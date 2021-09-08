@@ -4,7 +4,7 @@
 
 1) Create a new feature branch.
 
-2) Raise a pull request to the `main` branch. Merging requires at least 1 review + all GitHub actions need to pass.
+2) Raise a pull request to the `main` branch. Merging requires at least 1 approving review, and all GitHub actions need to pass.
 
 ## Python Requirements
 
@@ -12,7 +12,8 @@ The file [requirements.txt](requirements.txt) contains all python requirements. 
 
 ## Code Style
 
-We require all files to be formatted in the defined formatting style before we allow a PR to be merged to master. This is realized via a GitHub [action](.github/workflows/check_style.yml).
+We require all files to be formatted in the defined formatting style before we allow a PR to be merged to the `main` branch.
+This is realized via a GitHub [action](.github/workflows/check_style.yml).
 
 ### C++
 
