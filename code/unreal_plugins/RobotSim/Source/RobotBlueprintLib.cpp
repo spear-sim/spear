@@ -225,8 +225,7 @@ void URobotBlueprintLib::setUnrealClockSpeed(const AActor* context,
                                              float clock_speed)
 {
     URobotBlueprintLib::RunCommandOnGameThread(
-        [context, clock_speed]()
-        {
+        [context, clock_speed]() {
             auto* world_settings = context->GetWorldSettings();
             if (world_settings)
                 world_settings->SetTimeDilation(clock_speed);

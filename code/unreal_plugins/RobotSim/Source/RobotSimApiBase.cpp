@@ -537,8 +537,7 @@ void RobotSimApiBase::setCameraOrientation(
     const std::string& camera_name, const RobotSim::Quaternionr& orientation)
 {
     URobotBlueprintLib::RunCommandOnGameThread(
-        [this, camera_name, orientation]()
-        {
+        [this, camera_name, orientation]() {
             APIPCamera* camera = getCamera(camera_name);
             FQuat quat = ned_transform_.fromNed(orientation);
             camera->setCameraOrientation(quat.Rotator());
@@ -687,8 +686,9 @@ RobotSimApiBase::Pose RobotSimApiBase::toPose(const FVector& u_position,
 void RobotSimApiBase::setPose(const Pose& pose, bool ignore_collision)
 {
     URobotBlueprintLib::RunCommandOnGameThread(
-        [this, pose, ignore_collision]()
-        { setPoseInternal(pose, ignore_collision); },
+        [this, pose, ignore_collision]() {
+            setPoseInternal(pose, ignore_collision);
+        },
         true);
 }
 

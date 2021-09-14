@@ -80,12 +80,11 @@ void RobotSimApi::createVehicleApi(AUrdfBotPawn* pawn,
     // std::make_shared<UnrealSensorFactory>(components);
 
     std::function<const RobotSim::Kinematics::State*(std::string)>
-        state_provider_fxn = [&](std::string linkName)
-    {
-        FString linkNameFstr(linkName.c_str());
-        return &(static_cast<AUrdfLink*>(pawn->GetLink(linkNameFstr))
-                     ->GetKinematics());
-    };
+        state_provider_fxn = [&](std::string linkName) {
+            FString linkNameFstr(linkName.c_str());
+            return &(static_cast<AUrdfLink*>(pawn->GetLink(linkNameFstr))
+                         ->GetKinematics());
+        };
     this->vehicle_api_ = std::unique_ptr<RobotApi>(new RobotApi(
         pawn, getPawnKinematics(), home_geopoint, state_provider_fxn,
         getVehicleSetting(), (*getGroundTruthEnvironment())));
