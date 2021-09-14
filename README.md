@@ -19,7 +19,7 @@ This is realized via a GitHub [action](.github/workflows/check_style.yml).
 
 - We use `clang-format`. See [.clang-format](.clang-format) for more details.
 
-- The [script](utils/apply-clang-style.sh) applies this style to all C++ files in this repository.
+- The [script](utils/apply_clang_style.sh) applies this style to all C++ files in this repository.
 
 ### Python
 
