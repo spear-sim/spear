@@ -158,8 +158,8 @@ void ARobotSimHUD::setUnrealEngineSettings()
                                                 FString("r.CustomDepth 3"));
 
     // during startup we init stencil IDs to random hash and it takes long time
-    // for large environments we get error that GameThread has timed out after 30
-    // sec waiting on render thread
+    // for large environments we get error that GameThread has timed out after
+    // 30 sec waiting on render thread
     static const auto render_timeout_var =
         IConsoleManager::Get().FindConsoleVariable(
             TEXT("g.TimeoutForBlockOnRenderFence"));

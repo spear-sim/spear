@@ -21,8 +21,9 @@ NedTransform::NedTransform(const AActor* pivot,
     if (pivot != nullptr)
     {
         // normally pawns have their center as origin. If we use this as 0,0,0
-        // in NED then when we tell vehicle to go to 0,0,0 - it will try to go in
-        // the ground so we get the bounds and subtract z to get bottom as 0,0,0
+        // in NED then when we tell vehicle to go to 0,0,0 - it will try to go
+        // in the ground so we get the bounds and subtract z to get bottom as
+        // 0,0,0
         FVector mesh_origin, mesh_bounds;
         pivot->GetActorBounds(true, mesh_origin, mesh_bounds);
 

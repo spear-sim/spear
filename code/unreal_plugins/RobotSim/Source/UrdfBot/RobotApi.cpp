@@ -171,7 +171,7 @@ RobotSim::Momentums RobotApi::getBotInstantSpeed() const
     // motionComponents)
     //{
     //	motion_component_speed[std::string(TCHAR_TO_UTF8(*component.Key))] =
-    //component.Value->GetMotorSpeed();
+    // component.Value->GetMotorSpeed();
     //}
     // return motion_component_speed;
 
@@ -347,7 +347,7 @@ void RobotApi::setQueueTorque(const RobotSim::QueueVector3r& queueTorque)
     //	{
     //		RobotSim::Vector3r  vec3r = vecArray[index++];
     //		element.Value->SetConstTorque(FVector(vec3r.x(), vec3r.y(),
-    //vec3r.z()));
+    // vec3r.z()));
     //	}
     //}
 }
@@ -399,9 +399,10 @@ float RobotApi::getJointVelocity(const FString& jointName) const
     // (motionComponents.Contains(jointName))
     //{
     //	ControlledMotionComponent*  jointComponent =
-    //motionComponents[jointName]; 	TMap<FString, FString> jointState =
-    //jointComponent->GetState(); 	FString  actualPoint =
-    //jointState["ActualSpeed"]; 	actualVelocity = FCString::Atof(*actualPoint);
+    // motionComponents[jointName]; 	TMap<FString, FString> jointState =
+    // jointComponent->GetState(); 	FString  actualPoint =
+    // jointState["ActualSpeed"]; 	actualVelocity =
+    // FCString::Atof(*actualPoint);
     //}
 
     return actualVelocity;

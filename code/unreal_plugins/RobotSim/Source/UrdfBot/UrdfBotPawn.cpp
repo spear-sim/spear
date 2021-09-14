@@ -675,7 +675,7 @@ void AUrdfBotPawn::setJointTorque(FString jointName, const FVector& torque)
         //		break;
         //	//ToDo other list
         //	case
-        //ControlledMotionComponent::MotionComponentType::LINERACTUATOR:
+        // ControlledMotionComponent::MotionComponentType::LINERACTUATOR:
         //		phyXcomponent->SetAngularVelocityTarget(torque);
         //		break;
         //	default:
@@ -996,7 +996,7 @@ void AUrdfBotPawn::AttachChildren(
         //}
 
         //// Specal case - jointSpecification->Axis = - X. Then, roll 180
-        ///degrees
+        /// degrees
         // if (jointSpecification->Axis.X == -1 && jointSpecification->Axis.Y ==
         // 0 && jointSpecification->Axis.Z == 0)
         //{

@@ -182,7 +182,8 @@ void Motor::ComputeForces(float delta)
     // FPhysicsInterface::GetDriveAngularVelocity(constraintComponent_->ConstraintInstance.ConstraintHandle,
     // currentVeloctiy); currentVeloctiy *= this->radius_;
     // GEngine->AddOnScreenDebugMessage(-1, 8, FColor::Green,
-    // FString::Printf(TEXT("urdfbot speed: %s "), *currentVeloctiy.ToString()));
+    // FString::Printf(TEXT("urdfbot speed: %s "),
+    // *currentVeloctiy.ToString()));
 }
 
 TMap<FString, FString> Motor::GetState()

@@ -303,8 +303,8 @@ void RobotSimApiBase::setCameraPose(const RobotSim::CameraPose camera_pose)
         [&] { return this->move_camera_requests_.IsEmpty(); }, 0.005);
 
     // FVector transformVec = FVector(camera_pose.translation.x(),
-    // camera_pose.translation.y(), camera_pose.translation.z()); transformVec *=
-    // URobotBlueprintLib::GetWorldToMetersScale(cameraActor); // API will be
+    // camera_pose.translation.y(), camera_pose.translation.z()); transformVec
+    // *= URobotBlueprintLib::GetWorldToMetersScale(cameraActor); // API will be
     // specified in meters FQuat qq(camera_pose.rotation.x(),
     // camera_pose.rotation.y(), camera_pose.rotation.z(),
     // camera_pose.rotation.w()); FRotator rotation = qq.Rotator();
@@ -841,8 +841,8 @@ const RobotSim::Environment* RobotSimApiBase::getGroundTruthEnvironment() const
 //	}
 //
 //	const RobotSim::Kinematics::State* kinematics =
-//getGroundTruthKinematics(); 	uint64_t timestamp_millis =
-//static_cast<uint64_t>(RobotSim::ClockFactory::get()->nowNanos() / 1.0E6);
+// getGroundTruthKinematics(); 	uint64_t timestamp_millis =
+// static_cast<uint64_t>(RobotSim::ClockFactory::get()->nowNanos() / 1.0E6);
 //
 //	//TODO: because this bug we are using alternative code with stringstream
 //	//https://answers.unrealengine.com/questions/664905/unreal-crashes-on-two-lines-of-extremely-simple-st.html
@@ -863,9 +863,9 @@ const RobotSim::Environment* RobotSimApiBase::getGroundTruthEnvironment() const
 //	//std::stringstream ss;
 //	//ss << timestamp_millis << "\t";
 //	//ss << kinematics.pose.position.x() << "\t" <<
-//kinematics.pose.position.y() << "\t" << kinematics.pose.position.z() << "\t";
+// kinematics.pose.position.y() << "\t" << kinematics.pose.position.z() << "\t";
 //	//ss << kinematics.pose.orientation.w() << "\t" <<
-//kinematics.pose.orientation.x() << "\t" << kinematics.pose.orientation.y() <<
+// kinematics.pose.orientation.x() << "\t" << kinematics.pose.orientation.y() <<
 //"\t" << kinematics.pose.orientation.z() << "\t";
 //	//ss << "\n";
 //	//return ss.str();
