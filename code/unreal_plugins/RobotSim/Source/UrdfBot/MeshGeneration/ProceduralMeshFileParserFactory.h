@@ -8,6 +8,7 @@
 
 class ProceduralMeshFileParserFactory
 {
-    public:
-        TSharedPtr<ProceduralMeshFileParser> Create(ProceduralMeshFileType fileType);
+public:
+    TSharedPtr<ProceduralMeshFileParser>
+    Create(ProceduralMeshFileType fileType);
 };

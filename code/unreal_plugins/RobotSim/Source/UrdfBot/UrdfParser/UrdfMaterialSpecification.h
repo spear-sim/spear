@@ -4,8 +4,8 @@
 
 class ROBOTSIM_API UrdfMaterialSpecification
 {
-	public:
-		FString Name;
-		FVector4 Color;
-		FString TextureFile;
+public:
+    FString Name;
+    FVector4 Color;
+    FString TextureFile;
 };

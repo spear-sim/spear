@@ -4,10 +4,10 @@
 
 class UrdfCameraSpecification
 {
-    public:
-        UrdfOrigin OriginTransform;
-        FString Name;
-        FString ParentLinkName;
-        FString CameraKeyBinding;
-        float LagScale = 0;
+public:
+    UrdfOrigin OriginTransform;
+    FString Name;
+    FString ParentLinkName;
+    FString CameraKeyBinding;
+    float LagScale = 0;
 };

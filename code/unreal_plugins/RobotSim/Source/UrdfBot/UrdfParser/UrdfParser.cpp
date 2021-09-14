@@ -17,51 +17,72 @@ void UrdfParser::Parse(FString FileName)
 
         if (tag.Equals(TEXT("link")))
         {
-            UrdfLinkSpecification* linkSpecification = this->ParseLinkSpecification(node);
+            UrdfLinkSpecification* linkSpecification =
+                this->ParseLinkSpecification(node);
 
             if (!linkSpecification)
-                throw std::runtime_error("Unable to create link specification.");
+                throw std::runtime_error(
+                    "Unable to create link specification.");
 
             if (this->links_.Contains(linkSpecification->Name))
-                throw std::runtime_error("Multiple links with name '" + std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple links with name '" +
+                    std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) +
+                    "'.");
 
             this->links_.Add(linkSpecification->Name, linkSpecification);
         }
         else if (tag.Equals(TEXT("joint")))
         {
-            UrdfJointSpecification* jointSpecification = this->ParseJointSpecification(node); 
+            UrdfJointSpecification* jointSpecification =
+                this->ParseJointSpecification(node);
 
             if (!jointSpecification)
-                throw std::runtime_error("Unable to create joint specification.");
+                throw std::runtime_error(
+                    "Unable to create joint specification.");
 
             if (this->joints_.Contains(jointSpecification->Name))
-                throw std::runtime_error("Multiple joints with name '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple joints with name '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             this->joints_.Add(jointSpecification->Name, jointSpecification);
         }
         else if (tag.Equals(TEXT("force")))
         {
-            UrdfForceSpecification* forceSpecification = this->ParseForceSpecification(node);
+            UrdfForceSpecification* forceSpecification =
+                this->ParseForceSpecification(node);
 
             if (!forceSpecification)
-                throw std::runtime_error("Unable to create force specification.");
+                throw std::runtime_error(
+                    "Unable to create force specification.");
 
             if (this->forces_.Contains(forceSpecification->Name))
-                throw std::runtime_error("Multiple force specifications with name '" + std::string(TCHAR_TO_UTF8(*(forceSpecification->Name))) + "'.");
+                throw std::runtime_error(
+                    "Multiple force specifications with name '" +
+                    std::string(TCHAR_TO_UTF8(*(forceSpecification->Name))) +
+                    "'.");
 
             this->forces_.Add(forceSpecification->Name, forceSpecification);
         }
         else if (tag.Equals(TEXT("material")))
         {
-            UrdfMaterialSpecification* materialSpecification = this->ParseMaterialSpecification(node);
+            UrdfMaterialSpecification* materialSpecification =
+                this->ParseMaterialSpecification(node);
 
             if (!materialSpecification)
-                throw std::runtime_error("Unable to create material specification.");
+                throw std::runtime_error(
+                    "Unable to create material specification.");
 
             if (this->materials_.Contains(materialSpecification->Name))
-                throw std::runtime_error("Multiple materials with the name " + std::string(TCHAR_TO_UTF8(*(materialSpecification->Name))) + ".");
+                throw std::runtime_error(
+                    "Multiple materials with the name " +
+                    std::string(TCHAR_TO_UTF8(*(materialSpecification->Name))) +
+                    ".");
 
-            this->materials_.Add(materialSpecification->Name, materialSpecification);
+            this->materials_.Add(materialSpecification->Name,
+                                 materialSpecification);
         }
     }
 
@@ -69,23 +90,39 @@ void UrdfParser::Parse(FString FileName)
     if (this->joints_.Num() + 1 != this->links_.Num())
     {
         // TEST: do nothing.
-        //throw std::runtime_error("The number of joints parsed is " + std::to_string(this->joints_.Num()) + ", while the number of links parsed is " + std::to_string(this->joints_.Num()) + ". The number of joints must be one less than the number of links.");
+        // throw std::runtime_error("The number of joints parsed is " +
+        // std::to_string(this->joints_.Num()) + ", while the number of links
+        // parsed is " + std::to_string(this->joints_.Num()) + ". The number of
+        // joints must be one less than the number of links.");
     }
 
-    // Fill in link references 
+    // Fill in link references
     for (auto kvp : this->joints_)
     {
         UrdfJointSpecification* currentJoint = kvp.Value;
-        
+
         UrdfLinkSpecification* parentLink;
         UrdfLinkSpecification* childLink;
 
         if (!this->links_.Contains(currentJoint->ParentLinkName))
-            throw std::runtime_error("Joint '" + std::string(TCHAR_TO_UTF8(*currentJoint->Name)) + "' references link '" + std::string(TCHAR_TO_UTF8(*currentJoint->ParentLinkName)) + "' as the parent link, which does not exist.");
+            throw std::runtime_error(
+                "Joint '" + std::string(TCHAR_TO_UTF8(*currentJoint->Name)) +
+                "' references link '" +
+                std::string(TCHAR_TO_UTF8(*currentJoint->ParentLinkName)) +
+                "' as the parent link, which does not exist.");
         if (!this->links_.Contains(currentJoint->ChildLinkName))
-            throw std::runtime_error("Joint '" + std::string(TCHAR_TO_UTF8(*currentJoint->Name)) + "' references link '" + std::string(TCHAR_TO_UTF8(*currentJoint->ChildLinkName)) + "' as the child link, which does not exist.");
-        if (currentJoint->Mimic != nullptr && !this->joints_.Contains(currentJoint->Mimic->JointName))
-            throw std::runtime_error("Joint '" + std::string(TCHAR_TO_UTF8(*currentJoint->Name)) + "' references joint '" + std::string(TCHAR_TO_UTF8(*currentJoint->Mimic->JointName)) + "' as the mimic joint, which does not exist.");
+            throw std::runtime_error(
+                "Joint '" + std::string(TCHAR_TO_UTF8(*currentJoint->Name)) +
+                "' references link '" +
+                std::string(TCHAR_TO_UTF8(*currentJoint->ChildLinkName)) +
+                "' as the child link, which does not exist.");
+        if (currentJoint->Mimic != nullptr &&
+            !this->joints_.Contains(currentJoint->Mimic->JointName))
+            throw std::runtime_error(
+                "Joint '" + std::string(TCHAR_TO_UTF8(*currentJoint->Name)) +
+                "' references joint '" +
+                std::string(TCHAR_TO_UTF8(*currentJoint->Mimic->JointName)) +
+                "' as the mimic joint, which does not exist.");
 
         parentLink = this->links_[currentJoint->ParentLinkName];
         childLink = this->links_[currentJoint->ChildLinkName];
@@ -95,19 +132,24 @@ void UrdfParser::Parse(FString FileName)
 
         if (childLink->ParentLink != nullptr)
         {
-            //throw std::runtime_error("Link '" + std::string(TCHAR_TO_UTF8(*childLink->Name)) + "' has multiple parents.");
+            // throw std::runtime_error("Link '" +
+            // std::string(TCHAR_TO_UTF8(*childLink->Name)) + "' has multiple
+            // parents.");
         }
 
         childLink->ParentLink = parentLink;
-        parentLink->Children.Add(TPair<UrdfLinkSpecification*, UrdfJointSpecification*>(childLink, kvp.Value));
+        parentLink->Children.Add(
+            TPair<UrdfLinkSpecification*, UrdfJointSpecification*>(childLink,
+                                                                   kvp.Value));
 
         if (currentJoint->Mimic != nullptr)
         {
-            currentJoint->Mimic->Joint = this->joints_[currentJoint->Mimic->JointName];
+            currentJoint->Mimic->Joint =
+                this->joints_[currentJoint->Mimic->JointName];
         }
     }
 
-    // There must be exactly one node that has no parent. 
+    // There must be exactly one node that has no parent.
     // This represents the root node of the bot.
     TArray<UrdfLinkSpecification*> rootNodes;
 
@@ -119,10 +161,15 @@ void UrdfParser::Parse(FString FileName)
     }
 
     if (rootNodes.Num() == 0)
-        throw std::runtime_error("There is no root node. There must be at least one node in the tree that does not have a parent.");
+        throw std::runtime_error(
+            "There is no root node. There must be at least one node in the "
+            "tree that does not have a parent.");
     else if (rootNodes.Num() > 1)
     {
-        std::string errorMessage = "There are multiple nodes that have no parent node. There can only be one node that does not have a parent. The nodes that do not have parents are: ";
+        std::string errorMessage =
+            "There are multiple nodes that have no parent node. There can only "
+            "be one node that does not have a parent. The nodes that do not "
+            "have parents are: ";
         for (auto node : rootNodes)
         {
             errorMessage += "'";
@@ -133,7 +180,8 @@ void UrdfParser::Parse(FString FileName)
         throw std::runtime_error(errorMessage);
     }
 
-    // Validate that for each force, the link references point to valid link specifications.
+    // Validate that for each force, the link references point to valid link
+    // specifications.
     for (auto kvp : this->forces_)
     {
         UrdfForceSpecification* forceSpecification = kvp.Value;
@@ -143,16 +191,32 @@ void UrdfParser::Parse(FString FileName)
 
         switch (forceSpecification->GetForceSpecificationType())
         {
-            case FORCE_ANGULAR:
-                angularForceSpecification = static_cast<UrdfAngularForceSpecification*>(forceSpecification);
-                if (!this->links_.Contains(angularForceSpecification->LinkName))
-                    throw std::runtime_error("Angular force '" + std::string(TCHAR_TO_UTF8(*(angularForceSpecification->Name))) + "' is attached to link '" + std::string(TCHAR_TO_UTF8(*(angularForceSpecification->LinkName))) + "', which does not exist.");
-                break;
-            case FORCE_LINEAR:
-                linearForceSpecification = static_cast<UrdfLinearForceSpecification*>(forceSpecification);
-                if (!this->links_.Contains(linearForceSpecification->LinkName))
-                    throw std::runtime_error("Linear force '" + std::string(TCHAR_TO_UTF8(*(linearForceSpecification->Name))) + "' is attached to link '" + std::string(TCHAR_TO_UTF8(*(linearForceSpecification->LinkName))) + "', which does not exist.");
-                break;
+        case FORCE_ANGULAR:
+            angularForceSpecification =
+                static_cast<UrdfAngularForceSpecification*>(forceSpecification);
+            if (!this->links_.Contains(angularForceSpecification->LinkName))
+                throw std::runtime_error(
+                    "Angular force '" +
+                    std::string(
+                        TCHAR_TO_UTF8(*(angularForceSpecification->Name))) +
+                    "' is attached to link '" +
+                    std::string(
+                        TCHAR_TO_UTF8(*(angularForceSpecification->LinkName))) +
+                    "', which does not exist.");
+            break;
+        case FORCE_LINEAR:
+            linearForceSpecification =
+                static_cast<UrdfLinearForceSpecification*>(forceSpecification);
+            if (!this->links_.Contains(linearForceSpecification->LinkName))
+                throw std::runtime_error(
+                    "Linear force '" +
+                    std::string(
+                        TCHAR_TO_UTF8(*(linearForceSpecification->Name))) +
+                    "' is attached to link '" +
+                    std::string(
+                        TCHAR_TO_UTF8(*(linearForceSpecification->LinkName))) +
+                    "', which does not exist.");
+            break;
         }
     }
 
@@ -161,15 +225,16 @@ void UrdfParser::Parse(FString FileName)
     for (auto kvp : this->links_)
     {
         UrdfLinkSpecification* link = kvp.Value;
-		if (link->VisualSpecification != nullptr)
-		{
-			FString materialName = link->VisualSpecification->MaterialName;
+        if (link->VisualSpecification != nullptr)
+        {
+            FString materialName = link->VisualSpecification->MaterialName;
 
-			if (materialName.Len() > 0 && !this->materials_.Contains(materialName))
-			{
-				missingMaterials.Add(materialName);
-			}
-		}
+            if (materialName.Len() > 0 &&
+                !this->materials_.Contains(materialName))
+            {
+                missingMaterials.Add(materialName);
+            }
+        }
     }
 
     if (missingMaterials.Num() > 0)
@@ -206,7 +271,7 @@ TMap<FString, UrdfMaterialSpecification*> UrdfParser::GetMaterials()
     return this->materials_;
 }
 
-UrdfLinkSpecification* UrdfParser::ParseLinkSpecification(FXmlNode *linkNode)
+UrdfLinkSpecification* UrdfParser::ParseLinkSpecification(FXmlNode* linkNode)
 {
     auto linkSpecification = new UrdfLinkSpecification();
 
@@ -222,7 +287,10 @@ UrdfLinkSpecification* UrdfParser::ParseLinkSpecification(FXmlNode *linkNode)
         if (tag.Equals(TEXT("name")))
         {
             if (hasNameAttribute)
-                throw std::runtime_error("Multiple names specified for link. First name: '" + std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple names specified for link. First name: '" +
+                    std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) +
+                    "'.");
 
             hasNameAttribute = true;
             linkSpecification->Name = attr.GetValue();
@@ -232,7 +300,6 @@ UrdfLinkSpecification* UrdfParser::ParseLinkSpecification(FXmlNode *linkNode)
     if (!hasNameAttribute)
         throw std::runtime_error("Link is missing name attribute.");
 
-
     for (auto node : linkNode->GetChildrenNodes())
     {
         FString tag = node->GetTag();
@@ -241,44 +308,65 @@ UrdfLinkSpecification* UrdfParser::ParseLinkSpecification(FXmlNode *linkNode)
         {
             if (hasInertialNode)
             {
-                throw std::runtime_error("Multiple inertial nodes specified for link '" + std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple inertial nodes specified for link '" +
+                    std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) +
+                    "'.");
             }
 
             hasInertialNode = true;
-            linkSpecification->InertialSpecification = this->ParseLinkInertialSpecification(node);
+            linkSpecification->InertialSpecification =
+                this->ParseLinkInertialSpecification(node);
         }
         else if (tag.Equals(TEXT("visual")))
         {
             if (hasVisualNode)
             {
-                throw std::runtime_error("Multiple visual nodes specified for link '" + std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) + "'. Although this is technically allowed, limitations in the Unreal engine prevent us from efficiently implementing this. Please re-write as a series of multiple links with FIXED joint constraints.");
+                throw std::runtime_error(
+                    "Multiple visual nodes specified for link '" +
+                    std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) +
+                    "'. Although this is technically allowed, limitations in "
+                    "the Unreal engine prevent us from efficiently "
+                    "implementing this. Please re-write as a series of "
+                    "multiple links with FIXED joint constraints.");
             }
-             
+
             hasVisualNode = true;
-            linkSpecification->VisualSpecification = this->ParseLinkVisualSpecification(node);
+            linkSpecification->VisualSpecification =
+                this->ParseLinkVisualSpecification(node);
         }
         else if (tag.Equals(TEXT("collision")))
         {
             if (hasCollisionNode)
             {
-                throw std::runtime_error("Multiple collision nodes specified for link '" + std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) + "'. Although this is technically allowed, limitations in the Unreal engine prevent us from efficiently implementing this. Please re-write as a series of multiple links with FIXED joint constraints.");
+                throw std::runtime_error(
+                    "Multiple collision nodes specified for link '" +
+                    std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) +
+                    "'. Although this is technically allowed, limitations in "
+                    "the Unreal engine prevent us from efficiently "
+                    "implementing this. Please re-write as a series of "
+                    "multiple links with FIXED joint constraints.");
             }
 
             hasCollisionNode = true;
-            linkSpecification->CollisionSpecification = this->ParseLinkCollisionSpecification(node);
+            linkSpecification->CollisionSpecification =
+                this->ParseLinkCollisionSpecification(node);
         }
     }
-    
-	// ToDo  empty link node is permitted!!!
-    //if (!hasInertialNode)
-    //    throw std::runtime_error("No inertial node specified for link '" + std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) + "'.");
-    //if (!hasVisualNode && !hasCollisionNode)
-    //    throw std::runtime_error("No visual or collision node specified for link '" + std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) + "'.");
+
+    // ToDo  empty link node is permitted!!!
+    // if (!hasInertialNode)
+    //    throw std::runtime_error("No inertial node specified for link '" +
+    //    std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) + "'.");
+    // if (!hasVisualNode && !hasCollisionNode)
+    //    throw std::runtime_error("No visual or collision node specified for
+    //    link '" + std::string(TCHAR_TO_UTF8(*linkSpecification->Name)) +
+    //    "'.");
 
     return linkSpecification;
 }
 
-UrdfJointSpecification* UrdfParser::ParseJointSpecification(FXmlNode *jointNode)
+UrdfJointSpecification* UrdfParser::ParseJointSpecification(FXmlNode* jointNode)
 {
     auto jointSpecification = new UrdfJointSpecification();
 
@@ -302,7 +390,11 @@ UrdfJointSpecification* UrdfParser::ParseJointSpecification(FXmlNode *jointNode)
         {
             if (hasNameAttribute)
             {
-                throw std::runtime_error("Multiple name attributes specified for joint. First name: '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple name attributes specified for joint. First name: "
+                    "'" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
             }
 
             hasNameAttribute = true;
@@ -312,18 +404,22 @@ UrdfJointSpecification* UrdfParser::ParseJointSpecification(FXmlNode *jointNode)
         {
             if (hasTypeAttribute)
             {
-                throw std::runtime_error("Multiple type attributes specified for joint.");
+                throw std::runtime_error(
+                    "Multiple type attributes specified for joint.");
             }
 
             hasTypeAttribute = true;
-            jointSpecification->Type = UrdfJointSpecification::ParseJointType(attr.GetValue());
+            jointSpecification->Type =
+                UrdfJointSpecification::ParseJointType(attr.GetValue());
         }
     }
 
     if (!hasNameAttribute)
         throw std::runtime_error("No name specified for joint.");
     if (!hasTypeAttribute)
-        throw std::runtime_error("No type specified for joint with name '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+        throw std::runtime_error(
+            "No type specified for joint with name '" +
+            std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
 
     for (auto node : jointNode->GetChildrenNodes())
     {
@@ -332,7 +428,10 @@ UrdfJointSpecification* UrdfParser::ParseJointSpecification(FXmlNode *jointNode)
         if (tag.Equals(TEXT("origin")))
         {
             if (hasOriginNode)
-                throw std::runtime_error("Multiple origin nodes specified for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple origin nodes specified for joint '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             hasOriginNode = true;
             jointSpecification->Origin = this->ParseUrdfOrigin(node);
@@ -340,76 +439,120 @@ UrdfJointSpecification* UrdfParser::ParseJointSpecification(FXmlNode *jointNode)
         else if (tag.Equals(TEXT("parent")))
         {
             if (hasParentNode)
-                throw std::runtime_error("Multiple parent nodes specified for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple parent nodes specified for joint '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             hasParentNode = true;
-            jointSpecification->ParentLinkName = node->GetAttribute(TEXT("link"));
+            jointSpecification->ParentLinkName =
+                node->GetAttribute(TEXT("link"));
         }
         else if (tag.Equals(TEXT("child")))
         {
             if (hasChildNode)
-                throw std::runtime_error("Multiple child nodes specified for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple child nodes specified for joint '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             hasChildNode = true;
-            jointSpecification->ChildLinkName = node->GetAttribute(TEXT("link"));
+            jointSpecification->ChildLinkName =
+                node->GetAttribute(TEXT("link"));
         }
         else if (tag.Equals(TEXT("axis")))
         {
             if (hasAxisNode)
-                throw std::runtime_error("Multiple axis nodes specified for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple axis nodes specified for joint '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             hasAxisNode = true;
-            jointSpecification->Axis = this->ParseFVectorFromAttributeString(node->GetAttribute(TEXT("xyz")));
-            jointSpecification->RollPitchYaw = this->ParseFRotatorFromAttributeString(node->GetAttribute(TEXT("rpy")));
+            jointSpecification->Axis = this->ParseFVectorFromAttributeString(
+                node->GetAttribute(TEXT("xyz")));
+            jointSpecification->RollPitchYaw =
+                this->ParseFRotatorFromAttributeString(
+                    node->GetAttribute(TEXT("rpy")));
         }
         else if (tag.Equals(TEXT("calibration")))
         {
             if (hasCalibrationNode)
-                throw std::runtime_error("Multiple calibration nodes specified for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple calibration nodes specified for joint '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             hasCalibrationNode = true;
-            jointSpecification->Calibration = this->ParseJointCalibrationSpecification(node);
+            jointSpecification->Calibration =
+                this->ParseJointCalibrationSpecification(node);
         }
         else if (tag.Equals(TEXT("dynamics")))
         {
             if (hasDynamicsNode)
-                throw std::runtime_error("Multiple dynamics nodes detected for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple dynamics nodes detected for joint '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             hasDynamicsNode = true;
-            jointSpecification->Dynamics = this->ParseJointDynamicsSpecification(node);
+            jointSpecification->Dynamics =
+                this->ParseJointDynamicsSpecification(node);
         }
         else if (tag.Equals(TEXT("limit")))
         {
             if (hasLimitNode)
-                throw std::runtime_error("Multiple limit nodes detected for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple limit nodes detected for joint '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             hasLimitNode = true;
-            jointSpecification->Limit = this->ParseJointLimitSpecification(node);
+            jointSpecification->Limit =
+                this->ParseJointLimitSpecification(node);
         }
         else if (tag.Equals(TEXT("mimic")))
         {
             if (hasMimicNode)
-                throw std::runtime_error("Multiple mimic nodes detected for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple mimic nodes detected for joint '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             hasMimicNode = true;
-            jointSpecification->Mimic = this->ParseJointMimicSpecification(node);
+            jointSpecification->Mimic =
+                this->ParseJointMimicSpecification(node);
         }
         else if (tag.Equals(TEXT("safety_controller")))
         {
             if (hasSafetyControllerNode)
-                throw std::runtime_error("Multiple safety_controller nodes detected for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple safety_controller nodes detected for joint '" +
+                    std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                    "'.");
 
             hasSafetyControllerNode = true;
-            jointSpecification->SafetyController = this->ParseJointSafetyControllerSpecification(node);
+            jointSpecification->SafetyController =
+                this->ParseJointSafetyControllerSpecification(node);
         }
     }
 
     if (!hasParentNode)
-        throw std::runtime_error("Joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "' is missing the parent link node.");
+        throw std::runtime_error(
+            "Joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+            "' is missing the parent link node.");
     if (!hasChildNode)
-        throw std::runtime_error("Joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "' is missing the child link node.");
-    if ((jointSpecification->Type == REVOLUTE_TYPE || jointSpecification->Type == PRISMATIC_TYPE) && !hasLimitNode)
-        throw std::runtime_error("Joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "' is of type 'revolute' or 'prismatic', but has no limit specification. For joints of this type, the limit node must be provided.");
+        throw std::runtime_error(
+            "Joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+            "' is missing the child link node.");
+    if ((jointSpecification->Type == REVOLUTE_TYPE ||
+         jointSpecification->Type == PRISMATIC_TYPE) &&
+        !hasLimitNode)
+        throw std::runtime_error(
+            "Joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+            "' is of type 'revolute' or 'prismatic', but has no limit "
+            "specification. For joints of this type, the limit node must be "
+            "provided.");
 
     return jointSpecification;
 }
@@ -420,7 +563,7 @@ UrdfForceSpecification* UrdfParser::ParseForceSpecification(FXmlNode* forceNode)
 
     bool foundName = false;
     FString name;
-    
+
     for (auto attr : forceNode->GetAttributes())
     {
         FString tag = attr.GetTag();
@@ -439,19 +582,23 @@ UrdfForceSpecification* UrdfParser::ParseForceSpecification(FXmlNode* forceNode)
 
             if (tag.Equals(TEXT("actuator")))
             {
-                forceSpecification = this->ParseAngularForceSpecification(forceNode);
+                forceSpecification =
+                    this->ParseAngularForceSpecification(forceNode);
             }
             else if (tag.Equals(TEXT("linear")))
             {
-                forceSpecification = this->ParseLinearForceSpecification(forceNode);
+                forceSpecification =
+                    this->ParseLinearForceSpecification(forceNode);
             }
             else if (tag.Equals(TEXT("angular")))
             {
-                forceSpecification = this->ParseAngularForceSpecification(forceNode);
+                forceSpecification =
+                    this->ParseAngularForceSpecification(forceNode);
             }
             else
             {
-                throw std::runtime_error("Unrecognized force type " + std::string(TCHAR_TO_UTF8(*tag)));
+                throw std::runtime_error("Unrecognized force type " +
+                                         std::string(TCHAR_TO_UTF8(*tag)));
             }
         }
     }
@@ -470,9 +617,11 @@ UrdfForceSpecification* UrdfParser::ParseForceSpecification(FXmlNode* forceNode)
     return forceSpecification;
 }
 
-UrdfMaterialSpecification* UrdfParser::ParseMaterialSpecification(FXmlNode* materialNode)
+UrdfMaterialSpecification*
+UrdfParser::ParseMaterialSpecification(FXmlNode* materialNode)
 {
-    UrdfMaterialSpecification* materialSpecification = new UrdfMaterialSpecification();
+    UrdfMaterialSpecification* materialSpecification =
+        new UrdfMaterialSpecification();
 
     bool hasName = false;
     for (auto attr : materialNode->GetAttributes())
@@ -483,7 +632,9 @@ UrdfMaterialSpecification* UrdfParser::ParseMaterialSpecification(FXmlNode* mate
         {
             if (hasName)
             {
-                throw std::runtime_error("Multiple names for material " + std::string(TCHAR_TO_UTF8(*materialSpecification->Name)));
+                throw std::runtime_error(
+                    "Multiple names for material " +
+                    std::string(TCHAR_TO_UTF8(*materialSpecification->Name)));
             }
 
             hasName = true;
@@ -497,11 +648,14 @@ UrdfMaterialSpecification* UrdfParser::ParseMaterialSpecification(FXmlNode* mate
 
         if (tag.Equals(TEXT("color")))
         {
-            materialSpecification->Color = this->ParseFVector4FromAttributeString(node->GetAttribute(TEXT("rgba")));
+            materialSpecification->Color =
+                this->ParseFVector4FromAttributeString(
+                    node->GetAttribute(TEXT("rgba")));
         }
         else if (tag.Equals(TEXT("unreal_material")))
         {
-            materialSpecification->TextureFile = node->GetAttribute(TEXT("path"));
+            materialSpecification->TextureFile =
+                node->GetAttribute(TEXT("path"));
         }
     }
 
@@ -513,9 +667,11 @@ UrdfMaterialSpecification* UrdfParser::ParseMaterialSpecification(FXmlNode* mate
     return materialSpecification;
 }
 
-UrdfLinkInertialSpecification* UrdfParser::ParseLinkInertialSpecification(FXmlNode *inertialNode)
+UrdfLinkInertialSpecification*
+UrdfParser::ParseLinkInertialSpecification(FXmlNode* inertialNode)
 {
-    UrdfLinkInertialSpecification* inertialSpecification = new UrdfLinkInertialSpecification();
+    UrdfLinkInertialSpecification* inertialSpecification =
+        new UrdfLinkInertialSpecification();
 
     bool hasOriginNode = false;
     bool hasMassNode = false;
@@ -528,7 +684,8 @@ UrdfLinkInertialSpecification* UrdfParser::ParseLinkInertialSpecification(FXmlNo
         if (tag.Equals(TEXT("origin")))
         {
             if (hasOriginNode)
-                throw std::runtime_error("Multiple origin nodes in inertial specification.");
+                throw std::runtime_error(
+                    "Multiple origin nodes in inertial specification.");
 
             hasOriginNode = true;
             inertialSpecification->Origin = this->ParseUrdfOrigin(node);
@@ -536,32 +693,40 @@ UrdfLinkInertialSpecification* UrdfParser::ParseLinkInertialSpecification(FXmlNo
         else if (tag.Equals(TEXT("mass")))
         {
             if (hasMassNode)
-                throw std::runtime_error("Multiple mass nodes in inertial specification.");
+                throw std::runtime_error(
+                    "Multiple mass nodes in inertial specification.");
 
             hasMassNode = true;
-            inertialSpecification->Mass = FCString::Atof(*node->GetAttribute(TEXT("value")));
+            inertialSpecification->Mass =
+                FCString::Atof(*node->GetAttribute(TEXT("value")));
         }
         else if (tag.Equals(TEXT("inertia")))
         {
             if (hasInertiaNode)
-                throw std::runtime_error("Multiple inertia nodes in inertial specification.");
+                throw std::runtime_error(
+                    "Multiple inertia nodes in inertial specification.");
 
             hasInertiaNode = true;
-            inertialSpecification->Inertia = this->ParseInertiaMatrixFromAttributes(node);
+            inertialSpecification->Inertia =
+                this->ParseInertiaMatrixFromAttributes(node);
         }
     }
 
     if (!hasInertiaNode)
-        throw std::runtime_error("No inertia node specified in inertial specification.");
+        throw std::runtime_error(
+            "No inertia node specified in inertial specification.");
     if (!hasMassNode)
-        throw std::runtime_error("No mass node specified in inertial specification.");
+        throw std::runtime_error(
+            "No mass node specified in inertial specification.");
 
     return inertialSpecification;
 }
 
-UrdfLinkVisualSpecification* UrdfParser::ParseLinkVisualSpecification(FXmlNode *visualNode)
+UrdfLinkVisualSpecification*
+UrdfParser::ParseLinkVisualSpecification(FXmlNode* visualNode)
 {
-    UrdfLinkVisualSpecification* visualSpecification = new UrdfLinkVisualSpecification();
+    UrdfLinkVisualSpecification* visualSpecification =
+        new UrdfLinkVisualSpecification();
 
     bool hasNameAttribute = false;
     bool hasOriginNode = false;
@@ -575,7 +740,11 @@ UrdfLinkVisualSpecification* UrdfParser::ParseLinkVisualSpecification(FXmlNode *
         {
             if (hasNameAttribute)
             {
-                throw std::runtime_error("Multiple name attributes detected for visual node. First name is '" + std::string(TCHAR_TO_UTF8(*visualSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple name attributes detected for visual node. First "
+                    "name is '" +
+                    std::string(TCHAR_TO_UTF8(*visualSpecification->Name)) +
+                    "'.");
             }
 
             hasNameAttribute = true;
@@ -592,9 +761,14 @@ UrdfLinkVisualSpecification* UrdfParser::ParseLinkVisualSpecification(FXmlNode *
             if (hasOriginNode)
             {
                 if (hasNameAttribute)
-                    throw std::runtime_error("Multiple origin nodes detected for visual node with name '" + std::string(TCHAR_TO_UTF8(*visualSpecification->Name)) + "'.");
+                    throw std::runtime_error(
+                        "Multiple origin nodes detected for visual node with "
+                        "name '" +
+                        std::string(TCHAR_TO_UTF8(*visualSpecification->Name)) +
+                        "'.");
                 else
-                    throw std::runtime_error("Multiple origin nodes detected for unnamed visual node.");
+                    throw std::runtime_error("Multiple origin nodes detected "
+                                             "for unnamed visual node.");
             }
 
             hasOriginNode = true;
@@ -605,34 +779,46 @@ UrdfLinkVisualSpecification* UrdfParser::ParseLinkVisualSpecification(FXmlNode *
             if (hasGeometryNode)
             {
                 if (hasNameAttribute)
-                    throw std::runtime_error("Multiple geometry nodes detected for visual node with name '" + std::string(TCHAR_TO_UTF8(*visualSpecification->Name)) + "'.");
+                    throw std::runtime_error(
+                        "Multiple geometry nodes detected for visual node with "
+                        "name '" +
+                        std::string(TCHAR_TO_UTF8(*visualSpecification->Name)) +
+                        "'.");
                 else
-                    throw std::runtime_error("Multiple geometry nodes detected for unnamed visual node.");
+                    throw std::runtime_error("Multiple geometry nodes detected "
+                                             "for unnamed visual node.");
             }
 
             hasGeometryNode = true;
-            visualSpecification->Geometry = this->ParseUrdfGeometrySpecification(node);
+            visualSpecification->Geometry =
+                this->ParseUrdfGeometrySpecification(node);
         }
         else if (tag.Equals(TEXT("material")))
         {
-            visualSpecification->MaterialName = node->GetAttribute(TEXT("name"));
+            visualSpecification->MaterialName =
+                node->GetAttribute(TEXT("name"));
         }
     }
 
     if (!hasGeometryNode)
     {
         if (hasNameAttribute)
-            throw std::runtime_error("No geometry specified for visual node with name '" + std::string(TCHAR_TO_UTF8(*visualSpecification->Name)) + "'.");
+            throw std::runtime_error(
+                "No geometry specified for visual node with name '" +
+                std::string(TCHAR_TO_UTF8(*visualSpecification->Name)) + "'.");
         else
-            throw std::runtime_error("No geometry specified for unnamed visual node.");
+            throw std::runtime_error(
+                "No geometry specified for unnamed visual node.");
     }
 
     return visualSpecification;
 }
 
-UrdfLinkCollisionSpecification* UrdfParser::ParseLinkCollisionSpecification(FXmlNode *collisionNode)
+UrdfLinkCollisionSpecification*
+UrdfParser::ParseLinkCollisionSpecification(FXmlNode* collisionNode)
 {
-    UrdfLinkCollisionSpecification* collisionSpecification = new UrdfLinkCollisionSpecification();
+    UrdfLinkCollisionSpecification* collisionSpecification =
+        new UrdfLinkCollisionSpecification();
 
     bool hasGeometryNode = false;
     bool hasOriginNode = false;
@@ -646,7 +832,11 @@ UrdfLinkCollisionSpecification* UrdfParser::ParseLinkCollisionSpecification(FXml
         {
             if (hasNameAttribute)
             {
-                throw std::runtime_error("Multiple name attributes detected for collision node. First name is '" + std::string(TCHAR_TO_UTF8(*collisionSpecification->Name)) + "'.");
+                throw std::runtime_error(
+                    "Multiple name attributes detected for collision node. "
+                    "First name is '" +
+                    std::string(TCHAR_TO_UTF8(*collisionSpecification->Name)) +
+                    "'.");
             }
 
             hasNameAttribute = true;
@@ -657,17 +847,23 @@ UrdfLinkCollisionSpecification* UrdfParser::ParseLinkCollisionSpecification(FXml
     for (auto node : collisionNode->GetChildrenNodes())
     {
         FString tag = node->GetTag();
-        
+
         if (tag.Equals(TEXT("origin")))
         {
             if (hasOriginNode)
             {
                 if (hasNameAttribute)
-                    throw std::runtime_error("Multiple origin nodes detected for collision node with name '" + std::string(TCHAR_TO_UTF8(*collisionSpecification->Name)) + "'.");
+                    throw std::runtime_error(
+                        "Multiple origin nodes detected for collision node "
+                        "with name '" +
+                        std::string(
+                            TCHAR_TO_UTF8(*collisionSpecification->Name)) +
+                        "'.");
                 else
-                    throw std::runtime_error("Multiple origin nodes on unnamed collision node.");
+                    throw std::runtime_error(
+                        "Multiple origin nodes on unnamed collision node.");
             }
-            
+
             hasOriginNode = true;
             collisionSpecification->Origin = this->ParseUrdfOrigin(node);
         }
@@ -676,33 +872,46 @@ UrdfLinkCollisionSpecification* UrdfParser::ParseLinkCollisionSpecification(FXml
             if (hasGeometryNode)
             {
                 if (hasNameAttribute)
-                    throw std::runtime_error("Multiple geometry nodes detected for collision node with name '" + std::string(TCHAR_TO_UTF8(*collisionSpecification->Name)) + "'.");
+                    throw std::runtime_error(
+                        "Multiple geometry nodes detected for collision node "
+                        "with name '" +
+                        std::string(
+                            TCHAR_TO_UTF8(*collisionSpecification->Name)) +
+                        "'.");
                 else
-                    throw std::runtime_error("Multiple geometry elements on unnamed collision node.");
+                    throw std::runtime_error("Multiple geometry elements on "
+                                             "unnamed collision node.");
             }
 
             hasGeometryNode = true;
-            collisionSpecification->Geometry = this->ParseUrdfGeometrySpecification(node);
+            collisionSpecification->Geometry =
+                this->ParseUrdfGeometrySpecification(node);
         }
     }
 
     if (!hasGeometryNode)
     {
         if (hasNameAttribute)
-            throw std::runtime_error("No geometry node specified for collision node " + std::string(TCHAR_TO_UTF8(*collisionSpecification->Name)) + ".");
+            throw std::runtime_error(
+                "No geometry node specified for collision node " +
+                std::string(TCHAR_TO_UTF8(*collisionSpecification->Name)) +
+                ".");
         else
-            throw std::runtime_error("No geometry node specified for unnamed collision node.");
+            throw std::runtime_error(
+                "No geometry node specified for unnamed collision node.");
     }
 
     return collisionSpecification;
 }
 
-UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
+UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode* geometryNode)
 {
     auto childNodes = geometryNode->GetChildrenNodes();
 
     if (childNodes.Num() != 1)
-        throw std::runtime_error("Invalid number of child nodes to geometry element in link. Must be 1, but found " + std::to_string(childNodes.Num()) + ".");
+        throw std::runtime_error("Invalid number of child nodes to geometry "
+                                 "element in link. Must be 1, but found " +
+                                 std::to_string(childNodes.Num()) + ".");
 
     UrdfGeometry* result = nullptr;
 
@@ -713,7 +922,8 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
         if (tag.Equals(TEXT("box")))
         {
             auto box = new UrdfBox();
-            box->Size = ParseFVectorFromAttributeString(node->GetAttribute("size"));
+            box->Size =
+                ParseFVectorFromAttributeString(node->GetAttribute("size"));
             result = box;
         }
         else if (tag.Equals(TEXT("cylinder")))
@@ -750,17 +960,23 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
                 {
                     if (foundLocation)
                     {
-                        throw std::runtime_error("Multiple locations specified for geometry.");
+                        throw std::runtime_error(
+                            "Multiple locations specified for geometry.");
                     }
-					//mesh->FileLocation = RobotSim::Settings::getPorjectDirectoryFullPath(TCHAR_TO_UTF8(*kvp.GetValue())).c_str();
-					mesh->FileLocation = RobotSim::Settings::getPluginDirectoryFullPath(TCHAR_TO_UTF8(*kvp.GetValue())).c_str();
+                    // mesh->FileLocation =
+                    // RobotSim::Settings::getPorjectDirectoryFullPath(TCHAR_TO_UTF8(*kvp.GetValue())).c_str();
+                    mesh->FileLocation =
+                        RobotSim::Settings::getPluginDirectoryFullPath(
+                            TCHAR_TO_UTF8(*kvp.GetValue()))
+                            .c_str();
                     foundLocation = true;
                 }
                 else if (kvp.GetTag().Equals(TEXT("type")))
                 {
                     if (foundType)
                     {
-                        throw std::runtime_error("Multiple file types specified for geometry.");
+                        throw std::runtime_error(
+                            "Multiple file types specified for geometry.");
                     }
 
                     auto value = kvp.GetValue();
@@ -774,7 +990,10 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
                     }
                     else
                     {
-                        throw std::runtime_error("Unrecognized file type: " + std::string(TCHAR_TO_UTF8(*(value))) + ". Valid values are 'stl_ascii', 'unreal_mesh'");
+                        throw std::runtime_error(
+                            "Unrecognized file type: " +
+                            std::string(TCHAR_TO_UTF8(*(value))) +
+                            ". Valid values are 'stl_ascii', 'unreal_mesh'");
                     }
 
                     foundType = true;
@@ -783,7 +1002,9 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
                 {
                     if (foundReverseNormals)
                     {
-                        throw std::runtime_error("Multiple instances of reverse_normals specified for geometry.");
+                        throw std::runtime_error(
+                            "Multiple instances of reverse_normals specified "
+                            "for geometry.");
                     }
 
                     auto value = kvp.GetValue();
@@ -798,7 +1019,9 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
                 {
                     if (foundScaleFactor)
                     {
-                        throw std::runtime_error("Multiple instances of scale_factor specified for geometry.");
+                        throw std::runtime_error(
+                            "Multiple instances of scale_factor specified for "
+                            "geometry.");
                     }
 
                     mesh->ScaleFactor = FCString::Atof(*kvp.GetValue());
@@ -807,7 +1030,9 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
                 {
                     if (foundVhacdConcavity)
                     {
-                        throw std::runtime_error("Multiple instances of vhacd_concavity specified for geometry.");
+                        throw std::runtime_error(
+                            "Multiple instances of vhacd_concavity specified "
+                            "for geometry.");
                     }
 
                     mesh->VhacdConcavity = FCString::Atof(*kvp.GetValue());
@@ -816,25 +1041,33 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
                 {
                     if (foundVhacdResolution)
                     {
-                        throw std::runtime_error("Multiple instances of vhacd_resolution specified for geometry.");
+                        throw std::runtime_error(
+                            "Multiple instances of vhacd_resolution specified "
+                            "for geometry.");
                     }
 
                     mesh->VhacdResolution = FCString::Atoi(*kvp.GetValue());
                 }
-                else if (kvp.GetTag().Equals(TEXT("vhacd_max_num_vertices_per_ch")))
+                else if (kvp.GetTag().Equals(
+                             TEXT("vhacd_max_num_vertices_per_ch")))
                 {
                     if (foundVhacdMasNumVerticesPerCh)
                     {
-                        throw std::runtime_error("Multiple instances of vhacd_max_num_vertices_per_ch specified for geometry.");
+                        throw std::runtime_error("Multiple instances of "
+                                                 "vhacd_max_num_vertices_per_"
+                                                 "ch specified for geometry.");
                     }
 
-                    mesh->VhacdMaxNumVerticesPerCh = FCString::Atoi(*kvp.GetValue());
+                    mesh->VhacdMaxNumVerticesPerCh =
+                        FCString::Atoi(*kvp.GetValue());
                 }
                 else if (kvp.GetTag().Equals(TEXT("vhacd_min_volume_per_ch")))
                 {
                     if (foundVhacdConcavity)
                     {
-                        throw std::runtime_error("Multiple instances of vhacd_min_volume_per_ch specified for geometry.");
+                        throw std::runtime_error(
+                            "Multiple instances of vhacd_min_volume_per_ch "
+                            "specified for geometry.");
                     }
 
                     mesh->VhacdMinVolumePerCh = FCString::Atof(*kvp.GetValue());
@@ -843,7 +1076,9 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
                 {
                     if (foundVhacdConcavity)
                     {
-                        throw std::runtime_error("Multiple instances of vhacd_output_folder_path specified for geometry.");
+                        throw std::runtime_error(
+                            "Multiple instances of vhacd_output_folder_path "
+                            "specified for geometry.");
                     }
 
                     mesh->VhacdOutputFolderPath = kvp.GetValue();
@@ -852,39 +1087,51 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
                 {
                     if (foundDynamicCollisionType)
                     {
-                        throw std::runtime_error("Multiple instances of dynamic_collision_type specified for geometry.");
+                        throw std::runtime_error(
+                            "Multiple instances of dynamic_collision_type "
+                            "specified for geometry.");
                     }
 
                     FString collisionType = *kvp.GetValue();
 
                     // TODO: does this check case?
-                    if (collisionType.Equals(TEXT("bsp"), ESearchCase::IgnoreCase))
+                    if (collisionType.Equals(TEXT("bsp"),
+                                             ESearchCase::IgnoreCase))
                     {
                         mesh->DynamicCollisionType = COL_BSP;
                     }
-                    else if (collisionType.Equals(TEXT("vhacd"), ESearchCase::IgnoreCase))
+                    else if (collisionType.Equals(TEXT("vhacd"),
+                                                  ESearchCase::IgnoreCase))
                     {
                         mesh->DynamicCollisionType = COL_VHACD;
                     }
-                    else if (collisionType.Equals(TEXT("manual"), ESearchCase::IgnoreCase))
+                    else if (collisionType.Equals(TEXT("manual"),
+                                                  ESearchCase::IgnoreCase))
                     {
                         mesh->DynamicCollisionType = COL_MANUAL;
                     }
-					else if (collisionType.Equals(TEXT("box"), ESearchCase::IgnoreCase))
-					{
-						mesh->DynamicCollisionType = COL_BOX;
-					}
-					else if (collisionType.Equals(TEXT("cyliner"), ESearchCase::IgnoreCase))
-					{
-						mesh->DynamicCollisionType = COL_CYLINER;
-					}
-					else if (collisionType.Equals(TEXT("sphere"), ESearchCase::IgnoreCase))
-					{
-						mesh->DynamicCollisionType = COL_SPHERE;
-					}
+                    else if (collisionType.Equals(TEXT("box"),
+                                                  ESearchCase::IgnoreCase))
+                    {
+                        mesh->DynamicCollisionType = COL_BOX;
+                    }
+                    else if (collisionType.Equals(TEXT("cyliner"),
+                                                  ESearchCase::IgnoreCase))
+                    {
+                        mesh->DynamicCollisionType = COL_CYLINER;
+                    }
+                    else if (collisionType.Equals(TEXT("sphere"),
+                                                  ESearchCase::IgnoreCase))
+                    {
+                        mesh->DynamicCollisionType = COL_SPHERE;
+                    }
                     else
                     {
-                        throw std::runtime_error("Invalid collision type specified: '" + std::string(TCHAR_TO_UTF8(*collisionType)) + "'. Valid values are 'bsp', 'vhacd', and 'manual.'");
+                        throw std::runtime_error(
+                            "Invalid collision type specified: '" +
+                            std::string(TCHAR_TO_UTF8(*collisionType)) +
+                            "'. Valid values are 'bsp', 'vhacd', and "
+                            "'manual.'");
                     }
                 }
             }
@@ -899,12 +1146,15 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode *geometryNode)
     }
 
     if (result == nullptr)
-        throw std::runtime_error("Could not parse geometry element : type was not one of 'box', 'cylinder', 'sphere', or 'mesh'");
+        throw std::runtime_error(
+            "Could not parse geometry element : type was not one of 'box', "
+            "'cylinder', 'sphere', or 'mesh'");
 
     return result;
 }
 
-UrdfJointCalibrationSpecification* UrdfParser::ParseJointCalibrationSpecification(FXmlNode *calibrationNode)
+UrdfJointCalibrationSpecification*
+UrdfParser::ParseJointCalibrationSpecification(FXmlNode* calibrationNode)
 {
     auto calibrationSpecification = new UrdfJointCalibrationSpecification();
 
@@ -915,13 +1165,15 @@ UrdfJointCalibrationSpecification* UrdfParser::ParseJointCalibrationSpecificatio
         if (tag.Equals(TEXT("rising")))
             calibrationSpecification->Rising = FCString::Atof(*attr.GetValue());
         else if (tag.Equals(TEXT("falling")))
-            calibrationSpecification->Falling = FCString::Atof(*attr.GetValue());
+            calibrationSpecification->Falling =
+                FCString::Atof(*attr.GetValue());
     }
 
     return calibrationSpecification;
 }
 
-UrdfJointDynamicsSpecification UrdfParser::ParseJointDynamicsSpecification(FXmlNode *dynamicsNode)
+UrdfJointDynamicsSpecification
+UrdfParser::ParseJointDynamicsSpecification(FXmlNode* dynamicsNode)
 {
     UrdfJointDynamicsSpecification dynamicsSpecification;
 
@@ -938,7 +1190,8 @@ UrdfJointDynamicsSpecification UrdfParser::ParseJointDynamicsSpecification(FXmlN
     return dynamicsSpecification;
 }
 
-UrdfJointLimitSpecification* UrdfParser::ParseJointLimitSpecification(FXmlNode *limitNode)
+UrdfJointLimitSpecification*
+UrdfParser::ParseJointLimitSpecification(FXmlNode* limitNode)
 {
     auto limitSpecification = new UrdfJointLimitSpecification();
 
@@ -973,7 +1226,8 @@ UrdfJointLimitSpecification* UrdfParser::ParseJointLimitSpecification(FXmlNode *
     return limitSpecification;
 }
 
-UrdfJointMimicSpecification* UrdfParser::ParseJointMimicSpecification(FXmlNode *mimicNode)
+UrdfJointMimicSpecification*
+UrdfParser::ParseJointMimicSpecification(FXmlNode* mimicNode)
 {
     auto mimicSpecification = new UrdfJointMimicSpecification();
 
@@ -1000,9 +1254,12 @@ UrdfJointMimicSpecification* UrdfParser::ParseJointMimicSpecification(FXmlNode *
     return mimicSpecification;
 }
 
-UrdfJointSafetyControllerSpecification* UrdfParser::ParseJointSafetyControllerSpecification(FXmlNode *safetyControllerNode)
+UrdfJointSafetyControllerSpecification*
+UrdfParser::ParseJointSafetyControllerSpecification(
+    FXmlNode* safetyControllerNode)
 {
-    auto safetyControllerSpecification = new UrdfJointSafetyControllerSpecification();
+    auto safetyControllerSpecification =
+        new UrdfJointSafetyControllerSpecification();
 
     bool hasKVelocity = false;
 
@@ -1010,27 +1267,34 @@ UrdfJointSafetyControllerSpecification* UrdfParser::ParseJointSafetyControllerSp
     {
         FString tag = attr.GetTag();
         if (tag.Equals(TEXT("soft_lower_limit")))
-            safetyControllerSpecification->SoftLowerLimit = FCString::Atof(*attr.GetValue());
+            safetyControllerSpecification->SoftLowerLimit =
+                FCString::Atof(*attr.GetValue());
         else if (tag.Equals(TEXT("soft_upper_limit")))
-            safetyControllerSpecification->SoftUpperLimit = FCString::Atof(*attr.GetValue());
+            safetyControllerSpecification->SoftUpperLimit =
+                FCString::Atof(*attr.GetValue());
         else if (tag.Equals(TEXT("k_position")))
-            safetyControllerSpecification->KPosition = FCString::Atof(*attr.GetValue());
+            safetyControllerSpecification->KPosition =
+                FCString::Atof(*attr.GetValue());
         else if (tag.Equals(TEXT("k_velocity")))
         {
-            safetyControllerSpecification->KVelocity = FCString::Atof(*attr.GetValue());
+            safetyControllerSpecification->KVelocity =
+                FCString::Atof(*attr.GetValue());
             hasKVelocity = true;
         }
     }
 
     if (!hasKVelocity)
-        throw std::runtime_error("Missing k_velocity element on Safety Controller node.");
+        throw std::runtime_error(
+            "Missing k_velocity element on Safety Controller node.");
 
     return safetyControllerSpecification;
 }
 
-UrdfAngularForceSpecification* UrdfParser::ParseAngularForceSpecification(FXmlNode *angularForceNode)
+UrdfAngularForceSpecification*
+UrdfParser::ParseAngularForceSpecification(FXmlNode* angularForceNode)
 {
-    UrdfAngularForceSpecification* forceSpecification = new UrdfAngularForceSpecification();
+    UrdfAngularForceSpecification* forceSpecification =
+        new UrdfAngularForceSpecification();
 
     bool isLinkNameSpecified = false;
     bool isAxisSpecified = false;
@@ -1043,7 +1307,8 @@ UrdfAngularForceSpecification* UrdfParser::ParseAngularForceSpecification(FXmlNo
         {
             if (isLinkNameSpecified)
             {
-                throw std::runtime_error("Multiple Link Names specified for angular force.");
+                throw std::runtime_error(
+                    "Multiple Link Names specified for angular force.");
             }
 
             isLinkNameSpecified = true;
@@ -1053,11 +1318,13 @@ UrdfAngularForceSpecification* UrdfParser::ParseAngularForceSpecification(FXmlNo
         {
             if (isAxisSpecified)
             {
-                throw std::runtime_error("Multiple axis specified for angular force.");
+                throw std::runtime_error(
+                    "Multiple axis specified for angular force.");
             }
 
             isAxisSpecified = true;
-            forceSpecification->Axis = this->ParseFVectorFromAttributeString(attr.GetValue());
+            forceSpecification->Axis =
+                this->ParseFVectorFromAttributeString(attr.GetValue());
         }
     }
 
@@ -1070,23 +1337,26 @@ UrdfAngularForceSpecification* UrdfParser::ParseAngularForceSpecification(FXmlNo
     return forceSpecification;
 }
 
-UrdfLinearForceSpecification* UrdfParser::ParseLinearForceSpecification(FXmlNode *linearForceNode)
+UrdfLinearForceSpecification*
+UrdfParser::ParseLinearForceSpecification(FXmlNode* linearForceNode)
 {
-    UrdfLinearForceSpecification* forceSpecification = new UrdfLinearForceSpecification();
+    UrdfLinearForceSpecification* forceSpecification =
+        new UrdfLinearForceSpecification();
 
     bool isLinkNameSpecified = false;
     bool isAxisSpecified = false;
     bool isApplicationPointSpecified = false;
 
     for (auto attr : linearForceNode->GetAttributes())
-    {		
+    {
         FString tag = attr.GetTag();
 
         if (tag.Equals(TEXT("link_name")))
         {
             if (isLinkNameSpecified)
             {
-                throw std::runtime_error("Multiple Link Names specified for linear force.");
+                throw std::runtime_error(
+                    "Multiple Link Names specified for linear force.");
             }
 
             isLinkNameSpecified = true;
@@ -1096,21 +1366,25 @@ UrdfLinearForceSpecification* UrdfParser::ParseLinearForceSpecification(FXmlNode
         {
             if (isAxisSpecified)
             {
-                throw std::runtime_error("Multiple axis specified for linear force.");
+                throw std::runtime_error(
+                    "Multiple axis specified for linear force.");
             }
 
             isAxisSpecified = true;
-            forceSpecification->Axis = this->ParseFVectorFromAttributeString(attr.GetValue());
+            forceSpecification->Axis =
+                this->ParseFVectorFromAttributeString(attr.GetValue());
         }
         else if (tag.Equals(TEXT("application_point")))
         {
             if (isApplicationPointSpecified)
             {
-                throw std::runtime_error("Multiple application points specified for linear force.");
+                throw std::runtime_error(
+                    "Multiple application points specified for linear force.");
             }
 
             isApplicationPointSpecified = true;
-            forceSpecification->ApplicationPoint = this->ParseFVectorFromAttributeString(attr.GetValue());
+            forceSpecification->ApplicationPoint =
+                this->ParseFVectorFromAttributeString(attr.GetValue());
         }
     }
 
@@ -1119,12 +1393,13 @@ UrdfLinearForceSpecification* UrdfParser::ParseLinearForceSpecification(FXmlNode
     if (!isAxisSpecified)
         throw std::runtime_error("No axis specified for linear force.");
     if (!isApplicationPointSpecified)
-        throw std::runtime_error("No application point specified for linear force.");
+        throw std::runtime_error(
+            "No application point specified for linear force.");
 
     return forceSpecification;
 }
 
-UrdfOrigin UrdfParser::ParseUrdfOrigin(FXmlNode *originNode)
+UrdfOrigin UrdfParser::ParseUrdfOrigin(FXmlNode* originNode)
 {
     UrdfOrigin origin;
 
@@ -1134,68 +1409,72 @@ UrdfOrigin UrdfParser::ParseUrdfOrigin(FXmlNode *originNode)
         if (tag.Equals(TEXT("xyz")))
             origin.Origin = ParseFVectorFromAttributeString(attr.GetValue());
         else if (tag.Equals(TEXT("rpy")))
-            origin.RollPitchYaw = ParseFRotatorFromAttributeString(attr.GetValue());
+            origin.RollPitchYaw =
+                ParseFRotatorFromAttributeString(attr.GetValue());
     }
 
     return origin;
 }
 
-FVector UrdfParser::ParseFVectorFromAttributeString(const FString &string)
+FVector UrdfParser::ParseFVectorFromAttributeString(const FString& string)
 {
     TArray<FString> splitString;
     string.ParseIntoArray(splitString, TEXT(" "), true);
-	if (splitString.Num() == 0)
-	{
-		return FVector(0.0, 0.0, 0.0);
-	}
-	if (splitString.Num() != 3)
+    if (splitString.Num() == 0)
     {
-        throw std::runtime_error("Error parsing 3-d vector from string " + std::string(TCHAR_TO_UTF8(*string)) + ", did not detect 3 elements.");
+        return FVector(0.0, 0.0, 0.0);
     }
-
-    return FVector(
-        FCString::Atof(*splitString[0]), 
-        FCString::Atof(*splitString[1]), 
-        FCString::Atof(*splitString[2]));
-}
-
-FRotator UrdfParser::ParseFRotatorFromAttributeString(const FString &string)
-{
-    TArray<FString> splitString;
-    string.ParseIntoArray(splitString, TEXT(" "), true);
-	if (splitString.Num() == 0)
-	{
-		return FRotator(0.0, 0.0, 0.0);
-	}
     if (splitString.Num() != 3)
     {
-        throw std::runtime_error("Error parsing 3-d vector from string " + std::string(TCHAR_TO_UTF8(*string)) + ", did not detect 3 elements.");
+        throw std::runtime_error("Error parsing 3-d vector from string " +
+                                 std::string(TCHAR_TO_UTF8(*string)) +
+                                 ", did not detect 3 elements.");
     }
 
-    return FRotator(
-        FCString::Atof(*splitString[1]),
-        FCString::Atof(*splitString[2]),
-        FCString::Atof(*splitString[0]));
+    return FVector(FCString::Atof(*splitString[0]),
+                   FCString::Atof(*splitString[1]),
+                   FCString::Atof(*splitString[2]));
 }
 
-FVector4 UrdfParser::ParseFVector4FromAttributeString(const FString &string)
+FRotator UrdfParser::ParseFRotatorFromAttributeString(const FString& string)
+{
+    TArray<FString> splitString;
+    string.ParseIntoArray(splitString, TEXT(" "), true);
+    if (splitString.Num() == 0)
+    {
+        return FRotator(0.0, 0.0, 0.0);
+    }
+    if (splitString.Num() != 3)
+    {
+        throw std::runtime_error("Error parsing 3-d vector from string " +
+                                 std::string(TCHAR_TO_UTF8(*string)) +
+                                 ", did not detect 3 elements.");
+    }
+
+    return FRotator(FCString::Atof(*splitString[1]),
+                    FCString::Atof(*splitString[2]),
+                    FCString::Atof(*splitString[0]));
+}
+
+FVector4 UrdfParser::ParseFVector4FromAttributeString(const FString& string)
 {
     TArray<FString> splitString;
     string.ParseIntoArray(splitString, TEXT(" "), true);
 
     if (splitString.Num() != 4)
     {
-        throw std::runtime_error("Error parsing 4-d vector from string " + std::string(TCHAR_TO_UTF8(*string)) + ", did not detect 4 elements.");
+        throw std::runtime_error("Error parsing 4-d vector from string " +
+                                 std::string(TCHAR_TO_UTF8(*string)) +
+                                 ", did not detect 4 elements.");
     }
 
     return FVector4(
-        FCString::Atof(*splitString[0]),
-        FCString::Atof(*splitString[1]),
-        FCString::Atof(*splitString[2]),
-        FCString::Atof(*splitString[3]));
+        FCString::Atof(*splitString[0]), FCString::Atof(*splitString[1]),
+        FCString::Atof(*splitString[2]), FCString::Atof(*splitString[3]));
 }
 
-RobotSim::VectorMathf::Matrix3x3f UrdfParser::ParseInertiaMatrixFromAttributes(FXmlNode *inertiaNode)
+RobotSim::VectorMathf::Matrix3x3f
+UrdfParser::ParseInertiaMatrixFromAttributes(FXmlNode* inertiaNode)
 {
     RobotSim::VectorMathf::Matrix3x3f inertiaMatrix;
 
@@ -1224,31 +1503,37 @@ RobotSim::VectorMathf::Matrix3x3f UrdfParser::ParseInertiaMatrixFromAttributes(F
     }
 
     if (std::isnan(ixx))
-        throw std::runtime_error("Error parsing inertia node: ixx cannot be parsed.");
+        throw std::runtime_error(
+            "Error parsing inertia node: ixx cannot be parsed.");
     else if (std::isnan(ixy))
-        throw std::runtime_error("Error parsing inertia node: ixy cannot be parsed.");
+        throw std::runtime_error(
+            "Error parsing inertia node: ixy cannot be parsed.");
     else if (std::isnan(ixz))
-        throw std::runtime_error("Error parsing inertia node: ixz cannot be parsed.");
+        throw std::runtime_error(
+            "Error parsing inertia node: ixz cannot be parsed.");
     else if (std::isnan(iyy))
-        throw std::runtime_error("Error parsing inertia node: iyy cannot be parsed.");
+        throw std::runtime_error(
+            "Error parsing inertia node: iyy cannot be parsed.");
     else if (std::isnan(iyz))
-        throw std::runtime_error("Error parsing inertia node: iyz cannot be parsed.");
+        throw std::runtime_error(
+            "Error parsing inertia node: iyz cannot be parsed.");
     else if (std::isnan(izz))
-        throw std::runtime_error("Error parsing inertia node: izz cannot be parsed.");
+        throw std::runtime_error(
+            "Error parsing inertia node: izz cannot be parsed.");
 
     int x = 0;
     int y = 1;
     int z = 2;
 
-    inertiaMatrix(x,x) = ixx;
-    inertiaMatrix(x,y) = ixy;
-    inertiaMatrix(x,z) = ixz;
-    inertiaMatrix(y,x) = ixy;
-    inertiaMatrix(y,y) = iyy;
-    inertiaMatrix(y,z) = iyz;
-    inertiaMatrix(z,x) = ixz;
-    inertiaMatrix(z,y) = iyz;
-    inertiaMatrix(z,z) = izz;
+    inertiaMatrix(x, x) = ixx;
+    inertiaMatrix(x, y) = ixy;
+    inertiaMatrix(x, z) = ixz;
+    inertiaMatrix(y, x) = ixy;
+    inertiaMatrix(y, y) = iyy;
+    inertiaMatrix(y, z) = iyz;
+    inertiaMatrix(z, x) = ixz;
+    inertiaMatrix(z, y) = iyz;
+    inertiaMatrix(z, z) = izz;
 
     return inertiaMatrix;
 }
@@ -1266,5 +1551,8 @@ UrdfGeometryType UrdfParser::GeometryTypeFromString(FString typeString)
     else if (typeString.Equals(TEXT("mesh")))
         return MESH;
 
-    throw std::runtime_error("Unrecognized geometry type '" + std::string(TCHAR_TO_UTF8(*typeString)) + ". Valid options are 'box', 'cylinder', 'sphere', and 'mesh'.");
+    throw std::runtime_error(
+        "Unrecognized geometry type '" +
+        std::string(TCHAR_TO_UTF8(*typeString)) +
+        ". Valid options are 'box', 'cylinder', 'sphere', and 'mesh'.");
 }

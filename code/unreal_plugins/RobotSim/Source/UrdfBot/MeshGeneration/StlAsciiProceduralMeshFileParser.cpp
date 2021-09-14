@@ -1,12 +1,14 @@
 #include "StlAsciiProceduralMeshFileParser.h"
 
-ProceduralMeshSpecification StlAsciiProceduralMeshFileParser::ParseFromFile(FString fileName)
+ProceduralMeshSpecification
+StlAsciiProceduralMeshFileParser::ParseFromFile(FString fileName)
 {
-    IFileHandle* fileHandle = ProceduralMeshFileUtilities::OpenFile(fileName, true);
+    IFileHandle* fileHandle =
+        ProceduralMeshFileUtilities::OpenFile(fileName, true);
 
     this->_vertexIndexes.Empty();
     this->_maxVertexIndex = 0;
-  
+
     ProceduralMeshSpecification meshSpecification;
     meshSpecification.Triangles.Empty();
     meshSpecification.Verticies.Empty();
@@ -23,7 +25,9 @@ ProceduralMeshSpecification StlAsciiProceduralMeshFileParser::ParseFromFile(FStr
 
     bool reachedEnd = false;
 
-    while (ProceduralMeshFileUtilities::ReadNextLineTrimmingLeadingWhitespace(fileHandle, line) || line.Len() > 0)
+    while (ProceduralMeshFileUtilities::ReadNextLineTrimmingLeadingWhitespace(
+               fileHandle, line) ||
+           line.Len() > 0)
     {
         if (line.Len() > 0)
         {
@@ -37,7 +41,10 @@ ProceduralMeshSpecification StlAsciiProceduralMeshFileParser::ParseFromFile(FStr
                 if (reachedEnd)
                 {
                     delete fileHandle;
-                    throw std::runtime_error("Corrupt STL file " + std::string(TCHAR_TO_UTF8(*fileName)) + ": vertex found after endsolid.");
+                    throw std::runtime_error(
+                        "Corrupt STL file " +
+                        std::string(TCHAR_TO_UTF8(*fileName)) +
+                        ": vertex found after endsolid.");
                 }
 
                 TArray<FString> splitLine;
@@ -45,10 +52,14 @@ ProceduralMeshSpecification StlAsciiProceduralMeshFileParser::ParseFromFile(FStr
                 if (splitLine.Num() != 4)
                 {
                     delete fileHandle;
-                    throw std::runtime_error("Improperly formatted vertex line: " + std::string(TCHAR_TO_UTF8(*line)) + ".");
+                    throw std::runtime_error(
+                        "Improperly formatted vertex line: " +
+                        std::string(TCHAR_TO_UTF8(*line)) + ".");
                 }
 
-                FVector newVertex(FCString::Atof(*splitLine[1]), FCString::Atof(*splitLine[2]), FCString::Atof(*splitLine[3]));
+                FVector newVertex(FCString::Atof(*splitLine[1]),
+                                  FCString::Atof(*splitLine[2]),
+                                  FCString::Atof(*splitLine[3]));
                 if (!this->_vertexIndexes.Contains(newVertex))
                 {
                     meshSpecification.Verticies.Add(newVertex);
@@ -56,7 +67,8 @@ ProceduralMeshSpecification StlAsciiProceduralMeshFileParser::ParseFromFile(FStr
                     this->_maxVertexIndex++;
                 }
 
-                meshSpecification.Triangles.Add(this->_vertexIndexes[newVertex]);
+                meshSpecification.Triangles.Add(
+                    this->_vertexIndexes[newVertex]);
             }
         }
     }
@@ -64,12 +76,17 @@ ProceduralMeshSpecification StlAsciiProceduralMeshFileParser::ParseFromFile(FStr
     if (!reachedEnd)
     {
         delete fileHandle;
-        throw std::runtime_error("Corrupt STL file " + std::string(TCHAR_TO_UTF8(*fileName)) + ": no endsolid found.");
+        throw std::runtime_error("Corrupt STL file " +
+                                 std::string(TCHAR_TO_UTF8(*fileName)) +
+                                 ": no endsolid found.");
     }
     if (meshSpecification.Triangles.Num() % 3 != 0)
     {
         delete fileHandle;
-        throw std::runtime_error("Improper number of vertexes in stl file. Found " + std::to_string(this->_vertexIndexes.Num()) + ", which is not divisible by 3.");
+        throw std::runtime_error(
+            "Improper number of vertexes in stl file. Found " +
+            std::to_string(this->_vertexIndexes.Num()) +
+            ", which is not divisible by 3.");
     }
 
     meshSpecification.ParseSuccessful = true;

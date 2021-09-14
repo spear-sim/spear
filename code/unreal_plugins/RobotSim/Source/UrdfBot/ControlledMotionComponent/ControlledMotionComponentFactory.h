@@ -9,7 +9,11 @@
 class ControlledMotionComponentFactory
 {
 public:
-    static ControlledMotionComponent* CreateControlledMotionComponent(AUrdfLink* baseLink, AUrdfLink* actuatedLink, UrdfJointSpecification *jointSpecification, UPhysicsConstraintComponent* constraintComponent)
+    static ControlledMotionComponent* CreateControlledMotionComponent(
+        AUrdfLink* baseLink,
+        AUrdfLink* actuatedLink,
+        UrdfJointSpecification* jointSpecification,
+        UPhysicsConstraintComponent* constraintComponent)
     {
         ControlledMotionComponent* motionComponent = nullptr;
         if (jointSpecification->Type == PRISMATIC_TYPE)
@@ -26,10 +30,14 @@ public:
         }
         else
         {
-            throw std::runtime_error("Unsupported joint type for joint '" + std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) + "'. Cannot create controlled motion component.");
+            throw std::runtime_error(
+                "Unsupported joint type for joint '" +
+                std::string(TCHAR_TO_UTF8(*jointSpecification->Name)) +
+                "'. Cannot create controlled motion component.");
         }
 
-        motionComponent->Attach(baseLink, actuatedLink, jointSpecification, constraintComponent);
+        motionComponent->Attach(baseLink, actuatedLink, jointSpecification,
+                                constraintComponent);
 
         return motionComponent;
     }

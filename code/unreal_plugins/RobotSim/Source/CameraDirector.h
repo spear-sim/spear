@@ -9,19 +9,20 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "CameraDirector.generated.h"
 
-
 UENUM(BlueprintType)
 enum class ECameraDirectorMode : uint8
 {
     CAMERA_DIRECTOR_MODE_UNUSED = 0 UMETA(Displayname = "Unused"),
-    CAMERA_DIRECTOR_MODE_FPV = 1	UMETA(DisplayName = "FPV"),
-    CAMERA_DIRECTOR_MODE_GROUND_OBSERVER = 2	UMETA(DisplayName = "GroundObserver"),
-    CAMERA_DIRECTOR_MODE_FLY_WITH_ME = 3	UMETA(DisplayName = "FlyWithMe"),
-    CAMERA_DIRECTOR_MODE_MANUAL = 4	UMETA(DisplayName = "Manual"),
-    CAMERA_DIRECTOR_MODE_SPRINGARM_CHASE = 5	UMETA(DisplayName = "SpringArmChase"),
-    CAMERA_DIRECTOR_MODE_BACKUP = 6     UMETA(DisplayName = "Backup"),
-    CAMERA_DIRECTOR_MODE_NODISPLAY = 7      UMETA(DisplayName = "No Display"),
-	CAMERA_DIRECTOR_MODE_FRONT = 8	UMETA(DisplayName = "Front")
+    CAMERA_DIRECTOR_MODE_FPV = 1 UMETA(DisplayName = "FPV"),
+    CAMERA_DIRECTOR_MODE_GROUND_OBSERVER =
+        2 UMETA(DisplayName = "GroundObserver"),
+    CAMERA_DIRECTOR_MODE_FLY_WITH_ME = 3 UMETA(DisplayName = "FlyWithMe"),
+    CAMERA_DIRECTOR_MODE_MANUAL = 4 UMETA(DisplayName = "Manual"),
+    CAMERA_DIRECTOR_MODE_SPRINGARM_CHASE =
+        5 UMETA(DisplayName = "SpringArmChase"),
+    CAMERA_DIRECTOR_MODE_BACKUP = 6 UMETA(DisplayName = "Backup"),
+    CAMERA_DIRECTOR_MODE_NODISPLAY = 7 UMETA(DisplayName = "No Display"),
+    CAMERA_DIRECTOR_MODE_FRONT = 8 UMETA(DisplayName = "Front")
 };
 
 UCLASS()
@@ -31,10 +32,16 @@ class ROBOTSIM_API ACameraDirector : public AActor
 
 public:
     /** Spring arm that will offset the camera */
-    UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-     USpringArmComponent* SpringArm;
-    
-    UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(Category = Camera,
+              VisibleDefaultsOnly,
+              BlueprintReadOnly,
+              meta = (AllowPrivateAccess = "true"))
+    USpringArmComponent* SpringArm;
+
+    UPROPERTY(Category = Camera,
+              VisibleDefaultsOnly,
+              BlueprintReadOnly,
+              meta = (AllowPrivateAccess = "true"))
     APIPCamera* ExternalCamera;
 
 public:
@@ -45,7 +52,7 @@ public:
     void inputEventSpringArmChaseView();
     void inputEventBackupView();
     void inputEventNoDisplayView();
-	void inputEventFrontView();
+    void inputEventFrontView();
 
 public:
     ACameraDirector();
@@ -54,18 +61,27 @@ public:
     virtual void Tick(float DeltaSeconds) override;
 
     UFUNCTION(BlueprintCallable, Category = "Modes")
-        ECameraDirectorMode getMode();
+    ECameraDirectorMode getMode();
     UFUNCTION(BlueprintCallable, Category = "Modes")
-        void setMode(ECameraDirectorMode mode);
+    void setMode(ECameraDirectorMode mode);
 
     void initializeForBeginPlay(ECameraDirectorMode view_mode,
-        AActor* follow_actor, APIPCamera* fpv_camera, APIPCamera* front_camera, APIPCamera* back_camera);
+                                AActor* follow_actor,
+                                APIPCamera* fpv_camera,
+                                APIPCamera* front_camera,
+                                APIPCamera* back_camera);
 
     APIPCamera* getFpvCamera() const;
     APIPCamera* getExternalCamera() const;
     APIPCamera* getBackupCamera() const;
-    void setFollowDistance(const int follow_distance) { this->follow_distance_ = follow_distance; }
-    void setCameraRotationLagEnabled(const bool lag_enabled) { this->camera_rotation_lag_enabled_ = lag_enabled; }
+    void setFollowDistance(const int follow_distance)
+    {
+        this->follow_distance_ = follow_distance;
+    }
+    void setCameraRotationLagEnabled(const bool lag_enabled)
+    {
+        this->camera_rotation_lag_enabled_ = lag_enabled;
+    }
 
 private:
     void setupInputBindings();
@@ -75,10 +91,9 @@ private:
 private:
     typedef common_utils::Utils Utils;
 
-
     APIPCamera* fpv_camera_;
     APIPCamera* backup_camera_;
-	APIPCamera* front_camera_;
+    APIPCamera* front_camera_;
     AActor* follow_actor_;
 
     USceneComponent* last_parent_ = nullptr;

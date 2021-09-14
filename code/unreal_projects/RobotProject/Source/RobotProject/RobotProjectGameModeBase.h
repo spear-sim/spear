@@ -7,11 +7,10 @@
 #include "RobotProjectGameModeBase.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class ROBOTPROJECT_API ARobotProjectGameModeBase : public AGameModeBase
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
 };

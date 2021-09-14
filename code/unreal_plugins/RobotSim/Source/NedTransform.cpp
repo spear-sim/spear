@@ -1,21 +1,28 @@
 #include "NedTransform.h"
 #include "RobotBlueprintLib.h"
 
-NedTransform::NedTransform(const FTransform& global_transform, float world_to_meters)
+NedTransform::NedTransform(const FTransform& global_transform,
+                           float world_to_meters)
     : NedTransform(nullptr, global_transform, world_to_meters)
 {
 }
-NedTransform::NedTransform(const AActor* pivot, const NedTransform& global_transform)
-    : NedTransform(pivot, global_transform.global_transform_, global_transform.world_to_meters_)
+NedTransform::NedTransform(const AActor* pivot,
+                           const NedTransform& global_transform)
+    : NedTransform(pivot,
+                   global_transform.global_transform_,
+                   global_transform.world_to_meters_)
 {
 }
-NedTransform::NedTransform(const AActor* pivot, const FTransform& global_transform, float world_to_meters)
+NedTransform::NedTransform(const AActor* pivot,
+                           const FTransform& global_transform,
+                           float world_to_meters)
     : global_transform_(global_transform), world_to_meters_(world_to_meters)
 {
-    if (pivot != nullptr) {
-        //normally pawns have their center as origin. If we use this as 0,0,0 in NED then
-        //when we tell vehicle to go to 0,0,0 - it will try to go in the ground
-        //so we get the bounds and subtract z to get bottom as 0,0,0
+    if (pivot != nullptr)
+    {
+        // normally pawns have their center as origin. If we use this as 0,0,0
+        // in NED then when we tell vehicle to go to 0,0,0 - it will try to go in
+        // the ground so we get the bounds and subtract z to get bottom as 0,0,0
         FVector mesh_origin, mesh_bounds;
         pivot->GetActorBounds(true, mesh_origin, mesh_bounds);
 
@@ -30,12 +37,12 @@ NedTransform::NedTransform(const AActor* pivot, const FTransform& global_transfo
 NedTransform::Vector3r NedTransform::toLocalNed(const FVector& position) const
 {
     return NedTransform::toVector3r(position - local_ned_offset_,
-        1 / world_to_meters_, true);
+                                    1 / world_to_meters_, true);
 }
 NedTransform::Vector3r NedTransform::toGlobalNed(const FVector& position) const
 {
     return NedTransform::toVector3r(position - global_transform_.GetLocation(),
-        1 / world_to_meters_, true);
+                                    1 / world_to_meters_, true);
 }
 NedTransform::Quaternionr NedTransform::toNed(const FQuat& q) const
 {
@@ -60,11 +67,14 @@ float NedTransform::fromNed(float length) const
 }
 FVector NedTransform::fromLocalNed(const NedTransform::Vector3r& position) const
 {
-    return NedTransform::toFVector(position, world_to_meters_, true) + local_ned_offset_;
+    return NedTransform::toFVector(position, world_to_meters_, true) +
+           local_ned_offset_;
 }
-FVector NedTransform::fromGlobalNed(const NedTransform::Vector3r& position) const
+FVector
+NedTransform::fromGlobalNed(const NedTransform::Vector3r& position) const
 {
-    return NedTransform::toFVector(position, world_to_meters_, true) + global_transform_.GetLocation();
+    return NedTransform::toFVector(position, world_to_meters_, true) +
+           global_transform_.GetLocation();
 }
 FQuat NedTransform::fromNed(const Quaternionr& q) const
 {
@@ -92,14 +102,18 @@ FTransform NedTransform::getGlobalTransform() const
     return global_transform_;
 }
 
-FVector NedTransform::toFVector(const Vector3r& vec, float scale, bool convert_from_ned) const
+FVector NedTransform::toFVector(const Vector3r& vec,
+                                float scale,
+                                bool convert_from_ned) const
 {
-    return FVector(vec.x() * scale, vec.y() * scale, 
-        (convert_from_ned ? -vec.z() : vec.z()) * scale);
+    return FVector(vec.x() * scale, vec.y() * scale,
+                   (convert_from_ned ? -vec.z() : vec.z()) * scale);
 }
 
-NedTransform::Vector3r NedTransform::toVector3r(const FVector& vec, float scale, bool convert_to_ned) const
+NedTransform::Vector3r NedTransform::toVector3r(const FVector& vec,
+                                                float scale,
+                                                bool convert_to_ned) const
 {
     return Vector3r(vec.X * scale, vec.Y * scale,
-        (convert_to_ned ? -vec.Z : vec.Z)  * scale);
+                    (convert_to_ned ? -vec.Z : vec.Z) * scale);
 }

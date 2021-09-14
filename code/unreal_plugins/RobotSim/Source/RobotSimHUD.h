@@ -11,28 +11,27 @@
 #include "RobotSimHUD.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class ROBOTSIM_API ARobotSimHUD : public AHUD
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	virtual void BeginPlay() override;
-
+    virtual void BeginPlay() override;
 
 private:
-	void initializeSettings();
-	void setUnrealEngineSettings();
+    void initializeSettings();
+    void setUnrealEngineSettings();
 
-	bool getSettingsTextContent(std::string& settingsText);
-	bool getSettingsTextFromCommandLine(std::string& settingsText);
-	bool readSettingsTextFromFile(FString settingsFilepath, std::string& settingsText);
- 	void createSimMode();
+    bool getSettingsTextContent(std::string& settingsText);
+    bool getSettingsTextFromCommandLine(std::string& settingsText);
+    bool readSettingsTextFromFile(FString settingsFilepath,
+                                  std::string& settingsText);
+    void createSimMode();
 
-	std::string getSimModeFromUser();
-	UPROPERTY() USimHUDWidget* widget_;
-	UPROPERTY() ASimModeBase* simmode_;
-	
+    std::string getSimModeFromUser();
+    UPROPERTY() USimHUDWidget* widget_;
+    UPROPERTY() ASimModeBase* simmode_;
 };

@@ -6,11 +6,11 @@
 
 class StlAsciiProceduralMeshFileParser : public ProceduralMeshFileParser
 {
-    public:
-        virtual ProceduralMeshSpecification ParseFromFile(FString fileName) override;
+public:
+    virtual ProceduralMeshSpecification
+    ParseFromFile(FString fileName) override;
 
-    private:
-
-        TMap<FVector, int> _vertexIndexes;
-        int _maxVertexIndex;
+private:
+    TMap<FVector, int> _vertexIndexes;
+    int _maxVertexIndex;
 };

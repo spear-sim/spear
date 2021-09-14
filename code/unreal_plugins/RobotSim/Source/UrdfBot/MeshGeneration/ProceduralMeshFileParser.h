@@ -6,7 +6,7 @@
 
 class ProceduralMeshFileParser
 {
-    public:
-        virtual ~ProceduralMeshFileParser() {};
-        virtual ProceduralMeshSpecification ParseFromFile(FString fileName) = 0;
+public:
+    virtual ~ProceduralMeshFileParser(){};
+    virtual ProceduralMeshSpecification ParseFromFile(FString fileName) = 0;
 };

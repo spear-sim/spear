@@ -17,69 +17,68 @@ enum UrdfGeometryDynamicCollisionType
     COL_BSP = 0,
     COL_VHACD,
     COL_MANUAL,
-	COL_BOX,
-	COL_CYLINER,
-	COL_SPHERE
+    COL_BOX,
+    COL_CYLINER,
+    COL_SPHERE
 };
 
 class UrdfGeometry
 {
-    public:
-        virtual UrdfGeometryType GetGeometryType() = 0;
-        virtual ~UrdfGeometry() {};
+public:
+    virtual UrdfGeometryType GetGeometryType() = 0;
+    virtual ~UrdfGeometry(){};
 };
 
 class UrdfBox : public UrdfGeometry
 {
-    public:
-        FVector Size;
+public:
+    FVector Size;
 
-        UrdfGeometryType GetGeometryType() override
-        {
-            return BOX;
-        }
-
+    UrdfGeometryType GetGeometryType() override
+    {
+        return BOX;
+    }
 };
 
 class UrdfCylinder : public UrdfGeometry
 {
-    public:
-        float Radius;
-        float Length;
+public:
+    float Radius;
+    float Length;
 
-        UrdfGeometryType GetGeometryType() override
-        {
-            return CYLINDER;
-        }
+    UrdfGeometryType GetGeometryType() override
+    {
+        return CYLINDER;
+    }
 };
 
 class UrdfSphere : public UrdfGeometry
 {
-    public:
-        float Radius;
+public:
+    float Radius;
 
-        UrdfGeometryType GetGeometryType() override
-        {
-            return SPHERE;
-        }
+    UrdfGeometryType GetGeometryType() override
+    {
+        return SPHERE;
+    }
 };
 
 class UrdfMesh : public UrdfGeometry
 {
-    public:
-        ProceduralMeshFileType FileType;
-        FString FileLocation;
-        bool ReverseNormals = false;
-        float ScaleFactor = 1.0f;
-        double VhacdConcavity = 0.1f;
-        unsigned int VhacdResolution = 100000;
-        unsigned int VhacdMaxNumVerticesPerCh = 64;
-        double VhacdMinVolumePerCh = 0.007f;
-        FString VhacdOutputFolderPath = FString(TEXT(""));
-        UrdfGeometryDynamicCollisionType DynamicCollisionType = COL_BSP;
+public:
+    ProceduralMeshFileType FileType;
+    FString FileLocation;
+    bool ReverseNormals = false;
+    float ScaleFactor = 1.0f;
+    double VhacdConcavity = 0.1f;
+    unsigned int VhacdResolution = 100000;
+    unsigned int VhacdMaxNumVerticesPerCh = 64;
+    double VhacdMinVolumePerCh = 0.007f;
+    FString VhacdOutputFolderPath = FString(TEXT(""));
+    UrdfGeometryDynamicCollisionType DynamicCollisionType = COL_BSP;
 
-        UrdfGeometryType GetGeometryType() override
-        {
-            return MESH;
-        }
+    UrdfGeometryType GetGeometryType() override
+    {
+        return MESH;
+    }
 };

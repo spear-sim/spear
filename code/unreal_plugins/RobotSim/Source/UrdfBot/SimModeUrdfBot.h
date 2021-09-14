@@ -16,24 +16,24 @@ class ROBOTSIM_API ASimModeUrdfBot : public ASimModeBase
     GENERATED_BODY()
 
 public:
-	ASimModeUrdfBot();
+    ASimModeUrdfBot();
 
     virtual void BeginPlay() override;
 
-        virtual void setupVehiclesAndCamera() override;
-        virtual void getExistingVehiclePawns(TArray<RobotSimVehicle*>& pawns) const override;
+    virtual void setupVehiclesAndCamera() override;
+    virtual void
+    getExistingVehiclePawns(TArray<RobotSimVehicle*>& pawns) const override;
 
-        void cycleVisibleCameraForward();
-        void cycleVisibleCameraBackward();
-        void cycleVisibleCamera(bool forward);
+    void cycleVisibleCameraForward();
+    void cycleVisibleCameraBackward();
+    void cycleVisibleCamera(bool forward);
     //    void initializePauseState();
 
-        int camera_index_ = 0;
+    int camera_index_ = 0;
 
-        std::vector<std::unique_ptr<RobotSimApi> > vehicle_sim_apis_;
+    std::vector<std::unique_ptr<RobotSimApi>> vehicle_sim_apis_;
 
-        TArray<APIPCamera*> cameras_;
+    TArray<APIPCamera*> cameras_;
 
-        TArray<AActor*> spawned_actors_;
-
+    TArray<AActor*> spawned_actors_;
 };
