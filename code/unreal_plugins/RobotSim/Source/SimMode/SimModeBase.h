@@ -1,0 +1,92 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/SkyLightComponent.h"
+#include "Engine/DirectionalLight.h"
+#include "GameFramework/Actor.h"
+#include "ParticleDefinitions.h"
+
+#include <string>
+#include "CameraDirector.h" 
+#include "common_utils/RobotSimSettings.hpp"
+#include "NedTransform.h"
+#include "RobotSimApi.h"
+#include "UrdfBot/RobotSimVehicle.h"
+#include "SimModeBase.generated.h"
+
+
+class AUrdfBotPawn;
+
+UCLASS()
+class ROBOTSIM_API ASimModeBase : public AActor
+{
+public:
+
+    GENERATED_BODY()
+
+
+public:	
+    // Sets default values for this actor's properties
+    ASimModeBase();
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void Tick( float DeltaSeconds ) override;
+
+    const NedTransform& getGlobalNedTransform();
+
+    virtual bool isUrdf() { return false; }
+
+protected: //must overrides
+    typedef RobotSim::RobotSimSettings RobotSimSettings;
+
+    virtual void getExistingVehiclePawns(TArray<RobotSimVehicle*>& pawns) const;
+
+protected: //optional overrides
+    virtual void setupVehiclesAndCamera();
+    virtual void setupInputBindings();
+
+
+    ////called when SimMode should handle clock speed setting
+    //virtual void setupClockSpeed();
+
+protected: //Utility methods for derived classes
+    virtual const RobotSim::RobotSimSettings& getSettings() const;
+    //FRotator toFRotator(const RobotSimSettings::Rotation& rotation, const FRotator& default_val);
+
+
+protected:
+    int record_tick_count;
+
+    UPROPERTY() UClass* pip_camera_class;
+    UPROPERTY() UParticleSystem* collision_display_template;
+private:
+    typedef common_utils::Utils Utils;
+	typedef RobotSim::TTimePoint TTimePoint;
+	typedef RobotSim::TTimeDelta TTimeDelta;
+
+private:
+    //assets loaded in constructor
+    UPROPERTY() UClass* external_camera_class_;
+    UPROPERTY() UClass* camera_director_class_;
+    UPROPERTY() UClass* sky_sphere_class_;
+
+
+    UPROPERTY() AActor* sky_sphere_;
+    UPROPERTY() ADirectionalLight* sun_;;
+    TTimePoint tod_sim_clock_start_;
+    TTimePoint tod_last_update_;
+    std::time_t tod_start_time_;
+    std::unique_ptr<NedTransform> global_ned_transform_;
+
+
+    UPROPERTY()
+        TArray<AActor*> spawned_actors_; //keep refs alive from Unreal GC
+
+    bool lidar_checks_done_ = false; 
+    bool lidar_draw_debug_points_ = false;
+
+private:
+
+    void setupTimeOfDay();
+
+};
