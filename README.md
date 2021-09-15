@@ -27,6 +27,8 @@ Version 10 can be installed in the following way:
   - MAC: Download the [pre-build binaries](https://releases.llvm.org/download.html) (LLVM 10.0.0) and add the bin folder to your PATH.
   - Linux: `sudo apt-get install clang-format-10`
 
+- You can test if the correct version is installed with: `clang-format --version`
+
 ### Python
 
 - We use `black` for python formatting. You can install it with `pip install black`. (It is already contained in the python [requirements file](requirements.txt).)
