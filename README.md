@@ -19,7 +19,13 @@ This is realized via a GitHub [action](.github/workflows/check_style.yml).
 
 - We use `clang-format`. See [.clang-format](.clang-format) for more details.
 
-- The [script](utils/apply-clang-style.sh) applies this style to all C++ files in this repository.
+- The script [apply_clang_style.sh](utils/apply_clang_style.sh) applies this style to all C++ files in this repository. (This requires clang-format to be installed on your system; see below.)
+
+- Since different versions of `clang-format` provide different results, we decided to use Version 10. (This also aligns with the clang version required for building UE 4.26 projects in Linux; see [this list](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Linux/GettingStarted/).)
+Version 10 can be installed in the following way:
+  - Windows: Download the [pre-build binaries](https://releases.llvm.org/download.html) (LLVM 10.0.0) and allow the option to add the clang toolchains to the PATH during installation.
+  - MAC: Download the [pre-build binaries](https://releases.llvm.org/download.html) (LLVM 10.0.0) and add the bin folder to your PATH.
+  - Linux: `sudo apt-get install clang-format-10`
 
 ### Python
 
