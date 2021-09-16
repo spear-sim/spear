@@ -18,7 +18,8 @@ jobs:
           python-version: 3.6
       - name: Install dependencies
         run: |
-          python -m pip install black clang-format
+          sudo apt-get install --yes clang-format-10
+          python -m pip install black
       - name: Check python style
         run: |
           black --check .
