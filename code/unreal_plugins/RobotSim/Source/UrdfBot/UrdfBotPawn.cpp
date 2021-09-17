@@ -175,6 +175,12 @@ void AUrdfBotPawn::Tick(float delta)
 
 void AUrdfBotPawn::EndPlay(const EEndPlayReason::Type endPlayReason)
 {
+    for (auto& kvp : this->constraints_)
+    {
+        UPhysicsConstraintComponent* component = kvp.Value.Value;
+        component->BreakConstraint();
+        // component->DestroyComponent();
+    }
 }
 
 void AUrdfBotPawn::NotifyHit(class UPrimitiveComponent* myComp,
