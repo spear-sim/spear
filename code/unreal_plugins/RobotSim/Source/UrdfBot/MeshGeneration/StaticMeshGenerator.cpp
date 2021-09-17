@@ -119,6 +119,10 @@ bool StaticMeshGenerator::CreateUnscaledMeshForLink(
             meshComponent->SetCollisionEnabled(
                 ECollisionEnabled::Type::QueryAndPhysics);
             meshComponent->SetNotifyRigidBodyCollision(true);
+            meshComponent->SetCollisionResponseToChannel(
+                ECC_PhysicsBody,
+                ECR_Overlap); // ignore collision between robot links
+
             if (linkMaterialName.Len() > 0)
             {
                 meshComponent->SetMaterial(0, materials[linkMaterialName]);

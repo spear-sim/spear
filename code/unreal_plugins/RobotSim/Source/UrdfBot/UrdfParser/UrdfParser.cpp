@@ -965,10 +965,17 @@ UrdfGeometry* UrdfParser::ParseUrdfGeometrySpecification(FXmlNode* geometryNode)
                     }
                     // mesh->FileLocation =
                     // RobotSim::Settings::getPorjectDirectoryFullPath(TCHAR_TO_UTF8(*kvp.GetValue())).c_str();
-                    mesh->FileLocation =
-                        RobotSim::Settings::getPluginDirectoryFullPath(
-                            TCHAR_TO_UTF8(*kvp.GetValue()))
-                            .c_str();
+                    if (kvp.GetValue().StartsWith(TEXT("StaticMesh")))
+                    {
+                        mesh->FileLocation = kvp.GetValue();
+                    }
+                    else
+                    {
+                        mesh->FileLocation =
+                            RobotSim::Settings::getPluginDirectoryFullPath(
+                                TCHAR_TO_UTF8(*kvp.GetValue()))
+                                .c_str();
+                    }
                     foundLocation = true;
                 }
                 else if (kvp.GetTag().Equals(TEXT("type")))

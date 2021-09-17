@@ -18,8 +18,9 @@
   <material name="CaliperOrange">
     <unreal_material path="MaterialInstanceConstant'/RobotSim/VehicleAdv/SUV/AutomotiveMaterials/Materials/CaliperPaint/MI_Caliper_Orange.MI_Caliper_Orange'" />
   </material>
-
-
+  <material name="base_link_material">
+    <unreal_material path="MaterialInstanceConstant'/RobotSim/Examples/fetch_description/meshes/Material_001.Material_001'" />
+  </material>
 
 
 
@@ -32,14 +33,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/base_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/base_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/base_link.base_link'" reverse_normals="true" scale_factor="1" />
       </geometry>
       <material name="CaliperOrange" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/base_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/base_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/base_link_collision.base_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -53,14 +56,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/r_wheel_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/r_wheel_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/r_wheel_link.r_wheel_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/r_wheel_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/r_wheel_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/r_wheel_link_collision.r_wheel_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -79,14 +84,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/l_wheel_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/l_wheel_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/l_wheel_link.l_wheel_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/l_wheel_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/l_wheel_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/l_wheel_link_collision.l_wheel_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -105,14 +112,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/torso_lift_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/torso_lift_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/torso_lift_link.torso_lift_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/torso_lift_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/torso_lift_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/torso_lift_link_collision.torso_lift_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -121,8 +130,8 @@
     <parent link="base_link" />
     <child link="torso_lift_link" />
     <axis xyz="0 0 1" />
-<!--    <limit effort="450.0" lower="0" upper="0.38615" velocity="0.1" />-->
-    <limit effort="450.0" lower="0" upper="0.19307" velocity="0.1" />
+	<limit effort="450.0" lower="0" upper="0.38615" velocity="0.1" />
+    <!-- <limit effort="450.0" lower="0" upper="0.19307" velocity="0.1" /> -->
   <dynamics damping="100.0" /></joint>
   <link name="head_pan_link">
     <inertial>
@@ -133,14 +142,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/head_pan_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/head_pan_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/head_pan_link.head_pan_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/head_pan_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/head_pan_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/head_pan_link_collision.head_pan_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -159,14 +170,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/head_tilt_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/head_tilt_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/head_tilt_link.head_tilt_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/head_tilt_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/head_tilt_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/head_tilt_link_collision.head_tilt_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -186,14 +199,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/shoulder_pan_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/shoulder_pan_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/shoulder_pan_link.shoulder_pan_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/shoulder_pan_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/shoulder_pan_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/shoulder_pan_link_collision.shoulder_pan_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -214,14 +229,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/shoulder_lift_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/shoulder_lift_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/shoulder_lift_link.shoulder_lift_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/shoulder_lift_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/shoulder_lift_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/shoulder_lift_link_collision.shoulder_lift_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -244,14 +261,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/upperarm_roll_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/upperarm_roll_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/upperarm_roll_link.upperarm_roll_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/upperarm_roll_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/upperarm_roll_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/upperarm_roll_link_collision.upperarm_roll_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -272,14 +291,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/elbow_flex_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/elbow_flex_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/elbow_flex_link.elbow_flex_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/elbow_flex_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/elbow_flex_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/elbow_flex_link_collision.elbow_flex_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -292,7 +313,7 @@
     <limit effort="66.18" lower="-2.251" upper="2.251" velocity="1.521" />
   </joint>
 
-  
+
   <link name="forearm_roll_link">
     <inertial>
       <origin rpy="0 0 0" xyz="0.1097 -0.0266 0.0000" />
@@ -302,14 +323,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/forearm_roll_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/forearm_roll_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/forearm_roll_link.forearm_roll_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/forearm_roll_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/forearm_roll_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/forearm_roll_link_collision.forearm_roll_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -330,14 +353,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/wrist_flex_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/wrist_flex_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/wrist_flex_link.wrist_flex_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/wrist_flex_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/wrist_flex_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/wrist_flex_link_collision.wrist_flex_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -350,7 +375,7 @@
     <limit effort="25.7" lower="-2.16" upper="2.16" velocity="2.268" />
   </joint>
 
-  
+
   <link name="wrist_roll_link">
     <inertial>
       <origin rpy="0 0 0" xyz="0.0095 0.0004 -0.0002" />
@@ -360,14 +385,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/wrist_roll_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/wrist_roll_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/wrist_roll_link.wrist_roll_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/wrist_roll_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/wrist_roll_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/wrist_roll_link_collision.wrist_roll_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -388,13 +415,15 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/gripper_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/gripper_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/gripper_link.gripper_link'" />
       </geometry>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/gripper_link.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/gripper_link.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/gripper_link.gripper_link'" />
       </geometry>
     </collision>
   </link>
@@ -413,7 +442,8 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0.101425 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/r_gripper_finger_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/r_gripper_finger_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/r_gripper_finger_link.r_gripper_finger_link'" />
       </geometry>
       <material name="">
         <color rgba="0.356 0.361 0.376 1" />
@@ -422,7 +452,8 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0.101425 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/r_gripper_finger_link.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/r_gripper_finger_link.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/r_gripper_finger_link.r_gripper_finger_link'" />
       </geometry>
     </collision>
   </link>
@@ -431,8 +462,8 @@
     <parent link="gripper_link" />
     <child link="r_gripper_finger_link" />
     <axis xyz="0 1 0" />
-  <!-- <limit effort="60" lower="0.0" upper="0.05" velocity="0.05" /><dynamics damping="100.0" /> -->
-  <limit effort="60" lower="0.0" upper="0.025" velocity="0.05" /><dynamics damping="100.0" />
+  <limit effort="60" lower="0.0" upper="0.05" velocity="0.05" /><dynamics damping="100.0" />
+  <!-- <limit effort="60" lower="0.0" upper="0.025" velocity="0.05" /><dynamics damping="100.0" /> -->
   </joint>
   <link name="l_gripper_finger_link">
     <inertial>
@@ -443,7 +474,8 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 -0.101425 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/l_gripper_finger_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/l_gripper_finger_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/l_gripper_finger_link.l_gripper_finger_link'" />
       </geometry>
       <material name="">
         <color rgba="0.356 0.361 0.376 1" />
@@ -452,7 +484,8 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 -0.101425 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/l_gripper_finger_link.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/l_gripper_finger_link.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/l_gripper_finger_link.l_gripper_finger_link'"/>
       </geometry>
     </collision>
   </link>
@@ -461,8 +494,8 @@
     <parent link="gripper_link" />
     <child link="l_gripper_finger_link" />
     <axis xyz="0 -1 0" />
-  <!-- <limit effort="60" lower="0.0" upper="0.05" velocity="0.05" /><dynamics damping="100.0" /> -->
-  <limit effort="60" lower="0.0" upper="0.025" velocity="0.05" /><dynamics damping="100.0" />
+  <limit effort="60" lower="0.0" upper="0.05" velocity="0.05" /><dynamics damping="100.0" />
+  <!-- <limit effort="60" lower="0.0" upper="0.025" velocity="0.05" /><dynamics damping="100.0" /> -->
   </joint>
 
   <link name="bellows_link">
@@ -474,14 +507,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/bellows_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/bellows_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/bellows_link.bellows_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/bellows_link_collision.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/bellows_link_collision.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/bellows_link_collision.bellows_link_collision'" />
       </geometry>
     </collision>
   </link>
@@ -502,14 +537,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/bellows_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/bellows_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/bellows_link.bellows_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/bellows_link.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/bellows_link.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/bellows_link.bellows_link'" />
       </geometry>
     </collision>
   </link>
@@ -529,14 +566,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/estop_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/estop_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/estop_link.estop_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/estop_link.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/estop_link.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/estop_link.estop_link'" />
       </geometry>
     </collision>
   </link>
@@ -548,7 +587,7 @@
   </joint>
 
 
-  
+
   <link name="laser_link">
     <inertial>
       <origin rpy="0 0 0" xyz="-0.0306228970175641 0.0007091682908278 0.0551974119471302" />
@@ -558,14 +597,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/laser_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/laser_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/laser_link.laser_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/laser_link.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/laser_link.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/laser_link.laser_link'" />
       </geometry>
     </collision>
   </link>
@@ -576,7 +617,7 @@
     <axis xyz="0 0 0" />
   </joint>
 
-  
+
   <link name="torso_fixed_link">
     <inertial>
       <origin rpy="0 0 0" xyz="-0.0722 0.0057 0.2656" />
@@ -586,14 +627,16 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/torso_fixed_link.stl" reverse_normals="true" scale_factor="50" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/torso_fixed_link.stl" reverse_normals="true" scale_factor="100" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/torso_fixed_link.torso_fixed_link'" />
       </geometry>
       <material name="RedSolidColor" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/torso_fixed_link.stl" reverse_normals="true" scale_factor="50" dynamic_collision_type="vhacd" vhacd_concavity="0.2" />
+        <!-- <mesh type="stl_ascii" location="RobotSim/Content/Examples/fetch_description/meshes/torso_fixed_link.stl" reverse_normals="true" scale_factor="100" dynamic_collision_type="vhacd" vhacd_concavity="0.2" /> -->
+        <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/fetch_description/meshes/torso_fixed_link.torso_fixed_link'" />
       </geometry>
     </collision>
   </link>
@@ -608,14 +651,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.03005"/> <!-- 0.0601 --> <!-- 0.06033 -->
+        <sphere radius="0.0601"/> <!-- 0.0601 --> <!-- 0.06033 -->
       </geometry>
       <material name="plastic" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.03005"/> <!-- 0.0601 -->
+        <sphere radius="0.0601"/> <!-- 0.0601 -->
       </geometry>
     </collision>
     <inertial>
@@ -635,14 +678,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.03005"/> <!-- 0.0601 --> <!-- 0.06033 -->
+        <sphere radius="0.0601"/> <!-- 0.0601 --> <!-- 0.06033 -->
       </geometry>
       <material name="plastic" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.03005"/> <!-- 0.0601 -->
+        <sphere radius="0.0601"/> <!-- 0.0601 -->
       </geometry>
     </collision>
     <inertial>
@@ -662,14 +705,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.03005"/> <!-- 0.0601 --> <!-- 0.06033 -->
+        <sphere radius="0.0601"/> <!-- 0.0601 --> <!-- 0.06033 -->
       </geometry>
       <material name="plastic" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.03005"/> <!-- 0.0601 -->
+        <sphere radius="0.0601"/> <!-- 0.0601 -->
       </geometry>
     </collision>
     <inertial>
@@ -689,14 +732,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.03005"/> <!-- 0.0601 --> <!-- 0.06033 -->
+        <sphere radius="0.0601"/> <!-- 0.0601 --> <!-- 0.06033 -->
       </geometry>
       <material name="plastic" />
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <sphere radius="0.03005"/> <!-- 0.0601 -->
+        <sphere radius="0.0601"/> <!-- 0.0601 -->
       </geometry>
     </collision>
     <inertial>
