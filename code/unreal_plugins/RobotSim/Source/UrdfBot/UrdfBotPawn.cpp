@@ -1120,7 +1120,7 @@ AUrdfBotPawn::CreateConstraint(const UrdfJointSpecification& jointSpecification)
     case PRISMATIC_TYPE:
         range = (jointSpecification.Limit->Upper -
                  jointSpecification.Limit->Lower) *
-                this->world_scale_ * 0.5f;
+                this->world_scale_ * 0.5f * this->scale_factor_;
         constraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited,
                                            range);
         if (jointSpecification.Limit != nullptr &&
@@ -1232,8 +1232,7 @@ void AUrdfBotPawn::ResizeLink(AUrdfLink* link, UrdfGeometry* geometry)
         throw std::runtime_error("Unable to construct shape component due to "
                                  "unrecognized mesh shape.");
     }
-
-    link->GetRootComponent()->SetWorldScale3D(resizeSpec);
+    link->GetRootComponent()->SetWorldScale3D(resizeSpec * this->scale_factor_);
 }
 
 UrdfLinkSpecification* AUrdfBotPawn::FindRootNodeSpecification(
@@ -1333,8 +1332,10 @@ FVector AUrdfBotPawn::MoveChildLinkForLimitedXAxisMotion(
     FRotator parentRotation = parentLink->GetActorRotation();
     FRotator childRotation = childLink->GetActorRotation();
 
-    float lowerUU = jointSpecification.Limit->Lower * this->world_scale_;
-    float upperUU = jointSpecification.Limit->Upper * this->world_scale_;
+    float lowerUU = jointSpecification.Limit->Lower * this->world_scale_ *
+                    this->scale_factor_;
+    float upperUU = jointSpecification.Limit->Upper * this->world_scale_ *
+                    this->scale_factor_;
 
     // FVector xAxisInParentFrame = parentRotation.UnrotateVector(FVector(1, 0,
     // 0));
@@ -1866,13 +1867,15 @@ FTransform AUrdfBotPawn::getJointPose(const FString& jointName)
 {
     ControlledMotionComponent* jointComponent =
         this->controlled_motion_components_[jointName];
-    const FTransform& World2Parent =
+    const FTransform& World2Base =
         jointComponent->GetParentLink()->GetTransform();
+    FTransform temp(World2Base.GetRotation(), World2Base.GetTranslation(),
+                    FVector(1, 1, 1));
     AUrdfLink* childLink = jointComponent->GetActuatorLink();
 
     FVector parent2childPos =
-        World2Parent.InverseTransformPosition(childLink->GetActorLocation());
-    FQuat parent2childOri = World2Parent.InverseTransformRotation(
+        temp.InverseTransformPosition(childLink->GetActorLocation());
+    FQuat parent2childOri = temp.InverseTransformRotation(
         childLink->GetActorRotation().Quaternion());
 
     return FTransform(parent2childOri, parent2childPos / this->world_scale_,
@@ -1884,11 +1887,12 @@ FTransform AUrdfBotPawn::getRelativePose(const FString& baseLinkName,
 {
     const FTransform& World2Base =
         this->components_[baseLinkName]->GetTransform();
+    FTransform temp(World2Base.GetRotation(), World2Base.GetTranslation(),
+                    FVector(1, 1, 1));
     AUrdfLink* targetLink = this->components_[TargetlinkName];
-
     FVector base2targetPos =
-        World2Base.InverseTransformPosition(targetLink->GetActorLocation());
-    FQuat base2targetOri = World2Base.InverseTransformRotation(
+        temp.InverseTransformPosition(targetLink->GetActorLocation());
+    FQuat base2targetOri = temp.InverseTransformRotation(
         targetLink->GetActorRotation().Quaternion());
 
     // URobotBlueprintLib::LogMessage(baseLinkName + FString("actual: \n"),

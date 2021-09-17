@@ -63,6 +63,7 @@ make
 ## Create symbolic links to plugins
 
 ```
+mkdir path/to/interiorsim/code/unreal_projects/RobotProject/Plugins
 ln -s path/to/interiorsim/code/unreal_plugins/RobotSim path/to/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim
 ```
 

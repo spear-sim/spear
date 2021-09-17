@@ -119,6 +119,10 @@ bool StaticMeshGenerator::CreateUnscaledMeshForLink(
             meshComponent->SetCollisionEnabled(
                 ECollisionEnabled::Type::QueryAndPhysics);
             meshComponent->SetNotifyRigidBodyCollision(true);
+            meshComponent->SetCollisionResponseToChannel(
+                ECC_PhysicsBody,
+                ECR_Overlap); // ignore collision between robot links
+
             if (linkMaterialName.Len() > 0)
             {
                 meshComponent->SetMaterial(0, materials[linkMaterialName]);
@@ -1176,13 +1180,13 @@ void StaticMeshGenerator::SplitPartitioner(UModel* Model,
         case SP_Coplanar:
             // May occasionally happen.
             //				UE_LOG(LogBSPOps, Log,
-            // TEXT("FilterBound: Got inficoplanar") );
+            //TEXT("FilterBound: Got inficoplanar") );
             break;
 
         case SP_Front:
             // Shouldn't happen if hull is correct.
-            //				UE_LOG(LogBSPOps, Log,
-            // TEXT("FilterBound: Got infifront")
+            //				UE_LOG(LogBSPOps, Log,  TEXT("FilterBound:
+            //Got infifront")
             //);
             return;
 
@@ -1248,8 +1252,8 @@ void StaticMeshGenerator::FilterBound(UModel* Model,
         switch (Poly->SplitWithPlane(Base, Normal, FrontPoly, BackPoly, 0))
         {
         case SP_Coplanar:
-            //				UE_LOG(LogBSPOps, Log,
-            // TEXT("FilterBound: Got coplanar")
+            //				UE_LOG(LogBSPOps, Log,  TEXT("FilterBound:
+            //Got coplanar")
             //);
             FrontList[nFront++] = Poly;
             BackList[nBack++] = Poly;

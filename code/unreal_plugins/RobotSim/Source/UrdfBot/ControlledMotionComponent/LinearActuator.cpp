@@ -5,8 +5,15 @@ void LinearActuator::Attach(AUrdfLink* baseLink,
                             UrdfJointSpecification* jointSpecification,
                             UPhysicsConstraintComponent* constraintComponent)
 {
-    this->mindegree = jointSpecification->Limit->Lower;
-    this->maxdegree = jointSpecification->Limit->Upper;
+    // consider scale
+    float limit = constraintComponent->ConstraintInstance.ProfileInstance
+                      .LinearLimit.Limit;
+    float scale =
+        limit /
+        ((jointSpecification->Limit->Upper - jointSpecification->Limit->Lower) *
+         this->worldScale * 0.5);
+    this->mindegree = scale * jointSpecification->Limit->Lower;
+    this->maxdegree = scale * jointSpecification->Limit->Upper;
     ControlledMotionComponent::Attach(baseLink, actuationLink,
                                       jointSpecification, constraintComponent);
 
@@ -32,7 +39,7 @@ void LinearActuator::Attach(AUrdfLink* baseLink,
 
     this->range_ =
         (jointSpecification->Limit->Upper - jointSpecification->Limit->Lower) *
-        this->worldScale;
+        this->worldScale * scale;
     this->invRange_ = 1.0f / this->range_;
     this->maxActuationRate_ = jointSpecification->Limit->Velocity;
 
