@@ -25,13 +25,13 @@ ASimModeBase::ASimModeBase()
     camera_director_class_ = camera_director_class.Succeeded()
                                  ? camera_director_class.Class
                                  : nullptr;
-
-    static ConstructorHelpers::FObjectFinder<UParticleSystem> collision_display(
-        TEXT("ParticleSystem'/RobotSim/StarterContent/Particles/"
-             "P_Explosion.P_Explosion'"));
-    if (!collision_display.Succeeded())
-        collision_display_template = collision_display.Object;
-    else
+// not used
+//    static ConstructorHelpers::FObjectFinder<UParticleSystem> collision_display(
+//        TEXT("ParticleSystem'/RobotSim/StarterContent/Particles/"
+//             "P_Explosion.P_Explosion'"));
+//    if (!collision_display.Succeeded())
+//        collision_display_template = collision_display.Object;
+//    else
         collision_display_template = nullptr;
 
     static ConstructorHelpers::FClassFinder<APIPCamera> pip_camera_class_val(

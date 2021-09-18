@@ -12,54 +12,68 @@
 #include "Common.hpp"
 #include "ImageCaptureBase.hpp"
 
-namespace RobotSim {
+namespace RobotSim
+{
 
-struct RobotSimSettings {
+struct RobotSimSettings
+{
 private:
     typedef common_utils::Utils Utils;
     typedef ImageCaptureBase::ImageType ImageType;
 
-public: //types
-    static constexpr int kSubwindowCount = 3; //must be >= 3 for now
-    static constexpr char const * kVehicleTypeUrdfBot = "urdfbot";
+public:                                       // types
+    static constexpr int kSubwindowCount = 3; // must be >= 3 for now
+    static constexpr char const* kVehicleTypeUrdfBot = "urdfbot";
 
+    //子窗口设置：窗口下标，图像类型，是否可视化，相机名字
+    struct SubwindowSetting
+    {
+        int window_index;
+        ImageType image_type;
+        bool visible;
+        std::string camera_name;
 
-	//子窗口设置：窗口下标，图像类型，是否可视化，相机名字
-	struct SubwindowSetting {
-		int window_index;
-		ImageType image_type;
-		bool visible;
-		std::string camera_name;
-
-		SubwindowSetting(int window_index_val = 0, ImageType image_type_val = ImageType::Scene, bool visible_val = false, const std::string& camera_name_val = "")
-			: window_index(window_index_val), image_type(image_type_val), visible(visible_val), camera_name(camera_name_val)
-		{
-		}
-	};
-
-    struct PawnPath {
-        std::string pawn_bp;
-        std::string slippery_mat;
-        std::string non_slippery_mat;
-        std::string urdf_path;
-		std::string end_effector_link;
-		float scale_factor;
-		bool enable_keyboard;
-
-        PawnPath(const std::string& pawn_bp_val = "",
-            const std::string& slippery_mat_val = "/RobotSim/VehicleAdv/PhysicsMaterials/Slippery.Slippery",
-            const std::string& non_slippery_mat_val = "/RobotSim/VehicleAdv/PhysicsMaterials/NonSlippery.NonSlippery", 
-            const std::string& urdf_path_val = "",
-			const std::string& end_effector_link_val = "",
-			const float& scale_factor_val = 1.0f,
-			const bool& enable_keyboard_val = true)
-            : pawn_bp(pawn_bp_val), slippery_mat(slippery_mat_val), non_slippery_mat(non_slippery_mat_val), urdf_path(urdf_path_val),
-			end_effector_link(end_effector_link_val), scale_factor(scale_factor_val), enable_keyboard(enable_keyboard_val)
+        SubwindowSetting(int window_index_val = 0,
+                         ImageType image_type_val = ImageType::Scene,
+                         bool visible_val = false,
+                         const std::string& camera_name_val = "")
+            : window_index(window_index_val), image_type(image_type_val),
+              visible(visible_val), camera_name(camera_name_val)
         {
         }
     };
 
-    struct Rotation {
+    struct PawnPath
+    {
+        std::string pawn_bp;
+        std::string slippery_mat;
+        std::string non_slippery_mat;
+        std::string urdf_path;
+        std::string end_effector_link;
+        float scale_factor;
+        bool enable_keyboard;
+
+        PawnPath(
+            const std::string& pawn_bp_val = "",
+            const std::string& slippery_mat_val =
+                "/RobotSim/VehicleAdv/PhysicsMaterials/Slippery.Slippery",
+            const std::string& non_slippery_mat_val =
+                "/RobotSim/VehicleAdv/PhysicsMaterials/NonSlippery.NonSlippery",
+            const std::string& urdf_path_val = "",
+            const std::string& end_effector_link_val = "",
+            const float& scale_factor_val = 1.0f,
+            const bool& enable_keyboard_val = true)
+            : pawn_bp(pawn_bp_val), slippery_mat(slippery_mat_val),
+              non_slippery_mat(non_slippery_mat_val), urdf_path(urdf_path_val),
+              end_effector_link(end_effector_link_val),
+              scale_factor(scale_factor_val),
+              enable_keyboard(enable_keyboard_val)
+        {
+        }
+    };
+
+    struct Rotation
+    {
         float yaw = 0;
         float pitch = 0;
         float roll = 0;
@@ -80,42 +94,47 @@ public: //types
 
         static Rotation nanRotation()
         {
-            static const Rotation val(Utils::nan<float>(), Utils::nan<float>(), Utils::nan<float>());
+            static const Rotation val(Utils::nan<float>(), Utils::nan<float>(),
+                                      Utils::nan<float>());
             return val;
         }
     };
 
-
-    struct GimbalSetting {
+    struct GimbalSetting
+    {
         float stabilization = 0;
-        //bool is_world_frame = false;
+        // bool is_world_frame = false;
         Rotation rotation = Rotation::nanRotation();
     };
 
-    struct CaptureSetting {
+    struct CaptureSetting
+    {
         typedef common_utils::Utils Utils;
         static constexpr float kSceneTargetGamma = 1.4f;
 
         int image_type = 0;
 
-        unsigned int width = 256, height = 144; //960 X 540
-        float fov_degrees = Utils::nan<float>(); //90.0f
-        int auto_exposure_method = -1;   //histogram
-        float auto_exposure_speed = Utils::nan<float>(); // 100.0f;
-        float auto_exposure_bias = Utils::nan<float>(); // 0;
+        unsigned int width = 256, height = 144;                   // 960 X 540
+        float fov_degrees = Utils::nan<float>();                  // 90.0f
+        int auto_exposure_method = -1;                            // histogram
+        float auto_exposure_speed = Utils::nan<float>();          // 100.0f;
+        float auto_exposure_bias = Utils::nan<float>();           // 0;
         float auto_exposure_max_brightness = Utils::nan<float>(); // 0.64f;
         float auto_exposure_min_brightness = Utils::nan<float>(); // 0.03f;
-        float auto_exposure_low_percent = Utils::nan<float>(); // 80.0f;
-        float auto_exposure_high_percent = Utils::nan<float>(); // 98.3f;
+        float auto_exposure_low_percent = Utils::nan<float>();    // 80.0f;
+        float auto_exposure_high_percent = Utils::nan<float>();   // 98.3f;
         float auto_exposure_histogram_log_min = Utils::nan<float>(); // -8;
         float auto_exposure_histogram_log_max = Utils::nan<float>(); // 4;
         float motion_blur_amount = Utils::nan<float>();
-        float target_gamma = Utils::nan<float>(); //1.0f; //This would be reset to kSceneTargetGamma for scene as default
+        float target_gamma =
+            Utils::nan<float>(); // 1.0f; //This would be reset to
+                                 // kSceneTargetGamma for scene as default
         int projection_mode = 0; // ECameraProjectionMode::Perspective
         float ortho_width = Utils::nan<float>();
     };
-	//相机的噪音
-    struct NoiseSetting {
+    //相机的噪音
+    struct NoiseSetting
+    {
         int ImageType = 0;
 
         bool Enabled = false;
@@ -138,8 +157,9 @@ public: //types
         float HorzDistortionStrength = 0.002f;
     };
 
-    struct CameraSetting {
-        //nan means keep the default values set in components
+    struct CameraSetting
+    {
+        // nan means keep the default values set in components
         Vector3r position = VectorMath::nanVector();
         Rotation rotation = Rotation::nanRotation();
 
@@ -147,7 +167,7 @@ public: //types
 
         GimbalSetting gimbal;
         std::map<int, CaptureSetting> capture_settings;
-        std::map<int, NoiseSetting>  noise_settings;
+        std::map<int, NoiseSetting> noise_settings;
 
         CameraSetting()
         {
@@ -156,20 +176,20 @@ public: //types
         }
     };
 
-    struct CameraDirectorSetting {
+    struct CameraDirectorSetting
+    {
         Vector3r position = VectorMath::nanVector();
         Rotation rotation = Rotation::nanRotation();
         float follow_distance = Utils::nan<float>();
     };
 
- 
-
-    struct VehicleSetting {
-        //required
+    struct VehicleSetting
+    {
+        // required
         std::string vehicle_name;
         std::string vehicle_type;
 
-        //optional
+        // optional
         std::string default_vehicle_state;
         std::string pawn_path;
         bool allow_api_always = true;
@@ -179,63 +199,70 @@ public: //types
         bool enable_collisions = true;
         bool is_fpv_vehicle = false;
         float debug_symbol_scale = 0.0f;
-        
-        //nan means use player start
-        Vector3r position = VectorMath::nanVector(); //in global NED
+
+        // nan means use player start
+        Vector3r position = VectorMath::nanVector(); // in global NED
         Rotation rotation = Rotation::nanRotation();
 
-		//相机输出不需要
+        //相机输出不需要
         std::map<std::string, CameraSetting> cameras;
-        //std::map<std::string, std::unique_ptr<SensorSetting>> sensors;
+        // std::map<std::string, std::unique_ptr<SensorSetting>> sensors;
         std::vector<std::pair<std::string, std::string>> collision_blacklist;
-
     };
 
-
-    struct SegmentationSetting {
-        enum class InitMethodType {
-            None, CommonObjectsRandomIDs
+    struct SegmentationSetting
+    {
+        enum class InitMethodType
+        {
+            None,
+            CommonObjectsRandomIDs
         };
 
-        enum class MeshNamingMethodType {
-            OwnerName, StaticMeshName
+        enum class MeshNamingMethodType
+        {
+            OwnerName,
+            StaticMeshName
         };
 
         InitMethodType init_method = InitMethodType::CommonObjectsRandomIDs;
         bool override_existing = false;
-        MeshNamingMethodType mesh_naming_method = MeshNamingMethodType::OwnerName;
+        MeshNamingMethodType mesh_naming_method =
+            MeshNamingMethodType::OwnerName;
     };
 
-    struct TimeOfDaySetting {
+    struct TimeOfDaySetting
+    {
         bool enabled = false;
-        std::string start_datetime = "";    //format: %Y-%m-%d %H:%M:%S
+        std::string start_datetime = ""; // format: %Y-%m-%d %H:%M:%S
         bool is_start_datetime_dst = false;
         float celestial_clock_speed = 1;
         float update_interval_secs = 60;
     };
 
-    struct ControlledMotionComponentSetting {
+    struct ControlledMotionComponentSetting
+    {
         std::string name = "";
         std::map<std::string, std::string> configuration;
     };
 
-private: //fields
+private: // fields
     float settings_version_actual;
     float settings_version_minimum = 1.2f;
 
-public: //fields
+public: // fields
     std::string simmode_name = "";
 
     std::vector<SubwindowSetting> subwindow_settings;
-    //RecordingSetting recording_setting;
+    // RecordingSetting recording_setting;
     SegmentationSetting segmentation_setting;
     TimeOfDaySetting tod_setting;
 
     std::vector<std::string> warning_messages;
     std::vector<std::string> error_messages;
-    
+
     bool is_record_ui_visible = false;
-    int initial_view_mode = 3; //ECameraDirectorMode::CAMERA_DIRECTOR_MODE_FLY_WITH_ME
+    int initial_view_mode =
+        3; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_FLY_WITH_ME
     bool enable_rpc = true;
     std::string api_server_address = "";
     std::string physics_engine_name = "";
@@ -244,16 +271,19 @@ public: //fields
     float clock_speed = 1.0f;
     bool engine_sound = false;
     bool log_messages_visible = true;
-    HomeGeoPoint origin_geopoint{ GeoPoint(47.641468, -122.140165, 122) }; //The geo-coordinate assigned to Unreal coordinate 0,0,0
-    std::map<std::string, PawnPath> pawn_paths; //path for pawn blueprint
+    HomeGeoPoint origin_geopoint{GeoPoint(
+        47.641468,
+        -122.140165,
+        122)}; // The geo-coordinate assigned to Unreal coordinate 0,0,0
+    std::map<std::string, PawnPath> pawn_paths; // path for pawn blueprint
     std::map<std::string, std::unique_ptr<VehicleSetting>> vehicles;
     CameraSetting camera_defaults;
     CameraDirectorSetting camera_director;
-    float speed_unit_factor =  1.0f;
+    float speed_unit_factor = 1.0f;
     std::string speed_unit_label = "m\\s";
 
-public: //methods
-    static RobotSimSettings& singleton() 
+public: // methods
+    static RobotSimSettings& singleton()
     {
         static RobotSimSettings instance;
         return instance;
@@ -262,11 +292,12 @@ public: //methods
     RobotSimSettings()
     {
         initializeSubwindowSettings(subwindow_settings);
-        //initializePawnPaths(pawn_paths); //无需加载默认的robotsimSettings.json
+        // initializePawnPaths(pawn_paths);
+        // //无需加载默认的robotsimSettings.json
         initializeVehicleSettings(vehicles);
     }
 
-    //returns number of warnings
+    // returns number of warnings
     void load(std::function<std::string(void)> simmode_getter)
     {
         warning_messages.clear();
@@ -281,66 +312,80 @@ public: //methods
         loadPawnPaths(settings_json, pawn_paths);
         loadVehicleSettings(simmode_name, settings_json, vehicles);
 
-        //this should be done last because it depends on type of vehicles we have
+        // this should be done last because it depends on type of vehicles we
+        // have
         loadClockSettings(settings_json);
     }
-	//仅依赖setting.hpp
+    //仅依赖setting.hpp
     static void initializeSettings(const std::string& json_settings_text)
     {
         Settings& settings_json = Settings::loadJSonString(json_settings_text);
-        if (! settings_json.isLoadSuccess())
-            throw std::invalid_argument("Cannot parse JSON settings_json string.");
+        if (!settings_json.isLoadSuccess())
+            throw std::invalid_argument(
+                "Cannot parse JSON settings_json string.");
     }
-	//仅依赖setting.hpp
+    //仅依赖setting.hpp
     static void createDefaultSettingsFile()
     {
-        std::string settings_filename = Settings::getUserDirectoryFullPath("settings.json");
+        std::string settings_filename =
+            Settings::getUserDirectoryFullPath("settings.json");
         Settings& settings_json = Settings::loadJSonString("{}");
-        //https://answers.unrealengine.com/questions/664905/unreal-crashes-on-two-lines-of-extremely-simple-st.html
+        // https://answers.unrealengine.com/questions/664905/unreal-crashes-on-two-lines-of-extremely-simple-st.html
         settings_json.saveJSonFile(settings_filename);
     }
-	//仅依赖string
-    const VehicleSetting* getVehicleSetting(const std::string& vehicle_name) const
+    //仅依赖string
+    const VehicleSetting*
+    getVehicleSetting(const std::string& vehicle_name) const
     {
         auto it = vehicles.find(vehicle_name);
         if (it == vehicles.end())
-            throw std::invalid_argument(Utils::stringf("VehicleSetting for vehicle name %s was requested but not found",
-                vehicle_name.c_str()).c_str());
+            throw std::invalid_argument(
+                Utils::stringf("VehicleSetting for vehicle name %s was "
+                               "requested but not found",
+                               vehicle_name.c_str())
+                    .c_str());
         else
             return it->second.get();
     }
 
 private:
-	//仅依赖settings.hpp
+    //仅依赖settings.hpp
     void checkSettingsVersion(const Settings& settings_json)
     {
-        bool has_default_settings = hasDefaultSettings(settings_json, settings_version_actual);
-        bool upgrade_required = settings_version_actual < settings_version_minimum;
-        if (upgrade_required) {
+        bool has_default_settings =
+            hasDefaultSettings(settings_json, settings_version_actual);
+        bool upgrade_required =
+            settings_version_actual < settings_version_minimum;
+        if (upgrade_required)
+        {
             bool auto_upgrade = false;
 
-            //if we have default setting file not modified by user then we will 
-            //just auto-upgrade it
-            if (has_default_settings) {
+            // if we have default setting file not modified by user then we will
+            // just auto-upgrade it
+            if (has_default_settings)
+            {
                 auto_upgrade = true;
             }
-            else {
-                //check if auto-upgrade is possible
-                if (settings_version_actual == 1) {
+            else
+            {
+                // check if auto-upgrade is possible
+                if (settings_version_actual == 1)
+                {
                     const std::vector<std::string> all_changed_keys = {
                         "AdditionalCameras", "CaptureSettings", "NoiseSettings",
-                        "UsageScenario", "SimpleFlight", "PX4"
-                    };
+                        "UsageScenario",     "SimpleFlight",    "PX4"};
                     std::stringstream detected_keys_ss;
-                    for (const auto& changed_key : all_changed_keys) {
+                    for (const auto& changed_key : all_changed_keys)
+                    {
                         if (settings_json.hasKey(changed_key))
                             detected_keys_ss << changed_key << ",";
                     }
                     std::string detected_keys = detected_keys_ss.str();
-                    if (detected_keys.length()) {
+                    if (detected_keys.length())
+                    {
                         std::string error_message =
-                            "You are using newer version of RobotSim with older version of settings.json. "
-                            ;
+                            "You are using newer version of RobotSim with "
+                            "older version of settings.json. ";
 
                         error_messages.push_back(error_message + detected_keys);
                     }
@@ -351,54 +396,66 @@ private:
                     auto_upgrade = true;
             }
 
-            if (auto_upgrade) {
+            if (auto_upgrade)
+            {
                 warning_messages.push_back(
-                    "You are using newer version of RobotSim with older version of settings.json. "
-                    "You should delete your settings.json file and restart RobotSim.");
+                    "You are using newer version of RobotSim with older "
+                    "version of settings.json. "
+                    "You should delete your settings.json file and restart "
+                    "RobotSim.");
             }
         }
-        //else no action necessary
+        // else no action necessary
     }
-	//仅依赖settings.hpp
+    //仅依赖settings.hpp
     bool hasDefaultSettings(const Settings& settings_json, float& version)
     {
-        //if empty settings file
+        // if empty settings file
         bool has_default = settings_json.size() == 0;
 
-        bool has_docs = settings_json.getString("SeeDocsAt", "") != ""
-            || settings_json.getString("see_docs_at", "") != "";
-        //we had spelling mistake so we are currently supporting SettingsVersion or SettingdVersion :(
-        version = settings_json.getFloat("SettingsVersion", settings_json.getFloat("SettingdVersion", 0));
+        bool has_docs = settings_json.getString("SeeDocsAt", "") != "" ||
+                        settings_json.getString("see_docs_at", "") != "";
+        // we had spelling mistake so we are currently supporting
+        // SettingsVersion or SettingdVersion :(
+        version = settings_json.getFloat(
+            "SettingsVersion", settings_json.getFloat("SettingdVersion", 0));
 
-        //If we have pre-V1 settings and only element is docs link
+        // If we have pre-V1 settings and only element is docs link
         has_default |= settings_json.size() == 1 && has_docs;
 
-        //if we have V1 settings and only elements are docs link and version
+        // if we have V1 settings and only elements are docs link and version
         has_default |= settings_json.size() == 2 && has_docs && version > 0;
 
         return has_default;
     }
 
-    void loadCoreSimModeSettings(const Settings& settings_json, std::function<std::string(void)> simmode_getter)
+    void
+    loadCoreSimModeSettings(const Settings& settings_json,
+                            std::function<std::string(void)> simmode_getter)
     {
-        //get the simmode from user if not specified
+        // get the simmode from user if not specified
         simmode_name = settings_json.getString("SimMode", "");
-        if (simmode_name == "") {
+        if (simmode_name == "")
+        {
             if (simmode_getter)
                 simmode_name = simmode_getter();
             else
-                throw std::invalid_argument("simmode_name is not expected empty in SimModeBase");
+                throw std::invalid_argument(
+                    "simmode_name is not expected empty in SimModeBase");
         }
-		physics_engine_name = "PhysX"; //this value is only informational for now
+        physics_engine_name =
+            "PhysX"; // this value is only informational for now
 
-		UE_LOG(LogTemp, Warning, TEXT("simmode_name:%s"), *FString(simmode_name.c_str()));
+        UE_LOG(LogTemp, Warning, TEXT("simmode_name:%s"),
+               *FString(simmode_name.c_str()));
     }
 
     void loadViewModeSettings(const Settings& settings_json)
     {
         std::string view_mode_string = settings_json.getString("ViewMode", "");
 
-        if (view_mode_string == "") {
+        if (view_mode_string == "")
+        {
             if (simmode_name == "Multirotor")
                 view_mode_string = "FlyWithMe";
             else if (simmode_name == "ComputerVision")
@@ -408,82 +465,107 @@ private:
         }
 
         if (view_mode_string == "Fpv")
-            initial_view_mode = 1; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_FPV;
+            initial_view_mode =
+                1; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_FPV;
         else if (view_mode_string == "GroundObserver")
-            initial_view_mode = 2; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_GROUND_OBSERVER;
+            initial_view_mode =
+                2; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_GROUND_OBSERVER;
         else if (view_mode_string == "FlyWithMe")
-            initial_view_mode = 3; //ECameraDirectorMode::CAMERA_DIRECTOR_MODE_FLY_WITH_ME;
+            initial_view_mode =
+                3; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_FLY_WITH_ME;
         else if (view_mode_string == "Manual")
-            initial_view_mode = 4; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_MANUAL;
+            initial_view_mode =
+                4; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_MANUAL;
         else if (view_mode_string == "SpringArmChase")
-            initial_view_mode = 5; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_SPRINGARM_CHASE;
+            initial_view_mode =
+                5; // ECameraDirectorMode::CAMERA_DIRECTOR_MODE_SPRINGARM_CHASE;
         else if (view_mode_string == "Backup")
-            initial_view_mode = 6; // ECameraDirectorMode::CAMREA_DIRECTOR_MODE_BACKUP;
+            initial_view_mode =
+                6; // ECameraDirectorMode::CAMREA_DIRECTOR_MODE_BACKUP;
         else if (view_mode_string == "NoDisplay")
-            initial_view_mode = 7; // ECameraDirectorMode::CAMREA_DIRECTOR_MODE_NODISPLAY;
+            initial_view_mode =
+                7; // ECameraDirectorMode::CAMREA_DIRECTOR_MODE_NODISPLAY;
         else if (view_mode_string == "Front")
-            initial_view_mode = 8; // ECameraDirectorMode::CAMREA_DIRECTOR_MODE_FRONT;
+            initial_view_mode =
+                8; // ECameraDirectorMode::CAMREA_DIRECTOR_MODE_FRONT;
         else
-            error_messages.push_back("ViewMode setting is not recognized: " + view_mode_string);
+            error_messages.push_back("ViewMode setting is not recognized: " +
+                                     view_mode_string);
     }
 
     static std::string getCameraName(const Settings& settings_json)
     {
-        return settings_json.getString("CameraName", 
-            //TODO: below exist only due to legacy reason and can be replaced by "" in future
+        return settings_json.getString(
+            "CameraName",
+            // TODO: below exist only due to legacy reason and can be replaced
+            // by "" in future
             std::to_string(settings_json.getInt("CameraID", 0)));
     }
 
-
-
-    static void initializeCaptureSettings(std::map<int, CaptureSetting>& capture_settings)
+    static void
+    initializeCaptureSettings(std::map<int, CaptureSetting>& capture_settings)
     {
         capture_settings.clear();
-        for (int i = -1; i < Utils::toNumeric(ImageType::Count); ++i) {
+        for (int i = -1; i < Utils::toNumeric(ImageType::Count); ++i)
+        {
             capture_settings[i] = CaptureSetting();
         }
-        capture_settings.at(Utils::toNumeric(ImageType::Scene)).target_gamma = CaptureSetting::kSceneTargetGamma;
+        capture_settings.at(Utils::toNumeric(ImageType::Scene)).target_gamma =
+            CaptureSetting::kSceneTargetGamma;
     }
 
-    static void loadCaptureSettings(const Settings& settings_json, std::map<int, CaptureSetting>& capture_settings)
+    static void
+    loadCaptureSettings(const Settings& settings_json,
+                        std::map<int, CaptureSetting>& capture_settings)
     {
         initializeCaptureSettings(capture_settings);
 
         Settings json_parent;
-        if (settings_json.getChild("CaptureSettings", json_parent)) {
-            for (size_t child_index = 0; child_index < json_parent.size(); ++child_index) {
-                Settings json_settings_child;     
-                if (json_parent.getChild(child_index, json_settings_child)) {
+        if (settings_json.getChild("CaptureSettings", json_parent))
+        {
+            for (size_t child_index = 0; child_index < json_parent.size();
+                 ++child_index)
+            {
+                Settings json_settings_child;
+                if (json_parent.getChild(child_index, json_settings_child))
+                {
                     CaptureSetting capture_setting;
                     createCaptureSettings(json_settings_child, capture_setting);
-                    capture_settings[capture_setting.image_type] = capture_setting;
+                    capture_settings[capture_setting.image_type] =
+                        capture_setting;
                 }
             }
         }
     }
 
-
-    static Vector3r createVectorSetting(const Settings& settings_json, const Vector3r& default_vec)
+    static Vector3r createVectorSetting(const Settings& settings_json,
+                                        const Vector3r& default_vec)
     {
-        return Vector3r(settings_json.getFloat("X", default_vec.x()), 
-            settings_json.getFloat("Y", default_vec.y()), 
-            settings_json.getFloat("Z", default_vec.z()));
+        return Vector3r(settings_json.getFloat("X", default_vec.x()),
+                        settings_json.getFloat("Y", default_vec.y()),
+                        settings_json.getFloat("Z", default_vec.z()));
     }
-    static Rotation createRotationSetting(const Settings& settings_json, const Rotation& default_rot)
+    static Rotation createRotationSetting(const Settings& settings_json,
+                                          const Rotation& default_rot)
     {
         return Rotation(settings_json.getFloat("Yaw", default_rot.yaw),
-            settings_json.getFloat("Pitch", default_rot.pitch),
-            settings_json.getFloat("Roll", default_rot.roll));
+                        settings_json.getFloat("Pitch", default_rot.pitch),
+                        settings_json.getFloat("Roll", default_rot.roll));
     }
 
-    static std::unique_ptr<VehicleSetting> createVehicleSetting(const std::string& simmode_name,  const Settings& settings_json,
-        const std::string vehicle_name)
+    static std::unique_ptr<VehicleSetting>
+    createVehicleSetting(const std::string& simmode_name,
+                         const Settings& settings_json,
+                         const std::string vehicle_name)
     {
-        auto vehicle_type = Utils::toLower(settings_json.getString("VehicleType", ""));
+        auto vehicle_type =
+            Utils::toLower(settings_json.getString("VehicleType", ""));
         std::unique_ptr<VehicleSetting> vehicle_setting;
         vehicle_setting = std::unique_ptr<VehicleSetting>(new VehicleSetting());
-		if (vehicle_type == kVehicleTypeUrdfBot) {
-            vehicle_setting->debug_symbol_scale = settings_json.getFloat("DebugSymbolScale", 0.0f);
+        if (vehicle_type == kVehicleTypeUrdfBot)
+        {
+            vehicle_setting->debug_symbol_scale =
+                settings_json.getFloat("DebugSymbolScale", 0.0f);
 
             Settings collisionBlacklist;
 
@@ -493,76 +575,91 @@ private:
             keys.emplace_back(botMeshKey);
             keys.emplace_back(externalMeshRegexKey);
 
-            std::vector<std::map<std::string, std::string>> collision_blacklist_pairs = settings_json.getArrayOfKeyValuePairs("CollisionBlacklist", keys);
+            std::vector<std::map<std::string, std::string>>
+                collision_blacklist_pairs =
+                    settings_json.getArrayOfKeyValuePairs("CollisionBlacklist",
+                                                          keys);
 
             vehicle_setting->collision_blacklist.clear();
             for (unsigned int i = 0; i < collision_blacklist_pairs.size(); i++)
             {
                 std::pair<std::string, std::string> pair;
                 pair.first = collision_blacklist_pairs[i][botMeshKey];
-                pair.second = collision_blacklist_pairs[i][externalMeshRegexKey];
+                pair.second =
+                    collision_blacklist_pairs[i][externalMeshRegexKey];
 
                 vehicle_setting->collision_blacklist.emplace_back(pair);
             }
         }
         vehicle_setting->vehicle_name = vehicle_name;
 
-        //required settings_json
+        // required settings_json
         vehicle_setting->vehicle_type = vehicle_type;
 
-        //optional settings_json
+        // optional settings_json
         vehicle_setting->pawn_path = settings_json.getString("PawnPath", "");
-        vehicle_setting->default_vehicle_state = settings_json.getString("DefaultVehicleState", "");
-        vehicle_setting->allow_api_always = settings_json.getBool("AllowAPIAlways", 
-            vehicle_setting->allow_api_always);
-        vehicle_setting->auto_create = settings_json.getBool("AutoCreate",
-            vehicle_setting->auto_create);
-        vehicle_setting->enable_collision_passthrough = settings_json.getBool("EnableCollisionPassthrogh", 
+        vehicle_setting->default_vehicle_state =
+            settings_json.getString("DefaultVehicleState", "");
+        vehicle_setting->allow_api_always = settings_json.getBool(
+            "AllowAPIAlways", vehicle_setting->allow_api_always);
+        vehicle_setting->auto_create =
+            settings_json.getBool("AutoCreate", vehicle_setting->auto_create);
+        vehicle_setting->enable_collision_passthrough = settings_json.getBool(
+            "EnableCollisionPassthrogh",
             vehicle_setting->enable_collision_passthrough);
-        vehicle_setting->enable_trace = settings_json.getBool("EnableTrace",
-            vehicle_setting->enable_trace);
-        vehicle_setting->enable_collisions = settings_json.getBool("EnableCollisions",
-            vehicle_setting->enable_collisions);
-        vehicle_setting->is_fpv_vehicle = settings_json.getBool("IsFpvVehicle",
-            vehicle_setting->is_fpv_vehicle);
+        vehicle_setting->enable_trace =
+            settings_json.getBool("EnableTrace", vehicle_setting->enable_trace);
+        vehicle_setting->enable_collisions = settings_json.getBool(
+            "EnableCollisions", vehicle_setting->enable_collisions);
+        vehicle_setting->is_fpv_vehicle = settings_json.getBool(
+            "IsFpvVehicle", vehicle_setting->is_fpv_vehicle);
 
-
-        vehicle_setting->position = createVectorSetting(settings_json, vehicle_setting->position);
-        vehicle_setting->rotation = createRotationSetting(settings_json, vehicle_setting->rotation);
+        vehicle_setting->position =
+            createVectorSetting(settings_json, vehicle_setting->position);
+        vehicle_setting->rotation =
+            createRotationSetting(settings_json, vehicle_setting->rotation);
 
         loadCameraSettings(settings_json, vehicle_setting->cameras);
-        //loadSensorSettings(settings_json, "Sensors", vehicle_setting->sensors);
-       
+        // loadSensorSettings(settings_json, "Sensors",
+        // vehicle_setting->sensors);
+
         return vehicle_setting;
     }
 
-    static void initializeVehicleSettings(std::map<std::string, std::unique_ptr<VehicleSetting>>& vehicles)
+    static void initializeVehicleSettings(
+        std::map<std::string, std::unique_ptr<VehicleSetting>>& vehicles)
     {
         vehicles.clear();
 
-        //create default urdf bot vehicle
-        auto urdf_bot_setting = std::unique_ptr<VehicleSetting>(new VehicleSetting());
+        // create default urdf bot vehicle
+        auto urdf_bot_setting =
+            std::unique_ptr<VehicleSetting>(new VehicleSetting());
         urdf_bot_setting->vehicle_name = "UrdfBot";
         urdf_bot_setting->vehicle_type = kVehicleTypeUrdfBot;
-        urdf_bot_setting->is_fpv_vehicle = true; // TODO: Should this be defined somewhere else??
+        urdf_bot_setting->is_fpv_vehicle =
+            true; // TODO: Should this be defined somewhere else??
         vehicles[urdf_bot_setting->vehicle_name] = std::move(urdf_bot_setting);
     }
 
-    static void loadVehicleSettings(const std::string& simmode_name, const Settings& settings_json,
+    static void loadVehicleSettings(
+        const std::string& simmode_name,
+        const Settings& settings_json,
         std::map<std::string, std::unique_ptr<VehicleSetting>>& vehicles)
     {
         initializeVehicleSettings(vehicles);
 
         RobotSim::Settings vehicles_child;
-        if (settings_json.getChild("Vehicles", vehicles_child)) {
+        if (settings_json.getChild("Vehicles", vehicles_child))
+        {
             std::vector<std::string> keys;
             vehicles_child.getChildNames(keys);
 
-            //remove default vehicles, if values are specified in settings
+            // remove default vehicles, if values are specified in settings
             if (keys.size())
                 vehicles.clear();
 
-            for (const auto& key : keys) {
+            for (const auto& key : keys)
+            {
                 RobotSim::Settings child;
                 vehicles_child.getChild(key, child);
                 vehicles[key] = createVehicleSetting(simmode_name, child, key);
@@ -570,7 +667,8 @@ private:
         }
     }
 
-    //static void initializePawnPaths(std::map<std::string, PawnPath>& pawn_paths)
+    // static void initializePawnPaths(std::map<std::string, PawnPath>&
+    // pawn_paths)
     //{
     //    pawn_paths.clear();
     //    pawn_paths.emplace("BareboneCar",
@@ -581,20 +679,23 @@ private:
     //        PawnPath("Class'/RobotSim/Blueprints/BP_FlyingPawn.BP_FlyingPawn_C'"));
     //    pawn_paths.emplace("DefaultComputerVision",
     //        PawnPath("Class'/RobotSim/Blueprints/BP_ComputerVisionPawn.BP_ComputerVisionPawn_C'"));
-    //    
+    //
     //}
 
-    static void loadPawnPaths(const Settings& settings_json, std::map<std::string, PawnPath>& pawn_paths)
+    static void loadPawnPaths(const Settings& settings_json,
+                              std::map<std::string, PawnPath>& pawn_paths)
     {
-        //initializePawnPaths(pawn_paths);
+        // initializePawnPaths(pawn_paths);
 
-		RobotSim::Settings pawn_paths_child;
-        if (settings_json.getChild("PawnPaths", pawn_paths_child)) {
+        RobotSim::Settings pawn_paths_child;
+        if (settings_json.getChild("PawnPaths", pawn_paths_child))
+        {
             std::vector<std::string> keys;
             pawn_paths_child.getChildNames(keys);
 
-            for (const auto& key : keys) {
-				RobotSim::Settings child;
+            for (const auto& key : keys)
+            {
+                RobotSim::Settings child;
                 pawn_paths_child.getChild(key, child);
                 pawn_paths[key] = createPathPawn(child);
             }
@@ -608,68 +709,91 @@ private:
         auto slippery_mat = settings_json.getString("SlipperyMat", "");
         auto non_slippery_mat = settings_json.getString("NonSlipperyMat", "");
         auto urdf_path = settings_json.getString("UrdfFile", "");
-		auto end_effector_link = settings_json.getString("EndEffectorLink", "");
-		auto scale_factor = settings_json.getFloat("ScaleFactor", 1.0f);
-		auto enable_keyboard = settings_json.getBool("EnableKeyboard", true);
+        auto end_effector_link = settings_json.getString("EndEffectorLink", "");
+        auto scale_factor = settings_json.getFloat("ScaleFactor", 1.0f);
+        auto enable_keyboard = settings_json.getBool("EnableKeyboard", true);
 
         if (slippery_mat != "")
             paths.slippery_mat = slippery_mat;
         if (non_slippery_mat != "")
             paths.non_slippery_mat = non_slippery_mat;
-		if (urdf_path != "")
-			//paths.urdf_path = RobotSim::Settings::getPorjectDirectoryFullPath(urdf_path);
-			paths.urdf_path = RobotSim::Settings::getPluginDirectoryFullPath(urdf_path);
-		if (end_effector_link != "")
-			paths.end_effector_link = end_effector_link;
+        if (urdf_path != "")
+            paths.urdf_path =
+                RobotSim::Settings::getAnyPossiblePath(urdf_path);
+        if (end_effector_link != "")
+            paths.end_effector_link = end_effector_link;
 
-		paths.scale_factor = scale_factor;
-		paths.enable_keyboard = enable_keyboard;
+        paths.scale_factor = scale_factor;
+        paths.enable_keyboard = enable_keyboard;
 
         return paths;
     }
 
-    static void loadSegmentationSetting(const Settings& settings_json, SegmentationSetting& segmentation_setting)
+    static void
+    loadSegmentationSetting(const Settings& settings_json,
+                            SegmentationSetting& segmentation_setting)
     {
         Settings json_parent;
-        if (settings_json.getChild("SegmentationSettings", json_parent)) {
-            std::string init_method = Utils::toLower(json_parent.getString("InitMethod", ""));
+        if (settings_json.getChild("SegmentationSettings", json_parent))
+        {
+            std::string init_method =
+                Utils::toLower(json_parent.getString("InitMethod", ""));
             if (init_method == "" || init_method == "commonobjectsrandomids")
-                segmentation_setting.init_method = SegmentationSetting::InitMethodType::CommonObjectsRandomIDs;
+                segmentation_setting.init_method =
+                    SegmentationSetting::InitMethodType::CommonObjectsRandomIDs;
             else if (init_method == "none")
-                segmentation_setting.init_method = SegmentationSetting::InitMethodType::None;
+                segmentation_setting.init_method =
+                    SegmentationSetting::InitMethodType::None;
             else
-                //TODO: below exception doesn't actually get raised right now because of issue in Unreal Engine?
-                throw std::invalid_argument(std::string("SegmentationSetting init_method has invalid value in settings_json ") + init_method);
+                // TODO: below exception doesn't actually get raised right now
+                // because of issue in Unreal Engine?
+                throw std::invalid_argument(
+                    std::string("SegmentationSetting init_method has invalid "
+                                "value in settings_json ") +
+                    init_method);
 
-            segmentation_setting.override_existing = json_parent.getBool("OverrideExisting", false);
+            segmentation_setting.override_existing =
+                json_parent.getBool("OverrideExisting", false);
 
-            std::string mesh_naming_method = Utils::toLower(json_parent.getString("MeshNamingMethod", ""));
+            std::string mesh_naming_method =
+                Utils::toLower(json_parent.getString("MeshNamingMethod", ""));
             if (mesh_naming_method == "" || mesh_naming_method == "ownername")
-                segmentation_setting.mesh_naming_method = SegmentationSetting::MeshNamingMethodType::OwnerName;
+                segmentation_setting.mesh_naming_method =
+                    SegmentationSetting::MeshNamingMethodType::OwnerName;
             else if (mesh_naming_method == "staticmeshname")
-                segmentation_setting.mesh_naming_method = SegmentationSetting::MeshNamingMethodType::StaticMeshName;
+                segmentation_setting.mesh_naming_method =
+                    SegmentationSetting::MeshNamingMethodType::StaticMeshName;
             else
-                throw std::invalid_argument(std::string("SegmentationSetting MeshNamingMethod has invalid value in settings_json ") + mesh_naming_method);
+                throw std::invalid_argument(
+                    std::string("SegmentationSetting MeshNamingMethod has "
+                                "invalid value in settings_json ") +
+                    mesh_naming_method);
         }
     }
 
-	static void initializeNoiseSettings(std::map<int, NoiseSetting>&  noise_settings)
-	{
-		int image_count = Utils::toNumeric(ImageType::Count);
-		noise_settings.clear();
-		for (int i = -1; i < image_count; ++i)
-			noise_settings[i] = NoiseSetting();
-	}
+    static void
+    initializeNoiseSettings(std::map<int, NoiseSetting>& noise_settings)
+    {
+        int image_count = Utils::toNumeric(ImageType::Count);
+        noise_settings.clear();
+        for (int i = -1; i < image_count; ++i)
+            noise_settings[i] = NoiseSetting();
+    }
 
-    static void loadNoiseSettings(const Settings& settings_json, std::map<int, NoiseSetting>&  noise_settings)
+    static void loadNoiseSettings(const Settings& settings_json,
+                                  std::map<int, NoiseSetting>& noise_settings)
     {
         initializeNoiseSettings(noise_settings);
 
         Settings json_parent;
-        if (settings_json.getChild("NoiseSettings", json_parent)) {
-            for (size_t child_index = 0; child_index < json_parent.size(); ++child_index) {
-                Settings json_settings_child;     
-                if (json_parent.getChild(child_index, json_settings_child)) {
+        if (settings_json.getChild("NoiseSettings", json_parent))
+        {
+            for (size_t child_index = 0; child_index < json_parent.size();
+                 ++child_index)
+            {
+                Settings json_settings_child;
+                if (json_parent.getChild(child_index, json_settings_child))
+                {
                     NoiseSetting noise_setting;
                     loadNoiseSetting(json_settings_child, noise_setting);
                     noise_settings[noise_setting.ImageType] = noise_setting;
@@ -678,147 +802,204 @@ private:
         }
     }
 
-    static void loadNoiseSetting(const RobotSim::Settings& settings_json, NoiseSetting& noise_setting)
+    static void loadNoiseSetting(const RobotSim::Settings& settings_json,
+                                 NoiseSetting& noise_setting)
     {
-        noise_setting.Enabled = settings_json.getBool("Enabled", noise_setting.Enabled);
-        noise_setting.ImageType = settings_json.getInt("ImageType", noise_setting.ImageType);
+        noise_setting.Enabled =
+            settings_json.getBool("Enabled", noise_setting.Enabled);
+        noise_setting.ImageType =
+            settings_json.getInt("ImageType", noise_setting.ImageType);
 
-        noise_setting.HorzWaveStrength = settings_json.getFloat("HorzWaveStrength", noise_setting.HorzWaveStrength);
-        noise_setting.RandSpeed = settings_json.getFloat("RandSpeed", noise_setting.RandSpeed);
-        noise_setting.RandSize = settings_json.getFloat("RandSize", noise_setting.RandSize);
-        noise_setting.RandDensity = settings_json.getFloat("RandDensity", noise_setting.RandDensity);
-        noise_setting.RandContrib = settings_json.getFloat("RandContrib", noise_setting.RandContrib);
-        noise_setting.HorzWaveContrib = settings_json.getFloat("HorzWaveContrib", noise_setting.HorzWaveContrib);
-        noise_setting.HorzWaveVertSize = settings_json.getFloat("HorzWaveVertSize", noise_setting.HorzWaveVertSize);
-        noise_setting.HorzWaveScreenSize = settings_json.getFloat("HorzWaveScreenSize", noise_setting.HorzWaveScreenSize);
-        noise_setting.HorzNoiseLinesContrib = settings_json.getFloat("HorzNoiseLinesContrib", noise_setting.HorzNoiseLinesContrib);
-        noise_setting.HorzNoiseLinesDensityY = settings_json.getFloat("HorzNoiseLinesDensityY", noise_setting.HorzNoiseLinesDensityY);
-        noise_setting.HorzNoiseLinesDensityXY = settings_json.getFloat("HorzNoiseLinesDensityXY", noise_setting.HorzNoiseLinesDensityXY);
-        noise_setting.HorzDistortionStrength = settings_json.getFloat("HorzDistortionStrength", noise_setting.HorzDistortionStrength);
-        noise_setting.HorzDistortionContrib = settings_json.getFloat("HorzDistortionContrib", noise_setting.HorzDistortionContrib);
+        noise_setting.HorzWaveStrength = settings_json.getFloat(
+            "HorzWaveStrength", noise_setting.HorzWaveStrength);
+        noise_setting.RandSpeed =
+            settings_json.getFloat("RandSpeed", noise_setting.RandSpeed);
+        noise_setting.RandSize =
+            settings_json.getFloat("RandSize", noise_setting.RandSize);
+        noise_setting.RandDensity =
+            settings_json.getFloat("RandDensity", noise_setting.RandDensity);
+        noise_setting.RandContrib =
+            settings_json.getFloat("RandContrib", noise_setting.RandContrib);
+        noise_setting.HorzWaveContrib = settings_json.getFloat(
+            "HorzWaveContrib", noise_setting.HorzWaveContrib);
+        noise_setting.HorzWaveVertSize = settings_json.getFloat(
+            "HorzWaveVertSize", noise_setting.HorzWaveVertSize);
+        noise_setting.HorzWaveScreenSize = settings_json.getFloat(
+            "HorzWaveScreenSize", noise_setting.HorzWaveScreenSize);
+        noise_setting.HorzNoiseLinesContrib = settings_json.getFloat(
+            "HorzNoiseLinesContrib", noise_setting.HorzNoiseLinesContrib);
+        noise_setting.HorzNoiseLinesDensityY = settings_json.getFloat(
+            "HorzNoiseLinesDensityY", noise_setting.HorzNoiseLinesDensityY);
+        noise_setting.HorzNoiseLinesDensityXY = settings_json.getFloat(
+            "HorzNoiseLinesDensityXY", noise_setting.HorzNoiseLinesDensityXY);
+        noise_setting.HorzDistortionStrength = settings_json.getFloat(
+            "HorzDistortionStrength", noise_setting.HorzDistortionStrength);
+        noise_setting.HorzDistortionContrib = settings_json.getFloat(
+            "HorzDistortionContrib", noise_setting.HorzDistortionContrib);
     }
 
     static GimbalSetting createGimbalSetting(const Settings& settings_json)
     {
         GimbalSetting gimbal;
-        //capture_setting.gimbal.is_world_frame = settings_json.getBool("IsWorldFrame", false);
+        // capture_setting.gimbal.is_world_frame =
+        // settings_json.getBool("IsWorldFrame", false);
         gimbal.stabilization = settings_json.getFloat("Stabilization", false);
         gimbal.rotation = createRotationSetting(settings_json, gimbal.rotation);
         return gimbal;
     }
 
-	static CameraSetting createCameraSetting(const Settings& settings_json)
-	{
-		CameraSetting setting;
-
-		setting.position = createVectorSetting(settings_json, setting.position);
-		setting.rotation = createRotationSetting(settings_json, setting.rotation);
-
-		loadCaptureSettings(settings_json, setting.capture_settings);
-		loadNoiseSettings(settings_json, setting.noise_settings);
-		Settings json_gimbal;
-		if (settings_json.getChild("Gimbal", json_gimbal))
-			setting.gimbal = createGimbalSetting(json_gimbal);
-
-		setting.attach_link = settings_json.getString("AttachLink", "");
-
-		return setting;
-	}
-
-	static void loadCameraSettings(const Settings& settings_json, std::map<std::string, CameraSetting>& cameras)
-	{
-		cameras.clear();
-
-		Settings json_parent;
-		if (settings_json.getChild("Cameras", json_parent)) {
-			std::vector<std::string> keys;
-			json_parent.getChildNames(keys);
-
-			for (const auto& key : keys) {
-				RobotSim::Settings child;
-				json_parent.getChild(key, child);
-				cameras[key] = createCameraSetting(child);
-			}
-		}
-	}
-
-    static void createCaptureSettings(const RobotSim::Settings& settings_json, CaptureSetting& capture_setting)
+    static CameraSetting createCameraSetting(const Settings& settings_json)
     {
-        capture_setting.width = settings_json.getInt("Width", capture_setting.width);
-        capture_setting.height = settings_json.getInt("Height", capture_setting.height);
-        capture_setting.fov_degrees = settings_json.getFloat("FOV_Degrees", capture_setting.fov_degrees);
-        capture_setting.auto_exposure_speed = settings_json.getFloat("AutoExposureSpeed", capture_setting.auto_exposure_speed);
-        capture_setting.auto_exposure_bias = settings_json.getFloat("AutoExposureBias", capture_setting.auto_exposure_bias);
-        capture_setting.auto_exposure_max_brightness = settings_json.getFloat("AutoExposureMaxBrightness", capture_setting.auto_exposure_max_brightness);
-        capture_setting.auto_exposure_min_brightness = settings_json.getFloat("AutoExposureMinBrightness", capture_setting.auto_exposure_min_brightness);
-        capture_setting.motion_blur_amount = settings_json.getFloat("MotionBlurAmount", capture_setting.motion_blur_amount);
-        capture_setting.image_type = settings_json.getInt("ImageType", 0);
-        capture_setting.target_gamma = settings_json.getFloat("TargetGamma", 
-            capture_setting.image_type == 0 ? CaptureSetting::kSceneTargetGamma : Utils::nan<float>());
+        CameraSetting setting;
 
-        std::string projection_mode = Utils::toLower(settings_json.getString("ProjectionMode", ""));
+        setting.position = createVectorSetting(settings_json, setting.position);
+        setting.rotation =
+            createRotationSetting(settings_json, setting.rotation);
+
+        loadCaptureSettings(settings_json, setting.capture_settings);
+        loadNoiseSettings(settings_json, setting.noise_settings);
+        Settings json_gimbal;
+        if (settings_json.getChild("Gimbal", json_gimbal))
+            setting.gimbal = createGimbalSetting(json_gimbal);
+
+        setting.attach_link = settings_json.getString("AttachLink", "");
+
+        return setting;
+    }
+
+    static void
+    loadCameraSettings(const Settings& settings_json,
+                       std::map<std::string, CameraSetting>& cameras)
+    {
+        cameras.clear();
+
+        Settings json_parent;
+        if (settings_json.getChild("Cameras", json_parent))
+        {
+            std::vector<std::string> keys;
+            json_parent.getChildNames(keys);
+
+            for (const auto& key : keys)
+            {
+                RobotSim::Settings child;
+                json_parent.getChild(key, child);
+                cameras[key] = createCameraSetting(child);
+            }
+        }
+    }
+
+    static void createCaptureSettings(const RobotSim::Settings& settings_json,
+                                      CaptureSetting& capture_setting)
+    {
+        capture_setting.width =
+            settings_json.getInt("Width", capture_setting.width);
+        capture_setting.height =
+            settings_json.getInt("Height", capture_setting.height);
+        capture_setting.fov_degrees =
+            settings_json.getFloat("FOV_Degrees", capture_setting.fov_degrees);
+        capture_setting.auto_exposure_speed = settings_json.getFloat(
+            "AutoExposureSpeed", capture_setting.auto_exposure_speed);
+        capture_setting.auto_exposure_bias = settings_json.getFloat(
+            "AutoExposureBias", capture_setting.auto_exposure_bias);
+        capture_setting.auto_exposure_max_brightness = settings_json.getFloat(
+            "AutoExposureMaxBrightness",
+            capture_setting.auto_exposure_max_brightness);
+        capture_setting.auto_exposure_min_brightness = settings_json.getFloat(
+            "AutoExposureMinBrightness",
+            capture_setting.auto_exposure_min_brightness);
+        capture_setting.motion_blur_amount = settings_json.getFloat(
+            "MotionBlurAmount", capture_setting.motion_blur_amount);
+        capture_setting.image_type = settings_json.getInt("ImageType", 0);
+        capture_setting.target_gamma = settings_json.getFloat(
+            "TargetGamma", capture_setting.image_type == 0
+                               ? CaptureSetting::kSceneTargetGamma
+                               : Utils::nan<float>());
+
+        std::string projection_mode =
+            Utils::toLower(settings_json.getString("ProjectionMode", ""));
         if (projection_mode == "" || projection_mode == "perspective")
             capture_setting.projection_mode = 0; // Perspective
         else if (projection_mode == "orthographic")
             capture_setting.projection_mode = 1; // Orthographic
         else
-            throw std::invalid_argument(std::string("CaptureSettings projection_mode has invalid value in settings_json ") + projection_mode);
+            throw std::invalid_argument(
+                std::string("CaptureSettings projection_mode has invalid value "
+                            "in settings_json ") +
+                projection_mode);
 
-        capture_setting.ortho_width = settings_json.getFloat("OrthoWidth", capture_setting.ortho_width);
+        capture_setting.ortho_width =
+            settings_json.getFloat("OrthoWidth", capture_setting.ortho_width);
     }
 
-    static void loadSubWindowsSettings(const Settings& settings_json, std::vector<SubwindowSetting>& subwindow_settings)
+    static void
+    loadSubWindowsSettings(const Settings& settings_json,
+                           std::vector<SubwindowSetting>& subwindow_settings)
     {
-        //load default subwindows
+        // load default subwindows
         initializeSubwindowSettings(subwindow_settings);
 
         Settings json_parent;
-        if (settings_json.getChild("SubWindows", json_parent)) {
-            for (size_t child_index = 0; child_index < json_parent.size(); ++child_index) {
+        if (settings_json.getChild("SubWindows", json_parent))
+        {
+            for (size_t child_index = 0; child_index < json_parent.size();
+                 ++child_index)
+            {
                 Settings json_settings_child;
-                if (json_parent.getChild(child_index, json_settings_child)) {
-                    int window_index = json_settings_child.getInt("WindowID", 0);
-                    SubwindowSetting& subwindow_setting = subwindow_settings.at(window_index);
+                if (json_parent.getChild(child_index, json_settings_child))
+                {
+                    int window_index =
+                        json_settings_child.getInt("WindowID", 0);
+                    SubwindowSetting& subwindow_setting =
+                        subwindow_settings.at(window_index);
                     subwindow_setting.window_index = window_index;
                     subwindow_setting.image_type = Utils::toEnum<ImageType>(
                         json_settings_child.getInt("ImageType", 0));
-                    subwindow_setting.visible = json_settings_child.getBool("Visible", false);
-                    subwindow_setting.camera_name = getCameraName(json_settings_child);
+                    subwindow_setting.visible =
+                        json_settings_child.getBool("Visible", false);
+                    subwindow_setting.camera_name =
+                        getCameraName(json_settings_child);
                 }
             }
         }
     }
 
-    static void initializeSubwindowSettings(std::vector<SubwindowSetting>& subwindow_settings)
+    static void initializeSubwindowSettings(
+        std::vector<SubwindowSetting>& subwindow_settings)
     {
         subwindow_settings.clear();
-        subwindow_settings.push_back(SubwindowSetting(0, ImageType::DepthVis, false, "")); //depth
-        subwindow_settings.push_back(SubwindowSetting(0, ImageType::Segmentation, false, "")); //seg
-        subwindow_settings.push_back(SubwindowSetting(0, ImageType::Scene, false, "")); //vis
+        subwindow_settings.push_back(
+            SubwindowSetting(0, ImageType::DepthVis, false, "")); // depth
+        subwindow_settings.push_back(
+            SubwindowSetting(0, ImageType::Segmentation, false, "")); // seg
+        subwindow_settings.push_back(
+            SubwindowSetting(0, ImageType::Scene, false, "")); // vis
     }
 
-
-    static void loadDefaultCameraSetting(const Settings& settings_json, CameraSetting& camera_defaults)
+    static void loadDefaultCameraSetting(const Settings& settings_json,
+                                         CameraSetting& camera_defaults)
     {
         Settings child_json;
-        if (settings_json.getChild("CameraDefaults", child_json)) {
-			UE_LOG(LogTemp,Warning,TEXT("loadDefaultCameraSetting!"));
+        if (settings_json.getChild("CameraDefaults", child_json))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("loadDefaultCameraSetting!"));
             camera_defaults = createCameraSetting(child_json);
         }
     }
 
-    static void loadCameraDirectorSetting(const Settings& settings_json, 
-        CameraDirectorSetting& camera_director, const std::string& simmode_name)
+    static void
+    loadCameraDirectorSetting(const Settings& settings_json,
+                              CameraDirectorSetting& camera_director,
+                              const std::string& simmode_name)
     {
         camera_director = CameraDirectorSetting();
 
         if (std::isnan(camera_director.follow_distance))
-                camera_director.follow_distance = -3;
+            camera_director.follow_distance = -3;
         if (std::isnan(camera_director.position.x()))
             camera_director.position.x() = camera_director.follow_distance;
         if (std::isnan(camera_director.position.y()))
             camera_director.position.y() = 0;
-        if (std::isnan(camera_director.position.z())) 
+        if (std::isnan(camera_director.position.z()))
             camera_director.position.z() = -2;
     }
 
@@ -826,12 +1007,14 @@ private:
     {
         clock_type = settings_json.getString("ClockType", "");
 
-        if (clock_type == "") {
-            //default value
+        if (clock_type == "")
+        {
+            // default value
             clock_type = "ScalableClock";
 
-            //override if multirotor simmode with simple_flight
-            if (simmode_name == "Multirotor") {
+            // override if multirotor simmode with simple_flight
+            if (simmode_name == "Multirotor")
+            {
 
                 clock_type = "SteppableClock";
             }
@@ -839,9 +1022,7 @@ private:
 
         clock_speed = settings_json.getFloat("ClockSpeed", 1.0f);
     }
-
- 
 };
 
-} //namespace
+} // namespace RobotSim
 #endif
