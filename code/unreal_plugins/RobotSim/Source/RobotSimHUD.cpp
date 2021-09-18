@@ -80,13 +80,13 @@ bool ARobotSimHUD::getSettingsTextContent(std::string& settingsText)
     // FString  CurrentProjectFilePath =
     // RobotSim::Settings::getPorjectDirectoryFullPath("settings.json").c_str();
     FString CurrentProjectFilePath =
-        RobotSim::Settings::getAnyPossiblePath("settings.json")
-            .c_str();
+        RobotSim::Settings::getAnyPossiblePath("settings.json").c_str();
     if (!FPaths::FileExists(CurrentProjectFilePath))
     {
-            throw std::runtime_error(
-            "settings.json not found" + std::string(TCHAR_TO_UTF8(*CurrentProjectFilePath)));
-	}
+        throw std::runtime_error(
+            "settings.json not found" +
+            std::string(TCHAR_TO_UTF8(*CurrentProjectFilePath)));
+    }
     return readSettingsTextFromFile(CurrentProjectFilePath, settingsText);
 }
 
