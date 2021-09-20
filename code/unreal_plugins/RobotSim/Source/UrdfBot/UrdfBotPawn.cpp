@@ -58,7 +58,11 @@ AUrdfBotPawn::AUrdfBotPawn()
             throw std::runtime_error(
                 "No pawn path specified. Make sure that the 'PawnPaths' member "
                 "named 'UrdfBot' has member 'urdf_path' specified.");
-
+        if (!FPaths::FileExists(urdfPath))
+        {
+            throw std::runtime_error(
+                "Invalid pawn_paths. Make sure that the UrdfFile exists");
+        }
         this->components_.Empty();
 
         UrdfParser parser;
@@ -246,7 +250,11 @@ void AUrdfBotPawn::InitializeForBeginPlay()
         throw std::runtime_error(
             "No pawn path specified. Make sure that the 'PawnPaths' member "
             "named 'UrdfBot' has member 'urdf_path' specified.");
-
+    if (!FPaths::FileExists(urdfPath))
+    {
+        throw std::runtime_error(
+            "Invalid pawn_paths. Make sure that the UrdfFile exists");
+    }
     // TODO: change when multiple vehicles are supported.
     this->debug_symbol_scale_ =
         settings.vehicles["UrdfBot"].get()->debug_symbol_scale;
@@ -264,20 +272,8 @@ void AUrdfBotPawn::InitializeForBeginPlay()
     this->ConstructFromFile(urdfPath);
 
     std::string& urdf_path = settings.pawn_paths["UrdfBot"].urdf_path;
-    if (urdf_path.substr(urdf_path.length() - 4, urdf_path.length()) ==
-        std::string(".xml"))
-    {
-        // import ik library using urdf file path instead of urdf
-        this->inverseKinematicComponent->ImportModel(
-            urdf_path.substr(0, urdf_path.length() - 4) + ".urdf",
-            this->scale_factor_);
-    }
-    else
-    {
-        // TODO use .urdf file directly?
-        this->inverseKinematicComponent->ImportModel(urdf_path,
-                                                     this->scale_factor_);
-    };
+    this->inverseKinematicComponent->ImportModel(urdf_path,
+                                                 this->scale_factor_);
 
     FString endEffectorName =
         settings.pawn_paths["UrdfBot"].end_effector_link.c_str();

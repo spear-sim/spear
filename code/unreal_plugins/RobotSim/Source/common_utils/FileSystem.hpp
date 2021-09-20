@@ -55,7 +55,10 @@ public:
     static std::string getAppDataFolder() {
         return ensureFolder(combine(getUserDocumentsFolder(), ProductFolderName));
     }
-
+	static std::string getProductFolderName()
+	{
+        return ProductFolderName;
+	}
     static std::string ensureFolder(const std::string& fullpath) {
         // make sure this directory exists.
         return createDirectory(fullpath);
