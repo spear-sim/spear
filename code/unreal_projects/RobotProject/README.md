@@ -99,6 +99,30 @@ path/to/UE_4.26/Engine/Binaries/Mac/UE4Editor.app/Contents/MacOS/UE4Editor path/
 path/to/UE_4.26/Engine/Binaries/Linux/UE4Editor path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -game -WINDOWED -ResX=512 -ResY=512 -nullrhi -RenderOffScreen
 ```
 
+## RobotSim Setting
+In order to provide more flexibility such as changing robot model and other settings, there are two setting files
+that can be modified easily to change the robot config without changing any code. 
+
+Default setting can be found in `code/unreal_plugins/RobotSim/setting` (used when start from `.uproject` if no settign found from higher priority paths).  
+Copy the directory to either `{LaunchDir}` or Document directory (Required for standalone executable and optional when start from `.uproject`).
+
+* Settings.json: basic settings for robot loading, urdfFilePath, loading config, camera config etc.  
+* fetch.xml: robot structure description based on fetch.urdf  
+
+Current parsing path order for above files is as follows: 
+1. check if the filepath is absolute path (only makes sense for UrdfFile)
+2. check if the file is in {LaunchDir}/setting/ (useful for standalone executable, structure as follows)
+    ```
+    [Packaging Dir]
+    ├── RobotProject.exe
+    ├── setting/
+    │        ├──   setting.json
+    │        └──   fetch.xml
+    └──  [...]
+    ```
+3. check if the file is in `~/Documents/RobotSim/setting/` for macOS/Linux, or `C:/Users/{userName}/Documents/RobotSim/setting/` for Windows
+4. check if the file is in `{PluginDir}/RobotSim/setting/` (Default setting when run from `.uproject`)
+
 # Virtual World
 
 ### Scene Manager
