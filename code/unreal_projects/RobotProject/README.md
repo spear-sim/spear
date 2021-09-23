@@ -117,7 +117,7 @@ path/to/UE_4.26/Engine/Binaries/Linux/UE4Editor path/to/interiorsim/code/unreal_
 
 	```
 	[InstalledDerivedDataBackendGraph]
-	Local=(Type=FileSystem, ReadOnly=false, Clean=false, Flush=false, PurgeTransient=true, DeleteUnused=true, nusedFileAge=34, FoldersToClean=-1,Path="%GAMEDIR%DerivedDataCache", EditorOverrideSetting=LocalDerivedDataCache)
+	Local=(Type=FileSystem, ReadOnly=false, Clean=false, Flush=false, PurgeTransient=true, DeleteUnused=true, nusedFileAge=34, FoldersToClean=-1, Path="%GAMEDIR%DerivedDataCache", EditorOverrideSetting=LocalDerivedDataCache)
 	```
 
    -f: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version information(MD5 in it) to remote version information and decide whether to download asset.
