@@ -1,3 +1,3 @@
 #!/bin/sh
 
-find .. \( -name '*.h' -or -name '*.cpp' \) | xargs clang-format -i -style=file --verbose
+find ../code/ \( -name '*.h' -or -name '*.cpp' \) -not -ipath '*/ThirdParty/*' | xargs clang-format -i -style=file --verbose
