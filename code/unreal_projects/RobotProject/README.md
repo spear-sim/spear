@@ -22,7 +22,7 @@ In order to use SceneManager script, install python3 and run `pip3 install tqdm`
 
 RobotSim is developed on Windows. It might not be compatible with Linux or macOS, although we are working on making it so.
 
-# Building and running on macOS or Linux
+# Building and running on macOS and Linux
 
 ## Install and build pre-requisite libraries
 
