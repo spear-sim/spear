@@ -3,6 +3,8 @@ code/unreal_plugins/RobotSim/Intermediate
 code/unreal_plugins/RobotSim/Source/RobotSim.Build.cs
 code/unreal_projects/RobotProject/Binaries
 code/unreal_projects/RobotProject/Build
+code/unreal_projects/RobotProject/DerivedDataCache
+code/unreal_projects/RobotProject/dist
 code/unreal_projects/RobotProject/Intermediate
 code/unreal_projects/RobotProject/Plugins/RobotSim
 code/unreal_projects/RobotProject/Saved

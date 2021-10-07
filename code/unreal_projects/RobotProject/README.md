@@ -71,32 +71,54 @@ ln -s path/to/interiorsim/code/unreal_plugins/RobotSim path/to/interiorsim/code/
 
 Rename `path/to/interiorsim/code/unreal_plugins/RobotSim/Source/RobotSim.Build.cs.example -> RobotSim.Build.cs` and modify the paths at the top of this file for your system.
 
-## Build RobotProject
+## Build and run RobotProject through the Unreal Editor
 
 #### macOS
 
 ```
+# build
 path/to/UE_4.26/Engine/Build/BatchFiles/Mac/Build.sh RobotProjectEditor Mac Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
-```
 
-#### Linux
-
-```
-path/to/UE_4.26/Engine/Build/BatchFiles/Linux/Build.sh RobotProjectEditor Linux Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
-```
-
-## Run RobotProject
-
-#### macOS
-
-```
+# run
 path/to/UE_4.26/Engine/Binaries/Mac/UE4Editor.app/Contents/MacOS/UE4Editor path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -game -WINDOWED -ResX=512 -ResY=512
 ```
 
 #### Linux
 
 ```
+# build
+path/to/UE_4.26/Engine/Build/BatchFiles/Linux/Build.sh RobotProjectEditor Linux Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
+
+# run
 path/to/UE_4.26/Engine/Binaries/Linux/UE4Editor path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -game -WINDOWED -ResX=512 -ResY=512 -nullrhi -RenderOffScreen
+```
+
+## Build and run RobotProject as a standalone executable
+
+#### macOS
+
+```
+# build and package
+path/to/UE_4.26/Engine/Build/BatchFiles/Mac/Build.sh RobotProjectEditor Mac Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
+path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -nop4 -project=path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -build -cook -stage -archive -archivedirectory=path/to/interiorsim/code/unreal_projects/RobotProject/dist -targetplatform=Mac -target=RobotProject -nocompileeditor -nodebuginfo -serverconfig=Development -clientconfig=Development -package
+
+# run
+cd path/to/interiorsim/code/unreal_projects/RobotProject/dist/MacNoEditor/RobotProject.app/Contents/MacOS
+cp -R path/to/interiorsim/code/unreal_plugins/RobotSim/setting .
+./RobotProject -WINDOWED -ResX=512 -ResY=512
+```
+
+#### Linux
+
+```
+# build and package
+path/to/UE_4.26/Engine/Build/BatchFiles/Linux/Build.sh RobotProjectEditor Linux Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
+path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -nop4 -project=path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -build -cook -stage -archive -archivedirectory=path/to/interiorsim/code/unreal_projects/RobotProject/dist -targetplatform=Linux -target=RobotProject -nocompileeditor -nodebuginfo -serverconfig=Development -clientconfig=Development -package
+
+# run
+cd path/to/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor
+cp -R path/to/interiorsim/code/unreal_plugins/RobotSim/setting .
+./RobotProject.sh -WINDOWED -ResX=512 -ResY=512 -nullrhi -RenderOffScreen
 ```
 
 # Virtual World
