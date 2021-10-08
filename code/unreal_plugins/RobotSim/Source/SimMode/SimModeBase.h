@@ -11,7 +11,7 @@
 #include "common_utils/RobotSimSettings.hpp"
 #include "NedTransform.h"
 #include "RobotSimApi.h"
-#include "UrdfBot/RobotBase.h"
+#include "RobotBase.h"
 #include "SimModeBase.generated.h"
 
 class AUrdfBotPawn;

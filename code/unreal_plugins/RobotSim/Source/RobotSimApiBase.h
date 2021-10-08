@@ -16,7 +16,7 @@
 //#include "SimJoyStick.h"
 #include "common_utils/RobotApiBase.hpp"
 #include "common_utils/UniqueValueMap.hpp"
-#include "UrdfBot/RobotBase.h"
+#include "RobotBase.h"
 #include "PawnEvents.h"
 #include "common_utils/UpdatableObject.hpp"
 #include "common_utils/ImageCaptureBase.hpp"

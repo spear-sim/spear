@@ -29,7 +29,7 @@
 
 #include "MeshGeneration/StaticMeshGenerator.h"
 #include "PawnEvents.h"
-#include "UrdfBot/RobotBase.h"
+#include "RobotBase.h"
 #include "PhysXIncludes.h"
 #include "PhysicsPublic.h"
 #include "PhysXPublic.h"
