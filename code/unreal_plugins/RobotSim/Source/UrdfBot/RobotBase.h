@@ -3,10 +3,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 
-class RobotSimVehicle
+class RobotBase
 {
 public:
-    virtual ~RobotSimVehicle(){};
+    virtual ~RobotBase(){};
 
     virtual USceneComponent* GetComponent(FString componentName) = 0;
     virtual void GetComponentReferenceTransform(FString componentName,

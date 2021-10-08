@@ -1,6 +1,6 @@
 #pragma once
 #include "common_utils/VectorMath.hpp"
-#include "common_utils/VehicleApiBase.hpp"
+#include "common_utils/RobotApiBase.hpp"
 
 #include "physics/Kinematics.hpp"
 #include "physics/Environment.hpp"
@@ -9,7 +9,7 @@
 
 class AUrdfBotPawn;
 
-class RobotApi : public RobotSim::VehicleApiBase
+class RobotApi : public RobotSim::RobotApiBase
 {
 
 public:

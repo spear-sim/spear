@@ -1,6 +1,7 @@
 #include "UrdfBotPawn.h"
 #include "Engine/Engine.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "SimModeUrdfBot.h"
 
 AUrdfBotPawn::AUrdfBotPawn()
 {
@@ -356,7 +357,7 @@ void AUrdfBotPawn::TeleportToLocation(FVector position,
 
     this->MoveAllComponents(translation, rotation);
 
-    RobotSimVehicle::TeleportToLocation(
+    RobotBase::TeleportToLocation(
         position * URobotBlueprintLib::GetWorldToMetersScale(this), orientation,
         teleport);
 }
@@ -487,15 +488,6 @@ void AUrdfBotPawn::onMoveForward(float Val)
     components.Push("rear_right_wheel");
     components.Push("rear_left_wheel");
 
-    ////测试运动组件
-    // if (Val > 0)
-    //{
-    //	for (const auto& kvp : this->controlled_motion_components_)
-    //	{
-    //		kvp.Value->GetState();
-    //	}
-    //}
-
     GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red,
                                      *FString::SanitizeFloat(Val));
     for (auto& componentName : components)
@@ -508,10 +500,6 @@ void AUrdfBotPawn::onMoveForward(float Val)
             controlSignalValues.Add(FString("Value"), Val);
             component->SetControl(controlSignalValues);
         }
-        // else
-        //{
-        //	throw  std::runtime_error("components is undefined");
-        //}
     }
 }
 
@@ -535,10 +523,6 @@ void AUrdfBotPawn::onMoveRight(float Val)
                 controlSignalValues.Add(FString("Value"), Val);
                 component->SetControl(controlSignalValues);
             }
-            // else
-            //{
-            //	throw  std::runtime_error("components is undefined");
-            //}
         }
     }
     if (Val > 0)
@@ -557,11 +541,7 @@ void AUrdfBotPawn::onMoveRight(float Val)
                 controlSignalValues.Add(FString("Value"), -Val);
                 component->SetControl(controlSignalValues);
             }
-            // else
-            //{
-            //	throw  std::runtime_error("components is undefined");
-            //}
-        }
+		}
     }
 }
 
@@ -632,6 +612,22 @@ TMap<FString, TTuple<UrdfJointType, UPhysicsConstraintComponent*>>
 AUrdfBotPawn::getConstraints()
 {
     return this->constraints_;
+}
+
+RobotApi* AUrdfBotPawn::getRobotApi() const
+{
+	RobotApi* resultApi = nullptr;
+	ASimModeUrdfBot* urdfSimMode = static_cast<ASimModeUrdfBot*>(simmode_);
+	std::vector<std::unique_ptr<RobotSimApi>>& simapiArray = urdfSimMode->vehicle_sim_apis_;
+	for (auto& ptr : simapiArray)
+	{
+		if (ptr->getPawn() == this)
+		{
+			resultApi = ptr->getVehicleApi();
+			break;
+		}
+	}
+	return resultApi;
 }
 
 void AUrdfBotPawn::setLinkForceAndTorque(FString componentName,
@@ -1575,6 +1571,9 @@ void AUrdfBotPawn::onStiffnessDown()
 
 void AUrdfBotPawn::onBaseMove(float value)
 {
+    URobotBlueprintLib::LogMessage(
+        "onBaseMove", FString("value=") + FString::SanitizeFloat(value),
+        LogDebugLevel::Informational, 30);
     // this->setDriveVelocity("r_wheel_joint", value);
     // this->setDriveVelocity("l_wheel_joint", value);
     if (!this->controlled_motion_components_.Contains("r_wheel_joint"))
@@ -1634,6 +1633,9 @@ void AUrdfBotPawn::onBaseMove(float value)
 
 void AUrdfBotPawn::onBaseRotate(float value)
 {
+    URobotBlueprintLib::LogMessage(
+        "onBaseRotate", FString("value=") + FString::SanitizeFloat(value),
+        LogDebugLevel::Informational, 30);
     if (value != 0)
     {
         this->updateVelocity("l_wheel_joint", value);

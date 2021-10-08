@@ -1057,7 +1057,7 @@ void RobotSimApiBase::drawDrawShapes()
     }
 }
 
-RobotSim::VehicleApiBase* RobotSimApiBase::getVehicleApiBase() const
+RobotSim::RobotApiBase* RobotSimApiBase::getVehicleApiBase() const
 {
     return nullptr;
 }

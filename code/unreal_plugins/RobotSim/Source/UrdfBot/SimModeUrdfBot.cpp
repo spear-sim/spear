@@ -14,20 +14,13 @@ void ASimModeUrdfBot::BeginPlay()
 }
 
 void ASimModeUrdfBot::getExistingVehiclePawns(
-    TArray<RobotSimVehicle*>& pawns) const
+    TArray<RobotBase*>& pawns) const
 {
     for (TActorIterator<AUrdfBotPawn> it(this->GetWorld()); it; ++it)
     {
-        pawns.Add(static_cast<RobotSimVehicle*>(*it));
+        pawns.Add(static_cast<RobotBase*>(*it));
     }
 }
-
-// void ASimModeUrdfBot::initializePauseState()
-//{
-//    this->pause_period_ = 0.0f;
-//    this->pause_period_start_ = 0;
-//    this->pause(false);
-//}
 
 void ASimModeUrdfBot::cycleVisibleCameraForward()
 {
@@ -62,7 +55,7 @@ void ASimModeUrdfBot::setupVehiclesAndCamera()
 {
     FTransform uu_origin = this->getGlobalNedTransform().getGlobalTransform();
     //
-    TArray<RobotSimVehicle*> pawns;
+    TArray<RobotBase*> pawns;
     getExistingVehiclePawns(pawns);
 
     AUrdfBotPawn* fpv_pawn = nullptr;
@@ -114,7 +107,7 @@ void ASimModeUrdfBot::setupVehiclesAndCamera()
     // create API objects for each pawn we have
     this->cameras_.Empty();
     int camera_offset = 0;
-    for (RobotSimVehicle* pawn : pawns)
+    for (RobotBase* pawn : pawns)
     {
         // initialize each vehicle pawn we found
         AUrdfBotPawn* vehicle_pawn = static_cast<AUrdfBotPawn*>(pawn);

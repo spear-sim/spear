@@ -3,7 +3,7 @@
 #include "Runtime/Engine/Public/EngineUtils.h"
 #include "SimMode/SimModeBase.h"
 #include "RobotBlueprintLib.h"
-#include "RobotSimVehicle.h"
+#include "RobotBase.h"
 #include "UrdfBotPawn.h"
 #include "RobotSimApi.h"
 #include "UrdfBot/RobotApi.h"
@@ -22,12 +22,11 @@ public:
 
     virtual void setupVehiclesAndCamera() override;
     virtual void
-    getExistingVehiclePawns(TArray<RobotSimVehicle*>& pawns) const override;
+    getExistingVehiclePawns(TArray<RobotBase*>& pawns) const override;
 
     void cycleVisibleCameraForward();
     void cycleVisibleCameraBackward();
     void cycleVisibleCamera(bool forward);
-    //    void initializePauseState();
 
     int camera_index_ = 0;
 

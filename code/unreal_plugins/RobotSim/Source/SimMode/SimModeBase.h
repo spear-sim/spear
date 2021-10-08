@@ -11,7 +11,7 @@
 #include "common_utils/RobotSimSettings.hpp"
 #include "NedTransform.h"
 #include "RobotSimApi.h"
-#include "UrdfBot/RobotSimVehicle.h"
+#include "UrdfBot/RobotBase.h"
 #include "SimModeBase.generated.h"
 
 class AUrdfBotPawn;
@@ -39,7 +39,7 @@ public:
 protected: // must overrides
     typedef RobotSim::RobotSimSettings RobotSimSettings;
 
-    virtual void getExistingVehiclePawns(TArray<RobotSimVehicle*>& pawns) const;
+    virtual void getExistingVehiclePawns(TArray<RobotBase*>& pawns) const;
 
 protected: // optional overrides
     virtual void setupVehiclesAndCamera();

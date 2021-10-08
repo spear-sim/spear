@@ -15,7 +15,7 @@
 
 namespace RobotSim {
 
-class VehicleApiBase : public UpdatableObject {
+class RobotApiBase : public UpdatableObject {
 public:
     virtual void enableApiControl(bool is_enabled) = 0;
     virtual bool isApiControlEnabled() const = 0;
@@ -68,7 +68,7 @@ public:
     }
 
 
-    virtual ~VehicleApiBase() = default;
+    virtual ~RobotApiBase() = default;
 
     //exceptions
     class VehicleControllerException : public std::runtime_error {

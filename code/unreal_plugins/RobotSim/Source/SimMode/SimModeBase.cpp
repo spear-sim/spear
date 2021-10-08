@@ -578,7 +578,7 @@ void ASimModeBase::setupVehiclesAndCamera()
 }
 
 void ASimModeBase::getExistingVehiclePawns(
-    TArray<RobotSimVehicle*>& pawns) const
+    TArray<RobotBase*>& pawns) const
 {
     // derived class should override this method to retrieve types of pawns they
     // support
