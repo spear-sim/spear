@@ -40,8 +40,8 @@ public class RobotSim : ModuleRules
         }
         else if (Target.Platform == UnrealTargetPlatform.Linux)
         {
-            PublicAdditionalLibraries.Add(Path.Combine(SystemConfig.RBDL_LIB_DIR, "librbdl.so"));
-            PublicAdditionalLibraries.Add(Path.Combine(SystemConfig.RBDL_URDF_READER_LIB_DIR, "librbdl_urdfreader.so"));
+            PublicAdditionalLibraries.Add(Path.Combine(SystemConfig.RBDL_LIB_DIR, "librbdl.a"));
+            PublicAdditionalLibraries.Add(Path.Combine(SystemConfig.RBDL_URDF_READER_LIB_DIR, "librbdl_urdfreader.a"));
         }
     }
 
