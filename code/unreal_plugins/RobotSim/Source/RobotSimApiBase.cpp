@@ -63,11 +63,10 @@ RobotSimApiBase::RobotSimApiBase(Params params)
     setupCamerasFromSettings(params_.cameras);
 
     // add listener for pawn's collision event
-	//TODO collision callback
-    //params_.pawn_events->getCollisionSignal().connect_member(
-    //    this, &RobotSimApiBase::onCollision);
-    //params_.pawn_events->getPawnTickSignal().connect_member(
-    //    this, &RobotSimApiBase::pawnTick);
+    params_.pawn_events->getCollisionSignal().connect_member(
+        this, &RobotSimApiBase::onCollision);
+    params_.pawn_events->getPawnTickSignal().connect_member(
+        this, &RobotSimApiBase::pawnTick);
 
     // start with no shapes
     this->drawable_shapes_.clear();

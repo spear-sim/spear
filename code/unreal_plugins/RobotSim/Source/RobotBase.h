@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "common_utils/UniqueValueMap.hpp"
 // TODO move camera and pawn event to here
 class RobotBase
 {

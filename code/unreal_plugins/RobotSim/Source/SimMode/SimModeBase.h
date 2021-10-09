@@ -10,7 +10,6 @@
 #include "CameraDirector.h"
 #include "common_utils/RobotSimSettings.hpp"
 #include "NedTransform.h"
-#include "RobotSimApi.h"
 #include "RobotBase.h"
 #include "SimModeBase.generated.h"
 
