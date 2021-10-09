@@ -95,6 +95,20 @@ void ASimpleVehiclePawn::SetupPlayerInputComponent(
                                    &ASimpleVehiclePawn::MoveRight);
 }
 
+void ASimpleVehiclePawn::SetupInputBindings()
+{
+    URobotBlueprintLib::EnableInput(this);
+
+    // keyboard control
+    APlayerController* controller =
+        this->GetWorld()->GetFirstPlayerController();
+
+    controller->InputComponent->BindAxis("MoveForward", this,
+                                         &ASimpleVehiclePawn::MoveForward);
+    controller->InputComponent->BindAxis("MoveRight", this,
+                                         &ASimpleVehiclePawn::MoveRight);
+}
+
 void ASimpleVehiclePawn::MoveForward(float Val)
 {
     USimpleWheeledVehicleMovementComponent* vehicle_pawn =
@@ -147,7 +161,6 @@ USceneComponent* ASimpleVehiclePawn::GetComponent(FString componentName)
     throw std::runtime_error("Requested component named " +
                              std::string(TCHAR_TO_UTF8(*componentName)) +
                              " in GetComponent(), which does not exist.");
-    // return this->components_[componentName]->GetRootComponent();
 }
 
 void ASimpleVehiclePawn::GetComponentReferenceTransform(FString componentName,
@@ -157,8 +170,6 @@ void ASimpleVehiclePawn::GetComponentReferenceTransform(FString componentName,
     throw std::runtime_error("Requested component named " +
                              std::string(TCHAR_TO_UTF8(*componentName)) +
                              " in GetComponent(), which does not exist.");
-    /*this->components_[componentName]->GetReferenceFrameLocation(translation,
-                                                                rotation);*/
 }
 
 void ASimpleVehiclePawn::TeleportToLocation(FVector position,

@@ -7,7 +7,10 @@
 		"EndEffectorLink":"gripper_link",
 		"ScaleFactor": 0.5,
 		"EnableKeyboard":true
-      }
+      },
+	  "SimpleVehicle":
+	  {
+	  }
   },
   "SubWindows": [
     {"WindowID": 0, "CameraName": "Follow", "ImageType": 3, "VehicleName": "", "Visible": false},
@@ -15,6 +18,21 @@
     {"WindowID": 2, "CameraName": "TopBar", "ImageType": 0, "VehicleName": "", "Visible": false}
   ],
   "Vehicles": {
+      "SimpleVehicle": {
+        "VehicleType": "SimpleVehicle",
+        "DebugSymbolScale": 0,
+        "Cameras": {
+          "Follow": {
+            "X": -90,
+            "Y": 0,
+            "Z": 40,
+            "Pitch": 0,
+            "Roll": 0,
+            "Yaw": 0,
+            "AttachLink": "test"
+          }
+        }
+	  },
       "UrdfBot": {
           "VehicleType": "UrdfBot",
           "DebugSymbolScale": 0,

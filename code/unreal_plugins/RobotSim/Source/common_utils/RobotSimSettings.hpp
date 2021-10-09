@@ -24,6 +24,7 @@ private:
 public:                                       // types
     static constexpr int kSubwindowCount = 3; // must be >= 3 for now
     static constexpr char const* kVehicleTypeUrdfBot = "urdfbot";
+    static constexpr char const* kVehicleTypeSimpleVehicle = "simplevehicle";
 
     //子窗口设置：窗口下标，图像类型，是否可视化，相机名字
     struct SubwindowSetting

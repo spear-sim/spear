@@ -81,6 +81,9 @@ public:
                                     FQuat orientation,
                                     bool teleport) override;
     // End RobotBase interface
+    // add keyboard control to set urdfbot movement
+    void SetupInputBindings();
+
     void MoveForward(float Val);
 
     void MoveRight(float Val);

@@ -12,7 +12,6 @@ USimpleWheel::USimpleWheel()
 	//disable suspension
     SuspensionMaxRaise = 0.f;
     SuspensionMaxDrop = 0.f;
-    
 }
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
