@@ -63,7 +63,7 @@ RobotSimApiBase::RobotSimApiBase(Params params)
     setupCamerasFromSettings(params_.cameras);
 
     // add listener for pawn's collision event
-	//TODO 
+	//TODO collision callback
     //params_.pawn_events->getCollisionSignal().connect_member(
     //    this, &RobotSimApiBase::onCollision);
     //params_.pawn_events->getPawnTickSignal().connect_member(
@@ -169,15 +169,25 @@ void RobotSimApiBase::createCamerasFromSettings()
 
         // TODO: Properly attach camera. Determine NED transform
         FString componentName(setting.attach_link.c_str());
-        APawn* pawn = params_.vehicle->GetPawn();
-        pawn->GetTransform();
-        USceneComponent* attachComponent =
-            params_.vehicle->GetPawn()->GetRootComponent();
 
+        USceneComponent* attachComponent;
         FVector componentTranslation;
         FRotator componentRotation;
-        FTransform componentTransform =
-            params_.vehicle->GetPawn()->GetTransform();
+
+        if (componentName == "")
+        {
+            attachComponent = params_.vehicle->GetPawn()->GetRootComponent();
+            FTransform componentTransform =
+                params_.vehicle->GetPawn()->GetTransform();
+            componentRotation = componentTransform.GetRotation().Rotator();
+            componentTranslation = componentTransform.GetTranslation();
+        }
+        else
+        {
+            attachComponent = params_.vehicle->GetComponent(componentName);
+            params_.vehicle->GetComponentReferenceTransform(
+                componentName, componentTranslation, componentRotation);
+        }
 
         // TODO: Other pawns are using localNED. Is this OK?
         FVector localPositionOffset = FVector(
@@ -189,8 +199,7 @@ void RobotSimApiBase::createCamerasFromSettings()
         // setting.rotation.yaw, setting.rotation.roll) + componentRotation,
         //	position, FVector(1., 1., 1.));
 
-        FTransform world2BaseTransform(componentTransform.GetRotation(),
-                                       componentTransform.GetTranslation(),
+        FTransform world2BaseTransform(componentRotation, componentTranslation,
                                        FVector(1., 1., 1.));
         FVector world2CameraPos =
             world2BaseTransform.TransformPosition(localPositionOffset);

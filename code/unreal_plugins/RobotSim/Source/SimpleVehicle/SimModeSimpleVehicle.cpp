@@ -19,6 +19,36 @@ void ASimModeSimpleVehicle::getExistingVehiclePawns(
     }
 }
 
+
+void ASimModeSimpleVehicle::cycleVisibleCameraForward()
+{
+    this->cycleVisibleCamera(true);
+}
+
+void ASimModeSimpleVehicle::cycleVisibleCameraBackward()
+{
+    this->cycleVisibleCamera(false);
+}
+
+void ASimModeSimpleVehicle::cycleVisibleCamera(bool forward)
+{
+    int currentIndex = this->camera_index_;
+
+    this->camera_index_ += (forward ? 1 : -1);
+
+    if (this->camera_index_ < 0)
+    {
+        this->camera_index_ = this->cameras_.Num() - 1;
+    }
+    else if (this->camera_index_ >= this->cameras_.Num())
+    {
+        this->camera_index_ = 0;
+    }
+
+    this->cameras_[currentIndex]->disableMain();
+    this->cameras_[this->camera_index_]->showToScreen();
+}
+
 // TODO what is this?
 void ASimModeSimpleVehicle::setupVehiclesAndCamera()
 {
@@ -93,8 +123,11 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
         RobotSimApiBase::Params params;
         params.vehicle = vehicle_pawn;
         params.global_transform = &getGlobalNedTransform();
-        // params.pawn_events = vehicle_pawn->GetPawnEvents();
-        // params.cameras = vehicle_pawn->GetCameras();
+		//TODO collision info
+        //params.pawn_events = vehicle_pawn->GetPawnEvents();
+		//TODO camera switching? 
+        params.cameras = vehicle_pawn->GetCameraMap();
+
         params.pip_camera_class = pip_camera_class;
         params.collision_display_template = collision_display_template;
         params.home_geopoint = home_geopoint;
@@ -140,11 +173,11 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
     //}
 
     URobotBlueprintLib::EnableInput(this);
-    // URobotBlueprintLib::BindActionToKey("inputEventCycleCameraForward",
-    // EKeys::N, this, &ASimModeUrdfBot::cycleVisibleCameraForward);
-    // URobotBlueprintLib::BindActionToKey(
-    //    "inputEventCycleCameraBackward", EKeys::P, this,
-    //    &ASimModeUrdfBot::cycleVisibleCameraBackward);
+     URobotBlueprintLib::BindActionToKey("inputEventCycleCameraForward",
+     EKeys::N, this, &ASimModeSimpleVehicle::cycleVisibleCameraForward);
+     URobotBlueprintLib::BindActionToKey(
+        "inputEventCycleCameraBackward", EKeys::P, this,
+        &ASimModeSimpleVehicle::cycleVisibleCameraBackward);
     this->cameras_[0]->showToScreen();
 
     for (auto& api : vehicle_sim_apis_)

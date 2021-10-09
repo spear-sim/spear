@@ -24,6 +24,11 @@ public:
     virtual void
     getExistingVehiclePawns(TArray<RobotBase*>& pawns) const override;
 
+    void cycleVisibleCameraForward();
+    void cycleVisibleCameraBackward();
+    void cycleVisibleCamera(bool forward);
+
+    int camera_index_ = 0;
     std::vector<std::unique_ptr<SimpleVehicleSimApi>> vehicle_sim_apis_;
 
     TArray<APIPCamera*> cameras_;

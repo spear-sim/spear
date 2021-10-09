@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-
+// TODO move camera and pawn event to here
 class RobotBase
 {
 public:
@@ -25,4 +25,11 @@ public:
             this->GetPawn()->SetActorLocationAndRotation(position, orientation,
                                                          true);
     }
+    virtual common_utils::UniqueValueMap<std::string, APIPCamera*>
+    GetCameraMap()
+    {
+        return this->mCameras;
+    }
+
+    common_utils::UniqueValueMap<std::string, APIPCamera*> mCameras;
 };
