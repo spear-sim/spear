@@ -1,6 +1,6 @@
 {
   "SettingsVersion": 1.2,
-  "SimMode": "UrdfBot",
+  "SimMode": "SimpleVehicle",
   "PawnPaths": {
       "UrdfBot": {
         "UrdfFile": "fetch.xml",
@@ -28,8 +28,15 @@
             "Z": 40,
             "Pitch": 0,
             "Roll": 0,
-            "Yaw": 0,
-            "AttachLink": "test"
+            "Yaw": 0
+          },
+		"Follow2": {
+            "X": -180,
+            "Y": 0,
+            "Z": 80,
+            "Pitch": 0,
+            "Roll": 0,
+            "Yaw": 0
           }
         }
 	  },

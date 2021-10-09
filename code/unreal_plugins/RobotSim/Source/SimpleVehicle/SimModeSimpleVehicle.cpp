@@ -124,10 +124,9 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
         params.vehicle = vehicle_pawn;
         params.global_transform = &getGlobalNedTransform();
 		//TODO collision info
-        //params.pawn_events = vehicle_pawn->GetPawnEvents();
-		//TODO camera switching? 
-        params.cameras = vehicle_pawn->GetCameraMap();
-
+        params.pawn_events = vehicle_pawn->GetPawnEvents();
+		//not used anywhere?
+        //params.cameras = vehicle_pawn->GetCameraMap();
         params.pip_camera_class = pip_camera_class;
         params.collision_display_template = collision_display_template;
         params.home_geopoint = home_geopoint;

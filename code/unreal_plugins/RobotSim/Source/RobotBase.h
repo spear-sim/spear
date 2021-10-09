@@ -26,11 +26,4 @@ public:
             this->GetPawn()->SetActorLocationAndRotation(position, orientation,
                                                          true);
     }
-    virtual common_utils::UniqueValueMap<std::string, APIPCamera*>
-    GetCameraMap()
-    {
-        return this->mCameras;
-    }
-
-    common_utils::UniqueValueMap<std::string, APIPCamera*> mCameras;
 };

@@ -33,6 +33,9 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     Mesh->bBlendPhysics = true;
     Mesh->SetGenerateOverlapEvents(true);
     Mesh->SetCanEverAffectNavigation(false);
+    // example for adding user-defined collision callback
+    // Mesh->OnComponentHit.AddDynamic(this,
+    //                                &ASimpleVehiclePawn::OnComponentCollision);
     RootComponent = Mesh;
 
     VehicleMovement =
@@ -63,7 +66,7 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     VehicleMovement->SetIsReplicated(true); // Enable replication by default
     VehicleMovement->UpdatedComponent = Mesh;
 
-    // Create camera component
+    // Create default camera component
     FVector CameraPos(-200.0f, -00.0f, 80.0f);
     FRotator CameraOri(-10.0f, 0.0f, 0.0f);
 
@@ -86,7 +89,7 @@ void ASimpleVehiclePawn::SetupPlayerInputComponent(
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    // set up gameplay key bindings
+    // set up gameplay key bindings in RobotSimVehicleGameMode
     check(PlayerInputComponent);
 
     PlayerInputComponent->BindAxis("MoveForward", this,
@@ -99,7 +102,7 @@ void ASimpleVehiclePawn::SetupInputBindings()
 {
     URobotBlueprintLib::EnableInput(this);
 
-    // keyboard control
+    // keyboard control in RobotSimGameMode
     APlayerController* controller =
         this->GetWorld()->GetFirstPlayerController();
 
@@ -150,6 +153,40 @@ void ASimpleVehiclePawn::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
+void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,
+                                   class AActor* OtherActor,
+                                   class UPrimitiveComponent* otherComp,
+                                   bool bSelfMoved,
+                                   FVector hitLocation,
+                                   FVector hitNormal,
+                                   FVector normalImpulse,
+                                   const FHitResult& hit)
+{
+    URobotBlueprintLib::LogMessage(
+        FString("NotifyHit: ") + HitComponent->GetName() + " with " +
+            OtherActor->GetName(),
+        " location: " + hitLocation.ToString() +
+            " normal: " + normalImpulse.ToString(),
+        LogDebugLevel::Informational, 30);
+    this->mPawnEvents.getCollisionSignal().emit(
+        HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal,
+        normalImpulse, hit);
+}
+
+void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent* HitComponent,
+                                              AActor* OtherActor,
+                                              UPrimitiveComponent* OtherComp,
+                                              FVector NormalImpulse,
+                                              const FHitResult& Hit)
+{
+    URobotBlueprintLib::LogMessage(
+        FString("OnComponentCollision: ") + HitComponent->GetName() + " with " +
+            OtherActor->GetName(),
+        " location: " + Hit.Location.ToString() +
+            " normal: " + Hit.Normal.ToString(),
+        LogDebugLevel::Informational, 30);
+}
+
 // Called when the game starts or when spawned
 void ASimpleVehiclePawn::BeginPlay()
 {
@@ -185,4 +222,9 @@ void ASimpleVehiclePawn::TeleportToLocation(FVector position,
         position * URobotBlueprintLib::GetWorldToMetersScale(this), orientation,
         teleport);
 }
+PawnEvents* ASimpleVehiclePawn::GetPawnEvents()
+{
+    return &(this->mPawnEvents);
+}
+
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

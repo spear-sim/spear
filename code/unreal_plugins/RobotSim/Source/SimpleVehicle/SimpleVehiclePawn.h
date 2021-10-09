@@ -16,6 +16,7 @@
 #include "PhysXIncludes.h"
 #include "PhysicsPublic.h"
 #include "PhysXPublic.h"
+#include "PawnEvents.h"
 
 #include "SimpleVehiclePawn.generated.h"
 
@@ -57,6 +58,22 @@ public:
     // Begin Actor interface
     // Called every frame
     virtual void Tick(float DeltaTime) override;
+	// collision callback
+    virtual void NotifyHit(class UPrimitiveComponent* myComp,
+                           class AActor* other,
+                           class UPrimitiveComponent* otherComp,
+                           bool bSelfMoved,
+                           FVector hitLocation,
+                           FVector hitNormal,
+                           FVector normalImpulse,
+                           const FHitResult& hit) override;
+	// uesr-defined callback function 
+    UFUNCTION()
+    void OnComponentCollision(UPrimitiveComponent* HitComponent,
+                              AActor* OtherActor,
+                              UPrimitiveComponent* OtherComp,
+                              FVector NormalImpulse,
+                              const FHitResult& Hit);
 
 protected:
     // Called when the game starts or when spawned
@@ -85,8 +102,12 @@ public:
     void SetupInputBindings();
 
     void MoveForward(float Val);
-
     void MoveRight(float Val);
+
+    PawnEvents* GetPawnEvents();
+
+private:
+    PawnEvents mPawnEvents;
 
 public:
     /** Name of the MeshComponent. Use this name if you want to prevent creation
