@@ -10,3 +10,9 @@ Contents:
     2. Update all assets of 100 virtualworlds to 'https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/' by DLC.
          Notes: Now use MD5 instead of ETag as the version update tag, because the ETag of the same file may be different and the MD5 of the file is unqiue.
     3. Update scene_manager.py, use MD5 to check asset version instead of ETag.
+
+Time:20211011
+Version: v1
+Contents:
+    1. Update ./Data/virtualworld-ids.json file, adding another 100 ids(from '235114793' to '245086562'). Now there are totally 200 virtualworld ids.
+    2. Update all assets of 100 virtualworlds to 'https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/' by DLC.
