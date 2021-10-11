@@ -8,11 +8,12 @@ from concurrent import futures
 from tqdm import tqdm
 
 CDN_API = "https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/"
-# CDN_API = 'https://kloudsim-nj-cos.kujiale.com/interiorsim/dataset-repo/'
 
 PROJECT_SAVED_FOLDER = os.path.join(os.path.dirname(__file__), "../Saved")
 TEMP_FOLDER = os.path.join(PROJECT_SAVED_FOLDER, "Temp")
 VERSION_INFO_FOLDER = os.path.join(PROJECT_SAVED_FOLDER, "VersionInfo")
+
+NUM_RETRIES = 8
 
 
 def create_folder(folder_path):
@@ -35,7 +36,13 @@ def check_update_version_info(local_version_info, remote_version_info):
             local_data = json.load(f)
         with open(remote_version_info) as f:
             remote_data = json.load(f)
-        if local_data["ETag"] == remote_data["ETag"]:
+        local_md5 = local_data.get("MD5")
+        remote_md5 = remote_data.get("MD5")
+        if local_md5 is None:
+            return True
+        if remote_md5 is None:
+            return True
+        if local_md5 == remote_md5:
             return False
     return True
 
@@ -51,8 +58,12 @@ def check_updade_version(local_version_info, version):
     return True
 
 
-def download_file_from_url(url, local_path):
-    urllib.request.urlretrieve(url, local_path)
+def download_file_from_url(url, local_path, num_retry=NUM_RETRIES):
+    try:
+        urllib.request.urlretrieve(url, local_path)
+    except:
+        if num_retry > 0:
+            download_file_from_url(url, local_path, num_retry - 1)
     if os.path.exists(local_path):
         return True
     else:
@@ -107,10 +118,10 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
     )
     remote_version_info = os.path.join(TEMP_FOLDER, version_scene_info_name)
     download_file_from_url(remote_version_info_url, remote_version_info)
+
     if not is_force_update:
-        if not is_force_update:
-            if not check_update_version_info(local_version_info, remote_version_info):
-                return True
+        if not check_update_version_info(local_version_info, remote_version_info):
+            return True
 
     anim_url = (
         CDN_API
@@ -397,7 +408,9 @@ def download_assets(
                     os.makedirs(dic_curr["asset_local"])
                 except:
                     pass
-            dic_curr["asset_dst"] = ""
+            dic_curr["asset_dst"] = os.path.join(
+                os.path.dirname(__file__), "../DerivedDataCache", ddc_path
+            )
             dic_curr["version_info_url"] = (
                 CDN_API
                 + "assets/ddc/"
@@ -419,7 +432,7 @@ def download_assets(
             ddc_down_body.append(dic_curr)
         print("update {} ddc".format(virtualworld_id))
         is_ddc_ok = mult_down(ddc_down_body)
-        return is_mat_ok and is_fur_ok and is_phys_fur_ok and is_ddc_ok
+        return is_mat_ok and is_fur_ok and is_phys_fur_ok
     else:
         return is_mat_ok and is_fur_ok and is_phys_fur_ok
 
@@ -433,10 +446,12 @@ def download_single_virtualworld(
     is_assets_ready = download_assets(
         virtualworld_id, version, is_down_ddc, scene_config_data, is_force_update
     )
+    is_scene_ready = False
     # download scenes
-    is_scene_ready = download_scenes(
-        virtualworld_id, version, scene_config_data, is_force_update
-    )
+    if is_assets_ready:
+        is_scene_ready = download_scenes(
+            virtualworld_id, version, scene_config_data, is_force_update
+        )
 
     update_log = os.path.join(PROJECT_SAVED_FOLDER, "UpdateLog")
     if not os.path.exists(update_log):
@@ -465,7 +480,12 @@ def download_single_virtualworld(
 
 def print_help():
     print(
-        "scene_manager.py -i <option> -v <version> -d <option is_download_ddc> -f <option is_force_upadte>\ne.g:scene_manager.py -v v1"
+        """scene_manager.py -i <option> -v <necessary> -d <option> -f <option>
+e.g: scene_manager.py -v v1
+ -i: Specify to download a VirtualWorld. if not use -i, the script will load all virtualworld-ids in /VirtualWrold/SceneManager/Data/virtualworld-ids.json.
+ -v: it shoud be v1 v2 or v{n}. The newly version information in /VirtualWrold/SceneManager/dataset-repo-update.log.
+ -d: if you want to donwload DerivedDataCache, set '-d true'. 
+ -f: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version information(MD5 in it) to remote version information and decide whether to download asset."""
     )
     sys.exit(2)
 
@@ -502,7 +522,7 @@ if __name__ == "__main__":
 
     if version == "":
         print(
-            "set version correct. please select version form SceneManage/Data/dataset-repo-update.log"
+            "Error: set version correct. please select version from SceneManage/Data/dataset-repo-update.log"
         )
         print_help()
 
