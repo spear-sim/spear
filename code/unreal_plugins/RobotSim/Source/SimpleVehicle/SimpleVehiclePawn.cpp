@@ -18,11 +18,11 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
         VehicleMeshComponentName);
     // setup skeletal mesh
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(
-        TEXT("/RobotSim/freight/freight.freight"));
+        TEXT("/RobotSim/SimpleVehicle/freight/freight.freight"));
     Mesh->SetSkeletalMesh(CarMesh.Object);
     // setup animation
     static ConstructorHelpers::FObjectFinder<UAnimBlueprint> CarMeshAnimation(
-        TEXT("/RobotSim/freight/freight_Animation.freight_Animation"));
+        TEXT("/RobotSim/SimpleVehicle/freight/freight_Animation.freight_Animation"));
     Mesh->SetAnimClass(
         CarMeshAnimation.Object->GetAnimBlueprintGeneratedClass());
 
