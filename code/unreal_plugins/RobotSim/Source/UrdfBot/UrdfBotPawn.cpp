@@ -1291,6 +1291,10 @@ bool AUrdfBotPawn::ConstraintNeedsControlledMotionComponent(
             return (spec.Limit->Effort > 0) &&
                    !(this->controlled_motion_components_.Contains(spec.Name));
         }
+        else
+        {
+            return !(this->controlled_motion_components_.Contains(spec.Name));
+        }
     }
 
     return false;
@@ -1582,9 +1586,9 @@ void AUrdfBotPawn::onBaseMove(float value)
         return;
     }
     Motor* leftComponent = static_cast<Motor*>(
-        this->controlled_motion_components_["r_wheel_joint"]);
+        this->controlled_motion_components_["wheel_right_joint"]);
     Motor* rightComponent = static_cast<Motor*>(
-        this->controlled_motion_components_["l_wheel_joint"]);
+        this->controlled_motion_components_["wheel_left_joint"]);
     FVector leftTarget = leftComponent->GetConstraintComponent()
                              ->ConstraintInstance.ProfileInstance.AngularDrive
                              .AngularVelocityTarget;
@@ -1636,8 +1640,8 @@ void AUrdfBotPawn::onBaseRotate(float value)
 {
     if (value != 0)
     {
-        this->updateVelocity("l_wheel_joint", value);
-        this->updateVelocity("r_wheel_joint", -value);
+        this->updateVelocity("wheel_left_joint", value);
+        this->updateVelocity("wheel_right_joint", -value);
     }
 }
 
@@ -1785,26 +1789,21 @@ void AUrdfBotPawn::onTest()
 {
     for (auto& kvp : this->components_)
     {
-        if (kvp.Key != "base_link")
-        {
-            UMeshComponent* mesh_root = kvp.Value->GetRootMesh();
-            if (mesh_root->IsGravityEnabled())
-            {
-                mesh_root->SetEnableGravity(false);
-                URobotBlueprintLib::LogMessage(
-                    FString(kvp.Value->linkName_), FString(" false"),
-                    LogDebugLevel::Informational, 30);
-            }
-            else
-            {
-                mesh_root->SetEnableGravity(true);
-                URobotBlueprintLib::LogMessage(
-                    FString(kvp.Value->linkName_), FString(" true"),
-                    LogDebugLevel::Informational, 30);
-            }
-            mesh_root->WakeAllRigidBodies();
-        }
+        URobotBlueprintLib::LogMessage("link: " + kvp.Key, "",
+                                       LogDebugLevel::Informational, 30);
     }
+    for (auto& kvp : this->constraints_)
+    {
+        URobotBlueprintLib::LogMessage("joint: " + kvp.Key, "",
+                                       LogDebugLevel::Informational, 30);
+    }
+    UMeshComponent* mesh_root = this->components_["base_link"]->GetRootMesh();
+    FTransform transform = mesh_root->GetRelativeTransform();
+
+    URobotBlueprintLib::LogMessage(FString("base_link: \n"),
+                                   transform.ToHumanReadableString(),
+                                   LogDebugLevel::Informational, 30);
+
     // GetCurrentQPosByLinkName();
     FTransform result =
         getRelativePose(FString("base_link"), FString("gripper_link"));

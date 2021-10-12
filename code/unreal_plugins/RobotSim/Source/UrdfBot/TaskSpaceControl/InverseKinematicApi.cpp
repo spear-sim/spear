@@ -70,8 +70,8 @@ bool InverseKinematicComponent::CalculateIK(TMap<FString, float> QInitMap,
                           Qres(jointId));
         }
         // scale prismatic joint
-        resultMap["torso_lift_link"] =
-            resultMap["torso_lift_link"] / this->invScaleFactor_;
+        //resultMap["torso_lift_link"] =
+        //    resultMap["torso_lift_link"] / this->invScaleFactor_;
     }
     return result;
 }
@@ -87,9 +87,9 @@ bool InverseKinematicComponent::CalculateIKWithControlledTorso(
     // add end effector target pose
     cs.AddFullConstraint(body_id, Vector3d(0., 0., 0.), targetPos, targetOri);
     // limit torso_lift_link at current position
-    cs.AddPointConstraint(
-        model->GetBodyId("torso_lift_link"), Vector3d(0., 0., 0.),
-        Vector3d(-0.086875, 0., this->invScaleFactor_ * Qinit(2) + 0.37743));
+    //cs.AddPointConstraint(
+    //    model->GetBodyId("torso_lift_link"), Vector3d(0., 0., 0.),
+    //    Vector3d(-0.086875, 0., this->invScaleFactor_ * Qinit(2) + 0.37743));
 
     bool result = RigidBodyDynamics::InverseKinematics(*model, Qinit, cs, Qres);
 

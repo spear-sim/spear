@@ -3,9 +3,8 @@
   "SimMode": "UrdfBot",
   "PawnPaths": {
       "UrdfBot": {
-        "UrdfFile": "fetch.xml",
-		"EndEffectorLink":"gripper_link",
-		"ScaleFactor": 0.5,
+        "UrdfFile": "cmu_locobot_description.xml",
+		"ScaleFactor":1,
 		"EnableKeyboard":true
       }
   },
