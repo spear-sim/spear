@@ -33,7 +33,9 @@ void Motor::Attach(AUrdfLink* baseLink,
                          .AngularDrive.TwistDrive.MaxForce;
 
     if (jointSpecification->Name == "l_wheel_joint" or
-        jointSpecification->Name == "r_wheel_joint")
+        jointSpecification->Name == "r_wheel_joint" or
+        jointSpecification->Name == "wheel_right_joint" or
+        jointSpecification->Name == "wheel_left_joint")
     {
         // only velocity control for robot wheels
         constraintComponent_->SetAngularDriveParams(0.0f, 1000, maxForce);

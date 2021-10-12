@@ -285,7 +285,7 @@ void AUrdfBotPawn::InitializeForBeginPlay()
         }
         else
         {
-            throw std::runtime_error("invalid EndEffectorLink");
+            // throw std::runtime_error("invalid EndEffectorLink");
         }
     }
 
@@ -365,7 +365,7 @@ void AUrdfBotPawn::setupInputBindings()
 {
     URobotBlueprintLib::EnableInput(this);
 
-    float val = 0.01;
+    float val = 4;
     float rotVal = 2;
     // keyboard control over xxx
     URobotBlueprintLib::BindAxisToKey(
@@ -1581,7 +1581,7 @@ void AUrdfBotPawn::onBaseMove(float value)
 {
     // this->setDriveVelocity("r_wheel_joint", value);
     // this->setDriveVelocity("l_wheel_joint", value);
-    if (!this->controlled_motion_components_.Contains("r_wheel_joint"))
+    if (!this->controlled_motion_components_.Contains("wheel_right_joint"))
     {
         return;
     }
@@ -1617,21 +1617,17 @@ void AUrdfBotPawn::onBaseMove(float value)
                 .IsVelocityDriveEnabled())
         {
             // update baesd on previous target
-            leftComponent->SetDriveTargetVelocity(averageTargetVelocity +
-                                                  value);
-            rightComponent->SetDriveTargetVelocity(averageTargetVelocity +
-                                                   value);
+            leftComponent->SetDriveTargetVelocity(value);
+            rightComponent->SetDriveTargetVelocity(value);
         }
         else
         {
             // update baesd on current velocity
             leftComponent->EnableDrive(true);
-            leftComponent->SetDriveTargetVelocity(averageActualVelocity +
-                                                  value);
+            leftComponent->SetDriveTargetVelocity(value);
 
             rightComponent->EnableDrive(true);
-            rightComponent->SetDriveTargetVelocity(averageActualVelocity +
-                                                   value);
+            rightComponent->SetDriveTargetVelocity(value);
         }
     }
 }
@@ -1789,8 +1785,15 @@ void AUrdfBotPawn::onTest()
 {
     for (auto& kvp : this->components_)
     {
-        URobotBlueprintLib::LogMessage("link: " + kvp.Key, "",
-                                       LogDebugLevel::Informational, 30);
+        UMeshComponent* mesh = kvp.Value->GetRootMesh();
+        UMaterialInterface* material = mesh->GetMaterial(0);
+        UPhysicalMaterial* physical = material->GetPhysicalMaterial();
+        URobotBlueprintLib::LogMessage(
+            "link: " + kvp.Key,
+            material->GetName() + " " +
+                FString::SanitizeFloat(physical->Friction) + " " +
+                FString::SanitizeFloat(physical->StaticFriction),
+            LogDebugLevel::Informational, 30);
     }
     for (auto& kvp : this->constraints_)
     {
@@ -1805,11 +1808,14 @@ void AUrdfBotPawn::onTest()
                                    LogDebugLevel::Informational, 30);
 
     // GetCurrentQPosByLinkName();
-    FTransform result =
-        getRelativePose(FString("base_link"), FString("gripper_link"));
-    URobotBlueprintLib::LogMessage(FString("gripper_link actual: \n"),
-                                   *result.ToHumanReadableString(),
-                                   LogDebugLevel::Informational, 30);
+    if (this->components_.Contains("gripper_link"))
+    {
+        FTransform result =
+            getRelativePose(FString("base_link"), FString("gripper_link"));
+        URobotBlueprintLib::LogMessage(FString("gripper_link actual: \n"),
+                                       *result.ToHumanReadableString(),
+                                       LogDebugLevel::Informational, 30);
+    }
 
     // set to its current position. error might exist due to gravity? TODO
     // double check on this FVector deltaPos(0.0, 0.0, 0.0); FVector

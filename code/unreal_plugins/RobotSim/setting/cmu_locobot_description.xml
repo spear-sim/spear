@@ -1,19 +1,28 @@
 <?xml version="1.0" ?>
 <robot name="locobot">
+    <material name="caster_link_material">
+        <unreal_material path="Material'/RobotSim/Examples/slippery_material.slippery_material'"/>
+    </material>
+    <material name="metal">
+        <unreal_material path="Material'/RobotSim/Examples/M_Metal.M_Metal'"/>
+    </material>
+
     <link name="base_link">
         <visual>
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_body.main_body'"/>
-<!--                <cylinder length="0.05" radius="0.178"/>-->
+                <mesh type="unreal_mesh"
+                      location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_body.main_body'"/>
+                <!--                <cylinder length="0.05" radius="0.178"/>-->
             </geometry>
-            <origin rpy="0 0 0" xyz="0.001 0 11"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
         </visual>
         <collision name="base">
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_body.main_body'"/>
-<!--                <cylinder length="0.05" radius="0.178"/>-->
+                <mesh type="unreal_mesh"
+                      location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_body.main_body'"/>
+                <!--                <cylinder length="0.05" radius="0.178"/>-->
             </geometry>
-            <origin rpy="0 0 0" xyz="0.0 0 11"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
         </collision>
         <inertial>
             <!-- COM experimentally determined -->
@@ -34,26 +43,26 @@
         <parent link="base_link"/>
         <child link="wheel_left_link"/>
         <origin rpy="-1.57079632679 0 0" xyz="0.00 0.115 0.0250"/>
-        <axis xyz="0 0 1"/>
-        <limit effort="8.85" velocity="17.4" />
+        <axis xyz="0 1 0"/>
+        <limit effort="8.85" velocity="17.4"/>
     </joint>
     <link name="wheel_left_link">
         <visual>
             <geometry>
-<!--                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>-->
-                <cylinder length="0.0206" radius="0.0350"/>
+                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>
+<!--                <cylinder length="0.0206" radius="0.0350"/>-->
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </visual>
         <collision>
             <geometry>
-<!--                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>-->
-                <cylinder length="0.0206" radius="0.0350"/>
+                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>
+<!--                <cylinder length="0.0206" radius="0.0350"/>-->
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </collision>
         <inertial>
-            <mass value="0.01"/>
+            <mass value="1"/>
             <origin xyz="0 0 0"/>
             <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
         </inertial>
@@ -62,26 +71,26 @@
         <parent link="base_link"/>
         <child link="wheel_right_link"/>
         <origin rpy="-1.57079632679 0 0" xyz="0.00 -0.115 0.0250"/>
-        <axis xyz="0 0 1"/>
-        <limit effort="8.85" velocity="17.4" />
+        <axis xyz="0 1 0"/>
+        <limit effort="8.85" velocity="17.4"/>
     </joint>
     <link name="wheel_right_link">
         <visual>
             <geometry>
-<!--                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>-->
-                <cylinder length="0.0206" radius="0.0350"/>
+                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>
+<!--                <cylinder length="0.0206" radius="0.0350"/>-->
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </visual>
         <collision>
             <geometry>
-<!--                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>-->
-                <cylinder length="0.0206" radius="0.0350"/>
+                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>
+<!--                <cylinder length="0.0206" radius="0.0350"/>-->
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </collision>
         <inertial>
-            <mass value="0.01"/>
+            <mass value="1"/>
             <origin xyz="0 0 0"/>
             <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
         </inertial>
@@ -97,6 +106,7 @@
                 <cylinder length="0.0176" radius="0.017"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
+            <material name="caster_link_material"/>
         </visual>
         <collision>
             <geometry>
@@ -121,6 +131,7 @@
                 <cylinder length="0.0176" radius="0.017"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
+            <material name="caster_link_material"/>
         </visual>
         <collision>
             <geometry>
@@ -134,56 +145,7 @@
             <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
         </inertial>
     </link>
-    <!-- Kobuki's sensors -->
-    <joint name="gyro_joint" type="fixed">
-        <axis xyz="0 1 0"/>
-        <origin rpy="0 0 0" xyz="0.056 0.062 0.0202"/>
-        <parent link="base_link"/>
-        <child link="gyro_link"/>
-    </joint>
-    <link name="gyro_link">
-        <inertial>
-            <mass value="0.001"/>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-            <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.0001"/>
-        </inertial>
-    </link>
-    <joint name="cliff_sensor_left_joint" type="fixed">
-        <origin rpy="0 1.57079632679 0" xyz="0.08734 0.13601 0.0214"/>
-        <parent link="base_link"/>
-        <child link="cliff_sensor_left_link"/>
-    </joint>
-    <link name="cliff_sensor_left_link">
-        <inertial>
-            <mass value="0.0001"/>
-            <origin xyz="0 0 0"/>
-            <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
-        </inertial>
-    </link>
-    <joint name="cliff_sensor_right_joint" type="fixed">
-        <origin rpy="0 1.57079632679 0" xyz="0.085 -0.13601 0.0214"/>
-        <parent link="base_link"/>
-        <child link="cliff_sensor_right_link"/>
-    </joint>
-    <link name="cliff_sensor_right_link">
-        <inertial>
-            <mass value="0.0001"/>
-            <origin xyz="0 0 0"/>
-            <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
-        </inertial>
-    </link>
-    <joint name="cliff_sensor_front_joint" type="fixed">
-        <origin rpy="0 1.57079632679 0" xyz="0.156 0.00 0.0214"/>
-        <parent link="base_link"/>
-        <child link="cliff_sensor_front_link"/>
-    </joint>
-    <link name="cliff_sensor_front_link">
-        <inertial>
-            <mass value="0.0001"/>
-            <origin xyz="0 0 0"/>
-            <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
-        </inertial>
-    </link>
+
     <!-- plates  -->
     <link name="plate_1">
         <inertial>
