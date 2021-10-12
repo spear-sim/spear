@@ -1825,7 +1825,7 @@ void AUrdfBotPawn::onTest()
 void AUrdfBotPawn::onManipulator()
 {
     float val = 1;
-    float before = this->controlled_motion_components_["r_gripper_finger_joint"]
+    float before = this->controlled_motion_components_["joint_6"]
                        ->GetDriveTarget();
     if (before <= 0)
     {
@@ -1835,9 +1835,9 @@ void AUrdfBotPawn::onManipulator()
     {
         val = -1;
     }
-    this->controlled_motion_components_["r_gripper_finger_joint"]
+    this->controlled_motion_components_["joint_6"]
         ->SetDriveTarget(val);
-    this->controlled_motion_components_["l_gripper_finger_joint"]
+    this->controlled_motion_components_["joint_7"]
         ->SetDriveTarget(val);
 }
 

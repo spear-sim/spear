@@ -4,6 +4,7 @@
   "PawnPaths": {
       "UrdfBot": {
         "UrdfFile": "cmu_locobot_description.xml",
+        "EndEffectorLink":"gripper_link",
 		"ScaleFactor":1,
 		"EnableKeyboard":true
       }
@@ -53,16 +54,16 @@
                 "Yaw": 0,
                   "AttachLink": "base_link"
               },
-              "FrontView": {
-                "X": 100,
+              "GripperView": {
+                "X": 30,
                 "Y": 0,
                 "Z": 30,
-                "Pitch": 0,
+                "Pitch": -45,
                 "Roll": 0,
                 "Yaw": 180,
-                "AttachLink": "base_link"
+                "AttachLink": "gripper_link"
             },
-              "Follow1": {
+              "SideView": {
                 "X": 108,
                 "Y": 55,
                 "Z": 54,

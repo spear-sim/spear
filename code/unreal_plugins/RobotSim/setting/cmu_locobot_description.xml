@@ -386,16 +386,13 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/finger_r.finger_r'"/>
+                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/finger_l.finger_l'"/>
             </geometry>
-<!--            <material name="">-->
-<!--                <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>-->
-<!--            </material>-->
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/finger_r.finger_r'"/>
+                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/finger_l.finger_l'"/>
             </geometry>
         </collision>
     </link>
@@ -403,8 +400,8 @@
         <origin rpy="0 0 0" xyz="0.07285 0 0.0050143"/>
         <parent link="gripper_link"/>
         <child link="finger_r"/>
-        <axis xyz="0 1 0"/>
-        <limit effort="1" lower="-1" upper="0" velocity="1"/>
+        <axis xyz="0 -1 0"/>
+        <limit effort="1" lower="0" upper="0.04" velocity="1"/>
     </joint>
     <link name="finger_l">
         <inertial>
@@ -415,16 +412,13 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/finger_l.finger_l'"/>
+                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/finger_r.finger_r'"/>
             </geometry>
-<!--            <material name="">-->
-<!--                <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>-->
-<!--            </material>-->
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/finger_l.finger_l'"/>
+                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/finger_r.finger_r'"/>
             </geometry>
         </collision>
     </link>
@@ -433,7 +427,7 @@
         <parent link="gripper_link"/>
         <child link="finger_l"/>
         <axis xyz="0 1 0"/>
-        <limit effort="1" lower="0" upper="1" velocity="1"/>
+        <limit effort="1" lower="0" upper="0.04" velocity="1"/>
     </joint>
     <link name="ar_tag">
         <inertial>
