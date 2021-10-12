@@ -24,7 +24,6 @@ void Motor::Attach(AUrdfLink* baseLink,
     this->targetConstTorque_ = FVector::ZeroVector;
     this->bUseTorqueControl = false;
 
-    //若用位置控制则将damping数值设置为0，若用速度控制则将stiffness的数值设置为0
     float stiffness = constraintComponent_->ConstraintInstance.ProfileInstance
                           .AngularDrive.TwistDrive.Stiffness;
     float damping = constraintComponent_->ConstraintInstance.ProfileInstance
@@ -32,21 +31,10 @@ void Motor::Attach(AUrdfLink* baseLink,
     float maxForce = constraintComponent_->ConstraintInstance.ProfileInstance
                          .AngularDrive.TwistDrive.MaxForce;
 
-    if (jointSpecification->Name == "l_wheel_joint" or
-        jointSpecification->Name == "r_wheel_joint" or
-        jointSpecification->Name == "wheel_right_joint" or
-        jointSpecification->Name == "wheel_left_joint")
-    {
-        // only velocity control for robot wheels
-        constraintComponent_->SetAngularDriveParams(0.0f, 1000, maxForce);
-    }
-    else
-    {
-        // default stiffness and damping instead of URDF value to optimize
-        // movement performance
-        float val = 1000000;
-        this->SetDrive(val, val / 10);
-    }
+    // default stiffness and damping instead of URDF value to optimize
+    // movement performance
+    float val = 1000000;
+    this->SetDrive(val, val / 10);
 }
 
 void Motor::SetMotionSpeed(const float& liner_speed)

@@ -287,6 +287,22 @@ public:
         return return_value;
     }
 
+    std::vector<std::string> getStringArray(const std::string& name) const
+    {
+        std::vector<std::string> return_value;
+        if (doc_.count(name) == 1 && doc_[name].is_array())
+        {
+            auto arr = doc_[name].get<nlohmann::json::array_t>();
+            for (size_t i = 0; i < arr.size(); i++)
+            {
+                auto obj = arr[i].get<std::string>();
+                //auto obj2 = arr[i].get<nlohmann::json::object_t>();
+                return_value.emplace_back(obj);
+			}
+        }
+        return return_value;
+    }
+
     bool hasKey(const std::string& key) const
     {
         return doc_.find(key) != doc_.end();

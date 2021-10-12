@@ -4,16 +4,10 @@
   "PawnPaths": {
       "UrdfBot": {
         "UrdfFile": "cmu_locobot_description.xml",
-        "EndEffectorLink":"gripper_link",
 		"ScaleFactor":1,
 		"EnableKeyboard":true
       }
   },
-  "SubWindows": [
-    {"WindowID": 0, "CameraName": "Follow", "ImageType": 3, "VehicleName": "", "Visible": false},
-    {"WindowID": 1, "CameraName": "Follow1", "ImageType": 5, "VehicleName": "", "Visible": false},
-    {"WindowID": 2, "CameraName": "TopBar", "ImageType": 0, "VehicleName": "", "Visible": false}
-  ],
   "Vehicles": {
       "UrdfBot": {
           "VehicleType": "UrdfBot",
@@ -73,31 +67,11 @@
                 "AttachLink": "base_link"
             }
           },
-          "Sensors": {
-              "BodyImu": {
-                  "SensorType": 2,
-                  "AttachLink": "base_link",
-                  "Enabled": false
-              },
-              "BaseLidar": {
-                  "SensorType": 6,
-                  "AttachLink": "base_link",
-                  "Enabled": false,
-                  "Range": 600,
-                  "NumberOfChannels": 16, 
-                  "RotationsPerSecond": 1,
-                  "VerticalFOVUpper": 8,
-                  "VerticalFOVLower": -7,
-                  "X": 30,
-                  "Y": 30,
-                  "Z": 35,
-                  "Roll": 0,
-                  "Pitch": 0,
-                  "Yaw": 0,
-                  "DrawDebugPoints": true,
-                  "PointsPerSecond": 1000,
-                  "IgnorePawnCollision": false
-              }
+          "Control": {
+            "LeftWheelJoint":"wheel_left_joint",
+            "RightWheelJoint":"wheel_right_joint",
+            "EndEffectorLink":"gripper_link",
+            "ManipulatorJoints":["joint_6","joint_7"]
           }
       }
   }

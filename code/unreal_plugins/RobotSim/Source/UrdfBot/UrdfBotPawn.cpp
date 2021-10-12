@@ -169,7 +169,6 @@ void AUrdfBotPawn::Tick(float delta)
         this->DrawDebug();
     }
     // update physicshandle location
-    // AUrdfLink*  clawLink = this->GetLink(FString("gripper_link"));
     if (this->mEndEffectorLink)
     {
         FVector clawLocation = this->mEndEffectorLink->GetActorLocation();
@@ -256,8 +255,9 @@ void AUrdfBotPawn::InitializeForBeginPlay()
             "Invalid pawn_paths. Make sure that the UrdfFile exists");
     }
     // TODO: change when multiple vehicles are supported.
-    this->debug_symbol_scale_ =
-        settings.vehicles["UrdfBot"].get()->debug_symbol_scale;
+    RobotSimSettings::VehicleSetting* vehicleSetting =
+        settings.vehicles["UrdfBot"].get();
+    this->debug_symbol_scale_ = vehicleSetting->debug_symbol_scale;
     this->draw_debug_ =
         !RobotSim::Utils::isApproximatelyZero(this->debug_symbol_scale_);
 
@@ -275,22 +275,58 @@ void AUrdfBotPawn::InitializeForBeginPlay()
     this->inverseKinematicComponent->ImportModel(urdf_path,
                                                  this->scale_factor_);
 
+    // set left wheel joint
+    FString leftWheelJoint =
+        vehicleSetting->controlSetting.LeftWheelJoint.c_str();
+    if (leftWheelJoint.Len() > 0)
+    {
+        if (this->controlled_motion_components_.Contains(leftWheelJoint))
+        {
+            this->mLeftWheelJoint = static_cast<Motor*>(
+                this->controlled_motion_components_[leftWheelJoint]);
+            this->mLeftWheelJoint->SetDrive(0, 1000);
+        }
+    }
+    // Set right wheel joint
+    FString rightWheelJoint =
+        vehicleSetting->controlSetting.RightWheelJoint.c_str();
+    if (rightWheelJoint.Len() > 0)
+    {
+        if (this->controlled_motion_components_.Contains(rightWheelJoint))
+        {
+            this->mRightWheelJoint = static_cast<Motor*>(
+                this->controlled_motion_components_[rightWheelJoint]);
+            this->mRightWheelJoint->SetDrive(0, 1000);
+        }
+    }
+    // set manipulator joint
+    std::vector<std::string> manipulatorJoints =
+        vehicleSetting->controlSetting.ManipulatorJoints;
+    if (manipulatorJoints.size() > 0)
+    {
+        for (size_t i = 0; i < manipulatorJoints.size(); i++)
+        {
+            FString manipulatorJoint = manipulatorJoints[i].c_str();
+            if (this->controlled_motion_components_.Contains(manipulatorJoint))
+            {
+                this->mManipulatorJointList.Add(
+                    this->controlled_motion_components_[manipulatorJoint]);
+            }
+        }
+    }
+    // set end effector link
     FString endEffectorName =
-        settings.pawn_paths["UrdfBot"].end_effector_link.c_str();
+        vehicleSetting->controlSetting.EndEffectorLink.c_str();
     if (endEffectorName.Len() > 0)
     {
         if (this->components_.Contains(endEffectorName))
         {
             this->setEndEffector(FString(endEffectorName));
         }
-        else
-        {
-            // throw std::runtime_error("invalid EndEffectorLink");
-        }
     }
 
     this->collision_blacklist_.Empty();
-    for (auto& kvp : settings.vehicles["UrdfBot"].get()->collision_blacklist)
+    for (auto& kvp : vehicleSetting->collision_blacklist)
     {
         FString bot_mesh = FString(kvp.first.c_str()) + TEXT("_visual");
         FString regex = FString(kvp.second.c_str());
@@ -567,9 +603,13 @@ void AUrdfBotPawn::onMoveRight(float Val)
 
 void AUrdfBotPawn::onGrabObject()
 {
+    if (!this->mEndEffectorLink)
+    {
+        return;
+    }
     FTransform result =
-        getRelativePose(FString("base_link"), FString("gripper_link"));
-    URobotBlueprintLib::LogMessage(FString("gripper_link actual: \n"),
+        getRelativePoseByLink(this->root_component_, this->mEndEffectorLink);
+    URobotBlueprintLib::LogMessage(FString("end effector link transform: \n"),
                                    *result.ToHumanReadableString(),
                                    LogDebugLevel::Informational, 30);
 
@@ -1579,65 +1619,72 @@ void AUrdfBotPawn::onStiffnessDown()
 
 void AUrdfBotPawn::onBaseMove(float value)
 {
-    // this->setDriveVelocity("r_wheel_joint", value);
-    // this->setDriveVelocity("l_wheel_joint", value);
-    if (!this->controlled_motion_components_.Contains("wheel_right_joint"))
+    if (!this->mLeftWheelJoint || !this->mRightWheelJoint)
     {
         return;
     }
-    Motor* leftComponent = static_cast<Motor*>(
-        this->controlled_motion_components_["wheel_right_joint"]);
-    Motor* rightComponent = static_cast<Motor*>(
-        this->controlled_motion_components_["wheel_left_joint"]);
-    FVector leftTarget = leftComponent->GetConstraintComponent()
+    FVector leftTarget = this->mLeftWheelJoint->GetConstraintComponent()
                              ->ConstraintInstance.ProfileInstance.AngularDrive
                              .AngularVelocityTarget;
-    FVector rightTarget = rightComponent->GetConstraintComponent()
+    FVector rightTarget = this->mRightWheelJoint->GetConstraintComponent()
                               ->ConstraintInstance.ProfileInstance.AngularDrive
                               .AngularVelocityTarget;
 
     float averageTargetVelocity = 0.5 * (leftTarget.X + rightTarget.X);
-    float averageActualVelocity =
-        0.5 / (2 * PI) *
-        (leftComponent->GetMotionSpeed() + rightComponent->GetMotionSpeed());
+    float averageActualVelocity = 0.5 / (2 * PI) *
+                                  (this->mLeftWheelJoint->GetMotionSpeed() +
+                                   this->mRightWheelJoint->GetMotionSpeed());
 
     if (value == 0)
     {
         // disable drive for free motion
-        leftComponent->EnableDrive(false);
-        leftComponent->SetDriveTargetVelocity(0);
+        this->mLeftWheelJoint->EnableDrive(false);
+        this->mLeftWheelJoint->SetDriveTargetVelocity(0);
 
-        rightComponent->EnableDrive(false);
-        rightComponent->SetDriveTargetVelocity(0);
+        this->mRightWheelJoint->EnableDrive(false);
+        this->mRightWheelJoint->SetDriveTargetVelocity(0);
     }
     else
     {
-        if (leftComponent->GetConstraintComponent()
+        if (this->mLeftWheelJoint->GetConstraintComponent()
                 ->ConstraintInstance.ProfileInstance.AngularDrive
                 .IsVelocityDriveEnabled())
         {
-            // update baesd on previous target
-            leftComponent->SetDriveTargetVelocity(value);
-            rightComponent->SetDriveTargetVelocity(value);
+            // update based on previous target
+            this->mLeftWheelJoint->SetDriveTargetVelocity(value);
+            this->mRightWheelJoint->SetDriveTargetVelocity(value);
         }
         else
         {
-            // update baesd on current velocity
-            leftComponent->EnableDrive(true);
-            leftComponent->SetDriveTargetVelocity(value);
+            // update based on current velocity
+            this->mLeftWheelJoint->EnableDrive(true);
+            this->mLeftWheelJoint->SetDriveTargetVelocity(value);
 
-            rightComponent->EnableDrive(true);
-            rightComponent->SetDriveTargetVelocity(value);
+            this->mRightWheelJoint->EnableDrive(true);
+            this->mRightWheelJoint->SetDriveTargetVelocity(value);
         }
     }
 }
 
 void AUrdfBotPawn::onBaseRotate(float value)
 {
-    if (value != 0)
+    if (value != 0 && this->mLeftWheelJoint && this->mRightWheelJoint)
     {
-        this->updateVelocity("wheel_left_joint", value);
-        this->updateVelocity("wheel_right_joint", -value);
+        this->mLeftWheelJoint->EnableDrive(true);
+        FVector currentLeftTarget =
+            this->mLeftWheelJoint->GetConstraintComponent()
+                ->ConstraintInstance.ProfileInstance.AngularDrive
+                .AngularVelocityTarget;
+        this->mLeftWheelJoint->SetDriveTargetVelocity(currentLeftTarget.X +
+                                                      value);
+
+        this->mRightWheelJoint->EnableDrive(true);
+        FVector currentRightTarget =
+            this->mRightWheelJoint->GetConstraintComponent()
+                ->ConstraintInstance.ProfileInstance.AngularDrive
+                .AngularVelocityTarget;
+        this->mRightWheelJoint->SetDriveTargetVelocity(currentRightTarget.X -
+                                                       value);
     }
 }
 
@@ -1687,16 +1734,22 @@ void AUrdfBotPawn::updateVelocity(FString jointName, float delta)
 
 void AUrdfBotPawn::onTorsoUp()
 {
-    ControlledMotionComponent* jointComponent =
-        this->controlled_motion_components_["torso_lift_joint"];
-    jointComponent->SetDriveTarget(jointComponent->GetDriveTarget() + 0.1);
+    if (this->controlled_motion_components_.Contains("torso_lift_joint"))
+    {
+        ControlledMotionComponent* jointComponent =
+            this->controlled_motion_components_["torso_lift_joint"];
+        jointComponent->SetDriveTarget(jointComponent->GetDriveTarget() + 0.1);
+    }
 }
 
 void AUrdfBotPawn::onTorsoDown()
 {
-    ControlledMotionComponent* jointComponent =
-        this->controlled_motion_components_["torso_lift_joint"];
-    jointComponent->SetDriveTarget(jointComponent->GetDriveTarget() - 0.1);
+    if (this->controlled_motion_components_.Contains("torso_lift_joint"))
+    {
+        ControlledMotionComponent* jointComponent =
+            this->controlled_motion_components_["torso_lift_joint"];
+        jointComponent->SetDriveTarget(jointComponent->GetDriveTarget() - 0.1);
+    }
 }
 
 void AUrdfBotPawn::setEndEffector(FString endEffectorName)
@@ -1769,6 +1822,7 @@ void AUrdfBotPawn::onArmZRotationDown()
 void AUrdfBotPawn::onArmReset()
 {
     TMap<FString, float> map = TMap<FString, float>();
+    // TODO find every joint from base link up to gripper link
     map.Add(FString("torso_lift_joint"), 0.0);
     map.Add(FString("shoulder_pan_joint"), 0.0);
     map.Add(FString("shoulder_lift_joint"), 0.0);
@@ -1800,57 +1854,42 @@ void AUrdfBotPawn::onTest()
         URobotBlueprintLib::LogMessage("joint: " + kvp.Key, "",
                                        LogDebugLevel::Informational, 30);
     }
-    UMeshComponent* mesh_root = this->components_["base_link"]->GetRootMesh();
+    UMeshComponent* mesh_root = root_component_->GetRootMesh();
     FTransform transform = mesh_root->GetRelativeTransform();
 
-    URobotBlueprintLib::LogMessage(FString("base_link: \n"),
+    URobotBlueprintLib::LogMessage(FString("rootMesh transform: \n"),
                                    transform.ToHumanReadableString(),
                                    LogDebugLevel::Informational, 30);
-
-    // GetCurrentQPosByLinkName();
-    if (this->components_.Contains("gripper_link"))
-    {
-        FTransform result =
-            getRelativePose(FString("base_link"), FString("gripper_link"));
-        URobotBlueprintLib::LogMessage(FString("gripper_link actual: \n"),
-                                       *result.ToHumanReadableString(),
-                                       LogDebugLevel::Informational, 30);
-    }
-
-    // set to its current position. error might exist due to gravity? TODO
-    // double check on this FVector deltaPos(0.0, 0.0, 0.0); FVector
-    // deltaOri(0.0, 0.0, 0.0); KeyBoardControl(deltaPos, deltaOri);
 }
 
 void AUrdfBotPawn::onManipulator()
 {
-    float val = 1;
-    float before = this->controlled_motion_components_["joint_6"]
-                       ->GetDriveTarget();
-    if (before <= 0)
+    for (auto& manipulatorJoint : this->mManipulatorJointList)
     {
-        val = 1;
+        float val = 1;
+        float before = manipulatorJoint->GetDriveTarget();
+        if (before <= 0)
+        {
+            val = 1;
+        }
+        else
+        {
+            val = -1;
+        }
+        manipulatorJoint->SetDriveTarget(val);
     }
-    else
-    {
-        val = -1;
-    }
-    this->controlled_motion_components_["joint_6"]
-        ->SetDriveTarget(val);
-    this->controlled_motion_components_["joint_7"]
-        ->SetDriveTarget(val);
 }
 
 void AUrdfBotPawn::KeyBoardControl(FVector deltaPos, FVector deltaOri)
 {
     TMap<FString, float> Qinit = this->GetTargetQPosByLinkName();
     FTransform currentPose =
-        getRelativePose(FString("base_link"), this->mEndEffectorName);
+        getRelativePoseByLink(this->root_component_, this->mEndEffectorLink);
     FVector target_pos = currentPose.GetTranslation() + deltaPos;
     FQuat target_ori = FQuat::MakeFromEuler(currentPose.GetRotation().Euler() +
                                             100 * deltaOri);
     FTransform temp(target_ori, target_pos, FVector(1.0, 1.0, 1.0));
-    URobotBlueprintLib::LogMessage(FString("gripper_link target"),
+    URobotBlueprintLib::LogMessage(FString("end effector target"),
                                    *temp.ToHumanReadableString(),
                                    LogDebugLevel::Informational, 30);
 
@@ -1892,21 +1931,28 @@ FTransform AUrdfBotPawn::getJointPose(const FString& jointName)
 FTransform AUrdfBotPawn::getRelativePose(const FString& baseLinkName,
                                          const FString& TargetlinkName)
 {
-    const FTransform& World2Base =
-        this->components_[baseLinkName]->GetTransform();
+    if (this->components_.Contains(baseLinkName) &&
+        this->components_.Contains(TargetlinkName))
+    {
+        return getRelativePoseByLink(this->components_[baseLinkName],
+                                     this->components_[TargetlinkName]);
+    }
+    else
+    {
+        return FTransform();
+    }
+}
+
+FTransform AUrdfBotPawn::getRelativePoseByLink(AUrdfLink* baseLink,
+                                               AUrdfLink* targetLink)
+{
+    const FTransform& World2Base = baseLink->GetTransform();
     FTransform temp(World2Base.GetRotation(), World2Base.GetTranslation(),
                     FVector(1, 1, 1));
-    AUrdfLink* targetLink = this->components_[TargetlinkName];
     FVector base2targetPos =
         temp.InverseTransformPosition(targetLink->GetActorLocation());
     FQuat base2targetOri = temp.InverseTransformRotation(
         targetLink->GetActorRotation().Quaternion());
-
-    // URobotBlueprintLib::LogMessage(baseLinkName + FString("actual: \n"),
-    // *World2Base.ToHumanReadableString(), LogDebugLevel::Informational, 30);
-    // URobotBlueprintLib::LogMessage(TargetlinkName + FString("actual: \n"),
-    // *targetLink->GetTransform().ToHumanReadableString(),
-    // LogDebugLevel::Informational, 30);
 
     return FTransform(base2targetOri, base2targetPos / this->world_scale_,
                       FVector(1.0, 1.0, 1.0));

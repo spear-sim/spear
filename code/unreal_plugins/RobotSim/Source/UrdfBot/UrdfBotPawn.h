@@ -151,6 +151,8 @@ public:
     FTransform getJointPose(const FString& jointName);
     FTransform getRelativePose(const FString& baseLinkName,
                                const FString& TargetlinkName);
+    FTransform getRelativePoseByLink(AUrdfLink* baseLink,
+                                     AUrdfLink* Targetlink);
 
     TMap<FString, float> GetTargetQPosByLinkName();
     TMap<FString, float> GetCurrentQPosByLinkName();
@@ -232,4 +234,7 @@ private:
     FVector mHitPoint;
     FString mEndEffectorName;
     AUrdfLink* mEndEffectorLink;
+    Motor* mLeftWheelJoint;
+    Motor* mRightWheelJoint;
+    TArray<ControlledMotionComponent*> mManipulatorJointList;
 };
