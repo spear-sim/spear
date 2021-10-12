@@ -158,6 +158,7 @@ public:
     TMap<FString, float> GetCurrentQPosByLinkName();
     void SetTargetQPosByLinkName(const TMap<FString, float>& map);
     void SetTargetQPos(const TMap<FString, float>& map);
+    void FindArmChain(TArray<FString>* linkList, TArray<FString>* jointList);
 
 private:
     // For limited translation joints, we need to move the link to the center of

@@ -1821,22 +1821,25 @@ void AUrdfBotPawn::onArmZRotationDown()
 
 void AUrdfBotPawn::onArmReset()
 {
+    TArray<FString> linkList;
+    TArray<FString> jointList;
+    FindArmChain(&linkList, &jointList);
+
     TMap<FString, float> map = TMap<FString, float>();
-    // TODO find every joint from base link up to gripper link
-    map.Add(FString("torso_lift_joint"), 0.0);
-    map.Add(FString("shoulder_pan_joint"), 0.0);
-    map.Add(FString("shoulder_lift_joint"), 0.0);
-    map.Add(FString("upperarm_roll_joint"), 0.0);
-    map.Add(FString("elbow_flex_joint"), 0.0);
-    map.Add(FString("forearm_roll_joint"), 0.0);
-    map.Add(FString("wrist_flex_joint"), 0.0);
-    map.Add(FString("wrist_roll_joint"), 0.0);
-    map.Add(FString("bellows_joint"), 0.0);
+    for (auto joint : jointList)
+    {
+        map.Add(joint, 0.0);
+	}
     this->SetTargetQPos(map);
 }
 
 void AUrdfBotPawn::onTest()
 {
+    TArray<FString> linkList;
+    TArray<FString> jointList;
+
+    FindArmChain(&linkList, &jointList);
+
     for (auto& kvp : this->components_)
     {
         UMeshComponent* mesh = kvp.Value->GetRootMesh();
@@ -1972,26 +1975,16 @@ TMap<FString, float> AUrdfBotPawn::GetTargetQPosByLinkName()
 
 TMap<FString, float> AUrdfBotPawn::GetCurrentQPosByLinkName()
 {
-    TArray<FString> list;
-    list.Add(FString("torso_lift_joint"));
-    list.Add(FString("shoulder_pan_joint"));
-    list.Add(FString("shoulder_lift_joint"));
-    list.Add(FString("upperarm_roll_joint"));
-    list.Add(FString("elbow_flex_joint"));
-    list.Add(FString("forearm_roll_joint"));
-    list.Add(FString("wrist_flex_joint"));
-    list.Add(FString("wrist_roll_joint"));
+    TArray<FString> linkList;
+    TArray<FString> jointList;
+
+    FindArmChain(&linkList, &jointList);
     TMap<FString, float> map;
-    for (FString str : list)
+    for (FString str : jointList)
     {
         ControlledMotionComponent* component =
             this->controlled_motion_components_[str];
         FTransform transform = getJointPose(str);
-        // URobotBlueprintLib::LogMessage(str, FString::SanitizeFloat(180 / PI *
-        // component->GetDriveTarget()) + FString(" -> ") +
-        // transform.GetTranslation().ToString() + FString(" ") +
-        // transform.GetRotation().Euler().ToString(),
-        // LogDebugLevel::Informational, 30);
         URobotBlueprintLib::LogMessage(
             str,
             FString::SanitizeFloat(180 / PI * component->GetDriveTarget()) +
@@ -2001,13 +1994,6 @@ TMap<FString, float> AUrdfBotPawn::GetCurrentQPosByLinkName()
     for (const TPair<FString, ControlledMotionComponent*>& pair :
          this->controlled_motion_components_)
     {
-        // FTransform transform = getJointPose(pair.Key);
-        // URobotBlueprintLib::LogMessage(pair.Key, FString::SanitizeFloat(180 /
-        // PI * pair.Value->GetDriveTarget())+FString(" ->
-        // ")+transform.GetTranslation().ToString() + FString(" ") +
-        // transform.GetRotation().Euler().ToString() ,
-        // LogDebugLevel::Informational, 30);
-
         map.Add(pair.Key, pair.Value->GetDriveTarget());
     }
     return map;
@@ -2035,6 +2021,47 @@ void AUrdfBotPawn::SetTargetQPos(const TMap<FString, float>& map)
             ControlledMotionComponent* jointComponent =
                 this->controlled_motion_components_[pair.Key];
             jointComponent->SetDriveTarget(pair.Value);
+        }
+    }
+}
+
+void AUrdfBotPawn::FindArmChain(TArray<FString>* linkList,
+                                TArray<FString>* jointList)
+{
+    linkList->Empty();
+    jointList->Empty();
+
+    AUrdfLink* currentLink = mEndEffectorLink;
+    TMap<FString, FString> child2ParentMap;
+
+    for (auto& kvp : this->constraints_)
+    {
+        UPhysicsConstraintComponent* component = kvp.Value.Value;
+        FString parentLinkName =
+            component->ComponentName1.ComponentName.ToString();
+        FString childLinkName =
+            component->ComponentName2.ComponentName.ToString();
+
+        child2ParentMap.Add(childLinkName.Replace(TEXT("_visual"), TEXT("")),
+                parentLinkName.Replace(TEXT("_visual"), TEXT("")));
+    }
+
+    while (currentLink && currentLink != this->root_component_)
+    {
+        FString parentJointName = currentLink->parentJointName_;
+        if (!parentJointName.IsEmpty())
+        {
+            ControlledMotionComponent* joint =
+                this->controlled_motion_components_[parentJointName];
+            currentLink = joint->GetParentLink();
+            jointList->Add(parentJointName);
+            linkList->Add(currentLink->GetName());
+        }
+        else
+        {
+            // fixed joint, get parent link from map data
+            FString parentLinkName = child2ParentMap[currentLink->GetName()];
+            currentLink = this->components_[parentLinkName];
         }
     }
 }
