@@ -60,10 +60,10 @@ bool InverseKinematicComponent::CalculateIK(TMap<FString, float> QInitMap,
     bool result = false;
 
     // check if there is torso_lift_joint?
-    bool isTorsoLiftJointPresent = model->GetBodyId("torso_lift_joint") == -1;
-    if (isTorsoLiftJointPresent)
+    bool isTorsoLiftLinkMissing = model->GetBodyId("torso_lift_link") == -1;
+    if (isTorsoLiftLinkMissing)
     {
-        // normal calculationCalculateIKNormal
+        // normal calculation
         result = this->CalculateIKNormal(
             Qinit, Qres, body_id,
             this->invScaleFactor_ *

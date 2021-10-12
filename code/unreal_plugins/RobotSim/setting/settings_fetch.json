@@ -3,8 +3,8 @@
     "SimMode": "UrdfBot",
     "PawnPaths": {
         "UrdfBot": {
-            "UrdfFile": "cmu_locobot_description.xml",
-            "ScaleFactor": 1,
+            "UrdfFile": "fetch.xml",
+            "ScaleFactor": 0.5,
             "EnableKeyboard": true
         }
     },
@@ -18,19 +18,27 @@
                     "ExternalActorRegex": "Floor"
                 },
                 {
-                    "BotMesh": "wheel_left_link",
+                    "BotMesh": "r_wheel_link",
                     "ExternalActorRegex": "Floor"
                 },
                 {
-                    "BotMesh": "wheel_right_link",
+                    "BotMesh": "l_wheel_link",
                     "ExternalActorRegex": "Floor"
                 },
                 {
-                    "BotMesh": "caster_front_link",
+                    "BotMesh": "fl_caster_link",
                     "ExternalActorRegex": "Floor"
                 },
                 {
-                    "BotMesh": "caster_back_link",
+                    "BotMesh": "fr_caster_link",
+                    "ExternalActorRegex": "Floor"
+                },
+                {
+                    "BotMesh": "br_caster_link",
+                    "ExternalActorRegex": "Floor"
+                },
+                {
+                    "BotMesh": "bl_caster_link",
                     "ExternalActorRegex": "Floor"
                 }
             ],
@@ -64,12 +72,12 @@
                 }
             },
             "Control": {
-                "LeftWheelJoint": "wheel_left_joint",
-                "RightWheelJoint": "wheel_right_joint",
+                "LeftWheelJoint": "l_wheel_joint",
+                "RightWheelJoint": "r_wheel_joint",
                 "EndEffectorLink": "gripper_link",
                 "ManipulatorJoints": [
-                    "joint_6",
-                    "joint_7"
+                    "l_gripper_finger_joint",
+                    "r_gripper_finger_joint"
                 ]
             }
         }
