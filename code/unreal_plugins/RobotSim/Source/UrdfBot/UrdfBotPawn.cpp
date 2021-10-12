@@ -1829,7 +1829,7 @@ void AUrdfBotPawn::onArmReset()
     for (auto joint : jointList)
     {
         map.Add(joint, 0.0);
-	}
+    }
     this->SetTargetQPos(map);
 }
 
@@ -2043,7 +2043,7 @@ void AUrdfBotPawn::FindArmChain(TArray<FString>* linkList,
             component->ComponentName2.ComponentName.ToString();
 
         child2ParentMap.Add(childLinkName.Replace(TEXT("_visual"), TEXT("")),
-                parentLinkName.Replace(TEXT("_visual"), TEXT("")));
+                            parentLinkName.Replace(TEXT("_visual"), TEXT("")));
     }
 
     while (currentLink && currentLink != this->root_component_)
