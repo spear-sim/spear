@@ -311,6 +311,8 @@ void AUrdfBotPawn::InitializeForBeginPlay()
             {
                 this->mManipulatorJointList.Add(
                     this->controlled_motion_components_[manipulatorJoint]);
+                this->controlled_motion_components_[manipulatorJoint]->SetDrive(
+                    60000, 5);
             }
         }
     }
@@ -1873,11 +1875,11 @@ void AUrdfBotPawn::onManipulator()
         float before = manipulatorJoint->GetDriveTarget();
         if (before <= 0)
         {
-            val = 1;
+            val = val;
         }
         else
         {
-            val = -1;
+            val = -val;
         }
         manipulatorJoint->SetDriveTarget(val);
     }
