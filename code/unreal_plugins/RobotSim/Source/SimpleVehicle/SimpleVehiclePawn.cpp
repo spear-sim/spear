@@ -3,6 +3,8 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 #include "SimpleVehiclePawn.h"
 #include "SimpleWheel.h"
+#include "OpenBotWheel.h"
+
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
@@ -17,12 +19,14 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(
         VehicleMeshComponentName);
     // setup skeletal mesh
+    //static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(TEXT(
+    //    "/RobotSim/SimpleVehicle/freight/freight.freight"));
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(
-        TEXT("/RobotSim/SimpleVehicle/freight/freight.freight"));
+        TEXT("/RobotSim/SimpleVehicle/OpenBot/OpenBot.OpenBot"));
     Mesh->SetSkeletalMesh(CarMesh.Object);
     // setup animation
     static ConstructorHelpers::FObjectFinder<UAnimBlueprint> CarMeshAnimation(
-        TEXT("/RobotSim/SimpleVehicle/freight/freight_Animation.freight_Animation"));
+        TEXT("/RobotSim/SimpleVehicle/OpenBot/OpenBot_Animation.OpenBot_Animation"));
     Mesh->SetAnimClass(
         CarMeshAnimation.Object->GetAnimBlueprintGeneratedClass());
 
@@ -36,6 +40,7 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     // example for adding user-defined collision callback
     // Mesh->OnComponentHit.AddDynamic(this,
     //                                &ASimpleVehiclePawn::OnComponentCollision);
+
     RootComponent = Mesh;
 
     VehicleMovement =
@@ -46,22 +51,23 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     // setup wheels
     VehicleMovement->WheelSetups.SetNum(4);
     // TODO dynamic tire?
+    UClass* wheelClasss = UOpenBotWheel::StaticClass();
     // https://answers.unrealengine.com/questions/325623/view.html
-    VehicleMovement->WheelSetups[0].WheelClass = USimpleWheel::StaticClass();
+    VehicleMovement->WheelSetups[0].WheelClass = wheelClasss;
     VehicleMovement->WheelSetups[0].BoneName = FName("FL");
-    VehicleMovement->WheelSetups[0].AdditionalOffset = FVector(0.f, -12.f, 0.f);
+    VehicleMovement->WheelSetups[0].AdditionalOffset = FVector(0.f, -1.2f, 0.f);
 
-    VehicleMovement->WheelSetups[1].WheelClass = USimpleWheel::StaticClass();
+    VehicleMovement->WheelSetups[1].WheelClass = wheelClasss;
     VehicleMovement->WheelSetups[1].BoneName = FName("FR");
-    VehicleMovement->WheelSetups[1].AdditionalOffset = FVector(0.f, 12.f, 0.f);
+    VehicleMovement->WheelSetups[1].AdditionalOffset = FVector(0.f, 1.2f, 0.f);
 
-    VehicleMovement->WheelSetups[2].WheelClass = USimpleWheel::StaticClass();
+    VehicleMovement->WheelSetups[2].WheelClass = wheelClasss;
     VehicleMovement->WheelSetups[2].BoneName = FName("RL");
-    VehicleMovement->WheelSetups[2].AdditionalOffset = FVector(0.f, -12.f, 0.f);
+    VehicleMovement->WheelSetups[2].AdditionalOffset = FVector(0.f, -1.2f, 0.f);
 
-    VehicleMovement->WheelSetups[3].WheelClass = USimpleWheel::StaticClass();
+    VehicleMovement->WheelSetups[3].WheelClass = wheelClasss;
     VehicleMovement->WheelSetups[3].BoneName = FName("RR");
-    VehicleMovement->WheelSetups[3].AdditionalOffset = FVector(0.f, 12.f, 0.f);
+    VehicleMovement->WheelSetups[3].AdditionalOffset = FVector(0.f, 1.2f, 0.f);
 
     VehicleMovement->SetIsReplicated(true); // Enable replication by default
     VehicleMovement->UpdatedComponent = Mesh;
