@@ -49,15 +49,15 @@
     <link name="wheel_left_link">
         <visual>
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>
-<!--                <cylinder length="0.0206" radius="0.0350"/>-->
+<!--                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>-->
+                <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </visual>
         <collision>
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>
-<!--                <cylinder length="0.0206" radius="0.0350"/>-->
+<!--                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>-->
+                <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </collision>
@@ -77,15 +77,15 @@
     <link name="wheel_right_link">
         <visual>
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>
-<!--                <cylinder length="0.0206" radius="0.0350"/>-->
+<!--                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>-->
+                <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </visual>
         <collision>
             <geometry>
-                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>
-<!--                <cylinder length="0.0206" radius="0.0350"/>-->
+<!--                <mesh type="unreal_mesh" location="StaticMesh'/RobotSim/Examples/locobot_description/meshes/main_wheel.main_wheel'"/>-->
+                <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </collision>
@@ -103,19 +103,19 @@
     <link name="caster_front_link">
         <visual>
             <geometry>
-                <cylinder length="0.0176" radius="0.017"/>
+                <sphere length="0.0176" radius="0.017"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <material name="caster_link_material"/>
         </visual>
         <collision>
             <geometry>
-                <cylinder length="0.0176" radius="0.017"/>
+                <sphere length="0.0176" radius="0.017"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </collision>
         <inertial>
-            <mass value="0.01"/>
+            <mass value="1"/>
             <origin xyz="0 0 0"/>
             <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
         </inertial>
@@ -128,19 +128,19 @@
     <link name="caster_back_link">
         <visual>
             <geometry>
-                <cylinder length="0.0176" radius="0.017"/>
+                <sphere length="0.0176" radius="0.017"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <material name="caster_link_material"/>
         </visual>
         <collision>
             <geometry>
-                <cylinder length="0.0176" radius="0.017"/>
+                <sphere length="0.0176" radius="0.017"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </collision>
         <inertial>
-            <mass value="0.01"/>
+            <mass value="1"/>
             <origin xyz="0 0 0"/>
             <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
         </inertial>
