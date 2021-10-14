@@ -10,8 +10,8 @@ UOpenBotWheel::UOpenBotWheel()
     SteerAngle = 0.f;
 
 	//small suspension for better stability
-    SuspensionMaxRaise = 0.5f;
-    SuspensionMaxDrop = 0.5f;
+    SuspensionMaxRaise = 0.2f;
+    SuspensionMaxDrop = 0.2f;
 }
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

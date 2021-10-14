@@ -23,17 +23,17 @@
         "DebugSymbolScale": 0,
         "Cameras": {
           "Follow": {
-            "X": -90,
+            "X": -50,
             "Y": 0,
-            "Z": 40,
+            "Z": 10,
             "Pitch": 0,
             "Roll": 0,
             "Yaw": 0
           },
 		"SideView": {
-            "X": -100,
-            "Y": -100,
-            "Z": 40,
+            "X": -50,
+            "Y": -50,
+            "Z": 0,
             "Pitch": 0,
             "Roll": 0,
             "Yaw": 45
