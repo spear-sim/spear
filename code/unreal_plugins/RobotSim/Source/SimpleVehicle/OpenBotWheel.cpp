@@ -4,8 +4,8 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 UOpenBotWheel::UOpenBotWheel()
 {
-    ShapeRadius = 4.0f;
-    ShapeWidth = 2.0f;
+    ShapeRadius = 3.25f;
+    ShapeWidth = 1.4f;
     bAffectedByHandbrake = true;
     SteerAngle = 0.f;
 

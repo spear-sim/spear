@@ -19,14 +19,13 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(
         VehicleMeshComponentName);
     // setup skeletal mesh
-    //static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(TEXT(
-    //    "/RobotSim/SimpleVehicle/freight/freight.freight"));
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(
-        TEXT("/RobotSim/SimpleVehicle/OpenBot/OpenBot.OpenBot"));
+        TEXT("/RobotSim/SimpleVehicle/freight/freight.freight"));
     Mesh->SetSkeletalMesh(CarMesh.Object);
     // setup animation
     static ConstructorHelpers::FObjectFinder<UAnimBlueprint> CarMeshAnimation(
-        TEXT("/RobotSim/SimpleVehicle/OpenBot/OpenBot_Animation.OpenBot_Animation"));
+        TEXT("/RobotSim/SimpleVehicle/freight/"
+             "freight_Animation.freight_Animation"));
     Mesh->SetAnimClass(
         CarMeshAnimation.Object->GetAnimBlueprintGeneratedClass());
 
@@ -51,7 +50,7 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     // setup wheels
     VehicleMovement->WheelSetups.SetNum(4);
     // TODO dynamic tire?
-    UClass* wheelClasss = UOpenBotWheel::StaticClass();
+    UClass* wheelClasss = USimpleWheel::StaticClass();
     // https://answers.unrealengine.com/questions/325623/view.html
     VehicleMovement->WheelSetups[0].WheelClass = wheelClasss;
     VehicleMovement->WheelSetups[0].BoneName = FName("FL");
@@ -168,12 +167,11 @@ void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,
                                    FVector normalImpulse,
                                    const FHitResult& hit)
 {
-    URobotBlueprintLib::LogMessage(
-        FString("NotifyHit: ") + HitComponent->GetName() + " with " +
-            OtherActor->GetName(),
-        " location: " + hitLocation.ToString() +
-            " normal: " + normalImpulse.ToString(),
-        LogDebugLevel::Informational, 30);
+    URobotBlueprintLib::LogMessage(FString("NotifyHit: ") +
+                                       OtherActor->GetName(),
+                                   " location: " + hitLocation.ToString() +
+                                       " normal: " + normalImpulse.ToString(),
+                                   LogDebugLevel::Informational, 30);
     this->mPawnEvents.getCollisionSignal().emit(
         HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal,
         normalImpulse, hit);
@@ -185,12 +183,11 @@ void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent* HitComponent,
                                               FVector NormalImpulse,
                                               const FHitResult& Hit)
 {
-    URobotBlueprintLib::LogMessage(
-        FString("OnComponentCollision: ") + HitComponent->GetName() + " with " +
-            OtherActor->GetName(),
-        " location: " + Hit.Location.ToString() +
-            " normal: " + Hit.Normal.ToString(),
-        LogDebugLevel::Informational, 30);
+    URobotBlueprintLib::LogMessage(FString("OnComponentCollision: ") +
+                                       OtherActor->GetName(),
+                                   " location: " + Hit.Location.ToString() +
+                                       " normal: " + Hit.Normal.ToString(),
+                                   LogDebugLevel::Informational, 30);
 }
 
 // Called when the game starts or when spawned

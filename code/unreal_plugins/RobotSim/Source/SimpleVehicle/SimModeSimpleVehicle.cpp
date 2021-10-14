@@ -19,7 +19,6 @@ void ASimModeSimpleVehicle::getExistingVehiclePawns(
     }
 }
 
-
 void ASimModeSimpleVehicle::cycleVisibleCameraForward()
 {
     this->cycleVisibleCamera(true);
@@ -91,9 +90,23 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
             pawn_spawn_params.SpawnCollisionHandlingOverride =
                 ESpawnActorCollisionHandlingMethod::
                     AdjustIfPossibleButAlwaysSpawn;
-            ASimpleVehiclePawn* spawned_pawn =
-                this->GetWorld()->SpawnActor<ASimpleVehiclePawn>(
+            // spawn from PawnBP
+            ASimpleVehiclePawn* spawned_pawn;
+            std::string PawnBP =
+                getSettings().pawn_paths.at("SimpleVehicle").pawn_bp;
+            if (PawnBP.length() > 0)
+            {
+                auto vehicle_bp_class = URobotBlueprintLib::LoadClass(PawnBP);
+                spawned_pawn = static_cast<ASimpleVehiclePawn*>(
+                    this->GetWorld()->SpawnActor(
+                        vehicle_bp_class, &spawn_position, &spawn_rotation,
+                        pawn_spawn_params));
+            }
+            else
+            {
+                spawned_pawn = this->GetWorld()->SpawnActor<ASimpleVehiclePawn>(
                     spawn_position, spawn_rotation, pawn_spawn_params);
+            }
 
             spawned_actors_.Add(spawned_pawn);
             pawns.Add(spawned_pawn);
@@ -123,10 +136,10 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
         RobotSimApiBase::Params params;
         params.vehicle = vehicle_pawn;
         params.global_transform = &getGlobalNedTransform();
-		//TODO collision info
+        // collision info
         params.pawn_events = vehicle_pawn->GetPawnEvents();
-		//not used anywhere?
-        //params.cameras = vehicle_pawn->GetCameraMap();
+        // not used anywhere?
+        // params.cameras = vehicle_pawn->GetCameraMap();
         params.pip_camera_class = pip_camera_class;
         params.collision_display_template = collision_display_template;
         params.home_geopoint = home_geopoint;
@@ -151,9 +164,9 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
 
         auto vehicle_api = vehicle_sim_api->getVehicleApi();
         auto vehicle_sim_api_p = vehicle_sim_api.get();
-		//regisger for rpc? 
-         //getApiProvider()->insert_or_assign(vehicle_name, vehicle_api,
-         //vehicle_sim_api_p);
+        // regisger for rpc?
+        // getApiProvider()->insert_or_assign(vehicle_name, vehicle_api,
+        // vehicle_sim_api_p);
         /*if ((fpv_pawn == vehicle_pawn ||
            !getApiProvider()->hasDefaultVehicle()) && vehicle_name != "")
                 getApiProvider()->makeDefaultVehicle(vehicle_name);*/
@@ -172,9 +185,10 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
     //}
 
     URobotBlueprintLib::EnableInput(this);
-     URobotBlueprintLib::BindActionToKey("inputEventCycleCameraForward",
-     EKeys::N, this, &ASimModeSimpleVehicle::cycleVisibleCameraForward);
-     URobotBlueprintLib::BindActionToKey(
+    URobotBlueprintLib::BindActionToKey(
+        "inputEventCycleCameraForward", EKeys::N, this,
+        &ASimModeSimpleVehicle::cycleVisibleCameraForward);
+    URobotBlueprintLib::BindActionToKey(
         "inputEventCycleCameraBackward", EKeys::P, this,
         &ASimModeSimpleVehicle::cycleVisibleCameraBackward);
     this->cameras_[0]->showToScreen();

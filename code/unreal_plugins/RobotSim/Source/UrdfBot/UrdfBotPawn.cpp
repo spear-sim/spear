@@ -541,7 +541,7 @@ void AUrdfBotPawn::onMoveRight(float Val)
                 controlSignalValues.Add(FString("Value"), -Val);
                 component->SetControl(controlSignalValues);
             }
-		}
+        }
     }
 }
 
@@ -616,18 +616,19 @@ AUrdfBotPawn::getConstraints()
 
 RobotApi* AUrdfBotPawn::getRobotApi() const
 {
-	RobotApi* resultApi = nullptr;
-	ASimModeUrdfBot* urdfSimMode = static_cast<ASimModeUrdfBot*>(simmode_);
-	std::vector<std::unique_ptr<RobotSimApi>>& simapiArray = urdfSimMode->vehicle_sim_apis_;
-	for (auto& ptr : simapiArray)
-	{
-		if (ptr->getPawn() == this)
-		{
-			resultApi = ptr->getVehicleApi();
-			break;
-		}
-	}
-	return resultApi;
+    RobotApi* resultApi = nullptr;
+    ASimModeUrdfBot* urdfSimMode = static_cast<ASimModeUrdfBot*>(simmode_);
+    std::vector<std::unique_ptr<RobotSimApi>>& simapiArray =
+        urdfSimMode->vehicle_sim_apis_;
+    for (auto& ptr : simapiArray)
+    {
+        if (ptr->getPawn() == this)
+        {
+            resultApi = ptr->getVehicleApi();
+            break;
+        }
+    }
+    return resultApi;
 }
 
 void AUrdfBotPawn::setLinkForceAndTorque(FString componentName,
