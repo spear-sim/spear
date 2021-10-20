@@ -82,16 +82,8 @@ void LinearActuator::Attach(AUrdfLink* baseLink,
                                    FString::SanitizeFloat(a) + " " +
                                        FString::SanitizeFloat(b),
                                    LogDebugLevel::Failure, 30);
-    if (this->name_ == "l_gripper_finger_joint" or
-        this->name_ == "r_gripper_finger_joint")
-    {
-        this->SetDrive(60000, 5);
-    }
-    else
-    {
-        float val = 1000000;
-        this->SetDrive(val, val / 10);
-    }
+    float val = 1000000;
+    this->SetDrive(val, val / 10);
 }
 
 void LinearActuator::SetControl(TMap<FString, float> controlSignals)

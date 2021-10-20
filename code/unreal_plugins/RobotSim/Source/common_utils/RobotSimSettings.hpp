@@ -182,7 +182,13 @@ public:                                       // types
         Rotation rotation = Rotation::nanRotation();
         float follow_distance = Utils::nan<float>();
     };
-
+    struct ControlSetting
+    {
+        std::string LeftWheelJoint;
+        std::string RightWheelJoint;
+        std::string EndEffectorLink;
+        std::vector<std::string> ManipulatorJoints;
+    };
     struct VehicleSetting
     {
         // required
@@ -199,6 +205,7 @@ public:                                       // types
         bool enable_collisions = true;
         bool is_fpv_vehicle = false;
         float debug_symbol_scale = 0.0f;
+        ControlSetting controlSetting;
 
         // nan means use player start
         Vector3r position = VectorMath::nanVector(); // in global NED
@@ -590,6 +597,11 @@ private:
 
                 vehicle_setting->collision_blacklist.emplace_back(pair);
             }
+            // control setting
+            Settings controlSetting;
+            settings_json.getChild("Control", controlSetting);
+            vehicle_setting->controlSetting =
+                createControlSetting(controlSetting);
         }
         vehicle_setting->vehicle_name = vehicle_name;
 
@@ -718,8 +730,7 @@ private:
         if (non_slippery_mat != "")
             paths.non_slippery_mat = non_slippery_mat;
         if (urdf_path != "")
-            paths.urdf_path =
-                RobotSim::Settings::getAnyPossiblePath(urdf_path);
+            paths.urdf_path = RobotSim::Settings::getAnyPossiblePath(urdf_path);
         if (end_effector_link != "")
             paths.end_effector_link = end_effector_link;
 
@@ -886,6 +897,21 @@ private:
                 cameras[key] = createCameraSetting(child);
             }
         }
+    }
+
+    static ControlSetting createControlSetting(const Settings& settings_json)
+    {
+        ControlSetting setting;
+
+        setting.LeftWheelJoint = settings_json.getString("LeftWheelJoint", "");
+        setting.RightWheelJoint =
+            settings_json.getString("RightWheelJoint", "");
+        setting.EndEffectorLink =
+            settings_json.getString("EndEffectorLink", "");
+        setting.ManipulatorJoints =
+            settings_json.getStringArray("ManipulatorJoints");
+
+        return setting;
     }
 
     static void createCaptureSettings(const RobotSim::Settings& settings_json,

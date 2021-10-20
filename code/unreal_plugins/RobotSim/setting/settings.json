@@ -1,104 +1,77 @@
 {
-  "SettingsVersion": 1.2,
-  "SimMode": "UrdfBot",
-  "PawnPaths": {
-      "UrdfBot": {
-        "UrdfFile": "fetch.xml",
-		"EndEffectorLink":"gripper_link",
-		"ScaleFactor": 0.5,
-		"EnableKeyboard":true
-      }
-  },
-  "SubWindows": [
-    {"WindowID": 0, "CameraName": "Follow", "ImageType": 3, "VehicleName": "", "Visible": false},
-    {"WindowID": 1, "CameraName": "Follow1", "ImageType": 5, "VehicleName": "", "Visible": false},
-    {"WindowID": 2, "CameraName": "TopBar", "ImageType": 0, "VehicleName": "", "Visible": false}
-  ],
-  "Vehicles": {
-      "UrdfBot": {
-          "VehicleType": "UrdfBot",
-          "DebugSymbolScale": 0,
-          "CollisionBlacklist": [
-            {
-                "BotMesh": "front_right_wheel", 
-                "ExternalActorRegex": "Ground"
+    "SettingsVersion": 1.2,
+    "SimMode": "UrdfBot",
+    "PawnPaths": {
+        "UrdfBot": {
+            "UrdfFile": "cmu_locobot_description.xml",
+            "ScaleFactor": 1,
+            "EnableKeyboard": true
+        }
+    },
+    "Vehicles": {
+        "UrdfBot": {
+            "VehicleType": "UrdfBot",
+            "DebugSymbolScale": 0,
+            "CollisionBlacklist": [
+                {
+                    "BotMesh": "base_link",
+                    "ExternalActorRegex": "Floor"
+                },
+                {
+                    "BotMesh": "wheel_left_link",
+                    "ExternalActorRegex": "Floor"
+                },
+                {
+                    "BotMesh": "wheel_right_link",
+                    "ExternalActorRegex": "Floor"
+                },
+                {
+                    "BotMesh": "caster_front_link",
+                    "ExternalActorRegex": "Floor"
+                },
+                {
+                    "BotMesh": "caster_back_link",
+                    "ExternalActorRegex": "Floor"
+                }
+            ],
+            "Cameras": {
+                "Follow": {
+                    "X": -90,
+                    "Y": 0,
+                    "Z": 40,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 0,
+                    "AttachLink": "base_link"
+                },
+                "GripperView": {
+                    "X": 30,
+                    "Y": 0,
+                    "Z": 30,
+                    "Pitch": -45,
+                    "Roll": 0,
+                    "Yaw": 180,
+                    "AttachLink": "gripper_link"
+                },
+                "SideView": {
+                    "X": 108,
+                    "Y": 55,
+                    "Z": 54,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 220,
+                    "AttachLink": "base_link"
+                }
             },
-            {
-                "BotMesh": "back_right_wheel", 
-                "ExternalActorRegex": "Ground"
-            },
-            {
-                "BotMesh": "front_left_wheel", 
-                "ExternalActorRegex": "Ground"
-            },
-            {
-                "BotMesh": "back_left_wheel", 
-                "ExternalActorRegex": "Ground"
-            },
-			{
-                "BotMesh": "r_wheel_link", 
-                "ExternalActorRegex": "Ground"
-            },
-			{
-                "BotMesh": "l_wheel_link", 
-                "ExternalActorRegex": "Ground"
+            "Control": {
+                "LeftWheelJoint": "wheel_left_joint",
+                "RightWheelJoint": "wheel_right_joint",
+                "EndEffectorLink": "gripper_link",
+                "ManipulatorJoints": [
+                    "joint_6",
+                    "joint_7"
+                ]
             }
-          ],
-          "Cameras": {
-              "Follow": {
-                "X": -90,
-                "Y": 0,
-                "Z": 40,
-                "Pitch": 0,
-                "Roll": 0,
-                "Yaw": 0,
-                  "AttachLink": "base_link"
-              },
-              "FrontView": {
-                "X": 100,
-                "Y": 0,
-                "Z": 30,
-                "Pitch": 0,
-                "Roll": 0,
-                "Yaw": 180,
-                "AttachLink": "base_link"
-            },
-              "Follow1": {
-                "X": 108,
-                "Y": 55,
-                "Z": 54,
-                "Pitch": 0,
-                "Roll": 0,
-                "Yaw": 220,
-                "AttachLink": "base_link"
-            }
-          },
-          "Sensors": {
-              "BodyImu": {
-                  "SensorType": 2,
-                  "AttachLink": "base_link",
-                  "Enabled": false
-              },
-              "BaseLidar": {
-                  "SensorType": 6,
-                  "AttachLink": "base_link",
-                  "Enabled": false,
-                  "Range": 600,
-                  "NumberOfChannels": 16, 
-                  "RotationsPerSecond": 1,
-                  "VerticalFOVUpper": 8,
-                  "VerticalFOVLower": -7,
-                  "X": 30,
-                  "Y": 30,
-                  "Z": 35,
-                  "Roll": 0,
-                  "Pitch": 0,
-                  "Yaw": 0,
-                  "DrawDebugPoints": true,
-                  "PointsPerSecond": 1000,
-                  "IgnorePawnCollision": false
-              }
-          }
-      }
-  }
+        }
+    }
 }
