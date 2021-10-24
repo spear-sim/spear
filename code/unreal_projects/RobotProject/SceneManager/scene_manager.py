@@ -12,6 +12,7 @@ CDN_API = "https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/"
 PROJECT_SAVED_FOLDER = os.path.join(os.path.dirname(__file__), "../Saved")
 TEMP_FOLDER = os.path.join(PROJECT_SAVED_FOLDER, "Temp")
 VERSION_INFO_FOLDER = os.path.join(PROJECT_SAVED_FOLDER, "VersionInfo")
+PROXY_URL = ""
 
 NUM_RETRIES = 8
 
@@ -60,7 +61,16 @@ def check_updade_version(local_version_info, version):
 
 def download_file_from_url(url, local_path, num_retry=NUM_RETRIES):
     try:
-        urllib.request.urlretrieve(url, local_path)
+        if PROXY_URL == "":
+            urllib.request.urlretrieve(url, local_path)
+        else:
+            proxy_string = "proxy-chain.intel.com:911"
+            proxy = urllib.request.ProxyHandler(
+                {"https": proxy_string, "http": proxy_string}
+            )
+            opener = urllib.request.build_opener(proxy)
+            urllib.request.install_opener(opener=opener)
+            urllib.request.urlretrieve(url, local_path)
     except:
         if num_retry > 0:
             download_file_from_url(url, local_path, num_retry - 1)
@@ -250,7 +260,7 @@ def deal_asset_file(content):
 def mult_down(contents):
     is_ok = True
     is_appear = False
-    with futures.ProcessPoolExecutor() as pool:
+    with futures.ThreadPoolExecutor() as pool:
         for result in tqdm(pool.map(deal_asset_file, contents), total=len(contents)):
             if not result and not is_appear:
                 is_appear = True
@@ -499,8 +509,8 @@ if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
-            "h:i:v:d:f:",
-            ["help=", "infile=", "version=", "downDDC=", "forceUpade="],
+            "h:i:v:d:f:p:",
+            ["help=", "infile=", "version=", "downDDC=", "forceUpdate=", "proxy="],
         )
     except getopt.GetoptError:
         print_help()
@@ -513,12 +523,14 @@ if __name__ == "__main__":
         elif opt in ("-v", "--version"):
             if "v" in arg:
                 version = arg
-        elif opt in ("-f", "--forceUpade"):
+        elif opt in ("-f", "--forceUpdate"):
             if arg in ["true", "True"]:
                 is_force_update = True
         elif opt in ("-d", "--downDDC"):
             if arg in ["true", "True"]:
                 is_down_ddc = True
+        elif opt in ("-p", "--proxy"):
+            PROXY_URL = str(arg)
 
     if version == "":
         print(
