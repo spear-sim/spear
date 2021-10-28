@@ -44,6 +44,8 @@ protected: // optional overrides
     virtual void setupVehiclesAndCamera();
     virtual void setupInputBindings();
 
+    virtual void traceGround(FVector& spawnPosition);
+
     ////called when SimMode should handle clock speed setting
     // virtual void setupClockSpeed();
 

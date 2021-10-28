@@ -92,6 +92,8 @@ void ASimModeUrdfBot::setupVehiclesAndCamera()
             pawn_spawn_params.SpawnCollisionHandlingOverride =
                 ESpawnActorCollisionHandlingMethod::
                     AdjustIfPossibleButAlwaysSpawn;
+			//use LineTracing to adjust pawn spawn height slightly above the ground
+            traceGround(spawn_position);
             AUrdfBotPawn* spawned_pawn =
                 this->GetWorld()->SpawnActor<AUrdfBotPawn>(
                     spawn_position, spawn_rotation, pawn_spawn_params);

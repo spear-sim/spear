@@ -321,6 +321,33 @@ const RobotSim::RobotSimSettings& ASimModeBase::getSettings() const
     return RobotSimSettings::singleton();
 }
 
+void ASimModeBase::traceGround(FVector& spawnPosition)
+{
+    UWorld* world = GetWorld();
+    if (world == nullptr)
+        return;
+
+    FCollisionQueryParams collisionParams(FName(TEXT("test")), true, this);
+
+    FHitResult hit(ForceInit);
+    FVector rayEnd = spawnPosition - FVector(0, 0, 1000);
+    if (world->LineTraceSingleByChannel(hit, spawnPosition, rayEnd,
+                                        ECollisionChannel::ECC_Vehicle,
+                                        collisionParams))
+    {
+
+        spawnPosition = hit.Location + FVector(0, 0, 10);
+        URobotBlueprintLib::LogMessage(TEXT("spawn ground - "),
+                                       spawnPosition.ToString(),
+                                       LogDebugLevel::Informational);
+    }
+    else
+    {
+        URobotBlueprintLib::LogMessage(TEXT("find ground - "), TEXT("not found"),
+                                       LogDebugLevel::Informational);
+    }
+}
+
 // void ASimModeBase::initializeCameraDirector(const FTransform&
 // camera_transform, float follow_distance)
 //{
