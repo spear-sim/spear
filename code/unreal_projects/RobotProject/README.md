@@ -22,7 +22,7 @@ In order to use SceneManager script, install python3 and run `pip3 install tqdm`
 
 RobotSim is developed on Windows. It might not be compatible with Linux or macOS, although we are working on making it so.
 
-# Building and running on macOS or Linux
+# Building and running on macOS and Linux
 
 ## Install and build pre-requisite libraries
 
@@ -71,32 +71,54 @@ ln -s path/to/interiorsim/code/unreal_plugins/RobotSim path/to/interiorsim/code/
 
 Rename `path/to/interiorsim/code/unreal_plugins/RobotSim/Source/RobotSim.Build.cs.example -> RobotSim.Build.cs` and modify the paths at the top of this file for your system.
 
-## Build RobotProject
+## Build and run RobotProject through the Unreal Editor
 
 #### macOS
 
 ```
+# build
 path/to/UE_4.26/Engine/Build/BatchFiles/Mac/Build.sh RobotProjectEditor Mac Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
-```
 
-#### Linux
-
-```
-path/to/UE_4.26/Engine/Build/BatchFiles/Linux/Build.sh RobotProjectEditor Linux Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
-```
-
-## Run RobotProject
-
-#### macOS
-
-```
+# run
 path/to/UE_4.26/Engine/Binaries/Mac/UE4Editor.app/Contents/MacOS/UE4Editor path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -game -WINDOWED -ResX=512 -ResY=512
 ```
 
 #### Linux
 
 ```
+# build
+path/to/UE_4.26/Engine/Build/BatchFiles/Linux/Build.sh RobotProjectEditor Linux Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
+
+# run
 path/to/UE_4.26/Engine/Binaries/Linux/UE4Editor path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -game -WINDOWED -ResX=512 -ResY=512 -nullrhi -RenderOffScreen
+```
+
+## Build and run RobotProject as a standalone executable
+
+#### macOS
+
+```
+# build and package
+path/to/UE_4.26/Engine/Build/BatchFiles/Mac/Build.sh RobotProjectEditor Mac Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
+path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -nop4 -project=path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -build -cook -stage -archive -archivedirectory=path/to/interiorsim/code/unreal_projects/RobotProject/dist -targetplatform=Mac -target=RobotProject -nocompileeditor -nodebuginfo -serverconfig=Development -clientconfig=Development -package
+
+# run
+cd path/to/interiorsim/code/unreal_projects/RobotProject/dist/MacNoEditor/RobotProject.app/Contents/MacOS
+cp -R path/to/interiorsim/code/unreal_plugins/RobotSim/setting .
+./RobotProject -WINDOWED -ResX=512 -ResY=512
+```
+
+#### Linux
+
+```
+# build and package
+path/to/UE_4.26/Engine/Build/BatchFiles/Linux/Build.sh RobotProjectEditor Linux Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
+path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -nop4 -project=path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -build -cook -stage -archive -archivedirectory=path/to/interiorsim/code/unreal_projects/RobotProject/dist -targetplatform=Linux -target=RobotProject -nocompileeditor -nodebuginfo -serverconfig=Development -clientconfig=Development -package
+
+# run
+cd path/to/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor
+cp -R path/to/interiorsim/code/unreal_plugins/RobotSim/setting .
+./RobotProject.sh -WINDOWED -ResX=512 -ResY=512 -nullrhi -RenderOffScreen
 ```
 
 ## RobotSim Setting
@@ -129,7 +151,7 @@ Current parsing path order for above files is as follows:
 
 1. Run SceneManager/scene_manager.py to download virtual worlds to `Content/`.
 
-        scene_manager.py -i <option virtualworld-id> -v <version v1> -d <option is_download_ddc>
+        scene_manager.py -i <option virtualworld-id> -v <necessary version-info> -d <option is_download_ddc>
         # for example
         scene_manager.py -i 235554690 -v v1 -d true
 
@@ -137,7 +159,14 @@ Current parsing path order for above files is as follows:
    
    -v: required scene version in format of v{n}. Up-to-date version information can be found in SceneManager/dataset-repo-update.log.
    
-   -d: default false, whether download ddc. See [UE4 DerivedDataCache](https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/DerivedDataCache/) for more information.
+   -d: default false, whether download ddc. See [UE4 DerivedDataCache](https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/DerivedDataCache/) for more information.  Modify .\Epic Games\UE_4.26\Engine\Config\BaseEngine.ini as bellow:
+
+	```
+	[InstalledDerivedDataBackendGraph]
+	Local=(Type=FileSystem, ReadOnly=false, Clean=false, Flush=false, PurgeTransient=true, DeleteUnused=true, nusedFileAge=34, FoldersToClean=-1, Path="%GAMEDIR%DerivedDataCache", EditorOverrideSetting=LocalDerivedDataCache)
+	```
+
+   -f: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version information(MD5 in it) to remote version information and decide whether to download asset.
 
 2. If download fails or there are materials missing in Virtual World (mostly due to internet issues), try run 'scene_manager.py -v v1 -f true -i <virtualworld-id>' to reload the scene. Download log can be found in `Saved/UpdateLog/{virtualworld-id}_failed.txt`.
 

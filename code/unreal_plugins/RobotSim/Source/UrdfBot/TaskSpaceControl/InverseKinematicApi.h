@@ -34,6 +34,11 @@ public:
     Matrix44 ForwardKinematic(VectorNd Q, int body_id);
 
 private:
+    bool CalculateIKNormal(const Math::VectorNd& Qinit,
+                           Math::VectorNd& Qres,
+                           int body_id,
+                           Vector3d targetPos,
+                           Matrix3d targetOri);
     // calculate IK with current torso pose preferred torso_lift_joint only
     // changed if required
     bool CalculateIKWithControlledTorso(const Math::VectorNd& Qinit,

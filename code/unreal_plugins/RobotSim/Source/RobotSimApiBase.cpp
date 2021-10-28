@@ -261,8 +261,9 @@ void RobotSimApiBase::onCollision(class UPrimitiveComponent* MyComp,
 
     URobotBlueprintLib::LogMessageString(
         "Collision",
-        Utils::stringf("#%d with %s - ObjID %d",
+        Utils::stringf("#%d %s with %s - ObjID %d",
                        state_.collision_info.collision_count,
+                       TCHAR_TO_UTF8(*MyComp->GetName()),
                        state_.collision_info.object_name.c_str(),
                        state_.collision_info.object_id),
         LogDebugLevel::Informational);
