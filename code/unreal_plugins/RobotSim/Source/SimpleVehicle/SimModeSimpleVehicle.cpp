@@ -90,6 +90,9 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
             pawn_spawn_params.SpawnCollisionHandlingOverride =
                 ESpawnActorCollisionHandlingMethod::
                     AdjustIfPossibleButAlwaysSpawn;
+            // use LineTracing to adjust pawn spawn height slightly above the
+            // ground
+            traceGround(spawn_position);
             // spawn from PawnBP
             ASimpleVehiclePawn* spawned_pawn;
             std::string PawnBP =
