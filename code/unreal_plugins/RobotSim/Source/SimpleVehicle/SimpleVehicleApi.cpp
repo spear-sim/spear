@@ -21,5 +21,5 @@ bool SimpleVehicleApi::armDisarm(bool arm)
 // TODO: Figure out what is this.
 RobotSim::GeoPoint SimpleVehicleApi::getHomeGeoPoint() const
 {
-	return this->mHomeGeoPoint;
+    return this->mHomeGeoPoint;
 }

@@ -13,8 +13,7 @@ void ASimModeUrdfBot::BeginPlay()
     // this->initializePauseState();
 }
 
-void ASimModeUrdfBot::getExistingVehiclePawns(
-    TArray<RobotBase*>& pawns) const
+void ASimModeUrdfBot::getExistingVehiclePawns(TArray<RobotBase*>& pawns) const
 {
     for (TActorIterator<AUrdfBotPawn> it(this->GetWorld()); it; ++it)
     {
@@ -92,7 +91,8 @@ void ASimModeUrdfBot::setupVehiclesAndCamera()
             pawn_spawn_params.SpawnCollisionHandlingOverride =
                 ESpawnActorCollisionHandlingMethod::
                     AdjustIfPossibleButAlwaysSpawn;
-			//use LineTracing to adjust pawn spawn height slightly above the ground
+            // use LineTracing to adjust pawn spawn height slightly above the
+            // ground
             traceGround(spawn_position);
             AUrdfBotPawn* spawned_pawn =
                 this->GetWorld()->SpawnActor<AUrdfBotPawn>(

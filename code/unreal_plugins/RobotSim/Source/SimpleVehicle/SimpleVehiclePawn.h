@@ -58,7 +58,7 @@ public:
     // Begin Actor interface
     // Called every frame
     virtual void Tick(float DeltaTime) override;
-	// collision callback
+    // collision callback
     virtual void NotifyHit(class UPrimitiveComponent* myComp,
                            class AActor* other,
                            class UPrimitiveComponent* otherComp,
@@ -67,7 +67,7 @@ public:
                            FVector hitNormal,
                            FVector normalImpulse,
                            const FHitResult& hit) override;
-	// uesr-defined callback function 
+    // uesr-defined callback function
     UFUNCTION()
     void OnComponentCollision(UPrimitiveComponent* HitComponent,
                               AActor* OtherActor,

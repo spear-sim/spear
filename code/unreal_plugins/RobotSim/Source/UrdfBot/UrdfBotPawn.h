@@ -106,7 +106,7 @@ public:
     getConstraints();
 
 public:
-	RobotApi*  getRobotApi() const;
+    RobotApi* getRobotApi() const;
     void setLinkForceAndTorque(FString componentName,
                                const FVector& force,
                                const FVector& torque);
@@ -193,6 +193,7 @@ private:
     void MoveAllComponents(FVector translation, FRotator rotation);
     // change joint velocity by delta
     void updateVelocity(FString jointName, float delta);
+
 private:
     UPROPERTY()
     TMap<FString, AUrdfLink*> components_; //所有机器人的link节点

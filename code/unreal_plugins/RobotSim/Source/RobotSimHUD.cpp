@@ -68,11 +68,11 @@ void ARobotSimHUD::createSimMode()
     simmode_spawn_params.SpawnCollisionHandlingOverride =
         ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-	if (simmode_name == "UrdfBot")
-	{
+    if (simmode_name == "UrdfBot")
+    {
         simmode_ = this->GetWorld()->SpawnActor<ASimModeUrdfBot>(
             FVector::ZeroVector, FRotator::ZeroRotator, simmode_spawn_params);
-	}
+    }
     else if (simmode_name == "SimpleVehicle")
     {
         simmode_ = this->GetWorld()->SpawnActor<ASimModeSimpleVehicle>(

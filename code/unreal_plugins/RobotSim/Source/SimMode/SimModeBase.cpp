@@ -343,7 +343,8 @@ void ASimModeBase::traceGround(FVector& spawnPosition)
     }
     else
     {
-        URobotBlueprintLib::LogMessage(TEXT("find ground - "), TEXT("not found"),
+        URobotBlueprintLib::LogMessage(TEXT("find ground - "),
+                                       TEXT("not found"),
                                        LogDebugLevel::Informational);
     }
 }
@@ -604,8 +605,7 @@ void ASimModeBase::setupVehiclesAndCamera()
     // checkVehicleReady();
 }
 
-void ASimModeBase::getExistingVehiclePawns(
-    TArray<RobotBase*>& pawns) const
+void ASimModeBase::getExistingVehiclePawns(TArray<RobotBase*>& pawns) const
 {
     // derived class should override this method to retrieve types of pawns they
     // support

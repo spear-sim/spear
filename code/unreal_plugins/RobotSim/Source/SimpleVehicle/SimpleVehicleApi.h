@@ -13,7 +13,7 @@ class SimpleVehicleApi : public RobotSim::RobotApiBase
 public:
     virtual void enableApiControl(bool bIsApiControlEnabled) override;
     virtual bool isApiControlEnabled() const override;
-	// TODO remove
+    // TODO remove
     virtual bool armDisarm(bool arm) override;
     // TODO remove
     virtual RobotSim::GeoPoint getHomeGeoPoint() const override;
