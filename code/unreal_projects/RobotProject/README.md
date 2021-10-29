@@ -145,6 +145,17 @@ Current parsing path order for above files is as follows:
 3. check if the file is in `~/Documents/RobotSim/setting/` for macOS/Linux, or `C:/Users/{userName}/Documents/RobotSim/setting/` for Windows
 4. check if the file is in `{PluginDir}/RobotSim/setting/` (Default setting when run from `.uproject`)
 
+### setting configuration
+The robot structure and setting can be configured in settings.json. Default settings are available for `fetch`, `LoCoBot` and `OpenBot`. Replace the content to settings.json to run RobotSim with different robots.
+Key setting:
+
+SimMode：UrdfBot | SimpleVehicle , define robot running mode. UrdfBot requires urdf like xml description to build robot in UE4. SimpleVehicle requires a BluePrint class predefined to have differential vehicle control.
+
+PawnPaths.UrdfBot.UrdfFile: <path/to/xml/*.xml> urdf like robot description file. Required for UrdfBot mode.
+
+PawnPaths.SimpleVehicle.PawnBP: BluePrint class for robot description. Required for SimpleVehicle Mode. provide a BP class inherit `ASimpleVehiclePawn`. Default use Fetch vehicle base if not specified.
+
+
 # Virtual World
 
 ### Scene Manager
