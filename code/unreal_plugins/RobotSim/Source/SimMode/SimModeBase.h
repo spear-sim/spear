@@ -5,6 +5,7 @@
 #include "Engine/DirectionalLight.h"
 #include "GameFramework/Actor.h"
 #include "ParticleDefinitions.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 #include <string>
 #include "CameraDirector.h"
@@ -44,7 +45,8 @@ protected: // optional overrides
     virtual void setupVehiclesAndCamera();
     virtual void setupInputBindings();
 
-    virtual void traceGround(FVector& spawnPosition);
+    virtual void traceGround(FVector& spawnPosition,
+                             const FVector& boxHalfSize = FVector(0, 0, 0));
 
     ////called when SimMode should handle clock speed setting
     // virtual void setupClockSpeed();

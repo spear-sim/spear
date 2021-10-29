@@ -90,26 +90,35 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
             pawn_spawn_params.SpawnCollisionHandlingOverride =
                 ESpawnActorCollisionHandlingMethod::
                     AdjustIfPossibleButAlwaysSpawn;
-            // use LineTracing to adjust pawn spawn height slightly above the
-            // ground
-            traceGround(spawn_position);
-            // spawn from PawnBP
-            ASimpleVehiclePawn* spawned_pawn;
+
             std::string PawnBP =
                 getSettings().pawn_paths.at("SimpleVehicle").pawn_bp;
+            UClass* vehicle_bp_class;
             if (PawnBP.length() > 0)
             {
-                auto vehicle_bp_class = URobotBlueprintLib::LoadClass(PawnBP);
-                spawned_pawn = static_cast<ASimpleVehiclePawn*>(
-                    this->GetWorld()->SpawnActor(
-                        vehicle_bp_class, &spawn_position, &spawn_rotation,
-                        pawn_spawn_params));
+                vehicle_bp_class = URobotBlueprintLib::LoadClass(PawnBP);
             }
             else
             {
-                spawned_pawn = this->GetWorld()->SpawnActor<ASimpleVehiclePawn>(
-                    spawn_position, spawn_rotation, pawn_spawn_params);
+                vehicle_bp_class = ASimpleVehiclePawn::StaticClass();
             }
+
+            ASimpleVehiclePawn* defaultObject =
+                static_cast<ASimpleVehiclePawn*>(
+                    vehicle_bp_class->GetDefaultObject());
+            USkeletalMeshComponent* mesh = defaultObject->GetMesh();
+            FBoxSphereBounds test = mesh->SkeletalMesh->GetBounds();
+            // defaultObject->GetActorBounds();
+            FVector origin;
+            FVector boxSize;
+            // use LineTracing to adjust pawn spawn height slightly above the
+            // ground
+            traceGround(spawn_position, test.GetBox().GetSize() / 2);
+
+            ASimpleVehiclePawn* spawned_pawn =
+                static_cast<ASimpleVehiclePawn*>(this->GetWorld()->SpawnActor(
+                    vehicle_bp_class, &spawn_position, &spawn_rotation,
+                    pawn_spawn_params));
 
             spawned_actors_.Add(spawned_pawn);
             pawns.Add(spawned_pawn);
@@ -167,25 +176,9 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
 
         auto vehicle_api = vehicle_sim_api->getVehicleApi();
         auto vehicle_sim_api_p = vehicle_sim_api.get();
-        // regisger for rpc?
-        // getApiProvider()->insert_or_assign(vehicle_name, vehicle_api,
-        // vehicle_sim_api_p);
-        /*if ((fpv_pawn == vehicle_pawn ||
-           !getApiProvider()->hasDefaultVehicle()) && vehicle_name != "")
-                getApiProvider()->makeDefaultVehicle(vehicle_name);*/
 
         vehicle_sim_apis_.push_back(std::move(vehicle_sim_api));
     }
-
-    // if (getApiProvider()->hasDefaultVehicle()) {
-    //	getVehicleSimApi()->possess();
-    //}
-
-    // Set up camera cycling
-    // if (this->cameras_.Num() < 1) {
-    //    throw std::runtime_error("UrdfBotPawn has no cameras defined. Please
-    //    define at least one camera in settings.json");
-    //}
 
     URobotBlueprintLib::EnableInput(this);
     URobotBlueprintLib::BindActionToKey(
