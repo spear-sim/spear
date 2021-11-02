@@ -16,3 +16,14 @@ Version: v1
 Contents:
     1. Update ./Data/virtualworld-ids.json file, adding another 100 ids(from '235114793' to '245086562'). Now there are totally 200 virtualworld ids.
     2. Update all assets of 100 virtualworlds to 'https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/' by DLC.
+
+Time:20211102
+Version: v1
+Contents:
+    1. Update ./Data/virtualworld-ids.json file, adding another 100 ids(from '235114795' to '248188049'). Now there are totally 300 virtualworld ids.
+    2. Update all assets of 100 virtualworlds to 'https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/' by DLC.
+    3. Update 26 virtualworlds(in Time 20211011 and 20210922) by DLC to make them more stable when simulating. 26 ids:
+        243632555  243646290  243623730  243618886  243649209  237202516  237217030  
+        239796017  236885103  235547982  236869507  235562313  235570109  239782533  
+        237077949  237085616  239773167  237089613  237110004  237109008  237120210  
+        235114828  235547972  235559331  236865541  237081640
