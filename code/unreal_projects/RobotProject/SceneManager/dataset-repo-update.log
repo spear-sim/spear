@@ -2,3 +2,28 @@ Time:20210824
 Version: v1
 Contents:
     update all assets of '235554690' and '235576087'.
+
+Time:20210922
+Version: v1
+Contents:
+    1. Update ./Data/virtualworld-ids.json file, adding another 98 ids(from '235114775' to '237120210'). Now there are totally 100 virtualworld ids.
+    2. Update all assets of 100 virtualworlds to 'https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/' by DLC.
+         Notes: Now use MD5 instead of ETag as the version update tag, because the ETag of the same file may be different and the MD5 of the file is unqiue.
+    3. Update scene_manager.py, use MD5 to check asset version instead of ETag.
+
+Time:20211011
+Version: v1
+Contents:
+    1. Update ./Data/virtualworld-ids.json file, adding another 100 ids(from '235114793' to '245086562'). Now there are totally 200 virtualworld ids.
+    2. Update all assets of 100 virtualworlds to 'https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/' by DLC.
+
+Time:20211102
+Version: v1
+Contents:
+    1. Update ./Data/virtualworld-ids.json file, adding another 100 ids(from '235114795' to '248188049'). Now there are totally 300 virtualworld ids.
+    2. Update all assets of 100 virtualworlds to 'https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/' by DLC.
+    3. Update 26 virtualworlds(in Time 20211011 and 20210922) by DLC to make them more stable when simulating. 26 ids:
+        243632555  243646290  243623730  243618886  243649209  237202516  237217030  
+        239796017  236885103  235547982  236869507  235562313  235570109  239782533  
+        237077949  237085616  239773167  237089613  237110004  237109008  237120210  
+        235114828  235547972  235559331  236865541  237081640

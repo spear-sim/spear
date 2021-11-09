@@ -151,15 +151,30 @@ Current parsing path order for above files is as follows:
 
 1. Run SceneManager/scene_manager.py to download virtual worlds to `Content/`.
 
-        scene_manager.py -i <option virtualworld-id> -v <version v1> -d <option is_download_ddc>
+	```bash
+        scene_manager.py -i <option virtualworld-id> -v <necessary version-info> -d <option is_download_ddc> -p <proxy_host:proxy_port>
         # for example
         scene_manager.py -i 235554690 -v v1 -d true
+	```
 
    -i: optional virtualworld-id. All available id lists can be found in SceneManager/Data/virtualworld-ids.json. If not specified, all virtualworld-ids will be loaded.
    
    -v: required scene version in format of v{n}. Up-to-date version information can be found in SceneManager/dataset-repo-update.log.
    
-   -d: default false, whether download ddc. See [UE4 DerivedDataCache](https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/DerivedDataCache/) for more information.
+   -d: default false, whether download ddc. See [UE4 DerivedDataCache](https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/DerivedDataCache/) for more information.  Modify .\Epic Games\UE_4.26\Engine\Config\BaseEngine.ini as bellow:
+
+	```
+	[InstalledDerivedDataBackendGraph]
+	Local=(Type=FileSystem, ReadOnly=false, Clean=false, Flush=false, PurgeTransient=true, DeleteUnused=true, nusedFileAge=34, FoldersToClean=-1, Path="%GAMEDIR%DerivedDataCache", EditorOverrideSetting=LocalDerivedDataCache)
+	```
+
+   -f: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version information(MD5 in it) to remote version information and decide whether to download asset.
+
+   -p: if you need to run this script behind a proxy, use this option. Use this format, `-p hostname:port`. Don't include `http or https` in your hostname.
+	With proxy, command would look something like:
+	```bash
+	python scene_manager.py -i 235554690 -v v1 -d true -p hostname:port
+	```
 
 2. If download fails or there are materials missing in Virtual World (mostly due to internet issues), try run 'scene_manager.py -v v1 -f true -i <virtualworld-id>' to reload the scene. Download log can be found in `Saved/UpdateLog/{virtualworld-id}_failed.txt`.
 

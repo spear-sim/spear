@@ -74,13 +74,15 @@ bool StaticMeshGenerator::CreateUnscaledMeshForLink(
         }
 
         meshComponent->SetSimulatePhysics(true);
-        meshComponent->SetCollisionObjectType(
-            ECollisionChannel::ECC_PhysicsBody);
+        meshComponent->SetCollisionObjectType(ECollisionChannel::ECC_Vehicle);
         meshComponent->SetCollisionResponseToAllChannels(
             ECollisionResponse::ECR_Block);
         meshComponent->SetCollisionEnabled(
             ECollisionEnabled::Type::QueryAndPhysics);
         meshComponent->SetNotifyRigidBodyCollision(true);
+        meshComponent->SetCollisionResponseToChannel(
+            ECC_Vehicle,
+            ECR_Overlap); // ignore collision between robot links
 
         if (linkMaterialName.Len() > 0)
         {
@@ -113,14 +115,14 @@ bool StaticMeshGenerator::CreateUnscaledMeshForLink(
 
             meshComponent->SetSimulatePhysics(true);
             meshComponent->SetCollisionObjectType(
-                ECollisionChannel::ECC_PhysicsBody);
+                ECollisionChannel::ECC_Vehicle);
             meshComponent->SetCollisionResponseToAllChannels(
                 ECollisionResponse::ECR_Block);
             meshComponent->SetCollisionEnabled(
                 ECollisionEnabled::Type::QueryAndPhysics);
             meshComponent->SetNotifyRigidBodyCollision(true);
             meshComponent->SetCollisionResponseToChannel(
-                ECC_PhysicsBody,
+                ECC_Vehicle,
                 ECR_Overlap); // ignore collision between robot links
 
             if (linkMaterialName.Len() > 0)
@@ -287,53 +289,15 @@ bool StaticMeshGenerator::CreateUnscaledMeshForLink(
             }
             meshComponent->SetSimulatePhysics(true);
             meshComponent->SetCollisionObjectType(
-                ECollisionChannel::ECC_PhysicsBody);
+                ECollisionChannel::ECC_Vehicle);
             meshComponent->SetCollisionResponseToAllChannels(
                 ECollisionResponse::ECR_Block);
             meshComponent->SetCollisionEnabled(
                 ECollisionEnabled::Type::QueryAndPhysics);
-            meshComponent->SetCollisionResponseToChannel(
-                ECC_PhysicsBody, ECR_Overlap); // 忽略机器人link之间的碰撞
             meshComponent->SetNotifyRigidBodyCollision(true);
-
-            // 忽视指定link之间的碰撞
-
-            // if(linkName == "torso_fixed_link"){
-            //     meshComponent->SetSimulatePhysics(true);
-            //     meshComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
-            //     meshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
-            //     meshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-            //     meshComponent->SetNotifyRigidBodyCollision(true);
-            //     meshComponent->SetCollisionResponseToChannel(ECC_PhysicsBody,
-            //     ECR_Overlap);
-            // }else if(linkName == "bellows_link"){
-            //     meshComponent->SetSimulatePhysics(true);
-            //     meshComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
-            //     meshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
-            //     meshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-            //     meshComponent->SetNotifyRigidBodyCollision(true);
-            //     meshComponent->SetCollisionResponseToChannel(ECC_PhysicsBody,
-            //     ECR_Overlap);
-            // }
-            // else if(linkName == "torso_fixed_link"){
-            //     meshComponent->SetSimulatePhysics(true);
-            //     meshComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
-            //     meshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
-            //     meshComponent->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-            //     meshComponent->SetNotifyRigidBodyCollision(true);
-            //     meshComponent->SetCollisionResponseToChannel(ECC_PhysicsBody,
-            //     ECR_Overlap);
-            // }
-            // else{
-            //     meshComponent->SetSimulatePhysics(true);
-            //     meshComponent->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
-            //     meshComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-            //     meshComponent->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-            //     meshComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
-            //     meshComponent->SetCollisionResponseToChannel(ECC_WorldStatic,
-            //     ECR_Overlap);
-            //     meshComponent->SetNotifyRigidBodyCollision(true);
-            // }
+            meshComponent->SetCollisionResponseToChannel(
+                ECC_Vehicle,
+                ECR_Overlap); // ignore collision between robot links
 
             link->SetMeshFromProceduralMeshComponent(meshComponent);
         }
