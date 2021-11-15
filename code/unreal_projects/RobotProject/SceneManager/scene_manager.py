@@ -200,6 +200,23 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
     is_umap_ok = False
     if os.path.exists(umap_local):
         is_umap_ok = True
+    
+    if scene_config_data.get('BuildData') is not None:
+        build_data_local = os.path.join(map_folder, scene_config_data["BuildData"])
+        download_file_from_url(
+            CDN_API
+            + "scenes/"
+            + virtualworld_id
+            + "/"
+            + version
+            + "/"
+            + scene_config_data["BuildData"],
+            build_data_local,
+        )
+        
+        if not os.path.exists(build_data_local):
+            return False
+        
 
     # move versioninfo file
     if is_umap_ok and is_anim_ok and is_arch_ok and is_mat_ok:

@@ -161,6 +161,26 @@ Current parsing path order for above files is as follows:
    
    -v: required scene version in format of v{n}. Up-to-date version information can be found in SceneManager/dataset-repo-update.log.
    
+   ```
+	v1: RTX method, the renderersettings in ./RobotProject/Config/DefaultEngine.ini should be as follow:
+      [/Script/Engine.RendererSettings]
+      r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange=True
+      r.DefaultFeature.LightUnits=2
+      r.SkinCache.CompileShaders=True
+      r.RayTracing=True
+   v2: Baking method, the renderersettings in ./RobotProject/Config/DefaultEngine.ini should be as follow:
+      [/Script/Engine.RendererSettings]
+      r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange=True
+      r.ReflectionCaptureResolution=1024
+      r.DefaultFeature.LightUnits=2
+      r.SkinCache.CompileShaders=True
+      r.RayTracing=False
+      r.CustomDepth=3
+      r.SSGI.Enable=True
+      r.GenerateMeshDistanceFields=True
+      r.DistanceFieldBuild.Compress=True
+	```
+   
    -d: default false, whether download ddc. See [UE4 DerivedDataCache](https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/DerivedDataCache/) for more information.  Modify .\Epic Games\UE_4.26\Engine\Config\BaseEngine.ini as bellow:
 
 	```

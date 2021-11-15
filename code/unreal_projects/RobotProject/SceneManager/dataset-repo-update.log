@@ -27,3 +27,28 @@ Contents:
         239796017  236885103  235547982  236869507  235562313  235570109  239782533  
         237077949  237085616  239773167  237089613  237110004  237109008  237120210  
         235114828  235547972  235559331  236865541  237081640
+
+Time:20211115
+Version: v2
+Contents:
+    1. We use the baking method instead of the RTX to sovle GI in version v2, becase RTX is not supported in Linux platform.
+    2. Need change ./RobotProject/Config/DefaultEngine.ini to support baking method.
+        From RTX method setting in v1:
+            [/Script/Engine.RendererSettings]
+            r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange=True
+            r.DefaultFeature.LightUnits=2
+            r.SkinCache.CompileShaders=True
+            r.RayTracing=True
+        To Baking method setting in v2:
+            [/Script/Engine.RendererSettings]
+            r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange=True
+            r.ReflectionCaptureResolution=1024
+            r.DefaultFeature.LightUnits=2
+            r.SkinCache.CompileShaders=True
+            r.RayTracing=False
+            r.CustomDepth=3
+            r.SSGI.Enable=True
+            r.GenerateMeshDistanceFields=True
+            r.DistanceFieldBuild.Compress=True
+    3. Now 50 virtualworlds from '235554690' to '235564195' in ./Data/virtualworld-ids.json file are available in v2.
+    4. Update scene_manager.py, support to download BuildData asset.
