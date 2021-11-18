@@ -23,7 +23,9 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
         TEXT("/RobotSim/SimpleVehicle/freight/freight.freight"));
     Mesh->SetSkeletalMesh(CarMesh.Object);
     // setup animation
-   static ConstructorHelpers::FClassFinder<UAnimInstance> finderAnim(TEXT("/RobotSim/SimpleVehicle/freight/freight_Animation.freight_Animation_C"));
+    static ConstructorHelpers::FClassFinder<UAnimInstance> finderAnim(
+        TEXT("/RobotSim/SimpleVehicle/freight/"
+             "freight_Animation.freight_Animation_C"));
     if (finderAnim.Succeeded())
     {
         Mesh->SetAnimClass(finderAnim.Class);
@@ -110,9 +112,11 @@ void ASimpleVehiclePawn::SetupPlayerInputComponent(
 
 void ASimpleVehiclePawn::SetupInputBindings()
 {
-    UE_LOG(LogTemp, Warning, TEXT("ASimpleVehiclePawn::SetupInputBindings start"));
+    UE_LOG(LogTemp, Warning,
+           TEXT("ASimpleVehiclePawn::SetupInputBindings start"));
     this->EnableInput(this->GetWorld()->GetFirstPlayerController());
-    UE_LOG(LogTemp, Warning, TEXT("ASimpleVehiclePawn::SetupInputBindings end"));
+    UE_LOG(LogTemp, Warning,
+           TEXT("ASimpleVehiclePawn::SetupInputBindings end"));
     // keyboard control in RobotSimGameMode
     APlayerController* controller =
         this->GetWorld()->GetFirstPlayerController();
