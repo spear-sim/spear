@@ -52,3 +52,8 @@ Contents:
             r.DistanceFieldBuild.Compress=True
     3. Now 50 virtualworlds from '235554690' to '235564195' in ./Data/virtualworld-ids.json file are available in v2.
     4. Update scene_manager.py, support to download BuildData asset.
+
+Time:20211124
+Version: v2
+Contents:
+    1. Upload another 250 virtualworlds from '235564255' to '248188049' in ./Data/virtualworld-ids.json file by DLC. So there are totally 300 virtualworlds in v2.
