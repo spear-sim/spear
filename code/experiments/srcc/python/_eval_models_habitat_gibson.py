@@ -425,7 +425,13 @@ def eval_model(model_path, num_episodes=-1, max_num_actions_per_episode=10000):
             batch_rgb = batch["rgb"].permute(0,3,1,2) / 255.0 # depth prediction model expects N,C,H,W and values in [0,1]
             depth_pred = depth_prediction_model(batch_rgb)
             batch["depth"] = torch.clamp(depth_pred/max_depth, 0.0, 1.0).permute(0,2,3,1) # action model expects N,H,W,C and values in [0,1]
-            batch["rgb"] = None
+            batch.pop("rgb") # remove "rgb" key
+
+            tmp_depth = torch.clone(batch["depth"]).detach().numpy()
+
+            # print(np.min(tmp_depth))
+            # print(np.max(tmp_depth))
+            # print(np.all(np.isfinite(tmp_depth)))
 
         with torch.no_grad():
             _, actions, _, test_recurrent_hidden_states = model.act(
