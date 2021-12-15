@@ -25,7 +25,7 @@ def load_all_meta():
     """
     style_map = {}
     for file_path in glob.glob("metadata/metadata_{}.json".format("*")):
-        with open(file_path, mode='r') as f:
+        with open(file_path, mode="r") as f:
             metadata = json.load(f)
             if metadata["style"] not in style_map:
                 style_map[metadata["style"]] = []
@@ -53,9 +53,18 @@ def parse_key(style_map, key):
 
     print(f"----------{key}--------")
     for style in style_result:
-        style_result[style]["avg"] = float(style_result[style]["val"]) / float(style_result[style]["count"])
-        print("{}\t{}\t{}\t{}\t{}\t".format(style[0:7], key[0:6], style_result[style]["count"],
-                                            style_result[style]["val"], style_result[style]["avg"]))
+        style_result[style]["avg"] = float(style_result[style]["val"]) / float(
+            style_result[style]["count"]
+        )
+        print(
+            "{}\t{}\t{}\t{}\t{}\t".format(
+                style[0:7],
+                key[0:6],
+                style_result[style]["count"],
+                style_result[style]["val"],
+                style_result[style]["avg"],
+            )
+        )
     print(f"----------{key}--------")
     return style_result
 

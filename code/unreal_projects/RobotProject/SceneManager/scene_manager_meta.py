@@ -21,9 +21,10 @@ e.g: scene_manager_meta.py -v v1
 def download_metadata(virtualworld_id, version):
     if not os.path.exists("metadata"):
         os.mkdir("metadata")
-    metadata_url = "{}scenes/{}/{}/metadata_{}.json".format(scene_manager.CDN_API, virtualworld_id, version,
-                                                            virtualworld_id)
-    metadata_local = "metadata/metadata_{}_{}.json".format(virtualworld_id,version)
+    metadata_url = "{}scenes/{}/{}/metadata_{}.json".format(
+        scene_manager.CDN_API, virtualworld_id, version, virtualworld_id
+    )
+    metadata_local = "metadata/metadata_{}_{}.json".format(virtualworld_id, version)
     result = scene_manager.download_file_from_url(metadata_url, metadata_local)
     print("download_metadata by vw_id", virtualworld_id, version, result)
     return result
