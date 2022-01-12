@@ -22,7 +22,7 @@ jobs:
           python -m pip install black
       - name: Check python style
         run: |
-          black --check .
+          black --check . --exclude 'code/experiments'
       - name: Check cpp style
         run: |
-          ! find . -type f \( -name '*.h' -or -name '*.cpp' \) | xargs clang-format -style=file --output-replacements-xml | grep -q 'replacement '
+          ! find . -type f \( -name '*.h' -or -name '*.cpp' \) -not -ipath './code/experiments/*' | xargs clang-format -style=file --output-replacements-xml | grep -q 'replacement '
