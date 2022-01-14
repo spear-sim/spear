@@ -14,9 +14,9 @@
 #include "NedTransform.h"
 #include "common_utils/RobotSimSettings.hpp"
 //#include "SimJoyStick.h"
-#include "common_utils/VehicleApiBase.hpp"
+#include "common_utils/RobotApiBase.hpp"
 #include "common_utils/UniqueValueMap.hpp"
-#include "UrdfBot/RobotSimVehicle.h"
+#include "RobotBase.h"
 #include "PawnEvents.h"
 #include "common_utils/UpdatableObject.hpp"
 #include "common_utils/ImageCaptureBase.hpp"
@@ -40,7 +40,7 @@ public: // types
 
     struct Params
     {
-        RobotSimVehicle* vehicle;
+        RobotBase* vehicle;
         const NedTransform* global_transform;
         PawnEvents* pawn_events;
         common_utils::UniqueValueMap<std::string, APIPCamera*> cameras;
@@ -53,7 +53,7 @@ public: // types
         {
         }
 
-        Params(RobotSimVehicle* pawn_val,
+        Params(RobotBase* pawn_val,
                const NedTransform* global_transform_val,
                PawnEvents* pawn_events_val,
                const common_utils::UniqueValueMap<std::string, APIPCamera*>
@@ -107,7 +107,7 @@ protected: // additional interface for derived class
     virtual void pawnTick(float dt);
     const RobotSim::Kinematics::State* getPawnKinematics() const;
     void setPoseInternal(const Pose& pose, bool ignore_collision);
-    virtual RobotSim::VehicleApiBase* getVehicleApiBase() const;
+    virtual RobotSim::RobotApiBase* getVehicleApiBase() const;
 
 public: // Unreal specific methods
     // returns one of the cameras attached to the pawn

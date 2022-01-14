@@ -6,6 +6,7 @@
 #include "Misc/FileHelper.h"
 
 #include "UrdfBot/SimModeUrdfBot.h"
+#include "SimpleVehicle/SimModeSimpleVehicle.h"
 
 //#include "common_utils/Settings.hpp"
 #include "common_utils/RobotSimSettings.hpp"
@@ -44,7 +45,7 @@ void ARobotSimHUD::initializeSettings()
     else
         RobotSimSettings::createDefaultSettingsFile();
 
-    //加载settings.json文件。并且解析相关的配置到arisimsetting。
+    // load and parse settings.json
     RobotSimSettings::singleton().load(
         std::bind(&ARobotSimHUD::getSimModeFromUser, this));
     for (const auto& warning : RobotSimSettings::singleton().warning_messages)
@@ -64,15 +65,25 @@ void ARobotSimHUD::createSimMode()
     std::string simmode_name = RobotSimSettings::singleton().simmode_name;
 
     FActorSpawnParameters simmode_spawn_params;
+    simmode_spawn_params.Name = FName("SimModeRobotSim_0");
     simmode_spawn_params.SpawnCollisionHandlingOverride =
         ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
     if (simmode_name == "UrdfBot")
+    {
         simmode_ = this->GetWorld()->SpawnActor<ASimModeUrdfBot>(
             FVector::ZeroVector, FRotator::ZeroRotator, simmode_spawn_params);
+    }
+    else if (simmode_name == "SimpleVehicle")
+    {
+        simmode_ = this->GetWorld()->SpawnActor<ASimModeSimpleVehicle>(
+            FVector::ZeroVector, FRotator::ZeroRotator, simmode_spawn_params);
+    }
     else
+    {
         URobotBlueprintLib::LogMessageString(
             "SimMode is not valid: ", simmode_name, LogDebugLevel::Failure);
+    }
 }
 
 bool ARobotSimHUD::getSettingsTextContent(std::string& settingsText)

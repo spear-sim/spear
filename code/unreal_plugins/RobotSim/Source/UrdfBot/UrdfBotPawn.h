@@ -29,7 +29,7 @@
 
 #include "MeshGeneration/StaticMeshGenerator.h"
 #include "PawnEvents.h"
-#include "UrdfBot/RobotSimVehicle.h"
+#include "RobotBase.h"
 #include "PhysXIncludes.h"
 #include "PhysicsPublic.h"
 #include "PhysXPublic.h"
@@ -38,8 +38,7 @@
 #include "UrdfBotPawn.generated.h"
 
 UCLASS(Blueprintable, meta = (ShortTooltip = "URDF  Pawn"))
-// class ROBOTSIM_API AUrdfBotPawn : public APawn, public RobotSimVehicle
-class ROBOTSIM_API AUrdfBotPawn : public APawn, public RobotSimVehicle
+class ROBOTSIM_API AUrdfBotPawn : public APawn, public RobotBase
 {
     GENERATED_BODY()
 
@@ -107,6 +106,7 @@ public:
     getConstraints();
 
 public:
+    RobotApi* getRobotApi() const;
     void setLinkForceAndTorque(FString componentName,
                                const FVector& force,
                                const FVector& torque);
@@ -123,6 +123,7 @@ public:
 
     void onBaseMove(float value);
     void onBaseRotate(float value);
+    void onBrake(float value);
 
     void onTorsoUp();
     void onTorsoDown();
@@ -193,6 +194,8 @@ private:
     void MoveAllComponents(FVector translation, FRotator rotation);
     // change joint velocity by delta
     void updateVelocity(FString jointName, float delta);
+
+private:
     UPROPERTY()
     TMap<FString, AUrdfLink*> components_; //所有机器人的link节点
     UPROPERTY()
@@ -227,6 +230,10 @@ private:
     float world_scale_;
     float debug_symbol_scale_ = 0.0f;
     float scale_factor_ = 1.0f;
+
+public:
+    UPROPERTY()
+    class ASimModeBase* simmode_;
 
 private:
     UPROPERTY()

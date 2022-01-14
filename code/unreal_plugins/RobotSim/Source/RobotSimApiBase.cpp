@@ -150,7 +150,7 @@ void RobotSimApiBase::setupCamerasFromSettings(
         const auto& camera_setting = Utils::findOrDefault(
             getVehicleSetting()->cameras, pair.first, camera_defaults);
         APIPCamera* camera = pair.second;
-        camera->setupCameraFromSettings(camera_setting, getNedTransform());
+        camera->setupCameraFromSettings(camera_setting);
     }
 }
 
@@ -168,13 +168,25 @@ void RobotSimApiBase::createCamerasFromSettings()
 
         // TODO: Properly attach camera. Determine NED transform
         FString componentName(setting.attach_link.c_str());
-        USceneComponent* attachComponent =
-            params_.vehicle->GetComponent(componentName);
 
+        USceneComponent* attachComponent;
         FVector componentTranslation;
         FRotator componentRotation;
-        params_.vehicle->GetComponentReferenceTransform(
-            componentName, componentTranslation, componentRotation);
+
+        if (componentName == "")
+        {
+            attachComponent = params_.vehicle->GetPawn()->GetRootComponent();
+            FTransform componentTransform =
+                params_.vehicle->GetPawn()->GetTransform();
+            componentRotation = componentTransform.GetRotation().Rotator();
+            componentTranslation = componentTransform.GetTranslation();
+        }
+        else
+        {
+            attachComponent = params_.vehicle->GetComponent(componentName);
+            params_.vehicle->GetComponentReferenceTransform(
+                componentName, componentTranslation, componentRotation);
+        }
 
         // TODO: Other pawns are using localNED. Is this OK?
         FVector localPositionOffset = FVector(
@@ -200,7 +212,7 @@ void RobotSimApiBase::createCamerasFromSettings()
         // spawn and attach camera to pawn
         APIPCamera* camera =
             params_.vehicle->GetPawn()->GetWorld()->SpawnActor<APIPCamera>(
-                params_.pip_camera_class, camera_transform,
+                APIPCamera::StaticClass(), camera_transform,
                 camera_spawn_params);
         camera->setIndex(camera_index);
         camera_index++;
@@ -221,11 +233,12 @@ void RobotSimApiBase::onCollision(class UPrimitiveComponent* MyComp,
                                   FVector NormalImpulse,
                                   const FHitResult& Hit)
 {
-    // Deflect along the surface when we collide.
+    // TODO this is causing a lot of error
+    // Deflect along the surface when
+    // we collide.
     // FRotator CurrentRotation = GetActorRotation(RootComponent);
     // SetActorRotation(FQuat::Slerp(CurrentRotation.Quaternion(),
     // HitNormal.ToOrientationQuat(), 0.025f));
-
     UPrimitiveComponent* comp = Cast<class UPrimitiveComponent>(
         Other
             ? (Other->GetRootComponent() ? Other->GetRootComponent() : nullptr)
@@ -236,25 +249,26 @@ void RobotSimApiBase::onCollision(class UPrimitiveComponent* MyComp,
         Vector3r(Hit.ImpactNormal.X, Hit.ImpactNormal.Y, -Hit.ImpactNormal.Z);
     state_.collision_info.impact_point =
         ned_transform_.toLocalNed(Hit.ImpactPoint);
-    state_.collision_info.position = ned_transform_.toLocalNed(getUUPosition());
+    // state_.collision_info.position =
+    // ned_transform_.toLocalNed(getUUPosition());
     state_.collision_info.penetration_depth =
         ned_transform_.toNed(Hit.PenetrationDepth);
     // state_.collision_info.time_stamp =
     // RobotSim::ClockFactory::get()->nowNanos();
-    state_.collision_info.object_name =
-        std::string(Other ? TCHAR_TO_UTF8(*(Other->GetName())) : "(null)");
+    // state_.collision_info.object_name =
+    //    std::string(Other ? TCHAR_TO_UTF8(*(Other->GetName())) : "(null)");
     state_.collision_info.object_id = comp ? comp->CustomDepthStencilValue : -1;
 
     ++state_.collision_info.collision_count;
 
-    URobotBlueprintLib::LogMessageString(
-        "Collision",
-        Utils::stringf("#%d %s with %s - ObjID %d",
-                       state_.collision_info.collision_count,
-                       TCHAR_TO_UTF8(*MyComp->GetName()),
-                       state_.collision_info.object_name.c_str(),
-                       state_.collision_info.object_id),
-        LogDebugLevel::Informational);
+    // URobotBlueprintLib::LogMessageString(
+    //    "Collision",
+    //    Utils::stringf("#%d %s with %s - ObjID %d",
+    //                   state_.collision_info.collision_count,
+    //                   TCHAR_TO_UTF8(*MyComp->GetName()),
+    //                   state_.collision_info.object_name.c_str(),
+    //                   state_.collision_info.object_id),
+    //    LogDebugLevel::Informational);
 }
 
 void RobotSimApiBase::possess()
@@ -277,16 +291,6 @@ APawn* RobotSimApiBase::getPawn()
 
 void RobotSimApiBase::setCameraPose(const RobotSim::CameraPose camera_pose)
 {
-    // auto matchedCamera =
-    // this->cameras_.findOrDefault(camera_pose.camera_name, nullptr);
-
-    // if (matchedCamera == nullptr)
-    //{
-    //    return;
-    //}
-
-    // AActor* cameraActor = matchedCamera->GetAttachParentActor();
-
     MoveCameraRequest r;
     r.camera_name = camera_pose.camera_name;
     r.transformVec =
@@ -302,30 +306,6 @@ void RobotSimApiBase::setCameraPose(const RobotSim::CameraPose camera_pose)
     // busy-wait until camera is actually moved
     FGenericPlatformProcess::ConditionalSleep(
         [&] { return this->move_camera_requests_.IsEmpty(); }, 0.005);
-
-    // FVector transformVec = FVector(camera_pose.translation.x(),
-    // camera_pose.translation.y(), camera_pose.translation.z()); transformVec
-    // *= URobotBlueprintLib::GetWorldToMetersScale(cameraActor); // API will be
-    // specified in meters FQuat qq(camera_pose.rotation.x(),
-    // camera_pose.rotation.y(), camera_pose.rotation.z(),
-    // camera_pose.rotation.w()); FRotator rotation = qq.Rotator();
-
-    // FDetachmentTransformRules detatchRules(EDetachmentRule::KeepWorld,
-    // EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, true); try
-    //{
-    //    auto ss = cameraActor->GetActorLocation();
-    //    matchedCamera->DetachSceneComponentsFromParent(cameraActor->GetRootComponent(),
-    //    true); matchedCamera->SetActorLocation(cameraActor->GetActorLocation()
-    //    + transformVec);
-    //    matchedCamera->SetActorRotation(cameraActor->GetActorRotation() +
-    //    rotation);
-    //    matchedCamera->AttachToComponent(cameraActor->GetRootComponent(),
-    //    FAttachmentTransformRules::KeepWorldTransform);
-    //}
-    // catch (std::exception e)
-    //{
-    //    e.what();
-    //}
 }
 
 void RobotSimApiBase::displayCollisionEffect(FVector hit_location,
@@ -433,25 +413,6 @@ void RobotSimApiBase::serviceMoveCameraRequests()
             FAttachmentTransformRules::KeepWorldTransform);
     }
 }
-
-// void playBack()
-//{
-// if (params_.pawn->GetRootPrimitiveComponent()->IsAnySimulatingPhysics()) {
-//    params_.pawn->GetRootPrimitiveComponent()->SetSimulatePhysics(false);
-//    params_.pawn->GetRootPrimitiveComponent()->SetSimulatePhysics(true);
-//}
-// TODO: refactor below code used for playback
-// std::ifstream sim_log("C:\\temp\\mavlogs\\circle\\sim_cmd_006_orbit
-// 5 1.txt.pos.txt"); plot(sim_log, FColor::Purple, Vector3r(0, 0, -3));
-// std::ifstream real_log("C:\\temp\\mavlogs\\circle\\real_cmd_006_orbit
-// 5 1.txt.pos.txt"); plot(real_log, FColor::Yellow, Vector3r(0, 0, -3));
-
-// std::ifstream sim_log("C:\\temp\\mavlogs\\square\\sim_cmd_005_square
-// 5 1.txt.pos.txt"); plot(sim_log, FColor::Purple, Vector3r(0, 0, -3));
-// std::ifstream real_log("C:\\temp\\mavlogs\\square\\real_cmd_012_square
-// 5 1.txt.pos.txt"); plot(real_log, FColor::Yellow, Vector3r(0, 0, -3));
-//}
-
 RobotSimApiBase::CollisionInfo RobotSimApiBase::getCollisionInfo() const
 {
     return state_.collision_info;
@@ -529,21 +490,12 @@ RobotSimApiBase::getCameraInfo(const std::string& camera_name) const
     camera_info.pose.orientation =
         ned_transform_.toNed(camera->GetActorRotation().Quaternion());
     camera_info.fov = camera->GetCameraComponent()->FieldOfView;
-    camera_info.proj_mat =
-        camera->getProjectionMatrix(APIPCamera::ImageType::Scene);
     return camera_info;
 }
 
 void RobotSimApiBase::setCameraOrientation(
     const std::string& camera_name, const RobotSim::Quaternionr& orientation)
 {
-    URobotBlueprintLib::RunCommandOnGameThread(
-        [this, camera_name, orientation]() {
-            APIPCamera* camera = getCamera(camera_name);
-            FQuat quat = ned_transform_.fromNed(orientation);
-            camera->setCameraOrientation(quat.Rotator());
-        },
-        true);
 }
 
 RobotSim::RayCastResponse
@@ -1058,7 +1010,7 @@ void RobotSimApiBase::drawDrawShapes()
     }
 }
 
-RobotSim::VehicleApiBase* RobotSimApiBase::getVehicleApiBase() const
+RobotSim::RobotApiBase* RobotSimApiBase::getVehicleApiBase() const
 {
     return nullptr;
 }

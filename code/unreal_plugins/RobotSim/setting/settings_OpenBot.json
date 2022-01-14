@@ -1,0 +1,108 @@
+{
+    "SettingsVersion": 1.2,
+    "SimMode": "SimpleVehicle",
+    "PawnPaths": {
+        "UrdfBot": {
+            "UrdfFile": "fetch.xml",
+            "EndEffectorLink": "gripper_link",
+            "ScaleFactor": 0.5,
+            "EnableKeyboard": true
+        },
+        "SimpleVehicle": {
+            "PawnBP": "/RobotSim/SimpleVehicle/OpenBot/BP_OpenBot.BP_OpenBot_C"
+        }
+    },
+    "Vehicles": {
+        "SimpleVehicle": {
+            "VehicleType": "SimpleVehicle",
+            "DebugSymbolScale": 0,
+            "SpawnTransform": {
+                "X": 0,
+                "Y": 0,
+                "Z": 0,
+                "Yaw": 0,
+                "Pitch": 0,
+                "Roll": 0
+            },
+            "EableRandomSpawn": true,
+            "EnableSpawnTracingGround": true,
+            "Cameras": {
+                "Follow": {
+                    "X": -50,
+                    "Y": 0,
+                    "Z": 10,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 0
+                },
+                "SideView": {
+                    "X": -50,
+                    "Y": -50,
+                    "Z": 0,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 45
+                }
+            }
+        },
+        "UrdfBot": {
+            "VehicleType": "UrdfBot",
+            "DebugSymbolScale": 0,
+            "CollisionBlacklist": [
+                {
+                    "BotMesh": "front_right_wheel",
+                    "ExternalActorRegex": "Ground"
+                },
+                {
+                    "BotMesh": "back_right_wheel",
+                    "ExternalActorRegex": "Ground"
+                },
+                {
+                    "BotMesh": "front_left_wheel",
+                    "ExternalActorRegex": "Ground"
+                },
+                {
+                    "BotMesh": "back_left_wheel",
+                    "ExternalActorRegex": "Ground"
+                },
+                {
+                    "BotMesh": "r_wheel_link",
+                    "ExternalActorRegex": "Ground"
+                },
+                {
+                    "BotMesh": "l_wheel_link",
+                    "ExternalActorRegex": "Ground"
+                }
+            ],
+            "Cameras": {
+                "Follow": {
+                    "X": -90,
+                    "Y": 0,
+                    "Z": 40,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 0,
+                    "AttachLink": "base_link"
+                },
+                "FrontView": {
+                    "X": 100,
+                    "Y": 0,
+                    "Z": 30,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 180,
+                    "AttachLink": "base_link"
+                },
+                "Follow1": {
+                    "X": 108,
+                    "Y": 55,
+                    "Z": 54,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 220,
+                    "AttachLink": "base_link"
+                }
+            }
+        }
+    }
+}
