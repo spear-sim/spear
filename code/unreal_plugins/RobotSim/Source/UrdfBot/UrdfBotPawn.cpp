@@ -1873,14 +1873,11 @@ void AUrdfBotPawn::onManipulator()
     {
         float val = 1;
         float before = manipulatorJoint->GetDriveTarget();
-        if (before <= 0)
-        {
-            val = val;
-        }
-        else
+        if (before > 0)
         {
             val = -val;
         }
+
         manipulatorJoint->SetDriveTarget(val);
     }
 }
