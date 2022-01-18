@@ -78,7 +78,7 @@ void ARobotSimHUD::createSimMode()
 bool ARobotSimHUD::getSettingsTextContent(std::string& settingsText)
 {
     FString CmdLineFilePath = "settings.json";
-	// parse cmd line command for setting json file path
+    // parse cmd line command for setting json file path
     if (FParse::Value(FCommandLine::Get(), TEXT("RobotSimSettingPath"),
                       CmdLineFilePath))
     {
