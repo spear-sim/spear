@@ -87,24 +87,31 @@ public:
     }
     static std::string getAnyPossiblePath(std::string fileName)
     {
-        // check if absolute path valid
+        // check if absolute path
         if (FPaths::FileExists(FString(fileName.c_str())))
         {
             return fileName;
         }
+        // check if relative path from launch directory
+        std::string fileRelativeToLaunchDir = getLaunchDir(fileName);
+        if (FPaths::FileExists(FString(fileRelativeToLaunchDir.c_str())))
+        {
+            return fileRelativeToLaunchDir;
+        }
         std::string fileInSetting("setting/" + fileName);
+        // check if in <user directory>/setting/
         std::string fileInUserDir = getUserDirectoryFullPath(fileInSetting);
         if (FPaths::FileExists(FString(fileInUserDir.c_str())))
         {
             return fileInUserDir;
         }
-        // check if launch dir valid
-        std::string fileInLaunchDir = getLaunchDir(fileInSetting);
-        if (FPaths::FileExists(FString(fileInLaunchDir.c_str())))
+        // check if in <launch dir>/setting/ (for standalone executable)
+        std::string fileInLaunchSettingDir = getLaunchDir(fileInSetting);
+        if (FPaths::FileExists(FString(fileInLaunchSettingDir.c_str())))
         {
-            return fileInLaunchDir;
+            return fileInLaunchSettingDir;
         }
-        // check if plugin path valid
+        // check if in <path/to/ue4project>/Plugins/RobotSim/setting/
         std::string fileInPluginDir = getPluginDirectoryFullPath(
             common_utils::FileSystem::getProductFolderName() + "/" +
             fileInSetting);
@@ -296,9 +303,9 @@ public:
             for (size_t i = 0; i < arr.size(); i++)
             {
                 auto obj = arr[i].get<std::string>();
-                //auto obj2 = arr[i].get<nlohmann::json::object_t>();
+                // auto obj2 = arr[i].get<nlohmann::json::object_t>();
                 return_value.emplace_back(obj);
-			}
+            }
         }
         return return_value;
     }
