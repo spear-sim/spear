@@ -221,7 +221,7 @@ To view the Virtual World in semantic view, select `PostProcessVolume` in World 
 ### Load Scene in standalone executable
 Add map argument to run command.
 ```commandline
-./Robotsim.exe /Game/Maps/Map_<virtual-world-id> ...
+./RobotProject.exe /Game/Maps/Map_<virtual-world-id> ...
 # e.g.
 ./RobotProject.exe /Game/Maps/Map_235554690 -WINDOWED -ResX=512 -ResY=512
 ```
