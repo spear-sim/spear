@@ -24,6 +24,7 @@ private:
 public:                                       // types
     static constexpr int kSubwindowCount = 3; // must be >= 3 for now
     static constexpr char const* kVehicleTypeUrdfBot = "urdfbot";
+    static constexpr char const* kVehicleTypeSimpleVehicle = "simplevehicle";
 
     //子窗口设置：窗口下标，图像类型，是否可视化，相机名字
     struct SubwindowSetting
@@ -208,8 +209,14 @@ public:                                       // types
         ControlSetting controlSetting;
 
         // nan means use player start
-        Vector3r position = VectorMath::nanVector(); // in global NED
-        Rotation rotation = Rotation::nanRotation();
+        Vector3r position;
+        Rotation rotation;
+        // whether use box tracing to find position close to ground for spawn
+        bool enable_spawn_tracing_ground = true;
+		// whether use NavMesh to find random spawn location
+        bool enable_random_spawn = true;
+        Vector3r bounding_box;
+        Vector3r bounding_box_offset;
 
         //相机输出不需要
         std::map<std::string, CameraSetting> cameras;
@@ -626,10 +633,29 @@ private:
         vehicle_setting->is_fpv_vehicle = settings_json.getBool(
             "IsFpvVehicle", vehicle_setting->is_fpv_vehicle);
 
+        Settings positionSetting;
+        settings_json.getChild("SpawnTransform", positionSetting);
         vehicle_setting->position =
-            createVectorSetting(settings_json, vehicle_setting->position);
+            createVectorSetting(positionSetting, vehicle_setting->position);
         vehicle_setting->rotation =
-            createRotationSetting(settings_json, vehicle_setting->rotation);
+            createRotationSetting(positionSetting, vehicle_setting->rotation);
+
+        vehicle_setting->enable_spawn_tracing_ground =
+            settings_json.getBool("EnableSpawnTracingGround",
+                                  vehicle_setting->enable_spawn_tracing_ground);
+        vehicle_setting->enable_random_spawn =
+            settings_json.getBool("EnableRandomSpawn",
+                                  vehicle_setting->enable_random_spawn);
+
+        Settings boundingBoxSetting;
+        settings_json.getChild("BoundingBox", boundingBoxSetting);
+        vehicle_setting->bounding_box = createVectorSetting(
+            boundingBoxSetting, vehicle_setting->bounding_box);
+
+        Settings boundingBoxOffsetSetting;
+        settings_json.getChild("BoundingBoxOffset", boundingBoxOffsetSetting);
+        vehicle_setting->bounding_box_offset = createVectorSetting(
+            boundingBoxOffsetSetting, vehicle_setting->bounding_box_offset);
 
         loadCameraSettings(settings_json, vehicle_setting->cameras);
         // loadSensorSettings(settings_json, "Sensors",

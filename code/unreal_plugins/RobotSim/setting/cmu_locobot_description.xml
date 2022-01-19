@@ -98,19 +98,19 @@
     <joint name="caster_front_joint" type="fixed">
         <parent link="base_link"/>
         <child link="caster_front_link"/>
-        <origin rpy="-1.57079632679 0 0" xyz="0.115 0.0 0.007"/>
+        <origin rpy="-1.57079632679 0 0" xyz="0.115 0.0 0.0260"/>
     </joint>
     <link name="caster_front_link">
         <visual>
             <geometry>
-                <sphere length="0.0176" radius="0.017"/>
+                <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <material name="caster_link_material"/>
         </visual>
         <collision>
             <geometry>
-                <sphere length="0.0176" radius="0.017"/>
+                <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </collision>
@@ -123,19 +123,19 @@
     <joint name="caster_back_joint" type="fixed">
         <parent link="base_link"/>
         <child link="caster_back_link"/>
-        <origin rpy="-1.57079632679 0 0" xyz="-0.135 0.0 0.009"/>
+        <origin rpy="-1.57079632679 0 0" xyz="-0.135 0.0 0.025"/>
     </joint>
     <link name="caster_back_link">
         <visual>
             <geometry>
-                <sphere length="0.0176" radius="0.017"/>
+                <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <material name="caster_link_material"/>
         </visual>
         <collision>
             <geometry>
-                <sphere length="0.0176" radius="0.017"/>
+                <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
         </collision>

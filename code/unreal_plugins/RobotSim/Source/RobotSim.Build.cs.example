@@ -120,10 +120,11 @@ public class RobotSim : ModuleRules
                 // ... add other public dependencies that you statically link with here ...
 
                 "CoreUObject", "Engine", "InputCore", "ImageWrapper", "RenderCore", "RHI",
-                //"PhysXVehicles",
+                "PhysXVehicles",
                 "ProceduralMeshComponent",
                 "Landscape", "XmlParser", "APEX", "PhysX",
-                "PhysXVehicleLib", "Foliage", "PhysicsCore"
+                "PhysXVehicleLib", "Foliage", "PhysicsCore",
+                "NavigationSystem"
             }
             );
             
@@ -135,11 +136,12 @@ public class RobotSim : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
-                // ... add private dependencies that you statically link with here ...  
+                // ... add private dependencies that you statically link with here ...
                 "ProceduralMeshComponent",
                 "UMG",  "PhysX",
-                //"PhysXVehicles",
-                "PhysXVehicleLib" 
+                "PhysXVehicles",
+                "PhysXVehicleLib",
+                "NavigationSystem"
             }
             );
         

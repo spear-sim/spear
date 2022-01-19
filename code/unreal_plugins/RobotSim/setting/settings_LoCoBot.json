@@ -12,6 +12,28 @@
         "UrdfBot": {
             "VehicleType": "UrdfBot",
             "DebugSymbolScale": 0,
+            "SpawnTransform": {
+                "X": 0,
+                "Y": 0,
+                "Z": 0,
+                "Yaw": 0,
+                "Pitch": 0,
+                "Roll": 0
+            },
+            "EableRandomSpawn": true,
+            "EnableSpawnTracingGround": true,
+            "BoundingBox":
+            {
+                "X": 0.4,
+                "Y": 0.4,
+                "Z": 0.12
+            },
+            "BoundingBoxOffset":
+            {
+                "X": 0,
+                "Y": 0,
+                "Z": 0.05
+            },
             "CollisionBlacklist": [
                 {
                     "BotMesh": "base_link",

@@ -410,7 +410,7 @@ float RobotApi::getJointVelocity(const FString& jointName) const
 
 void RobotApi::reset()
 {
-    RobotSim::VehicleApiBase::reset();
+    RobotSim::RobotApiBase::reset();
 
     // ToDo:  Reset all forces on object to  0.
     for (auto& linkKvp : this->pawn_->GetLinkComponents())
@@ -421,7 +421,7 @@ void RobotApi::reset()
 
 void RobotApi::update()
 {
-    RobotSim::VehicleApiBase::update();
+    RobotSim::RobotApiBase::update();
 }
 
 RobotSim::GeoPoint RobotApi::getHomeGeoPoint() const

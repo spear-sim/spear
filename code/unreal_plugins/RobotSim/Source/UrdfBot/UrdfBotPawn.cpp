@@ -1,6 +1,7 @@
 #include "UrdfBotPawn.h"
 #include "Engine/Engine.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "SimModeUrdfBot.h"
 
 AUrdfBotPawn::AUrdfBotPawn()
 {
@@ -162,7 +163,7 @@ void AUrdfBotPawn::Tick(float delta)
         kvp.Value->Tick(delta);
     }
 
-    this->pawn_events_.getPawnTickSignal().emit(delta);
+    // this->pawn_events_.getPawnTickSignal().emit(delta);
 
     if (this->draw_debug_)
     {
@@ -182,7 +183,13 @@ void AUrdfBotPawn::EndPlay(const EEndPlayReason::Type endPlayReason)
     {
         UPhysicsConstraintComponent* component = kvp.Value.Value;
         component->BreakConstraint();
-        // component->DestroyComponent();
+        component->DestroyComponent();
+    }
+    // destory all links
+    for (auto& kvp : this->components_)
+    {
+        AUrdfLink* link = kvp.Value;
+        link->Destroy();
     }
 }
 
@@ -229,9 +236,10 @@ void AUrdfBotPawn::NotifyHit(class UPrimitiveComponent* myComp,
         }
     }
 
-    this->pawn_events_.getCollisionSignal().emit(myComp, other, otherComp,
-                                                 bSelfMoved, hitLocation,
-                                                 hitNormal, normalImpulse, hit);
+    // this->pawn_events_.getCollisionSignal().emit(myComp, other, otherComp,
+    //                                              bSelfMoved, hitLocation,
+    //                                              hitNormal, normalImpulse,
+    //                                              hit);
 }
 
 void AUrdfBotPawn::InitializeForBeginPlay()
@@ -394,7 +402,7 @@ void AUrdfBotPawn::TeleportToLocation(FVector position,
 
     this->MoveAllComponents(translation, rotation);
 
-    RobotSimVehicle::TeleportToLocation(
+    RobotBase::TeleportToLocation(
         position * URobotBlueprintLib::GetWorldToMetersScale(this), orientation,
         teleport);
 }
@@ -431,6 +439,10 @@ void AUrdfBotPawn::setupInputBindings()
     URobotBlueprintLib::BindAxisToKey(
         FInputAxisKeyMapping("onBaseRotate", EKeys::Right, -rotVal), this, this,
         &AUrdfBotPawn::onBaseRotate);
+
+    URobotBlueprintLib::BindAxisToKey(
+        FInputAxisKeyMapping("onBrake", EKeys::BackSpace, 1), this, this,
+        &AUrdfBotPawn::onBrake);
 
     // keyboard binding to move prismatic joint
     URobotBlueprintLib::BindActionToKey("onStiffnessUp", EKeys::E, this,
@@ -483,38 +495,6 @@ void AUrdfBotPawn::setupInputBindings()
 
     URobotBlueprintLib::BindActionToKey("onManipulator", EKeys::SpaceBar, this,
                                         &AUrdfBotPawn::onManipulator, true);
-
-    ////运动控制绑定
-    // URobotBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("MoveForward",
-    // EKeys::Up, 0.2), this, 	this, &AUrdfBotPawn::onMoveForward);
-
-    // URobotBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("MoveForward",
-    // EKeys::Down, 0.0), this, 	this, &AUrdfBotPawn::onMoveForward);
-
-    // URobotBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("MoveRight",
-    // EKeys::Right, 0.5), this, 	this, &AUrdfBotPawn::onMoveRight);
-
-    // URobotBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("MoveRight",
-    // EKeys::Left, -0.5), this, 	this, &AUrdfBotPawn::onMoveRight);
-
-    // URobotBlueprintLib::BindActionToKey("CatchObject", EKeys::U , this,
-    // &AUrdfBotPawn::onGrabObject, true);
-    // URobotBlueprintLib::BindActionToKey("Handbrake", EKeys::End, this,
-    // &AUrdfBotPawn::onDropReleased, false);
-
-    // URobotBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("Footbrake",
-    // EKeys::SpaceBar, 1), this, 	this, &AUrdfBotPawn::onFootBrake);
-
-    // URobotBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("MoveRight",
-    // EKeys::Gamepad_LeftX, 1), this, 	this, &AUrdfBotPawn::onMoveRight);
-
-    // URobotBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("MoveForward",
-    // EKeys::Gamepad_RightTriggerAxis, 1), this, 	this,
-    //&AUrdfBotPawn::onMoveForward);
-
-    // URobotBlueprintLib::BindAxisToKey(FInputAxisKeyMapping("Footbrake",
-    // EKeys::Gamepad_LeftTriggerAxis, 1), this, 	this,
-    //&AUrdfBotPawn::onFootBrake);
 }
 
 void AUrdfBotPawn::onMoveForward(float Val)
@@ -524,15 +504,6 @@ void AUrdfBotPawn::onMoveForward(float Val)
     components.Push("front_left_wheel");
     components.Push("rear_right_wheel");
     components.Push("rear_left_wheel");
-
-    ////测试运动组件
-    // if (Val > 0)
-    //{
-    //	for (const auto& kvp : this->controlled_motion_components_)
-    //	{
-    //		kvp.Value->GetState();
-    //	}
-    //}
 
     GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red,
                                      *FString::SanitizeFloat(Val));
@@ -546,10 +517,6 @@ void AUrdfBotPawn::onMoveForward(float Val)
             controlSignalValues.Add(FString("Value"), Val);
             component->SetControl(controlSignalValues);
         }
-        // else
-        //{
-        //	throw  std::runtime_error("components is undefined");
-        //}
     }
 }
 
@@ -573,10 +540,6 @@ void AUrdfBotPawn::onMoveRight(float Val)
                 controlSignalValues.Add(FString("Value"), Val);
                 component->SetControl(controlSignalValues);
             }
-            // else
-            //{
-            //	throw  std::runtime_error("components is undefined");
-            //}
         }
     }
     if (Val > 0)
@@ -595,10 +558,6 @@ void AUrdfBotPawn::onMoveRight(float Val)
                 controlSignalValues.Add(FString("Value"), -Val);
                 component->SetControl(controlSignalValues);
             }
-            // else
-            //{
-            //	throw  std::runtime_error("components is undefined");
-            //}
         }
     }
 }
@@ -676,6 +635,23 @@ AUrdfBotPawn::getConstraints()
     return this->constraints_;
 }
 
+RobotApi* AUrdfBotPawn::getRobotApi() const
+{
+    RobotApi* resultApi = nullptr;
+    ASimModeUrdfBot* urdfSimMode = static_cast<ASimModeUrdfBot*>(simmode_);
+    std::vector<std::unique_ptr<RobotSimApi>>& simapiArray =
+        urdfSimMode->vehicle_sim_apis_;
+    for (auto& ptr : simapiArray)
+    {
+        if (ptr->getPawn() == this)
+        {
+            resultApi = ptr->getVehicleApi();
+            break;
+        }
+    }
+    return resultApi;
+}
+
 void AUrdfBotPawn::setLinkForceAndTorque(FString componentName,
                                          const FVector& force,
                                          const FVector& torque)
@@ -699,32 +675,6 @@ void AUrdfBotPawn::setJointTorque(FString jointName, const FVector& torque)
             this->controlled_motion_components_[jointName];
         jointComponent->SetConstTorque(
             torque); // jointComponent指针必然不为空，所以不需要做判空处理。
-
-        // FRotator   oritation(torque[0], torque[1], torque[2]);
-        // AUrdfLink* parentLink = jointComponent->GetParentLink();
-        // AUrdfLink* childLink = jointComponent->GetActuatorLink();
-        // UMeshComponent*  parentMesh = parentLink->GetRootMesh();
-        // UMeshComponent*  childMesh = childLink->GetRootMesh();
-        // parentMesh->GetLinearDamping();
-        // UPhysicsConstraintComponent*  phyXcomponent =
-        // jointComponent->GetConstraintComponent(); float damping0 =
-        // phyXcomponent->ConstraintInstance.ProfileInstance.LinearDrive.XDrive.Damping;
-        // float damping1 =
-        // phyXcomponent->ConstraintInstance.ProfileInstance.AngularDrive.TwistDrive.Damping;
-        // switch (jointComponent->GetMotionType())
-        //{
-        //	case ControlledMotionComponent::MotionComponentType::MOTOR:
-        //		//进行torque的转化处理
-        //		phyXcomponent->SetAngularVelocityTarget(torque);
-        //		break;
-        //	//ToDo other list
-        //	case
-        // ControlledMotionComponent::MotionComponentType::LINERACTUATOR:
-        //		phyXcomponent->SetAngularVelocityTarget(torque);
-        //		break;
-        //	default:
-        //		break;
-        //}
     }
 }
 
@@ -1688,6 +1638,26 @@ void AUrdfBotPawn::onBaseRotate(float value)
         this->mRightWheelJoint->SetDriveTargetVelocity(currentRightTarget.X -
                                                        value);
     }
+}
+
+void AUrdfBotPawn::onBrake(float value)
+{
+    if (!this->mLeftWheelJoint || !this->mRightWheelJoint)
+    {
+        return;
+    }
+    if (value == 0)
+    {
+        return;
+    }
+    // disable drive for free motion
+    this->mLeftWheelJoint->EnableDrive(true);
+    this->mLeftWheelJoint->SetDriveTargetVelocity(0);
+
+    this->mRightWheelJoint->EnableDrive(true);
+    this->mRightWheelJoint->SetDriveTargetVelocity(0);
+    URobotBlueprintLib::LogMessage("onBrake", FString::SanitizeFloat(0),
+                                   LogDebugLevel::Informational, 30);
 }
 
 void AUrdfBotPawn::setDriveVelocity(FString jointName, float target)

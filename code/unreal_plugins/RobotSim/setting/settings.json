@@ -1,37 +1,77 @@
 {
     "SettingsVersion": 1.2,
-    "SimMode": "UrdfBot",
+    "SimMode": "SimpleVehicle",
     "PawnPaths": {
         "UrdfBot": {
-            "UrdfFile": "cmu_locobot_description.xml",
-            "ScaleFactor": 1,
+            "UrdfFile": "fetch.xml",
+            "EndEffectorLink": "gripper_link",
+            "ScaleFactor": 0.5,
             "EnableKeyboard": true
+        },
+        "SimpleVehicle": {
+            "PawnBP": "/RobotSim/SimpleVehicle/OpenBot/BP_OpenBot.BP_OpenBot_C"
         }
     },
     "Vehicles": {
+        "SimpleVehicle": {
+            "VehicleType": "SimpleVehicle",
+            "DebugSymbolScale": 0,
+            "SpawnTransform": {
+                "X": 0,
+                "Y": 0,
+                "Z": 0,
+                "Yaw": 0,
+                "Pitch": 0,
+                "Roll": 0
+            },
+            "EableRandomSpawn": true,
+            "EnableSpawnTracingGround": true,
+            "Cameras": {
+                "Follow": {
+                    "X": -50,
+                    "Y": 0,
+                    "Z": 10,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 0
+                },
+                "SideView": {
+                    "X": -50,
+                    "Y": -50,
+                    "Z": 0,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 45
+                }
+            }
+        },
         "UrdfBot": {
             "VehicleType": "UrdfBot",
             "DebugSymbolScale": 0,
             "CollisionBlacklist": [
                 {
-                    "BotMesh": "base_link",
-                    "ExternalActorRegex": "Floor"
+                    "BotMesh": "front_right_wheel",
+                    "ExternalActorRegex": "Ground"
                 },
                 {
-                    "BotMesh": "wheel_left_link",
-                    "ExternalActorRegex": "Floor"
+                    "BotMesh": "back_right_wheel",
+                    "ExternalActorRegex": "Ground"
                 },
                 {
-                    "BotMesh": "wheel_right_link",
-                    "ExternalActorRegex": "Floor"
+                    "BotMesh": "front_left_wheel",
+                    "ExternalActorRegex": "Ground"
                 },
                 {
-                    "BotMesh": "caster_front_link",
-                    "ExternalActorRegex": "Floor"
+                    "BotMesh": "back_left_wheel",
+                    "ExternalActorRegex": "Ground"
                 },
                 {
-                    "BotMesh": "caster_back_link",
-                    "ExternalActorRegex": "Floor"
+                    "BotMesh": "r_wheel_link",
+                    "ExternalActorRegex": "Ground"
+                },
+                {
+                    "BotMesh": "l_wheel_link",
+                    "ExternalActorRegex": "Ground"
                 }
             ],
             "Cameras": {
@@ -44,16 +84,16 @@
                     "Yaw": 0,
                     "AttachLink": "base_link"
                 },
-                "GripperView": {
-                    "X": 30,
+                "FrontView": {
+                    "X": 100,
                     "Y": 0,
                     "Z": 30,
-                    "Pitch": -45,
+                    "Pitch": 0,
                     "Roll": 0,
                     "Yaw": 180,
-                    "AttachLink": "gripper_link"
+                    "AttachLink": "base_link"
                 },
-                "SideView": {
+                "Follow1": {
                     "X": 108,
                     "Y": 55,
                     "Z": 54,
@@ -62,15 +102,6 @@
                     "Yaw": 220,
                     "AttachLink": "base_link"
                 }
-            },
-            "Control": {
-                "LeftWheelJoint": "wheel_left_joint",
-                "RightWheelJoint": "wheel_right_joint",
-                "EndEffectorLink": "gripper_link",
-                "ManipulatorJoints": [
-                    "joint_6",
-                    "joint_7"
-                ]
             }
         }
     }
