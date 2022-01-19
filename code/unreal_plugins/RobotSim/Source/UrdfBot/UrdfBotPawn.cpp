@@ -1847,6 +1847,7 @@ void AUrdfBotPawn::onManipulator()
         {
             val = -val;
         }
+
         manipulatorJoint->SetDriveTarget(val);
     }
 }

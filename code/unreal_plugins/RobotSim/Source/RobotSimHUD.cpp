@@ -88,14 +88,20 @@ void ARobotSimHUD::createSimMode()
 
 bool ARobotSimHUD::getSettingsTextContent(std::string& settingsText)
 {
-    // FString  CurrentProjectFilePath =
-    // RobotSim::Settings::getPorjectDirectoryFullPath("settings.json").c_str();
+    FString CmdLineFilePath = "settings.json";
+    // parse cmd line command for setting json file path
+    if (FParse::Value(FCommandLine::Get(), TEXT("RobotSimSettingPath"),
+                      CmdLineFilePath))
+    {
+        CmdLineFilePath = CmdLineFilePath.Replace(TEXT("="), TEXT(""));
+    }
     FString CurrentProjectFilePath =
-        RobotSim::Settings::getAnyPossiblePath("settings.json").c_str();
+        RobotSim::Settings::getAnyPossiblePath(TCHAR_TO_UTF8(*CmdLineFilePath))
+            .c_str();
     if (!FPaths::FileExists(CurrentProjectFilePath))
     {
         throw std::runtime_error(
-            "settings.json not found" +
+            "settings.json not found: " +
             std::string(TCHAR_TO_UTF8(*CurrentProjectFilePath)));
     }
     return readSettingsTextFromFile(CurrentProjectFilePath, settingsText);
