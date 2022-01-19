@@ -1,0 +1,29 @@
+# configuration file
+---
+env_config:
+  server_ip: &server_ip ""
+  server_port: &server_port "8080"
+  timeout_value: 3600
+  reconn_tries: 1000
+  enable_thread_sync: True
+  delta_seconds: 0.1
+  # binary_path: "/Users/rachithp/UnrealEngine/UE_4.26/Engine/Binaries/Mac/UE4Editor.app"
+  # binary_path: "D:\UE4\UE_4.26\Engine\Binaries\Win64\UE4Editor.exe"
+  #binary_path: "/Users/dhafner/Projects/unreal/unreal-ai/examples/PlayEnvironment/dist/MacNoEditor/PlayEnvironment.app"
+  # binary_path: "/home/rachithp/projects/unreal-ai/examples/PlayEnvironment/dist/LinuxNoEditor/PlayEnvironment.sh"
+  binary_path: "D:/kopbot/interiorsim/code/unreal_projects/RobotProject/dist/WindowsNoEditor/RobotProject.exe"
+  launch_params: # first launch param has to be your project path if your binary_path points to an ue4editor executable.
+    # - "/Users/rachithp/projects/unreal-ai/examples/PlayEnvironment/PlayEnvironment.uproject"
+    # - "D:\Projects\UnrealProjects\ActionRPG\ActionRPG.uproject"
+    - "-game"
+    - "-rlport="
+    - *server_port
+    - "-rlip="
+    - *server_ip
+    - "-windowed"
+    - "-resx=512"
+    - "-resy=512"
+    - "-novsync"
+    - "-rlseed=123"
+    - "-NoSound"
+    # - "-RenderOffscreen"
