@@ -24,7 +24,6 @@ public:
     void GetObservation(std::vector<unrealrl::Observation>&) override;
     bool IsAgentReady() override;
 
-
     // actual robot agent for training
     UPROPERTY()
     class AActor* Owner;

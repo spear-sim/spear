@@ -26,7 +26,8 @@ struct FInteriorSimBridgeManagerBootLoader
             NewObject<UInteriorSimBridgeManager>(GEngine, Class);
         check(InteriorSimBridgeManagerInstance);
         InteriorSimBridgeManagerInstance->AddToRoot();
-        UE_LOG(LogInteriorSimBridge, Warning, TEXT("Created an instance of SimManager!!"));
+        UE_LOG(LogInteriorSimBridge, Warning,
+               TEXT("Created an instance of SimManager!!"));
     }
 };
 
@@ -44,7 +45,8 @@ void FInteriorSimBridgeModule::ShutdownModule()
     // This function may be called during shutdown to clean up your module.  For
     // modules that support dynamic reloading, we call this function before
     // unloading the module.
-    UE_LOG(LogInteriorSimBridge, Log, TEXT("InteriorSimBridge module unloaded."));
+    UE_LOG(LogInteriorSimBridge, Log,
+           TEXT("InteriorSimBridge module unloaded."));
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -13,7 +13,7 @@ class INTERIORSIMBRIDGE_API UInteriorSimBridgeManager : public UObject
 
 public:
     UInteriorSimBridgeManager(const FObjectInitializer& ObjectInitializer =
-                      FObjectInitializer::Get());
+                                  FObjectInitializer::Get());
 
     /** UObject overrides*/
     virtual UWorld* GetWorld() const override
