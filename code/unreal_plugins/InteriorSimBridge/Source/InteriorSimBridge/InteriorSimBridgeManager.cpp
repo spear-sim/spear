@@ -1,10 +1,10 @@
-#include "InSimManager.h"
+#include "InteriorSimBridgeManager.h"
 #include "RL/Brain.h"
 #include "UrdfBotBrain.h"
 #include "UrdfBot/SimModeUrdfBot.h"
 #include "SimpleVehicleBrain.h"
 #include "SimpleVehicle/SimModeSimpleVehicle.h"
-#include "InSim.h"
+#include "InteriorSimBridge.h"
 
 #include "EngineUtils.h"
 #include "Engine/Engine.h"
@@ -12,21 +12,21 @@
 #include <thread>
 
 // Static variables definitions
-UInSimManager* UInSimManager::InSimManagerInstance = nullptr;
+UInteriorSimBridgeManager* UInteriorSimBridgeManager::InteriorSimBridgeManagerInstance = nullptr;
 
-UInSimManager::UInSimManager(const FObjectInitializer& ObjectInitializer)
+UInteriorSimBridgeManager::UInteriorSimBridgeManager(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
     if (HasAnyFlags(RF_ClassDefaultObject) == false)
     {
-        ensure(InSimManagerInstance == nullptr);
-        InSimManagerInstance = this;
-        UE_LOG(LogInSIM, Warning,
-               TEXT("InSimManagerInstance successfully assigned..."));
+        ensure(InteriorSimBridgeManagerInstance == nullptr);
+        InteriorSimBridgeManagerInstance = this;
+        UE_LOG(LogInteriorSimBridge, Warning,
+               TEXT("InteriorSimBridgeManagerInstance successfully assigned..."));
     }
 }
 
-void UInSimManager::PostInitProperties()
+void UInteriorSimBridgeManager::PostInitProperties()
 {
     Super::PostInitProperties();
 
@@ -47,31 +47,31 @@ void UInSimManager::PostInitProperties()
     }
 }
 
-void UInSimManager::BindToDelegates()
+void UInteriorSimBridgeManager::BindToDelegates()
 {
     // required to obtained gameworld instance
     FWorldDelegates::OnPostWorldInitialization.AddUObject(
-        this, &UInSimManager::OnPostWorldInit);
+        this, &UInteriorSimBridgeManager::OnPostWorldInit);
 
     // required to reset any delegates while clearing world
     FWorldDelegates::OnWorldCleanup.AddUObject(this,
-                                               &UInSimManager::OnWorldCleanup);
+                                               &UInteriorSimBridgeManager::OnWorldCleanup);
 
     // to catch any new actors spawned with Brain component
     FWorldDelegates::OnWorldInitializedActors.AddUObject(
-        this, &UInSimManager::OnWorldInitializedActors);
+        this, &UInteriorSimBridgeManager::OnWorldInitializedActors);
 }
 
-void UInSimManager::OnPostWorldInit(UWorld* World,
+void UInteriorSimBridgeManager::OnPostWorldInit(UWorld* World,
                                     const UWorld::InitializationValues)
 {
-    // UE_LOG(LogInSIM, Warning, TEXT("OnPostWorldInit called on new world %s"),
+    // UE_LOG(LogInteriorSimBridge, Warning, TEXT("OnPostWorldInit called on new world %s"),
     // *GetNameSafe(World));
 
     if (World && World->IsGameWorld())
     {
-        UE_LOG(LogInSIM, Warning,
-               TEXT("InSimManager: New world assigned. World changed from %s "
+        UE_LOG(LogInteriorSimBridge, Warning,
+               TEXT("InteriorSimBridgeManager: New world assigned. World changed from %s "
                     "to %s"),
                *GetNameSafe(WorldInstance), *GetNameSafe(World));
 
@@ -79,22 +79,22 @@ void UInSimManager::OnPostWorldInit(UWorld* World,
 
         if (ActorSpawnedDelegateHandle.IsValid() == false)
         {
-            UE_LOG(LogInSIM, Warning,
-                   TEXT("InSimManager: Binding OnActorSpawned Delegate..."));
+            UE_LOG(LogInteriorSimBridge, Warning,
+                   TEXT("InteriorSimBridgeManager: Binding OnActorSpawned Delegate..."));
             ActorSpawnedDelegateHandle =
                 WorldInstance->AddOnActorSpawnedHandler(
                     FOnActorSpawned::FDelegate::CreateUObject(
-                        this, &UInSimManager::OnActorSpawned));
+                        this, &UInteriorSimBridgeManager::OnActorSpawned));
         }
     }
 }
 
-void UInSimManager::OnWorldCleanup(UWorld* World,
+void UInteriorSimBridgeManager::OnWorldCleanup(UWorld* World,
                                    bool bSessionEnded,
                                    bool bCleanupResources)
 {
-    UE_LOG(LogInSIM, Warning,
-           TEXT("InSimManager: : World %s is cleaning up..."),
+    UE_LOG(LogInteriorSimBridge, Warning,
+           TEXT("InteriorSimBridgeManager: : World %s is cleaning up..."),
            *GetNameSafe(World));
 
     // no need to remove, the World is going away
@@ -115,11 +115,11 @@ void UInSimManager::OnWorldCleanup(UWorld* World,
     }
 }
 
-void UInSimManager::OnWorldInitializedActors(
+void UInteriorSimBridgeManager::OnWorldInitializedActors(
     const UWorld::FActorsInitializedParams& ActorsInitializedParams)
 {
-    UE_LOG(LogInSIM, Warning,
-           TEXT("InSIMManager : OnWorldInitialized Actors..."));
+    UE_LOG(LogInteriorSimBridge, Warning,
+           TEXT("InteriorSimBridgeManager : OnWorldInitialized Actors..."));
 
     // Find a URDF robot
     if (WorldInstance)
@@ -155,17 +155,17 @@ void UInSimManager::OnWorldInitializedActors(
     }
 }
 
-void UInSimManager::OnActorSpawned(AActor* InActor)
+void UInteriorSimBridgeManager::OnActorSpawned(AActor* InActor)
 {
-    UE_LOG(LogInSIM, Warning, TEXT("InSIMManager : OnActorSpawned... %s"),
+    UE_LOG(LogInteriorSimBridge, Warning, TEXT("InteriorSimBridgeManager : OnActorSpawned... %s"),
            *(InActor->GetName()));
 
     // Capture UrdfBot factory and spawn corresponding UBrain
     // identify ASimModeUrdfBot by actor label
     if (InActor->IsA(ASimModeUrdfBot::StaticClass()))
     {
-        UE_LOG(LogInSIM, Warning,
-               TEXT("InSIMManager : OnActorSpawned... UUrdfBotBrain"));
+        UE_LOG(LogInteriorSimBridge, Warning,
+               TEXT("InteriorSimBridgeManager : OnActorSpawned... UUrdfBotBrain"));
         UUrdfBotBrain* Brain = NewObject<UUrdfBotBrain>(
             InActor, UUrdfBotBrain::StaticClass(), FName("UUrdfBotBrain"));
         Brain->RegisterComponent();
@@ -173,8 +173,8 @@ void UInSimManager::OnActorSpawned(AActor* InActor)
 
     if (InActor->IsA(ASimModeSimpleVehicle::StaticClass()))
     {
-        UE_LOG(LogInSIM, Warning,
-               TEXT("InSIMManager : OnActorSpawned... USimpleVehicleBrain"));
+        UE_LOG(LogInteriorSimBridge, Warning,
+               TEXT("InteriorSimBridgeManager : OnActorSpawned... USimpleVehicleBrain"));
         USimpleVehicleBrain* Brain = NewObject<USimpleVehicleBrain>(
             InActor, USimpleVehicleBrain::StaticClass(),
             FName("USimpleVehicleBrain"));
@@ -182,14 +182,14 @@ void UInSimManager::OnActorSpawned(AActor* InActor)
     }
 }
 
-void UInSimManager::BeginDestroy()
+void UInteriorSimBridgeManager::BeginDestroy()
 {
-    if (InSimManagerInstance == this)
+    if (InteriorSimBridgeManagerInstance == this)
     {
-        InSimManagerInstance = nullptr;
+        InteriorSimBridgeManagerInstance = nullptr;
         UE_LOG(
-            LogInSIM, Warning,
-            TEXT("InSimManager: Resetting InSimManagerInstance to nullptr..."));
+            LogInteriorSimBridge, Warning,
+            TEXT("InteriorSimBridgeManager: Resetting InteriorSimBridgeManagerInstance to nullptr..."));
     }
 
     if (ActorSpawnedDelegateHandle.IsValid() == true)

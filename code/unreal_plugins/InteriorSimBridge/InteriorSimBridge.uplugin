@@ -2,7 +2,7 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "InSim",
+	"FriendlyName": "InteriorSimBridge",
 	"Description": "",
 	"Category": "Other",
 	"CreatedBy": "",
@@ -16,7 +16,7 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "InSim",
+			"Name": "InteriorSimBridge",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}

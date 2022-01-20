@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogInSIM, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogInteriorSimBridge, Log, All);
 
-class FInSimModule : public IModuleInterface
+class FInteriorSimBridgeModule : public IModuleInterface
 {
 public:
     /** IModuleInterface implementation */

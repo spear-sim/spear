@@ -6,9 +6,6 @@
 #include "UnrealRLManager.h"
 #include "SimpleVehicle/SimModeSimpleVehicle.h"
 #include "SimpleVehicle/SimpleVehiclePawn.h"
-#include "Components/SceneCaptureComponent2D.h"
-#include "Engine/TextureRenderTarget2D.h"
-#include "ServerManager.h"
 
 USimpleVehicleBrain::USimpleVehicleBrain(
     const FObjectInitializer& ObjectInitializer)
@@ -37,14 +34,6 @@ void USimpleVehicleBrain::OnActorHit(AActor* SelfActor,
 
 void USimpleVehicleBrain::Init()
 {
-    this->SimModeOwner = Cast<AActor>(GetOwner());
-    if (!SimModeOwner)
-    {
-        UE_LOG(LogTemp, Error,
-               TEXT("No valid owner of this component is defined"));
-        check(false);
-    }
-    auto simModeSimpleVehicle = Cast<ASimModeSimpleVehicle>(SimModeOwner);
 
     for (TActorIterator<ASimpleVehiclePawn> it(this->GetWorld()); it; ++it)
     {

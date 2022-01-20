@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class InSim : ModuleRules
+public class InteriorSimBridge : ModuleRules
 {
-	public InSim(ReadOnlyTargetRules Target) : base(Target)
+	public InteriorSimBridge(ReadOnlyTargetRules Target) : base(Target)
 	{
         bEnableExceptions = true;
 

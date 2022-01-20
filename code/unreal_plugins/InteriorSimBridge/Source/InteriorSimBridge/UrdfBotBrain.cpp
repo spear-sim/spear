@@ -6,7 +6,6 @@
 #include "UnrealRLManager.h"
 #include "UrdfBot/UrdfBotPawn.h"
 #include "UrdfBot/SimModeUrdfBot.h"
-#include "ServerManager.h"
 
 UUrdfBotBrain::UUrdfBotBrain(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
@@ -33,15 +32,6 @@ void UUrdfBotBrain::OnActorHit(AActor* SelfActor,
 
 void UUrdfBotBrain::Init()
 {
-    this->SimModeOwner = Cast<AActor>(GetOwner());
-    if (!SimModeOwner)
-    {
-        UE_LOG(LogTemp, Error,
-               TEXT("No valid owner of this component is defined"));
-        check(false);
-    }
-    auto simModeUrdfBot = Cast<ASimModeUrdfBot>(SimModeOwner);
-    // simModeUrdfBot->setupVehiclesAndCamera();
     for (TActorIterator<AUrdfBotPawn> it(this->GetWorld()); it; ++it)
     {
         Owner = static_cast<AUrdfBotPawn*>(*it);

@@ -2,17 +2,17 @@
 
 #include "CoreMinimal.h"
 #include "Engine/World.h"
-#include "InSimManager.generated.h"
+#include "InteriorSimBridgeManager.generated.h"
 
 class UWorld;
 
 UCLASS()
-class INSIM_API UInSimManager : public UObject
+class INTERIORSIMBRIDGE_API UInteriorSimBridgeManager : public UObject
 {
     GENERATED_BODY()
 
 public:
-    UInSimManager(const FObjectInitializer& ObjectInitializer =
+    UInteriorSimBridgeManager(const FObjectInitializer& ObjectInitializer =
                       FObjectInitializer::Get());
 
     /** UObject overrides*/
@@ -22,15 +22,15 @@ public:
     }
 
     /** Utility functions*/
-    FORCEINLINE static UInSimManager& Get()
+    FORCEINLINE static UInteriorSimBridgeManager& Get()
     {
-        check(InSimManagerInstance);
-        return *InSimManagerInstance;
+        check(InteriorSimBridgeManagerInstance);
+        return *InteriorSimBridgeManagerInstance;
     }
 
-    FORCEINLINE static bool IsInSimManagerReady()
+    FORCEINLINE static bool IsInteriorSimBridgeManagerReady()
     {
-        return (InSimManagerInstance != nullptr);
+        return (InteriorSimBridgeManagerInstance != nullptr);
     }
 
 protected:
@@ -56,7 +56,7 @@ protected:
 
 private:
     /** Instance of this class. */
-    static UInSimManager* InSimManagerInstance;
+    static UInteriorSimBridgeManager* InteriorSimBridgeManagerInstance;
 
     UPROPERTY()
     UWorld* WorldInstance;

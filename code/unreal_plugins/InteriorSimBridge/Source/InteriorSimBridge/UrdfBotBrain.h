@@ -4,7 +4,7 @@
 #include "UrdfBotBrain.generated.h"
 
 UCLASS(Blueprintable)
-class INSIM_API UUrdfBotBrain : public UBrain
+class INTERIORSIMBRIDGE_API UUrdfBotBrain : public UBrain
 {
     GENERATED_BODY()
 
@@ -24,9 +24,7 @@ public:
     void GetObservation(std::vector<unrealrl::Observation>&) override;
     bool IsAgentReady() override;
 
-    // SimMode owner actor support dynamic destroy and create owner
-    UPROPERTY()
-    class AActor* SimModeOwner;
+
     // actual robot agent for training
     UPROPERTY()
     class AActor* Owner;
