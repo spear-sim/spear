@@ -1,4 +1,0 @@
-numpy
-gym
-pyyaml
-opencv-python
