@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/OutputDeviceNull.h"
 #include "Engine/World.h"
+#include "Engine/ObjectLibrary.h"
 
 #include "NavMesh/NavMeshBoundsVolume.h"
 
@@ -201,32 +202,27 @@ ARecastNavMesh* ASimModeBase::GetNavMesh()
     return Cast<ARecastNavMesh>(navData);
 }
 
-void ASimModeBase::NavSystemTest()
+void ASimModeBase::Test()
 {
-    ARecastNavMesh* navMesh = GetNavMesh();
-    // change navMesh size
-    if (navMesh->AgentRadius == 40)
+    TArray<FString> mapList;
+    this->GetAllMaps(mapList);
+    if (mapList.Num() == 0)
     {
-        NavSystemRebuild(20);
+        UE_LOG(LogTemp, Warning, TEXT("no map found"));
+        return;
     }
-    else
+    FString currentMap = this->GetWorld()->GetName();
+    int currentIndex = -1;
+    for (int i = 0; i < mapList.Num(); i++)
     {
-        NavSystemRebuild(40);
-    }
-
-    FBox worldBox = GetWorldBoundingBox();
-    TArray<FNavPoly> Polys;
-    navMesh->GetPolysInBox(worldBox, Polys);
-    for (auto& PolyId : Polys)
-    {
-        TArray<FVector> array;
-        navMesh->GetPolyVerts(PolyId.Ref, array);
-        for (auto& v : array)
+        UE_LOG(LogTemp, Warning, TEXT("Found map name: %s"), *(mapList[i]));
+        if (currentMap.Equals(mapList[i]))
         {
-            UE_LOG(LogTemp, Display, TEXT("vertices: %lld ->%s"), PolyId.Ref,
-                   *v.ToString());
+            currentIndex = i;
         }
     }
+    FString NextMap = mapList[(currentIndex + 1) % mapList.Num()];
+    this->LoadMap(NextMap);
 }
 
 bool ASimModeBase::NavSystemRebuild(float AgentRadius)
@@ -295,4 +291,25 @@ FBox ASimModeBase::GetWorldBoundingBox(bool bScaleCeiling)
                ? box
                : box.ExpandBy(box.GetSize() * 0.1f)
                      .ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
+}
+
+void ASimModeBase::GetAllMaps(TArray<FString>& MapList) const
+{
+    auto ObjectLibrary =
+        UObjectLibrary::CreateLibrary(UWorld::StaticClass(), false, true);
+    ObjectLibrary->LoadAssetDataFromPath(TEXT("/Game/Maps"));
+    TArray<FAssetData> AssetDatas;
+    ObjectLibrary->GetAssetDataList(AssetDatas);
+    UE_LOG(LogTemp, Warning, TEXT("Found maps count: %d"), AssetDatas.Num());
+    for (int32 i = 0; i < AssetDatas.Num(); i++)
+    {
+        FAssetData& AssetData = AssetDatas[i];
+        MapList.Add(AssetData.AssetName.ToString());
+    }
+}
+
+void ASimModeBase::LoadMap(FString mapName)
+{
+    UE_LOG(LogTemp, Warning, TEXT("LoadMap: %s"), *(mapName));
+    UGameplayStatics::OpenLevel(this, FName(mapName), false);
 }

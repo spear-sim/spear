@@ -21,6 +21,9 @@ void ASimModeUrdfBot::BeginPlay()
 
     URobotBlueprintLib::BindActionToKey("DestroyAgent", EKeys::Two, this,
                                         &ASimModeUrdfBot::DestroyPawn);
+
+    URobotBlueprintLib::BindActionToKey("test", EKeys::Three, this,
+                                        &ASimModeUrdfBot::Test);
 }
 
 void ASimModeUrdfBot::getExistingVehiclePawns(TArray<RobotBase*>& pawns) const

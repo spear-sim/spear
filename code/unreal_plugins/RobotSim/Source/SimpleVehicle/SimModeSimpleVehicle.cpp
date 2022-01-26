@@ -21,8 +21,8 @@ void ASimModeSimpleVehicle::BeginPlay()
         "inputEventCycleCameraBackward", EKeys::P, this,
         &ASimModeSimpleVehicle::cycleVisibleCameraBackward);
 
-    URobotBlueprintLib::BindActionToKey("testNavSystem", EKeys::Three, this,
-                                        &ASimModeSimpleVehicle::NavSystemTest);
+    URobotBlueprintLib::BindActionToKey("test", EKeys::Three, this,
+                                        &ASimModeSimpleVehicle::Test);
 }
 
 void ASimModeSimpleVehicle::getExistingVehiclePawns(
