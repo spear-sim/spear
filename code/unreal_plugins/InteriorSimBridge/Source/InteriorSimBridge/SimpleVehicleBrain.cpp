@@ -79,8 +79,7 @@ void USimpleVehicleBrain::Init()
     unrealrl::ActionSpec ActSpec(true, unrealrl::DataType::UInteger8, {1},
                                  std::make_pair(-1, 1), aDescription);
 
-    unrealrl::ActionSpecs ASpecs(ActSpec);
-    SetActionSpecs(ASpecs);
+    SetActionSpecs({ActSpec});
 
     std::string oDescription =
         "The agent has following observations.\nx-coordinate of agent w.r.t "
@@ -89,8 +88,7 @@ void USimpleVehicleBrain::Init()
     unrealrl::ObservationSpec ObSpec({4}, unrealrl::DataType::Float32,
                                      oDescription);
 
-    unrealrl::ObservationSpecs ObSpecs(ObSpec);
-    SetObservationSpecs(ObSpecs);
+    SetObservationSpecs({ObSpec});
 }
 
 void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& Action)
@@ -138,12 +136,12 @@ void USimpleVehicleBrain::GetObservation(
 
     // Get observation data
 
-    ObservationVec.clear();
+    ObservationVec.resize(GetObservationSpecs().size());
 
     // vector observations
-    ObservationVec.emplace_back(unrealrl::Observation(
-        {0.01f * RelativePositionToTarget.X, 0.01f * RelativePositionToTarget.Y,
-         0.01f * CurrentLocation.X, 0.01f * CurrentLocation.Y}));
+    ObservationVec.at(0).Copy(std::vector<float>{
+        0.01f * RelativePositionToTarget.X, 0.01f * RelativePositionToTarget.Y,
+        0.01f * CurrentLocation.X, 0.01f * CurrentLocation.Y});
 
     // Reset HitInfo.
     HitInfo = UHitInfo::NoHit;

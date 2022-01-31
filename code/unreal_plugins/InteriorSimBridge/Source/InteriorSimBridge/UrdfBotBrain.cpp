@@ -95,8 +95,7 @@ void UUrdfBotBrain::Init()
     unrealrl::ActionSpec ActSpec(true, unrealrl::DataType::UInteger8, {1},
                                  std::make_pair(0, 3), aDescription);
 
-    unrealrl::ActionSpecs ASpecs(ActSpec);
-    SetActionSpecs(ASpecs);
+    SetActionSpecs({ActSpec});
 
     std::string oDescription =
         "The agent has following observations.\nx-coordinate of agent w.r.t "
@@ -105,8 +104,7 @@ void UUrdfBotBrain::Init()
     unrealrl::ObservationSpec ObSpec({4}, unrealrl::DataType::Float32,
                                      oDescription);
 
-    unrealrl::ObservationSpecs ObSpecs(ObSpec);
-    SetObservationSpecs(ObSpecs);
+    SetObservationSpecs({ObSpec});
 }
 
 void UUrdfBotBrain::SetAction(const std::vector<unrealrl::Action>& Action)
@@ -163,12 +161,12 @@ void UUrdfBotBrain::GetObservation(
         EndEpisode();
     }
 
-    ObservationVec.clear();
+    ObservationVec.resize(GetObservationSpecs().size());
 
     // vector observations
-    ObservationVec.emplace_back(unrealrl::Observation(
-        {0.01f * RelativePositionToTarget.X, 0.01f * RelativePositionToTarget.Y,
-         0.01f * CurrentLocation.X, 0.01f * CurrentLocation.Y}));
+    ObservationVec.at(0).Copy(std::vector<float>{
+        0.01f * RelativePositionToTarget.X, 0.01f * RelativePositionToTarget.Y,
+        0.01f * CurrentLocation.X, 0.01f * CurrentLocation.Y});
 
     // Reset HitInfo.
     HitInfo = UHitInfo::NoHit;
@@ -191,6 +189,5 @@ bool UUrdfBotBrain::IsAgentReady()
 
 void UUrdfBotBrain::OnEpisodeBegin()
 {
-    UE_LOG(LogTemp, Warning, TEXT("UUrdfBotBrain::ResetAgent"));
     UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }
