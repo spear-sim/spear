@@ -2,116 +2,111 @@
 
 #include "InteriorSimBridge.h"
 
-#include "EngineUtils.h"
-#include "Engine/Engine.h"
-#include "Engine/World.h"
+#include <Engine/Engine.h>
+#include <Engine/World.h>
+#include <EngineUtils.h>
 
-#include "UrdfBot/SimModeUrdfBot.h"
-#include "SimpleVehicle/SimModeSimpleVehicle.h"
-#include "UrdfBotBrain.h"
+#include <SimpleVehicle/SimModeSimpleVehicle.h>
+#include <UrdfBot/SimModeUrdfBot.h>
+
 #include "SimpleVehicleBrain.h"
+#include "UrdfBotBrain.h"
 
 #define LOCTEXT_NAMESPACE "FInteriorSimBridgeModule"
 
-DEFINE_LOG_CATEGORY(LogInteriorSimBridge);
-
 void FInteriorSimBridgeModule::StartupModule()
 {
-    // This code will execute after your module is loaded into memory; the exact
-    // timing is specified in the .uplugin file per-module
-    UE_LOG(LogInteriorSimBridge, Log, TEXT("InteriorSimBridge module loaded."));
-
     // required to get updated gameworld instance and add OnActorSpawned event
     // handler
-    FWorldDelegates::OnPostWorldInitialization.AddRaw(
-        this, &FInteriorSimBridgeModule::PostWorldInitializationEventHandler);
+    PostWorldInitializationDelegateHandle =
+        FWorldDelegates::OnPostWorldInitialization.AddRaw(
+            this,
+            &FInteriorSimBridgeModule::PostWorldInitializationEventHandler);
 
     // required to reset any custom logic during a world cleanup
-    FWorldDelegates::OnWorldCleanup.AddRaw(
+    WorldCleanupDelegateHandle = FWorldDelegates::OnWorldCleanup.AddRaw(
         this, &FInteriorSimBridgeModule::WorldCleanupEventHandler);
 
     // required to handle custom logic when actors are initialized
-    FWorldDelegates::OnWorldInitializedActors.AddRaw(
-        this, &FInteriorSimBridgeModule::WorldInitializedActorsEventHandler);
+    WorldInitializedActorsDelegateHandle =
+        FWorldDelegates::OnWorldInitializedActors.AddRaw(
+            this,
+            &FInteriorSimBridgeModule::WorldInitializedActorsEventHandler);
 }
 
 void FInteriorSimBridgeModule::PostWorldInitializationEventHandler(
-    UWorld* World, const UWorld::InitializationValues)
+    UWorld* InWorld, const UWorld::InitializationValues)
 {
-    if (World && World->IsGameWorld())
+    check(InWorld);
+
+    if (InWorld->IsGameWorld())
     {
-        UE_LOG(LogInteriorSimBridge, Log,
-               TEXT("InteriorSimBridge: New world assigned. World "
-                    "changed from %s "
-                    "to %s"),
-               *GetNameSafe(WorldInstance), *GetNameSafe(World));
+        check(!World);
 
-        WorldInstance = World;
-
-        UE_LOG(LogInteriorSimBridge, Log,
-               TEXT("InteriorSimBridge: Binding OnActorSpawned "
-                    "Delegate..."));
+        World = InWorld;
 
         // required to handle cases when new actors of custom classes are
         // spawned
-        WorldInstance->AddOnActorSpawnedHandler(
+        ActorSpawnedDelegateHandle = World->AddOnActorSpawnedHandler(
             FOnActorSpawned::FDelegate::CreateRaw(
                 this, &FInteriorSimBridgeModule::ActorSpawnedEventHandler));
     }
 }
 
-void FInteriorSimBridgeModule::WorldCleanupEventHandler(UWorld* World,
+void FInteriorSimBridgeModule::WorldCleanupEventHandler(UWorld* InWorld,
                                                         bool bSessionEnded,
                                                         bool bCleanupResources)
 {
-    UE_LOG(LogInteriorSimBridge, Log, TEXT("World %s is cleaning up"),
-           *GetNameSafe(World));
+    check(InWorld);
 
-    if (World && World->IsGameWorld())
+    if (InWorld->IsGameWorld())
     {
-        if (World == WorldInstance)
-        {
-            WorldInstance = nullptr;
-        }
+        check(World == InWorld);
+
+        // remove event handlers bound to this world before world gets cleaned
+        // up
+        World->RemoveOnActorSpawnedHandler(ActorSpawnedDelegateHandle);
+        ActorSpawnedDelegateHandle.Reset();
+
+        // clear local reference to world as it will get cleaned up soon
+        World = nullptr;
     }
 }
 
 void FInteriorSimBridgeModule::WorldInitializedActorsEventHandler(
     const UWorld::FActorsInitializedParams& ActorsInitializedParams)
 {
+    check(World);
+
     // add required components to actors if not already present when initialized
-    if (WorldInstance)
+    for (TActorIterator<AActor> It(World, AActor::StaticClass()); It; ++It)
     {
-        for (TActorIterator<AActor> It(WorldInstance, AActor::StaticClass());
-             It; ++It)
+        // openbot, and other simplevehicle based robots
+        if ((*It)->GetName().Contains(TEXT("simmodesimplevehicle"),
+                                      ESearchCase::IgnoreCase) &&
+            !(*It)->GetName().Contains(TEXT("simmode"),
+                                       ESearchCase::IgnoreCase))
         {
-            // openbot
-            if ((*It)->GetName().Contains(TEXT("simmodesimplevehicle"),
-                                          ESearchCase::IgnoreCase) &&
-                !(*It)->GetName().Contains(TEXT("simmode"),
-                                           ESearchCase::IgnoreCase))
+            if (!(*It)->GetComponentByClass(UBrain::StaticClass()))
             {
-                if (!(*It)->GetComponentByClass(UBrain::StaticClass()))
-                {
-                    USimpleVehicleBrain* Brain = NewObject<USimpleVehicleBrain>(
-                        (*It), USimpleVehicleBrain::StaticClass(),
-                        FName("USimpleVehicleBrain"));
+                USimpleVehicleBrain* Brain = NewObject<USimpleVehicleBrain>(
+                    (*It), USimpleVehicleBrain::StaticClass(),
+                    FName("USimpleVehicleBrain"));
 
-                    Brain->RegisterComponent();
-                }
+                Brain->RegisterComponent();
             }
-            // locobot
-            else if ((*It)->GetName().Contains(TEXT("simmodeurdfbot"),
-                                               ESearchCase::IgnoreCase))
+        }
+        // locobot, and other UrdfBot based robots
+        else if ((*It)->GetName().Contains(TEXT("simmodeurdfbot"),
+                                           ESearchCase::IgnoreCase))
+        {
+            if (!(*It)->GetComponentByClass(UBrain::StaticClass()))
             {
-                if (!(*It)->GetComponentByClass(UBrain::StaticClass()))
-                {
-                    UUrdfBotBrain* Brain = NewObject<UUrdfBotBrain>(
-                        (*It), UUrdfBotBrain::StaticClass(),
-                        FName("UUrdfBotBrain"));
+                UUrdfBotBrain* Brain = NewObject<UUrdfBotBrain>(
+                    (*It), UUrdfBotBrain::StaticClass(),
+                    FName("UUrdfBotBrain"));
 
-                    Brain->RegisterComponent();
-                }
+                Brain->RegisterComponent();
             }
         }
     }
@@ -119,42 +114,43 @@ void FInteriorSimBridgeModule::WorldInitializedActorsEventHandler(
 
 void FInteriorSimBridgeModule::ActorSpawnedEventHandler(AActor* InActor)
 {
-    UE_LOG(LogInteriorSimBridge, Log, TEXT("Spawned an Actor with name %s."),
-           *(InActor->GetName()));
+    check(InActor);
 
     // check UrdfBot factory and create corresponding UBrain component
     if (InActor->IsA(ASimModeUrdfBot::StaticClass()))
     {
-        UE_LOG(LogInteriorSimBridge, Log,
-               TEXT("Spawned actor has a UUrdfBotBrain component."));
-
         UUrdfBotBrain* Brain = NewObject<UUrdfBotBrain>(
             InActor, UUrdfBotBrain::StaticClass(), FName("UUrdfBotBrain"));
 
+        check(Brain);
         Brain->RegisterComponent();
     }
     else if (InActor->IsA(ASimModeSimpleVehicle::StaticClass()))
     {
-        UE_LOG(LogInteriorSimBridge, Log,
-               TEXT("Spawned actor has a USimpleVehicleBrain component"));
-
         USimpleVehicleBrain* Brain = NewObject<USimpleVehicleBrain>(
             InActor, USimpleVehicleBrain::StaticClass(),
             FName("USimpleVehicleBrain"));
 
+        check(Brain);
         Brain->RegisterComponent();
     }
 }
 
 void FInteriorSimBridgeModule::ShutdownModule()
 {
-    // This function may be called during shutdown to clean up your module.  For
-    // modules that support dynamic reloading, we call this function before
-    // unloading the module.
-    UE_LOG(LogInteriorSimBridge, Log,
-           TEXT("InteriorSimBridge module unloaded."));
+    // remove event handlers used by this module
+    FWorldDelegates::OnPostWorldInitialization.Remove(
+        PostWorldInitializationDelegateHandle);
+    PostWorldInitializationDelegateHandle.Reset();
 
-    WorldInstance = nullptr;
+    FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupDelegateHandle);
+    WorldCleanupDelegateHandle.Reset();
+
+    FWorldDelegates::OnWorldInitializedActors.Remove(
+        WorldInitializedActorsDelegateHandle);
+    WorldInitializedActorsDelegateHandle.Reset();
+
+    World = nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE

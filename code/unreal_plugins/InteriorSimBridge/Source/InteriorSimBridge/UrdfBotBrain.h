@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RL/Brain.h"
+#include <RL/Brain.h>
 #include "UrdfBotBrain.generated.h"
 
 UCLASS(Blueprintable)

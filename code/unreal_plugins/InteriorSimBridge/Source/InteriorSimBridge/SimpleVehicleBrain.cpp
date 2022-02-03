@@ -1,17 +1,19 @@
 #include "SimpleVehicleBrain.h"
-#include "EngineUtils.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "UObject/ConstructorHelpers.h"
-#include "UnrealRL.h"
-#include "UnrealRLManager.h"
-#include "SimpleVehicle/SimModeSimpleVehicle.h"
-#include "SimpleVehicle/SimpleVehiclePawn.h"
+
+#include <EngineUtils.h>
+#include <Kismet/KismetMathLibrary.h>
+#include <UObject/ConstructorHelpers.h>
+
+#include <UnrealRL.h>
+#include <UnrealRLManager.h>
+
+#include <SimpleVehicle/SimModeSimpleVehicle.h>
+#include <SimpleVehicle/SimpleVehiclePawn.h>
 
 USimpleVehicleBrain::USimpleVehicleBrain(
     const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
-    Force = 100000.0f;
 }
 
 void USimpleVehicleBrain::OnActorHit(AActor* SelfActor,
@@ -34,7 +36,6 @@ void USimpleVehicleBrain::OnActorHit(AActor* SelfActor,
 
 void USimpleVehicleBrain::Init()
 {
-
     for (TActorIterator<ASimpleVehiclePawn> it(this->GetWorld()); it; ++it)
     {
         Owner = static_cast<ASimpleVehiclePawn*>(*it);
@@ -105,9 +106,8 @@ void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& Action)
     // ActionVec[0], ActionVec[1]);
     /*UE_LOG(LogTemp, Warning, TEXT("Action received from client is %f"),
            ActionVec.at(0));*/
-    float scale = 0.01f;
-    Cast<ASimpleVehiclePawn>(Owner)->MoveForward(ActionVec[0]);
-    Cast<ASimpleVehiclePawn>(Owner)->MoveRight(ActionVec[1]);
+    Cast<ASimpleVehiclePawn>(Owner)->MoveForward(2 * ActionVec[0]);
+    Cast<ASimpleVehiclePawn>(Owner)->MoveRight(2 * ActionVec[1]);
 }
 
 void USimpleVehicleBrain::GetObservation(

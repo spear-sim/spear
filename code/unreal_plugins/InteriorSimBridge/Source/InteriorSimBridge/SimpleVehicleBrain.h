@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RL/Brain.h"
+#include <RL/Brain.h>
 #include "SimpleVehicleBrain.generated.h"
 
 UCLASS(Blueprintable)
@@ -30,10 +30,6 @@ public:
 
     UPROPERTY()
     class AActor* Goal = nullptr;
-
-    /** Torque to apply when trying to roll ball */
-    UPROPERTY(EditAnywhere)
-    float Force;
 
 private:
     class UStaticMeshComponent* Base;
