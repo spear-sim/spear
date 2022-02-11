@@ -1,11 +1,12 @@
 #include "SimpleVehicleBrain.h"
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include <EngineUtils.h>
 #include <Kismet/KismetMathLibrary.h>
 #include <UObject/ConstructorHelpers.h>
-
-#include <UnrealRL.h>
-#include <UnrealRLManager.h>
 
 #include <SimpleVehicle/SimModeSimpleVehicle.h>
 #include <SimpleVehicle/SimpleVehiclePawn.h>
@@ -23,13 +24,14 @@ void USimpleVehicleBrain::OnActorHit(AActor* SelfActor,
 {
     if (OtherActor && OtherActor->ActorHasTag("goal"))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Hit Goal"));
         HitInfo = UHitInfo::Goal;
     }
+    // TODO: Does instid1227 apply to all obstacles?
+    // If not, include all obstacles or provide an user interface to specify
+    // obstacles
     else if (OtherActor && !OtherActor->GetName().Contains(
                                TEXT("instid1227"), ESearchCase::IgnoreCase))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Hit Obstacle"));
         HitInfo = UHitInfo::Edge;
     }
 };
@@ -48,11 +50,10 @@ void USimpleVehicleBrain::Init()
         check(false);
     }
 
+    // TODO: remove this?
     Owner->Tags.Add(TEXT("Agent"));
 
     Owner->OnActorHit.AddDynamic(this, &USimpleVehicleBrain::OnActorHit);
-
-    Base = Cast<UStaticMeshComponent>(Owner->GetRootComponent());
 
     // Store actor refs required during simulation.
     for (TActorIterator<AActor> ActorItr(GetWorld(), AActor::StaticClass());
@@ -61,7 +62,7 @@ void USimpleVehicleBrain::Init()
         if ((*ActorItr)->ActorHasTag("goal"))
         {
             Goal = *ActorItr;
-            // break;
+            break;
         }
     }
 
@@ -71,30 +72,32 @@ void USimpleVehicleBrain::Init()
         check(false);
     }
 
-    // Initialize Observation and ActionSpec for this agent
-    std::string aDescription =
-        "The actions represent the velocities applied "
-        "to the agent along right and left set of wheels.\nThe actions are "
-        "continuous in nature.\n Values are "
-        "in range [-1,1].\n";
-    unrealrl::ActionSpec ActSpec(true, unrealrl::DataType::UInteger8, {1},
-                                 std::make_pair(-1, 1), aDescription);
+    // Initialize ObservationSpec and ActionSpec for this agent
+    std::string SimpleVehicleActionDescription =
+        "The actions represent a multiplier scale applied to wheel torques.\n"
+        "There are two multiplier scales.\nThe first multiplier scale moves"
+        "the robot forward and backward.\nThe second multiplier scale turns "
+        "the robot right and left.\n"
+        "The scales are continuous in nature, ranging from [-1, 1].\n";
+    unrealrl::ActionSpec SimpleVehicleActionSpec(
+        false, unrealrl::DataType::Float32, {2}, std::make_pair(-1, 1),
+        SimpleVehicleActionDescription);
 
-    SetActionSpecs({ActSpec});
+    SetActionSpecs({SimpleVehicleActionSpec});
 
-    std::string oDescription =
+    std::string SimpleVehicleObservationDescription =
         "The agent has following observations.\nx-coordinate of agent w.r.t "
         "world frame. \ny-coordinate of agent w.r.t world frame.\nx-coordinate "
         "of agent relative to goal.\ny-coordinate of agent relative to goal.";
-    unrealrl::ObservationSpec ObSpec({4}, unrealrl::DataType::Float32,
-                                     oDescription);
+    unrealrl::ObservationSpec SimpleVehicleObservationSpec(
+        {4}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
 
-    SetObservationSpecs({ObSpec});
+    SetObservationSpecs({SimpleVehicleObservationSpec});
 }
 
 void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& Action)
 {
-    check(Action.size() == 2);
+    check(Action.size() == 1);
 
     std::vector<float> ActionVec = Action.at(0).GetActions();
 
@@ -102,12 +105,9 @@ void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& Action)
 
     check(Cast<ASimpleVehiclePawn>(Owner));
 
-    // UE_LOG(LogTemp, Warning, TEXT("USimpleVehicleBrain::SetAction, %f %f"),
-    // ActionVec[0], ActionVec[1]);
-    /*UE_LOG(LogTemp, Warning, TEXT("Action received from client is %f"),
-           ActionVec.at(0));*/
-    Cast<ASimpleVehiclePawn>(Owner)->MoveForward(2 * ActionVec[0]);
-    Cast<ASimpleVehiclePawn>(Owner)->MoveRight(2 * ActionVec[1]);
+    float Scale = 10.f;
+    Cast<ASimpleVehiclePawn>(Owner)->MoveForward(Scale * ActionVec[0]);
+    Cast<ASimpleVehiclePawn>(Owner)->MoveRight(Scale * ActionVec[1]);
 }
 
 void USimpleVehicleBrain::GetObservation(
@@ -164,10 +164,6 @@ bool USimpleVehicleBrain::IsAgentReady()
 
 void USimpleVehicleBrain::OnEpisodeBegin()
 {
-    UE_LOG(LogTemp, Warning, TEXT("USimpleVehicleBrain::OnEpisodeBegin start"));
     // reset by reload entire map
     UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
-
-    UE_LOG(LogTemp, Warning,
-           TEXT("USimpleVehicleBrain::OnEpisodeBegin complete"));
 }

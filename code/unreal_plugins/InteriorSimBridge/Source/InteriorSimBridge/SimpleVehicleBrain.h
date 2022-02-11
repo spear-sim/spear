@@ -1,6 +1,9 @@
 #pragma once
 
-#include <RL/Brain.h>
+#include <vector>
+
+#include <Brain.h>
+
 #include "SimpleVehicleBrain.generated.h"
 
 UCLASS(Blueprintable)
@@ -32,8 +35,6 @@ public:
     class AActor* Goal = nullptr;
 
 private:
-    class UStaticMeshComponent* Base;
-
     enum class UHitInfo
     {
         NoHit,

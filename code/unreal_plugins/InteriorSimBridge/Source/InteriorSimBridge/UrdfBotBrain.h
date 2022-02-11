@@ -1,6 +1,9 @@
 #pragma once
 
-#include <RL/Brain.h>
+#include <vector>
+
+#include <Brain.h>
+
 #include "UrdfBotBrain.generated.h"
 
 UCLASS(Blueprintable)
@@ -31,17 +34,7 @@ public:
     UPROPERTY()
     class AActor* Goal = nullptr;
 
-    /** Camera through which simulation is viewed. */
-    UPROPERTY()
-    class AActor* ViewCamera = nullptr;
-
-    /** Torque to apply when trying to roll ball */
-    UPROPERTY(EditAnywhere)
-    float Force;
-
 private:
-    class UStaticMeshComponent* Base;
-
     enum class UHitInfo
     {
         NoHit,

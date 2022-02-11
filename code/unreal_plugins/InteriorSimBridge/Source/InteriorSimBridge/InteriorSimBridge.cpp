@@ -16,8 +16,8 @@
 
 void FInteriorSimBridgeModule::StartupModule()
 {
-    // required to get updated gameworld instance and add OnActorSpawned event
-    // handler
+    // required to get updated gameworld instance and to add
+    // ActorSpawnedEventHandler
     PostWorldInitializationDelegateHandle =
         FWorldDelegates::OnPostWorldInitialization.AddRaw(
             this,
@@ -26,12 +26,6 @@ void FInteriorSimBridgeModule::StartupModule()
     // required to reset any custom logic during a world cleanup
     WorldCleanupDelegateHandle = FWorldDelegates::OnWorldCleanup.AddRaw(
         this, &FInteriorSimBridgeModule::WorldCleanupEventHandler);
-
-    // required to handle custom logic when actors are initialized
-    WorldInitializedActorsDelegateHandle =
-        FWorldDelegates::OnWorldInitializedActors.AddRaw(
-            this,
-            &FInteriorSimBridgeModule::WorldInitializedActorsEventHandler);
 }
 
 void FInteriorSimBridgeModule::PostWorldInitializationEventHandler(
@@ -41,6 +35,7 @@ void FInteriorSimBridgeModule::PostWorldInitializationEventHandler(
 
     if (InWorld->IsGameWorld())
     {
+        // make sure that local World reference is not in use
         check(!World);
 
         World = InWorld;
@@ -61,6 +56,7 @@ void FInteriorSimBridgeModule::WorldCleanupEventHandler(UWorld* InWorld,
 
     if (InWorld->IsGameWorld())
     {
+        // make sure we are cleaning up based on the correct world
         check(World == InWorld);
 
         // remove event handlers bound to this world before world gets cleaned
@@ -73,51 +69,14 @@ void FInteriorSimBridgeModule::WorldCleanupEventHandler(UWorld* InWorld,
     }
 }
 
-void FInteriorSimBridgeModule::WorldInitializedActorsEventHandler(
-    const UWorld::FActorsInitializedParams& ActorsInitializedParams)
-{
-    check(World);
-
-    // add required components to actors if not already present when initialized
-    for (TActorIterator<AActor> It(World, AActor::StaticClass()); It; ++It)
-    {
-        // openbot, and other simplevehicle based robots
-        if ((*It)->GetName().Contains(TEXT("simmodesimplevehicle"),
-                                      ESearchCase::IgnoreCase) &&
-            !(*It)->GetName().Contains(TEXT("simmode"),
-                                       ESearchCase::IgnoreCase))
-        {
-            if (!(*It)->GetComponentByClass(UBrain::StaticClass()))
-            {
-                USimpleVehicleBrain* Brain = NewObject<USimpleVehicleBrain>(
-                    (*It), USimpleVehicleBrain::StaticClass(),
-                    FName("USimpleVehicleBrain"));
-
-                Brain->RegisterComponent();
-            }
-        }
-        // locobot, and other UrdfBot based robots
-        else if ((*It)->GetName().Contains(TEXT("simmodeurdfbot"),
-                                           ESearchCase::IgnoreCase))
-        {
-            if (!(*It)->GetComponentByClass(UBrain::StaticClass()))
-            {
-                UUrdfBotBrain* Brain = NewObject<UUrdfBotBrain>(
-                    (*It), UUrdfBotBrain::StaticClass(),
-                    FName("UUrdfBotBrain"));
-
-                Brain->RegisterComponent();
-            }
-        }
-    }
-}
-
 void FInteriorSimBridgeModule::ActorSpawnedEventHandler(AActor* InActor)
 {
     check(InActor);
 
     // check UrdfBot factory and create corresponding UBrain component
-    if (InActor->IsA(ASimModeUrdfBot::StaticClass()))
+    // skip if Actor already contains UBrain component
+    if (InActor->IsA(ASimModeUrdfBot::StaticClass()) &&
+        !InActor->GetComponentByClass(UBrain::StaticClass()))
     {
         UUrdfBotBrain* Brain = NewObject<UUrdfBotBrain>(
             InActor, UUrdfBotBrain::StaticClass(), FName("UUrdfBotBrain"));
@@ -125,7 +84,8 @@ void FInteriorSimBridgeModule::ActorSpawnedEventHandler(AActor* InActor)
         check(Brain);
         Brain->RegisterComponent();
     }
-    else if (InActor->IsA(ASimModeSimpleVehicle::StaticClass()))
+    else if (InActor->IsA(ASimModeSimpleVehicle::StaticClass()) &&
+             !InActor->GetComponentByClass(UBrain::StaticClass()))
     {
         USimpleVehicleBrain* Brain = NewObject<USimpleVehicleBrain>(
             InActor, USimpleVehicleBrain::StaticClass(),
@@ -146,10 +106,7 @@ void FInteriorSimBridgeModule::ShutdownModule()
     FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupDelegateHandle);
     WorldCleanupDelegateHandle.Reset();
 
-    FWorldDelegates::OnWorldInitializedActors.Remove(
-        WorldInitializedActorsDelegateHandle);
-    WorldInitializedActorsDelegateHandle.Reset();
-
+    // local World will no longer be used, so remove clear it
     World = nullptr;
 }
 

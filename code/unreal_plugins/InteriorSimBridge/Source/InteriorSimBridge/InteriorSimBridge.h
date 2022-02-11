@@ -33,9 +33,6 @@ public:
 
     void ActorSpawnedEventHandler(AActor* InActor);
 
-    void WorldInitializedActorsEventHandler(
-        const UWorld::FActorsInitializedParams& ActorsInitializedParams);
-
 private:
     /** Store a local reference to current gameworld */
     UWorld* World = nullptr;
@@ -44,6 +41,5 @@ private:
      * class */
     FDelegateHandle PostWorldInitializationDelegateHandle;
     FDelegateHandle WorldCleanupDelegateHandle;
-    FDelegateHandle WorldInitializedActorsDelegateHandle;
     FDelegateHandle ActorSpawnedDelegateHandle;
 };

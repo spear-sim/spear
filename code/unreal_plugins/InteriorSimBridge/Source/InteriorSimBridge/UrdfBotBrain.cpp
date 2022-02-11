@@ -1,11 +1,12 @@
 #include "UrdfBotBrain.h"
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include <EngineUtils.h>
 #include <Kismet/KismetMathLibrary.h>
 #include <UObject/ConstructorHelpers.h>
-
-#include <UnrealRL.h>
-#include <UnrealRLManager.h>
 
 #include <UrdfBot/UrdfBotPawn.h>
 #include <UrdfBot/SimModeUrdfBot.h>
@@ -13,7 +14,6 @@
 UUrdfBotBrain::UUrdfBotBrain(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
-    Force = 100000.0f;
 }
 
 void UUrdfBotBrain::OnActorHit(AActor* SelfActor,
@@ -21,13 +21,15 @@ void UUrdfBotBrain::OnActorHit(AActor* SelfActor,
                                FVector NormalImpulse,
                                const FHitResult& Hit)
 {
-    if (OtherActor &&
-        OtherActor->GetName().Contains(TEXT("Table"), ESearchCase::IgnoreCase))
+    if (OtherActor && OtherActor->ActorHasTag("goal"))
     {
         HitInfo = UHitInfo::Goal;
     }
-    else if (OtherActor && OtherActor->GetName().Contains(
-                               TEXT("Wall"), ESearchCase::IgnoreCase))
+    // TODO: Does instid1227 apply to all obstacles?
+    // If not, include all obstacles or provide an user interface to specify
+    // obstacles
+    else if (OtherActor && !OtherActor->GetName().Contains(
+                               TEXT("instid1227"), ESearchCase::IgnoreCase))
     {
         HitInfo = UHitInfo::Edge;
     }
@@ -40,6 +42,7 @@ void UUrdfBotBrain::Init()
         Owner = static_cast<AUrdfBotPawn*>(*it);
     }
 
+    // if no owner is found, exit
     if (!Owner)
     {
         UE_LOG(LogTemp, Error,
@@ -47,40 +50,20 @@ void UUrdfBotBrain::Init()
         check(false);
     }
 
+    // TODO: remove this?
     Owner->Tags.Add(TEXT("Agent"));
 
     Owner->OnActorHit.AddDynamic(this, &UUrdfBotBrain::OnActorHit);
-
-    Base = Cast<UStaticMeshComponent>(Owner->GetRootComponent());
 
     // Store actor refs required during simulation.
     for (TActorIterator<AActor> ActorItr(GetWorld(), AActor::StaticClass());
          ActorItr; ++ActorItr)
     {
-        if ((*ActorItr)->GetName().Contains(TEXT("Table"),
-                                            ESearchCase::IgnoreCase))
+        if ((*ActorItr)->ActorHasTag("goal"))
         {
             Goal = *ActorItr;
-            // break;
+            break;
         }
-        else if ((*ActorItr)->GetName().Contains(TEXT("ViewCamera"),
-                                                 ESearchCase::IgnoreCase))
-        {
-            ViewCamera = *ActorItr;
-        }
-    }
-
-    // disable view from bot's ego centric view
-    Owner->EndViewTarget(this->GetWorld()->GetFirstPlayerController());
-
-    // Set a certain camera as this player's target view
-    // TODO: Do we need to do this here?
-    check(ViewCamera);
-    APlayerController* Controller =
-        this->GetWorld()->GetFirstPlayerController();
-    if (Controller)
-    {
-        Controller->SetViewTarget(ViewCamera);
     }
 
     if (!Goal)
@@ -89,25 +72,30 @@ void UUrdfBotBrain::Init()
         check(false);
     }
 
-    // Initialize Observation and ActionSpec for this agent
-    std::string aDescription =
-        "The actions represent the velocities applied "
-        "to the agent along right and left set of wheels.\nThe actions are "
-        "continuous in nature.\n Values are "
-        "in range [-1,1].\n";
-    unrealrl::ActionSpec ActSpec(true, unrealrl::DataType::UInteger8, {1},
-                                 std::make_pair(0, 3), aDescription);
+    // Initialize ObservationSpec and ActionSpec for this agent
+    std::string UrdfBotActionDescription =
+        "The actions represents moving the robot in 4 directions - Forward, "
+        "Backward, turn right, turn left.\n"
+        "Actions are discrete in nature.\n There are 4 possible values, "
+        "ranging from 0 to 3.\n"
+        "0 - move forward\n"
+        "1 - move backwards\n"
+        "2 - rotate right\n"
+        "3 - rotate left.\n";
+    unrealrl::ActionSpec UrdfBotActionSpec(true, unrealrl::DataType::UInteger8,
+                                           {1}, std::make_pair(0, 3),
+                                           UrdfBotActionDescription);
 
-    SetActionSpecs({ActSpec});
+    SetActionSpecs({UrdfBotActionSpec});
 
-    std::string oDescription =
+    std::string UrdfBotObservationDescription =
         "The agent has following observations.\nx-coordinate of agent w.r.t "
         "world frame. \ny-coordinate of agent w.r.t world frame.\nx-coordinate "
         "of agent relative to goal.\ny-coordinate of agent relative to goal.";
-    unrealrl::ObservationSpec ObSpec({4}, unrealrl::DataType::Float32,
-                                     oDescription);
+    unrealrl::ObservationSpec UrdfBotObservationSpec(
+        {4}, unrealrl::DataType::Float32, UrdfBotObservationDescription);
 
-    SetObservationSpecs({ObSpec});
+    SetObservationSpecs({UrdfBotObservationSpec});
 }
 
 void UUrdfBotBrain::SetAction(const std::vector<unrealrl::Action>& Action)
@@ -119,9 +107,6 @@ void UUrdfBotBrain::SetAction(const std::vector<unrealrl::Action>& Action)
     check(ActionVec.size() == 1);
 
     check(Cast<AUrdfBotPawn>(Owner));
-
-    /*UE_LOG(LogTemp, Warning, TEXT("Action received from client is %f"),
-           ActionVec.at(0));*/
 
     switch (static_cast<uint8>(ActionVec.at(0)))
     {
@@ -192,5 +177,6 @@ bool UUrdfBotBrain::IsAgentReady()
 
 void UUrdfBotBrain::OnEpisodeBegin()
 {
+    // reset by reload entire map
     UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }
