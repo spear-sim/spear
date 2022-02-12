@@ -29,17 +29,12 @@ void FInteriorSimBridgeModule::StartupModule()
 }
 
 void FInteriorSimBridgeModule::PostWorldInitializationEventHandler(
-    UWorld* InWorld, const UWorld::InitializationValues)
+    UWorld* World, const UWorld::InitializationValues)
 {
-    check(InWorld);
+    check(World);
 
-    if (InWorld->IsGameWorld())
+    if (World->IsGameWorld())
     {
-        // make sure that local World reference is not in use
-        check(!World);
-
-        World = InWorld;
-
         // required to handle cases when new actors of custom classes are
         // spawned
         ActorSpawnedDelegateHandle = World->AddOnActorSpawnedHandler(
@@ -48,24 +43,18 @@ void FInteriorSimBridgeModule::PostWorldInitializationEventHandler(
     }
 }
 
-void FInteriorSimBridgeModule::WorldCleanupEventHandler(UWorld* InWorld,
+void FInteriorSimBridgeModule::WorldCleanupEventHandler(UWorld* World,
                                                         bool bSessionEnded,
                                                         bool bCleanupResources)
 {
-    check(InWorld);
+    check(World);
 
-    if (InWorld->IsGameWorld())
+    if (World->IsGameWorld())
     {
-        // make sure we are cleaning up based on the correct world
-        check(World == InWorld);
-
         // remove event handlers bound to this world before world gets cleaned
         // up
         World->RemoveOnActorSpawnedHandler(ActorSpawnedDelegateHandle);
         ActorSpawnedDelegateHandle.Reset();
-
-        // clear local reference to world as it will get cleaned up soon
-        World = nullptr;
     }
 }
 
@@ -106,8 +95,10 @@ void FInteriorSimBridgeModule::ShutdownModule()
     FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupDelegateHandle);
     WorldCleanupDelegateHandle.Reset();
 
-    // local World will no longer be used, so remove clear it
-    World = nullptr;
+    // If this module is unloaded in the middle of simulation for some reason,
+    // raise an error because we do not support this and we want to know when
+    // this happens
+    check(!ActorSpawnedDelegateHandle.IsValid());
 }
 
 #undef LOCTEXT_NAMESPACE

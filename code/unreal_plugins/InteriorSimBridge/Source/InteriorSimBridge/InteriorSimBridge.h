@@ -34,9 +34,6 @@ public:
     void ActorSpawnedEventHandler(AActor* InActor);
 
 private:
-    /** Store a local reference to current gameworld */
-    UWorld* World = nullptr;
-
     /** DelegateHandles corresponding to each Event Handler defined in this
      * class */
     FDelegateHandle PostWorldInitializationDelegateHandle;

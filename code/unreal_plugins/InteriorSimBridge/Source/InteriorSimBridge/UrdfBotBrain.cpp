@@ -50,9 +50,6 @@ void UUrdfBotBrain::Init()
         check(false);
     }
 
-    // TODO: remove this?
-    Owner->Tags.Add(TEXT("Agent"));
-
     Owner->OnActorHit.AddDynamic(this, &UUrdfBotBrain::OnActorHit);
 
     // Store actor refs required during simulation.

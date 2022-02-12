@@ -15,8 +15,7 @@
 
 - To use InteriorSimBridge plugin, make sure both RobotSim and UnrealRL plugins are part of the InteriorSim Project.
 - Depending on the experiment that needs to be run, you can write a 'UBrain' implementation similar to [SimpleVehicleBrain.cpp](../code/unreal_plugins/InteriorSimBridge/Source/InteriorSimBridge/SimpleVehicleBrain.cpp).
-- Make sure the new implementation is handled/included in InteriorSimBridge.cpp file in `WorldInitializedActorsEventHandler()` and `ActorSpawnedEventHandler()` functions.
+- If you are using `SimpleVehicleBrain.cpp` or `UrdfBotBrain.cpp` in any of the InteriorSim environments, you need to add 'goal' as a tag to one of your assets in the environment.
 
 ## How to use UnrealAI library's python client
 - Navigate to [UnrealAI's python client](../code/thirdparty/unreal-ai/client/python) directory and follows steps as outlined in the README file to setup the python client.
-- Use [example code](../code/python_client/example_code.py) to write your own experiments.
