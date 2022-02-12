@@ -40,7 +40,7 @@ void USimpleVehicleBrain::Init()
 {
     for (TActorIterator<ASimpleVehiclePawn> it(this->GetWorld()); it; ++it)
     {
-        Owner = static_cast<ASimpleVehiclePawn*>(*it);
+        Owner = Cast<ASimpleVehiclePawn>(*it);
     }
 
     if (!Owner)

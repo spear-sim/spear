@@ -39,7 +39,7 @@ void UUrdfBotBrain::Init()
 {
     for (TActorIterator<AUrdfBotPawn> it(this->GetWorld()); it; ++it)
     {
-        Owner = static_cast<AUrdfBotPawn*>(*it);
+        Owner = Cast<AUrdfBotPawn>(*it);
     }
 
     // if no owner is found, exit
