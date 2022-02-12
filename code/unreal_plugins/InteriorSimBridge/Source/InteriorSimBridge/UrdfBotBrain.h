@@ -22,10 +22,10 @@ public:
 
     // UnrealRL overrides.
     void Init() override;
+    bool IsAgentReady() override;
     void OnEpisodeBegin() override;
     void SetAction(const std::vector<unrealrl::Action>& Action) override;
     void GetObservation(std::vector<unrealrl::Observation>&) override;
-    bool IsAgentReady() override;
 
     // actual robot agent for training
     UPROPERTY()

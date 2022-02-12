@@ -50,6 +50,9 @@ void UUrdfBotBrain::Init()
         check(false);
     }
 
+    // TODO: remove this?
+    // Owner->Tags.Add(TEXT("Agent"));
+
     Owner->OnActorHit.AddDynamic(this, &UUrdfBotBrain::OnActorHit);
 
     // Store actor refs required during simulation.
@@ -93,6 +96,27 @@ void UUrdfBotBrain::Init()
         {4}, unrealrl::DataType::Float32, UrdfBotObservationDescription);
 
     SetObservationSpecs({UrdfBotObservationSpec});
+}
+
+bool UUrdfBotBrain::IsAgentReady()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Velocity is {%f}"),
+           Owner->GetVelocity().Size());
+
+    if (Owner->GetVelocity().Size() >= 0.0 && Owner->GetVelocity().Size() < 0.1)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void UUrdfBotBrain::OnEpisodeBegin()
+{
+    // reset by reload entire map
+    UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }
 
 void UUrdfBotBrain::SetAction(const std::vector<unrealrl::Action>& Action)
@@ -155,25 +179,4 @@ void UUrdfBotBrain::GetObservation(
 
     // Reset HitInfo.
     HitInfo = UHitInfo::NoHit;
-}
-
-bool UUrdfBotBrain::IsAgentReady()
-{
-    UE_LOG(LogTemp, Warning, TEXT("Velocity is {%f}"),
-           Owner->GetVelocity().Size());
-
-    if (Owner->GetVelocity().Size() >= 0.0 && Owner->GetVelocity().Size() < 0.1)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void UUrdfBotBrain::OnEpisodeBegin()
-{
-    // reset by reload entire map
-    UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }

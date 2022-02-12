@@ -50,6 +50,9 @@ void USimpleVehicleBrain::Init()
         check(false);
     }
 
+    // TODO: remove this?
+    // Owner->Tags.Add(TEXT("Agent"));
+
     Owner->OnActorHit.AddDynamic(this, &USimpleVehicleBrain::OnActorHit);
 
     // Store actor refs required during simulation.
@@ -90,6 +93,27 @@ void USimpleVehicleBrain::Init()
         {4}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
 
     SetObservationSpecs({SimpleVehicleObservationSpec});
+}
+
+bool USimpleVehicleBrain::IsAgentReady()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Velocity is {%f}"),
+           Owner->GetVelocity().Size());
+
+    if (Owner->GetVelocity().Size() >= 0.0 && Owner->GetVelocity().Size() < 0.1)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void USimpleVehicleBrain::OnEpisodeBegin()
+{
+    // reset by reload entire map
+    UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }
 
 void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& Action)
@@ -142,25 +166,4 @@ void USimpleVehicleBrain::GetObservation(
 
     // Reset HitInfo.
     HitInfo = UHitInfo::NoHit;
-}
-
-bool USimpleVehicleBrain::IsAgentReady()
-{
-    UE_LOG(LogTemp, Warning, TEXT("Velocity is {%f}"),
-           Owner->GetVelocity().Size());
-
-    if (Owner->GetVelocity().Size() >= 0.0 && Owner->GetVelocity().Size() < 0.1)
-    {
-        return true;
-    }
-    else
-    {
-        return true;
-    }
-}
-
-void USimpleVehicleBrain::OnEpisodeBegin()
-{
-    // reset by reload entire map
-    UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }

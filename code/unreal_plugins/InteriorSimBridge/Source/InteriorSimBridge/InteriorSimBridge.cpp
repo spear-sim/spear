@@ -28,6 +28,22 @@ void FInteriorSimBridgeModule::StartupModule()
         this, &FInteriorSimBridgeModule::WorldCleanupEventHandler);
 }
 
+void FInteriorSimBridgeModule::ShutdownModule()
+{
+    // remove event handlers used by this module
+    FWorldDelegates::OnPostWorldInitialization.Remove(
+        PostWorldInitializationDelegateHandle);
+    PostWorldInitializationDelegateHandle.Reset();
+
+    FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupDelegateHandle);
+    WorldCleanupDelegateHandle.Reset();
+
+    // If this module is unloaded in the middle of simulation for some reason,
+    // raise an error because we do not support this and we want to know when
+    // this happens
+    check(!ActorSpawnedDelegateHandle.IsValid());
+}
+
 void FInteriorSimBridgeModule::PostWorldInitializationEventHandler(
     UWorld* World, const UWorld::InitializationValues)
 {
@@ -83,22 +99,6 @@ void FInteriorSimBridgeModule::ActorSpawnedEventHandler(AActor* InActor)
         check(Brain);
         Brain->RegisterComponent();
     }
-}
-
-void FInteriorSimBridgeModule::ShutdownModule()
-{
-    // remove event handlers used by this module
-    FWorldDelegates::OnPostWorldInitialization.Remove(
-        PostWorldInitializationDelegateHandle);
-    PostWorldInitializationDelegateHandle.Reset();
-
-    FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupDelegateHandle);
-    WorldCleanupDelegateHandle.Reset();
-
-    // If this module is unloaded in the middle of simulation for some reason,
-    // raise an error because we do not support this and we want to know when
-    // this happens
-    check(!ActorSpawnedDelegateHandle.IsValid());
 }
 
 #undef LOCTEXT_NAMESPACE
