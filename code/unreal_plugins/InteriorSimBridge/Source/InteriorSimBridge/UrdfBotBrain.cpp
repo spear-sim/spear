@@ -21,15 +21,16 @@ void UUrdfBotBrain::OnActorHit(AActor* SelfActor,
                                FVector NormalImpulse,
                                const FHitResult& Hit)
 {
-    if (OtherActor && OtherActor->ActorHasTag("goal"))
+    check(OtherActor);
+    if (OtherActor->ActorHasTag("goal"))
     {
         HitInfo = UHitInfo::Goal;
     }
     // TODO: Does instid1227 apply to all obstacles?
     // If not, include all obstacles or provide an user interface to specify
     // obstacles
-    else if (OtherActor && !OtherActor->GetName().Contains(
-                               TEXT("instid1227"), ESearchCase::IgnoreCase))
+    else if (!OtherActor->GetName().Contains(TEXT("instid1227"),
+                                             ESearchCase::IgnoreCase))
     {
         HitInfo = UHitInfo::Edge;
     }
@@ -87,17 +88,9 @@ void UUrdfBotBrain::Init()
 
 bool UUrdfBotBrain::IsAgentReady()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Velocity is {%f}"),
-           Owner->GetVelocity().Size());
-
-    if (Owner->GetVelocity().Size() >= 0.0 && Owner->GetVelocity().Size() < 0.1)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    check(Owner);
+    return (Owner->GetVelocity().Size() >= 0.0 &&
+            Owner->GetVelocity().Size() < 0.1);
 }
 
 void UUrdfBotBrain::OnEpisodeBegin()
@@ -113,7 +106,6 @@ void UUrdfBotBrain::SetAction(const std::vector<unrealrl::Action>& Action)
     std::vector<float> ActionVec = Action.at(0).GetActions();
 
     check(ActionVec.size() == 1);
-
     check(Owner);
 
     switch (static_cast<uint8>(ActionVec.at(0)))
@@ -136,6 +128,9 @@ void UUrdfBotBrain::SetAction(const std::vector<unrealrl::Action>& Action)
 void UUrdfBotBrain::GetObservation(
     std::vector<unrealrl::Observation>& ObservationVec)
 {
+    check(Owner);
+    check(Goal);
+
     // Get observations.
     const FVector CurrentLocation = Owner->GetActorLocation();
 
