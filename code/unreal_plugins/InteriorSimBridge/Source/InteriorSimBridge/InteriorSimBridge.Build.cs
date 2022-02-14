@@ -27,7 +27,6 @@ public class InteriorSimBridge : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -36,14 +35,12 @@ public class InteriorSimBridge : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"Core",
 				"InputCore", // This is required for using EKeys::W, etc 
 				"CoreUObject",
 				"Engine",
 				"RobotSim",
 				"UnrealRL",
-				"RHI",
-				"Renderer",
-				"RenderCore"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
