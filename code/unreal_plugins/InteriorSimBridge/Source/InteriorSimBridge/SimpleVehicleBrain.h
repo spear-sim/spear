@@ -29,7 +29,7 @@ public:
 
     // actual robot agent for training
     UPROPERTY()
-    class AActor* Owner;
+    class ASimpleVehiclePawn* Owner;
 
     UPROPERTY()
     class AActor* Goal = nullptr;

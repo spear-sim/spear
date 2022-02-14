@@ -43,15 +43,7 @@ void USimpleVehicleBrain::Init()
         Owner = Cast<ASimpleVehiclePawn>(*it);
     }
 
-    if (!Owner)
-    {
-        UE_LOG(LogTemp, Error,
-               TEXT("No valid owner of this component is defined"));
-        check(false);
-    }
-
-    // TODO: remove this?
-    // Owner->Tags.Add(TEXT("Agent"));
+    check(Owner);
 
     Owner->OnActorHit.AddDynamic(this, &USimpleVehicleBrain::OnActorHit);
 
@@ -66,11 +58,7 @@ void USimpleVehicleBrain::Init()
         }
     }
 
-    if (!Goal)
-    {
-        UE_LOG(LogTemp, Error, TEXT("No valid goal found in this environment"));
-        check(false);
-    }
+    check(Goal);
 
     // Initialize ObservationSpec and ActionSpec for this agent
     std::string SimpleVehicleActionDescription =
@@ -124,11 +112,12 @@ void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& Action)
 
     check(ActionVec.size() == 2);
 
-    check(Cast<ASimpleVehiclePawn>(Owner));
+    check(Owner);
 
+    // TODO: Should not use magic numbers
     float Scale = 10.f;
-    Cast<ASimpleVehiclePawn>(Owner)->MoveForward(Scale * ActionVec[0]);
-    Cast<ASimpleVehiclePawn>(Owner)->MoveRight(Scale * ActionVec[1]);
+    Owner->MoveForward(Scale * ActionVec[0]);
+    Owner->MoveRight(Scale * ActionVec[1]);
 }
 
 void USimpleVehicleBrain::GetObservation(

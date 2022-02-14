@@ -42,16 +42,7 @@ void UUrdfBotBrain::Init()
         Owner = Cast<AUrdfBotPawn>(*it);
     }
 
-    // if no owner is found, exit
-    if (!Owner)
-    {
-        UE_LOG(LogTemp, Error,
-               TEXT("No valid owner of this component is defined"));
-        check(false);
-    }
-
-    // TODO: remove this?
-    // Owner->Tags.Add(TEXT("Agent"));
+    check(Owner);
 
     Owner->OnActorHit.AddDynamic(this, &UUrdfBotBrain::OnActorHit);
 
@@ -66,11 +57,7 @@ void UUrdfBotBrain::Init()
         }
     }
 
-    if (!Goal)
-    {
-        UE_LOG(LogTemp, Error, TEXT("No valid goal found in this environment"));
-        check(false);
-    }
+    check(Goal);
 
     // Initialize ObservationSpec and ActionSpec for this agent
     std::string UrdfBotActionDescription =
@@ -127,21 +114,21 @@ void UUrdfBotBrain::SetAction(const std::vector<unrealrl::Action>& Action)
 
     check(ActionVec.size() == 1);
 
-    check(Cast<AUrdfBotPawn>(Owner));
+    check(Owner);
 
     switch (static_cast<uint8>(ActionVec.at(0)))
     {
     case 0:
-        Cast<AUrdfBotPawn>(Owner)->onBaseMove(1);
+        Owner->onBaseMove(1);
         break;
     case 1:
-        Cast<AUrdfBotPawn>(Owner)->onBaseMove(-1);
+        Owner->onBaseMove(-1);
         break;
     case 2:
-        Cast<AUrdfBotPawn>(Owner)->onBaseRotate(1);
+        Owner->onBaseRotate(1);
         break;
     case 3:
-        Cast<AUrdfBotPawn>(Owner)->onBaseRotate(-1);
+        Owner->onBaseRotate(-1);
         break;
     }
 }
