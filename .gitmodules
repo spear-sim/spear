@@ -1,0 +1,3 @@
+[submodule "code/thirdparty/unreal-ai"]
+	path = code/thirdparty/unreal-ai
+	url = https://github.com/isl-org/unreal-ai.git
