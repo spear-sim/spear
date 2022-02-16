@@ -101,12 +101,13 @@ void UUrdfBotBrain::OnEpisodeBegin()
 
 void UUrdfBotBrain::SetAction(const std::vector<unrealrl::Action>& Action)
 {
+    check(Owner);
+
     check(Action.size() == 1);
 
     std::vector<float> ActionVec = Action.at(0).GetActions();
 
     check(ActionVec.size() == 1);
-    check(Owner);
 
     switch (static_cast<uint8>(ActionVec.at(0)))
     {

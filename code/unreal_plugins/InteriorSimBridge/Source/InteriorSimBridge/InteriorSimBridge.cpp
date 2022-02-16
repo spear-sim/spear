@@ -30,18 +30,18 @@ void FInteriorSimBridgeModule::StartupModule()
 
 void FInteriorSimBridgeModule::ShutdownModule()
 {
-    // remove event handlers used by this module
-    FWorldDelegates::OnPostWorldInitialization.Remove(
-        PostWorldInitializationDelegateHandle);
-    PostWorldInitializationDelegateHandle.Reset();
-
-    FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupDelegateHandle);
-    WorldCleanupDelegateHandle.Reset();
-
     // If this module is unloaded in the middle of simulation for some reason,
     // raise an error because we do not support this and we want to know when
     // this happens
     check(!ActorSpawnedDelegateHandle.IsValid());
+
+    // remove event handlers used by this module
+    FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupDelegateHandle);
+    WorldCleanupDelegateHandle.Reset();
+
+    FWorldDelegates::OnPostWorldInitialization.Remove(
+        PostWorldInitializationDelegateHandle);
+    PostWorldInitializationDelegateHandle.Reset();
 }
 
 void FInteriorSimBridgeModule::PostWorldInitializationEventHandler(

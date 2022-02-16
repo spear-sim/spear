@@ -100,12 +100,13 @@ void USimpleVehicleBrain::OnEpisodeBegin()
 
 void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& Action)
 {
+    check(Owner);
+
     check(Action.size() == 1);
 
     std::vector<float> ActionVec = Action.at(0).GetActions();
 
     check(ActionVec.size() == 2);
-    check(Owner);
 
     // TODO: Should not use magic numbers
     float Scale = 10.f;
