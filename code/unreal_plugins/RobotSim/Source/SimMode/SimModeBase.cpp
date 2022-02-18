@@ -219,6 +219,7 @@ void ASimModeBase::Test()
         if (currentMap.Equals(mapList[i]))
         {
             currentIndex = i;
+            break;
         }
     }
     FString NextMap = mapList[(currentIndex + 1) % mapList.Num()];
