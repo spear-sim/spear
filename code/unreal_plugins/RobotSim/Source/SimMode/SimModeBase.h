@@ -52,7 +52,6 @@ protected: // optional overrides
                              const FVector& boxHalfSize = FVector(0, 0, 0));
 
     virtual ARecastNavMesh* GetNavMesh();
-    virtual void NavSystemTest();
     virtual bool NavSystemRebuild(float AgentRadius);
     // find bounding box of all actors with architecture tag or furniture tag
     virtual FBox GetWorldBoundingBox(bool bScaleCeiling = true);
@@ -63,6 +62,12 @@ protected: // Utility methods for derived classes
     virtual const RobotSim::RobotSimSettings& getSettings() const;
     // FRotator toFRotator(const RobotSimSettings::Rotation& rotation, const
     // FRotator& default_val);
+    // keyboard callback to test functions
+    virtual void Test();
+    // return all maps name in /Game/Maps
+    virtual void GetAllMaps(TArray<FString>& MapList) const;
+    // load specific scene
+    virtual void LoadMap(FString MapName);
 
 protected:
     int record_tick_count;
