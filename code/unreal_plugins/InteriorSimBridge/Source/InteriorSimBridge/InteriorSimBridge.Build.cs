@@ -27,7 +27,7 @@ public class InteriorSimBridge : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				// ... add other public dependencies that you statically link with here ...
+				"RHI", "Renderer", "RenderCore" // ... add other public dependencies that you statically link with here ...
 			}
 			);
 			
