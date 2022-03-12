@@ -1,10 +1,10 @@
 #pragma once
 
+#include <CoreMinimal.h>
 #include <vector>
-
 #include <Brain.h>
-
 #include "SimpleVehicleBrain.generated.h"
+
 
 UCLASS(Blueprintable)
 class INTERIORSIMBRIDGE_API USimpleVehicleBrain : public UBrain
@@ -41,6 +41,16 @@ private:
         Goal,
         Edge
     };
+
+    std::vector<float> ActionVec;
+    
+#if USE_IMAGE_OBSERVATIONS
+    int Height = 512;
+    int Width = 512;
+    
+    USceneCaptureComponent2D* captureComponent2D;
+    UTextureRenderTarget2D* renderTarget2D; // Output render target of the scene capture that can be read in materals.
+#endif
 
     UHitInfo HitInfo = UHitInfo::NoHit;
 };
