@@ -4,9 +4,9 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #include "SimpleVehiclePawn.h"
 #include "SimpleWheel.h"
 #include "OpenBotWheel.h"
-
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include <iostream>
 
 FName ASimpleVehiclePawn::VehicleMovementComponentName(
     TEXT("SimpleWheeledVehicleMovement"));
@@ -16,6 +16,8 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     const FObjectInitializer& ObjectInitializer)
     : APawn(ObjectInitializer)
 {
+    // To create components, you can use
+    // CreateDefaultSubobject<Type>("InternalName").
     Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(
         VehicleMeshComponentName);
     // setup skeletal mesh
@@ -78,15 +80,17 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     VehicleMovement->SetIsReplicated(true); // Enable replication by default
     VehicleMovement->UpdatedComponent = Mesh;
 
-    // Create default camera component
-    FVector CameraPos(-200.0f, -00.0f, 80.0f);
-    FRotator CameraOri(-10.0f, 0.0f, 0.0f);
+    vehicle_pawn_ = static_cast<USimpleWheeledVehicleMovementComponent*>(
+        GetVehicleMovementComponent());
 
-    Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
-    Camera->SetRelativeLocationAndRotation(CameraPos, CameraOri);
-    Camera->SetupAttachment(Mesh);
-    Camera->bUsePawnControlRotation = false;
-    Camera->FieldOfView = 90.f;
+    wheelVelocity_.setZero();
+    motorVelocity_.setZero();
+    counterElectromotiveForce_.setZero();
+    motorTorque_.setZero();
+    wheelTorque_.setZero();
+    dutyCycle_.setZero();
+    motorWindingCurrent_.setZero();
+    actionVec_.setZero();
 }
 
 ASimpleVehiclePawn::~ASimpleVehiclePawn()
@@ -127,43 +131,144 @@ void ASimpleVehiclePawn::SetupInputBindings()
                                          &ASimpleVehiclePawn::MoveRight);
 }
 
-void ASimpleVehiclePawn::MoveForward(float Val)
+// This command is meant to be bound to keyboard input. It will be executed at
+// each press or unpress event.
+void ASimpleVehiclePawn::MoveForward(float Forward)
 {
-    USimpleWheeledVehicleMovementComponent* vehicle_pawn =
-        static_cast<USimpleWheeledVehicleMovementComponent*>(
-            GetVehicleMovementComponent());
+    // Forward describes the percentage of input voltage to be applied to the motor
+    // by the H-bridge controller: 1.0 = 100%, -1.0 = reverse 100%.
 
-    // UE_LOG(LogTemp, Warning, TEXT("MoveForward {%f}"), Val);
-    float torque = 50 * Val;
-    vehicle_pawn->SetDriveTorque(torque, 0);
-    vehicle_pawn->SetDriveTorque(torque, 1);
-    vehicle_pawn->SetDriveTorque(torque, 2);
-    vehicle_pawn->SetDriveTorque(torque, 3);
-
-    const FVector CurrentLocation = this->GetActorLocation();
+    dutyCycle_(0) += Forward; // in [%]
+    dutyCycle_(1) += Forward; // in [%]
+    dutyCycle_(2) += Forward; // in [%]
+    dutyCycle_(3) += Forward; // in [%]
 }
 
-void ASimpleVehiclePawn::MoveRight(float Val)
+// This command is meant to be bound to keyboard input. It will be executed at
+// each press or unpress event.
+void ASimpleVehiclePawn::MoveRight(float Right)
 {
-    if (Val != 0)
+    // Right describes the percentage of input voltage to be applied to the motor
+    // by the H-bridge controller: 1.0 = 100%, -1.0 = reverse 100%.
+
+    dutyCycle_(0) += Right; // in [%]
+    dutyCycle_(1) -= Right; // in [%]
+    dutyCycle_(2) += Right; // in [%]
+    dutyCycle_(3) -= Right; // in [%]
+}
+
+// This command is meant to be used by the python client interface.
+void ASimpleVehiclePawn::Move(float leftCtrl, float rightCtrl)
+{
+    // leftCtrl and rightCtrl describe the percentage of input voltage to be applied
+    // to the left and right motors by the H-bridge controller: 1 = 100%, -1 = reverse 100%. 
+
+    dutyCycle_(0) += leftCtrl;  // in [%]
+    dutyCycle_(1) += rightCtrl; // in [%]
+    dutyCycle_(2) += leftCtrl;  // in [%]
+    dutyCycle_(3) += rightCtrl; // in [%]
+    
+}
+
+// Provides feedback on the action executed by the robot. This action can either
+// be defined through the python client or by keyboard/game controller input.
+void ASimpleVehiclePawn::GetExecutedAction(std::vector<float>& ActionVec)
+{
+    ActionVec[0] = actionVec_(0);
+    ActionVec[1] = actionVec_(1);
+}
+
+void ASimpleVehiclePawn::computeMotorTorques(float DeltaTime)
+{
+    std::cout << "Owner->GetVelocity(): "<< this->GetVelocity().Size() << std::endl; // in cm/s
+    // First make sure the duty cycle is not getting above 100%. This is done simillarly on the real OpenBot:
+    // (c.f. https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Control.java)
+    dutyCycle_ = RobotSim::clamp(dutyCycle_, -Eigen::Vector4f::Ones(), Eigen::Vector4f::Ones());
+
+    // Acquire the ground truth motor and wheel velocity for motor counter-electromotive force 
+    // computation purposes (or alternatively friction computation purposes): 
+    wheelVelocity_(0) =
+        vehicle_pawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
+    wheelVelocity_(1) =
+        vehicle_pawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
+    wheelVelocity_(2) =
+        vehicle_pawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
+    wheelVelocity_(3) =
+        vehicle_pawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
+
+    motorVelocity_ = gearRatio_ * RobotSim::RPMToRadSec(wheelVelocity_); // Expressed in [rad/s]
+
+    // Compute the counter electromotive force using the motor torque constant: 
+    counterElectromotiveForce_ = motorTorqueConstant_ * motorVelocity_; // Expressed in [V]
+
+    // The current allowed to circulate in the motor is the result of the difference between the applied 
+    // voltage and the counter electromotive force: 
+    motorWindingCurrent_ = ((batteryVoltage_*dutyCycle_)-counterElectromotiveForce_)/electricalResistance_; // Expressed in [A]
+    // motorWindingCurrent_ = motorWindingCurrent_ * (1-(electricalResistance_/electricalInductance_)*DeltaTime) + ((batteryVoltage_*dutyCycle_)-counterElectromotiveForce_)*DeltaTime/electricalInductance_; // If deltaTime is "small enouth" (which is definitely not the case here)
+
+    // The torque is then obtained using the torque coefficient of the motor:
+    motorTorque_ = motorTorqueConstant_ * motorWindingCurrent_;
+
+    // Motor torque is saturated to match the motor limits:
+    motorTorque_ = RobotSim::clamp(motorTorque_, Eigen::Vector4f::Constant(-motorTorqueMax_), Eigen::Vector4f::Constant(motorTorqueMax_));
+
+    // The torque applied to the robot wheels is finally computed acounting for the gear ratio: 
+    wheelTorque_ = gearRatio_ * motorTorque_;
+
+    // Control dead zone at near-zero velocity:
+    // Note: this is a simplified but reliable way to deal with the friction behavior 
+    // observed on the real vehicle in the low-velocities/low-duty-cycle dommain.
+    for (size_t i = 0; i < dutyCycle_.size(); i++)
     {
-        USimpleWheeledVehicleMovementComponent* vehicle_pawn =
-            static_cast<USimpleWheeledVehicleMovementComponent*>(
-                GetVehicleMovementComponent());
-
-        // UE_LOG(LogTemp, Warning, TEXT("MoveRight {%f}"), Val);
-        float torque = 50 * Val;
-        vehicle_pawn->SetDriveTorque(torque, 0);
-        vehicle_pawn->SetDriveTorque(-torque, 1);
-        vehicle_pawn->SetDriveTorque(torque, 2);
-        vehicle_pawn->SetDriveTorque(-torque, 3);
+        if (std::abs(motorVelocity_(i)) < 1e-5 and std::abs(dutyCycle_(i)) <= controlDeadZone_/actionScale_ ) // If the motor is "nearly" stopped
+        {
+            wheelTorque_(i) = 0.f;
+        }
     }
+
+    // Apply the drive torque in [N.m] to the vehicle wheels. Note that the
+    // "SetDriveTorque" command can be found in the code of the unreal engine
+    // at the following location:
+    // UnrealEngine-4.26.2-release/Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/SimpleWheeledVehicleMovementComponent.h.
+    // This file also contains a bunch of useful functions such as
+    // "SetBrakeTorque" or "SetSteerAngle". Please take a look if you want to
+    // modify the way the simulated vehicle is being controlled.
+    vehicle_pawn_->SetDriveTorque(wheelTorque_(0),
+                                  0); // Torque applied to the wheel, expressed in [N.m]
+    vehicle_pawn_->SetDriveTorque(wheelTorque_(1),
+                                  1); // Torque applied to the wheel, expressed in [N.m]
+    vehicle_pawn_->SetDriveTorque(wheelTorque_(2),
+                                  2); // Torque applied to the wheel, expressed in [N.m]
+    vehicle_pawn_->SetDriveTorque(wheelTorque_(3),
+                                  3); // Torque applied to the wheel, expressed in [N.m]
+
+    // Fill the observed action vector to be used for RL purposes:
+    actionVec_(0) = (dutyCycle_(0) + dutyCycle_(2))/2; // leftCtrl
+    actionVec_(1) = (dutyCycle_(1) + dutyCycle_(3))/2; // rightCtrl
+    
+    // std::cout << " ----------------------------------------------- " << std::endl;
+    // std::cout << "actionVec_ = " << actionVec_.transpose() << std::endl;
+    // std::cout << "dutyCycle_ = " << dutyCycle_.transpose() << std::endl;
+    // std::cout << "motorVelocity_ = " << motorVelocity_.transpose() << std::endl;
+    // std::cout << "wheelVelocity_ = " << wheelVelocity_.transpose() << std::endl;
+    // std::cout << "appliedVoltage = " << (batteryVoltage_*dutyCycle_).transpose() << std::endl;
+    // std::cout << "counterElectromotiveForce_ = " << counterElectromotiveForce_.transpose() << std::endl;
+    // std::cout << "motorWindingCurrent_ = " << motorWindingCurrent_.transpose() << std::endl;
+    // std::cout << "motorTorque_ = " << motorTorque_.transpose() << std::endl;
+    // std::cout << "wheelTorque_ = " << wheelTorque_.transpose() << std::endl;
+
+    // Reset duty cycle value:
+    dutyCycle_.setZero();
 }
 
-// Called every frame
+// Called every simulator update
 void ASimpleVehiclePawn::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    // std::cout << "DeltaTime = " << DeltaTime<< std::endl; 
+
+    computeMotorTorques(DeltaTime);
 
     const FVector CurrentLocation = this->GetActorLocation();
     const FRotator CurrentRotation = this->GetActorRotation();
@@ -171,6 +276,20 @@ void ASimpleVehiclePawn::Tick(float DeltaTime)
                                    FString::SanitizeFloat(this->count),
                                    LogDebugLevel::Informational, 30);
     count++;
+}
+
+void ASimpleVehiclePawn::SetRobotParameters(
+    const RobotSim::RobotSimSettings::VehicleSetting& settings)
+{
+    gearRatio_ = settings.actuationSetting.gearRatio;
+    motorVelocityConstant_ = settings.actuationSetting.motorVelocityConstant;
+    motorTorqueConstant_ = 1/motorVelocityConstant_;
+    controlDeadZone_ = settings.actuationSetting.controlDeadZone;
+    motorTorqueMax_ = settings.actuationSetting.motorTorqueMax;
+    electricalResistance_ = settings.actuationSetting.electricalResistance;
+    electricalInductance_ = settings.actuationSetting.electricalInductance;
+    actionScale_ = settings.actuationSetting.actionScale;
+    batteryVoltage_ = settings.actuationSetting.batteryVoltage;
 }
 
 void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,

@@ -19,15 +19,15 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
-namespace RobotSim 
+namespace RobotSim
 {
 
-//numericals
+// numericals
 typedef float real_T;
-//this is not required for most compilers
+// this is not required for most compilers
 typedef unsigned int uint;
 
-//well known types
+// well known types
 typedef RobotSim::VectorMathf VectorMath;
 typedef VectorMath::Vector3f Vector3r;
 typedef VectorMath::Vector2f Vector2r;
@@ -46,29 +46,76 @@ typedef VectorMath::RandomVectorT RandomVectorR;
 typedef uint64_t TTimePoint;
 typedef double TTimeDelta;
 
-
-template <typename T>
-using vector = std::vector<T>;
+template <typename T> using vector = std::vector<T>;
 template <typename TKey, typename TValue>
 using unordered_map = std::unordered_map<TKey, TValue>;
-template <typename TKey>
-using unordered_set = std::unordered_set<TKey>;
-template <typename T>
-using unique_ptr = std::unique_ptr<T>;
-template <typename T>
-using shared_ptr = std::shared_ptr<T>;
+template <typename TKey> using unordered_set = std::unordered_set<TKey>;
+template <typename T> using unique_ptr = std::unique_ptr<T>;
+template <typename T> using shared_ptr = std::shared_ptr<T>;
 template <typename T>
 using vector_size_type = typename std::vector<T>::size_type;
 
-inline std::ostream& operator<<(std::ostream &os, Quaternionr const &q) { 
+inline std::ostream& operator<<(std::ostream& os, Quaternionr const& q)
+{
     float p, r, y;
     VectorMath::toEulerianAngle(q, p, r, y);
-    return os << "(" << r << "\t" << p << "\t" << y << ")" << q.w() << q.x() << "\t" << q.y() << "\t" << q.z() << "\t";
+    return os << "(" << r << "\t" << p << "\t" << y << ")" << q.w() << q.x()
+              << "\t" << q.y() << "\t" << q.z() << "\t";
 }
 
-inline std::ostream& operator<<(std::ostream &os, Vector3r const &vec) { 
+inline std::ostream& operator<<(std::ostream& os, Vector3r const& vec)
+{
     return os << vec.x() << "\t" << vec.y() << "\t" << vec.z() << "\t";
 }
 
-} //namespace
+/**
+ * @brief Clamp a vector between two values.
+ *
+ * @param v
+ * @param vMin
+ * @param vMax
+ * @return Eigen::Vector4f The clamped value.
+ */
+inline Eigen::Vector4f
+clamp(Eigen::Vector4f v, Eigen::Vector4f vMin, Eigen::Vector4f vMax)
+{
+    Eigen::Vector4f v_clamped;
+    v_clamped = v;
+    for (unsigned int i = 0; i < v.size(); i++)
+    {
+        if (v(i) > vMax(i))
+        {
+            v_clamped(i) = vMax(i);
+        }
+        if (v(i) < vMin(i))
+        {
+            v_clamped(i) = vMin(i);
+        }
+    }
+    return v_clamped;
+}
+
+/**
+ * @brief Rev per minute to rad/s
+ *
+ * @param RPM
+ * @return Eigen::VectorXf
+ */
+inline Eigen::VectorXf RPMToRadSec(Eigen::VectorXf RPM)
+{
+    return RPM * PI / 30.f;
+}
+
+/**
+ * @brief rad/s to rev per minute
+ *
+ * @param Omega
+ * @return Eigen::VectorXf
+ */
+inline Eigen::VectorXf RadSecToRPM(Eigen::VectorXf Omega)
+{
+    return Omega * 30.f / PI;
+}
+
+} // namespace RobotSim
 #endif

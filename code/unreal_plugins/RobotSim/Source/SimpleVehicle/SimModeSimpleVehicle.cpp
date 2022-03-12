@@ -163,6 +163,9 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
                     vehicle_bp_class, &spawnPosition, &spawnRotation,
                     pawn_spawn_params));
 
+            // Apply settings from the parameter file: 
+            spawned_pawn->SetRobotParameters(vehicle_setting);
+
             spawned_actors_.Add(spawned_pawn);
             pawns.Add(spawned_pawn);
 
@@ -179,6 +182,8 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
         // initialize each vehicle pawn we found
         ASimpleVehiclePawn* vehicle_pawn =
             static_cast<ASimpleVehiclePawn*>(pawn);
+
+        // Note Quentin: uncomment to activate keyboard
         if (getSettings().pawn_paths.at("SimpleVehicle").enable_keyboard)
         {
             vehicle_pawn->SetupInputBindings();

@@ -1994,6 +1994,12 @@ void AUrdfBotPawn::SetTargetQPos(const TMap<FString, float>& map)
     }
 }
 
+void AUrdfBotPawn::SetRobotParameters(
+    const RobotSim::RobotSimSettings::VehicleSetting& settings)
+{
+    // Nothing to do so far...
+}
+
 void AUrdfBotPawn::FindArmChain(TArray<FString>* linkList,
                                 TArray<FString>* jointList)
 {

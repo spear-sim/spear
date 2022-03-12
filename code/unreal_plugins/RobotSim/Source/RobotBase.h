@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "common_utils/UniqueValueMap.hpp"
+#include "common_utils/RobotSimSettings.hpp"
 // TODO move camera and pawn event to here
 class RobotBase
 {
@@ -26,4 +27,6 @@ public:
             this->GetPawn()->SetActorLocationAndRotation(position, orientation,
                                                          true);
     }
+
+    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting &settings) = 0; 
 };

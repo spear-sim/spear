@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef air_VehicleApiBase_hpp
-#define air_VehicleApiBase_hpp
+#ifndef __ROBOTAPIBASE_H__
+#define __ROBOTAPIBASE_H__
 
 #include "common_utils/CommonStructs.hpp"
 #include "common_utils/UpdatableObject.hpp"
@@ -95,4 +95,5 @@ public:
 
 
 } //namespace
-#endif
+
+#endif // __ROBOTAPIBASE_H__
