@@ -25,6 +25,10 @@
 		{
 			"Name": "ProceduralMeshComponent",
 			"Enabled": true
+		},
+		{
+			"Name": "PhysXVehicles",
+			"Enabled": true
 		}
 	]
 }
