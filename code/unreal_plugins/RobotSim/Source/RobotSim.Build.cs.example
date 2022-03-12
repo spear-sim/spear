@@ -6,13 +6,17 @@ using System.IO;
 
 public class SystemConfig
 {
-    public const String EIGEN_INCLUDE_DIR = "/usr/local/include/eigen3";
-
-    public const String RBDL_INCLUDE_DIR = "/Users/mroberts/code/github/rbdl/include";
-    public const String RBDL_CONFIG_INCLUDE_DIR = "/Users/mroberts/code/github/rbdl/BUILD/include";
-    public const String RBDL_URDF_READER_INCLUDE_DIR = "/Users/mroberts/code/github";
-    public const String RBDL_LIB_DIR = "/Users/mroberts/code/github/rbdl/BUILD";
-    public const String RBDL_URDF_READER_LIB_DIR = "/Users/mroberts/code/github/rbdl/BUILD/addons/urdfreader";
+    public const String EIGEN_INCLUDE_DIR = "/usr/include/eigen3";
+    public const String RPCLIB_INCLUDE = "/home/quentin/Desktop/ISL/unreal-ai/thirdparty/rpclib/include";
+    public const String RPCLIB_LIB = "/home/quentin/Desktop/ISL/unreal-ai/thirdparty/rpclib/build/librpc.a";
+    public const String ASIO_INCLUDE = "/home/quentin/Desktop/ISL/unreal-ai/thirdparty/asio/asio/include";
+    public const String YAML_CPP_INCLUDE = "/home/quentin/Desktop/ISL/unreal-ai/thirdparty/yaml-cpp/include";
+    public const String YAML_CPP_LIB = "/home/quentin/Desktop/ISL/unreal-ai/thirdparty/yaml-cpp/build/libyaml-cpp.a";
+    public const String RBDL_INCLUDE_DIR = "/home/quentin/Desktop/ISL/interiorsim/code/thirdparty/rbdl/include";
+    public const String RBDL_CONFIG_INCLUDE_DIR = "/home/quentin/Desktop/ISL/interiorsim/code/thirdparty/rbdl/BUILD/include";
+    public const String RBDL_URDF_READER_INCLUDE_DIR = "/home/quentin/Desktop/ISL/interiorsim/code/thirdparty";
+    public const String RBDL_LIB_DIR = "/home/quentin/Desktop/ISL/interiorsim/code/thirdparty/rbdl/BUILD";
+    public const String RBDL_URDF_READER_LIB_DIR = "/home/quentin/Desktop/ISL/interiorsim/code/thirdparty/rbdl/BUILD/addons/urdfreader";
 }
 
 public class RobotSim : ModuleRules
@@ -118,13 +122,11 @@ public class RobotSim : ModuleRules
             {
                 "Core",
                 // ... add other public dependencies that you statically link with here ...
-
-                "CoreUObject", "Engine", "InputCore", "ImageWrapper", "RenderCore", "RHI",
-                "PhysXVehicles",
+                "CoreUObject", "Engine", "InputCore", "ImageWrapper", 
                 "ProceduralMeshComponent",
-                "Landscape", "XmlParser", "APEX", "PhysX",
-                "PhysXVehicleLib", "Foliage", "PhysicsCore",
-                "NavigationSystem"
+                "Landscape", "XmlParser", "APEX", "PhysX", "Foliage", "PhysicsCore",
+                "NavigationSystem","PhysXVehicles",
+                "PhysXVehicleLib"
             }
             );
             
@@ -139,9 +141,8 @@ public class RobotSim : ModuleRules
                 // ... add private dependencies that you statically link with here ...
                 "ProceduralMeshComponent",
                 "UMG",  "PhysX",
-                "PhysXVehicles",
-                "PhysXVehicleLib",
-                "NavigationSystem"
+                "NavigationSystem",
+                 "Renderer", "RenderCore", "RHI"
             }
             );
         
