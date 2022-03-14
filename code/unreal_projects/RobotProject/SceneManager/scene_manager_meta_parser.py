@@ -5,6 +5,7 @@ import os
 import sys
 import getopt
 
+
 def print_help():
     print(
         """
@@ -74,11 +75,7 @@ if __name__ == "__main__":
     virtualworld_id = ""
 
     try:
-        opts, args = getopt.getopt(
-            sys.argv[1:],
-            "h:k:",
-            ["help=", "keys="],
-        )
+        opts, args = getopt.getopt(sys.argv[1:], "h:k:", ["help=", "keys="],)
     except getopt.GetoptError:
         print_help()
 

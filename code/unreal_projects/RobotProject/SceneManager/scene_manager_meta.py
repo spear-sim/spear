@@ -36,9 +36,7 @@ if __name__ == "__main__":
 
     try:
         opts, args = getopt.getopt(
-            sys.argv[1:],
-            "h:i:v:d:f:p:",
-            ["help=", "infile=", "version=", "proxy="],
+            sys.argv[1:], "h:i:v:d:f:p:", ["help=", "infile=", "version=", "proxy="],
         )
     except getopt.GetoptError:
         print_help()
