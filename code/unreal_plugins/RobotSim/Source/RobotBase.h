@@ -28,5 +28,6 @@ public:
                                                          true);
     }
 
-    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting &settings) = 0; 
+    virtual void SetRobotParameters(
+        const RobotSim::RobotSimSettings::VehicleSetting& settings) = 0;
 };

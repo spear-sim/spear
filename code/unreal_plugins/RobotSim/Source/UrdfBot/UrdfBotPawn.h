@@ -107,11 +107,11 @@ public:
 
     /**
      * @brief Set the Robot Parameters from a dedicated parameter file
-     * 
-     * @param settings 
+     *
+     * @param settings
      */
-    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting &settings) override;
-
+    virtual void SetRobotParameters(
+        const RobotSim::RobotSimSettings::VehicleSetting& settings) override;
 
 public:
     RobotApi* getRobotApi() const;

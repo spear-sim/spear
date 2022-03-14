@@ -144,8 +144,9 @@ void USimpleVehicleBrain::Init()
 bool USimpleVehicleBrain::IsAgentReady()
 {
     check(Owner);
-    return (Owner->GetVelocity().Size() >= 0.0 && 
-            Owner->GetVelocity().Size() < 0.1); // Wait for the agent to settle...
+    return (Owner->GetVelocity().Size() >= 0.0 &&
+            Owner->GetVelocity().Size() <
+                0.1); // Wait for the agent to settle...
 }
 
 void USimpleVehicleBrain::OnEpisodeBegin()
@@ -221,12 +222,12 @@ void USimpleVehicleBrain::GetObservation(
     // Scaled distance to goal.
     SetCurrentReward(-dist / 100000); // TODO: set proper reward !!!!
 
-    if (HitInfo == UHitInfo::Goal) // NOTE: so far we never get there... 
+    if (HitInfo == UHitInfo::Goal) // NOTE: so far we never get there...
     {
         SetCurrentReward(100);
         EndEpisode();
     }
-    else if (HitInfo == UHitInfo::Edge) // NOTE: so far we never get there... 
+    else if (HitInfo == UHitInfo::Edge) // NOTE: so far we never get there...
     {
         SetCurrentReward(-100);
         EndEpisode();
@@ -297,13 +298,11 @@ void USimpleVehicleBrain::GetObservation(
     Context.Flags.SetLinearToGamma(false);
 
     ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)
-    (
-        [Context](FRHICommandListImmediate& RHICmdList)
-        {
-            RHICmdList.ReadSurfaceData(
-                Context.SrcRenderTarget->GetRenderTargetTexture(), Context.Rect,
-                *Context.OutData, Context.Flags);
-        });
+    ([Context](FRHICommandListImmediate& RHICmdList) {
+        RHICmdList.ReadSurfaceData(
+            Context.SrcRenderTarget->GetRenderTargetTexture(), Context.Rect,
+            *Context.OutData, Context.Flags);
+    });
 
     FRenderCommandFence ReadPixelFence;
     ReadPixelFence.BeginFence();
