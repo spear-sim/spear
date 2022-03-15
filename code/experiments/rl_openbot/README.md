@@ -1,4 +1,4 @@
-# Running OpenBot within in interiorsim as a standalone executable in a RL context: 
+# Running OpenBot within interiorsim as a standalone executable in a RL context: 
 
 The following ReadMe file will guide you through the differents steps required to execute the OpenBot simulation within a photorealistic environment using a python client. It is here assumed that you are running Ubuntu 20.04.
 
