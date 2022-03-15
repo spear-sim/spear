@@ -16,7 +16,7 @@ sudo apt install libeigen3-dev
 
 ### Download and build RBDL
 
-Download and build the Rigid Body Dynamics Library (RBDL): 
+Download and build the Rigid Body Dynamics Library (RBDL). Rather than cloning RBDL from the official (repository)[https://github.com/rbdl/rbdl], consider the following (fork)[https://github.com/quentin-leboutet/rbdl] which solves a set of compile-time issues you may encounter with the main branch. Then build RBDL using the following commands: 
 
 ```
 cd interiorsim/code/thirdparty
@@ -27,8 +27,6 @@ cd BUILD
 cmake -D CMAKE_BUILD_TYPE=Release -D RBDL_BUILD_STATIC=ON -D RBDL_BUILD_ADDON_URDFREADER=ON -D CMAKE_CXX_COMPILER="clang++" -D CMAKE_CXX_FLAGS="-fPIC -stdlib=libc++" ../
 make
 ```
-
-You might witness some compile time issues dues to one of the most recent commits. These are only minor issues due to the std namespace being ommited from some math functions. Replacing sin and cos by std::sin and std::cos in the required files should normally do the trick...
 
 ### Set symbolic links to the plugins 
 
