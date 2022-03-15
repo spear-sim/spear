@@ -44,22 +44,6 @@ ln -s path/to/UnrealRL/ .
 
 Rename `path/to/interiorsim/code/unreal_plugins/RobotSim/Source/RobotSim.Build.cs.example -> RobotSim.Build.cs` and modify the paths at the top of this file for your system.
 
-### Build and run RobotProject through the Unreal Editor
-
-```
-# Generate vscode workspace
-path/to/UE_4.26/Engine/Build/BatchFiles/Linux/GenerateProjectFiles.sh path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -game -vscode
-```
-
-```
-# build
-path/to/UE_4.26/Engine/Build/BatchFiles/Linux/Build.sh RobotProjectEditor Linux Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
-```
-
-```
-# run
-path/to/UE_4.26/Engine/Binaries/Linux/UE4Editor path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -game -WINDOWED -ResX=512 -ResY=512 -nullrhi -RenderOffScreen
-```
 
 ### Build and run RobotProject as a standalone executable
 
