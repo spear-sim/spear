@@ -50,14 +50,14 @@ Rename `path/to/interiorsim/code/unreal_plugins/RobotSim/Source/RobotSim.Build.c
 The first time the project is being built, the following command should be used: 
 
 ```
-# build cook and package (needs to be done the first time you build or when you modify an asset)
+# Build cook and package (needs to be done the first time you build or when you modify an asset)
 path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -nop4 -project=path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -build -cook -stage -package -archive -archivedirectory=path/to/interiorsim/code/unreal_projects/RobotProject/dist -targetplatform=Linux -target=RobotProject -nocompileeditor -nodebuginfo -serverconfig=Development -clientconfig=Development -package
 ```
 
 In case the build and cooking process were already executed and no asset was edited, the cooking process can be skipped for the next build iterations:
 
 ```
-# build, skip cook (allows saving compile time when no asset was modified)
+# Build, skip cook (allows saving compile time when no asset was modified)
 path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -build -skipcook -skipstage -skiparchive -targetplatform=Linux -target=RobotProject -nocompileeditor -nodebuginfo -serverconfig=Development -clientconfig=Development -package
 ```
 
@@ -93,7 +93,7 @@ The map should take around 30 seconds to load the first time you open it:
 
 You should then be able to explore the environment you downloaded: 
 
-<img src="docs/load_map.png" width="100%" alt="Goal Tag" />
+<img src="docs/map_loaded.png" width="100%" alt="Goal Tag" />
 
 Executing the RL code requires a "goal" actor towards which your agent should move. As the goal actor is not natively included in the maps, you should therefore add it manually. To do so, simply add an empty pawn to your freshly downloaded map using the "PlaceActor" menu on the left of your screen. The new pawn should be in a reachable location and -- more importantly -- should be labelled as a "goal". You can label your pawn using the "Actor" properties menu on the right of your screen: 
 
@@ -102,7 +102,7 @@ Executing the RL code requires a "goal" actor towards which your agent should mo
 Save your changes to the environment. Then **rebuild + cook** your project:
 
 ```
-# cook and package (needs to be done the first time you build or when you modify an asset)
+# Build cook and package (needs to be done the first time you build or when you modify an asset)
 path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -nop4 -project=path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -build -cook -stage -archive -archivedirectory=path/to/interiorsim/code/unreal_projects/RobotProject/dist -targetplatform=Linux -target=RobotProject -nocompileeditor -nodebuginfo -serverconfig=Development -clientconfig=Development -package
 ```
 
