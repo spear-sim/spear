@@ -21,3 +21,6 @@ code/unreal_projects/RobotProject/Plugins/InteriorSimBridge
 code/unreal_projects/RobotProject/Saved
 code/unreal_plugins/InteriorSimBridge/Binaries
 code/unreal_plugins/InteriorSimBridge/Intermediate
+code/*.sh
+
+
