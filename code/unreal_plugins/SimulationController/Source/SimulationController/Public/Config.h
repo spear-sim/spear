@@ -1,72 +1,66 @@
-// #pragma once
+#pragma once
 
-// #include <string>
-// #include <vector>
+#include <iostream>
+#include <string>
+#include <vector>
 
-// #include "IgnoreCompilerWarnings.h"
-// ENABLE_IGNORE_COMPILER_WARNINGS
-// #include <yaml-cpp/yaml.h>
-// DISABLE_IGNORE_COMPILER_WARNINGS
+#include "IgnoreCompilerWarnings.h"
+ENABLE_IGNORE_COMPILER_WARNINGS
+#include <yaml-cpp/yaml.h>
+DISABLE_IGNORE_COMPILER_WARNINGS
 
-// #include "Assert.h"
+#include "Assert.h"
 
-// namespace unrealrl
-// {
-// class SIMULATIONCONTROLLER_API Config
-// {
-//     Config() = default;
-//     ~Config() = default;
+class SIMULATIONCONTROLLER_API Config
+{
+    Config() = default;
+    ~Config() = default;
 
-//     // load contents of the config file intot YAML::Node
-//     static YAML::Node ConfigNode;
+    // Load contents of the config file intot YAML::Node.
+    static YAML::Node config_node_;
 
-// public:
-//     /**
-//      * This function is used to initialize ConfigNode when UnrealRL module is
-//      * loaded
-//      */
-//     static void Initialize();
+public:
+    /** This function is used to initialize config_node_ when UnrealRL module is loaded. */
+    static void initialize();
 
-//     /**
-//      * This function is used to clear ConfigNode when UnrealRL module is
-//      * unloaded
-//      */
-//     static void Terminate();
+    /** This function is used to clear config_node_ when UnrealRL module is  unloaded. */
+    static void terminate();
 
-//     /**
-//      * This function is used to extract a value from a yaml file.
-//      * This function takes in a list of strings ('Keys') that lead to the
-//      * required config value in the yaml file. The keys have to be passed in the
-//      * descending hierarchical order. For example, if you have a config.yaml
-//      * such as below; abc: x: 1 y: 2 , to access 'y', you need to provide
-//      * {"abc", "y"} as your Keys and not {"y", "abc"}
-//      */
-//     template <typename T>
-//     static T GetValue(const std::vector<std::string>& Keys)
-//     {
-//         // atleast one key should be present when this function is called
-//         ASSERT(Keys.size() > 0);
+    /**
+     * This function is used to extract a value from a yaml file.
+     * This function takes in a list of strings ('Keys') that lead to the required config value in the yaml file. The keys have to be passed in the descending hierarchical order.
+     * For example, if you have a config.yaml such as below; abc: x: 1 y: 2 , to access 'y', you need to provide {"abc", "y"} as your Keys and not {"y", "abc"}.
+     */
+    template <typename T>
+    static T getValue(const std::vector<std::string>& keys)
+    {
+        // At least one key should be present when this function is called.
+        ASSERT(keys.size() > 0, "getValue<> called without any keys. This is not supported.");
 
-//         // make sure we have the confignode defined before trying to read
-//         // from it
-//         ASSERT(ConfigNode.IsDefined());
+        // Make sure we have the config_node_ defined before trying to read from it.
+        ASSERT(config_node_.IsDefined());
 
-//         // create a local copy of Config
-//         YAML::Node Node = ConfigNode;
+        // Create a local copy of Config.
+        YAML::Node node = config_node_;
 
-//         for (size_t i = 0; i < Keys.size(); ++i)
-//         {
-//             ASSERT(Node[Keys.at(i)]);
+        for (size_t i = 0; i < keys.size(); ++i)
+        {
+            if (!node[keys.at(i)])
+            {
+                std::cout << "Invalid key, keys == [";
+                for (size_t j = 0; j < keys.size() - 1; ++j)
+                {
+                    std::cout << "\"" << keys.at(j) << "\", ";
+                }
+                std::cout << "\"" << keys.at(keys.size() - 1) << "\"], keys[" << i << "] is invalid." << std::endl;
+                ASSERT(false);
+            }
 
-//             // We don't use Node = Node[Keys.at(i)], because operator= merges
-//             // the right-hand side into the left-hand side Node. Also, repeated
-//             // assignment to the same Node consumes additional memory as noted
-//             // in https://github.com/jbeder/yaml-cpp/issues/502.
-//             Node.reset(Node[Keys.at(i)]);
-//         }
+            // We don't use Node = Node[keys.at(i)], because operator= merges the right-hand side into the left-hand side Node.
+            // Also, repeated assignment to the same Node consumes additional memory as noted in https://github.com/jbeder/yaml-cpp/issues/502.
+            node.reset(node[keys.at(i)]);
+        }
 
-//         return Node.as<T>();
-//     }
-// };
-
-// } // namespace unrealrl
+        return node.as<T>();
+    }
+};

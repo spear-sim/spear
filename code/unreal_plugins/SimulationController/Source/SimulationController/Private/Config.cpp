@@ -1,47 +1,43 @@
-// #include "Config.h"
+#include "Config.h"
 
-// #include "IgnoreCompilerWarnings.h"
-// ENABLE_IGNORE_COMPILER_WARNINGS
-// #include <yaml-cpp/yaml.h>
-// DISABLE_IGNORE_COMPILER_WARNINGS
+#include "IgnoreCompilerWarnings.h"
+ENABLE_IGNORE_COMPILER_WARNINGS
+#include <yaml-cpp/yaml.h>
+DISABLE_IGNORE_COMPILER_WARNINGS
 
-// #include <Misc/CommandLine.h>
-// #include <Misc/Parse.h>
-// #include <Misc/Paths.h>
+#include <Misc/CommandLine.h>
+#include <Misc/Parse.h>
+#include <Misc/Paths.h>
 
-// #include "Assert.h"
+#include "Assert.h"
 
-// YAML::Node unrealrl::Config::ConfigNode;
+YAML::Node Config::config_node_;
 
-// void unrealrl::Config::Initialize()
-// {
-//     // path to the file that contains config values
-//     FString ConfigFile;
+void Config::initialize()
+{
+    // Path to the file that contains config values.
+    FString config_file;
 
-//     // load ConfigNode from config file provided via command line
-//     if (FParse::Value(FCommandLine::Get(), TEXT("configfile="), ConfigFile))
-//     {
-//         // read config file contents into a YAML::Node
-//         ConfigNode = YAML::LoadFile(TCHAR_TO_UTF8(*ConfigFile));
-//     }
-//     // load ConfigNode from project dir
-//     else if (FPaths::FileExists(FPaths::ConvertRelativePathToFull(
-//                  FPaths::ProjectDir().Append("config.yaml"))))
-//     {
-//         // read config file contents into a YAML::Node
-//         ConfigFile = FPaths::ConvertRelativePathToFull(
-//             FPaths::ProjectDir().Append("config.yaml"));
-//         ConfigNode = YAML::LoadFile(TCHAR_TO_UTF8(*ConfigFile));
-//     }
-//     else
-//     {
-//         // Currently we do not support launching the project without ConfigFile
-//         // param.
-//         ASSERT(false);
-//     }
-// }
+    // Load config_node_ from config file provided via command line.
+    if (FParse::Value(FCommandLine::Get(), TEXT("configfile="), config_file))
+    {
+        // Read config file contents into a YAML::Node.
+        config_node_ = YAML::LoadFile(TCHAR_TO_UTF8(*config_file));
+    }
+    // Load config_node_ from project dir.
+    else if (FPaths::FileExists(FPaths::ConvertRelativePathToFull(FPaths::ProjectDir().Append("Temp/config.yaml"))))
+    {
+        // Read config file contents into a YAML::Node.
+        config_file = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir().Append("Temp/config.yaml"));
+        config_node_ = YAML::LoadFile(TCHAR_TO_UTF8(*config_file));
+    }
+    else
+    {
+        ASSERT(false, "Did not receive a config file location from python and could not find config.yaml in project's 'Temp' directory. So, tried to launch project without a config file. Currently we do not support this.");
+    }
+}
 
-// void unrealrl::Config::Terminate()
-// {
-//     ConfigNode.reset();
-// }
+void Config::terminate()
+{
+    config_node_.reset();
+}

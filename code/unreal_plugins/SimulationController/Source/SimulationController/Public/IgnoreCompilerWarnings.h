@@ -1,3 +1,5 @@
+#pragma once
+
 /*
 The MIT License (MIT)
 
@@ -25,8 +27,6 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifndef PLATFORM_SPECIFIC_COMPILER_WARNINGS_IGNORE
-#define PLATFORM_SPECIFIC_COMPILER_WARNINGS_IGNORE
 
 #ifdef _MSC_VER
 //'=': conversion from 'double' to 'float', possible loss of data
@@ -53,7 +53,6 @@ THE SOFTWARE.
 #define IGNORE_FORMAT_STRING_OFF
 #endif
 
-// clang-format off
 // Please keep this list sorted so it is easier to find stuff, also make sure there 
 // is no whitespace after the trailing \, GCC doesn't like that.
 #ifdef __CLANG__
@@ -117,6 +116,3 @@ _Pragma("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")		\
 #endif
 
 #endif
-
-#endif
-// clang-format on

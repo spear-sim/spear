@@ -1,9 +1,16 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
+using System;
 
 public class SimulationController : ModuleRules
 {
+    public const String RPCLIB_INCLUDE = "/home/rachithp/code/github/unreal-ai/thirdparty/rpclib/include";
+    public const String RPCLIB_LIB = "/home/rachithp/code/github/unreal-ai/thirdparty/rpclib/build/librpc.a";
+    public const String ASIO_INCLUDE = "/home/rachithp/code/github/unreal-ai/thirdparty/asio/asio/include";
+    public const String YAML_CPP_INCLUDE = "/home/rachithp/code/github/unreal-ai/thirdparty/yaml-cpp/include";
+    public const String YAML_CPP_LIB = "/home/rachithp/code/github/unreal-ai/thirdparty/yaml-cpp/build/libyaml-cpp.a";
+
     public SimulationController(ReadOnlyTargetRules Target) : base(Target)
     {
         bEnableExceptions = true;
@@ -39,7 +46,7 @@ public class SimulationController : ModuleRules
                 "InputCore", // This is required for using EKeys::W, etc 
 				"CoreUObject",
                 "Engine",
-                "RobotSim",
+                // "RobotSim", // Uncomment this when using RobotSim
 				// ... add private dependencies that you statically link with here ...	
 			}
             );
@@ -51,5 +58,18 @@ public class SimulationController : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
             );
+
+
+        // asio
+        PublicDefinitions.Add("ASIO_NO_TYPEID");
+        PublicIncludePaths.Add(ASIO_INCLUDE);
+
+        // rpclib
+        PublicIncludePaths.Add(RPCLIB_INCLUDE);
+        PublicAdditionalLibraries.Add(RPCLIB_LIB);
+
+        // yaml-cpp
+        PublicIncludePaths.Add(YAML_CPP_INCLUDE);
+        PublicAdditionalLibraries.Add(YAML_CPP_LIB);
     }
 }

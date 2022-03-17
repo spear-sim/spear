@@ -24,7 +24,7 @@
 	"Plugins": [
 		{
 			"Name": "RobotSim",
-			"Enabled": true
+			"Enabled": false
 		}
 	]
 }
