@@ -1,20 +1,15 @@
 [submodule "code/third_party/rbdl"]
 	path = code/third_party/rbdl
 	url = https://github.com/rbdl/rbdl.git
-	branch = e82afbdcea67d6544b56592622b0a945d501c67b
 [submodule "code/third_party/yaml-cpp"]
 	path = code/third_party/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
-	branch = 0579ae3d976091d7d664aa9d2527e0d0cff25763
 [submodule "code/third_party/msgpack-rpc-python"]
 	path = code/third_party/msgpack-rpc-python
 	url = https://github.com/dvdhfnr/msgpack-rpc-python.git
-	branch = 938a57e9c26604e7e03d9971afeda810f4e43cd2
 [submodule "code/third_party/rpclib"]
 	path = code/third_party/rpclib
 	url = https://github.com/rpclib/rpclib.git
-	branch = a663a1598a4b419123b2e13c0ae6a39c91dcf5b8
 [submodule "code/third_party/asio"]
 	path = code/third_party/asio
 	url = https://github.com/chriskohlhoff/asio
-	branch = b84e6c16b2ea907dbad94206b7510d85aafc0b42
