@@ -1,0 +1,11 @@
+INTERIORSIM:
+  # LAUNCH_MODE: "uproject"
+  # UNREAL_EDITOR_EXECUTABLE: "/home/rachithp/code/github/unrealengine/UnrealEngine/Engine/Binaries/Linux/UE4Editor"  
+  # UPROJECT: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject"
+  # LAUNCH_MODE: "standalone_executable"
+  # STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
+  # TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Temp"
+  LAUNCH_MODE: "running_instance"
+  ROBOTSIM_SETTINGS_PATH: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json"
+  VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30

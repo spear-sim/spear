@@ -2,16 +2,25 @@
 
 #include "SimulationController.h"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <Engine/Engine.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
+#include <Kismet/GameplayStatics.h>
 
 //#include <SimpleVehicle/SimModeSimpleVehicle.h>
 //#include <UrdfBot/SimModeUrdfBot.h>
 
+#include "AgentController.h"
 #include "Assert.h"
 #include "Config.h"
 #include "RpcServer.h"
+#include "SphereAgentController.h"
+#include "Types.h"
 
 #define LOCTEXT_NAMESPACE "SimulationController"
 
@@ -20,32 +29,21 @@ void SimulationController::StartupModule()
     // Initialize config system
     Config::initialize();
 
-    // Read config values required for rpc communication
-    FString hostname = Config::getValue<std::string>({"UNREALAI", "IP"}).c_str();
-    int port = Config::getValue<int>({"UNREALAI", "PORT"});
-
-    // Create and launch rpc server
-    // First argument is false because we want to start the server is asynchronous mode, otherwise it will block the gamethread from executing anything!
-    // The client will call a function that will take care of setting synchronous mode.
-    rpc_server_ = MakeUnique<RpcServer>(false, TCHAR_TO_UTF8(*hostname), port);  // TCHAR_TO_UTF8 for FString -> std::string
-    ASSERT(rpc_server_);
-    rpc_server_->asyncRun(std::max(std::thread::hardware_concurrency(), 4u) - 2u); // launch worker threads
-    bindFunctionsToRpcServer();
-
     // Required to add ActorSpawnedEventHandler
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
 
     // Required to reset any custom logic during a world cleanup
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
-    // OnBeginFrameDelegate = FCoreDelegates::OnBeginFrame.AddRaw(this, &UnrealRLManager::OnBeginFrame);
+    // OnBeginFrameDelegate = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::OnBeginFrame);
+    // OnEndFrameDelegate = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::OnEndFrame);
 }
 
 void SimulationController::ShutdownModule()
 {
-    // If this module is unloaded in the middle of simulation for some reason, raise an error because we do not support this and we want to know when this happens
-    ASSERT(!world_beginplay_delegate_handle_.IsValid());
-    ASSERT(rpc_server_);
+    // If this module is unloaded in the middle of simulation for some reason, raise an error because we do not support this and we want to know when this happens.
+    // We expect worldCleanUpEvenHandler() to be called before ShutdownModule(). 
+    ASSERT(!world_begin_play_delegate_handle_.IsValid());
 
     // Remove event handlers used by this module
     FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_delegate_handle_);
@@ -53,9 +51,6 @@ void SimulationController::ShutdownModule()
     
     FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_delegate_handle_);
     post_world_initialization_delegate_handle_.Reset();
-
-    // Quit worker threads and stop the RPC server
-    rpc_server_->stop();
 
     // Terminate config system as we will not use it anymore
     Config::terminate();
@@ -67,14 +62,14 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
     if (world->IsGameWorld())
     {
-        // Check if game_world_ is valid, and if it is, we do not support mulitple Game worlds and we need to know about this. This should happen only once in program lifecycle.
-        ASSERT(!game_world_);
+        // Check if world_ is valid, and if it is, we do not support mulitple Game worlds and we need to know about this. There should only be one Game World..
+        ASSERT(!world_);
 
         // Cache local reference of World instance as this is required in other parts of this class.
-        game_world_ = world;
+        world_ = world;
         
         // Required to assign an AgentController based on config param
-        world_beginplay_delegate_handle_ = world->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
+        world_begin_play_delegate_handle_ = world->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
     }
 }
 
@@ -84,49 +79,120 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
     if (world->IsGameWorld())
     {
+        ASSERT(world_);
+
+        // OnWorldCleanUp is called for all worlds. rpc_server_ is created only when a Game World's begin play event is launched.
+        if(is_world_begin_play_executed_) {
+            ASSERT(rpc_server_);
+            rpc_server_->stop(); // stop the RPC server
+        }
+
         // Remove event handlers bound to this world before world gets cleaned up
-        world->OnWorldBeginPlay.Remove(world_beginplay_delegate_handle_);
-        world_beginplay_delegate_handle_.Reset();
+        world->OnWorldBeginPlay.Remove(world_begin_play_delegate_handle_);
+        world_begin_play_delegate_handle_.Reset();
 
         // Clear local cache
-        game_world_ = nullptr;
+        world_ = nullptr;
     }
 }
 
 void SimulationController::worldBeginPlayEventHandler()
 {
-    UE_LOG(LogTemp, Warning, TEXT(" "));
-    UE_LOG(LogTemp, Warning, TEXT("OnWorldBeginPlay called...."));
-    UE_LOG(LogTemp, Warning, TEXT(" "));
-
     // Set few console commands for syncing Game Thread (GT) and RHI thread.
     // For more information on GTSyncType, see http://docs.unrealengine.com/en-US/SharingAndReleasing/LowLatencyFrameSyncing/index.html.
-    GEngine->Exec(game_world_, TEXT("r.GTSyncType 1"));
-    GEngine->Exec(game_world_, TEXT("r.OneFrameThreadLag 0"));
+    GEngine->Exec(world_, TEXT("r.GTSyncType 1"));
+    GEngine->Exec(world_, TEXT("r.OneFrameThreadLag 0"));
 
     // Set fixed simulation step time in seconds
     // FApp::SetBenchmarking(true);
-    // FApp::SetFixedDeltaTime(unrealrl::Config::getValue<double>({"UNREALAI", "SIMULATION_STEP_TIME_SECONDS"}));
+    // FApp::SetFixedDeltaTime(unrealrl::Config::getValue<double>({"INTERIORSIM", "SIMULATION_STEP_TIME_SECONDS"}));
 
     // // Read and set random seed value
-    // Seed = unrealrl::Config::getValue<int>({"UNREALAI", "RANDOM_SEED"});
-    // SetRandomStreamSeed(Seed);
+    // Seed = unrealrl::Config::getValue<int>({"INTERIORSIM", "RANDOM_SEED"});
+    // SetRandomStreamSeed(Seed); // @TODO: complete this
 
     // @TODO: Read config to decide which AgentController to create
+    for (TActorIterator<AActor> ActorItr(world_, AActor::StaticClass()); ActorItr; ++ActorItr)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("%s"), *(*ActorItr)->GetName());
+        if ((*ActorItr)->GetName().Equals(TEXT("SphereAgent"), ESearchCase::IgnoreCase))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Sphere actor found!"));
+            // create agentcontroller for this actor
+            agent_controller_ = std::make_unique<SphereAgentController>();
+            break;
+        }
+    }
 
+
+    // Add separate Task class (compute reward)
+
+    
+    // config values required for rpc communication
+    constexpr bool is_sync = false;
+    std::string hostname = Config::getValue<std::string>({"INTERIORSIM", "IP"});
+    int port = Config::getValue<int>({"INTERIORSIM", "PORT"});
+
+    // First argument is false because we want to start the server is asynchronous mode, otherwise it will block the gamethread from executing anything!
+    ASSERT(world_->IsGameWorld());
+
+    rpc_server_ = std::make_unique<RpcServer>(is_sync, hostname, port);
+    ASSERT(rpc_server_);
+
+    bindFunctionsToRpcServer();
+
+    rpc_server_->asyncRun(Config::getValue<int>({"INTERIORSIM", "RPC_WORKER_THREADS"})); // launch worker threads
+
+
+    // set this boolean to true since worldbeginplay executed
+    is_world_begin_play_executed_ = true;
 }
 
 void SimulationController::bindFunctionsToRpcServer()
 {
-    rpc_server_->bindAsync("Ping", []() -> std::string {
+    rpc_server_->bindAsync("ping", []() -> std::string {
         return "received ping";
     });
 
-    rpc_server_->bindAsync("Echo", [](std::string echo_string) -> std::string {
+    rpc_server_->bindAsync("echo", [](std::string echo_string) -> std::string {
         return std::string("echoing -> ") + echo_string;
     });
 
-    // rpc_server_->bindSync("")
+    rpc_server_->bindAsync("close", []() -> void {
+        FGenericPlatformMisc::RequestExit(false);
+    });
+
+    rpc_server_->bindAsync("pause", [this]() -> bool {
+        return UGameplayStatics::SetGamePaused(this->world_, true);
+    });
+
+    rpc_server_->bindAsync("unPause", [this]() -> bool {
+        return UGameplayStatics::SetGamePaused(this->world_, false);
+    });
+
+    rpc_server_->bindAsync("getEndianness", []() -> Endianness {
+        return GetEndianness();
+    });
+
+    rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, Box> {
+        ASSERT(this->agent_controller_);
+        return this->agent_controller_.get()->getObservationSpace();
+    });
+
+    rpc_server_->bindAsync("getActionSpace", [this]() -> std::map<std::string, Box> {
+        ASSERT(this->agent_controller_);
+        return this->agent_controller_.get()->getActionSpace();
+    });
+
+    rpc_server_->bindAsync("applyAction", [this](std::map<std::string, std::vector<float>> ActionMap) -> void {
+        ASSERT(this->agent_controller_);
+        this->agent_controller_.get()->applyAction(ActionMap);
+    });
+
+    rpc_server_->bindAsync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        ASSERT(this->agent_controller_);
+        return this->agent_controller_.get()->getObservation();
+    });
 }
 
 #undef LOCTEXT_NAMESPACE
