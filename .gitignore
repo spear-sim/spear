@@ -27,4 +27,4 @@ code/unreal_plugins/InteriorSimBridge/Binaries
 code/unreal_plugins/InteriorSimBridge/Intermediate
 code/*.sh
 code/experiments/rl_openbot/imitation_learning/dataset
-
+code/experiments/rl_openbot/imitation_learning/openbot/__pycache__
