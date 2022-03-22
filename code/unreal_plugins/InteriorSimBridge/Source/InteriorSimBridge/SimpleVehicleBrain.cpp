@@ -121,7 +121,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
     // Get OpenBot position and orientation:
     const FVector currentLocation = ownerPawn->GetActorLocation();     // Relative to global coordinate system
     const FRotator currentOrientation = ownerPawn->GetActorRotation(); // Relative to global coordinate system
-    std::vector<float> controlState;
+    Eigen::Vector2f controlState;
     
     if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "ROBOTSIM_LEARNING_MODE"}) == "reinforcement_learning")
     {
@@ -162,12 +162,12 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
         observationVector.resize(GetObservationSpecs().size());
 
         // Vector observations
-        ownerPawn->GetControlState(controlState); // Fuses the actions received from the python client
+        controlState = ownerPawn->GetControlState(); // Fuses the actions received from the python client
                                                   // with those received from the keyboard interface (if
                                                   // this interface is activated in the settings.json
                                                   // file)
 
-        observationVector.at(0).Copy(std::vector<float>{controlState[0], controlState[1], dist, sinYaw, cosYaw});
+        observationVector.at(0).Copy(std::vector<float>{controlState(0), controlState(1), dist, sinYaw, cosYaw});
 
         switch (hitInfo_)
         {
@@ -194,12 +194,12 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
         observationVector.resize(GetObservationSpecs().size());
 
         // Vector observations
-        ownerPawn->GetControlState(controlState); // Fuses the actions received from the python client
+        controlState = ownerPawn->GetControlState(); // Fuses the actions received from the python client
                                                   // with those received from the keyboard interface (if
                                                   // this interface is activated in the settings.json
                                                   // file)
 
-        observationVector.at(0).Copy(std::vector<float>{controlState[0], controlState[1], FMath::DegreesToRadians(currentOrientation.Yaw), currentLocation.X, currentLocation.Y});
+        observationVector.at(0).Copy(std::vector<float>{controlState(0), controlState(1), FMath::DegreesToRadians(currentOrientation.Yaw), currentLocation.X, currentLocation.Y});
     }
     else
     {

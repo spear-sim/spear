@@ -161,10 +161,9 @@ void ASimpleVehiclePawn::MoveLeftRight(float leftCtrl, float rightCtrl)
 
 // Provides feedback on the action executed by the robot. This action can either
 // be defined through the python client or by keyboard/game controller input.
-void ASimpleVehiclePawn::GetControlState(std::vector<float> &ActionVec)
+Eigen::Vector2f ASimpleVehiclePawn::GetControlState()
 {
-    ActionVec[0] = actionVec_(0);
-    ActionVec[1] = actionVec_(1);
+    return actionVec_;
 }
 
 void ASimpleVehiclePawn::ComputeMotorTorques(float DeltaTime)
