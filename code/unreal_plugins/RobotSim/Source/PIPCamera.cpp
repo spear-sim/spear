@@ -50,17 +50,17 @@ void APIPCamera::DeactivateCamera()
     }
 }
 
-void APIPCamera::setIndex(int UpdateIndex)
+void APIPCamera::SetIndex(int UpdateIndex)
 {
     this->index = UpdateIndex;
 }
 
-int APIPCamera::getIndex()
+int APIPCamera::GetIndex()
 {
     return this->index;
 }
 
-void APIPCamera::setupCameraFromSettings(
+void APIPCamera::SetupCameraFromSettings(
     const RobotSim::RobotSimSettings::CameraSetting& camera_setting)
 {
     FActorSpawnParameters spawnParameteres;
@@ -93,15 +93,17 @@ void APIPCamera::SetupCaptureComponent()
 
     // Setup the RenderTarget capture format
     renderTarget2D->InitAutoFormat(
-        512, 512); // some random format, got crashing otherwise
+        160,120); // some random format, got crashing otherwise
     // int32 frameWidht = 2048;
     // int32 frameHeight = 2048;
     renderTarget2D->InitCustomFormat(
-        512, 512, PF_B8G8R8A8,
+        160,120, PF_B8G8R8A8,
         true); // PF_B8G8R8A8 disables HDR which will boost storing to disk due
                // to less image information
     renderTarget2D->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     renderTarget2D->bGPUSharedFlag = true; // demand buffer on GPU
+    
+    CaptureComponent->GetCaptureComponent2D()->FOVAngle = 72.0f; // Smartphone FOV
 
     // Assign RenderTarget
     CaptureComponent->GetCaptureComponent2D()->TextureTarget = renderTarget2D;

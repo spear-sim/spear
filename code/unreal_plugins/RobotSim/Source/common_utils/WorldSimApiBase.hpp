@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef air_WorldSimApiBase_hpp
-#define air_WorldSimApiBase_hpp
+#pragma once
 
 #include "CommonStructs.hpp"
 
@@ -51,4 +50,3 @@ public:
 
 
 } //namespace
-#endif

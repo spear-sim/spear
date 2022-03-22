@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef common_utils_FileSystem_hpp
-#define common_utils_FileSystem_hpp
+#pragma once
 
 #include <codecvt>
 #include <fstream>
@@ -224,4 +223,3 @@ public:
 };
 
 } 
-#endif

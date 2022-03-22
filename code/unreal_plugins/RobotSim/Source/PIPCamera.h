@@ -19,12 +19,12 @@ public:
     APIPCamera();
     virtual void BeginPlay() override;
 
-    void setupCameraFromSettings(
+    void SetupCameraFromSettings(
         const RobotSim::RobotSimSettings::CameraSetting& camera_setting);
     void SetupCaptureComponent();
     USceneCaptureComponent2D* GetSceneCaptureComponent();
-    int getIndex();
-    void setIndex(int UpdateIndex);
+    int GetIndex();
+    void SetIndex(int UpdateIndex);
 
     void DeactivateCamera();
     void ActivateCamera();

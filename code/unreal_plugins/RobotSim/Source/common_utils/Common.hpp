@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef msr_airlib_Common_hpp
-#define msr_airlib_Common_hpp
+#pragma once
 
 #include <string>
 #include <memory>
@@ -68,54 +67,5 @@ inline std::ostream& operator<<(std::ostream& os, Vector3r const& vec)
     return os << vec.x() << "\t" << vec.y() << "\t" << vec.z() << "\t";
 }
 
-/**
- * @brief Clamp a vector between two values.
- *
- * @param v
- * @param vMin
- * @param vMax
- * @return Eigen::Vector4f The clamped value.
- */
-inline Eigen::Vector4f
-clamp(Eigen::Vector4f v, Eigen::Vector4f vMin, Eigen::Vector4f vMax)
-{
-    Eigen::Vector4f v_clamped;
-    v_clamped = v;
-    for (unsigned int i = 0; i < v.size(); i++)
-    {
-        if (v(i) > vMax(i))
-        {
-            v_clamped(i) = vMax(i);
-        }
-        if (v(i) < vMin(i))
-        {
-            v_clamped(i) = vMin(i);
-        }
-    }
-    return v_clamped;
-}
-
-/**
- * @brief Rev per minute to rad/s
- *
- * @param RPM
- * @return Eigen::VectorXf
- */
-inline Eigen::VectorXf RPMToRadSec(Eigen::VectorXf RPM)
-{
-    return RPM * PI / 30.f;
-}
-
-/**
- * @brief rad/s to rev per minute
- *
- * @param Omega
- * @return Eigen::VectorXf
- */
-inline Eigen::VectorXf RadSecToRPM(Eigen::VectorXf Omega)
-{
-    return Omega * 30.f / PI;
-}
 
 } // namespace RobotSim
-#endif

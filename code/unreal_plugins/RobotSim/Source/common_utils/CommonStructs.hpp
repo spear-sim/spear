@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef msr_airlib_CommonStructs_hpp
-#define msr_airlib_CommonStructs_hpp
+#pragma once
 
 #include "common_utils/Common.hpp"
 #include <ostream>
@@ -349,4 +348,4 @@ struct DrawableShapeRequest
 };
 
 } //namespace
-#endif
+

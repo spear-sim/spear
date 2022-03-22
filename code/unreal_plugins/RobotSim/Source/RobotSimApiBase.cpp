@@ -150,7 +150,7 @@ void RobotSimApiBase::setupCamerasFromSettings(
         const auto& camera_setting = Utils::findOrDefault(
             getVehicleSetting()->cameras, pair.first, camera_defaults);
         APIPCamera* camera = pair.second;
-        camera->setupCameraFromSettings(camera_setting);
+        camera->SetupCameraFromSettings(camera_setting);
     }
 }
 
@@ -214,7 +214,7 @@ void RobotSimApiBase::createCamerasFromSettings()
             params_.vehicle->GetPawn()->GetWorld()->SpawnActor<APIPCamera>(
                 APIPCamera::StaticClass(), camera_transform,
                 camera_spawn_params);
-        camera->setIndex(camera_index);
+        camera->SetIndex(camera_index);
         camera_index++;
         camera->AttachToComponent(
             attachComponent, FAttachmentTransformRules::KeepWorldTransform);

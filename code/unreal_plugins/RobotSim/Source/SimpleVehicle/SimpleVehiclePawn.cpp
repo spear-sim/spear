@@ -8,26 +8,22 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #include "Camera/CameraComponent.h"
 #include <iostream>
 
-FName ASimpleVehiclePawn::VehicleMovementComponentName(
-    TEXT("SimpleWheeledVehicleMovement"));
+FName ASimpleVehiclePawn::VehicleMovementComponentName(TEXT("SimpleWheeledVehicleMovement"));
 FName ASimpleVehiclePawn::VehicleMeshComponentName(TEXT("VehicleMesh'"));
 
-ASimpleVehiclePawn::ASimpleVehiclePawn(
-    const FObjectInitializer& ObjectInitializer)
-    : APawn(ObjectInitializer)
+ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer &ObjectInitializer) : APawn(ObjectInitializer)
 {
     // To create components, you can use
     // CreateDefaultSubobject<Type>("InternalName").
-    Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(
-        VehicleMeshComponentName);
-    // setup skeletal mesh
-    static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(
-        TEXT("/RobotSim/SimpleVehicle/freight/freight.freight"));
+    Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(VehicleMeshComponentName);
+
+    // Setup skeletal mesh
+    static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(TEXT("/RobotSim/SimpleVehicle/freight/freight.freight"));
     Mesh->SetSkeletalMesh(CarMesh.Object);
-    // setup animation
-    static ConstructorHelpers::FClassFinder<UAnimInstance> finderAnim(
-        TEXT("/RobotSim/SimpleVehicle/freight/"
-             "freight_Animation.freight_Animation_C"));
+
+    // Setup animation
+    static ConstructorHelpers::FClassFinder<UAnimInstance> finderAnim(TEXT("/RobotSim/SimpleVehicle/freight/freight_Animation.freight_Animation_C"));
+
     if (finderAnim.Succeeded())
     {
         Mesh->SetAnimClass(finderAnim.Class);
@@ -46,20 +42,18 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     Mesh->SetGenerateOverlapEvents(true);
     Mesh->SetCanEverAffectNavigation(false);
     // example for adding user-defined collision callback
-    // Mesh->OnComponentHit.AddDynamic(this,
-    //                                &ASimpleVehiclePawn::OnComponentCollision);
+    // Mesh->OnComponentHit.AddDynamic(this,&ASimpleVehiclePawn::OnComponentCollision);
 
     RootComponent = Mesh;
 
-    VehicleMovement =
-        CreateDefaultSubobject<UWheeledVehicleMovementComponent,
-                               USimpleWheeledVehicleMovementComponent>(
-            VehicleMovementComponentName);
+    VehicleMovement = CreateDefaultSubobject<UWheeledVehicleMovementComponent, USimpleWheeledVehicleMovementComponent>(VehicleMovementComponentName);
 
-    // setup wheels
+    // Setup wheels
     VehicleMovement->WheelSetups.SetNum(4);
+
     // TODO dynamic tire?
-    UClass* wheelClasss = USimpleWheel::StaticClass();
+    UClass *wheelClasss = USimpleWheel::StaticClass();
+
     // https://answers.unrealengine.com/questions/325623/view.html
     VehicleMovement->WheelSetups[0].WheelClass = wheelClasss;
     VehicleMovement->WheelSetups[0].BoneName = FName("FL");
@@ -80,8 +74,7 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(
     VehicleMovement->SetIsReplicated(true); // Enable replication by default
     VehicleMovement->UpdatedComponent = Mesh;
 
-    vehicle_pawn_ = static_cast<USimpleWheeledVehicleMovementComponent*>(
-        GetVehicleMovementComponent());
+    vehiclePawn_ = static_cast<USimpleWheeledVehicleMovementComponent *>(GetVehicleMovementComponent());
 
     wheelVelocity_.setZero();
     motorVelocity_.setZero();
@@ -101,34 +94,29 @@ ASimpleVehiclePawn::~ASimpleVehiclePawn()
 }
 
 void ASimpleVehiclePawn::SetupPlayerInputComponent(
-    class UInputComponent* PlayerInputComponent)
+    class UInputComponent *PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
     // set up gameplay key bindings in RobotSimVehicleGameMode
     check(PlayerInputComponent);
 
-    PlayerInputComponent->BindAxis("MoveForward", this,
-                                   &ASimpleVehiclePawn::MoveForward);
-    PlayerInputComponent->BindAxis("MoveRight", this,
-                                   &ASimpleVehiclePawn::MoveRight);
+    PlayerInputComponent->BindAxis("MoveForward", this, &ASimpleVehiclePawn::MoveForward);
+    PlayerInputComponent->BindAxis("MoveRight", this, &ASimpleVehiclePawn::MoveRight);
 }
 
 void ASimpleVehiclePawn::SetupInputBindings()
 {
-    UE_LOG(LogTemp, Warning,
-           TEXT("ASimpleVehiclePawn::SetupInputBindings start"));
-    this->EnableInput(this->GetWorld()->GetFirstPlayerController());
-    UE_LOG(LogTemp, Warning,
-           TEXT("ASimpleVehiclePawn::SetupInputBindings end"));
-    // keyboard control in RobotSimGameMode
-    APlayerController* controller =
-        this->GetWorld()->GetFirstPlayerController();
+    UE_LOG(LogTemp, Warning, TEXT("ASimpleVehiclePawn::SetupInputBindings start"));
 
-    controller->InputComponent->BindAxis("MoveForward", this,
-                                         &ASimpleVehiclePawn::MoveForward);
-    controller->InputComponent->BindAxis("MoveRight", this,
-                                         &ASimpleVehiclePawn::MoveRight);
+    this->EnableInput(this->GetWorld()->GetFirstPlayerController());
+
+    UE_LOG(LogTemp, Warning, TEXT("ASimpleVehiclePawn::SetupInputBindings end"));
+
+    // Keyboard control in RobotSimGameMode
+    APlayerController *controller = this->GetWorld()->GetFirstPlayerController();
+    controller->InputComponent->BindAxis("MoveForward", this, &ASimpleVehiclePawn::MoveForward);
+    controller->InputComponent->BindAxis("MoveRight", this, &ASimpleVehiclePawn::MoveRight);
 }
 
 // This command is meant to be bound to keyboard input. It will be executed at
@@ -158,7 +146,7 @@ void ASimpleVehiclePawn::MoveRight(float Right)
 }
 
 // This command is meant to be used by the python client interface.
-void ASimpleVehiclePawn::Move(float leftCtrl, float rightCtrl)
+void ASimpleVehiclePawn::MoveLeftRight(float leftCtrl, float rightCtrl)
 {
     // leftCtrl and rightCtrl describe the percentage of input voltage to be
     // applied to the left and right motors by the H-bridge controller: 1 =
@@ -172,51 +160,38 @@ void ASimpleVehiclePawn::Move(float leftCtrl, float rightCtrl)
 
 // Provides feedback on the action executed by the robot. This action can either
 // be defined through the python client or by keyboard/game controller input.
-void ASimpleVehiclePawn::GetExecutedAction(std::vector<float>& ActionVec)
+void ASimpleVehiclePawn::GetExecutedAction(std::vector<float> &ActionVec)
 {
     ActionVec[0] = actionVec_(0);
     ActionVec[1] = actionVec_(1);
 }
 
-void ASimpleVehiclePawn::computeMotorTorques(float DeltaTime)
+void ASimpleVehiclePawn::ComputeMotorTorques(float DeltaTime)
 {
-    std::cout << "Owner->GetVelocity(): " << this->GetVelocity().Size()
-              << std::endl; // in cm/s
+    // std::cout << "Vehicle velocity: " << this->GetVelocity().Size()*0.036
+    //           << "km/h" << std::endl; // GetVelocity() gives results in cm/s
     // First make sure the duty cycle is not getting above 100%. This is done
     // simillarly on the real OpenBot: (c.f.
     // https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Control.java)
-    dutyCycle_ = RobotSim::clamp(dutyCycle_, -Eigen::Vector4f::Ones(),
-                                 Eigen::Vector4f::Ones());
+    dutyCycle_ = clamp(dutyCycle_, -Eigen::Vector4f::Ones(), Eigen::Vector4f::Ones());
 
     // Acquire the ground truth motor and wheel velocity for motor
     // counter-electromotive force computation purposes (or alternatively
     // friction computation purposes):
-    wheelVelocity_(0) =
-        vehicle_pawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(
-            0); // Expressed in [RPM]
-    wheelVelocity_(1) =
-        vehicle_pawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(
-            1); // Expressed in [RPM]
-    wheelVelocity_(2) =
-        vehicle_pawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(
-            2); // Expressed in [RPM]
-    wheelVelocity_(3) =
-        vehicle_pawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(
-            3); // Expressed in [RPM]
+    wheelVelocity_(0) = vehiclePawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
+    wheelVelocity_(1) = vehiclePawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
+    wheelVelocity_(2) = vehiclePawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
+    wheelVelocity_(3) = vehiclePawn_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
 
-    motorVelocity_ = gearRatio_ * RobotSim::RPMToRadSec(
-                                      wheelVelocity_); // Expressed in [rad/s]
+    motorVelocity_ = gearRatio_ * RPMToRadSec(wheelVelocity_); // Expressed in [rad/s]
 
     // Compute the counter electromotive force using the motor torque constant:
-    counterElectromotiveForce_ =
-        motorTorqueConstant_ * motorVelocity_; // Expressed in [V]
+    counterElectromotiveForce_ = motorTorqueConstant_ * motorVelocity_; // Expressed in [V]
 
     // The current allowed to circulate in the motor is the result of the
     // difference between the applied voltage and the counter electromotive
     // force:
-    motorWindingCurrent_ =
-        ((batteryVoltage_ * dutyCycle_) - counterElectromotiveForce_) /
-        electricalResistance_; // Expressed in [A]
+    motorWindingCurrent_ = ((batteryVoltage_ * dutyCycle_) - counterElectromotiveForce_) / electricalResistance_; // Expressed in [A]
     // motorWindingCurrent_ = motorWindingCurrent_ *
     // (1-(electricalResistance_/electricalInductance_)*DeltaTime) +
     // ((batteryVoltage_*dutyCycle_)-counterElectromotiveForce_)*DeltaTime/electricalInductance_;
@@ -226,9 +201,9 @@ void ASimpleVehiclePawn::computeMotorTorques(float DeltaTime)
     motorTorque_ = motorTorqueConstant_ * motorWindingCurrent_;
 
     // Motor torque is saturated to match the motor limits:
-    motorTorque_ = RobotSim::clamp(motorTorque_,
-                                   Eigen::Vector4f::Constant(-motorTorqueMax_),
-                                   Eigen::Vector4f::Constant(motorTorqueMax_));
+    motorTorque_ = clamp(motorTorque_,
+                         Eigen::Vector4f::Constant(-motorTorqueMax_),
+                         Eigen::Vector4f::Constant(motorTorqueMax_));
 
     // The torque applied to the robot wheels is finally computed acounting for
     // the gear ratio:
@@ -240,10 +215,7 @@ void ASimpleVehiclePawn::computeMotorTorques(float DeltaTime)
     // low-velocities/low-duty-cycle dommain.
     for (size_t i = 0; i < dutyCycle_.size(); i++)
     {
-        if (std::abs(motorVelocity_(i)) < 1e-5 and
-            std::abs(dutyCycle_(i)) <=
-                controlDeadZone_ /
-                    actionScale_) // If the motor is "nearly" stopped
+        if (std::abs(motorVelocity_(i)) < 1e-5 and std::abs(dutyCycle_(i)) <= controlDeadZone_ / actionScale_) // If the motor is "nearly" stopped
         {
             wheelTorque_(i) = 0.f;
         }
@@ -256,18 +228,10 @@ void ASimpleVehiclePawn::computeMotorTorques(float DeltaTime)
     // This file also contains a bunch of useful functions such as
     // "SetBrakeTorque" or "SetSteerAngle". Please take a look if you want to
     // modify the way the simulated vehicle is being controlled.
-    vehicle_pawn_->SetDriveTorque(
-        wheelTorque_(0),
-        0); // Torque applied to the wheel, expressed in [N.m]
-    vehicle_pawn_->SetDriveTorque(
-        wheelTorque_(1),
-        1); // Torque applied to the wheel, expressed in [N.m]
-    vehicle_pawn_->SetDriveTorque(
-        wheelTorque_(2),
-        2); // Torque applied to the wheel, expressed in [N.m]
-    vehicle_pawn_->SetDriveTorque(
-        wheelTorque_(3),
-        3); // Torque applied to the wheel, expressed in [N.m]
+    vehiclePawn_->SetDriveTorque(wheelTorque_(0), 0); // Torque applied to the wheel, expressed in [N.m]
+    vehiclePawn_->SetDriveTorque(wheelTorque_(1), 1); // Torque applied to the wheel, expressed in [N.m]
+    vehiclePawn_->SetDriveTorque(wheelTorque_(2), 2); // Torque applied to the wheel, expressed in [N.m]
+    vehiclePawn_->SetDriveTorque(wheelTorque_(3), 3); // Torque applied to the wheel, expressed in [N.m]
 
     // Fill the observed action vector to be used for RL purposes:
     actionVec_(0) = (dutyCycle_(0) + dutyCycle_(2)) / 2; // leftCtrl
@@ -297,18 +261,17 @@ void ASimpleVehiclePawn::Tick(float DeltaTime)
 
     // std::cout << "DeltaTime = " << DeltaTime<< std::endl;
 
-    computeMotorTorques(DeltaTime);
+    ComputeMotorTorques(DeltaTime);
 
     const FVector CurrentLocation = this->GetActorLocation();
     const FRotator CurrentRotation = this->GetActorRotation();
     URobotBlueprintLib::LogMessage(FString("Tick - "),
-                                   FString::SanitizeFloat(this->count),
+                                   FString::SanitizeFloat(this->count_),
                                    LogDebugLevel::Informational, 30);
-    count++;
+    count_++;
 }
 
-void ASimpleVehiclePawn::SetRobotParameters(
-    const RobotSim::RobotSimSettings::VehicleSetting& settings)
+void ASimpleVehiclePawn::SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting &settings)
 {
     gearRatio_ = settings.actuationSetting.gearRatio;
     motorVelocityConstant_ = settings.actuationSetting.motorVelocityConstant;
@@ -321,14 +284,14 @@ void ASimpleVehiclePawn::SetRobotParameters(
     batteryVoltage_ = settings.actuationSetting.batteryVoltage;
 }
 
-void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,
-                                   class AActor* OtherActor,
-                                   class UPrimitiveComponent* otherComp,
+void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent *HitComponent,
+                                   class AActor *OtherActor,
+                                   class UPrimitiveComponent *otherComp,
                                    bool bSelfMoved,
                                    FVector hitLocation,
                                    FVector hitNormal,
                                    FVector normalImpulse,
-                                   const FHitResult& hit)
+                                   const FHitResult &hit)
 {
     /*
         URobotBlueprintLib::LogMessage(FString("NotifyHit: ") +
@@ -337,16 +300,14 @@ void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,
                                            " normal: " +
        normalImpulse.ToString(), LogDebugLevel::Informational, 30);
                                        */
-    this->mPawnEvents.getCollisionSignal().emit(
-        HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal,
-        normalImpulse, hit);
+    this->pawnEvents_.getCollisionSignal().emit(HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal, normalImpulse, hit);
 }
 
-void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent* HitComponent,
-                                              AActor* OtherActor,
-                                              UPrimitiveComponent* OtherComp,
+void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent *HitComponent,
+                                              AActor *OtherActor,
+                                              UPrimitiveComponent *OtherComp,
                                               FVector NormalImpulse,
-                                              const FHitResult& Hit)
+                                              const FHitResult &Hit)
 {
     URobotBlueprintLib::LogMessage(FString("OnComponentCollision: ") +
                                        OtherActor->GetName(),
@@ -361,7 +322,7 @@ void ASimpleVehiclePawn::BeginPlay()
     Super::BeginPlay();
 }
 
-USceneComponent* ASimpleVehiclePawn::GetComponent(FString componentName)
+USceneComponent *ASimpleVehiclePawn::GetComponent(FString componentName)
 {
     throw std::runtime_error("Requested component named " +
                              std::string(TCHAR_TO_UTF8(*componentName)) +
@@ -369,8 +330,8 @@ USceneComponent* ASimpleVehiclePawn::GetComponent(FString componentName)
 }
 
 void ASimpleVehiclePawn::GetComponentReferenceTransform(FString componentName,
-                                                        FVector& translation,
-                                                        FRotator& rotation)
+                                                        FVector &translation,
+                                                        FRotator &rotation)
 {
     throw std::runtime_error("Requested component named " +
                              std::string(TCHAR_TO_UTF8(*componentName)) +
@@ -381,18 +342,14 @@ void ASimpleVehiclePawn::TeleportToLocation(FVector position,
                                             FQuat orientation,
                                             bool teleport)
 {
-    FVector translation =
-        (position * URobotBlueprintLib::GetWorldToMetersScale(this)) -
-        this->GetActorLocation();
-    FRotator rotation =
-        (orientation * this->GetActorQuat().Inverse()).Rotator();
-    RobotBase::TeleportToLocation(
-        position * URobotBlueprintLib::GetWorldToMetersScale(this), orientation,
-        teleport);
+    FVector translation = (position * URobotBlueprintLib::GetWorldToMetersScale(this)) - this->GetActorLocation();
+    FRotator rotation = (orientation * this->GetActorQuat().Inverse()).Rotator();
+    RobotBase::TeleportToLocation(position * URobotBlueprintLib::GetWorldToMetersScale(this), orientation, teleport);
 }
-PawnEvents* ASimpleVehiclePawn::GetPawnEvents()
+
+PawnEvents *ASimpleVehiclePawn::GetPawnEvents()
 {
-    return &(this->mPawnEvents);
+    return &(this->pawnEvents_);
 }
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

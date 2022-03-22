@@ -2,8 +2,7 @@
 // Licensed under the MIT License.
 
 
-#ifndef air_Earth_hpp
-#define air_Earth_hpp
+#pragma once
 
 #include <cmath>
 #include <exception>
@@ -350,4 +349,4 @@ private:
 };
 
 } //namespace
-#endif
+

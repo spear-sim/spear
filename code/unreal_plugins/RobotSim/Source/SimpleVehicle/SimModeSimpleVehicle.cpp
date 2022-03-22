@@ -212,7 +212,7 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
 
         for (APIPCamera* camera : vehicle_sim_api->getAllCameras())
         {
-            int add_index = camera_offset + camera->getIndex();
+            int add_index = camera_offset + camera->GetIndex();
             while (this->cameras_.Num() <= add_index)
             {
                 this->cameras_.Emplace(nullptr);

@@ -1,5 +1,5 @@
-#ifndef CommonUtils_UniqueValueMap_hpp
-#define CommonUtils_UniqueValueMap_hpp
+#pragma once
+
 #include <chrono>
 #include "Utils.hpp"
 
@@ -80,4 +80,3 @@ private:
 
 
 }
-#endif

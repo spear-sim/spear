@@ -1,12 +1,10 @@
 #pragma once
 
 #include "common_utils/RobotSimSettings.hpp"
-
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Engine/CollisionProfile.h"
 #include "SimpleWheeledVehicleMovementComponent.h"
-
 #include "PIPCamera.h"
 #include "common_utils/UniqueValueMap.hpp"
 #include "common_utils/Utils.hpp"
@@ -17,7 +15,6 @@
 #include "PhysicsPublic.h"
 #include "PhysXPublic.h"
 #include "PawnEvents.h"
-
 #include "SimpleVehiclePawn.generated.h"
 
 UCLASS(Blueprintable, meta = (ShortTooltip = "Simple Vehicle Pawn"))
@@ -25,61 +22,84 @@ class ROBOTSIM_API ASimpleVehiclePawn : public APawn, public RobotBase
 {
     GENERATED_BODY()
 
-    /**  The main skeletal mesh associated with this Vehicle */
+    //  The main skeletal mesh associated with this Vehicle
     UPROPERTY(Category = Vehicle,
               VisibleDefaultsOnly,
               BlueprintReadOnly,
               meta = (AllowPrivateAccess = "true"))
-    class USkeletalMeshComponent* Mesh;
+    class USkeletalMeshComponent *Mesh;
 
-    /** vehicle simulation component */
+    // vehicle simulation component
     UPROPERTY(Category = Vehicle,
               VisibleDefaultsOnly,
               BlueprintReadOnly,
               meta = (AllowPrivateAccess = "true"))
-    class UWheeledVehicleMovementComponent* VehicleMovement;
+    class UWheeledVehicleMovementComponent *VehicleMovement;
 
 public:
-    ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializer);
+    ASimpleVehiclePawn(const FObjectInitializer &ObjectInitializer);
     ~ASimpleVehiclePawn();
 
-    // Begin Pawn interface
+    /**
+     * @brief Pawn interface
+     *
+     * @param InputComponent
+     */
     virtual void
-    SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-    // End Pawn interface
+    SetupPlayerInputComponent(UInputComponent *InputComponent) override;
 
-    // Begin Actor interface
-    // Called every frame
+    /**
+     * @brief Called every frame
+     *
+     * @param DeltaTime
+     */
     virtual void Tick(float DeltaTime) override;
-    // collision callback
-    virtual void NotifyHit(class UPrimitiveComponent* myComp,
-                           class AActor* other,
-                           class UPrimitiveComponent* otherComp,
+
+    /**
+     * @brief Collision callback
+     *
+     * @param myComp
+     * @param other
+     * @param otherComp
+     * @param bSelfMoved
+     * @param hitLocation
+     * @param hitNormal
+     * @param normalImpulse
+     * @param hit
+     */
+    virtual void NotifyHit(class UPrimitiveComponent *myComp,
+                           class AActor *other,
+                           class UPrimitiveComponent *otherComp,
                            bool bSelfMoved,
                            FVector hitLocation,
                            FVector hitNormal,
                            FVector normalImpulse,
-                           const FHitResult& hit) override;
-    // uesr-defined callback function
+                           const FHitResult &hit) override;
+
+    /**
+     * @brief User-defined callback function
+     *
+     */
     UFUNCTION()
-    void OnComponentCollision(UPrimitiveComponent* HitComponent,
-                              AActor* OtherActor,
-                              UPrimitiveComponent* OtherComp,
+    void OnComponentCollision(UPrimitiveComponent *HitComponent,
+                              AActor *OtherActor,
+                              UPrimitiveComponent *OtherComp,
                               FVector NormalImpulse,
-                              const FHitResult& Hit);
+                              const FHitResult &Hit);
 
 protected:
-    // Called when the game starts or when spawned
+    /**
+     * @brief Called when the game starts or when spawned
+     *
+     */
     virtual void BeginPlay() override;
 
 public:
-    // End Actor interface
-    // Begin RobotBase interface
-    virtual USceneComponent* GetComponent(FString componentName) override;
+    virtual USceneComponent *GetComponent(FString componentName) override;
     virtual void GetComponentReferenceTransform(FString componentName,
-                                                FVector& translation,
-                                                FRotator& rotation) override;
-    virtual APawn* GetPawn() override
+                                                FVector &translation,
+                                                FRotator &rotation) override;
+    virtual APawn *GetPawn() override
     {
         return this;
     }
@@ -90,8 +110,11 @@ public:
     virtual void TeleportToLocation(FVector position,
                                     FQuat orientation,
                                     bool teleport) override;
-    // End RobotBase interface
-    // add keyboard control to set urdfbot movement
+
+    /**
+     * @brief Add keyboard/mouse control interface
+     *
+     */
     void SetupInputBindings();
 
     /**
@@ -124,7 +147,7 @@ public:
      * @param rightCtrl denotes the percentage of input voltage to be applied to
      * the right motors. It should therefore be on a [-1.0, 1.0] scale.
      */
-    void Move(float leftCtrl, float rightCtrl);
+    void MoveLeftRight(float leftCtrl, float rightCtrl);
 
     /**
      * @brief Provides acces to the action sent to the agent at the current
@@ -134,7 +157,7 @@ public:
      *
      * @param ActionVec
      */
-    void GetExecutedAction(std::vector<float>& ActionVec);
+    void GetExecutedAction(std::vector<float> &ActionVec);
 
     /**
      * @brief Set the Vehicle Parameters from a dedicated .json parameter file.
@@ -142,17 +165,15 @@ public:
      * @param settings
      */
     virtual void SetRobotParameters(
-        const RobotSim::RobotSimSettings::VehicleSetting& settings) override;
+        const RobotSim::RobotSimSettings::VehicleSetting &settings) override;
 
-    PawnEvents* GetPawnEvents();
+    PawnEvents *GetPawnEvents();
 
 private:
-    PawnEvents mPawnEvents;
-    int count = 0;
+    PawnEvents pawnEvents_;
+    int count_ = 0;
 
-    USimpleWheeledVehicleMovementComponent* vehicle_pawn_;
-
-    const std::string vehicle_name;
+    USimpleWheeledVehicleMovementComponent *vehiclePawn_;
 
     Eigen::Vector4f wheelVelocity_; // The ground truth velocity of the robot
                                     // wheels in [RPM]
@@ -213,21 +234,37 @@ private:
              // zero if the motor velocity is "small enough"
 
 public:
-    /** Name of the MeshComponent. Use this name if you want to prevent creation
-     * of the component (with ObjectInitializer.DoNotCreateDefaultSubobject). */
+    /**
+     * @brief Name of the MeshComponent. Use this name if you want to prevent
+     * creation of the component (with
+     * ObjectInitializer.DoNotCreateDefaultSubobject).
+     *
+     */
     static FName VehicleMeshComponentName;
 
-    /** Name of the VehicleMovement. Use this name if you want to use a
-     * different class (with ObjectInitializer.SetDefaultSubobjectClass). */
+    /**
+     * @brief Name of the VehicleMovement. Use this name if you want to use a
+     * different class (with ObjectInitializer.SetDefaultSubobjectClass).
+     *
+     */
     static FName VehicleMovementComponentName;
 
-    /** Returns Mesh subobject **/
-    class USkeletalMeshComponent* GetMesh() const
+    /**
+     * @brief Returns Mesh subobject
+     *
+     * @return USkeletalMeshComponent*
+     */
+    class USkeletalMeshComponent *GetMesh() const
     {
         return Mesh;
     }
-    /** Returns VehicleMovement subobject **/
-    class UWheeledVehicleMovementComponent* GetVehicleMovementComponent() const
+
+    /**
+     * @brief Returns VehicleMovement subobject
+     *
+     * @return UWheeledVehicleMovementComponent*
+     */
+    class UWheeledVehicleMovementComponent *GetVehicleMovementComponent() const
     {
         return VehicleMovement;
     }
@@ -272,5 +309,53 @@ private:
      * friction, this quantity is what makes the rotation speed of a DC motor
      * saturate...
      */
-    void computeMotorTorques(float DeltaTime);
+    void ComputeMotorTorques(float DeltaTime);
+
+    /**
+     * @brief Clamp a vector between two values.
+     *
+     * @param v
+     * @param vMin
+     * @param vMax
+     * @return Eigen::Vector4f The clamped value.
+     */
+    inline Eigen::Vector4f clamp(Eigen::Vector4f v, Eigen::Vector4f vMin, Eigen::Vector4f vMax)
+    {
+        Eigen::Vector4f v_clamped;
+        v_clamped = v;
+        for (unsigned int i = 0; i < v.size(); i++)
+        {
+            if (v(i) > vMax(i))
+            {
+                v_clamped(i) = vMax(i);
+            }
+            if (v(i) < vMin(i))
+            {
+                v_clamped(i) = vMin(i);
+            }
+        }
+        return v_clamped;
+    }
+
+    /**
+     * @brief Rev per minute to rad/s
+     *
+     * @param RPM
+     * @return Eigen::VectorXf
+     */
+    inline Eigen::VectorXf RPMToRadSec(Eigen::VectorXf RPM)
+    {
+        return RPM * PI / 30.f;
+    }
+
+    /**
+     * @brief rad/s to rev per minute
+     *
+     * @param Omega
+     * @return Eigen::VectorXf
+     */
+    inline Eigen::VectorXf RadSecToRPM(Eigen::VectorXf Omega)
+    {
+        return Omega * 30.f / PI;
+    }
 };

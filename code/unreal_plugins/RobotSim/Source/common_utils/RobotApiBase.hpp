@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef __ROBOTAPIBASE_H__
-#define __ROBOTAPIBASE_H__
+#pragma once
 
 #include "common_utils/CommonStructs.hpp"
 #include "common_utils/UpdatableObject.hpp"
@@ -95,5 +94,3 @@ public:
 
 
 } //namespace
-
-#endif // __ROBOTAPIBASE_H__

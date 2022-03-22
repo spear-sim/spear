@@ -1,0 +1,12 @@
+INTERIOR_SIM_BRIDGE:
+  
+  # If set to True, the actor provides egocentric visual observations:
+  USE_IMAGE_OBSERVATIONS: True
+  
+  # Allows behavior specialization of the InteriorSimBridge classes:
+  # - "reinforcement_learning" set the simulator to use a reinforcement learning pipeline (a goal actor required)
+  # - "imitation_learning" set the simulator to use a imitation learning pipeline 
+  ROBOTSIM_LEARNING_MODE: "imitation_learning"
+
+
+  

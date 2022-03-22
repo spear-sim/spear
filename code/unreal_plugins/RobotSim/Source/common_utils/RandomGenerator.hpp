@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef commn_utils_sincos_hpp
-#define commn_utils_sincos_hpp
+#pragma once
 
 #include <random>
 
@@ -49,4 +48,4 @@ typedef RandomGenerator<float, std::normal_distribution<double>> RandomGenerator
 typedef RandomGenerator<double, std::normal_distribution<double>> RandomGeneratorGaussianD;
 
 }
-#endif
+

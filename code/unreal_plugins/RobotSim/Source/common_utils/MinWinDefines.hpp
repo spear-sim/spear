@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef common_utils_MinWinDefines_hpp
-#define common_utils_MinWinDefines_hpp
+#pragma once
 
 /************************************************
 This header disables lots of things soafter including it
@@ -57,5 +56,3 @@ you may have to #undef whatever you are actually using.
 #define NOIMAGE
 #define NOPROXYSTUB
 #define NORPC
-
-#endif

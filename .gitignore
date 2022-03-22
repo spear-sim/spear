@@ -10,6 +10,10 @@ code/unreal_plugins/RobotSim/Intermediate
 code/unreal_plugins/RobotSim/Source/RobotSim.Build.cs
 code/unreal_projects/RobotProject/Binaries
 code/unreal_projects/RobotProject/Build
+code/unreal_projects/RobotProject/Temp
+code/unreal_projects/RobotProject/.ignore
+code/unreal_projects/RobotProject/.vscode/
+code/unreal_projects/RobotProject/RobotProject.code-workspace
 code/unreal_projects/RobotProject/Content/Maps
 code/unreal_projects/RobotProject/Content/Scene
 code/unreal_projects/RobotProject/DerivedDataCache
@@ -22,5 +26,5 @@ code/unreal_projects/RobotProject/Saved
 code/unreal_plugins/InteriorSimBridge/Binaries
 code/unreal_plugins/InteriorSimBridge/Intermediate
 code/*.sh
-
+code/experiments/rl_openbot/imitation_learning/dataset
 

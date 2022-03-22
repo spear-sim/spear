@@ -1,5 +1,4 @@
-#ifndef __ROBOTSIMSETTINGS_H__
-#define __ROBOTSIMSETTINGS_H__
+#pragma once
 
 #include <string>
 #include <vector>
@@ -139,7 +138,7 @@ public:                                       // types
         int image_type = 0;
 
         unsigned int width = 256, height = 144;                   // 960 X 540
-        float fov_degrees = Utils::nan<float>();                  // 90.0f
+        float fov_degrees = 72; //Utils::nan<float>();                  // 90.0f
         int auto_exposure_method = -1;                            // histogram
         float auto_exposure_speed = Utils::nan<float>();          // 100.0f;
         float auto_exposure_bias = Utils::nan<float>();           // 0;
@@ -1373,4 +1372,3 @@ private:
 
 } // namespace RobotSim
 
-#endif // __ROBOTSIMSETTINGS_H__

@@ -9,10 +9,7 @@ public class InteriorSimBridge : ModuleRules
         bEnableExceptions = true;
 
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		// Change this to 1, if you need visual observations
-        	PublicDefinitions.Add("USE_IMAGE_OBSERVATIONS=1");
-
+        
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...

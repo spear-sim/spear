@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef air_ImageCaptureBase_hpp
-#define air_ImageCaptureBase_hpp
+#pragma once
 
 #include "common_utils/Common.hpp"
 #include "common_utils/EnumFlags.hpp"
@@ -62,4 +61,3 @@ public: //methods
     virtual void getImages(const std::vector<ImageRequest>& requests, std::vector<ImageResponse>& responses) const = 0;
 };
 } //namespace
-#endif
