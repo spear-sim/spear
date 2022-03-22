@@ -8,6 +8,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #include "Camera/CameraComponent.h"
 #include <iostream>
 
+
 FName ASimpleVehiclePawn::VehicleMovementComponentName(TEXT("SimpleWheeledVehicleMovement"));
 FName ASimpleVehiclePawn::VehicleMeshComponentName(TEXT("VehicleMesh'"));
 
@@ -160,7 +161,7 @@ void ASimpleVehiclePawn::MoveLeftRight(float leftCtrl, float rightCtrl)
 
 // Provides feedback on the action executed by the robot. This action can either
 // be defined through the python client or by keyboard/game controller input.
-void ASimpleVehiclePawn::GetExecutedAction(std::vector<float> &ActionVec)
+void ASimpleVehiclePawn::GetControlState(std::vector<float> &ActionVec)
 {
     ActionVec[0] = actionVec_(0);
     ActionVec[1] = actionVec_(1);
@@ -173,7 +174,7 @@ void ASimpleVehiclePawn::ComputeMotorTorques(float DeltaTime)
     // First make sure the duty cycle is not getting above 100%. This is done
     // simillarly on the real OpenBot: (c.f.
     // https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Control.java)
-    dutyCycle_ = clamp(dutyCycle_, -Eigen::Vector4f::Ones(), Eigen::Vector4f::Ones());
+    dutyCycle_ = Clamp(dutyCycle_, -Eigen::Vector4f::Ones(), Eigen::Vector4f::Ones());
 
     // Acquire the ground truth motor and wheel velocity for motor
     // counter-electromotive force computation purposes (or alternatively
@@ -201,7 +202,7 @@ void ASimpleVehiclePawn::ComputeMotorTorques(float DeltaTime)
     motorTorque_ = motorTorqueConstant_ * motorWindingCurrent_;
 
     // Motor torque is saturated to match the motor limits:
-    motorTorque_ = clamp(motorTorque_,
+    motorTorque_ = Clamp(motorTorque_,
                          Eigen::Vector4f::Constant(-motorTorqueMax_),
                          Eigen::Vector4f::Constant(motorTorqueMax_));
 

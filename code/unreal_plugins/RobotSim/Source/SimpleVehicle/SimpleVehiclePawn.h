@@ -157,7 +157,7 @@ public:
      *
      * @param ActionVec
      */
-    void GetExecutedAction(std::vector<float> &ActionVec);
+    void GetControlState(std::vector<float> &ActionVec);
 
     /**
      * @brief Set the Vehicle Parameters from a dedicated .json parameter file.
@@ -319,7 +319,7 @@ private:
      * @param vMax
      * @return Eigen::Vector4f The clamped value.
      */
-    inline Eigen::Vector4f clamp(Eigen::Vector4f v, Eigen::Vector4f vMin, Eigen::Vector4f vMax)
+    inline Eigen::Vector4f Clamp(Eigen::Vector4f v, Eigen::Vector4f vMin, Eigen::Vector4f vMax)
     {
         Eigen::Vector4f v_clamped;
         v_clamped = v;

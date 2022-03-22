@@ -70,26 +70,10 @@ private:
         Edge
     };
 
-    /**
-     * @brief Enumerates the different learning modes 
-     * 
-     */
-    enum LearningMode
-    {
-        ReinforcementLearning,
-        ImitationLearning, 
-        Unknown
-    };
-
-    std::vector<float> actionVec_;
-
     const unsigned long height_ = 120;
     const unsigned long width_ = 160;
     APIPCamera* mainCamera_ = nullptr;
-    USceneCaptureComponent2D *captureComponent2D_ = nullptr;
-
-    bool useImageObservations_ = false; // If true, the observation vector should contain images
-    LearningMode learningMode_ = LearningMode::Unknown;
+    USceneCaptureComponent2D *captureComponent2D_ = nullptr; 
 
     UHitInfo hitInfo_ = UHitInfo::NoHit;
 };
