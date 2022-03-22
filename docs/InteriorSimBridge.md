@@ -1,12 +1,13 @@
-# InterioSimBridge plugin
+# InteriorSimBridge plugin
+
 - InteriorSimBridge plugin acts a bridge between RobotSim and UnrealRL plugin.
-- UnrealRL plugin is part of the UnrealAI library. For more information on UnrealAI, go [here](../code/thirdparty/unreal-ai/README.md).
+- UnrealRL plugin is part of the UnrealAI library. For more information on UnrealAI, go [here](https://github.com/isl-org/unreal-ai/blob/main/README.md).
 
 ## Setup InteriorSim project to work with InteriorSimBridge and UnrealRL plugin
 
 ### Setup UnrealRL plugin
-- Follow steps outlined in [UnrealRL readme](../code/thirdparty/unreal-ai/README.md) to setup UnrealRL plugin.
-- Add [UnrealRL plugin](../code/thirdparty/unreal-ai/unreal/Plugins/UnrealRL) to the Unreal project.
+- Follow steps outlined in [UnrealRL readme](https://github.com/isl-org/unreal-ai/blob/main/README.md) to setup UnrealRL plugin.
+- Add [UnrealRL plugin](https://github.com/isl-org/unreal-ai/blob/main/unreal/Plugins/UnrealRL) to the Unreal project.
 
 ### Setup InteriorSimBridge plugin
 - Add [InteriorSimBridge plugin](../code/unreal_plugins/InteriorSimBridge) to the Unreal project.
@@ -18,4 +19,4 @@
 - If you are using `SimpleVehicleBrain.cpp` or `UrdfBotBrain.cpp` in any of the InteriorSim environments, you need to add 'goal' as a tag to one of your assets in the environment.
 
 ## How to use UnrealAI library's python client
-- Navigate to [UnrealAI's python client](../code/thirdparty/unreal-ai/client/python) directory and follows steps as outlined in the README file to setup the python client.
+- Navigate to [UnrealAI's python client](https://github.com/isl-org/unreal-ai/blob/main/client/python) directory and follows steps as outlined in the README file to setup the python client.
