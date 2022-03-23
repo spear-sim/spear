@@ -6,7 +6,7 @@ public class InteriorSimBridge : ModuleRules
 {
 	public InteriorSimBridge(ReadOnlyTargetRules Target) : base(Target)
 	{
-        bEnableExceptions = true;
+        	bEnableExceptions = true;
 
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         

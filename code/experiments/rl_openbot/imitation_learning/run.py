@@ -158,7 +158,7 @@ def client(args, config, folderName):
     elif learningMode == "Infer":
     
         # Load TFLite model and allocate tensors.
-        interpreter = tflite.Interpreter("/home/quentin/Desktop/interiorsim/code/experiments/rl_openbot/imitation_learning/models/TestSession_1_pilot_net_lr0.0001_bz64_bn/checkpoints/best-val.tflite")
+        interpreter = tflite.Interpreter("/home/qleboute/Documents/Git/interiorsim/code/experiments/rl_openbot/imitation_learning/models/TestSession_1_pilot_net_lr0.0001_bz64_bn/checkpoints/best-val.tflite")
         interpreter.allocate_tensors()
 
         # Get input and output tensors.
@@ -232,9 +232,9 @@ if __name__ == "__main__":
 
     # Add default config files first and then user config files
     config_files.append(os.path.join(os.getcwd(), "default_config.yaml"))
-    config_files.append("/home/quentin/Desktop/interiorsim/code/unreal_plugins/InteriorSimBridge/default_config.yaml")
-    config_files.append("/home/quentin/Desktop/interiorsim/code/unreal_plugins/RobotSim/default_config.yaml")
-    config_files.append("/home/quentin/Desktop/unreal-ai/client/python/unrealai/config.yaml")
+    config_files.append("/home/qleboute/Documents/Git/interiorsim/code/unreal_plugins/InteriorSimBridge/default_config.yaml")
+    config_files.append("/home/qleboute/Documents/Git/interiorsim/code/unreal_plugins/RobotSim/default_config.yaml")
+    config_files.append("/home/qleboute/Documents/Git/unreal-ai/client/python/unrealai/user_config.yaml")
 
     # Load configs
     config = uai.utils.get_config(config_files)

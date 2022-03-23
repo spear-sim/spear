@@ -26,7 +26,7 @@ At the time this README file is written (march 2022), [InteriorSim](https://gith
 
   ```bash
   cd <path/to/unreal-ai>/utils
-  ./build_external_lib.sh
+  ./build_external_libs.sh
   ``` 
 
   To successfully execute this script, you should have `clang` (Version 10) installed on your machine; see e.g. https://releases.llvm.org/download.html
@@ -59,8 +59,8 @@ At the time this README file is written (march 2022), [InteriorSim](https://gith
   Assuming you have just cloned [Unreal-AI](https://github.com/isl-org/unreal-ai), a `default_config.yaml` file containing a set of default parameters should already be available in `<path/to/unreal-ai>/client/python/unrealai`. Your next task should therefore be genrate a new `.yaml` file named `config.yaml` and to document it with your own settings: 
   ```bash
   cd <path/to/unreal-ai>/client/python/unrealai
-  cp default_config.yaml config.yaml
-  gedit config.yaml
+  cp default_config.yaml user_config.yaml
+  gedit user_config.yaml
   ```
 
   Your `config.yaml` setting file should at least contain the following fields: 
@@ -81,7 +81,7 @@ At the time this README file is written (march 2022), [InteriorSim](https://gith
   RENDER_OFFSCREEN: False
 
   # Allows to avoid "settings.json not found" error at simulation start
-  ROBOTSIM_SETTINGS_FILE: "<path/to/interiorsim>/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json"
+  ROBOTSIM_SETTINGS_PATH: "<path/to/interiorsim>/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json"
 
   # Path to the map you want to load, based on the map codes provided in virtualworld-ids.json.
   # Allows to start the packaged environment while automatically loading the desired map.
@@ -99,7 +99,7 @@ At the time this README file is written (march 2022), [InteriorSim](https://gith
 
   Typically: 
   ```bash
-  python generate_config.py --config_files <path/to/unreal-ai>/client/python/unrealai/config.yaml  --output_unreal_project_dir <path/to/interiorsim>/code/unreal_projects/RobotProject
+  python generate_config.py --config_files <path/to/unreal-ai>/client/python/unrealai/user_config.yaml  --output_unreal_project_dir <path/to/interiorsim>/code/unreal_projects/RobotProject
   ```
 - UE4 is split into modules. Each module has a ´.build.cs´ file that controls how it is built, including options for defining module dependencies, additional libraries, include paths, etc. A default build configuration for UnrealRL is provided in the file `<path/to/unreal-ai>/unreal/Plugins/UnrealRL/Source/UnrealRL/UnrealRL.Build.cs.example`. You should rename this file as `UnrealRL.Build.cs` and modify it to match your system configuration:
   ```bash
@@ -122,7 +122,9 @@ You should by now have fully fledge Unreal-AI setup and should therefore proceed
 - Download and build the Rigid Body Dynamics Library (RBDL). RBDL is here only needed for URDF file parsing purposes and inverse kinematics computation on the URDF-bot. Nevertheless, being listed as a dependency for the whole RobotSim plugin, it must be included into the project:
 
   ```bash
-  cd interiorsim/code/thirdparty
+  cd interiorsim/code
+  mkdir thirdparty
+  cd thirdparty
   git clone https://github.com/rbdl/rbdl
   cd rbdl
   mkdir BUILD
@@ -136,11 +138,11 @@ You should by now have fully fledge Unreal-AI setup and should therefore proceed
 
   ```bash
   cd interiorsim/code/unreal_projects/RobotProject
-  mkdir Plugin 
-  cd Plugin 
-  ln -s ../../../unreal_plugins/InteriorSimBridge/ .
-  ln -s ../../../unreal_plugins/RobotSim/ .
-  ln -s <path/to/unreal-ai>/unreal/Plugins/UnrealRL/ .
+  mkdir Plugins
+  cd Plugins
+  ln -s ../../../unreal_plugins/InteriorSimBridge .
+  ln -s ../../../unreal_plugins/RobotSim .
+  ln -s <path/to/unreal-ai>/unreal/Plugins/UnrealRL .
   ```
 
 - A default build configuration for RobotSim is provided in the file `<path/to/interiorsim>/code/unreal_plugins/RobotSim/Source/RobotSim.Build.cs.example`. You should rename this file as `UnrealRL.Build.cs` and modify it to match your system configuration:
@@ -247,7 +249,7 @@ Download one of the available photorealistic interior environments (for instance
 
 ```bash
 cd code/unreal_projects/RobotProject/SceneManager
-scene_manager.py -i 235553720 -v v2 -d true
+python scene_manager.py -i 235553720 -v v2 -d true
 ```
 
 A complete list of the available environments can be found in the [virtualworld-ids.json](../../unreal_projects/RobotProject/SceneManager/Data/virtualworld-ids.json) parameter file. 

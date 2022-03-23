@@ -168,8 +168,7 @@ Eigen::Vector2f ASimpleVehiclePawn::GetControlState()
 
 void ASimpleVehiclePawn::ComputeMotorTorques(float DeltaTime)
 {
-    // std::cout << "Vehicle velocity: " << this->GetVelocity().Size()*0.036
-    //           << "km/h" << std::endl; // GetVelocity() gives results in cm/s
+    // std::cout << "Vehicle velocity: " << this->GetVelocity().Size()*0.036<< "km/h" << std::endl; // GetVelocity() gives results in cm/s
     // First make sure the duty cycle is not getting above 100%. This is done
     // simillarly on the real OpenBot: (c.f.
     // https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Control.java)

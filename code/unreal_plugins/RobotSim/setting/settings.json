@@ -27,11 +27,11 @@
             },
             "ActuationParameters": {
                 "GearRatio": 50.0,
-                "MotorVelocityConstant": 130.89,
+                "MotorVelocityConstant": 65.89,
                 "ControlDeadZone": 5.0,
-                "MaximumMotorTorque": 0.1177,
-                "WindingResistance": 1.5,
-                "WindingInductance": 1.5,
+                "MaximumMotorTorque": 0.19,
+                "WindingResistance": 0.5,
+                "WindingInductance": 0.5,
                 "ActionScaling": 255,
                 "BatteryVoltage": 12.0
             },
