@@ -17,10 +17,10 @@
 
 #include "AgentController.h"
 #include "Assert.h"
+#include "Box.h"
 #include "Config.h"
 #include "RpcServer.h"
 #include "SphereAgentController.h"
-#include "Types.h"
 
 #define LOCTEXT_NAMESPACE "SimulationController"
 
@@ -60,8 +60,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 {
     ASSERT(world);
 
-    if (world->IsGameWorld())
-    {
+    if (world->IsGameWorld()) {
         // Check if world_ is valid, and if it is, we do not support mulitple Game worlds and we need to know about this. There should only be one Game World..
         ASSERT(!world_);
 
@@ -77,8 +76,7 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 {
     ASSERT(world);
 
-    if (world->IsGameWorld())
-    {
+    if (world->IsGameWorld()) {
         ASSERT(world_);
 
         // OnWorldCleanUp is called for all worlds. rpc_server_ is created only when a Game World's begin play event is launched.
@@ -112,18 +110,9 @@ void SimulationController::worldBeginPlayEventHandler()
     // SetRandomStreamSeed(Seed); // @TODO: complete this
 
     // @TODO: Read config to decide which AgentController to create
-    for (TActorIterator<AActor> ActorItr(world_, AActor::StaticClass()); ActorItr; ++ActorItr)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("%s"), *(*ActorItr)->GetName());
-        if ((*ActorItr)->GetName().Equals(TEXT("SphereAgent"), ESearchCase::IgnoreCase))
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Sphere actor found!"));
-            // create agentcontroller for this actor
-            agent_controller_ = std::make_unique<SphereAgentController>();
-            break;
-        }
+    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_NAME"}) == "SphereAgent") {
+        agent_controller_ = std::make_unique<SphereAgentController>(world_); // passing around UWorld pointer can be dangerous!
     }
-
 
     // Add separate Task class (compute reward)
 
@@ -134,13 +123,9 @@ void SimulationController::worldBeginPlayEventHandler()
     int port = Config::getValue<int>({"INTERIORSIM", "PORT"});
 
     // First argument is false because we want to start the server is asynchronous mode, otherwise it will block the gamethread from executing anything!
-    ASSERT(world_->IsGameWorld());
-
     rpc_server_ = std::make_unique<RpcServer>(is_sync, hostname, port);
     ASSERT(rpc_server_);
-
     bindFunctionsToRpcServer();
-
     rpc_server_->asyncRun(Config::getValue<int>({"INTERIORSIM", "RPC_WORKER_THREADS"})); // launch worker threads
 
 
@@ -170,8 +155,14 @@ void SimulationController::bindFunctionsToRpcServer()
         return UGameplayStatics::SetGamePaused(this->world_, false);
     });
 
-    rpc_server_->bindAsync("getEndianness", []() -> Endianness {
-        return GetEndianness();
+    rpc_server_->bindAsync("getEndianness", []() -> uint8_t {
+        enum class Endianness : uint8_t
+        {
+            LittleEndian = 0,
+            BigEndian = 1,
+        };        
+        uint32_t Num = 0x01020304;
+        return (reinterpret_cast<const char*>(&Num)[3] == 1) ? static_cast<uint8_t>(Endianness::LittleEndian) : static_cast<uint8_t>(Endianness::BigEndian);
     });
 
     rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, Box> {
@@ -184,14 +175,14 @@ void SimulationController::bindFunctionsToRpcServer()
         return this->agent_controller_.get()->getActionSpace();
     });
 
-    rpc_server_->bindAsync("applyAction", [this](std::map<std::string, std::vector<float>> ActionMap) -> void {
-        ASSERT(this->agent_controller_);
-        this->agent_controller_.get()->applyAction(ActionMap);
-    });
-
     rpc_server_->bindAsync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(this->agent_controller_);
         return this->agent_controller_.get()->getObservation();
+    });
+
+    rpc_server_->bindAsync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
+        ASSERT(this->agent_controller_);
+        this->agent_controller_.get()->applyAction(action);
     });
 }
 

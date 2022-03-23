@@ -1,9 +1,13 @@
 #pragma once
 
+#include <memory>
+
 #include <CoreMinimal.h>
 #include <Modules/ModuleManager.h>
 
-#include <memory>
+// forward declarations
+class RpcServer;
+class AgentController;
 
 class SimulationController : public IModuleInterface
 {
@@ -29,8 +33,11 @@ private:
     FDelegateHandle world_cleanup_delegate_handle_;
     FDelegateHandle world_begin_play_delegate_handle_;
 
-    std::unique_ptr<class RpcServer> rpc_server_ = nullptr;
+    // store a local reference to game world
     UWorld* world_ = nullptr;
+    
+    std::unique_ptr<RpcServer> rpc_server_ = nullptr;
+    std::unique_ptr<AgentController> agent_controller_ = nullptr;
+
     bool is_world_begin_play_executed_ = false;
-    std::unique_ptr<class AgentController> agent_controller_ = nullptr;
 };

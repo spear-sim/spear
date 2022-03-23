@@ -1,39 +1,44 @@
-from abc import ABC, abstractmethod
+from enum import Enum
+import gym
 import numpy as np
 import os
-import psutil
 from subprocess import Popen
 import sys
 import time
 from typing import Any, Dict, List, Optional
-from yacs.config import CfgNode
-from interiorsim.adaptors import RpcEndiannessType, RpcDataType, RpcAction, RpcObservation, Box
 
-from interiorsim.communicator import Communicator
+import msgpackrpc   # pip install -e code/third_party/msgpack-rpc-python
+import psutil
+from yacs.config import CfgNode
+
 from interiorsim.constants import PACKAGE_DEFAULT_CONFIG_FILE
 
-class BaseEnv(ABC):
-    @abstractmethod
-    def step(self):
-        """
-        Signals the environment to move the simulation forward
-        by one step.
-        """
+class DataType(Enum):
+    """
+    Specifies different types of Data types that is used for encoding/decoding information transferred between rpc server and client.
+    """
 
-    @abstractmethod
-    def reset(self):
-        """
-        Signals the environment to reset the simulation.
-        """
-
-    @abstractmethod
-    def close(self):
-        """
-        Signals the environment to close.
-        """
+    Boolean = 0
+    UInteger8 = 1
+    Integer8 = 2
+    UInteger16 = 3
+    Integer16 = 4
+    UInteger32 = 5
+    Integer32 = 6
+    Float32 = 7
+    Double = 8
 
 
-class InteriorSimEnv:
+class EndiannessType(Enum):
+    """
+    Different types of Endianness currently supported.
+    """
+
+    LittleEndian = 0
+    BigEndian = 1
+
+
+class InteriorSimEnv(gym.Env):
 
     def __init__(self, config: CfgNode):
 
@@ -100,18 +105,16 @@ class InteriorSimEnv:
         if config.INTERIORSIM.LAUNCH_MODE == "running_instance":
             connected = False
             try:
-                self._communicator = Communicator(
-                    ip=config.INTERIORSIM.IP,
-                    port=config.INTERIORSIM.PORT,
-                    timeout=config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
+                self._client = msgpackrpc.Client(
+                    msgpackrpc.Address(config.INTERIORSIM.IP, config.INTERIORSIM.PORT), 
+                    timeout=config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                     reconnect_limit=config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                self._communicator.ping()
+                self._ping()
                 connected = True
             except:
                 # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                 # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
-                self._communicator._client.close()
-                self._communicator._client._loop._ioloop.close()
+                self._closeConnection()
 
         # Otherwise try to connect repeatedly, since the RPC server might not have started yet
         else:
@@ -122,18 +125,16 @@ class InteriorSimEnv:
                 print(process.status())
                 # assert process.status() == "running"
                 try:
-                    self._communicator = Communicator(
-                        ip=config.INTERIORSIM.IP,
-                        port=config.INTERIORSIM.PORT,
-                        timeout_value=config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
-                        reconn_limit=config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                    self._communicator.ping()
+                    self._client = msgpackrpc.Client(
+                        msgpackrpc.Address(config.INTERIORSIM.IP, config.INTERIORSIM.PORT), 
+                        timeout=config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
+                        reconnect_limit=config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
+                    self._ping()
                     connected = True
                 except:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                     # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
-                    self._communicator._client.close()
-                    self._communicator._client._loop._ioloop.close()
+                    self._closeConnection()
                 time.sleep(config.INTERIORSIM.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
 
@@ -141,7 +142,7 @@ class InteriorSimEnv:
 
         print(f"Waiting for Unreal Environment to get ready...")
 
-    def _get_obs(self, obs: RpcObservation) -> Dict[str, np.ndarray]:
+    def _get_obs(self, obs) -> Dict[str, np.ndarray]:
         """Convert observations retrieved from Unreal Environment to a numpy array."""
 
         ret_dict: Dict[str, np.ndarray] = {}
@@ -171,10 +172,18 @@ class InteriorSimEnv:
             #         ret_dict[agent_name] = [arr]
         return ret_dict
 
+    def step():
+        pass
+
+    def reset():
+        pass
+
+    def render():
+        pass
+
     def close(self) -> None:
-        self._communicator.close()
-        self._communicator._client._loop._ioloop.close()
-        self._communicator.close_connection()
+        self._closeUnrealInstance()
+        self._closeConnection()
 
     # This function returns a config object, obtained by loading and merging a list of config
     # files in the order they appear in the config_files input argument. This function is useful
@@ -189,9 +198,9 @@ class InteriorSimEnv:
         # create a single CfgNode that will eventually contain data from all config files
         config = CfgNode(new_allowed=True)
 
-        config.merge_from_file(PACKAGE_DEFAULT_CONFIG_FILE)
+        config.merge_from_file(cfg_filename=PACKAGE_DEFAULT_CONFIG_FILE)
         for c in config_files:
-            config.merge_from_file(c)
+            config.merge_from_file(cfg_filename=c)
         config.freeze()
 
         return config
@@ -242,27 +251,109 @@ class InteriorSimEnv:
 
         return p
 
+    def _ping(self) -> bool:
+        """
+        If connection is established then this call will return true otherwise it will be blocked until timeout
+        Returns:
+            bool:
+        """
+        return self._client.call("ping")
+
+    def _echo(self, msg: str) -> str:
+        """
+        Echo a message from server. Can be used in addition to ping to test connection.
+        Args:
+            msg (string): Send a message that will be echoed back by server.
+        """
+        return self._client.call("echo", msg)
+
+    def _closeConnection(self):
+        """Close the connection with Unreal Environment."""
+        self._client.close()
+        self._client._loop._ioloop.close()
+
+    def _pause(self) -> None:
+        """
+        Pause Unreal simulation.
+        """
+        return self._client.call("pause")
+
+    def _unPause(self) -> None:
+        """
+        Unpause Unreal simulation.
+        """
+        return self._client.call("unPause")
+
+    def _isPaused(self) -> bool:
+        """
+        Returns true if the Unreal environment is paused
+        Returns:
+            bool: If the Unreal environment is paused
+        """
+        return self._client.call("isPaused")
+
+    def _getEndianness(self) -> EndiannessType:
+        return self._client.call("getEndianness")
+
+    def _closeUnrealInstance(self) -> None:
+        """
+        Close Unreal environment.
+        """
+        self._client.call("close")
+
+    def _getObservationSpace(self):
+        """
+        Retreive observation space of an agent
+        """
+        return self._client.call("getObservationSpace")
+
+    def _getActionSpace(self):
+        """
+        Retreive action space of an agent
+        """
+        return self._client.call("getActionSpace")
+
+    def _getObservation(self):
+        """
+        Retreive observation of an agent
+        Returns:
+            RpcObservation : see @RpcObservation more details about the type of ret value
+        """
+        return self._client.call("getObservation")
+
+    def _applyAction(self, action) -> None:
+        """
+        Sends action information to a particular agent in the enviroment.
+        Args:
+            action : see adators.RpcAction
+        """
+        self._client.call("applyAction", action)
+
+    def set_game_viewport_rendering_flag(self, flag: bool) -> None:
+        """
+        Args:
+            flag (bool) :   False if you don't want to render game viewport. By default UE has this flag as True
+        """
+        self._client.call("SetGameViewPortRenderingFlag", flag)
+
     @staticmethod
     def get_numpy_dtype(x):
         return {
-            RpcDataType.Boolean.value: np.dtype("?"),
-            RpcDataType.UInteger8.value: np.dtype("u1"),
-            RpcDataType.Integer8.value: np.dtype("i1"),
-            RpcDataType.UInteger16.value: np.dtype("u2"),
-            RpcDataType.Integer16.value: np.dtype("i2"),
-            RpcDataType.UInteger32.value: np.dtype("u4"),
-            RpcDataType.Integer32.value: np.dtype("i4"),
-            RpcDataType.Float32.value: np.dtype("f4"),
-            RpcDataType.Double.value: np.dtype("f8"),
+            DataType.Boolean.value: np.dtype("?"),
+            DataType.UInteger8.value: np.dtype("u1"),
+            DataType.Integer8.value: np.dtype("i1"),
+            DataType.UInteger16.value: np.dtype("u2"),
+            DataType.Integer16.value: np.dtype("i2"),
+            DataType.UInteger32.value: np.dtype("u4"),
+            DataType.Integer32.value: np.dtype("i4"),
+            DataType.Float32.value: np.dtype("f4"),
+            DataType.Double.value: np.dtype("f8"),
         }[x]
 
     @staticmethod
     def getEndianness():
         if sys.byteorder == "little":
-            return RpcEndiannessType.LittleEndian
+            return EndiannessType.LittleEndian
         elif sys.byteorder == "big":
-            return RpcEndiannessType.BigEndian
+            return EndiannessType.BigEndian
 
-    @property
-    def conn(self):
-        return self._communicator
