@@ -20,6 +20,7 @@ import os
 from unrealai.constants import PACKAGE_DEFAULT_CONFIG_FILE
 from unrealai.constants import PACKAGE_ROOT_DIR
 from unrealai.exceptions import UnrealAIException
+from unrealai.config import get_config
 import math
 from math import cos, sin, atan2, pi
 
@@ -252,7 +253,7 @@ if __name__ == "__main__":
     config_files.append("/home/qleboute/Documents/Git/unreal-ai/client/python/unrealai/user_config.yaml")
 
     # Load configs
-    config = uai.utils.get_config(config_files)
+    config = get_config(config_files)
     
     # Parse input script arguments
     parser = argparse.ArgumentParser()

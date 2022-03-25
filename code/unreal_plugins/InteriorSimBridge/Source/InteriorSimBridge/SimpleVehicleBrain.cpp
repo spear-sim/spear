@@ -169,8 +169,8 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
 
         observationVector.at(0).Copy(std::vector<float>{controlState(0), controlState(1), dist, sinYaw, cosYaw});
 
-        // Hack: 
-        if(dist < 10) // in [cm]
+        // Hack:
+        if (dist < 10) // in [cm]
         {
             hitInfo_ = UHitInfo::Goal;
         }
@@ -287,7 +287,7 @@ void USimpleVehicleBrain::OnActorHit(AActor *selfActor,
                                      const FHitResult &hitFlag)
 {
     ASSERT(otherActor != nullptr);
-    //std::cout << "##############################################"  << "    OnActorHit BRAIN    " << "##############################################" << std::endl;
+
     if (otherActor->ActorHasTag("goal"))
     {
         hitInfo_ = UHitInfo::Goal;
@@ -299,7 +299,7 @@ void USimpleVehicleBrain::OnActorHit(AActor *selfActor,
     // TODO: Does instid1227 apply to all obstacles?
     // If not, include all obstacles or provide an user interface to specify
     // obstacles
-    //else if (!otherActor->GetName().Contains(TEXT("instid1227"), ESearchCase::IgnoreCase))
+    // else if (!otherActor->GetName().Contains(TEXT("instid1227"), ESearchCase::IgnoreCase))
     //{
     //    hitInfo_ = UHitInfo::Edge;
     //}
