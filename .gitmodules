@@ -16,5 +16,5 @@
 	branch = a663a1598a4b419123b2e13c0ae6a39c91dcf5b8
 [submodule "code/third_party/asio"]
 	path = code/third_party/asio
-	url = https://github.com/chriskohlhoff/asio
+	url = https://github.com/chriskohlhoff/asio.git
 	branch = b84e6c16b2ea907dbad94206b7510d85aafc0b42
