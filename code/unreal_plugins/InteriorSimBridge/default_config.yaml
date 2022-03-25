@@ -6,7 +6,20 @@ INTERIOR_SIM_BRIDGE:
   # Allows behavior specialization of the InteriorSimBridge classes:
   # - "yaw-x-y" the observation vector is set to be the vehicle's yaw, x position and y position in the world frame.
   # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal.
-  OBSERVATION_VECTOR: "yaw-x-y"
+  OBSERVATION_VECTOR: "dist-sin-cos"
+  
+  # Reward time:
+  MAX_STEPS_PER_EPISODE: 1000
+  
+  # Reward distance gains:
+  REWARD_DISTANCE_GAIN: 0.005 # REWARD_COLLISION_GAIN/MAX_STEPS_PER_EPISODE
+  REWARD_DISTANCE_BIAS: 0.0
+  
+  # Collision score:
+  REWARD_COLLISION: 5.0
+  
+  # Goal reached:
+  REWARD_GOAL_REACHED: 2.5
 
 
   

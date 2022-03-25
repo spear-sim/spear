@@ -169,21 +169,34 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
 
         observationVector.at(0).Copy(std::vector<float>{controlState(0), controlState(1), dist, sinYaw, cosYaw});
 
+        // Hack: 
+        if(dist < 10) // in [cm]
+        {
+            hitInfo_ = UHitInfo::Goal;
+        }
+
+        // Reward function is defined based on https://github.com/isl-org/OpenBot-Distributed/blob/main/trainer/ob_agents/envs/open_bot_replay_env.py
         switch (hitInfo_)
         {
         case UHitInfo::Goal: // NOTE: so far we never get there...
-            SetCurrentReward(100);
+            // Goal reached reward:
+            AddReward(unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_GOAL_REACHED"}));
             EndEpisode();
             break;
         case UHitInfo::Edge: // NOTE: so far we never get there...
-            SetCurrentReward(-100);
+            // Obstacle penalty
+            AddReward(-unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_COLLISION"}));
             EndEpisode();
             break;
         case UHitInfo::NoHit:
-            SetCurrentReward(-dist / 100000); // TODO: set proper reward !!!!
+            // Constant timestep penalty:
+            AddReward(-1 / unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "MAX_STEPS_PER_EPISODE"}));
+            // Goal distance penalty:
+            AddReward(-dist * unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_DISTANCE_GAIN"}));
+            AddReward(-unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_DISTANCE_BIAS"}));
             break;
         default:
-            SetCurrentReward(-dist / 100000); // TODO: set proper reward !!!!
+            SetCurrentReward(0.0);
             break;
         }
     }
@@ -274,16 +287,20 @@ void USimpleVehicleBrain::OnActorHit(AActor *selfActor,
                                      const FHitResult &hitFlag)
 {
     ASSERT(otherActor != nullptr);
-
+    //std::cout << "##############################################"  << "    OnActorHit BRAIN    " << "##############################################" << std::endl;
     if (otherActor->ActorHasTag("goal"))
     {
         hitInfo_ = UHitInfo::Goal;
     }
-    // TODO: Does instid1227 apply to all obstacles?
-    // If not, include all obstacles or provide an user interface to specify
-    // obstacles
-    else if (!otherActor->GetName().Contains(TEXT("instid1227"), ESearchCase::IgnoreCase))
+    else
     {
         hitInfo_ = UHitInfo::Edge;
     }
+    // TODO: Does instid1227 apply to all obstacles?
+    // If not, include all obstacles or provide an user interface to specify
+    // obstacles
+    //else if (!otherActor->GetName().Contains(TEXT("instid1227"), ESearchCase::IgnoreCase))
+    //{
+    //    hitInfo_ = UHitInfo::Edge;
+    //}
 }

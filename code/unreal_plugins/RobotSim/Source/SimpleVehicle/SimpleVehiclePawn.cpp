@@ -299,6 +299,10 @@ void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent *HitComponent,
                                            " normal: " +
        normalImpulse.ToString(), LogDebugLevel::Informational, 30);
                                        */
+    FString hitComponent = HitComponent->GetName();
+    FString otherComponent = otherComp->GetName();
+    
+    std::cout << "    COLLISION    " <<  std::string(TCHAR_TO_UTF8(*hitComponent)) << "  ---  " << std::string(TCHAR_TO_UTF8(*otherComponent)) << std::endl;
     this->pawnEvents_.getCollisionSignal().emit(HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal, normalImpulse, hit);
 }
 
@@ -308,6 +312,7 @@ void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent *HitComponent,
                                               FVector NormalImpulse,
                                               const FHitResult &Hit)
 {
+    std::cout << "##############################################"  << "    OnComponentCollision    " << "##############################################" << std::endl;
     URobotBlueprintLib::LogMessage(FString("OnComponentCollision: ") +
                                        OtherActor->GetName(),
                                    " location: " + Hit.Location.ToString() +

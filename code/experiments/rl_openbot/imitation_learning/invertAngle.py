@@ -75,7 +75,7 @@ for folder in os.listdir(f"dataset/uploaded"):
 
         # Write the corresponding high level command into a file:
         # For imitation learning, use the latest position as a goal 
-        writer_goal.writerow( (int(array_obs[i][3]), dist/100, cosYaw, sinYaw) )
+        writer_goal.writerow( (int(array_obs[i][3]), dist/100, sinYaw, cosYaw) )
  
 
     f_goal.close()

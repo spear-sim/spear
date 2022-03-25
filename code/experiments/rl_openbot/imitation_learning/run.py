@@ -118,7 +118,7 @@ def client(args, config, folderName):
             dist = np.linalg.norm(relativePositionToTarget)
             
             # Compute robot forward axis (global coordinate system)
-            yawVehicle = array_obs[i][3];
+            yawVehicle = array_obs[i][2];
             rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
             
             forwardRotated = np.dot(rot, forward)
@@ -148,7 +148,7 @@ def client(args, config, folderName):
             
             # Write the corresponding high level command into a file:
             # For imitation learning, use the latest position as a goal 
-            writer_goal.writerow( (int(array_obs[i][5]), dist/100, cosYaw, sinYaw) )
+            writer_goal.writerow( (int(array_obs[i][5]), dist/100, sinYaw, cosYaw) )
                  
         f_ctrl.close()
         f_pose.close()
@@ -158,7 +158,7 @@ def client(args, config, folderName):
     elif learningMode == "Infer":
     
         # Load TFLite model and allocate tensors.
-        interpreter = tflite.Interpreter("/home/qleboute/Documents/Git/interiorsim/code/experiments/rl_openbot/imitation_learning/models/TestSession_1_pilot_net_lr0.0001_bz128_bn/checkpoints/realRobot.tflite")
+        interpreter = tflite.Interpreter("/home/qleboute/Documents/Git/interiorsim/code/experiments/rl_openbot/imitation_learning/models/TestSession_1_pilot_net_lr0.0001_bz96_bn/checkpoints/best-val.tflite")
         interpreter.allocate_tensors()
 
         # Get input and output tensors.
@@ -212,6 +212,21 @@ def client(args, config, folderName):
             # Send action to the agent:
             uenv.step(action={agent_name: action })
             
+            print(f"iteration {i} over {numIter}")
+            
+    elif learningMode == "Keyboard": # Just play with the keyboard while checking the observations
+    
+        for i in range(numIter):
+            
+            command_x = 0#random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
+            command_y = 0#random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
+            
+            # Send action to the agent:
+            uenv.step(action={agent_name: [ np.array([command_x,command_y]) ] })
+            
+            # Collect observation from the agent:
+            observation = uenv.get_obs_for_agent(agent_name=agent_name)
+            print(f"Reward {uenv.current_reward}")
             print(f"iteration {i} over {numIter}")
     
     else:
