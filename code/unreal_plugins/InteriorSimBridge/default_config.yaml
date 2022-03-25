@@ -4,9 +4,9 @@ INTERIOR_SIM_BRIDGE:
   USE_IMAGE_OBSERVATIONS: True
   
   # Allows behavior specialization of the InteriorSimBridge classes:
-  # - "reinforcement_learning" set the simulator to use a reinforcement learning pipeline (a goal actor required)
-  # - "imitation_learning" set the simulator to use a imitation learning pipeline 
-  ROBOTSIM_LEARNING_MODE: "imitation_learning"
+  # - "yaw-x-y" the observation vector is set to be the vehicle's yaw, x position and y position in the world frame.
+  # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal.
+  OBSERVATION_VECTOR: "yaw-x-y"
 
 
   

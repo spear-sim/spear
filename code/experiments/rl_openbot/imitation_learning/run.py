@@ -158,7 +158,7 @@ def client(args, config, folderName):
     elif learningMode == "Infer":
     
         # Load TFLite model and allocate tensors.
-        interpreter = tflite.Interpreter("/home/qleboute/Documents/Git/interiorsim/code/experiments/rl_openbot/imitation_learning/models/TestSession_1_pilot_net_lr0.0001_bz64_bn/checkpoints/best-val.tflite")
+        interpreter = tflite.Interpreter("/home/qleboute/Documents/Git/interiorsim/code/experiments/rl_openbot/imitation_learning/models/TestSession_1_pilot_net_lr0.0001_bz128_bn/checkpoints/realRobot.tflite")
         interpreter.allocate_tensors()
 
         # Get input and output tensors.
@@ -181,8 +181,7 @@ def client(args, config, folderName):
             # Collect observation from the agent:
             observation = uenv.get_obs_for_agent(agent_name=agent_name)
             img_input = np.float32(observation[1])/255
-            img_input = tf.image.crop_to_bounding_box(
-            img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
+            img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
             cmd_input[0][0] = np.float32(observation[0][2])/100
             cmd_input[0][1] = np.float32(observation[0][3])
             cmd_input[0][2] = np.float32(observation[0][4])
@@ -206,6 +205,7 @@ def client(args, config, folderName):
 
             action = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
             
+            print(cmd_input)
             print(output)
             #print(action)
             

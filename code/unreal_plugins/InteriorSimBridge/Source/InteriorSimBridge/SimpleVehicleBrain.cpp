@@ -32,7 +32,7 @@ void USimpleVehicleBrain::Init()
     // Set the observation camera:
     Controller->SetViewTarget(mainCamera_);
 
-    if(unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
     {
         // Point to the vehicle camera capture component:
         captureComponent2D_ = mainCamera_->GetSceneCaptureComponent();
@@ -74,7 +74,7 @@ void USimpleVehicleBrain::Init()
 
     unrealrl::ObservationSpec SimpleVehicleObservationSpec({5}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
 
-    if(unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
     {
         std::string CameraObservationDescription = "This observation is an egocentric RGB image.\n";
         unrealrl::ObservationSpec CameraObservationSpec({{height_, width_, 3}}, unrealrl::DataType::UInteger8, CameraObservationDescription); // HACK: should specify constants in a config file
@@ -104,7 +104,7 @@ void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action> &actionV
 {
     ASSERT(ownerPawn != nullptr);
     ASSERT(actionVector.size() == 1);
-    
+
     std::vector<float> controlState;
     controlState = actionVector.at(0).GetActions();
 
@@ -122,8 +122,8 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
     const FVector currentLocation = ownerPawn->GetActorLocation();     // Relative to global coordinate system
     const FRotator currentOrientation = ownerPawn->GetActorRotation(); // Relative to global coordinate system
     Eigen::Vector2f controlState;
-    
-    if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "ROBOTSIM_LEARNING_MODE"}) == "reinforcement_learning")
+
+    if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "dist-sin-cos")
     {
         // Get relative position to target in the global coordinate system:
         const FVector2D relativePositionToTarget(
@@ -163,9 +163,9 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
 
         // Vector observations
         controlState = ownerPawn->GetControlState(); // Fuses the actions received from the python client
-                                                  // with those received from the keyboard interface (if
-                                                  // this interface is activated in the settings.json
-                                                  // file)
+                                                     // with those received from the keyboard interface (if
+                                                     // this interface is activated in the settings.json
+                                                     // file)
 
         observationVector.at(0).Copy(std::vector<float>{controlState(0), controlState(1), dist, sinYaw, cosYaw});
 
@@ -186,31 +186,29 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
             SetCurrentReward(-dist / 100000); // TODO: set proper reward !!!!
             break;
         }
-
     }
-    if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "ROBOTSIM_LEARNING_MODE"}) == "imitation_learning")
+    else if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "yaw-x-y")
     {
-            // Get observation data
+        // Get observation data
         observationVector.resize(GetObservationSpecs().size());
 
         // Vector observations
         controlState = ownerPawn->GetControlState(); // Fuses the actions received from the python client
-                                                  // with those received from the keyboard interface (if
-                                                  // this interface is activated in the settings.json
-                                                  // file)
+                                                     // with those received from the keyboard interface (if
+                                                     // this interface is activated in the settings.json
+                                                     // file)
 
         observationVector.at(0).Copy(std::vector<float>{controlState(0), controlState(1), FMath::DegreesToRadians(currentOrientation.Yaw), currentLocation.X, currentLocation.Y});
     }
     else
     {
-       ASSERT(false);
+        ASSERT(false);
     }
-
 
     // Reset hitInfo_ .
     hitInfo_ = UHitInfo::NoHit;
 
-    if(unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
     {
         ASSERT(IsInGameThread());
 
