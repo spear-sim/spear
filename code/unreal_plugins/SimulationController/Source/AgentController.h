@@ -7,7 +7,7 @@
 // forward declarations
 struct Box;
 
-class SIMULATIONCONTROLLER_API AgentController
+class AgentController
 {
 public:
 
@@ -15,18 +15,15 @@ public:
     virtual ~AgentController() = default;
 
     virtual void applyAction(const std::map<std::string, std::vector<float>>& action) = 0;
-    virtual std::map<std::string, std::vector<uint8_t>> getObservation() = 0;
-    virtual std::map<std::string, Box> getObservationSpace() = 0;
-    virtual std::map<std::string, Box> getActionSpace() = 0;
+    virtual std::map<std::string, std::vector<uint8_t>> getObservation() const = 0;
+    virtual std::map<std::string, Box> getObservationSpace() const = 0;
+    virtual std::map<std::string, Box> getActionSpace() const = 0;
 
 protected:
 
-    /**
-     * Template function to fill @param dest with @param src.
-     * This function clears any existing data. Potentially dangerous if T is not a primitive datatype.
-     */
+    // Function returns serialized uint8_t vector by copying data from input src vector.
     template <typename T>
-    std::vector<uint8_t> serializeToUint8(const std::vector<T>& src)
+    static std::vector<uint8_t> serializeToUint8(const std::vector<T>& src)
     {
         std::vector<uint8_t> dest;
 

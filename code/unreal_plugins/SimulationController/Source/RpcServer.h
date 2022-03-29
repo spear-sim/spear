@@ -2,9 +2,7 @@
 
 #pragma once
 
-#include <chrono>
 #include <future>
-#include <memory>
 #include <string>
 #include <utility>
 
@@ -26,7 +24,7 @@ public:
     using work_guard_type = asio::executor_work_guard<asio::io_context::executor_type>;
 
     template <typename... Args>
-    explicit RpcServer(bool is_sync, Args&&... args);
+    explicit RpcServer(Args&&... args);
 
     template <typename FunctorT>
     void bindSync(const std::string& name, FunctorT&& functor);
@@ -34,34 +32,25 @@ public:
     template <typename FunctorT>
     void bindAsync(const std::string& name, FunctorT&& functor);
 
-    void asyncRun(size_t worker_threads)
+    void launchWorkerThreads(size_t worker_threads)
     {
         server_.async_run(worker_threads);
     }
 
-    void syncRun()
+    void RunSync()
     {
-        sync_io_context_.restart(); // prepare io_context for subsequent run
-        if (is_sync_mode_)
-        {
-            work_guard_.reset(new work_guard_type(sync_io_context_.get_executor()));
-        }
-        sync_io_context_.run();
+        io_context_.run();
+    }
+
+    void reinitializeIOContextAndWorkGuard()
+    {
+        io_context_.restart();
+        new(&work_guard_) work_guard_type(io_context_.get_executor());
     }
 
     void resetWorkGuard()
     {
-        work_guard_.reset();
-    }
-
-    void setSyncMode(bool is_sync)
-    {
-        is_sync_mode_ = is_sync;
-    }
-
-    bool isSyncMode() const
-    {
-        return is_sync_mode_;
+        work_guard_.reset(); // io_context is now free to return
     }
 
     /** @warning does not stop the game thread. */
@@ -72,13 +61,11 @@ public:
     }
 
 private:
-    asio::io_context sync_io_context_;
-
-    std::unique_ptr<work_guard_type> work_guard_;
-
     ::rpc::server server_;
+    
+    asio::io_context io_context_;
 
-    bool is_sync_mode_;
+    work_guard_type work_guard_;
 };
 
 namespace detail
@@ -135,7 +122,7 @@ struct FunctionWrapper<R (*)(Args...)>
 } // namespace detail
 
 template <typename... Args>
-inline RpcServer::RpcServer(bool is_sync, Args&&... args) : server_(std::forward<Args>(args)...), is_sync_mode_(is_sync)
+inline RpcServer::RpcServer(Args&&... args) : server_(std::forward<Args>(args)...), io_context_(), work_guard_(io_context_.get_executor())
 {
     // Throwing an exception will cause the server to write an error response. This call will make it also suppress the exception (note that this is not default because this behavior might hide errors in the code)
     // @Todo: Don't think this should be suppressed!!
@@ -146,7 +133,7 @@ template <typename FunctorT>
 inline void RpcServer::bindSync(const std::string& name, FunctorT&& functor)
 {
     using Wrapper = detail::FunctionWrapper<FunctorT>;
-    server_.bind(name, Wrapper::wrapSyncCall(sync_io_context_, std::forward<FunctorT>(functor)));
+    server_.bind(name, Wrapper::wrapSyncCall(io_context_, std::forward<FunctorT>(functor)));
 }
 
 template <typename FunctorT>

@@ -1,8 +1,7 @@
 import argparse
 import os
 
-from interiorsim import InteriorSimEnv
-from interiorsim.constants import PACKAGE_DEFAULT_CONFIG_FILE
+from interiorsim import config
 
 if __name__ == "__main__":
 
@@ -22,7 +21,7 @@ if __name__ == "__main__":
             config_files.append(file)
     
     # create a single CfgNode that contains data from all config files
-    config_node = InteriorSimEnv.get_config(config_files)
+    config_node = config.get_config(config_files)
 
     # Dump updated config params into a new yaml file
     output_temp_dir = os.path.join(args.output_unreal_project_dir, "Temp")

@@ -46,6 +46,8 @@ public class SimulationController : ModuleRules
                 "InputCore", // This is required for using EKeys::W, etc 
 				"CoreUObject",
                 "Engine",
+                "RHI",
+                "RenderCore",
                 // "RobotSim", // Uncomment this when using RobotSim
 				// ... add private dependencies that you statically link with here ...	
 			}

@@ -5,19 +5,11 @@ import os
 from subprocess import Popen
 import sys
 import time
-from typing import Any, Dict, List, Optional
 
 import msgpackrpc   # pip install -e code/third_party/msgpack-rpc-python
 import psutil
-from yacs.config import CfgNode
-
-from interiorsim.constants import PACKAGE_DEFAULT_CONFIG_FILE
 
 class DataType(Enum):
-    """
-    Specifies different types of Data types that is used for encoding/decoding information transferred between rpc server and client.
-    """
-
     Boolean = 0
     UInteger8 = 1
     Integer8 = 2
@@ -30,85 +22,125 @@ class DataType(Enum):
 
 
 class EndiannessType(Enum):
-    """
-    Different types of Endianness currently supported.
-    """
-
     LittleEndian = 0
     BigEndian = 1
 
 
 class InteriorSimEnv(gym.Env):
 
-    def __init__(self, config: CfgNode):
+    def __init__(self, config):
 
         super(InteriorSimEnv, self).__init__()
 
-        launch_params: List[str] = []
+        self._config = config
+
+        self._launch_executable()
+        self._connect_to_executable()
+
+        self.observation_space = self._getObservationSpace()
+        self.action_space = self._getActionSpace()
+
+    def _launch_executable(self):
+
+        if self._config.INTERIORSIM.LAUNCH_MODE == "running_instance":
+            return
+
+        launch_params = []
 
         # Get launch executable from config
-        if config.INTERIORSIM.LAUNCH_MODE == "uproject":
-            launch_executable = config.INTERIORSIM.UNREAL_EDITOR_EXECUTABLE
-            launch_params.insert(0, config.INTERIORSIM.UPROJECT) # prepend uproject file to launch params
-        elif config.INTERIORSIM.LAUNCH_MODE == "standalone_executable":
-            launch_executable = config.INTERIORSIM.STANDALONE_EXECUTABLE
+        if self._config.INTERIORSIM.LAUNCH_MODE == "uproject":
+            launch_executable = self._config.INTERIORSIM.UNREAL_EDITOR_EXECUTABLE
+            launch_params.append(self._config.INTERIORSIM.UPROJECT) # prepend uproject file to launch params
+        elif self._config.INTERIORSIM.LAUNCH_MODE == "standalone_executable":
+            launch_executable = self._config.INTERIORSIM.STANDALONE_EXECUTABLE
+        else:
+            assert False
 
-        if config.INTERIORSIM.LAUNCH_MODE != "running_instance":
-        
-            # Dump updated config params into a new yaml file
-            temp_config_file = os.path.join(os.path.abspath(config.INTERIORSIM.TEMP_DIR), "config.yaml")
-            if not os.path.exists(os.path.abspath(config.INTERIORSIM.TEMP_DIR)):
-                os.makedirs(os.path.abspath(config.INTERIORSIM.TEMP_DIR))
-            try:
-                with open(temp_config_file, "w") as output:
-                    config.dump(stream=output, default_flow_style=False)
-            except EnvironmentError as e:
-                raise Exception(e)
+        # Read params required for launching the Unreal Engine executable:
+        launch_params.append("{}".format(self._config.INTERIORSIM.MAP_ID)) # Allows convenient selection of the map to be loaded by your executable. 
+        launch_params.append("-game")
+        launch_params.append("-windowed")
+        launch_params.append("-novsync")
+        launch_params.append("-NoSound")
+        launch_params.append("-resx={}".format(self._config.INTERIORSIM.WINDOW_RESOLUTION_X))
+        launch_params.append("-resy={}".format(self._config.INTERIORSIM.WINDOW_RESOLUTION_Y))
+        launch_params.append("-graphicsadapter={}".format(self._config.INTERIORSIM.GPU_ID))
 
-            print("Starting Unreal engine...")
+        if self._config.INTERIORSIM.RENDER_OFFSCREEN:
+            launch_params.append("-RenderOffscreen")
 
-            # Read params required for launching the Unreal Engine executable:
-            launch_params.append("".format(config.INTERIORSIM.MAP_ID)) # Allows convenient selection of the map to be loaded by your executable. 
-            launch_params.append("-game")
-            launch_params.append("-windowed")
-            launch_params.append("-novsync")
-            launch_params.append("-NoSound")
-            launch_params.append("-resx={}".format(config.INTERIORSIM.WINDOW_RESOLUTION_X))
-            launch_params.append("-resy={}".format(config.INTERIORSIM.WINDOW_RESOLUTION_Y))
-            launch_params.append("-graphicsadapter={}".format(config.INTERIORSIM.GPU_ID))
-            
-            if config.INTERIORSIM.RENDER_OFFSCREEN:
-                launch_params.append("-RenderOffscreen")
+        if len(self._config.INTERIORSIM.UNREAL_INTERNAL_LOG_FILE) > 0:
+            launch_params.append("-log={}".format(self._config.INTERIORSIM.UNREAL_INTERNAL_LOG_FILE))
+       
+        # Dump updated config params into a new yaml file
+        temp_config_file = os.path.join(os.path.abspath(self._config.INTERIORSIM.TEMP_DIR), "config.yaml")
 
-            # Unreal Engine server needs to read values from this config file
-            launch_params.append("-configfile={}".format(temp_config_file))
-            
-            # Allows avoiding the "settings.json not found" error at simulation start
-            launch_params.append("-RobotSimSettingPath={}".format(config.INTERIORSIM.ROBOTSIM_SETTINGS_PATH)) 
+        # Unreal Engine server needs to read values from this config file
+        launch_params.append("-configfile={}".format(temp_config_file))
 
-            # Additional control over which Vulkan devices are recognized by Unreal
-            if len(config.INTERIORSIM.VULKAN_DEVICE_FILES) > 0:
-                os.environ["VK_ICD_FILENAMES"] = config.INTERIORSIM.VULKAN_DEVICE_FILES
+        # Append any additional command-line arguments
+        for a in self._config.INTERIORSIM.CUSTOM_COMMAND_LINE_ARGUMENTS:
+            launch_params.append("{}".format(a))
 
-            print("Launching executable with the following parameters...")
-            print(" ".join([launch_executable] + launch_params))
+        # Provides additional control over which Vulkan devices are recognized by Unreal
+        if len(self._config.INTERIORSIM.VULKAN_DEVICE_FILES) > 0:
+            print("Setting VK_ICD_FILENAMES environment variable: " + self._config.INTERIORSIM.VULKAN_DEVICE_FILES)
+            os.environ["VK_ICD_FILENAMES"] = self._config.INTERIORSIM.VULKAN_DEVICE_FILES
 
-            popen = self._start_unreal_engine(launch_executable, *launch_params)
-            process = psutil.Process(popen.pid)
+        print("Writing temp config file: " + temp_config_file)
+        if not os.path.exists(os.path.abspath(self._config.INTERIORSIM.TEMP_DIR)):
+            os.makedirs(os.path.abspath(self._config.INTERIORSIM.TEMP_DIR))
+        with open(temp_config_file, "w") as output:
+            self._config.dump(stream=output, default_flow_style=False)
 
-            print(process.status())
-            # assert process.status() == "running"
+        assert os.path.exists(launch_executable)
 
-        print("Connecting to Unreal engine...")
+        _, launch_executable_ext = os.path.splitext(launch_executable)
+
+        if sys.platform == "darwin":
+            assert launch_executable_ext == ".app"
+            launch_executable_internal_dir = os.path.join(launch_executable, "Contents", "MacOS")
+            launch_executable_internal = os.path.join(launch_executable_internal_dir, os.listdir(launch_executable_internal_dir)[0])
+        elif sys.platform == "linux":
+            assert launch_executable_ext == "" or launch_executable_ext == ".sh"
+            launch_executable_internal = launch_executable
+        elif sys.platform == "win32":
+            assert launch_executable_ext == ".exe"
+            launch_executable_internal = launch_executable
+        else:
+            assert False
+
+        assert os.path.exists(launch_executable_internal)
+
+        args = [launch_executable_internal] + launch_params
+
+        print("Launching executable with the following parameters:")
+        print(" ".join(args))
+
+        popen = Popen(args)
+        self._process = psutil.Process(popen.pid)
+
+        # See https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
+        status = self._process.status()
+        if status not in ["running", "sleeping", "disk-sleep"]:
+            print("ERROR: Unrecognized process status: " + status)
+            print("ERROR: Killing process " + str(self._process.pid) + "...")
+            self._forceKillUnrealInstance()
+            assert False
+
+
+    def _connect_to_executable(self):
+
+        print(f"Connecting to Unreal application...")
 
         # If we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
-        if config.INTERIORSIM.LAUNCH_MODE == "running_instance":
+        if self._config.INTERIORSIM.LAUNCH_MODE == "running_instance":
             connected = False
             try:
                 self._client = msgpackrpc.Client(
-                    msgpackrpc.Address(config.INTERIORSIM.IP, config.INTERIORSIM.PORT), 
-                    timeout=config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
-                    reconnect_limit=config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
+                    msgpackrpc.Address(self._config.INTERIORSIM.IP, self._config.INTERIORSIM.PORT), 
+                    timeout=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
+                    reconnect_limit=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                 self._ping()
                 connected = True
             except:
@@ -121,223 +153,130 @@ class InteriorSimEnv(gym.Env):
             connected = False
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
-            while not connected and elapsed_time_seconds < config.INTERIORSIM.RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS:
-                print(process.status())
-                # assert process.status() == "running"
+            while not connected and elapsed_time_seconds < self._config.INTERIORSIM.RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS:
+                # See https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
+                status = self._process.status()
+                if status not in ["running", "sleeping", "disk-sleep"]:
+                    print("ERROR: Unrecognized process status: " + status)
+                    print("ERROR: Killing process " + str(self._process.pid) + "...")
+                    self._forceKillUnrealInstance()
+                    assert False
                 try:
                     self._client = msgpackrpc.Client(
-                        msgpackrpc.Address(config.INTERIORSIM.IP, config.INTERIORSIM.PORT), 
-                        timeout=config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
-                        reconnect_limit=config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
+                        msgpackrpc.Address(self._config.INTERIORSIM.IP, self._config.INTERIORSIM.PORT), 
+                        timeout=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
+                        reconnect_limit=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                     self._ping()
                     connected = True
                 except:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                     # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
                     self._closeConnection()
-                time.sleep(config.INTERIORSIM.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
+                time.sleep(self._config.INTERIORSIM.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
 
-        assert connected
+        if not connected:
+            if self._self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
+                print("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
+                self._forceKillUnrealInstance()
+            assert False
 
-        print(f"Waiting for Unreal Environment to get ready...")
+    def get_observation(self, observation_component_name):
+    
+        # get shape and dtype of the observation component
+        obs_shape = tuple(x for x in self.observation_space[observation_component_name]["shape"])
+        obs_data_type = self._get_numpy_dtype(self.observation_space[observation_component_name]["dtype"])
 
-    def _get_obs(self, obs) -> Dict[str, np.ndarray]:
-        """Convert observations retrieved from Unreal Environment to a numpy array."""
+        def get_endianness():
+            if sys.byteorder == "little":
+                return EndiannessType.LittleEndian.value
+            elif sys.byteorder == "big":
+                return EndiannessType.BigEndian.value
+            
+        if self._getUnrealInstanceEndianness() == get_endianness():
+            print("1")
+            pass
+        elif self._getUnrealInstanceEndianness() == EndiannessType.BigEndian.value:
+            obs_data_type = obs_data_type.newbyteorder(">")
+            print("2")
+        elif self._getUnrealInstanceEndianness() == EndiannessType.LittleEndian.value:
+            obs_data_type = obs_data_type.newbyteorder("<")
+            print("3")
 
-        ret_dict: Dict[str, np.ndarray] = {}
+        return np.frombuffer(self._getObservation()[observation_component_name], dtype=obs_data_type, count=-1).reshape(obs_shape)
 
-        for obs_name, obs_vec in obs["ObservationsMap"].items():
-            if len(obs_vec) == 0:
-                raise Exception(f"Did not receive any observations for {obs_name}.")
+    def __del__(self):
+        try:
+            self._ping()
+        except:
+            self._forceKillUnrealInstance()
+            assert False
 
-            # go over each obs in the vector of observations returned by agent
-            # for ind, obs in enumerate(obs_vec):
-            #     oshape = tuple(x for x in self._obs_space[ind]["Shape"])
-
-            #     data_type = utils.get_numpy_dtype(self._obs_specs[agent_name][ind]["Dtype"])
-
-            #     if self._communicator.get_endianness() == utils.get_endianness():
-            #         pass
-            #     elif (self._communicator.get_endianness() == Endianness.BigEndian.value):
-            #         data_type = data_type.newbyteorder(">")
-            #     elif (self._communicator.get_endianness() == Endianness.LittleEndian.value):
-            #         data_type = data_type.newbyteorder("<")
-
-            #     arr = np.frombuffer(obs["Data"], dtype=data_type, count=-1).reshape(oshape)
-
-            #     if agent_name in ret_dict:
-            #         ret_dict[agent_name].append(arr)
-            #     else:
-            #         ret_dict[agent_name] = [arr]
-        return ret_dict
-
+    # override gym.Env member functions
     def step():
         pass
 
+    # override gym.Env member functions
     def reset():
         pass
 
+    # override gym.Env member functions
     def render():
         pass
 
-    def close(self) -> None:
+    def close(self):
         self._closeUnrealInstance()
         self._closeConnection()
 
-    # This function returns a config object, obtained by loading and merging a list of config
-    # files in the order they appear in the config_files input argument. This function is useful
-    # for loading default values from multiple different components and systems, and then
-    # overriding some of the default values with experiment-specific or user-specific overrides.
-    # Before loading any of the config files specified in config_files, all the default values
-    # required by the INTERIORSIM Python module are loaded into a top-level INTERIORSIM namespace, and
-    # can be overridden by any of the files appearing in config_files.
-    @staticmethod
-    def get_config(config_files: List[str] = []) -> CfgNode:
+    def _forceKillUnrealInstance(self):
+        self._process.terminate()
+        self._process.kill()
+        self._closeConnection()
 
-        # create a single CfgNode that will eventually contain data from all config files
-        config = CfgNode(new_allowed=True)
-
-        config.merge_from_file(cfg_filename=PACKAGE_DEFAULT_CONFIG_FILE)
-        for c in config_files:
-            config.merge_from_file(cfg_filename=c)
-        config.freeze()
-
-        return config
-
-    def _start_unreal_engine(self, binary_path: str = "", *args) -> Optional[Popen]:
-
-        if not binary_path:
-            raise Exception(f"Empty path entered. Please enter a valid path.")
-
-        if not os.path.exists(binary_path):
-            raise Exception(f"Entered path {binary_path} does not exist. Please enter a valid path.")
-
-        _, ext = os.path.splitext(binary_path)
-
-        if sys.platform == "darwin":
-            if ext != ".app":
-                raise Exception(f"The path entered contains an extension {ext} which is not an executable on {sys.platform}. Please enter a path to a valid Unreal Engine executable file.")
-            exe_path = binary_path + "/Contents/MacOS/"
-            exe_file = os.listdir(exe_path)[0]
-            try:
-                p = Popen([exe_path + exe_file, *args])
-            except OSError:
-                raise OSError(f"Could not launch the Unreal Engine executable. Please check the executable's path.")
-            except ValueError:
-                raise ValueError(f"The parameters entered to run with the executable are invalid. Please check the parameters.")
-
-        elif sys.platform == "win32":
-            if ext != ".exe":
-                raise Exception(f"The path entered contains an extension {ext} which is not an executable on {sys.platform}. Please enter a path to a valid Unreal Engine executable file.")
-            try:
-                p = Popen([binary_path, *args])
-            except OSError:
-                raise OSError(f"Could not launch the Unreal Engine executable. Please check the executable's path.")
-            except ValueError:
-                raise ValueError(f"The parameters entered to run with the executable are invalid. Please check the parameters.")
-
-        elif sys.platform == "linux":
-            if ext != "" and ext != ".sh":
-                raise Exception(f"The path entered contains an extension {ext} which is not an executable on {sys.platform}. Please enter a path to a valid Unreal Engine executable file.")
-            try:
-                p = Popen([binary_path, *args])
-            except OSError:
-                raise OSError(f"Could not launch the Unreal Engine executable. Please check the executable's path.")
-            except ValueError:
-                raise ValueError(f"The parameters entered to run with the executable are invalid. Please check the parameters.")
-        else:
-            raise Exception(f"Unknown platform detected. Make sure you are on either MacOS, Windows(64bit), or Ubuntu platform.")
-
-        return p
-
-    def _ping(self) -> bool:
-        """
-        If connection is established then this call will return true otherwise it will be blocked until timeout
-        Returns:
-            bool:
-        """
+    def _ping(self):
         return self._client.call("ping")
 
-    def _echo(self, msg: str) -> str:
-        """
-        Echo a message from server. Can be used in addition to ping to test connection.
-        Args:
-            msg (string): Send a message that will be echoed back by server.
-        """
-        return self._client.call("echo", msg)
-
     def _closeConnection(self):
-        """Close the connection with Unreal Environment."""
         self._client.close()
         self._client._loop._ioloop.close()
 
-    def _pause(self) -> None:
-        """
-        Pause Unreal simulation.
-        """
+    def _pause(self):
         return self._client.call("pause")
 
-    def _unPause(self) -> None:
-        """
-        Unpause Unreal simulation.
-        """
+    def _unPause(self):
         return self._client.call("unPause")
 
-    def _isPaused(self) -> bool:
-        """
-        Returns true if the Unreal environment is paused
-        Returns:
-            bool: If the Unreal environment is paused
-        """
+    def _isPaused(self):
         return self._client.call("isPaused")
 
-    def _getEndianness(self) -> EndiannessType:
+    def _getUnrealInstanceEndianness(self):
         return self._client.call("getEndianness")
 
-    def _closeUnrealInstance(self) -> None:
-        """
-        Close Unreal environment.
-        """
+    def _closeUnrealInstance(self):
         self._client.call("close")
 
+    def _beginTick(self):
+        return self._client.call("beginTick")
+
+    def _tick(self):
+        return self._client.call("tick")
+
+    def _endTick(self):
+        return self._client.call("endTick")
+
     def _getObservationSpace(self):
-        """
-        Retreive observation space of an agent
-        """
         return self._client.call("getObservationSpace")
 
     def _getActionSpace(self):
-        """
-        Retreive action space of an agent
-        """
         return self._client.call("getActionSpace")
 
     def _getObservation(self):
-        """
-        Retreive observation of an agent
-        Returns:
-            RpcObservation : see @RpcObservation more details about the type of ret value
-        """
         return self._client.call("getObservation")
 
-    def _applyAction(self, action) -> None:
-        """
-        Sends action information to a particular agent in the enviroment.
-        Args:
-            action : see adators.RpcAction
-        """
+    def _applyAction(self, action):
         self._client.call("applyAction", action)
 
-    def set_game_viewport_rendering_flag(self, flag: bool) -> None:
-        """
-        Args:
-            flag (bool) :   False if you don't want to render game viewport. By default UE has this flag as True
-        """
-        self._client.call("SetGameViewPortRenderingFlag", flag)
-
-    @staticmethod
-    def get_numpy_dtype(x):
+    def _get_numpy_dtype(self, x):
         return {
             DataType.Boolean.value: np.dtype("?"),
             DataType.UInteger8.value: np.dtype("u1"),
@@ -349,11 +288,3 @@ class InteriorSimEnv(gym.Env):
             DataType.Float32.value: np.dtype("f4"),
             DataType.Double.value: np.dtype("f8"),
         }[x]
-
-    @staticmethod
-    def getEndianness():
-        if sys.byteorder == "little":
-            return EndiannessType.LittleEndian
-        elif sys.byteorder == "big":
-            return EndiannessType.BigEndian
-

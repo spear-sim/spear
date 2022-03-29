@@ -16,7 +16,7 @@
 #define PPK_ASSERT_DEFAULT_LEVEL Error
 
 // Borrowed and modified the following code from
-// https://github.com/gpakosz/PPK_ASSERT. Modification: Added 'SIMULATIONCONTROLLER_API'
+// https://github.com/gpakosz/PPK_ASSERT. Modification: Added '
 // prefix to the classes, structs and functions that are used outside this
 // module.
 
@@ -276,7 +276,7 @@
     #define PPK_STATIC_ASSERT_0(expression, message) static_assert(expression, message)
   #else
     #define PPK_STATIC_ASSERT_0(expression, message)\
-      struct SIMULATIONCONTROLLER_API  PPK_ASSERT_JOIN(_ppk_static_assertion_at_line_, PPK_ASSERT_LINE)\
+      struct  PPK_ASSERT_JOIN(_ppk_static_assertion_at_line_, PPK_ASSERT_LINE)\
       {\
         ppk::assert::implementation::StaticAssertion<static_cast<bool>((expression))> PPK_ASSERT_JOIN(STATIC_ASSERTION_FAILED_AT_LINE_, PPK_ASSERT_LINE);\
       };\
@@ -294,15 +294,15 @@
     namespace implementation {
 
       template <bool>
-      struct SIMULATIONCONTROLLER_API StaticAssertion;
+      struct StaticAssertion;
 
       template <>
-      struct SIMULATIONCONTROLLER_API StaticAssertion<true>
+      struct StaticAssertion<true>
       {
       }; // StaticAssertion<true>
 
       template<int i>
-      struct SIMULATIONCONTROLLER_API StaticAssertionTest
+      struct StaticAssertionTest
       {
       }; // StaticAssertionTest<int>
 
@@ -341,9 +341,9 @@
   namespace assert {
 
   #if !defined(PPK_ASSERT_DISABLE_STL)
-    class SIMULATIONCONTROLLER_API AssertionException: public std::exception
+    class AssertionException: public std::exception
   #else
-    class SIMULATIONCONTROLLER_API AssertionException
+    class AssertionException
   #endif
     {
       public:
@@ -484,7 +484,7 @@
   #endif
 
     PPK_ASSERT_FUNCSPEC
-    AssertAction::AssertAction PPK_ASSERT_CALL SIMULATIONCONTROLLER_API handleAssert(const char* file,
+    AssertAction::AssertAction PPK_ASSERT_CALL handleAssert(const char* file,
                                                             int line,
                                                             const char* function,
                                                             const char* expression,
@@ -493,18 +493,18 @@
                                                             const char* message, ...) PPK_ASSERT_HANDLE_ASSERT_FORMAT;
 
     PPK_ASSERT_FUNCSPEC
-    AssertHandler PPK_ASSERT_CALL SIMULATIONCONTROLLER_API setAssertHandler(AssertHandler handler);
+    AssertHandler PPK_ASSERT_CALL setAssertHandler(AssertHandler handler);
 
     PPK_ASSERT_FUNCSPEC
-    void PPK_ASSERT_CALL SIMULATIONCONTROLLER_API ignoreAllAsserts(bool value);
+    void PPK_ASSERT_CALL ignoreAllAsserts(bool value);
 
     PPK_ASSERT_FUNCSPEC
-    bool PPK_ASSERT_CALL SIMULATIONCONTROLLER_API ignoreAllAsserts();
+    bool PPK_ASSERT_CALL ignoreAllAsserts();
 
   #if defined(PPK_ASSERT_CXX11)
 
     template<int level, typename T>
-    class SIMULATIONCONTROLLER_API AssertUsedWrapper
+    class AssertUsedWrapper
     {
       public:
       AssertUsedWrapper(T&& t);
@@ -541,7 +541,7 @@
   #else
 
     template<int level, typename T>
-    class SIMULATIONCONTROLLER_API AssertUsedWrapper
+    class AssertUsedWrapper
     {
       public:
       AssertUsedWrapper(const T& t);

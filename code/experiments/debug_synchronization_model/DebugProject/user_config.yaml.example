@@ -1,0 +1,9 @@
+INTERIORSIM:
+  LAUNCH_MODE: "standalone_executable"
+  STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/experiments/debug_synchronization_model/DebugProject/dist/LinuxNoEditor/DebugProject.sh"
+  TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/experiments/debug_synchronization_model/DebugProject/Temp"
+  VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
+  AGENT_NAME: "SphereAgent"
+  CUSTOM_COMMAND_LINE_ARGUMENTS:
+    - "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json"

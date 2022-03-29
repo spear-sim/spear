@@ -11,14 +11,8 @@ DISABLE_IGNORE_COMPILER_WARNINGS
 
 #include "Assert.h"
 
-class SIMULATIONCONTROLLER_API Config
+class Config
 {
-    Config() = default;
-    ~Config() = default;
-
-    // Load contents of the config file intot YAML::Node.
-    static YAML::Node config_node_;
-
 public:
     /** This function is used to initialize config_node_ when UnrealRL module is loaded. */
     static void initialize();
@@ -43,13 +37,10 @@ public:
         // Create a local copy of Config.
         YAML::Node node = config_node_;
 
-        for (size_t i = 0; i < keys.size(); ++i)
-        {
-            if (!node[keys.at(i)])
-            {
+        for (size_t i = 0; i < keys.size(); ++i) {
+            if (!node[keys.at(i)]) {
                 std::cout << "Invalid key, keys == [";
-                for (size_t j = 0; j < keys.size() - 1; ++j)
-                {
+                for (size_t j = 0; j < keys.size() - 1; ++j) {
                     std::cout << "\"" << keys.at(j) << "\", ";
                 }
                 std::cout << "\"" << keys.at(keys.size() - 1) << "\"], keys[" << i << "] is invalid." << std::endl;
@@ -63,4 +54,11 @@ public:
 
         return node.as<T>();
     }
+
+private:
+    Config() = default;
+    ~Config() = default;
+
+    // Load contents of the config file intot YAML::Node.
+    static YAML::Node config_node_;
 };

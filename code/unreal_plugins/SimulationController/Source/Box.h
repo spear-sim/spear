@@ -4,9 +4,7 @@
 
 #include "Rpclib.h"
 
-/**
- * Supported types for sending observation and action data types via msgpackrpc
- */
+// Supported types for sending observation and action data types via msgpackrpc
 enum class DataType : uint8
 {
     Boolean = 0,
@@ -21,11 +19,12 @@ enum class DataType : uint8
 };
 MSGPACK_ADD_ENUM(DataType);
 
+
 struct Box
 {
     float low;
     float high;
-    std::vector<int> shape;
+    std::vector<uint64_t> shape;
     DataType dtype;
 
     MSGPACK_DEFINE_MAP(low, high, shape, dtype);
