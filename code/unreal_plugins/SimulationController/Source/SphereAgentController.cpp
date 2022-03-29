@@ -21,7 +21,7 @@ SphereAgentController::SphereAgentController(UWorld* world)
     {
         if ((*ActorItr)->GetName().Equals(TEXT("SphereAgent"), ESearchCase::IgnoreCase)) { 
             UE_LOG(LogTemp, Warning, TEXT("Sphere actor found!"));
-            sphere_agent_ = (*ActorItr);
+            sphere_actor_ = (*ActorItr);
         }
         else if ((*ActorItr)->GetName().Equals(TEXT("ObservationCamera"), ESearchCase::IgnoreCase)) {
             UE_LOG(LogTemp, Warning, TEXT("Observation camera actor found!"));
@@ -29,7 +29,7 @@ SphereAgentController::SphereAgentController(UWorld* world)
         }
     }
 
-    ASSERT(sphere_agent_);
+    ASSERT(sphere_actor_);
     ASSERT(observation_camera_);
 
     APlayerController* Controller = world->GetFirstPlayerController();
@@ -67,18 +67,20 @@ SphereAgentController::SphereAgentController(UWorld* world)
 std::map<std::string, Box> SphereAgentController::getActionSpace() const
 {
     std::map<std::string, Box> action_space;
+    Box box;
 
-    action_space.emplace("set_location", Box());
-    action_space["set_location"].low = std::numeric_limits<float>::lowest();
-    action_space["set_location"].high = std::numeric_limits<float>::max();
-    action_space["set_location"].shape = {3};
-    action_space["set_location"].dtype = DataType::Float32;
+    box.low = std::numeric_limits<float>::lowest();
+    box.high = std::numeric_limits<float>::max();
+    box.shape = {3};
+    box.dtype = DataType::Float32;
+    action_space["set_location"] = box; // @Todo: implement move assignment operator
 
-    action_space.emplace("apply_force", Box());
-    action_space["apply_force"].low = std::numeric_limits<float>::lowest();
-    action_space["apply_force"].high = std::numeric_limits<float>::max();
-    action_space["apply_force"].shape = {1};
-    action_space["apply_force"].dtype = DataType::Float32;
+    box = Box();
+    box.low = std::numeric_limits<float>::lowest();
+    box.high = std::numeric_limits<float>::max();
+    box.shape = {1};
+    box.dtype = DataType::Float32;
+    action_space["apply_force"] = box;
 
     return action_space;
 }
@@ -119,12 +121,12 @@ void SphereAgentController::applyAction(const std::map<std::string, std::vector<
     
     if (action.count("set_location")) {
         std::vector<float> action_vec = action.at("set_location");
-        sphere_agent_->SetActorLocation(FVector(action_vec.at(0), action_vec.at(1), action_vec.at(2)));
+        sphere_actor_->SetActorLocation(FVector(action_vec.at(0), action_vec.at(1), action_vec.at(2)));
     }
 
     if (action.count("apply_force")) {
         float force = action.at("apply_force").at(0);
-        Cast<UStaticMeshComponent>(sphere_agent_->GetRootComponent())->AddForce(sphere_agent_->GetActorForwardVector() * force);
+        Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent())->AddForce(sphere_actor_->GetActorForwardVector() * force);
     }
 }
 
@@ -132,8 +134,8 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    FVector sphere_agent_location = sphere_agent_->GetActorLocation();
-    std::vector<float> src = {sphere_agent_location.X, sphere_agent_location.Y, sphere_agent_location.Z};
+    FVector sphere_actor_location = sphere_actor_->GetActorLocation();
+    std::vector<float> src = {sphere_actor_location.X, sphere_actor_location.Y, sphere_actor_location.Z};
     observation["location"] = AgentController::serializeToUint8(src);
 
     ASSERT(IsInGameThread());

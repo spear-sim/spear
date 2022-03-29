@@ -28,7 +28,7 @@ public:
 
 private:
 
-    AActor* sphere_agent_ = nullptr;
+    AActor* sphere_actor_ = nullptr;
     AActor* observation_camera_ = nullptr;
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
 };
