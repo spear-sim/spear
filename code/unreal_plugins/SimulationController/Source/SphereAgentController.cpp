@@ -119,6 +119,12 @@ void SphereAgentController::applyAction(const std::map<std::string, std::vector<
         std::cout << std::endl;
     }
     
+    // Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent())->SetPhysicsLinearVelocity(FVector(0), false);
+    // Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent())->SetPhysicsAngularVelocityInRadians(FVector(0), false);
+
+    // Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent())->GetBodyInstance()->ClearTorques();
+    // Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent())->GetBodyInstance()->ClearForces();
+
     if (action.count("set_location")) {
         std::vector<float> action_vec = action.at("set_location");
         sphere_actor_->SetActorLocation(FVector(action_vec.at(0), action_vec.at(1), action_vec.at(2)));

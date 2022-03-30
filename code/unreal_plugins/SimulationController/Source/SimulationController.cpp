@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <Engine/Engine.h>
@@ -50,10 +51,10 @@ void SimulationController::StartupModule()
     end_frame_delegate_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
     end_frame_rt_delegate_handle_ = FCoreDelegates::OnEndFrameRT.AddRaw(this, &SimulationController::endFrameRTEventHandler);
 
-    end_frame_started_executing_promise_ = std::promise<bool>();
+    end_frame_started_executing_promise_ = std::promise<void>();
     end_frame_started_executing_future_ = end_frame_started_executing_promise_.get_future();
 
-    end_frame_finished_executing_promise_ = std::promise<bool>();
+    end_frame_finished_executing_promise_ = std::promise<void>();
     end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
     
     frame_state_.store(FrameState::idle_, std::memory_order_seq_cst);
@@ -137,6 +138,7 @@ void SimulationController::worldBeginPlayEventHandler()
     rpc_server_ = std::make_unique<RpcServer>(hostname, port);
     ASSERT(rpc_server_);
     bindFunctionsToRpcServer();
+    ASSERT(Config::getValue<int>({"INTERIORSIM", "RPC_WORKER_THREADS"}) < std::thread::hardware_concurrency());
     rpc_server_->launchWorkerThreads(Config::getValue<int>({"INTERIORSIM", "RPC_WORKER_THREADS"}));
 
     // set this boolean to true since worldbeginplay executed
@@ -214,7 +216,7 @@ void SimulationController::endFrameEventHandler()
 
         std::cout << "c++: EndFrame: set end_frame_started_executing_promise_" << std::endl;
         // allow tick() to finish executing
-        end_frame_started_executing_promise_.set_value(true);
+        end_frame_started_executing_promise_.set_value();
 
         // update frame state
         frame_state_.store(FrameState::executing_post_tick_, std::memory_order_seq_cst);
@@ -239,7 +241,7 @@ void SimulationController::endFrameEventHandler()
 
         std::cout << "c++: EndFrame: set end_frame_finished_executing_promise_ and end endframe" << std::endl;
         // notify that end frame has finished executing
-        end_frame_finished_executing_promise_.set_value(true);
+        end_frame_finished_executing_promise_.set_value();
 
         std::cout << "c++: OnEndFrame: GFrameCounter " << GFrameCounter << std::endl;
         std::cout << "c++: OnEndFrame: GFrameNumber " << GFrameNumber << std::endl;
@@ -267,14 +269,6 @@ void SimulationController::bindFunctionsToRpcServer()
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
-    rpc_server_->bindAsync("pause", [this]() -> bool {
-        return UGameplayStatics::SetGamePaused(world_, true);
-    });
-
-    rpc_server_->bindAsync("unPause", [this]() -> bool {
-        return UGameplayStatics::SetGamePaused(world_, false);
-    });
-
     rpc_server_->bindAsync("isPaused", [this]() -> bool {
         return world_->GetAuthGameMode()->IsPaused();
     });
@@ -296,11 +290,11 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::idle_);
 
         // reinitialize end_frame_started_executing promise and future
-        end_frame_started_executing_promise_ = std::promise<bool>();
+        end_frame_started_executing_promise_ = std::promise<void>();
         end_frame_started_executing_future_ = end_frame_started_executing_promise_.get_future();
 
         // reinitialize end_frame_finished_executing promise and future
-        end_frame_finished_executing_promise_ = std::promise<bool>();
+        end_frame_finished_executing_promise_ = std::promise<void>();
         end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
 
         // indicate that we want the game thread to execute one frame of work
@@ -340,8 +334,10 @@ void SimulationController::bindFunctionsToRpcServer()
         std::cout << "c++: endtick---- resetted workguard and now waiting for end_frame_finished_executing_promise_ to set value" << std::endl;
         // wait here until the game thread has finished executing end_frame()
         end_frame_finished_executing_future_.wait();
-        std::cout << "c++: endtick----end_frame_finished_executing_promise_ has set value" << std::endl;
 
+        ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::idle_);
+
+        std::cout << "c++: endtick----end_frame_finished_executing_promise_ has set value" << std::endl;
         std::cout << "c++: endTick----end----------------" << std::endl;
     });
 
@@ -357,11 +353,13 @@ void SimulationController::bindFunctionsToRpcServer()
 
     rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(agent_controller_);
+        ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::executing_post_tick_);
         return agent_controller_->getObservation();
     });
 
     rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
         ASSERT(agent_controller_);
+        ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::executing_pre_tick_);
         agent_controller_->applyAction(action);
     });
 }

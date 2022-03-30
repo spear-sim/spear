@@ -55,10 +55,10 @@ private:
     std::atomic<FrameState> frame_state_;
 
     // used so tick() can wait until end_frame() has started executing before returning, reinitialized in begin_tick()
-    std::promise<bool> end_frame_started_executing_promise_;
-    std::future<bool> end_frame_started_executing_future_;
+    std::promise<void> end_frame_started_executing_promise_;
+    std::future<void> end_frame_started_executing_future_;
 
     // used so end_tick() can wait until end_frame() has finished executing before returning, reinitialized in begin_tick()
-    std::promise<bool> end_frame_finished_executing_promise_;
-    std::future<bool> end_frame_finished_executing_future_;
+    std::promise<void> end_frame_finished_executing_promise_;
+    std::future<void> end_frame_finished_executing_future_;
 };

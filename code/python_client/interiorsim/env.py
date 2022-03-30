@@ -181,6 +181,12 @@ class InteriorSimEnv(gym.Env):
                 self._forceKillUnrealInstance()
             assert False
 
+        # do one tick cyle here 
+        self._beginTick()
+        self._tick()
+        self._endTick()
+
+
     def get_observation(self, observation_component_name):
     
         # get shape and dtype of the observation component
@@ -194,34 +200,27 @@ class InteriorSimEnv(gym.Env):
                 return EndiannessType.BigEndian.value
             
         if self._getUnrealInstanceEndianness() == get_endianness():
-            print("1")
             pass
         elif self._getUnrealInstanceEndianness() == EndiannessType.BigEndian.value:
             obs_data_type = obs_data_type.newbyteorder(">")
-            print("2")
         elif self._getUnrealInstanceEndianness() == EndiannessType.LittleEndian.value:
             obs_data_type = obs_data_type.newbyteorder("<")
-            print("3")
 
         return np.frombuffer(self._getObservation()[observation_component_name], dtype=obs_data_type, count=-1).reshape(obs_shape)
 
-    def __del__(self):
-        try:
-            self._ping()
-        except:
-            self._forceKillUnrealInstance()
-            assert False
-
     # override gym.Env member functions
-    def step():
+    def step(self):
         pass
 
-    # override gym.Env member functions
-    def reset():
-        pass
+    def reset(self):
+        self._beginTick()
+        self._tick()
+        obs = self.get_observation()
+        self._endTick()
+        return obs
 
     # override gym.Env member functions
-    def render():
+    def render(self):
         pass
 
     def close(self):
@@ -239,12 +238,6 @@ class InteriorSimEnv(gym.Env):
     def _closeConnection(self):
         self._client.close()
         self._client._loop._ioloop.close()
-
-    def _pause(self):
-        return self._client.call("pause")
-
-    def _unPause(self):
-        return self._client.call("unPause")
 
     def _isPaused(self):
         return self._client.call("isPaused")
