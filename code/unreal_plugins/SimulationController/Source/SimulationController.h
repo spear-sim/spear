@@ -7,10 +7,9 @@
 #include <CoreMinimal.h>
 #include <Modules/ModuleManager.h>
 
-// forward declarations
 class RpcServer;
 class AgentController;
-enum class FrameState;
+enum class FrameState : uint8_t;
 
 class SimulationController : public IModuleInterface
 {
@@ -28,20 +27,18 @@ private:
     void bindFunctionsToRpcServer();
 
     // event handlers
+    void beginFrameEventHandler();
+    void endFrameEventHandler();
     void postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
     void worldBeginPlayEventHandler();
     void worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources);
-    void beginFrameEventHandler();
-    void endFrameEventHandler();
-    void endFrameRTEventHandler();
 
     // DelegateHandles corresponding to each event handler defined in this class
+    FDelegateHandle begin_frame_delegate_handle_;
+    FDelegateHandle end_frame_delegate_handle_;
     FDelegateHandle post_world_initialization_delegate_handle_;
     FDelegateHandle world_begin_play_delegate_handle_;
     FDelegateHandle world_cleanup_delegate_handle_;
-    FDelegateHandle begin_frame_delegate_handle_;
-    FDelegateHandle end_frame_delegate_handle_;
-    FDelegateHandle end_frame_rt_delegate_handle_;
 
     // store a local reference to a game world
     UWorld* world_ = nullptr;

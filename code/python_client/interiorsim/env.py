@@ -1,5 +1,6 @@
 from enum import Enum
 import gym
+from gym import spaces
 import numpy as np
 import os
 from subprocess import Popen
@@ -34,13 +35,45 @@ class InteriorSimEnv(gym.Env):
 
         self._config = config
 
-        self._launch_executable()
-        self._connect_to_executable()
+        self._launchExecutable()
+        self._connectToExecutable()
+        self._setupEnvironment()
 
         self.observation_space = self._getObservationSpace()
         self.action_space = self._getActionSpace()
+    
+    # TODO: add reward functionality
+    def step(self, action):
+        
+        self._beginTick()
 
-    def _launch_executable(self):
+        self._applyAction(action)
+
+        self._tick()
+
+        obs = self._getObservation()
+
+        self._endTick()
+
+        return obs
+
+    def reset(self):
+        self._beginTick()
+        # TODO: implement to bring agent to reset state
+        self._tick()
+        obs = self._getObservation()
+        self._endTick()
+        return obs
+
+    # need to override gym.Env member function
+    def render(self):
+        pass
+
+    def close(self):
+        self._closeUnrealInstance()
+        self._closeConnection()
+
+    def _launchExecutable(self):
 
         if self._config.INTERIORSIM.LAUNCH_MODE == "running_instance":
             return
@@ -129,7 +162,7 @@ class InteriorSimEnv(gym.Env):
             assert False
 
 
-    def _connect_to_executable(self):
+    def _connectToExecutable(self):
 
         print(f"Connecting to Unreal application...")
 
@@ -181,63 +214,23 @@ class InteriorSimEnv(gym.Env):
                 self._forceKillUnrealInstance()
             assert False
 
-        # do one tick cyle here 
+    def _setupEnvironment(self):
+        # do one tick cyle here to prep Unreal Engine so that we can receive valid observations
         self._beginTick()
         self._tick()
         self._endTick()
-
-
-    def get_observation(self, observation_component_name):
-    
-        # get shape and dtype of the observation component
-        obs_shape = tuple(x for x in self.observation_space[observation_component_name]["shape"])
-        obs_data_type = self._get_numpy_dtype(self.observation_space[observation_component_name]["dtype"])
-
-        def get_endianness():
-            if sys.byteorder == "little":
-                return EndiannessType.LittleEndian.value
-            elif sys.byteorder == "big":
-                return EndiannessType.BigEndian.value
-            
-        if self._getUnrealInstanceEndianness() == get_endianness():
-            pass
-        elif self._getUnrealInstanceEndianness() == EndiannessType.BigEndian.value:
-            obs_data_type = obs_data_type.newbyteorder(">")
-        elif self._getUnrealInstanceEndianness() == EndiannessType.LittleEndian.value:
-            obs_data_type = obs_data_type.newbyteorder("<")
-
-        return np.frombuffer(self._getObservation()[observation_component_name], dtype=obs_data_type, count=-1).reshape(obs_shape)
-
-    # override gym.Env member functions
-    def step(self):
-        pass
-
-    def reset(self):
-        self._beginTick()
-        self._tick()
-        obs = self.get_observation()
-        self._endTick()
-        return obs
-
-    # override gym.Env member functions
-    def render(self):
-        pass
-
-    def close(self):
-        self._closeUnrealInstance()
-        self._closeConnection()
 
     def _forceKillUnrealInstance(self):
         self._process.terminate()
         self._process.kill()
         self._closeConnection()
 
-    def _ping(self):
-        return self._client.call("ping")
-
     def _closeConnection(self):
         self._client.close()
         self._client._loop._ioloop.close()
+
+    def _ping(self):
+        return self._client.call("ping")
 
     def _isPaused(self):
         return self._client.call("isPaused")
@@ -246,7 +239,7 @@ class InteriorSimEnv(gym.Env):
         return self._client.call("getEndianness")
 
     def _closeUnrealInstance(self):
-        self._client.call("close")
+        self._client.call("exit")
 
     def _beginTick(self):
         return self._client.call("beginTick")
@@ -258,18 +251,74 @@ class InteriorSimEnv(gym.Env):
         return self._client.call("endTick")
 
     def _getObservationSpace(self):
-        return self._client.call("getObservationSpace")
+        observation_space = self._client.call("getObservationSpace")
+        if len(observation_space) == 0:
+            assert False
+        
+        # construct a dict with gym spaces
+        gym_spaces_dict = {}
 
+        for obs_name, obs_info in observation_space.items():
+            low = obs_info["low"]
+            high = obs_info["high"]
+            shape = tuple(x for x in obs_info["shape"])
+            dtype = self._getNumpyDtype(obs_info["dtype"]).type
+            gym_spaces_dict[obs_name] = spaces.Box(low, high, shape, dtype)
+
+        return spaces.Dict(gym_spaces_dict)
+
+
+    # TODO: expand functionality to support discrete action spaces
     def _getActionSpace(self):
-        return self._client.call("getActionSpace")
+        action_space = self._client.call("getActionSpace")
+        if len(action_space) == 0:
+            assert False
+        
+        # construct a dict with gym spaces
+        gym_spaces_dict = {}
+
+        for action_name, action_info in action_space.items():
+            low = action_info["low"]
+            high = action_info["high"]
+            shape = tuple(x for x in action_info["shape"])
+            dtype = self._getNumpyDtype(action_info["dtype"]).type
+            gym_spaces_dict[action_name] = spaces.Box(low, high, shape, dtype)
+
+        return spaces.Dict(gym_spaces_dict)
 
     def _getObservation(self):
-        return self._client.call("getObservation")
+        obs_dict = self._client.call("getObservation")
+        if len(obs_dict) == 0:
+            assert False
+            
+        return_obs_dict = {}
+
+        def getEndianness():
+            if sys.byteorder == "little":
+                return EndiannessType.LittleEndian.value
+            elif sys.byteorder == "big":
+                return EndiannessType.BigEndian.value
+
+        for obs_name, obs in obs_dict.items():
+            # get shape and dtype of the observation component
+            obs_shape = self.observation_space[obs_name].shape
+            obs_data_type = self.observation_space[obs_name].dtype
+
+            if self._getUnrealInstanceEndianness() == getEndianness():
+                pass
+            elif self._getUnrealInstanceEndianness() == EndiannessType.BigEndian.value:
+                obs_data_type = obs_data_type.newbyteorder(">")
+            elif self._getUnrealInstanceEndianness() == EndiannessType.LittleEndian.value:
+                obs_data_type = obs_data_type.newbyteorder("<")
+
+            return_obs_dict[obs_name] = np.frombuffer(obs, dtype=obs_data_type, count=-1).reshape(obs_shape)
+        
+        return return_obs_dict
 
     def _applyAction(self, action):
         self._client.call("applyAction", action)
 
-    def _get_numpy_dtype(self, x):
+    def _getNumpyDtype(self, x):
         return {
             DataType.Boolean.value: np.dtype("?"),
             DataType.UInteger8.value: np.dtype("u1"),

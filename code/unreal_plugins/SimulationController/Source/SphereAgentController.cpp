@@ -1,30 +1,23 @@
 #include "SphereAgentController.h"
 
-//remove
-#include <iostream>
-//this
-
 #include <map>
 #include <string>
 #include <vector>
 
-#include <Components/StaticMeshComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
+#include <Components/StaticMeshComponent.h>
 #include <Engine/TextureRenderTarget2D.h>
-
+#include <EngineUtils.h>
 
 #include "Box.h"
 
 SphereAgentController::SphereAgentController(UWorld* world)
 {
-    for (TActorIterator<AActor> ActorItr(world, AActor::StaticClass()); ActorItr; ++ActorItr)
-    {
-        if ((*ActorItr)->GetName().Equals(TEXT("SphereAgent"), ESearchCase::IgnoreCase)) { 
-            UE_LOG(LogTemp, Warning, TEXT("Sphere actor found!"));
+    for (TActorIterator<AActor> ActorItr(world, AActor::StaticClass()); ActorItr; ++ActorItr) {
+        if ((*ActorItr)->GetName().Equals(TEXT("SphereActor"), ESearchCase::IgnoreCase)) { 
             sphere_actor_ = (*ActorItr);
         }
-        else if ((*ActorItr)->GetName().Equals(TEXT("ObservationCamera"), ESearchCase::IgnoreCase)) {
-            UE_LOG(LogTemp, Warning, TEXT("Observation camera actor found!"));
+        else if ((*ActorItr)->GetName().Equals(TEXT("FirstObservationCamera"), ESearchCase::IgnoreCase)) {
             observation_camera_ = (*ActorItr);
         }
     }
@@ -32,26 +25,23 @@ SphereAgentController::SphereAgentController(UWorld* world)
     ASSERT(sphere_actor_);
     ASSERT(observation_camera_);
 
+    // Set observation active camera as active camera
     APlayerController* Controller = world->GetFirstPlayerController();
     ASSERT(Controller);
-
-    // Set active camera
     Controller->SetViewTarget(observation_camera_);
 
-    // Create SceneCaptureComponent2D and TextureRenderTarget2D
-    scene_capture_component_ = NewObject<USceneCaptureComponent2D>(observation_camera_, TEXT("SceneCaptureComponent2D"));
+    // create SceneCaptureComponent2D
+    scene_capture_component_ = NewObject<USceneCaptureComponent2D>(observation_camera_, TEXT("SceneCaptureComponent2D_1"));
     ASSERT(scene_capture_component_);
-
     scene_capture_component_->AttachToComponent(observation_camera_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
     scene_capture_component_->SetVisibility(true);
     scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
     scene_capture_component_->FOVAngle = 60.f;
     scene_capture_component_->ShowFlags.SetTemporalAA(false);
 
-    UTextureRenderTarget2D* texture_render_target_ = NewObject<UTextureRenderTarget2D>(scene_capture_component_, TEXT("TextureRenderTarget2D"));
+    // create TextureRenderTarget2D
+    texture_render_target_ = NewObject<UTextureRenderTarget2D>(scene_capture_component_, TEXT("TextureRenderTarget2D_1"));
     ASSERT(texture_render_target_);
-
-    // texture_render_target_->bHDR_DEPRECATED = false;
     texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
     texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
@@ -80,7 +70,7 @@ std::map<std::string, Box> SphereAgentController::getActionSpace() const
     box.high = std::numeric_limits<float>::max();
     box.shape = {1};
     box.dtype = DataType::Float32;
-    action_space["apply_force"] = box;
+    action_space["apply_force"] = box; // @Todo: implement move assignment operator
 
     return action_space;
 }
@@ -99,7 +89,7 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
     box = Box();
     box.low = 0;
     box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), 3};
+    box.shape = {Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), 3}; // RGB image
     box.dtype = DataType::UInteger8;
     observation_space["image"] = box;
 
@@ -108,26 +98,9 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
 
 void SphereAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
-    std::cout << "c++: Received actions!" << std::endl;
-    for (auto a : action)
-    {
-        std::cout << "Name: " << a.first << ", action: ";
-        for(auto b: a.second)
-        {
-            std::cout << b << ", ";
-        }
-        std::cout << std::endl;
-    }
-    
-    // Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent())->SetPhysicsLinearVelocity(FVector(0), false);
-    // Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent())->SetPhysicsAngularVelocityInRadians(FVector(0), false);
-
-    // Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent())->GetBodyInstance()->ClearTorques();
-    // Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent())->GetBodyInstance()->ClearForces();
-
     if (action.count("set_location")) {
         std::vector<float> action_vec = action.at("set_location");
-        sphere_actor_->SetActorLocation(FVector(action_vec.at(0), action_vec.at(1), action_vec.at(2)));
+        sphere_actor_->SetActorLocation(FVector(action_vec.at(0), action_vec.at(1), action_vec.at(2)), false, nullptr, ETeleportType::TeleportPhysics);
     }
 
     if (action.count("apply_force")) {
@@ -140,53 +113,50 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
+    // get location observation
     FVector sphere_actor_location = sphere_actor_->GetActorLocation();
     std::vector<float> src = {sphere_actor_location.X, sphere_actor_location.Y, sphere_actor_location.Z};
-    observation["location"] = AgentController::serializeToUint8(src);
-
+    observation["location"] = serializeToUint8(src);
+    
+    // get image observation
     ASSERT(IsInGameThread());
 
     FTextureRenderTargetResource* target_resource = scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
-    if (target_resource == nullptr)
-    {
+    if (target_resource == nullptr) {
         ASSERT(false, "Could not get RenderTarget Resource from GameThread!! :(");
     }
 
-    TArray<FColor> raw_pixels;
-    raw_pixels.Reset();
+    TArray<FColor> pixels;
 
     struct FReadSurfaceContext
     {
         FRenderTarget* src_render_target_;
-        TArray<FColor>* out_data_;
+        TArray<FColor>& out_data_;
         FIntRect rect_;
         FReadSurfaceDataFlags flags_;
     };
 
-    FReadSurfaceContext Context = {target_resource,  &raw_pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
+    FReadSurfaceContext context = {target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
 
     // Required for uint8 read mode
-    Context.flags_.SetLinearToGamma(false);
+    context.flags_.SetLinearToGamma(false);
 
-    ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)
-    ([Context](FRHICommandListImmediate& RHICmdList)
-    {
-        RHICmdList.ReadSurfaceData(Context.src_render_target_->GetRenderTargetTexture(), Context.rect_, *Context.out_data_, Context.flags_);
+    ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([context](FRHICommandListImmediate& RHICmdList) {
+        RHICmdList.ReadSurfaceData(context.src_render_target_->GetRenderTargetTexture(), context.rect_, context.out_data_, context.flags_);
     });
 
     FRenderCommandFence ReadPixelFence;
-    ReadPixelFence.BeginFence();
+    ReadPixelFence.BeginFence(true);
     ReadPixelFence.Wait(true);
 
-    std::vector<uint8_t> image;
-    image.resize(Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}) * Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_WIDTH"}) * 3);
+    std::vector<uint8_t> image(Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}) * Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_WIDTH"}) * 3);
 
-    for (uint32 i = 0; i < static_cast<uint32>(raw_pixels.Num()); ++i)
-    {
-        image.at(3 * i + 0) = raw_pixels[i].R;
-        image.at(3 * i + 1) = raw_pixels[i].G;
-        image.at(3 * i + 2) = raw_pixels[i].B;
+    for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
+        image.at(3 * i + 0) = pixels[i].R;
+        image.at(3 * i + 1) = pixels[i].G;
+        image.at(3 * i + 2) = pixels[i].B;
     }
+    
     observation["image"] = image;
 
     return observation;

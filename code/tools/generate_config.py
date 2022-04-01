@@ -29,8 +29,7 @@ if __name__ == "__main__":
         os.makedirs(output_temp_dir)
 
     output_config_file = os.path.join(output_temp_dir, "config.yaml")
-    try:
-        with open(output_config_file, "w") as output:
-            config_node.dump(stream=output, default_flow_style=False)
-    except EnvironmentError as e:
-        raise Exception(e)
+    with open(output_config_file, "w") as output:
+        config_node.dump(stream=output, default_flow_style=False)
+
+    print("Config file generated successfully: " + output_config_file)

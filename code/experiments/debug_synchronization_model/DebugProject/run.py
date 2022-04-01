@@ -33,10 +33,10 @@ if __name__ == "__main__":
     print(f"python: Is Game paused ? {env._isPaused()}")
 
     print("python: printing action space...")
-    print(env._getActionSpace())
+    print(env.action_space)
 
     print("python: printing observation space...")
-    print(env._getObservationSpace())
+    print(env.observation_space)
 
     #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
     # For this section, you'll have to modify SimulationController.cpp with the following changes to observe the effects:
@@ -52,10 +52,10 @@ if __name__ == "__main__":
 
     # env._tick()
 
-    # img_1 = env.get_observation("image") # will be blank image
+    # img_1 = env._getObservation()["image"] # will be blank image
 
     # env._endTick()
-    # img_2 = env.get_observation("image") # will be blank image
+    # img_2 = env._getObservation()["image"] # will be blank image
 
     # cv2.imshow("1st end frame image (should be blank)", cv2.cvtColor(img_1.astype(np.uint8), cv2.COLOR_BGR2RGB))
     # cv2.waitKey(0)
@@ -67,10 +67,10 @@ if __name__ == "__main__":
 
     # env._tick()
 
-    # img_3 = env.get_observation("image")  # will not be blank image
+    # img_3 = env._getObservation()["image"]  # will not be blank image
 
     # env._endTick()
-    # img_4 = env.get_observation("image")  # will not be blank image
+    # img_4 = env._getObservation()["image"]  # will not be blank image
 
     # cv2.imshow("2nd end frame image (should not be blank)", cv2.cvtColor(img_3.astype(np.uint8), cv2.COLOR_BGR2RGB))
     # cv2.waitKey(0)
@@ -82,10 +82,10 @@ if __name__ == "__main__":
 
     # env._tick()
 
-    # img_5 = env.get_observation("image")  # will not be blank image
+    # img_5 = env._getObservation()["image"]  # will not be blank image
 
     # env._endTick()
-    # img_6 = env.get_observation("image")  # will not be blank image
+    # img_6 = env._getObservation()["image"]  # will not be blank image
  
     # cv2.imshow("3rd end frame image (should not be blank)", cv2.cvtColor(img_5.astype(np.uint8), cv2.COLOR_BGR2RGB))
     # cv2.waitKey(0)
@@ -105,72 +105,34 @@ if __name__ == "__main__":
     env._applyAction(action)
     print(f"python: applying action set_location...{[0, 0, 20]}")
     
-    # arr = env.get_observation("location") # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
+    # arr = env._getObservation()["location"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
     # print(f"python: printing location before tick() {arr}")
 
     print(f"python: before tick---Is Game Paused? {env._isPaused()}")
     env._tick()
     print(f"python: after tick---Is Game Paused? {env._isPaused()}")
 
-    arr = env.get_observation("location")
+    arr = env._getObservation()["location"]
     print(f"python: printing location after tick() {arr}")
 
     env._endTick()
-    #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
-    # print("#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#")
 
-    # print("======================================python: applying set_location actions======================================")
-    # for i in range(5):
-    #     print("-------------------------------------------------------------------------------------------------")
-    #     env._beginTick()
-
-    #     env._applyAction({"set_location": [i*10, 0, 15]})
-    #     print(f"python: applying action...{i*10, 0, 15}")
-        
-    #     arr = env.get_observation("location")
-    #     print(f"python: before tick actor location....{arr}")
-
-    #     arr_b1 = env.get_observation("image")
-    #     arr_b2 = env.get_observation("image")
-    #     assert np.all(arr_b1 == arr_b2)
-
-    #     if i>=1:
-    #         assert np.all(arr_b2 == arr_a2)
-
-    #     env._tick()
-
-    #     arr_a1 = env.get_observation("image")
-    #     arr_a2 = env.get_observation("image")
-    #     assert np.all(arr_a1 == arr_a2)
-
-    #     assert not np.allclose(arr_a2, arr_b2)
-
-    #     arr = env.get_observation("location")
-    #     print(f"python: after tick actor location.... {arr}")
-
-    #     cv2.imshow("before tick image observation", cv2.cvtColor(arr_b2.astype(np.uint8), cv2.COLOR_BGR2RGB))
-    #     cv2.waitKey(0)
-
-    #     cv2.imshow("end tick image observation", cv2.cvtColor(arr_a2.astype(np.uint8), cv2.COLOR_BGR2RGB))
-    #     cv2.waitKey(0)
-
-    #     env._endTick()
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
     print("#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#")   
     
     print("======================================python: applying apply_force actions======================================")    
-    for i in range(10):
+    for i in range(5):
         print("-------------------------------------------------------------------------------------------------")
         env._beginTick()
 
         env._applyAction({"apply_force": [300000]})
         print(f"python: applying action of force multiplier value {300000}")
 
-        # arr = env.get_observation("location") # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
+        # arr = env._getObservation()["location"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
         # print(f"python: before tick actor location....{arr}")
 
-        # arr_b1 = env.get_observation("image") # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
-        # arr_b2 = env.get_observation("image") # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
+        # arr_b1 = env._getObservation()["image"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
+        # arr_b2 = env._getObservation()["image"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
         # assert np.all(arr_b1 == arr_b2)
 
         # if i>=1:
@@ -178,13 +140,13 @@ if __name__ == "__main__":
 
         env._tick()
 
-        arr_a1 = env.get_observation("image")
-        arr_a2 = env.get_observation("image")
+        arr_a1 = env._getObservation()["image"]
+        arr_a2 = env._getObservation()["image"]
         assert np.all(arr_a1 == arr_a2)
 
         # assert not np.allclose(arr_a2, arr_b2)
 
-        arr = env.get_observation("location")
+        arr = env._getObservation()["location"]
         print(f"python: after tick action location.... {arr}")
         
         # cv2.imshow("before tick image observation", cv2.cvtColor(arr_b2.astype(np.uint8), cv2.COLOR_BGR2RGB))
@@ -196,6 +158,19 @@ if __name__ == "__main__":
         env._endTick()
 
     cv2.destroyAllWindows()
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+    # print("#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#")
+
+    print("======================================python: applying set_location actions======================================")
+    for i in range(5):
+        print("-------------------------------------------------------------------------------------------------")
+        
+        print(f"python: applying action...{i*10, 0, 15}")
+        obs = env.step({"set_location": [i*10, 0, 15]})
+
+        print(f"python: after tick actor location.... {obs['location']}")
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
     # close your unreal executable environment gracefully
