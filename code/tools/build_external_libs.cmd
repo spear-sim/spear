@@ -16,6 +16,17 @@ if "%VisualStudioVersion%" lss "16.0" (
     goto :buildfailed_nomsg
 )
 
+REM //---------- Build rbdl -------------
+ECHO Starting cmake to build rbdl
+if exist %ROOT_DIR%\..\rbdl\build rmdir /Q /S %ROOT_DIR%\..\rbdl\build
+IF NOT EXIST %ROOT_DIR%\..\rbdl\build mkdir %ROOT_DIR%\..\rbdl\build
+cd %ROOT_DIR%\..\rbdl\build
+cmake -G"Visual Studio 16 2019" -DRBDL_BUILD_STATIC=ON -DRBDL_BUILD_ADDON_URDFREADER=ON ..
+cmake --build . --config Release
+
+if ERRORLEVEL 1 goto :buildfailed
+echo Successfully built rbdl
+
 REM //---------- Build rpclib ------------
 ECHO Starting cmake to build rpclib...
 if exist %ROOT_DIR%\..\rpclib\build rmdir /Q /S %ROOT_DIR%\..\rpclib\build
@@ -25,6 +36,7 @@ cmake -G"Visual Studio 16 2019" ..
 cmake --build . --config Release
 
 if ERRORLEVEL 1 goto :buildfailed
+echo Successfully built rpclib
 
 REM //---------- Build yaml-cpp -------------
 ECHO Starting cmake to build yaml-cpp
@@ -35,16 +47,7 @@ cmake -G"Visual Studio 16 2019" ..
 cmake --build . --config Release
 
 if ERRORLEVEL 1 goto :buildfailed
-
-REM //---------- Build rbdl -------------
-ECHO Starting cmake to build rbdl
-if exist %ROOT_DIR%\..\rbdl\build rmdir /Q /S %ROOT_DIR%\..\rbdl\build
-IF NOT EXIST %ROOT_DIR%\..\rbdl\build mkdir %ROOT_DIR%\..\rbdl\build
-cd %ROOT_DIR%\..\rbdl\build
-cmake -G"Visual Studio 16 2019" -DRBDL_BUILD_STATIC=ON -DRBDL_BUILD_ADDON_URDFREADER=ON ..
-cmake --build . --config Release
-
-if ERRORLEVEL 1 goto :buildfailed
+echo Successfully built yaml-cpp
 
 exit /b 0
 

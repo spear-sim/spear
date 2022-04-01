@@ -20,8 +20,39 @@ if version_less_than_equal_to $cmake_ver $MIN_CMAKE_VERSION; then
     echo "Required version of cmake is $MIN_CMAKE_VERSION. You have $cmake_ver. Please install the required cmake version and try again."
     exit 1
 else
-    echo "Already have good version of cmake: $cmake_ver"
+    echo "cmake version: $cmake_ver is good to proceed."
 fi
+
+echo "Now building rbdl..."
+
+#rbdl
+#compile lib
+pushd ../rbdl > /dev/null
+
+if [ -d build ]; then
+    rm -rf build
+fi
+
+mkdir build
+
+pushd ./build > /dev/null
+
+if [ "$(uname)" == "Linux" ]
+then
+    export CC=clang
+    export CXX=clang++
+    cmake -D CMAKE_BUILD_TYPE=Release -D RBDL_BUILD_STATIC=ON -D RBDL_BUILD_ADDON_URDFREADER=ON -D CMAKE_CXX_COMPILER="clang++" -D CMAKE_CXX_FLAGS="-fPIC -stdlib=libc++" ..
+else
+    cmake -D CMAKE_BUILD_TYPE=Release -D RBDL_BUILD_STATIC=ON -D RBDL_BUILD_ADDON_URDFREADER=ON ..
+fi
+
+cmake --build . --
+
+popd >/dev/null # rbdl build
+popd >/dev/null # rbdl
+
+echo "Successfully built rbdl!"
+echo "Now building rpclib..."
 
 #rpclib
 #compile lib
@@ -49,6 +80,9 @@ cmake --build . --
 popd >/dev/null # rpclib build
 popd >/dev/null # rpclib
 
+echo "Successfully built rpclib!"
+echo "Now building yaml-cpp..."
+
 #yaml-cpp
 #compile lib
 pushd ../yaml-cpp > /dev/null
@@ -75,31 +109,7 @@ cmake --build . --
 popd >/dev/null # yaml-cpp build
 popd >/dev/null # yaml-cpp
 
-#rbdl
-#compile lib
-pushd ../rbdl > /dev/null
-
-if [ -d build ]; then
-    rm -rf build
-fi
-
-mkdir build
-
-pushd ./build > /dev/null
-
-if [ "$(uname)" == "Linux" ]
-then
-    export CC=clang
-    export CXX=clang++
-    cmake -D CMAKE_BUILD_TYPE=Release -D RBDL_BUILD_STATIC=ON -D RBDL_BUILD_ADDON_URDFREADER=ON -D CMAKE_CXX_COMPILER="clang++" -D CMAKE_CXX_FLAGS="-fPIC -stdlib=libc++" ..
-else
-    cmake -D CMAKE_BUILD_TYPE=Release -D RBDL_BUILD_STATIC=ON -D RBDL_BUILD_ADDON_URDFREADER=ON ..
-fi
-
-cmake --build . --
-
-popd >/dev/null # rbdl build
-popd >/dev/null # rbdl
+echo "Successfully built yaml-cpp!"
 
 popd >/dev/null # ${SCRIPT_DIR}
 
