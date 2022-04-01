@@ -2,6 +2,7 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
@@ -57,20 +58,20 @@ SphereAgentController::SphereAgentController(UWorld* world)
 std::map<std::string, Box> SphereAgentController::getActionSpace() const
 {
     std::map<std::string, Box> action_space;
+    
     Box box;
-
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
     box.shape = {3};
     box.dtype = DataType::Float32;
-    action_space["set_location"] = box; // @Todo: implement move assignment operator
+    action_space["set_location"] = std::move(box); // @Todo: implement move assignment operator
 
     box = Box();
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
     box.shape = {1};
     box.dtype = DataType::Float32;
-    action_space["apply_force"] = box; // @Todo: implement move assignment operator
+    action_space["apply_force"] = std::move(box); // @Todo: implement move assignment operator
 
     return action_space;
 }
@@ -84,14 +85,14 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
     box.high = std::numeric_limits<float>::max();
     box.shape = {3};
     box.dtype = DataType::Float32;
-    observation_space["location"] = box;
+    observation_space["location"] = std::move(box);
 
     box = Box();
     box.low = 0;
     box.high = 255;
     box.shape = {Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), 3}; // RGB image
     box.dtype = DataType::UInteger8;
-    observation_space["image"] = box;
+    observation_space["image"] = std::move(box);
 
     return observation_space;
 }

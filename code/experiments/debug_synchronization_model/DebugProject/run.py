@@ -52,10 +52,10 @@ if __name__ == "__main__":
 
     # env._tick()
 
-    # img_1 = env._getObservation()["image"] # will be blank image
+    # img_1 = env._getObservation()["camera_1_image"] # will be blank image
 
     # env._endTick()
-    # img_2 = env._getObservation()["image"] # will be blank image
+    # img_2 = env._getObservation()["camera_1_image"] # will be blank image
 
     # cv2.imshow("1st end frame image (should be blank)", cv2.cvtColor(img_1.astype(np.uint8), cv2.COLOR_BGR2RGB))
     # cv2.waitKey(0)
@@ -67,10 +67,10 @@ if __name__ == "__main__":
 
     # env._tick()
 
-    # img_3 = env._getObservation()["image"]  # will not be blank image
+    # img_3 = env._getObservation()["camera_1_image"]  # will not be blank image
 
     # env._endTick()
-    # img_4 = env._getObservation()["image"]  # will not be blank image
+    # img_4 = env._getObservation()["camera_1_image"]  # will not be blank image
 
     # cv2.imshow("2nd end frame image (should not be blank)", cv2.cvtColor(img_3.astype(np.uint8), cv2.COLOR_BGR2RGB))
     # cv2.waitKey(0)
@@ -82,10 +82,10 @@ if __name__ == "__main__":
 
     # env._tick()
 
-    # img_5 = env._getObservation()["image"]  # will not be blank image
+    # img_5 = env._getObservation()["camera_1_image"]  # will not be blank image
 
     # env._endTick()
-    # img_6 = env._getObservation()["image"]  # will not be blank image
+    # img_6 = env._getObservation()["camera_1_image"]  # will not be blank image
  
     # cv2.imshow("3rd end frame image (should not be blank)", cv2.cvtColor(img_5.astype(np.uint8), cv2.COLOR_BGR2RGB))
     # cv2.waitKey(0)
@@ -131,8 +131,8 @@ if __name__ == "__main__":
         # arr = env._getObservation()["location"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
         # print(f"python: before tick actor location....{arr}")
 
-        # arr_b1 = env._getObservation()["image"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
-        # arr_b2 = env._getObservation()["image"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
+        # arr_b1 = env._getObservation()["camera_1_image"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
+        # arr_b2 = env._getObservation()["camera_1_image"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
         # assert np.all(arr_b1 == arr_b2)
 
         # if i>=1:
@@ -140,8 +140,8 @@ if __name__ == "__main__":
 
         env._tick()
 
-        arr_a1 = env._getObservation()["image"]
-        arr_a2 = env._getObservation()["image"]
+        arr_a1 = env._getObservation()["camera_1_image"]
+        arr_a2 = env._getObservation()["camera_1_image"]
         assert np.all(arr_a1 == arr_a2)
 
         # assert not np.allclose(arr_a2, arr_b2)

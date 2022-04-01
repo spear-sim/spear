@@ -6,7 +6,7 @@
 
 struct Box;
 
-class AgentController
+class SIMULATIONCONTROLLER_API AgentController
 {
 public:
 

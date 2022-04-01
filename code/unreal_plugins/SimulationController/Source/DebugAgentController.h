@@ -1,3 +1,4 @@
+// This is useful only when this Plugin is used with interiorsim/code/experiments/debug_synchronization_model/DebugProject as the actors referred to in this file are available only in DebugProject.
 #pragma once
 
 #include <map>
