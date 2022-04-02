@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 
 from interiorsim import config
-from interiorsim import InteriorSimEnv
+from interiorsim import Env
 
 if __name__ == "__main__":
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # load configs
     config = config.get_config(config_files)
 
-    env = InteriorSimEnv(config)
+    env = Env(config)
 
     print("python: pinging...")
     print(f"python: Is Game paused ? {env._isPaused()}")

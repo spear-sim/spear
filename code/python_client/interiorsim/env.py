@@ -27,32 +27,30 @@ class EndiannessType(Enum):
     BigEndian = 1
 
 
-class InteriorSimEnv(gym.Env):
+class Env(gym.Env):
 
     def __init__(self, config):
 
-        super(InteriorSimEnv, self).__init__()
+        super(Env, self).__init__()
 
         self._config = config
 
-        self._launchExecutable()
-        self._connectToExecutable()
-        self._setupEnvironment()
+        self._requestUnrealInstanceLaunch()
+        self._connectToUnrealInstance()
+        self._initializeUnrealInstance()
 
         self.observation_space = self._getObservationSpace()
         self.action_space = self._getActionSpace()
+
+        self.unreal_engine_instance_endianness = self._getUnrealInstanceEndianness()
     
     # TODO: add reward functionality
     def step(self, action):
         
         self._beginTick()
-
         self._applyAction(action)
-
         self._tick()
-
         obs = self._getObservation()
-
         self._endTick()
 
         return obs
@@ -71,9 +69,9 @@ class InteriorSimEnv(gym.Env):
 
     def close(self):
         self._closeUnrealInstance()
-        self._closeConnection()
+        self._closeClientServerConnection()
 
-    def _launchExecutable(self):
+    def _requestUnrealInstanceLaunch(self):
 
         if self._config.INTERIORSIM.LAUNCH_MODE == "running_instance":
             return
@@ -159,10 +157,11 @@ class InteriorSimEnv(gym.Env):
             print("ERROR: Unrecognized process status: " + status)
             print("ERROR: Killing process " + str(self._process.pid) + "...")
             self._forceKillUnrealInstance()
+            self._closeClientServerConnection()
             assert False
 
 
-    def _connectToExecutable(self):
+    def _connectToUnrealInstance(self):
 
         print(f"Connecting to Unreal application...")
 
@@ -179,7 +178,7 @@ class InteriorSimEnv(gym.Env):
             except:
                 # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                 # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
-                self._closeConnection()
+                self._closeClientServerConnection()
 
         # Otherwise try to connect repeatedly, since the RPC server might not have started yet
         else:
@@ -193,6 +192,7 @@ class InteriorSimEnv(gym.Env):
                     print("ERROR: Unrecognized process status: " + status)
                     print("ERROR: Killing process " + str(self._process.pid) + "...")
                     self._forceKillUnrealInstance()
+                    self._closeClientServerConnection()
                     assert False
                 try:
                     self._client = msgpackrpc.Client(
@@ -204,7 +204,7 @@ class InteriorSimEnv(gym.Env):
                 except:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                     # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
-                    self._closeConnection()
+                    self._closeClientServerConnection()
                 time.sleep(self._config.INTERIORSIM.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
 
@@ -212,9 +212,10 @@ class InteriorSimEnv(gym.Env):
             if self._self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
                 print("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
                 self._forceKillUnrealInstance()
+                self._closeClientServerConnection()
             assert False
 
-    def _setupEnvironment(self):
+    def _initializeUnrealInstance(self):
         # do one tick cyle here to prep Unreal Engine so that we can receive valid observations
         self._beginTick()
         self._tick()
@@ -223,11 +224,23 @@ class InteriorSimEnv(gym.Env):
     def _forceKillUnrealInstance(self):
         self._process.terminate()
         self._process.kill()
-        self._closeConnection()
 
-    def _closeConnection(self):
+    def _closeClientServerConnection(self):
         self._client.close()
         self._client._loop._ioloop.close()
+    
+    def _getNumpyDtype(self, x):
+        return {
+            DataType.Boolean.value: np.dtype("?"),
+            DataType.UInteger8.value: np.dtype("u1"),
+            DataType.Integer8.value: np.dtype("i1"),
+            DataType.UInteger16.value: np.dtype("u2"),
+            DataType.Integer16.value: np.dtype("i2"),
+            DataType.UInteger32.value: np.dtype("u4"),
+            DataType.Integer32.value: np.dtype("i4"),
+            DataType.Float32.value: np.dtype("f4"),
+            DataType.Double.value: np.dtype("f8"),
+        }[x]
 
     def _ping(self):
         return self._client.call("ping")
@@ -239,7 +252,7 @@ class InteriorSimEnv(gym.Env):
         return self._client.call("getEndianness")
 
     def _closeUnrealInstance(self):
-        self._client.call("exit")
+        self._client.call("close")
 
     def _beginTick(self):
         return self._client.call("beginTick")
@@ -304,11 +317,11 @@ class InteriorSimEnv(gym.Env):
             obs_shape = self.observation_space[obs_name].shape
             obs_data_type = self.observation_space[obs_name].dtype
 
-            if self._getUnrealInstanceEndianness() == getEndianness():
+            if self.unreal_engine_instance_endianness == getEndianness():
                 pass
-            elif self._getUnrealInstanceEndianness() == EndiannessType.BigEndian.value:
+            elif self.unreal_engine_instance_endianness == EndiannessType.BigEndian.value:
                 obs_data_type = obs_data_type.newbyteorder(">")
-            elif self._getUnrealInstanceEndianness() == EndiannessType.LittleEndian.value:
+            elif self.unreal_engine_instance_endianness == EndiannessType.LittleEndian.value:
                 obs_data_type = obs_data_type.newbyteorder("<")
 
             return_obs_dict[obs_name] = np.frombuffer(obs, dtype=obs_data_type, count=-1).reshape(obs_shape)
@@ -317,16 +330,3 @@ class InteriorSimEnv(gym.Env):
 
     def _applyAction(self, action):
         self._client.call("applyAction", action)
-
-    def _getNumpyDtype(self, x):
-        return {
-            DataType.Boolean.value: np.dtype("?"),
-            DataType.UInteger8.value: np.dtype("u1"),
-            DataType.Integer8.value: np.dtype("i1"),
-            DataType.UInteger16.value: np.dtype("u2"),
-            DataType.Integer16.value: np.dtype("i2"),
-            DataType.UInteger32.value: np.dtype("u4"),
-            DataType.Integer32.value: np.dtype("i4"),
-            DataType.Float32.value: np.dtype("f4"),
-            DataType.Double.value: np.dtype("f8"),
-        }[x]

@@ -1,1 +1,1 @@
-from interiorsim.env import InteriorSimEnv
+from interiorsim.env import Env

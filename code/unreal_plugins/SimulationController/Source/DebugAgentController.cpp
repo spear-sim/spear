@@ -10,8 +10,9 @@
 #include <Engine/TextureRenderTarget2D.h>
 #include <EngineUtils.h>
 
-
+#include "Assert.h"
 #include "Box.h"
+#include "Config.h"
 
 DebugAgentController::DebugAgentController(UWorld* world)
 {

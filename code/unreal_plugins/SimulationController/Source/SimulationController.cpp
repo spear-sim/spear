@@ -25,11 +25,11 @@
 // different possible frame states for thread synchronization
 enum class FrameState : uint8_t
 {
-    idle,
-    request_pre_tick,
-    executing_pre_tick,
-    executing_tick,
-    executing_post_tick
+    Idle,
+    RequestPreTick,
+    ExecutingPreTick,
+    ExecutingTick,
+    ExecutingPostTick
 };
 
 void SimulationController::StartupModule()
@@ -54,7 +54,7 @@ void SimulationController::StartupModule()
     end_frame_finished_executing_promise_ = std::promise<void>();
     end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
     
-    frame_state_.store(FrameState::idle, std::memory_order_seq_cst);
+    frame_state_ = FrameState::Idle;
 }
 
 void SimulationController::ShutdownModule()
@@ -137,8 +137,7 @@ void SimulationController::worldBeginPlayEventHandler()
     
     bindFunctionsToRpcServer();
     
-    ASSERT(Config::getValue<int>({"INTERIORSIM", "RPC_WORKER_THREADS"}) < std::thread::hardware_concurrency());
-    rpc_server_->launchWorkerThreads(Config::getValue<int>({"INTERIORSIM", "RPC_WORKER_THREADS"}));
+    rpc_server_->launchWorkerThreads(1u);
 
     is_world_begin_play_executed_ = true;
 }
@@ -170,10 +169,11 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
 void SimulationController::beginFrameEventHandler()
 {
-    // if beginTick() has indicated (via request_pre_tick framestate) that we should execute a frame of work
-    if (frame_state_.load(std::memory_order_seq_cst) == FrameState::request_pre_tick) {
+    // if beginTick() has indicated (via RequestPreTick framestate) that we should execute a frame of work
+    if (frame_state_ == FrameState::RequestPreTick) {
+
         // update frame state
-        frame_state_.store(FrameState::executing_pre_tick, std::memory_order_seq_cst);
+        frame_state_ = FrameState::ExecutingPreTick;
 
         // unpause the game
         UGameplayStatics::SetGamePaused(world_, false);
@@ -185,22 +185,19 @@ void SimulationController::beginFrameEventHandler()
         rpc_server_->reinitializeIOContextAndWorkGuard();
 
         // update frame state so that end frame can execute
-        frame_state_.store(FrameState::executing_tick, std::memory_order_seq_cst);
+        frame_state_ = FrameState::ExecutingTick;
     }
 }
 
 void SimulationController::endFrameEventHandler()
 {
-    if (frame_state_.load(std::memory_order_seq_cst) == FrameState::executing_tick) {
+    if (frame_state_ == FrameState::ExecutingTick) {
+
+        // update frame state so that endTick() can execute successfully
+        frame_state_ = FrameState::ExecutingPostTick;
 
         // allow tick() to finish executing
         end_frame_started_executing_promise_.set_value();
-
-        // update frame state so that endTick() can execute successfully
-        frame_state_.store(FrameState::executing_post_tick, std::memory_order_seq_cst);
-
-        // pause the game
-        UGameplayStatics::SetGamePaused(world_, true);
 
         // execute all post-tick sync work, wait here for endTick() to reset work guard
         rpc_server_->RunSync();
@@ -208,8 +205,11 @@ void SimulationController::endFrameEventHandler()
         // reinitialze the io_context and work guard after runSync to prepare for next run
         rpc_server_->reinitializeIOContextAndWorkGuard();
 
+        // pause the game
+        UGameplayStatics::SetGamePaused(world_, true);
+
         // update frame state so that beginTick() can execute successfully
-        frame_state_.store(FrameState::idle, std::memory_order_seq_cst);
+        frame_state_ = FrameState::Idle;
 
         // notify that end frame has finished executing so that endTick() can finish executing
         end_frame_finished_executing_promise_.set_value();
@@ -222,7 +222,7 @@ void SimulationController::bindFunctionsToRpcServer()
         return "received ping";
     });
 
-    rpc_server_->bindAsync("exit", []() -> void {
+    rpc_server_->bindAsync("close", []() -> void {
         constexpr bool immediate_shutdown = false;
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
@@ -242,7 +242,7 @@ void SimulationController::bindFunctionsToRpcServer()
     });
 
     rpc_server_->bindAsync("beginTick", [this]() -> void {
-        ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::idle);
+        ASSERT(frame_state_ == FrameState::Idle);
 
         // reinitialize end_frame_started_executing promise and future
         end_frame_started_executing_promise_ = std::promise<void>();
@@ -253,11 +253,11 @@ void SimulationController::bindFunctionsToRpcServer()
         end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
 
         // indicate that we want the game thread to execute one frame of work
-        frame_state_.store(FrameState::request_pre_tick, std::memory_order_seq_cst);
+        frame_state_ = FrameState::RequestPreTick;
     });
 
     rpc_server_->bindAsync("tick", [this]() -> void {
-        ASSERT((frame_state_.load(std::memory_order_seq_cst) == FrameState::executing_pre_tick) || (frame_state_.load(std::memory_order_seq_cst) == FrameState::request_pre_tick));
+        ASSERT((frame_state_ == FrameState::ExecutingPreTick) || (frame_state_ == FrameState::RequestPreTick));
 
         // indicate that we want the game thread to stop blocking in begin_frame()
         rpc_server_->resetWorkGuard();
@@ -265,11 +265,11 @@ void SimulationController::bindFunctionsToRpcServer()
         // wait here until the game thread has started executing end_frame()
         end_frame_started_executing_future_.wait();
 
-        ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::executing_post_tick);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
     });
 
     rpc_server_->bindAsync("endTick", [this]() -> void {
-        ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::executing_post_tick);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
         // indicate that we want the game thread to stop blocking in end_frame()
         rpc_server_->resetWorkGuard();
@@ -277,7 +277,7 @@ void SimulationController::bindFunctionsToRpcServer()
         // wait here until the game thread has finished executing end_frame()
         end_frame_finished_executing_future_.wait();
 
-        ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::idle);
+        ASSERT(frame_state_ == FrameState::Idle);
     });
 
     rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, Box> {
@@ -292,13 +292,13 @@ void SimulationController::bindFunctionsToRpcServer()
 
     rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(agent_controller_);
-        ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::executing_post_tick);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         return agent_controller_->getObservation();
     });
 
     rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
         ASSERT(agent_controller_);
-        ASSERT(frame_state_.load(std::memory_order_seq_cst) == FrameState::executing_pre_tick);
+        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         agent_controller_->applyAction(action);
     });
 }
