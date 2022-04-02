@@ -17,16 +17,16 @@
 DebugAgentController::DebugAgentController(UWorld* world)
 {
     for (TActorIterator<AActor> ActorItr(world, AActor::StaticClass()); ActorItr; ++ActorItr) {
-        if ((*ActorItr)->GetName().Equals(TEXT("SphereActor"), ESearchCase::IgnoreCase)) { 
+        if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "ACTOR_NAME"}).c_str(), ESearchCase::IgnoreCase)) { 
             UE_LOG(LogTemp, Warning, TEXT("Sphere actor found!"));
             sphere_actor_ = (*ActorItr);
         }
-        else if ((*ActorItr)->GetName().Equals(TEXT("FirstObservationCamera"), ESearchCase::IgnoreCase)) {
-            UE_LOG(LogTemp, Warning, TEXT("Debug camera 1 actor found!"));
+        else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
+            UE_LOG(LogTemp, Warning, TEXT("Observation camera 1 actor found!"));
             first_observation_camera_ = (*ActorItr);
         }
-        else if ((*ActorItr)->GetName().Equals(TEXT("SecondObservationCamera"), ESearchCase::IgnoreCase)) {
-            UE_LOG(LogTemp, Warning, TEXT("Debug camera 2 actor found!"));
+        else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
+            UE_LOG(LogTemp, Warning, TEXT("Observation camera 2 actor found!"));
             second_observation_camera_ = (*ActorItr);
         }
     }
@@ -52,7 +52,7 @@ DebugAgentController::DebugAgentController(UWorld* world)
     texture_render_target_ = NewObject<UTextureRenderTarget2D>(first_scene_capture_component_, TEXT("TextureRenderTarget2D_1"));
     ASSERT(texture_render_target_);
     // texture_render_target_->bHDR_DEPRECATED = false;
-    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
+    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
     texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
     texture_render_target_->TargetGamma = 1;
@@ -75,7 +75,7 @@ DebugAgentController::DebugAgentController(UWorld* world)
     texture_render_target_ = NewObject<UTextureRenderTarget2D>(second_scene_capture_component_, TEXT("TextureRenderTarget2D_2"));
     ASSERT(texture_render_target_);
     // texture_render_target_->bHDR_DEPRECATED = false;
-    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
+    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
     texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
     texture_render_target_->TargetGamma = 1;
@@ -122,14 +122,14 @@ std::map<std::string, Box> DebugAgentController::getObservationSpace() const
     box = Box();
     box.low = 0;
     box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), 3};
+    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}), 3};
     box.dtype = DataType::UInteger8;
     observation_space["camera_1_image"] = std::move(box);
 
     box = Box();
     box.low = 0;
     box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), 3};
+    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}), 3};
     box.dtype = DataType::UInteger8;
     observation_space["camera_2_image"] = std::move(box);
 
@@ -201,7 +201,7 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
     ReadPixelFence.BeginFence(true);
     ReadPixelFence.Wait(true);
 
-    std::vector<uint8_t> image(Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}) * Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_WIDTH"}) * 3);
+    std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}) * Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}) * 3);
     for (uint32 i = 0; i < static_cast<uint32>(raw_pixels.Num()); ++i)
     {
         image.at(3 * i + 0) = raw_pixels[i].R;
@@ -236,7 +236,7 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
     ReadPixelFence.Wait(true);
 
     image.clear();
-    image.resize(Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}) * Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_WIDTH"}) * 3);
+    image.resize(Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}) * Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}) * 3);
 
     for (uint32 i = 0; i < static_cast<uint32>(raw_pixels.Num()); ++i)
     {

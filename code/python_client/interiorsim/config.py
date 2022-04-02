@@ -1,6 +1,7 @@
+import os
 from yacs.config import CfgNode, load_cfg
 
-from interiorsim.constants import PACKAGE_DEFAULT_CONFIG_FILE
+from interiorsim.constants import PACKAGE_DEFAULT_CONFIG_FILE, PACKAGE_ROOT_DIR
 
 
 # This function returns a config object, obtained by loading and merging a list of config
@@ -16,6 +17,7 @@ def get_config(config_files):
     config = CfgNode(new_allowed=True)
 
     config.merge_from_file(PACKAGE_DEFAULT_CONFIG_FILE)
+    config.merge_from_file(os.path.join(PACKAGE_ROOT_DIR, "..", "..", "unreal_plugins", "SimulationController", "default_config.yaml"))
     for c in config_files:
         config.merge_from_file(c)
     config.freeze()

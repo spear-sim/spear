@@ -17,10 +17,10 @@
 SphereAgentController::SphereAgentController(UWorld* world)
 {
     for (TActorIterator<AActor> ActorItr(world, AActor::StaticClass()); ActorItr; ++ActorItr) {
-        if ((*ActorItr)->GetName().Equals(TEXT("SphereActor"), ESearchCase::IgnoreCase)) { 
+        if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "ACTOR_NAME"}).c_str(), ESearchCase::IgnoreCase)) { 
             sphere_actor_ = (*ActorItr);
         }
-        else if ((*ActorItr)->GetName().Equals(TEXT("FirstObservationCamera"), ESearchCase::IgnoreCase)) {
+        else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
             observation_camera_ = (*ActorItr);
         }
     }
@@ -45,7 +45,7 @@ SphereAgentController::SphereAgentController(UWorld* world)
     // create TextureRenderTarget2D
     texture_render_target_ = NewObject<UTextureRenderTarget2D>(scene_capture_component_, TEXT("TextureRenderTarget2D_1"));
     ASSERT(texture_render_target_);
-    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
+    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
     texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
     texture_render_target_->TargetGamma = 1;
@@ -92,7 +92,7 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
     box = Box();
     box.low = 0;
     box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"DEBUG_PROJECT", "IMAGE_WIDTH"}), 3}; // RGB image
+    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_WIDTH"}), 3}; // RGB image
     box.dtype = DataType::UInteger8;
     observation_space["image"] = std::move(box);
 
@@ -152,7 +152,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     ReadPixelFence.BeginFence(true);
     ReadPixelFence.Wait(true);
 
-    std::vector<uint8_t> image(Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_HEIGHT"}) * Config::getValue<int>({"DEBUG_PROJECT", "IMAGE_WIDTH"}) * 3);
+    std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_HEIGHT"}) * Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_WIDTH"}) * 3);
 
     for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
         image.at(3 * i + 0) = pixels[i].R;

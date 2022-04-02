@@ -60,11 +60,6 @@ INTERIORSIM:
 
   # Port used by the Unreal application's RPC server
   PORT: 30000
-
-  # Internal simulation parameters
-  SIMULATION_STEP_TIME_SECONDS: 0.1
-  RANDOM_SEED: 123
-  AGENT_NAME: ""
   
   # Maximum time to wait when initializing the RPC client before asserting
   RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 120.0

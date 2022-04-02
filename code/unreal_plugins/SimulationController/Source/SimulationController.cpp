@@ -105,7 +105,7 @@ void SimulationController::worldBeginPlayEventHandler()
 
     // Set fixed simulation step time in seconds
     FApp::SetBenchmarking(true);
-    FApp::SetFixedDeltaTime(Config::getValue<double>({"INTERIORSIM", "SIMULATION_STEP_TIME_SECONDS"}));
+    FApp::SetFixedDeltaTime(Config::getValue<double>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));
 
     // @TODO: Read and set random seed value
     // Seed = Config::getValue<int>({"INTERIORSIM", "RANDOM_SEED"});
@@ -115,10 +115,10 @@ void SimulationController::worldBeginPlayEventHandler()
     UGameplayStatics::SetGamePaused(world_, true);
 
     // @TODO: Read config to decide which type of AgentController to create
-    if(Config::getValue<std::string>({"INTERIORSIM", "AGENT_NAME"}) == "SphereAgent") {
+    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
     }
-    else if(Config::getValue<std::string>({"INTERIORSIM", "AGENT_NAME"}) == "DebugAgent") {
+    else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
         agent_controller_ = std::make_unique<DebugAgentController>(world_);
     }
     else {
