@@ -74,3 +74,31 @@ python scene_manager_meta_parser.py --keys "room,asset,Living room"
 * -k: required. comma separated key list. Available key: 
  room, area, asset, asset_unique, Living room, Bedroom, Bathroom, Kitchen, Aisle, Balcony, Study, Customize, Dinning room	
 
+### Top View Images
+
+Download top view images and semantic images use following script:
+
+```
+scene_manager_images.py -v <version> -i <virtual-world-id>  -p <proxy>
+# e.g.
+scene_manager_images.py -v v2
+```
+
+* `-v`: required. VirtualWorld version in format of v{n}, e.g. v1, v2. The latest version information is in
+  /VirtualWrold/SceneManager/dataset-repo-update.log.
+* `-i`: optional. Specify to download metadata for VirtualWorld. if not use -i, the script will load all
+  virtualworld-ids in /VirtualWrold/SceneManager/Data/virtualworld-ids.json.
+* `-p`: optional. setup proxy
+
+There will be three file downloade:
+* `top_view.png` : top view image.
+* `top_view_semantic.png` : top view image in semantic mode. Semantic color mapping can be found in [link](https://docs.google.com/spreadsheets/d/1dtWZOmYr40xc2fasLo63aJB1KFXmuWoDXGafoAJHf6U/edit#gid=1058311551).
+* `image_data.json` : listing information for coordinate conversion between image pixel position and unreal coordinates:
+
+```
+x_unreal = width / 2 - y_image + x_center
+y_unreal = - width / 2 + x_image + y_center
+
+x_image = width / 2 + y_unreal - y_center
+y_image = width / 2 - x_unreal + x_center
+```
