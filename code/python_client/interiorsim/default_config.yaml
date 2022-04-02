@@ -64,7 +64,6 @@ INTERIORSIM:
   # Internal simulation parameters
   SIMULATION_STEP_TIME_SECONDS: 0.1
   RANDOM_SEED: 123
-  RPC_WORKER_THREADS: 8
   AGENT_NAME: ""
   
   # Maximum time to wait when initializing the RPC client before asserting
