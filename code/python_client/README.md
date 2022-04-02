@@ -5,7 +5,7 @@
 - Python 3.6 and above
 - `numpy`
 - `gym`
-- `yacs`
+- `yacs==0.1.8`
 - `psutil`
 
 ## Setup
