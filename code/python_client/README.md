@@ -7,7 +7,6 @@
 - `gym`
 - `yacs`
 - `psutil`
-- `opencv-python`
 
 ## Setup
 
@@ -16,11 +15,6 @@
   - Run `cd thirdparty/msgpack-rpc-python` and `pip install -e .`
 - Recommended way to install is via `pip install -e .` in current directory. `pip` will take care of dependency installs.
 - You could also install python packages mentioned in `requirements.txt`. You can do `pip install -r requirements.txt`, for example, or you could install them separately using pip.
-
-## Unit tests
-
-- For running tests, you will need to install `pytest` packages. They are available in pip.
-- For running tests of a particular file, you can run `pytest <file>.py`.
 
 ## Something wrong?
 

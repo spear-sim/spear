@@ -7,5 +7,5 @@ setuptools.setup(
     author_email="",
     description="Python client for enabling Artificial Intelligence with Unreal Engine",
     packages=setuptools.find_packages(),
-    install_requires=["numpy", "gym", "opencv-python", "psutil", "yacs"],
+    install_requires=["numpy", "gym", "psutil", "yacs"],
 )
