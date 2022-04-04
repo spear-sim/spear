@@ -18,7 +18,7 @@
 		{
 			"Name": "CoreUtils",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PreDefault"
 		}
 	]
 }

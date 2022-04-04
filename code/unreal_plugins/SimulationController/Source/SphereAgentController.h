@@ -10,14 +10,12 @@ struct Box;
 class AActor;
 class UWorld;
 class USceneCaptureComponent2D;
-class UTextureRenderTarget2D;
 
 class SphereAgentController : public AgentController
 {
 public:
 
-    // CAUTION: This UWorld pointer points to the only running game world, so do not clear the value stored at this address.
-    // We are using it here only to iterate through all actors in the world.
+    // This UWorld pointer passed here points to the only running game world.
     SphereAgentController(UWorld* world);
     ~SphereAgentController() = default;
     
@@ -26,10 +24,18 @@ public:
     void applyAction(const std::map<std::string, std::vector<float>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
 
+    AActor* getConeActor() const;
+    AActor* getSphereActor() const;
+    AActor* getObservationCameraActor() const;
+
 private:
 
     AActor* sphere_actor_ = nullptr;
-    AActor* observation_camera_ = nullptr;
+    AActor* cone_actor_ = nullptr;
+    AActor* debug_camera_actor_ = nullptr;
+    AActor* observation_camera_actor_ = nullptr;
+
+    UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
+    UStaticMeshComponent* cone_static_mesh_component_ = nullptr;
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
-    UTextureRenderTarget2D* texture_render_target_ = nullptr;
 };

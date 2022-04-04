@@ -7,9 +7,10 @@
 #include <CoreMinimal.h>
 #include <Modules/ModuleManager.h>
 
-class RpcServer;
 class AgentController;
 enum class FrameState : uint8_t;
+class RpcServer;
+class Task;
 
 class SimulationController : public IModuleInterface
 {
@@ -44,7 +45,8 @@ private:
     UWorld* world_ = nullptr;
     
     std::unique_ptr<RpcServer> rpc_server_ = nullptr;
-    std::unique_ptr<AgentController> agent_controller_ = nullptr;
+    AgentController* agent_controller_ = nullptr;
+    Task* task_ = nullptr;
 
     bool is_world_begin_play_executed_ = false;
 

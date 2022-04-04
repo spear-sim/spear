@@ -19,8 +19,10 @@
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "PointGoalNavTask.h"
 #include "RpcServer.h"
 #include "SphereAgentController.h"
+#include "Task.h"
 
 // different possible frame states for thread synchronization
 enum class FrameState : uint8_t
@@ -34,8 +36,9 @@ enum class FrameState : uint8_t
 
 void SimulationController::StartupModule()
 {
-    // Initialize config system
-    Config::initialize();
+    // // Initialize config system
+    // Config::initialize();
+    // ASSERT(FModuleManager::IsModuleLoaded(TEXT("CoreUtils")));
 
     // required to add ActorSpawnedEventHandler
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
@@ -76,8 +79,8 @@ void SimulationController::ShutdownModule()
     FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_delegate_handle_);
     post_world_initialization_delegate_handle_.Reset();
 
-    // Terminate config system as we will not use it anymore
-    Config::terminate();
+    // // Terminate config system as we will not use it anymore
+    // Config::terminate();
 }
 
 void SimulationController::postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
@@ -107,26 +110,27 @@ void SimulationController::worldBeginPlayEventHandler()
     FApp::SetBenchmarking(true);
     FApp::SetFixedDeltaTime(Config::getValue<double>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));
 
-    // @TODO: Read and set random seed value
-    // Seed = Config::getValue<int>({"INTERIORSIM", "RANDOM_SEED"});
-    // SetRandomStreamSeed(Seed); // @TODO: complete this
-
     // pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
-    // @TODO: Read config to decide which type of AgentController to create
+    // Read config to decide which type of AgentController and Task to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
-        agent_controller_ = std::make_unique<SphereAgentController>(world_);
+        agent_controller_ = new SphereAgentController(world_);
+        ASSERT(agent_controller_);
+        // Read config to decide which type of Task class to create
+        if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
+            task_ = new PointGoalNavTask(static_cast<SphereAgentController*>(agent_controller_));
+        }
+        else {
+            ASSERT(false);
+        }
     }
     else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
-        agent_controller_ = std::make_unique<DebugAgentController>(world_);
+        agent_controller_ = new DebugAgentController(world_);
     }
     else {
         ASSERT(false);
     }
-
-    // @TODO: Add separate Task class (to compute reward)
-
     
     // config values required for rpc communication
     const std::string hostname = Config::getValue<std::string>({"INTERIORSIM", "IP"});
@@ -154,8 +158,13 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             ASSERT(rpc_server_);
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
 
+            ASSERT(task_);
+            delete task_;
+            task_ = nullptr;
+
             ASSERT(agent_controller_);
-            agent_controller_.reset(nullptr);
+            delete agent_controller_;
+            agent_controller_ = nullptr;
         }
 
         // Remove event handlers bound to this world before world gets cleaned up
@@ -300,6 +309,16 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT(agent_controller_);
         ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         agent_controller_->applyAction(action);
+    });
+
+    rpc_server_->bindSync("getReward", [this]() -> float {
+        ASSERT(task_);
+        return task_->getReward();
+    });
+
+    rpc_server_->bindSync("reset", [this]() -> void {
+        ASSERT(task_);
+        task_->reset();
     });
 }
 

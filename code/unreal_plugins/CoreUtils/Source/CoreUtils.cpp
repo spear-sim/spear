@@ -2,8 +2,14 @@
 
 #include "CoreUtils.h"
 
-void CoreUtils::StartupModule() {}
+void CoreUtils::StartupModule() {
+    // Initialize config system
+    Config::initialize();
+}
 
-void CoreUtils::ShutdownModule() {}
+void CoreUtils::ShutdownModule() {
+    // Terminate config system as we will not use it anymore
+    Config::terminate();
+}
 
 IMPLEMENT_MODULE(CoreUtils, CoreUtils)

@@ -17,8 +17,7 @@ class DebugAgentController : public AgentController
 {
 public:
 
-    // CAUTION: This UWorld pointer points to the only running game world, so do not clear the value stored at this address.
-    // We are using it here only to iterate through all actors in the world.
+    // This UWorld pointer passed here points to the only running game world.
     DebugAgentController(UWorld* world);
     ~DebugAgentController() = default;
     
