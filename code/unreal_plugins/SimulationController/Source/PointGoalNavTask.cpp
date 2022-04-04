@@ -16,22 +16,14 @@ void UPointGoalNavTask::initializeAgentController(SphereAgentController* agent_c
 
 float UPointGoalNavTask::getReward()
 {
-    end_episode_ = false;
-
     if (hit_goal_) {
         reward_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "REWARD", "HIT_GOAL"});
-        end_episode_ = true;
     } else if (hit_other_) {
         reward_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "REWARD", "HIT_OBSTACLE"});
-        end_episode_ = true;
     } else {
         const FVector sphere_to_cone = agent_controller_->getConeActor()->GetActorLocation() - agent_controller_->getSphereActor()->GetActorLocation();
         reward_ = -sphere_to_cone.Size() / Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
     }
-
-    // reset hit state
-    hit_goal_ = false;
-    hit_other_ = false;
 
     return reward_;
 }
@@ -86,9 +78,18 @@ bool UPointGoalNavTask::isEpisodeDone() const
 
 void UPointGoalNavTask::ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
 {
+    // reset hit state
+    hit_goal_ = false;
+    hit_other_ = false;
+
+    // reset end episode state
+    end_episode_ = false;
+
     if (other_actor != nullptr && other_actor->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "CONE_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
         hit_goal_ = true;
+        end_episode_ = true;
     } else if (other_actor != nullptr && !other_actor->GetName().Equals(TEXT("Architecture_SMid0_PMid0_INSTid1227_obj19"), ESearchCase::IgnoreCase) && !other_actor->GetName().Equals(TEXT("6KAPD2ZVAZSUSPTUKE888888_SMid116_PMid1009_INSTid1080_obj0_0"), ESearchCase::IgnoreCase)) {
         hit_other_ = true;
+        end_episode_ = true;
     }
 };
