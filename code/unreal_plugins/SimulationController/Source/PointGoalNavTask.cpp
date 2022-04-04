@@ -2,16 +2,19 @@
 
 #include "SphereAgentController.h"
 
-PointGoalNavTask::PointGoalNavTask(SphereAgentController* agent_controller)
+UPointGoalNavTask::UPointGoalNavTask(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-    ASSERT(agent_controller);
-    agent_controller_ = agent_controller;
-    agent_controller_->getSphereActor()->OnActorHit.AddDynamic(this, &PointGoalNavTask::ActorHitEventHandler);
-
     random_stream_.Initialize(Config::getValue<int>({"INTERIORSIM", "RANDOM_SEED"}));
 }
 
-float PointGoalNavTask::getReward()
+void UPointGoalNavTask::initializeAgentController(SphereAgentController* agent_controller)
+{
+    ASSERT(agent_controller);
+    agent_controller_ = agent_controller;
+    agent_controller_->getSphereActor()->OnActorHit.AddDynamic(this, &UPointGoalNavTask::ActorHitEventHandler);
+}
+
+float UPointGoalNavTask::getReward()
 {
     end_episode_ = false;
 
@@ -33,7 +36,7 @@ float PointGoalNavTask::getReward()
     return reward_;
 }
 
-void PointGoalNavTask::reset()
+void UPointGoalNavTask::reset()
 {
     float position_x, position_y, position_z;
     FVector sphere_position(0), cone_position(0);
@@ -76,7 +79,12 @@ void PointGoalNavTask::reset()
     Cast<UStaticMeshComponent>(agent_controller_->getSphereActor()->GetRootComponent())->GetBodyInstance()->ClearForces();
 }
 
-void PointGoalNavTask::ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
+bool UPointGoalNavTask::isEpisodeDone() const
+{
+    return end_episode_;
+}
+
+void UPointGoalNavTask::ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
 {
     if (other_actor != nullptr && other_actor->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "CONE_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
         hit_goal_ = true;

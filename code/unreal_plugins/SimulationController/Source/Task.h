@@ -7,5 +7,6 @@ public:
     virtual ~Task() = default;
 
     virtual float getReward() = 0;
+    virtual bool isEpisodeDone() const = 0;
     virtual void reset() = 0;
 };

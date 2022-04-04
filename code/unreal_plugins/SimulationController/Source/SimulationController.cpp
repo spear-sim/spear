@@ -119,7 +119,8 @@ void SimulationController::worldBeginPlayEventHandler()
         ASSERT(agent_controller_);
         // Read config to decide which type of Task class to create
         if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
-            task_ = new PointGoalNavTask(static_cast<SphereAgentController*>(agent_controller_));
+            task_ = NewObject<UPointGoalNavTask>(world_, TEXT("PointGoalNavTask"));
+            static_cast<UPointGoalNavTask*>(task_)->initializeAgentController(static_cast<SphereAgentController*>(agent_controller_));
         }
         else {
             ASSERT(false);
@@ -159,8 +160,11 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
 
             ASSERT(task_);
-            delete task_;
-            task_ = nullptr;
+            if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
+                static_cast<UPointGoalNavTask*>(task_)->MarkPendingKill(); // if UObject
+            }
+            // delete task_;
+            // task_ = nullptr;
 
             ASSERT(agent_controller_);
             delete agent_controller_;

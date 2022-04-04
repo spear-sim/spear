@@ -1,29 +1,34 @@
 #pragma once
 
-#include <map>
-#include <string>
-#include <vector>
-
+#include <CoreMinimal.h>
 #include <Engine/EngineTypes.h>
 #include <Math/RandomStream.h>
 
 #include "Task.h"
 
+#include "PointGoalNavTask.generated.h"
+
 class AActor;
 class SphereAgentController;
 
-class PointGoalNavTask: public Task
+UCLASS()
+class UPointGoalNavTask: public UObject, public Task
 {
+    GENERATED_BODY()
 public:
 
-    PointGoalNavTask(SphereAgentController*);
-    ~PointGoalNavTask() = default;
+    UPointGoalNavTask(const FObjectInitializer& ObjectInitializer);
+    ~UPointGoalNavTask() = default;
     
+    void initializeAgentController(SphereAgentController* agent_controller);
+
     float getReward() override;
     void reset() override;
+    bool isEpisodeDone() const override;
 
 private:
 
+    UFUNCTION()
     void ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
     SphereAgentController* agent_controller_ = nullptr;
