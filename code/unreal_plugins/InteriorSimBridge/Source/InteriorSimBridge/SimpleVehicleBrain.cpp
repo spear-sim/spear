@@ -1,23 +1,23 @@
 #include "SimpleVehicleBrain.h"
 
-USimpleVehicleBrain::USimpleVehicleBrain(const FObjectInitializer &objectInitializer) : Super(objectInitializer)
+USimpleVehicleBrain::USimpleVehicleBrain(const FObjectInitializer& objectInitializer) : Super(objectInitializer)
 {
 }
 
 void USimpleVehicleBrain::Init()
 {
-    for (TActorIterator<ASimpleVehiclePawn> it(this->GetWorld()); it; ++it)
+    for (TActorIterator<ASimpleVehiclePawn> it(GetWorld()); it; ++it)
     {
         ownerPawn = *it;
     }
 
     ASSERT(ownerPawn != nullptr);
 
-    APlayerController *Controller = GetWorld()->GetFirstPlayerController();
+    APlayerController* Controller = GetWorld()->GetFirstPlayerController();
     ASSERT(Controller != nullptr);
 
     // Look for the desired observation camera among all available camera actors:
-    for (TActorIterator<APIPCamera> it(this->GetWorld()); it; ++it)
+    for (TActorIterator<APIPCamera> it(GetWorld()); it; ++it)
     {
         // This is quick and dirty fix to get access to the camera actors
         // attached to the vehicle. Note that these actors are defined within
@@ -55,29 +55,32 @@ void USimpleVehicleBrain::Init()
 
     // Initialize ObservationSpec and ActionSpec for this agent
 
-    std::string SimpleVehicleActionDescription =
-        "The OpenBot action space consists of a 2D vector containing the "
-        "percentages of "
-        "battery voltage to be applied to the left (resp. right) vehicle "
-        "motors.\n"
-        "These commands are in the [-1, 1] range.\n";
+    /*
+     * The OpenBot action space consists of a 2D vector containing the percentages of
+     * battery voltage to be applied to the left (resp. right) vehicle motors.
+     * These commands are in the [-1, 1] range.
+     */
+    std::string SimpleVehicleActionDescription = "";
+
     unrealrl::ActionSpec SimpleVehicleActionSpec(false, unrealrl::DataType::Float32, {2}, std::make_pair(-1.0f, 1.0f), SimpleVehicleActionDescription); // HACK: should specify constants in a config file
 
-    std::string SimpleVehicleObservationDescription =
-        "The agent has following observations:\n"
-        "left wheel commands in the range [-1, 1]\n"
-        "right wheel commands in the range [-1, 1]\n"
-        "Euclidean distance between current x-y position and target x-y "
-        "position.\n"
-        "Sinus of the relative yaw between current pose and target pose.\n"
-        "Cosinus of the relative yaw between current pose and target pose.\n";
+    /*
+     * The agent has following observations:
+     *   --> left wheel commands in the range [-1, 1]
+     *   --> right wheel commands in the range [-1, 1]
+     *   --> Euclidean distance between current x-y position and target x-y position.
+     *   --> Sinus of the relative yaw between current pose and target pose.
+     *   --> Cosinus of the relative yaw between current pose and target pose.
+     */
+    std::string SimpleVehicleObservationDescription = "";
 
     unrealrl::ObservationSpec SimpleVehicleObservationSpec({5}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
 
     if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
     {
-        std::string CameraObservationDescription = "This observation is an egocentric RGB image.\n";
-        unrealrl::ObservationSpec CameraObservationSpec({{height_, width_, 3}}, unrealrl::DataType::UInteger8, CameraObservationDescription); // HACK: should specify constants in a config file
+        // This observation is an egocentric RGB image.
+        std::string CameraObservationDescription = "";
+        unrealrl::ObservationSpec CameraObservationSpec({{unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_HEIGHT"}), unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_WIDTH"}), 3}}, unrealrl::DataType::UInteger8, CameraObservationDescription); // HACK: should specify constants in a config file
 
         SetObservationSpecs({SimpleVehicleObservationSpec, CameraObservationSpec});
     }
@@ -100,7 +103,7 @@ void USimpleVehicleBrain::OnEpisodeBegin()
     UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }
 
-void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action> &actionVector)
+void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& actionVector)
 {
     ASSERT(ownerPawn != nullptr);
     ASSERT(actionVector.size() == 1);
@@ -113,7 +116,7 @@ void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action> &actionV
     ownerPawn->MoveLeftRight(controlState[0], controlState[1]); // controlState are in the [-1.0; 1.0] range
 }
 
-void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &observationVector)
+void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& observationVector)
 {
     ASSERT(ownerPawn != nullptr);
     ASSERT(goalActor != nullptr);
@@ -225,7 +228,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
     {
         ASSERT(IsInGameThread());
 
-        FTextureRenderTargetResource *targetResource = captureComponent2D_->TextureTarget->GameThread_GetRenderTargetResource();
+        FTextureRenderTargetResource* targetResource = captureComponent2D_->TextureTarget->GameThread_GetRenderTargetResource();
 
         if (targetResource == nullptr)
         {
@@ -238,8 +241,8 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
 
         struct FReadSurfaceContext
         {
-            FRenderTarget *srcRenderTarget;
-            TArray<FColor> *outData;
+            FRenderTarget* srcRenderTarget;
+            TArray<FColor>* outData;
             FIntRect rect;
             FReadSurfaceDataFlags flags;
         };
@@ -255,7 +258,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
 
         ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)
         (
-            [context](FRHICommandListImmediate &RHICmdList)
+            [context](FRHICommandListImmediate& RHICmdList)
             {
                 RHICmdList.ReadSurfaceData(context.srcRenderTarget->GetRenderTargetTexture(), context.rect, *context.outData, context.flags);
             });
@@ -265,9 +268,9 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
         readPixelFence.Wait(true); // true if you want to process gamethreadtasks
         // in parallel while waiting for RT to complete the enqueued task
 
-        std::vector<uint8_t> *pixelData = &observationVector.at(1).Data;
+        std::vector<uint8_t>* pixelData = &observationVector.at(1).Data;
 
-        pixelData->resize(height_ * width_ * 3); // HACK: should specify constants in a config file
+        pixelData->resize(unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_HEIGHT"}) * unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_WIDTH"}) * 3); // HACK: should specify constants in a config file
 
         for (uint32 i = 0; i < static_cast<uint32>(rawPixels.Num()); ++i)
         {
@@ -281,10 +284,10 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
     }
 }
 
-void USimpleVehicleBrain::OnActorHit(AActor *selfActor,
-                                     AActor *otherActor,
+void USimpleVehicleBrain::OnActorHit(AActor* selfActor,
+                                     AActor* otherActor,
                                      FVector normalImpulse,
-                                     const FHitResult &hitFlag)
+                                     const FHitResult& hitFlag)
 {
     ASSERT(otherActor != nullptr);
 

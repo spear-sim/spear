@@ -1,0 +1,10 @@
+ROBOT_SIM:
+  
+  # If set to True, the actor follows a collision-free trajectory towards a randomly defined reachable location:
+  ACTIVATE_AUTOPILOT: True
+
+  # Radius in [cm], of the region within which the path planning will occur 
+  TARGET_RADIUS: 10000
+
+  # Radius in [cm], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+  ACCEPTANCE_RADIUS: 0.1

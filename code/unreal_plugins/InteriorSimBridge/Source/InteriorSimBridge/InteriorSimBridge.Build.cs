@@ -27,7 +27,8 @@ public class InteriorSimBridge : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"RHI", "Renderer", "RenderCore" // ... add other public dependencies that you statically link with here ...
+				// ... add other public dependencies that you statically link with here ...
+				"ProceduralMeshComponent"
 			}
 			);
 			
@@ -41,6 +42,9 @@ public class InteriorSimBridge : ModuleRules
 				"Engine",
 				"RobotSim",
 				"UnrealRL",
+				"Renderer", 
+				"RenderCore",
+				"RHI", 
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

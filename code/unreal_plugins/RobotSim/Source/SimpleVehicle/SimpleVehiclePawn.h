@@ -15,6 +15,11 @@
 #include "PhysicsPublic.h"
 #include "PhysXPublic.h"
 #include "PawnEvents.h"
+#include "NavigationSystem.h"
+
+#include <Brain.h>
+#include "Config.h"
+
 #include "SimpleVehiclePawn.generated.h"
 
 UCLASS(Blueprintable, meta = (ShortTooltip = "Simple Vehicle Pawn"))
@@ -87,11 +92,11 @@ public:
                               FVector NormalImpulse,
                               const FHitResult &Hit);
 
-    virtual USceneComponent *GetComponent(FString componentName) override;
+    virtual USceneComponent* GetComponent(FString componentName) override;
     virtual void GetComponentReferenceTransform(FString componentName,
                                                 FVector &translation,
                                                 FRotator &rotation) override;
-    virtual APawn *GetPawn() override
+    virtual APawn* GetPawn() override
     {
         return this;
     }
@@ -159,7 +164,7 @@ public:
     virtual void SetRobotParameters(
         const RobotSim::RobotSimSettings::VehicleSetting &settings) override;
 
-    PawnEvents *GetPawnEvents();
+    PawnEvents* GetPawnEvents();
 
     /**
      * @brief Name of the MeshComponent. Use this name if you want to prevent
@@ -181,7 +186,7 @@ public:
      *
      * @return USkeletalMeshComponent*
      */
-    class USkeletalMeshComponent *GetMesh() const
+    class USkeletalMeshComponent* GetMesh() const
     {
         return Mesh;
     }
@@ -191,7 +196,7 @@ public:
      *
      * @return UWheeledVehicleMovementComponent*
      */
-    class UWheeledVehicleMovementComponent *GetVehicleMovementComponent() const
+    class UWheeledVehicleMovementComponent* GetVehicleMovementComponent() const
     {
         return VehicleMovement;
     }
@@ -295,7 +300,7 @@ private:
 
     PawnEvents pawnEvents_;
     int count_ = 0;
-    USimpleWheeledVehicleMovementComponent *vehiclePawn_;
+    USimpleWheeledVehicleMovementComponent* vehiclePawn_;
     Eigen::Vector4f wheelVelocity_; // The ground truth velocity of the robot wheels in [RPM]
     Eigen::Vector4f motorVelocity_; // The ground truth velocity of the motors in [rad/s]
     Eigen::Vector4f counterElectromotiveForce_; // Vector of counter electromotive forces of each motor [V]

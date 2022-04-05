@@ -2,17 +2,16 @@
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 #include "SimpleVehiclePawn.h"
-#include "SimpleWheel.h"
-#include "OpenBotWheel.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "OpenBotWheel.h"
+#include "SimpleWheel.h"
 #include <iostream>
-
 
 FName ASimpleVehiclePawn::VehicleMovementComponentName(TEXT("SimpleWheeledVehicleMovement"));
 FName ASimpleVehiclePawn::VehicleMeshComponentName(TEXT("VehicleMesh'"));
 
-ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer &ObjectInitializer) : APawn(ObjectInitializer)
+ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializer) : APawn(ObjectInitializer)
 {
     // To create components, you can use
     // CreateDefaultSubobject<Type>("InternalName").
@@ -53,7 +52,7 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer &ObjectInitializ
     VehicleMovement->WheelSetups.SetNum(4);
 
     // TODO dynamic tire?
-    UClass *wheelClasss = USimpleWheel::StaticClass();
+    UClass* wheelClasss = USimpleWheel::StaticClass();
 
     // https://answers.unrealengine.com/questions/325623/view.html
     VehicleMovement->WheelSetups[0].WheelClass = wheelClasss;
@@ -75,7 +74,7 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer &ObjectInitializ
     VehicleMovement->SetIsReplicated(true); // Enable replication by default
     VehicleMovement->UpdatedComponent = Mesh;
 
-    vehiclePawn_ = static_cast<USimpleWheeledVehicleMovementComponent *>(GetVehicleMovementComponent());
+    vehiclePawn_ = static_cast<USimpleWheeledVehicleMovementComponent*>(GetVehicleMovementComponent());
 
     wheelVelocity_.setZero();
     motorVelocity_.setZero();
@@ -94,8 +93,7 @@ ASimpleVehiclePawn::~ASimpleVehiclePawn()
     PrimaryActorTick.bCanEverTick = true;
 }
 
-void ASimpleVehiclePawn::SetupPlayerInputComponent(
-    class UInputComponent *PlayerInputComponent)
+void ASimpleVehiclePawn::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
@@ -115,7 +113,7 @@ void ASimpleVehiclePawn::SetupInputBindings()
     UE_LOG(LogTemp, Warning, TEXT("ASimpleVehiclePawn::SetupInputBindings end"));
 
     // Keyboard control in RobotSimGameMode
-    APlayerController *controller = this->GetWorld()->GetFirstPlayerController();
+    APlayerController* controller = this->GetWorld()->GetFirstPlayerController();
     controller->InputComponent->BindAxis("MoveForward", this, &ASimpleVehiclePawn::MoveForward);
     controller->InputComponent->BindAxis("MoveRight", this, &ASimpleVehiclePawn::MoveRight);
 }
@@ -270,7 +268,7 @@ void ASimpleVehiclePawn::Tick(float DeltaTime)
     count_++;
 }
 
-void ASimpleVehiclePawn::SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting &settings)
+void ASimpleVehiclePawn::SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings)
 {
     gearRatio_ = settings.actuationSetting.gearRatio;
     motorVelocityConstant_ = settings.actuationSetting.motorVelocityConstant;
@@ -283,14 +281,14 @@ void ASimpleVehiclePawn::SetRobotParameters(const RobotSim::RobotSimSettings::Ve
     batteryVoltage_ = settings.actuationSetting.batteryVoltage;
 }
 
-void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent *HitComponent,
-                                   class AActor *OtherActor,
-                                   class UPrimitiveComponent *otherComp,
+void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,
+                                   class AActor* OtherActor,
+                                   class UPrimitiveComponent* otherComp,
                                    bool bSelfMoved,
                                    FVector hitLocation,
                                    FVector hitNormal,
                                    FVector normalImpulse,
-                                   const FHitResult &hit)
+                                   const FHitResult& hit)
 {
     /*
         URobotBlueprintLib::LogMessage(FString("NotifyHit: ") +
@@ -301,18 +299,20 @@ void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent *HitComponent,
                                        */
     FString hitComponent = HitComponent->GetName();
     FString otherComponent = otherComp->GetName();
-    
-    std::cout << "    COLLISION    " <<  std::string(TCHAR_TO_UTF8(*hitComponent)) << "  ---  " << std::string(TCHAR_TO_UTF8(*otherComponent)) << std::endl;
+
+    std::cout << "    COLLISION    " << std::string(TCHAR_TO_UTF8(*hitComponent)) << "  ---  " << std::string(TCHAR_TO_UTF8(*otherComponent)) << std::endl;
     this->pawnEvents_.getCollisionSignal().emit(HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal, normalImpulse, hit);
 }
 
-void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent *HitComponent,
-                                              AActor *OtherActor,
-                                              UPrimitiveComponent *OtherComp,
+void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent* HitComponent,
+                                              AActor* OtherActor,
+                                              UPrimitiveComponent* OtherComp,
                                               FVector NormalImpulse,
-                                              const FHitResult &Hit)
+                                              const FHitResult& Hit)
 {
-    std::cout << "##############################################"  << "    OnComponentCollision    " << "##############################################" << std::endl;
+    std::cout << "##############################################"
+              << "    OnComponentCollision    "
+              << "##############################################" << std::endl;
     URobotBlueprintLib::LogMessage(FString("OnComponentCollision: ") +
                                        OtherActor->GetName(),
                                    " location: " + Hit.Location.ToString() +
@@ -324,22 +324,36 @@ void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent *HitComponent,
 void ASimpleVehiclePawn::BeginPlay()
 {
     Super::BeginPlay();
+
+    /*FVector Origin = this->GetActorLocation();
+    FNavLocation ReachableDestinationWorld;
+
+    if (not GetRandomReachablePointInRadius(Origin, unrealrl::Config::GetValue<float>({"ROBOT_SIM", "TARGET_RADIUS"}), ReachableDestinationWorld, NULL))
+    {
+        std::cout << "##############################################"
+                  << "    COULD NOT GENERATE REACHABLE POINT    "
+                  << "##############################################" << std::endl;
+        ASSERT(false);
+    }
+
+    std::cout << "###################### " << ReachableDestinationWorld.Location.X << ", " << ReachableDestinationWorld.Location.Y << ", " << ReachableDestinationWorld.Location.Z << " ######################" << std::endl;
+
+    if (unrealrl::Config::GetValue<bool>({"ROBOT_SIM", "ACTIVATE_AUTOPILOT"}))
+    {
+        this->MoveToLocation(ReachableDestinationWorld.Location, unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"}), true, true, false, true, NULL, true);
+    }*/
 }
 
-USceneComponent *ASimpleVehiclePawn::GetComponent(FString componentName)
+USceneComponent* ASimpleVehiclePawn::GetComponent(FString componentName)
 {
-    throw std::runtime_error("Requested component named " +
-                             std::string(TCHAR_TO_UTF8(*componentName)) +
-                             " in GetComponent(), which does not exist.");
+    ASSERT(false);
 }
 
 void ASimpleVehiclePawn::GetComponentReferenceTransform(FString componentName,
-                                                        FVector &translation,
-                                                        FRotator &rotation)
+                                                        FVector& translation,
+                                                        FRotator& rotation)
 {
-    throw std::runtime_error("Requested component named " +
-                             std::string(TCHAR_TO_UTF8(*componentName)) +
-                             " in GetComponent(), which does not exist.");
+    ASSERT(false);
 }
 
 void ASimpleVehiclePawn::TeleportToLocation(FVector position,
@@ -351,7 +365,7 @@ void ASimpleVehiclePawn::TeleportToLocation(FVector position,
     RobotBase::TeleportToLocation(position * URobotBlueprintLib::GetWorldToMetersScale(this), orientation, teleport);
 }
 
-PawnEvents *ASimpleVehiclePawn::GetPawnEvents()
+PawnEvents* ASimpleVehiclePawn::GetPawnEvents()
 {
     return &(this->pawnEvents_);
 }

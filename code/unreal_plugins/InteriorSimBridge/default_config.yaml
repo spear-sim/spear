@@ -21,5 +21,11 @@ INTERIOR_SIM_BRIDGE:
   # Goal reached:
   REWARD_GOAL_REACHED: 2.5
 
+  # Height of the rendered egocentric observation in [pixels]
+  IMAGE_HEIGHT: 120
+
+  # Width of the rendered egocentric observation in [pixels]
+  IMAGE_WIDTH: 160
+
 
   
