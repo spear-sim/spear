@@ -36,8 +36,6 @@ enum class FrameState : uint8_t
 
 void SimulationController::StartupModule()
 {
-    // // Initialize config system
-    // Config::initialize();
     // ASSERT(FModuleManager::IsModuleLoaded(TEXT("CoreUtils")));
 
     // required to add ActorSpawnedEventHandler
@@ -78,9 +76,6 @@ void SimulationController::ShutdownModule()
     
     FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_delegate_handle_);
     post_world_initialization_delegate_handle_.Reset();
-
-    // // Terminate config system as we will not use it anymore
-    // Config::terminate();
 }
 
 void SimulationController::postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
@@ -116,23 +111,20 @@ void SimulationController::worldBeginPlayEventHandler()
     // Read config to decide which type of AgentController and Task to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = new SphereAgentController(world_);
-        ASSERT(agent_controller_);
-        // Read config to decide which type of Task class to create
-        if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
-            task_ = NewObject<UPointGoalNavTask>(world_, TEXT("PointGoalNavTask"));
-            static_cast<UPointGoalNavTask*>(task_)->initializeAgentController(static_cast<SphereAgentController*>(agent_controller_));
-        }
-        else {
-            ASSERT(false);
-        }
-    }
-    else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
+    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
         agent_controller_ = new DebugAgentController(world_);
-    }
-    else {
+    } else {
         ASSERT(false);
     }
-    
+    ASSERT(agent_controller_);
+
+    // Read config to decide which type of Task class to create
+    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
+        task_ = new PointGoalNavTask(world_);
+    } else {
+        ASSERT(false);
+    }
+
     // config values required for rpc communication
     const std::string hostname = Config::getValue<std::string>({"INTERIORSIM", "IP"});
     const int port = Config::getValue<int>({"INTERIORSIM", "PORT"});
@@ -160,11 +152,8 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
 
             ASSERT(task_);
-            if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
-                static_cast<UPointGoalNavTask*>(task_)->MarkPendingKill(); // if UObject
-            }
-            // delete task_;
-            // task_ = nullptr;
+            delete task_;
+            task_ = nullptr;
 
             ASSERT(agent_controller_);
             delete agent_controller_;
@@ -238,10 +227,6 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("close", []() -> void {
         constexpr bool immediate_shutdown = false;
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
-    });
-
-    rpc_server_->bindAsync("isPaused", [this]() -> bool {
-        return world_->GetAuthGameMode()->IsPaused();
     });
 
     rpc_server_->bindAsync("getEndianness", []() -> uint8_t {
@@ -323,6 +308,11 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindSync("reset", [this]() -> void {
         ASSERT(task_);
         task_->reset();
+    });
+
+    rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
+        ASSERT(task_);
+        return task_->isEpisodeDone();
     });
 }
 

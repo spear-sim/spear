@@ -1,40 +1,37 @@
 #pragma once
 
-#include <CoreMinimal.h>
 #include <Engine/EngineTypes.h>
 #include <Math/RandomStream.h>
 
 #include "Task.h"
 
-#include "PointGoalNavTask.generated.h"
-
 class AActor;
-class SphereAgentController;
+class UWorld;
+class UActorHitDummyHandler;
 
-UCLASS()
-class UPointGoalNavTask: public UObject, public Task
+class PointGoalNavTask: public Task
 {
-    GENERATED_BODY()
 public:
 
-    UPointGoalNavTask(const FObjectInitializer& ObjectInitializer);
-    ~UPointGoalNavTask() = default;
-    
-    void initializeAgentController(SphereAgentController* agent_controller);
+    PointGoalNavTask(UWorld* world);
+    ~PointGoalNavTask();
 
+    // Task overrides
     float getReward() override;
     void reset() override;
     bool isEpisodeDone() const override;
+    void ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit) override; // handles collision related logic
 
 private:
-
-    UFUNCTION()
-    void ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
-
-    SphereAgentController* agent_controller_ = nullptr;
     bool hit_goal_ = false;
     bool hit_other_ = false;
     bool end_episode_ = false;
     float reward_ = -1.f;
     FRandomStream random_stream_;
+
+    AActor* agent_actor_ = nullptr;
+    AActor* goal_actor_ = nullptr;
+    AActor* observation_camera_actor_ = nullptr;
+
+    UActorHitDummyHandler* actor_hit_dummy_handler_ = nullptr;
 };

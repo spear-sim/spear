@@ -18,25 +18,17 @@
 
 SphereAgentController::SphereAgentController(UWorld* world)
 {
-    for (TActorIterator<AActor> ActorItr(world, AActor::StaticClass()); ActorItr; ++ActorItr) {
-        if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "ACTOR_NAME"}).c_str(), ESearchCase::IgnoreCase)) { 
-            ASSERT(sphere_actor_ == nullptr);
-            sphere_actor_ = (*ActorItr);
-            ASSERT(sphere_actor_);
-        } else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
-            ASSERT(observation_camera_actor_ == nullptr);
-            observation_camera_actor_ = (*ActorItr);
-            ASSERT(observation_camera_actor_);
-        } else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "CONE_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
-            ASSERT(cone_actor_ == nullptr);
-            cone_actor_ = *ActorItr;
-            ASSERT(cone_actor_);
-        } else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
-            ASSERT(debug_camera_actor_ == nullptr);
-            debug_camera_actor_ = *ActorItr;
-            ASSERT(debug_camera_actor_);
-        }
-    }
+    sphere_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "ACTOR_NAME"}).c_str()), true));
+    ASSERT(sphere_actor_);
+
+    observation_camera_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_NAME"}).c_str()), true));
+    ASSERT(observation_camera_actor_);
+    
+    cone_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "CONE_NAME"}).c_str()), true));
+    ASSERT(cone_actor_);
+
+    debug_camera_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA_NAME"}).c_str()), true));
+    ASSERT(debug_camera_actor_);
 
     // set active camera
     APlayerController* Controller = world->GetFirstPlayerController();
@@ -288,19 +280,4 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     }
 
     return observation;
-}
-
-AActor* SphereAgentController::getConeActor() const
-{
-    return cone_actor_;
-}
-
-AActor* SphereAgentController::getSphereActor() const
-{
-    return sphere_actor_;
-}
-
-AActor* SphereAgentController::getObservationCameraActor() const
-{
-    return observation_camera_actor_;
 }

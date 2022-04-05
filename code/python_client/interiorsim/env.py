@@ -44,20 +44,21 @@ class Env(gym.Env):
 
         self.unreal_engine_instance_endianness = self._getUnrealInstanceEndianness()
     
-    # TODO: add reward functionality
     def step(self, action):
         
         self._beginTick()
         self._applyAction(action)
         self._tick()
         obs = self._getObservation()
+        reward = self._getReward()
+        is_done = self._isEpisodeDone()
         self._endTick()
 
-        return obs
+        return obs, reward, is_done
 
     def reset(self):
         self._beginTick()
-        # TODO: implement to bring agent to reset state
+        self._reset()
         self._tick()
         obs = self._getObservation()
         self._endTick()
@@ -245,9 +246,6 @@ class Env(gym.Env):
     def _ping(self):
         return self._client.call("ping")
 
-    def _isPaused(self):
-        return self._client.call("isPaused")
-
     def _getUnrealInstanceEndianness(self):
         return self._client.call("getEndianness")
 
@@ -330,3 +328,12 @@ class Env(gym.Env):
 
     def _applyAction(self, action):
         self._client.call("applyAction", action)
+
+    def _getReward(self):
+        return self._client.call("getReward")
+    
+    def _isEpisodeDone(self):
+        return self._client.call("isEpisodeDone")
+
+    def _reset(self):
+        self._client.call("reset")

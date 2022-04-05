@@ -24,10 +24,6 @@ public:
     void applyAction(const std::map<std::string, std::vector<float>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
 
-    AActor* getConeActor() const;
-    AActor* getSphereActor() const;
-    AActor* getObservationCameraActor() const;
-
 private:
 
     AActor* sphere_actor_ = nullptr;
