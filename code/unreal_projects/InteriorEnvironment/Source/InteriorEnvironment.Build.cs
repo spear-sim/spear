@@ -9,12 +9,11 @@ public class InteriorEnvironment : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         // UnrealRL depends on libraries that use exceptions: asio and yaml-cpp
-        bEnableExceptions = true;
+        // bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+        PublicDependencyModuleNames.AddRange(new string[] { });
 
-        // PrivateDependencyModuleNames.AddRange(new string[] {  });
-        PrivateDependencyModuleNames.AddRange(new string[] { });
+        PrivateDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 
         // Uncomment if you are using Slate UI
         // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
