@@ -35,7 +35,7 @@ class Env(gym.Env):
 
         self._config = config
 
-        self._requestUnrealInstanceLaunch()
+        self._requestLaunchUnrealInstance()
         self._connectToUnrealInstance()
         self._initializeUnrealInstance()
 
@@ -72,7 +72,7 @@ class Env(gym.Env):
         self._closeUnrealInstance()
         self._closeClientServerConnection()
 
-    def _requestUnrealInstanceLaunch(self):
+    def _requestLaunchUnrealInstance(self):
 
         if self._config.INTERIORSIM.LAUNCH_MODE == "running_instance":
             return
@@ -246,11 +246,11 @@ class Env(gym.Env):
     def _ping(self):
         return self._client.call("ping")
 
-    def _getUnrealInstanceEndianness(self):
-        return self._client.call("getEndianness")
-
     def _closeUnrealInstance(self):
         self._client.call("close")
+
+    def _getUnrealInstanceEndianness(self):
+        return self._client.call("getEndianness")
 
     def _beginTick(self):
         return self._client.call("beginTick")
@@ -321,7 +321,8 @@ class Env(gym.Env):
                 obs_data_type = obs_data_type.newbyteorder(">")
             elif self.unreal_engine_instance_endianness == EndiannessType.LittleEndian.value:
                 obs_data_type = obs_data_type.newbyteorder("<")
-
+            else:
+                assert False
             return_obs_dict[obs_name] = np.frombuffer(obs, dtype=obs_data_type, count=-1).reshape(obs_shape)
         
         return return_obs_dict
@@ -332,8 +333,8 @@ class Env(gym.Env):
     def _getReward(self):
         return self._client.call("getReward")
     
-    def _isEpisodeDone(self):
-        return self._client.call("isEpisodeDone")
-
     def _reset(self):
         self._client.call("reset")
+
+    def _isEpisodeDone(self):
+        return self._client.call("isEpisodeDone")
