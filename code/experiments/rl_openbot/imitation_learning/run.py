@@ -248,9 +248,9 @@ if __name__ == "__main__":
 
     # Add default config files first and then user config files
     config_files.append(os.path.join(os.getcwd(), "default_config.yaml"))
-    config_files.append("/home/quentin/Desktop/interiorsim/code/unreal_plugins/InteriorSimBridge/default_config.yaml")
-    config_files.append("/home/quentin/Desktop/interiorsim/code/unreal_plugins/RobotSim/default_config.yaml")
-    config_files.append("/home/quentin/Desktop/interiorsim/code/unreal_projects/RobotProject/default_config.yaml")
+    config_files.append("../../../unreal_plugins/InteriorSimBridge/default_config.yaml")
+    config_files.append("../../../unreal_plugins/RobotSim/default_config.yaml")
+    config_files.append("../../../unreal_projects/RobotProject/default_config.yaml")
 
     # Load configs
     config = get_config(config_files)

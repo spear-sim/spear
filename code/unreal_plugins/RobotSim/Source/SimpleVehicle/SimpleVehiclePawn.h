@@ -16,6 +16,7 @@
 #include "PhysXPublic.h"
 #include "PawnEvents.h"
 #include "NavigationSystem.h"
+#include "AIController.h"
 
 #include <Brain.h>
 #include "Config.h"

@@ -325,23 +325,34 @@ void ASimpleVehiclePawn::BeginPlay()
 {
     Super::BeginPlay();
 
-    /*FVector Origin = this->GetActorLocation();
+    FVector Origin = GetActorLocation();
     FNavLocation ReachableDestinationWorld;
+    //UNavigationSystemV1* NavSys = this->GetWorld()->GetNavigationSystem();
 
-    if (not GetRandomReachablePointInRadius(Origin, unrealrl::Config::GetValue<float>({"ROBOT_SIM", "TARGET_RADIUS"}), ReachableDestinationWorld, NULL))
+    //const UNavigationSystemV1* navSystem = UNavigationSystemV1::GetCurrent(this);
+    const UNavigationSystemV1* navSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    //bool navResult = navSystem->ProjectPointToNavigation(HitResult.Location, NavLocation, TeleportFadeTimeExtent);
+
+
+    if (not navSystem->GetRandomReachablePointInRadius(Origin, unrealrl::Config::GetValue<float>({"ROBOT_SIM", "TARGET_RADIUS"}), ReachableDestinationWorld))
     {
         std::cout << "##############################################"
-                  << "    COULD NOT GENERATE REACHABLE POINT    "
+                  << "      COULD NOT GENERATE REACHABLE POINT      "
                   << "##############################################" << std::endl;
         ASSERT(false);
     }
+    
+    std::cout << "###################### Current: " << Origin.X << ", " << Origin.Y << ", " << Origin.Z << " ######################" << std::endl;
+    std::cout << "###################### Reachable: " << ReachableDestinationWorld.Location.X << ", " << ReachableDestinationWorld.Location.Y << ", " << ReachableDestinationWorld.Location.Z << " ######################" << std::endl;
 
-    std::cout << "###################### " << ReachableDestinationWorld.Location.X << ", " << ReachableDestinationWorld.Location.Y << ", " << ReachableDestinationWorld.Location.Z << " ######################" << std::endl;
+    //AAIController* ai = Cast<AAIController>(this->GetController());
 
-    if (unrealrl::Config::GetValue<bool>({"ROBOT_SIM", "ACTIVATE_AUTOPILOT"}))
-    {
-        this->MoveToLocation(ReachableDestinationWorld.Location, unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"}), true, true, false, true, NULL, true);
-    }*/
+    //ASSERT(ai != NULL);
+
+    //if (unrealrl::Config::GetValue<bool>({"ROBOT_SIM", "ACTIVATE_AUTOPILOT"}))
+    //{
+    //    ai->MoveToLocation(ReachableDestinationWorld.Location, unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"}));
+    //}
 }
 
 USceneComponent* ASimpleVehiclePawn::GetComponent(FString componentName)

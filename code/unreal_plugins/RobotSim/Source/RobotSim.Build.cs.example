@@ -121,7 +121,7 @@ public class RobotSim : ModuleRules
                 "ProceduralMeshComponent",
                 "Landscape", "XmlParser", "APEX", "PhysX", "Foliage", "PhysicsCore",
                 "NavigationSystem","PhysXVehicles",
-                "PhysXVehicleLib"
+                "PhysXVehicleLib", "AIModule"
             }
             );
             
@@ -137,7 +137,7 @@ public class RobotSim : ModuleRules
                 "ProceduralMeshComponent",
                 "UMG",  "PhysX",
                 "NavigationSystem",
-                 "Renderer", "RenderCore", "RHI"
+                 "Renderer", "RenderCore", "RHI", "AIModule"
             }
             );
         
