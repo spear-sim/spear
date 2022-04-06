@@ -79,9 +79,9 @@ python scene_manager_meta_parser.py --keys "room,asset,Living room"
 Download top view images and semantic images use following script:
 
 ```
-scene_manager_images.py -v <version> -i <virtual-world-id>  -p <proxy>
+python scene_manager_images.py -v <version> -i <virtual-world-id>  -p <proxy>
 # e.g.
-scene_manager_images.py -v v2
+python scene_manager_images.py -v v2
 ```
 
 * `-v`: required. VirtualWorld version in format of v{n}, e.g. v1, v2. The latest version information is in
