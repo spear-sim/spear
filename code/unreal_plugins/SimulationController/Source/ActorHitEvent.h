@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CoreMinimal.h>
+#include <Components/ActorComponent.h>
 #include <GameFramework/Actor.h>
 
 #include "ActorHitEvent.generated.h"
@@ -8,18 +9,13 @@
 DECLARE_MULTICAST_DELEGATE_FourParams(OnActorHitEvent, AActor*, AActor*, FVector, const FHitResult&);
 
 UCLASS()
-class UActorHitEvent : public UObject
+class UActorHitEvent : public UActorComponent
 {
     GENERATED_BODY()
 public:
     UActorHitEvent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
     {
-        UE_LOG(LogTemp, Warning, TEXT("UActorHitEvent is created..."));
-    }
-
-    ~UActorHitEvent()
-    {
-        UE_LOG(LogTemp, Warning, TEXT("~UActorHitEvent is destroyed..."));
+        PrimaryComponentTick.bCanEverTick = false;
     }
 
     void subscribeToActor(AActor* actor)

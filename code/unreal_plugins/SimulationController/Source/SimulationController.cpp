@@ -107,7 +107,7 @@ void SimulationController::worldBeginPlayEventHandler()
     // pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
-    // Read config to decide which type of AgentController and Task to create
+    // read config to decide which type of AgentController to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
     } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
@@ -117,7 +117,7 @@ void SimulationController::worldBeginPlayEventHandler()
     }
     ASSERT(agent_controller_);
 
-    // Read config to decide which type of Task class to create
+    // read config to decide which type of Task class to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
         task_ = std::make_unique<PointGoalNavTask>(world_);
     } else {

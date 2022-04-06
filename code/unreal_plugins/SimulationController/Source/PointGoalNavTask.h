@@ -23,7 +23,7 @@ public:
     void reset() override;
 
     // handles collision related logic
-    void ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
+    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
 private:
     bool hit_goal_ = false;

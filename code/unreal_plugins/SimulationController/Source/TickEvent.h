@@ -14,16 +14,10 @@ class UTickEvent : public UActorComponent
 public:
     UTickEvent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
     {
-        UE_LOG(LogTemp, Warning, TEXT("UTickEvent is created..."));
         PrimaryComponentTick.bCanEverTick = true;
         PrimaryComponentTick.bTickEvenWhenPaused = false;
     }
-
-    ~UTickEvent()
-    {
-        UE_LOG(LogTemp, Warning, TEXT("~UTickEvent is destroyed..."));   
-    }
-
+    
     void initialize(const ETickingGroup& tick_group)
     {
         PrimaryComponentTick.TickGroup = tick_group;

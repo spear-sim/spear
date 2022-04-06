@@ -37,8 +37,9 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     // create and initialize actor hit handler
     actor_hit_event_ = NewObject<UActorHitEvent>(agent_actor_, TEXT("ActorHitEvent"));
     ASSERT(actor_hit_event_);
+    actor_hit_event_->RegisterComponent();
     actor_hit_event_->subscribeToActor(agent_actor_);
-    actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::ActorHitEventHandler);
+    actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
 }
 
 PointGoalNavTask::~PointGoalNavTask()
@@ -122,7 +123,7 @@ void PointGoalNavTask::reset()
     static_mesh_component->GetBodyInstance()->ClearForces();
 }
 
-void PointGoalNavTask::ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
+void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
 {
     if (self_actor == agent_actor_ && other_actor != nullptr && other_actor == goal_actor_) {
         hit_goal_ = true;
