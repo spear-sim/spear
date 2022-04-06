@@ -11,23 +11,35 @@
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <UObject/UObjectGlobals.h>
 
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "TickEvent.h"
 
 SphereAgentController::SphereAgentController(UWorld* world)
 {
-    sphere_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "ACTOR_NAME"}).c_str()), true));
-    ASSERT(sphere_actor_);
+    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
+        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
 
-    observation_camera_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_NAME"}).c_str()), true));
+        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "ACTOR_NAME"})) { 
+            ASSERT(!agent_actor_);
+            agent_actor_ = (*actor_itr);
+        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_NAME"})) {
+            ASSERT(!observation_camera_actor_);
+            observation_camera_actor_ = (*actor_itr);
+        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "GOAL_NAME"})) {
+            ASSERT(!goal_actor_);
+            goal_actor_ = *actor_itr;
+        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA_NAME"})) {
+            ASSERT(!debug_camera_actor_);
+            debug_camera_actor_ = *actor_itr;
+        }
+    }
+    ASSERT(agent_actor_);
     ASSERT(observation_camera_actor_);
-    
-    cone_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "CONE_NAME"}).c_str()), true));
-    ASSERT(cone_actor_);
-
-    debug_camera_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA_NAME"}).c_str()), true));
+    ASSERT(goal_actor_);
     ASSERT(debug_camera_actor_);
 
     // set active camera
@@ -41,7 +53,7 @@ SphereAgentController::SphereAgentController(UWorld* world)
         ASSERT(false);
     }
 
-    // Set debug camera
+    // setup debug camera
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "SET_POSE"})) {
         const FVector debug_camera_pose(
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "POSITION_X"}),
@@ -54,8 +66,15 @@ SphereAgentController::SphereAgentController(UWorld* world)
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "ROLL"})));
     }
 
+    // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        // Create SceneCaptureComponent2D and TextureRenderTarget2D
+        // assign observation camera to post physics tick group
+        post_physics_ = NewObject<UTickEvent>(observation_camera_actor_, TEXT("PostPhysicsTickEvent"));
+        ASSERT(post_physics_);
+        post_physics_->initialize(ETickingGroup::TG_PostPhysics);
+        post_physics_handle_ = post_physics_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTick);
+
+        // create SceneCaptureComponent2D and TextureRenderTarget2D
         scene_capture_component_ = NewObject<USceneCaptureComponent2D>(observation_camera_actor_, TEXT("SceneCaptureComponent2D"));
         ASSERT(scene_capture_component_);
 
@@ -85,20 +104,17 @@ SphereAgentController::SphereAgentController(UWorld* world)
         scene_capture_component_->RegisterComponent();
     }
 
-    // Set collision callback
-    // sphere_actor_->OnActorHit.AddDynamic(this, &SphereAgentController::OnActorHit);
-
-    sphere_static_mesh_component_ = Cast<UStaticMeshComponent>(sphere_actor_->GetRootComponent());
+    sphere_static_mesh_component_ = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
     ASSERT(sphere_static_mesh_component_);
 
-    cone_static_mesh_component_ = Cast<UStaticMeshComponent>(cone_actor_->GetRootComponent());
+    cone_static_mesh_component_ = Cast<UStaticMeshComponent>(goal_actor_->GetRootComponent());
     ASSERT(cone_static_mesh_component_);
 
-    // Need to set this to apply forces or move objects
+    // need to set this to apply forces or move objects
     sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
     cone_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
 
-    // Set physics state
+    // set physics state
     sphere_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
     sphere_static_mesh_component_->SetSimulatePhysics(true);
     sphere_static_mesh_component_->SetAngularDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "ANGULAR_DAMPING"}));
@@ -106,6 +122,15 @@ SphereAgentController::SphereAgentController(UWorld* world)
     sphere_static_mesh_component_->BodyInstance.MaxAngularVelocity = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "MAX_ANGULAR_VELOCITY"}));
     sphere_static_mesh_component_->BodyInstance.MassScale = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "MASS_SCALE"}));
     sphere_static_mesh_component_->SetNotifyRigidBodyCollision(true);
+}
+
+SphereAgentController::~SphereAgentController()
+{
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
+        ASSERT(post_physics_);
+        post_physics_->delegate_.Remove(post_physics_handle_);
+        post_physics_handle_.Reset();
+    }
 }
 
 std::map<std::string, Box> SphereAgentController::getActionSpace() const
@@ -137,7 +162,9 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
         box = Box();
         box.low = 0;
         box.high = 255;
-        box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}), 3};
+        box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                     Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+                     3};
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
@@ -196,17 +223,6 @@ void SphereAgentController::applyAction(const std::map<std::string, std::vector<
     } else {
         ASSERT(false);
     }
-
-    // Set the observation camera's position to be offset relative to the sphere's position. This is an imperfect place to set the
-    // position because this function will be called before a physics update, but rendering will happen after a physics update. So
-    // it's possible to see the sphere in the observation camera's rendered view, even if we set the sphere to be directly above
-    // the sphere here.
-    const FVector observation_camera_pose(
-        sphere_actor_->GetActorLocation() +
-        FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA", "POSITION_OFFSET_X"}),
-                Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA", "POSITION_OFFSET_Y"}),
-                Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA", "POSITION_OFFSET_Z"})));
-    observation_camera_actor_->SetActorLocation(observation_camera_pose);
 }
 
 std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservation() const
@@ -214,13 +230,12 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     std::map<std::string, std::vector<uint8_t>> observation;
 
     // get game state
-    const FVector sphere_to_cone = cone_actor_->GetActorLocation() - sphere_actor_->GetActorLocation();
+    const FVector sphere_to_cone = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
     const FVector linear_velocity = sphere_static_mesh_component_->GetPhysicsLinearVelocity();
     const float observation_camera_yaw = observation_camera_actor_->GetActorRotation().Yaw;
 
     // get observations
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-
         observation["physical_observation"] = serializeToUint8(std::vector<float>{
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_cone.X,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_cone.Y,
@@ -231,9 +246,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
         ASSERT(IsInGameThread());
 
         FTextureRenderTargetResource* target_resource = scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
-        if (target_resource == nullptr) {
-            ASSERT(false, "Could not get RenderTarget Resource from GameThread!! :(");
-        }
+        ASSERT(target_resource);
 
         TArray<FColor> pixels;
 
@@ -259,7 +272,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
         ReadPixelFence.Wait(true);
 
 
-        std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_HEIGHT"}) * Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_WIDTH"}) * 3);
+        std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) * Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) * 3);
 
         for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
             image.at(3 * i + 0) = pixels[i].R;
@@ -267,9 +280,8 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
             image.at(3 * i + 2) = pixels[i].B;
         }
         
-        observation["visual_observation"] = image;
+        observation["visual_observation"] = std::move(image);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
-
         observation["physical_observation"] = serializeToUint8(std::vector<float>{
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_cone.X,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_cone.Y,
@@ -280,4 +292,14 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     }
 
     return observation;
+}
+
+void SphereAgentController::postPhysicsPreRenderTick(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction *this_tick_function)
+{
+    const FVector observation_camera_pose(
+        agent_actor_->GetActorLocation() +
+        FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA", "POSITION_OFFSET_X"}),
+                Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA", "POSITION_OFFSET_Y"}),
+                Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA", "POSITION_OFFSET_Z"})));
+    observation_camera_actor_->SetActorLocation(observation_camera_pose);
 }

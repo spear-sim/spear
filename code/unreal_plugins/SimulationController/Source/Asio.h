@@ -1,7 +1,5 @@
 #pragma once
 
-#include "IgnoreCompilerWarnings.h"
-
 // We need to define InterlockedCompareExchange for the following reason.
 // On Windows, 'asio.hpp' uses InterlockedCompareExchange macro.
 // When 'asio.hpp' is included as below, if InterlockedCompareExchange macro is
@@ -14,6 +12,7 @@
 #define InterlockedCompareExchange _InterlockedCompareExchange
 #endif
 
+#include "IgnoreCompilerWarnings.h"
 ENABLE_IGNORE_COMPILER_WARNINGS
 #include <asio.hpp>
 DISABLE_IGNORE_COMPILER_WARNINGS

@@ -20,6 +20,7 @@
 #include "Box.h"
 #include "Config.h"
 #include "PointGoalNavTask.h"
+#include "Rpclib.h"
 #include "RpcServer.h"
 #include "SphereAgentController.h"
 #include "Task.h"
@@ -34,6 +35,13 @@ enum class FrameState : uint8_t
     ExecutingPostTick
 };
 
+enum class Endianness : uint8_t
+{
+    LittleEndian = 0,
+    BigEndian = 1,
+};
+MSGPACK_ADD_ENUM(Endianness);
+
 void SimulationController::StartupModule()
 {
     // ASSERT(FModuleManager::IsModuleLoaded(TEXT("CoreUtils")));
@@ -47,15 +55,6 @@ void SimulationController::StartupModule()
     // required for adding thread synchronization logic
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
     end_frame_delegate_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
-
-    // initialize variables used in thread synchronization
-    end_frame_started_executing_promise_ = std::promise<void>();
-    end_frame_started_executing_future_ = end_frame_started_executing_promise_.get_future();
-
-    end_frame_finished_executing_promise_ = std::promise<void>();
-    end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
-    
-    frame_state_ = FrameState::Idle;
 }
 
 void SimulationController::ShutdownModule()
@@ -110,9 +109,9 @@ void SimulationController::worldBeginPlayEventHandler()
 
     // Read config to decide which type of AgentController and Task to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
-        agent_controller_ = new SphereAgentController(world_);
+        agent_controller_ = std::make_unique<SphereAgentController>(world_);
     } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
-        agent_controller_ = new DebugAgentController(world_);
+        agent_controller_ = std::make_unique<DebugAgentController>(world_);
     } else {
         ASSERT(false);
     }
@@ -120,10 +119,14 @@ void SimulationController::worldBeginPlayEventHandler()
 
     // Read config to decide which type of Task class to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
-        task_ = new PointGoalNavTask(world_);
+        task_ = std::make_unique<PointGoalNavTask>(world_);
     } else {
         ASSERT(false);
     }
+    ASSERT(task_);
+
+    // initialize frame state used for thread synchronization
+    frame_state_ = FrameState::Idle;
 
     // config values required for rpc communication
     const std::string hostname = Config::getValue<std::string>({"INTERIORSIM", "IP"});
@@ -150,14 +153,13 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
         if(is_world_begin_play_executed_) {
             ASSERT(rpc_server_);
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
+            rpc_server_ = nullptr;
 
             ASSERT(task_);
-            delete task_;
-            task_ = nullptr;
+            task_.reset(nullptr);
 
             ASSERT(agent_controller_);
-            delete agent_controller_;
-            agent_controller_ = nullptr;
+            agent_controller_.reset(nullptr);
         }
 
         // Remove event handlers bound to this world before world gets cleaned up
@@ -181,18 +183,19 @@ void SimulationController::beginFrameEventHandler()
         UGameplayStatics::SetGamePaused(world_, false);
 
         // execute all pre-tick sync work, wait here for tick() to reset work guard
-        rpc_server_->RunSync();
-    
-        // reinitialze the io_context and work guard after runSync to prepare for next run
-        rpc_server_->reinitializeIOContextAndWorkGuard();
+        rpc_server_->runSync();
 
-        // update frame state so that end frame can execute
+        // setup things before physics
+        task_->beginFrame();
+
+        // update local state
         frame_state_ = FrameState::ExecutingTick;
     }
 }
 
 void SimulationController::endFrameEventHandler()
 {
+    // if beginFrameEventHandler() has indicated that we are currently executing a frame of work
     if (frame_state_ == FrameState::ExecutingTick) {
 
         // update frame state so that endTick() can execute successfully
@@ -201,19 +204,19 @@ void SimulationController::endFrameEventHandler()
         // allow tick() to finish executing
         end_frame_started_executing_promise_.set_value();
 
-        // execute all post-tick sync work, wait here for endTick() to reset work guard
-        rpc_server_->RunSync();
+        // finalize things before next tick cycle
+        task_->endFrame();
 
-        // reinitialze the io_context and work guard after runSync to prepare for next run
-        rpc_server_->reinitializeIOContextAndWorkGuard();
+        // execute all post-tick sync work, wait here for endTick() to reset work guard
+        rpc_server_->runSync();
 
         // pause the game
         UGameplayStatics::SetGamePaused(world_, true);
 
-        // update frame state so that beginTick() can execute successfully
+        // update local state
         frame_state_ = FrameState::Idle;
 
-        // notify that end frame has finished executing so that endTick() can finish executing
+        // allow endTick() to finish executing
         end_frame_finished_executing_promise_.set_value();
     }
 }
@@ -221,7 +224,7 @@ void SimulationController::endFrameEventHandler()
 void SimulationController::bindFunctionsToRpcServer()
 {
     rpc_server_->bindAsync("ping", []() -> std::string {
-        return "received ping";
+        return "SimulationController received a call to ping()...";
     });
 
     rpc_server_->bindAsync("close", []() -> void {
@@ -229,14 +232,9 @@ void SimulationController::bindFunctionsToRpcServer()
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
-    rpc_server_->bindAsync("getEndianness", []() -> uint8_t {
-        enum class Endianness : uint8_t
-        {
-            LittleEndian = 0,
-            BigEndian = 1,
-        };        
+    rpc_server_->bindAsync("getEndianness", []() -> Endianness {
         uint32_t Num = 0x01020304;
-        return (reinterpret_cast<const char*>(&Num)[3] == 1) ? static_cast<uint8_t>(Endianness::LittleEndian) : static_cast<uint8_t>(Endianness::BigEndian);
+        return (reinterpret_cast<const char*>(&Num)[3] == 1) ? Endianness::LittleEndian : Endianness::BigEndian;
     });
 
     rpc_server_->bindAsync("beginTick", [this]() -> void {
@@ -258,7 +256,7 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT((frame_state_ == FrameState::ExecutingPreTick) || (frame_state_ == FrameState::RequestPreTick));
 
         // indicate that we want the game thread to stop blocking in begin_frame()
-        rpc_server_->resetWorkGuard();
+        rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
         // wait here until the game thread has started executing end_frame()
         end_frame_started_executing_future_.wait();
@@ -270,7 +268,7 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
         // indicate that we want the game thread to stop blocking in end_frame()
-        rpc_server_->resetWorkGuard();
+        rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
         // wait here until the game thread has finished executing end_frame()
         end_frame_finished_executing_future_.wait();

@@ -1,60 +1,88 @@
 #include "PointGoalNavTask.h"
 
+#include <algorithm>
+
+#include <EngineUtils.h>
 #include <UObject/UObjectGlobals.h>
 
-#include "ActorHitDummyHandler.h"
+#include "ActorHitEvent.h"
 #include "Assert.h"
 #include "Config.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
-    agent_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "ACTOR_NAME"}).c_str()), true));
-    ASSERT(agent_actor_);
+    // append all actors that need to be ignored during collision check
+    std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
 
-    observation_camera_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_NAME"}).c_str()), true));
-    ASSERT(observation_camera_actor_);
-    
-    goal_actor_ = Cast<AActor>(StaticFindObject(AActor::StaticClass(), world, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "GOAL_NAME"}).c_str()), true));
+    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
+        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
+
+        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "ACTOR_NAME"})) { 
+            ASSERT(!agent_actor_);
+            agent_actor_ = (*actor_itr);
+        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_NAME"})) {
+            ASSERT(!goal_actor_);
+            goal_actor_ = *actor_itr;
+        } else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
+            obstacle_ignore_actors_.emplace_back(*actor_itr);
+        }
+    }
+    ASSERT(agent_actor_);
     ASSERT(goal_actor_);
+    ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
 
     // read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
 
-    // create and initialize actor hit dummy handler
-    actor_hit_dummy_handler_ = NewObject<UActorHitDummyHandler>(world, TEXT("ActorHitDummyHandler"));
-    ASSERT(actor_hit_dummy_handler_);
-    actor_hit_dummy_handler_->initialize(agent_actor_, this);
+    // create and initialize actor hit handler
+    actor_hit_event_ = NewObject<UActorHitEvent>(agent_actor_, TEXT("ActorHitEvent"));
+    ASSERT(actor_hit_event_);
+    actor_hit_event_->subscribeToActor(agent_actor_);
+    actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::ActorHitEventHandler);
 }
 
 PointGoalNavTask::~PointGoalNavTask()
 {
-    ASSERT(actor_hit_dummy_handler_);
-    actor_hit_dummy_handler_->terminate(agent_actor_);
+    ASSERT(actor_hit_event_);
+    actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);
+    actor_hit_event_delegate_handle_.Reset();
+    actor_hit_event_->unsubscribeFromActor(agent_actor_);
 
     random_stream_.Reset();
 
     ASSERT(goal_actor_);    
     goal_actor_ = nullptr;
 
-    ASSERT(observation_camera_actor_);
-    observation_camera_actor_ = nullptr;
-
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
 }
 
+void PointGoalNavTask::beginFrame()
+{
+    // reset hit states
+    hit_goal_ = false;
+    hit_obstacle_ = false;
+}
+
 float PointGoalNavTask::getReward()
 {
+    float reward;
+
     if (hit_goal_) {
-        reward_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "HIT_GOAL"});
-    } else if (hit_other_) {
-        reward_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "HIT_OBSTACLE"});
+        reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "HIT_GOAL"});
+    } else if (hit_obstacle_) {
+        reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "HIT_OBSTACLE"});
     } else {
         const FVector sphere_to_cone = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
-        reward_ = -sphere_to_cone.Size() / Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
+        reward = -sphere_to_cone.Size() / Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
     }
 
-    return reward_;
+    return reward;
+}
+
+bool PointGoalNavTask::isEpisodeDone() const
+{
+    return hit_goal_ or hit_obstacle_;
 }
 
 void PointGoalNavTask::reset()
@@ -87,38 +115,18 @@ void PointGoalNavTask::reset()
     agent_actor_->SetActorLocation(sphere_position);
     goal_actor_->SetActorLocation(cone_position);
 
-    const FVector observation_camera_position(
-        agent_actor_->GetActorLocation() +
-        FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "OBSERVATION_CAMERA_POSITION_OFFSET_X"}),
-                Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "OBSERVATION_CAMERA_POSITION_OFFSET_Y"}),
-                Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "OBSERVATION_CAMERA_POSITION_OFFSET_Z"})));
-    observation_camera_actor_->SetActorLocation(observation_camera_position);
-
-    Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent())->SetPhysicsLinearVelocity(FVector(0), false);
-    Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent())->SetPhysicsAngularVelocityInRadians(FVector(0), false);
-    Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent())->GetBodyInstance()->ClearTorques();
-    Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent())->GetBodyInstance()->ClearForces();
-}
-
-bool PointGoalNavTask::isEpisodeDone() const
-{
-    return end_episode_;
+    UStaticMeshComponent* static_mesh_component = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
+    static_mesh_component->SetPhysicsLinearVelocity(FVector(0), false);
+    static_mesh_component->SetPhysicsAngularVelocityInRadians(FVector(0), false);
+    static_mesh_component->GetBodyInstance()->ClearTorques();
+    static_mesh_component->GetBodyInstance()->ClearForces();
 }
 
 void PointGoalNavTask::ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
 {
-    // reset hit state
-    hit_goal_ = false;
-    hit_other_ = false;
-
-    // reset end episode state
-    end_episode_ = false;
-
-    if (other_actor != nullptr && other_actor == goal_actor_) {
+    if (self_actor == agent_actor_ && other_actor != nullptr && other_actor == goal_actor_) {
         hit_goal_ = true;
-        end_episode_ = true;
-    } else if (other_actor != nullptr && !other_actor->GetName().Equals(TEXT("Architecture_SMid0_PMid0_INSTid1227_obj19"), ESearchCase::IgnoreCase) && !other_actor->GetName().Equals(TEXT("6KAPD2ZVAZSUSPTUKE888888_SMid116_PMid1009_INSTid1080_obj0_0"), ESearchCase::IgnoreCase)) {
-        hit_other_ = true;
-        end_episode_ = true;
+    } else if (self_actor == agent_actor_ && other_actor != nullptr && !other_actor->GetName().Equals(TEXT("Architecture_SMid0_PMid0_INSTid1227_obj19"), ESearchCase::IgnoreCase) && !other_actor->GetName().Equals(TEXT("6KAPD2ZVAZSUSPTUKE888888_SMid116_PMid1009_INSTid1080_obj0_0"), ESearchCase::IgnoreCase)) {
+        hit_obstacle_ = true;
     }
 };

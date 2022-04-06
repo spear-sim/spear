@@ -12,10 +12,10 @@
 
 /**
  * An RPC server in which functions can be bind to run synchronously or asynchronously.
- * Use `AsyncRun` to start the worker threads, and use `SyncRunFor`, `SyncRun()` to run a slice of work in the caller's thread.
+ * Use `launchWorkerThreads` to start the worker threads, and use `runSync`, to service work on the Game thread.
  *
  * Functions that are bind using `BindAsync` will run asynchronously in the worker threads.
- * Functions that are bind using `BindSync` will run within `SyncRunFor`and `SyncRun()` function.
+ * Functions that are bind using `BindSync` will run within `runSync` function.
  */
 
 class RpcServer
@@ -37,18 +37,15 @@ public:
         server_.async_run(worker_threads);
     }
 
-    void RunSync()
+    void runSync()
     {
         io_context_.run();
+
+        // reinitialze the io_context and work guard after runSync to prepare for next run
+        reinitializeIOContextAndWorkGuard();
     }
 
-    void reinitializeIOContextAndWorkGuard()
-    {
-        io_context_.restart();
-        new(&work_guard_) work_guard_type(io_context_.get_executor());
-    }
-
-    void resetWorkGuard()
+    void unblockRunSyncWhenFinishedExecuting()
     {
         work_guard_.reset(); // io_context is now free to return
     }
@@ -61,10 +58,15 @@ public:
     }
 
 private:
-    ::rpc::server server_;
-    
-    asio::io_context io_context_;
 
+    void reinitializeIOContextAndWorkGuard()
+    {
+        io_context_.restart();
+        new(&work_guard_) work_guard_type(io_context_.get_executor());
+    }
+    
+    ::rpc::server server_;
+    asio::io_context io_context_;
     work_guard_type work_guard_;
 };
 

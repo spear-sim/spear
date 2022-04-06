@@ -14,17 +14,15 @@ DISABLE_IGNORE_COMPILER_WARNINGS
 class COREUTILS_API Config
 {
 public:
-    /** This function is used to initialize config_node_ when UnrealRL module is loaded. */
+    // This function is used to initialize config_node_ when UnrealRL module is loaded.
     static void initialize();
 
-    /** This function is used to clear config_node_ when UnrealRL module is  unloaded. */
+    // This function is used to clear config_node_ when UnrealRL module is  unloaded.
     static void terminate();
 
-    /**
-     * This function is used to extract a value from a yaml file.
-     * This function takes in a list of strings ('Keys') that lead to the required config value in the yaml file. The keys have to be passed in the descending hierarchical order.
-     * For example, if you have a config.yaml such as below; abc: x: 1 y: 2 , to access 'y', you need to provide {"abc", "y"} as your Keys and not {"y", "abc"}.
-     */
+    // This function is used to extract a value from a yaml file.
+    // This function takes in a list of strings ('Keys') that lead to the required config value in the yaml file. The keys have to be passed in the descending hierarchical order.
+    // For example, if you have a config.yaml such as below; abc: x: 1 y: 2 , to access 'y', you need to provide {"abc", "y"} as your Keys and not {"y", "abc"}.
     template <typename T>
     static T getValue(const std::vector<std::string>& keys)
     {
@@ -54,7 +52,6 @@ public:
 
         return node.as<T>();
     }
-
 private:
     Config() = default;
     ~Config() = default;

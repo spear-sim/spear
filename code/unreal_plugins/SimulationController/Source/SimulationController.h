@@ -45,8 +45,8 @@ private:
     UWorld* world_ = nullptr;
     
     std::unique_ptr<RpcServer> rpc_server_ = nullptr;
-    AgentController* agent_controller_ = nullptr;
-    Task* task_ = nullptr;
+    std::unique_ptr<AgentController> agent_controller_ = nullptr;
+    std::unique_ptr<Task> task_ = nullptr;
 
     bool is_world_begin_play_executed_ = false;
 

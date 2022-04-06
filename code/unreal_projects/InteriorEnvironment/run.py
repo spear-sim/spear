@@ -3,6 +3,7 @@ This is an example code to show how to launch an Unreal application using our co
 Before running this file, please modify user_config.yaml.example -> user_config.yaml and update it with appropriate paths.
 """
 
+import cv2
 import numpy as np
 import os
 
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     config_files = []
 
     # add default config files first and then user config files
-    config_files.append(os.path.join(PACKAGE_ROOT_DIR, "../../examples/InteriorEnvironment/user_config.yaml"))
+    config_files.append(os.path.join(PACKAGE_ROOT_DIR, "../../unreal_projects/InteriorEnvironment/user_config.yaml"))
 
     # load configs
     config = get_config(config_files)
@@ -27,15 +28,16 @@ if __name__ == "__main__":
 
     env.reset()
 
-    print("Printing action space and observation space...")
-    print(env.action_space)
-    print(env.observation_space)
-
     # run few iterations
-    for _ in range(10):
-        _, _, done = env.step({"apply_force": [1, 1]})
+    for _ in range(100):
+        obs, reward, done, _ = env.step({"apply_force": [1, 1]})
+        cv2.imshow("rgb image", obs["visual_observation"].astype(np.uint8))
+        cv2.waitKey(0)
+        print(reward, done)
         if done:
             env.reset()
+
+    cv2.destroyAllWindows()
 
     # close your unreal executable environment gracefully
     env.close()

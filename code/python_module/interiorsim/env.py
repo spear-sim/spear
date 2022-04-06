@@ -39,10 +39,11 @@ class Env(gym.Env):
         self._connectToUnrealInstance()
         self._initializeUnrealInstance()
 
+        self._observation_byte_order = self._getObservationByteOrder()
+
         self.observation_space = self._getObservationSpace()
         self.action_space = self._getActionSpace()
 
-        self.unreal_engine_instance_endianness = self._getUnrealInstanceEndianness()
     
     def step(self, action):
         
@@ -54,7 +55,7 @@ class Env(gym.Env):
         is_done = self._isEpisodeDone()
         self._endTick()
 
-        return obs, reward, is_done
+        return obs, reward, is_done, None
 
     def reset(self):
         self._beginTick()
@@ -249,17 +250,33 @@ class Env(gym.Env):
     def _closeUnrealInstance(self):
         self._client.call("close")
 
-    def _getUnrealInstanceEndianness(self):
-        return self._client.call("getEndianness")
+    def _getObservationByteOrder(self):
+        unreal_instance_endianness = self._client.call("getEndianness")
+
+        if sys.byteorder == "little":
+            client_endianess = EndiannessType.LittleEndian.value
+        elif sys.byteorder == "big":
+            client_endianess = EndiannessType.BigEndian.value
+
+        if unreal_instance_endianness == client_endianess:
+            return None
+        elif unreal_instance_endianness == EndiannessType.BigEndian.value:
+            return ">"
+            # obs_data_type = obs_data_type.newbyteorder(">")
+        elif unreal_instance_endianness == EndiannessType.LittleEndian.value:
+            return "<"
+            # obs_data_type = obs_data_type.newbyteorder("<")
+        else:
+            assert False
 
     def _beginTick(self):
-        return self._client.call("beginTick")
+        self._client.call("beginTick")
 
     def _tick(self):
-        return self._client.call("tick")
+        self._client.call("tick")
 
     def _endTick(self):
-        return self._client.call("endTick")
+        self._client.call("endTick")
 
     def _getObservationSpace(self):
         observation_space = self._client.call("getObservationSpace")
@@ -304,25 +321,15 @@ class Env(gym.Env):
             
         return_obs_dict = {}
 
-        def getEndianness():
-            if sys.byteorder == "little":
-                return EndiannessType.LittleEndian.value
-            elif sys.byteorder == "big":
-                return EndiannessType.BigEndian.value
-
         for obs_name, obs in obs_dict.items():
             # get shape and dtype of the observation component
             obs_shape = self.observation_space[obs_name].shape
             obs_data_type = self.observation_space[obs_name].dtype
 
-            if self.unreal_engine_instance_endianness == getEndianness():
-                pass
-            elif self.unreal_engine_instance_endianness == EndiannessType.BigEndian.value:
-                obs_data_type = obs_data_type.newbyteorder(">")
-            elif self.unreal_engine_instance_endianness == EndiannessType.LittleEndian.value:
-                obs_data_type = obs_data_type.newbyteorder("<")
-            else:
-                assert False
+            # change observation byte order based on Unreal instance and client endianness
+            if self._observation_byte_order is not None:
+                obs_data_type = obs_data_type.newbyteorder(self._observation_byte_order)
+
             return_obs_dict[obs_name] = np.frombuffer(obs, dtype=obs_data_type, count=-1).reshape(obs_shape)
         
         return return_obs_dict

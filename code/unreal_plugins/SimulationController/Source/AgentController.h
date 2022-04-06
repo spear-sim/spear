@@ -28,7 +28,7 @@ protected:
 
         // copy src to dest
         const uint8_t* begin_itr = reinterpret_cast<const uint8_t*>(&src.at(0));
-        size_t size = src.size() * (sizeof(T) / sizeof(uint8_t));
+        size_t size = src.size() * sizeof(T);
         dest.assign(begin_itr, begin_itr + size);
 
         return dest;

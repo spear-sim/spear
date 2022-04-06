@@ -18,15 +18,15 @@ DebugAgentController::DebugAgentController(UWorld* world)
 {
     for (TActorIterator<AActor> ActorItr(world, AActor::StaticClass()); ActorItr; ++ActorItr) {
         if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "ACTOR_NAME"}).c_str(), ESearchCase::IgnoreCase)) { 
-            UE_LOG(LogTemp, Warning, TEXT("Sphere actor found!"));
+            std::cout << "Sphere actor found!" << std::endl;
             sphere_actor_ = (*ActorItr);
         }
         else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
-            UE_LOG(LogTemp, Warning, TEXT("Observation camera 1 actor found!"));
+            std::cout << "Observation camera 1 actor found!" << std::endl;
             first_observation_camera_ = (*ActorItr);
         }
         else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
-            UE_LOG(LogTemp, Warning, TEXT("Observation camera 2 actor found!"));
+            std::cout << "Observation camera 2 actor found!" << std::endl;
             second_observation_camera_ = (*ActorItr);
         }
     }
