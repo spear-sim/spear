@@ -60,9 +60,6 @@ cmake -D CMAKE_BUILD_TYPE=Release -D RBDL_BUILD_STATIC=ON -D RBDL_BUILD_ADDON_UR
 make
 ```
 
-Note on RBDL library (https://github.com/rbdl/rbdl):
-The main branch with commit (73b7048e83d1cce26d6f0762363cab1fc21c76c3) dated Oct 16, 2021 build fails. So, we have successfully built and have been using commit (e82afbdcea67d6544b56592622b0a945d501c67b) dated Aug 6, 2021.
-
 ## Create symbolic links to plugins
 
 ```
