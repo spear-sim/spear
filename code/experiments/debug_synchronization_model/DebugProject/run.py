@@ -30,7 +30,6 @@ if __name__ == "__main__":
     env = Env(config)
 
     print("python: pinging...")
-    print(f"python: Is Game paused ? {env._isPaused()}")
 
     print("python: printing action space...")
     print(env.action_space)
@@ -96,9 +95,9 @@ if __name__ == "__main__":
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
     print("#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#")
     
-    #--------------------------------------------cheking game paused state at different stages of tick cycle------------------------------------------------------------------------#
-    #-----------------------------------also, after applying action, checking actor location just before tick() and after tick()----------------------------------------------------#
-    print(f"python: before begintick---Is Game Paused? {env._isPaused()}")
+    env.reset()
+
+    #-----------------------------------after applying action, checking actor location just before tick() and after tick()----------------------------------------------------#
     env._beginTick()
 
     action = {"set_location": [0, 0, 20]}
@@ -108,9 +107,7 @@ if __name__ == "__main__":
     # arr = env._getObservation()["location"] # will raise error if uncommented. To execute this, remove assert() statement in getObservation() function on rpc server
     # print(f"python: printing location before tick() {arr}")
 
-    print(f"python: before tick---Is Game Paused? {env._isPaused()}")
     env._tick()
-    print(f"python: after tick---Is Game Paused? {env._isPaused()}")
 
     arr = env._getObservation()["location"]
     print(f"python: printing location after tick() {arr}")
@@ -168,7 +165,7 @@ if __name__ == "__main__":
         print("-------------------------------------------------------------------------------------------------")
         
         print(f"python: applying action...{i*10, 0, 15}")
-        obs = env.step({"set_location": [i*10, 0, 15]})
+        obs, reward, done, _ = env.step({"set_location": [i*10, 0, 15]})
 
         print(f"python: after tick actor location.... {obs['location']}")
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#

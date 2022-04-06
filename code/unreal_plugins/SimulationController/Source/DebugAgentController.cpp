@@ -16,18 +16,23 @@
 
 DebugAgentController::DebugAgentController(UWorld* world)
 {
-    for (TActorIterator<AActor> ActorItr(world, AActor::StaticClass()); ActorItr; ++ActorItr) {
-        if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "ACTOR_NAME"}).c_str(), ESearchCase::IgnoreCase)) { 
+    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
+        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
+
+        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "ACTOR_NAME"})) {
             std::cout << "Sphere actor found!" << std::endl;
-            sphere_actor_ = (*ActorItr);
+            ASSERT(!sphere_actor_);
+            sphere_actor_ = (*actor_itr);
         }
-        else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
+        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_NAME"})) {
             std::cout << "Observation camera 1 actor found!" << std::endl;
-            first_observation_camera_ = (*ActorItr);
+            ASSERT(!first_observation_camera_);
+            first_observation_camera_ = (*actor_itr);
         }
-        else if ((*ActorItr)->GetName().Equals(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_NAME"}).c_str(), ESearchCase::IgnoreCase)) {
+        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_NAME"})) {
             std::cout << "Observation camera 2 actor found!" << std::endl;
-            second_observation_camera_ = (*ActorItr);
+            ASSERT(!second_observation_camera_);
+            second_observation_camera_ = (*actor_itr);
         }
     }
 
@@ -49,7 +54,7 @@ DebugAgentController::DebugAgentController(UWorld* world)
     first_scene_capture_component_->FOVAngle = 60.f;
     first_scene_capture_component_->ShowFlags.SetTemporalAA(false);
 
-    texture_render_target_ = NewObject<UTextureRenderTarget2D>(first_scene_capture_component_, TEXT("TextureRenderTarget2D_1"));
+    UTextureRenderTarget2D* texture_render_target_ = NewObject<UTextureRenderTarget2D>(first_scene_capture_component_, TEXT("TextureRenderTarget2D_1"));
     ASSERT(texture_render_target_);
     // texture_render_target_->bHDR_DEPRECATED = false;
     texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
@@ -96,14 +101,14 @@ std::map<std::string, Box> DebugAgentController::getActionSpace() const
     box.high = std::numeric_limits<float>::max();
     box.shape = {3};
     box.dtype = DataType::Float32;
-    action_space["set_location"] = std::move(box); // @Todo: implement move assignment operator
+    action_space["set_location"] = std::move(box);
 
     box = Box();
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
     box.shape = {1};
     box.dtype = DataType::Float32;
-    action_space["apply_force"] = std::move(box);  // @Todo: implement move assignment operator
+    action_space["apply_force"] = std::move(box);
 
     return action_space;
 }
@@ -172,9 +177,7 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
     ASSERT(IsInGameThread());
 
     FTextureRenderTargetResource* target_resource = first_scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
-    if (target_resource == nullptr) {
-        ASSERT(false, "Could not get RenderTarget Resource from GameThread!! :(");
-    }
+    ASSERT(target_resource);
 
     TArray<FColor> raw_pixels;
 
@@ -209,15 +212,12 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
         image.at(3 * i + 2) = raw_pixels[i].B;
     }
 
-    observation["camera_1_image"] = image;
+    observation["camera_1_image"] = std::move(image);
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
 
     target_resource = second_scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
-    if (target_resource == nullptr)
-    {
-        ASSERT(false, "Could not get RenderTarget Resource from GameThread!! :(");
-    }
+    ASSERT(target_resource);
 
     raw_pixels.Reset();
 
@@ -244,7 +244,7 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
         image.at(3 * i + 1) = raw_pixels[i].G;
         image.at(3 * i + 2) = raw_pixels[i].B;
     }
-    observation["camera_2_image"] = image;
+    observation["camera_2_image"] = std::move(image);
 
     return observation;
 }

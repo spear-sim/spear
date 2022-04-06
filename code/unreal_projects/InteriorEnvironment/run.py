@@ -31,13 +31,13 @@ if __name__ == "__main__":
     # run few iterations
     for _ in range(100):
         obs, reward, done, _ = env.step({"apply_force": [1, 1]})
-        cv2.imshow("rgb image", obs["visual_observation"].astype(np.uint8))
-        cv2.waitKey(0)
+        # cv2.imshow("rgb image", obs["visual_observation"].astype(np.uint8))
+        # cv2.waitKey(0)
         print(reward, done)
         if done:
             env.reset()
 
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
 
     # close your unreal executable environment gracefully
     env.close()
