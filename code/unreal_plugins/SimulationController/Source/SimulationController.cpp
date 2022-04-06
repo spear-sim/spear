@@ -156,10 +156,10 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             rpc_server_ = nullptr;
 
             ASSERT(task_);
-            task_.reset(nullptr);
+            task_ = nullptr;
 
             ASSERT(agent_controller_);
-            agent_controller_.reset(nullptr);
+            agent_controller_ = nullptr;
         }
 
         // Remove event handlers bound to this world before world gets cleaned up

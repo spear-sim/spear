@@ -69,10 +69,10 @@ SphereAgentController::SphereAgentController(UWorld* world)
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         // assign observation camera to post physics tick group
-        post_physics_ = NewObject<UTickEvent>(observation_camera_actor_, TEXT("PostPhysicsTickEvent"));
-        ASSERT(post_physics_);
-        post_physics_->initialize(ETickingGroup::TG_PostPhysics);
-        post_physics_handle_ = post_physics_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTick);
+        post_physics_event_ = NewObject<UTickEvent>(observation_camera_actor_, TEXT("PostPhysicsTickEvent"));
+        ASSERT(post_physics_event_);
+        post_physics_event_->initialize(ETickingGroup::TG_PostPhysics);
+        post_physics_event_handle_ = post_physics_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTick);
 
         // create SceneCaptureComponent2D and TextureRenderTarget2D
         scene_capture_component_ = NewObject<USceneCaptureComponent2D>(observation_camera_actor_, TEXT("SceneCaptureComponent2D"));
@@ -127,9 +127,10 @@ SphereAgentController::SphereAgentController(UWorld* world)
 SphereAgentController::~SphereAgentController()
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        ASSERT(post_physics_);
-        post_physics_->delegate_.Remove(post_physics_handle_);
-        post_physics_handle_.Reset();
+        ASSERT(post_physics_event_);
+        post_physics_event_->delegate_.Remove(post_physics_event_handle_);
+        post_physics_event_handle_.Reset();
+        post_physics_event_->DestroyComponent();
     }
 }
 

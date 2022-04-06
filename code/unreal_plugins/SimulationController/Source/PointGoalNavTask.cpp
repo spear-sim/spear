@@ -19,7 +19,7 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
 
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "ACTOR_NAME"})) { 
             ASSERT(!agent_actor_);
-            agent_actor_ = (*actor_itr);
+            agent_actor_ = *actor_itr;
         } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_NAME"})) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
@@ -37,7 +37,6 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     // create and initialize actor hit handler
     actor_hit_event_ = NewObject<UActorHitEvent>(agent_actor_, TEXT("ActorHitEvent"));
     ASSERT(actor_hit_event_);
-    actor_hit_event_->RegisterComponent();
     actor_hit_event_->subscribeToActor(agent_actor_);
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
 }
@@ -48,6 +47,7 @@ PointGoalNavTask::~PointGoalNavTask()
     actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);
     actor_hit_event_delegate_handle_.Reset();
     actor_hit_event_->unsubscribeFromActor(agent_actor_);
+    actor_hit_event_->DestroyComponent();
 
     random_stream_.Reset();
 
@@ -127,7 +127,7 @@ void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_ac
 {
     if (self_actor == agent_actor_ && other_actor != nullptr && other_actor == goal_actor_) {
         hit_goal_ = true;
-    } else if (self_actor == agent_actor_ && other_actor != nullptr && !other_actor->GetName().Equals(TEXT("Architecture_SMid0_PMid0_INSTid1227_obj19"), ESearchCase::IgnoreCase) && !other_actor->GetName().Equals(TEXT("6KAPD2ZVAZSUSPTUKE888888_SMid116_PMid1009_INSTid1080_obj0_0"), ESearchCase::IgnoreCase)) {
+    } else if (self_actor == agent_actor_ && other_actor != nullptr && std::find(obstacle_ignore_actors_.begin(), obstacle_ignore_actors_.end(), other_actor) == obstacle_ignore_actors_.end()) {
         hit_obstacle_ = true;
     }
 };

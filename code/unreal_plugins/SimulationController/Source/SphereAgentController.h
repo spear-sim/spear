@@ -38,6 +38,6 @@ private:
     UStaticMeshComponent* cone_static_mesh_component_ = nullptr;
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
 
-    UTickEvent* post_physics_ = nullptr;
-    FDelegateHandle post_physics_handle_;
+    UTickEvent* post_physics_event_ = nullptr;
+    FDelegateHandle post_physics_event_handle_;
 };
