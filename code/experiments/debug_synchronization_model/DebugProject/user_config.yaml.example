@@ -8,3 +8,8 @@ INTERIORSIM:
     - "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json"
 SIMULATION_CONTROLLER:
   AGENT_CONTROLLER_NAME: "DebugAgentController"
+  TASK_NAME: "PointGoalNavigation"
+  POINT_GOAL_NAV_TASK:
+    GOAL_NAME: "Cube_6"
+    ACTOR_NAME: "SphereActor"
+    OBSTACLE_IGNORE_ACTOR_NAMES: []
