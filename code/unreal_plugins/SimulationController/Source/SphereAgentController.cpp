@@ -152,8 +152,9 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
 
+    Box box;
+    
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        Box box;
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
         box.shape = {5};
@@ -169,7 +170,6 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
-        Box box;
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
         box.shape = {4};

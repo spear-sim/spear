@@ -35,6 +35,7 @@ enum class FrameState : uint8_t
     ExecutingPostTick
 };
 
+// enum values should match values in python module
 enum class Endianness : uint8_t
 {
     LittleEndian = 0,
@@ -255,10 +256,10 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("tick", [this]() -> void {
         ASSERT((frame_state_ == FrameState::ExecutingPreTick) || (frame_state_ == FrameState::RequestPreTick));
 
-        // indicate that we want the game thread to stop blocking in begin_frame()
+        // indicate that we want the game thread to stop blocking in beginFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // wait here until the game thread has started executing end_frame()
+        // wait here until the game thread has started executing endFrame()
         end_frame_started_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
@@ -267,10 +268,10 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("endTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
-        // indicate that we want the game thread to stop blocking in end_frame()
+        // indicate that we want the game thread to stop blocking in endFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // wait here until the game thread has finished executing end_frame()
+        // wait here until the game thread has finished executing endFrame()
         end_frame_finished_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::Idle);

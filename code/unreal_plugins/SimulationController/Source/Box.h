@@ -5,6 +5,7 @@
 #include "Rpclib.h"
 
 // Supported types for sending observation and action data types via msgpackrpc
+// enum values should match values in python module
 enum class DataType : uint8
 {
     Boolean = 0,

@@ -10,6 +10,7 @@ import time
 import msgpackrpc   # pip install -e code/third_party/msgpack-rpc-python
 import psutil
 
+# Enum values should match Box.h in SimulationController plugin
 class DataType(Enum):
     Boolean = 0
     UInteger8 = 1
@@ -21,7 +22,7 @@ class DataType(Enum):
     Float32 = 7
     Double = 8
 
-
+# Enum values should match SimulationController.cpp in SimulationController plugin
 class EndiannessType(Enum):
     LittleEndian = 0
     BigEndian = 1
@@ -262,10 +263,8 @@ class Env(gym.Env):
             return None
         elif unreal_instance_endianness == EndiannessType.BigEndian.value:
             return ">"
-            # obs_data_type = obs_data_type.newbyteorder(">")
         elif unreal_instance_endianness == EndiannessType.LittleEndian.value:
             return "<"
-            # obs_data_type = obs_data_type.newbyteorder("<")
         else:
             assert False
 

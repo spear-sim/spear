@@ -1,4 +1,3 @@
-import os
 from yacs.config import CfgNode, load_cfg
 
 from interiorsim.constants import PACKAGE_DEFAULT_CONFIG_FILE, SIMULATION_CONTROLLER_DEFAULT_CONFIG_FILE
