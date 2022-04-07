@@ -123,17 +123,18 @@ cp -R path/to/interiorsim/code/unreal_plugins/RobotSim/setting .
 
 ## RobotSim Setting
 In order to provide more flexibility such as changing robot model and other settings, there are two setting files
-that can be modified easily to change the robot config without changing any code. 
+that can be modified externally to change the robot config. 
 
-Default setting can be found in `code/unreal_plugins/RobotSim/setting` (used when start from `.uproject` if no settign found from higher priority paths).  
-Copy the directory to either `{LaunchDir}` or Document directory (Required for standalone executable and optional when start from `.uproject`).
-
-* Settings.json: basic settings for robot loading, urdfFilePath, loading config, camera config etc.  
+* settings.json: basic settings for robot loading, urdfFilePath, loading config, camera config etc.  
 * fetch.xml: robot structure description based on fetch.urdf  
 
-Current parsing path order for above files is as follows: 
-1. check if the filepath is absolute path (only makes sense for UrdfFile)
-2. check if the file is in {LaunchDir}/setting/ (useful for standalone executable, structure as follows)
+Default setting can be found in `code/unreal_plugins/RobotSim/setting` (used when start from `.uproject` if no setting found from higher priority paths).  
+Copy the directory to either `{LaunchDir}` or Document directory (Required for standalone executable and optional when start from `.uproject`).
+
+### Setting Path Finding Priority
+RobotSim attempts to find setting files in multiple locations. The parsing path order for above files is as follows: 
+1. check if is full path
+2. check if the file is in `{LaunchDir}/` or `{LaunchDir}/setting/` (useful for standalone executable, structure as follows)
     ```
     [Packaging Dir]
     ├── RobotProject.exe
@@ -144,6 +145,14 @@ Current parsing path order for above files is as follows:
     ```
 3. check if the file is in `~/Documents/RobotSim/setting/` for macOS/Linux, or `C:/Users/{userName}/Documents/RobotSim/setting/` for Windows
 4. check if the file is in `{PluginDir}/RobotSim/setting/` (Default setting when run from `.uproject`)
+
+### Config Settings from Command-line Argument 
+For standalone executable, pass `RobotSimSettingPath` argument to change the setting file path and file name. 
+```
+RobotProject.exe -RobotSimSettingPath=<path/to/settings.json>
+# e.g.
+RobotProject.exe -RobotSimSettingPath="settings/settings_fetch.json"
+```
 
 # Virtual World
 
@@ -208,6 +217,14 @@ Load VirtualWorld to UE4 by selecting .umap file under `Content/maps` in Content
 To view the Virtual World in semantic view, select `PostProcessVolume` in World Outliner, and set the `Post Process Material` to be 1.Set 0 to go back to normal view 
 
 ![image](Doc/virtualworld_instruction_sematic_view.png)
+
+### Load Scene in standalone executable
+Add map argument to run command.
+```commandline
+./RobotProject.exe /Game/Maps/Map_<virtual-world-id> ...
+# e.g.
+./RobotProject.exe /Game/Maps/Map_235554690 -WINDOWED -ResX=512 -ResY=512
+```
 
 # RobotSim
 

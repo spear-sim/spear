@@ -1,8 +1,17 @@
+code/experiments/srcc/jupyter/.ipynb_checkpoints
+code/experiments/srcc/jupyter/__pycache__
+code/experiments/srcc/jupyter/imagenet/__pycache__
+code/experiments/srcc/jupyter/my_habitat_baselines/__pycache__
+code/experiments/srcc/python/__pycache__
+code/experiments/srcc/python/imagenet/__pycache__
+code/experiments/srcc/python/my_habitat_baselines/__pycache__
 code/unreal_plugins/RobotSim/Binaries
 code/unreal_plugins/RobotSim/Intermediate
 code/unreal_plugins/RobotSim/Source/RobotSim.Build.cs
 code/unreal_projects/RobotProject/Binaries
 code/unreal_projects/RobotProject/Build
+code/unreal_projects/RobotProject/Content/Maps
+code/unreal_projects/RobotProject/Content/Scene
 code/unreal_projects/RobotProject/DerivedDataCache
 code/unreal_projects/RobotProject/dist
 code/unreal_projects/RobotProject/Intermediate

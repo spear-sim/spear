@@ -1,11 +1,15 @@
 #include "SimModeBase.h"
 #include "Misc/MessageDialog.h"
 #include "Misc/EngineVersion.h"
+#include "Runtime/Engine/Public/EngineUtils.h"
 #include "Runtime/Launch/Resources/Version.h"
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/OutputDeviceNull.h"
 #include "Engine/World.h"
+#include "Engine/ObjectLibrary.h"
+
+#include "NavMesh/NavMeshBoundsVolume.h"
 
 #include <memory>
 #include "RobotBlueprintLib.h"
@@ -14,17 +18,12 @@
 
 ASimModeBase::ASimModeBase()
 {
-    static ConstructorHelpers::FClassFinder<APIPCamera> external_camera_class(
-        TEXT("Blueprint'/RobotSim/Blueprints/BP_PIPCamera'"));
-    external_camera_class_ = external_camera_class.Succeeded()
-                                 ? external_camera_class.Class
-                                 : nullptr;
-    static ConstructorHelpers::FClassFinder<ACameraDirector>
-        camera_director_class(
-            TEXT("Blueprint'/RobotSim/Blueprints/BP_CameraDirector'"));
-    camera_director_class_ = camera_director_class.Succeeded()
-                                 ? camera_director_class.Class
-                                 : nullptr;
+    // static ConstructorHelpers::FClassFinder<APIPCamera>
+    // external_camera_class(
+    //    TEXT("Blueprint'/RobotSim/Blueprints/BP_PIPCamera'"));
+    // external_camera_class_ = external_camera_class.Succeeded()
+    //                             ? external_camera_class.Class
+    //                             : nullptr;
     // not used
     //    static ConstructorHelpers::FObjectFinder<UParticleSystem>
     //    collision_display(
@@ -35,10 +34,11 @@ ASimModeBase::ASimModeBase()
     //    else
     collision_display_template = nullptr;
 
-    static ConstructorHelpers::FClassFinder<APIPCamera> pip_camera_class_val(
-        TEXT("Blueprint'/RobotSim/Blueprints/BP_PIPCamera'"));
-    pip_camera_class =
-        pip_camera_class_val.Succeeded() ? pip_camera_class_val.Class : nullptr;
+    // static ConstructorHelpers::FClassFinder<APIPCamera> pip_camera_class_val(
+    //    TEXT("Blueprint'/RobotSim/Blueprints/BP_PIPCamera'"));
+    // pip_camera_class =
+    //    pip_camera_class_val.Succeeded() ? pip_camera_class_val.Class :
+    //    nullptr;
 
     PrimaryActorTick.bCanEverTick = true;
 
@@ -77,37 +77,6 @@ const NedTransform& ASimModeBase::getGlobalNedTransform()
 {
     return *global_ned_transform_;
 }
-
-// void ASimModeBase::checkVehicleReady()
-//{
-//    for (auto& api : api_provider_->getVehicleApis()) {
-//        if (api) { //sim-only vehicles may have api as null
-//            std::string message;
-//            if (!api->isReady(message)) {
-//                URobotBlueprintLib::LogMessage("Vehicle %s was not
-//                initialized: ",
-//                    "", LogDebugLevel::Failure); //TODO: add vehicle name in
-//                    message
-//                URobotBlueprintLib::LogMessage("Tip: check connection info in
-//                settings.json", "", LogDebugLevel::Informational);
-//            }
-//        }
-//
-//    }
-//}
-
-// void ASimModeBase::setStencilIDs()
-//{
-//    URobotBlueprintLib::SetMeshNamingMethod(getSettings().segmentation_setting.mesh_naming_method);
-//
-//    if (getSettings().segmentation_setting.init_method ==
-//        RobotSimSettings::SegmentationSetting::InitMethodType::CommonObjectsRandomIDs)
-//        {
-//
-//        URobotBlueprintLib::InitializeMeshStencilIDs(!getSettings().segmentation_setting.override_existing);
-//    }
-//    //else don't init
-//}
 
 void ASimModeBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
@@ -177,130 +146,10 @@ void ASimModeBase::setupTimeOfDay()
     // else ignore
 }
 
-// bool ASimModeBase::isPaused() const
-//{
-//    return false;
-//}
-
-// void ASimModeBase::pause(bool is_paused)
-//{
-//    //should be overridden by derived class
-//    unused(is_paused);
-//    throw std::domain_error("Pause is not implemented by SimMode");
-//}
-
-// void ASimModeBase::continueForTime(double seconds)
-//{
-//    //should be overridden by derived class
-//    unused(seconds);
-//    throw std::domain_error("continueForTime is not implemented by SimMode");
-//}
-
-// std::unique_ptr<RobotSim::ApiServerBase> ASimModeBase::createApiServer()
-// const
-//{
-//    //this will be the case when compilation with RPCLIB is disabled or
-//    simmode doesn't support APIs return nullptr;
-//}
-
-// void ASimModeBase::setupClockSpeed()
-//{
-//    //default setup - this should be overridden in derived modes as needed
-//
-//    float clock_speed = getSettings().clock_speed;
-//
-//    //setup clock in ClockFactory
-//    std::string clock_type = getSettings().clock_type;
-//
-//    if (clock_type == "ScalableClock")
-//        ClockFactory::get(std::make_shared<RobotSim::ScalableClock>(clock_speed
-//        == 1 ? 1 : 1 / clock_speed));
-//    else if (clock_type == "SteppableClock")
-//        ClockFactory::get(std::make_shared<RobotSim::SteppableClock>(
-//            static_cast<RobotSim::TTimeDelta>(RobotSim::SteppableClock::DefaultStepSize
-//            * clock_speed)));
-//    else
-//        throw std::invalid_argument(common_utils::Utils::stringf(
-//            "clock_type %s is not recognized", clock_type.c_str()));
-//}
-
-// void ASimModeBase::setupPhysicsLoopPeriod()
-//{
-//}
-
 void ASimModeBase::Tick(float DeltaSeconds)
 {
-    // if (isRecording())
-    //	++record_tick_count;
-
-    // advanceTimeOfDay();
-
-    // showClockStats();
-
-    // updateDebugReport(debug_reporter_);
-
-    // drawLidarDebugPoints();
-
     Super::Tick(DeltaSeconds);
 }
-
-// void ASimModeBase::showClockStats()
-//{
-//    float clock_speed = getSettings().clock_speed;
-//    if (clock_speed != 1) {
-//        URobotBlueprintLib::LogMessageString("ClockSpeed config, actual: ",
-//            Utils::stringf("%f, %f", clock_speed,
-//            ClockFactory::get()->getTrueScaleWrtWallClock()),
-//            LogDebugLevel::Informational);
-//    }
-//}
-
-// void ASimModeBase::advanceTimeOfDay()
-//{
-//    const auto& settings = getSettings();
-//
-//    if (settings.tod_setting.enabled && sky_sphere_ && sun_) {
-//        auto secs = ClockFactory::get()->elapsedSince(tod_last_update_);
-//        if (secs > settings.tod_setting.update_interval_secs) {
-//            tod_last_update_ = ClockFactory::get()->nowNanos();
-//
-//            auto interval =
-//            ClockFactory::get()->elapsedSince(tod_sim_clock_start_) *
-//            settings.tod_setting.celestial_clock_speed; uint64_t cur_time =
-//            ClockFactory::get()->addTo(tod_sim_clock_start_, interval)  / 1E9;
-//
-//            URobotBlueprintLib::LogMessageString("DateTime: ",
-//            Utils::to_string(cur_time), LogDebugLevel::Informational);
-//
-//            auto coord = RobotSim::EarthCelestial::getSunCoordinates(cur_time,
-//            settings.origin_geopoint.home_geo_point.latitude,
-//                settings.origin_geopoint.home_geo_point.longitude);
-//
-//            auto rot = FRotator(-coord.altitude, coord.azimuth, 0);
-//            sun_->SetActorRotation(rot);
-//
-//            FOutputDeviceNull ar;
-//            sky_sphere_->CallFunctionByNameWithArguments(TEXT("UpdateSunDirection"),
-//            ar, NULL, true);
-//        }
-//
-//    }
-//}
-
-// void ASimModeBase::reset()
-//{
-//    //default implementation
-//    URobotBlueprintLib::RunCommandOnGameThread([this]() {
-//        for (auto& api : getApiProvider()->getVehicleSimApis()) {
-//            api->reset();
-//        }
-//    }, true);
-//}
-
-// std::string ASimModeBase::getDebugReport()
-//{
-//    return debug_reporter_.getOutput();
-//}
 
 void ASimModeBase::setupInputBindings()
 {
@@ -310,392 +159,158 @@ void ASimModeBase::setupInputBindings()
     // EKeys::BackSpace, this, &ASimModeBase::reset);
 }
 
-// ECameraDirectorMode ASimModeBase::getInitialViewMode() const
-//{
-//    return
-//    Utils::toEnum<ECameraDirectorMode>(getSettings().initial_view_mode);
-//}
-
 const RobotSim::RobotSimSettings& ASimModeBase::getSettings() const
 {
     return RobotSimSettings::singleton();
 }
 
-// void ASimModeBase::initializeCameraDirector(const FTransform&
-// camera_transform, float follow_distance)
-//{
-//    TArray<AActor*> camera_dirs;
-//    URobotBlueprintLib::FindAllActor<ACameraDirector>(this, camera_dirs);
-//    if (camera_dirs.Num() == 0) {
-//        //create director
-//        FActorSpawnParameters camera_spawn_params;
-//        camera_spawn_params.SpawnCollisionHandlingOverride =
-//        ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-//        camera_spawn_params.Name = "CameraDirector";
-//        CameraDirector =
-//        this->GetWorld()->SpawnActor<ACameraDirector>(camera_director_class_,
-//            camera_transform, camera_spawn_params);
-//        CameraDirector->setFollowDistance(follow_distance);
-//        CameraDirector->setCameraRotationLagEnabled(false);
-//        //create external camera required for the director
-//        camera_spawn_params.Name = "ExternalCamera";
-//        CameraDirector->ExternalCamera =
-//        this->GetWorld()->SpawnActor<APIPCamera>(external_camera_class_,
-//            camera_transform, camera_spawn_params);
-//    }
-//    else {
-//        CameraDirector = static_cast<ACameraDirector*>(camera_dirs[0]);
-//    }
-//}
+void ASimModeBase::traceGround(FVector& spawnPosition,
+                               FRotator& spawnRotator,
+                               const FVector& boxHalfSize)
+{
+    FVector startLoc = spawnPosition + FVector(0, 0, 100);
+    FVector endLoc = spawnPosition + FVector(0, 0, -1000);
 
-// bool ASimModeBase::toggleRecording()
-//{
-//    if (isRecording())
-//        stopRecording();
-//    else
-//        startRecording();
-//
-//    return isRecording();
-//}
-
-// void ASimModeBase::stopRecording()
-//{
-//    FRecordingThread::stopRecording();
-//}
-
-// void ASimModeBase::startRecording()
-//{
-//    FRecordingThread::startRecording(getVehicleSimApi()->getImageCapture(),
-//        getVehicleSimApi()->getGroundTruthKinematics(),
-//        getSettings().recording_setting , getVehicleSimApi());
-//}
-
-// bool ASimModeBase::isRecording() const
-//{
-//    return FRecordingThread::isRecording();
-//}
-
-// API server start/stop
-// void ASimModeBase::startApiServer()
-//{
-//    if (getSettings().enable_rpc) {
-//
-//#ifdef AIRLIB_NO_RPC
-//        api_server_.reset();
-//#else
-//        api_server_ = createApiServer();
-//#endif
-//
-//        try {
-//            api_server_->start();
-//        }
-//        catch (std::exception& ex) {
-//            URobotBlueprintLib::LogMessageString("Cannot start RpcLib Server",
-//            ex.what(), LogDebugLevel::Failure);
-//        }
-//    }
-//    else
-//        URobotBlueprintLib::LogMessageString("API server is disabled in
-//        settings", "", LogDebugLevel::Informational);
-//
-//}
-
-// void ASimModeBase::stopApiServer()
-//{
-//    if (api_server_ != nullptr) {
-//        api_server_->stop();
-//        api_server_.reset(nullptr);
-//    }
-//}
-
-// bool ASimModeBase::isApiServerStarted()
-//{
-//    return api_server_ != nullptr;
-//}
-
-// void ASimModeBase::updateDebugReport(RobotSim::StateReporterWrapper&
-// debug_reporter)
-//{
-//    debug_reporter.update();
-//    debug_reporter.setEnable(EnableReport);
-//
-//    if (debug_reporter.canReport()) {
-//        debug_reporter.clearReport();
-//
-//        for (auto& api : getApiProvider()->getVehicleSimApis()) {
-//            PawnSimApi* vehicle_sim_api = static_cast<PawnSimApi*>(api);
-//            RobotSim::StateReporter& reporter = *debug_reporter.getReporter();
-//            std::string vehicle_name = vehicle_sim_api->getVehicleName();
-//
-//            reporter.writeHeading(std::string("Vehicle: ").append(
-//                vehicle_name == "" ? "(default)" : vehicle_name));
-//
-//            const RobotSim::Kinematics::State* kinematics =
-//            vehicle_sim_api->getGroundTruthKinematics();
-//
-//            reporter.writeValue("Position", kinematics->pose.position);
-//            reporter.writeValue("Orientation", kinematics->pose.orientation);
-//            reporter.writeValue("Lin-Vel", kinematics->twist.linear);
-//            reporter.writeValue("Lin-Accl", kinematics->accelerations.linear);
-//            reporter.writeValue("Ang-Vel", kinematics->twist.angular);
-//            reporter.writeValue("Ang-Accl",
-//            kinematics->accelerations.angular);
-//        }
-//    }
-//}
-
-// FRotator ASimModeBase::toFRotator(const RobotSim::RobotSimSettings::Rotation&
-// rotation, const FRotator& default_val)
-//{
-//    FRotator frotator = default_val;
-//    if (!std::isnan(rotation.yaw))
-//        frotator.Yaw = rotation.yaw;
-//    if (!std::isnan(rotation.pitch))
-//        frotator.Pitch = rotation.pitch;
-//    if (!std::isnan(rotation.roll))
-//        frotator.Roll = rotation.roll;
-//
-//    return frotator;
-//}
+    FCollisionQueryParams collisionParams(FName(TEXT("trace2ground")), true,
+                                          this);
+    FHitResult hit(ForceInit);
+    if (UKismetSystemLibrary::BoxTraceSingle(
+            GetWorld(), startLoc, endLoc, boxHalfSize, spawnRotator,
+            ETraceTypeQuery::TraceTypeQuery1, false, TArray<AActor*>(),
+            EDrawDebugTrace::Type::ForDuration, hit, true))
+    {
+        spawnPosition = hit.Location;
+    }
+}
 
 void ASimModeBase::setupVehiclesAndCamera()
 {
-    ////get UU origin of global NED frame
-    // const FTransform uu_origin =
-    // getGlobalNedTransform().getGlobalTransform();
-
-    // determine camera director camera default pose and spawn it
-    // const auto& camera_director_setting = getSettings().camera_director;
-    // FVector camera_director_position_uu = uu_origin.GetLocation() +
-    // getGlobalNedTransform().fromLocalNed(camera_director_setting.position);
-    // FTransform camera_transform(toFRotator(camera_director_setting.rotation,
-    // FRotator::ZeroRotator),
-    //    camera_director_position_uu);
-    // initializeCameraDirector(camera_transform,
-    // camera_director_setting.follow_distance);
-
-    ////find all vehicle pawns
-    //{
-    //    TArray<RobotSimVehicle*> pawns;
-    //    getExistingVehiclePawns(pawns);
-
-    //    APawn* fpv_pawn = nullptr;
-
-    //    //add vehicles from settings
-    //    for (auto const& vehicle_setting_pair : getSettings().vehicles)
-    //    {
-    //        //if vehicle is of type for derived SimMode and auto creatable
-    //        const auto& vehicle_setting = *vehicle_setting_pair.second;
-    //        if (vehicle_setting.auto_create &&
-    //            isVehicleTypeSupported(vehicle_setting.vehicle_type)) {
-
-    //            //compute initial pose
-    //            FVector spawn_position = uu_origin.GetLocation();
-    //            RobotSim::Vector3r settings_position =
-    //            vehicle_setting.position; if
-    //            (!RobotSim::VectorMath::hasNan(settings_position))
-    //                spawn_position =
-    //                getGlobalNedTransform().fromGlobalNed(settings_position);
-    //            FRotator spawn_rotation = toFRotator(vehicle_setting.rotation,
-    //            uu_origin.Rotator());
-
-    //            //spawn vehicle pawn
-    //            FActorSpawnParameters pawn_spawn_params;
-    //            pawn_spawn_params.Name =
-    //            FName(vehicle_setting.vehicle_name.c_str());
-    //            pawn_spawn_params.SpawnCollisionHandlingOverride =
-    //                ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-    //            auto vehicle_bp_class = URobotBlueprintLib::LoadClass(
-    //                getSettings().pawn_paths.at(getVehiclePawnPathName(vehicle_setting)).pawn_bp);
-
-    //            // TODO: Make the child sim modes responsible for casting the
-    //            types. AActor* spawned_actor = static_cast<AActor*>(
-    //            this->GetWorld()->SpawnActor(
-    //                vehicle_bp_class, &spawn_position, &spawn_rotation,
-    //                pawn_spawn_params));
-
-    //            RobotSimVehicle* spawned_pawn =
-    //            dynamic_cast<RobotSimVehicle*>(spawned_actor);
-
-    //            spawned_actors_.Add(spawned_pawn->GetPawn());
-    //            pawns.Add(spawned_pawn);
-
-    //            if (vehicle_setting.is_fpv_vehicle)
-    //                fpv_pawn = spawned_pawn->GetPawn();
-    //        }
-    //    }
-
-    //    //create API objects for each pawn we have
-    //    for (RobotSimVehicle* pawn : pawns)
-    //    {
-    //        RobotSimVehicle* vehicle_pawn =
-    //        static_cast<RobotSimVehicle*>(pawn);
-
-    //        initializeVehiclePawn(vehicle_pawn->GetPawn());
-
-    //        //create vehicle sim api
-    //        const auto& ned_transform = getGlobalNedTransform();
-    //        const auto& pawn_ned_pos =
-    //        ned_transform.toLocalNed(vehicle_pawn->GetPawn()->GetActorLocation());
-    //        const auto& home_geopoint=
-    //        RobotSim::EarthUtils::nedToGeodetic(pawn_ned_pos,
-    //        getSettings().origin_geopoint); const std::string vehicle_name =
-    //        std::string(TCHAR_TO_UTF8(*(vehicle_pawn->GetPawn()->GetName())));
-
-    //        PawnSimApi::Params pawn_sim_api_params(vehicle_pawn,
-    //        &getGlobalNedTransform(),
-    //            getVehiclePawnEvents(vehicle_pawn->GetPawn()),
-    //            getVehiclePawnCameras(vehicle_pawn->GetPawn()),
-    //            pip_camera_class, collision_display_template, home_geopoint,
-    //            vehicle_name);
-
-    //        auto vehicle_sim_api = createVehicleSimApi(pawn_sim_api_params);
-    //        auto vehicle_sim_api_p = vehicle_sim_api.get();
-    //        auto vehicle_Api = getVehicleApi(pawn_sim_api_params,
-    //        vehicle_sim_api_p);
-    //        getApiProvider()->insert_or_assign(vehicle_name, vehicle_Api,
-    //        vehicle_sim_api_p); if ((fpv_pawn == vehicle_pawn->GetPawn() ||
-    //        !getApiProvider()->hasDefaultVehicle()) && vehicle_name != "")
-    //            getApiProvider()->makeDefaultVehicle(vehicle_name);
-
-    //        vehicle_sim_apis_.push_back(std::move(vehicle_sim_api));
-    //    }
-    //}
-
-    // if (getApiProvider()->hasDefaultVehicle()) {
-    //    //TODO: better handle no FPV vehicles scenario
-    //    getVehicleSimApi()->possess();
-    //    CameraDirector->initializeForBeginPlay(getInitialViewMode(),
-    //    getVehicleSimApi()->getPawn(),
-    //        getVehicleSimApi()->getCamera("fpv"),
-    //        getVehicleSimApi()->getCamera("back_center"), nullptr);
-    //}
-    // else
-    //    CameraDirector->initializeForBeginPlay(getInitialViewMode(), nullptr,
-    //    nullptr, nullptr, nullptr);
-
-    // checkVehicleReady();
 }
 
-void ASimModeBase::getExistingVehiclePawns(
-    TArray<RobotSimVehicle*>& pawns) const
+void ASimModeBase::getExistingVehiclePawns(TArray<RobotBase*>& pawns) const
 {
     // derived class should override this method to retrieve types of pawns they
     // support
 }
 
-// bool ASimModeBase::isVehicleTypeSupported(const std::string& vehicle_type)
-// const
-//{
-//    //derived class should override this method to retrieve types of pawns
-//    they support return false;
-//}
+ARecastNavMesh* ASimModeBase::GetNavMesh()
+{
+    UNavigationSystemV1* NavSys =
+        FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 
-// std::string ASimModeBase::getVehiclePawnPathName(const
-// RobotSimSettings::VehicleSetting& vehicle_setting) const
-//{
-//    //derived class should override this method to retrieve types of pawns
-//    they support return "";
-//}
+    auto navData = NavSys->GetMainNavData();
+    return Cast<ARecastNavMesh>(navData);
+}
 
-// PawnEvents* ASimModeBase::getVehiclePawnEvents(APawn* pawn) const
-//{
-//    unused(pawn);
-//
-//    //derived class should override this method to retrieve types of pawns
-//    they support return nullptr;
-//}
-// const common_utils::UniqueValueMap<std::string, APIPCamera*>
-// ASimModeBase::getVehiclePawnCameras(APawn* pawn) const
-//{
-//    unused(pawn);
-//
-//    //derived class should override this method to retrieve types of pawns
-//    they support return common_utils::UniqueValueMap<std::string,
-//    APIPCamera*>();
-////}
-// void ASimModeBase::initializeVehiclePawn(APawn* pawn)
-//{
-//    unused(pawn);
-//    //derived class should override this method to retrieve types of pawns
-//    they support
-//}
-// std::unique_ptr<PawnSimApi> ASimModeBase::createVehicleSimApi(
-//    const PawnSimApi::Params& pawn_sim_api_params) const
-//{
-//    unused(pawn_sim_api_params);
-//    return std::unique_ptr<PawnSimApi>();
-//}
-// RobotSim::VehicleApiBase* ASimModeBase::getVehicleApi(const
-// PawnSimApi::Params& pawn_sim_api_params,
-//    const PawnSimApi* sim_api) const
-//{
-//    //derived class should override this method to retrieve types of pawns
-//    they support return nullptr;
-//}
+void ASimModeBase::Test()
+{
+    TArray<FString> mapList;
+    this->GetAllMaps(mapList);
+    if (mapList.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("no map found"));
+        return;
+    }
+    FString currentMap = this->GetWorld()->GetName();
+    int currentIndex = -1;
+    for (int i = 0; i < mapList.Num(); i++)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Found map name: %s"), *(mapList[i]));
+        if (currentMap.Equals(mapList[i]))
+        {
+            currentIndex = i;
+            break;
+        }
+    }
+    FString NextMap = mapList[(currentIndex + 1) % mapList.Num()];
+    this->LoadMap(NextMap);
+}
 
-// Draws debug-points on main viewport for Lidar laser hits.
-// Used for debugging only.
+bool ASimModeBase::NavSystemRebuild(float AgentRadius)
+{
+    UNavigationSystemV1* NavSys =
+        FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    if (!NavSys)
+    {
+        return false;
+    }
+    auto navData = NavSys->GetMainNavData();
+    ARecastNavMesh* navMesh = Cast<ARecastNavMesh>(navData);
+    if (!navMesh)
+    {
+        return false;
+    }
 
-// void ASimModeBase::drawLidarDebugPoints()
-//{
-//    // This has been moved to the UnrealLidarSensor.
-//    // Currently we are checking the sensor-collection instead of
-//    sensor-settings.
-//    // Also using variables to optimize not checking the collection if not
-//    needed. if (lidar_checks_done_ && !lidar_draw_debug_points_)
-//        return;
-//
-//    if (getApiProvider() == nullptr)
-//        return;
-//
-//    for (auto& sim_api : getApiProvider()->getVehicleSimApis()) {
-//        PawnSimApi* pawn_sim_api = static_cast<PawnSimApi*>(sim_api);
-//        std::string vehicle_name = pawn_sim_api->getVehicleName();
-//
-//        RobotSim::VehicleApiBase* api =
-//        getApiProvider()->getVehicleApi(vehicle_name); if (api != nullptr) {
-//
-//            RobotSim::uint count_lidars =
-//            api->getSensors().size(RobotSim::SensorBase::SensorType::Lidar);
-//
-//            for (RobotSim::uint i = 0; i < count_lidars; i++) {
-//                // TODO: Is it incorrect to assume LidarSimple here?
-//                const RobotSim::LidarSimple* lidar =
-//                    static_cast<const
-//                    RobotSim::LidarSimple*>(api->getSensors().getByType(RobotSim::SensorBase::SensorType::Lidar,
-//                    i));
-//                if (lidar != nullptr && lidar->getParams().draw_debug_points)
-//                {
-//                    lidar_draw_debug_points_ = true;
-//
-//                    RobotSim::LidarData lidar_data = lidar->getOutput();
-//
-//                    if (lidar_data.point_cloud.size() < 3)
-//                        return;
-//
-//                    for (int i = 0; i < lidar_data.point_cloud.size(); i = i +
-//                    3) {
-//                        RobotSim::Vector3r point(lidar_data.point_cloud[i],
-//                        lidar_data.point_cloud[i + 1],
-//                        lidar_data.point_cloud[i + 2]);
-//
-//                        FVector uu_point =
-//                        pawn_sim_api->getNedTransform().fromLocalNed(point);
-//
-//                        DrawDebugPoint(
-//                            this->GetWorld(),
-//                            uu_point,
-//                            5,              //size
-//                            FColor::Green,
-//                            true,           //persistent (never goes away)
-//                            0.1             //point leaves a trail on moving
-//                            object
-//                        );
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    lidar_checks_done_ = true;
-//}
+    ANavMeshBoundsVolume* NavmeshBounds = nullptr;
+    for (TActorIterator<ANavMeshBoundsVolume> it(this->GetWorld()); it; ++it)
+    {
+        NavmeshBounds = *it;
+    }
+    if (NavmeshBounds == nullptr)
+    {
+        return false;
+    }
+
+    navMesh->AgentRadius = AgentRadius;
+    navMesh->CellSize = 10;
+    navMesh->AgentMaxSlope = 0.1f;
+    navMesh->AgentMaxStepHeight = 0.1f;
+    navMesh->MergeRegionSize = 0;
+    // ignore region that are too small
+    navMesh->MinRegionArea = 400;
+
+    // dynamic update navMesh location and size
+    NavmeshBounds->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+
+    FBox worldBox = GetWorldBoundingBox();
+    NavmeshBounds->SetActorLocation(worldBox.GetCenter(), false);
+    NavmeshBounds->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);
+    NavmeshBounds->GetRootComponent()->UpdateBounds();
+    // NavmeshBounds->SupportedAgents.bSupportsAgent0;
+    NavSys->OnNavigationBoundsUpdated(NavmeshBounds);
+    // redo modify frequency change
+    NavmeshBounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
+
+    // rebuild NavMesh, required for update AgentRadius
+    NavSys->Build();
+
+    return true;
+}
+
+FBox ASimModeBase::GetWorldBoundingBox(bool bScaleCeiling)
+{
+    FBox box(ForceInit);
+    for (TActorIterator<AActor> it(this->GetWorld()); it; ++it)
+    {
+        if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture"))
+        {
+            box += it->GetComponentsBoundingBox(false, true);
+        }
+    }
+    // remove ceiling
+    return !bScaleCeiling
+               ? box
+               : box.ExpandBy(box.GetSize() * 0.1f)
+                     .ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
+}
+
+void ASimModeBase::GetAllMaps(TArray<FString>& MapList) const
+{
+    auto ObjectLibrary =
+        UObjectLibrary::CreateLibrary(UWorld::StaticClass(), false, true);
+    ObjectLibrary->LoadAssetDataFromPath(TEXT("/Game/Maps"));
+    TArray<FAssetData> AssetDatas;
+    ObjectLibrary->GetAssetDataList(AssetDatas);
+    UE_LOG(LogTemp, Warning, TEXT("Found maps count: %d"), AssetDatas.Num());
+    for (int32 i = 0; i < AssetDatas.Num(); i++)
+    {
+        FAssetData& AssetData = AssetDatas[i];
+        MapList.Add(AssetData.AssetName.ToString());
+    }
+}
+
+void ASimModeBase::LoadMap(FString mapName)
+{
+    UE_LOG(LogTemp, Warning, TEXT("LoadMap: %s"), *(mapName));
+    UGameplayStatics::OpenLevel(this, FName(mapName), false);
+}
