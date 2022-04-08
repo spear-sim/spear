@@ -3,19 +3,9 @@ SIMULATION_CONTROLLER:
   AGENT_CONTROLLER_NAME: ""
   TASK_NAME: ""
 
-  SPHERE_AGENT_CONTROLLER:    
-    OBSERVATION_MODE: "mixed" # "mixed" or "physical"
-    VISUALIZATION_MODE: "observation" # "debug" or "observation"
-    ACTOR_NAME: "Sphere_2"
-    OBSERVATION_CAMERA_NAME: "ObservationCameraActor"
-    GOAL_NAME: "Cone_5"
-    DEBUG_CAMERA_NAME: "DebugCameraActor"
-    SPHERE:
-      KEYBOARD_INPUT_FORCE_SCALE: 1000000.0
-      MASS_SCALE: 1.0
-      MAX_ANGULAR_VELOCITY: 1.0
-      LINEAR_DAMPING: 0.1
-      ANGULAR_DAMPING: 0.1
+  VISUALIZER:
+    CAMERA_NAME: "ObservationCameraActor" # DebugCameraActor OR ObservationCameraActor
+    CAMERA_TYPE: "" # Debug or ""
     DEBUG_CAMERA:
       SET_POSE: True
       POSITION_X: -250.0
@@ -24,6 +14,18 @@ SIMULATION_CONTROLLER:
       PITCH: -90.0
       YAW: 0.0
       ROLL: 0.0
+  
+  SPHERE_AGENT_CONTROLLER:    
+    OBSERVATION_MODE: "mixed" # "mixed" or "physical"
+    ACTOR_NAME: "Sphere_2"
+    OBSERVATION_CAMERA_NAME: "ObservationCameraActor"
+    GOAL_NAME: "Cone_5"
+    SPHERE:
+      KEYBOARD_INPUT_FORCE_SCALE: 1000000.0
+      MASS_SCALE: 1.0
+      MAX_ANGULAR_VELOCITY: 1.0
+      LINEAR_DAMPING: 0.1
+      ANGULAR_DAMPING: 0.1
     OBSERVATION_CAMERA:
       POSITION_OFFSET_X: 0.0
       POSITION_OFFSET_Y: 0.0

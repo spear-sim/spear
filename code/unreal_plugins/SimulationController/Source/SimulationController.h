@@ -11,6 +11,7 @@ class AgentController;
 enum class FrameState : uint8_t;
 class RpcServer;
 class Task;
+class Visualizer;
 
 class SimulationController : public IModuleInterface
 {
@@ -47,6 +48,7 @@ private:
     std::unique_ptr<RpcServer> rpc_server_ = nullptr;
     std::unique_ptr<AgentController> agent_controller_ = nullptr;
     std::unique_ptr<Task> task_ = nullptr;
+    std::unique_ptr<Visualizer> visualizer_camera_ = nullptr;
 
     bool is_world_begin_play_executed_ = false;
 

@@ -31,7 +31,6 @@ private:
 
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
-    AActor* debug_camera_actor_ = nullptr;
     AActor* observation_camera_actor_ = nullptr;
 
     UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;

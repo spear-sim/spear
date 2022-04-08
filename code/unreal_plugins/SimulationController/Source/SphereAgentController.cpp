@@ -32,39 +32,11 @@ SphereAgentController::SphereAgentController(UWorld* world)
         } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "GOAL_NAME"})) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
-        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA_NAME"})) {
-            ASSERT(!debug_camera_actor_);
-            debug_camera_actor_ = *actor_itr;
         }
     }
     ASSERT(agent_actor_);
     ASSERT(observation_camera_actor_);
     ASSERT(goal_actor_);
-    ASSERT(debug_camera_actor_);
-
-    // set active camera
-    APlayerController* Controller = world->GetFirstPlayerController();
-    ASSERT(Controller);
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "VISUALIZATION_MODE"}) == "debug") {
-        Controller->SetViewTarget(debug_camera_actor_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "VISUALIZATION_MODE"}) == "observation") {
-        Controller->SetViewTarget(observation_camera_actor_);
-    } else {
-        ASSERT(false);
-    }
-
-    // setup debug camera
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "SET_POSE"})) {
-        const FVector debug_camera_pose(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "POSITION_X"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "POSITION_Y"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "POSITION_Z"}));
-        debug_camera_actor_->SetActorLocation(debug_camera_pose);
-        debug_camera_actor_->SetActorRotation(FRotator(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "PITCH"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "YAW"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "DEBUG_CAMERA", "ROLL"})));
-    }
 
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {

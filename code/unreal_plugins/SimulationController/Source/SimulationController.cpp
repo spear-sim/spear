@@ -24,6 +24,7 @@
 #include "RpcServer.h"
 #include "SphereAgentController.h"
 #include "Task.h"
+#include "Visualizer.h"
 
 // different possible frame states for thread synchronization
 enum class FrameState : uint8_t
@@ -126,6 +127,9 @@ void SimulationController::worldBeginPlayEventHandler()
     }
     ASSERT(task_);
 
+    // create a visualizer that is responsible for the camera view
+    visualizer_camera_ = std::make_unique<Visualizer>(world_);
+
     // initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
 
@@ -155,6 +159,9 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             ASSERT(rpc_server_);
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
             rpc_server_ = nullptr;
+
+            ASSERT(visualizer_camera_);
+            visualizer_camera_ = nullptr;
 
             ASSERT(task_);
             task_ = nullptr;
