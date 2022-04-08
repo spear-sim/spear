@@ -10,13 +10,10 @@
 #include "MoveHandler.h"
 #include "Rpclib.h"
 
-/**
- * An RPC server in which functions can be bind to run synchronously or asynchronously.
- * Use `launchWorkerThreads` to start the worker threads, and use `runSync`, to service work on the Game thread.
- *
- * Functions that are bind using `BindAsync` will run asynchronously in the worker threads.
- * Functions that are bind using `BindSync` will run within `runSync` function.
- */
+// An RPC server in which functions can be bind to run synchronously or asynchronously.
+// Use `launchWorkerThreads` to start the worker threads, and use `runSync`, to service work on the Game thread. 
+// Functions that are bind using `bindAsync` will run asynchronously in the worker threads.
+// Functions that are bind using `bindSync` will run within `runSync` function.
 
 class RpcServer
 {

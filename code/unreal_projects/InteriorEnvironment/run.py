@@ -8,8 +8,8 @@ import numpy as np
 import os
 
 from interiorsim import Env
-from interiorsim.config import getConfig
-from interiorsim.constants import PACKAGE_ROOT_DIR
+from interiorsim.config import get_config
+from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
 
 if __name__ == "__main__":
@@ -18,10 +18,10 @@ if __name__ == "__main__":
     config_files = []
 
     # add default config files first and then user config files
-    config_files.append(os.path.join(PACKAGE_ROOT_DIR, "../../unreal_projects/InteriorEnvironment/user_config.yaml"))
+    config_files.append(os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/InteriorEnvironment/user_config.yaml"))
 
     # load configs
-    config = getConfig(config_files)
+    config = get_config(config_files)
 
     # create unreal environment object
     env = Env(config)

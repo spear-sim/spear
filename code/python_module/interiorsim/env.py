@@ -36,34 +36,34 @@ class Env(gym.Env):
 
         self._config = config
 
-        self._requestLaunchUnrealInstance()
-        self._connectToUnrealInstance()
-        self._initializeUnrealInstance()
+        self._request_launch_unreal_instance()
+        self._connect_to_unreal_instance()
+        self._initialize_unreal_instance()
 
-        self._observation_byte_order = self._getObservationByteOrder()
+        self._observation_byte_order = self._get_observation_byte_order()
 
-        self.observation_space = self._getObservationSpace()
-        self.action_space = self._getActionSpace()
+        self.observation_space = self._get_observation_space()
+        self.action_space = self._get_action_space()
 
     
     def step(self, action):
         
-        self._beginTick()
-        self._applyAction(action)
+        self._begin_tick()
+        self._apply_action(action)
         self._tick()
-        obs = self._getObservation()
-        reward = self._getReward()
-        is_done = self._isEpisodeDone()
-        self._endTick()
+        obs = self._get_observation()
+        reward = self._get_reward()
+        is_done = self._is_episode_done()
+        self._end_tick()
 
         return obs, reward, is_done, None
 
     def reset(self):
-        self._beginTick()
+        self._begin_tick()
         self._reset()
         self._tick()
-        obs = self._getObservation()
-        self._endTick()
+        obs = self._get_observation()
+        self._end_tick()
         return obs
 
     # need to override gym.Env member function
@@ -71,10 +71,10 @@ class Env(gym.Env):
         pass
 
     def close(self):
-        self._closeUnrealInstance()
-        self._closeClientServerConnection()
+        self._close_unreal_instance()
+        self._close_client_server_connection()
 
-    def _requestLaunchUnrealInstance(self):
+    def _request_launch_unreal_instance(self):
 
         if self._config.INTERIORSIM.LAUNCH_MODE == "running_instance":
             return
@@ -159,12 +159,12 @@ class Env(gym.Env):
         if status not in ["running", "sleeping", "disk-sleep"]:
             print("ERROR: Unrecognized process status: " + status)
             print("ERROR: Killing process " + str(self._process.pid) + "...")
-            self._forceKillUnrealInstance()
-            self._closeClientServerConnection()
+            self._force_kill_unreal_instance()
+            self._close_client_server_connection()
             assert False
 
 
-    def _connectToUnrealInstance(self):
+    def _connect_to_unreal_instance(self):
 
         print(f"Connecting to Unreal application...")
 
@@ -181,7 +181,7 @@ class Env(gym.Env):
             except:
                 # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                 # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
-                self._closeClientServerConnection()
+                self._close_client_server_connection()
 
         # Otherwise try to connect repeatedly, since the RPC server might not have started yet
         else:
@@ -194,8 +194,8 @@ class Env(gym.Env):
                 if status not in ["running", "sleeping", "disk-sleep"]:
                     print("ERROR: Unrecognized process status: " + status)
                     print("ERROR: Killing process " + str(self._process.pid) + "...")
-                    self._forceKillUnrealInstance()
-                    self._closeClientServerConnection()
+                    self._force_kill_unreal_instance()
+                    self._close_client_server_connection()
                     assert False
                 try:
                     self._client = msgpackrpc.Client(
@@ -207,32 +207,32 @@ class Env(gym.Env):
                 except:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                     # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
-                    self._closeClientServerConnection()
+                    self._close_client_server_connection()
                 time.sleep(self._config.INTERIORSIM.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
 
         if not connected:
             if self._self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
                 print("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
-                self._forceKillUnrealInstance()
-                self._closeClientServerConnection()
+                self._force_kill_unreal_instance()
+                self._close_client_server_connection()
             assert False
 
-    def _initializeUnrealInstance(self):
+    def _initialize_unreal_instance(self):
         # do one tick cyle here to prep Unreal Engine so that we can receive valid observations
-        self._beginTick()
+        self._begin_tick()
         self._tick()
-        self._endTick()
+        self._end_tick()
 
-    def _forceKillUnrealInstance(self):
+    def _force_kill_unreal_instance(self):
         self._process.terminate()
         self._process.kill()
 
-    def _closeClientServerConnection(self):
+    def _close_client_server_connection(self):
         self._client.close()
         self._client._loop._ioloop.close()
     
-    def _getNumpyDtype(self, x):
+    def _get_numpy_dtype(self, x):
         return {
             DataType.Boolean.value: np.dtype("?"),
             DataType.UInteger8.value: np.dtype("u1"),
@@ -248,10 +248,10 @@ class Env(gym.Env):
     def _ping(self):
         return self._client.call("ping")
 
-    def _closeUnrealInstance(self):
+    def _close_unreal_instance(self):
         self._client.call("close")
 
-    def _getObservationByteOrder(self):
+    def _get_observation_byte_order(self):
         unreal_instance_endianness = self._client.call("getEndianness")
 
         if sys.byteorder == "little":
@@ -268,16 +268,16 @@ class Env(gym.Env):
         else:
             assert False
 
-    def _beginTick(self):
+    def _begin_tick(self):
         self._client.call("beginTick")
 
     def _tick(self):
         self._client.call("tick")
 
-    def _endTick(self):
+    def _end_tick(self):
         self._client.call("endTick")
 
-    def _getObservationSpace(self):
+    def _get_observation_space(self):
         observation_space = self._client.call("getObservationSpace")
         if len(observation_space) == 0:
             assert False
@@ -289,14 +289,14 @@ class Env(gym.Env):
             low = obs_info["low"]
             high = obs_info["high"]
             shape = tuple(x for x in obs_info["shape"])
-            dtype = self._getNumpyDtype(obs_info["dtype"]).type
+            dtype = self._get_numpy_dtype(obs_info["dtype"]).type
             gym_spaces_dict[obs_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
 
 
     # TODO: expand functionality to support discrete action spaces
-    def _getActionSpace(self):
+    def _get_action_space(self):
         action_space = self._client.call("getActionSpace")
         if len(action_space) == 0:
             assert False
@@ -308,12 +308,12 @@ class Env(gym.Env):
             low = action_info["low"]
             high = action_info["high"]
             shape = tuple(x for x in action_info["shape"])
-            dtype = self._getNumpyDtype(action_info["dtype"]).type
+            dtype = self._get_numpy_dtype(action_info["dtype"]).type
             gym_spaces_dict[action_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
 
-    def _getObservation(self):
+    def _get_observation(self):
         obs_dict = self._client.call("getObservation")
         if len(obs_dict) == 0:
             assert False
@@ -333,14 +333,14 @@ class Env(gym.Env):
         
         return return_obs_dict
 
-    def _applyAction(self, action):
+    def _apply_action(self, action):
         self._client.call("applyAction", action)
 
-    def _getReward(self):
+    def _get_reward(self):
         return self._client.call("getReward")
     
     def _reset(self):
         self._client.call("reset")
 
-    def _isEpisodeDone(self):
+    def _is_episode_done(self):
         return self._client.call("isEpisodeDone")
