@@ -35,7 +35,7 @@ if sys.platform == "linux":
 else:
     cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", ".."], stdout=sys.stdout)
 assert cmake_cmd.returncode == 0
-rbld_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "8"], stdout=sys.stdout)
+rbld_build_cmd = subprocess.run(["cmake",  "--build", ".", "--"], stdout=sys.stdout)
 assert rbld_build_cmd.returncode == 0
 print("rbdl built successfully...")
 
@@ -54,7 +54,7 @@ if sys.platform == "linux":
 else:
     cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release"], stdout=sys.stdout)
 assert cmake_cmd.returncode == 0
-rpclib_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "8"], stdout=sys.stdout)
+rpclib_build_cmd = subprocess.run(["cmake",  "--build", ".", "--"], stdout=sys.stdout)
 assert rpclib_build_cmd.returncode == 0
 print("rpclib built successfully...")
 
@@ -73,6 +73,6 @@ if sys.platform == "linux":
 else:
     cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release"], stdout=sys.stdout)
 assert cmake_cmd.returncode == 0
-yamlcpp_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "8"], stdout=sys.stdout)
+yamlcpp_build_cmd = subprocess.run(["cmake",  "--build", ".", "--"], stdout=sys.stdout)
 assert yamlcpp_build_cmd.returncode == 0
 print("yaml-cpp built successfully...")
