@@ -148,6 +148,23 @@ public:
     void MoveLeftRight(float leftCtrl, float rightCtrl);
 
     /**
+     * @brief Uses the autopilot to move the vehicle from its current position in world frame to target position.
+     * The target position is here assumed to be reachable and on a collision-free trajectory (e.g. provided by a 
+     * suitable trajectory planner). Returns true once the position is reached. 
+     * 
+     * @param target 
+     * @return true 
+     * @return false 
+     */
+    bool MoveTo(const FVector2D &target);
+
+    /**
+     * @brief 
+     * 
+     */
+    void TrackWayPoint(float DeltaTime);
+
+    /**
      * @brief Provides acces to the action sent to the agent at the current
      * simulation epoch. This function is required as the action to be executed
      * by the agent may either come from the python client (RL scenario) or from
@@ -162,8 +179,7 @@ public:
      *
      * @param settings
      */
-    virtual void SetRobotParameters(
-        const RobotSim::RobotSimSettings::VehicleSetting &settings) override;
+    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting &settings) override;
 
     PawnEvents* GetPawnEvents();
 
@@ -277,6 +293,11 @@ private:
         return v_clamped;
     }
 
+    template <typename T>
+    T Clamp(const T& n, const T& lower, const T& upper) {
+        return std::max(lower, std::min(n, upper));
+    }
+
     /**
      * @brief Rev per minute to rad/s
      *
@@ -328,6 +349,10 @@ private:
     float batteryVoltage_ = 12.f;       // Expressed in [V]
     float electricalResistance_ = 4.2f; // Electrical resistance of the DC motor windings in [Ohms]
     float electricalInductance_ = 0.f;  // Electrical inductance of the DC motor windings in [Henry]
-    float controlDeadZone_ = 5.0;       // Below this command threshold, the torque is set to
-                                        // zero if the motor velocity is "small enough"
+    float controlDeadZone_ = 5.0;       // Below this command threshold, the torque is set to zero if the motor velocity is "small enough"
+
+    float yaw_ = 0.0;
+    FVector2D targetLocation_;
+    bool targetLocationReached_ = false;
+    bool useAutopilot_ = false;
 };

@@ -51,6 +51,9 @@ public:
     void GetObservation(std::vector<unrealrl::Observation>&) override;
 
 private:
+
+    void PlanPathToRachableTarget();
+
     /**
      * @brief Enumeates the different collision cases
      *
@@ -72,4 +75,13 @@ private:
     class AActor* goalActor = nullptr;
 
     UHitInfo hitInfo_ = UHitInfo::NoHit;
+
+    // An array containing the different waypoints to be followed by the agent:
+    TArray<FNavPathPoint> pathPoints_;
+
+    // The path point begin considered by the PID controller:
+    FVector2D currentPathPoint_;
+
+    // Index of the considered path point (starts at one since 0 is the initial position):
+    unsigned int indexPath_ = 1;
 };

@@ -154,10 +154,10 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
                             bound.GetBox().GetSize() / 2);
                 spawnPosition = spawnPosition + FVector(0, 0, -3);
             }
-            URobotBlueprintLib::LogMessage("spawn at pos",
-                                           spawnPosition.ToString() + " ori: " +
-                                               spawnRotation.Euler().ToString(),
-                                           LogDebugLevel::Informational, 30);
+            // URobotBlueprintLib::LogMessage("spawn at pos",
+            //                                spawnPosition.ToString() + " ori: " +
+            //                                    spawnRotation.Euler().ToString(),
+            //                                LogDebugLevel::Informational, 30);
             ASimpleVehiclePawn* spawned_pawn =
                 static_cast<ASimpleVehiclePawn*>(this->GetWorld()->SpawnActor(
                     vehicle_bp_class, &spawnPosition, &spawnRotation,

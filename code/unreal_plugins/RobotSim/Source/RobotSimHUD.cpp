@@ -27,7 +27,7 @@ void ARobotSimHUD::BeginPlay()
         setUnrealEngineSettings();
         createSimMode();
     }
-    catch (std::exception& ex)
+    catch (std::exception &ex)
     {
         URobotBlueprintLib::LogMessageString("Error at startup: ", ex.what(),
                                              LogDebugLevel::Failure);
@@ -41,22 +41,23 @@ void ARobotSimHUD::initializeSettings()
 {
     std::string settingsText;
     if (getSettingsTextContent(settingsText))
+    {
         RobotSimSettings::initializeSettings(settingsText);
+    }
     else
+    {
         RobotSimSettings::createDefaultSettingsFile();
+    }
 
     // load and parse settings.json
-    RobotSimSettings::singleton().load(
-        std::bind(&ARobotSimHUD::getSimModeFromUser, this));
-    for (const auto& warning : RobotSimSettings::singleton().warning_messages)
+    RobotSimSettings::singleton().load(std::bind(&ARobotSimHUD::getSimModeFromUser, this));
+    for (const auto &warning : RobotSimSettings::singleton().warning_messages)
     {
-        URobotBlueprintLib::LogMessageString(warning, "",
-                                             LogDebugLevel::Failure);
+        URobotBlueprintLib::LogMessageString(warning, "", LogDebugLevel::Failure);
     }
-    for (const auto& error : RobotSimSettings::singleton().error_messages)
+    for (const auto &error : RobotSimSettings::singleton().error_messages)
     {
-        URobotBlueprintLib::ShowMessage(EAppMsgType::Ok, error,
-                                        "settings.json");
+        URobotBlueprintLib::ShowMessage(EAppMsgType::Ok, error, "settings.json");
     }
 }
 
@@ -66,27 +67,23 @@ void ARobotSimHUD::createSimMode()
 
     FActorSpawnParameters simmode_spawn_params;
     simmode_spawn_params.Name = FName("SimModeRobotSim_0");
-    simmode_spawn_params.SpawnCollisionHandlingOverride =
-        ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    simmode_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
     if (simmode_name == "UrdfBot")
     {
-        simmode_ = this->GetWorld()->SpawnActor<ASimModeUrdfBot>(
-            FVector::ZeroVector, FRotator::ZeroRotator, simmode_spawn_params);
+        simmode_ = this->GetWorld()->SpawnActor<ASimModeUrdfBot>(FVector::ZeroVector, FRotator::ZeroRotator, simmode_spawn_params);
     }
     else if (simmode_name == "SimpleVehicle")
     {
-        simmode_ = this->GetWorld()->SpawnActor<ASimModeSimpleVehicle>(
-            FVector::ZeroVector, FRotator::ZeroRotator, simmode_spawn_params);
+        simmode_ = this->GetWorld()->SpawnActor<ASimModeSimpleVehicle>(FVector::ZeroVector, FRotator::ZeroRotator, simmode_spawn_params);
     }
     else
     {
-        URobotBlueprintLib::LogMessageString(
-            "SimMode is not valid: ", simmode_name, LogDebugLevel::Failure);
+        URobotBlueprintLib::LogMessageString("SimMode is not valid: ", simmode_name, LogDebugLevel::Failure);
     }
 }
 
-bool ARobotSimHUD::getSettingsTextContent(std::string& settingsText)
+bool ARobotSimHUD::getSettingsTextContent(std::string &settingsText)
 {
     FString CmdLineFilePath = "settings.json";
     // parse cmd line command for setting json file path
@@ -95,31 +92,28 @@ bool ARobotSimHUD::getSettingsTextContent(std::string& settingsText)
     {
         CmdLineFilePath = CmdLineFilePath.Replace(TEXT("="), TEXT(""));
     }
-    FString CurrentProjectFilePath =
-        RobotSim::Settings::getAnyPossiblePath(TCHAR_TO_UTF8(*CmdLineFilePath))
-            .c_str();
+
+    FString CurrentProjectFilePath = RobotSim::Settings::getAnyPossiblePath(TCHAR_TO_UTF8(*CmdLineFilePath)).c_str();
+
     if (!FPaths::FileExists(CurrentProjectFilePath))
     {
-        throw std::runtime_error(
-            "settings.json not found: " +
-            std::string(TCHAR_TO_UTF8(*CurrentProjectFilePath)));
+        throw std::runtime_error("settings.json not found: " + std::string(TCHAR_TO_UTF8(*CurrentProjectFilePath)));
     }
     return readSettingsTextFromFile(CurrentProjectFilePath, settingsText);
 }
 
-bool ARobotSimHUD::getSettingsTextFromCommandLine(std::string& settingsText)
+bool ARobotSimHUD::getSettingsTextFromCommandLine(std::string &settingsText)
 {
-
     bool found = false;
     FString settingsTextFString;
-    const TCHAR* commandLineArgs = FCommandLine::Get();
+    const TCHAR *commandLineArgs = FCommandLine::Get();
 
     if (FParse::Param(commandLineArgs, TEXT("-settings")))
     {
         FString commandLineArgsFString = FString(commandLineArgs);
         int idx = commandLineArgsFString.Find(TEXT("-settings"));
-        FString settingsJsonFString =
-            commandLineArgsFString.RightChop(idx + 10);
+        FString settingsJsonFString = commandLineArgsFString.RightChop(idx + 10);
+
         if (FParse::QuotedString(*settingsJsonFString, settingsTextFString))
         {
             settingsText = std::string(TCHAR_TO_UTF8(*settingsTextFString));
@@ -130,27 +124,22 @@ bool ARobotSimHUD::getSettingsTextFromCommandLine(std::string& settingsText)
     return found;
 }
 
-bool ARobotSimHUD::readSettingsTextFromFile(FString settingsFilepath,
-                                            std::string& settingsText)
+bool ARobotSimHUD::readSettingsTextFromFile(FString settingsFilepath, std::string &settingsText)
 {
     bool found = FPaths::FileExists(settingsFilepath);
     if (found)
     {
         FString settingsTextFStr;
-        bool readSuccessful =
-            FFileHelper::LoadFileToString(settingsTextFStr, *settingsFilepath);
+        bool readSuccessful = FFileHelper::LoadFileToString(settingsTextFStr, *settingsFilepath);
+
         if (readSuccessful)
         {
-            URobotBlueprintLib::LogMessageString(
-                "Loaded settings from ", TCHAR_TO_UTF8(*settingsFilepath),
-                LogDebugLevel::Informational);
+            // URobotBlueprintLib::LogMessageString("Loaded settings from ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Informational);
             settingsText = TCHAR_TO_UTF8(*settingsTextFStr);
         }
         else
         {
-            URobotBlueprintLib::LogMessageString(
-                "Cannot read file ", TCHAR_TO_UTF8(*settingsFilepath),
-                LogDebugLevel::Failure);
+            URobotBlueprintLib::LogMessageString("Cannot read file ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Failure);
             throw std::runtime_error("Cannot read settings file.");
         }
     }
@@ -170,20 +159,16 @@ void ARobotSimHUD::setUnrealEngineSettings()
 
     // use two different methods to set console var because sometime it doesn't
     // seem to work
-    static const auto custom_depth_var =
-        IConsoleManager::Get().FindConsoleVariable(TEXT("r.CustomDepth"));
+    static const auto custom_depth_var = IConsoleManager::Get().FindConsoleVariable(TEXT("r.CustomDepth"));
     custom_depth_var->Set(3);
 
     // Equivalent to enabling Custom Stencil in Project > Settings > Rendering >
     // Postprocessing
-    UKismetSystemLibrary::ExecuteConsoleCommand(GetWorld(),
-                                                FString("r.CustomDepth 3"));
+    UKismetSystemLibrary::ExecuteConsoleCommand(GetWorld(), FString("r.CustomDepth 3"));
 
     // during startup we init stencil IDs to random hash and it takes long time
     // for large environments we get error that GameThread has timed out after
     // 30 sec waiting on render thread
-    static const auto render_timeout_var =
-        IConsoleManager::Get().FindConsoleVariable(
-            TEXT("g.TimeoutForBlockOnRenderFence"));
+    static const auto render_timeout_var = IConsoleManager::Get().FindConsoleVariable(TEXT("g.TimeoutForBlockOnRenderFence"));
     render_timeout_var->Set(300000);
 }

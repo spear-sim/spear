@@ -67,8 +67,8 @@ void ASimModeBase::BeginPlay()
 
     setupTimeOfDay();
 
-    URobotBlueprintLib::LogMessage(TEXT("Press F1 to see help"), TEXT(""),
-                                   LogDebugLevel::Informational);
+    // URobotBlueprintLib::LogMessage(TEXT("Press F1 to see help"), TEXT(""),
+    //                                LogDebugLevel::Informational);
 
     setupVehiclesAndCamera();
 }

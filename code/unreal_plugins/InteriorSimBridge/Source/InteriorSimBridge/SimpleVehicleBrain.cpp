@@ -1,6 +1,6 @@
 #include "SimpleVehicleBrain.h"
 
-USimpleVehicleBrain::USimpleVehicleBrain(const FObjectInitializer& objectInitializer) : Super(objectInitializer)
+USimpleVehicleBrain::USimpleVehicleBrain(const FObjectInitializer &objectInitializer) : Super(objectInitializer)
 {
 }
 
@@ -13,7 +13,7 @@ void USimpleVehicleBrain::Init()
 
     ASSERT(ownerPawn != nullptr);
 
-    APlayerController* Controller = GetWorld()->GetFirstPlayerController();
+    APlayerController *Controller = GetWorld()->GetFirstPlayerController();
     ASSERT(Controller != nullptr);
 
     // Look for the desired observation camera among all available camera actors:
@@ -89,6 +89,79 @@ void USimpleVehicleBrain::Init()
         SetObservationSpecs({SimpleVehicleObservationSpec});
     }
     SetActionSpecs({SimpleVehicleActionSpec});
+
+    // Trajectory planning:
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "ACTIVATE_AUTOPILOT"}))
+    {
+        // Initialize navigation variables:
+        int numberOfWayPoints = 0;
+        int numIter = 0;
+        int numIterTot = 0;
+        int numCycle = 0;
+        FVector initialPosition = ownerPawn->GetActorLocation();
+        FNavLocation targetLocation;
+        FVector2D relativePositionToTarget(0.0f, 0.0f);
+
+        // Initialize navigation:
+        UNavigationSystemV1 *navSys = Cast<UNavigationSystemV1>(ownerPawn->GetWorld()->GetNavigationSystem());
+        ANavigationData *navData = (navSys == nullptr) ? nullptr : navSys->GetNavDataForProps(ownerPawn->GetNavAgentPropertiesRef());
+
+        // Set path generation query:
+        FPathFindingQuery Query = FPathFindingQuery(*ownerPawn, *navData, initialPosition, targetLocation.Location);
+        // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
+        Query.SetAllowPartialPaths(true);
+
+        // Path generation polling to get "interesting" paths in every experiment:
+        while ((numberOfWayPoints < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_WAY_POINTS"}) - numCycle and relativePositionToTarget.Size() < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MIN_TARGET_DISTANCE"})) or numIterTot < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_ITER_REPLAN"}) * unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_WAY_POINTS"})) // Try to generate interesting trajectories with multiple waypoints
+        {
+            std::cout << "Iteration: " << numIterTot << std::endl;
+            if (numIter >= unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_ITER_REPLAN"}))
+            {
+                numCycle++;
+                numIter = 0;
+            }
+            pathPoints_.Empty();
+
+            // Ret a random target point, to be reached by the agent:
+            if (not navSys->GetRandomReachablePointInRadius(initialPosition, unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "TARGET_RADIUS"}), targetLocation))
+            {
+                ASSERT(false);
+            }
+            relativePositionToTarget.X = (targetLocation.Location - initialPosition).X;
+            relativePositionToTarget.Y = (targetLocation.Location - initialPosition).Y;
+
+            // Genrate a collision-free path between the robot position and the target point:
+            FPathFindingResult collisionFreePath = navSys->FindPathSync(Query, EPathFindingMode::Type::Regular);
+
+            // If path generation is sucessful, analyze the obtained path (it should not be too simple):
+            if (collisionFreePath.IsSuccessful() && collisionFreePath.Path.IsValid())
+            {
+                if (collisionFreePath.IsPartial())
+                {
+                    std::cout << "Only a partial path could be found by the planner..." << std::endl;
+                }
+                pathPoints_ = collisionFreePath.Path->GetPathPoints();
+                numberOfWayPoints = pathPoints_.Num();
+            }
+            std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
+            std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
+            numIter++;
+            numIterTot++;
+        }
+
+        std::cout << "Current position: [" << initialPosition.X << ", " << initialPosition.Y << ", " << initialPosition.Z << "]." << std::endl;
+        std::cout << "Reachable position: [" << targetLocation.Location.X << ", " << targetLocation.Location.Y << ", " << targetLocation.Location.Z << "]." << std::endl;
+        std::cout << "-----------------------------------------------------------" << std::endl;
+        std::cout << "Way points: " << std::endl;
+        for (auto wayPoint : pathPoints_)
+        {
+            std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
+        }
+        std::cout << "-----------------------------------------------------------" << std::endl;
+        currentPathPoint_.X = pathPoints_[indexPath_].Location.X;
+        currentPathPoint_.Y = pathPoints_[indexPath_].Location.Y;
+        indexPath_++;
+    }
 }
 
 bool USimpleVehicleBrain::IsAgentReady()
@@ -99,24 +172,45 @@ bool USimpleVehicleBrain::IsAgentReady()
 
 void USimpleVehicleBrain::OnEpisodeBegin()
 {
-    // reset by reload entire map
+    // Reset by reloading the entire map:
     UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }
 
-void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& actionVector)
+void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action> &actionVector)
 {
     ASSERT(ownerPawn != nullptr);
     ASSERT(actionVector.size() == 1);
 
-    std::vector<float> controlState;
-    controlState = actionVector.at(0).GetActions();
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "ACTIVATE_AUTOPILOT"}))
+    {
+        if (ownerPawn->MoveTo(currentPathPoint_))
+        {
+            if (indexPath_ == pathPoints_.Num() - 1) // Move to the next waypoint
+            {
+                std::cout << "######## Reached waypoint " << indexPath_ << " ########" << std::endl;
+                currentPathPoint_.X = pathPoints_[indexPath_].Location.X;
+                currentPathPoint_.Y = pathPoints_[indexPath_].Location.Y;
+                indexPath_++;
+            }
+            else // We reached the target
+            {
+                std::cout << "############ Reached the target location ! ############" << std::endl;
+                hitInfo_ = UHitInfo::Goal;
+            }
+        }
+    }
+    else
+    {
+        std::vector<float> controlState;
+        controlState = actionVector.at(0).GetActions(); // Get actions from the python interface
 
-    ASSERT(controlState.size() == 2);
+        ASSERT(controlState.size() == 2);
 
-    ownerPawn->MoveLeftRight(controlState[0], controlState[1]); // controlState are in the [-1.0; 1.0] range
+        ownerPawn->MoveLeftRight(controlState[0], controlState[1]); // controlState are in the [-1.0; 1.0] range
+    }
 }
 
-void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& observationVector)
+void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &observationVector)
 {
     ASSERT(ownerPawn != nullptr);
     ASSERT(goalActor != nullptr);
@@ -181,12 +275,12 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
         // Reward function is defined based on https://github.com/isl-org/OpenBot-Distributed/blob/main/trainer/ob_agents/envs/open_bot_replay_env.py
         switch (hitInfo_)
         {
-        case UHitInfo::Goal: // NOTE: so far we never get there...
+        case UHitInfo::Goal:
             // Goal reached reward:
             AddReward(unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_GOAL_REACHED"}));
             EndEpisode();
             break;
-        case UHitInfo::Edge: // NOTE: so far we never get there...
+        case UHitInfo::Edge:
             // Obstacle penalty
             AddReward(-unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_COLLISION"}));
             EndEpisode();
@@ -228,7 +322,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
     {
         ASSERT(IsInGameThread());
 
-        FTextureRenderTargetResource* targetResource = captureComponent2D_->TextureTarget->GameThread_GetRenderTargetResource();
+        FTextureRenderTargetResource *targetResource = captureComponent2D_->TextureTarget->GameThread_GetRenderTargetResource();
 
         if (targetResource == nullptr)
         {
@@ -241,8 +335,8 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
 
         struct FReadSurfaceContext
         {
-            FRenderTarget* srcRenderTarget;
-            TArray<FColor>* outData;
+            FRenderTarget *srcRenderTarget;
+            TArray<FColor> *outData;
             FIntRect rect;
             FReadSurfaceDataFlags flags;
         };
@@ -258,7 +352,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
 
         ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)
         (
-            [context](FRHICommandListImmediate& RHICmdList)
+            [context](FRHICommandListImmediate &RHICmdList)
             {
                 RHICmdList.ReadSurfaceData(context.srcRenderTarget->GetRenderTargetTexture(), context.rect, *context.outData, context.flags);
             });
@@ -268,7 +362,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
         readPixelFence.Wait(true); // true if you want to process gamethreadtasks
         // in parallel while waiting for RT to complete the enqueued task
 
-        std::vector<uint8_t>* pixelData = &observationVector.at(1).Data;
+        std::vector<uint8_t> *pixelData = &observationVector.at(1).Data;
 
         pixelData->resize(unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_HEIGHT"}) * unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_WIDTH"}) * 3); // HACK: should specify constants in a config file
 
@@ -284,10 +378,10 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
     }
 }
 
-void USimpleVehicleBrain::OnActorHit(AActor* selfActor,
-                                     AActor* otherActor,
+void USimpleVehicleBrain::OnActorHit(AActor *selfActor,
+                                     AActor *otherActor,
                                      FVector normalImpulse,
-                                     const FHitResult& hitFlag)
+                                     const FHitResult &hitFlag)
 {
     ASSERT(otherActor != nullptr);
 
@@ -299,11 +393,4 @@ void USimpleVehicleBrain::OnActorHit(AActor* selfActor,
     {
         hitInfo_ = UHitInfo::Edge;
     }
-    // TODO: Does instid1227 apply to all obstacles?
-    // If not, include all obstacles or provide an user interface to specify
-    // obstacles
-    // else if (!otherActor->GetName().Contains(TEXT("instid1227"), ESearchCase::IgnoreCase))
-    //{
-    //    hitInfo_ = UHitInfo::Edge;
-    //}
 }
