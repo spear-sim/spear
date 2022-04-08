@@ -13,11 +13,11 @@ cmake_version = (subprocess.run(["cmake", "--version"], stdout=subprocess.PIPE).
 print(f"cmake version on this sytem is {cmake_version}")
 cmake_version = cmake_version.split(".")
 assert len(min_cmake_version) == len(cmake_version)
-flag = True
 for i in range(len(min_cmake_version)):
     if int(cmake_version[i]) > int(min_cmake_version[i]):
         break
-assert flag
+    if i == len(min_cmake_version) - 1:
+        assert False
 print("cmake version looks good...")
 
 print("building rbdl...")
