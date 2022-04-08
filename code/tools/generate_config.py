@@ -21,7 +21,7 @@ if __name__ == "__main__":
             config_files.append(file)
     
     # create a single CfgNode that contains data from all config files
-    config_node = config.get_config(config_files)
+    config_node = config.getConfig(config_files)
 
     # Dump updated config params into a new yaml file
     output_temp_dir = os.path.join(args.output_unreal_project_dir, "Temp")

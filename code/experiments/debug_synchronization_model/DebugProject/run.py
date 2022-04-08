@@ -25,7 +25,7 @@ if __name__ == "__main__":
             config_files.append(file)
 
     # load configs
-    config = config.get_config(config_files)
+    config = config.getConfig(config_files)
 
     env = Env(config)
 

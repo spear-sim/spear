@@ -1,4 +1,4 @@
-from yacs.config import CfgNode, load_cfg
+from yacs.config import CfgNode
 
 from interiorsim.constants import PACKAGE_DEFAULT_CONFIG_FILE, SIMULATION_CONTROLLER_DEFAULT_CONFIG_FILE
 
@@ -10,7 +10,7 @@ from interiorsim.constants import PACKAGE_DEFAULT_CONFIG_FILE, SIMULATION_CONTRO
 # Before loading any of the config files specified in config_files, all the default values
 # required by the interiorsim Python module are loaded into a top-level interiorsim namespace, and
 # can be overridden by any of the files appearing in config_files.
-def get_config(config_files):
+def getConfig(config_files):
 
     # create a single CfgNode that will eventually contain data from all config files
     config = CfgNode(new_allowed=True)
