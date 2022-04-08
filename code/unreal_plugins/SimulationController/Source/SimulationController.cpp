@@ -129,6 +129,7 @@ void SimulationController::worldBeginPlayEventHandler()
 
     // create a visualizer that is responsible for the camera view
     visualizer_camera_ = std::make_unique<Visualizer>(world_);
+    ASSERT(visualizer_camera_);
 
     // initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
@@ -184,7 +185,7 @@ void SimulationController::beginFrameEventHandler()
     // if beginTick() has indicated (via RequestPreTick framestate) that we should execute a frame of work
     if (frame_state_ == FrameState::RequestPreTick) {
 
-        // update frame state
+        // update local state
         frame_state_ = FrameState::ExecutingPreTick;
 
         // unpause the game
@@ -206,7 +207,7 @@ void SimulationController::endFrameEventHandler()
     // if beginFrameEventHandler() has indicated that we are currently executing a frame of work
     if (frame_state_ == FrameState::ExecutingTick) {
 
-        // update frame state so that endTick() can execute successfully
+        // update local state
         frame_state_ = FrameState::ExecutingPostTick;
 
         // allow tick() to finish executing
