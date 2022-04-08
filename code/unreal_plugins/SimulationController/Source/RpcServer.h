@@ -47,7 +47,7 @@ public:
         work_guard_.reset(); // io_context is now free to return
     }
 
-    /** @warning does not stop the game thread. */
+    // @warning does not stop the game thread.
     void stop()
     {
         server_.close_sessions();
@@ -87,11 +87,10 @@ struct FunctionWrapper<T&&> : public FunctionWrapper<T> {};
 template <typename R, typename... Args>
 struct FunctionWrapper<R (*)(Args...)>
 {
-    /** Wraps @a functor into a function type with equivalent signature. The wrap function returned. When called, posts @a functor into the io_context;
-     * if the client called this method synchronously, waits for the posted task to finish, otherwise returns immediately.
-     * This way, no matter from which thread the wrap function is called, the @a functor provided is always called from the context of the io_context.
-     * I.e., we can use the io_context to run tasks on a specific thread (e.g. game thread).
-     */
+    // ROBOTSIM_DEFAULT_CONFIG_FILEWraps @a functor into a function type with equivalent signature. The wrap function returned. When called, posts @a functor into the io_context;
+    // if the client called this method synchronously, waits for the posted task to finish, otherwise returns immediately.
+    // This way, no matter from which thread the wrap function is called, the @a functor provided is always called from the context of the io_context.
+    // I.e., we can use the io_context to run tasks on a specific thread (e.g. game thread).
     template <typename FuncT>
     static auto wrapSyncCall(asio::io_context& io, FuncT&& functor)
     {

@@ -25,7 +25,7 @@ struct MoveWrapper : FunctorT
 
 } // namespace detail
 
-/** Hack to trick asio into accepting move-only handlers, if the handler were actually copied it would result in a link error. @see https://stackoverflow.com/a/22891509. */
+// Hack to trick asio into accepting move-only handlers, if the handler were actually copied it would result in a link error. @see https://stackoverflow.com/a/22891509.
 template <typename FunctorT>
 auto moveHandler(FunctorT&& func)
 {
