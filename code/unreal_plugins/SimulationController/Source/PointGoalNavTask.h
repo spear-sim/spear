@@ -17,7 +17,7 @@ public:
     ~PointGoalNavTask();
 
     // Task overrides
-    void beginFrame();
+    void beginFrame() override;
     float getReward() override;
     bool isEpisodeDone() const override;
     void reset() override;
