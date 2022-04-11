@@ -1,7 +1,7 @@
 ROBOT_SIM:
 
   
-  # Radius in [cm], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+  # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
   ACCEPTANCE_RADIUS: 0.1
   
   # PID proportional gain for the autopilot
@@ -17,9 +17,9 @@ ROBOT_SIM:
   DERIVATIVE_GAIN_DIST: 0.1
   
   # Angular range within which the vehicle moves forward to the target in [rad]
-  FORWARD_MIN_ANGLE: 1.57
+  FORWARD_MIN_ANGLE: 0.2
   
   # 
-  CONTROL_SATURATION: 0.9
+  CONTROL_SATURATION: 0.8
   
   

@@ -74,7 +74,7 @@ def client(args, config, mapNames):
                 
                 agent_name = uenv.agents[0]
             
-                folderName = f"dataset/run_{mapName}_{run}/data/"
+                folderName = f"dataset/uploaded/run_{mapName}_{run}/data/"
                 os.makedirs(folderName, exist_ok=True)
                 os.makedirs(folderName+"sensor_data", exist_ok=True)
                 os.makedirs(folderName+"images", exist_ok=True)

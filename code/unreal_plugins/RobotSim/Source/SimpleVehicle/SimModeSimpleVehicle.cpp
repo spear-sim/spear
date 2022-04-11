@@ -138,7 +138,7 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
 
                 ARecastNavMesh* navMesh = GetNavMesh();
                 RobotSim::NavMeshUtil::GetRandomPoint(navMesh, spawnPosition,
-                                                      20.0f);
+                                                      5.0f);
 
                 // FBox worldBox = GetWorldBoundingBox();
                 // RobotSim::NavMeshUtil::GetRandomPointFromLargestCluster(

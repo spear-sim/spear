@@ -11,7 +11,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 FName ASimpleVehiclePawn::VehicleMovementComponentName(TEXT("SimpleWheeledVehicleMovement"));
 FName ASimpleVehiclePawn::VehicleMeshComponentName(TEXT("VehicleMesh'"));
 
-ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer &ObjectInitializer) : APawn(ObjectInitializer)
+ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializer) : APawn(ObjectInitializer)
 {
     // To create components, you can use
     // CreateDefaultSubobject<Type>("InternalName").
@@ -52,7 +52,7 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer &ObjectInitializ
     VehicleMovement->WheelSetups.SetNum(4);
 
     // TODO dynamic tire?
-    UClass *wheelClasss = USimpleWheel::StaticClass();
+    UClass* wheelClasss = USimpleWheel::StaticClass();
 
     // https://answers.unrealengine.com/questions/325623/view.html
     VehicleMovement->WheelSetups[0].WheelClass = wheelClasss;
@@ -74,7 +74,7 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer &ObjectInitializ
     VehicleMovement->SetIsReplicated(true); // Enable replication by default
     VehicleMovement->UpdatedComponent = Mesh;
 
-    vehiclePawn_ = static_cast<USimpleWheeledVehicleMovementComponent *>(GetVehicleMovementComponent());
+    vehiclePawn_ = static_cast<USimpleWheeledVehicleMovementComponent*>(GetVehicleMovementComponent());
 
     wheelVelocity_.setZero();
     motorVelocity_.setZero();
@@ -94,7 +94,7 @@ ASimpleVehiclePawn::~ASimpleVehiclePawn()
     PrimaryActorTick.bCanEverTick = true;
 }
 
-void ASimpleVehiclePawn::SetupPlayerInputComponent(class UInputComponent *PlayerInputComponent)
+void ASimpleVehiclePawn::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
@@ -114,7 +114,7 @@ void ASimpleVehiclePawn::SetupInputBindings()
     UE_LOG(LogTemp, Warning, TEXT("ASimpleVehiclePawn::SetupInputBindings end"));
 
     // Keyboard control in RobotSimGameMode
-    APlayerController *controller = this->GetWorld()->GetFirstPlayerController();
+    APlayerController* controller = this->GetWorld()->GetFirstPlayerController();
     controller->InputComponent->BindAxis("MoveForward", this, &ASimpleVehiclePawn::MoveForward);
     controller->InputComponent->BindAxis("MoveRight", this, &ASimpleVehiclePawn::MoveRight);
 }
@@ -159,7 +159,7 @@ void ASimpleVehiclePawn::MoveLeftRight(float leftCtrl, float rightCtrl)
 }
 
 // This command is meant to be used by the python client interface.
-bool ASimpleVehiclePawn::MoveTo(const FVector2D &target)
+bool ASimpleVehiclePawn::MoveTo(const FVector2D& target)
 {
     targetLocation_ = target;
     useAutopilot_ = true;
@@ -279,7 +279,7 @@ void ASimpleVehiclePawn::Tick(float DeltaTime)
     count_++;
 }
 
-void ASimpleVehiclePawn::SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting &settings)
+void ASimpleVehiclePawn::SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings)
 {
     gearRatio_ = settings.actuationSetting.gearRatio;
     motorVelocityConstant_ = settings.actuationSetting.motorVelocityConstant;
@@ -292,14 +292,14 @@ void ASimpleVehiclePawn::SetRobotParameters(const RobotSim::RobotSimSettings::Ve
     batteryVoltage_ = settings.actuationSetting.batteryVoltage;
 }
 
-void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent *HitComponent,
-                                   class AActor *OtherActor,
-                                   class UPrimitiveComponent *otherComp,
+void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,
+                                   class AActor* OtherActor,
+                                   class UPrimitiveComponent* otherComp,
                                    bool bSelfMoved,
                                    FVector hitLocation,
                                    FVector hitNormal,
                                    FVector normalImpulse,
-                                   const FHitResult &hit)
+                                   const FHitResult& hit)
 {
     /*
         URobotBlueprintLib::LogMessage(FString("NotifyHit: ") +
@@ -315,11 +315,11 @@ void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent *HitComponent,
     this->pawnEvents_.getCollisionSignal().emit(HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal, normalImpulse, hit);
 }
 
-void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent *HitComponent,
-                                              AActor *OtherActor,
-                                              UPrimitiveComponent *OtherComp,
+void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent* HitComponent,
+                                              AActor* OtherActor,
+                                              UPrimitiveComponent* OtherComp,
                                               FVector NormalImpulse,
-                                              const FHitResult &Hit)
+                                              const FHitResult& Hit)
 {
     URobotBlueprintLib::LogMessage(FString("OnComponentCollision: ") +
                                        OtherActor->GetName(),
@@ -339,7 +339,7 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
     targetLocationReached_ = false;
 
     // If the waypoint is reached:
-    if ((relativePositionToTarget.Size() * 0.01) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"})) 
+    if ((relativePositionToTarget.Size() * 0.01) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"}))
     {
         targetLocationReached_ = true;
     }
@@ -377,7 +377,7 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
         yaw_ = FMath::DegreesToRadians(currentOrientation.Yaw);
 
         rightCtrl = -unrealrl::Config::GetValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_HEADING"}) * deltaYaw + unrealrl::Config::GetValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_HEADING"}) * yawVel;
-        
+
         if (std::abs(deltaYaw) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "FORWARD_MIN_ANGLE"}))
         {
             forwardCtrl = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_DIST"}) * relativePositionToTarget.Size() * 0.01 - unrealrl::Config::GetValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_DIST"}) * linVel;
@@ -402,14 +402,14 @@ void ASimpleVehiclePawn::BeginPlay()
     Super::BeginPlay();
 }
 
-USceneComponent *ASimpleVehiclePawn::GetComponent(FString componentName)
+USceneComponent* ASimpleVehiclePawn::GetComponent(FString componentName)
 {
     ASSERT(false);
 }
 
 void ASimpleVehiclePawn::GetComponentReferenceTransform(FString componentName,
-                                                        FVector &translation,
-                                                        FRotator &rotation)
+                                                        FVector& translation,
+                                                        FRotator& rotation)
 {
     ASSERT(false);
 }
@@ -423,7 +423,7 @@ void ASimpleVehiclePawn::TeleportToLocation(FVector position,
     RobotBase::TeleportToLocation(position * URobotBlueprintLib::GetWorldToMetersScale(this), orientation, teleport);
 }
 
-PawnEvents *ASimpleVehiclePawn::GetPawnEvents()
+PawnEvents* ASimpleVehiclePawn::GetPawnEvents()
 {
     return &(this->pawnEvents_);
 }

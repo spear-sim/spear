@@ -117,9 +117,7 @@ void RobotSimApiBase::detectUsbRc()
 {
     /*if (getRemoteControlID() >= 0) {
             joystick_.getJoyStickState(getRemoteControlID(), joystick_state_);
-
             rc_data_.is_initialized = joystick_state_.is_initialized;
-
             if (rc_data_.is_initialized)
                     URobotBlueprintLib::LogMessageString("RC Controller on USB:
     ", joystick_state_.pid_vid == "" ?

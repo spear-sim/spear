@@ -1,25 +1,25 @@
 #pragma once
 
-#include "common_utils/RobotSimSettings.hpp"
+#include "AIController.h"
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
 #include "Engine/CollisionProfile.h"
-#include "SimpleWheeledVehicleMovementComponent.h"
+#include "GameFramework/Pawn.h"
+#include "NavigationSystem.h"
 #include "PIPCamera.h"
+#include "PawnEvents.h"
+#include "PhysXIncludes.h"
+#include "PhysXPublic.h"
+#include "PhysicsPublic.h"
+#include "RobotBase.h"
+#include "RobotBlueprintLib.h"
+#include "SimpleWheeledVehicleMovementComponent.h"
+#include "common_utils/Common.hpp"
+#include "common_utils/RobotSimSettings.hpp"
 #include "common_utils/UniqueValueMap.hpp"
 #include "common_utils/Utils.hpp"
-#include "RobotBlueprintLib.h"
-#include "common_utils/Common.hpp"
-#include "RobotBase.h"
-#include "PhysXIncludes.h"
-#include "PhysicsPublic.h"
-#include "PhysXPublic.h"
-#include "PawnEvents.h"
-#include "NavigationSystem.h"
-#include "AIController.h"
 
-#include <Brain.h>
 #include "Config.h"
+#include <Brain.h>
 
 #include "SimpleVehiclePawn.generated.h"
 
@@ -33,17 +33,17 @@ class ROBOTSIM_API ASimpleVehiclePawn : public APawn, public RobotBase
               VisibleDefaultsOnly,
               BlueprintReadOnly,
               meta = (AllowPrivateAccess = "true"))
-    class USkeletalMeshComponent *Mesh;
+    class USkeletalMeshComponent* Mesh;
 
     // vehicle simulation component
     UPROPERTY(Category = Vehicle,
               VisibleDefaultsOnly,
               BlueprintReadOnly,
               meta = (AllowPrivateAccess = "true"))
-    class UWheeledVehicleMovementComponent *VehicleMovement;
+    class UWheeledVehicleMovementComponent* VehicleMovement;
 
 public:
-    ASimpleVehiclePawn(const FObjectInitializer &ObjectInitializer);
+    ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializer);
     ~ASimpleVehiclePawn();
 
     /**
@@ -52,7 +52,7 @@ public:
      * @param InputComponent
      */
     virtual void
-    SetupPlayerInputComponent(UInputComponent *InputComponent) override;
+    SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
     /**
      * @brief Called every frame
@@ -73,30 +73,30 @@ public:
      * @param normalImpulse
      * @param hit
      */
-    virtual void NotifyHit(class UPrimitiveComponent *myComp,
-                           class AActor *other,
-                           class UPrimitiveComponent *otherComp,
+    virtual void NotifyHit(class UPrimitiveComponent* myComp,
+                           class AActor* other,
+                           class UPrimitiveComponent* otherComp,
                            bool bSelfMoved,
                            FVector hitLocation,
                            FVector hitNormal,
                            FVector normalImpulse,
-                           const FHitResult &hit) override;
+                           const FHitResult& hit) override;
 
     /**
      * @brief User-defined callback function
      *
      */
     UFUNCTION()
-    void OnComponentCollision(UPrimitiveComponent *HitComponent,
-                              AActor *OtherActor,
-                              UPrimitiveComponent *OtherComp,
+    void OnComponentCollision(UPrimitiveComponent* HitComponent,
+                              AActor* OtherActor,
+                              UPrimitiveComponent* OtherComp,
                               FVector NormalImpulse,
-                              const FHitResult &Hit);
+                              const FHitResult& Hit);
 
     virtual USceneComponent* GetComponent(FString componentName) override;
     virtual void GetComponentReferenceTransform(FString componentName,
-                                                FVector &translation,
-                                                FRotator &rotation) override;
+                                                FVector& translation,
+                                                FRotator& rotation) override;
     virtual APawn* GetPawn() override
     {
         return this;
@@ -149,18 +149,18 @@ public:
 
     /**
      * @brief Uses the autopilot to move the vehicle from its current position in world frame to target position.
-     * The target position is here assumed to be reachable and on a collision-free trajectory (e.g. provided by a 
-     * suitable trajectory planner). Returns true once the position is reached. 
-     * 
-     * @param target 
-     * @return true 
-     * @return false 
+     * The target position is here assumed to be reachable and on a collision-free trajectory (e.g. provided by a
+     * suitable trajectory planner). Returns true once the position is reached.
+     *
+     * @param target
+     * @return true
+     * @return false
      */
-    bool MoveTo(const FVector2D &target);
+    bool MoveTo(const FVector2D& target);
 
     /**
-     * @brief 
-     * 
+     * @brief
+     *
      */
     void TrackWayPoint(float DeltaTime);
 
@@ -179,7 +179,7 @@ public:
      *
      * @param settings
      */
-    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting &settings) override;
+    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings) override;
 
     PawnEvents* GetPawnEvents();
 
@@ -294,7 +294,8 @@ private:
     }
 
     template <typename T>
-    T Clamp(const T& n, const T& lower, const T& upper) {
+    T Clamp(const T& n, const T& lower, const T& upper)
+    {
         return std::max(lower, std::min(n, upper));
     }
 
@@ -323,20 +324,20 @@ private:
     PawnEvents pawnEvents_;
     int count_ = 0;
     USimpleWheeledVehicleMovementComponent* vehiclePawn_;
-    Eigen::Vector4f wheelVelocity_; // The ground truth velocity of the robot wheels in [RPM]
-    Eigen::Vector4f motorVelocity_; // The ground truth velocity of the motors in [rad/s]
+    Eigen::Vector4f wheelVelocity_;             // The ground truth velocity of the robot wheels in [RPM]
+    Eigen::Vector4f motorVelocity_;             // The ground truth velocity of the motors in [rad/s]
     Eigen::Vector4f counterElectromotiveForce_; // Vector of counter electromotive forces of each motor [V]
-    Eigen::Vector4f motorTorque_; // The torque generated by the motors in [N.m]
-    Eigen::Vector4f wheelTorque_; // The torque applied to the robot wheels in [N.m]
-    Eigen::Vector4f dutyCycle_; // The duty cycle of the PWM signal applied to the motors in [%]
-    Eigen::Vector4f motorWindingCurrent_; // Electrical current circulating into the DC motor windings in [A]
-    Eigen::Vector2f actionVec_; // Vector of action observations to be fed back to the RL algorithm.
+    Eigen::Vector4f motorTorque_;               // The torque generated by the motors in [N.m]
+    Eigen::Vector4f wheelTorque_;               // The torque applied to the robot wheels in [N.m]
+    Eigen::Vector4f dutyCycle_;                 // The duty cycle of the PWM signal applied to the motors in [%]
+    Eigen::Vector4f motorWindingCurrent_;       // Electrical current circulating into the DC motor windings in [A]
+    Eigen::Vector2f actionVec_;                 // Vector of action observations to be fed back to the RL algorithm.
 
     // TODO: these values should be set in a proper .yaml parameter file.
-    float motorTorqueConstant_ = 0.f; // Motor torque constant in [N.m/A]
+    float motorTorqueConstant_ = 0.f;   // Motor torque constant in [N.m/A]
     float motorVelocityConstant_ = 0.f; // Motor torque constant in [rad/s/V]
-    float gearRatio_ = 50.f; // Gear ratio of the OpenBot motors.
-    float motorTorqueMax_ = 0.1177f; // Maximum ammount of torque an OpenBot motor can generate [N.m].
+    float gearRatio_ = 50.f;            // Gear ratio of the OpenBot motors.
+    float motorTorqueMax_ = 0.1177f;    // Maximum ammount of torque an OpenBot motor can generate [N.m].
     // Openbot motor torque: 1200 gf.cm (gram force centimeter) = 0.1177 N.m
     // https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html)
     // Gear ratio: 50 => max. wheel torque = 5.88399 N.m

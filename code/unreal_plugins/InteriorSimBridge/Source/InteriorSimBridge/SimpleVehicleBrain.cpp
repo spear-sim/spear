@@ -1,6 +1,6 @@
 #include "SimpleVehicleBrain.h"
 
-USimpleVehicleBrain::USimpleVehicleBrain(const FObjectInitializer &objectInitializer) : Super(objectInitializer)
+USimpleVehicleBrain::USimpleVehicleBrain(const FObjectInitializer& objectInitializer) : Super(objectInitializer)
 {
 }
 
@@ -13,7 +13,7 @@ void USimpleVehicleBrain::Init()
 
     ASSERT(ownerPawn != nullptr);
 
-    APlayerController *Controller = GetWorld()->GetFirstPlayerController();
+    APlayerController* Controller = GetWorld()->GetFirstPlayerController();
     ASSERT(Controller != nullptr);
 
     // Look for the desired observation camera among all available camera actors:
@@ -103,8 +103,8 @@ void USimpleVehicleBrain::Init()
         FVector2D relativePositionToTarget(0.0f, 0.0f);
 
         // Initialize navigation:
-        UNavigationSystemV1 *navSys = Cast<UNavigationSystemV1>(ownerPawn->GetWorld()->GetNavigationSystem());
-        ANavigationData *navData = (navSys == nullptr) ? nullptr : navSys->GetNavDataForProps(ownerPawn->GetNavAgentPropertiesRef());
+        UNavigationSystemV1* navSys = Cast<UNavigationSystemV1>(ownerPawn->GetWorld()->GetNavigationSystem());
+        ANavigationData* navData = (navSys == nullptr) ? nullptr : navSys->GetNavDataForProps(ownerPawn->GetNavAgentPropertiesRef());
 
         // Set path generation query:
         FPathFindingQuery Query = FPathFindingQuery(*ownerPawn, *navData, initialPosition, targetLocation.Location);
@@ -176,7 +176,7 @@ void USimpleVehicleBrain::OnEpisodeBegin()
     UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }
 
-void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action> &actionVector)
+void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& actionVector)
 {
     ASSERT(ownerPawn != nullptr);
     ASSERT(actionVector.size() == 1);
@@ -210,7 +210,7 @@ void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action> &actionV
     }
 }
 
-void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &observationVector)
+void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& observationVector)
 {
     ASSERT(ownerPawn != nullptr);
     ASSERT(goalActor != nullptr);
@@ -322,7 +322,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
     {
         ASSERT(IsInGameThread());
 
-        FTextureRenderTargetResource *targetResource = captureComponent2D_->TextureTarget->GameThread_GetRenderTargetResource();
+        FTextureRenderTargetResource* targetResource = captureComponent2D_->TextureTarget->GameThread_GetRenderTargetResource();
 
         if (targetResource == nullptr)
         {
@@ -335,8 +335,8 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
 
         struct FReadSurfaceContext
         {
-            FRenderTarget *srcRenderTarget;
-            TArray<FColor> *outData;
+            FRenderTarget* srcRenderTarget;
+            TArray<FColor>* outData;
             FIntRect rect;
             FReadSurfaceDataFlags flags;
         };
@@ -352,7 +352,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
 
         ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)
         (
-            [context](FRHICommandListImmediate &RHICmdList)
+            [context](FRHICommandListImmediate& RHICmdList)
             {
                 RHICmdList.ReadSurfaceData(context.srcRenderTarget->GetRenderTargetTexture(), context.rect, *context.outData, context.flags);
             });
@@ -362,7 +362,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
         readPixelFence.Wait(true); // true if you want to process gamethreadtasks
         // in parallel while waiting for RT to complete the enqueued task
 
-        std::vector<uint8_t> *pixelData = &observationVector.at(1).Data;
+        std::vector<uint8_t>* pixelData = &observationVector.at(1).Data;
 
         pixelData->resize(unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_HEIGHT"}) * unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_WIDTH"}) * 3); // HACK: should specify constants in a config file
 
@@ -378,10 +378,10 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation> &obs
     }
 }
 
-void USimpleVehicleBrain::OnActorHit(AActor *selfActor,
-                                     AActor *otherActor,
+void USimpleVehicleBrain::OnActorHit(AActor* selfActor,
+                                     AActor* otherActor,
                                      FVector normalImpulse,
-                                     const FHitResult &hitFlag)
+                                     const FHitResult& hitFlag)
 {
     ASSERT(otherActor != nullptr);
 

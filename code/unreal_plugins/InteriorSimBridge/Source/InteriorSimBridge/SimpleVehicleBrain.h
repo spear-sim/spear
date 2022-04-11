@@ -51,7 +51,6 @@ public:
     void GetObservation(std::vector<unrealrl::Observation>&) override;
 
 private:
-
     void PlanPathToRachableTarget();
 
     /**
