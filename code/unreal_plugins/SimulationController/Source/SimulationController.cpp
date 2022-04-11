@@ -135,8 +135,8 @@ void SimulationController::worldBeginPlayEventHandler()
     frame_state_ = FrameState::Idle;
 
     // config values required for rpc communication
-    const std::string hostname = Config::getValue<std::string>({"INTERIORSIM", "IP"});
-    const int port = Config::getValue<int>({"INTERIORSIM", "PORT"});
+    const std::string hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
+    const int port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
 
     rpc_server_ = std::make_unique<RpcServer>(hostname, port);
     ASSERT(rpc_server_);
