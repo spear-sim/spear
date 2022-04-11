@@ -25,10 +25,6 @@
 		{
 			"Name": "CoreUtils",
 			"Enabled": true
-		},
-		{
-			"Name": "RobotSim",
-			"Enabled": false
 		}
 	]
 }

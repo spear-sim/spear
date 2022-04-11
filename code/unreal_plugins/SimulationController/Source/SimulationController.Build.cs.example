@@ -15,7 +15,7 @@ public class SimulationController : ModuleRules
 
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "InputCore", "CoreUObject", "Engine", "RHI", "RenderCore", "CoreUtils" }); // "RobotSim" // include RobotSim when OpenBot is integrated
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "InputCore", "CoreUObject", "Engine", "RHI", "RenderCore", "CoreUtils" });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
 
