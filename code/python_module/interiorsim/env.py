@@ -173,7 +173,7 @@ class Env(gym.Env):
             connected = False
             try:
                 self._client = msgpackrpc.Client(
-                    msgpackrpc.Address(self._config.INTERIORSIM.IP, self._config.INTERIORSIM.PORT), 
+                    msgpackrpc.Address(self._config.SIMULATION_CONTROLLER.IP, self._config.SIMULATION_CONTROLLER.PORT), 
                     timeout=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                     reconnect_limit=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                 self._ping()

@@ -12,7 +12,7 @@ from interiorsim import Env
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config_files", nargs="*", help="List that contains locations to config files. If this argument is skipped, only default_config.yaml from unrealai package will be used to generate an output config file.")
+    parser.add_argument("--config_files", nargs="*")
 
     args = parser.parse_args()
 

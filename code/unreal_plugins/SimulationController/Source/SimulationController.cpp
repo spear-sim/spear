@@ -36,7 +36,7 @@ enum class FrameState : uint8_t
     ExecutingPostTick
 };
 
-// enum values should match values in python module
+// enum values should match values in python module (env.py)
 enum class Endianness : uint8_t
 {
     LittleEndian = 0,
@@ -128,8 +128,8 @@ void SimulationController::worldBeginPlayEventHandler()
     ASSERT(task_);
 
     // create a visualizer that is responsible for the camera view
-    visualizer_camera_ = std::make_unique<Visualizer>(world_);
-    ASSERT(visualizer_camera_);
+    visualizer_ = std::make_unique<Visualizer>(world_);
+    ASSERT(visualizer_);
 
     // initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
@@ -161,8 +161,8 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
             rpc_server_ = nullptr;
 
-            ASSERT(visualizer_camera_);
-            visualizer_camera_ = nullptr;
+            ASSERT(visualizer_);
+            visualizer_ = nullptr;
 
             ASSERT(task_);
             task_ = nullptr;
@@ -194,7 +194,7 @@ void SimulationController::beginFrameEventHandler()
         // execute all pre-tick sync work, wait here for tick() to reset work guard
         rpc_server_->runSync();
 
-        // setup things before physics
+        // execute pre-tick work inside the task
         task_->beginFrame();
 
         // update local state
@@ -210,11 +210,11 @@ void SimulationController::endFrameEventHandler()
         // update local state
         frame_state_ = FrameState::ExecutingPostTick;
 
+        // execute post-tick work inside the task
+        task_->endFrame();
+
         // allow tick() to finish executing
         end_frame_started_executing_promise_.set_value();
-
-        // finalize things before next tick cycle
-        task_->endFrame();
 
         // execute all post-tick sync work, wait here for endTick() to reset work guard
         rpc_server_->runSync();

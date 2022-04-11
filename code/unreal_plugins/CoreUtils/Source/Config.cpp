@@ -31,7 +31,7 @@ void Config::initialize()
         config_node_ = YAML::LoadFile(TCHAR_TO_UTF8(*config_file));
     }
     else {
-        ASSERT(false, "Did not receive a config file location from python and could not find config.yaml in project's 'Temp' directory. So, tried to launch project without a config file. Currently we do not support this.");
+        ASSERT(false);
     }
 }
 

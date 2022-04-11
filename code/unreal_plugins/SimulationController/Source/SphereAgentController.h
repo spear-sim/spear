@@ -25,7 +25,7 @@ public:
     void applyAction(const std::map<std::string, std::vector<float>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
 
-    void postPhysicsPreRenderTick(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction *this_tick_function);
+    void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction* this_tick_function);
 
 private:
 
@@ -34,9 +34,9 @@ private:
     AActor* observation_camera_actor_ = nullptr;
 
     UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
-    UStaticMeshComponent* cone_static_mesh_component_ = nullptr;
+    UStaticMeshComponent* goal_static_mesh_component_ = nullptr;
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
 
-    UTickEvent* post_physics_event_ = nullptr;
-    FDelegateHandle post_physics_event_handle_;
+    UTickEvent* post_physics_pre_render_event_ = nullptr;
+    FDelegateHandle post_physics_pre_render_event_handle_;
 };

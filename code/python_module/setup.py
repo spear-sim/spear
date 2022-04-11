@@ -5,7 +5,7 @@ setuptools.setup(
     version="0.0.1",
     author="",
     author_email="",
-    description="Python client for enabling Artificial Intelligence with Unreal Engine",
+    description="",
     packages=setuptools.find_packages(),
     install_requires=["numpy", "gym", "psutil", "yacs==0.1.8"],
 )

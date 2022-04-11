@@ -39,7 +39,8 @@ public:
         io_context_.run();
 
         // reinitialze the io_context and work guard after runSync to prepare for next run
-        reinitializeIOContextAndWorkGuard();
+        io_context_.restart();
+        new(&work_guard_) work_guard_type(io_context_.get_executor());
     }
 
     void unblockRunSyncWhenFinishedExecuting()
@@ -55,13 +56,6 @@ public:
     }
 
 private:
-
-    void reinitializeIOContextAndWorkGuard()
-    {
-        io_context_.restart();
-        new(&work_guard_) work_guard_type(io_context_.get_executor());
-    }
-    
     ::rpc::server server_;
     asio::io_context io_context_;
     work_guard_type work_guard_;
@@ -87,7 +81,7 @@ struct FunctionWrapper<T&&> : public FunctionWrapper<T> {};
 template <typename R, typename... Args>
 struct FunctionWrapper<R (*)(Args...)>
 {
-    // ROBOTSIM_DEFAULT_CONFIG_FILEWraps @a functor into a function type with equivalent signature. The wrap function returned. When called, posts @a functor into the io_context;
+    // Wraps @a functor into a function type with equivalent signature. The wrap function returned. When called, posts @a functor into the io_context;
     // if the client called this method synchronously, waits for the posted task to finish, otherwise returns immediately.
     // This way, no matter from which thread the wrap function is called, the @a functor provided is always called from the context of the io_context.
     // I.e., we can use the io_context to run tasks on a specific thread (e.g. game thread).

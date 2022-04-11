@@ -41,10 +41,10 @@ SphereAgentController::SphereAgentController(UWorld* world)
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         // assign observation camera to post physics tick group
-        post_physics_event_ = NewObject<UTickEvent>(observation_camera_actor_, TEXT("PostPhysicsTickEvent"));
-        ASSERT(post_physics_event_);
-        post_physics_event_->initialize(ETickingGroup::TG_PostPhysics);
-        post_physics_event_handle_ = post_physics_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTick);
+        post_physics_pre_render_event_ = NewObject<UTickEvent>(observation_camera_actor_, TEXT("PostPhysicsTickEvent"));
+        ASSERT(post_physics_pre_render_event_);
+        post_physics_pre_render_event_->initialize(ETickingGroup::TG_PostPhysics);
+        post_physics_pre_render_event_handle_ = post_physics_pre_render_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTickEventHandler);
 
         // create SceneCaptureComponent2D and TextureRenderTarget2D
         scene_capture_component_ = NewObject<USceneCaptureComponent2D>(observation_camera_actor_, TEXT("SceneCaptureComponent2D"));
@@ -79,12 +79,12 @@ SphereAgentController::SphereAgentController(UWorld* world)
     sphere_static_mesh_component_ = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
     ASSERT(sphere_static_mesh_component_);
 
-    cone_static_mesh_component_ = Cast<UStaticMeshComponent>(goal_actor_->GetRootComponent());
-    ASSERT(cone_static_mesh_component_);
+    goal_static_mesh_component_ = Cast<UStaticMeshComponent>(goal_actor_->GetRootComponent());
+    ASSERT(goal_static_mesh_component_);
 
     // need to set this to apply forces or move objects
     sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
-    cone_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
+    goal_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
 
     // set physics state
     sphere_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
@@ -99,10 +99,10 @@ SphereAgentController::SphereAgentController(UWorld* world)
 SphereAgentController::~SphereAgentController()
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        ASSERT(post_physics_event_);
-        post_physics_event_->delegate_.Remove(post_physics_event_handle_);
-        post_physics_event_handle_.Reset();
-        post_physics_event_->DestroyComponent();
+        ASSERT(post_physics_pre_render_event_);
+        post_physics_pre_render_event_->delegate_.Remove(post_physics_pre_render_event_handle_);
+        post_physics_pre_render_event_handle_.Reset();
+        post_physics_pre_render_event_->DestroyComponent();
     }
 }
 
@@ -267,7 +267,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     return observation;
 }
 
-void SphereAgentController::postPhysicsPreRenderTick(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction *this_tick_function)
+void SphereAgentController::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction* this_tick_function)
 {
     const FVector observation_camera_pose(
         agent_actor_->GetActorLocation() +

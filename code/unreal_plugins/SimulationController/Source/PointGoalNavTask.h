@@ -18,7 +18,8 @@ public:
 
     // Task overrides
     void beginFrame() override;
-    float getReward() override;
+    void endFrame() override;
+    float getReward() const override;
     bool isEpisodeDone() const override;
     void reset() override;
 

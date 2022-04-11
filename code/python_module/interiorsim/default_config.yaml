@@ -54,12 +54,6 @@ INTERIORSIM:
   # effect on Linux. See
   # https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/blob/master/loader/LoaderAndLayerInterface.md
   VULKAN_DEVICE_FILES: ""
-
-  # IP address of the unreal engine server
-  IP: "127.0.0.1"
-
-  # Port used by the Unreal application's RPC server
-  PORT: 30000
   
   # Maximum time to wait when initializing the RPC client before asserting
   RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 120.0

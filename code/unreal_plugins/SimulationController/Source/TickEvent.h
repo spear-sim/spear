@@ -24,7 +24,7 @@ public:
         RegisterComponent();
     }
 
-    void TickComponent(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction *this_tick_function) override
+    void TickComponent(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction* this_tick_function) override
     {
         delegate_.Broadcast(delta_time, tick_type, this_tick_function);
     }

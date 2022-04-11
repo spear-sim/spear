@@ -21,7 +21,12 @@ def check_cmake_requirement():
             break
     print("cmake version looks good...")
 
-def build_libs(number_of_parallel_jobs):
+def build_libs(num_parallel_jobs):
+    
+    if sys.platform == "linux":
+        os.environ["CC"] = "clang"
+        os.environ["CXX"] = "clang++"
+
     print("building rbdl...")
     rbdl_build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "rbdl", "build")
     if os.path.isdir(rbdl_build_dir):
@@ -31,13 +36,14 @@ def build_libs(number_of_parallel_jobs):
     os.chdir(rbdl_build_dir)
 
     if sys.platform == "linux":
-        os.environ["CC"] = "clang"
-        os.environ["CXX"] = "clang++"
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_COMPILER='clang++'", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."], stdout=sys.stdout)
+        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release -DRBDL_BUILD_STATIC=ON -DRBDL_BUILD_ADDON_URDFREADER=ON -DCMAKE_CXX_COMPILER='clang++' -DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++' ..")
+        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_COMPILER='clang++'", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."])
     else:
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", ".."], stdout=sys.stdout)
+        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release -DRBDL_BUILD_STATIC=ON -DRBDL_BUILD_ADDON_URDFREADER=ON ..")
+        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", ".."])
     assert cmake_cmd.returncode == 0
-    rbld_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "{0}".format(number_of_parallel_jobs)], stdout=sys.stdout)
+    print(f"Executing: cmake --build . -- -j {num_parallel_jobs}")
+    rbld_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)])
     assert rbld_build_cmd.returncode == 0
     print("rbdl built successfully...")
 
@@ -50,13 +56,14 @@ def build_libs(number_of_parallel_jobs):
     os.chdir(rpblib_build_dir)
 
     if sys.platform == "linux":
-        os.environ["CC"] = "clang"
-        os.environ["CXX"] = "clang++"
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."], stdout=sys.stdout)
+        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS='-stdlib=libc++' -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..")
+        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."])
     else:
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release"], stdout=sys.stdout)
+        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release ..")
+        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."])
     assert cmake_cmd.returncode == 0
-    rpclib_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "{0}".format(number_of_parallel_jobs)], stdout=sys.stdout)
+    print(f"Executing: cmake --build . -- -j {num_parallel_jobs}")
+    rpclib_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)])
     assert rpclib_build_cmd.returncode == 0
     print("rpclib built successfully...")
 
@@ -69,24 +76,25 @@ def build_libs(number_of_parallel_jobs):
     os.chdir(yamlcpp_build_dir)
 
     if sys.platform == "linux":
-        os.environ["CC"] = "clang"
-        os.environ["CXX"] = "clang++"
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."], stdout=sys.stdout)
+        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS='-stdlib=libc++' -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..")
+        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."])
     else:
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release"], stdout=sys.stdout)
+        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release ..")
+        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."])
     assert cmake_cmd.returncode == 0
-    yamlcpp_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "{0}".format(number_of_parallel_jobs)], stdout=sys.stdout)
+    print(f"Executing: cmake --build . -- -j {num_parallel_jobs}")
+    yamlcpp_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)])
     assert yamlcpp_build_cmd.returncode == 0
     print("yaml-cpp built successfully...")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--number_of_parallel_jobs", "-n", type=int, default=1, required=False, help="Number of parallel jobs you want to run cmake build with.")
+    parser.add_argument("--num_parallel_jobs", "-n", type=int, default=1, required=False)
     args = parser.parse_args()
 
     # check cmake version requirement
     check_cmake_requirement()
 
     # build third party libs
-    build_libs(number_of_parallel_jobs=args.number_of_parallel_jobs)
+    build_libs(num_parallel_jobs=args.num_parallel_jobs)

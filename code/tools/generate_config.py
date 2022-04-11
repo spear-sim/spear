@@ -7,8 +7,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--config_files", nargs="*", help="List that contains locations to config files. If this argument is skipped, only default_config.yaml from unrealai package will be used to generate an output config file.")
-    parser.add_argument("--output_unreal_project_dir", required=True, help="Location of the Unreal project directory where you want the generated config file written to.")
+    parser.add_argument("--config_files", nargs="*")
+    parser.add_argument("--output_unreal_project_dir", required=True)
 
     args = parser.parse_args()
 

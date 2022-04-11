@@ -65,7 +65,11 @@ void PointGoalNavTask::beginFrame()
     hit_obstacle_ = false;
 }
 
-float PointGoalNavTask::getReward()
+void PointGoalNavTask::endFrame()
+{
+}
+
+float PointGoalNavTask::getReward() const
 {
     float reward;
 
@@ -89,9 +93,9 @@ bool PointGoalNavTask::isEpisodeDone() const
 void PointGoalNavTask::reset()
 {
     float position_x, position_y, position_z;
-    FVector sphere_position(0), cone_position(0);
+    FVector sphere_position(0), goal_position(0);
 
-    while ((sphere_position - cone_position).Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "SPAWN_DISTANCE_THRESHOLD"})) {
+    while ((sphere_position - goal_position).Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "SPAWN_DISTANCE_THRESHOLD"})) {
         position_x = random_stream_.FRandRange(
             Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "SPHERE_POSITION_X_MIN"}),
             Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "SPHERE_POSITION_X_MAX"}));
@@ -103,18 +107,18 @@ void PointGoalNavTask::reset()
         sphere_position = FVector(position_x, position_y, position_z);
 
         position_x = random_stream_.FRandRange(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "CONE_POSITION_X_MIN"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "CONE_POSITION_X_MAX"}));
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "GOAL_POSITION_X_MIN"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "GOAL_POSITION_X_MAX"}));
         position_y = random_stream_.FRandRange(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "CONE_POSITION_Y_MIN"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "CONE_POSITION_Y_MAX"}));
-        position_z = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "CONE_POSITION_Z"});
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "GOAL_POSITION_Y_MIN"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "GOAL_POSITION_Y_MAX"}));
+        position_z = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "GOAL_POSITION_Z"});
 
-        cone_position = FVector(position_x, position_y, position_z);
+        goal_position = FVector(position_x, position_y, position_z);
     }
 
     agent_actor_->SetActorLocation(sphere_position);
-    goal_actor_->SetActorLocation(cone_position);
+    goal_actor_->SetActorLocation(goal_position);
 
     UStaticMeshComponent* static_mesh_component = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
     static_mesh_component->SetPhysicsLinearVelocity(FVector(0), false);
@@ -125,9 +129,9 @@ void PointGoalNavTask::reset()
 
 void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
 {
-    if (self_actor == agent_actor_ && other_actor != nullptr && other_actor == goal_actor_) {
+    if (self_actor == agent_actor_ && other_actor == goal_actor_) {
         hit_goal_ = true;
-    } else if (self_actor == agent_actor_ && other_actor != nullptr && std::find(obstacle_ignore_actors_.begin(), obstacle_ignore_actors_.end(), other_actor) == obstacle_ignore_actors_.end()) {
+    } else if (self_actor == agent_actor_ && std::find(obstacle_ignore_actors_.begin(), obstacle_ignore_actors_.end(), other_actor) == obstacle_ignore_actors_.end()) {
         hit_obstacle_ = true;
     }
 };
