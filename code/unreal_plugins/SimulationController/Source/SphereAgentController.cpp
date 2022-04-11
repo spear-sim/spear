@@ -25,10 +25,10 @@ SphereAgentController::SphereAgentController(UWorld* world)
 
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "ACTOR_NAME"})) { 
             ASSERT(!agent_actor_);
-            agent_actor_ = (*actor_itr);
+            agent_actor_ = *actor_itr;
         } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_CAMERA_NAME"})) {
             ASSERT(!observation_camera_actor_);
-            observation_camera_actor_ = (*actor_itr);
+            observation_camera_actor_ = *actor_itr;
         } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "GOAL_NAME"})) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
@@ -40,12 +40,6 @@ SphereAgentController::SphereAgentController(UWorld* world)
 
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        // assign observation camera to post physics tick group
-        post_physics_pre_render_event_ = NewObject<UTickEvent>(observation_camera_actor_, TEXT("PostPhysicsTickEvent"));
-        ASSERT(post_physics_pre_render_event_);
-        post_physics_pre_render_event_->initialize(ETickingGroup::TG_PostPhysics);
-        post_physics_pre_render_event_handle_ = post_physics_pre_render_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTickEventHandler);
-
         // create SceneCaptureComponent2D and TextureRenderTarget2D
         scene_capture_component_ = NewObject<USceneCaptureComponent2D>(observation_camera_actor_, TEXT("SceneCaptureComponent2D"));
         ASSERT(scene_capture_component_);
@@ -74,6 +68,12 @@ SphereAgentController::SphereAgentController(UWorld* world)
 
         scene_capture_component_->TextureTarget = texture_render_target;
         scene_capture_component_->RegisterComponent();
+
+        // assign observation camera to post physics tick group
+        post_physics_pre_render_event_ = NewObject<UTickEvent>(observation_camera_actor_, TEXT("PostPhysicsTickEvent"));
+        ASSERT(post_physics_pre_render_event_);
+        post_physics_pre_render_event_->initialize(ETickingGroup::TG_PostPhysics);
+        post_physics_pre_render_event_handle_ = post_physics_pre_render_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTickEventHandler);
     }
 
     sphere_static_mesh_component_ = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
@@ -98,12 +98,30 @@ SphereAgentController::SphereAgentController(UWorld* world)
 
 SphereAgentController::~SphereAgentController()
 {
+    ASSERT(goal_static_mesh_component_);
+    goal_static_mesh_component_ = nullptr;
+
+    ASSERT(sphere_static_mesh_component_);   
+    sphere_static_mesh_component_ = nullptr;
+
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         ASSERT(post_physics_pre_render_event_);
         post_physics_pre_render_event_->delegate_.Remove(post_physics_pre_render_event_handle_);
         post_physics_pre_render_event_handle_.Reset();
         post_physics_pre_render_event_->DestroyComponent();
+        post_physics_pre_render_event_ = nullptr;
+        
+        scene_capture_component_ = nullptr;
     }
+
+    ASSERT(agent_actor_);
+    agent_actor_ = nullptr;
+    
+    ASSERT(observation_camera_actor_);
+    observation_camera_actor_ = nullptr;
+    
+    ASSERT(goal_actor_);
+    goal_actor_ = nullptr;
 }
 
 std::map<std::string, Box> SphereAgentController::getActionSpace() const
@@ -267,7 +285,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     return observation;
 }
 
-void SphereAgentController::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction* this_tick_function)
+void SphereAgentController::postPhysicsPreRenderTickEventHandler()
 {
     const FVector observation_camera_pose(
         agent_actor_->GetActorLocation() +

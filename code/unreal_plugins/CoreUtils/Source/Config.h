@@ -35,19 +35,19 @@ public:
         // Create a local copy of Config.
         YAML::Node node = config_node_;
 
-        for (size_t i = 0; i < keys.size(); ++i) {
-            if (!node[keys.at(i)]) {
+        for (const auto& key : keys) {
+            if (!node[key]) {
                 std::cout << "Invalid key, keys == [";
                 for (size_t j = 0; j < keys.size() - 1; ++j) {
                     std::cout << "\"" << keys.at(j) << "\", ";
                 }
-                std::cout << "\"" << keys.at(keys.size() - 1) << "\"], keys[" << i << "] is invalid." << std::endl;
+                std::cout << "\"" << keys.at(keys.size() - 1) << "\"], key " << key << " is invalid." << std::endl;
                 ASSERT(false);
             }
 
-            // We don't use Node = Node[keys.at(i)], because operator= merges the right-hand side into the left-hand side Node.
+            // We don't use none = Node[key], because operator= merges the right-hand side into the left-hand side Node.
             // Also, repeated assignment to the same Node consumes additional memory as noted in https://github.com/jbeder/yaml-cpp/issues/502.
-            node.reset(node[keys.at(i)]);
+            node.reset(node[key]);
         }
 
         return node.as<T>();

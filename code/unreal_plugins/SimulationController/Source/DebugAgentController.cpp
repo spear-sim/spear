@@ -22,17 +22,17 @@ DebugAgentController::DebugAgentController(UWorld* world)
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "ACTOR_NAME"})) {
             std::cout << "Sphere actor found!" << std::endl;
             ASSERT(!sphere_actor_);
-            sphere_actor_ = (*actor_itr);
+            sphere_actor_ = *actor_itr;
         }
         else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_NAME"})) {
             std::cout << "Observation camera 1 actor found!" << std::endl;
             ASSERT(!first_observation_camera_);
-            first_observation_camera_ = (*actor_itr);
+            first_observation_camera_ = *actor_itr;
         }
         else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_NAME"})) {
             std::cout << "Observation camera 2 actor found!" << std::endl;
             ASSERT(!second_observation_camera_);
-            second_observation_camera_ = (*actor_itr);
+            second_observation_camera_ = *actor_itr;
         }
     }
 
@@ -57,7 +57,8 @@ DebugAgentController::DebugAgentController(UWorld* world)
     UTextureRenderTarget2D* texture_render_target_ = NewObject<UTextureRenderTarget2D>(first_scene_capture_component_, TEXT("TextureRenderTarget2D_1"));
     ASSERT(texture_render_target_);
     // texture_render_target_->bHDR_DEPRECATED = false;
-    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
+    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}),
+        Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
     texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
     texture_render_target_->TargetGamma = 1;
@@ -80,7 +81,8 @@ DebugAgentController::DebugAgentController(UWorld* world)
     texture_render_target_ = NewObject<UTextureRenderTarget2D>(second_scene_capture_component_, TEXT("TextureRenderTarget2D_2"));
     ASSERT(texture_render_target_);
     // texture_render_target_->bHDR_DEPRECATED = false;
-    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
+    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}),
+        Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR;
     texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
     texture_render_target_->TargetGamma = 1;
@@ -127,14 +129,16 @@ std::map<std::string, Box> DebugAgentController::getObservationSpace() const
     box = Box();
     box.low = 0;
     box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}), 3};
+    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}),
+                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}), 3};
     box.dtype = DataType::UInteger8;
     observation_space["camera_1_image"] = std::move(box);
 
     box = Box();
     box.low = 0;
     box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}), 3};
+    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}),
+                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}), 3};
     box.dtype = DataType::UInteger8;
     observation_space["camera_2_image"] = std::move(box);
 
@@ -173,7 +177,6 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
     std::vector<float> src = {sphere_actor_location.X, sphere_actor_location.Y, sphere_actor_location.Z};
     observation["location"] = serializeToUint8(src);
     
-    // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
     ASSERT(IsInGameThread());
 
     FTextureRenderTargetResource* target_resource = first_scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
@@ -204,7 +207,9 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
     ReadPixelFence.BeginFence(true);
     ReadPixelFence.Wait(true);
 
-    std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}) * Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}) * 3);
+    std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"})
+                                * Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"})
+                                * 3);
     for (uint32 i = 0; i < static_cast<uint32>(raw_pixels.Num()); ++i)
     {
         image.at(3 * i + 0) = raw_pixels[i].R;
@@ -213,8 +218,6 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
     }
 
     observation["camera_1_image"] = std::move(image);
-
-    // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
 
     target_resource = second_scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
     ASSERT(target_resource);
@@ -236,7 +239,9 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
     ReadPixelFence.Wait(true);
 
     image.clear();
-    image.resize(Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}) * Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}) * 3);
+    image.resize(Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}) 
+                    * Config::getValue<int>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"})
+                    * 3);
 
     for (uint32 i = 0; i < static_cast<uint32>(raw_pixels.Num()); ++i)
     {

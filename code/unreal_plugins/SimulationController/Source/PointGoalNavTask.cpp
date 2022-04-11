@@ -48,6 +48,7 @@ PointGoalNavTask::~PointGoalNavTask()
     actor_hit_event_delegate_handle_.Reset();
     actor_hit_event_->unsubscribeFromActor(agent_actor_);
     actor_hit_event_->DestroyComponent();
+    actor_hit_event_ = nullptr;
 
     random_stream_.Reset();
 
@@ -56,6 +57,8 @@ PointGoalNavTask::~PointGoalNavTask()
 
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
+
+    obstacle_ignore_actors_.clear();
 }
 
 void PointGoalNavTask::beginFrame()

@@ -39,7 +39,11 @@ public:
         }
     }
 
-    ~Visualizer() = default;
+    ~Visualizer()
+    {
+        ASSERT(visualizer_camera_);
+        visualizer_camera_ = nullptr;
+    }
 private:
     AActor* visualizer_camera_ = nullptr;
 };

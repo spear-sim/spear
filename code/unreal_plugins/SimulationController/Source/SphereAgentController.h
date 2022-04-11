@@ -25,7 +25,7 @@ public:
     void applyAction(const std::map<std::string, std::vector<float>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
 
-    void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction* this_tick_function);
+    void postPhysicsPreRenderTickEventHandler();
 
 private:
 
