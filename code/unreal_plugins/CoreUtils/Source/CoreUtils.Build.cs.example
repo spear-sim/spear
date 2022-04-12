@@ -14,7 +14,7 @@ public class CoreUtils : ModuleRules
 
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "InputCore", "CoreUObject", "Engine" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
 

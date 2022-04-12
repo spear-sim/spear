@@ -15,7 +15,7 @@ public class SimulationController : ModuleRules
 
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "InputCore", "CoreUObject", "Engine", "RHI", "RenderCore", "CoreUtils" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "RenderCore", "RHI" });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
 
