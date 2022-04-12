@@ -294,7 +294,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     return observation;
 }
 
-void SphereAgentController::postPhysicsPreRenderTickEventHandler()
+void SphereAgentController::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick tick_type)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "SET_OBSERVATION_CAMERA_POSE_EGOCENTRIC"})) {

@@ -5,7 +5,7 @@
 
 #include "TickEvent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(OnTickEvent);
+DECLARE_MULTICAST_DELEGATE_TwoParams(OnTickEvent, float, enum ELevelTick);
 
 UCLASS()
 class UTickEvent : public UActorComponent
@@ -26,7 +26,7 @@ public:
 
     void TickComponent(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction* this_tick_function) override
     {
-        delegate_.Broadcast();
+        delegate_.Broadcast(delta_time, tick_type);
     }
 
     OnTickEvent delegate_;
