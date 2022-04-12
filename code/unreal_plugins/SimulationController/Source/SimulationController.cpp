@@ -46,7 +46,7 @@ MSGPACK_ADD_ENUM(Endianness);
 
 void SimulationController::StartupModule()
 {
-    // ASSERT(FModuleManager::IsModuleLoaded(TEXT("CoreUtils")));
+    ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 
     // required to add ActorSpawnedEventHandler
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);

@@ -10,7 +10,7 @@ public:
     {
         for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
             std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-            if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_NAME"})) {
+            if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_ACTOR_NAME"})) {
                 ASSERT(!visualizer_camera_);
                 visualizer_camera_ = *actor_itr;
                 break;
@@ -24,18 +24,16 @@ public:
         Controller->SetViewTarget(visualizer_camera_);
 
         // setup camera pose
-        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_TYPE"}) == "Debug") {
-            if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "DEBUG_CAMERA", "SET_POSE"})) {
-                const FVector camera_pose(
-                    Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "DEBUG_CAMERA", "POSITION_X"}),
-                    Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "DEBUG_CAMERA", "POSITION_Y"}),
-                    Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "DEBUG_CAMERA", "POSITION_Z"}));
-                visualizer_camera_->SetActorLocation(camera_pose);
-                visualizer_camera_->SetActorRotation(FRotator(
-                    Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "DEBUG_CAMERA", "PITCH"}),
-                    Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "DEBUG_CAMERA","YAW"}),
-                    Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "DEBUG_CAMERA", "ROLL"})));
-            }
+        if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SET_CAMERA_POSE"})) {
+            const FVector camera_pose(
+                Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_POSITION_X"}),
+                Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_POSITION_Y"}),
+                Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_POSITION_Z"}));
+            visualizer_camera_->SetActorLocation(camera_pose);
+            visualizer_camera_->SetActorRotation(FRotator(
+                Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_PITCH"}),
+                Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_YAW"}),
+                Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_ROLL"})));
         }
     }
 
