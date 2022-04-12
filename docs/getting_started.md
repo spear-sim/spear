@@ -25,6 +25,15 @@ cd code/tools
 python build_third_party_libs.py
 ```
 
+## Create symbolic links
+
+Our Unreal projects depend on several of our Unreal plugins. Let's create symbolic links to these plugins.
+
+```console
+cd code/tools
+python create_sym_links.py
+```
+
 ## Install the interiorsim Python package
 
 ```console
@@ -36,7 +45,7 @@ conda activate interiorsim-env
 conda install -c anaconda pip
 
 # install msgpack-rpc-python separately from other Python dependencies
-pip install -e thirdparty/msgpack-rpc-python
+pip install -e code/third_party/msgpack-rpc-python
 
 # install interiorsim
 pip install -e code/python_module
@@ -48,10 +57,10 @@ Our Unreal projects assume that all of their required parameters are declared in
 
 ```console
 cd code/tools
-python generate_config.py --config_files path/to/code/unreal_projects/PlayEnvironment/default_config.yaml --output_unreal_project_dir path/to/code/unreal_projects/PlayEnvironment
+python generate_config.py --config_files path/to/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/interiorsim/code/unreal_projects/PlayEnvironment
 ```
 
-At this point, you should be able to double-click on `code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully. You should be able to control the ball with the `{W,A,S,D}` keyboard keys.
+At this point, you should be able to double-click on `code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully.
 
 Our other examples require you to download additional content before you can run them. See the README file in each example directory for more details.
 
@@ -61,7 +70,7 @@ This step is not strictly necessary, because you can run our example environment
 
 ```console
 # build, cook, stage, package, archive
-path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject -build -cook -stage -package -archive -targetPlatform=Mac -target=PlayEnvironment -clientconfig=Development -archivedirectory=path/to/code/unreal_projects/PlayEnvironment/Standalone-Development
+path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/interiorsim/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject -build -cook -stage -package -archive -targetPlatform=Mac -target=PlayEnvironment -clientconfig=Development -archivedirectory=path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development
 ```
 
 This step will build a standalone executable at the path `code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app`.
@@ -75,10 +84,10 @@ At this point, you should be able to run your standalone executable directly as 
 ```
 # generate config
 cd utils
-python generate_config.py --config_files path/to/code/unreal_projects/PlayEnvironment/default_config.yaml --output_unreal_project_dir path/to/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/UE4/PlayEnvironment
+python generate_config.py --config_files path/to/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/UE4/PlayEnvironment
 
 # run the executable in the terminal, alternatively you can double-click on PlayEnvironment.app
-path/to/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/MacOS/PlayEnvironment
+path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/MacOS/PlayEnvironment
 ```
 
 ## Control the environment via Python
@@ -94,7 +103,7 @@ import interiorsim.config
 import interiorsim.constants
 
 config_files = []
-config_files.append(os.path.join(interiorsim.constants.INTERIORSIM_ROOT_DIR, "..", "..", "unreal_projects", "PlayEnvironment", "default_config.yaml"))
+config_files.append(os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/PlayEnvironment/user_config.yaml"))
 
 # you can append your own user-specific config file(s) to config_files to override
 # default values; your config file(s) only need to specify a value if you want to
@@ -108,11 +117,11 @@ config.defrost()
 
 # standalone executable mode
 config.INTERIORSIM.LAUNCH_MODE = "standalone_executable"
-config.INTERIORSIM.STANDALONE_EXECUTABLE = "path/to/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app"
+config.INTERIORSIM.STANDALONE_EXECUTABLE = "path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app"
 
 # uproject mode
 # config.INTERIORSIM.LAUNCH_MODE = "uproject"
-# config.INTERIORSIM.UPROJECT = "path/to/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject"
+# config.INTERIORSIM.UPROJECT = "path/to/interiorsim/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject"
 
 # prevent further editing of config values
 config.freeze()
@@ -129,7 +138,7 @@ obs = env.reset()
 
 # take a few actions; in this example, each action is specified as a 2D point, you should see the ball move in the Unreal game window
 for i in range(10):
-    obs, reward, done, _ = env.step(action={action_name: [np.array([1.0, 1.0])]})
+    obs, reward, done, _ = env.step({"apply_force": [1, 1]})
 
 # close the environment
 env.close()
