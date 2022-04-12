@@ -20,7 +20,7 @@ public:
 
     // This UWorld pointer passed here points to the only running game world.
     DebugAgentController(UWorld* world);
-    ~DebugAgentController() = default;
+    ~DebugAgentController();
     
     std::map<std::string, Box> getActionSpace() const override;
     std::map<std::string, Box> getObservationSpace() const override;
@@ -29,7 +29,7 @@ public:
 
 private:
 
-    AActor* sphere_actor_ = nullptr;
+    AActor* agent_actor_ = nullptr;
     AActor* first_observation_camera_ = nullptr;
     AActor* second_observation_camera_ = nullptr;
     USceneCaptureComponent2D* first_scene_capture_component_ = nullptr;
