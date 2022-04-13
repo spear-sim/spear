@@ -40,6 +40,17 @@ code/unreal_projects/InteriorEnvironment/Temp
 code/unreal_projects/InteriorEnvironment/user_config.yaml
 code/unreal_projects/InteriorEnvironment/.vscode
 
+code/unreal_projects/PlayEnvironment/Binaries
+code/unreal_projects/PlayEnvironment/Build
+code/unreal_projects/PlayEnvironment/DerivedDataCache
+code/unreal_projects/PlayEnvironment/Intermediate
+code/unreal_projects/PlayEnvironment/Saved
+code/unreal_projects/PlayEnvironment/Standalone-Development
+code/unreal_projects/PlayEnvironment/Standalone-Shipping
+code/unreal_projects/PlayEnvironment/Temp
+code/unreal_projects/PlayEnvironment/user_config.yaml
+code/unreal_projects/PlayEnvironment/.vscode
+
 code/unreal_projects/RobotProject/Binaries
 code/unreal_projects/RobotProject/Build
 code/unreal_projects/RobotProject/Content/Maps

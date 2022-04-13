@@ -7,7 +7,7 @@ import sys
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 MIN_CMAKE_VERSION = "3.5.1"
 
-def check_cmake_requirement():
+def check_cmake_version():
     min_cmake_version = MIN_CMAKE_VERSION.split(".")
     print(f"cmake min version required is {MIN_CMAKE_VERSION}, checking if this requirement is met...")
     cmake_version = (subprocess.run(["cmake", "--version"], stdout=subprocess.PIPE).stdout).decode("utf-8").split('\n')[0].split(' ')[-1]
@@ -37,15 +37,15 @@ def build_libs(num_parallel_jobs):
 
     if sys.platform == "linux":
         args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_COMPILER='clang++'", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
-        print(f"Executing cmd: {' '.join(x for x in args)}")
+        print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     else:
         args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", ".."]
-        print(f"Executing cmd: {' '.join(x for x in args)}")
+        print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
     args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
-    print(f"Executing cmd: {' '.join(x for x in args)}")
+    print(f"Executing cmd: {' '.join(args)}")
     rbld_build_cmd = subprocess.run(args)
     assert rbld_build_cmd.returncode == 0
     print("rbdl built successfully...")
@@ -60,15 +60,15 @@ def build_libs(num_parallel_jobs):
 
     if sys.platform == "linux":
         args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
-        print(f"Executing cmd: {' '.join(x for x in args)}")
+        print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     else:
         args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
-        print(f"Executing cmd: {' '.join(x for x in args)}")
+        print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
     args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
-    print(f"Executing cmd: {' '.join(x for x in args)}")
+    print(f"Executing cmd: {' '.join(args)}")
     rpclib_build_cmd = subprocess.run(args)
     assert rpclib_build_cmd.returncode == 0
     print("rpclib built successfully...")
@@ -83,15 +83,15 @@ def build_libs(num_parallel_jobs):
 
     if sys.platform == "linux":
         args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
-        print(f"Executing cmd: {' '.join(x for x in args)}")
+        print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     else:
         args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
-        print(f"Executing cmd: {' '.join(x for x in args)}")
+        print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
     args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
-    print(f"Executing cmd: {' '.join(x for x in args)}")
+    print(f"Executing cmd: {' '.join(args)}")
     yamlcpp_build_cmd = subprocess.run(args)
     assert yamlcpp_build_cmd.returncode == 0
     print("yaml-cpp built successfully...")
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # check cmake version requirement
-    check_cmake_requirement()
+    check_cmake_version()
 
     # build third party libs
     build_libs(num_parallel_jobs=args.num_parallel_jobs)
