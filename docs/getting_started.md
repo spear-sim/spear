@@ -31,7 +31,7 @@ Our Unreal projects depend on several of our Unreal plugins. Let's create symbol
 
 ```console
 cd code/tools
-python create_sym_links.py
+python create_symbolic_links.py
 ```
 
 ## Install the interiorsim Python package
