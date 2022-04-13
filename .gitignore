@@ -33,6 +33,7 @@ code/unreal_projects/InteriorEnvironment/Content/Maps
 code/unreal_projects/InteriorEnvironment/Content/Scene
 code/unreal_projects/InteriorEnvironment/DerivedDataCache
 code/unreal_projects/InteriorEnvironment/Intermediate
+code/unreal_projects/InteriorEnvironment/Plugins
 code/unreal_projects/InteriorEnvironment/Saved
 code/unreal_projects/InteriorEnvironment/Standalone-Development
 code/unreal_projects/InteriorEnvironment/Standalone-Shipping
@@ -44,6 +45,7 @@ code/unreal_projects/PlayEnvironment/Binaries
 code/unreal_projects/PlayEnvironment/Build
 code/unreal_projects/PlayEnvironment/DerivedDataCache
 code/unreal_projects/PlayEnvironment/Intermediate
+code/unreal_projects/PlayEnvironment/Plugins
 code/unreal_projects/PlayEnvironment/Saved
 code/unreal_projects/PlayEnvironment/Standalone-Development
 code/unreal_projects/PlayEnvironment/Standalone-Shipping
@@ -57,6 +59,7 @@ code/unreal_projects/RobotProject/Content/Maps
 code/unreal_projects/RobotProject/Content/Scene
 code/unreal_projects/RobotProject/DerivedDataCache
 code/unreal_projects/RobotProject/Intermediate
+code/unreal_projects/RobotProject/Plugins
 code/unreal_projects/RobotProject/Saved
 code/unreal_projects/RobotProject/Standalone-Development
 code/unreal_projects/RobotProject/Standalone-Shipping
