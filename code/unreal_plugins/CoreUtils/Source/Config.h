@@ -45,7 +45,7 @@ public:
                 ASSERT(false);
             }
 
-            // We don't use none = Node[key], because operator= merges the right-hand side into the left-hand side Node.
+            // We don't use node = node[key], because operator= merges the right-hand side into the left-hand side Node.
             // Also, repeated assignment to the same Node consumes additional memory as noted in https://github.com/jbeder/yaml-cpp/issues/502.
             node.reset(node[key]);
         }

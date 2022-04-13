@@ -241,15 +241,15 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     std::map<std::string, std::vector<uint8_t>> observation;
 
     // get game state
-    const FVector sphere_to_cone = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
+    const FVector sphere_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
     const FVector linear_velocity = sphere_static_mesh_component_->GetPhysicsLinearVelocity();
 
     // get observations
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         const float observation_camera_yaw = observation_camera_actor_->GetActorRotation().Yaw;
         observation["physical_observation"] = serializeToUint8(std::vector<float>{
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_cone.X,
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_cone.Y,
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.X,
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.Y,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "LINEAR_VELOCITY_SCALE"}) * linear_velocity.X,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "LINEAR_VELOCITY_SCALE"}) * linear_velocity.Y,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "YAW_SCALE"}) * observation_camera_yaw});
@@ -296,8 +296,8 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
         observation["visual_observation"] = std::move(image);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         observation["physical_observation"] = serializeToUint8(std::vector<float>{
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_cone.X,
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_cone.Y,
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.X,
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.Y,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "LINEAR_VELOCITY_SCALE"}) * linear_velocity.X,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "LINEAR_VELOCITY_SCALE"}) * linear_velocity.Y});
     } else {
