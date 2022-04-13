@@ -100,7 +100,7 @@ import os
 
 import interiorsim
 import interiorsim.config
-import interiorsim.constants
+from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
 config_files = []
 config_files.append(os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/PlayEnvironment/user_config.yaml"))
