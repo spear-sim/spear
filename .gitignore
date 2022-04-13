@@ -17,6 +17,8 @@ code/experiments/srcc/python/my_habitat_baselines/__pycache__
 code/experiments/srcc/python/imagenet/__pycache__
 code/experiments/srcc/python/__pycache__
 
+code/python_module/interiorsim.egg-info
+
 code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
 code/unreal_plugins/CoreUtils/Source/CoreUtils.Build.cs

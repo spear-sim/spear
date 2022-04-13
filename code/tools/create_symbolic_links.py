@@ -8,10 +8,10 @@ UNREAL_PLUGINS_PATH = os.path.join(SCRIPT_DIR_PATH, "..", "unreal_plugins")
 def create_symbolic_links():
 
     # get list of the projects and plugins we maintain
-    our_plugins = os.listdir(UNREAL_PLUGINS_PATH)
     our_projects = os.listdir(UNREAL_PROJECTS_PATH)
+    our_plugins = os.listdir(UNREAL_PLUGINS_PATH)
 
-    # for each project dir
+    # for each project
     for project in our_projects:
 
         # if the project is a valid project (i.e., project dir has a uproject file)
@@ -28,10 +28,8 @@ def create_symbolic_links():
             if not os.path.exists(project_plugins_dir):
                 os.makedirs(project_plugins_dir)
 
-            # create symlink for each plugin listed in the project...
+            # create symlink for each plugin listed in the project, if the plugin is maintained by us
             for project_plugin in project_plugins:
-
-                # ...if the plugin is maintained by us
                 if project_plugin in our_plugins:                
                     our_plugin_path = os.path.abspath(os.path.join(UNREAL_PLUGINS_PATH, project_plugin))
                     symlink_plugin_path = os.path.abspath(os.path.join(project_plugins_dir, project_plugin))
