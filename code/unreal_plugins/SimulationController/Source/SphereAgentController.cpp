@@ -147,8 +147,8 @@ SphereAgentController::~SphereAgentController()
 std::map<std::string, Box> SphereAgentController::getActionSpace() const
 {
     std::map<std::string, Box> action_space;
-    
     Box box;
+    
     box.low = -1.f;
     box.high = 1.f;
     box.shape = {2};
@@ -161,7 +161,6 @@ std::map<std::string, Box> SphereAgentController::getActionSpace() const
 std::map<std::string, Box> SphereAgentController::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
-
     Box box;
     
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {

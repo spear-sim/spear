@@ -10,6 +10,7 @@ import time
 import msgpackrpc   # pip install -e code/third_party/msgpack-rpc-python
 import psutil
 
+
 # Enum values should match Box.h in SimulationController plugin
 class DataType(Enum):
     Boolean = 0
@@ -21,6 +22,7 @@ class DataType(Enum):
     Integer32 = 6
     Float32 = 7
     Double = 8
+
 
 # Enum values should match SimulationController.cpp in SimulationController plugin
 class EndiannessType(Enum):
@@ -45,7 +47,6 @@ class Env(gym.Env):
         self.observation_space = self._get_observation_space()
         self.action_space = self._get_action_space()
 
-    
     def step(self, action):
         
         self._begin_tick()
@@ -162,7 +163,6 @@ class Env(gym.Env):
             self._force_kill_unreal_instance()
             self._close_client_server_connection()
             assert False
-
 
     def _connect_to_unreal_instance(self):
 
@@ -293,7 +293,6 @@ class Env(gym.Env):
             gym_spaces_dict[obs_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
-
 
     # TODO: expand functionality to support discrete action spaces
     def _get_action_space(self):
