@@ -50,21 +50,21 @@ DebugAgentController::DebugAgentController(UWorld* world)
     first_scene_capture_component_->FOVAngle = 60.f;
     first_scene_capture_component_->ShowFlags.SetTemporalAA(false);
 
-    UTextureRenderTarget2D* texture_render_target_first_camera = NewObject<UTextureRenderTarget2D>(world, TEXT("TextureRenderTarget2D_1"));
-    ASSERT(texture_render_target_first_camera);
-    // texture_render_target_first_camera->bHDR_DEPRECATED = false;
-    texture_render_target_first_camera->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}),
+    texture_render_target_first_camera_ = NewObject<UTextureRenderTarget2D>(world, TEXT("TextureRenderTarget2D_1"));
+    ASSERT(texture_render_target_first_camera_);
+    // texture_render_target_first_camera_->bHDR_DEPRECATED = false;
+    texture_render_target_first_camera_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}),
                                              Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}),
                                              PF_B8G8R8A8,
                                              true); // PF_B8G8R8A8 disables HDR;
-    texture_render_target_first_camera->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-    texture_render_target_first_camera->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
-    texture_render_target_first_camera->TargetGamma = 1;
-    texture_render_target_first_camera->SRGB = false; // false for pixels to be stored in linear space
-    texture_render_target_first_camera->bAutoGenerateMips = false;
-    texture_render_target_first_camera->UpdateResourceImmediate(true);
+    texture_render_target_first_camera_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+    texture_render_target_first_camera_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
+    texture_render_target_first_camera_->TargetGamma = 1;
+    texture_render_target_first_camera_->SRGB = false; // false for pixels to be stored in linear space
+    texture_render_target_first_camera_->bAutoGenerateMips = false;
+    texture_render_target_first_camera_->UpdateResourceImmediate(true);
 
-    first_scene_capture_component_->TextureTarget = texture_render_target_first_camera;
+    first_scene_capture_component_->TextureTarget = texture_render_target_first_camera_;
     first_scene_capture_component_->RegisterComponent();
 
     // Create SceneCaptureComponent2D and TextureRenderTarget2D
@@ -76,29 +76,37 @@ DebugAgentController::DebugAgentController(UWorld* world)
     second_scene_capture_component_->FOVAngle = 60.f;
     second_scene_capture_component_->ShowFlags.SetTemporalAA(false);
 
-    UTextureRenderTarget2D* texture_render_target_second_camera = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D_2"));
-    ASSERT(texture_render_target_second_camera);
-    // texture_render_target_second_camera->bHDR_DEPRECATED = false;
-    texture_render_target_second_camera->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}),
+    texture_render_target_second_camera_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D_2"));
+    ASSERT(texture_render_target_second_camera_);
+    // texture_render_target_second_camera_->bHDR_DEPRECATED = false;
+    texture_render_target_second_camera_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}),
                                              Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}),
                                              PF_B8G8R8A8,
                                              true); // PF_B8G8R8A8 disables HDR;
-    texture_render_target_second_camera->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-    texture_render_target_second_camera->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
-    texture_render_target_second_camera->TargetGamma = 1;
-    texture_render_target_second_camera->SRGB = false; // false for pixels to be stored in linear space
-    texture_render_target_second_camera->bAutoGenerateMips = false;
-    texture_render_target_second_camera->UpdateResourceImmediate(true);
+    texture_render_target_second_camera_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+    texture_render_target_second_camera_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
+    texture_render_target_second_camera_->TargetGamma = 1;
+    texture_render_target_second_camera_->SRGB = false; // false for pixels to be stored in linear space
+    texture_render_target_second_camera_->bAutoGenerateMips = false;
+    texture_render_target_second_camera_->UpdateResourceImmediate(true);
 
-    second_scene_capture_component_->TextureTarget = texture_render_target_second_camera;
+    second_scene_capture_component_->TextureTarget = texture_render_target_second_camera_;
     second_scene_capture_component_->RegisterComponent();    
 }
 
 DebugAgentController::~DebugAgentController()
 {
+    ASSERT(texture_render_target_second_camera_);
+    texture_render_target_second_camera_->MarkPendingKill();
+    texture_render_target_second_camera_ = nullptr;
+
     ASSERT(second_scene_capture_component_);
     second_scene_capture_component_->DestroyComponent();
     second_scene_capture_component_ = nullptr;
+
+    ASSERT(texture_render_target_first_camera_);
+    texture_render_target_first_camera_->MarkPendingKill();
+    texture_render_target_first_camera_ = nullptr;
 
     ASSERT(first_scene_capture_component_);
     first_scene_capture_component_->DestroyComponent();

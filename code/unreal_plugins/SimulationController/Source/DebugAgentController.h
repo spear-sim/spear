@@ -36,4 +36,7 @@ private:
 
     USceneCaptureComponent2D* first_scene_capture_component_ = nullptr;
     USceneCaptureComponent2D* second_scene_capture_component_ = nullptr;
+
+    UTextureRenderTarget2D* texture_render_target_first_camera_ = nullptr;
+    UTextureRenderTarget2D* texture_render_target_second_camera_ = nullptr;
 };
