@@ -18,12 +18,6 @@ public:
         PrimaryComponentTick.bCanEverTick = false;
     }
 
-    void BeginPlay() override
-    {
-        RegisterComponent();
-        Super::BeginPlay();
-    }
-
     void subscribeToActor(AActor* actor)
     {
         actor->OnActorHit.AddDynamic(this, &UActorHitEvent::ActorHitEventHandler);

@@ -34,9 +34,13 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     // read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
 
+    new_object_parent_actor_ = world->SpawnActor<AActor>();
+    ASSERT(new_object_parent_actor_);
+
     // create and initialize actor hit handler
-    actor_hit_event_ = NewObject<UActorHitEvent>(agent_actor_, TEXT("ActorHitEvent"));
+    actor_hit_event_ = NewObject<UActorHitEvent>(new_object_parent_actor_, TEXT("ActorHitEvent"));
     ASSERT(actor_hit_event_);
+    actor_hit_event_->RegisterComponent();
     actor_hit_event_->subscribeToActor(agent_actor_);
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
 }
@@ -49,6 +53,10 @@ PointGoalNavTask::~PointGoalNavTask()
     actor_hit_event_->unsubscribeFromActor(agent_actor_);
     actor_hit_event_->DestroyComponent();
     actor_hit_event_ = nullptr;
+
+    ASSERT(new_object_parent_actor_);
+    new_object_parent_actor_->Destroy();
+    new_object_parent_actor_ = nullptr;
 
     random_stream_.Reset();
 

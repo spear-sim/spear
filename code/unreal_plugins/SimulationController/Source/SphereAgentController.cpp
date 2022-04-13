@@ -46,8 +46,11 @@ SphereAgentController::SphereAgentController(UWorld* world)
         }
         ASSERT(observation_camera_actor_);
 
+        new_object_parent_actor_ = world->SpawnActor<AActor>();
+        ASSERT(new_object_parent_actor_);
+        
         // create SceneCaptureComponent2D and TextureRenderTarget2D
-        scene_capture_component_ = NewObject<USceneCaptureComponent2D>(observation_camera_actor_, TEXT("SceneCaptureComponent2D"));
+        scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
         ASSERT(scene_capture_component_);
 
         scene_capture_component_->AttachToComponent(observation_camera_actor_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
@@ -56,30 +59,31 @@ SphereAgentController::SphereAgentController(UWorld* world)
         scene_capture_component_->FOVAngle = 60.f;
         scene_capture_component_->ShowFlags.SetTemporalAA(false);
 
-        UTextureRenderTarget2D* texture_render_target = NewObject<UTextureRenderTarget2D>(scene_capture_component_, TEXT("TextureRenderTarget2D"));
-        ASSERT(texture_render_target);
+        texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
+        ASSERT(texture_render_target_);
 
-        // texture_render_target->bHDR_DEPRECATED = false;
-        texture_render_target->InitCustomFormat(
+        // texture_render_target_->bHDR_DEPRECATED = false;
+        texture_render_target_->InitCustomFormat(
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
             PF_B8G8R8A8,
             true); // PF_B8G8R8A8 disables HDR;
-        texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-        texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
-        texture_render_target->TargetGamma = 1;
-        texture_render_target->SRGB = false; // false for pixels to be stored in linear space
-        texture_render_target->bAutoGenerateMips = false;
-        texture_render_target->UpdateResourceImmediate(true);
+        texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+        texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
+        texture_render_target_->TargetGamma = 1;
+        texture_render_target_->SRGB = false; // false for pixels to be stored in linear space
+        texture_render_target_->bAutoGenerateMips = false;
+        texture_render_target_->UpdateResourceImmediate(true);
 
-        scene_capture_component_->TextureTarget = texture_render_target;
+        scene_capture_component_->TextureTarget = texture_render_target_;
         scene_capture_component_->RegisterComponent();
 
         // assign observation camera to post physics tick group
-        post_physics_pre_render_event_ = NewObject<UTickEvent>(observation_camera_actor_, TEXT("PostPhysicsTickEvent"));
-        ASSERT(post_physics_pre_render_event_);
-        post_physics_pre_render_event_->initialize(ETickingGroup::TG_PostPhysics);
-        post_physics_pre_render_event_handle_ = post_physics_pre_render_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTickEventHandler);
+        post_physics_pre_render_tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
+        ASSERT(post_physics_pre_render_tick_event_);
+        post_physics_pre_render_tick_event_->RegisterComponent();
+        post_physics_pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
+        post_physics_pre_render_tick_event_handle_ = post_physics_pre_render_tick_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTickEventHandler);
     }
 
     sphere_static_mesh_component_ = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
@@ -111,14 +115,23 @@ SphereAgentController::~SphereAgentController()
     sphere_static_mesh_component_ = nullptr;
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        ASSERT(post_physics_pre_render_event_);
-        post_physics_pre_render_event_->delegate_.Remove(post_physics_pre_render_event_handle_);
-        post_physics_pre_render_event_handle_.Reset();
-        post_physics_pre_render_event_->DestroyComponent();
-        post_physics_pre_render_event_ = nullptr;
+        ASSERT(post_physics_pre_render_tick_event_);
+        post_physics_pre_render_tick_event_->delegate_.Remove(post_physics_pre_render_tick_event_handle_);
+        post_physics_pre_render_tick_event_handle_.Reset();
+        post_physics_pre_render_tick_event_->DestroyComponent();
+        post_physics_pre_render_tick_event_ = nullptr;
         
+        ASSERT(texture_render_target_);
+        texture_render_target_->MarkPendingKill();
+        texture_render_target_ = nullptr;
+
         ASSERT(scene_capture_component_);
+        scene_capture_component_->DestroyComponent();
         scene_capture_component_ = nullptr;
+
+        ASSERT(new_object_parent_actor_);
+        new_object_parent_actor_->Destroy();
+        new_object_parent_actor_ = nullptr;
 
         ASSERT(observation_camera_actor_);
         observation_camera_actor_ = nullptr;
@@ -294,8 +307,8 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     return observation;
 }
 
-void SphereAgentController::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick tick_type)
-{
+void SphereAgentController::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
+{    
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "SET_OBSERVATION_CAMERA_POSE_EGOCENTRIC"})) {
             const FVector observation_camera_pose(

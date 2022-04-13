@@ -21,12 +21,11 @@ public:
     void initialize(const ETickingGroup& tick_group)
     {
         PrimaryComponentTick.TickGroup = tick_group;
-        RegisterComponent();
     }
 
-    void TickComponent(float delta_time, enum ELevelTick tick_type, FActorComponentTickFunction* this_tick_function) override
+    void TickComponent(float delta_time, enum ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
-        delegate_.Broadcast(delta_time, tick_type);
+        delegate_.Broadcast(delta_time, level_tick);
     }
 
     OnTickEvent delegate_;

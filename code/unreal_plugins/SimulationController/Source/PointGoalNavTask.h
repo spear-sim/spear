@@ -34,6 +34,7 @@ private:
 
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
+    AActor* new_object_parent_actor_ = nullptr;
 
     UActorHitEvent* actor_hit_event_ = nullptr;
     FDelegateHandle actor_hit_event_delegate_handle_;

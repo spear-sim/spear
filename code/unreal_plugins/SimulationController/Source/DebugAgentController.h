@@ -32,6 +32,8 @@ private:
     AActor* agent_actor_ = nullptr;
     AActor* first_observation_camera_ = nullptr;
     AActor* second_observation_camera_ = nullptr;
+    AActor* new_object_parent_actor_ = nullptr;
+
     USceneCaptureComponent2D* first_scene_capture_component_ = nullptr;
     USceneCaptureComponent2D* second_scene_capture_component_ = nullptr;
 };
