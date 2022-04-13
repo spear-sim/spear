@@ -36,14 +36,17 @@ def build_libs(num_parallel_jobs):
     os.chdir(rbdl_build_dir)
 
     if sys.platform == "linux":
-        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release -DRBDL_BUILD_STATIC=ON -DRBDL_BUILD_ADDON_URDFREADER=ON -DCMAKE_CXX_COMPILER='clang++' -DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++' ..")
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_COMPILER='clang++'", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."])
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_COMPILER='clang++'", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
+        print(f"Executing cmd: {' '.join(x for x in args)}")
+        cmake_cmd = subprocess.run(args)
     else:
-        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release -DRBDL_BUILD_STATIC=ON -DRBDL_BUILD_ADDON_URDFREADER=ON ..")
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", ".."])
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", ".."]
+        print(f"Executing cmd: {' '.join(x for x in args)}")
+        cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
-    print(f"Executing: cmake --build . -- -j {num_parallel_jobs}")
-    rbld_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)])
+    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
+    print(f"Executing cmd: {' '.join(x for x in args)}")
+    rbld_build_cmd = subprocess.run(args)
     assert rbld_build_cmd.returncode == 0
     print("rbdl built successfully...")
 
@@ -56,14 +59,17 @@ def build_libs(num_parallel_jobs):
     os.chdir(rpblib_build_dir)
 
     if sys.platform == "linux":
-        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS='-stdlib=libc++' -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..")
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."])
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
+        print(f"Executing cmd: {' '.join(x for x in args)}")
+        cmake_cmd = subprocess.run(args)
     else:
-        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release ..")
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."])
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        print(f"Executing cmd: {' '.join(x for x in args)}")
+        cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
-    print(f"Executing: cmake --build . -- -j {num_parallel_jobs}")
-    rpclib_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)])
+    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
+    print(f"Executing cmd: {' '.join(x for x in args)}")
+    rpclib_build_cmd = subprocess.run(args)
     assert rpclib_build_cmd.returncode == 0
     print("rpclib built successfully...")
 
@@ -76,14 +82,17 @@ def build_libs(num_parallel_jobs):
     os.chdir(yamlcpp_build_dir)
 
     if sys.platform == "linux":
-        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS='-stdlib=libc++' -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..")
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."])
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
+        print(f"Executing cmd: {' '.join(x for x in args)}")
+        cmake_cmd = subprocess.run(args)
     else:
-        print("Executing: cmake -DCMAKE_BUILD_TYPE=Release ..")
-        cmake_cmd = subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."])
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        print(f"Executing cmd: {' '.join(x for x in args)}")
+        cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
-    print(f"Executing: cmake --build . -- -j {num_parallel_jobs}")
-    yamlcpp_build_cmd = subprocess.run(["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)])
+    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
+    print(f"Executing cmd: {' '.join(x for x in args)}")
+    yamlcpp_build_cmd = subprocess.run(args)
     assert yamlcpp_build_cmd.returncode == 0
     print("yaml-cpp built successfully...")
 
