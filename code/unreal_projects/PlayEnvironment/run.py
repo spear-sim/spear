@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 
 from interiorsim import Env
 from interiorsim.config import get_config
