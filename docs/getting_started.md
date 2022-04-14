@@ -66,14 +66,6 @@ cd code/tools
 python generate_config.py --config_files path/to/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/interiorsim/code/unreal_projects/PlayEnvironment
 ```
 
-The next step consists in adjusting the `.Build.cs` file of every plugins, to match the paths and settings of your system. Note that after cloning the git repository, only a `.Build.cs.example` file should be available within the **Source** folder of every plugin. It is therefore necessary to make a copy of this file and to rename it as `XXX.Build.cs.example -> XXX.Build.cs`. For instance, for the **CoreUtils** plugin:
-
-```console
-cp code/unreal_plugins/CoreUtils/Source/CoreUtils.Build.cs.example code/unreal_plugins/CoreUtils/Source/CoreUtils.Build.cs
-```
-
-It is then necessary to edit the newly created `.Build.cs` file such that the different settings it contains match your system setup.
-
 At this point, you should be able to double-click on `code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully.
 
 Our other projects require you to download additional content before you can run them. See the README file in each project directory for more details.

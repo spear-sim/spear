@@ -1,4 +1,4 @@
-UNREALAI:
+INTERIORSIM:
   # launch unreal engine instance via different modes
   # "standalone_executable", or "uproject", or "running_instance"
   # "standalone_executable" - launches a packaged executable of an Unreal Engine project
@@ -28,7 +28,7 @@ UNREALAI:
   
   # Specify the location of the settings.json parameter file used in the InteriorSim executable. 
   # Allows avoiding the "settings.json not found" error at simulation start:
-  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json", "-game"]
+  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json"]
   #CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/quentin/Desktop/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json", "-game"]
   
   # Once a connection has been established, the RPC client will wait for this amount of

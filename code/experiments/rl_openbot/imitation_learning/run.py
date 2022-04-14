@@ -5,9 +5,8 @@
 
 #############################################################################
 import numpy as np
-import tensorflow as tf
-import tflite_runtime.interpreter as tflite
-import unrealai as uai
+#import tensorflow as tf
+#import tflite_runtime.interpreter as tflite
 import matplotlib.pyplot as plt
 from PIL import Image
 import datetime;
@@ -17,10 +16,9 @@ import csv
 import cv2
 import argparse
 import os
-from unrealai.constants import PACKAGE_DEFAULT_CONFIG_FILE
-from unrealai.constants import PACKAGE_ROOT_DIR
-from unrealai.exceptions import UnrealAIException
-from unrealai.config import get_config
+from interiorsim import Env
+from interiorsim.config import get_config
+from interiorsim.constants import INTERIORSIM_ROOT_DIR
 import math
 from math import cos, sin, atan2, pi, isclose
 
@@ -59,11 +57,11 @@ def client(args, config, mapNames):
         
             # Load the correct map:
             config.defrost()
-            config.UNREALAI.MAP_ID = "/Game/Maps/Map_" + mapName
+            config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_" + mapName
             config.freeze()
         
             # Create Uneal Environment: 
-            # uenv = uai.UnrealEnv(config)
+            # env = Env(config)
     
             # Gym wrapper:
             # env = UnrealToGymWrapper(uenv)
@@ -81,7 +79,8 @@ def client(args, config, mapNames):
                 collisionFlag = False
                 goalReachedFlag = False
             
-                uenv = uai.UnrealEnv(config)
+                print(config)
+                env = Env(config)
                 
                 agent_name = uenv.agents[0]
             
@@ -220,11 +219,11 @@ def client(args, config, mapNames):
                 
                     # Reset the environment after each run:
                     #uenv.reset()      
-                uenv.close()        
+                env.reset()      
                 time.sleep(5) 
                 
         # Close the environment:
-        uenv.close()
+        env.close()
         time.sleep(3) 
         
     elif learningMode == "Infer":
@@ -244,8 +243,8 @@ def client(args, config, mapNames):
         config.freeze()
     
         # Create Uneal Environment: 
-        uenv = uai.UnrealEnv(config)
-        agent_name = uenv.agents[0]
+        env = Env(config)
+        agent_name = env.agents[0]
     
         # Load TFLite model and allocate tensors.
         interpreter = tflite.Interpreter("/home/qleboute/Documents/Git/interiorsim/code/experiments/rl_openbot/imitation_learning/models/TestSession_1_pilot_net_lr0.0001_bz64_bn/checkpoints/best-val.tflite")
@@ -269,7 +268,7 @@ def client(args, config, mapNames):
         for i in range(numIter):
             
             # Collect observation from the agent:
-            observation = uenv.get_obs_for_agent(agent_name=agent_name)
+            observation = env.get_obs_for_agent(agent_name=agent_name)
             img_input = np.float32(observation[1])/255
             img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
             cmd_input[0][0] = np.float32(observation[0][2])/100
@@ -279,28 +278,28 @@ def client(args, config, mapNames):
             #print(cmd_input)
             
             # Inference:
-            interpreter.set_tensor(input_details[0]["index"], np.expand_dims(img_input, axis=0))
-            interpreter.set_tensor(input_details[1]["index"], cmd_input)    
+            #interpreter.set_tensor(input_details[0]["index"], np.expand_dims(img_input, axis=0))
+            #interpreter.set_tensor(input_details[1]["index"], cmd_input)    
             
             #print(np.expand_dims(img_input, axis=0))
             #print(cmd_input)
         
-            start_time = time.time()
-            interpreter.invoke()
-            stop_time = time.time()
+            #start_time = time.time()
+            #interpreter.invoke()
+            #stop_time = time.time()
             #print('time: {:.3f}ms'.format((stop_time - start_time) * 1000))
             
-            output = interpreter.get_tensor(output_details[0]["index"])
+            #output = interpreter.get_tensor(output_details[0]["index"])
             
 
-            action = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
+            #action = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
             
             print(cmd_input)
             print(output)
             #print(action)
             
             # Send action to the agent:
-            uenv.step(action={agent_name: action })
+            env.step(action={agent_name: action })
             
             print(f"iteration {i} over {numIter}")
             
@@ -309,13 +308,13 @@ def client(args, config, mapNames):
             #    break
             
         # Close the environment:
-        uenv.close()
+        env.close()
             
     elif learningMode == "Keyboard": # Just play with the keyboard while checking the observations
                 
         # Create Uneal Environment: 
-        uenv = uai.UnrealEnv(config)
-        agent_name = uenv.agents[0]
+        env = Env(config)
+        agent_name = env.agents[0]
     
         for i in range(numIter):
             
@@ -323,20 +322,20 @@ def client(args, config, mapNames):
             command_y = 0#random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
             
             # Send action to the agent:
-            uenv.step(action={agent_name: [ np.array([command_x,command_y]) ] })
+            env.step(action={agent_name: [ np.array([command_x,command_y]) ] })
             
             # Collect observation from the agent:
-            observation = uenv.get_obs_for_agent(agent_name=agent_name)
-            #print(f"Reward {uenv.current_reward}")
+            observation = env.get_obs_for_agent(agent_name=agent_name)
+            #print(f"Reward {env.current_reward}")
             print(f"iteration {i} over {numIter}")
             
             # An event triggered premature ending of the simulation
-            #if uenv.current_done: 
+            #if env.current_done: 
                 #break
                 #print("uenv.current_done")
 
         # Close the environment:
-        uenv.close()
+        env.close()
     
     else:
         
@@ -368,10 +367,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.map == [""]: # Use the default MAP_ID argument from parameter file 
-        if config.UNREALAI.MAP_ID == "":
+        if config.INTERIORSIM.MAP_ID == "":
             mapNames = ["simpleMap"]
-        elif config.UNREALAI.MAP_ID[0:15] == "/Game/Maps/Map_":
-            mapNames = [config.UNREALAI.MAP_ID[15:]]
+        elif config.INTERIORSIM.MAP_ID[0:15] == "/Game/Maps/Map_":
+            mapNames = [config.INTERIORSIM.MAP_ID[15:]]
         else:
             mapNames = ["errorMap"]
     else: # Overwrite the map value
