@@ -20,7 +20,7 @@ NUM_RETRIES = 8
 def create_folder(folder_path):
     try:
         if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+            os.makedirs(folder_path, exist_ok=True)
     except:
         pass
 
@@ -82,12 +82,12 @@ def download_file_from_url(url, local_path, num_retry=NUM_RETRIES):
 
 def get_scene_config(virtualworld_id, version):
     scene_meta_url = (
-        CDN_API
-        + "scenes/"
-        + virtualworld_id
-        + "/"
-        + version
-        + "/ConfigMeta_{}.json".format(virtualworld_id)
+            CDN_API
+            + "scenes/"
+            + virtualworld_id
+            + "/"
+            + version
+            + "/ConfigMeta_{}.json".format(virtualworld_id)
     )
     scene_meta_local = os.path.join(
         TEMP_FOLDER, virtualworld_id, "ConfigMeta_{}.json".format(virtualworld_id)
@@ -118,13 +118,13 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
         local_version_info_folder, version_scene_info_name
     )
     remote_version_info_url = (
-        CDN_API
-        + "scenes/"
-        + virtualworld_id
-        + "/"
-        + version
-        + "/"
-        + version_scene_info_name
+            CDN_API
+            + "scenes/"
+            + virtualworld_id
+            + "/"
+            + version
+            + "/"
+            + version_scene_info_name
     )
     remote_version_info = os.path.join(TEMP_FOLDER, version_scene_info_name)
     download_file_from_url(remote_version_info_url, remote_version_info)
@@ -134,13 +134,13 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
             return True
 
     anim_url = (
-        CDN_API
-        + "scenes/"
-        + virtualworld_id
-        + "/"
-        + version
-        + "/"
-        + scene_config_data["animation"]
+            CDN_API
+            + "scenes/"
+            + virtualworld_id
+            + "/"
+            + version
+            + "/"
+            + scene_config_data["animation"]
     )
     anim_local = os.path.join(TEMP_FOLDER, scene_config_data["animation"])
     anim_dst = os.path.join(
@@ -151,13 +151,13 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
     is_anim_ok = deal_scene_file(anim_url, anim_local, anim_dst)
 
     arch_url = (
-        CDN_API
-        + "scenes/"
-        + virtualworld_id
-        + "/"
-        + version
-        + "/"
-        + scene_config_data["architecture"]
+            CDN_API
+            + "scenes/"
+            + virtualworld_id
+            + "/"
+            + version
+            + "/"
+            + scene_config_data["architecture"]
     )
     arch_local = os.path.join(TEMP_FOLDER, scene_config_data["architecture"])
     arch_dst = os.path.join(
@@ -168,13 +168,13 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
     is_arch_ok = deal_scene_file(arch_url, arch_local, arch_dst)
 
     mat_url = (
-        CDN_API
-        + "scenes/"
-        + virtualworld_id
-        + "/"
-        + version
-        + "/"
-        + scene_config_data["materialinst"]
+            CDN_API
+            + "scenes/"
+            + virtualworld_id
+            + "/"
+            + version
+            + "/"
+            + scene_config_data["materialinst"]
     )
     mat_local = os.path.join(TEMP_FOLDER, scene_config_data["materialinst"])
     mat_dst = os.path.join(
@@ -285,7 +285,7 @@ def mult_down(contents):
 
 
 def download_assets(
-    virtualworld_id, version, is_down_ddc, scene_config_data, is_force_update
+        virtualworld_id, version, is_down_ddc, scene_config_data, is_force_update
 ):
     local_version_info_folder = os.path.join(VERSION_INFO_FOLDER, "assets")
     mat_version_info_folder = os.path.join(local_version_info_folder, "materials")
@@ -304,29 +304,29 @@ def download_assets(
     for materialid in scene_config_data["material"]:
         dic_curr = {}
         dic_curr["asset_url"] = (
-            CDN_API
-            + "assets/material/"
-            + materialid
-            + "/"
-            + version
-            + "/"
-            + materialid
-            + ".zip"
+                CDN_API
+                + "assets/material/"
+                + materialid
+                + "/"
+                + version
+                + "/"
+                + materialid
+                + ".zip"
         )
         dic_curr["asset_local"] = os.path.join(TEMP_FOLDER, materialid + ".zip")
         dic_curr["asset_dst"] = os.path.join(
             os.path.dirname(__file__), "../Content/Scene/Materials", materialid
         )
         dic_curr["version_info_url"] = (
-            CDN_API
-            + "assets/material/"
-            + materialid
-            + "/"
-            + version
-            + "/"
-            + "version_info_"
-            + materialid
-            + ".json"
+                CDN_API
+                + "assets/material/"
+                + materialid
+                + "/"
+                + version
+                + "/"
+                + "version_info_"
+                + materialid
+                + ".json"
         )
         dic_curr["version_info_local"] = os.path.join(
             TEMP_FOLDER, "version_info_" + materialid + ".json"
@@ -342,29 +342,29 @@ def download_assets(
     for meshid in scene_config_data["mesh"]:
         dic_curr = {}
         dic_curr["asset_url"] = (
-            CDN_API
-            + "assets/furniture/"
-            + meshid
-            + "/"
-            + version
-            + "/"
-            + meshid
-            + ".zip"
+                CDN_API
+                + "assets/furniture/"
+                + meshid
+                + "/"
+                + version
+                + "/"
+                + meshid
+                + ".zip"
         )
         dic_curr["asset_local"] = os.path.join(TEMP_FOLDER, meshid + ".zip")
         dic_curr["asset_dst"] = os.path.join(
             os.path.dirname(__file__), "../Content/Scene/Meshes/Furniture", meshid
         )
         dic_curr["version_info_url"] = (
-            CDN_API
-            + "assets/furniture/"
-            + meshid
-            + "/"
-            + version
-            + "/"
-            + "version_info_"
-            + meshid
-            + ".json"
+                CDN_API
+                + "assets/furniture/"
+                + meshid
+                + "/"
+                + version
+                + "/"
+                + "version_info_"
+                + meshid
+                + ".json"
         )
         dic_curr["version_info_local"] = os.path.join(
             TEMP_FOLDER, "version_info_" + meshid + ".json"
@@ -380,14 +380,14 @@ def download_assets(
     for meshid in scene_config_data["mesh"]:
         dic_curr = {}
         dic_curr["asset_url"] = (
-            CDN_API
-            + "assets/phys_furniture/"
-            + meshid
-            + "/"
-            + version
-            + "/"
-            + meshid
-            + ".zip"
+                CDN_API
+                + "assets/phys_furniture/"
+                + meshid
+                + "/"
+                + version
+                + "/"
+                + meshid
+                + ".zip"
         )
         dic_curr["asset_local"] = os.path.join(TEMP_FOLDER, meshid + ".zip")
         dic_curr["asset_dst"] = os.path.join(
@@ -396,15 +396,15 @@ def download_assets(
             meshid,
         )
         dic_curr["version_info_url"] = (
-            CDN_API
-            + "assets/phys_furniture/"
-            + meshid
-            + "/"
-            + version
-            + "/"
-            + "version_info_"
-            + meshid
-            + ".json"
+                CDN_API
+                + "assets/phys_furniture/"
+                + meshid
+                + "/"
+                + version
+                + "/"
+                + "version_info_"
+                + meshid
+                + ".json"
         )
         dic_curr["version_info_local"] = os.path.join(
             TEMP_FOLDER, "version_info_" + meshid + ".json"
@@ -424,7 +424,7 @@ def download_assets(
             ddc_name = ddc_array[len(ddc_array) - 1]
             dic_curr = {}
             dic_curr["asset_url"] = (
-                CDN_API + "assets/ddc/" + ddc_only_path + "/" + version + "/" + ddc_name
+                    CDN_API + "assets/ddc/" + ddc_only_path + "/" + version + "/" + ddc_name
             )
             dic_curr["asset_local"] = os.path.join(
                 os.path.dirname(__file__), "../DerivedDataCache", ddc_path
@@ -438,15 +438,15 @@ def download_assets(
                 os.path.dirname(__file__), "../DerivedDataCache", ddc_path
             )
             dic_curr["version_info_url"] = (
-                CDN_API
-                + "assets/ddc/"
-                + ddc_only_path
-                + "/"
-                + version
-                + "/"
-                + "version_info_"
-                + ddc_name.replace(".udd", "")
-                + ".json"
+                    CDN_API
+                    + "assets/ddc/"
+                    + ddc_only_path
+                    + "/"
+                    + version
+                    + "/"
+                    + "version_info_"
+                    + ddc_name.replace(".udd", "")
+                    + ".json"
             )
             dic_curr["version_info_local"] = os.path.join(
                 TEMP_FOLDER, "version_info_" + ddc_name.replace(".udd", "") + ".json"
@@ -464,7 +464,7 @@ def download_assets(
 
 
 def download_single_virtualworld(
-    virtualworld_id, version, is_down_ddc, is_force_update
+        virtualworld_id, version, is_down_ddc, is_force_update
 ):
     # get scene meta
     scene_config_data = get_scene_config(virtualworld_id, version)
@@ -502,6 +502,55 @@ def download_single_virtualworld(
             )
         )
         return False
+
+
+# determine process mode based on version
+def get_version_process_mode(version):
+    if version in ['v1', 'v2', 'v3']:
+        return "raw"
+    elif version in ['v4']:
+        return "pak"
+    else:
+        return "unknown"
+
+
+def download_file_by_path(vw_id, version, path, is_temp, is_force_update=False):
+    remote_url = f"{CDN_API}{version}/{path}"
+    folder_path = TEMP_FOLDER if is_temp else PROJECT_SAVED_FOLDER
+    local_path = os.path.abspath(os.path.join(folder_path, version, vw_id, path))
+    local_dir, fname = os.path.split(local_path)
+    create_folder(local_dir)
+    if not is_force_update and os.path.exists(local_path):
+        return local_path
+    if download_file_from_url(remote_url, local_path):
+        return local_path
+    else:
+        return None
+
+
+# download single virtual world
+def download_single_virtualworld_pak(vw_id, version, is_force_update=False):
+    # download info for basic info and  asset download path
+    data_relative_path = f"info/{vw_id}_info.json"
+    data_local_path = download_file_by_path(vw_id, version, data_relative_path, is_temp=True)
+    if data_local_path is None or data_local_path == "":
+        print(f"download data failed {vw_id} {version}")
+        return False
+
+    # download asset data
+    vw_data = json.load(open(data_local_path, mode='r'))
+    asset_mode = vw_data['default_asset_mode']
+    assets_relative_path = vw_data[asset_mode]
+    result_local_path = []
+    for asset_relative_path in assets_relative_path:
+        asset_local_path = download_file_by_path(vw_id, version, asset_relative_path, is_temp=False,
+                                                 is_force_update=is_force_update)
+        if asset_local_path is None:
+            print(f"download asset failed for {vw_id}: {asset_relative_path}")
+        else:
+            result_local_path.append(asset_local_path)
+    print(f"download complete for {vw_id}: {result_local_path}")
+    return True
 
 
 def print_help():
@@ -554,17 +603,36 @@ if __name__ == "__main__":
         )
         print_help()
 
-    if virtualworld_id == "":
-        virtualworld_ids_file = os.path.join(
-            os.path.dirname(__file__), "Data/virtualworld-ids.json"
-        )
-        if os.path.exists(virtualworld_ids_file):
-            with open(virtualworld_ids_file) as f:
-                for id in json.load(f):
-                    download_single_virtualworld(
-                        id, version, is_down_ddc, is_force_update
-                    )
+    mode = get_version_process_mode(version)
+    if mode == 'raw':
+        if virtualworld_id == "":
+            virtualworld_ids_file = os.path.join(
+                os.path.dirname(__file__), "Data/virtualworld-ids.json"
+            )
+            if os.path.exists(virtualworld_ids_file):
+                with open(virtualworld_ids_file) as f:
+                    for id in json.load(f):
+                        download_single_virtualworld(
+                            id, version, is_down_ddc, is_force_update
+                        )
+        else:
+            download_single_virtualworld(
+                virtualworld_id, version, is_down_ddc, is_force_update
+            )
+    elif mode == "pak":
+        if virtualworld_id == "":
+            virtualworld_ids_file = os.path.join(
+                os.path.dirname(__file__), "Data/virtualworld-ids.json"
+            )
+            if os.path.exists(virtualworld_ids_file):
+                with open(virtualworld_ids_file) as f:
+                    for id in json.load(f):
+                        download_single_virtualworld_pak(
+                            id, version, is_force_update
+                        )
+        else:
+            download_single_virtualworld_pak(
+                virtualworld_id, version, is_force_update
+            )
     else:
-        download_single_virtualworld(
-            virtualworld_id, version, is_down_ddc, is_force_update
-        )
+        print(f"unknown process mode: {version}")
