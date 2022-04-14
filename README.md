@@ -1,7 +1,7 @@
 # InteriorSim
 
-## Development
+InteriorSim is a photorealistic indoor home simulator. It is implemented using the Unreal Engine, and exposed to Python as an OpenAI gym environment.
 
-1) Create a new feature branch.
+- [Coding Guidelines](docs/coding_guidelines.md)
 
-2) Raise a pull request to the `main` branch. Merging requires at least 1 approving review, and all GitHub actions need to pass.
+- [Getting Started](docs/getting_started.md)
