@@ -5,7 +5,7 @@
 [submodule "code/third_party/libeigen"]
 	path = code/third_party/libeigen
 	url = https://gitlab.com/libeigen/eigen.git
-	branch = 67eeba6e720c5745abc77ae6c92ce0a44aa7b7ae
+	branch = 07db964bdeb78234667266e61dd96873a5eca56f
 [submodule "code/third_party/msgpack-rpc-python"]
 	path = code/third_party/msgpack-rpc-python
 	url = https://github.com/dvdhfnr/msgpack-rpc-python.git
