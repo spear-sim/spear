@@ -2,10 +2,10 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "RobotSim",
-	"Description": "",
+	"FriendlyName": "VirtualWorldManager",
+	"Description": "provide API to load Virtual World and apply modifications",
 	"Category": "Other",
-	"CreatedBy": "kylo",
+	"CreatedBy": "kujiale",
 	"CreatedByURL": "",
 	"DocsURL": "",
 	"MarketplaceURL": "",
@@ -16,19 +16,9 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "RobotSim",
+			"Name": "VirtualWorldManager",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "ProceduralMeshComponent",
-			"Enabled": true
-		},
-        {
-			"Name": "VirtualWorldManager",
-			"Enabled": true
 		}
 	]
 }
