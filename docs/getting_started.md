@@ -89,7 +89,7 @@ At this point, you should be able to run your standalone executable directly as 
 
 ```console
 # generate config
-cd code/utils
+cd code/tools
 python generate_config.py --config_files path/to/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/UE4/PlayEnvironment
 
 # run the executable from the terminal, alternatively you can double-click on PlayEnvironment.app
