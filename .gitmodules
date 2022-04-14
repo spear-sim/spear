@@ -2,6 +2,10 @@
 	path = code/third_party/asio
 	url = https://github.com/chriskohlhoff/asio.git
 	branch = b84e6c16b2ea907dbad94206b7510d85aafc0b42
+[submodule "code/third_party/libeigen"]
+	path = code/third_party/libeigen
+	url = https://gitlab.com/libeigen/eigen.git
+	branch = 07db964bdeb78234667266e61dd96873a5eca56f
 [submodule "code/third_party/msgpack-rpc-python"]
 	path = code/third_party/msgpack-rpc-python
 	url = https://github.com/dvdhfnr/msgpack-rpc-python.git
