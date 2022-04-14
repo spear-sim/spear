@@ -189,9 +189,9 @@ void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,
                                            " normal: " +
        normalImpulse.ToString(), LogDebugLevel::Informational, 30);
                                        */
-    this->mPawnEvents.getCollisionSignal().emit(
-        HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal,
-        normalImpulse, hit);
+    //this->mPawnEvents.getCollisionSignal().emit(
+    //    HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal,
+    //    normalImpulse, hit);
 }
 
 void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent* HitComponent,
