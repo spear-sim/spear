@@ -1,6 +1,6 @@
 # Getting Started
 
-This tutorial is intended for InteriorSim developers that are setting up their environment for the first time.
+This tutorial is intended for InteriorSim developers that are setting up their development environment for the first time.
 
 ## Assumptions 
 
@@ -25,20 +25,11 @@ cd code/tools
 python build_third_party_libs.py
 ```
 
-## Create symbolic links
-
-Our Unreal projects depend on several of our Unreal plugins. Let's create symbolic links to these plugins.
-
-```console
-cd code/tools
-python create_symbolic_links.py
-```
-
 ## Install the interiorsim Python package
 
 ```console
 # create environment
-conda create --name interiorsim-env
+conda create --name interiorsim-env python=3.8
 conda activate interiorsim-env
 
 # install pip
@@ -51,9 +42,24 @@ pip install -e code/third_party/msgpack-rpc-python
 pip install -e code/python_module
 ```
 
+## Create symbolic links
+
+Our Unreal projects require several symbolic links to function correctly. We provide a command-line tool to create these links.
+
+```console
+cd code/tools
+python create_symbolic_links.py
+```
+
 ## Launch your first Unreal project
 
-Our Unreal projects assume that all of their required parameters are declared in a config file. We usually launch our projects via high-level Python code, and this Python code takes care of generating the appropriate config file automatically. However, if you want to launch one of our projects directly from the Unreal Editor, you will need to generate the config file in a separate step. We provide a command-line tool for this purpose.
+Our Unreal projects assume that all of their required parameters are declared in a config file. We usually launch our projects via high-level Python code, and this Python code takes care of generating the appropriate config file automatically. However, if you want to launch one of our projects directly from the Unreal Editor, you will need to generate the config file in a separate step. First, rename the following file and edit the paths in the file for your system.
+
+```
+code/github/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml.example -> user_config.yaml
+```
+
+Next, run the following command-line tool.
 
 ```console
 cd code/tools
@@ -62,11 +68,11 @@ python generate_config.py --config_files path/to/interiorsim/code/unreal_project
 
 At this point, you should be able to double-click on `code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully.
 
-Our other examples require you to download additional content before you can run them. See the README file in each example directory for more details.
+Our other projects require you to download additional content before you can run them. See the README file in each project directory for more details.
 
 ## Build your first standalone executable
 
-This step is not strictly necessary, because you can run our example environments directly from the Unreal Editor. That being said, the Unreal Editor is a heavyweight application, so it is often preferable to build a standalone executable.
+Even though it is possible to launch our projects directly from the Unreal Editor, it is often preferable to build a standalone executable.
 
 ```console
 # build, cook, stage, package, archive
@@ -81,12 +87,12 @@ You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stag
 
 At this point, you should be able to run your standalone executable directly as follows.
 
-```
+```console
 # generate config
-cd utils
+cd code/utils
 python generate_config.py --config_files path/to/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/UE4/PlayEnvironment
 
-# run the executable in the terminal, alternatively you can double-click on PlayEnvironment.app
+# run the executable from the terminal, alternatively you can double-click on PlayEnvironment.app
 path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/MacOS/PlayEnvironment
 ```
 
@@ -102,43 +108,21 @@ import interiorsim
 import interiorsim.config
 from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
-config_files = []
-config_files.append(os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/PlayEnvironment/user_config.yaml"))
-
-# you can append your own user-specific config file(s) to config_files to override
-# default values; your config file(s) only need to specify a value if you want to
-# change it from its default
-# config_files.append(os.path.join("path", "to", "my", "user_config.yaml")
-
+# load config
+config_files = [ os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/PlayEnvironment/user_config.yaml") ]
 config = interiorsim.config.get_config(config_files)
 
-# allow editing of config values
-config.defrost()
-
-# standalone executable mode
-config.INTERIORSIM.LAUNCH_MODE = "standalone_executable"
-config.INTERIORSIM.STANDALONE_EXECUTABLE = "path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app"
-
-# uproject mode
-# config.INTERIORSIM.LAUNCH_MODE = "uproject"
-# config.INTERIORSIM.UPROJECT = "path/to/interiorsim/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject"
-
-# prevent further editing of config values
-config.freeze()
-
-# triggers several "WARNING:tornado.general:Connect error on fd 26: ECONNREFUSED" warnings which can be ignored
+# create Env object
 env = interiorsim.Env(config)
 
-# get action space and observation for the agent
-print(f"action space - {env.action_space}")
-print(f"observation space - {env.observation_space}")
-
-# resets the simulation, required before getting observations
+# reset the simulation to get the first observation
 obs = env.reset()
+print(obs["visual_observation"].shape, obs["visual_observation"].dtype)
 
-# take a few actions; in this example, each action is specified as a 2D point, you should see the ball move in the Unreal game window
+# take a few steps; in this example, each action is specified as a 2D point, you should see the ball move in the Unreal game window
 for i in range(10):
-    obs, reward, done, _ = env.step({"apply_force": [1, 1]})
+    obs, reward, done, info = env.step({"apply_force": [1, 1]})
+    print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
 
 # close the environment
 env.close()
