@@ -18,13 +18,14 @@ e.g: scene_manager_meta.py -v v1
     sys.exit(2)
 
 
-def download_metadata(virtualworld_id, version):
-    if not os.path.exists("metadata"):
-        os.mkdir("metadata")
-    metadata_url = "{}scenes/{}/{}/metadata_{}.json".format(
-        scene_manager.CDN_API, virtualworld_id, version, virtualworld_id
-    )
-    metadata_local = "metadata/metadata_{}_{}.json".format(virtualworld_id, version)
+DEFAULT_SAVE_DIR = "../SAVED/metadata"
+
+
+def download_metadata(virtualworld_id, version, save_dir):
+    if not os.path.exists(save_dir):
+        os.mkdir(save_dir)
+    metadata_url = f"{scene_manager.CDN_API}scenes/{virtualworld_id}/{version}/metadata_{virtualworld_id}.json"
+    metadata_local = f"{save_dir}/metadata_{virtualworld_id}_{version}.json"
     result = scene_manager.download_file_from_url(metadata_url, metadata_local)
     print("download_metadata by vw_id", virtualworld_id, version, result)
     return result
@@ -33,6 +34,7 @@ def download_metadata(virtualworld_id, version):
 if __name__ == "__main__":
     version = ""
     virtualworld_id = ""
+    save_dir = DEFAULT_SAVE_DIR
 
     try:
         opts, args = getopt.getopt(
@@ -49,6 +51,11 @@ if __name__ == "__main__":
         elif opt in ("-v", "--version"):
             if "v" in arg:
                 version = arg
+        elif opt in ("-o", "--out_dir"):
+            if os.path.isfile(arg):
+                print(f"invalid output_dir: {arg}")
+            else:
+                save_dir = arg
         elif opt in ("-p", "--proxy"):
             scene_manager.PROXY_URL = str(arg)
 
@@ -65,6 +72,6 @@ if __name__ == "__main__":
         if os.path.exists(virtualworld_ids_file):
             with open(virtualworld_ids_file) as f:
                 for id in json.load(f):
-                    download_metadata(id, version)
+                    download_metadata(id, version, save_dir)
     else:
-        download_metadata(virtualworld_id, version)
+        download_metadata(virtualworld_id, version, save_dir)
