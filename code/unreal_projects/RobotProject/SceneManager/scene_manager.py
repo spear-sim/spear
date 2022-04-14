@@ -517,7 +517,7 @@ def get_version_process_mode(version):
 def download_file_by_path(vw_id, version, path, is_temp, is_force_update=False):
     remote_url = f"{CDN_API}{version}/{path}"
     folder_path = TEMP_FOLDER if is_temp else PROJECT_SAVED_FOLDER
-    local_path = os.path.abspath(os.path.join(folder_path, version, vw_id, path))
+    local_path = os.path.abspath(os.path.join(folder_path, version, path))
     local_dir, fname = os.path.split(local_path)
     create_folder(local_dir)
     if not is_force_update and os.path.exists(local_path):
