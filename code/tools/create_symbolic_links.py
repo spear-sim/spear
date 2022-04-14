@@ -1,34 +1,81 @@
 import json
 import os
 
-SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR_PATH      = os.path.dirname(os.path.abspath(__file__))
 UNREAL_PROJECTS_PATH = os.path.join(SCRIPT_DIR_PATH, "..", "unreal_projects")
-UNREAL_PLUGINS_PATH = os.path.join(SCRIPT_DIR_PATH, "..", "unreal_plugins")
+UNREAL_PLUGINS_PATH  = os.path.join(SCRIPT_DIR_PATH, "..", "unreal_plugins")
+THIRD_PARTY_PATH     = os.path.join(SCRIPT_DIR_PATH, "..", "third_party")
 
 def create_symbolic_links():
 
-    for unreal_project in os.listdir(UNREAL_PROJECTS_PATH):
-        project_plugins = []
-        with open(os.path.join(UNREAL_PROJECTS_PATH, unreal_project, unreal_project+'.uproject')) as f:
-            uproject_contents = json.load(f)
-            uproject_plugins = uproject_contents["Plugins"]
-            for item in uproject_plugins:
-                project_plugins.append(item["Name"])
+    # get list of the projects and plugins we maintain
+    our_projects = os.listdir(UNREAL_PROJECTS_PATH)
+    our_plugins = os.listdir(UNREAL_PLUGINS_PATH)
 
-            print(f"{unreal_project} has dependency on {project_plugins} plugins. Creating symbolic links to the plugins that are part of our repo.")
-        
-        project_plugins_dir = os.path.join(UNREAL_PROJECTS_PATH, unreal_project, "Plugins")
-        symlink_plugins = os.listdir(UNREAL_PLUGINS_PATH)
 
-        for plugin_name in project_plugins:
-            if plugin_name in symlink_plugins:
-                if not os.path.exists(os.path.join(project_plugins_dir, plugin_name)):
-                    os.symlink(os.path.join(UNREAL_PLUGINS_PATH, plugin_name), os.path.join(project_plugins_dir, plugin_name))
-                    print(f"creating symbolic link to {plugin_name} for {unreal_project}.")
-                else:
-                    print(f"{unreal_project} already has {plugin_name} in it's plugins folder. So, skipping...")
+    # for each plugin
+    for plugin in our_plugins:
+
+        # if the plugin is a valid plugin (i.e., plugin dir has a uplugin file)
+        uplugin = os.path.join(UNREAL_PLUGINS_PATH, plugin, plugin+'.uplugin')
+        if os.path.exists(uplugin):
+
+            print(f"Found plugin: {plugin}")
+
+            # create a symlink to code/third_party
+            symlink_third_party_path = os.path.join(UNREAL_PLUGINS_PATH, plugin, "ThirdParty")
+            if not os.path.exists(symlink_third_party_path):
+                print(f"    Creating symlink: {symlink_third_party_path} -> {THIRD_PARTY_PATH}")
+                os.symlink(THIRD_PARTY_PATH, symlink_third_party_path)
             else:
-                print(f"{unreal_project} does not have dependency on {plugin_name}. So, skipping...")
+                print(f"    {symlink_third_party_path} already exists, so we do not create a symlink...")
+    print()
+
+
+    # for each project
+    for project in our_projects:
+
+        # if the project is a valid project (i.e., project dir has a uproject file)
+        uproject = os.path.join(UNREAL_PROJECTS_PATH, project, project+'.uproject')
+        if os.path.exists(uproject):
+
+            print(f"Found project: {project}")
+
+            # create a symlink to code/third_party
+            symlink_third_party_path = os.path.join(UNREAL_PROJECTS_PATH, project, "ThirdParty")
+            if not os.path.exists(symlink_third_party_path):
+                print(f"    Creating symlink: {symlink_third_party_path} -> {THIRD_PARTY_PATH}")
+                os.symlink(THIRD_PARTY_PATH, symlink_third_party_path)
+            else:
+                print(f"    {symlink_third_party_path} already exists, so we do not create a symlink...")
+
+            # get list of plugins from the uproject file
+            with open(os.path.join(UNREAL_PROJECTS_PATH, project, project+'.uproject')) as f:
+                project_plugins = [ p["Name"] for p in json.load(f)["Plugins"] ]
+            print(f"    Plugin dependencies: {project_plugins}")
+
+            # create a Plugins dir in the project dir
+            project_plugins_dir = os.path.join(UNREAL_PROJECTS_PATH, project, "Plugins")
+            if not os.path.exists(project_plugins_dir):
+                os.makedirs(project_plugins_dir)
+
+            # create symlink for each plugin listed in the project, if the plugin is maintained by us
+            for project_plugin in project_plugins:
+                if project_plugin in our_plugins:                
+                    our_plugin_path = os.path.abspath(os.path.join(UNREAL_PLUGINS_PATH, project_plugin))
+                    symlink_plugin_path = os.path.abspath(os.path.join(project_plugins_dir, project_plugin))
+                    if not os.path.exists(symlink_plugin_path):
+                        print(f"        Creating symlink: {symlink_plugin_path} -> {our_plugin_path}")
+                        os.symlink(our_plugin_path, symlink_plugin_path)
+                    else:
+                        print(f"        {symlink_plugin_path} already exists, so we do not create a symlink...")
+                else:
+                    print(f"        {project} depends on {project_plugin}, but this plugin is not in {UNREAL_PLUGINS_PATH}, so we do not create a symlink...")
+    print()
+
+
+    print(f"Done.")
+
 
 if __name__ == "__main__":    
     create_symbolic_links()    

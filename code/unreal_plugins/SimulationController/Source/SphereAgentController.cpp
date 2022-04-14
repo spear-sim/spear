@@ -291,7 +291,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
             image.at(3 * i + 1) = pixels[i].G;
             image.at(3 * i + 2) = pixels[i].B;
         }
-        
+
         observation["visual_observation"] = std::move(image);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         observation["physical_observation"] = serializeToUint8(std::vector<float>{
