@@ -219,6 +219,10 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
     const FVector currentLocation = ownerPawn->GetActorLocation();     // Relative to global coordinate system
     const FRotator currentOrientation = ownerPawn->GetActorRotation(); // Relative to global coordinate system
     Eigen::Vector2f controlState;
+    float dist;
+    float deltaYaw;
+    float sinYaw;
+    float cosYaw;
 
     if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "dist-sin-cos")
     {
@@ -228,14 +232,14 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
             (goalActor->GetActorLocation() - currentLocation).Y);
 
         // Compute Euclidean distance to target:
-        float dist = relativePositionToTarget.Size();
+        dist = relativePositionToTarget.Size();
 
         // Compute robot forward axis (global coordinate system)
         FVector forwardAxis = FVector(1.f, 0.f, 0.f); // Front axis is the X axis.
         FVector forwardAxisRotated = currentOrientation.RotateVector(forwardAxis);
 
         // Compute yaw in [rad]:
-        float deltaYaw = std::atan2f(forwardAxisRotated.Y, forwardAxisRotated.X) - std::atan2f(relativePositionToTarget.Y, relativePositionToTarget.X);
+        deltaYaw = std::atan2f(forwardAxisRotated.Y, forwardAxisRotated.X) - std::atan2f(relativePositionToTarget.Y, relativePositionToTarget.X);
 
         // Fit to range [-pi, pi]:
         if (deltaYaw > PI)
@@ -252,8 +256,8 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
 
         // Check the actual OpenBot code:
         // https://github.com/isl-org/OpenBot/blob/7868c54742f8ba3df0ba2a886247a753df982772/android/app/src/main/java/org/openbot/pointGoalNavigation/PointGoalNavigationFragment.java#L103
-        float sinYaw = std::sinf(deltaYaw);
-        float cosYaw = std::cosf(deltaYaw);
+        sinYaw = std::sinf(deltaYaw);
+        cosYaw = std::cosf(deltaYaw);
 
         // Get observation data
         observationVector.resize(GetObservationSpecs().size());
@@ -270,31 +274,6 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
         if (dist < 10) // in [cm]
         {
             hitInfo_ = UHitInfo::Goal;
-        }
-
-        // Reward function is defined based on https://github.com/isl-org/OpenBot-Distributed/blob/main/trainer/ob_agents/envs/open_bot_replay_env.py
-        switch (hitInfo_)
-        {
-        case UHitInfo::Goal:
-            // Goal reached reward:
-            AddReward(unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_GOAL_REACHED"}));
-            EndEpisode();
-            break;
-        case UHitInfo::Edge:
-            // Obstacle penalty
-            AddReward(-unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_COLLISION"}));
-            EndEpisode();
-            break;
-        case UHitInfo::NoHit:
-            // Constant timestep penalty:
-            AddReward(-1 / unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "MAX_STEPS_PER_EPISODE"}));
-            // Goal distance penalty:
-            AddReward(-dist * unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_DISTANCE_GAIN"}));
-            AddReward(-unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_DISTANCE_BIAS"}));
-            break;
-        default:
-            SetCurrentReward(0.0);
-            break;
         }
     }
     else if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "yaw-x-y")
@@ -313,6 +292,31 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
     else
     {
         ASSERT(false);
+    }
+
+    // Reward function is defined based on https://github.com/isl-org/OpenBot-Distributed/blob/main/trainer/ob_agents/envs/open_bot_replay_env.py
+    switch (hitInfo_)
+    {
+    case UHitInfo::Goal:
+        // Goal reached reward:
+        AddReward(unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_GOAL_REACHED"}));
+        EndEpisode();
+        break;
+    case UHitInfo::Edge:
+        // Obstacle penalty
+        AddReward(-unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_COLLISION"}));
+        EndEpisode();
+        break;
+    case UHitInfo::NoHit:
+        // Constant timestep penalty:
+        AddReward(-1 / unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "MAX_STEPS_PER_EPISODE"}));
+        // Goal distance penalty:
+        AddReward(-dist * unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_DISTANCE_GAIN"}));
+        AddReward(-unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_DISTANCE_BIAS"}));
+        break;
+    default:
+        SetCurrentReward(0.0);
+        break;
     }
 
     // Reset hitInfo_ .

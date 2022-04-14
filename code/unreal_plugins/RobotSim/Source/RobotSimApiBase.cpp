@@ -1,12 +1,12 @@
 #include "RobotSimApiBase.h"
-#include "Engine/World.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/GameplayStatics.h"
 #include "Camera/CameraComponent.h"
+#include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 
-#include "RobotBlueprintLib.h"
-#include "PIPCamera.h"
 #include "NedTransform.h"
+#include "PIPCamera.h"
+#include "RobotBlueprintLib.h"
 #include "common_utils/EarthUtils.hpp"
 
 void RobotSimApiBase::updateRenderedState(float dt)
@@ -27,48 +27,36 @@ std::string RobotSimApiBase::getRecordFileLine(bool is_header_line) const
 
 //#include "DrawDebugHelpers.h"
 
-RobotSimApiBase::RobotSimApiBase(Params params)
-    : params_(params),
-      ned_transform_(params.vehicle->GetPawn(), *params.global_transform)
+RobotSimApiBase::RobotSimApiBase(Params params) : params_(params), ned_transform_(params.vehicle->GetPawn(), *params.global_transform)
 {
     RobotSim::Environment::State initial_environment;
     initial_environment.position = getPose().position;
     initial_environment.geo_point = params_.home_geopoint;
     environment_.reset(new RobotSim::Environment(initial_environment));
 
-    // initialize state
-    params_.vehicle->GetPawn()->GetActorBounds(true, initial_state_.mesh_origin,
-                                               initial_state_.mesh_bounds);
+    // Initialize state
+    params_.vehicle->GetPawn()->GetActorBounds(true, initial_state_.mesh_origin, initial_state_.mesh_bounds);
     initial_state_.ground_offset = FVector(0, 0, initial_state_.mesh_bounds.Z);
-    initial_state_.transformation_offset =
-        params_.vehicle->GetPawn()->GetActorLocation() -
-        initial_state_.ground_offset;
-    ground_margin_ =
-        FVector(0, 0, 20); // TODO: can we explain params_.pawn experimental
-                           // setting? 7 seems to be minimum
+    initial_state_.transformation_offset = params_.vehicle->GetPawn()->GetActorLocation() - initial_state_.ground_offset;
+    ground_margin_ = FVector(0, 0, 20); // TODO: can we explain params_.pawn experimental setting? 7 seems to be minimum
     ground_trace_end_ = initial_state_.ground_offset + ground_margin_;
 
     setStartPosition(getUUPosition(), getUUOrientation());
 
     initial_state_.tracing_enabled = getVehicleSetting()->enable_trace;
     initial_state_.collisions_enabled = getVehicleSetting()->enable_collisions;
-    initial_state_.passthrough_enabled =
-        getVehicleSetting()->enable_collision_passthrough;
-
+    initial_state_.passthrough_enabled = getVehicleSetting()->enable_collision_passthrough;
     initial_state_.collision_info = CollisionInfo();
-
     initial_state_.was_last_move_teleport = false;
     initial_state_.was_last_move_teleport = canTeleportWhileMove();
 
     setupCamerasFromSettings(params_.cameras);
 
-    // add listener for pawn's collision event
-    params_.pawn_events->getCollisionSignal().connect_member(
-        this, &RobotSimApiBase::onCollision);
-    params_.pawn_events->getPawnTickSignal().connect_member(
-        this, &RobotSimApiBase::pawnTick);
+    // Add listener for pawn's collision event
+    params_.pawn_events->getCollisionSignal().connect_member(this, &RobotSimApiBase::onCollision);
+    params_.pawn_events->getPawnTickSignal().connect_member(this, &RobotSimApiBase::pawnTick);
 
-    // start with no shapes
+    // Start with no shapes
     this->drawable_shapes_.clear();
 }
 
@@ -77,26 +65,19 @@ void RobotSimApiBase::setStartPosition(const FVector& position,
 {
     initial_state_.start_location = getUUPosition();
     initial_state_.start_rotation = getUUOrientation();
-
     initial_state_.last_position = initial_state_.start_location;
     initial_state_.last_debug_position = initial_state_.start_location;
 
-    // compute our home point
-    // Flip z if sim mode name == "UrdfBot"
-    this->flip_z_for_gps_ =
-        (RobotSimSettings::singleton().simmode_name == "UrdfBot");
-    Vector3r nedWrtOrigin =
-        ned_transform_.toGlobalNed(initial_state_.start_location);
+    // Compute our home point Flip z if sim mode name == "UrdfBot"
+    this->flip_z_for_gps_ = (RobotSimSettings::singleton().simmode_name == "UrdfBot");
+    Vector3r nedWrtOrigin = ned_transform_.toGlobalNed(initial_state_.start_location);
 
     if (this->flip_z_for_gps_)
     {
-        nedWrtOrigin =
-            Vector3r(nedWrtOrigin.x(), nedWrtOrigin.y(), -1 * nedWrtOrigin.z());
+        nedWrtOrigin = Vector3r(nedWrtOrigin.x(), nedWrtOrigin.y(), -1 * nedWrtOrigin.z());
     }
 
-    home_geo_point_ = RobotSim::EarthUtils::nedToGeodetic(
-        nedWrtOrigin, RobotSimSettings::singleton().origin_geopoint,
-        this->flip_z_for_gps_);
+    home_geo_point_ = RobotSim::EarthUtils::nedToGeodetic(nedWrtOrigin, RobotSimSettings::singleton().origin_geopoint, this->flip_z_for_gps_);
 }
 
 void RobotSimApiBase::pawnTick(float dt)
@@ -135,18 +116,19 @@ void RobotSimApiBase::setupCamerasFromSettings(
     // add cameras that already exists in pawn
     cameras_.clear();
     for (const auto& p : cameras.getMap())
+    {
         cameras_.insert_or_assign(p.first, p.second);
+    }
 
-    // create or replace cameras specified in settings
+    // Create or replace cameras specified in settings
     createCamerasFromSettings();
 
-    // setup individual cameras
+    // Setup individual cameras
     typedef RobotSim::RobotSimSettings RobotSimSettings;
     const auto& camera_defaults = RobotSimSettings::singleton().camera_defaults;
     for (auto& pair : cameras_.getMap())
     {
-        const auto& camera_setting = Utils::findOrDefault(
-            getVehicleSetting()->cameras, pair.first, camera_defaults);
+        const auto& camera_setting = Utils::findOrDefault(getVehicleSetting()->cameras, pair.first, camera_defaults);
         APIPCamera* camera = pair.second;
         camera->SetupCameraFromSettings(camera_setting);
     }
@@ -155,8 +137,7 @@ void RobotSimApiBase::setupCamerasFromSettings(
 void RobotSimApiBase::createCamerasFromSettings()
 {
     FActorSpawnParameters camera_spawn_params;
-    camera_spawn_params.SpawnCollisionHandlingOverride =
-        ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
     const auto& transform = getNedTransform();
 
     int camera_index = 0;
@@ -174,21 +155,18 @@ void RobotSimApiBase::createCamerasFromSettings()
         if (componentName == "")
         {
             attachComponent = params_.vehicle->GetPawn()->GetRootComponent();
-            FTransform componentTransform =
-                params_.vehicle->GetPawn()->GetTransform();
+            FTransform componentTransform = params_.vehicle->GetPawn()->GetTransform();
             componentRotation = componentTransform.GetRotation().Rotator();
             componentTranslation = componentTransform.GetTranslation();
         }
         else
         {
             attachComponent = params_.vehicle->GetComponent(componentName);
-            params_.vehicle->GetComponentReferenceTransform(
-                componentName, componentTranslation, componentRotation);
+            params_.vehicle->GetComponentReferenceTransform(componentName, componentTranslation, componentRotation);
         }
 
         // TODO: Other pawns are using localNED. Is this OK?
-        FVector localPositionOffset = FVector(
-            setting.position.x(), setting.position.y(), setting.position.z());
+        FVector localPositionOffset = FVector(setting.position.x(), setting.position.y(), setting.position.z());
         // FVector worldPositionOffset =
         // componentRotation.UnrotateVector(localPositionOffset); FVector
         // position = worldPositionOffset + componentTranslation; FTransform
@@ -196,28 +174,19 @@ void RobotSimApiBase::createCamerasFromSettings()
         // setting.rotation.yaw, setting.rotation.roll) + componentRotation,
         //	position, FVector(1., 1., 1.));
 
-        FTransform world2BaseTransform(componentRotation, componentTranslation,
-                                       FVector(1., 1., 1.));
-        FVector world2CameraPos =
-            world2BaseTransform.TransformPosition(localPositionOffset);
-        FQuat world2CameraOri = world2BaseTransform.TransformRotation(
-            FRotator(setting.rotation.pitch, setting.rotation.yaw,
-                     setting.rotation.roll)
-                .Quaternion());
-        FTransform camera_transform(world2CameraOri, world2CameraPos,
-                                    FVector(1., 1., 1.));
+        FTransform world2BaseTransform(componentRotation, componentTranslation, FVector(1., 1., 1.));
+        FVector world2CameraPos = world2BaseTransform.TransformPosition(localPositionOffset);
+        FQuat world2CameraOri = world2BaseTransform.TransformRotation(FRotator(setting.rotation.pitch, setting.rotation.yaw, setting.rotation.roll).Quaternion());
+        FTransform camera_transform(world2CameraOri, world2CameraPos, FVector(1., 1., 1.));
 
-        // spawn and attach camera to pawn
-        APIPCamera* camera =
-            params_.vehicle->GetPawn()->GetWorld()->SpawnActor<APIPCamera>(
-                APIPCamera::StaticClass(), camera_transform,
-                camera_spawn_params);
+        // Spawn and attach camera to pawn
+        APIPCamera* camera = params_.vehicle->GetPawn()->GetWorld()->SpawnActor<APIPCamera>(APIPCamera::StaticClass(), camera_transform, camera_spawn_params);
+
         camera->SetIndex(camera_index);
         camera_index++;
-        camera->AttachToComponent(
-            attachComponent, FAttachmentTransformRules::KeepWorldTransform);
+        camera->AttachToComponent(attachComponent, FAttachmentTransformRules::KeepWorldTransform);
 
-        // add on to our collection
+        // Add on to our collection
         cameras_.insert_or_assign(camera_setting_pair.first, camera);
     }
 }
@@ -237,20 +206,14 @@ void RobotSimApiBase::onCollision(class UPrimitiveComponent* MyComp,
     // FRotator CurrentRotation = GetActorRotation(RootComponent);
     // SetActorRotation(FQuat::Slerp(CurrentRotation.Quaternion(),
     // HitNormal.ToOrientationQuat(), 0.025f));
-    UPrimitiveComponent* comp = Cast<class UPrimitiveComponent>(
-        Other
-            ? (Other->GetRootComponent() ? Other->GetRootComponent() : nullptr)
-            : nullptr);
+    UPrimitiveComponent* comp = Cast<class UPrimitiveComponent>(Other ? (Other->GetRootComponent() ? Other->GetRootComponent() : nullptr) : nullptr);
 
     state_.collision_info.has_collided = true;
-    state_.collision_info.normal =
-        Vector3r(Hit.ImpactNormal.X, Hit.ImpactNormal.Y, -Hit.ImpactNormal.Z);
-    state_.collision_info.impact_point =
-        ned_transform_.toLocalNed(Hit.ImpactPoint);
+    state_.collision_info.normal = Vector3r(Hit.ImpactNormal.X, Hit.ImpactNormal.Y, -Hit.ImpactNormal.Z);
+    state_.collision_info.impact_point = ned_transform_.toLocalNed(Hit.ImpactPoint);
     // state_.collision_info.position =
     // ned_transform_.toLocalNed(getUUPosition());
-    state_.collision_info.penetration_depth =
-        ned_transform_.toNed(Hit.PenetrationDepth);
+    state_.collision_info.penetration_depth = ned_transform_.toNed(Hit.PenetrationDepth);
     // state_.collision_info.time_stamp =
     // RobotSim::ClockFactory::get()->nowNanos();
     // state_.collision_info.object_name =
@@ -271,8 +234,7 @@ void RobotSimApiBase::onCollision(class UPrimitiveComponent* MyComp,
 
 void RobotSimApiBase::possess()
 {
-    APlayerController* controller =
-        params_.vehicle->GetPawn()->GetWorld()->GetFirstPlayerController();
+    APlayerController* controller = params_.vehicle->GetPawn()->GetWorld()->GetFirstPlayerController();
     controller->UnPossess();
     controller->Possess(params_.vehicle->GetPawn());
 }
@@ -291,32 +253,23 @@ void RobotSimApiBase::setCameraPose(const RobotSim::CameraPose camera_pose)
 {
     MoveCameraRequest r;
     r.camera_name = camera_pose.camera_name;
-    r.transformVec =
-        FVector(camera_pose.translation.x(), camera_pose.translation.y(),
-                camera_pose.translation.z()) *
-        URobotBlueprintLib::GetWorldToMetersScale(getPawn());
-    FQuat qq(camera_pose.rotation.x(), camera_pose.rotation.y(),
-             camera_pose.rotation.z(), camera_pose.rotation.w());
+    r.transformVec = FVector(camera_pose.translation.x(), camera_pose.translation.y(), camera_pose.translation.z()) * URobotBlueprintLib::GetWorldToMetersScale(getPawn());
+    FQuat qq(camera_pose.rotation.x(), camera_pose.rotation.y(), camera_pose.rotation.z(), camera_pose.rotation.w());
     r.rotator = qq.Rotator();
 
     this->move_camera_requests_.Enqueue(r);
 
     // busy-wait until camera is actually moved
-    FGenericPlatformProcess::ConditionalSleep(
-        [&] { return this->move_camera_requests_.IsEmpty(); }, 0.005);
+    FGenericPlatformProcess::ConditionalSleep([&]
+                                              { return this->move_camera_requests_.IsEmpty(); },
+                                              0.005);
 }
 
-void RobotSimApiBase::displayCollisionEffect(FVector hit_location,
-                                             const FHitResult& hit)
+void RobotSimApiBase::displayCollisionEffect(FVector hit_location, const FHitResult& hit)
 {
-    if (params_.collision_display_template != nullptr &&
-        Utils::isDefinitelyLessThan(hit.ImpactNormal.Z, 0.0f))
+    if (params_.collision_display_template != nullptr && Utils::isDefinitelyLessThan(hit.ImpactNormal.Z, 0.0f))
     {
-        UParticleSystemComponent* particles =
-            UGameplayStatics::SpawnEmitterAtLocation(
-                params_.vehicle->GetPawn()->GetWorld(),
-                params_.collision_display_template, FTransform(hit_location),
-                true);
+        UParticleSystemComponent* particles = UGameplayStatics::SpawnEmitterAtLocation(params_.vehicle->GetPawn()->GetWorld(), params_.collision_display_template, FTransform(hit_location), true);
         particles->SetWorldScale3D(FVector(0.1f, 0.1f, 0.1f));
     }
 }
@@ -332,16 +285,14 @@ const TArray<APIPCamera*> RobotSimApiBase::getAllCameras() const
     return result;
 }
 
-const APIPCamera*
-RobotSimApiBase::getCamera(const std::string& camera_name) const
+const APIPCamera* RobotSimApiBase::getCamera(const std::string& camera_name) const
 {
     return cameras_.findOrDefault(camera_name, nullptr);
 }
 
 APIPCamera* RobotSimApiBase::getCamera(const std::string& camera_name)
 {
-    return const_cast<APIPCamera*>(
-        static_cast<const RobotSimApiBase*>(this)->getCamera(camera_name));
+    return const_cast<APIPCamera*>(static_cast<const RobotSimApiBase*>(this)->getCamera(camera_name));
 }
 
 int RobotSimApiBase::getCameraCount()
@@ -355,10 +306,8 @@ void RobotSimApiBase::reset()
 
     state_ = initial_state_;
     // rc_data_ = RobotSim::RCData();
-    params_.vehicle->GetPawn()->SetActorLocationAndRotation(
-        state_.start_location, state_.start_rotation, false, nullptr,
-        ETeleportType::TeleportPhysics);
 
+    params_.vehicle->GetPawn()->SetActorLocationAndRotation(state_.start_location, state_.start_rotation, false, nullptr, ETeleportType::TeleportPhysics);
     environment_->reset();
 }
 
@@ -380,8 +329,7 @@ void RobotSimApiBase::serviceMoveCameraRequests()
         MoveCameraRequest request;
         this->move_camera_requests_.Dequeue(request);
 
-        auto matchedCamera =
-            this->cameras_.findOrDefault(request.camera_name, nullptr);
+        auto matchedCamera = this->cameras_.findOrDefault(request.camera_name, nullptr);
 
         if (matchedCamera == nullptr)
         {
@@ -390,27 +338,22 @@ void RobotSimApiBase::serviceMoveCameraRequests()
 
         AActor* cameraActor = matchedCamera->GetAttachParentActor();
 
-        FDetachmentTransformRules detatchRules(
-            EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld,
-            EDetachmentRule::KeepWorld, true);
-        matchedCamera->DetachAllSceneComponents(cameraActor->GetRootComponent(),
-                                                detatchRules);
+        FDetachmentTransformRules detatchRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, true);
+
+        matchedCamera->DetachAllSceneComponents(cameraActor->GetRootComponent(), detatchRules);
         matchedCamera->DetachFromActor(detatchRules);
         // matchedCamera->DetachSceneComponentsFromParent(cameraActor->GetRootComponent(),
         // true);
+
         auto a1 = cameraActor->GetActorLocation();
         auto a2 = cameraActor->GetRootComponent()->GetComponentLocation();
-        matchedCamera->SetActorLocation(
-            cameraActor->GetRootComponent()->GetComponentLocation() +
-            request.transformVec);
-        matchedCamera->SetActorRotation(
-            cameraActor->GetRootComponent()->GetComponentRotation() +
-            request.rotator);
-        matchedCamera->AttachToComponent(
-            cameraActor->GetRootComponent(),
-            FAttachmentTransformRules::KeepWorldTransform);
+
+        matchedCamera->SetActorLocation(cameraActor->GetRootComponent()->GetComponentLocation() + request.transformVec);
+        matchedCamera->SetActorRotation(cameraActor->GetRootComponent()->GetComponentRotation() + request.rotator);
+        matchedCamera->AttachToComponent(cameraActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
     }
 }
+
 RobotSimApiBase::CollisionInfo RobotSimApiBase::getCollisionInfo() const
 {
     return state_.collision_info;
@@ -418,8 +361,7 @@ RobotSimApiBase::CollisionInfo RobotSimApiBase::getCollisionInfo() const
 
 FVector RobotSimApiBase::getUUPosition() const
 {
-    return params_.vehicle->GetPawn()
-        ->GetActorLocation(); // - state_.mesh_origin
+    return params_.vehicle->GetPawn()->GetActorLocation(); // - state_.mesh_origin
 }
 
 FRotator RobotSimApiBase::getUUOrientation() const
@@ -432,12 +374,12 @@ void RobotSimApiBase::toggleTrace()
     state_.tracing_enabled = !state_.tracing_enabled;
 
     if (!state_.tracing_enabled)
-        UKismetSystemLibrary::FlushPersistentDebugLines(
-            params_.vehicle->GetPawn()->GetWorld());
+    {
+        UKismetSystemLibrary::FlushPersistentDebugLines(params_.vehicle->GetPawn()->GetWorld());
+    }
     else
     {
-        state_.debug_position_offset =
-            state_.current_debug_position - state_.current_position;
+        state_.debug_position_offset = state_.current_debug_position - state_.current_position;
         state_.last_debug_position = state_.last_position;
     }
 }
@@ -445,20 +387,17 @@ void RobotSimApiBase::toggleTrace()
 void RobotSimApiBase::allowPassthroughToggleInput()
 {
     state_.passthrough_enabled = !state_.passthrough_enabled;
-    URobotBlueprintLib::LogMessage("enable_passthrough_on_collisions: ",
-                                   FString::FromInt(state_.passthrough_enabled),
-                                   LogDebugLevel::Informational);
+    URobotBlueprintLib::LogMessage("enable_passthrough_on_collisions: ", FString::FromInt(state_.passthrough_enabled), LogDebugLevel::Informational);
 }
 
-void RobotSimApiBase::plot(std::istream& s,
-                           FColor color,
-                           const Vector3r& offset)
+void RobotSimApiBase::plot(std::istream& s, FColor color, const Vector3r& offset)
 {
     using namespace RobotSim;
 
     Vector3r last_point = VectorMath::nanVector();
     uint64_t timestamp;
     float heading, x, y, z;
+
     while (s >> timestamp >> heading >> x >> y >> z)
     {
         std::string discarded_line;
@@ -466,49 +405,40 @@ void RobotSimApiBase::plot(std::istream& s,
 
         Vector3r current_point(x, y, z);
         current_point += offset;
+
         if (!VectorMath::hasNan(last_point))
         {
-            UKismetSystemLibrary::DrawDebugLine(
-                params_.vehicle->GetPawn()->GetWorld(),
-                ned_transform_.fromLocalNed(last_point),
-                ned_transform_.fromLocalNed(current_point), color, 0, 3.0F);
+            UKismetSystemLibrary::DrawDebugLine(params_.vehicle->GetPawn()->GetWorld(), ned_transform_.fromLocalNed(last_point), ned_transform_.fromLocalNed(current_point), color, 0, 3.0F);
         }
         last_point = current_point;
     }
 }
 
-RobotSim::CameraInfo
-RobotSimApiBase::getCameraInfo(const std::string& camera_name) const
+RobotSim::CameraInfo RobotSimApiBase::getCameraInfo(const std::string& camera_name) const
 {
     RobotSim::CameraInfo camera_info;
 
     const APIPCamera* camera = getCamera(camera_name);
-    camera_info.pose.position =
-        ned_transform_.toLocalNed(camera->GetActorLocation());
-    camera_info.pose.orientation =
-        ned_transform_.toNed(camera->GetActorRotation().Quaternion());
+    camera_info.pose.position = ned_transform_.toLocalNed(camera->GetActorLocation());
+    camera_info.pose.orientation = ned_transform_.toNed(camera->GetActorRotation().Quaternion());
     camera_info.fov = camera->GetCameraComponent()->FieldOfView;
     return camera_info;
 }
 
-void RobotSimApiBase::setCameraOrientation(
-    const std::string& camera_name, const RobotSim::Quaternionr& orientation)
+void RobotSimApiBase::setCameraOrientation(const std::string& camera_name, const RobotSim::Quaternionr& orientation)
 {
 }
 
-RobotSim::RayCastResponse
-RobotSimApiBase::rayCast(const RobotSim::RayCastRequest& request)
+RobotSim::RayCastResponse RobotSimApiBase::rayCast(const RobotSim::RayCastRequest& request)
 {
     RobotSim::RayCastResponse response;
     response.hits.clear();
 
     UWorld* world = this->getPawn()->GetWorld();
 
-    float worldToMeters =
-        URobotBlueprintLib::GetWorldToMetersScale(this->getPawn());
+    float worldToMeters = URobotBlueprintLib::GetWorldToMetersScale(this->getPawn());
 
-    FVector start(request.position.x(), request.position.y(),
-                  request.position.z());
+    FVector start(request.position.x(), request.position.y(), request.position.z());
 
     FVector end(request.position.x() + request.direction.x(),
                 request.position.y() + request.direction.y(),
@@ -522,9 +452,7 @@ RobotSimApiBase::rayCast(const RobotSim::RayCastRequest& request)
 
     if (request.reference_frame_link.length() > 0)
     {
-        params_.vehicle->GetComponentReferenceTransform(
-            FString(request.reference_frame_link.c_str()), referenceOffset,
-            referenceRotator);
+        params_.vehicle->GetComponentReferenceTransform(FString(request.reference_frame_link.c_str()), referenceOffset, referenceRotator);
 
         start = referenceRotator.RotateVector(start) + referenceOffset;
         end = referenceRotator.RotateVector(end) + referenceOffset;
@@ -536,41 +464,34 @@ RobotSimApiBase::rayCast(const RobotSim::RayCastRequest& request)
     TArray<const AActor*> ignoreActors;
     while (isHit)
     {
-        isHit = URobotBlueprintLib::GetObstacle(this->getPawn(), start, end,
-                                                hitResult, ignoreActors,
-                                                ECC_Visibility, true);
+        isHit = URobotBlueprintLib::GetObstacle(this->getPawn(), start, end, hitResult, ignoreActors, ECC_Visibility, true);
 
         if (isHit)
         {
             RobotSim::RayCastHit hit;
             if (hitResult.Actor != nullptr)
             {
-                hit.collided_actor_name = std::string(
-                    TCHAR_TO_UTF8(*hitResult.Actor.Get()->GetName()));
+                hit.collided_actor_name = std::string(TCHAR_TO_UTF8(*hitResult.Actor.Get()->GetName()));
             }
 
             // Translate hit back into local frame of link provided
             // If no link is provided, this is a noop
             // Also scale back to MKS
-            FVector hitPoint = referenceRotator.UnrotateVector(
-                hitResult.ImpactPoint - referenceOffset);
+            FVector hitPoint = referenceRotator.UnrotateVector(hitResult.ImpactPoint - referenceOffset);
             hitPoint /= worldToMeters;
 
-            hit.hit_point =
-                RobotSim::Vector3r(hitPoint.X, hitPoint.Y, hitPoint.Z);
+            hit.hit_point = RobotSim::Vector3r(hitPoint.X, hitPoint.Y, hitPoint.Z);
 
             FVector impactNormal = hitResult.ImpactNormal;
             if (!impactNormal.Normalize())
             {
-                throw std::runtime_error(
-                    "Unable to normalize an impact vector.");
+                throw std::runtime_error("Unable to normalize an impact vector.");
             }
 
             // Only need to rotate normal
             FVector hitNormal = referenceRotator.UnrotateVector(impactNormal);
 
-            hit.hit_normal =
-                RobotSim::Vector3r(hitNormal.X, hitNormal.Y, hitNormal.Z);
+            hit.hit_normal = RobotSim::Vector3r(hitNormal.X, hitNormal.Y, hitNormal.Z);
 
             response.hits.emplace_back(hit);
 
@@ -611,9 +532,7 @@ RobotSimApiBase::rayCast(const RobotSim::RayCastRequest& request)
 // parameters in NED frame
 RobotSimApiBase::Pose RobotSimApiBase::getPose() const
 {
-    // kinematics_.twist.linear =
-    // RobotSim::Vector3r(nedTransform.fromNed(velocity.X),
-    // nedTransform.fromNed(velocity.Y), nedTransform.fromNed(velocity.Z));
+    // kinematics_.twist.linear = RobotSim::Vector3r(nedTransform.fromNed(velocity.X), nedTransform.fromNed(velocity.Y), nedTransform.fromNed(velocity.Z));
     auto nedTransform = getNedTransform();
     FVector position = getUUPosition();
     FVector position_scaled(nedTransform.toNed(position.X),
@@ -622,8 +541,7 @@ RobotSimApiBase::Pose RobotSimApiBase::getPose() const
     return toPose(position_scaled, getUUOrientation().Quaternion());
 }
 
-RobotSimApiBase::Pose RobotSimApiBase::toPose(const FVector& u_position,
-                                              const FQuat& u_quat) const
+RobotSimApiBase::Pose RobotSimApiBase::toPose(const FVector& u_position, const FQuat& u_quat) const
 {
     // const Vector3r& position = ned_transform_.toLocalNed(u_position);
     // const Quaternionr& orientation = ned_transform_.toNed(u_quat);
@@ -636,23 +554,19 @@ RobotSimApiBase::Pose RobotSimApiBase::toPose(const FVector& u_position,
 
 void RobotSimApiBase::setPose(const Pose& pose, bool ignore_collision)
 {
-    URobotBlueprintLib::RunCommandOnGameThread(
-        [this, pose, ignore_collision]() {
-            setPoseInternal(pose, ignore_collision);
-        },
-        true);
+    URobotBlueprintLib::RunCommandOnGameThread([this, pose, ignore_collision]()
+                                               { setPoseInternal(pose, ignore_collision); },
+                                               true);
 }
 
-std::vector<RobotSim::GeoPoint> RobotSimApiBase::xyzToGeoPoints(
-    const std::vector<RobotSim::Vector3r>& xyz_points)
+std::vector<RobotSim::GeoPoint> RobotSimApiBase::xyzToGeoPoints(const std::vector<RobotSim::Vector3r>& xyz_points)
 {
     std::vector<RobotSim::GeoPoint> result;
     result.reserve(xyz_points.size());
 
     for (const auto& point : xyz_points)
     {
-        result.emplace_back(RobotSim::EarthUtils::nedToGeodetic(
-            point, this->home_geo_point_, this->flip_z_for_gps_));
+        result.emplace_back(RobotSim::EarthUtils::nedToGeodetic(point, this->home_geo_point_, this->flip_z_for_gps_));
     }
 
     return result;
@@ -667,8 +581,7 @@ void RobotSimApiBase::setPoseInternal(const Pose& pose, bool ignore_collision)
 
     // quaternion formula comes from http://stackoverflow.com/a/40334755/207661
     // FQuat orientation = ned_transform_.fromNed(pose.orientation);
-    FQuat orientation(pose.orientation.x(), pose.orientation.y(),
-                      pose.orientation.z(), pose.orientation.w());
+    FQuat orientation(pose.orientation.x(), pose.orientation.y(), pose.orientation.z(), pose.orientation.w());
 
     bool enable_teleport = ignore_collision || canTeleportWhileMove();
 
@@ -681,12 +594,9 @@ void RobotSimApiBase::setPoseInternal(const Pose& pose, bool ignore_collision)
 
     params_.vehicle->TeleportToLocation(position, orientation, enable_teleport);
 
-    if (state_.tracing_enabled &&
-        (state_.last_position - position).SizeSquared() > 0.25)
+    if (state_.tracing_enabled && (state_.last_position - position).SizeSquared() > 0.25)
     {
-        UKismetSystemLibrary::DrawDebugLine(
-            params_.vehicle->GetPawn()->GetWorld(), state_.last_position,
-            position, FColor::Purple, -1, 3.0f);
+        UKismetSystemLibrary::DrawDebugLine(params_.vehicle->GetPawn()->GetWorld(), state_.last_position, position, FColor::Purple, -1, 3.0f);
         state_.last_position = position;
     }
     else if (!state_.tracing_enabled)
@@ -697,28 +607,21 @@ void RobotSimApiBase::setPoseInternal(const Pose& pose, bool ignore_collision)
 
 void RobotSimApiBase::setDebugPose(const Pose& debug_pose)
 {
-    state_.current_debug_position =
-        ned_transform_.fromLocalNed(debug_pose.position);
+    state_.current_debug_position = ned_transform_.fromLocalNed(debug_pose.position);
     if (state_.tracing_enabled && !VectorMath::hasNan(debug_pose.position))
     {
-        FVector debug_position =
-            state_.current_debug_position - state_.debug_position_offset;
+        FVector debug_position = state_.current_debug_position - state_.debug_position_offset;
+
         if ((state_.last_debug_position - debug_position).SizeSquared() > 0.25)
         {
-            UKismetSystemLibrary::DrawDebugLine(
-                params_.vehicle->GetPawn()->GetWorld(),
-                state_.last_debug_position, debug_position,
-                FColor(0xaa, 0x33, 0x11), -1, 10.0F);
-            URobotBlueprintLib::LogMessage(FString("Debug Pose: "),
-                                           debug_position.ToCompactString(),
-                                           LogDebugLevel::Informational);
+            UKismetSystemLibrary::DrawDebugLine(params_.vehicle->GetPawn()->GetWorld(), state_.last_debug_position, debug_position, FColor(0xaa, 0x33, 0x11), -1, 10.0F);
+            URobotBlueprintLib::LogMessage(FString("Debug Pose: "), debug_position.ToCompactString(), LogDebugLevel::Informational);
             state_.last_debug_position = debug_position;
         }
     }
     else if (!state_.tracing_enabled)
     {
-        state_.last_debug_position =
-            state_.current_debug_position - state_.debug_position_offset;
+        state_.last_debug_position = state_.current_debug_position - state_.debug_position_offset;
     }
 }
 
@@ -730,9 +633,7 @@ bool RobotSimApiBase::canTeleportWhileMove() const
     //     we will flip-flop was_last_move_teleport flag so on one tick we have
     //     passthrough and other tick we don't without flip flopping, collisions
     //     can't be detected
-    return !state_.collisions_enabled ||
-           (state_.collision_info.has_collided &&
-            !state_.was_last_move_teleport && state_.passthrough_enabled);
+    return !state_.collisions_enabled || (state_.collision_info.has_collided && !state_.was_last_move_teleport && state_.passthrough_enabled);
 }
 
 const RobotSim::Kinematics::State* RobotSimApiBase::getPawnKinematics() const
@@ -750,16 +651,11 @@ void RobotSimApiBase::updateKinematics(float dt)
     // getNedTransform().toLocalNed(getPawn()->GetVelocity());
     auto nedTransform = getNedTransform();
     auto velocity = getPawn()->GetVelocity();
-    kinematics_.twist.linear = RobotSim::Vector3r(
-        nedTransform.toNed(velocity.X), nedTransform.toNed(velocity.Y),
-        nedTransform.toNed(velocity.Z));
-    kinematics_.twist.angular = RobotSim::VectorMath::toAngularVelocity(
-        kinematics_.pose.orientation, last_kinematics.pose.orientation, dt);
+    kinematics_.twist.linear = RobotSim::Vector3r(nedTransform.toNed(velocity.X), nedTransform.toNed(velocity.Y), nedTransform.toNed(velocity.Z));
+    kinematics_.twist.angular = RobotSim::VectorMath::toAngularVelocity(kinematics_.pose.orientation, last_kinematics.pose.orientation, dt);
 
-    kinematics_.accelerations.linear =
-        (kinematics_.twist.linear - last_kinematics.twist.linear) / dt;
-    kinematics_.accelerations.angular =
-        (kinematics_.twist.angular - last_kinematics.twist.angular) / dt;
+    kinematics_.accelerations.linear = (kinematics_.twist.linear - last_kinematics.twist.linear) / dt;
+    kinematics_.accelerations.angular = (kinematics_.twist.angular - last_kinematics.twist.angular) / dt;
 
     // TODO: update other fields?
 }
@@ -775,11 +671,11 @@ void RobotSimApiBase::updateKinematics(float dt)
 //	//no default action in this base class
 //}
 
-const RobotSim::Kinematics::State*
-RobotSimApiBase::getGroundTruthKinematics() const
+const RobotSim::Kinematics::State* RobotSimApiBase::getGroundTruthKinematics() const
 {
     return &kinematics_;
 }
+
 const RobotSim::Environment* RobotSimApiBase::getGroundTruthEnvironment() const
 {
     return environment_.get();
@@ -822,9 +718,7 @@ const RobotSim::Environment* RobotSimApiBase::getGroundTruthEnvironment() const
 //	//return ss.str();
 //}
 
-void RobotSimApiBase::setDrawShapes(
-    std::unordered_map<std::string, RobotSim::DrawableShape>& drawableShapes,
-    bool persist_unmentioned)
+void RobotSimApiBase::setDrawShapes(std::unordered_map<std::string, RobotSim::DrawableShape>& drawableShapes, bool persist_unmentioned)
 {
     if (persist_unmentioned)
     {
@@ -861,9 +755,7 @@ void RobotSimApiBase::drawDrawShapes()
 
         if (shape.reference_frame_link.length() > 0)
         {
-            pawn->GetComponentReferenceTransform(
-                FString(shape.reference_frame_link.c_str()), offsetVector,
-                offsetRotator);
+            pawn->GetComponentReferenceTransform(FString(shape.reference_frame_link.c_str()), offsetVector, offsetRotator);
         }
 
         // Point
@@ -872,17 +764,14 @@ void RobotSimApiBase::drawDrawShapes()
         // Next four numbers are the color in RGBA space.
         if (shape.type == 0)
         {
-            FVector location(shape.shape_params[0], shape.shape_params[1],
-                             shape.shape_params[2]);
+            FVector location(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
             float size = shape.shape_params[3];
             FColor color(static_cast<uint8>(shape.shape_params[4]),
                          static_cast<uint8>(shape.shape_params[5]),
                          static_cast<uint8>(shape.shape_params[6]),
                          static_cast<uint8>(shape.shape_params[7]));
 
-            FVector finalLocation =
-                offsetRotator.RotateVector(location * worldScale) +
-                offsetVector;
+            FVector finalLocation = offsetRotator.RotateVector(location * worldScale) + offsetVector;
 
             //            DrawDebugPoint(world, finalLocation, size, color,
             //            persistant, persistSeconds, priority);
@@ -895,8 +784,7 @@ void RobotSimApiBase::drawDrawShapes()
         // Next four numbers are the color in RGBA space
         else if (shape.type == 1)
         {
-            FVector location(shape.shape_params[0], shape.shape_params[1],
-                             shape.shape_params[2]);
+            FVector location(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
             float radius = shape.shape_params[3] * worldScale;
             float thickness = shape.shape_params[4];
             int numberOfSegments = static_cast<int>(shape.shape_params[5]);
@@ -905,9 +793,7 @@ void RobotSimApiBase::drawDrawShapes()
                          static_cast<uint8>(shape.shape_params[8]),
                          static_cast<uint8>(shape.shape_params[9]));
 
-            FVector finalLocation =
-                offsetRotator.RotateVector(location * worldScale) +
-                offsetVector;
+            FVector finalLocation = offsetRotator.RotateVector(location * worldScale) + offsetVector;
 
             //            DrawDebugSphere(world, finalLocation, radius,
             //            numberOfSegments, color, persistant, persistSeconds,
@@ -922,10 +808,8 @@ void RobotSimApiBase::drawDrawShapes()
         // Next four numbers are the color in RGBA space
         else if (shape.type == 2)
         {
-            FVector location(shape.shape_params[0], shape.shape_params[1],
-                             shape.shape_params[2]);
-            FVector normal(shape.shape_params[3], shape.shape_params[4],
-                           shape.shape_params[5]);
+            FVector location(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
+            FVector normal(shape.shape_params[3], shape.shape_params[4], shape.shape_params[5]);
             float radius = shape.shape_params[6] * worldScale;
             float thickness = shape.shape_params[7];
             int numberOfSegments = static_cast<int>(shape.shape_params[8]);
@@ -934,9 +818,7 @@ void RobotSimApiBase::drawDrawShapes()
                          static_cast<uint8>(shape.shape_params[11]),
                          static_cast<uint8>(shape.shape_params[12]));
 
-            FVector finalLocation =
-                offsetRotator.RotateVector(location * worldScale) +
-                offsetVector;
+            FVector finalLocation = offsetRotator.RotateVector(location * worldScale) + offsetVector;
 
             FVector localY(0, 1, 0);
             FVector localZ(0, 0, 1);
@@ -958,19 +840,15 @@ void RobotSimApiBase::drawDrawShapes()
         // Next four are the color in RGBA space
         else if (shape.type == 3)
         {
-            FVector location(shape.shape_params[0], shape.shape_params[1],
-                             shape.shape_params[2]);
-            FVector boxExtents(shape.shape_params[3], shape.shape_params[4],
-                               shape.shape_params[5]);
+            FVector location(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
+            FVector boxExtents(shape.shape_params[3], shape.shape_params[4], shape.shape_params[5]);
             float thickness = shape.shape_params[6];
             FColor color(static_cast<uint8>(shape.shape_params[7]),
                          static_cast<uint8>(shape.shape_params[8]),
                          static_cast<uint8>(shape.shape_params[9]),
                          static_cast<uint8>(shape.shape_params[10]));
 
-            FVector finalLocation =
-                offsetRotator.RotateVector(location * worldScale) +
-                offsetVector;
+            FVector finalLocation = offsetRotator.RotateVector(location * worldScale) + offsetVector;
 
             boxExtents *= worldScale;
 
@@ -984,22 +862,16 @@ void RobotSimApiBase::drawDrawShapes()
         // Next four are the color in RGBA space
         else if (shape.type == 4)
         {
-            FVector firstPoint(shape.shape_params[0], shape.shape_params[1],
-                               shape.shape_params[2]);
-            FVector secondPoint(shape.shape_params[3], shape.shape_params[4],
-                                shape.shape_params[5]);
+            FVector firstPoint(shape.shape_params[0], shape.shape_params[1], shape.shape_params[2]);
+            FVector secondPoint(shape.shape_params[3], shape.shape_params[4], shape.shape_params[5]);
             float thickness = shape.shape_params[6];
             FColor color(static_cast<uint8>(shape.shape_params[7]),
                          static_cast<uint8>(shape.shape_params[8]),
                          static_cast<uint8>(shape.shape_params[9]),
                          static_cast<uint8>(shape.shape_params[10]));
 
-            FVector finalFirstPoint =
-                offsetRotator.RotateVector(firstPoint * worldScale) +
-                offsetVector;
-            FVector finalSecondPoint =
-                offsetRotator.RotateVector(secondPoint * worldScale) +
-                offsetVector;
+            FVector finalFirstPoint = offsetRotator.RotateVector(firstPoint * worldScale) + offsetVector;
+            FVector finalSecondPoint = offsetRotator.RotateVector(secondPoint * worldScale) + offsetVector;
 
             //            DrawDebugLine(world, finalFirstPoint,
             //            finalSecondPoint, color, persistant, persistSeconds,

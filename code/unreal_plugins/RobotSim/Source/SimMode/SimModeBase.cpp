@@ -1,18 +1,18 @@
 #include "SimModeBase.h"
-#include "Misc/MessageDialog.h"
+#include "Engine/ObjectLibrary.h"
+#include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 #include "Misc/EngineVersion.h"
+#include "Misc/MessageDialog.h"
+#include "Misc/OutputDeviceNull.h"
+#include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
 #include "Runtime/Launch/Resources/Version.h"
-#include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
-#include "Kismet/GameplayStatics.h"
-#include "Misc/OutputDeviceNull.h"
-#include "Engine/World.h"
-#include "Engine/ObjectLibrary.h"
 
 #include "NavMesh/NavMeshBoundsVolume.h"
 
-#include <memory>
 #include "RobotBlueprintLib.h"
+#include <memory>
 
 #include "DrawDebugHelpers.h"
 
@@ -164,20 +164,15 @@ const RobotSim::RobotSimSettings& ASimModeBase::getSettings() const
     return RobotSimSettings::singleton();
 }
 
-void ASimModeBase::traceGround(FVector& spawnPosition,
-                               FRotator& spawnRotator,
-                               const FVector& boxHalfSize)
+void ASimModeBase::traceGround(FVector& spawnPosition, FRotator& spawnRotator, const FVector& boxHalfSize)
 {
     FVector startLoc = spawnPosition + FVector(0, 0, 100);
     FVector endLoc = spawnPosition + FVector(0, 0, -1000);
 
-    FCollisionQueryParams collisionParams(FName(TEXT("trace2ground")), true,
-                                          this);
+    FCollisionQueryParams collisionParams(FName(TEXT("trace2ground")), true, this);
     FHitResult hit(ForceInit);
-    if (UKismetSystemLibrary::BoxTraceSingle(
-            GetWorld(), startLoc, endLoc, boxHalfSize, spawnRotator,
-            ETraceTypeQuery::TraceTypeQuery1, false, TArray<AActor*>(),
-            EDrawDebugTrace::Type::ForDuration, hit, true))
+
+    if (UKismetSystemLibrary::BoxTraceSingle(GetWorld(), startLoc, endLoc, boxHalfSize, spawnRotator, ETraceTypeQuery::TraceTypeQuery1, false, TArray<AActor*>(), EDrawDebugTrace::Type::ForDuration, hit, true))
     {
         spawnPosition = hit.Location;
     }
@@ -189,15 +184,12 @@ void ASimModeBase::setupVehiclesAndCamera()
 
 void ASimModeBase::getExistingVehiclePawns(TArray<RobotBase*>& pawns) const
 {
-    // derived class should override this method to retrieve types of pawns they
-    // support
+    // Derived class should override this method to retrieve types of pawns they support
 }
 
 ARecastNavMesh* ASimModeBase::GetNavMesh()
 {
-    UNavigationSystemV1* NavSys =
-        FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-
+    UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     auto navData = NavSys->GetMainNavData();
     return Cast<ARecastNavMesh>(navData);
 }
@@ -228,38 +220,44 @@ void ASimModeBase::Test()
 
 bool ASimModeBase::NavSystemRebuild(float AgentRadius)
 {
-    UNavigationSystemV1* NavSys =
-        FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+
     if (!NavSys)
     {
         return false;
     }
+
     auto navData = NavSys->GetMainNavData();
     ARecastNavMesh* navMesh = Cast<ARecastNavMesh>(navData);
+
     if (!navMesh)
     {
         return false;
     }
 
     ANavMeshBoundsVolume* NavmeshBounds = nullptr;
+
     for (TActorIterator<ANavMeshBoundsVolume> it(this->GetWorld()); it; ++it)
     {
         NavmeshBounds = *it;
     }
+
     if (NavmeshBounds == nullptr)
     {
         return false;
     }
 
     navMesh->AgentRadius = AgentRadius;
-    navMesh->CellSize = 10;
+    navMesh->AgentHeight = AgentRadius;
+    navMesh->CellSize = 1.0f;
+    navMesh->CellHeight = 1.0f;
     navMesh->AgentMaxSlope = 0.1f;
-    navMesh->AgentMaxStepHeight = 0.1f;
-    navMesh->MergeRegionSize = 0;
-    // ignore region that are too small
-    navMesh->MinRegionArea = 400;
+    navMesh->AgentMaxStepHeight = 2.0f;
+    navMesh->MergeRegionSize = 0.0f;
+    navMesh->MinRegionArea = 400.0f; // ignore region that are too small
+    navMesh->MaxSimplificationError = 1.3f;
 
-    // dynamic update navMesh location and size
+    // Dynamic update navMesh location and size
     NavmeshBounds->GetRootComponent()->SetMobility(EComponentMobility::Movable);
 
     FBox worldBox = GetWorldBoundingBox();
@@ -268,11 +266,8 @@ bool ASimModeBase::NavSystemRebuild(float AgentRadius)
     NavmeshBounds->GetRootComponent()->UpdateBounds();
     // NavmeshBounds->SupportedAgents.bSupportsAgent0;
     NavSys->OnNavigationBoundsUpdated(NavmeshBounds);
-    // redo modify frequency change
-    NavmeshBounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
-
-    // rebuild NavMesh, required for update AgentRadius
-    NavSys->Build();
+    NavmeshBounds->GetRootComponent()->SetMobility(EComponentMobility::Static); // Redo modify frequency change
+    NavSys->Build();                                                            // Rebuild NavMesh, required for update AgentRadius
 
     return true;
 }

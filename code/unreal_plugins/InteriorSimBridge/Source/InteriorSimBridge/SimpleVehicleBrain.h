@@ -1,12 +1,11 @@
 #pragma once
 
-#include <Brain.h>
-#include <CoreMinimal.h>
 #include <cstring>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <CoreMinimal.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Kismet/KismetMathLibrary.h>
 #include <SimpleVehicle/SimModeSimpleVehicle.h>
@@ -21,6 +20,7 @@
 
 #include "Action.h"
 #include "ActionSpec.h"
+#include "Brain.h"
 #include "Config.h"
 #include "Observation.h"
 #include "ObservationSpec.h"

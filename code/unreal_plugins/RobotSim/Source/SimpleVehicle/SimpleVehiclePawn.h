@@ -5,6 +5,9 @@
 #include "Engine/CollisionProfile.h"
 #include "GameFramework/Pawn.h"
 #include "NavigationSystem.h"
+
+#include "Brain.h"
+#include "Config.h"
 #include "PIPCamera.h"
 #include "PawnEvents.h"
 #include "PhysXIncludes.h"
@@ -17,10 +20,6 @@
 #include "common_utils/RobotSimSettings.hpp"
 #include "common_utils/UniqueValueMap.hpp"
 #include "common_utils/Utils.hpp"
-
-#include "Config.h"
-#include <Brain.h>
-
 #include "SimpleVehiclePawn.generated.h"
 
 UCLASS(Blueprintable, meta = (ShortTooltip = "Simple Vehicle Pawn"))

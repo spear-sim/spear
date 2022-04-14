@@ -31,10 +31,10 @@ INTERIOR_SIM_BRIDGE:
   REWARD_DISTANCE_BIAS: 0.0
   
   # Collision score:
-  REWARD_COLLISION: 5.0
+  REWARD_COLLISION: 500.0
   
   # Goal reached:
-  REWARD_GOAL_REACHED: 2.5
+  REWARD_GOAL_REACHED: 1000.0
 
   # Height of the rendered egocentric observation in [pixels]
   IMAGE_HEIGHT: 120

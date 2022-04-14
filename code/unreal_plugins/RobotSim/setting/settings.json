@@ -54,13 +54,37 @@
                     "Roll": 0,
                     "Yaw": 0
                 },
-                "SideView": {
+                "SideView1": {
                     "X": -50,
                     "Y": -50,
                     "Z": 10,
                     "Pitch": 0,
                     "Roll": 0,
                     "Yaw": 45
+                },
+                "SideView2": {
+                    "X": 50,
+                    "Y": -50,
+                    "Z": 10,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": -45
+                },
+                "SideView3": {
+                    "X": 40,
+                    "Y": -40,
+                    "Z": 10,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 135
+                },
+                "SideView4": {
+                    "X": 40,
+                    "Y": 40,
+                    "Z": 10,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": -135
                 }
             }
         },
