@@ -20,38 +20,45 @@
 #include "common_utils/RobotSimSettings.hpp"
 #include "common_utils/UniqueValueMap.hpp"
 #include "common_utils/Utils.hpp"
+
 #include "SimpleVehiclePawn.generated.h"
 
+/**
+ * @brief
+ *
+ */
 UCLASS(Blueprintable, meta = (ShortTooltip = "Simple Vehicle Pawn"))
-class ROBOTSIM_API ASimpleVehiclePawn : public APawn, public RobotBase
-{
+class ROBOTSIM_API ASimpleVehiclePawn : public APawn, public RobotBase {
     GENERATED_BODY()
 
     //  The main skeletal mesh associated with this Vehicle
-    UPROPERTY(Category = Vehicle,
-              VisibleDefaultsOnly,
-              BlueprintReadOnly,
-              meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(Category = Vehicle, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     class USkeletalMeshComponent* Mesh;
 
-    // vehicle simulation component
-    UPROPERTY(Category = Vehicle,
-              VisibleDefaultsOnly,
-              BlueprintReadOnly,
-              meta = (AllowPrivateAccess = "true"))
+    // Vehicle simulation component
+    UPROPERTY(Category = Vehicle, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     class UWheeledVehicleMovementComponent* VehicleMovement;
 
 public:
+    /**
+     * @brief Construct a new ASimpleVehiclePawn object
+     *
+     * @param ObjectInitializer
+     */
     ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializer);
-    ~ASimpleVehiclePawn();
+
+    /**
+     * @brief Destroy the ASimpleVehiclePawn object
+     *
+     */
+    virtual ~ASimpleVehiclePawn();
 
     /**
      * @brief Pawn interface
      *
      * @param InputComponent
      */
-    virtual void
-    SetupPlayerInputComponent(UInputComponent* InputComponent) override;
+    virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
     /**
      * @brief Called every frame
@@ -92,18 +99,53 @@ public:
                               FVector NormalImpulse,
                               const FHitResult& Hit);
 
+    /**
+     * @brief Get the Component object
+     *
+     * @param componentName
+     * @return USceneComponent*
+     */
     virtual USceneComponent* GetComponent(FString componentName) override;
+
+    /**
+     * @brief Get the Component Reference Transform object
+     *
+     * @param componentName
+     * @param translation
+     * @param rotation
+     */
     virtual void GetComponentReferenceTransform(FString componentName,
                                                 FVector& translation,
                                                 FRotator& rotation) override;
+
+    /**
+     * @brief Get the Pawn object
+     *
+     * @return APawn*
+     */
     virtual APawn* GetPawn() override
     {
         return this;
     }
+
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
     virtual bool PawnUsesNedCoords() override
     {
         return false;
     }
+
+    /**
+     * @brief
+     *
+     * @param position
+     * @param orientation
+     * @param teleport
+     */
     virtual void TeleportToLocation(FVector position,
                                     FQuat orientation,
                                     bool teleport) override;
@@ -278,20 +320,26 @@ private:
     {
         Eigen::Vector4f v_clamped;
         v_clamped = v;
-        for (unsigned int i = 0; i < v.size(); i++)
-        {
-            if (v(i) > vMax(i))
-            {
+        for (unsigned int i = 0; i < v.size(); i++) {
+            if (v(i) > vMax(i)) {
                 v_clamped(i) = vMax(i);
             }
-            if (v(i) < vMin(i))
-            {
+            if (v(i) < vMin(i)) {
                 v_clamped(i) = vMin(i);
             }
         }
         return v_clamped;
     }
 
+    /**
+     * @brief Clamp a value between a lower and an upper bound.
+     *
+     * @tparam T
+     * @param n
+     * @param lower
+     * @param upper
+     * @return T
+     */
     template <typename T>
     T Clamp(const T& n, const T& lower, const T& upper)
     {

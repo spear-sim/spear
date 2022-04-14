@@ -13,8 +13,7 @@ FName ASimpleVehiclePawn::VehicleMeshComponentName(TEXT("VehicleMesh'"));
 
 ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializer) : APawn(ObjectInitializer)
 {
-    // To create components, you can use
-    // CreateDefaultSubobject<Type>("InternalName").
+    // To create components, you can use CreateDefaultSubobject<Type>("InternalName").
     Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(VehicleMeshComponentName);
 
     // Setup skeletal mesh
@@ -24,13 +23,11 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializ
     // Setup animation
     static ConstructorHelpers::FClassFinder<UAnimInstance> finderAnim(TEXT("/RobotSim/SimpleVehicle/freight/freight_Animation.freight_Animation_C"));
 
-    if (finderAnim.Succeeded())
-    {
+    if (finderAnim.Succeeded()) {
         Mesh->SetAnimClass(finderAnim.Class);
         UE_LOG(LogTemp, Warning, TEXT("finderAnim success"));
     }
-    else
-    {
+    else {
         UE_LOG(LogTemp, Warning, TEXT("finderAnim failed"));
     }
 
@@ -219,8 +216,7 @@ void ASimpleVehiclePawn::ComputeMotorTorques(float DeltaTime)
     // Note: this is a simplified but reliable way to deal with the friction
     // behavior observed on the real vehicle in the
     // low-velocities/low-duty-cycle dommain.
-    for (size_t i = 0; i < dutyCycle_.size(); i++)
-    {
+    for (size_t i = 0; i < dutyCycle_.size(); i++) {
         if (std::abs(motorVelocity_(i)) < 1e-5 and std::abs(dutyCycle_(i)) <= controlDeadZone_ / actionScale_) // If the motor is "nearly" stopped
         {
             wheelTorque_(i) = 0.f;
@@ -265,8 +261,7 @@ void ASimpleVehiclePawn::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (useAutopilot_)
-    {
+    if (useAutopilot_) {
         TrackWayPoint(DeltaTime);
     }
 
@@ -301,13 +296,8 @@ void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,
                                    FVector normalImpulse,
                                    const FHitResult& hit)
 {
-    /*
-        URobotBlueprintLib::LogMessage(FString("NotifyHit: ") +
-                                           OtherActor->GetName(),
-                                       " location: " + hitLocation.ToString() +
-                                           " normal: " +
-       normalImpulse.ToString(), LogDebugLevel::Informational, 30);
-                                       */
+    // URobotBlueprintLib::LogMessage(FString("NotifyHit: ") + OtherActor->GetName(), " location: " + hitLocation.ToString() + " normal: " + normalImpulse.ToString(), LogDebugLevel::Informational, 30);
+
     FString hitComponent = HitComponent->GetName();
     FString otherComponent = otherComp->GetName();
 
@@ -321,11 +311,7 @@ void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent* HitComponent,
                                               FVector NormalImpulse,
                                               const FHitResult& Hit)
 {
-    URobotBlueprintLib::LogMessage(FString("OnComponentCollision: ") +
-                                       OtherActor->GetName(),
-                                   " location: " + Hit.Location.ToString() +
-                                       " normal: " + Hit.Normal.ToString(),
-                                   LogDebugLevel::Informational, 30);
+    URobotBlueprintLib::LogMessage(FString("OnComponentCollision: ") + OtherActor->GetName(), " location: " + Hit.Location.ToString() + " normal: " + Hit.Normal.ToString(), LogDebugLevel::Informational, 30);
 }
 
 void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
@@ -339,13 +325,11 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
     targetLocationReached_ = false;
 
     // If the waypoint is reached:
-    if ((relativePositionToTarget.Size() * 0.01) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"}))
-    {
+    if ((relativePositionToTarget.Size() * 0.01) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"})) {
         targetLocationReached_ = true;
     }
 
-    if (targetLocationReached_ == false)
-    {
+    if (targetLocationReached_ == false) {
         // Compute Euclidean distance to target:
         float dist = relativePositionToTarget.Size();
 
@@ -360,14 +344,11 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
         // std::cout << "std::atan2f(relativePositionToTarget.Y, relativePositionToTarget.X) " << std::atan2f(relativePositionToTarget.Y, relativePositionToTarget.X) << std::endl;
 
         // Fit to range [-pi, pi]:
-        if (deltaYaw > PI)
-        {
+        if (deltaYaw > PI) {
             deltaYaw -= 2 * PI;
         }
-        else
-        {
-            if (deltaYaw <= -PI)
-            {
+        else {
+            if (deltaYaw <= -PI) {
                 deltaYaw += 2 * PI;
             }
         }
@@ -378,13 +359,11 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
 
         rightCtrl = -unrealrl::Config::GetValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_HEADING"}) * deltaYaw + unrealrl::Config::GetValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_HEADING"}) * yawVel;
 
-        if (std::abs(deltaYaw) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "FORWARD_MIN_ANGLE"}))
-        {
+        if (std::abs(deltaYaw) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "FORWARD_MIN_ANGLE"})) {
             forwardCtrl = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_DIST"}) * relativePositionToTarget.Size() * 0.01 - unrealrl::Config::GetValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_DIST"}) * linVel;
             forwardCtrl *= std::cosf(deltaYaw); // Full throttle if the vehicle face the objective. Otherwise give more priority to the yaw command.
         }
-        else
-        {
+        else {
             forwardCtrl = 0.0f;
         }
         // std::cout << "dist " << relativePositionToTarget.Size() * 0.01 << std::endl;

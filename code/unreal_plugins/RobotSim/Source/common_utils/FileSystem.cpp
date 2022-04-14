@@ -5,8 +5,8 @@
 
 #include "Utils.hpp"
 #include <codecvt>
-#include <fstream>
 #include <cstdio>
+#include <fstream>
 #include <string>
 
 #if defined _WIN32 || defined _WIN64
@@ -26,16 +26,15 @@
 #include <Shlobj.h>
 #include <direct.h>
 #include <stdlib.h>
-#include <direct.h>
 
 #include "WindowsApisCommonPost.hpp"
 
 #else
-#include <unistd.h>
+#include <errno.h>
 #include <sys/param.h> // MAXPATHLEN definition
 #include <sys/stat.h>  // get mkdir.
 #include <sys/types.h>
-#include <errno.h>
+#include <unistd.h>
 #endif
 
 #ifdef __APPLE__
@@ -53,11 +52,9 @@ std::string FileSystem::createDirectory(const std::string& fullPath)
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
     std::wstring wide_path = converter.from_bytes(fullPath);
     int hr = CreateDirectoryW(wide_path.c_str(), NULL);
-    if (hr == 0)
-    {
+    if (hr == 0) {
         hr = GetLastError();
-        if (hr != ERROR_ALREADY_EXISTS)
-        {
+        if (hr != ERROR_ALREADY_EXISTS) {
             throw std::invalid_argument(
                 Utils::stringf("Error creating directory, hr=%d", hr));
         }
@@ -84,16 +81,14 @@ std::string FileSystem::getUserDocumentsFolder()
     wchar_t szPath[MAX_PATH];
 
     if (0 == SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS | CSIDL_FLAG_CREATE, NULL,
-                             0, szPath))
-    {
+                             0, szPath)) {
         std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
         path = converter.to_bytes(szPath);
     }
 
     // fall back in case SHGetFolderPath failed for some reason.
 #endif
-    if (path == "")
-    {
+    if (path == "") {
         path = combine(getUserHomeFolder(), "Documents");
     }
     return ensureFolder(path);
@@ -109,22 +104,18 @@ std::string FileSystem::getExecutableFolder()
 
     HMODULE hModule = GetModuleHandle(NULL);
 
-    if (NULL != hModule)
-    {
-        if (0 < GetModuleFileName(hModule, szPath, sizeof(szPath)))
-        {
+    if (NULL != hModule) {
+        if (0 < GetModuleFileName(hModule, szPath, sizeof(szPath))) {
             std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
             path = converter.to_bytes(szPath);
         }
-        else
-        {
+        else {
             HRESULT hr = GetLastError();
             throw std::invalid_argument(
                 Utils::stringf("Error getting executable folder, hr = %d", hr));
         }
     }
-    else
-    {
+    else {
         HRESULT hr = GetLastError();
         throw std::invalid_argument(
             Utils::stringf("Error getting executable folder - hModule is null. "
@@ -135,8 +126,7 @@ std::string FileSystem::getExecutableFolder()
     char szPath[8192];
     uint32_t size = sizeof(szPath);
 
-    if (_NSGetExecutablePath(szPath, &size) != 0)
-    {
+    if (_NSGetExecutablePath(szPath, &size) != 0) {
         throw std::invalid_argument(
             "Error getting executable folder, path is too long");
     }

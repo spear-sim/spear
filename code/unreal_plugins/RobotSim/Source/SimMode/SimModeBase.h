@@ -1,38 +1,74 @@
 #pragma once
 
-#include "CoreMinimal.h"
+#include <string>
+
 #include "Components/SkyLightComponent.h"
+#include "CoreMinimal.h"
 #include "Engine/DirectionalLight.h"
 #include "GameFramework/Actor.h"
-#include "ParticleDefinitions.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "ParticleDefinitions.h"
 
 #include "NavMesh/RecastNavMesh.h"
 #include "common_utils/NavMeshUtil.hpp"
 
-#include <string>
-#include "common_utils/RobotSimSettings.hpp"
 #include "NedTransform.h"
 #include "RobotBase.h"
+#include "common_utils/RobotSimSettings.hpp"
+
 #include "SimModeBase.generated.h"
 
 class AUrdfBotPawn;
 
+/**
+ * @brief
+ *
+ */
 UCLASS()
-class ROBOTSIM_API ASimModeBase : public AActor
-{
+class ROBOTSIM_API ASimModeBase : public AActor {
 public:
     GENERATED_BODY()
 
 public:
-    // Sets default values for this actor's properties
+    /**
+     * @brief Construct a new ASimModeBase object
+     * Sets default values for this actor's properties
+     */
     ASimModeBase();
+
+    /**
+     * @brief
+     *
+     */
     virtual void BeginPlay() override;
+
+    /**
+     * @brief
+     *
+     * @param EndPlayReason
+     */
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    /**
+     * @brief
+     *
+     * @param DeltaSeconds
+     */
     virtual void Tick(float DeltaSeconds) override;
 
+    /**
+     * @brief Get the Global Ned Transform object
+     *
+     * @return const NedTransform&
+     */
     const NedTransform& getGlobalNedTransform();
 
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
     virtual bool isUrdf()
     {
         return false;
@@ -41,39 +77,96 @@ public:
 protected: // must overrides
     typedef RobotSim::RobotSimSettings RobotSimSettings;
 
+    /**
+     * @brief Get the Existing Vehicle Pawns object
+     *
+     * @param pawns
+     */
     virtual void getExistingVehiclePawns(TArray<RobotBase*>& pawns) const;
 
 protected: // optional overrides
+    /**
+     * @brief
+     *
+     */
     virtual void setupVehiclesAndCamera();
+
+    /**
+     * @brief
+     *
+     */
     virtual void setupInputBindings();
 
+    /**
+     * @brief
+     *
+     * @param spawnPosition
+     * @param spawnRotator
+     * @param boxHalfSize
+     */
     virtual void traceGround(FVector& spawnPosition,
                              FRotator& spawnRotator,
                              const FVector& boxHalfSize = FVector(0, 0, 0));
 
+    /**
+     * @brief Get the Nav Mesh object
+     *
+     * @return ARecastNavMesh*
+     */
     virtual ARecastNavMesh* GetNavMesh();
+
+    /**
+     * @brief
+     *
+     * @param AgentRadius
+     * @return true
+     * @return false
+     */
     virtual bool NavSystemRebuild(float AgentRadius);
-    // find bounding box of all actors with architecture tag or furniture tag
+
+    /**
+     * @brief Find bounding box of all actors with architecture tag or furniture tag
+     *
+     * @param bScaleCeiling
+     * @return FBox
+     */
     virtual FBox GetWorldBoundingBox(bool bScaleCeiling = true);
-    ////called when SimMode should handle clock speed setting
-    // virtual void setupClockSpeed();
 
 protected: // Utility methods for derived classes
+    /**
+     * @brief
+     *
+     * @return const RobotSim::RobotSimSettings&
+     */
     virtual const RobotSim::RobotSimSettings& getSettings() const;
-    // FRotator toFRotator(const RobotSimSettings::Rotation& rotation, const
-    // FRotator& default_val);
-    // keyboard callback to test functions
+
+    /**
+     * @brief Keyboard callback to test functions
+     *
+     */
     virtual void Test();
-    // return all maps name in /Game/Maps
+
+    /**
+     * @brief Return all maps name in /Game/Maps
+     *
+     * @param MapList
+     */
     virtual void GetAllMaps(TArray<FString>& MapList) const;
-    // load specific scene
+
+    /**
+     * @brief Load a specific scene
+     *
+     * @param MapName
+     */
     virtual void LoadMap(FString MapName);
 
 protected:
     int record_tick_count;
 
-    UPROPERTY() UClass* pip_camera_class;
-    UPROPERTY() UParticleSystem* collision_display_template;
+    UPROPERTY()
+    UClass* pip_camera_class;
+    UPROPERTY()
+    UParticleSystem* collision_display_template;
 
 private:
     typedef common_utils::Utils Utils;
@@ -82,12 +175,16 @@ private:
 
 private:
     // assets loaded in constructor
-    UPROPERTY() UClass* external_camera_class_;
-    UPROPERTY() UClass* sky_sphere_class_;
+    UPROPERTY()
+    UClass* external_camera_class_;
+    UPROPERTY()
+    UClass* sky_sphere_class_;
 
-    UPROPERTY() AActor* sky_sphere_;
-    UPROPERTY() ADirectionalLight* sun_;
-    ;
+    UPROPERTY()
+    AActor* sky_sphere_;
+    UPROPERTY()
+    ADirectionalLight* sun_;
+
     TTimePoint tod_sim_clock_start_;
     TTimePoint tod_last_update_;
     std::time_t tod_start_time_;
@@ -100,5 +197,9 @@ private:
     bool lidar_draw_debug_points_ = false;
 
 private:
+    /**
+     * @brief
+     *
+     */
     void setupTimeOfDay();
 };

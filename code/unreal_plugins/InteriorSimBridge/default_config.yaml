@@ -42,5 +42,16 @@ INTERIOR_SIM_BRIDGE:
   # Width of the rendered egocentric observation in [pixels]
   IMAGE_WIDTH: 160
 
+  # Field of view of the smartphone camera in [deg]
+  SMARTPHONE_FOV: 72.0 
+
+  # Strength of motion blur, 0:off, should be renamed to intensity
+  MOTION_BLUR_AMMOUNT: 10.0
+
+  # Max distortion caused by motion blur, in percent of the screen width, 0:off
+  MOTION_BLUR_MAX: 10.0
+
+  #Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
+  POST_PROC_BLEND_WEIGHT: 1.0
 
   

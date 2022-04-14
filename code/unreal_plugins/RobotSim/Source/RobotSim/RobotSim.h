@@ -5,10 +5,23 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-class FRobotSimModule : public IModuleInterface
-{
+/**
+ * @brief
+ *
+ */
+class FRobotSimModule : public IModuleInterface {
 public:
     /** IModuleInterface implementation */
+
+    /**
+     * @brief
+     *
+     */
     virtual void StartupModule() override;
+
+    /**
+     * @brief
+     *
+     */
     virtual void ShutdownModule() override;
 };

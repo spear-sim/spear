@@ -4,27 +4,26 @@
 #include "GameFramework/Pawn.h"
 #include "Particles/ParticleSystemComponent.h"
 
-#include <vector>
-#include <memory>
-#include "common_utils/Common.hpp"
-#include "common_utils/Signal.hpp"
-#include "common_utils/CommonStructs.hpp"
-#include "PIPCamera.h"
-#include "physics/Kinematics.hpp"
 #include "NedTransform.h"
+#include "PIPCamera.h"
+#include "common_utils/Common.hpp"
+#include "common_utils/CommonStructs.hpp"
 #include "common_utils/RobotSimSettings.hpp"
+#include "common_utils/Signal.hpp"
+#include "physics/Kinematics.hpp"
+#include <memory>
+#include <vector>
 //#include "SimJoyStick.h"
+#include "PawnEvents.h"
+#include "RobotBase.h"
+#include "common_utils/ImageCaptureBase.hpp"
 #include "common_utils/RobotApiBase.hpp"
 #include "common_utils/UniqueValueMap.hpp"
-#include "RobotBase.h"
-#include "PawnEvents.h"
 #include "common_utils/UpdatableObject.hpp"
-#include "common_utils/ImageCaptureBase.hpp"
 #include "physics/Environment.hpp"
 //#include "UnrealSensors/UnrealSensorFactory.h"
 //
-class RobotSimApiBase : public RobotSim::UpdatableObject
-{
+class RobotSimApiBase : public RobotSim::UpdatableObject {
 public: // types
     typedef RobotSim::RobotSimSettings RobotSimSettings;
     typedef RobotSim::GeoPoint GeoPoint;
@@ -38,8 +37,7 @@ public: // types
     typedef RobotSim::RobotSimSettings::VehicleSetting VehicleSetting;
     typedef RobotSim::ImageCaptureBase ImageCaptureBase;
 
-    struct Params
-    {
+    struct Params {
         RobotBase* vehicle;
         const NedTransform* global_transform;
         PawnEvents* pawn_events;
@@ -135,13 +133,51 @@ public: // Unreal specific methods
     // void setRCForceFeedback(float rumble_strength, float auto_center);
 
 private: // methods
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
     bool canTeleportWhileMove() const;
+
+    /**
+     * @brief
+     *
+     */
     void allowPassthroughToggleInput();
+
+    /**
+     * @brief
+     *
+     */
     void detectUsbRc();
-    void setupCamerasFromSettings(
-        const common_utils::UniqueValueMap<std::string, APIPCamera*>& cameras);
+
+    /**
+     * @brief
+     *
+     * @param cameras
+     */
+    void setupCamerasFromSettings(const common_utils::UniqueValueMap<std::string, APIPCamera*>& cameras);
+
+    /**
+     * @brief Create a set of Cameras object based on a parameter file
+     *
+     */
     void createCamerasFromSettings();
-    // on collision, pawns should update this
+
+    /**
+     * @brief On collision, pawns should update this
+     *
+     * @param MyComp
+     * @param Other
+     * @param OtherComp
+     * @param bSelfMoved
+     * @param HitLocation
+     * @param HitNormal
+     * @param NormalImpulse
+     * @param Hit
+     */
     void onCollision(class UPrimitiveComponent* MyComp,
                      class AActor* Other,
                      class UPrimitiveComponent* OtherComp,
@@ -151,31 +187,66 @@ private: // methods
                      FVector NormalImpulse,
                      const FHitResult& Hit);
 
-    // these methods are for future usage
+    // These methods are for future usage
+
+    /**
+     * @brief
+     *
+     * @param s
+     * @param color
+     * @param offset
+     */
     void plot(std::istream& s, FColor color, const Vector3r& offset);
+
+    /**
+     * @brief
+     *
+     * @param u_position
+     * @param u_quat
+     * @return RobotSimApiBase::Pose
+     */
     RobotSimApiBase::Pose toPose(const FVector& u_position,
                                  const FQuat& u_quat) const;
+
+    /**
+     * @brief
+     *
+     * @param dt
+     */
     void updateKinematics(float dt);
+
+    /**
+     * @brief Set the Start Position object
+     *
+     * @param position
+     * @param rotator
+     */
     void setStartPosition(const FVector& position, const FRotator& rotator);
+
+    /**
+     * @brief
+     *
+     */
     void drawDrawShapes();
+
+    /**
+     * @brief
+     *
+     */
     void serviceMoveCameraRequests();
 
 private: // vars
     Params params_;
     common_utils::UniqueValueMap<std::string, APIPCamera*> cameras_;
     RobotSim::GeoPoint home_geo_point_;
-
     std::string vehicle_name_;
     NedTransform ned_transform_;
-
     FVector ground_trace_end_;
     FVector ground_margin_;
     std::string log_line_;
-
     bool flip_z_for_gps_;
 
-    struct State
-    {
+    struct State {
         FVector start_location;
         FRotator start_rotation;
         FVector last_position;
@@ -188,15 +259,13 @@ private: // vars
         bool passthrough_enabled;
         bool was_last_move_teleport;
         CollisionInfo collision_info;
-
         FVector mesh_origin;
         FVector mesh_bounds;
         FVector ground_offset;
         FVector transformation_offset;
     };
 
-    struct MoveCameraRequest
-    {
+    struct MoveCameraRequest {
         std::string camera_name;
         FVector transformVec;
         FRotator rotator;
@@ -204,7 +273,8 @@ private: // vars
 
     TQueue<MoveCameraRequest> move_camera_requests_;
 
-    State state_, initial_state_;
+    State state_;
+    State initial_state_;
 
     RobotSim::Kinematics::State kinematics_;
     std::unique_ptr<RobotSim::Environment> environment_;
@@ -214,13 +284,44 @@ private: // vars
     bool should_refresh_drawable_shapes_ = false;
 
 public:
+    /**
+     * @brief Construct a new Robot Sim Api Base object
+     *
+     * @param params
+     */
     RobotSimApiBase(Params params);
 
+    /**
+     * @brief
+     *
+     */
     virtual void reset() override;
+
+    /**
+     * @brief
+     *
+     */
     virtual void update() override;
 
+    /**
+     * @brief Get the Record File Line object
+     *
+     * @param is_header_line
+     * @return std::string
+     */
     virtual std::string getRecordFileLine(bool is_header_line) const;
 
+    /**
+     * @brief
+     *
+     * @param dt
+     */
     virtual void updateRenderedState(float dt);
+
+    /**
+     * @brief
+     *
+     * @param dt
+     */
     virtual void updateRendering(float dt);
 };

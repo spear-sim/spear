@@ -6,8 +6,7 @@ USimpleVehicleBrain::USimpleVehicleBrain(const FObjectInitializer& objectInitial
 
 void USimpleVehicleBrain::Init()
 {
-    for (TActorIterator<ASimpleVehiclePawn> it(GetWorld()); it; ++it)
-    {
+    for (TActorIterator<ASimpleVehiclePawn> it(GetWorld()); it; ++it) {
         ownerPawn = *it;
     }
 
@@ -17,8 +16,7 @@ void USimpleVehicleBrain::Init()
     ASSERT(Controller != nullptr);
 
     // Look for the desired observation camera among all available camera actors:
-    for (TActorIterator<APIPCamera> it(GetWorld()); it; ++it)
-    {
+    for (TActorIterator<APIPCamera> it(GetWorld()); it; ++it) {
         // This is quick and dirty fix to get access to the camera actors
         // attached to the vehicle. Note that these actors are defined within
         // the settings.json parameter file.
@@ -32,20 +30,41 @@ void USimpleVehicleBrain::Init()
     // Set the observation camera:
     Controller->SetViewTarget(mainCamera_);
 
-    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
-    {
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"})) {
         // Point to the vehicle camera capture component:
         captureComponent2D_ = mainCamera_->GetSceneCaptureComponent();
+
+        // Set Camera Properties
+        captureComponent2D_->bAlwaysPersistRenderingState = 1;
+        captureComponent2D_->bCaptureEveryFrame = 0;
+        captureComponent2D_->FOVAngle = unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "SMARTPHONE_FOV"}); // Smartphone FOV
+        captureComponent2D_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+        captureComponent2D_->ShowFlags.SetTemporalAA(false);
+        captureComponent2D_->ShowFlags.SetAntiAliasing(true);
+
+        // Adjust RenderTarget
+        UTextureRenderTarget2D* renderTarget2D = NewObject<UTextureRenderTarget2D>();
+        renderTarget2D->TargetGamma = GEngine->GetDisplayGamma();                                                                                                                                                                   // Set FrameWidth and FrameHeight: 1.2f; for Vulkan | GEngine->GetDisplayGamma(); for DX11/12
+        renderTarget2D->InitAutoFormat(unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_WIDTH"}), unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_HEIGHT"}));                      // Setup the RenderTarget capture format: some random format, got crashing otherwise frameWidht = 2048 and frameHeight = 2048.
+        renderTarget2D->InitCustomFormat(unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_WIDTH"}), unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_HEIGHT"}), PF_B8G8R8A8, true); // PF_B8G8R8A8 disables HDR which will boost storing to disk due to less image information
+        renderTarget2D->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+        renderTarget2D->bGPUSharedFlag = true; // demand buffer on GPU
+        captureComponent2D_->TextureTarget = renderTarget2D;
+
+        // Set post processing parameters:
+        FPostProcessSettings postProcSet;
+        postProcSet.MotionBlurAmount = unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "MOTION_BLUR_AMMOUNT"}); // Strength of motion blur, 0:off, should be renamed to intensity
+        postProcSet.MotionBlurMax = unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "MOTION_BLUR_MAX"});    // Max distortion caused by motion blur, in percent of the screen width, 0:off
+        captureComponent2D_->PostProcessSettings = postProcSet;
+        captureComponent2D_->PostProcessBlendWeight = unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "POST_PROC_BLEND_WEIGHT"}); // Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
     }
 
     ownerPawn->OnActorHit.AddDynamic(this, &USimpleVehicleBrain::OnActorHit);
 
     // Store actor refs required during simulation.
     for (TActorIterator<AActor> ActorItr(GetWorld(), AActor::StaticClass());
-         ActorItr; ++ActorItr)
-    {
-        if ((*ActorItr)->ActorHasTag("goal"))
-        {
+         ActorItr; ++ActorItr) {
+        if ((*ActorItr)->ActorHasTag("goal")) {
             goalActor = *ActorItr;
             break;
         }
@@ -76,23 +95,20 @@ void USimpleVehicleBrain::Init()
 
     unrealrl::ObservationSpec SimpleVehicleObservationSpec({5}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
 
-    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
-    {
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"})) {
         // This observation is an egocentric RGB image.
         std::string CameraObservationDescription = "";
         unrealrl::ObservationSpec CameraObservationSpec({{unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_HEIGHT"}), unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_WIDTH"}), 3}}, unrealrl::DataType::UInteger8, CameraObservationDescription); // HACK: should specify constants in a config file
 
         SetObservationSpecs({SimpleVehicleObservationSpec, CameraObservationSpec});
     }
-    else
-    {
+    else {
         SetObservationSpecs({SimpleVehicleObservationSpec});
     }
     SetActionSpecs({SimpleVehicleActionSpec});
 
     // Trajectory planning:
-    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "ACTIVATE_AUTOPILOT"}))
-    {
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "ACTIVATE_AUTOPILOT"})) {
         // Initialize navigation variables:
         int numberOfWayPoints = 0;
         int numIter = 0;
@@ -115,16 +131,14 @@ void USimpleVehicleBrain::Init()
         while ((numberOfWayPoints < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_WAY_POINTS"}) - numCycle and relativePositionToTarget.Size() < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MIN_TARGET_DISTANCE"})) or numIterTot < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_ITER_REPLAN"}) * unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_WAY_POINTS"})) // Try to generate interesting trajectories with multiple waypoints
         {
             std::cout << "Iteration: " << numIterTot << std::endl;
-            if (numIter >= unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_ITER_REPLAN"}))
-            {
+            if (numIter >= unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_ITER_REPLAN"})) {
                 numCycle++;
                 numIter = 0;
             }
             pathPoints_.Empty();
 
             // Ret a random target point, to be reached by the agent:
-            if (not navSys->GetRandomReachablePointInRadius(initialPosition, unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "TARGET_RADIUS"}), targetLocation))
-            {
+            if (not navSys->GetRandomReachablePointInRadius(initialPosition, unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "TARGET_RADIUS"}), targetLocation)) {
                 ASSERT(false);
             }
             relativePositionToTarget.X = (targetLocation.Location - initialPosition).X;
@@ -134,10 +148,8 @@ void USimpleVehicleBrain::Init()
             FPathFindingResult collisionFreePath = navSys->FindPathSync(Query, EPathFindingMode::Type::Regular);
 
             // If path generation is sucessful, analyze the obtained path (it should not be too simple):
-            if (collisionFreePath.IsSuccessful() && collisionFreePath.Path.IsValid())
-            {
-                if (collisionFreePath.IsPartial())
-                {
+            if (collisionFreePath.IsSuccessful() && collisionFreePath.Path.IsValid()) {
+                if (collisionFreePath.IsPartial()) {
                     std::cout << "Only a partial path could be found by the planner..." << std::endl;
                 }
                 pathPoints_ = collisionFreePath.Path->GetPathPoints();
@@ -153,8 +165,7 @@ void USimpleVehicleBrain::Init()
         std::cout << "Reachable position: [" << targetLocation.Location.X << ", " << targetLocation.Location.Y << ", " << targetLocation.Location.Z << "]." << std::endl;
         std::cout << "-----------------------------------------------------------" << std::endl;
         std::cout << "Way points: " << std::endl;
-        for (auto wayPoint : pathPoints_)
-        {
+        for (auto wayPoint : pathPoints_) {
             std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
         }
         std::cout << "-----------------------------------------------------------" << std::endl;
@@ -181,10 +192,8 @@ void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& actionV
     ASSERT(ownerPawn != nullptr);
     ASSERT(actionVector.size() == 1);
 
-    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "ACTIVATE_AUTOPILOT"}))
-    {
-        if (ownerPawn->MoveTo(currentPathPoint_))
-        {
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "ACTIVATE_AUTOPILOT"})) {
+        if (ownerPawn->MoveTo(currentPathPoint_)) {
             if (indexPath_ == pathPoints_.Num() - 1) // Move to the next waypoint
             {
                 std::cout << "######## Reached waypoint " << indexPath_ << " ########" << std::endl;
@@ -199,8 +208,7 @@ void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& actionV
             }
         }
     }
-    else
-    {
+    else {
         std::vector<float> controlState;
         controlState = actionVector.at(0).GetActions(); // Get actions from the python interface
 
@@ -224,8 +232,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
     float sinYaw;
     float cosYaw;
 
-    if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "dist-sin-cos")
-    {
+    if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "dist-sin-cos") {
         // Get relative position to target in the global coordinate system:
         const FVector2D relativePositionToTarget(
             (goalActor->GetActorLocation() - currentLocation).X,
@@ -242,14 +249,11 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
         deltaYaw = std::atan2f(forwardAxisRotated.Y, forwardAxisRotated.X) - std::atan2f(relativePositionToTarget.Y, relativePositionToTarget.X);
 
         // Fit to range [-pi, pi]:
-        if (deltaYaw > PI)
-        {
+        if (deltaYaw > PI) {
             deltaYaw -= 2 * PI;
         }
-        else
-        {
-            if (deltaYaw <= -PI)
-            {
+        else {
+            if (deltaYaw <= -PI) {
                 deltaYaw += 2 * PI;
             }
         }
@@ -276,8 +280,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
             hitInfo_ = UHitInfo::Goal;
         }
     }
-    else if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "yaw-x-y")
-    {
+    else if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "yaw-x-y") {
         // Get observation data
         observationVector.resize(GetObservationSpecs().size());
 
@@ -289,14 +292,12 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
 
         observationVector.at(0).Copy(std::vector<float>{controlState(0), controlState(1), FMath::DegreesToRadians(currentOrientation.Yaw), currentLocation.X, currentLocation.Y});
     }
-    else
-    {
+    else {
         ASSERT(false);
     }
 
     // Reward function is defined based on https://github.com/isl-org/OpenBot-Distributed/blob/main/trainer/ob_agents/envs/open_bot_replay_env.py
-    switch (hitInfo_)
-    {
+    switch (hitInfo_) {
     case UHitInfo::Goal:
         // Goal reached reward:
         AddReward(unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_GOAL_REACHED"}));
@@ -322,14 +323,12 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
     // Reset hitInfo_ .
     hitInfo_ = UHitInfo::NoHit;
 
-    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"}))
-    {
+    if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"})) {
         ASSERT(IsInGameThread());
 
         FTextureRenderTargetResource* targetResource = captureComponent2D_->TextureTarget->GameThread_GetRenderTargetResource();
 
-        if (targetResource == nullptr)
-        {
+        if (targetResource == nullptr) {
             UE_LOG(LogTemp, Error, TEXT("Could not get RenderTarget Resource from GameThread!! :("));
             ASSERT(false);
         }
@@ -337,8 +336,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
         TArray<FColor> rawPixels;
         rawPixels.Reset();
 
-        struct FReadSurfaceContext
-        {
+        struct FReadSurfaceContext {
             FRenderTarget* srcRenderTarget;
             TArray<FColor>* outData;
             FIntRect rect;
@@ -356,8 +354,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
 
         ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)
         (
-            [context](FRHICommandListImmediate& RHICmdList)
-            {
+            [context](FRHICommandListImmediate& RHICmdList) {
                 RHICmdList.ReadSurfaceData(context.srcRenderTarget->GetRenderTargetTexture(), context.rect, *context.outData, context.flags);
             });
 
@@ -370,8 +367,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
 
         pixelData->resize(unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_HEIGHT"}) * unrealrl::Config::GetValue<unsigned long>({"INTERIOR_SIM_BRIDGE", "IMAGE_WIDTH"}) * 3); // HACK: should specify constants in a config file
 
-        for (uint32 i = 0; i < static_cast<uint32>(rawPixels.Num()); ++i)
-        {
+        for (uint32 i = 0; i < static_cast<uint32>(rawPixels.Num()); ++i) {
             uint32 j = i;
             pixelData->at(3 * j) = rawPixels[i].R;
             pixelData->at(3 * j + 1) = rawPixels[i].G;
@@ -389,12 +385,10 @@ void USimpleVehicleBrain::OnActorHit(AActor* selfActor,
 {
     ASSERT(otherActor != nullptr);
 
-    if (otherActor->ActorHasTag("goal"))
-    {
+    if (otherActor->ActorHasTag("goal")) {
         hitInfo_ = UHitInfo::Goal;
     }
-    else
-    {
+    else {
         hitInfo_ = UHitInfo::Edge;
     }
 }

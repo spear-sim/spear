@@ -110,8 +110,7 @@ public:
      *
      * @param settings
      */
-    virtual void SetRobotParameters(
-        const RobotSim::RobotSimSettings::VehicleSetting& settings) override;
+    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings) override;
 
 public:
     RobotApi* getRobotApi() const;
