@@ -18,20 +18,20 @@ e.g: scene_manager_images.py -v v1
     sys.exit(2)
 
 
-IMAGE_SAVE_DIR = "./images"
+DEFAULT_SAVE_DIR = "../Saved/images"
 
-IMAGE_FILE_NAMES = ["topview.png", "topview_semantic.png","topview_data.json"]
+IMAGE_FILE_NAMES = ["topview.png", "topview_semantic.png", "topview_data.json"]
 
 
-def download_images(virtualworld_id, version):
-    if not os.path.exists(IMAGE_SAVE_DIR):
-        os.mkdir(IMAGE_SAVE_DIR)
+def download_images(virtualworld_id, version, save_dir):
+    if not os.path.exists(save_dir):
+        os.mkdir(save_dir)
     print(f"download_images - {virtualworld_id} {version}")
     for filename in IMAGE_FILE_NAMES:
         file_type = filename.split(".")[0]
         file_extension = filename.split(".")[1]
         metadata_url = f"{scene_manager.CDN_API}scenes/{virtualworld_id}/{version}/{filename}"
-        metadata_local = f"{IMAGE_SAVE_DIR}/{file_type}_{virtualworld_id}_{version}.{file_extension}"
+        metadata_local = f"{save_dir}/{file_type}_{virtualworld_id}_{version}.{file_extension}"
         if not os.path.exists(metadata_local):
             result = scene_manager.download_file_from_url(metadata_url, metadata_local)
 
@@ -39,6 +39,7 @@ def download_images(virtualworld_id, version):
 if __name__ == "__main__":
     version = ""
     virtualworld_id = ""
+    save_dir = DEFAULT_SAVE_DIR
 
     try:
         opts, args = getopt.getopt(
@@ -55,6 +56,11 @@ if __name__ == "__main__":
         elif opt in ("-v", "--version"):
             if "v" in arg:
                 version = arg
+        elif opt in ("-o", "--out_dir"):
+            if os.path.isfile(arg):
+                print(f"invalid output_dir: {arg}")
+            else:
+                save_dir = arg
         elif opt in ("-p", "--proxy"):
             scene_manager.PROXY_URL = str(arg)
 
@@ -71,6 +77,6 @@ if __name__ == "__main__":
         if os.path.exists(virtualworld_ids_file):
             with open(virtualworld_ids_file) as f:
                 for id in json.load(f):
-                    download_images(id, version)
+                    download_images(id, version, save_dir)
     else:
-        download_images(virtualworld_id, version)
+        download_images(virtualworld_id, version, save_dir)
