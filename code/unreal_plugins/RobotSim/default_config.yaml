@@ -1,6 +1,5 @@
 ROBOT_SIM:
 
-  
   # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
   ACCEPTANCE_RADIUS: 0.1
   
@@ -19,7 +18,6 @@ ROBOT_SIM:
   # Angular range within which the vehicle moves forward to the target in [rad]
   FORWARD_MIN_ANGLE: 0.2
   
-  # 
+  # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
   CONTROL_SATURATION: 0.8
-  
   

@@ -1,0 +1,66 @@
+INTERIORSIM:
+  # LAUNCH_MODE: "running_instance"
+  LAUNCH_MODE: "standalone_executable"
+  STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/PlayEnvironment/dist/LinuxNoEditor/PlayEnvironment.sh"
+  TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/unreal_projects/PlayEnvironment/Temp"
+  VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
+  CUSTOM_COMMAND_LINE_ARGUMENTS:
+    - "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json"
+
+SIMULATION_CONTROLLER:
+  AGENT_CONTROLLER_NAME: "SphereAgentController"
+  TASK_NAME: "PointGoalNavigation"
+  
+  VISUALIZER:
+    CAMERA_ACTOR_NAME: "DebugCameraActor" # DebugCameraActor OR ObservationCameraActor
+    SET_CAMERA_POSE: False # True only for DebugCameraActor if required
+
+  SPHERE_AGENT_CONTROLLER:    
+    OBSERVATION_MODE: "mixed" # "mixed" or "physical"
+    AGENT_ACTOR_NAME: "Sphere_2"
+    GOAL_ACTOR_NAME: "Goal"
+    SPHERE:
+      MASS_SCALE: 1.0
+      MAX_ANGULAR_VELOCITY: 1.0
+      LINEAR_DAMPING: 0.1
+      ANGULAR_DAMPING: 0.1
+    MIXED_MODE:
+      OBSERVATION_CAMERA_ACTOR_NAME: "ObservationCameraActor"
+      SET_OBSERVATION_CAMERA_POSE_EGOCENTRIC: True
+      IMAGE_HEIGHT: 128
+      IMAGE_WIDTH: 128
+      ACTION_APPLY_FORCE_SCALE: 100.0
+      ACTION_ROTATE_OBSERVATION_CAMERA_SCALE: 10.0
+      OBSERVATION_CAMERA_POSITION_OFFSET_X: 0.0
+      OBSERVATION_CAMERA_POSITION_OFFSET_Y: 0.0
+      OBSERVATION_CAMERA_POSITION_OFFSET_Z: 5.0
+      OFFSET_TO_GOAL_SCALE: 0.01
+      LINEAR_VELOCITY_SCALE: 0.01
+      YAW_SCALE: 1.0
+    PHYSICAL_MODE:
+      ACTION_APPLY_FORCE_SCALE: 100.0
+      OFFSET_TO_GOAL_SCALE: 0.01
+      LINEAR_VELOCITY_SCALE: 0.01
+
+  POINT_GOAL_NAV_TASK:
+    AGENT_ACTOR_NAME: "Sphere_2"
+    GOAL_ACTOR_NAME: "Goal"
+    RANDOM_SEED: 123
+    REWARD:
+      HIT_GOAL: 100.0
+      HIT_OBSTACLE: -100.0
+      DISTANCE_TO_GOAL_SCALE: 0.00001
+    EPISODE_BEGIN:
+      SPHERE_POSITION_X_MIN: -150.0
+      SPHERE_POSITION_X_MAX: 150.0
+      SPHERE_POSITION_Y_MIN: -150.0
+      SPHERE_POSITION_Y_MAX: 150.0
+      SPHERE_POSITION_Z: 5.0
+      GOAL_POSITION_X_MIN: -350.0
+      GOAL_POSITION_X_MAX: 350.0
+      GOAL_POSITION_Y_MIN: -350.0
+      GOAL_POSITION_Y_MAX: 350.0
+      GOAL_POSITION_Z: 5.0
+      SPAWN_DISTANCE_THRESHOLD: 50.0
+    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor"]
