@@ -6,10 +6,11 @@ public class InteriorSimBridge : ModuleRules
 {
 	public InteriorSimBridge(ReadOnlyTargetRules Target) : base(Target)
 	{
+	    // This helps with build errors due to try/throw in asio caused by disabled exceptions (e.g. C4530 warning on windows)
         bEnableExceptions = true;
 
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-
+        
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
@@ -27,7 +28,13 @@ public class InteriorSimBridge : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				// ... add other public dependencies that you statically link with here ...
+				"Core",
+                // ... add other public dependencies that you statically link with here ...
+                "CoreUObject", "Engine", "InputCore", "ImageWrapper", 
+                "ProceduralMeshComponent",
+                "Landscape", "XmlParser", "APEX", "PhysX", "Foliage", "PhysicsCore",
+                "NavigationSystem","PhysXVehicles",
+                "PhysXVehicleLib", "AIModule"
 			}
 			);
 			
@@ -38,9 +45,13 @@ public class InteriorSimBridge : ModuleRules
 				"Core",
 				"InputCore", // This is required for using EKeys::W, etc 
 				"CoreUObject",
+				"ProceduralMeshComponent", "UMG", "PhysX", "NavigationSystem",
 				"Engine",
 				"RobotSim",
 				"UnrealRL",
+				"Renderer", 
+				"RenderCore",
+				"RHI", "AIModule"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

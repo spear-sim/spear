@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef robotsim_core_StateReporter_hpp
-#define robotsim_core_StateReporter_hpp
+#pragma once
 
 #include <sstream>
 #include <string>
@@ -124,4 +123,3 @@ private:
 };
 
 } //namespace
-#endif

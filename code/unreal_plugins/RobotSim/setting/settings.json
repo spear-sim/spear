@@ -6,10 +6,11 @@
             "UrdfFile": "fetch.xml",
             "EndEffectorLink": "gripper_link",
             "ScaleFactor": 0.5,
-            "EnableKeyboard": true
+            "EnableKeyboard": false
         },
         "SimpleVehicle": {
-            "PawnBP": "/RobotSim/SimpleVehicle/OpenBot/BP_OpenBot.BP_OpenBot_C"
+            "PawnBP": "/RobotSim/SimpleVehicle/OpenBot/BP_OpenBot.BP_OpenBot_C",
+            "EnableKeyboard": true
         }
     },
     "Vehicles": {
@@ -24,9 +25,27 @@
                 "Pitch": 0,
                 "Roll": 0
             },
+            "ActuationParameters": {
+                "GearRatio": 50.0,
+                "MotorVelocityConstant": 65.89,
+                "ControlDeadZone": 5.0,
+                "MaximumMotorTorque": 0.19,
+                "WindingResistance": 0.5,
+                "WindingInductance": 0.5,
+                "ActionScaling": 255,
+                "BatteryVoltage": 12.0
+            },
             "EableRandomSpawn": true,
             "EnableSpawnTracingGround": true,
             "Cameras": {
+                "Smartphone": {
+                    "X": 5,
+                    "Y": 5,
+                    "Z": 5,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 0
+                },
                 "Follow": {
                     "X": -50,
                     "Y": 0,
@@ -35,13 +54,37 @@
                     "Roll": 0,
                     "Yaw": 0
                 },
-                "SideView": {
+                "SideView1": {
                     "X": -50,
                     "Y": -50,
-                    "Z": 0,
+                    "Z": 10,
                     "Pitch": 0,
                     "Roll": 0,
                     "Yaw": 45
+                },
+                "SideView2": {
+                    "X": 50,
+                    "Y": -50,
+                    "Z": 10,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": -45
+                },
+                "SideView3": {
+                    "X": 40,
+                    "Y": -40,
+                    "Z": 10,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": 135
+                },
+                "SideView4": {
+                    "X": 40,
+                    "Y": 40,
+                    "Z": 10,
+                    "Pitch": 0,
+                    "Roll": 0,
+                    "Yaw": -135
                 }
             }
         },

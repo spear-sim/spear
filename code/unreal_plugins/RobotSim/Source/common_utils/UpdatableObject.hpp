@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef robotsim_core_UpdatableObject_hpp
-#define robotsim_core_UpdatableObject_hpp
+#pragma once
 
 #include "common_utils/Common.hpp"
 #include "StateReporter.hpp"
@@ -61,4 +60,4 @@ private:
 };
 
 } //namespace
-#endif
+

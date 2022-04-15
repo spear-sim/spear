@@ -9,7 +9,7 @@ USimpleWheel::USimpleWheel()
     bAffectedByHandbrake = true;
     SteerAngle = 0.f;
 
-    // disable suspension
+    // Disable suspension
     SuspensionMaxRaise = 0.f;
     SuspensionMaxDrop = 0.f;
 }

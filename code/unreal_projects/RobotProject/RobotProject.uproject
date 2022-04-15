@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "4.26",
+	"EngineAssociation": "{0004D954-08D9-EFED-597F-4E9642B929B2}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -12,7 +12,15 @@
 	],
 	"Plugins": [
 		{
+			"Name": "UnrealRL",
+			"Enabled": true
+		},
+		{
 			"Name": "RobotSim",
+			"Enabled": true
+		},
+		{
+			"Name": "InteriorSimBridge",
 			"Enabled": true
 		},
 		{
@@ -29,4 +37,3 @@
 		}
 	]
 }
-

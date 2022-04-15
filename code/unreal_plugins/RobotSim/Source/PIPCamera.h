@@ -1,10 +1,10 @@
 #pragma once
 class ASceneCapture2D;
 
-#include "CoreMinimal.h"
-#include "Components/SceneCaptureComponent2D.h"
-#include "Engine/SceneCapture.h"
 #include "Camera/CameraActor.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "CoreMinimal.h"
+#include "Engine/SceneCapture.h"
 #include "Materials/Material.h"
 
 #include "common_utils/RobotSimSettings.hpp"
@@ -12,20 +12,17 @@ class ASceneCapture2D;
 #include "PIPCamera.generated.h"
 
 UCLASS()
-class ROBOTSIM_API APIPCamera : public ACameraActor
-{
+class ROBOTSIM_API APIPCamera : public ACameraActor {
     GENERATED_BODY()
 public:
     APIPCamera();
     virtual void BeginPlay() override;
 
-    void setupCameraFromSettings(
-        const RobotSim::RobotSimSettings::CameraSetting& camera_setting);
+    void SetupCameraFromSettings(const RobotSim::RobotSimSettings::CameraSetting& camera_setting);
     void SetupCaptureComponent();
-    USceneCaptureComponent2D* GetScemeCaptureComponent();
-    int getIndex();
-    void setIndex(int UpdateIndex);
-
+    USceneCaptureComponent2D* GetSceneCaptureComponent();
+    int GetIndex();
+    void SetIndex(int UpdateIndex);
     void DeactivateCamera();
     void ActivateCamera();
 

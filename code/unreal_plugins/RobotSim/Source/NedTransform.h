@@ -1,26 +1,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/Actor.h"
+#include "Kismet/KismetMathLibrary.h"
 
 #include "common_utils/Common.hpp"
 
-/*
-    Note on coordinate system
-    -------------------------
-    We have following coordinate systems:
-    (1) UU or Unreal Units or Unreal Coordinate system
-    (2) Global NED: This is NED transformation of UU with origin set to 0,0,0
-    (3) Local NED: This is NED transformation of UU with origin set to vehicle's
-   spawning UU location (4) Geo: This is GPS coordinate where UU origin is
-   assigned some geo-coordinate
+/**
+ *   Note on coordinate system
+ *   -------------------------
+ *   We have following coordinate systems:
+ *   (1) UU or Unreal Units or Unreal Coordinate system
+ *   (2) Global NED: This is NED transformation of UU with origin set to 0,0,0
+ *   (3) Local NED: This is NED transformation of UU with origin set to vehicle's
+ *  spawning UU location (4) Geo: This is GPS coordinate where UU origin is
+ *  assigned some geo-coordinate
+ *
+ *   Vehicles are spawned at position specified in settings in global NED
+ */
 
-    Vehicles are spawned at position specified in settings in global NED
-*/
-
-class ROBOTSIM_API NedTransform
-{
+class ROBOTSIM_API NedTransform {
 public:
     typedef RobotSim::Vector3r Vector3r;
     typedef RobotSim::Quaternionr Quaternionr;
@@ -51,14 +50,9 @@ public:
     FTransform getGlobalTransform() const;
 
 private:
-    NedTransform(
-        const AActor* pivot,
-        const FTransform& global_transform,
-        float world_to_meters); // create only through static factory methods
-    FVector
-    toFVector(const Vector3r& vec, float scale, bool convert_from_ned) const;
-    Vector3r
-    toVector3r(const FVector& vec, float scale, bool convert_to_ned) const;
+    NedTransform(const AActor* pivot, const FTransform& global_transform, float world_to_meters); // create only through static factory methods
+    FVector toFVector(const Vector3r& vec, float scale, bool convert_from_ned) const;
+    Vector3r toVector3r(const FVector& vec, float scale, bool convert_to_ned) const;
 
 private:
     FTransform global_transform_;

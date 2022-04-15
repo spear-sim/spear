@@ -1,2 +1,23 @@
 ROBOT_SIM:
-  DUMMY: -1
+
+  # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+  ACCEPTANCE_RADIUS: 0.1
+  
+  # PID proportional gain for the autopilot
+  PROPORTIONAL_GAIN_HEADING: 0.25
+  
+  # PID derivative gain for the autopilot
+  DERIVATIVE_GAIN_HEADING: 0.1
+  
+  # PID proportional gain for the autopilot
+  PROPORTIONAL_GAIN_DIST: 10.0
+  
+  # PID derivative gain for the autopilot
+  DERIVATIVE_GAIN_DIST: 0.1
+  
+  # Angular range within which the vehicle moves forward to the target in [rad]
+  FORWARD_MIN_ANGLE: 0.2
+  
+  # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+  CONTROL_SATURATION: 0.8
+  

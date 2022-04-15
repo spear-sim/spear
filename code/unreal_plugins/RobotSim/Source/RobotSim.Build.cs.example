@@ -84,4 +84,69 @@ public class RobotSim : ModuleRules
             }
         }
     }
+
+    public RobotSim(ReadOnlyTargetRules Target) : base(Target)
+    {
+        // module settings
+        OptimizeCode = CodeOptimization.Never;
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        bEnableExceptions = true;
+
+        
+        PublicIncludePaths.AddRange(
+            new string[] {
+                // ... add public include paths required here ...
+            }
+            );
+                
+        
+        PrivateIncludePaths.AddRange(
+            new string[] {
+                // ... add other private include paths required here ...
+            }
+            );
+            
+        
+        PublicDependencyModuleNames.AddRange(
+            new string[]
+            {
+                "Core",
+                // ... add other public dependencies that you statically link with here ...
+                "CoreUObject", "Engine", "InputCore", "ImageWrapper", 
+                "ProceduralMeshComponent",
+                "Landscape", "XmlParser", "APEX", "PhysX", "Foliage", "PhysicsCore",
+                "NavigationSystem","PhysXVehicles",
+                "PhysXVehicleLib", "AIModule"
+            }
+            );
+            
+        
+        PrivateDependencyModuleNames.AddRange(
+            new string[]
+            {
+                "Core", "CoreUObject",
+                "Engine",
+                "Slate",
+                "SlateCore",
+                // ... add private dependencies that you statically link with here ...
+                "ProceduralMeshComponent",
+                "UMG",  "PhysX",
+                "NavigationSystem",
+                 "Renderer", "RenderCore", "RHI", "AIModule"
+            }
+            );
+        
+        
+        DynamicallyLoadedModuleNames.AddRange(
+            new string[]
+            {
+                // ... add any modules that your module loads dynamically here ...
+            }
+            );
+
+        setupEigen(Target);
+        setupRBDL(Target);
+        setupVHACD(Target);
+    }
+
 }
