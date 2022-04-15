@@ -18,6 +18,10 @@
 		{
 			"Name": "SimulationController",
 			"Enabled": true
+		},
+		{
+			"Name": "RobotSim",
+			"Enabled": true
 		}
 	]
 }

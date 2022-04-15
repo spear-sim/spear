@@ -325,7 +325,7 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
     targetLocationReached_ = false;
 
     // If the waypoint is reached:
-    if ((relativePositionToTarget.Size() * 0.01) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"})) {
+    if ((relativePositionToTarget.Size() * 0.01) < Config::getValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"})) {
         targetLocationReached_ = true;
     }
 
@@ -357,10 +357,10 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
         float yawVel = (FMath::DegreesToRadians(currentOrientation.Yaw) - yaw_) / DeltaTime;
         yaw_ = FMath::DegreesToRadians(currentOrientation.Yaw);
 
-        rightCtrl = -unrealrl::Config::GetValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_HEADING"}) * deltaYaw + unrealrl::Config::GetValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_HEADING"}) * yawVel;
+        rightCtrl = -Config::getValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_HEADING"}) * deltaYaw + Config::getValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_HEADING"}) * yawVel;
 
-        if (std::abs(deltaYaw) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "FORWARD_MIN_ANGLE"})) {
-            forwardCtrl = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_DIST"}) * relativePositionToTarget.Size() * 0.01 - unrealrl::Config::GetValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_DIST"}) * linVel;
+        if (std::abs(deltaYaw) < Config::getValue<float>({"ROBOT_SIM", "FORWARD_MIN_ANGLE"})) {
+            forwardCtrl = Config::getValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_DIST"}) * relativePositionToTarget.Size() * 0.01 - Config::getValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_DIST"}) * linVel;
             forwardCtrl *= std::cosf(deltaYaw); // Full throttle if the vehicle face the objective. Otherwise give more priority to the yaw command.
         }
         else {
@@ -371,8 +371,8 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
         // std::cout << "rightCtrl " << rightCtrl << std::endl;
         // std::cout << "forwardCtrl " << forwardCtrl << std::endl;
     }
-    MoveRight(Clamp(rightCtrl, -unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
-    MoveForward(Clamp(forwardCtrl, -unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
+    MoveRight(Clamp(rightCtrl, -Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
+    MoveForward(Clamp(forwardCtrl, -Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
 }
 
 // Called when the game starts or when spawned

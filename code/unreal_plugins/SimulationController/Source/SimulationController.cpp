@@ -19,6 +19,7 @@
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "OpenBotAgentController.h"
 #include "PointGoalNavTask.h"
 #include "Rpclib.h"
 #include "RpcServer.h"
@@ -112,6 +113,8 @@ void SimulationController::worldBeginPlayEventHandler()
     // read config to decide which type of AgentController to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
+    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+        agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
     } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
         agent_controller_ = std::make_unique<DebugAgentController>(world_);
     } else {

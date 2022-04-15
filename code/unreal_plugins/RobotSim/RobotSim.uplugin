@@ -31,12 +31,12 @@
 			"Enabled": true
 		},
 		{
-			"Name": "UnrealRL",
+			"Name": "PhysXVehicles",
 			"Enabled": true
 		},
 		{
-			"Name": "PhysXVehicles",
+			"Name": "CoreUtils",
 			"Enabled": true
-		}
+		},
 	]
 }

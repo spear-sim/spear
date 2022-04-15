@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{0004D954-08D9-EFED-597F-4E9642B929B2}",
+	"EngineAssociation": "{00046D39-08D9-F0E8-5620-3534E0C29E51}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -12,19 +12,7 @@
 	],
 	"Plugins": [
 		{
-			"Name": "UnrealRL",
-			"Enabled": true
-		},
-		{
-			"Name": "RobotSim",
-			"Enabled": true
-		},
-		{
-			"Name": "InteriorSimBridge",
-			"Enabled": true
-		},
-		{
-			"Name": "PythonScriptPlugin",
+			"Name": "CoreUtils",
 			"Enabled": true
 		},
 		{
@@ -32,7 +20,19 @@
 			"Enabled": true
 		},
 		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true
+		},
+		{
+			"Name": "RobotSim",
+			"Enabled": true
+		},
+		{
 			"Name": "SequencerScripting",
+			"Enabled": true
+		},
+		{
+			"Name": "SimulationController",
 			"Enabled": true
 		}
 	]

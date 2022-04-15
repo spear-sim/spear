@@ -6,7 +6,6 @@
 #include "GameFramework/Pawn.h"
 #include "NavigationSystem.h"
 
-#include "Brain.h"
 #include "Config.h"
 #include "PIPCamera.h"
 #include "PawnEvents.h"
