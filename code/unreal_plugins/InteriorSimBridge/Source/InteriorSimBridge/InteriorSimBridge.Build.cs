@@ -34,7 +34,7 @@ public class InteriorSimBridge : ModuleRules
                 "ProceduralMeshComponent",
                 "Landscape", "XmlParser", "APEX", "PhysX", "Foliage", "PhysicsCore",
                 "NavigationSystem","PhysXVehicles",
-                "PhysXVehicleLib", "AIModule"
+                "PhysXVehicleLib"
 			}
 			);
 			
@@ -51,7 +51,7 @@ public class InteriorSimBridge : ModuleRules
 				"UnrealRL",
 				"Renderer", 
 				"RenderCore",
-				"RHI", "AIModule"
+				"RHI"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
