@@ -1,6 +1,5 @@
 
-#include <memory>
-
+#include "SimModeBase.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/ObjectLibrary.h"
 #include "Engine/World.h"
@@ -13,7 +12,7 @@
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
 #include "Runtime/Launch/Resources/Version.h"
-#include "SimModeBase.h"
+#include <memory>
 
 ASimModeBase::ASimModeBase()
 {

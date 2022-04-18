@@ -1,6 +1,5 @@
 #pragma once
 
-#include "AIController.h"
 #include "CoreMinimal.h"
 #include "Engine/CollisionProfile.h"
 #include "GameFramework/Pawn.h"

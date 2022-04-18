@@ -6,13 +6,13 @@ using System.IO;
 
 public class RobotSim : ModuleRules
 {
-    public const String EIGEN_INCLUDE_DIR = "/Users/mroberts/code/github/interiorsim/code/third_party/libeigen";
+    public const String EIGEN_INCLUDE_DIR = "../ThirdParty/libeigen";
 
-    public const String RBDL_INCLUDE_DIR = "/Users/mroberts/code/github/interiorsim/code/third_party/rbdl/include";
-    public const String RBDL_CONFIG_INCLUDE_DIR = "/Users/mroberts/code/github/interiorsim/code/third_party/rbdl/build/include";
-    public const String RBDL_URDF_READER_INCLUDE_DIR = "/Users/mroberts/code/github/interiorsim/code/third_party";
-    public const String RBDL_LIB = "/Users/mroberts/code/github/interiorsim/code/third_party/rbdl/build/librbdl.a";
-    public const String RBDL_URDF_READER_LIB = "/Users/mroberts/code/github/interiorsim/code/third_party/rbdl/build/addons/urdfreader/librbdl_urdfreader.a";
+    public const String RBDL_INCLUDE_DIR = "../ThirdParty/rbdl/include";
+    public const String RBDL_CONFIG_INCLUDE_DIR = "../ThirdParty/rbdl/build/include";
+    public const String RBDL_URDF_READER_INCLUDE_DIR = "../ThirdParty";
+    public const String RBDL_LIB = "../ThirdParty/rbdl/build/librbdl.a";
+    public const String RBDL_URDF_READER_LIB = "../ThirdParty/rbdl/build/addons/urdfreader/librbdl_urdfreader.a";
 
     public RobotSim(ReadOnlyTargetRules Target) : base(Target)
     {
@@ -128,6 +128,7 @@ public class RobotSim : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "UnrealRL",
                 // ... add private dependencies that you statically link with here ...
                 "ProceduralMeshComponent",
                 "UMG",  "PhysX",
