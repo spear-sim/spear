@@ -26,7 +26,6 @@ code/unreal_plugins/CoreUtils/ThirdParty
 
 code/unreal_plugins/RobotSim/Binaries
 code/unreal_plugins/RobotSim/Intermediate
-code/unreal_plugins/RobotSim/Source/RobotSim.Build.cs
 code/unreal_plugins/RobotSim/ThirdParty
 
 code/unreal_plugins/SimulationController/Binaries
