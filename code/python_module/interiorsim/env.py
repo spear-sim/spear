@@ -60,11 +60,13 @@ class Env(gym.Env):
         return obs, reward, is_done, None
 
     def reset(self):
+
         self._begin_tick()
         self._reset()
         self._tick()
         obs = self._get_observation()
         self._end_tick()
+
         return obs
 
     # need to override gym.Env member function
