@@ -6,6 +6,7 @@
 #include "Task.h"
 
 class AActor;
+struct StepInfo;
 class UWorld;
 class UActorHitEvent;
 
@@ -22,6 +23,7 @@ public:
     float getReward() const override;
     bool isEpisodeDone() const override;
     void reset() override;
+    StepInfo getStepInfo() override;
 
     // handles collision related logic
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);

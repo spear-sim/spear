@@ -122,17 +122,17 @@ std::map<std::string, Box> DebugAgentController::getActionSpace() const
     std::map<std::string, Box> action_space;
     
     Box box;
-    box.low = std::numeric_limits<float>::lowest();
-    box.high = std::numeric_limits<float>::max();
-    box.shape = {3};
-    box.dtype = DataType::Float32;
+    box.low_ = std::numeric_limits<float>::lowest();
+    box.high_ = std::numeric_limits<float>::max();
+    box.shape_ = {3};
+    box.dtype_ = DataType::Float32;
     action_space["set_location"] = std::move(box);
 
     box = Box();
-    box.low = std::numeric_limits<float>::lowest();
-    box.high = std::numeric_limits<float>::max();
-    box.shape = {1};
-    box.dtype = DataType::Float32;
+    box.low_ = std::numeric_limits<float>::lowest();
+    box.high_ = std::numeric_limits<float>::max();
+    box.shape_ = {1};
+    box.dtype_ = DataType::Float32;
     action_space["apply_force"] = std::move(box);
 
     return action_space;
@@ -143,28 +143,28 @@ std::map<std::string, Box> DebugAgentController::getObservationSpace() const
     std::map<std::string, Box> observation_space;
 
     Box box;
-    box.low = std::numeric_limits<float>::lowest();
-    box.high = std::numeric_limits<float>::max();
-    box.shape = {3};
-    box.dtype = DataType::Float32;
+    box.low_ = std::numeric_limits<float>::lowest();
+    box.high_ = std::numeric_limits<float>::max();
+    box.shape_ = {3};
+    box.dtype_ = DataType::Float32;
     observation_space["location"] = std::move(box);
 
     box = Box();
-    box.low = 0;
-    box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}),
+    box.low_ = 0;
+    box.high_ = 255;
+    box.shape_ = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}),
                  Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}),
                  3};
-    box.dtype = DataType::UInteger8;
+    box.dtype_ = DataType::UInteger8;
     observation_space["camera_1_image"] = std::move(box);
 
     box = Box();
-    box.low = 0;
-    box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}),
+    box.low_ = 0;
+    box.high_ = 255;
+    box.shape_ = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}),
                  Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}),
                  3};
-    box.dtype = DataType::UInteger8;
+    box.dtype_ = DataType::UInteger8;
     observation_space["camera_2_image"] = std::move(box);
 
     return observation_space;
@@ -271,4 +271,13 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
     observation["camera_2_image"] = std::move(image);
 
     return observation;
+}
+
+void DebugAgentController::reset()
+{
+    UStaticMeshComponent* sphere_static_mesh_component_ = static_cast<UStaticMeshComponent*>(agent_actor_->GetRootComponent());
+    sphere_static_mesh_component_->SetPhysicsLinearVelocity(FVector(0), false);
+    sphere_static_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector(0), false);
+    sphere_static_mesh_component_->GetBodyInstance()->ClearTorques();
+    sphere_static_mesh_component_->GetBodyInstance()->ClearForces();
 }

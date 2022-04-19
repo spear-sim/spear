@@ -317,12 +317,19 @@ void SimulationController::bindFunctionsToRpcServer()
 
     rpc_server_->bindSync("reset", [this]() -> void {
         ASSERT(task_);
+        ASSERT(agent_controller_);
         task_->reset();
+        agent_controller_->reset();
     });
 
     rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
         ASSERT(task_);
         return task_->isEpisodeDone();
+    });
+
+    rpc_server_->bindSync("getStepInfo", [this]() -> StepInfo {
+        ASSERT(task_);
+        return task_->getStepInfo();
     });
 }
 

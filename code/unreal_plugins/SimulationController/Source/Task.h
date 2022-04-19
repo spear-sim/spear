@@ -1,5 +1,7 @@
 #pragma once
 
+struct StepInfo;
+
 class Task
 {
 public:
@@ -11,4 +13,5 @@ public:
     virtual float getReward() const = 0;
     virtual bool isEpisodeDone() const = 0;
     virtual void reset() = 0;
+    virtual StepInfo getStepInfo() = 0;
 };

@@ -11,6 +11,8 @@
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <PxRigidDynamic.h>
+#include <SimpleWheeledVehicleMovementComponent.h>
 #include <UObject/UObjectGlobals.h>
 
 #include <PIPCamera.h>
@@ -121,10 +123,10 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
     std::map<std::string, Box> action_space;
     Box box;
     
-    box.low = -1.f;
-    box.high = 1.f;
-    box.shape = {2};
-    box.dtype = DataType::Float32;
+    box.low_ = -1.f;
+    box.high_ = 1.f;
+    box.shape_ = {2};
+    box.dtype_ = DataType::Float32;
     action_space["apply_voltage"] = std::move(box);
 
     return action_space;
@@ -136,25 +138,25 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     Box box;
     
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {5};
-        box.dtype = DataType::Float32;
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.shape_ = {5};
+        box.dtype_ = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
 
         box = Box();
-        box.low = 0;
-        box.high = 255;
-        box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+        box.low_ = 0;
+        box.high_ = 255;
+        box.shape_ = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
                      Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
                      3};
-        box.dtype = DataType::UInteger8;
+        box.dtype_ = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {5};
-        box.dtype = DataType::Float32;
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.shape_ = {5};
+        box.dtype_ = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
     } else {
         ASSERT(false);
@@ -170,8 +172,8 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
     ASSERT(isfinite(action.at("apply_voltage").at(1)));
 
     // @TODO: This can be checked in python?
-    ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
-    ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
+    ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low_ && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high_, "%f", action.at("apply_voltage").at(0));
+    ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low_ && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high_, "%f", action.at("apply_voltage").at(1));
 
     static_cast<ASimpleVehiclePawn*>(agent_actor_)->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
 }
@@ -267,4 +269,25 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     }
     
     return observation;
+}
+
+void OpenBotAgentController::reset()
+{
+    USimpleWheeledVehicleMovementComponent* vehicle_movement_component = static_cast<USimpleWheeledVehicleMovementComponent*>(static_cast<ASimpleVehiclePawn*>(agent_actor_)->GetVehicleMovementComponent());
+
+    PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component->PVehicle->getRigidDynamicActor();
+
+    //Set the rigid body to rest and clear all the accumulated forces and impulses.
+	if(!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
+	{
+		rigid_body_dynamic_actor->setLinearVelocity(PxVec3(0,0,0));
+		rigid_body_dynamic_actor->setAngularVelocity(PxVec3(0,0,0));
+		rigid_body_dynamic_actor->clearForce(PxForceMode::eACCELERATION);
+		rigid_body_dynamic_actor->clearForce(PxForceMode::eVELOCITY_CHANGE);
+		rigid_body_dynamic_actor->clearTorque(PxForceMode::eACCELERATION);
+		rigid_body_dynamic_actor->clearTorque(PxForceMode::eVELOCITY_CHANGE);
+	}
+
+    vehicle_movement_component->PVehicle->mWheelsDynData.setToRestState();
+    // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
 }

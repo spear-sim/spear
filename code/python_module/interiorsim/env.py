@@ -55,9 +55,10 @@ class Env(gym.Env):
         obs = self._get_observation()
         reward = self._get_reward()
         is_done = self._is_episode_done()
+        step_info = self._get_step_info()
         self._end_tick()
 
-        return obs, reward, is_done, None
+        return obs, reward, is_done, step_info
 
     def reset(self):
 
@@ -288,10 +289,10 @@ class Env(gym.Env):
         gym_spaces_dict = {}
 
         for obs_name, obs_info in observation_space.items():
-            low = obs_info["low"]
-            high = obs_info["high"]
-            shape = tuple(x for x in obs_info["shape"])
-            dtype = self._get_numpy_dtype(obs_info["dtype"]).type
+            low = obs_info["low_"]
+            high = obs_info["high_"]
+            shape = tuple(x for x in obs_info["shape_"])
+            dtype = self._get_numpy_dtype(obs_info["dtype_"]).type
             gym_spaces_dict[obs_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
@@ -306,10 +307,10 @@ class Env(gym.Env):
         gym_spaces_dict = {}
 
         for action_name, action_info in action_space.items():
-            low = action_info["low"]
-            high = action_info["high"]
-            shape = tuple(x for x in action_info["shape"])
-            dtype = self._get_numpy_dtype(action_info["dtype"]).type
+            low = action_info["low_"]
+            high = action_info["high_"]
+            shape = tuple(x for x in action_info["shape_"])
+            dtype = self._get_numpy_dtype(action_info["dtype_"]).type
             gym_spaces_dict[action_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
@@ -345,3 +346,6 @@ class Env(gym.Env):
 
     def _is_episode_done(self):
         return self._client.call("isEpisodeDone")
+
+    def _get_step_info(self):
+        return self._client.call("getStepInfo")

@@ -7,6 +7,7 @@
 
 #include "ActorHitEvent.h"
 #include "Assert.h"
+#include "Box.h"
 #include "Config.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
@@ -136,12 +137,15 @@ void PointGoalNavTask::reset()
 
     agent_actor_->SetActorLocation(agent_position);
     goal_actor_->SetActorLocation(goal_position);
+}
 
-    // UStaticMeshComponent* static_mesh_component = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
-    // static_mesh_component->SetPhysicsLinearVelocity(FVector(0), false);
-    // static_mesh_component->SetPhysicsAngularVelocityInRadians(FVector(0), false);
-    // static_mesh_component->GetBodyInstance()->ClearTorques();
-    // static_mesh_component->GetBodyInstance()->ClearForces();
+StepInfo PointGoalNavTask::getStepInfo()
+{
+    StepInfo step_info;
+    step_info.hit_goal_ = hit_goal_;
+    step_info.hit_obstacle_ = hit_obstacle_;
+
+    return step_info;
 }
 
 void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
