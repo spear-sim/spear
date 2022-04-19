@@ -1,14 +1,60 @@
 INTERIORSIM:
-  # LAUNCH_MODE: "running_instance"
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/InteriorEnvironment/dist/LinuxNoEditor/InteriorEnvironment.sh"
-  TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/unreal_projects/InteriorEnvironment/Temp"
-  VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
-  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
-  CUSTOM_COMMAND_LINE_ARGUMENTS:
-    - "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json"
+  STANDALONE_EXECUTABLE: "/Users/mroberts/code/github/interiorsim/code/unreal_projects/InteriorEnvironment/Standalone-Development/MacNoEditor/InteriorEnvironment.app"
+  TEMP_DIR: "/Users/mroberts/code/github/interiorsim/code/unreal_projects/InteriorEnvironment/Temp"
+
 SIMULATION_CONTROLLER:
   AGENT_CONTROLLER_NAME: "SphereAgentController"
   TASK_NAME: "PointGoalNavigation"
+
   POINT_GOAL_NAV_TASK:
-    RANDOM_SEED: 123
+    AGENT_ACTOR_NAME: "Sphere_2"
+    GOAL_ACTOR_NAME: "Cone_5"
+    REWARD:
+      HIT_GOAL: 100.0
+      HIT_OBSTACLE: -100.0
+      DISTANCE_TO_GOAL_SCALE: 0.00001
+    EPISODE_BEGIN:
+      AGENT_POSITION_X_MIN: -300.0
+      AGENT_POSITION_X_MAX: -220.0
+      AGENT_POSITION_Y_MIN: -200.0
+      AGENT_POSITION_Y_MAX: -120.0
+      AGENT_POSITION_Z: 5.0
+      GOAL_POSITION_X_MIN: -300.0
+      GOAL_POSITION_X_MAX: -220.0
+      GOAL_POSITION_Y_MIN: -200.0
+      GOAL_POSITION_Y_MAX: -120.0
+      GOAL_POSITION_Z: 5.0
+      SPAWN_DISTANCE_THRESHOLD: 50.0
+    OBSTACLE_IGNORE_ACTOR_NAMES: [ "Architecture_SMid0_PMid0_INSTid1227_obj19", "6KAPD2ZVAZSUSPTUKE888888_SMid116_PMid1009_INSTid1080_obj0_0" ]
+
+  SPHERE_AGENT_CONTROLLER:    
+    OBSERVATION_MODE: "mixed" # "mixed" or "physical"
+    AGENT_ACTOR_NAME: "Sphere_2"
+    GOAL_ACTOR_NAME: "Cone_5"
+    SPHERE:
+      MASS_SCALE: 1.0
+      MAX_ANGULAR_VELOCITY: 1.0
+      LINEAR_DAMPING: 0.1
+      ANGULAR_DAMPING: 0.1
+    MIXED_MODE:
+      OBSERVATION_CAMERA_ACTOR_NAME: "ObservationCameraActor"
+      SET_OBSERVATION_CAMERA_POSE_EGOCENTRIC: True
+      IMAGE_HEIGHT: 128
+      IMAGE_WIDTH: 128
+      ACTION_APPLY_FORCE_SCALE: 1000.0
+      ACTION_ROTATE_OBSERVATION_CAMERA_SCALE: 10.0
+      OBSERVATION_CAMERA_POSITION_OFFSET_X: 0.0
+      OBSERVATION_CAMERA_POSITION_OFFSET_Y: 0.0
+      OBSERVATION_CAMERA_POSITION_OFFSET_Z: 5.0
+      OFFSET_TO_GOAL_SCALE: 0.01
+      LINEAR_VELOCITY_SCALE: 0.01
+      YAW_SCALE: 1.0
+    PHYSICAL_MODE:
+      ACTION_APPLY_FORCE_SCALE: 1000.0
+      OFFSET_TO_GOAL_SCALE: 0.01
+      LINEAR_VELOCITY_SCALE: 0.01
+
+  VISUALIZER:
+    CAMERA_ACTOR_NAME: "DebugCameraActor" # "DebugCameraActor" or "ObservationCameraActor"
+    SET_CAMERA_POSE: False
