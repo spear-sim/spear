@@ -28,8 +28,7 @@ code/unreal_plugins/SimulationController/ThirdParty
 
 code/unreal_projects/InteriorEnvironment/Binaries
 code/unreal_projects/InteriorEnvironment/Build
-code/unreal_projects/InteriorEnvironment/Content/Maps
-code/unreal_projects/InteriorEnvironment/Content/Scene
+code/unreal_projects/InteriorEnvironment/Content
 code/unreal_projects/InteriorEnvironment/DerivedDataCache
 code/unreal_projects/InteriorEnvironment/Intermediate
 code/unreal_projects/InteriorEnvironment/Plugins
