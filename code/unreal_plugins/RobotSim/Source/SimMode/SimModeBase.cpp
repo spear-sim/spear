@@ -16,6 +16,8 @@ ASimModeBase::ASimModeBase()
     static ConstructorHelpers::FClassFinder<AActor> sky_sphere_class(
         TEXT("Blueprint'/Engine/EngineSky/BP_Sky_Sphere'"));
     sky_sphere_class_ = sky_sphere_class.Succeeded() ? sky_sphere_class.Class : nullptr;
+
+    this->level_manager_ = CreateDefaultSubobject<AVWLevelManager>(TEXT("AVWLevelManager"));
 }
 
 void ASimModeBase::BeginPlay()
@@ -198,7 +200,7 @@ void ASimModeBase::GetAllMaps(TArray<FString>& MapList) const
     }
 #else
     // only scan .pak for standalone. Could cause error in Editor note that maps from might be included twice
-    levelManager->getAllMapsInPak(MapList);
+    level_manager_->getAllMapsInPak(MapList);
 #endif
     // sort the output to ensure maps always in the same order.
     MapList.Sort();

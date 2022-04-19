@@ -27,7 +27,7 @@ public:
     virtual void Tick(float DeltaSeconds) override;
 
     const NedTransform& getGlobalNedTransform();
-	
+
 protected: // must overrides
     typedef RobotSim::RobotSimSettings RobotSimSettings;
 
@@ -83,5 +83,5 @@ private:
 
 private:
     UPROPERTY()
-    AVWLevelManager* levelManager;
+    AVWLevelManager* level_manager_;
 };

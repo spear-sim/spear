@@ -1,5 +1,31 @@
 #include "VWLevelManager.h"
 
+AVWLevelManager::AVWLevelManager()
+{
+    ConstructorHelpers::FObjectFinder<UMaterialInterface> finder_semantic(
+        TEXT("Material'/Game/Koolab/Materials/Segmentation/SegmentationMaterial.SegmentationMaterial'"));
+    if (finder_semantic.Succeeded()) {
+        this->pp_material_semantic_ = finder_semantic.Object;
+    }
+    ConstructorHelpers::FObjectFinder<UMaterialInterface> finder_diffuse(
+        TEXT("Material'/VirtualWorldManager/Koolab/Materials/CelSHader/PP_Diffuse.PP_Diffuse'"));
+    if (finder_diffuse.Succeeded()) {
+        this->pp_material_diffuse_ = finder_diffuse.Object;
+    }
+
+    ConstructorHelpers::FObjectFinder<UMaterial> finder_cel_shader(
+        TEXT("Material'/VirtualWorldManager/Koolab/Materials/CelSHader/PP_CelShader.PP_CelShader'"));
+    if (finder_cel_shader.Succeeded()) {
+        this->pp_material_cel_shader_ = finder_cel_shader.Object;
+    }
+
+    ConstructorHelpers::FObjectFinder<UMaterialInterface> finder_painter(
+        TEXT("MaterialInstanceConstant'/VirtualWorldManager/Koolab/Materials/Painter/PPI_Kuwahara.PPI_Kuwahara'"));
+    if (finder_painter.Succeeded()) {
+        this->pp_material_painter_ = finder_painter.Object;
+    }
+}
+
 bool AVWLevelManager::mountPakFromPath(const FString& PakPath)
 {
     if (FCoreDelegates::MountPak.IsBound()) {
@@ -63,5 +89,21 @@ void AVWLevelManager::getAllMapsInPak(TArray<FString>& map_list)
                 }
             }
         }
+    }
+}
+
+UMaterialInterface* AVWLevelManager::getPostProcessMaterial(EPostProcessMaterialType material_type)
+{
+    switch (material_type) {
+    case Semantic:
+        return this->pp_material_semantic_;
+    case Diffuse:
+        return this->pp_material_diffuse_;
+    case CelShader:
+        return this->pp_material_cel_shader_;
+    case Painter:
+        return this->pp_material_painter_;
+    default:
+        return NULL;
     }
 }
