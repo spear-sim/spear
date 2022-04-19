@@ -6,9 +6,9 @@
 1. Run SceneManager/scene_manager.py to download virtual worlds to `Content/`.
 
 	```bash
-        scene_manager.py -i <option virtualworld-id> -v <necessary version-info> -d <option is_download_ddc> -p <proxy_host:proxy_port>
+        python scene_manager.py -i <option virtualworld-id> -v <necessary version-info> -d <option is_download_ddc> -p <proxy_host:proxy_port> -o <ouputDir>
         # for example
-        scene_manager.py -i 235554690 -v v1 -d true
+        python scene_manager.py -i 235554690 -v v4 -d true -o ./Saved/
 	```
 
    -i: optional virtualworld-id. All available id lists can be found in SceneManager/Data/virtualworld-ids.json. If not specified, all virtualworld-ids will be loaded.
@@ -48,21 +48,24 @@
 	With proxy, command would look something like:
 	```bash
 	python scene_manager.py -i 235554690 -v v1 -d true -p hostname:port
+
 	```
+   `-o`: optional. Content saved directory. Default saved directory is `Saved/<version>/<relative_file_path>`.
+
 
 2. If download fails or there are materials missing in Virtual World (mostly due to internet issues), try run 'scene_manager.py -v v1 -f true -i <virtualworld-id>' to reload the scene. Download log can be found in `Saved/UpdateLog/{virtualworld-id}_failed.txt`.
+3. Start from v4, SceneManger delivers virtual worlds in `.pak` format which can be used directly in standalone executable without scene cooking step. Currently, it only supports Linux.
 
 ### Scene Manager Metadata
 1. download basic metrics by following script
 ```
-scene_manager_meta.py -v <version> -i <virtual-world-id>  -p <proxy>
+python scene_manager_meta.py -v <version> -i <virtual-world-id>  -p <proxy>
 # e.g.
-scene_manager_meta.py -v v4
+python scene_manager_meta.py -v v2
 ```
 * `-v`: required. VirtualWorld version in format of v{n}, e.g. v4. The latest version information is in /VirtualWrold/SceneManager/dataset-repo-update.log.  
 * `-i`: optional. Specify to download metadata for VirtualWorld. if not use -i, the script will load all virtualworld-ids in /VirtualWrold/SceneManager/Data/virtualworld-ids.json.
 * `-p`: optional. setup proxy
-* `-o`: optional. Content saved directory. Default saved directory is `Saved/<version>/<relative_file_path>`.
 
 ### Parse Metadata
 parse all available meta.json and output statistics result: sum and average based on style
