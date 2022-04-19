@@ -4,13 +4,23 @@
 #include "IPlatformFilePak.h"
 #include "VWLevelManager.generated.h"
 
+enum EPostProcessMaterialType
+{
+    Default = 0,
+	Semantic,
+    Diffuse,
+    CelShader,
+    Painter
+};
+
 UCLASS()
 class VIRTUALWORLDMANAGER_API AVWLevelManager : public AActor
 {
 public:
     GENERATED_BODY()
+    AVWLevelManager();
 
-    bool MountPakFromPath(const FString& PakPath);
+    bool mountPakFromPath(const FString& pak_path);
 
-    void GetAllMapsInPak(TArray<FString>& MapList);
+    void getAllMapsInPak(TArray<FString>& map_list);
 };

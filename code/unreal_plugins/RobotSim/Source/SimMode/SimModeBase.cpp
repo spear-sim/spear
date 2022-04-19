@@ -198,7 +198,7 @@ void ASimModeBase::GetAllMaps(TArray<FString>& MapList) const
     }
 #else
     // only scan .pak for standalone. Could cause error in Editor note that maps from might be included twice
-    levelManager->GetAllMapsInPak(MapList);
+    levelManager->getAllMapsInPak(MapList);
 #endif
     // sort the output to ensure maps always in the same order.
     MapList.Sort();
