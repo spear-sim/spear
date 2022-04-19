@@ -514,10 +514,15 @@ def get_version_process_mode(version):
         return "unknown"
 
 
-def download_file_by_path(vw_id, version, path, is_temp, is_force_update=False):
+def download_file_by_path(vw_id, version, path, output_directory="", is_temp=True, is_force_update=False):
+    """
+        return: local file path
+    """
     remote_url = f"{CDN_API}{version}/{path}"
-    folder_path = TEMP_FOLDER if is_temp else PROJECT_SAVED_FOLDER
-    local_path = os.path.abspath(os.path.join(folder_path, version, path))
+    # use user specified directory for target files
+    folder_path = TEMP_FOLDER if is_temp else (
+        output_directory if output_directory is not None else PROJECT_SAVED_FOLDER)
+    local_path = os.path.abspath(os.path.join(folder_path, version, vw_id, path))
     local_dir, fname = os.path.split(local_path)
     create_folder(local_dir)
     if not is_force_update and os.path.exists(local_path):
@@ -529,7 +534,10 @@ def download_file_by_path(vw_id, version, path, is_temp, is_force_update=False):
 
 
 # download single virtual world
-def download_single_virtualworld_pak(vw_id, version, is_force_update=False):
+def download_single_virtualworld_pak(vw_id, version, param=None):
+    if param is None:
+        param = {}
+
     # download info for basic info and  asset download path
     data_relative_path = f"info/{vw_id}_info.json"
     data_local_path = download_file_by_path(vw_id, version, data_relative_path, is_temp=True)
@@ -543,8 +551,9 @@ def download_single_virtualworld_pak(vw_id, version, is_force_update=False):
     assets_relative_path = vw_data[asset_mode]
     result_local_path = []
     for asset_relative_path in assets_relative_path:
-        asset_local_path = download_file_by_path(vw_id, version, asset_relative_path, is_temp=False,
-                                                 is_force_update=is_force_update)
+        asset_local_path = download_file_by_path(vw_id, version, asset_relative_path,
+                                                 output_directory=param.get("output_directory"), is_temp=False,
+                                                 is_force_update=param.get("is_force_update"))
         if asset_local_path is None:
             print(f"download asset failed for {vw_id}: {asset_relative_path}")
         else:
@@ -560,7 +569,9 @@ e.g: scene_manager.py -v v1
  -i: Specify to download a VirtualWorld. if not use -i, the script will load all virtualworld-ids in /VirtualWrold/SceneManager/Data/virtualworld-ids.json.
  -v: it shoud be v1 v2 or v{n}. The newly version information in /VirtualWrold/SceneManager/dataset-repo-update.log.
  -d: if you want to donwload DerivedDataCache, set '-d true'. 
- -f: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version information(MD5 in it) to remote version information and decide whether to download asset."""
+ -f: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version information(MD5 in it) to remote version information and decide whether to download asset.
+ -o: content saved directory, content will be saved at `<output_dir>/<version>/<relative_file_path>`. if not specified, content will be saved in Saved/<version>/<relative_file_path>
+"""
     )
     sys.exit(2)
 
@@ -568,14 +579,17 @@ e.g: scene_manager.py -v v1
 if __name__ == "__main__":
     version = ""
     virtualworld_id = ""
-    is_down_ddc = False
-    is_force_update = False
+    param = {
+        "output_directory": "",
+        "is_down_ddc": False,
+        "is_force_update": False
+    }
 
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
-            "h:i:v:d:f:p:",
-            ["help=", "infile=", "version=", "downDDC=", "forceUpdate=", "proxy="],
+            "h:i:v:d:f:p:o:",
+            ["help=", "infile=", "version=", "downDDC=", "forceUpdate=", "proxy=", "outputDir="],
         )
     except getopt.GetoptError:
         print_help()
@@ -590,10 +604,12 @@ if __name__ == "__main__":
                 version = arg
         elif opt in ("-f", "--forceUpdate"):
             if arg in ["true", "True"]:
-                is_force_update = True
+                param["is_force_update"] = True
         elif opt in ("-d", "--downDDC"):
             if arg in ["true", "True"]:
-                is_down_ddc = True
+                param["is_down_ddc"] = True
+        elif opt in ("-o", "--outputDir"):
+            param["output_directory"] = str(arg)
         elif opt in ("-p", "--proxy"):
             PROXY_URL = str(arg)
 
@@ -613,11 +629,11 @@ if __name__ == "__main__":
                 with open(virtualworld_ids_file) as f:
                     for id in json.load(f):
                         download_single_virtualworld(
-                            id, version, is_down_ddc, is_force_update
+                            id, version, param["is_down_ddc"], param["is_force_update"]
                         )
         else:
             download_single_virtualworld(
-                virtualworld_id, version, is_down_ddc, is_force_update
+                virtualworld_id, version, param["is_down_ddc"], param["is_force_update"]
             )
     elif mode == "pak":
         if virtualworld_id == "":
@@ -628,11 +644,11 @@ if __name__ == "__main__":
                 with open(virtualworld_ids_file) as f:
                     for id in json.load(f):
                         download_single_virtualworld_pak(
-                            id, version, is_force_update
+                            id, version, param
                         )
         else:
             download_single_virtualworld_pak(
-                virtualworld_id, version, is_force_update
+                virtualworld_id, version, param
             )
     else:
         print(f"unknown process mode: {version}")

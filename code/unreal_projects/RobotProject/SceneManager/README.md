@@ -57,11 +57,12 @@
 ```
 scene_manager_meta.py -v <version> -i <virtual-world-id>  -p <proxy>
 # e.g.
-scene_manager_meta.py -v v2
+scene_manager_meta.py -v v4
 ```
-* `-v`: required. VirtualWorld version in format of v{n}, e.g. v1, v2. The latest version information is in /VirtualWrold/SceneManager/dataset-repo-update.log.  
+* `-v`: required. VirtualWorld version in format of v{n}, e.g. v4. The latest version information is in /VirtualWrold/SceneManager/dataset-repo-update.log.  
 * `-i`: optional. Specify to download metadata for VirtualWorld. if not use -i, the script will load all virtualworld-ids in /VirtualWrold/SceneManager/Data/virtualworld-ids.json.
 * `-p`: optional. setup proxy
+* `-o`: optional. Content saved directory. Default saved directory is `Saved/<version>/<relative_file_path>`.
 
 ### Parse Metadata
 parse all available meta.json and output statistics result: sum and average based on style
