@@ -31,7 +31,7 @@ Contents:
 Time:20211115
 Version: v2
 Contents:
-    1. We use the baking method instead of the RTX to sovle GI in version v2, becase RTX is not supported in Linux platform.
+    1. We use the baking method instead of the RTX to solve GI in version v2, because RTX is not supported in Linux platform.
     2. Need change ./RobotProject/Config/DefaultEngine.ini to support baking method.
         From RTX method setting in v1:
             [/Script/Engine.RendererSettings]
@@ -57,3 +57,11 @@ Time:20211124
 Version: v2
 Contents:
     1. Upload another 250 virtualworlds from '235564255' to '248188049' in ./Data/virtualworld-ids.json file by DLC. So there are totally 300 virtualworlds in v2.
+
+Time:20220407
+Version: v3
+Contents:
+    v3 uses baking method, major updates are:
+        1. Replacing assets with IP issue via Domain Randomization.
+        2. Assets physical status correction.
+        3. Refine transparent material.

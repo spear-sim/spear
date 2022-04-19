@@ -1,3 +1,6 @@
+__pycache__
+.ipynb_checkpoints
+
 code/experiments/debug_synchronization_model/DebugProject/Binaries
 code/experiments/debug_synchronization_model/DebugProject/Build
 code/experiments/debug_synchronization_model/DebugProject/DerivedDataCache
@@ -9,23 +12,19 @@ code/experiments/debug_synchronization_model/DebugProject/Temp
 code/experiments/debug_synchronization_model/DebugProject/user_config.yaml
 code/experiments/debug_synchronization_model/DebugProject/.vscode
 
-code/experiments/srcc/jupyter/my_habitat_baselines/__pycache__
-code/experiments/srcc/jupyter/imagenet/__pycache__
-code/experiments/srcc/jupyter/.ipynb_checkpoints
-code/experiments/srcc/jupyter/__pycache__
-code/experiments/srcc/python/my_habitat_baselines/__pycache__
-code/experiments/srcc/python/imagenet/__pycache__
-code/experiments/srcc/python/__pycache__
+code/python_module/interiorsim.egg-info
 
 code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
-code/unreal_plugins/CoreUtils/Source/CoreUtils.Build.cs
+code/unreal_plugins/CoreUtils/ThirdParty
+
 code/unreal_plugins/RobotSim/Binaries
 code/unreal_plugins/RobotSim/Intermediate
-code/unreal_plugins/RobotSim/Source/RobotSim.Build.cs
+code/unreal_plugins/RobotSim/ThirdParty
+
 code/unreal_plugins/SimulationController/Binaries
 code/unreal_plugins/SimulationController/Intermediate
-code/unreal_plugins/SimulationController/Source/SimulationController.Build.cs
+code/unreal_plugins/SimulationController/ThirdParty
 
 code/unreal_projects/InteriorEnvironment/Binaries
 code/unreal_projects/InteriorEnvironment/Build
@@ -33,10 +32,12 @@ code/unreal_projects/InteriorEnvironment/Content/Maps
 code/unreal_projects/InteriorEnvironment/Content/Scene
 code/unreal_projects/InteriorEnvironment/DerivedDataCache
 code/unreal_projects/InteriorEnvironment/Intermediate
+code/unreal_projects/InteriorEnvironment/Plugins
 code/unreal_projects/InteriorEnvironment/Saved
 code/unreal_projects/InteriorEnvironment/Standalone-Development
 code/unreal_projects/InteriorEnvironment/Standalone-Shipping
 code/unreal_projects/InteriorEnvironment/Temp
+code/unreal_projects/InteriorEnvironment/ThirdParty
 code/unreal_projects/InteriorEnvironment/user_config.yaml
 code/unreal_projects/InteriorEnvironment/.vscode
 
@@ -44,10 +45,12 @@ code/unreal_projects/PlayEnvironment/Binaries
 code/unreal_projects/PlayEnvironment/Build
 code/unreal_projects/PlayEnvironment/DerivedDataCache
 code/unreal_projects/PlayEnvironment/Intermediate
+code/unreal_projects/PlayEnvironment/Plugins
 code/unreal_projects/PlayEnvironment/Saved
 code/unreal_projects/PlayEnvironment/Standalone-Development
 code/unreal_projects/PlayEnvironment/Standalone-Shipping
 code/unreal_projects/PlayEnvironment/Temp
+code/unreal_projects/PlayEnvironment/ThirdParty
 code/unreal_projects/PlayEnvironment/user_config.yaml
 code/unreal_projects/PlayEnvironment/.vscode
 
@@ -57,8 +60,10 @@ code/unreal_projects/RobotProject/Content/Maps
 code/unreal_projects/RobotProject/Content/Scene
 code/unreal_projects/RobotProject/DerivedDataCache
 code/unreal_projects/RobotProject/Intermediate
+code/unreal_projects/RobotProject/Plugins
 code/unreal_projects/RobotProject/Saved
 code/unreal_projects/RobotProject/Standalone-Development
 code/unreal_projects/RobotProject/Standalone-Shipping
 code/unreal_projects/RobotProject/Temp
+code/unreal_projects/RobotProject/ThirdParty
 code/unreal_projects/RobotProject/.vscode
