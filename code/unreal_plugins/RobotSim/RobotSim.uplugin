@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "RobotSim",
-	"Description": "",
+	"Description": "WARNING: The loading phases for CoreUtils, RobotSim, and SimulationController need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(RobotSim) < LoadingPhase(SimulationController)",
 	"Category": "Other",
 	"CreatedBy": "kylo",
 	"CreatedByURL": "",
@@ -11,14 +11,14 @@
 	"MarketplaceURL": "",
 	"SupportURL": "",
 	"CanContainContent": true,
-	"IsBetaVersion": false,
-	"IsExperimentalVersion": false,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": true,
 	"Installed": false,
 	"Modules": [
 		{
 			"Name": "RobotSim",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PreDefault"
 		}
 	],
 	"Plugins": [
@@ -37,6 +37,6 @@
 		{
 			"Name": "CoreUtils",
 			"Enabled": true
-		},
+		}
 	]
 }

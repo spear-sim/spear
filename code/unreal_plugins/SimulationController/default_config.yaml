@@ -57,6 +57,10 @@ SIMULATION_CONTROLLER:
       OBSERVATION_CAMERA_ACTOR_NAME: ""
       IMAGE_HEIGHT: 128
       IMAGE_WIDTH: 128
+      SMARTPHONE_FOV: 90.0
+      MOTION_BLUR_AMMOUNT: 0.0   # Strength of motion blur, 0:off, should be renamed to intensity
+      MOTION_BLUR_MAX: 0.0   # Max distortion caused by motion blur, in percent of the screen width, 0:off
+      POST_PROC_BLEND_WEIGHT: 0.0   #Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
     PHYSICAL_MODE:
       OBSERVATION: ""
 

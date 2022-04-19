@@ -29,12 +29,15 @@ if __name__ == "__main__":
     env.reset()
 
     # run few iterations
-    for _ in range(100):
+    for i in range(100):
         obs, reward, done, _ = env.step({"apply_voltage": [1, 1]})
-        cv2.imshow("rgb image", obs["visual_observation"].astype(np.uint8))
+        print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
+
+        cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
         cv2.waitKey(0)
-        print(reward, done)
-        if done:
+
+        if done or i%50==0:
+            print("resetting...")
             env.reset()
 
     cv2.destroyAllWindows()

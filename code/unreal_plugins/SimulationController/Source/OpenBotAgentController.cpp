@@ -18,8 +18,7 @@
 
 #include "Assert.h"
 #include "Box.h"
-#include "Config.h"
-#include "TickEvent.h"
+#include "Config.h" 
 
 OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
@@ -39,11 +38,14 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
-        for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
-            std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
+        TArray<AActor*> all_attached_actors;
+        agent_actor_->GetAttachedActors(all_attached_actors, true);
+
+        for (const auto& actor : all_attached_actors) {
+            std::string actor_name = TCHAR_TO_UTF8(*actor->GetName());
             if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_NAME"})) {
                 ASSERT(!observation_camera_actor_);
-                observation_camera_actor_ = *actor_itr;
+                observation_camera_actor_ = actor;
                 break;
             }
         }
@@ -52,27 +54,54 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         // create SceneCaptureComponent2D and TextureRenderTarget2D
         scene_capture_component_ = static_cast<APIPCamera*>(observation_camera_actor_)->GetSceneCaptureComponent();
         ASSERT(scene_capture_component_);
+
+        // Set Camera Properties
+        scene_capture_component_->bAlwaysPersistRenderingState = 1;
+        scene_capture_component_->bCaptureEveryFrame = 0;
+        scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "SMARTPHONE_FOV"}); // Smartphone FOV
+        scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+        scene_capture_component_->ShowFlags.SetTemporalAA(false);
+        scene_capture_component_->ShowFlags.SetAntiAliasing(true);
+
+        new_object_parent_actor_ = world->SpawnActor<AActor>();
+        ASSERT(new_object_parent_actor_);
+
+        // Adjust RenderTarget
+        texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
+        ASSERT(texture_render_target_);
+
+        texture_render_target_->TargetGamma = GEngine->GetDisplayGamma(); // Set FrameWidth and FrameHeight: 1.2f; for Vulkan | GEngine->GetDisplayGamma(); for DX11/12
+        texture_render_target_->InitAutoFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+                                               Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"})); // Setup the RenderTarget capture format: some random format, got crashing otherwise frameWidht = 2048 and frameHeight = 2048.
+        texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+                                                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                                                 PF_B8G8R8A8,
+                                                 true); // PF_B8G8R8A8 disables HDR which will boost storing to disk due to less image information
+        texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+        texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU
+        scene_capture_component_->TextureTarget = texture_render_target_;
+
+        // Set post processing parameters:
+        FPostProcessSettings post_process_settings;
+        post_process_settings.MotionBlurAmount = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_AMMOUNT"}); // Strength of motion blur, 0:off, should be renamed to intensity
+        post_process_settings.MotionBlurMax = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_MAX"});    // Max distortion caused by motion blur, in percent of the screen width, 0:off
+        scene_capture_component_->PostProcessSettings = post_process_settings;
+        scene_capture_component_->PostProcessBlendWeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "POST_PROC_BLEND_WEIGHT"}); // Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
     }
-
-    agent_static_mesh_component_ = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
-    ASSERT(agent_static_mesh_component_);
-
-    goal_static_mesh_component_ = Cast<UStaticMeshComponent>(goal_actor_->GetRootComponent());
-    ASSERT(goal_static_mesh_component_);
-
-    // need to set this to apply forces or move objects
-    agent_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
 }
 
 OpenBotAgentController::~OpenBotAgentController()
 {
-    ASSERT(goal_static_mesh_component_);
-    goal_static_mesh_component_ = nullptr;
-
-    ASSERT(agent_static_mesh_component_); 
-    agent_static_mesh_component_ = nullptr;
-
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
+        
+        ASSERT(texture_render_target_);
+        texture_render_target_->MarkPendingKill();
+        texture_render_target_ = nullptr;
+
+        ASSERT(new_object_parent_actor_);
+        new_object_parent_actor_->Destroy();
+        new_object_parent_actor_ = nullptr;
+
         ASSERT(scene_capture_component_);
         scene_capture_component_ = nullptr;
 
@@ -236,39 +265,6 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     } else {
         ASSERT(false);
     }
-
-    //     if (mag_relative_position_to_goal < 10) // in [cm]
-    //     {
-    //         hitInfo_ = UHitInfo::Goal;
-    //     }
-
-    //     // Reward function is defined based on https://github.com/isl-org/OpenBot-Distributed/blob/main/trainer/ob_agents/envs/open_bot_replay_env.py
-    //     switch (hitInfo_)
-    //     {
-    //     case UHitInfo::Goal:
-    //         // Goal reached reward:
-    //         AddReward(unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_GOAL_REACHED"}));
-    //         EndEpisode();
-    //         break;
-    //     case UHitInfo::Edge:
-    //         // Obstacle penalty
-    //         AddReward(-unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_COLLISION"}));
-    //         EndEpisode();
-    //         break;
-    //     case UHitInfo::NoHit:
-    //         // Constant timestep penalty:
-    //         AddReward(-1 / unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "MAX_STEPS_PER_EPISODE"}));
-    //         // Goal distance penalty:
-    //         AddReward(-mag_relative_position_to_goal * unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_DISTANCE_GAIN"}));
-    //         AddReward(-unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "REWARD_DISTANCE_BIAS"}));
-    //         break;
-    //     default:
-    //         SetCurrentReward(0.0);
-    //         break;
-    //     }
-    // } else {
-    //     ASSERT(false);
-    // }
-
+    
     return observation;
 }
