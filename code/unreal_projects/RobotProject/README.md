@@ -113,7 +113,7 @@ cp -R path/to/interiorsim/code/unreal_plugins/RobotSim/setting .
 ```
 # build and package
 path/to/UE_4.26/Engine/Build/BatchFiles/Linux/Build.sh RobotProjectEditor Linux Development path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject
-path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -nop4 -project=path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -build -cook -stage -archive -archivedirectory=path/to/interiorsim/code/unreal_projects/RobotProject/dist -targetplatform=Linux -target=RobotProject -nocompileeditor -nodebuginfo -serverconfig=Development -clientconfig=Development -package
+path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -nop4 -project=path/to/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject -build -cook -stage -archive -archivedirectory=path/to/interiorsim/code/unreal_projects/RobotProject/dist -targetplatform=Linux -target=RobotProject -nocompileeditor -nodebuginfo -serverconfig=Development -clientconfig=Development -package -pak
 
 # run
 cd path/to/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor
@@ -157,74 +157,18 @@ RobotProject.exe -RobotSimSettingPath="settings/settings_fetch.json"
 # Virtual World
 
 ### Scene Manager
+see instruction in [SceneManagerReadMe](./SceneManager/README.md) to download Virtual World source files. 
 
-1. Run SceneManager/scene_manager.py to download virtual worlds to `Content/`.
+### Dynamic Scene Loading for StandAlone Executable
+Start from v4, SceneManger delivers virtual worlds in `.pak` format which can be used directly in standalone executable without scene cooking step. 
+It allows build standalone executable independent of VirtualWorld, and load scenes on demand and dynamically. 
 
-	```bash
-        scene_manager.py -i <option virtualworld-id> -v <necessary version-info> -d <option is_download_ddc> -p <proxy_host:proxy_port>
-        # for example
-        scene_manager.py -i 235554690 -v v1 -d true
-	```
+Currently, it only supports Linux.
 
-   -i: optional virtualworld-id. All available id lists can be found in SceneManager/Data/virtualworld-ids.json. If not specified, all virtualworld-ids will be loaded.
-   
-   -v: required scene version in format of v{n}. Up-to-date version information can be found in SceneManager/dataset-repo-update.log.
-   
-   ```
-	v1: RTX method, the renderersettings in ./RobotProject/Config/DefaultEngine.ini should be as follow:
-      [/Script/Engine.RendererSettings]
-      r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange=True
-      r.DefaultFeature.LightUnits=2
-      r.SkinCache.CompileShaders=True
-      r.RayTracing=True
-   v2: Baking method, the renderersettings in ./RobotProject/Config/DefaultEngine.ini should be as follow:
-      [/Script/Engine.RendererSettings]
-      r.DefaultFeature.AutoExposure.ExtendDefaultLuminanceRange=True
-      r.ReflectionCaptureResolution=1024
-      r.DefaultFeature.LightUnits=2
-      r.SkinCache.CompileShaders=True
-      r.RayTracing=False
-      r.CustomDepth=3
-      r.SSGI.Enable=True
-      r.GenerateMeshDistanceFields=True
-      r.DistanceFieldBuild.Compress=True
-	```
-   
-   -d: default false, whether download ddc. See [UE4 DerivedDataCache](https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/DerivedDataCache/) for more information.  Modify .\Epic Games\UE_4.26\Engine\Config\BaseEngine.ini as bellow:
-
-	```
-	[InstalledDerivedDataBackendGraph]
-	Local=(Type=FileSystem, ReadOnly=false, Clean=false, Flush=false, PurgeTransient=true, DeleteUnused=true, nusedFileAge=34, FoldersToClean=-1, Path="%GAMEDIR%DerivedDataCache", EditorOverrideSetting=LocalDerivedDataCache)
-	```
-
-   -f: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version information(MD5 in it) to remote version information and decide whether to download asset.
-
-   -p: if you need to run this script behind a proxy, use this option. Use this format, `-p hostname:port`. Don't include `http or https` in your hostname.
-	With proxy, command would look something like:
-	```bash
-	python scene_manager.py -i 235554690 -v v1 -d true -p hostname:port
-	```
-
-2. If download fails or there are materials missing in Virtual World (mostly due to internet issues), try run 'scene_manager.py -v v1 -f true -i <virtualworld-id>' to reload the scene. Download log can be found in `Saved/UpdateLog/{virtualworld-id}_failed.txt`.
-
-### Load Scene in UE4  
-
-Double click `RobotProject.uproject` to open the project in UE4.
-
-Load VirtualWorld to UE4 by selecting .umap file under `Content/maps` in Content Browser. Loading scene for the first time might take a while and local cache will be created. Loading would take shorter if cache exists.  
-![image](Doc/robotsim_instruction_1.png)
-
-To view the Virtual World in semantic view, select `PostProcessVolume` in World Outliner, and set the `Post Process Material` to be 1.Set 0 to go back to normal view 
-
-![image](Doc/virtualworld_instruction_sematic_view.png)
-
-### Load Scene in standalone executable
-Add map argument to run command.
-```commandline
-./RobotProject.exe /Game/Maps/Map_<virtual-world-id> ...
-# e.g.
-./RobotProject.exe /Game/Maps/Map_235554690 -WINDOWED -ResX=512 -ResY=512
-```
+1. use SceneManager to download desired `.pak` files.
+2. move desired `<vw_id>_Linux.pak` file to <path_to_standalone>/RobotProject/Content/Paks
+3. start your standalone executable.
+4. openLevel `/Game/Maps/Map_<vw_id>`, or use API from `VirtualWorldManager` to find all maps available and load desired map.
 
 # RobotSim
 
