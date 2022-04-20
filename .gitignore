@@ -56,10 +56,11 @@ code/unreal_projects/InteriorEnvironment/Saved
 code/unreal_projects/InteriorEnvironment/Standalone-Development
 code/unreal_projects/InteriorEnvironment/Standalone-Shipping
 code/unreal_projects/InteriorEnvironment/Temp
+code/unreal_projects/InteriorEnvironment/ThirdParty
 code/unreal_projects/InteriorEnvironment/user_config.yaml
 code/unreal_projects/InteriorEnvironment/.vscode
 code/unreal_projects/InteriorEnvironment/.ignore
-code/unreal_projects/InteriorEnvironment/.kdev4/
+code/unreal_projects/InteriorEnvironment/.kdev4
 
 code/unreal_projects/PlayEnvironment/Binaries
 code/unreal_projects/PlayEnvironment/Build
@@ -83,10 +84,11 @@ code/unreal_projects/PlayEnvironment/Saved
 code/unreal_projects/PlayEnvironment/Standalone-Development
 code/unreal_projects/PlayEnvironment/Standalone-Shipping
 code/unreal_projects/PlayEnvironment/Temp
+code/unreal_projects/PlayEnvironment/ThirdParty
 code/unreal_projects/PlayEnvironment/user_config.yaml
 code/unreal_projects/PlayEnvironment/.vscode
 code/unreal_projects/PlayEnvironment/.ignore
-code/unreal_projects/PlayEnvironment/.kdev4/
+code/unreal_projects/PlayEnvironment/.kdev4
 
 code/unreal_projects/RobotProject/Binaries
 code/unreal_projects/RobotProject/Build
@@ -113,10 +115,11 @@ code/unreal_projects/RobotProject/SceneManager/images
 code/unreal_projects/RobotProject/Standalone-Development
 code/unreal_projects/RobotProject/Standalone-Shipping
 code/unreal_projects/RobotProject/Temp
+code/unreal_projects/RobotProject/ThirdParty
 code/unreal_projects/RobotProject/user_config.yaml
 code/unreal_projects/RobotProject/.vscode
 code/unreal_projects/RobotProject/.ignore
-code/unreal_projects/RobotProject/.kdev4/
+code/unreal_projects/RobotProject/.kdev4
 
 code/unreal_plugins/InteriorSimBridge/Binaries
 code/unreal_plugins/InteriorSimBridge/Intermediate
