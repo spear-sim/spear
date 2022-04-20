@@ -17,7 +17,7 @@ public class RobotSim : ModuleRules
         
         PublicDependencyModuleNames.AddRange(new string[] {
             "APEX", "Core", "CoreUObject", "Engine", "Foliage", "InputCore", "ImageWrapper", "NavigationSystem", "PhysicsCore", "PhysX",
-            "PhysXVehicles", "PhysXVehicleLib", "ProceduralMeshComponent", "Landscape", "RenderCore", "RHI", "Slate", "SlateCore", "UMG", "XmlParser", "UnrealRL"
+            "PhysXVehicles", "PhysXVehicleLib", "ProceduralMeshComponent", "Landscape", "RenderCore", "RHI", "Slate", "SlateCore", "UMG", "UnrealRL", "XmlParser"
         } );
         PrivateDependencyModuleNames.AddRange(new string[] {} );
 

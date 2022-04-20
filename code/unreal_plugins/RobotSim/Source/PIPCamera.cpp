@@ -79,8 +79,8 @@ void APIPCamera::SetupCaptureComponent() // Default settings
     UTextureRenderTarget2D* renderTarget2D = NewObject<UTextureRenderTarget2D>();
 
     renderTarget2D->TargetGamma = GEngine->GetDisplayGamma();           // Set FrameWidth and FrameHeight: 1.2f; for Vulkan | GEngine->GetDisplayGamma(); for DX11/12
-    renderTarget2D->InitAutoFormat(2048, 2048);                         // Setup the RenderTarget capture format: some random format, got crashing otherwise frameWidht = 2048 and frameHeight = 2048.
-    renderTarget2D->InitCustomFormat(2048, 2048, PF_B8G8R8A8, true);    // PF_B8G8R8A8 disables HDR which will boost storing to disk due to less image information
+    renderTarget2D->InitAutoFormat(32,32);                         // Setup the RenderTarget capture format: some random format, got crashing otherwise frameWidht = 2048 and frameHeight = 2048.
+    renderTarget2D->InitCustomFormat(32,32, PF_B8G8R8A8, true);    // PF_B8G8R8A8 disables HDR which will boost storing to disk due to less image information
     renderTarget2D->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     renderTarget2D->bGPUSharedFlag = true; // demand buffer on GPU
 

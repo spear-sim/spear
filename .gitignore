@@ -1,7 +1,5 @@
 __pycache__
 .ipynb_checkpoints
-code/*.sh
-ThirdParty
 
 code/experiments/debug_synchronization_model/DebugProject/Binaries
 code/experiments/debug_synchronization_model/DebugProject/Build
@@ -125,3 +123,4 @@ code/unreal_projects/RobotProject/.kdev4/
 code/unreal_plugins/InteriorSimBridge/Binaries
 code/unreal_plugins/InteriorSimBridge/Intermediate
 
+code/user

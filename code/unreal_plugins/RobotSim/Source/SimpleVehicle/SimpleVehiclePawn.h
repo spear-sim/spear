@@ -5,12 +5,12 @@
 #include "GameFramework/Pawn.h"
 #include "NavigationSystem.h"
 
-#include "Brain.h"
 #include "Config.h"
 #include "PIPCamera.h"
 #include "PawnEvents.h"
 #include "PhysXIncludes.h"
 #include "PhysXPublic.h"
+#include "PhysXVehicleManager.h"
 #include "PhysicsPublic.h"
 #include "RobotBase.h"
 #include "RobotBlueprintLib.h"
@@ -23,11 +23,13 @@
 #include "SimpleVehiclePawn.generated.h"
 
 /**
- * @brief
+ * @brief This class is inspired by the WheeledVehicle class, define in:
+ * UnrealEngine-4.26.2-release/Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/WheeledVehicle.h
  *
  */
 UCLASS(Blueprintable, meta = (ShortTooltip = "Simple Vehicle Pawn"))
-class ROBOTSIM_API ASimpleVehiclePawn : public APawn, public RobotBase {
+class ROBOTSIM_API ASimpleVehiclePawn : public APawn, public RobotBase
+{
     GENERATED_BODY()
 
     //  The main skeletal mesh associated with this Vehicle
@@ -221,6 +223,11 @@ public:
      */
     virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings) override;
 
+    /**
+     * @brief Get the Pawn Events object
+     * 
+     * @return PawnEvents* 
+     */
     PawnEvents* GetPawnEvents();
 
     /**
@@ -257,6 +264,13 @@ public:
     {
         return VehicleMovement;
     }
+    
+    /**
+     * @brief Set the Wheels Friction Scale
+     * 
+     * @param WheelsFrictionScale 
+     */
+    void SetWheelsFrictionScale(TArray<float> &WheelsFrictionScale);
 
 protected:
     /**
@@ -319,11 +333,14 @@ private:
     {
         Eigen::Vector4f v_clamped;
         v_clamped = v;
-        for (unsigned int i = 0; i < v.size(); i++) {
-            if (v(i) > vMax(i)) {
+        for (unsigned int i = 0; i < v.size(); i++)
+        {
+            if (v(i) > vMax(i))
+            {
                 v_clamped(i) = vMax(i);
             }
-            if (v(i) < vMin(i)) {
+            if (v(i) < vMin(i))
+            {
                 v_clamped(i) = vMin(i);
             }
         }

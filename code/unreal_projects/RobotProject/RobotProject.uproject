@@ -1,39 +1,35 @@
 {
-	"FileVersion": 3,
-	"EngineAssociation": "{00046394-08D9-EC0F-60B2-558CF37E7854}",
-	"Category": "",
-	"Description": "",
-	"Modules": [
-		{
-			"Name": "RobotProject",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "UnrealRL",
-			"Enabled": true
-		},
-		{
-			"Name": "RobotSim",
-			"Enabled": true
-		},
-		{
-			"Name": "InteriorSimBridge",
-			"Enabled": true
-		},
-		{
-			"Name": "PythonScriptPlugin",
-			"Enabled": true
-		},
-		{
-			"Name": "EditorScriptingUtilities",
-			"Enabled": true
-		},
-		{
-			"Name": "SequencerScripting",
-			"Enabled": true
-		}
-	]
+    "FileVersion": 3,
+    "EngineAssociation": "{00046394-08D9-EC0F-60B2-558CF37E7854}",
+    "Category": "",
+    "Description": "",
+    "Modules": [
+        {
+            "Name": "RobotProject",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        }
+    ],
+    "Plugins": [
+        {
+            "Name": "UnrealRL",
+            "Enabled": true
+        },
+        {
+            "Name": "RobotSim",
+            "Enabled": true
+        },
+        {
+            "Name": "PythonScriptPlugin",
+            "Enabled": true
+        },
+        {
+            "Name": "EditorScriptingUtilities",
+            "Enabled": true
+        },
+        {
+            "Name": "SequencerScripting",
+            "Enabled": true
+        }
+    ]
 }

@@ -115,7 +115,7 @@ bool ARobotSimHUD::readSettingsTextFromFile(FString settingsFilepath,
         FString settingsTextFStr;
         bool readSuccessful = FFileHelper::LoadFileToString(settingsTextFStr, *settingsFilepath);
         if (readSuccessful) {
-            URobotBlueprintLib::LogMessageString("Loaded settings from ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Informational);
+            //URobotBlueprintLib::LogMessageString("Loaded settings from ", TCHAR_TO_UTF8(*settingsFilepath), LogDebugLevel::Informational);
             settingsText = TCHAR_TO_UTF8(*settingsTextFStr);
         }
         else {

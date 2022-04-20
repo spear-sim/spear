@@ -23,6 +23,7 @@ from unrealai.exceptions import UnrealAIException
 from unrealai.config import get_config
 import math
 from math import cos, sin, atan2, pi, isclose
+import shutil
 
 def client(args, config, mapNames):
     """
@@ -85,14 +86,15 @@ def client(args, config, mapNames):
                 
                 agent_name = uenv.agents[0]
             
-                folderName = f"dataset/uploaded/run_{mapName}_{run}/data/"
-                os.makedirs(folderName, exist_ok=True)
-                os.makedirs(folderName+"sensor_data", exist_ok=True)
-                os.makedirs(folderName+"images", exist_ok=True)
+                folderName = f"dataset/uploaded/run_{mapName}_{run}"
+                dataFolderName = folderName+"/data/"
+                os.makedirs(dataFolderName, exist_ok=True)
+                os.makedirs(dataFolderName+"sensor_data", exist_ok=True)
+                os.makedirs(dataFolderName+"images", exist_ok=True)
                 
                 failed = []
     
-                array_obs = np.empty([numIter, 6])
+                array_obs = np.empty([numIter, 9])
                 
                 reward = 0.0
                 
@@ -115,19 +117,22 @@ def client(args, config, mapNames):
                     # Fill an array with the different observations:
                     array_obs[i][0] = speedMultiplier*observation[0][0] # ctrl left
                     array_obs[i][1] = speedMultiplier*observation[0][1] # ctrl right
-                    array_obs[i][2] = observation[0][2] # agent yaw wrt. world
-                    array_obs[i][3] = observation[0][3] # agent pos X wrt. world
-                    array_obs[i][4] = observation[0][4] # agent pos Y wrt. world
-                    array_obs[i][5] = ts # time stamp
+                    array_obs[i][2] = observation[0][2] # agent pos X wrt. world
+                    array_obs[i][3] = observation[0][3] # agent pos Y wrt. world
+                    array_obs[i][4] = observation[0][4] # agent pos Z wrt. world
+                    array_obs[i][5] = observation[0][5] # agent Roll wrt. world
+                    array_obs[i][6] = observation[0][6] # agent Pitch wrt. world
+                    array_obs[i][7] = observation[0][7] # agent Yaw wrt. world
+                    array_obs[i][8] = ts # time stamp
 
                     # Save the images:
                     im = Image.fromarray(observation[1])
-                    im.save(folderName+"images/%d.jpeg" % i)
+                    im.save(dataFolderName+"images/%d.jpeg" % i)
   
                     print(f"iteration {i} over {numIter}")
                     
                     deltaReward = reward - uenv.current_reward['SimModeRobotSim_0']
-                    print(f"delta reward: {deltaReward}")
+                    #print(f"delta reward: {deltaReward}")
                                         
                     if isclose(deltaReward, config.INTERIOR_SIM_BRIDGE.REWARD_COLLISION, abs_tol=5e1):
                         print("Collision detected ! Killing simulation and restarting run...")  
@@ -147,41 +152,40 @@ def client(args, config, mapNames):
                     
                 if collisionFlag == True:
                     print("Restarting run...") 
-                    #os.removedirs(folderName+"sensor_data")
-                    #os.removedirs(folderName+"images")
+                    shutil.rmtree(folderName)
                      
                 else:
                     run = run + 1
                     
                     print("Filling database...")    
-                    f_ctrl = open(folderName+"sensor_data/ctrlLog.txt", 'w') # Low-level commands sent to the motors
-                    f_goal = open(folderName+"sensor_data/goalLog.txt", 'w') # High level commands 
-                    f_rgb = open(folderName+"sensor_data/rgbFrames.txt", 'w') # Reference of the images correespoinding to each control input
-                    f_pose = open(folderName+"sensor_data/poseData.txt", 'w') # Raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
+                    f_ctrl = open(dataFolderName+"sensor_data/ctrlLog.txt", 'w') # Low-level commands sent to the motors
+                    f_goal = open(dataFolderName+"sensor_data/goalLog.txt", 'w') # High level commands 
+                    f_rgb = open(dataFolderName+"sensor_data/rgbFrames.txt", 'w') # Reference of the images correespoinding to each control input
+                    f_pose = open(dataFolderName+"sensor_data/poseData.txt", 'w') # Raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
         
                     writer_ctrl = csv.writer(f_ctrl, delimiter=",")
                     writer_ctrl.writerow( ('timestamp[ns]','leftCtrl','rightCtrl') )
                     writer_pose = csv.writer(f_pose , delimiter=",")
-                    writer_pose.writerow( ('timestamp[ns]','yawAngle','posX','posY') )
+                    writer_pose.writerow( ('timestamp[ns]','posX','posY','posZ','rollAngle','pitchAngle','yawAngle') )
                     writer_goal = csv.writer(f_goal, delimiter=",")
                     writer_goal.writerow( ('timestamp[ns]','dist','sinYaw','cosYaw') )
                     writer_rgb = csv.writer(f_rgb, delimiter=",")
                     writer_rgb.writerow( ('timestamp[ns]','frame') )
 
-                    goalLocation = np.array([array_obs[numIter-1][3],array_obs[numIter-1][4]]) # use the vehicle last location as goal
+                    goalLocation = np.array([array_obs[numIter-1][2],array_obs[numIter-1][3]]) # use the vehicle last location as goal
                     forward = np.array([1,0]) # Front axis is the X axis.
                     forwardRotated = np.array([0,0])
             
                     for i in range(executedIterations):
             
                         # Target error vector (global coordinate system):
-                        relativePositionToTarget = goalLocation - np.array([array_obs[i][3],array_obs[i][4]])
+                        relativePositionToTarget = goalLocation - np.array([array_obs[i][2],array_obs[i][3]])
             
                         # Compute Euclidean distance to target:
                         dist = np.linalg.norm(relativePositionToTarget)
             
                         # Compute robot forward axis (global coordinate system)
-                        yawVehicle = array_obs[i][2];
+                        yawVehicle = array_obs[i][7];
                         rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
             
                         forwardRotated = np.dot(rot, forward)
@@ -201,17 +205,17 @@ def client(args, config, mapNames):
                         cosYaw = cos(deltaYaw);
             
                         # Write pose data
-                        writer_pose.writerow( (int(array_obs[i][5]), array_obs[i][2], array_obs[i][3], array_obs[i][4]) )
+                        writer_pose.writerow( (int(array_obs[i][8]), array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]) )
             
                         # Write the low-level control observation into a file: 
-                        writer_ctrl.writerow( (int(array_obs[i][5]), array_obs[i][0], array_obs[i][1]) )
+                        writer_ctrl.writerow( (int(array_obs[i][8]), array_obs[i][0], array_obs[i][1]) )
             
                         # Write the corresponding image index into a file: 
-                        writer_rgb.writerow( (int(array_obs[i][5]), i) )
+                        writer_rgb.writerow( (int(array_obs[i][8]), i) )
             
                         # Write the corresponding high level command into a file:
                         # For imitation learning, use the latest position as a goal 
-                        writer_goal.writerow( (int(array_obs[i][5]), dist/100, sinYaw, cosYaw) )
+                        writer_goal.writerow( (int(array_obs[i][8]), dist/100, sinYaw, cosYaw) )
                  
                     f_ctrl.close()
                     f_pose.close()
@@ -351,13 +355,14 @@ if __name__ == "__main__":
     config_files = []
 
     # Add default config files first and then user config files
-    config_files.append(os.path.join(os.getcwd(), "default_config.yaml"))
+    config_files.append(os.path.join(os.getcwd(), "user_config.yaml"))
     config_files.append("../../../unreal_plugins/InteriorSimBridge/default_config.yaml")
     config_files.append("../../../unreal_plugins/RobotSim/default_config.yaml")
-    config_files.append("../../../unreal_projects/RobotProject/default_config.yaml")
 
     # Load configs
     config = get_config(config_files)
+    
+    print(config)
     
     # Parse input script arguments
     parser = argparse.ArgumentParser()

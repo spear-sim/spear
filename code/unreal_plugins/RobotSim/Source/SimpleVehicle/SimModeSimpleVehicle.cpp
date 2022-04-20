@@ -92,17 +92,16 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
                 vehicle_bp_class = ASimpleVehiclePawn::StaticClass();
             }
 
-            float scale = 100; // TODO world scale
-            FVector spawnPosition = uu_origin.GetTranslation();
-            const auto& settings_position = vehicle_setting.position;
-            spawnPosition = spawnPosition + FVector(settings_position.x() * scale, settings_position.y() * scale, settings_position.z() * scale);
-
-            const auto& rotation = vehicle_setting.rotation;
-            FRotator spawnRotation = uu_origin.GetRotation().Rotator() + FRotator(rotation.pitch, rotation.yaw, rotation.roll);
-
             ASimpleVehiclePawn* defaultObject = static_cast<ASimpleVehiclePawn*>(vehicle_bp_class->GetDefaultObject());
             USkeletalMeshComponent* mesh = defaultObject->GetMesh();
             FBoxSphereBounds bound = mesh->SkeletalMesh->GetBounds();
+
+            float scale = URobotBlueprintLib::GetWorldToMetersScale(defaultObject);
+            FVector spawnPosition = uu_origin.GetTranslation();
+            const auto& settings_position = vehicle_setting.position;
+            spawnPosition = spawnPosition + FVector(settings_position.x() * scale, settings_position.y() * scale, settings_position.z() * scale);
+            const auto& rotation = vehicle_setting.rotation;
+            FRotator spawnRotation = uu_origin.GetRotation().Rotator() + FRotator(rotation.pitch, rotation.yaw, rotation.roll);
 
             if (vehicle_setting.enable_random_spawn)
             {
@@ -112,7 +111,7 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
                 this->NavSystemRebuild(bound.SphereRadius);
 
                 ARecastNavMesh* navMesh = GetNavMesh();
-                RobotSim::NavMeshUtil::GetRandomPoint(navMesh, spawnPosition, 3.0f);
+                RobotSim::NavMeshUtil::GetRandomPoint(navMesh, spawnPosition, 20.0f);
 
                 // FBox worldBox = GetWorldBoundingBox();
                 // RobotSim::NavMeshUtil::GetRandomPointFromLargestCluster(navMesh, worldBox, spawnPosition);
