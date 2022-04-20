@@ -314,6 +314,11 @@ void SphereAgentController::reset()
     sphere_static_mesh_component_->GetBodyInstance()->ClearForces();
 }
 
+bool SphereAgentController::isReady() const
+{
+    return true;
+}
+
 void SphereAgentController::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
 {    
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {

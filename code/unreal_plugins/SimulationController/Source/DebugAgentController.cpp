@@ -185,7 +185,6 @@ void DebugAgentController::applyAction(const std::map<std::string, std::vector<f
         std::vector<float> action_vec = action.at("set_location");
         agent_actor_->SetActorLocation(FVector(action_vec.at(0), action_vec.at(1), action_vec.at(2)));
     }
-
     if (action.count("apply_force")) {
         float force = action.at("apply_force").at(0);
         Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent())->AddForce(agent_actor_->GetActorForwardVector() * force);
@@ -280,4 +279,9 @@ void DebugAgentController::reset()
     sphere_static_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector(0), false);
     sphere_static_mesh_component_->GetBodyInstance()->ClearTorques();
     sphere_static_mesh_component_->GetBodyInstance()->ClearForces();
+}
+
+bool DebugAgentController::isReady() const
+{
+    return true;
 }

@@ -18,6 +18,7 @@ public:
     virtual std::map<std::string, Box> getObservationSpace() const = 0;
     virtual std::map<std::string, Box> getActionSpace() const = 0;
     virtual void reset() = 0;
+    virtual bool isReady() const = 0;
 
 protected:
 

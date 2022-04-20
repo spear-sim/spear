@@ -331,6 +331,12 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT(task_);
         return task_->getStepInfo();
     });
+
+    rpc_server_->bindSync("isReady", [this]() -> bool{
+        ASSERT(task_);
+        ASSERT(agent_controller_);
+        return task_->isReady() && agent_controller_->isReady();
+    });
 }
 
 IMPLEMENT_MODULE(SimulationController, SimulationController)

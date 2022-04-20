@@ -62,12 +62,27 @@ class Env(gym.Env):
 
     def reset(self):
 
+        # reset the simulation, check if simulation is ready, get observation if ready
         self._begin_tick()
         self._reset()
         self._tick()
-        obs = self._get_observation()
+        is_ready = self._is_ready()
+        if is_ready:
+            print("1:is ready")
+            obs = self._get_observation()
         self._end_tick()
 
+        # while simulation is not ready, tick the simulation forward, get observation if ready
+        while not is_ready:
+            self._begin_tick()
+            self._tick()
+            is_ready = self._is_ready()
+            if is_ready:
+                print("2:is ready")
+                obs = self._get_observation()
+            self._end_tick()
+
+        # at this point, observation is guaranteed to be valid
         return obs
 
     # need to override gym.Env member function
@@ -346,3 +361,6 @@ class Env(gym.Env):
 
     def _get_step_info(self):
         return self._client.call("getStepInfo")
+
+    def _is_ready(self):
+        return self._client.call("isReady")

@@ -23,6 +23,7 @@ public:
     float getReward() const override;
     bool isEpisodeDone() const override;
     void reset() override;
+    bool isReady() const override;
     StepInfo getStepInfo() override;
 
     // handles collision related logic

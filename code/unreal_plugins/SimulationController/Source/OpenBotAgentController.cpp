@@ -282,12 +282,18 @@ void OpenBotAgentController::reset()
 {
     ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
     ASSERT(vehicle_pawn);
+
+    ASSERT(agent_actor_);
+    const FVector agent_location = agent_actor_->GetActorLocation();
+    vehicle_pawn->TeleportToLocation(agent_location, FQuat(FRotator(0)), true);
+
     USimpleWheeledVehicleMovementComponent* vehicle_movement_component = dynamic_cast<USimpleWheeledVehicleMovementComponent*>(vehicle_pawn->GetVehicleMovementComponent());
     ASSERT(vehicle_movement_component);
 
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component->PVehicle->getRigidDynamicActor();
     ASSERT(rigid_body_dynamic_actor);
     
+    // We are inlining the below code from UnrealEngine/Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleWheels.cpp::setToRestState(), because this function is protected.
     //Set the rigid body to rest and clear all the accumulated forces and impulses.
 	if(!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
 	{
@@ -298,8 +304,14 @@ void OpenBotAgentController::reset()
 		rigid_body_dynamic_actor->clearTorque(PxForceMode::eACCELERATION);
 		rigid_body_dynamic_actor->clearTorque(PxForceMode::eVELOCITY_CHANGE);
 	}
-    vehicle_movement_component->PVehicle->mWheelsDynData.setToRestState(); // this seems to not do anything
+    vehicle_movement_component->PVehicle->mWheelsDynData.setToRestState();
 
     ASSERT(!vehicle_movement_component->PVehicleDrive);
     // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
+}
+
+bool OpenBotAgentController::isReady() const
+{
+    ASSERT(agent_actor_);
+    return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"}); 
 }

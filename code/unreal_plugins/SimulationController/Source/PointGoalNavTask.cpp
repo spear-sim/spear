@@ -141,6 +141,11 @@ StepInfo PointGoalNavTask::getStepInfo()
     return step_info;
 }
 
+bool PointGoalNavTask::isReady() const
+{
+    return true;  
+}
+
 void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
 {
     ASSERT(self_actor == agent_actor_);
