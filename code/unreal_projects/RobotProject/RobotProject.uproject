@@ -12,10 +12,6 @@
     ],
     "Plugins": [
         {
-            "Name": "UnrealRL",
-            "Enabled": true
-        },
-        {
             "Name": "RobotSim",
             "Enabled": true
         },
