@@ -22,6 +22,10 @@ code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
 code/unreal_plugins/CoreUtils/ThirdParty
 
+code/unreal_plugins/InteriorSimBridge/Binaries
+code/unreal_plugins/InteriorSimBridge/Intermediate
+code/unreal_plugins/InteriorSimBridge/ThirdParty
+
 code/unreal_plugins/RobotSim/Binaries
 code/unreal_plugins/RobotSim/Intermediate
 code/unreal_plugins/RobotSim/ThirdParty
@@ -34,7 +38,6 @@ code/unreal_projects/InteriorEnvironment/Binaries
 code/unreal_projects/InteriorEnvironment/Build
 code/unreal_projects/InteriorEnvironment/Content
 code/unreal_projects/InteriorEnvironment/DerivedDataCache
-code/unreal_projects/InteriorEnvironment/dist
 code/unreal_projects/InteriorEnvironment/InteriorEnvironment.code-workspace
 code/unreal_projects/InteriorEnvironment/InteriorEnvironment.kdev4
 code/unreal_projects/InteriorEnvironment/InteriorEnvironment.pro
@@ -62,7 +65,6 @@ code/unreal_projects/PlayEnvironment/Binaries
 code/unreal_projects/PlayEnvironment/Build
 code/unreal_projects/PlayEnvironment/CMakeLists.txt
 code/unreal_projects/PlayEnvironment/DerivedDataCache
-code/unreal_projects/PlayEnvironment/dist
 code/unreal_projects/PlayEnvironment/Intermediate
 code/unreal_projects/PlayEnvironment/Makefile
 code/unreal_projects/PlayEnvironment/PlayEnvironment.code-workspace
@@ -91,7 +93,6 @@ code/unreal_projects/RobotProject/Build
 code/unreal_projects/RobotProject/CMakeLists.txt
 code/unreal_projects/RobotProject/Content
 code/unreal_projects/RobotProject/DerivedDataCache
-code/unreal_projects/RobotProject/dist/
 code/unreal_projects/RobotProject/Intermediate
 code/unreal_projects/RobotProject/Makefile
 code/unreal_projects/RobotProject/Plugins
