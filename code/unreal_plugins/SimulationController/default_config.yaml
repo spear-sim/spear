@@ -63,11 +63,14 @@ SIMULATION_CONTROLLER:
       OBSERVATION_CAMERA_ACTOR_NAME: ""
       IMAGE_HEIGHT: 128
       IMAGE_WIDTH: 128
-      SMARTPHONE_FOV: 90.0
-      MOTION_BLUR_AMMOUNT: 0.0   # Strength of motion blur, 0:off, should be renamed to intensity
-      MOTION_BLUR_MAX: 0.0   # Max distortion caused by motion blur, in percent of the screen width, 0:off
-      POST_PROC_BLEND_WEIGHT: 0.0   #Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
+      SMARTPHONE_FOV: 90.0            # Field of view of the smartphone camera in [deg]
+      MOTION_BLUR_AMMOUNT: 0.0        # Strength of motion blur, 0:off, should be renamed to intensity
+      MOTION_BLUR_MAX: 0.0            # Max distortion caused by motion blur, in percent of the screen width, 0:off
+      POST_PROC_BLEND_WEIGHT: 0.0     # Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
     PHYSICAL_MODE:
+      # Allows behavior specialization of the InteriorSimBridge classes:
+      # - "yaw-x-y" the observation vector is set to be the vehicle's yaw, x position and y position in the world frame.
+      # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal.
       OBSERVATION: ""
 
   POINT_GOAL_NAV_TASK:

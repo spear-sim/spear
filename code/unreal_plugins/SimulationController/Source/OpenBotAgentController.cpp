@@ -293,10 +293,10 @@ void OpenBotAgentController::reset()
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component->PVehicle->getRigidDynamicActor();
     ASSERT(rigid_body_dynamic_actor);
     
-    // We are inlining the below code from UnrealEngine/Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleWheels.cpp::setToRestState(), because this function is protected.
-    //Set the rigid body to rest and clear all the accumulated forces and impulses.
-	if(!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
-	{
+    // We want to reset the physics state of OpenBot, so we are inlining the below code from
+    // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleDrive.cpp::setToRestState(), and
+    // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleWheels.cpp::setToRestState(), because these functions are protected.
+    if(!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC)) {
 		rigid_body_dynamic_actor->setLinearVelocity(PxVec3(0,0,0));
 		rigid_body_dynamic_actor->setAngularVelocity(PxVec3(0,0,0));
 		rigid_body_dynamic_actor->clearForce(PxForceMode::eACCELERATION);
@@ -306,6 +306,7 @@ void OpenBotAgentController::reset()
 	}
     vehicle_movement_component->PVehicle->mWheelsDynData.setToRestState();
 
+    // PVehicleDrive is not intiliazed, and so PVehicleDrive->mDriveDynData.setToRestState() is commented out. We want to know if this changes at some point.
     ASSERT(!vehicle_movement_component->PVehicleDrive);
     // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
 }
