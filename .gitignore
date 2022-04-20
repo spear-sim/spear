@@ -89,8 +89,7 @@ code/unreal_projects/PlayEnvironment/.kdev4/
 code/unreal_projects/RobotProject/Binaries
 code/unreal_projects/RobotProject/Build
 code/unreal_projects/RobotProject/CMakeLists.txt
-code/unreal_projects/RobotProject/Content/Maps
-code/unreal_projects/RobotProject/Content/Scene
+code/unreal_projects/RobotProject/Content
 code/unreal_projects/RobotProject/DerivedDataCache
 code/unreal_projects/RobotProject/dist/
 code/unreal_projects/RobotProject/Intermediate
