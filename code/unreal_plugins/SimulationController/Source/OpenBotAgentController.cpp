@@ -54,7 +54,9 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         ASSERT(observation_camera_actor_);
         
         // create SceneCaptureComponent2D and TextureRenderTarget2D
-        scene_capture_component_ = static_cast<APIPCamera*>(observation_camera_actor_)->GetSceneCaptureComponent();
+        APIPCamera* pip_camera = dynamic_cast<APIPCamera*>(observation_camera_actor_);
+        ASSERT(pip_camera);
+        scene_capture_component_ = pip_camera->GetSceneCaptureComponent();
         ASSERT(scene_capture_component_);
 
         // Set Camera Properties
@@ -175,7 +177,9 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
     ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low_ && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high_, "%f", action.at("apply_voltage").at(0));
     ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low_ && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high_, "%f", action.at("apply_voltage").at(1));
 
-    static_cast<ASimpleVehiclePawn*>(agent_actor_)->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
+    ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
+    ASSERT(vehicle_pawn);
+    vehicle_pawn->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
 }
 
 std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservation() const
@@ -256,12 +260,15 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         float cos_yaw = std::cosf(delta_yaw);
 
         // Fuses the actions received from the python client with those received from the keyboard interface (if this interface is activated in the settings.json file)
-        Eigen::Vector2f control_state = static_cast<ASimpleVehiclePawn*>(agent_actor_)->GetControlState();
+        ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
+        ASSERT(vehicle_pawn);
+        Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
         observation["physical_observation"] = serializeToUint8(std::vector<float>{control_state(0), control_state(1), mag_relative_position_to_goal, sin_yaw, cos_yaw});
 
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_MODE", "OBSERVATION"}) == "yaw-x-y") {
-
-        Eigen::Vector2f control_state = static_cast<ASimpleVehiclePawn*>(agent_actor_)->GetControlState();
+        ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
+        ASSERT(vehicle_pawn);
+        Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
         observation["physical_observation"] = serializeToUint8(std::vector<float>{control_state(0), control_state(1), FMath::DegreesToRadians(agent_current_orientation.Yaw), agent_current_location.X, agent_current_location.Y});
 
     } else {
@@ -273,10 +280,14 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
 void OpenBotAgentController::reset()
 {
-    USimpleWheeledVehicleMovementComponent* vehicle_movement_component = static_cast<USimpleWheeledVehicleMovementComponent*>(static_cast<ASimpleVehiclePawn*>(agent_actor_)->GetVehicleMovementComponent());
+    ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
+    ASSERT(vehicle_pawn);
+    USimpleWheeledVehicleMovementComponent* vehicle_movement_component = dynamic_cast<USimpleWheeledVehicleMovementComponent*>(vehicle_pawn->GetVehicleMovementComponent());
+    ASSERT(vehicle_movement_component);
 
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component->PVehicle->getRigidDynamicActor();
-
+    ASSERT(rigid_body_dynamic_actor);
+    
     //Set the rigid body to rest and clear all the accumulated forces and impulses.
 	if(!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
 	{
@@ -287,7 +298,8 @@ void OpenBotAgentController::reset()
 		rigid_body_dynamic_actor->clearTorque(PxForceMode::eACCELERATION);
 		rigid_body_dynamic_actor->clearTorque(PxForceMode::eVELOCITY_CHANGE);
 	}
+    vehicle_movement_component->PVehicle->mWheelsDynData.setToRestState(); // this seems to not do anything
 
-    vehicle_movement_component->PVehicle->mWheelsDynData.setToRestState();
+    ASSERT(!vehicle_movement_component->PVehicleDrive);
     // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
 }

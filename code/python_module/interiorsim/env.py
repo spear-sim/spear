@@ -282,8 +282,7 @@ class Env(gym.Env):
 
     def _get_observation_space(self):
         observation_space = self._client.call("getObservationSpace")
-        if len(observation_space) == 0:
-            assert False
+        assert len(observation_space) > 0
         
         # construct a dict with gym spaces
         gym_spaces_dict = {}
@@ -300,8 +299,7 @@ class Env(gym.Env):
     # TODO: expand functionality to support discrete action spaces
     def _get_action_space(self):
         action_space = self._client.call("getActionSpace")
-        if len(action_space) == 0:
-            assert False
+        assert len(action_space) > 0
         
         # construct a dict with gym spaces
         gym_spaces_dict = {}
@@ -317,8 +315,7 @@ class Env(gym.Env):
 
     def _get_observation(self):
         obs_dict = self._client.call("getObservation")
-        if len(obs_dict) == 0:
-            assert False
+        assert len(obs_dict) > 0
             
         return_obs_dict = {}
 

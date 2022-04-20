@@ -30,12 +30,3 @@ struct Box
 
     MSGPACK_DEFINE_MAP(low_, high_, shape_, dtype_);
 };
-
-
-struct StepInfo
-{
-    bool hit_goal_;
-    bool hit_obstacle_;
-
-    MSGPACK_DEFINE_MAP(hit_goal_, hit_obstacle_);
-};

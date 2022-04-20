@@ -29,7 +29,7 @@ if __name__ == "__main__":
     env.reset()
 
     # run few iterations
-    for i in range(1000):
+    for i in range(100):
         obs, reward, done, step_info = env.step({"apply_voltage": [1, 1]})
         print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, step_info)
 
@@ -37,6 +37,7 @@ if __name__ == "__main__":
         cv2.waitKey(0)
 
         if done or i%23==0:
+            print('resetting ....')
             env.reset()
 
     cv2.destroyAllWindows()
