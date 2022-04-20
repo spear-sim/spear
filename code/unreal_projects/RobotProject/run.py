@@ -1,10 +1,6 @@
-"""
-This is an example code to show how to launch an Unreal application using our configuration system.
-Before running this file, please modify user_config.yaml.example -> user_config.yaml and update it with appropriate paths.
-"""
+# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import cv2
-import numpy as np
 import os
 
 from interiorsim import Env
@@ -14,33 +10,32 @@ from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
 if __name__ == "__main__":
 
-    # list of config files to be used 
-    config_files = []
-
-    # add default config files first and then user config files
-    config_files.append(os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/RobotProject/user_config.yaml"))
-
-    # load configs
+    # load config
+    config_files = [ os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/RobotProject/user_config.yaml") ]
     config = get_config(config_files)
 
-    # create unreal environment object
+    # create Env object
     env = Env(config)
 
-    env.reset()
+    # reset the simulation to get the first observation    
+    obs = env.reset()
+    print(obs["visual_observation"].shape, obs["visual_observation"].dtype)
 
-    # run few iterations
+    cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+    cv2.waitKey(0)
+
+    # take a few steps
     for i in range(100):
-        obs, reward, done, step_info = env.step({"apply_voltage": [1, 1]})
-        print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, step_info)
+        obs, reward, done, info = env.step({"apply_voltage": [1, 1]})
+        print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
 
         cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
         cv2.waitKey(0)
 
-        if done or i%23==0:
-            print('resetting ....')
+        if done:
             env.reset()
 
     cv2.destroyAllWindows()
 
-    # close your unreal executable environment gracefully
+    # close the environment
     env.close()

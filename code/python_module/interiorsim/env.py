@@ -68,7 +68,6 @@ class Env(gym.Env):
         self._tick()
         is_ready = self._is_ready()
         if is_ready:
-            print("1:is ready")
             obs = self._get_observation()
         self._end_tick()
 
@@ -78,7 +77,6 @@ class Env(gym.Env):
             self._tick()
             is_ready = self._is_ready()
             if is_ready:
-                print("2:is ready")
                 obs = self._get_observation()
             self._end_tick()
 
