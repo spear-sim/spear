@@ -9,6 +9,8 @@ class AActor;
 class UWorld;
 class UActorHitEvent;
 
+struct Box;
+
 class PointGoalNavTask: public Task
 {
 public:
@@ -21,9 +23,11 @@ public:
     void endFrame() override;
     float getReward() const override;
     bool isEpisodeDone() const override;
+    std::map<std::string, Box> getStepInfoSpace() const override;
+    std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
     void reset() override;
 
-    // handles collision related logic
+    // handles collision-related logic
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
 private:

@@ -16,6 +16,7 @@
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "Serialize.h"
 #include "TickEvent.h"
 
 SphereAgentController::SphereAgentController(UWorld* world)
@@ -170,7 +171,6 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
         box.dtype = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
 
-        box = Box();
         box.low = 0;
         box.high = 255;
         box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
@@ -246,7 +246,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     // get observations
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         const float observation_camera_yaw = observation_camera_actor_->GetActorRotation().Yaw;
-        observation["physical_observation"] = serializeToUint8(std::vector<float>{
+        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.X,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.Y,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "LINEAR_VELOCITY_SCALE"}) * linear_velocity.X,
@@ -294,7 +294,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
 
         observation["visual_observation"] = std::move(image);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
-        observation["physical_observation"] = serializeToUint8(std::vector<float>{
+        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.X,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.Y,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "LINEAR_VELOCITY_SCALE"}) * linear_velocity.X,

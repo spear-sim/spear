@@ -6,12 +6,13 @@
 
 #include "AgentController.h"
 
-struct Box;
 class AActor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UTickEvent;
 class UWorld;
+
+struct Box;
 
 class SphereAgentController : public AgentController
 {
