@@ -295,6 +295,11 @@ void SimulationController::bindFunctionsToRpcServer()
         return agent_controller_->getActionSpace();
     });
 
+    rpc_server_->bindAsync("getStepInfoSpace", [this]() -> std::map<std::string, Box> {
+        ASSERT(task_);
+        return task_->getStepInfoSpace();
+    });
+
     rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(agent_controller_);
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
@@ -310,6 +315,11 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindSync("getReward", [this]() -> float {
         ASSERT(task_);
         return task_->getReward();
+    });
+
+    rpc_server_->bindSync("getStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        ASSERT(task_);
+        return task_->getStepInfo();
     });
 
     rpc_server_->bindSync("reset", [this]() -> void {

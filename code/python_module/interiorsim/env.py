@@ -42,10 +42,11 @@ class Env(gym.Env):
         self._connect_to_unreal_instance()
         self._initialize_unreal_instance()
 
-        self._observation_byte_order = self._get_observation_byte_order()
+        self._byte_order = self._get_byte_order()
 
         self.observation_space = self._get_observation_space()
         self.action_space = self._get_action_space()
+        self.step_info_space = self._get_step_info_space()
 
     def step(self, action):
         
@@ -55,9 +56,10 @@ class Env(gym.Env):
         obs = self._get_observation()
         reward = self._get_reward()
         is_done = self._is_episode_done()
+        step_info = self._get_step_info()
         self._end_tick()
 
-        return obs, reward, is_done, None
+        return obs, reward, is_done, step_info
 
     def reset(self):
 
@@ -245,7 +247,7 @@ class Env(gym.Env):
             DataType.Integer32.value: np.dtype("i4"),
             DataType.Float32.value: np.dtype("f4"),
             DataType.Double.value: np.dtype("f8"),
-        }[x]
+        }[x].type
 
     def _ping(self):
         return self._client.call("ping")
@@ -253,7 +255,7 @@ class Env(gym.Env):
     def _close_unreal_instance(self):
         self._client.call("close")
 
-    def _get_observation_byte_order(self):
+    def _get_byte_order(self):
         unreal_instance_endianness = self._client.call("getEndianness")
 
         if sys.byteorder == "little":
@@ -281,43 +283,56 @@ class Env(gym.Env):
 
     def _get_observation_space(self):
         observation_space = self._client.call("getObservationSpace")
-        if len(observation_space) == 0:
-            assert False
+        assert len(observation_space) > 0
         
         # construct a dict with gym spaces
         gym_spaces_dict = {}
 
-        for obs_name, obs_info in observation_space.items():
-            low = obs_info["low"]
-            high = obs_info["high"]
-            shape = tuple(x for x in obs_info["shape"])
-            dtype = self._get_numpy_dtype(obs_info["dtype"]).type
-            gym_spaces_dict[obs_name] = spaces.Box(low, high, shape, dtype)
+        for observation_space_name, observation_space_component in observation_space.items():
+            low = observation_space_component["low"]
+            high = observation_space_component["high"]
+            shape = tuple(observation_space_component["shape"])
+            dtype = self._get_numpy_dtype(observation_space_component["dtype"])
+            gym_spaces_dict[observation_space_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
 
     # TODO: expand functionality to support discrete action spaces
     def _get_action_space(self):
         action_space = self._client.call("getActionSpace")
-        if len(action_space) == 0:
-            assert False
+        assert len(action_space) > 0
         
         # construct a dict with gym spaces
         gym_spaces_dict = {}
 
-        for action_name, action_info in action_space.items():
-            low = action_info["low"]
-            high = action_info["high"]
-            shape = tuple(x for x in action_info["shape"])
-            dtype = self._get_numpy_dtype(action_info["dtype"]).type
-            gym_spaces_dict[action_name] = spaces.Box(low, high, shape, dtype)
+        for action_space_component_name, action_space_component in action_space.items():
+            low = action_space_component["low"]
+            high = action_space_component["high"]
+            shape = tuple(action_space_component["shape"])
+            dtype = self._get_numpy_dtype(action_space_component["dtype"])
+            gym_spaces_dict[action_space_component_name] = spaces.Box(low, high, shape, dtype)
+
+        return spaces.Dict(gym_spaces_dict)
+
+    def _get_step_info_space(self):
+        step_info_space = self._client.call("getStepInfoSpace")
+        assert len(step_info_space) > 0
+        
+        # construct a dict with gym spaces
+        gym_spaces_dict = {}
+
+        for step_info_space_component_name, step_info_space_component in step_info_space.items():
+            low = step_info_space_component["low"]
+            high = step_info_space_component["high"]
+            shape = tuple(step_info_space_component["shape"])
+            dtype = self._get_numpy_dtype(step_info_space_component["dtype"])
+            gym_spaces_dict[step_info_space_component_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
 
     def _get_observation(self):
         obs_dict = self._client.call("getObservation")
-        if len(obs_dict) == 0:
-            assert False
+        assert len(obs_dict) > 0
             
         return_obs_dict = {}
 
@@ -326,9 +341,9 @@ class Env(gym.Env):
             obs_shape = self.observation_space[obs_name].shape
             obs_data_type = self.observation_space[obs_name].dtype
 
-            # change observation byte order based on Unreal instance and client endianness
-            if self._observation_byte_order is not None:
-                obs_data_type = obs_data_type.newbyteorder(self._observation_byte_order)
+            # change byte order based on Unreal instance and client endianness
+            if self._byte_order is not None:
+                obs_data_type = obs_data_type.newbyteorder(self._byte_order)
 
             return_obs_dict[obs_name] = np.frombuffer(obs, dtype=obs_data_type, count=-1).reshape(obs_shape)
         
@@ -340,6 +355,25 @@ class Env(gym.Env):
     def _get_reward(self):
         return self._client.call("getReward")
     
+    def _get_step_info(self):
+        step_info_dict = self._client.call("getStepInfo")
+        assert len(step_info_dict) > 0
+            
+        return_step_info_dict = {}
+
+        for step_info_name, step_info in step_info_dict.items():
+            # get shape and dtype of the step info component
+            step_info_shape = self.step_info_space[step_info_name].shape
+            step_info_data_type = self.step_info_space[step_info_name].dtype
+
+            # change byte order based on Unreal instance and client endianness
+            if self._byte_order is not None:
+                step_info_data_type = step_info_data_type.newbyteorder(self._byte_order)
+
+            return_step_info_dict[step_info_name] = np.frombuffer(step_info, dtype=step_info_data_type, count=-1).reshape(step_info_shape)
+        
+        return return_step_info_dict
+
     def _reset(self):
         self._client.call("reset")
 
