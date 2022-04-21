@@ -16,24 +16,12 @@
             "Enabled": true
         },
         {
-            "Name": "EditorScriptingUtilities",
-            "Enabled": true
-        },
-        {
-            "Name": "PythonScriptPlugin",
-            "Enabled": true
-        },
-        {
             "Name": "RobotSim",
-            "Enabled": true
-        },
-        {
-            "Name": "SequencerScripting",
             "Enabled": true
         },
         {
             "Name": "SimulationController",
             "Enabled": true
-        }
+        }        
     ]
 }

@@ -1,17 +1,26 @@
 
 #include "PIPCamera.h"
 
-#include "Camera/CameraComponent.h"
-#include "Engine/SceneCapture2D.h"
-#include "Engine/TextureRenderTarget2D.h"
-#include "EngineUtils.h"
+#include <Camera/CameraComponent.h>
+#include <Engine/SceneCapture2D.h>
+#include <Engine/TextureRenderTarget2D.h>
+#include <EngineUtils.h>
+
+#include "Config.h"
 
 APIPCamera::APIPCamera()
 {
-    ConstructorHelpers::FObjectFinder<UMaterial> material(TEXT("Material'/Game/Koolab/Materials/Segmentation/SegmentationMaterial.SegmentationMaterial'"));
+    // We use this config value to conditionally prevent RobotSim from loading the segmentation material.
+    // This is useful when RobotSim is loaded in a project other than RobotProject (e.g., PlayEnvironment
+    // or InteriorEnvironment). A cleaner solution might be to include this material directly in
+    // RobotSim/Content, rather than RobotProject/Content, because the plugin itself depends explicitly
+    // on the material.
+    if (Config::getValue<bool>({"ROBOT_SIM", "PIP_CAMERA_LOAD_SEGMENTATION_MATERIAL"})) {
+        ConstructorHelpers::FObjectFinder<UMaterial> material(TEXT("Material'/Game/Koolab/Materials/Segmentation/SegmentationMaterial.SegmentationMaterial'"));
 
-    if (material.Succeeded()) {
-        this->PostProcessMaterial = material.Object;
+        if (material.Succeeded()) {
+            this->PostProcessMaterial = material.Object;
+        }
     }
 }
 

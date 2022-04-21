@@ -4,8 +4,8 @@ INTERIORSIM:
   TEMP_DIR: "/Users/mroberts/code/github/interiorsim/code/unreal_projects/InteriorEnvironment/Temp"
 
 SIMULATION_CONTROLLER:
-  AGENT_CONTROLLER_NAME: "SphereAgentController"
   TASK_NAME: "PointGoalNavigation"
+  AGENT_CONTROLLER_NAME: "SphereAgentController"
 
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: "Sphere_2"
@@ -29,7 +29,7 @@ SIMULATION_CONTROLLER:
     OBSTACLE_IGNORE_ACTOR_NAMES: [ "Architecture_SMid0_PMid0_INSTid1227_obj19", "6KAPD2ZVAZSUSPTUKE888888_SMid116_PMid1009_INSTid1080_obj0_0" ]
 
   SPHERE_AGENT_CONTROLLER:    
-    OBSERVATION_MODE: "mixed" # "mixed" or "physical"
+    OBSERVATION_MODE: "mixed"
     AGENT_ACTOR_NAME: "Sphere_2"
     GOAL_ACTOR_NAME: "Cone_5"
     SPHERE:
@@ -58,3 +58,6 @@ SIMULATION_CONTROLLER:
   VISUALIZER:
     CAMERA_ACTOR_NAME: "DebugCameraActor" # "DebugCameraActor" or "ObservationCameraActor"
     SET_CAMERA_POSE: False
+
+ROBOT_SIM:
+  PIP_CAMERA_LOAD_SEGMENTATION_MATERIAL: False

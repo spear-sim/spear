@@ -16,6 +16,10 @@
             "Enabled": true
         },
         {
+            "Name": "RobotSim",
+            "Enabled": true
+        },
+        {
             "Name": "SimulationController",
             "Enabled": true
         }
