@@ -27,7 +27,7 @@ public:
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
     void reset() override;
 
-    // handles collision-related logic
+    // Handles collision-related logic
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
 private:

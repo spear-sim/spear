@@ -247,7 +247,7 @@ class Env(gym.Env):
             DataType.Integer32.value: np.dtype("i4"),
             DataType.Float32.value: np.dtype("f4"),
             DataType.Double.value: np.dtype("f8"),
-        }[x]
+        }[x].type
 
     def _ping(self):
         return self._client.call("ping")
@@ -288,12 +288,12 @@ class Env(gym.Env):
         # construct a dict with gym spaces
         gym_spaces_dict = {}
 
-        for obs_name, obs_info in observation_space.items():
-            low = obs_info["low"]
-            high = obs_info["high"]
-            shape = tuple(x for x in obs_info["shape"])
-            dtype = self._get_numpy_dtype(obs_info["dtype"]).type
-            gym_spaces_dict[obs_name] = spaces.Box(low, high, shape, dtype)
+        for observation_space_name, observation_space_component in observation_space.items():
+            low = observation_space_component["low"]
+            high = observation_space_component["high"]
+            shape = tuple(observation_space_component["shape"])
+            dtype = self._get_numpy_dtype(observation_space_component["dtype"])
+            gym_spaces_dict[observation_space_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
 
@@ -305,12 +305,12 @@ class Env(gym.Env):
         # construct a dict with gym spaces
         gym_spaces_dict = {}
 
-        for action_name, action_info in action_space.items():
-            low = action_info["low"]
-            high = action_info["high"]
-            shape = tuple(x for x in action_info["shape"])
-            dtype = self._get_numpy_dtype(action_info["dtype"]).type
-            gym_spaces_dict[action_name] = spaces.Box(low, high, shape, dtype)
+        for action_space_component_name, action_space_component in action_space.items():
+            low = action_space_component["low"]
+            high = action_space_component["high"]
+            shape = tuple(action_space_component["shape"])
+            dtype = self._get_numpy_dtype(action_space_component["dtype"])
+            gym_spaces_dict[action_space_component_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
 
@@ -321,12 +321,12 @@ class Env(gym.Env):
         # construct a dict with gym spaces
         gym_spaces_dict = {}
 
-        for obs_name, obs_info in step_info_space.items():
-            low = obs_info["low"]
-            high = obs_info["high"]
-            shape = tuple(x for x in obs_info["shape"])
-            dtype = self._get_numpy_dtype(obs_info["dtype"]).type
-            gym_spaces_dict[obs_name] = spaces.Box(low, high, shape, dtype)
+        for step_info_space_component_name, step_info_space_component in step_info_space.items():
+            low = step_info_space_component["low"]
+            high = step_info_space_component["high"]
+            shape = tuple(step_info_space_component["shape"])
+            dtype = self._get_numpy_dtype(step_info_space_component["dtype"])
+            gym_spaces_dict[step_info_space_component_name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces_dict)
 

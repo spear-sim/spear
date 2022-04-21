@@ -8,7 +8,6 @@
 #include "ActorHitEvent.h"
 #include "Assert.h"
 #include "Config.h"
-#include "Serialize.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
