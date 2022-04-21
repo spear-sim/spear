@@ -37,6 +37,7 @@ void ASimModeBase::BeginPlay()
 
     URobotBlueprintLib::LogMessage(TEXT("Press F1 to see help"), TEXT(""), LogDebugLevel::Informational);
 
+    setupTimeOfDay();
     setupVehiclesAndCamera();
 }
 
@@ -79,19 +80,18 @@ void ASimModeBase::traceGround(FVector& spawnPosition, FRotator& spawnRotator,
     }
 }
 
-void ASimModeBase::setupVehiclesAndCamera() {}
+void ASimModeBase::setupVehiclesAndCamera()
+{
+}
 
 void ASimModeBase::getExistingVehiclePawns(TArray<RobotBase*>& pawns) const
 {
-    // derived class should override this method to retrieve types of pawns they
-    // support
+    // Derived class should override this method to retrieve types of pawns they support
 }
 
 ARecastNavMesh* ASimModeBase::GetNavMesh()
 {
-    UNavigationSystemV1* NavSys =
-        FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
-
+    UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
     auto navData = NavSys->GetMainNavData();
     return Cast<ARecastNavMesh>(navData);
 }
@@ -100,73 +100,75 @@ void ASimModeBase::Test()
 {
     TArray<FString> mapList;
     this->GetAllMaps(mapList);
+
     if (mapList.Num() == 0) {
-        UE_LOG(LogTemp, Log, TEXT("no map found"));
-        URobotBlueprintLib::LogMessage(FString("no map found "), "", LogDebugLevel::Informational, 30);
+        UE_LOG(LogTemp, Warning, TEXT("no map found"));
         return;
     }
+
     FString currentMap = this->GetWorld()->GetName();
-    URobotBlueprintLib::LogMessage(
-        FString("current map: "), currentMap, LogDebugLevel::Informational, 30);
     int currentIndex = -1;
     for (int i = 0; i < mapList.Num(); i++) {
-        FString MapName = mapList[i];
-        FString MapShortName = FPackageName::GetShortName(MapName);
-        UE_LOG(LogTemp, Log, TEXT("Found map name: %s"), *(MapShortName));
-        URobotBlueprintLib::LogMessage(
-            FString("Found map name " + MapName), "", LogDebugLevel::Informational, 30);
-        if (currentMap.Equals(MapShortName)) {
+        UE_LOG(LogTemp, Warning, TEXT("Found map name: %s"), *(mapList[i]));
+
+        if (currentMap.Equals(mapList[i])) {
             currentIndex = i;
             break;
         }
     }
+
     FString NextMap = mapList[(currentIndex + 1) % mapList.Num()];
     this->LoadMap(NextMap);
 }
 
 bool ASimModeBase::NavSystemRebuild(float AgentRadius)
 {
-    UNavigationSystemV1* NavSys =
-        FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+
     if (!NavSys) {
         return false;
     }
+
     auto navData = NavSys->GetMainNavData();
     ARecastNavMesh* navMesh = Cast<ARecastNavMesh>(navData);
+
     if (!navMesh) {
         return false;
     }
 
     ANavMeshBoundsVolume* NavmeshBounds = nullptr;
+
     for (TActorIterator<ANavMeshBoundsVolume> it(this->GetWorld()); it; ++it) {
         NavmeshBounds = *it;
     }
+
     if (NavmeshBounds == nullptr) {
         return false;
     }
 
+    // TODO Quentin: replace with yaml parameters
+    // Set the NavMesh properties:
     navMesh->AgentRadius = AgentRadius;
-    navMesh->CellSize = 10;
+    navMesh->AgentHeight = AgentRadius;
+    navMesh->CellSize = 1.0f;
+    navMesh->CellHeight = 1.0f;
     navMesh->AgentMaxSlope = 0.1f;
-    navMesh->AgentMaxStepHeight = 0.1f;
-    navMesh->MergeRegionSize = 0;
-    // ignore region that are too small
-    navMesh->MinRegionArea = 400;
+    navMesh->AgentMaxStepHeight = 2.0f;
+    navMesh->MergeRegionSize = 0.0f;
+    navMesh->MinRegionArea = 400.0f; // ignore region that are too small
+    navMesh->MaxSimplificationError = 1.3f;
 
-    // dynamic update navMesh location and size
+    // Dynamic update navMesh location and size
     NavmeshBounds->GetRootComponent()->SetMobility(EComponentMobility::Movable);
 
     FBox worldBox = GetWorldBoundingBox();
     NavmeshBounds->SetActorLocation(worldBox.GetCenter(), false);
     NavmeshBounds->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);
     NavmeshBounds->GetRootComponent()->UpdateBounds();
-    // NavmeshBounds->SupportedAgents.bSupportsAgent0;
+    // NavmeshBounds->SupportedAgents.bSupportsAgent;
     NavSys->OnNavigationBoundsUpdated(NavmeshBounds);
-    // redo modify frequency change
-    NavmeshBounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
-
-    // rebuild NavMesh, required for update AgentRadius
-    NavSys->Build();
+    NavmeshBounds->GetRootComponent()->SetMobility(EComponentMobility::Static); // Redo modify frequency change
+    NavSys->Build();                                                            // Rebuild NavMesh, required for update AgentRadius
 
     return true;
 }
@@ -179,10 +181,8 @@ FBox ASimModeBase::GetWorldBoundingBox(bool bScaleCeiling)
             box += it->GetComponentsBoundingBox(false, true);
         }
     }
-    // remove ceiling be very careful about ceiling, some asset have very strange bbox causing Max.Z way above ceiling
-    return !bScaleCeiling ? box
-                          : box.ExpandBy(box.GetSize() * 0.1f)
-                                .ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
+    // Remove ceiling
+    return !bScaleCeiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
 }
 
 void ASimModeBase::GetAllMaps(TArray<FString>& MapList) const
@@ -208,6 +208,6 @@ void ASimModeBase::GetAllMaps(TArray<FString>& MapList) const
 
 void ASimModeBase::LoadMap(FString mapName)
 {
-    UE_LOG(LogTemp, Log, TEXT("LoadMap: %s"), *(mapName));
+    UE_LOG(LogTemp, Warning, TEXT("LoadMap: %s"), *(mapName));
     UGameplayStatics::OpenLevel(this, FName(mapName), false);
 }

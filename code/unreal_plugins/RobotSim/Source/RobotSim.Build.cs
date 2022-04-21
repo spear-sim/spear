@@ -19,7 +19,7 @@ public class RobotSim : ModuleRules
             "APEX", "Core", "CoreUObject", "Engine", "Foliage", "InputCore", "ImageWrapper", "NavigationSystem", "PhysicsCore", "PhysX",
             "PhysXVehicles", "PhysXVehicleLib", "ProceduralMeshComponent", "Landscape", "RenderCore", "RHI", "Slate", "SlateCore", "UMG", "XmlParser", "VirtualWorldManager"
         } );
-        PrivateDependencyModuleNames.AddRange(new string[] {} );
+        PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
         // Eigen

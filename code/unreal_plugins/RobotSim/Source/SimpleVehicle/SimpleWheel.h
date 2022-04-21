@@ -2,13 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "VehicleWheel.h"
+#include "Config.h"
+
 #include "SimpleWheel.generated.h"
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 UCLASS()
-class USimpleWheel : public UVehicleWheel
-{
+class USimpleWheel : public UVehicleWheel {
     GENERATED_BODY()
 
 public:

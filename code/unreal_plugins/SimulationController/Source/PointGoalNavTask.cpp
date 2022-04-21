@@ -101,6 +101,36 @@ bool PointGoalNavTask::isEpisodeDone() const
     return hit_goal_ or hit_obstacle_;
 }
 
+std::map<std::string, Box> PointGoalNavTask::getStepInfoSpace() const
+{
+    std::map<std::string, Box> step_info_space;
+    Box box;
+    
+    box.low = 0;
+    box.high = 1;
+    box.shape = {1};
+    box.dtype = DataType::Boolean;
+    step_info_space["hit_goal"] = std::move(box);
+
+    box.low = 0;
+    box.high = 1;
+    box.shape = {1};
+    box.dtype = DataType::Boolean;
+    step_info_space["hit_obstacle"] = std::move(box);
+
+    return step_info_space;
+}
+
+std::map<std::string, std::vector<uint8_t>> PointGoalNavTask::getStepInfo() const
+{
+    std::map<std::string, std::vector<uint8_t>> step_info;
+
+    step_info["hit_goal"] = std::vector<uint8_t>{hit_goal_};
+    step_info["hit_obstacle"] = std::vector<uint8_t>{hit_obstacle_};
+
+    return step_info;
+}
+
 void PointGoalNavTask::reset()
 {
     float position_x, position_y, position_z;

@@ -10,8 +10,8 @@ public class RobotProject : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
-
+		PrivateDependencyModuleNames.AddRange(new string[] { "RobotSim", "RHI", "Renderer", "RenderCore"  });
+		
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 		

@@ -2,26 +2,26 @@
 // Licensed under the MIT License.
 
 #include "RobotBlueprintLib.h"
-#include "GameFramework/WorldSettings.h"
+#include "Camera/CameraComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Components/SkinnedMeshComponent.h"
-#include "GameFramework/RotatingMovementComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "EngineUtils.h"
-#include "Runtime/Engine/Classes/Engine/StaticMesh.h"
+#include "GameFramework/RotatingMovementComponent.h"
+#include "GameFramework/WorldSettings.h"
 #include "Runtime/CoreUObject/Public/UObject/UObjectIterator.h"
-#include "Camera/CameraComponent.h"
+#include "Runtime/Engine/Classes/Engine/StaticMesh.h"
 //#include "Runtime/Foliage/Public/FoliageType.h"
-#include "Runtime/Core/Public/Misc/MessageDialog.h"
+#include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/SkeletalMesh.h"
-#include "Slate/SceneViewport.h"
 #include "IImageWrapper.h"
-#include "Runtime/Core/Public/Misc/ObjectThumbnail.h"
-#include "Engine/Engine.h"
 #include "ProceduralMeshComponent.h"
-#include <exception>
+#include "Runtime/Core/Public/Misc/MessageDialog.h"
+#include "Runtime/Core/Public/Misc/ObjectThumbnail.h"
+#include "Slate/SceneViewport.h"
 #include "common_utils/Utils.hpp"
+#include <exception>
 
 /*
 //TODO: change naming conventions to same as other files?
@@ -32,9 +32,7 @@ parameters -> camel_case
 
 bool URobotBlueprintLib::log_messages_hidden_ = false;
 uint32_t URobotBlueprintLib::flush_on_draw_count_ = 0;
-RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType
-    URobotBlueprintLib::mesh_naming_method_ = RobotSim::RobotSimSettings::
-        SegmentationSetting::MeshNamingMethodType::OwnerName;
+RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType URobotBlueprintLib::mesh_naming_method_ = RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType::OwnerName;
 IImageWrapperModule* URobotBlueprintLib::image_wrapper_module_ = nullptr;
 
 void URobotBlueprintLib::LogMessageString(const std::string& prefix,
@@ -42,30 +40,25 @@ void URobotBlueprintLib::LogMessageString(const std::string& prefix,
                                           LogDebugLevel level,
                                           float persist_sec)
 {
-    LogMessage(FString(prefix.c_str()), FString(suffix.c_str()), level,
-               persist_sec);
+    LogMessage(FString(prefix.c_str()), FString(suffix.c_str()), level, persist_sec);
 }
 
-EAppReturnType::Type
-URobotBlueprintLib::ShowMessage(EAppMsgType::Type message_type,
-                                const std::string& message,
-                                const std::string& title)
+EAppReturnType::Type URobotBlueprintLib::ShowMessage(EAppMsgType::Type message_type,
+                                                     const std::string& message,
+                                                     const std::string& title)
 {
     FText title_text = FText::FromString(title.c_str());
 
-    return FMessageDialog::Open(
-        message_type, FText::FromString(message.c_str()), &title_text);
+    return FMessageDialog::Open(message_type, FText::FromString(message.c_str()), &title_text);
 }
 
 void URobotBlueprintLib::enableWorldRendering(AActor* context, bool enable)
 {
-    ULocalPlayer* player =
-        context->GetWorld()->GetFirstLocalPlayerFromController();
-    if (player)
-    {
+    ULocalPlayer* player = context->GetWorld()->GetFirstLocalPlayerFromController();
+    if (player) {
         UGameViewportClient* viewport_client = player->ViewportClient;
-        if (viewport_client)
-        {
+
+        if (viewport_client) {
             viewport_client->bDisableWorldRendering = enable;
         }
     }
@@ -77,23 +70,21 @@ void URobotBlueprintLib::setSimulatePhysics(AActor* actor,
     TInlineComponentArray<UPrimitiveComponent*> components;
     actor->GetComponents(components);
 
-    for (UPrimitiveComponent* component : components)
-    {
+    for (UPrimitiveComponent* component : components) {
         component->SetSimulatePhysics(simulate_physics);
     }
 }
 
-std::vector<UPrimitiveComponent*>
-URobotBlueprintLib::getPhysicsComponents(AActor* actor)
+std::vector<UPrimitiveComponent*> URobotBlueprintLib::getPhysicsComponents(AActor* actor)
 {
     std::vector<UPrimitiveComponent*> phys_comps;
     TInlineComponentArray<UPrimitiveComponent*> components;
     actor->GetComponents(components);
 
-    for (UPrimitiveComponent* component : components)
-    {
-        if (component->IsSimulatingPhysics())
+    for (UPrimitiveComponent* component : components) {
+        if (component->IsSimulatingPhysics()) {
             phys_comps.push_back(component);
+        }
     }
 
     return phys_comps;
@@ -104,10 +95,8 @@ void URobotBlueprintLib::resetSimulatePhysics(AActor* actor)
     TInlineComponentArray<UPrimitiveComponent*> components;
     actor->GetComponents(components);
 
-    for (UPrimitiveComponent* component : components)
-    {
-        if (component->IsSimulatingPhysics())
-        {
+    for (UPrimitiveComponent* component : components) {
+        if (component->IsSimulatingPhysics()) {
             component->SetSimulatePhysics(false);
             component->SetSimulatePhysics(true);
         }
@@ -118,11 +107,11 @@ void URobotBlueprintLib::enableViewportRendering(AActor* context, bool enable)
 {
     // Enable/disable primary viewport rendering flag
     auto* viewport = context->GetWorld()->GetGameViewport();
-    if (!viewport)
+    if (!viewport) {
         return;
+    }
 
-    if (!enable)
-    {
+    if (!enable) {
         // This disables rendering of the main viewport in the same way as the
         // console command "show rendering" would do.
         viewport->EngineShowFlags.SetRendering(false);
@@ -137,12 +126,10 @@ void URobotBlueprintLib::enableViewportRendering(AActor* context, bool enable)
         // only if the main viewport is not being rendered anyway in case there
         // are any adverse performance effects during main rendering.
         // HACK: FViewPort doesn't expose this field so we are doing dirty work
-        // around by maintaining count by ourselves if (flush_on_draw_count_ ==
-        // 0)
-        //    viewport->GetGameViewport()->IncrementFlushOnDraw();
+        // around by maintaining count by ourselves if (flush_on_draw_count_ == 0)
+        // viewport->GetGameViewport()->IncrementFlushOnDraw();
     }
-    else
-    {
+    else {
         viewport->EngineShowFlags.SetRendering(true);
 
         // HACK: FViewPort doesn't expose this field so we are doing dirty work
@@ -155,14 +142,12 @@ void URobotBlueprintLib::enableViewportRendering(AActor* context, bool enable)
 void URobotBlueprintLib::OnBeginPlay()
 {
     flush_on_draw_count_ = 0;
-    image_wrapper_module_ =
-        &FModuleManager::LoadModuleChecked<IImageWrapperModule>(
-            FName("ImageWrapper"));
+    image_wrapper_module_ = &FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
 }
 
 void URobotBlueprintLib::OnEndPlay()
 {
-    // nothing to do for now
+    // Nothing to do for now
     image_wrapper_module_ = nullptr;
 }
 
@@ -176,22 +161,23 @@ void URobotBlueprintLib::LogMessage(const FString& prefix,
                                     LogDebugLevel level,
                                     float persist_sec)
 {
-    if (log_messages_hidden_)
+    if (log_messages_hidden_) {
         return;
+    }
 
     static TMap<FString, int> loggingKeys;
     static int counter = 1;
 
     int key = loggingKeys.FindOrAdd(prefix);
-    if (key == 0)
-    {
+
+    if (key == 0) {
         key = counter++;
         loggingKeys[prefix] = key;
     }
 
     FColor color;
-    switch (level)
-    {
+
+    switch (level) {
     case LogDebugLevel::Informational:
         color = FColor(147, 231, 237);
         // UE_LOG(LogTemp, Log, TEXT("%s%s"), *prefix, *suffix);
@@ -212,10 +198,8 @@ void URobotBlueprintLib::LogMessage(const FString& prefix,
         color = FColor::Black;
         break;
     }
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(key, persist_sec, color,
-                                         prefix + suffix);
+    if (GEngine) {
+        GEngine->AddOnScreenDebugMessage(key, persist_sec, color, prefix + suffix);
     }
     // GEngine->AddOnScreenDebugMessage(key + 10, 60.0f, color,
     // FString::FromInt(key));
@@ -227,11 +211,12 @@ void URobotBlueprintLib::setUnrealClockSpeed(const AActor* context,
     URobotBlueprintLib::RunCommandOnGameThread(
         [context, clock_speed]() {
             auto* world_settings = context->GetWorldSettings();
-            if (world_settings)
+            if (world_settings) {
                 world_settings->SetTimeDilation(clock_speed);
-            else
-                LogMessageString("Failed:", "WorldSettings was nullptr",
-                                 LogDebugLevel::Failure);
+            }
+            else {
+                LogMessageString("Failed:", "WorldSettings was nullptr", LogDebugLevel::Failure);
+            }
         },
         true);
 }
@@ -240,11 +225,9 @@ float URobotBlueprintLib::GetWorldToMetersScale(const AActor* context)
 {
     float w2m = 100.f;
     UWorld* w = context->GetWorld();
-    if (w != nullptr)
-    {
+    if (w != nullptr) {
         AWorldSettings* ws = w->GetWorldSettings();
-        if (ws != nullptr)
-        {
+        if (ws != nullptr) {
             w2m = ws->WorldToMeters;
         }
     }
@@ -257,26 +240,20 @@ T* URobotBlueprintLib::GetActorComponent(AActor* actor, FString name)
     TArray<T*> components;
     actor->GetComponents(components);
     T* found = nullptr;
-    for (T* component : components)
-    {
-        if (component->GetName().Compare(name) == 0)
-        {
+    for (T* component : components) {
+        if (component->GetName().Compare(name) == 0) {
             found = component;
             break;
         }
     }
     return found;
 }
-template UChildActorComponent* URobotBlueprintLib::GetActorComponent(AActor*,
-                                                                     FString);
-template USceneCaptureComponent2D*
-URobotBlueprintLib::GetActorComponent(AActor*, FString);
-template UStaticMeshComponent* URobotBlueprintLib::GetActorComponent(AActor*,
-                                                                     FString);
-template URotatingMovementComponent*
-URobotBlueprintLib::GetActorComponent(AActor*, FString);
-template UCameraComponent* URobotBlueprintLib::GetActorComponent(AActor*,
-                                                                 FString);
+
+template UChildActorComponent* URobotBlueprintLib::GetActorComponent(AActor*, FString);
+template USceneCaptureComponent2D* URobotBlueprintLib::GetActorComponent(AActor*, FString);
+template UStaticMeshComponent* URobotBlueprintLib::GetActorComponent(AActor*, FString);
+template URotatingMovementComponent* URobotBlueprintLib::GetActorComponent(AActor*, FString);
+template UCameraComponent* URobotBlueprintLib::GetActorComponent(AActor*, FString);
 
 bool URobotBlueprintLib::IsInGameThread()
 {
@@ -287,35 +264,35 @@ void URobotBlueprintLib::RunCommandOnGameThread(TFunction<void()> InFunction,
                                                 bool wait,
                                                 const TStatId InStatId)
 {
-    if (IsInGameThread())
+    if (IsInGameThread()) {
         InFunction();
-    else
-    {
-        FGraphEventRef task = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            MoveTemp(InFunction), InStatId, nullptr, ENamedThreads::GameThread);
-        if (wait)
+    }
+    else {
+        FGraphEventRef task = FFunctionGraphTask::CreateAndDispatchWhenReady(MoveTemp(InFunction), InStatId, nullptr, ENamedThreads::GameThread);
+        if (wait) {
             FTaskGraphInterface::Get().WaitUntilTaskCompletes(task);
+        }
     }
 }
 
 template <>
-std::string URobotBlueprintLib::GetMeshName<USkinnedMeshComponent>(
-    USkinnedMeshComponent* mesh)
+std::string URobotBlueprintLib::GetMeshName<USkinnedMeshComponent>(USkinnedMeshComponent* mesh)
 {
-    switch (mesh_naming_method_)
-    {
-    case RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType::
-        OwnerName:
-        if (mesh->GetOwner())
+    switch (mesh_naming_method_) {
+    case RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType::OwnerName:
+        if (mesh->GetOwner()) {
             return std::string(TCHAR_TO_UTF8(*(mesh->GetOwner()->GetName())));
-        else
+        }
+        else {
             return ""; // std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
-    case RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType::
-        StaticMeshName:
-        if (mesh->SkeletalMesh)
+        }
+    case RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType::StaticMeshName:
+        if (mesh->SkeletalMesh) {
             return std::string(TCHAR_TO_UTF8(*(mesh->SkeletalMesh->GetName())));
-        else
+        }
+        else {
             return "";
+        }
     default:
         return "";
     }
@@ -329,21 +306,21 @@ std::string URobotBlueprintLib::GetMeshName(ALandscapeProxy* mesh)
 std::string
 URobotBlueprintLib::GetMeshName(UProceduralMeshComponent* meshComponent)
 {
-    switch (mesh_naming_method_)
-    {
-    case RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType::
-        OwnerName:
-        if (meshComponent->GetOwner())
-            return std::string(
-                TCHAR_TO_UTF8(*(meshComponent->GetOwner()->GetName())));
-        else
+    switch (mesh_naming_method_) {
+    case RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType::OwnerName:
+        if (meshComponent->GetOwner()) {
+            return std::string(TCHAR_TO_UTF8(*(meshComponent->GetOwner()->GetName())));
+        }
+        else {
             return ""; // std::string(TCHAR_TO_UTF8(*(UKismetSystemLibrary::GetDisplayName(mesh))));
-    case RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType::
-        StaticMeshName:
-        if (meshComponent)
+        }
+    case RobotSim::RobotSimSettings::SegmentationSetting::MeshNamingMethodType::StaticMeshName:
+        if (meshComponent) {
             return std::string(TCHAR_TO_UTF8(*(meshComponent->GetName())));
-        else
+        }
+        else {
             return "";
+        }
     default:
         return "";
     }
@@ -351,16 +328,15 @@ URobotBlueprintLib::GetMeshName(UProceduralMeshComponent* meshComponent)
 
 void URobotBlueprintLib::InitializeMeshStencilIDs(bool ignore_existing)
 {
-    for (TObjectIterator<UMeshComponent> comp; comp; ++comp)
-    {
+    for (TObjectIterator<UMeshComponent> comp; comp; ++comp) {
         InitializeObjectStencilID(*comp, ignore_existing);
     }
-    for (TObjectIterator<USkinnedMeshComponent> comp; comp; ++comp)
-    {
+
+    for (TObjectIterator<USkinnedMeshComponent> comp; comp; ++comp) {
         InitializeObjectStencilID(*comp, ignore_existing);
     }
-    for (TObjectIterator<ALandscapeProxy> comp; comp; ++comp)
-    {
+
+    for (TObjectIterator<ALandscapeProxy> comp; comp; ++comp) {
         InitializeObjectStencilID(*comp, ignore_existing);
     }
 }
@@ -371,29 +347,26 @@ bool URobotBlueprintLib::SetMeshStencilID(const std::string& mesh_name,
 {
     std::regex name_regex;
 
-    if (is_name_regex)
+    if (is_name_regex) {
         name_regex.assign(mesh_name, std::regex_constants::icase);
+    }
 
     int changes = 0;
-    for (TObjectIterator<UMeshComponent> comp; comp; ++comp)
-    {
-        SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex,
-                                  name_regex, changes);
+
+    for (TObjectIterator<UMeshComponent> comp; comp; ++comp) {
+        SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex, name_regex, changes);
     }
-    for (TObjectIterator<USkinnedMeshComponent> comp; comp; ++comp)
-    {
-        SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex,
-                                  name_regex, changes);
+
+    for (TObjectIterator<USkinnedMeshComponent> comp; comp; ++comp) {
+        SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex, name_regex, changes);
     }
-    for (TObjectIterator<ALandscapeProxy> comp; comp; ++comp)
-    {
-        SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex,
-                                  name_regex, changes);
+
+    for (TObjectIterator<ALandscapeProxy> comp; comp; ++comp) {
+        SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex, name_regex, changes);
     }
-    for (TObjectIterator<UProceduralMeshComponent> comp; comp; ++comp)
-    {
-        SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex,
-                                  name_regex, changes);
+
+    for (TObjectIterator<UProceduralMeshComponent> comp; comp; ++comp) {
+        SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex, name_regex, changes);
     }
 
     return changes > 0;
@@ -402,13 +375,10 @@ bool URobotBlueprintLib::SetMeshStencilID(const std::string& mesh_name,
 int URobotBlueprintLib::GetMeshStencilID(const std::string& mesh_name)
 {
     FString fmesh_name(mesh_name.c_str());
-    for (TObjectIterator<UMeshComponent> comp; comp; ++comp)
-    {
+    for (TObjectIterator<UMeshComponent> comp; comp; ++comp) {
         // Access the subclass instance with the * or -> operators.
         UMeshComponent* mesh = *comp;
-        if (mesh->GetName() == fmesh_name ||
-            mesh->GetName() == (fmesh_name + "_visual"))
-        {
+        if (mesh->GetName() == fmesh_name or mesh->GetName() == (fmesh_name + "_visual")) {
             return mesh->CustomDepthStencilValue;
         }
     }
@@ -424,11 +394,11 @@ bool URobotBlueprintLib::HasObstacle(const AActor* actor,
 {
     FCollisionQueryParams trace_params;
     trace_params.AddIgnoredActor(actor);
-    if (ignore_actor != nullptr)
+    if (ignore_actor != nullptr) {
         trace_params.AddIgnoredActor(ignore_actor);
+    }
 
-    return actor->GetWorld()->LineTraceTestByChannel(
-        start, end, collision_channel, trace_params);
+    return actor->GetWorld()->LineTraceTestByChannel(start, end, collision_channel, trace_params);
 }
 
 bool URobotBlueprintLib::GetObstacle(const AActor* actor,
@@ -442,36 +412,37 @@ bool URobotBlueprintLib::GetObstacle(const AActor* actor,
     hit = FHitResult(ForceInit);
 
     FCollisionQueryParams trace_params;
-    if (ignore_root_actor)
+    if (ignore_root_actor) {
         trace_params.AddIgnoredActor(actor);
+    }
 
-    for (const auto& ignore_actor : ignore_actors)
+    for (const auto& ignore_actor : ignore_actors) {
         trace_params.AddIgnoredActor(ignore_actor);
+    }
 
-    return actor->GetWorld()->LineTraceSingleByChannel(
-        hit, start, end, collision_channel, trace_params);
+    return actor->GetWorld()->LineTraceSingleByChannel(hit, start, end, collision_channel, trace_params);
 }
 
-bool URobotBlueprintLib::GetLastObstaclePosition(
-    const AActor* actor,
-    const FVector& start,
-    const FVector& end,
-    FHitResult& hit,
-    const AActor* ignore_actor,
-    ECollisionChannel collision_channel)
+bool URobotBlueprintLib::GetLastObstaclePosition(const AActor* actor,
+                                                 const FVector& start,
+                                                 const FVector& end,
+                                                 FHitResult& hit,
+                                                 const AActor* ignore_actor,
+                                                 ECollisionChannel collision_channel)
 {
     TArray<FHitResult> hits;
 
     FCollisionQueryParams trace_params;
     trace_params.AddIgnoredActor(actor);
-    if (ignore_actor != nullptr)
+    if (ignore_actor != nullptr) {
         trace_params.AddIgnoredActor(ignore_actor);
+    }
 
-    bool has_hit = actor->GetWorld()->LineTraceMultiByChannel(
-        hits, start, end, collision_channel, trace_params);
+    bool has_hit = actor->GetWorld()->LineTraceMultiByChannel(hits, start, end, collision_channel, trace_params);
 
-    if (hits.Num())
+    if (hits.Num()) {
         hit = hits.Last(0);
+    }
 
     return has_hit;
 }
@@ -484,25 +455,25 @@ void URobotBlueprintLib::FollowActor(AActor* follower,
 {
     // can we see followee?
     FHitResult hit;
-    if (followee == nullptr)
-    {
+
+    if (followee == nullptr) {
         return;
     }
+
     FVector actor_location = followee->GetActorLocation() + FVector(0, 0, 4);
     FVector next_location = actor_location + offset;
-    if (fixed_z)
+
+    if (fixed_z) {
         next_location.Z = fixed_z_val;
+    }
 
     TArray<const AActor*> ignore_actors;
     ignore_actors.Emplace(followee);
-    if (GetObstacle(follower, next_location, actor_location, hit,
-                    ignore_actors))
-    {
+
+    if (GetObstacle(follower, next_location, actor_location, hit, ignore_actors)) {
         next_location = hit.ImpactPoint + offset;
 
-        if (GetObstacle(follower, next_location, actor_location, hit,
-                        ignore_actors))
-        {
+        if (GetObstacle(follower, next_location, actor_location, hit, ignore_actors)) {
             float next_z = next_location.Z;
             next_location = hit.ImpactPoint - offset;
             next_location.Z = next_z;
@@ -512,14 +483,10 @@ void URobotBlueprintLib::FollowActor(AActor* follower,
     float dist = (follower->GetActorLocation() - next_location).Size();
     float offset_dist = offset.Size();
     float dist_offset = (dist - offset_dist) / offset_dist;
-    float lerp_alpha = common_utils::Utils::clip(
-        (dist_offset * dist_offset) * 0.01f + 0.01f, 0.0f, 1.0f);
-    next_location =
-        FMath::Lerp(follower->GetActorLocation(), next_location, lerp_alpha);
+    float lerp_alpha = common_utils::Utils::clip((dist_offset * dist_offset) * 0.01f + 0.01f, 0.0f, 1.0f);
+    next_location = FMath::Lerp(follower->GetActorLocation(), next_location, lerp_alpha);
     follower->SetActorLocation(next_location);
-
-    FRotator next_rot = UKismetMathLibrary::FindLookAtRotation(
-        follower->GetActorLocation(), followee->GetActorLocation());
+    FRotator next_rot = UKismetMathLibrary::FindLookAtRotation(follower->GetActorLocation(), followee->GetActorLocation());
     next_rot = FMath::Lerp(follower->GetActorRotation(), next_rot, 0.5f);
     follower->SetActorRotation(next_rot);
 }
@@ -528,39 +495,34 @@ int URobotBlueprintLib::RemoveAxisBinding(const FInputAxisKeyMapping& axis,
                                           FInputAxisBinding* axis_binding,
                                           AActor* actor)
 {
-    if (axis_binding != nullptr && actor != nullptr)
-    {
-        APlayerController* controller =
-            actor->GetWorld()->GetFirstPlayerController();
+    if (axis_binding != nullptr && actor != nullptr) {
+        APlayerController* controller = actor->GetWorld()->GetFirstPlayerController();
 
-        // remove mapping
+        // Remove mapping
         int found_mapping_index = -1, cur_mapping_index = -1;
-        for (const auto& axis_arr : controller->PlayerInput->AxisMappings)
-        {
+        for (const auto& axis_arr : controller->PlayerInput->AxisMappings) {
             ++cur_mapping_index;
-            if (axis_arr.AxisName == axis.AxisName && axis_arr.Key == axis.Key)
-            {
+            if (axis_arr.AxisName == axis.AxisName and axis_arr.Key == axis.Key) {
                 found_mapping_index = cur_mapping_index;
                 break;
             }
         }
-        if (found_mapping_index >= 0)
+        if (found_mapping_index >= 0) {
             controller->PlayerInput->AxisMappings.RemoveAt(found_mapping_index);
+        }
 
-        // removing binding
+        // Removing binding
         int found_binding_index = -1, cur_binding_index = -1;
-        for (const auto& axis_arr : controller->InputComponent->AxisBindings)
-        {
+        for (const auto& axis_arr : controller->InputComponent->AxisBindings) {
             ++cur_binding_index;
-            if (axis_arr.AxisName == axis_binding->AxisName)
-            {
+            if (axis_arr.AxisName == axis_binding->AxisName) {
                 found_binding_index = cur_binding_index;
                 break;
             }
         }
-        if (found_binding_index >= 0)
-            controller->InputComponent->AxisBindings.RemoveAt(
-                found_binding_index);
+        if (found_binding_index >= 0) {
+            controller->InputComponent->AxisBindings.RemoveAt(found_binding_index);
+        }
 
         return found_binding_index;
     }
@@ -582,8 +544,7 @@ UObject* URobotBlueprintLib::LoadObject(const std::string& name)
 {
     FString str(name.c_str());
     UObject* obj = StaticLoadObject(UObject::StaticClass(), nullptr, *str);
-    if (obj == nullptr)
-    {
+    if (obj == nullptr) {
         std::string msg = "Failed to load asset object - " + name;
         FString fmsg(msg.c_str());
         LogMessage(TEXT("Load: "), fmsg, LogDebugLevel::Failure);
@@ -596,8 +557,7 @@ UClass* URobotBlueprintLib::LoadClass(const std::string& name)
 {
     FString str(name.c_str());
     UClass* cls = StaticLoadClass(UObject::StaticClass(), nullptr, *str);
-    if (cls == nullptr)
-    {
+    if (cls == nullptr) {
         std::string msg = "Failed to load asset class - " + name;
         FString fmsg(msg.c_str());
         LogMessage(TEXT("Load: "), fmsg, LogDebugLevel::Failure);
@@ -616,8 +576,7 @@ void URobotBlueprintLib::CompressImageArray(int32 width,
     // PNGs are saved as RGBA but FColors are stored as BGRA. An option to swap
     // the order upon compression may be added at some point. At the moment,
     // manually swapping Red and Blue
-    for (int32 Index = 0; Index < width * height; Index++)
-    {
+    for (int32 Index = 0; Index < width * height; Index++) {
         uint8 TempRed = MutableSrcData[Index].R;
         MutableSrcData[Index].R = MutableSrcData[Index].B;
         MutableSrcData[Index].B = TempRed;
@@ -630,32 +589,25 @@ void URobotBlueprintLib::CompressImageArray(int32 width,
     // Copy scaled image into destination thumb
     int32 MemorySize = width * height * sizeof(FColor);
     ThumbnailByteArray.AddUninitialized(MemorySize);
-    FMemory::Memcpy(ThumbnailByteArray.GetData(), MutableSrcData.GetData(),
-                    MemorySize);
+    FMemory::Memcpy(ThumbnailByteArray.GetData(), MutableSrcData.GetData(), MemorySize);
 
     // Compress data - convert into a .png
     CompressUsingImageWrapper(ThumbnailByteArray, width, height, dest);
-    ;
 }
 
-bool URobotBlueprintLib::CompressUsingImageWrapper(
-    const TArray<uint8>& uncompressed,
-    const int32 width,
-    const int32 height,
-    TArray<uint8>& compressed)
+bool URobotBlueprintLib::CompressUsingImageWrapper(const TArray<uint8>& uncompressed,
+                                                   const int32 width,
+                                                   const int32 height,
+                                                   TArray<uint8>& compressed)
 {
     bool bSucceeded = false;
     compressed.Reset();
-    if (uncompressed.Num() > 0)
-    {
-        IImageWrapperModule* ImageWrapperModule =
-            URobotBlueprintLib::getImageWrapperModule();
-        TSharedPtr<IImageWrapper> ImageWrapper =
-            ImageWrapperModule->CreateImageWrapper(EImageFormat::PNG);
-        if (ImageWrapper.IsValid() &&
-            ImageWrapper->SetRaw(&uncompressed[0], uncompressed.Num(), width,
-                                 height, ERGBFormat::RGBA, 8))
-        {
+
+    if (uncompressed.Num() > 0) {
+        IImageWrapperModule* ImageWrapperModule = URobotBlueprintLib::getImageWrapperModule();
+        TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule->CreateImageWrapper(EImageFormat::PNG);
+
+        if (ImageWrapper.IsValid() and ImageWrapper->SetRaw(&uncompressed[0], uncompressed.Num(), width, height, ERGBFormat::RGBA, 8)) {
             compressed = ImageWrapper->GetCompressed();
             bSucceeded = true;
         }

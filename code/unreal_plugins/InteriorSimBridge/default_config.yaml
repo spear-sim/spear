@@ -1,0 +1,57 @@
+INTERIOR_SIM_BRIDGE:
+
+  # If set to True, the actor follows a collision-free trajectory towards a randomly defined reachable location:
+  ACTIVATE_AUTOPILOT: True
+  
+  # Radius in [cm], of the region within which the path planning will occur 
+  TARGET_RADIUS: 100000
+  
+  # 
+  PATH_WEIGHT_DIST: 1
+  
+  #
+  PATH_WEIGHT_NUM_WAYPOINTS: 1
+  
+  #
+  MAX_ITER_REPLAN: 50000
+  
+  # If set to True, the actor provides egocentric visual observations:
+  USE_IMAGE_OBSERVATIONS: True
+  
+  # Allows behavior specialization of the InteriorSimBridge classes:
+  # - "yaw-x-y" the observation vector is set to be the vehicle's yaw, x position and y position in the world frame.
+  # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal.
+  OBSERVATION_VECTOR: "dist-sin-cos"
+  
+  # Reward time:
+  MAX_STEPS_PER_EPISODE: 1000
+  
+  # Reward distance gains:
+  REWARD_DISTANCE_GAIN: 0.005 # REWARD_COLLISION_GAIN/MAX_STEPS_PER_EPISODE
+  REWARD_DISTANCE_BIAS: 0.0
+  
+  # Collision score:
+  REWARD_COLLISION: 500.0
+  
+  # Goal reached:
+  REWARD_GOAL_REACHED: 1000.0
+
+  # Height of the rendered egocentric observation in [pixels]
+  IMAGE_HEIGHT: 120
+
+  # Width of the rendered egocentric observation in [pixels]
+  IMAGE_WIDTH: 160
+
+  # Field of view of the smartphone camera in [deg]
+  SMARTPHONE_FOV: 72.0 
+
+  # Strength of motion blur, 0:off, should be renamed to intensity
+  MOTION_BLUR_AMMOUNT: 10.0
+
+  # Max distortion caused by motion blur, in percent of the screen width, 0:off
+  MOTION_BLUR_MAX: 10.0
+
+  #Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
+  POST_PROC_BLEND_WEIGHT: 1.0
+
+  
