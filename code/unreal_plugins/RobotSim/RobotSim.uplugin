@@ -23,19 +23,15 @@
     ],
     "Plugins": [
         {
+            "Name": "CoreUtils",
+            "Enabled": true
+        },
+        {
             "Name": "PhysXVehicles",
             "Enabled": true
         },
         {
             "Name": "ProceduralMeshComponent",
-            "Enabled": true
-        },
-        {
-            "Name": "PhysXVehicles",
-            "Enabled": true
-        },
-        {
-            "Name": "CoreUtils",
             "Enabled": true
         }
     ]

@@ -29,7 +29,8 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializ
         Mesh->SetAnimClass(finderAnim.Class);
         UE_LOG(LogTemp, Warning, TEXT("finderAnim success"));
     }
-    else {
+    else
+    {
         UE_LOG(LogTemp, Warning, TEXT("finderAnim failed"));
     }
 
