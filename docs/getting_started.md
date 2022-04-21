@@ -51,9 +51,9 @@ cd code/tools
 python create_symbolic_links.py
 ```
 
-## Launch your first Unreal project
+## Generate a config file for your first Unreal project
 
-Our Unreal projects assume that all of their required parameters are declared in a config file. We usually launch our projects via high-level Python code, and this Python code takes care of generating the appropriate config file automatically. However, if you want to launch one of our projects directly from the Unreal Editor, you will need to generate the config file in a separate step. First, rename the following file and edit the paths in the file for your system.
+Our Unreal projects assume that all of their required parameters are declared in a config file. We usually launch our projects via high-level Python code, and this Python code takes care of generating the appropriate config file automatically. However, a valid config file is also required when building our projects, and we must generate this config file explicitly before attempting to build. A valid config file is also required if you want to launch one of our projects directly from the Unreal Editor. To generate a config file, rename the following file and edit the paths in the file for your system.
 
 ```
 code/github/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml.example -> user_config.yaml
@@ -65,6 +65,8 @@ Next, run the following command-line tool.
 cd code/tools
 python generate_config.py --config_files path/to/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/interiorsim/code/unreal_projects/PlayEnvironment
 ```
+
+## Launch your first Unreal project
 
 At this point, you should be able to double-click on `code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully.
 
@@ -88,11 +90,11 @@ You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stag
 At this point, you should be able to run your standalone executable directly as follows.
 
 ```console
-# generate config
+# generate config directly inside PlayEnvironment.app
 cd code/tools
 python generate_config.py --config_files path/to/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/UE4/PlayEnvironment
 
-# run the executable from the terminal, alternatively you can double-click on PlayEnvironment.app
+# run the executable from the terminal (or double-click on PlayEnvironment.app)
 path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/MacOS/PlayEnvironment
 ```
 
@@ -101,7 +103,6 @@ path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/
 At this point, you should be able to control the environment in an interactive IPython session. Here is a minimal example program that you should be able to execute one line at a time from IPython. We also provide a `run.py` script with each of our examples that executes similar code.
 
 ```python
-import numpy as np
 import os
 
 import interiorsim

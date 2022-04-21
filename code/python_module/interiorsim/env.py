@@ -101,6 +101,10 @@ class Env(gym.Env):
         pass
 
     def close(self):
+
+        print("Closing Unreal instance...")
+        print()
+
         # request to close Unreal instance
         self._close_unreal_instance()
         self._close_client_server_connection()
@@ -110,6 +114,9 @@ class Env(gym.Env):
         while status in ["running", "sleeping", "disk-sleep"]:
             time.sleep(1.0)
             status = self._process.status()
+
+        print("Finished closing Unreal instance.")
+        print()
 
     def _request_launch_unreal_instance(self):
 
@@ -159,6 +166,8 @@ class Env(gym.Env):
             os.environ["VK_ICD_FILENAMES"] = self._config.INTERIORSIM.VULKAN_DEVICE_FILES
 
         print("Writing temp config file: " + temp_config_file)
+        print()
+
         if not os.path.exists(os.path.abspath(self._config.INTERIORSIM.TEMP_DIR)):
             os.makedirs(os.path.abspath(self._config.INTERIORSIM.TEMP_DIR))
         with open(temp_config_file, "w") as output:
@@ -185,9 +194,14 @@ class Env(gym.Env):
 
         args = [launch_executable_internal] + launch_params
 
-        print("Launching executable with the following parameters:")
+        print("Launching executable with the following arguments:")
         print(" ".join(args))
+        print()
 
+        print("Launching executable with the following config values:")
+        print(self._config)
+        print()
+        
         popen = Popen(args)
         self._process = psutil.Process(popen.pid)
 
@@ -203,7 +217,8 @@ class Env(gym.Env):
     def _connect_to_unreal_instance(self):
 
         print(f"Connecting to Unreal application...")
-
+        print()
+        
         # If we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
         if self._config.INTERIORSIM.LAUNCH_MODE == "running_instance":
             connected = False

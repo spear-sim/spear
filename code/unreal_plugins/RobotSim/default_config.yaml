@@ -1,5 +1,9 @@
 ROBOT_SIM:
 
+  # Used to prevent RobotSim from attempting to load a segmentation material stored directly in RobotProject/Content.
+  # This is useful when RobotSim is loaded in projects other than RobotProject (e.g., PlayEnvironment or InteriorEnvironment).
+  PIP_CAMERA_LOAD_SEGMENTATION_MATERIAL: True
+
   # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
   ACCEPTANCE_RADIUS: 0.1
   

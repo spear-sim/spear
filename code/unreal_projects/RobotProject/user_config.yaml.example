@@ -1,42 +1,15 @@
 INTERIORSIM:
-  # LAUNCH_MODE: "running_instance"
   LAUNCH_MODE: "standalone_executable"
   STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/LinuxNoEditor/RobotProject.sh"
   TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Temp"
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
-  CUSTOM_COMMAND_LINE_ARGUMENTS:
-    - "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json"
+  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-RobotSimSettingPath=/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json" ]
 
 SIMULATION_CONTROLLER:
-  AGENT_CONTROLLER_NAME: "OpenBotAgentController"
   TASK_NAME: "PointGoalNavigation"
-
-  VISUALIZER:
-    CAMERA_ACTOR_NAME: "Follow"
-    SET_CAMERA_POSE: False
-    CAMERA_POSITION_X: -250.0
-    CAMERA_POSITION_Y: -155.0
-    CAMERA_POSITION_Z: 200.0
-    CAMERA_PITCH: -90.0
-    CAMERA_YAW: 0.0
-    CAMERA_ROLL: 0.0
+  AGENT_CONTROLLER_NAME: "OpenBotAgentController"
   
-  OPENBOT_AGENT_CONTROLLER:
-    AGENT_ACTOR_NAME: "SimpleVehicle_0"
-    GOAL_ACTOR_NAME: "Cube_6"
-    OBSERVATION_MODE: "mixed"
-    AGENT_READY_VELOCITY_THRESHOLD: 1.0
-    PHYSICAL_OBSERVATION_MODE: "dist-sin-cos" # "dist-sin-cos" or "yaw-x-y"
-    MIXED_MODE:
-      OBSERVATION_CAMERA_ACTOR_NAME: "Follow"
-      IMAGE_HEIGHT: 128
-      IMAGE_WIDTH: 128
-      SMARTPHONE_FOV: 72.0
-      MOTION_BLUR_AMOUNT: 10.0
-      MOTION_BLUR_MAX: 10.0
-      POST_PROC_BLEND_WEIGHT: 1.0
-
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: "SimpleVehicle_0"
     GOAL_ACTOR_NAME: "Cube_6"
@@ -57,3 +30,22 @@ SIMULATION_CONTROLLER:
       GOAL_POSITION_Z: 5.0
       SPAWN_DISTANCE_THRESHOLD: 100.0
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor"]
+
+  OPENBOT_AGENT_CONTROLLER:
+    AGENT_ACTOR_NAME: "SimpleVehicle_0"
+    GOAL_ACTOR_NAME: "Cube_6"
+    OBSERVATION_MODE: "mixed"
+    PHYSICAL_OBSERVATION_MODE: "dist-sin-cos"
+    AGENT_READY_VELOCITY_THRESHOLD: 1.0
+    MIXED_MODE:
+      OBSERVATION_CAMERA_ACTOR_NAME: "Follow"
+      IMAGE_HEIGHT: 128
+      IMAGE_WIDTH: 128
+      SMARTPHONE_FOV: 72.0
+      MOTION_BLUR_AMOUNT: 10.0
+      MOTION_BLUR_MAX: 10.0
+      POST_PROC_BLEND_WEIGHT: 1.0
+
+  VISUALIZER:
+    CAMERA_ACTOR_NAME: "Follow"
+    SET_CAMERA_POSE: False
