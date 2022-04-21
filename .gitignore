@@ -1,7 +1,5 @@
 __pycache__
 .ipynb_checkpoints
-code/*.sh
-ThirdParty
 
 code/experiments/debug_synchronization_model/DebugProject/Binaries
 code/experiments/debug_synchronization_model/DebugProject/Build
