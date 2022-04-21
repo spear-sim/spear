@@ -20,7 +20,8 @@
 
 #include "Assert.h"
 #include "Box.h"
-#include "Config.h" 
+#include "Config.h"
+#include "Serialize.h"
 
 OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
@@ -263,13 +264,13 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
         ASSERT(vehicle_pawn);
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
-        observation["physical_observation"] = serializeToUint8(std::vector<float>{control_state(0), control_state(1), mag_relative_position_to_goal, sin_yaw, cos_yaw});
+        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), mag_relative_position_to_goal, sin_yaw, cos_yaw});
 
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_MODE", "OBSERVATION"}) == "yaw-x-y") {
         ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
         ASSERT(vehicle_pawn);
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
-        observation["physical_observation"] = serializeToUint8(std::vector<float>{control_state(0), control_state(1), FMath::DegreesToRadians(agent_current_orientation.Yaw), agent_current_location.X, agent_current_location.Y});
+        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), FMath::DegreesToRadians(agent_current_orientation.Yaw), agent_current_location.X, agent_current_location.Y});
 
     } else {
         ASSERT(false);
