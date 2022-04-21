@@ -39,27 +39,23 @@ void FInteriorSimBridgeModule::ShutdownModule()
     FWorldDelegates::OnWorldCleanup.Remove(WorldCleanupDelegateHandle);
     WorldCleanupDelegateHandle.Reset();
 
-    FWorldDelegates::OnPostWorldInitialization.Remove(
-        PostWorldInitializationDelegateHandle);
+    FWorldDelegates::OnPostWorldInitialization.Remove(PostWorldInitializationDelegateHandle);
     PostWorldInitializationDelegateHandle.Reset();
 }
 
 void FInteriorSimBridgeModule::PostWorldInitializationEventHandler(
-    UWorld* World, const UWorld::InitializationValues)
+    UWorld *World, const UWorld::InitializationValues)
 {
     check(World);
 
     if (World->IsGameWorld())
     {
-        // required to handle cases when new actors of custom classes are
-        // spawned
-        ActorSpawnedDelegateHandle = World->AddOnActorSpawnedHandler(
-            FOnActorSpawned::FDelegate::CreateRaw(
-                this, &FInteriorSimBridgeModule::ActorSpawnedEventHandler));
+        // Required to handle cases when new actors of custom classes are spawned
+        ActorSpawnedDelegateHandle = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateRaw(this, &FInteriorSimBridgeModule::ActorSpawnedEventHandler));
     }
 }
 
-void FInteriorSimBridgeModule::WorldCleanupEventHandler(UWorld* World,
+void FInteriorSimBridgeModule::WorldCleanupEventHandler(UWorld *World,
                                                         bool bSessionEnded,
                                                         bool bCleanupResources)
 {
@@ -67,14 +63,13 @@ void FInteriorSimBridgeModule::WorldCleanupEventHandler(UWorld* World,
 
     if (World->IsGameWorld())
     {
-        // remove event handlers bound to this world before world gets cleaned
-        // up
+        // Remove event handlers bound to this world before world gets cleaned up
         World->RemoveOnActorSpawnedHandler(ActorSpawnedDelegateHandle);
         ActorSpawnedDelegateHandle.Reset();
     }
 }
 
-void FInteriorSimBridgeModule::ActorSpawnedEventHandler(AActor* InActor)
+void FInteriorSimBridgeModule::ActorSpawnedEventHandler(AActor *InActor)
 {
     check(InActor);
 

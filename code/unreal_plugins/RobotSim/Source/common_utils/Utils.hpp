@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef common_utils_Utils_hpp
-#define common_utils_Utils_hpp
+#pragma once
 
 #include "StrictMode.hpp"
 #include <chrono>
@@ -727,4 +726,4 @@ public:
 };
 
 } //namespace
-#endif
+

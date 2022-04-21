@@ -4,8 +4,6 @@
 
 //#include "CoreMinimal.h"
 
-#ifndef msr_airlib_settings_hpp
-#define msr_airlib_settings_hpp
 
 #include "common_utils/Utils.hpp"
 
@@ -378,4 +376,3 @@ public:
     }
 };
 } // namespace RobotSim
-#endif

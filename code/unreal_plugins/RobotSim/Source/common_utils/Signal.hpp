@@ -1,5 +1,4 @@
-#ifndef common_utils_Signal_hpp
-#define common_utils_Signal_hpp
+#pragma once
 
 #include <functional>
 #include <map>
@@ -97,5 +96,3 @@ private:
 };
 
 }
-
-#endif /* common_utils_Signal_hpp */

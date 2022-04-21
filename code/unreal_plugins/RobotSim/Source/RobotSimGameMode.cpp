@@ -10,9 +10,7 @@ void ARobotSimGameMode::StartPlay()
     Super::StartPlay();
 }
 
-ARobotSimGameMode::ARobotSimGameMode(
-    const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
+ARobotSimGameMode::ARobotSimGameMode(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     DefaultPawnClass = nullptr;
     HUDClass = ARobotSimHUD::StaticClass();

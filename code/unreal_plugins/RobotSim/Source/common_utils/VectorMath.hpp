@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifndef air_VectorMath_hpp
-#define air_VectorMath_hpp
+#pragma once
 
 #include "common_utils/Utils.hpp"
 #include "common_utils/RandomGenerator.hpp"
@@ -670,4 +669,4 @@ typedef VectorMathT<Eigen::Vector3d, Eigen::Quaternion<double, Eigen::DontAlign>
 typedef VectorMathT<Eigen::Vector3f, Eigen::Quaternion<float, Eigen::DontAlign>, float> VectorMathf;
 
 } //namespace
-#endif
+

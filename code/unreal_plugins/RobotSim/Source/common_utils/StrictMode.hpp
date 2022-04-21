@@ -1,5 +1,4 @@
-#ifndef common_StrictMode_hpp
-#define common_StrictMode_hpp
+#pragma once
 
 #if defined(_MSC_VER)
 //'=': conversion from 'double' to 'float', possible loss of data
@@ -89,8 +88,6 @@ _Pragma("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")		\
 
 #define STRICT_MODE_ON                                            \
     _Pragma("GCC diagnostic pop")          
-#endif
-
 #endif
 
 #endif

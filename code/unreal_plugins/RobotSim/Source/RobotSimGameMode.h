@@ -8,14 +8,23 @@
 #include "RobotSimGameMode.generated.h"
 
 /**
+ * @brief
  *
  */
 UCLASS()
-class ROBOTSIM_API ARobotSimGameMode : public AGameModeBase
-{
+class ROBOTSIM_API ARobotSimGameMode : public AGameModeBase {
     GENERATED_BODY()
 public:
+    /**
+     * @brief
+     *
+     */
     virtual void StartPlay() override;
 
+    /**
+     * @brief 
+     *
+     * @param ObjectInitializer
+     */
     ARobotSimGameMode(const FObjectInitializer& ObjectInitializer);
 };
