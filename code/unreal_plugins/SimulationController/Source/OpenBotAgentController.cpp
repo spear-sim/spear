@@ -125,10 +125,10 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
     std::map<std::string, Box> action_space;
     Box box;
     
-    box.low_ = -1.f;
-    box.high_ = 1.f;
-    box.shape_ = {2};
-    box.dtype_ = DataType::Float32;
+    box.low = -1.f;
+    box.high = 1.f;
+    box.shape = {2};
+    box.dtype = DataType::Float32;
     action_space["apply_voltage"] = std::move(box);
 
     return action_space;
@@ -140,25 +140,25 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     Box box;
     
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.shape_ = {5};
-        box.dtype_ = DataType::Float32;
+        box.low = std::numeric_limits<float>::lowest();
+        box.high = std::numeric_limits<float>::max();
+        box.shape = {5};
+        box.dtype = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
 
         box = Box();
-        box.low_ = 0;
-        box.high_ = 255;
-        box.shape_ = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+        box.low = 0;
+        box.high = 255;
+        box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
                      Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
                      3};
-        box.dtype_ = DataType::UInteger8;
+        box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.shape_ = {5};
-        box.dtype_ = DataType::Float32;
+        box.low = std::numeric_limits<float>::lowest();
+        box.high = std::numeric_limits<float>::max();
+        box.shape = {5};
+        box.dtype = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
     } else {
         ASSERT(false);
@@ -174,8 +174,8 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
     ASSERT(isfinite(action.at("apply_voltage").at(1)));
 
     // @TODO: This can be checked in python?
-    ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low_ && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high_, "%f", action.at("apply_voltage").at(0));
-    ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low_ && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high_, "%f", action.at("apply_voltage").at(1));
+    ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
+    ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
 
     ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
     ASSERT(vehicle_pawn);
