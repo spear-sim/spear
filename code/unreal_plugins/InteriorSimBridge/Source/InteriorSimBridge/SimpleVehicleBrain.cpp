@@ -93,7 +93,17 @@ void USimpleVehicleBrain::Init()
      */
     std::string SimpleVehicleObservationDescription = "";
 
-    unrealrl::ObservationSpec SimpleVehicleObservationSpec({5}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
+    unrealrl::ObservationSpec SimpleVehicleObservationSpec; 
+
+    if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "dist-sin-cos") {
+        SimpleVehicleObservationSpec = unrealrl::ObservationSpec({5}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
+    }
+    else if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "yaw-x-y") {
+        SimpleVehicleObservationSpec = unrealrl::ObservationSpec({8}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
+    }
+    else{
+        SimpleVehicleObservationSpec = unrealrl::ObservationSpec({5}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
+    }
 
     if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"})) {
         // This observation is an egocentric RGB image.
@@ -112,57 +122,82 @@ void USimpleVehicleBrain::Init()
         // Initialize navigation variables:
         int numberOfWayPoints = 0;
         int numIter = 0;
-        int numIterTot = 0;
-        int numCycle = 0;
+        float pathCriterion = 0.f;
         FVector initialPosition = ownerPawn->GetActorLocation();
-        FNavLocation targetLocation;
+        FNavLocation bestTargetLocation;
         FVector2D relativePositionToTarget(0.0f, 0.0f);
 
         // Initialize navigation:
-        UNavigationSystemV1* navSys = Cast<UNavigationSystemV1>(ownerPawn->GetWorld()->GetNavigationSystem());
+        //UNavigationSystemV1* navSys = Cast<UNavigationSystemV1>(ownerPawn->GetWorld()->GetNavigationSystem());
+        UNavigationSystemV1* navSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+
+        if (not navSys) {
+            ASSERT(false);
+        }
+        
+        //auto navData = navSys->GetNavDataForAgentName(FName(ownerPawn->GetName()));
+
         ANavigationData* navData = (navSys == nullptr) ? nullptr : navSys->GetNavDataForProps(ownerPawn->GetNavAgentPropertiesRef());
+        if (not navData) {
+            ASSERT(false);
+        }
+        
+
+        // ARecastNavMesh* navMesh = Cast<ARecastNavMesh>(navData);
+
+        // if (not navMesh) {
+        //     ASSERT(false);
+        // }
 
         // Set path generation query:
-        FPathFindingQuery Query = FPathFindingQuery(*ownerPawn, *navData, initialPosition, targetLocation.Location);
+        FPathFindingQuery Query = FPathFindingQuery(*ownerPawn, *navData, initialPosition, targetLocation_.Location);
         // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
         Query.SetAllowPartialPaths(true);
 
         // Path generation polling to get "interesting" paths in every experiment:
-        while ((numberOfWayPoints < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_WAY_POINTS"}) - numCycle and relativePositionToTarget.Size() < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MIN_TARGET_DISTANCE"})) or numIterTot < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_ITER_REPLAN"}) * unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_WAY_POINTS"})) // Try to generate interesting trajectories with multiple waypoints
+        while (numIter < unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
         {
-            std::cout << "Iteration: " << numIterTot << std::endl;
-            if (numIter >= unrealrl::Config::GetValue<int>({"INTERIOR_SIM_BRIDGE", "MAX_ITER_REPLAN"})) {
-                numCycle++;
-                numIter = 0;
-            }
-            pathPoints_.Empty();
-
             // Ret a random target point, to be reached by the agent:
-            if (not navSys->GetRandomReachablePointInRadius(initialPosition, unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "TARGET_RADIUS"}), targetLocation)) {
+            if (not navSys->GetRandomReachablePointInRadius(initialPosition, unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "TARGET_RADIUS"}), targetLocation_)) {
                 ASSERT(false);
             }
-            relativePositionToTarget.X = (targetLocation.Location - initialPosition).X;
-            relativePositionToTarget.Y = (targetLocation.Location - initialPosition).Y;
+            relativePositionToTarget.X = (targetLocation_.Location - initialPosition).X;
+            relativePositionToTarget.Y = (targetLocation_.Location - initialPosition).Y;
+
+            // Update navigation query with the new target: 
+            Query = FPathFindingQuery(*ownerPawn, *navData, initialPosition, targetLocation_.Location);
 
             // Genrate a collision-free path between the robot position and the target point:
             FPathFindingResult collisionFreePath = navSys->FindPathSync(Query, EPathFindingMode::Type::Regular);
 
             // If path generation is sucessful, analyze the obtained path (it should not be too simple):
-            if (collisionFreePath.IsSuccessful() && collisionFreePath.Path.IsValid()) {
+            if (collisionFreePath.IsSuccessful() and collisionFreePath.Path.IsValid()) {
                 if (collisionFreePath.IsPartial()) {
                     std::cout << "Only a partial path could be found by the planner..." << std::endl;
                 }
-                pathPoints_ = collisionFreePath.Path->GetPathPoints();
-                numberOfWayPoints = pathPoints_.Num();
+                numberOfWayPoints = collisionFreePath.Path->GetPathPoints().Num();
+                float crit = relativePositionToTarget.Size()*unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "PATH_WEIGHT_DIST"}) + numberOfWayPoints * relativePositionToTarget.Size() * unrealrl::Config::GetValue<float>({"INTERIOR_SIM_BRIDGE", "PATH_WEIGHT_NUM_WAYPOINTS"});
+                
+                if (pathCriterion <= crit) {
+                    std::cout << "Iteration: " << numIter << std::endl;
+                    std::cout << "Cost: " << crit << std::endl;
+                    pathCriterion = crit; 
+                    bestTargetLocation = targetLocation_;
+                    pathPoints_.Empty();
+                    pathPoints_ = collisionFreePath.Path->GetPathPoints();
+                    std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
+                    std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
+                }
+                numIter++;
             }
-            std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
-            std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
-            numIter++;
-            numIterTot++;
         }
 
+        ASSERT(pathPoints_.Num() != 0);
+
+        targetLocation_ = bestTargetLocation;
+
         std::cout << "Current position: [" << initialPosition.X << ", " << initialPosition.Y << ", " << initialPosition.Z << "]." << std::endl;
-        std::cout << "Reachable position: [" << targetLocation.Location.X << ", " << targetLocation.Location.Y << ", " << targetLocation.Location.Z << "]." << std::endl;
+        std::cout << "Reachable position: [" << bestTargetLocation.Location.X << ", " << bestTargetLocation.Location.Y << ", " << bestTargetLocation.Location.Z << "]." << std::endl;
         std::cout << "-----------------------------------------------------------" << std::endl;
         std::cout << "Way points: " << std::endl;
         for (auto wayPoint : pathPoints_) {
@@ -193,8 +228,9 @@ void USimpleVehicleBrain::SetAction(const std::vector<unrealrl::Action>& actionV
     ASSERT(actionVector.size() == 1);
 
     if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "ACTIVATE_AUTOPILOT"})) {
+        //std::cout << "Waypoint " << indexPath_ << " over " << pathPoints_.Num() << "." << std::endl;
         if (ownerPawn->MoveTo(currentPathPoint_)) {
-            if (indexPath_ == pathPoints_.Num() - 1) // Move to the next waypoint
+            if (indexPath_ < pathPoints_.Num() - 1) // Move to the next waypoint
             {
                 std::cout << "######## Reached waypoint " << indexPath_ << " ########" << std::endl;
                 currentPathPoint_.X = pathPoints_[indexPath_].Location.X;
@@ -226,6 +262,9 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
     // Get OpenBot position and orientation:
     const FVector currentLocation = ownerPawn->GetActorLocation();     // Relative to global coordinate system
     const FRotator currentOrientation = ownerPawn->GetActorRotation(); // Relative to global coordinate system
+    // Get relative position to target in the global coordinate system:
+    // const FVector2D relativePositionToTarget((goalActor->GetActorLocation() - currentLocation).X, (goalActor->GetActorLocation() - currentLocation).Y);
+    const FVector2D relativePositionToTarget((targetLocation_.Location - currentLocation).X, (targetLocation_.Location - currentLocation).Y);
     Eigen::Vector2f controlState;
     float dist;
     float deltaYaw;
@@ -233,11 +272,7 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
     float cosYaw;
 
     if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "dist-sin-cos") {
-        // Get relative position to target in the global coordinate system:
-        const FVector2D relativePositionToTarget(
-            (goalActor->GetActorLocation() - currentLocation).X,
-            (goalActor->GetActorLocation() - currentLocation).Y);
-
+        
         // Compute Euclidean distance to target:
         dist = relativePositionToTarget.Size();
 
@@ -284,13 +319,13 @@ void USimpleVehicleBrain::GetObservation(std::vector<unrealrl::Observation>& obs
         // Get observation data
         observationVector.resize(GetObservationSpecs().size());
 
-        // Vector observations
-        controlState = ownerPawn->GetControlState(); // Fuses the actions received from the python client
-                                                     // with those received from the keyboard interface (if
-                                                     // this interface is activated in the settings.json
-                                                     // file)
+        //std::cout << "relativePositionToTarget: [" << currentLocation.X << ", " << currentLocation.Y << ", " << currentLocation.Z << "]." << std::endl;
 
-        observationVector.at(0).Copy(std::vector<float>{controlState(0), controlState(1), FMath::DegreesToRadians(currentOrientation.Yaw), currentLocation.X, currentLocation.Y});
+        // Vector observations
+        controlState = ownerPawn->GetControlState(); // Fuses the actions received from the python client with those received from the keyboard interface (if
+                                                     // this interface is activated in the settings.json file)
+
+        observationVector.at(0).Copy(std::vector<float>{controlState(0), controlState(1), currentLocation.X, currentLocation.Y, currentLocation.Z, FMath::DegreesToRadians(currentOrientation.Roll), FMath::DegreesToRadians(currentOrientation.Pitch), FMath::DegreesToRadians(currentOrientation.Yaw)});
     }
     else {
         ASSERT(false);

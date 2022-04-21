@@ -1,6 +1,5 @@
-#include "SimModeBase.h"
-#include <memory>
 
+#include "SimModeBase.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/ObjectLibrary.h"
 #include "Engine/World.h"
@@ -13,7 +12,7 @@
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Public/EngineUtils.h"
 #include "Runtime/Launch/Resources/Version.h"
-
+#include <memory>
 
 ASimModeBase::ASimModeBase()
 {
@@ -220,6 +219,10 @@ bool ASimModeBase::NavSystemRebuild(float AgentRadius)
         return false;
     }
 
+<<<<<<< HEAD
+=======
+    // TODO Quentin: replace with yaml parameters
+>>>>>>> origin/main
     // Set the NavMesh properties:
     navMesh->AgentRadius = AgentRadius;
     navMesh->AgentHeight = AgentRadius;

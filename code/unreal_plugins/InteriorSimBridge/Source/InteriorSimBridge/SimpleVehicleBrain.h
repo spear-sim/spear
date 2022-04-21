@@ -81,6 +81,8 @@ private:
     // The path point begin considered by the PID controller:
     FVector2D currentPathPoint_;
 
+    FNavLocation targetLocation_;
+
     // Index of the considered path point (starts at one since 0 is the initial position):
     unsigned int indexPath_ = 1;
 };

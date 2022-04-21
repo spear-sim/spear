@@ -24,6 +24,10 @@ code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
 code/unreal_plugins/CoreUtils/ThirdParty
 
+code/unreal_plugins/InteriorSimBridge/Binaries
+code/unreal_plugins/InteriorSimBridge/Intermediate
+code/unreal_plugins/InteriorSimBridge/ThirdParty
+
 code/unreal_plugins/RobotSim/Binaries
 code/unreal_plugins/RobotSim/Intermediate
 code/unreal_plugins/RobotSim/ThirdParty
@@ -37,7 +41,6 @@ code/unreal_projects/InteriorEnvironment/Build
 code/unreal_projects/InteriorEnvironment/CMakeLists.txt
 code/unreal_projects/InteriorEnvironment/Content
 code/unreal_projects/InteriorEnvironment/DerivedDataCache
-code/unreal_projects/InteriorEnvironment/dist
 code/unreal_projects/InteriorEnvironment/InteriorEnvironment.code-workspace
 code/unreal_projects/InteriorEnvironment/InteriorEnvironment.kdev4
 code/unreal_projects/InteriorEnvironment/InteriorEnvironment.pro
@@ -59,7 +62,7 @@ code/unreal_projects/InteriorEnvironment/Temp
 code/unreal_projects/InteriorEnvironment/user_config.yaml
 code/unreal_projects/InteriorEnvironment/.vscode
 code/unreal_projects/InteriorEnvironment/.ignore
-code/unreal_projects/InteriorEnvironment/.kdev4/
+code/unreal_projects/InteriorEnvironment/.kdev4
 
 code/unreal_projects/PlayEnvironment/Binaries
 code/unreal_projects/PlayEnvironment/Build
@@ -87,7 +90,7 @@ code/unreal_projects/PlayEnvironment/Temp
 code/unreal_projects/PlayEnvironment/user_config.yaml
 code/unreal_projects/PlayEnvironment/.vscode
 code/unreal_projects/PlayEnvironment/.ignore
-code/unreal_projects/PlayEnvironment/.kdev4/
+code/unreal_projects/PlayEnvironment/.kdev4
 
 code/unreal_projects/RobotProject/Binaries
 code/unreal_projects/RobotProject/Build
@@ -116,11 +119,13 @@ code/unreal_projects/RobotProject/SceneManager/images
 code/unreal_projects/RobotProject/Standalone-Development
 code/unreal_projects/RobotProject/Standalone-Shipping
 code/unreal_projects/RobotProject/Temp
+code/unreal_projects/RobotProject/ThirdParty
 code/unreal_projects/RobotProject/user_config.yaml
 code/unreal_projects/RobotProject/.vscode
 code/unreal_projects/RobotProject/.ignore
-code/unreal_projects/RobotProject/.kdev4/
+code/unreal_projects/RobotProject/.kdev4
 
 code/unreal_plugins/InteriorSimBridge/Binaries
 code/unreal_plugins/InteriorSimBridge/Intermediate
 
+code/user

@@ -6,14 +6,14 @@ INTERIOR_SIM_BRIDGE:
   # Radius in [cm], of the region within which the path planning will occur 
   TARGET_RADIUS: 100000
   
-  # in [cm]
-  MIN_TARGET_DISTANCE: 200
+  # 
+  PATH_WEIGHT_DIST: 1
   
   #
-  MAX_WAY_POINTS: 10
+  PATH_WEIGHT_NUM_WAYPOINTS: 1
   
   #
-  MAX_ITER_REPLAN: 10
+  MAX_ITER_REPLAN: 50000
   
   # If set to True, the actor provides egocentric visual observations:
   USE_IMAGE_OBSERVATIONS: True

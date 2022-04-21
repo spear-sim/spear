@@ -61,11 +61,10 @@ namespace RobotSim {
         }
 
         // find cluster area, return clusterId with largest area
-        static NavNodeRef
-        FindAreaMap(ARecastNavMesh* navMesh,
-                    TMap<NavNodeRef, TArray<NavNodeRef>>& clusterMap,
-                    TMap<NavNodeRef, float>& areaMap,
-                    bool FilterFlat = true)
+        static NavNodeRef FindAreaMap(ARecastNavMesh* navMesh,
+                                      TMap<NavNodeRef, TArray<NavNodeRef>>& clusterMap,
+                                      TMap<NavNodeRef, float>& areaMap,
+                                      bool FilterFlat = true)
         {
             areaMap.Empty();
             for (auto& kvp : clusterMap) {
@@ -95,7 +94,7 @@ namespace RobotSim {
         {
             if (navMesh) {
                 int trial = 0;
-                while (trial < 5) {
+                while (trial < 10) {
                     FNavLocation navLocation = navMesh->GetRandomPoint();
                     if (heightLimit <= 0.0f or navLocation.Location.Z < heightLimit) {
                         spawnLocation = navLocation.Location;
