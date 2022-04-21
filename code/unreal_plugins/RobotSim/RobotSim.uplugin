@@ -18,7 +18,7 @@
         {
             "Name": "RobotSim",
             "Type": "Runtime",
-            "LoadingPhase": "PreDefault"
+            "LoadingPhase": "Default"
         }
     ],
     "Plugins": [
