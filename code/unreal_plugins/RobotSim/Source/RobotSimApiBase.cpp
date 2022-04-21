@@ -174,6 +174,7 @@ void RobotSimApiBase::createCamerasFromSettings()
         FTransform camera_transform(world2CameraOri, world2CameraPos, FVector(1., 1., 1.));
 
         // Spawn and attach camera to pawn
+        camera_spawn_params.Name = FName(camera_setting_pair.first.c_str());
         APIPCamera* camera = params_.vehicle->GetPawn()->GetWorld()->SpawnActor<APIPCamera>(APIPCamera::StaticClass(), camera_transform, camera_spawn_params);
 
         camera->SetIndex(camera_index);
