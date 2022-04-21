@@ -13,7 +13,7 @@ public class SimulationController : ModuleRules
         bEnableExceptions = true;
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "PhysX", "PhysXVehicles", "RenderCore", "RHI", "RobotSim" });
-        PrivateDependencyModuleNames.AddRange(new string[] { });
+        PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
         // asio
@@ -28,20 +28,13 @@ public class SimulationController : ModuleRules
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "include"));
 
-        if (Target.Platform == UnrealTargetPlatform.Win64)
-        {
+        if (Target.Platform == UnrealTargetPlatform.Win64) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "build", "rpc.lib"));
-        }
-        else if (Target.Platform == UnrealTargetPlatform.Mac)
-        {
+        } else if (Target.Platform == UnrealTargetPlatform.Mac) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "build", "librpc.a"));
-        }
-        else if (Target.Platform == UnrealTargetPlatform.Linux)
-        {
+        } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "build", "librpc.a"));
-        }
-        else
-        {
+        } else {
             throw new Exception("Unexpected: Target.Platform == " + Target.Platform);
         }
     }

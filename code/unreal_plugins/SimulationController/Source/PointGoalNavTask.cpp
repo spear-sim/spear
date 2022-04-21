@@ -162,15 +162,6 @@ void PointGoalNavTask::reset()
     goal_actor_->SetActorLocation(goal_position);
 }
 
-StepInfo PointGoalNavTask::getStepInfo()
-{
-    StepInfo step_info;
-    step_info.hit_goal_ = hit_goal_;
-    step_info.hit_obstacle_ = hit_obstacle_;
-
-    return step_info;
-}
-
 bool PointGoalNavTask::isReady() const
 {
     return true;  

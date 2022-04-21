@@ -219,10 +219,7 @@ bool ASimModeBase::NavSystemRebuild(float AgentRadius)
         return false;
     }
 
-<<<<<<< HEAD
-=======
     // TODO Quentin: replace with yaml parameters
->>>>>>> origin/main
     // Set the NavMesh properties:
     navMesh->AgentRadius = AgentRadius;
     navMesh->AgentHeight = AgentRadius;

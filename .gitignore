@@ -59,6 +59,7 @@ code/unreal_projects/InteriorEnvironment/Saved
 code/unreal_projects/InteriorEnvironment/Standalone-Development
 code/unreal_projects/InteriorEnvironment/Standalone-Shipping
 code/unreal_projects/InteriorEnvironment/Temp
+code/unreal_projects/InteriorEnvironment/ThirdParty
 code/unreal_projects/InteriorEnvironment/user_config.yaml
 code/unreal_projects/InteriorEnvironment/.vscode
 code/unreal_projects/InteriorEnvironment/.ignore
@@ -68,7 +69,6 @@ code/unreal_projects/PlayEnvironment/Binaries
 code/unreal_projects/PlayEnvironment/Build
 code/unreal_projects/PlayEnvironment/CMakeLists.txt
 code/unreal_projects/PlayEnvironment/DerivedDataCache
-code/unreal_projects/PlayEnvironment/dist
 code/unreal_projects/PlayEnvironment/Intermediate
 code/unreal_projects/PlayEnvironment/Makefile
 code/unreal_projects/PlayEnvironment/PlayEnvironment.code-workspace
@@ -87,6 +87,7 @@ code/unreal_projects/PlayEnvironment/Saved
 code/unreal_projects/PlayEnvironment/Standalone-Development
 code/unreal_projects/PlayEnvironment/Standalone-Shipping
 code/unreal_projects/PlayEnvironment/Temp
+code/unreal_projects/PlayEnvironment/ThirdParty
 code/unreal_projects/PlayEnvironment/user_config.yaml
 code/unreal_projects/PlayEnvironment/.vscode
 code/unreal_projects/PlayEnvironment/.ignore
@@ -98,7 +99,6 @@ code/unreal_projects/RobotProject/CMakeLists.txt
 code/unreal_projects/RobotProject/Content/Maps
 code/unreal_projects/RobotProject/Content/Scene
 code/unreal_projects/RobotProject/DerivedDataCache
-code/unreal_projects/RobotProject/dist/
 code/unreal_projects/RobotProject/Intermediate
 code/unreal_projects/RobotProject/Makefile
 code/unreal_projects/RobotProject/Plugins

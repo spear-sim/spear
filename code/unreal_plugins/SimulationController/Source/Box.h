@@ -23,10 +23,10 @@ MSGPACK_ADD_ENUM(DataType);
 
 struct Box
 {
-    float low_;
-    float high_;
-    std::vector<uint64_t> shape_;
-    DataType dtype_;
+    float low;
+    float high;
+    std::vector<uint64_t> shape;
+    DataType dtype;
 
-    MSGPACK_DEFINE_MAP(low_, high_, shape_, dtype_);
+    MSGPACK_DEFINE_MAP(low, high, shape, dtype);
 };
