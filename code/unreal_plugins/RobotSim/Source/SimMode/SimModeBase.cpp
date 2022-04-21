@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "Engine/ObjectLibrary.h"
 #include "Kismet/GameplayStatics.h"
+
 #include "RobotBlueprintLib.h"
 
 ASimModeBase::ASimModeBase()
@@ -13,8 +14,7 @@ ASimModeBase::ASimModeBase()
 
     PrimaryActorTick.bCanEverTick = true;
 
-    static ConstructorHelpers::FClassFinder<AActor> sky_sphere_class(
-        TEXT("Blueprint'/Engine/EngineSky/BP_Sky_Sphere'"));
+    static ConstructorHelpers::FClassFinder<AActor> sky_sphere_class(TEXT("Blueprint'/Engine/EngineSky/BP_Sky_Sphere'"));
     sky_sphere_class_ = sky_sphere_class.Succeeded() ? sky_sphere_class.Class : nullptr;
 
     this->level_manager_ = CreateDefaultSubobject<AVWLevelManager>(TEXT("AVWLevelManager"));
@@ -26,18 +26,11 @@ void ASimModeBase::BeginPlay()
 
     // get player start
     // this must be done from within actor otherwise we don't get player start
-    APlayerController* player_controller =
-        this->GetWorld()->GetFirstPlayerController();
-    FTransform player_start_transform =
-        player_controller->GetViewTarget()->GetActorTransform();
-    global_ned_transform_.reset(new NedTransform(
-        player_start_transform, URobotBlueprintLib::GetWorldToMetersScale(this)));
+    APlayerController* player_controller =this->GetWorld()->GetFirstPlayerController();
+    FTransform player_start_transform =player_controller->GetViewTarget()->GetActorTransform();
+    global_ned_transform_.reset(new NedTransform(player_start_transform, URobotBlueprintLib::GetWorldToMetersScale(this)));
 
     setupInputBindings();
-
-    URobotBlueprintLib::LogMessage(TEXT("Press F1 to see help"), TEXT(""), LogDebugLevel::Informational);
-
-    setupTimeOfDay();
     setupVehiclesAndCamera();
 }
 
@@ -66,16 +59,14 @@ const RobotSim::RobotSimSettings& ASimModeBase::getSettings() const
     return RobotSimSettings::singleton();
 }
 
-void ASimModeBase::traceGround(FVector& spawnPosition, FRotator& spawnRotator,
-                               const FVector& boxHalfSize)
+void ASimModeBase::traceGround(FVector& spawnPosition, FRotator& spawnRotator,const FVector& boxHalfSize)
 {
     FVector startLoc = spawnPosition + FVector(0, 0, 100);
     FVector endLoc = spawnPosition + FVector(0, 0, -1000);
 
     FCollisionQueryParams collisionParams(FName(TEXT("trace2ground")), true, this);
     FHitResult hit(ForceInit);
-    if (UKismetSystemLibrary::BoxTraceSingle(
-            GetWorld(), startLoc, endLoc, boxHalfSize, spawnRotator, ETraceTypeQuery::TraceTypeQuery1, false, TArray<AActor*>(), EDrawDebugTrace::Type::ForDuration, hit, true)) {
+    if (UKismetSystemLibrary::BoxTraceSingle(GetWorld(), startLoc, endLoc, boxHalfSize, spawnRotator, ETraceTypeQuery::TraceTypeQuery1, false, TArray<AActor*>(), EDrawDebugTrace::Type::ForDuration, hit, true)) {
         spawnPosition = hit.Location;
     }
 }
@@ -150,8 +141,8 @@ bool ASimModeBase::NavSystemRebuild(float AgentRadius)
     // Set the NavMesh properties:
     navMesh->AgentRadius = AgentRadius;
     navMesh->AgentHeight = AgentRadius;
-    navMesh->CellSize = 1.0f;
-    navMesh->CellHeight = 1.0f;
+    navMesh->CellSize = 10.0f;
+    navMesh->CellHeight = 10.0f;
     navMesh->AgentMaxSlope = 0.1f;
     navMesh->AgentMaxStepHeight = 2.0f;
     navMesh->MergeRegionSize = 0.0f;
@@ -199,7 +190,7 @@ void ASimModeBase::GetAllMaps(TArray<FString>& MapList) const
         MapList.AddUnique(AssetData.AssetName.ToString());
     }
 #else
-    // only scan .pak for standalone. Could cause error in Editor note that maps from might be included twice
+    // only scan .pak for standalone. Could cause error in Editor. Note that maps from might be included twice
     level_manager_->getAllMapsInPak(MapList);
 #endif
     // sort the output to ensure maps always in the same order.

@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "NavMesh/RecastNavMesh.h"
+
 #include "NedTransform.h"
 #include "RobotBase.h"
 #include "VWLevelManager.h"
@@ -39,12 +40,12 @@ public:
     /**
      * @brief
      *
-     * @param EndPlayReason
+     * @param EndPlayReason123
      */
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
     /**
-     * @brief
+     * @brief 
      *
      * @param DeltaSeconds
      */
@@ -56,18 +57,7 @@ public:
      * @return const NedTransform&
      */
     const NedTransform& getGlobalNedTransform();
-
-    /**
-     * @brief
-     *
-     * @return true
-     * @return false
-     */
-    virtual bool isUrdf()
-    {
-        return false;
-    }
-
+	
 protected: // must overrides
     typedef RobotSim::RobotSimSettings RobotSimSettings;
 
@@ -90,9 +80,10 @@ protected: // optional overrides
      *
      */
     virtual void setupInputBindings();
-
+	
+protected: // Utility methods for derived classes
     /**
-     * @brief
+     * @brief find a good location near ground 
      *
      * @param spawnPosition
      * @param spawnRotator
@@ -126,7 +117,6 @@ protected: // optional overrides
      */
     virtual FBox GetWorldBoundingBox(bool bScaleCeiling = true);
 
-protected: // Utility methods for derived classes
     /**
      * @brief
      *
@@ -155,8 +145,6 @@ protected: // Utility methods for derived classes
     virtual void LoadMap(FString MapName);
 
 protected:
-    int record_tick_count;
-
     UPROPERTY()
     UClass* pip_camera_class;
     UPROPERTY()
