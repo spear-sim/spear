@@ -393,8 +393,5 @@ class Env(gym.Env):
     def _is_episode_done(self):
         return self._client.call("isEpisodeDone")
 
-    def _get_step_info(self):
-        return self._client.call("getStepInfo")
-
     def _is_ready(self):
         return self._client.call("isReady")
