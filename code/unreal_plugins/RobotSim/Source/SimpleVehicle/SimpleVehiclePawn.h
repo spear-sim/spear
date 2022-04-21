@@ -28,7 +28,8 @@
  *
  */
 UCLASS(Blueprintable, meta = (ShortTooltip = "Simple Vehicle Pawn"))
-class ROBOTSIM_API ASimpleVehiclePawn : public APawn, public RobotBase {
+class ROBOTSIM_API ASimpleVehiclePawn : public APawn, public RobotBase
+{
     GENERATED_BODY()
 
     //  The main skeletal mesh associated with this Vehicle

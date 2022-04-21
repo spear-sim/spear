@@ -147,7 +147,6 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
         box.dtype = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
 
-        box = Box();
         box.low = 0;
         box.high = 255;
         box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
