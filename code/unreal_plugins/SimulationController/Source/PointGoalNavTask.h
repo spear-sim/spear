@@ -7,6 +7,7 @@
 
 class AActor;
 class UWorld;
+
 class UActorHitEvent;
 
 struct Box;
@@ -26,6 +27,7 @@ public:
     std::map<std::string, Box> getStepInfoSpace() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
     void reset() override;
+    bool isReady() const override;
 
     // Handles collision-related logic
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);

@@ -19,6 +19,7 @@
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "OpenBotAgentController.h"
 #include "PointGoalNavTask.h"
 #include "Rpclib.h"
 #include "RpcServer.h"
@@ -112,6 +113,8 @@ void SimulationController::worldBeginPlayEventHandler()
     // read config to decide which type of AgentController to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
+    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+        agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
     } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
         agent_controller_ = std::make_unique<DebugAgentController>(world_);
     } else {
@@ -324,12 +327,20 @@ void SimulationController::bindFunctionsToRpcServer()
 
     rpc_server_->bindSync("reset", [this]() -> void {
         ASSERT(task_);
+        ASSERT(agent_controller_);
         task_->reset();
+        agent_controller_->reset();
     });
 
     rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
         ASSERT(task_);
         return task_->isEpisodeDone();
+    });
+
+    rpc_server_->bindSync("isReady", [this]() -> bool{
+        ASSERT(task_);
+        ASSERT(agent_controller_);
+        return task_->isReady() && agent_controller_->isReady();
     });
 }
 

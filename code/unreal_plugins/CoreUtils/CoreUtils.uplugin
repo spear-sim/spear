@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "CoreUtils",
-    "Description": "",
+    "Description": "WARNING: The loading phases for CoreUtils, RobotSim, and SimulationController need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(RobotSim) < LoadingPhase(SimulationController)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -18,7 +18,7 @@
         {
             "Name": "CoreUtils",
             "Type": "Runtime",
-            "LoadingPhase": "PreDefault"
+            "LoadingPhase": "EarliestPossible"
         }
     ]
 }

@@ -385,5 +385,3 @@ if __name__ == "__main__":
     client(args, config, mapNames) 
     
     # python run.py -i 10 -r 3 -s "Data" -m "235114801" "235114775" 
-
-

@@ -12,13 +12,13 @@ public class RobotSim : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         bEnableExceptions = true;
 
-        PublicIncludePaths.AddRange(new string[] {} );
-        PrivateIncludePaths.AddRange(new string[] {} );
-        
+        PublicIncludePaths.AddRange(new string[] {});
+        PrivateIncludePaths.AddRange(new string[] {});
+
         PublicDependencyModuleNames.AddRange(new string[] {
-            "APEX", "Core", "CoreUObject", "Engine", "Foliage", "InputCore", "ImageWrapper", "NavigationSystem", "PhysicsCore", "PhysX",
+            "APEX", "Core", "CoreUObject", "CoreUtils", "Engine", "Foliage", "InputCore", "ImageWrapper", "NavigationSystem", "PhysicsCore", "PhysX",
             "PhysXVehicles", "PhysXVehicleLib", "ProceduralMeshComponent", "Landscape", "RenderCore", "RHI", "Slate", "SlateCore", "UMG", "XmlParser"
-        } );
+            });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
@@ -26,7 +26,7 @@ public class RobotSim : ModuleRules
         //
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "libeigen"));
-        
+
         //
         // RBDL
         //

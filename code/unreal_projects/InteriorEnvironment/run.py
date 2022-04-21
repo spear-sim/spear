@@ -1,7 +1,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import cv2
-import numpy as np
 import os
 
 from interiorsim import Env
