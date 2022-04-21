@@ -1,7 +1,7 @@
 INTERIORSIM:
   # LAUNCH_MODE: "running_instance"
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
+  STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/LinuxNoEditor/RobotProject.sh"
   TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Temp"
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
@@ -27,21 +27,19 @@ SIMULATION_CONTROLLER:
     GOAL_ACTOR_NAME: "Cube_6"
     OBSERVATION_MODE: "mixed"
     AGENT_READY_VELOCITY_THRESHOLD: 1.0
+    PHYSICAL_OBSERVATION_MODE: "dist-sin-cos" # "dist-sin-cos" or "yaw-x-y"
     MIXED_MODE:
       OBSERVATION_CAMERA_ACTOR_NAME: "PIPCamera_2147482533" # "PIPCamera_2147482533"
       IMAGE_HEIGHT: 128
       IMAGE_WIDTH: 128
       SMARTPHONE_FOV: 72.0
-      MOTION_BLUR_AMMOUNT: 10.0
+      MOTION_BLUR_AMOUNT: 10.0
       MOTION_BLUR_MAX: 10.0
       POST_PROC_BLEND_WEIGHT: 1.0
-    PHYSICAL_MODE:
-      OBSERVATION: "dist-sin-cos" # or "yaw-x-y"
 
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: "SimpleVehicle_0"
     GOAL_ACTOR_NAME: "Cube_6"
-    RANDOM_SEED: 123
     REWARD:
       HIT_GOAL: 1000.0
       HIT_OBSTACLE: 500.0

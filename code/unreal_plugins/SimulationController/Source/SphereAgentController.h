@@ -9,8 +9,9 @@
 class AActor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
-class UTickEvent;
 class UWorld;
+
+class UTickEvent;
 
 struct Box;
 

@@ -88,7 +88,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
 
         // Set post processing parameters:
         FPostProcessSettings post_process_settings;
-        post_process_settings.MotionBlurAmount = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_AMMOUNT"}); // Strength of motion blur, 0:off, should be renamed to intensity
+        post_process_settings.MotionBlurAmount = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_AMOUNT"}); // Strength of motion blur, 0:off, should be renamed to intensity
         post_process_settings.MotionBlurMax = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_MAX"});    // Max distortion caused by motion blur, in percent of the screen width, 0:off
         scene_capture_component_->PostProcessSettings = post_process_settings;
         scene_capture_component_->PostProcessBlendWeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "POST_PROC_BLEND_WEIGHT"}); // Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
@@ -233,7 +233,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     const FVector agent_current_location = agent_actor_->GetActorLocation();
     const FRotator agent_current_orientation = agent_actor_->GetActorRotation();
 
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_MODE", "OBSERVATION"}) == "dist-sin-cos") {
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
         // Get relative position to the goal in the global coordinate system:
         const FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
 
@@ -265,7 +265,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), mag_relative_position_to_goal, sin_yaw, cos_yaw});
 
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_MODE", "OBSERVATION"}) == "yaw-x-y") {
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "yaw-x-y") {
         ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
         ASSERT(vehicle_pawn);
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();

@@ -8,10 +8,11 @@
 #include <Modules/ModuleManager.h>
 
 class AgentController;
-enum class FrameState : uint8_t;
 class RpcServer;
 class Task;
 class Visualizer;
+
+enum class FrameState : uint8_t;
 
 class SimulationController : public IModuleInterface
 {

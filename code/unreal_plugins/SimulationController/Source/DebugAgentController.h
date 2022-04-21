@@ -8,11 +8,12 @@
 
 #include "AgentController.h"
 
-struct Box;
 class AActor;
 class UWorld;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
+
+struct Box;
 
 class DebugAgentController : public AgentController
 {

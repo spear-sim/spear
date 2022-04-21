@@ -6,11 +6,12 @@
 
 #include "AgentController.h"
 
-struct Box;
 class AActor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
+
+struct Box;
 
 class OpenBotAgentController : public AgentController
 {
