@@ -58,3 +58,6 @@ SIMULATION_CONTROLLER:
   VISUALIZER:
     CAMERA_ACTOR_NAME: "DebugCameraActor" # "DebugCameraActor" or "ObservationCameraActor"
     SET_CAMERA_POSE: False
+
+ROBOT_SIM:
+  PIP_CAMERA_LOAD_SEGMENTATION_MATERIAL: False
