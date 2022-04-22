@@ -3,6 +3,7 @@
 #pragma once
 
 #include <future>
+#include <mutex>
 #include <string>
 #include <utility>
 
@@ -10,16 +11,18 @@
 #include "MoveHandler.h"
 #include "Rpclib.h"
 
-// An RPC server in which functions can be bind to run synchronously or asynchronously.
-// Use `launchWorkerThreads` to start the worker threads, and use `runSync`, to service work on the Game thread. 
-// Functions that are bind using `bindAsync` will run asynchronously in the worker threads.
-// Functions that are bind using `bindSync` will run within `runSync` function.
+// An RPC server in which functions can be bound to run synchronously or asynchronously. Use
+// launchWorkerThreads() to start the worker threads, and use stop() to terminate the server.
+// Functions that are bound using bindAsync() will run asynchronously in the worker threads,
+// and functions that are bound using bindSync() will run synchronously on the game thread.
+// By design, runSync() will block indefinitely, even if there is no more synchronous work
+// that has been scheduled. Call unblockRunSyncWhenFinishedExecuting() from another thread to
+// force runSync() to return. This design gives us precise control over where and when
+// function calls are executed within the Unreal Engine game loop.
 
 class RpcServer
 {
 public:
-    using work_guard_type = asio::executor_work_guard<asio::io_context::executor_type>;
-
     template <typename... Args>
     explicit RpcServer(Args&&... args);
 
@@ -39,13 +42,18 @@ public:
         io_context_.run();
 
         // reinitialze the io_context and work guard after runSync to prepare for next run
+        mutex_.lock();
         io_context_.restart();
-        new(&work_guard_) work_guard_type(io_context_.get_executor());
+        new(&executor_work_guard_) asio::executor_work_guard<asio::io_context::executor_type>(io_context_.get_executor());
+        mutex_.unlock();
     }
 
     void unblockRunSyncWhenFinishedExecuting()
     {
-        work_guard_.reset(); // io_context is now free to return
+        // allow io_context to return from run()
+        mutex_.lock();
+        executor_work_guard_.reset();
+        mutex_.unlock();
     }
 
     // @warning does not stop the game thread.
@@ -57,8 +65,9 @@ public:
 
 private:
     ::rpc::server server_;
+    std::mutex mutex_;
     asio::io_context io_context_;
-    work_guard_type work_guard_;
+    asio::executor_work_guard<asio::io_context::executor_type> executor_work_guard_;
 };
 
 namespace detail
@@ -86,17 +95,17 @@ struct FunctionWrapper<R (*)(Args...)>
     // This way, no matter from which thread the wrap function is called, the @a functor provided is always called from the context of the io_context.
     // I.e., we can use the io_context to run tasks on a specific thread (e.g. game thread).
     template <typename FuncT>
-    static auto wrapSyncCall(asio::io_context& io, FuncT&& functor)
+    static auto wrapSyncCall(asio::io_context& io_context, FuncT&& functor)
     {
         return
-            [&io, functor = std::forward<FuncT>(functor)](Args... args) -> R {
+            [&io_context, functor = std::forward<FuncT>(functor)](Args... args) -> R {
                 auto task = std::packaged_task<R()>(
                     [functor = std::move(functor), args...]() {
                         return functor(args...);
                     });
                 // Post task and wait for result.
                 auto result = task.get_future();
-                asio::post(io, moveHandler(task));
+                asio::post(io_context, moveHandler(task));
                 return result.get();
             };
     }
@@ -114,7 +123,7 @@ struct FunctionWrapper<R (*)(Args...)>
 } // namespace detail
 
 template <typename... Args>
-inline RpcServer::RpcServer(Args&&... args) : server_(std::forward<Args>(args)...), io_context_(), work_guard_(io_context_.get_executor())
+inline RpcServer::RpcServer(Args&&... args) : server_(std::forward<Args>(args)...), io_context_(), executor_work_guard_(io_context_.get_executor())
 {
     // Throwing an exception will cause the server to write an error response. This call will make it also suppress the exception (note that this is not default because this behavior might hide errors in the code)
     // @Todo: Don't think this should be suppressed!!

@@ -303,43 +303,48 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->getStepInfoSpace();
     });
 
-    rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
-        ASSERT(agent_controller_);
-        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
-        return agent_controller_->getObservation();
-    });
-
     rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
         ASSERT(agent_controller_);
         ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         agent_controller_->applyAction(action);
     });
 
+    rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        ASSERT(agent_controller_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        return agent_controller_->getObservation();
+    });
+
     rpc_server_->bindSync("getReward", [this]() -> float {
         ASSERT(task_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         return task_->getReward();
     });
 
     rpc_server_->bindSync("getStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(task_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         return task_->getStepInfo();
+    });
+
+    rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
+        ASSERT(task_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        return task_->isEpisodeDone();
     });
 
     rpc_server_->bindSync("reset", [this]() -> void {
         ASSERT(task_);
         ASSERT(agent_controller_);
+        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         task_->reset();
         agent_controller_->reset();
-    });
-
-    rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
-        ASSERT(task_);
-        return task_->isEpisodeDone();
     });
 
     rpc_server_->bindSync("isReady", [this]() -> bool{
         ASSERT(task_);
         ASSERT(agent_controller_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         return task_->isReady() && agent_controller_->isReady();
     });
 }
