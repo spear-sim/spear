@@ -5,41 +5,34 @@ import sys
 
 import scene_manager
 
+META_SAVE_DIR = os.path.join(scene_manager.Scene_Data_Folder, "images")
 
 def print_help():
     print(
         """scene_manager_meta.py -v <version> -i <virtual-world-id>  -p <proxy>
-e.g: scene_manager_images.py -v v1
+e.g: scene_manager_meta.py -v v1
  -v: required. VirtualWorld version in format of v{n}, e.g. v1, v2. The latest version information is in /VirtualWrold/SceneManager/dataset-repo-update.log.
- -i: optional. Specify to download images for VirtualWorld. if not use -i, the script will load all virtualworld-ids in /VirtualWrold/SceneManager/Data/virtualworld-ids.json.
+ -i: optional. Specify to download metadata for VirtualWorld. if not use -i, the script will load all virtualworld-ids in /VirtualWrold/SceneManager/Data/virtualworld-ids.json.
  -p: optional. setup proxy
 """
     )
     sys.exit(2)
 
 
-DEFAULT_SAVE_DIR = "../Saved/images"
-
-IMAGE_FILE_NAMES = ["topview.png", "topview_semantic.png", "topview_data.json"]
-
-
-def download_images(virtualworld_id, version, save_dir):
+def download_metadata(virtualworld_id, version, save_dir):
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
-    print(f"download_images - {virtualworld_id} {version}")
-    for filename in IMAGE_FILE_NAMES:
-        file_type = filename.split(".")[0]
-        file_extension = filename.split(".")[1]
-        metadata_url = f"{scene_manager.CDN_API}scenes/{virtualworld_id}/{version}/{filename}"
-        metadata_local = f"{save_dir}/{file_type}_{virtualworld_id}_{version}.{file_extension}"
-        if not os.path.exists(metadata_local):
-            result = scene_manager.download_file_from_url(metadata_url, metadata_local)
+    metadata_url = f"{scene_manager.CDN_API}scenes/{virtualworld_id}/{version}/metadata_{virtualworld_id}.json"
+    metadata_local = f"{save_dir}/metadata_{virtualworld_id}_{version}.json"
+    result = scene_manager.download_file_from_url(metadata_url, metadata_local)
+    print("download_metadata by vw_id", virtualworld_id, version, result)
+    return result
 
 
 if __name__ == "__main__":
     version = ""
     virtualworld_id = ""
-    save_dir = DEFAULT_SAVE_DIR
+    save_dir = META_SAVE_DIR
 
     try:
         opts, args = getopt.getopt(
@@ -77,6 +70,6 @@ if __name__ == "__main__":
         if os.path.exists(virtualworld_ids_file):
             with open(virtualworld_ids_file) as f:
                 for id in json.load(f):
-                    download_images(id, version, save_dir)
+                    download_metadata(id, version, save_dir)
     else:
-        download_images(virtualworld_id, version, save_dir)
+        download_metadata(virtualworld_id, version, save_dir)

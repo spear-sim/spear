@@ -157,7 +157,7 @@ RobotProject.exe -RobotSimSettingPath="settings/settings_fetch.json"
 # Virtual World
 
 ### Scene Manager
-see instruction in [SceneManagerReadMe](./SceneManager/README.md) to download Virtual World source files. 
+see instruction in [SceneManagerReadMe](../../tools/SceneManager/README.md) to download Virtual World source files. 
 
 ### Dynamic Scene Loading for StandAlone Executable
 Start from v4, SceneManger delivers virtual worlds in `.pak` format which can be used directly in standalone executable without scene cooking step. 

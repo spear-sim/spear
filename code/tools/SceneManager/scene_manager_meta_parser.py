@@ -1,9 +1,8 @@
-import getopt
 import glob
 import json
-import os
 import sys
 import getopt
+from scene_manager_meta import META_SAVE_DIR
 
 
 def print_help():
@@ -25,7 +24,7 @@ def load_all_meta():
     :return: style_map {"style1":[],"style2":[]}
     """
     style_map = {}
-    for file_path in glob.glob("metadata/metadata_{}.json".format("*")):
+    for file_path in glob.glob("{}/metadata_{}.json".format(META_SAVE_DIR, "*")):
         with open(file_path, mode="r") as f:
             metadata = json.load(f)
             if metadata["style"] not in style_map:

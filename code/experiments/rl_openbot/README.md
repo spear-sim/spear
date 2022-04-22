@@ -252,7 +252,7 @@ cd code/unreal_projects/RobotProject/SceneManager
 python scene_manager.py -i 235553720 -v v2 -d true
 ```
 
-A complete list of the available environments can be found in the [virtualworld-ids.json](../../unreal_projects/RobotProject/SceneManager/Data/virtualworld-ids.json) parameter file. 
+A complete list of the available environments can be found in the [virtualworld-ids.json](../../tools/SceneManager/Data/virtualworld-ids.json) parameter file. 
 Remember that the more environments you download, the greater the cooking time... 
 
 Adjust the `MAP_ID` field within the `<path/to/unreal-ai>/client/python/unrealai/config.yaml` setting file: 

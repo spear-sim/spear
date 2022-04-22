@@ -9,9 +9,9 @@ from tqdm import tqdm
 
 CDN_API = "https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/"
 
-PROJECT_SAVED_FOLDER = os.path.join(os.path.dirname(__file__), "../Saved")
-TEMP_FOLDER = os.path.join(PROJECT_SAVED_FOLDER, "Temp")
-VERSION_INFO_FOLDER = os.path.join(PROJECT_SAVED_FOLDER, "VersionInfo")
+Scene_Data_Folder = os.path.join(os.path.dirname(__file__), "download_data")
+TEMP_FOLDER = os.path.join(Scene_Data_Folder, "Temp")
+VERSION_INFO_FOLDER = os.path.join(Scene_Data_Folder, "VersionInfo")
 PROXY_URL = ""
 
 NUM_RETRIES = 8
@@ -26,7 +26,7 @@ def create_folder(folder_path):
 
 
 # create folder
-create_folder(PROJECT_SAVED_FOLDER)
+create_folder(Scene_Data_Folder)
 create_folder(TEMP_FOLDER)
 create_folder(VERSION_INFO_FOLDER)
 
@@ -145,7 +145,7 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
     anim_local = os.path.join(TEMP_FOLDER, scene_config_data["animation"])
     anim_dst = os.path.join(
         os.path.dirname(__file__),
-        "../Content/Scene/",
+        "../../unreal_projects/RobotProject/Content/Scene/",
         scene_config_data["animation"].replace(".zip", ""),
     )
     is_anim_ok = deal_scene_file(anim_url, anim_local, anim_dst)
@@ -162,7 +162,7 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
     arch_local = os.path.join(TEMP_FOLDER, scene_config_data["architecture"])
     arch_dst = os.path.join(
         os.path.dirname(__file__),
-        "../Content/Scene/Meshes",
+        "../../unreal_projects/RobotProject/Content/Scene/Meshes",
         scene_config_data["architecture"].replace(".zip", ""),
     )
     is_arch_ok = deal_scene_file(arch_url, arch_local, arch_dst)
@@ -179,12 +179,12 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
     mat_local = os.path.join(TEMP_FOLDER, scene_config_data["materialinst"])
     mat_dst = os.path.join(
         os.path.dirname(__file__),
-        "../Content/Scene/",
+        "../../unreal_projects/RobotProject/Content/Scene/",
         scene_config_data["materialinst"].replace(".zip", ""),
     )
     is_mat_ok = deal_scene_file(mat_url, mat_local, mat_dst)
 
-    map_folder = os.path.join(os.path.dirname(__file__), "../Content/Maps")
+    map_folder = os.path.join(os.path.dirname(__file__), "../../unreal_projects/RobotProject/Content/Maps")
     create_folder(map_folder)
     umap_local = os.path.join(map_folder, scene_config_data["map"])
     download_file_from_url(
@@ -315,7 +315,7 @@ def download_assets(
         )
         dic_curr["asset_local"] = os.path.join(TEMP_FOLDER, materialid + ".zip")
         dic_curr["asset_dst"] = os.path.join(
-            os.path.dirname(__file__), "../Content/Scene/Materials", materialid
+            os.path.dirname(__file__), "../../unreal_projects/RobotProject/Content/Scene/Materials", materialid
         )
         dic_curr["version_info_url"] = (
                 CDN_API
@@ -353,7 +353,7 @@ def download_assets(
         )
         dic_curr["asset_local"] = os.path.join(TEMP_FOLDER, meshid + ".zip")
         dic_curr["asset_dst"] = os.path.join(
-            os.path.dirname(__file__), "../Content/Scene/Meshes/Furniture", meshid
+            os.path.dirname(__file__), "../../unreal_projects/RobotProject/Content/Scene/Meshes/Furniture", meshid
         )
         dic_curr["version_info_url"] = (
                 CDN_API
@@ -392,7 +392,7 @@ def download_assets(
         dic_curr["asset_local"] = os.path.join(TEMP_FOLDER, meshid + ".zip")
         dic_curr["asset_dst"] = os.path.join(
             os.path.dirname(__file__),
-            "../Content/Scene/Meshes/PhysicalFurniture",
+            "../../unreal_projects/RobotProject/Content/Scene/Meshes/PhysicalFurniture",
             meshid,
         )
         dic_curr["version_info_url"] = (
@@ -427,7 +427,7 @@ def download_assets(
                     CDN_API + "assets/ddc/" + ddc_only_path + "/" + version + "/" + ddc_name
             )
             dic_curr["asset_local"] = os.path.join(
-                os.path.dirname(__file__), "../DerivedDataCache", ddc_path
+                os.path.dirname(__file__), "../../unreal_projects/RobotProject/DerivedDataCache", ddc_path
             )
             if not os.path.exists(os.path.dirname(dic_curr["asset_local"])):
                 try:
@@ -435,7 +435,7 @@ def download_assets(
                 except:
                     pass
             dic_curr["asset_dst"] = os.path.join(
-                os.path.dirname(__file__), "../DerivedDataCache", ddc_path
+                os.path.dirname(__file__), "../../unreal_projects/RobotProject/DerivedDataCache", ddc_path
             )
             dic_curr["version_info_url"] = (
                     CDN_API
@@ -479,7 +479,7 @@ def download_single_virtualworld(
             virtualworld_id, version, scene_config_data, is_force_update
         )
 
-    update_log = os.path.join(PROJECT_SAVED_FOLDER, "UpdateLog")
+    update_log = os.path.join(Scene_Data_Folder, "UpdateLog")
     if not os.path.exists(update_log):
         os.makedirs(update_log)
 
@@ -521,7 +521,7 @@ def download_file_by_path(vw_id, version, path, output_directory="", is_temp=Tru
     remote_url = f"{CDN_API}{version}/{path}"
     # use user specified directory for target files
     folder_path = TEMP_FOLDER if is_temp else (
-        output_directory if output_directory is not None else PROJECT_SAVED_FOLDER)
+        output_directory if output_directory != '' else Scene_Data_Folder)
     local_path = os.path.abspath(os.path.join(folder_path, version, vw_id, path))
     local_dir, fname = os.path.split(local_path)
     create_folder(local_dir)
