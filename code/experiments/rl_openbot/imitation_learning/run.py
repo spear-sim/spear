@@ -9,6 +9,8 @@
 #
 #
 # python run.py -i 10 -r 3 -s "Data" -m "235114801" "235114775" 
+# python run.py -i 10 -r 3 -s "Infer" -m "235114801" "235114775" 
+# python run.py -i 10 -r 3 -s "Debug" -m "235114801" "235114775" 
 
 import argparse
 import csv
@@ -37,10 +39,7 @@ if __name__ == "__main__":
     config_files = []
 
     # Add default config files first and then user config files
-    # config_files = [ os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/InteriorEnvironment/user_config.yaml") ]
     config_files.append(os.path.join(os.getcwd(), "user_config.yaml"))
-    config_files.append("../../../unreal_plugins/InteriorSimBridge/default_config.yaml")
-    config_files.append("../../../unreal_plugins/RobotSim/default_config.yaml")
 
     # Load configs
     config = get_config(config_files)
@@ -50,7 +49,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
-    parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Keyboard (for testing purposes only)", required=True)
+    parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Debug (for debug purposes only)", required=True)
     parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the MAP_ID argument and allows collecting data in multiple environments programatically", required=False)
     args = parser.parse_args()
     
@@ -96,95 +95,71 @@ if __name__ == "__main__":
             config.UNREALAI.MAP_ID = "/Game/Maps/Map_" + mapName
             config.freeze()
         
-            # Create Uneal Environment: 
-            # uenv = uai.UnrealEnv(config)
-    
-            # Gym wrapper:
-            # env = UnrealToGymWrapper(uenv)
-            # env.reset()
-
-            # get current observation and reward
-            # agent_name = uenv.agents[0]
+            # Create Env object:
+            env = Env(config)
         
             run = 0
             while run < runs:
-                print("----------------------")
-                print(f"run {run} over {runs}")
-                print("----------------------")
             
                 collisionFlag = False
                 goalReachedFlag = False
-            
-                uenv = uai.UnrealEnv(config)
+                array_obs = np.empty([numIter, 9])
+                executedIterations = 0
                 
-                agent_name = uenv.agents[0]
-            
                 folderName = f"dataset/uploaded/run_{mapName}_{run}"
                 dataFolderName = folderName+"/data/"
                 os.makedirs(dataFolderName, exist_ok=True)
                 os.makedirs(dataFolderName+"sensor_data", exist_ok=True)
                 os.makedirs(dataFolderName+"images", exist_ok=True)
                 
-                failed = []
-    
-                array_obs = np.empty([numIter, 9])
+                print("----------------------")
+                print(f"run {run} over {runs}")
+                print("----------------------")
                 
-                reward = 0.0
+                # Reset the simulation to get the first observation  
+                obs = env.reset()
                 
-                executedIterations = 0
-                
-        
+                # Take a few steps:
                 for i in range(numIter):
+                
+                    print(f"iteration {i} over {numIter}")
+                
                     executedIterations = i+1
                     ct = datetime.datetime.now() 
                     ts = 10000*ct.timestamp()
-                    command_x = 0#random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
-                    command_y = 0#random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
+                    command_x = 0 #random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
+                    command_y = 0 #random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
             
-                    # Send action to the agent:
-                    uenv.step(action={agent_name: [ np.array([command_x,command_y]) ] })
-            
-                    # Collect observation from the agent:
-                    observation = uenv.get_obs_for_agent(agent_name=agent_name)
+                    # Send action to the agent and collect observations:
+                    obs, reward, done, info = env.step({"apply_voltage": [command_x,command_y]})
             
                     # Fill an array with the different observations:
-                    array_obs[i][0] = speedMultiplier*observation[0][0] # ctrl left
-                    array_obs[i][1] = speedMultiplier*observation[0][1] # ctrl right
-                    array_obs[i][2] = observation[0][2] # agent pos X wrt. world
-                    array_obs[i][3] = observation[0][3] # agent pos Y wrt. world
-                    array_obs[i][4] = observation[0][4] # agent pos Z wrt. world
-                    array_obs[i][5] = observation[0][5] # agent Roll wrt. world
-                    array_obs[i][6] = observation[0][6] # agent Pitch wrt. world
-                    array_obs[i][7] = observation[0][7] # agent Yaw wrt. world
+                    array_obs[i][0] = speedMultiplier*obs["physical_observation"][0] # ctrl left
+                    array_obs[i][1] = speedMultiplier*obs["physical_observation"][1] # ctrl right
+                    array_obs[i][2] = obs["physical_observation"][2] # agent pos X wrt. world
+                    array_obs[i][3] = obs["physical_observation"][3] # agent pos Y wrt. world
+                    array_obs[i][4] = obs["physical_observation"][4] # agent pos Z wrt. world
+                    array_obs[i][5] = obs["physical_observation"][5] # agent Roll wrt. world
+                    array_obs[i][6] = obs["physical_observation"][6] # agent Pitch wrt. world
+                    array_obs[i][7] = obs["physical_observation"][7] # agent Yaw wrt. world
                     array_obs[i][8] = ts # time stamp
 
                     # Save the images:
-                    im = Image.fromarray(observation[1])
+                    im = Image.fromarray(obs["visual_observation"])
                     im.save(dataFolderName+"images/%d.jpeg" % i)
-  
-                    print(f"iteration {i} over {numIter}")
-                    
-                    deltaReward = reward - uenv.current_reward['SimModeRobotSim_0']
-                    #print(f"delta reward: {deltaReward}")
                            
-                    #TODO: change !!             
-                    if isclose(deltaReward, config.OPENBOT_AGENT_CONTROLLER.REWARD_COLLISION, abs_tol=5e1):
-                        print("Collision detected ! Killing simulation and restarting run...")  
-                        collisionFlag = True
+                    # Interrupt the step loop if the done flag is raised:  
+                    if done:  
+                        if info["hit_obstacle"]:
+                            print("Collision detected ! Killing simulation and restarting run...")  
+                            collisionFlag = True
+        
+                        if info["hit_goal"]:
+                            print("Goal reached !")  
+                            goalReachedFlag = True
+                            
                         break
-                    
-                    #TODO: change !!           
-                    if isclose(deltaReward, -config.OPENBOT_AGENT_CONTROLLER.REWARD_GOAL_REACHED, abs_tol=5e1):
-                        print("Goal reached !")  
-                        goalReachedFlag = True
-                        break
-                    
-                    reward = uenv.current_reward['SimModeRobotSim_0']
-            
-                    # An event triggered premature ending of the simulation
-                    #if uenv.current_done: 
-                    #    break
-                    
+                        
                 if collisionFlag == True:
                     print("Restarting run...") 
                     shutil.rmtree(folderName)
@@ -219,7 +194,7 @@ if __name__ == "__main__":
                         # Compute Euclidean distance to target:
                         dist = np.linalg.norm(relativePositionToTarget)
             
-                        # Compute robot forward axis (global coordinate system)
+                        # Compute robot forward axis (global coordinate system):
                         yawVehicle = array_obs[i][7];
                         rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
             
@@ -257,13 +232,11 @@ if __name__ == "__main__":
                     f_goal.close()
                     f_rgb.close()
                 
-                    # Reset the environment after each run:
-                    #uenv.reset()      
-                uenv.close()        
-                time.sleep(5) 
-                
+                # Reset the environment after each run:  
+                env.reset()    
+        
         # Close the environment:
-        uenv.close()
+        env.close()
         time.sleep(3) 
         
     elif learningMode == "Infer":
@@ -279,15 +252,11 @@ if __name__ == "__main__":
         # ---> Cosinus of the relative yaw between current pose and target pose.
         
         config.defrost()
-        config.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "dist-sin-cos"
+        config.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "dist-sin-cos" # Owerwrite observation mode to prevent crash. 
         config.freeze()
     
-        # Create Uneal Environment: 
-        uenv = uai.UnrealEnv(config)
-        agent_name = uenv.agents[0]
-    
         # Load TFLite model and allocate tensors.
-        interpreter = tflite.Interpreter("/home/quentin/Desktop/interiorsim/code/experiments/rl_openbot/imitation_learning/models/TestSession_1_pilot_net_lr0.0001_bz64_bn/checkpoints/best-val.tflite")
+        interpreter = tflite.Interpreter("./models/TestSession_1_pilot_net_lr0.0001_bz64_bn/checkpoints/best-val.tflite")
         interpreter.allocate_tensors()
 
         # Get input and output tensors.
@@ -300,82 +269,125 @@ if __name__ == "__main__":
         img_input = np.array(np.random.random_sample(input_details[0]["shape"]), dtype=np.float32)
         cmd_input = np.array(np.random.random_sample(input_details[1]["shape"]), dtype=np.float32)
         
-        print(cmd_input)
+        for mapName in mapNames: # For each map
         
-        result = np.empty((0, 2), dtype=float)
+            # Load the correct map:
+            config.defrost()
+            config.UNREALAI.MAP_ID = "/Game/Maps/Map_" + mapName
+            config.freeze()
         
+            # Create Env object:
+            env = Env(config)
         
-        for i in range(numIter):
+            run = 0
+            while run < runs:
             
-            # Collect observation from the agent:
-            observation = uenv.get_obs_for_agent(agent_name=agent_name)
-            img_input = np.float32(observation[1])/255
-            img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
-            cmd_input[0][0] = np.float32(observation[0][2])/100
-            cmd_input[0][1] = np.float32(observation[0][3])
-            cmd_input[0][2] = np.float32(observation[0][4])
-          
-            #print(cmd_input)
-            
-            # Inference:
-            interpreter.set_tensor(input_details[0]["index"], np.expand_dims(img_input, axis=0))
-            interpreter.set_tensor(input_details[1]["index"], cmd_input)    
-            
-            #print(np.expand_dims(img_input, axis=0))
-            #print(cmd_input)
-        
-            start_time = time.time()
-            interpreter.invoke()
-            stop_time = time.time()
-            #print('time: {:.3f}ms'.format((stop_time - start_time) * 1000))
-            
-            output = interpreter.get_tensor(output_details[0]["index"])
-            
-
-            action = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
-            
-            print(cmd_input)
-            print(output)
-            #print(action)
-            
-            # Send action to the agent:
-            uenv.step(action={agent_name: action })
-            
-            print(f"iteration {i} over {numIter}")
-            
-            # An event triggered premature ending of the simulation
-            #if uenv.current_done: 
-            #    break
-            
-        # Close the environment:
-        uenv.close()
-            
-    elif learningMode == "Keyboard": # Just play with the keyboard while checking the observations
+                collisionFlag = False
+                goalReachedFlag = False
+                result = np.empty((0, 2), dtype=float)
+                executedIterations = 0
                 
-        # Create Uneal Environment: 
-        uenv = uai.UnrealEnv(config)
-        agent_name = uenv.agents[0]
+                print("----------------------")
+                print(f"run {run} over {runs}")
+                print("----------------------")
+                
+                # Reset the simulation to get the first observation  
+                obs = env.reset()
+                
+                # Take a few steps:
+                for i in range(numIter):
+                
+                    print(f"iteration {i} over {numIter}")
+                
+                    # Process (crop) visual observations:
+                    img_input = np.float32(obs["visual_observation"])/255
+                    img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
+                    
+                    # Physical observations
+                    cmd_input[0][0] = np.float32(obs["physical_observation"][2])/100
+                    cmd_input[0][1] = np.float32(obs["physical_observation"][3])
+                    cmd_input[0][2] = np.float32(obs["physical_observation"][4])
+
+                    # Inference:
+                    interpreter.set_tensor(input_details[0]["index"], np.expand_dims(img_input, axis=0))
+                    interpreter.set_tensor(input_details[1]["index"], cmd_input)    
+                    start_time = time.time()
+                    interpreter.invoke()
+                    stop_time = time.time()
+                    print('Infererence time: {:.3f}ms'.format((stop_time - start_time) * 1000))
+            
+                    # Output of the Artificial Neural Network
+                    output = interpreter.get_tensor(output_details[0]["index"])
+            
+                    # Command 
+                    action = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
+                    print(action)
+            
+                    # Send action to the agent:
+                    obs, reward, done, info = env.step({"apply_voltage": action})
+            
+                    # Interrupt the step loop if the done flag is raised:  
+                    if done:  
+                        if info["hit_obstacle"]:
+                            print("Collision detected ! Killing simulation and restarting run...")  
+                            collisionFlag = True
+        
+                        if info["hit_goal"]:
+                            print("Goal reached !")  
+                            goalReachedFlag = True
+                            
+                        break
+            
+                # If the run was executed with a collision event, re-execute it:
+                if collisionFlag == True:
+                    print("Restarting run...") 
+                    
+                # Otherwise move to the next run:
+                else:
+                    run = run + 1
+            
+        # Close the environment:
+        env.close()
+            
+    elif learningMode == "Debug": # Just play with the keyboard while checking the observations
     
+        # Load the correct map:
+        config.defrost()
+        config.UNREALAI.MAP_ID = "/Game/Maps/Map_" + mapNames[0]
+        config.freeze()
+                
+        # Create Env object:
+        env = Env(config)
+        
+        # Reset the simulation to get the first observation  
+        obs = env.reset()
+        print(obs["visual_observation"].shape, obs["visual_observation"].dtype)
+                
+        cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+        cv2.waitKey(0)
+    
+        # Take a few steps:
         for i in range(numIter):
-            
-            command_x = 0#random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
-            command_y = 0#random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
-            
-            # Send action to the agent:
-            uenv.step(action={agent_name: [ np.array([command_x,command_y]) ] })
-            
-            # Collect observation from the agent:
-            observation = uenv.get_obs_for_agent(agent_name=agent_name)
-            #print(f"Reward {uenv.current_reward}")
+        
             print(f"iteration {i} over {numIter}")
             
-            # An event triggered premature ending of the simulation
-            #if uenv.current_done: 
-                #break
-                #print("uenv.current_done")
+            command_x = 0 #random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
+            command_y = 0 #random.uniform(-1.0, 1.0) # Should be in the [-1 1] range. 
+            
+            obs, reward, done, info = env.step({"apply_voltage": [command_x, command_y]})
+            print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
 
+            cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            cv2.waitKey(0)
+
+            #if done:
+            #    print("Reset run...") 
+            #    env.reset()
+
+        cv2.destroyAllWindows()
+        
         # Close the environment:
-        uenv.close()
+        env.close()
     
     else:
         
