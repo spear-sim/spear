@@ -83,3 +83,106 @@ UNREALAI:
   RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 10.0
   RPC_CLIENT_INTERNAL_RECONNECT_LIMIT: 10
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 120.0
+  
+  
+  
+  
+  
+SIMULATION_CONTROLLER:
+  OPENBOT_AGENT_CONTROLLER:
+    AGENT_ACTOR_NAME: ""
+    GOAL_ACTOR_NAME: ""
+    OBSERVATION_MODE: "mixed" # "mixed" or "physical"
+
+    # - "full-pose" the observation vector is set to be the vehicle's x/y/z position concatenated with its roll/pitch/yaw angles in the world frame.
+    # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal
+    PHYSICAL_OBSERVATION_MODE: "full-pose"
+
+    AGENT_READY_VELOCITY_THRESHOLD: 0.0
+    MIXED_MODE:
+      OBSERVATION_CAMERA_ACTOR_NAME: ""
+      IMAGE_HEIGHT: 128
+      IMAGE_WIDTH: 128
+      SMARTPHONE_FOV: 90.0        # Field of view of the smartphone camera in [deg]
+      MOTION_BLUR_AMOUNT: 0.0     # Strength of motion blur, 0:off, should be renamed to intensity
+      MOTION_BLUR_MAX: 0.0        # Max distortion caused by motion blur, in percent of the screen width, 0:off
+      POST_PROC_BLEND_WEIGHT: 0.0 # Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect
+      
+ROBOT_SIM:
+
+  # Used to prevent RobotSim from attempting to load a segmentation material stored directly in RobotProject/Content.
+  # This is useful when RobotSim is loaded in projects other than RobotProject (e.g., PlayEnvironment or InteriorEnvironment).
+  PIP_CAMERA_LOAD_SEGMENTATION_MATERIAL: True
+
+  # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+  ACCEPTANCE_RADIUS: 0.1
+  
+  # PID proportional gain for the autopilot
+  PROPORTIONAL_GAIN_HEADING: 5.25
+  
+  # PID derivative gain for the autopilot
+  DERIVATIVE_GAIN_HEADING: 2.1
+  
+  # PID proportional gain for the autopilot
+  PROPORTIONAL_GAIN_DIST: 3.0
+  
+  # PID derivative gain for the autopilot
+  DERIVATIVE_GAIN_DIST: 0.1
+  
+  # Angular range within which the vehicle moves forward to the target in [rad]
+  FORWARD_MIN_ANGLE: 0.5
+  
+  # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+  CONTROL_SATURATION: 0.9
+
+  # Radius of the wheel in [m]
+  WHEEL_SHAPE_RADIUS: 0.03
+
+  # Width of the wheel in [m]
+  WHEEL_SHAPE_WIDTH: 0.025
+
+  # How far the wheel can go above the resting position in [m]
+  WHEEL_SUSPENSION_MAX_RAISE: 0.0
+
+  # How far the wheel can drop below the resting position in [m]
+  WHEEL_SUSPENSION_MAX_DROP: 0.0
+
+  # Mass of this wheel in [kg]
+  WHEEL_MASS: 0.033
+
+  # DragCoefficient of the vehicle chassis.
+  DRAG_COEFFICIENT: 1.0
+
+  # Chassis width used for drag force computation in [cm]
+  CHASSIS_WIDTH: 15.0
+
+  # Chassis height used for drag force computation in [cm]
+  CHASSIS_HEIGHT: 15.0
+
+  # Max RPM for engine
+  MOTOR_MAX_RPM: 20000.0
+
+  # Velocity constant of the OpenBot motors
+  MOTOR_VELOCITY_CONSTANT: 65.89
+
+  # Gear ratio of the OpenBot motors
+  GEAR_RATIO: 50.0
+
+  # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle 
+  CONTROL_DEAD_ZONE: 5.0
+
+  # Motor maximal torque
+  MOTOR_TORQUE_MAX: 0.19
+
+  # Motor winding electrical resistance
+  ELECTRICAL_RESISTANCE: 0.5
+
+  # Motor winding electrical inductance
+  ELECTRICAL_INDUCTANCE: 0.5
+
+  # OpenBot action scaling factor
+  ACTION_SCALE: 255
+
+  # Voltage of the battery powering the OpenBot
+  BATTERY_VOLTAGE: 12.0
+

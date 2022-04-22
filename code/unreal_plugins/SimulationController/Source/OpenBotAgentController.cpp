@@ -265,7 +265,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), mag_relative_position_to_goal, sin_yaw, cos_yaw});
 
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "yaw-x-y") {
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
         ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
         ASSERT(vehicle_pawn);
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();

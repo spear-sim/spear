@@ -34,9 +34,9 @@ SIMULATION_CONTROLLER:
     GOAL_ACTOR_NAME: ""
     OBSERVATION_MODE: "mixed" # "mixed" or "physical"
 
-    # - "yaw-x-y" the observation vector is set to be the vehicle's yaw, x position and y position in the world frame
+    # - "full-pose" the observation vector is set to be the vehicle's x/y/z position concatenated with its roll/pitch/yaw angles in the world frame.
     # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal
-    PHYSICAL_OBSERVATION_MODE: "yaw-x-y"
+    PHYSICAL_OBSERVATION_MODE: "full-pose"
 
     AGENT_READY_VELOCITY_THRESHOLD: 0.0
     MIXED_MODE:

@@ -4,39 +4,69 @@
 # egocentric visual obsevations.
 
 #############################################################################
-import numpy as np
-import tensorflow as tf
-import tflite_runtime.interpreter as tflite
-import unrealai as uai
-import matplotlib.pyplot as plt
-from PIL import Image
-import datetime;
-import random
-import time
+
+# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
+#
+#
+# python run.py -i 10 -r 3 -s "Data" -m "235114801" "235114775" 
+
+import argparse
 import csv
 import cv2
-import argparse
-import os
-from unrealai.constants import PACKAGE_DEFAULT_CONFIG_FILE
-from unrealai.constants import PACKAGE_ROOT_DIR
-from unrealai.exceptions import UnrealAIException
-from unrealai.config import get_config
+import datetime;
 import math
 from math import cos, sin, atan2, pi, isclose
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+import os
+import random
 import shutil
+import tensorflow as tf
+import tflite_runtime.interpreter as tflite
+import time
 
-def client(args, config, mapNames):
-    """
-        Client script for the InteriorSim project. Calls for the creation of a virtual environment containing an openbot agent.
-        Then executes a set of actions with the agent while gathering suitable observations.
-        """
-        
+from interiorsim import Env
+from interiorsim.config import get_config
+from interiorsim.constants import INTERIORSIM_ROOT_DIR
+
+
+if __name__ == "__main__":
+
+    # List of config files to be used 
+    config_files = []
+
+    # Add default config files first and then user config files
+    # config_files = [ os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/InteriorEnvironment/user_config.yaml") ]
+    config_files.append(os.path.join(os.getcwd(), "user_config.yaml"))
+    config_files.append("../../../unreal_plugins/InteriorSimBridge/default_config.yaml")
+    config_files.append("../../../unreal_plugins/RobotSim/default_config.yaml")
+
+    # Load configs
+    config = get_config(config_files)
+    print(config)
+    
+    # Parse input script arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
+    parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
+    parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Keyboard (for testing purposes only)", required=True)
+    parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the MAP_ID argument and allows collecting data in multiple environments programatically", required=False)
+    args = parser.parse_args()
+    
+    if args.map == [""]: # Use the default MAP_ID argument from parameter file 
+        if config.UNREALAI.MAP_ID == "":
+            mapNames = ["simpleMap"]
+        elif config.UNREALAI.MAP_ID[0:15] == "/Game/Maps/Map_":
+            mapNames = [config.UNREALAI.MAP_ID[15:]]
+        else:
+            mapNames = ["errorMap"]
+    else: # Overwrite the map value
+        mapNames = args.map
+  
     numIter = args.iterations
     learningMode = args.setup
     runs = args.runs
-    
-    print(numIter)
-    print(learningMode)
     
     if learningMode == "Data":
         
@@ -46,12 +76,15 @@ def client(args, config, mapNames):
         
         # ---> left wheel commands in the range [-1, 1]
         # ---> right wheel commands in the range [-1, 1]
-        # ---> Yaw in world frame.
         # ---> X position in world frame.
         # ---> Y position in world frame.
+        # ---> Z position in world frame.
+        # ---> Roll in world frame.
+        # ---> Pitch in world frame.
+        # ---> Yaw in world frame.
         
         config.defrost()
-        config.INTERIOR_SIM_BRIDGE.OBSERVATION_VECTOR = "yaw-x-y"
+        config.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "full-pose"
         config.freeze()
         
         speedMultiplier = 1
@@ -133,13 +166,15 @@ def client(args, config, mapNames):
                     
                     deltaReward = reward - uenv.current_reward['SimModeRobotSim_0']
                     #print(f"delta reward: {deltaReward}")
-                                        
-                    if isclose(deltaReward, config.INTERIOR_SIM_BRIDGE.REWARD_COLLISION, abs_tol=5e1):
+                           
+                    #TODO: change !!             
+                    if isclose(deltaReward, config.OPENBOT_AGENT_CONTROLLER.REWARD_COLLISION, abs_tol=5e1):
                         print("Collision detected ! Killing simulation and restarting run...")  
                         collisionFlag = True
                         break
                     
-                    if isclose(deltaReward, -config.INTERIOR_SIM_BRIDGE.REWARD_GOAL_REACHED, abs_tol=5e1):
+                    #TODO: change !!           
+                    if isclose(deltaReward, -config.OPENBOT_AGENT_CONTROLLER.REWARD_GOAL_REACHED, abs_tol=5e1):
                         print("Goal reached !")  
                         goalReachedFlag = True
                         break
@@ -244,7 +279,7 @@ def client(args, config, mapNames):
         # ---> Cosinus of the relative yaw between current pose and target pose.
         
         config.defrost()
-        config.INTERIOR_SIM_BRIDGE.OBSERVATION_VECTOR = "dist-sin-cos"
+        config.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "dist-sin-cos"
         config.freeze()
     
         # Create Uneal Environment: 
@@ -348,40 +383,3 @@ def client(args, config, mapNames):
         
     return 0
 
-
-if __name__ == "__main__":
-
-    # List of config files to be used 
-    config_files = []
-
-    # Add default config files first and then user config files
-    config_files.append(os.path.join(os.getcwd(), "user_config.yaml"))
-    config_files.append("../../../unreal_plugins/InteriorSimBridge/default_config.yaml")
-    config_files.append("../../../unreal_plugins/RobotSim/default_config.yaml")
-
-    # Load configs
-    config = get_config(config_files)
-    
-    print(config)
-    
-    # Parse input script arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
-    parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
-    parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Keyboard (for testing purposes only)", required=True)
-    parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the MAP_ID argument and allows collecting data in multiple environments programatically", required=False)
-    args = parser.parse_args()
-    
-    if args.map == [""]: # Use the default MAP_ID argument from parameter file 
-        if config.UNREALAI.MAP_ID == "":
-            mapNames = ["simpleMap"]
-        elif config.UNREALAI.MAP_ID[0:15] == "/Game/Maps/Map_":
-            mapNames = [config.UNREALAI.MAP_ID[15:]]
-        else:
-            mapNames = ["errorMap"]
-    else: # Overwrite the map value
-        mapNames = args.map
-
-    client(args, config, mapNames) 
-    
-    # python run.py -i 10 -r 3 -s "Data" -m "235114801" "235114775" 
