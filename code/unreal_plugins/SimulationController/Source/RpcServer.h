@@ -14,11 +14,12 @@
 // An RPC server in which functions can be bound to run synchronously or asynchronously. Use
 // launchWorkerThreads() to start the worker threads, and use stop() to terminate the server.
 // Functions that are bound using bindAsync() will run asynchronously in the worker threads,
-// and functions that are bound using bindSync() will run synchronously on the game thread.
-// By design, runSync() will block indefinitely, even if there is no more synchronous work
-// that has been scheduled. Call unblockRunSyncWhenFinishedExecuting() from another thread to
-// force runSync() to return. This design gives us precise control over where and when
-// function calls are executed within the Unreal Engine game loop.
+// and functions that are bound using bindSync() will run synchronously in the game thread
+// when the game thread calls runSync(). By design, runSync() will block indefinitely, even
+// if there is no more synchronous work that has been scheduled. Call
+// unblockRunSyncWhenFinishedExecuting() from another thread to force runSync() to return.
+// This design gives us precise control over where and when function calls are executed within
+// the Unreal Engine game loop.
 
 class RpcServer
 {
