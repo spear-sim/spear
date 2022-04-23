@@ -288,14 +288,14 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT(frame_state_ == FrameState::Idle);
     });
 
-    rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, Box> {
-        ASSERT(agent_controller_);
-        return agent_controller_->getObservationSpace();
-    });
-
     rpc_server_->bindAsync("getActionSpace", [this]() -> std::map<std::string, Box> {
         ASSERT(agent_controller_);
         return agent_controller_->getActionSpace();
+    });
+
+    rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, Box> {
+        ASSERT(agent_controller_);
+        return agent_controller_->getObservationSpace();
     });
 
     rpc_server_->bindAsync("getStepInfoSpace", [this]() -> std::map<std::string, Box> {
@@ -321,16 +321,16 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->getReward();
     });
 
-    rpc_server_->bindSync("getStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
-        ASSERT(task_);
-        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
-        return task_->getStepInfo();
-    });
-
     rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
         ASSERT(task_);
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         return task_->isEpisodeDone();
+    });
+
+    rpc_server_->bindSync("getStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        ASSERT(task_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        return task_->getStepInfo();
     });
 
     rpc_server_->bindSync("reset", [this]() -> void {
