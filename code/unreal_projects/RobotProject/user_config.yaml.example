@@ -3,7 +3,6 @@ INTERIORSIM:
   STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/LinuxNoEditor/RobotProject.sh"
   TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Temp"
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
-  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
   CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-RobotSimSettingPath=/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json" ]
 
 SIMULATION_CONTROLLER:
