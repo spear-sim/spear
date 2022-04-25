@@ -29,8 +29,8 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
         }
     }
     ASSERT(agent_actor_);
-    ASSERT(goal_actor_);
-    ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
+    //ASSERT(goal_actor_);
+    //ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
 
     // read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
@@ -61,7 +61,7 @@ PointGoalNavTask::~PointGoalNavTask()
 
     random_stream_.Reset();
 
-    ASSERT(goal_actor_);    
+    //ASSERT(goal_actor_);    
     goal_actor_ = nullptr;
 
     ASSERT(agent_actor_);
@@ -90,7 +90,8 @@ float PointGoalNavTask::getReward() const
     } else if (hit_obstacle_) {
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "HIT_OBSTACLE"});
     } else {
-        const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
+        //const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
+        const FVector agent_to_goal = agent_actor_->GetActorLocation();
         reward = -agent_to_goal.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
     }
     return reward;
@@ -159,7 +160,7 @@ void PointGoalNavTask::reset()
     }
 
     agent_actor_->SetActorLocation(agent_position);
-    goal_actor_->SetActorLocation(goal_position);
+    //goal_actor_->SetActorLocation(goal_position);
 }
 
 bool PointGoalNavTask::isReady() const

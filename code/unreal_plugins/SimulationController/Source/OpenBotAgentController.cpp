@@ -36,7 +36,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         }
     }
     ASSERT(agent_actor_);
-    ASSERT(goal_actor_);
+    //ASSERT(goal_actor_);
 
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
@@ -117,7 +117,7 @@ OpenBotAgentController::~OpenBotAgentController()
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
 
-    ASSERT(goal_actor_);
+    //ASSERT(goal_actor_);
     goal_actor_ = nullptr;
 }
 
@@ -235,7 +235,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
         // Get relative position to the goal in the global coordinate system:
-        const FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
+        // const FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
+        const FVector2D relative_position_to_goal(agent_current_location.X, agent_current_location.Y);
 
         // Compute Euclidean distance to target:
         float mag_relative_position_to_goal = relative_position_to_goal.Size();

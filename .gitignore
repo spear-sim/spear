@@ -97,6 +97,7 @@ code/unreal_projects/RobotProject/CMakeLists.txt
 code/unreal_projects/RobotProject/Content/Maps
 code/unreal_projects/RobotProject/Content/Scene
 code/unreal_projects/RobotProject/DerivedDataCache
+code/unreal_projects/RobotProject/dist
 code/unreal_projects/RobotProject/Intermediate
 code/unreal_projects/RobotProject/Makefile
 code/unreal_projects/RobotProject/Plugins
