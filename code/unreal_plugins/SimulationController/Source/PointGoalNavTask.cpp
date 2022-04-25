@@ -143,7 +143,11 @@ void PointGoalNavTask::reset()
 
     if (Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "SPAWN_ON_NAV_MESH"})){
         
-        ARecastNavMesh* navMesh = GetNavMesh();
+       // ARecastNavMesh* navMesh = GetNavMesh();
+        
+        UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+        auto navData = NavSys->GetMainNavData();
+        ARecastNavMesh* navMesh = Cast<ARecastNavMesh>(navData);
 
         float heightLimit = 20.0f;
 
