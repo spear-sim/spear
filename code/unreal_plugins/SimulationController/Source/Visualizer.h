@@ -42,6 +42,7 @@ public:
         ASSERT(camera_actor_);
         camera_actor_ = nullptr;
     }
+
 private:
     AActor* camera_actor_ = nullptr;
 };

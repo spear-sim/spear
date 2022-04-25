@@ -3,12 +3,12 @@ import gym
 from gym import spaces
 import numpy as np
 import os
+import psutil
 from subprocess import Popen
 import sys
 import time
 
 import msgpackrpc   # pip install -e code/third_party/msgpack-rpc-python
-import psutil
 
 
 # Enum values should match Box.h in SimulationController plugin
@@ -56,8 +56,8 @@ class Env(gym.Env):
 
         self._byte_order = self._get_byte_order()
 
-        self.observation_space = self._get_observation_space()
         self.action_space = self._get_action_space()
+        self.observation_space = self._get_observation_space()
         self.step_info_space = self._get_step_info_space()
 
     def step(self, action):
@@ -75,25 +75,26 @@ class Env(gym.Env):
 
     def reset(self):
 
-        # reset the simulation, check if simulation is ready, get observation if ready
-        self._begin_tick()
-        self._reset()
-        self._tick()
-        is_ready = self._is_ready()
-        if is_ready:
-            obs = self._get_observation()
-        self._end_tick()
+        ready = False
+        once = False
 
-        # while simulation is not ready, tick the simulation forward, get observation if ready
-        while not is_ready:
+        while not ready:
             self._begin_tick()
+
+            # only reset the simulation once
+            if not once:
+                self._reset()
+                once = True
+
             self._tick()
-            is_ready = self._is_ready()
-            if is_ready:
+
+            # only get the observation if ready
+            ready = self._is_ready()
+            if ready:
                 obs = self._get_observation()
+
             self._end_tick()
 
-        # at this point, observation is guaranteed to be valid
         return obs
 
     # need to override gym.Env member function
@@ -349,37 +350,37 @@ class Env(gym.Env):
     def _end_tick(self):
         self._client.call("endTick")
 
-    def _get_observation_space(self):
-        space = self._client.call("getObservationSpace")
-        return self._get_gym_space(space)
-
     def _get_action_space(self):
         space = self._client.call("getActionSpace")
+        return self._get_gym_space(space)
+
+    def _get_observation_space(self):
+        space = self._client.call("getObservationSpace")
         return self._get_gym_space(space)
 
     def _get_step_info_space(self):
         space = self._client.call("getStepInfoSpace")
         return self._get_gym_space(space)
 
+    def _apply_action(self, action):
+        self._client.call("applyAction", action)
+
     def _get_observation(self):
         observation = self._client.call("getObservation")
         return self._deserialize(observation, self.observation_space)
 
-    def _apply_action(self, action):
-        self._client.call("applyAction", action)
-
     def _get_reward(self):
         return self._client.call("getReward")
     
+    def _is_episode_done(self):
+        return self._client.call("isEpisodeDone")
+
     def _get_step_info(self):
         step_info = self._client.call("getStepInfo")
         return self._deserialize(step_info, self.step_info_space)
 
     def _reset(self):
         self._client.call("reset")
-
-    def _is_episode_done(self):
-        return self._client.call("isEpisodeDone")
 
     def _is_ready(self):
         return self._client.call("isReady")
