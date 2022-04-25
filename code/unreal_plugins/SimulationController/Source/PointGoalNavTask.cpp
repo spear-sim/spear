@@ -1,4 +1,7 @@
 #include "PointGoalNavTask.h"
+#include "NavMesh/NavMeshBoundsVolume.h"
+#include "NavMesh/RecastNavMesh.h"
+#include "NavigationSystem.h"
 
 #include <algorithm>
 
@@ -9,6 +12,7 @@
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
@@ -136,6 +140,25 @@ void PointGoalNavTask::reset()
 {
     float position_x, position_y, position_z;
     FVector agent_position(0), goal_position(0);
+
+    if (Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "SPAWN_ON_NAV_MESH"})){
+        
+        ARecastNavMesh* navMesh = GetNavMesh();
+
+        float heightLimit = 20.0f;
+
+        if (navMesh) {
+                int trial = 0;
+                while (trial < 10) {
+                    FNavLocation navLocation = navMesh->GetRandomPoint();
+                    if (heightLimit <= 0.0f or navLocation.Location.Z < heightLimit) {
+                        agent_position = navLocation.Location;
+                        return;
+                    }
+                    trial++;
+                }
+        }
+    } 
 
     while ((agent_position - goal_position).Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "SPAWN_DISTANCE_THRESHOLD"})) {
         position_x = random_stream_.FRandRange(
