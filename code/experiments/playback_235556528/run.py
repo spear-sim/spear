@@ -9,9 +9,9 @@ from interiorsim import Env
 from interiorsim.config import get_config
 from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
-def read_data():
-    pose_data_path = os.path.join(INTERIORSIM_ROOT_DIR, "../../experiments/run_235556528/data/sensor_data/pose_data.txt")
-    image_data_path = os.path.join(INTERIORSIM_ROOT_DIR, "../../experiments/run_235556528/data/images")
+def read_recorded_data():
+    pose_data_path = os.path.join(INTERIORSIM_ROOT_DIR, "../../experiments/playback_235556528/data/sensor_data/pose_data.txt")
+    image_data_path = os.path.join(INTERIORSIM_ROOT_DIR, "../../experiments/playback_235556528/data/images")
     with open(pose_data_path) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         poses = {}
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     config.freeze()
 
     # read data from a recorded session in 235556528
-    poses, images = read_data()
+    poses, images = read_recorded_data()
 
     # create Env object
     env = Env(config)

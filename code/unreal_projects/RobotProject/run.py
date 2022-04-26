@@ -27,9 +27,9 @@ if __name__ == "__main__":
     # take a few steps
     for i in range(100):
         if config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.ACTION_MODE == "low_level_control":
-            obs, reward, done, info = env.step({"apply_voltage": [1, 1]})
+            obs, reward, done, info = env.step({"apply_voltage": [1, 0.5]})
         elif config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.ACTION_MODE == "teleport":
-            obs, reward, done, info = env.step({"set_location": [0, i%199, 0], "set_rotation": [0, i*4, 0]}) # set_rotation: [pitch, yaw, roll]
+            obs, reward, done, info = env.step({"set_location_xyz": [0, i%199, 0], "set_rotation_pyr": [0, i*4, 0]}) # set_rotation: [pitch, yaw, roll]
         else:
             assert False
 
