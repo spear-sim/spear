@@ -26,7 +26,13 @@ if __name__ == "__main__":
 
     # take a few steps
     for i in range(100):
-        obs, reward, done, info = env.step({"apply_voltage": [1, 1]})
+        if config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.ACTION_MODE == "low_level_control":
+            obs, reward, done, info = env.step({"apply_voltage": [1, 1]})
+        elif config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.ACTION_MODE == "teleport":
+            obs, reward, done, info = env.step({"set_location": [0, i%199, 0], "set_rotation": [0, i*4, 0]}) # set_rotation: [pitch, yaw, roll]
+        else:
+            assert False
+
         print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
 
         cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB

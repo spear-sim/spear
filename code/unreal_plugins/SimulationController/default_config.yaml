@@ -33,7 +33,7 @@ SIMULATION_CONTROLLER:
     AGENT_ACTOR_NAME: ""
     GOAL_ACTOR_NAME: ""
     OBSERVATION_MODE: "mixed" # "mixed" or "physical"
-
+    ACTION_MODE: "" # "low_level_control" or "teleport"
     # - "yaw-x-y" the observation vector is set to be the vehicle's yaw, x position and y position in the world frame
     # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal
     PHYSICAL_OBSERVATION_MODE: "yaw-x-y"
