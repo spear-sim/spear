@@ -5,6 +5,10 @@
 #include <vector>
 
 #include "AgentController.h"
+#include "NavMesh/NavMeshBoundsVolume.h"
+#include "NavMesh/RecastNavMesh.h"
+#include "NavigationSystem.h"
+#include "NavigationSystemTypes.h"
 
 class AActor;
 class USceneCaptureComponent2D;
@@ -37,4 +41,14 @@ private:
 
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
+
+    // An array containing the different waypoints to be followed by the agent:
+    mutable TArray<FNavPathPoint> pathPoints_;
+
+    // The path point begin considered by the PID controller:
+    mutable FVector2D currentPathPoint_;
+    mutable FNavLocation targetLocation_;
+
+    // Index of the considered path point (starts at one since 0 is the initial position):
+    mutable unsigned int indexPath_ = 1;
 };

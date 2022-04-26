@@ -2,6 +2,7 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavMesh/RecastNavMesh.h"
 #include "NavigationSystem.h"
+#include "NavigationSystemTypes.h"
 
 #include <algorithm>
 
@@ -13,7 +14,6 @@
 #include "Box.h"
 #include "Config.h"
 
-
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
     // append all actors that need to be ignored during collision check
@@ -22,19 +22,21 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
 
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AGENT_ACTOR_NAME"})) { 
+        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AGENT_ACTOR_NAME"})) {
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
-        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_ACTOR_NAME"})) {
+        }
+        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_ACTOR_NAME"})) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
-        } else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
+        }
+        else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
             obstacle_ignore_actors_.emplace_back(*actor_itr);
         }
     }
     ASSERT(agent_actor_);
-    //ASSERT(goal_actor_);
-    //ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
+    // ASSERT(goal_actor_);
+    // ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
 
     // read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
@@ -65,7 +67,7 @@ PointGoalNavTask::~PointGoalNavTask()
 
     random_stream_.Reset();
 
-    //ASSERT(goal_actor_);    
+    // ASSERT(goal_actor_);
     goal_actor_ = nullptr;
 
     ASSERT(agent_actor_);
@@ -91,10 +93,12 @@ float PointGoalNavTask::getReward() const
 
     if (hit_goal_) {
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "HIT_GOAL"});
-    } else if (hit_obstacle_) {
+    }
+    else if (hit_obstacle_) {
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "HIT_OBSTACLE"});
-    } else {
-        //const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
+    }
+    else {
+        // const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
         const FVector agent_to_goal = agent_actor_->GetActorLocation();
         reward = -agent_to_goal.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
     }
@@ -110,7 +114,7 @@ std::map<std::string, Box> PointGoalNavTask::getStepInfoSpace() const
 {
     std::map<std::string, Box> step_info_space;
     Box box;
-    
+
     box.low = 0;
     box.high = 1;
     box.shape = {1};
@@ -141,28 +145,25 @@ void PointGoalNavTask::reset()
     float position_x, position_y, position_z;
     FVector agent_position(0), goal_position(0);
 
-    if (Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "SPAWN_ON_NAV_MESH"})){
-        
-       // ARecastNavMesh* navMesh = GetNavMesh();
-        
-        UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    // Spawn the agent in a random location within the navigation mesh: 
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "SPAWN_ON_NAV_MESH"})) {
+
+        UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(agent_actor_->GetWorld());
         auto navData = NavSys->GetMainNavData();
         ARecastNavMesh* navMesh = Cast<ARecastNavMesh>(navData);
 
-        float heightLimit = 20.0f;
-
         if (navMesh) {
-                int trial = 0;
-                while (trial < 10) {
-                    FNavLocation navLocation = navMesh->GetRandomPoint();
-                    if (heightLimit <= 0.0f or navLocation.Location.Z < heightLimit) {
-                        agent_position = navLocation.Location;
-                        return;
-                    }
-                    trial++;
+            int trial = 0;
+            while (trial < Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "NUMBER_RANDOM_RELOCATION_TRIALS"})) {
+                FNavLocation navLocation = navMesh->GetRandomPoint();
+                if (Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "ACTOR_HEIGHT"}) <= 0.0f or navLocation.Location.Z < Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "ACTOR_HEIGHT"})) {
+                    agent_position = navLocation.Location;
+                    return;
                 }
+                trial++;
+            }
         }
-    } 
+    }
 
     while ((agent_position - goal_position).Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "EPISODE_BEGIN", "SPAWN_DISTANCE_THRESHOLD"})) {
         position_x = random_stream_.FRandRange(
@@ -187,12 +188,12 @@ void PointGoalNavTask::reset()
     }
 
     agent_actor_->SetActorLocation(agent_position);
-    //goal_actor_->SetActorLocation(goal_position);
+    // goal_actor_->SetActorLocation(goal_position);
 }
 
 bool PointGoalNavTask::isReady() const
 {
-    return true;  
+    return true;
 }
 
 void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
@@ -201,7 +202,8 @@ void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_ac
 
     if (other_actor == goal_actor_) {
         hit_goal_ = true;
-    } else if (std::find(obstacle_ignore_actors_.begin(), obstacle_ignore_actors_.end(), other_actor) == obstacle_ignore_actors_.end()) {
+    }
+    else if (std::find(obstacle_ignore_actors_.begin(), obstacle_ignore_actors_.end(), other_actor) == obstacle_ignore_actors_.end()) {
         hit_obstacle_ = true;
     }
 };

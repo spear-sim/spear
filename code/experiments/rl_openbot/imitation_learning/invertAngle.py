@@ -11,15 +11,15 @@ for folder in os.listdir(f"dataset/uploaded"):
     folderName = f"dataset/uploaded/{folder}/data/"
 
 
-    numIter = 1000
-    array_obs = np.empty([numIter, 6])
+    numIterMax = 1000
+    array_obs = np.empty([numIterMax, 7])
 
 
     f_pose = open(folderName+"sensor_data/poseData.txt", 'r')
     csvreader = csv.reader(f_pose)
     header = []
     header = next(csvreader)
-    i = 0
+    numIter = 0
     for row in csvreader:
         
         #print(i)
@@ -27,11 +27,14 @@ for folder in os.listdir(f"dataset/uploaded"):
         ts = row[0]
 
         # Fill an array with the different observations:
-        array_obs[i][0] = row[1] # agent yaw wrt. world
-        array_obs[i][1] = row[2] # agent pos X wrt. world
-        array_obs[i][2] = row[3] # agent pos Y wrt. world
-        array_obs[i][3] = ts # time stamp
-        i = i+1
+        array_obs[numIter][0] = row[1] # agent pos X wrt. world
+        array_obs[numIter][1] = row[2] # agent pos Y wrt. world
+        array_obs[numIter][2] = row[3] # agent pos Z wrt. world
+        array_obs[numIter][3] = row[4] # agent roll wrt. world
+        array_obs[numIter][4] = row[5] # agent pitch wrt. world
+        array_obs[numIter][5] = row[6] # agent yaw wrt. world
+        array_obs[numIter][6] = ts # time stamp
+        numIter = numIter+1
 
     f_pose.close()
 
@@ -41,20 +44,20 @@ for folder in os.listdir(f"dataset/uploaded"):
     writer_goal = csv.writer(f_goal, delimiter=",")
     writer_goal.writerow( ('timestamp[ns]','dist','sinYaw','cosYaw') )
 
-    goalLocation = np.array([array_obs[numIter-1][1],array_obs[numIter-1][2]]) # use the vehicle last location as goal
+    goalLocation = np.array([array_obs[numIter-1][0],array_obs[numIter-1][1]]) # use the vehicle last location as goal
     forward = np.array([1,0]) # Front axis is the X axis.
     forwardRotated = np.array([0,0])
 
     for i in range(numIter):
 
         # Target error vector (global coordinate system):
-        relativePositionToTarget = goalLocation - np.array([array_obs[i][1],array_obs[i][2]])
+        relativePositionToTarget = goalLocation - np.array([array_obs[i][0],array_obs[i][1]])
 
         # Compute Euclidean distance to target:
         dist = np.linalg.norm(relativePositionToTarget)
 
         # Compute robot forward axis (global coordinate system)
-        yawVehicle = array_obs[i][0];
+        yawVehicle = array_obs[i][5];
         rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
 
         forwardRotated = np.dot(rot, forward)
@@ -75,7 +78,7 @@ for folder in os.listdir(f"dataset/uploaded"):
 
         # Write the corresponding high level command into a file:
         # For imitation learning, use the latest position as a goal 
-        writer_goal.writerow( (int(array_obs[i][3]), dist/100, sinYaw, cosYaw) )
+        writer_goal.writerow( (int(array_obs[i][6]), dist/100, sinYaw, cosYaw) )
  
 
     f_goal.close()

@@ -30,13 +30,14 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_ACTOR_NAME"})) {
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
-        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
+        }
+        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
         }
     }
     ASSERT(agent_actor_);
-    //ASSERT(goal_actor_);
+    // ASSERT(goal_actor_);
 
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
@@ -53,7 +54,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
             }
         }
         ASSERT(observation_camera_actor_);
-        
+
         // create SceneCaptureComponent2D and TextureRenderTarget2D
         APIPCamera* pip_camera = dynamic_cast<APIPCamera*>(observation_camera_actor_);
         ASSERT(pip_camera);
@@ -89,7 +90,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         // Set post processing parameters:
         FPostProcessSettings post_process_settings;
         post_process_settings.MotionBlurAmount = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_AMOUNT"}); // Strength of motion blur, 0:off, should be renamed to intensity
-        post_process_settings.MotionBlurMax = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_MAX"});    // Max distortion caused by motion blur, in percent of the screen width, 0:off
+        post_process_settings.MotionBlurMax = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_MAX"});       // Max distortion caused by motion blur, in percent of the screen width, 0:off
         scene_capture_component_->PostProcessSettings = post_process_settings;
         scene_capture_component_->PostProcessBlendWeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "POST_PROC_BLEND_WEIGHT"}); // Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
     }
@@ -98,7 +99,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
 OpenBotAgentController::~OpenBotAgentController()
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        
+
         ASSERT(texture_render_target_);
         texture_render_target_->MarkPendingKill();
         texture_render_target_ = nullptr;
@@ -113,11 +114,11 @@ OpenBotAgentController::~OpenBotAgentController()
         ASSERT(observation_camera_actor_);
         observation_camera_actor_ = nullptr;
     }
-    
+
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
 
-    //ASSERT(goal_actor_);
+    // ASSERT(goal_actor_);
     goal_actor_ = nullptr;
 }
 
@@ -125,7 +126,7 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
 {
     std::map<std::string, Box> action_space;
     Box box;
-    
+
     box.low = -1.f;
     box.high = 1.f;
     box.shape = {2};
@@ -139,7 +140,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
     Box box;
-    
+
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
@@ -154,13 +155,15 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
                      3};
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
+    }
+    else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
         box.shape = {5};
         box.dtype = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
-    } else {
+    }
+    else {
         ASSERT(false);
     }
 
@@ -195,8 +198,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
         TArray<FColor> pixels;
 
-        struct FReadSurfaceContext
-        {
+        struct FReadSurfaceContext {
             FRenderTarget* src_render_target_;
             TArray<FColor>& out_data_;
             FIntRect rect_;
@@ -208,14 +210,14 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         // Required for uint8 read mode
         context.flags_.SetLinearToGamma(false);
 
-        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([context](FRHICommandListImmediate& RHICmdList) {
+        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)
+        ([context](FRHICommandListImmediate& RHICmdList) {
             RHICmdList.ReadSurfaceData(context.src_render_target_->GetRenderTargetTexture(), context.rect_, context.out_data_, context.flags_);
         });
 
         FRenderCommandFence ReadPixelFence;
         ReadPixelFence.BeginFence(true);
         ReadPixelFence.Wait(true);
-
 
         std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
                                    Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
@@ -226,21 +228,21 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
             image.at(3 * i + 1) = pixels[i].G;
             image.at(3 * i + 2) = pixels[i].B;
         }
-        
+
         observation["visual_observation"] = std::move(image);
-    } 
-    
+    }
+
     const FVector agent_current_location = agent_actor_->GetActorLocation();
     const FRotator agent_current_orientation = agent_actor_->GetActorRotation();
+    // Get relative position to the goal in the global coordinate system:
+    // const FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
+    const FVector2D relative_position_to_goal(currentPathPoint_.X-agent_current_location.X, currentPathPoint_.Y-agent_current_location.Y);
+
+    // Compute Euclidean distance to target:
+    float mag_relative_position_to_goal = relative_position_to_goal.Size();
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
-        // Get relative position to the goal in the global coordinate system:
-        // const FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
-        const FVector2D relative_position_to_goal(agent_current_location.X, agent_current_location.Y);
-
-        // Compute Euclidean distance to target:
-        float mag_relative_position_to_goal = relative_position_to_goal.Size();
-
+        
         // Compute robot forward axis (global coordinate system)
         FVector forward_axis = FVector(1.f, 0.f, 0.f); // Front axis is the X axis.
         FVector forward_axis_rotated = agent_current_orientation.RotateVector(forward_axis);
@@ -251,7 +253,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         // Fit to range [-pi, pi]:
         if (delta_yaw > PI) {
             delta_yaw -= 2 * PI;
-        } else if (delta_yaw <= -PI) {
+        }
+        else if (delta_yaw <= -PI) {
             delta_yaw += 2 * PI;
         }
 
@@ -265,17 +268,30 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         ASSERT(vehicle_pawn);
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), mag_relative_position_to_goal, sin_yaw, cos_yaw});
+    }
+    else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
 
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
+        if ((mag_relative_position_to_goal * 0.01) < Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "ACCEPTANCE_RADIUS"})) {
+            if (indexPath_ < pathPoints_.Num() - 1) { // Move to the next waypoint
+                std::cout << "######## Reached waypoint " << indexPath_ << " ########" << std::endl;
+                currentPathPoint_.X = pathPoints_[indexPath_].Location.X;
+                currentPathPoint_.Y = pathPoints_[indexPath_].Location.Y;
+                indexPath_++;
+            }
+            else { // We reached the target
+                std::cout << "############ Reached the target location ! ############" << std::endl;
+            }
+        }
+
         ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
         ASSERT(vehicle_pawn);
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
-        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), FMath::DegreesToRadians(agent_current_orientation.Yaw), agent_current_location.X, agent_current_location.Y});
-
-    } else {
+        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), currentPathPoint_.X, currentPathPoint_.Y});
+    }
+    else {
         ASSERT(false);
     }
-    
+
     return observation;
 }
 
@@ -293,18 +309,111 @@ void OpenBotAgentController::reset()
 
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component->PVehicle->getRigidDynamicActor();
     ASSERT(rigid_body_dynamic_actor);
-    
+
+    // Trajectory planning:
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "ACTIVATE"})) {
+        // Initialize navigation variables:
+        int numberOfWayPoints = 0;
+        int numIter = 0;
+        float pathCriterion = 0.f;
+        FVector initialPosition = agent_location;
+        FNavLocation bestTargetLocation;
+        FVector2D relativePositionToTarget(0.0f, 0.0f);
+
+        // Initialize navigation:
+        // UNavigationSystemV1* navSys = Cast<UNavigationSystemV1>(agent_actor_->GetWorld()->GetNavigationSystem());
+        UNavigationSystemV1* navSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(vehicle_pawn->GetWorld());
+
+        if (not navSys) {
+            ASSERT(false);
+        }
+
+        // auto navData = navSys->GetNavDataForAgentName(FName(agent_actor_->GetName()));
+
+        ANavigationData* navData = (navSys == nullptr) ? nullptr : navSys->GetNavDataForProps(vehicle_pawn->GetNavAgentPropertiesRef());
+        if (not navData) {
+            ASSERT(false);
+        }
+
+        // ARecastNavMesh* navMesh = Cast<ARecastNavMesh>(navData);
+
+        // if (not navMesh) {
+        //     ASSERT(false);
+        // }
+
+        indexPath_ = 1;
+
+        // Set path generation query:
+        FPathFindingQuery Query = FPathFindingQuery(*agent_actor_, *navData, initialPosition, targetLocation_.Location);
+        // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
+        Query.SetAllowPartialPaths(true);
+
+        // Path generation polling to get "interesting" paths in every experiment:
+        while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
+        {
+            // Ret a random target point, to be reached by the agent:
+            if (not navSys->GetRandomReachablePointInRadius(initialPosition, Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "TARGET_RADIUS"}), targetLocation_)) {
+                ASSERT(false);
+            }
+            relativePositionToTarget.X = (targetLocation_.Location - initialPosition).X;
+            relativePositionToTarget.Y = (targetLocation_.Location - initialPosition).Y;
+
+            // Update navigation query with the new target:
+            Query = FPathFindingQuery(*agent_actor_, *navData, initialPosition, targetLocation_.Location);
+
+            // Genrate a collision-free path between the robot position and the target point:
+            FPathFindingResult collisionFreePath = navSys->FindPathSync(Query, EPathFindingMode::Type::Regular);
+
+            // If path generation is sucessful, analyze the obtained path (it should not be too simple):
+            if (collisionFreePath.IsSuccessful() and collisionFreePath.Path.IsValid()) {
+                if (collisionFreePath.IsPartial()) {
+                    std::cout << "Only a partial path could be found by the planner..." << std::endl;
+                }
+                numberOfWayPoints = collisionFreePath.Path->GetPathPoints().Num();
+                float crit = relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "PATH_WEIGHT_DIST"}) + numberOfWayPoints * relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "PATH_WEIGHT_NUM_WAYPOINTS"});
+
+                if (pathCriterion <= crit) {
+                    std::cout << "Iteration: " << numIter << std::endl;
+                    std::cout << "Cost: " << crit << std::endl;
+                    pathCriterion = crit;
+                    bestTargetLocation = targetLocation_;
+                    pathPoints_.Empty();
+                    pathPoints_ = collisionFreePath.Path->GetPathPoints();
+                    std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
+                    std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
+                }
+                numIter++;
+            }
+        }
+
+        ASSERT(pathPoints_.Num() != 0);
+
+        targetLocation_ = bestTargetLocation;
+
+        std::cout << "Current position: [" << initialPosition.X << ", " << initialPosition.Y << ", " << initialPosition.Z << "]." << std::endl;
+        std::cout << "Reachable position: [" << bestTargetLocation.Location.X << ", " << bestTargetLocation.Location.Y << ", " << bestTargetLocation.Location.Z << "]." << std::endl;
+        std::cout << "-----------------------------------------------------------" << std::endl;
+        std::cout << "Way points: " << std::endl;
+        for (auto wayPoint : pathPoints_) {
+            std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
+        }
+        std::cout << "-----------------------------------------------------------" << std::endl;
+        currentPathPoint_.X = pathPoints_[indexPath_].Location.X;
+        currentPathPoint_.Y = pathPoints_[indexPath_].Location.Y;
+        indexPath_++;
+    }
+
     // We want to reset the physics state of OpenBot, so we are inlining the below code from
     // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleDrive.cpp::setToRestState(), and
     // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleWheels.cpp::setToRestState(), because these functions are protected.
-    if(!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC)) {
-		rigid_body_dynamic_actor->setLinearVelocity(PxVec3(0,0,0));
-		rigid_body_dynamic_actor->setAngularVelocity(PxVec3(0,0,0));
-		rigid_body_dynamic_actor->clearForce(PxForceMode::eACCELERATION);
-		rigid_body_dynamic_actor->clearForce(PxForceMode::eVELOCITY_CHANGE);
-		rigid_body_dynamic_actor->clearTorque(PxForceMode::eACCELERATION);
-		rigid_body_dynamic_actor->clearTorque(PxForceMode::eVELOCITY_CHANGE);
-	}
+    if (!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC)) {
+        rigid_body_dynamic_actor->setLinearVelocity(PxVec3(0, 0, 0));
+        rigid_body_dynamic_actor->setAngularVelocity(PxVec3(0, 0, 0));
+        rigid_body_dynamic_actor->clearForce(PxForceMode::eACCELERATION);
+        rigid_body_dynamic_actor->clearForce(PxForceMode::eVELOCITY_CHANGE);
+        rigid_body_dynamic_actor->clearTorque(PxForceMode::eACCELERATION);
+        rigid_body_dynamic_actor->clearTorque(PxForceMode::eVELOCITY_CHANGE);
+    }
     vehicle_movement_component->PVehicle->mWheelsDynData.setToRestState();
 
     // PVehicleDrive is not intiliazed, and so PVehicleDrive->mDriveDynData.setToRestState() is commented out. We want to know if this changes at some point.
@@ -315,5 +424,5 @@ void OpenBotAgentController::reset()
 bool OpenBotAgentController::isReady() const
 {
     ASSERT(agent_actor_);
-    return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"}); 
+    return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
 }
