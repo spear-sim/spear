@@ -20,6 +20,8 @@ code/experiments/rl_openbot/imitation_learning/Temp
 
 code/python_module/interiorsim.egg-info
 
+code/tools/scene_manager/download_data
+
 code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
 code/unreal_plugins/CoreUtils/ThirdParty
@@ -114,8 +116,6 @@ code/unreal_projects/RobotProject/RobotProjectHeader.pri
 code/unreal_projects/RobotProject/RobotProjectIncludes.pri
 code/unreal_projects/RobotProject/RobotProjectSource.pri
 code/unreal_projects/RobotProject/Saved
-code/unreal_projects/RobotProject/SceneManager/__pycache__
-code/unreal_projects/RobotProject/SceneManager/images
 code/unreal_projects/RobotProject/Standalone-Development
 code/unreal_projects/RobotProject/Standalone-Shipping
 code/unreal_projects/RobotProject/Temp
