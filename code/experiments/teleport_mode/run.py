@@ -14,7 +14,6 @@ def read_recorded_data():
         csv_reader = csv.reader(csv_file, delimiter=',')
         poses = {}
         images = {}
-        # first_row = next(csv_reader)
         for index, row in enumerate(list(csv_reader)[1:]):
             poses[index] = [float(i) for i in row[1:]]
             images[index] = cv2.imread(os.path.join(image_data_path, f"{index}.jpeg"))
