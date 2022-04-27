@@ -1,13 +1,12 @@
 #include "PointGoalNavTask.h"
-#include "NavMesh/NavMeshBoundsVolume.h"
-#include "NavMesh/RecastNavMesh.h"
-#include "NavigationSystem.h"
-#include "NavigationSystemTypes.h"
 
 #include <algorithm>
 
 #include <EngineUtils.h>
 #include <UObject/UObjectGlobals.h>
+#include <NavMesh/NavMeshBoundsVolume.h>
+#include <NavMesh/RecastNavMesh.h>
+#include <NavigationSystem.h>
 
 #include "ActorHitEvent.h"
 #include "Assert.h"

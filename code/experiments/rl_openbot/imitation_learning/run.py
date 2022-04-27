@@ -33,6 +33,79 @@ from interiorsim.config import get_config
 from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
 
+
+def Clamp(n, smallest, largest):
+    return max(smallest, min(n, largest))
+
+def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation):
+
+    targetLocationReached = False
+    forwardCtrl = 0.0
+    rightCtrl = 0.0
+    action = np.array([0.0,0.0])
+    deltaYaw = 0.0
+    forward = np.array([1,0]) # Front axis is the X axis.
+    forwardRotated = np.array([0,0])
+
+    # Target error vector (global coordinate system):
+    relativePositionToTarget = desiredPositionXY - np.array([actualPoseYawXY[1],actualPoseYawXY[2]])
+        
+    # Compute Euclidean distance to target in [m]:
+    dist = np.linalg.norm(relativePositionToTarget)*0.01
+
+    # If the waypoint is reached, send zero command:
+    if dist < acceptanceRadius :
+
+        targetLocationReached = True;
+        print("Target reached !")
+
+    # Otherwise compute the PID command:
+    else:
+    
+        # Compute robot forward axis (global coordinate system):
+        yawVehicle = actualPoseYawXY[0];
+        rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
+
+        forwardRotated = np.dot(rot, forward)
+
+        # Compute yaw:
+        deltaYaw = atan2(forwardRotated[1], forwardRotated[0]) - atan2(relativePositionToTarget[1], relativePositionToTarget[0])
+
+        # Fit to range [-pi, pi]:
+        if deltaYaw > math.pi:
+            deltaYaw -= 2 * math.pi
+        elif deltaYaw <= -math.pi:
+            deltaYaw += 2 * math.pi
+
+        linVel = linVelNorm * 0.036; # In [m/s]
+
+        rightCtrl = -Kp_ang * deltaYaw - Kd_ang * yawVel;
+        Clamp(rightCtrl, -controlSaturation, controlSaturation)
+
+        if abs(deltaYaw) < forwardMinAngle :
+            forwardCtrl = Kp_lin * dist - Kd_lin * linVel
+            forwardCtrl = Clamp(forwardCtrl, -controlSaturation, controlSaturation)
+            forwardCtrl *= abs(cos(deltaYaw)); # Full throttle if the vehicle facing the objective. Otherwise give more priority to the yaw command.
+
+        # Compute action:
+        leftWheelCommand = forwardCtrl + rightCtrl
+        leftWheelCommand = Clamp(leftWheelCommand, -controlSaturation, controlSaturation)
+        
+        rightWheelCommand = forwardCtrl - rightCtrl
+        rightWheelCommand = Clamp(rightWheelCommand, -controlSaturation, controlSaturation)
+        
+        action = np.array([leftWheelCommand,rightWheelCommand])
+
+    print(f"dist: {dist} m")
+    print(f"deltaYaw: {deltaYaw}")
+    print(f"rightCtrl: {rightCtrl}")
+    print(f"forwardCtrl: {forwardCtrl}")
+    print(f"action: {action[0]}, {action[1]}")
+
+    return action, targetLocationReached
+    
+    
+
 if __name__ == "__main__":
 
     # List of config files to be used
@@ -105,7 +178,7 @@ if __name__ == "__main__":
 
                 collisionFlag = False
                 goalReachedFlag = False
-                array_obs = np.empty([numIter, 9])
+                array_obs = np.empty([numIter, 11])
                 executedIterations = 0
 
                 folderName = f"dataset/uploaded/run_{mapName}_{run}"
@@ -121,7 +194,7 @@ if __name__ == "__main__":
                 # Reset the simulation to get the first observation
                 obs = env.reset()
                 actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y], for velocity initialization
-                desiredPositionXY = np.array([obs["physical_observation"][2], obs["physical_observation"][3]]) # [X, Y]
+                desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
 
                 # Take a few steps:
                 for i in range(numIter):
@@ -143,8 +216,8 @@ if __name__ == "__main__":
                     dt = 0.1
 
                     # XY position of the next waypoint in world frame:
-                    dXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) - desiredPositionXY
-                    desiredPositionXY = np.array([obs["physical_observation"][2], obs["physical_observation"][3]]) # [X, Y]
+                    dXY = np.array([obs["physical_observation"][2], obs["physical_observation"][3]]) - desiredPositionXY
+                    desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
 
                     # Current position and heading of the vehicle in world frame:
                     dYaw = obs["physical_observation"][7] - actualPoseYawXY[0]
@@ -157,7 +230,7 @@ if __name__ == "__main__":
                     action, targetLocationReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
 
                     # Send action to the agent and collect observations:
-                    obs, reward, done, info = env.step({"apply_voltage": action})
+                    obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1]]})
 
                     # Fill an array with the different observations:
                     array_obs[i][0] = speedMultiplier*obs["physical_observation"][0] # ctrl left
@@ -168,7 +241,13 @@ if __name__ == "__main__":
                     array_obs[i][5] = obs["physical_observation"][5] # agent Roll wrt. world
                     array_obs[i][6] = obs["physical_observation"][6] # agent Pitch wrt. world
                     array_obs[i][7] = obs["physical_observation"][7] # agent Yaw wrt. world
-                    array_obs[i][8] = ts # time stamp
+                    array_obs[i][8] = obs["physical_observation"][8] # desired (waypoint) agent pos X wrt. world
+                    array_obs[i][9] = obs["physical_observation"][9] # desired (waypoint) agent pos Y wrt. world
+                    array_obs[i][10] = ts # time stamp
+                    
+                    
+                    print(f"Action: {array_obs[i][0]}, {array_obs[i][1]}")
+                    print(f"Pose: {array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]}")
 
                     # Save the images:
                     im = Image.fromarray(obs["visual_observation"])
@@ -417,7 +496,7 @@ if __name__ == "__main__":
 
             # XY position of the next waypoint in world frame:
             dXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) - desiredPositionXY
-            desiredPositionXY = np.array([obs["physical_observation"][2], obs["physical_observation"][3]]) # [X, Y]
+            desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
 
             # Current position and heading of the vehicle in world frame:
             dYaw = obs["physical_observation"][7] - actualPoseYawXY[0]
@@ -450,68 +529,3 @@ if __name__ == "__main__":
 
         print("No mode selected...")
 
-
-
-def Clamp(n, smallest, largest):
-    return max(smallest, min(n, largest))
-
-def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation):
-
-    targetLocationReached = False
-    forwardCtrl = 0.0
-    rightCtrl = 0.0
-
-    # Compute Euclidean distance to target:
-    dist = np.linalg.norm(relativePositionToTarget)
-
-    # If the waypoint is reached, send zero command:
-    if (dist * 0.01) < acceptanceRadius :
-
-        targetLocationReached = True;
-
-    # Otherwise compute the PID command:
-    else:
-
-        # Target error vector (global coordinate system):
-        relativePositionToTarget = desiredPosition - np.array([actualPoseYawXY[i][1],actualPoseYawXY[i][2]])
-
-        # Compute Euclidean distance to target:
-        dist = np.linalg.norm(relativePositionToTarget)
-
-        # Compute robot forward axis (global coordinate system):
-        yawVehicle = actualPoseYawXY[0];
-        rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
-
-        forwardRotated = np.dot(rot, forward)
-
-        # Compute yaw:
-        deltaYaw = atan2(forwardRotated[1], forwardRotated[0]) - atan2(relativePositionToTarget[1], relativePositionToTarget[0])
-
-        # Fit to range [-pi, pi]:
-        if deltaYaw > math.pi:
-            deltaYaw -= 2 * math.pi
-        elif deltaYaw <= -math.pi:
-            deltaYaw += 2 * math.pi
-
-        linVel = linVelNorm * 0.036; # In [m/s]
-
-        rightCtrl = -Kp_ang * deltaYaw - Kd_ang * yawVel;
-        Clamp(rightCtrl, -controlSaturation, controlSaturation)
-
-        if abs(deltaYaw) < forwardMinAngle :
-            forwardCtrl = Kp_lin * relativePositionToTarget.Size() * 0.01 - Kd_lin * linVel
-            forwardCtrl = Clamp(forwardCtrl, -controlSaturation, controlSaturation)
-            forwardCtrl *= cos(deltaYaw); # Full throttle if the vehicle facing the objective. Otherwise give more priority to the yaw command.
-
-        # Compute action:
-        leftWheelCommand = forwardCtrl + rightCtrl
-        rightWheelCommand = forwardCtrl - rightCtrl
-        action = np.array([leftWheelCommand,rightWheelCommand])
-
-        print(f"dist: {dist * 0.01} m")
-        print(f"deltaYaw: {deltaYaw}")
-        print(f"rightCtrl: {rightCtrl}")
-        print(f"forwardCtrl: {forwardCtrl}")
-        print(f"action: {action[0]}, {action[1]}")
-
-    return action, targetLocationReached

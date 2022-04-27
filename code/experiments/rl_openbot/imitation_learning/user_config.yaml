@@ -80,13 +80,15 @@ SIMULATION_CONTROLLER:
   OPENBOT_AGENT_CONTROLLER:
     AGENT_ACTOR_NAME: "SimpleVehicle_0"
     GOAL_ACTOR_NAME: ""
+    # "low_level_control" or "teleport"
+    ACTION_MODE: "low_level_control"
     OBSERVATION_MODE: "mixed"
     # - "full-pose" the observation vector is set to be the vehicle's x/y/z position concatenated with its roll/pitch/yaw angles in the world frame.
     # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal
     PHYSICAL_OBSERVATION_MODE: "full-pose"
     AGENT_READY_VELOCITY_THRESHOLD: 1.0
     MIXED_MODE:
-      OBSERVATION_CAMERA_ACTOR_NAME: "Follow"
+      OBSERVATION_CAMERA_ACTOR_NAME: "Smartphone"
       IMAGE_HEIGHT: 120
       IMAGE_WIDTH: 160
       SMARTPHONE_FOV: 72.0
@@ -117,7 +119,7 @@ ROBOT_SIM:
   PROPORTIONAL_GAIN_DIST: 3.0
   
   # PID derivative gain for the autopilot
-  DERIVATIVE_GAIN_DIST: 0.1
+  DERIVATIVE_GAIN_DIST: -0.1
   
   # Angular range within which the vehicle moves forward to the target in [rad]
   FORWARD_MIN_ANGLE: 0.5

@@ -127,14 +127,15 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
 {
     std::map<std::string, Box> action_space;
     Box box;
-    
+
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
         box.low = -1.f;
         box.high = 1.f;
         box.shape = {2};
         box.dtype = DataType::Float32;
         action_space["apply_voltage"] = std::move(box);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
+    }
+    else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
         box.shape = {3};
@@ -146,7 +147,8 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
         box.shape = {3};
         box.dtype = DataType::Float32;
         action_space["set_orientation_pyr_radians"] = std::move(box);
-    } else {
+    }
+    else {
         ASSERT(false);
     }
 
@@ -161,7 +163,16 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
-        box.shape = {5};
+        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
+            box.shape = {5};
+        }
+        else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
+            box.shape = {10};
+        }
+        else {
+            ASSERT(false);
+        }
+
         box.dtype = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
 
@@ -176,7 +187,15 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
-        box.shape = {5};
+        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
+            box.shape = {5};
+        }
+        else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
+            box.shape = {10};
+        }
+        else {
+            ASSERT(false);
+        }
         box.dtype = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
     }
@@ -194,26 +213,28 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
         ASSERT(action.count("apply_voltage"));
-        ASSERT(std::all_of(action.at("apply_voltage").begin(), action.at("apply_voltage").end(), [](float i) -> bool {return isfinite(i);}));
+        ASSERT(std::all_of(action.at("apply_voltage").begin(), action.at("apply_voltage").end(), [](float i) -> bool { return isfinite(i); }));
 
         // @TODO: This can be checked in python?
         ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
         ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
 
         vehicle_pawn->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
+    }
+    else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
         ASSERT(action.count("set_position_xyz_centimeters"));
-        ASSERT(std::all_of(action.at("set_position_xyz_centimeters").begin(), action.at("set_position_xyz_centimeters").end(), [](float i) -> bool {return isfinite(i);}));
-        const FVector agent_location {action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
+        ASSERT(std::all_of(action.at("set_position_xyz_centimeters").begin(), action.at("set_position_xyz_centimeters").end(), [](float i) -> bool { return isfinite(i); }));
+        const FVector agent_location{action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
 
         ASSERT(action.count("set_orientation_pyr_radians"));
-        ASSERT(std::all_of(action.at("set_orientation_pyr_radians").begin(), action.at("set_orientation_pyr_radians").end(), [](float i) -> bool {return isfinite(i);}));
-        const FRotator agent_rotation {FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
+        ASSERT(std::all_of(action.at("set_orientation_pyr_radians").begin(), action.at("set_orientation_pyr_radians").end(), [](float i) -> bool { return isfinite(i); }));
+        const FRotator agent_rotation{FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
         vehicle_pawn->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
-    } else {
+    }
+    else {
         ASSERT(false);
     }
 }
@@ -269,13 +290,13 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     const FRotator agent_current_orientation = agent_actor_->GetActorRotation();
     // Get relative position to the goal in the global coordinate system:
     // const FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
-    const FVector2D relative_position_to_goal(currentPathPoint_.X-agent_current_location.X, currentPathPoint_.Y-agent_current_location.Y);
+    const FVector2D relative_position_to_goal(currentPathPoint_.X - agent_current_location.X, currentPathPoint_.Y - agent_current_location.Y);
 
     // Compute Euclidean distance to target:
     float mag_relative_position_to_goal = relative_position_to_goal.Size();
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
-        
+
         // Compute robot forward axis (global coordinate system)
         FVector forward_axis = FVector(1.f, 0.f, 0.f); // Front axis is the X axis.
         FVector forward_axis_rotated = agent_current_orientation.RotateVector(forward_axis);
@@ -377,7 +398,7 @@ void OpenBotAgentController::reset()
         indexPath_ = 1;
 
         // Set path generation query:
-        FPathFindingQuery Query = FPathFindingQuery(*agent_actor_, *navData, initialPosition, targetLocation_.Location);
+        FPathFindingQuery Query = FPathFindingQuery(*vehicle_pawn, *navData, agent_location, targetLocation_.Location);
         // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
         Query.SetAllowPartialPaths(true);
 
@@ -385,14 +406,14 @@ void OpenBotAgentController::reset()
         while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
         {
             // Ret a random target point, to be reached by the agent:
-            if (not navSys->GetRandomReachablePointInRadius(initialPosition, Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "TARGET_RADIUS"}), targetLocation_)) {
+            if (not navSys->GetRandomReachablePointInRadius(agent_location, Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "TARGET_RADIUS"}), targetLocation_)) {
                 ASSERT(false);
             }
-            relativePositionToTarget.X = (targetLocation_.Location - initialPosition).X;
-            relativePositionToTarget.Y = (targetLocation_.Location - initialPosition).Y;
+            relativePositionToTarget.X = (targetLocation_.Location - agent_location).X;
+            relativePositionToTarget.Y = (targetLocation_.Location - agent_location).Y;
 
             // Update navigation query with the new target:
-            Query = FPathFindingQuery(*agent_actor_, *navData, initialPosition, targetLocation_.Location);
+            Query = FPathFindingQuery(*vehicle_pawn, *navData, agent_location, targetLocation_.Location);
 
             // Genrate a collision-free path between the robot position and the target point:
             FPathFindingResult collisionFreePath = navSys->FindPathSync(Query, EPathFindingMode::Type::Regular);
@@ -423,7 +444,7 @@ void OpenBotAgentController::reset()
 
         targetLocation_ = bestTargetLocation;
 
-        std::cout << "Current position: [" << initialPosition.X << ", " << initialPosition.Y << ", " << initialPosition.Z << "]." << std::endl;
+        std::cout << "Current position: [" << agent_location.X << ", " << agent_location.Y << ", " << agent_location.Z << "]." << std::endl;
         std::cout << "Reachable position: [" << bestTargetLocation.Location.X << ", " << bestTargetLocation.Location.Y << ", " << bestTargetLocation.Location.Z << "]." << std::endl;
         std::cout << "-----------------------------------------------------------" << std::endl;
         std::cout << "Way points: " << std::endl;
