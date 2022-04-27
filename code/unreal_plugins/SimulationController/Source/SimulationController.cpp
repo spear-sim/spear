@@ -19,6 +19,7 @@
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "NullTask.h"
 #include "OpenBotAgentController.h"
 #include "PointGoalNavTask.h"
 #include "Rpclib.h"
@@ -125,6 +126,8 @@ void SimulationController::worldBeginPlayEventHandler()
     // read config to decide which type of Task class to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
         task_ = std::make_unique<PointGoalNavTask>(world_);
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
+        task_ = std::make_unique<NullTask>();
     } else {
         ASSERT(false);
     }

@@ -1,5 +1,6 @@
 #include "OpenBotAgentController.h"
 
+#include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
@@ -126,11 +127,27 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
     std::map<std::string, Box> action_space;
     Box box;
     
-    box.low = -1.f;
-    box.high = 1.f;
-    box.shape = {2};
-    box.dtype = DataType::Float32;
-    action_space["apply_voltage"] = std::move(box);
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
+        box.low = -1.f;
+        box.high = 1.f;
+        box.shape = {2};
+        box.dtype = DataType::Float32;
+        action_space["apply_voltage"] = std::move(box);
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
+        box.low = std::numeric_limits<float>::lowest();
+        box.high = std::numeric_limits<float>::max();
+        box.shape = {3};
+        box.dtype = DataType::Float32;
+        action_space["set_position_xyz_centimeters"] = std::move(box);
+
+        box.low = std::numeric_limits<float>::lowest();
+        box.high = std::numeric_limits<float>::max();
+        box.shape = {3};
+        box.dtype = DataType::Float32;
+        action_space["set_orientation_pyr_radians"] = std::move(box);
+    } else {
+        ASSERT(false);
+    }
 
     return action_space;
 }
@@ -169,17 +186,33 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
 
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
-    ASSERT(action.count("apply_voltage"));
-    ASSERT(isfinite(action.at("apply_voltage").at(0)));
-    ASSERT(isfinite(action.at("apply_voltage").at(1)));
-
-    // @TODO: This can be checked in python?
-    ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
-    ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
-
     ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
     ASSERT(vehicle_pawn);
-    vehicle_pawn->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
+
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
+        ASSERT(action.count("apply_voltage"));
+        ASSERT(std::all_of(action.at("apply_voltage").begin(), action.at("apply_voltage").end(), [](float i) -> bool {return isfinite(i);}));
+
+        // @TODO: This can be checked in python?
+        ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
+        ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
+
+        vehicle_pawn->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
+        ASSERT(action.count("set_position_xyz_centimeters"));
+        ASSERT(std::all_of(action.at("set_position_xyz_centimeters").begin(), action.at("set_position_xyz_centimeters").end(), [](float i) -> bool {return isfinite(i);}));
+        const FVector agent_location {action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
+
+        ASSERT(action.count("set_orientation_pyr_radians"));
+        ASSERT(std::all_of(action.at("set_orientation_pyr_radians").begin(), action.at("set_orientation_pyr_radians").end(), [](float i) -> bool {return isfinite(i);}));
+        const FRotator agent_rotation {FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
+
+        constexpr bool sweep = false;
+        constexpr FHitResult* hit_result_info = nullptr;
+        vehicle_pawn->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
+    } else {
+        ASSERT(false);
+    }
 }
 
 std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservation() const
@@ -285,7 +318,7 @@ void OpenBotAgentController::reset()
 
     ASSERT(agent_actor_);
     const FVector agent_location = agent_actor_->GetActorLocation();
-    vehicle_pawn->TeleportToLocation(agent_location, FQuat(FRotator(0)), true);
+    vehicle_pawn->SetActorLocationAndRotation(agent_location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
 
     USimpleWheeledVehicleMovementComponent* vehicle_movement_component = dynamic_cast<USimpleWheeledVehicleMovementComponent*>(vehicle_pawn->GetVehicleMovementComponent());
     ASSERT(vehicle_movement_component);
