@@ -304,8 +304,6 @@ class Env(gym.Env):
 
     def _get_gym_space(self, space):
 
-        assert len(space) > 0
-
         gym_spaces = {}
         for name, component in space.items():
             low = component["low"]
@@ -318,11 +316,12 @@ class Env(gym.Env):
 
     def _deserialize(self, data, space):
 
-        assert len(data) > 0
+        assert data.keys() == space.keys()
 
         return_data = {}
         for name, component in data.items():
-
+            
+            assert len(component) > 0
             # get shape and dtype of the data component
             shape = space[name].shape
             dtype = space[name].dtype
@@ -352,10 +351,12 @@ class Env(gym.Env):
 
     def _get_action_space(self):
         space = self._client.call("getActionSpace")
+        assert len(space) > 0
         return self._get_gym_space(space)
 
     def _get_observation_space(self):
         space = self._client.call("getObservationSpace")
+        assert len(space) > 0
         return self._get_gym_space(space)
 
     def _get_step_info_space(self):
