@@ -169,9 +169,11 @@ def process_data(tr: Training, redo_matching=False, remove_zeros=True):
     )
 
 
-def load_tfrecord(tr: Training, verbose=0):
+def load_tfrecord(tr: Training, verbose=0, is_crop=True):
     def process_train_sample(features):
         image = features["image"]
+        if is_crop:
+            image = tf.image.crop_to_bounding_box(image, tf.shape(image)[0] - 90, tf.shape(image)[1] - 160, 90, 160)
         goal = [features["dist"], features["sinYaw"], features["cosYaw"]]
         label = [features["left"], features["right"]]
         image = data_augmentation.augment_img(image)
@@ -179,6 +181,8 @@ def load_tfrecord(tr: Training, verbose=0):
 
     def process_test_sample(features):
         image = features["image"]
+        if is_crop:
+            image = tf.image.crop_to_bounding_box(image, tf.shape(image)[0] - 90, tf.shape(image)[1] - 160, 90, 160)
         goal = [features["dist"], features["sinYaw"], features["cosYaw"]]
         label = [features["left"], features["right"]]
         return (image, goal), label
