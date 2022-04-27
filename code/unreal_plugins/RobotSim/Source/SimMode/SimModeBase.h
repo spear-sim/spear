@@ -1,14 +1,19 @@
 #pragma once
 
+#include <string>
+
 #include "Components/SkyLightComponent.h"
+#include "CoreMinimal.h"
+#include "Engine/DirectionalLight.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "ParticleDefinitions.h"
+
 #include "NavMesh/RecastNavMesh.h"
+#include "common_utils/NavMeshUtil.hpp"
 
 #include "NedTransform.h"
 #include "RobotBase.h"
-#include "VWLevelManager.h"
-#include "common_utils/NavMeshUtil.hpp"
 #include "common_utils/RobotSimSettings.hpp"
 
 #include "SimModeBase.generated.h"
@@ -40,12 +45,12 @@ public:
     /**
      * @brief
      *
-     * @param EndPlayReason123
+     * @param EndPlayReason
      */
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
     /**
-     * @brief 
+     * @brief
      *
      * @param DeltaSeconds
      */
@@ -57,7 +62,18 @@ public:
      * @return const NedTransform&
      */
     const NedTransform& getGlobalNedTransform();
-	
+
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
+    virtual bool isUrdf()
+    {
+        return false;
+    }
+
 protected: // must overrides
     typedef RobotSim::RobotSimSettings RobotSimSettings;
 
@@ -80,10 +96,9 @@ protected: // optional overrides
      *
      */
     virtual void setupInputBindings();
-	
-protected: // Utility methods for derived classes
+
     /**
-     * @brief find a good location near ground 
+     * @brief
      *
      * @param spawnPosition
      * @param spawnRotator
@@ -117,6 +132,7 @@ protected: // Utility methods for derived classes
      */
     virtual FBox GetWorldBoundingBox(bool bScaleCeiling = true);
 
+protected: // Utility methods for derived classes
     /**
      * @brief
      *
@@ -145,6 +161,8 @@ protected: // Utility methods for derived classes
     virtual void LoadMap(FString MapName);
 
 protected:
+    int record_tick_count;
+
     UPROPERTY()
     UClass* pip_camera_class;
     UPROPERTY()
@@ -164,16 +182,24 @@ private:
 
     UPROPERTY()
     AActor* sky_sphere_;
+    UPROPERTY()
+    ADirectionalLight* sun_;
+
+    TTimePoint tod_sim_clock_start_;
+    TTimePoint tod_last_update_;
+    std::time_t tod_start_time_;
     std::unique_ptr<NedTransform> global_ned_transform_;
 
     UPROPERTY()
     TArray<AActor*> spawned_actors_; // keep refs alive from Unreal GC
+
+    bool lidar_checks_done_ = false;
+    bool lidar_draw_debug_points_ = false;
 
 private:
     /**
      * @brief
      *
      */
-    UPROPERTY()
-    AVWLevelManager* level_manager_;
+    void setupTimeOfDay();
 };

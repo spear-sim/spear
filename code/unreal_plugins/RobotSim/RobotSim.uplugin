@@ -33,10 +33,6 @@
         {
             "Name": "ProceduralMeshComponent",
             "Enabled": true
-        },
-        {
-			"Name": "VirtualWorldManager",
-			"Enabled": true
-		}
+        }
     ]
 }
