@@ -25,9 +25,6 @@ if __name__ == "__main__":
     # load config
     config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
     config = get_config(config_files)
-    config.defrost()
-    config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_235556528"
-    config.freeze()
 
     # read data from a recorded session in 235556528
     poses, images = read_recorded_data()
