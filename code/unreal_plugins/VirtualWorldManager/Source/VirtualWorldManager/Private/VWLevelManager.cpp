@@ -1,5 +1,7 @@
 #include "VWLevelManager.h"
 
+#include "Kismet/GameplayStatics.h"
+
 AVWLevelManager::AVWLevelManager()
 {
     ConstructorHelpers::FObjectFinder<UMaterialInterface> finder_semantic(
@@ -105,5 +107,50 @@ UMaterialInterface* AVWLevelManager::getPostProcessMaterial(EPostProcessMaterial
         return this->pp_material_painter_;
     default:
         return NULL;
+    }
+}
+
+void AVWLevelManager::LambertRendering(bool is_enable)
+{
+    // find all static mesh actors in the scene
+    TArray<AActor*> furniture_actors;
+    TArray<AActor*> architecure_actors;
+    UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Furniture", furniture_actors);
+    UGameplayStatics::GetAllActorsWithTag(GetWorld(), "architecture", architecure_actors);
+    furniture_actors.Append(architecure_actors);
+    // update materials in the scene
+    for (auto& actor : furniture_actors) {
+        TArray<UStaticMeshComponent*> components;
+        actor->GetComponents<UStaticMeshComponent>(components);
+        for (auto& component : components) {
+            TArray<UMaterialInterface*> materials;
+            component->GetUsedMaterials(materials);
+            for (UMaterialInterface*& mtl : materials) {
+                if (is_enable && !mtl->IsA(UMaterialInstanceDynamic::StaticClass())) {
+                    // replace current material with MID, and disable metallic,roughness and specular
+                    UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(mtl, component, FName(mtl->GetName() + "_Dynamic"));
+                    DynMaterial->SetVectorParameterValue("Metallic_Color", FVector(0, 0, 0));
+                    DynMaterial->SetVectorParameterValue("Gloss_Color", FVector(0, 0, 0));
+                    DynMaterial->SetVectorParameterValue("Specular_Color", FVector(0, 0, 0));
+                    component->SetMaterial(0, DynMaterial);
+                }
+                else {
+                    // if mid is already setup, switch config
+                    UMaterialInstanceDynamic* DynMaterial = static_cast<UMaterialInstanceDynamic*>(mtl);
+                    if (DynMaterial != nullptr) {
+                        if (is_enable) {
+                            // override settings if not exist
+                            DynMaterial->SetVectorParameterValue("Metallic_Color", FVector(0, 0, 0));
+                            DynMaterial->SetVectorParameterValue("Gloss_Color", FVector(0, 0, 0));
+                            DynMaterial->SetVectorParameterValue("Specular_Color", FVector(0, 0, 0));
+                        }
+                        else {
+                            // clear override setting to disable lambert
+                            DynMaterial->ClearParameterValues();
+                        }
+                    }
+                }
+            }
+        }
     }
 }

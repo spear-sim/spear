@@ -7,7 +7,7 @@
 enum EPostProcessMaterialType
 {
     Default = 0,
-	Semantic,
+    Semantic,
     Diffuse,
     CelShader,
     Painter
@@ -23,8 +23,15 @@ public:
     bool mountPakFromPath(const FString& pak_path);
 
     void getAllMapsInPak(TArray<FString>& map_list);
+    /**
+     * @brief acchieve lambert rendering by adjust asset material by disable metallic,roughness and specular
+     *
+     * @return true - enable lambert rendering
+     * @return false - disable lambert rendering
+     */
+    void LambertRendering(bool is_enable = true);
 
-	UMaterialInterface* getPostProcessMaterial(EPostProcessMaterialType material_type);
+    UMaterialInterface* getPostProcessMaterial(EPostProcessMaterialType material_type);
 
     UPROPERTY()
     UMaterialInterface* pp_material_semantic_ = nullptr;
