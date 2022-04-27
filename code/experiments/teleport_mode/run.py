@@ -14,17 +14,11 @@ def read_recorded_data():
         csv_reader = csv.reader(csv_file, delimiter=',')
         poses = {}
         images = {}
-        for index, row in enumerate(csv_reader):
-            if index == 0:
-                # print(f'Column names are {", ".join(row)}')
-                continue
+        # first_row = next(csv_reader)
+        for index, row in enumerate(list(csv_reader)[1:]):
             poses[index] = [float(i) for i in row[1:]]
             images[index] = cv2.imread(os.path.join(image_data_path, f"{index}.jpeg"))
-            # print(f"Poses -> {poses[index]}")
-            # cv2.imshow(f"index {index}", images[index])
-            # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-
+            
     return poses, images
 
 if __name__ == "__main__":
@@ -53,7 +47,7 @@ if __name__ == "__main__":
     # iterate over recorded poses
     for index, data in poses.items():
         if config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.ACTION_MODE == "teleport":
-            obs, _, _, _ = env.step({"set_location_xyz": [data[0], data[1], data[2]], "set_orientation_pyr": [data[4], data[5], data[3]]}) # set_orientation_pyr: [pitch, yaw, roll]
+            obs, _, _, _ = env.step({"set_position_xyz_centimeters": [data[0], data[1], data[2]], "set_orientation_pyr_radians": [data[4], data[5], data[3]]}) # set_orientation_pyr_radians: [pitch, yaw, roll]
         else:
             assert False
 

@@ -138,13 +138,13 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
         box.high = std::numeric_limits<float>::max();
         box.shape = {3};
         box.dtype = DataType::Float32;
-        action_space["set_location_xyz"] = std::move(box);
+        action_space["set_position_xyz_centimeters"] = std::move(box);
 
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
         box.shape = {3};
         box.dtype = DataType::Float32;
-        action_space["set_orientation_pyr"] = std::move(box);
+        action_space["set_orientation_pyr_radians"] = std::move(box);
     } else {
         ASSERT(false);
     }
@@ -199,13 +199,13 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
 
         vehicle_pawn->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
-        ASSERT(action.count("set_location_xyz"));
-        ASSERT(std::all_of(action.at("set_location_xyz").begin(), action.at("set_location_xyz").end(), [](float i) -> bool {return isfinite(i);}));
-        const FVector agent_location {action.at("set_location_xyz").at(0), action.at("set_location_xyz").at(1), action.at("set_location_xyz").at(2)};
+        ASSERT(action.count("set_position_xyz_centimeters"));
+        ASSERT(std::all_of(action.at("set_position_xyz_centimeters").begin(), action.at("set_position_xyz_centimeters").end(), [](float i) -> bool {return isfinite(i);}));
+        const FVector agent_location {action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
 
-        ASSERT(action.count("set_orientation_pyr"));
-        ASSERT(std::all_of(action.at("set_orientation_pyr").begin(), action.at("set_orientation_pyr").end(), [](float i) -> bool {return isfinite(i);}));
-        const FRotator agent_rotation {FMath::RadiansToDegrees(action.at("set_orientation_pyr").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr").at(2))};
+        ASSERT(action.count("set_orientation_pyr_radians"));
+        ASSERT(std::all_of(action.at("set_orientation_pyr_radians").begin(), action.at("set_orientation_pyr_radians").end(), [](float i) -> bool {return isfinite(i);}));
+        const FRotator agent_rotation {FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
