@@ -9,9 +9,9 @@ from tqdm import tqdm
 
 CDN_API = "https://kloudsim-usa-cos.kujiale.com/Samples_i/dataset-repo/"
 
-Scene_Data_Folder = os.path.join(os.path.dirname(__file__), "download_data")
-TEMP_FOLDER = os.path.join(Scene_Data_Folder, "Temp")
-VERSION_INFO_FOLDER = os.path.join(Scene_Data_Folder, "VersionInfo")
+SCENE_DATA_FOLDER = os.path.join(os.path.dirname(__file__), "download_data")
+TEMP_FOLDER = os.path.join(SCENE_DATA_FOLDER, "Temp")
+VERSION_INFO_FOLDER = os.path.join(SCENE_DATA_FOLDER, "version_info")
 PROXY_URL = ""
 
 NUM_RETRIES = 8
@@ -26,7 +26,7 @@ def create_folder(folder_path):
 
 
 # create folder
-create_folder(Scene_Data_Folder)
+create_folder(SCENE_DATA_FOLDER)
 create_folder(TEMP_FOLDER)
 create_folder(VERSION_INFO_FOLDER)
 
@@ -479,7 +479,7 @@ def download_single_virtualworld(
             virtualworld_id, version, scene_config_data, is_force_update
         )
 
-    update_log = os.path.join(Scene_Data_Folder, "UpdateLog")
+    update_log = os.path.join(SCENE_DATA_FOLDER, "UpdateLog")
     if not os.path.exists(update_log):
         os.makedirs(update_log)
 
@@ -521,7 +521,7 @@ def download_file_by_path(vw_id, version, path, output_directory="", is_temp=Tru
     remote_url = f"{CDN_API}{version}/{path}"
     # use user specified directory for target files
     folder_path = TEMP_FOLDER if is_temp else (
-        output_directory if output_directory != '' else Scene_Data_Folder)
+        output_directory if output_directory != '' else SCENE_DATA_FOLDER)
     local_path = os.path.abspath(os.path.join(folder_path, version, vw_id, path))
     local_dir, fname = os.path.split(local_path)
     create_folder(local_dir)
@@ -566,8 +566,8 @@ def print_help():
     print(
         """scene_manager.py -i <option> -v <necessary> -d <option> -f <option>
 e.g: scene_manager.py -v v1
- -i: Specify to download a VirtualWorld. if not use -i, the script will load all virtualworld-ids in /VirtualWrold/SceneManager/Data/virtualworld-ids.json.
- -v: it shoud be v1 v2 or v{n}. The newly version information in /VirtualWrold/SceneManager/dataset-repo-update.log.
+ -i: Specify to download a VirtualWorld. if not use -i, the script will load all virtualworld-ids in data/virtualworld-ids.json.
+ -v: it shoud be v1 v2 or v{n}. The newly version information in dataset-repo-update.log.
  -d: if you want to donwload DerivedDataCache, set '-d true'. 
  -f: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version information(MD5 in it) to remote version information and decide whether to download asset.
  -o: content saved directory, content will be saved at `<output_dir>/<version>/<relative_file_path>`. if not specified, content will be saved in Saved/<version>/<relative_file_path>
@@ -615,7 +615,7 @@ if __name__ == "__main__":
 
     if version == "":
         print(
-            "Error: set version correct. please select version from SceneManage/Data/dataset-repo-update.log"
+            "Error: set version correct. please select version from scene_manager/data/dataset-repo-update.log"
         )
         print_help()
 
@@ -623,7 +623,7 @@ if __name__ == "__main__":
     if mode == 'raw':
         if virtualworld_id == "":
             virtualworld_ids_file = os.path.join(
-                os.path.dirname(__file__), "Data/virtualworld-ids.json"
+                os.path.dirname(__file__), "data/virtualworld-ids.json"
             )
             if os.path.exists(virtualworld_ids_file):
                 with open(virtualworld_ids_file) as f:
@@ -638,7 +638,7 @@ if __name__ == "__main__":
     elif mode == "pak":
         if virtualworld_id == "":
             virtualworld_ids_file = os.path.join(
-                os.path.dirname(__file__), "Data/virtualworld-ids.json"
+                os.path.dirname(__file__), "data/virtualworld-ids.json"
             )
             if os.path.exists(virtualworld_ids_file):
                 with open(virtualworld_ids_file) as f:

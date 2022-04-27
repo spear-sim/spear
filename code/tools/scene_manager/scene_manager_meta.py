@@ -5,7 +5,7 @@ import sys
 
 import scene_manager
 
-META_SAVE_DIR = os.path.join(scene_manager.Scene_Data_Folder, "images")
+META_SAVE_DIR = os.path.join(scene_manager.SCENE_DATA_FOLDER, "images")
 
 def print_help():
     print(
@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     if virtualworld_id == "":
         virtualworld_ids_file = os.path.join(
-            os.path.dirname(__file__), "Data/virtualworld-ids.json"
+            os.path.dirname(__file__), "data/virtualworld-ids.json"
         )
         if os.path.exists(virtualworld_ids_file):
             with open(virtualworld_ids_file) as f:

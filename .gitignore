@@ -18,7 +18,7 @@ code/experiments/rl_openbot/imitation_learning/Temp
 
 code/python_module/interiorsim.egg-info
 
-code/tools/SceneManager/download_data
+code/tools/scene_manager/download_data
 
 code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
