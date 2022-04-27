@@ -144,7 +144,7 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
         box.high = std::numeric_limits<float>::max();
         box.shape = {3};
         box.dtype = DataType::Float32;
-        action_space["set_rotation_pyr"] = std::move(box);
+        action_space["set_orientation_pyr"] = std::move(box);
     } else {
         ASSERT(false);
     }
@@ -203,11 +203,13 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
         ASSERT(std::all_of(action.at("set_location_xyz").begin(), action.at("set_location_xyz").end(), [](float i) -> bool {return isfinite(i);}));
         const FVector agent_location {action.at("set_location_xyz").at(0), action.at("set_location_xyz").at(1), action.at("set_location_xyz").at(2)};
 
-        ASSERT(action.count("set_rotation_pyr"));
-        ASSERT(std::all_of(action.at("set_rotation_pyr").begin(), action.at("set_rotation_pyr").end(), [](float i) -> bool {return isfinite(i);}));
-        const FRotator agent_rotation {FMath::RadiansToDegrees(action.at("set_rotation_pyr").at(0)), FMath::RadiansToDegrees(action.at("set_rotation_pyr").at(1)), FMath::RadiansToDegrees(action.at("set_rotation_pyr").at(2))};
-   
-        vehicle_pawn->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), false, nullptr, ETeleportType::TeleportPhysics);
+        ASSERT(action.count("set_orientation_pyr"));
+        ASSERT(std::all_of(action.at("set_orientation_pyr").begin(), action.at("set_orientation_pyr").end(), [](float i) -> bool {return isfinite(i);}));
+        const FRotator agent_rotation {FMath::RadiansToDegrees(action.at("set_orientation_pyr").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr").at(2))};
+
+        constexpr bool sweep = false;
+        constexpr FHitResult* hit_result_info = nullptr;
+        vehicle_pawn->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
     } else {
         ASSERT(false);
     }
