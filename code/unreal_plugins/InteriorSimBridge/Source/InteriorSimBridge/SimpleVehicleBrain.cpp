@@ -92,7 +92,7 @@ void USimpleVehicleBrain::Init()
      *   --> Cosinus of the relative yaw between current pose and target pose.
      */
     std::string SimpleVehicleObservationDescription = "";
-    
+
     unrealrl::ObservationSpec SimpleVehicleObservationSpec; 
 
     if (unrealrl::Config::GetValue<std::string>({"INTERIOR_SIM_BRIDGE", "OBSERVATION_VECTOR"}) == "dist-sin-cos") {
@@ -104,7 +104,6 @@ void USimpleVehicleBrain::Init()
     else{
         SimpleVehicleObservationSpec = unrealrl::ObservationSpec({5}, unrealrl::DataType::Float32, SimpleVehicleObservationDescription);
     }
-    
 
     if (unrealrl::Config::GetValue<bool>({"INTERIOR_SIM_BRIDGE", "USE_IMAGE_OBSERVATIONS"})) {
         // This observation is an egocentric RGB image.

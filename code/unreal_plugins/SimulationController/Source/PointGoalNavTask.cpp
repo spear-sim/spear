@@ -7,6 +7,7 @@
 
 #include "ActorHitEvent.h"
 #include "Assert.h"
+#include "Box.h"
 #include "Config.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
@@ -92,7 +93,6 @@ float PointGoalNavTask::getReward() const
         const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
         reward = -agent_to_goal.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
     }
-
     return reward;
 }
 
@@ -160,12 +160,11 @@ void PointGoalNavTask::reset()
 
     agent_actor_->SetActorLocation(agent_position);
     goal_actor_->SetActorLocation(goal_position);
+}
 
-    UStaticMeshComponent* static_mesh_component = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
-    static_mesh_component->SetPhysicsLinearVelocity(FVector(0), false);
-    static_mesh_component->SetPhysicsAngularVelocityInRadians(FVector(0), false);
-    static_mesh_component->GetBodyInstance()->ClearTorques();
-    static_mesh_component->GetBodyInstance()->ClearForces();
+bool PointGoalNavTask::isReady() const
+{
+    return true;  
 }
 
 void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)

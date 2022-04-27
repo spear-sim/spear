@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "VehicleWheel.h"
-#include "Config.h"
 
 #include "SimpleWheel.generated.h"
 

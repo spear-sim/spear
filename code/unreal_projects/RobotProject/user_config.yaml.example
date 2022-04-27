@@ -1,0 +1,50 @@
+INTERIORSIM:
+  LAUNCH_MODE: "standalone_executable"
+  STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/LinuxNoEditor/RobotProject.sh"
+  TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Temp"
+  VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
+  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-RobotSimSettingPath=/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json" ]
+
+SIMULATION_CONTROLLER:
+  TASK_NAME: "PointGoalNavigation"
+  AGENT_CONTROLLER_NAME: "OpenBotAgentController"
+  
+  POINT_GOAL_NAV_TASK:
+    AGENT_ACTOR_NAME: "SimpleVehicle_0"
+    GOAL_ACTOR_NAME: "Cube_6"
+    REWARD:
+      HIT_GOAL: 1000.0
+      HIT_OBSTACLE: 500.0
+      DISTANCE_TO_GOAL_SCALE: 0.00001
+    EPISODE_BEGIN:
+      AGENT_POSITION_X_MIN: -4.0
+      AGENT_POSITION_X_MAX: 4.0
+      AGENT_POSITION_Y_MIN: -4.0
+      AGENT_POSITION_Y_MAX: 4.0
+      AGENT_POSITION_Z: 0.0
+      GOAL_POSITION_X_MIN: -300.0
+      GOAL_POSITION_X_MAX: -220.0
+      GOAL_POSITION_Y_MIN: -200.0
+      GOAL_POSITION_Y_MAX: -120.0
+      GOAL_POSITION_Z: 5.0
+      SPAWN_DISTANCE_THRESHOLD: 100.0
+    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor"]
+
+  OPENBOT_AGENT_CONTROLLER:
+    AGENT_ACTOR_NAME: "SimpleVehicle_0"
+    GOAL_ACTOR_NAME: "Cube_6"
+    OBSERVATION_MODE: "mixed"
+    PHYSICAL_OBSERVATION_MODE: "dist-sin-cos"
+    AGENT_READY_VELOCITY_THRESHOLD: 1.0
+    MIXED_MODE:
+      OBSERVATION_CAMERA_ACTOR_NAME: "Follow"
+      IMAGE_HEIGHT: 128
+      IMAGE_WIDTH: 128
+      SMARTPHONE_FOV: 72.0
+      MOTION_BLUR_AMOUNT: 10.0
+      MOTION_BLUR_MAX: 10.0
+      POST_PROC_BLEND_WEIGHT: 1.0
+
+  VISUALIZER:
+    CAMERA_ACTOR_NAME: "Follow"
+    SET_CAMERA_POSE: False

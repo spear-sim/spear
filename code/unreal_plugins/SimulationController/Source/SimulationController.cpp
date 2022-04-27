@@ -19,6 +19,7 @@
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "OpenBotAgentController.h"
 #include "PointGoalNavTask.h"
 #include "Rpclib.h"
 #include "RpcServer.h"
@@ -112,6 +113,8 @@ void SimulationController::worldBeginPlayEventHandler()
     // read config to decide which type of AgentController to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
+    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+        agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
     } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
         agent_controller_ = std::make_unique<DebugAgentController>(world_);
     } else {
@@ -285,25 +288,19 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT(frame_state_ == FrameState::Idle);
     });
 
-    rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, Box> {
-        ASSERT(agent_controller_);
-        return agent_controller_->getObservationSpace();
-    });
-
     rpc_server_->bindAsync("getActionSpace", [this]() -> std::map<std::string, Box> {
         ASSERT(agent_controller_);
         return agent_controller_->getActionSpace();
     });
 
+    rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, Box> {
+        ASSERT(agent_controller_);
+        return agent_controller_->getObservationSpace();
+    });
+
     rpc_server_->bindAsync("getStepInfoSpace", [this]() -> std::map<std::string, Box> {
         ASSERT(task_);
         return task_->getStepInfoSpace();
-    });
-
-    rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
-        ASSERT(agent_controller_);
-        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
-        return agent_controller_->getObservation();
     });
 
     rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
@@ -312,24 +309,43 @@ void SimulationController::bindFunctionsToRpcServer()
         agent_controller_->applyAction(action);
     });
 
+    rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        ASSERT(agent_controller_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        return agent_controller_->getObservation();
+    });
+
     rpc_server_->bindSync("getReward", [this]() -> float {
         ASSERT(task_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         return task_->getReward();
+    });
+
+    rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
+        ASSERT(task_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        return task_->isEpisodeDone();
     });
 
     rpc_server_->bindSync("getStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(task_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         return task_->getStepInfo();
     });
 
     rpc_server_->bindSync("reset", [this]() -> void {
         ASSERT(task_);
+        ASSERT(agent_controller_);
+        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         task_->reset();
+        agent_controller_->reset();
     });
 
-    rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
+    rpc_server_->bindSync("isReady", [this]() -> bool{
         ASSERT(task_);
-        return task_->isEpisodeDone();
+        ASSERT(agent_controller_);
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        return task_->isReady() && agent_controller_->isReady();
     });
 }
 

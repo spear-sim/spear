@@ -86,21 +86,21 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializ
     actionVec_.setZero();
     targetLocation_ = FVector2D::ZeroVector;
 
-    // gearRatio_ = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "GEAR_RATIO"});
-    // motorVelocityConstant_ = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "MOTOR_VELOCITY_CONSTANT"});
+    // gearRatio_ = Config::getValue<float>({"ROBOT_SIM", "GEAR_RATIO"});
+    // motorVelocityConstant_ = Config::getValue<float>({"ROBOT_SIM", "MOTOR_VELOCITY_CONSTANT"});
     // motorTorqueConstant_ = 1 / motorVelocityConstant_;
-    // controlDeadZone_ = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_DEAD_ZONE"});
-    // motorTorqueMax_ = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "MOTOR_TORQUE_MAX"});
-    // electricalResistance_ = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ELECTRICAL_RESISTANCE"});
-    // electricalInductance_ = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ELECTRICAL_INDUCTANCE"});
-    // actionScale_ = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACTION_SCALE"});
-    // batteryVoltage_ = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "BATTERY_VOLTAGE"});
+    // controlDeadZone_ = Config::getValue<float>({"ROBOT_SIM", "CONTROL_DEAD_ZONE"});
+    // motorTorqueMax_ = Config::getValue<float>({"ROBOT_SIM", "MOTOR_TORQUE_MAX"});
+    // electricalResistance_ = Config::getValue<float>({"ROBOT_SIM", "ELECTRICAL_RESISTANCE"});
+    // electricalInductance_ = Config::getValue<float>({"ROBOT_SIM", "ELECTRICAL_INDUCTANCE"});
+    // actionScale_ = Config::getValue<float>({"ROBOT_SIM", "ACTION_SCALE"});
+    // batteryVoltage_ = Config::getValue<float>({"ROBOT_SIM", "BATTERY_VOLTAGE"});
 
     // Vehicle dynamics:
-    // VehicleMovement->DragCoefficient = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "DRAG_COEFFICIENT"}); // DragCoefficient of the vehicle chassis.
-    // VehicleMovement->ChassisWidth = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CHASSIS_WIDTH"});       // Chassis width used for drag force computation in [cm]
-    // VehicleMovement->ChassisHeight = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CHASSIS_HEIGHT"});     // Chassis height used for drag force computation in [cm]
-    // VehicleMovement->MaxEngineRPM = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "MOTOR_MAX_RPM"});       // Max RPM for engine
+    // VehicleMovement->DragCoefficient = Config::getValue<float>({"ROBOT_SIM", "DRAG_COEFFICIENT"}); // DragCoefficient of the vehicle chassis.
+    // VehicleMovement->ChassisWidth = Config::getValue<float>({"ROBOT_SIM", "CHASSIS_WIDTH"});       // Chassis width used for drag force computation in [cm]
+    // VehicleMovement->ChassisHeight = Config::getValue<float>({"ROBOT_SIM", "CHASSIS_HEIGHT"});     // Chassis height used for drag force computation in [cm]
+    // VehicleMovement->MaxEngineRPM = Config::getValue<float>({"ROBOT_SIM", "MOTOR_MAX_RPM"});       // Max RPM for engine
 
     // VehicleMovement->DragCoefficient = 1.0f; // DragCoefficient of the vehicle chassis.
     // VehicleMovement->ChassisWidth = 15.0f;       // Chassis width used for drag force computation in [cm]
@@ -345,7 +345,7 @@ void ASimpleVehiclePawn::NotifyHit(class UPrimitiveComponent* HitComponent,
     FString otherComponent = otherComp->GetName();
 
     std::cout << "    COLLISION    " << std::string(TCHAR_TO_UTF8(*hitComponent)) << "  ---  " << std::string(TCHAR_TO_UTF8(*otherComponent)) << std::endl;
-    this->pawnEvents_.getCollisionSignal().emit(HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal, normalImpulse, hit);
+    // this->pawnEvents_.getCollisionSignal().emit(HitComponent, OtherActor, otherComp, bSelfMoved, hitLocation, hitNormal, normalImpulse, hit);
 }
 
 void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent* HitComponent,
@@ -368,7 +368,7 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
     targetLocationReached_ = false;
 
     // If the waypoint is reached:
-    if ((relativePositionToTarget.Size() * 0.01) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"}))
+    if ((relativePositionToTarget.Size() * 0.01) < Config::getValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"}))
     {
         targetLocationReached_ = true;
     }
@@ -405,12 +405,12 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
         float yawVel = (FMath::DegreesToRadians(currentOrientation.Yaw) - yaw_) / DeltaTime;
         yaw_ = FMath::DegreesToRadians(currentOrientation.Yaw);
 
-        rightCtrl = -unrealrl::Config::GetValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_HEADING"}) * deltaYaw + unrealrl::Config::GetValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_HEADING"}) * yawVel;
+        rightCtrl = -Config::getValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_HEADING"}) * deltaYaw + Config::getValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_HEADING"}) * yawVel;
 
-        if (std::abs(deltaYaw) < unrealrl::Config::GetValue<float>({"ROBOT_SIM", "FORWARD_MIN_ANGLE"}))
+        if (std::abs(deltaYaw) < Config::getValue<float>({"ROBOT_SIM", "FORWARD_MIN_ANGLE"}))
         {
-            forwardCtrl = unrealrl::Config::GetValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_DIST"}) * relativePositionToTarget.Size() * 0.01 - unrealrl::Config::GetValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_DIST"}) * linVel;
-            forwardCtrl = Clamp(forwardCtrl, -unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}));
+            forwardCtrl = Config::getValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_DIST"}) * relativePositionToTarget.Size() * 0.01 - Config::getValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_DIST"}) * linVel;
+            forwardCtrl = Clamp(forwardCtrl, -Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}));
             forwardCtrl *= std::cosf(deltaYaw); // Full throttle if the vehicle face the objective. Otherwise give more priority to the yaw command.
         }
         else
@@ -422,8 +422,8 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
         // std::cout << "rightCtrl " << rightCtrl << std::endl;
         // std::cout << "forwardCtrl " << forwardCtrl << std::endl;
     }
-    MoveRight(Clamp(rightCtrl, -unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
-    MoveForward(Clamp(forwardCtrl, -unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), unrealrl::Config::GetValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
+    MoveRight(Clamp(rightCtrl, -Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
+    MoveForward(Clamp(forwardCtrl, -Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
 }
 
 // Called when the game starts or when spawned

@@ -11,7 +11,7 @@ from interiorsim.constants import INTERIORSIM_ROOT_DIR
 if __name__ == "__main__":
 
     # load config
-    config_files = [ os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/PlayEnvironment/user_config.yaml") ]
+    config_files = [ os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/RobotProject/user_config.yaml") ]
     config = get_config(config_files)
 
     # create Env object
@@ -25,8 +25,8 @@ if __name__ == "__main__":
     cv2.waitKey(0)
 
     # take a few steps
-    for i in range(10):
-        obs, reward, done, info = env.step({"apply_force": [1, 1]})
+    for i in range(100):
+        obs, reward, done, info = env.step({"apply_voltage": [1, 1]})
         print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
 
         cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB

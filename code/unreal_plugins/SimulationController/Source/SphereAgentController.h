@@ -9,8 +9,9 @@
 class AActor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
-class UTickEvent;
 class UWorld;
+
+class UTickEvent;
 
 struct Box;
 
@@ -26,6 +27,8 @@ public:
     std::map<std::string, Box> getObservationSpace() const override;
     void applyAction(const std::map<std::string, std::vector<float>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
+    void reset() override;
+    bool isReady() const override;
 
     void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
 
