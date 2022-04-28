@@ -217,13 +217,6 @@ public:
     Eigen::Vector2f GetControlState();
 
     /**
-     * @brief Set the Vehicle Parameters from a dedicated .json parameter file.
-     *
-     * @param settings
-     */
-    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings) override;
-
-    /**
      * @brief Get the Pawn Events object
      * 
      * @return PawnEvents* 

@@ -86,26 +86,26 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializ
     actionVec_.setZero();
     targetLocation_ = FVector2D::ZeroVector;
 
-    // gearRatio_ = Config::getValue<float>({"ROBOT_SIM", "GEAR_RATIO"});
-    // motorVelocityConstant_ = Config::getValue<float>({"ROBOT_SIM", "MOTOR_VELOCITY_CONSTANT"});
-    // motorTorqueConstant_ = 1 / motorVelocityConstant_;
-    // controlDeadZone_ = Config::getValue<float>({"ROBOT_SIM", "CONTROL_DEAD_ZONE"});
-    // motorTorqueMax_ = Config::getValue<float>({"ROBOT_SIM", "MOTOR_TORQUE_MAX"});
-    // electricalResistance_ = Config::getValue<float>({"ROBOT_SIM", "ELECTRICAL_RESISTANCE"});
-    // electricalInductance_ = Config::getValue<float>({"ROBOT_SIM", "ELECTRICAL_INDUCTANCE"});
-    // actionScale_ = Config::getValue<float>({"ROBOT_SIM", "ACTION_SCALE"});
-    // batteryVoltage_ = Config::getValue<float>({"ROBOT_SIM", "BATTERY_VOLTAGE"});
+    gearRatio_ = Config::getValue<float>({"ROBOT_SIM", "GEAR_RATIO"});
+    motorVelocityConstant_ = Config::getValue<float>({"ROBOT_SIM", "MOTOR_VELOCITY_CONSTANT"});
+    motorTorqueConstant_ = 1 / motorVelocityConstant_;
+    controlDeadZone_ = Config::getValue<float>({"ROBOT_SIM", "CONTROL_DEAD_ZONE"});
+    motorTorqueMax_ = Config::getValue<float>({"ROBOT_SIM", "MOTOR_TORQUE_MAX"});
+    electricalResistance_ = Config::getValue<float>({"ROBOT_SIM", "ELECTRICAL_RESISTANCE"});
+    electricalInductance_ = Config::getValue<float>({"ROBOT_SIM", "ELECTRICAL_INDUCTANCE"});
+    actionScale_ = Config::getValue<float>({"ROBOT_SIM", "ACTION_SCALE"});
+    batteryVoltage_ = Config::getValue<float>({"ROBOT_SIM", "BATTERY_VOLTAGE"});
 
     // Vehicle dynamics:
-    // VehicleMovement->DragCoefficient = Config::getValue<float>({"ROBOT_SIM", "DRAG_COEFFICIENT"}); // DragCoefficient of the vehicle chassis.
-    // VehicleMovement->ChassisWidth = Config::getValue<float>({"ROBOT_SIM", "CHASSIS_WIDTH"});       // Chassis width used for drag force computation in [cm]
-    // VehicleMovement->ChassisHeight = Config::getValue<float>({"ROBOT_SIM", "CHASSIS_HEIGHT"});     // Chassis height used for drag force computation in [cm]
-    // VehicleMovement->MaxEngineRPM = Config::getValue<float>({"ROBOT_SIM", "MOTOR_MAX_RPM"});       // Max RPM for engine
+    VehicleMovement->DragCoefficient = Config::getValue<float>({"ROBOT_SIM", "DRAG_COEFFICIENT"}); // DragCoefficient of the vehicle chassis.
+    VehicleMovement->ChassisWidth = Config::getValue<float>({"ROBOT_SIM", "CHASSIS_WIDTH"});       // Chassis width used for drag force computation in [cm]
+    VehicleMovement->ChassisHeight = Config::getValue<float>({"ROBOT_SIM", "CHASSIS_HEIGHT"});     // Chassis height used for drag force computation in [cm]
+    VehicleMovement->MaxEngineRPM = Config::getValue<float>({"ROBOT_SIM", "MOTOR_MAX_RPM"});       // Max RPM for engine
 
-    // VehicleMovement->DragCoefficient = 1.0f; // DragCoefficient of the vehicle chassis.
-    // VehicleMovement->ChassisWidth = 15.0f;       // Chassis width used for drag force computation in [cm]
-    // VehicleMovement->ChassisHeight = 15.0f;     // Chassis height used for drag force computation in [cm]
-    // VehicleMovement->MaxEngineRPM = 20000.0f;       // Max RPM for engine
+    VehicleMovement->DragCoefficient = 1.0f;  // DragCoefficient of the vehicle chassis.
+    VehicleMovement->ChassisWidth = 15.0f;    // Chassis width used for drag force computation in [cm]
+    VehicleMovement->ChassisHeight = 15.0f;   // Chassis height used for drag force computation in [cm]
+    VehicleMovement->MaxEngineRPM = 20000.0f; // Max RPM for engine
 
     vehiclePawn_ = static_cast<USimpleWheeledVehicleMovementComponent*>(GetVehicleMovementComponent());
 
@@ -298,19 +298,6 @@ void ASimpleVehiclePawn::ComputeMotorTorques(float DeltaTime)
     dutyCycle_.setZero();
 }
 
-void ASimpleVehiclePawn::SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings)
-{
-    gearRatio_ = settings.actuationSetting.gearRatio;
-    motorVelocityConstant_ = settings.actuationSetting.motorVelocityConstant;
-    motorTorqueConstant_ = 1 / motorVelocityConstant_;
-    controlDeadZone_ = settings.actuationSetting.controlDeadZone;
-    motorTorqueMax_ = settings.actuationSetting.motorTorqueMax;
-    electricalResistance_ = settings.actuationSetting.electricalResistance;
-    electricalInductance_ = settings.actuationSetting.electricalInductance;
-    actionScale_ = settings.actuationSetting.actionScale;
-    batteryVoltage_ = settings.actuationSetting.batteryVoltage;
-}
-
 // Called every simulator update
 void ASimpleVehiclePawn::Tick(float DeltaTime)
 {
@@ -431,22 +418,22 @@ void ASimpleVehiclePawn::BeginPlay()
 {
     Super::BeginPlay();
 
-//     float FrictionScale = 3.5f;
-//     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//     USimpleWheeledVehicleMovementComponent* Vehicle = Cast<USimpleWheeledVehicleMovementComponent>(GetVehicleMovementComponent());
-//     ASSERT(Vehicle != nullptr);
-// std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//     // Setup Tire Configs with default value. This is needed to avoid getting
-//     // friction values of previously created TireConfigs for the same vehicle
-//     // blueprint.
-//     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//     TArray<float> OriginalFrictions;
-//     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//     OriginalFrictions.Init(FrictionScale, Vehicle->Wheels.Num());
-//     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//     SetWheelsFrictionScale(OriginalFrictions);
-// std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//     // Check if it overlaps with a Friction trigger, if so, update the friction scale.
+    //     float FrictionScale = 3.5f;
+    //     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //     USimpleWheeledVehicleMovementComponent* Vehicle = Cast<USimpleWheeledVehicleMovementComponent>(GetVehicleMovementComponent());
+    //     ASSERT(Vehicle != nullptr);
+    // std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //     // Setup Tire Configs with default value. This is needed to avoid getting
+    //     // friction values of previously created TireConfigs for the same vehicle
+    //     // blueprint.
+    //     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //     TArray<float> OriginalFrictions;
+    //     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //     OriginalFrictions.Init(FrictionScale, Vehicle->Wheels.Num());
+    //     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //     SetWheelsFrictionScale(OriginalFrictions);
+    // std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //     // Check if it overlaps with a Friction trigger, if so, update the friction scale.
     // TArray<AActor*> OverlapActors;
     // GetOverlappingActors(OverlapActors, AFrictionTrigger::StaticClass());
     // for (const auto& Actor : OverlapActors)
@@ -459,18 +446,18 @@ void ASimpleVehiclePawn::BeginPlay()
     // }
 
     // Set the friction scale to Wheel CDO and update wheel setups
-//     TArray<FWheelSetup> NewWheelSetups = Vehicle->WheelSetups;
-// std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//     for (const auto& WheelSetup : NewWheelSetups)
-//     {
-//         std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//         UVehicleWheel* Wheel = WheelSetup.WheelClass.GetDefaultObject();
-//         std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//         ASSERT(Wheel != nullptr);
-//     }
-// std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
-//     Vehicle->WheelSetups = NewWheelSetups;
-//     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //     TArray<FWheelSetup> NewWheelSetups = Vehicle->WheelSetups;
+    // std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //     for (const auto& WheelSetup : NewWheelSetups)
+    //     {
+    //         std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //         UVehicleWheel* Wheel = WheelSetup.WheelClass.GetDefaultObject();
+    //         std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //         ASSERT(Wheel != nullptr);
+    //     }
+    // std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
+    //     Vehicle->WheelSetups = NewWheelSetups;
+    //     std::cout << "####################################### " <<  __LINE__  << " #######################################" << std::endl;
 }
 
 void ASimpleVehiclePawn::SetWheelsFrictionScale(TArray<float>& WheelsFrictionScale)

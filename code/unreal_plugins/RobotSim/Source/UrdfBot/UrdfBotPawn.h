@@ -105,13 +105,6 @@ public:
     TMap<FString, TTuple<UrdfJointType, UPhysicsConstraintComponent*>>
     getConstraints();
 
-    /**
-     * @brief Set the Robot Parameters from a dedicated parameter file
-     *
-     * @param settings
-     */
-    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings) override;
-
 public:
     RobotApi* getRobotApi() const;
     void setLinkForceAndTorque(FString componentName,

@@ -130,7 +130,6 @@ void ASimModeSimpleVehicle::setupVehiclesAndCamera()
             ASimpleVehiclePawn* spawned_pawn = static_cast<ASimpleVehiclePawn*>(this->GetWorld()->SpawnActor(vehicle_bp_class, &spawnPosition, &spawnRotation, pawn_spawn_params));
 
             // Apply settings from the parameter file:
-            spawned_pawn->SetRobotParameters(vehicle_setting);
             spawned_actors_.Add(spawned_pawn);
             pawns.Add(spawned_pawn);
 
