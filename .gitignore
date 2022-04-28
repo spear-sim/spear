@@ -26,10 +26,6 @@ code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
 code/unreal_plugins/CoreUtils/ThirdParty
 
-code/unreal_plugins/InteriorSimBridge/Binaries
-code/unreal_plugins/InteriorSimBridge/Intermediate
-code/unreal_plugins/InteriorSimBridge/ThirdParty
-
 code/unreal_plugins/RobotSim/Binaries
 code/unreal_plugins/RobotSim/Intermediate
 code/unreal_plugins/RobotSim/ThirdParty
@@ -37,6 +33,10 @@ code/unreal_plugins/RobotSim/ThirdParty
 code/unreal_plugins/SimulationController/Binaries
 code/unreal_plugins/SimulationController/Intermediate
 code/unreal_plugins/SimulationController/ThirdParty
+
+code/unreal_plugins/VirtualWorldManager/Binaries
+code/unreal_plugins/VirtualWorldManager/Intermediate
+code/unreal_plugins/VirtualWorldManager/ThirdParty
 
 code/unreal_projects/InteriorEnvironment/Binaries
 code/unreal_projects/InteriorEnvironment/Build
