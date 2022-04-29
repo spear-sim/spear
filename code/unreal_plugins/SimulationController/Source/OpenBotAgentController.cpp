@@ -287,16 +287,18 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     const FVector agent_current_location = agent_actor_->GetActorLocation();
     const FRotator agent_current_orientation = agent_actor_->GetActorRotation();
 
+    ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
+    ASSERT(vehicle_pawn);
+
     // Get relative position to the goal in the global coordinate system:
+    FVector2D relative_position_to_goal;
     if (not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
-        const FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
+        relative_position_to_goal = FVector2D((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
     }
     else {
-        const FVector2D relative_position_to_goal(currentPathPoint_.X - agent_current_location.X, currentPathPoint_.Y - agent_current_location.Y);
+        FVector2D currentPathPoint = Navigation::Singleton(vehicle_pawn).getCurrentPathPoint();
+        relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
     }
-
-    // Compute Euclidean distance to target:
-    float mag_relative_position_to_goal = relative_position_to_goal.Size();
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
 
@@ -321,29 +323,15 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         float cos_yaw = std::cosf(delta_yaw);
 
         // Fuses the actions received from the python client with those received from the keyboard interface (if this interface is activated in the settings.json file)
-        ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
-        ASSERT(vehicle_pawn);
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
-        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), mag_relative_position_to_goal, sin_yaw, cos_yaw});
+        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), relative_position_to_goal.Size(), sin_yaw, cos_yaw});
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
 
-        if ((mag_relative_position_to_goal * 0.01) < Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "ACCEPTANCE_RADIUS"})) {
-            if (indexPath_ < pathPoints_.Num() - 1) { // Move to the next waypoint
-                std::cout << "######## Reached waypoint " << indexPath_ << " ########" << std::endl;
-                currentPathPoint_.X = pathPoints_[indexPath_].Location.X;
-                currentPathPoint_.Y = pathPoints_[indexPath_].Location.Y;
-                indexPath_++;
-            }
-            else { // We reached the target
-                std::cout << "############ Reached the target location ! ############" << std::endl;
-            }
-        }
+        FVector2D updatedPathPoint = Navigation::Singleton(vehicle_pawn).updateNavigation();
 
-        ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
-        ASSERT(vehicle_pawn);
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
-        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), currentPathPoint_.X, currentPathPoint_.Y});
+        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), updatedPathPoint.X, updatedPathPoint.Y});
     }
     else {
         ASSERT(false);
@@ -368,90 +356,7 @@ void OpenBotAgentController::reset()
     ASSERT(rigid_body_dynamic_actor);
 
     // Trajectory planning:
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "ACTIVATE"})) {
-        
-        // Initialize navigation variables:
-        int numberOfWayPoints = 0;
-        int numIter = 0;
-        float pathCriterion = 0.f;
-        FVector initialPosition = agent_location;
-        FNavLocation bestTargetLocation;
-        FVector2D relativePositionToTarget(0.0f, 0.0f);
-
-        // Initialize navigation:
-        UNavigationSystemV1* navSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(vehicle_pawn->GetWorld());
-
-        if (not navSys) {
-            ASSERT(false);
-        }
-
-        ANavigationData* navData = (navSys == nullptr) ? nullptr : navSys->GetNavDataForProps(vehicle_pawn->GetNavAgentPropertiesRef());
-        
-        if (not navData) {
-            ASSERT(false);
-        }
-
-        indexPath_ = 1;
-
-        // Set path generation query:
-        FPathFindingQuery Query = FPathFindingQuery(*vehicle_pawn, *navData, agent_location, targetLocation_.Location);
-        // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
-        Query.SetAllowPartialPaths(true);
-
-        // Path generation polling to get "interesting" paths in every experiment:
-        while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
-        {
-            // Ret a random target point, to be reached by the agent:
-            if (not navSys->GetRandomReachablePointInRadius(agent_location, Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "TARGET_RADIUS"}), targetLocation_)) {
-                ASSERT(false);
-            }
-            relativePositionToTarget.X = (targetLocation_.Location - agent_location).X;
-            relativePositionToTarget.Y = (targetLocation_.Location - agent_location).Y;
-
-            // Update navigation query with the new target:
-            Query = FPathFindingQuery(*vehicle_pawn, *navData, agent_location, targetLocation_.Location);
-
-            // Genrate a collision-free path between the robot position and the target point:
-            FPathFindingResult collisionFreePath = navSys->FindPathSync(Query, EPathFindingMode::Type::Regular);
-
-            // If path generation is sucessful, analyze the obtained path (it should not be too simple):
-            if (collisionFreePath.IsSuccessful() and collisionFreePath.Path.IsValid()) {
-                if (collisionFreePath.IsPartial()) {
-                    std::cout << "Only a partial path could be found by the planner..." << std::endl;
-                }
-                numberOfWayPoints = collisionFreePath.Path->GetPathPoints().Num();
-                float crit = relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "PATH_WEIGHT_DIST"}) + numberOfWayPoints * relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "PATH_WEIGHT_NUM_WAYPOINTS"});
-
-                if (pathCriterion <= crit) {
-                    std::cout << "Iteration: " << numIter << std::endl;
-                    std::cout << "Cost: " << crit << std::endl;
-                    pathCriterion = crit;
-                    bestTargetLocation = targetLocation_;
-                    pathPoints_.Empty();
-                    pathPoints_ = collisionFreePath.Path->GetPathPoints();
-                    std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
-                    std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
-                }
-                numIter++;
-            }
-        }
-
-        ASSERT(pathPoints_.Num() != 0);
-
-        targetLocation_ = bestTargetLocation;
-
-        std::cout << "Current position: [" << agent_location.X << ", " << agent_location.Y << ", " << agent_location.Z << "]." << std::endl;
-        std::cout << "Reachable position: [" << bestTargetLocation.Location.X << ", " << bestTargetLocation.Location.Y << ", " << bestTargetLocation.Location.Z << "]." << std::endl;
-        std::cout << "-----------------------------------------------------------" << std::endl;
-        std::cout << "Way points: " << std::endl;
-        for (auto wayPoint : pathPoints_) {
-            std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
-        }
-        std::cout << "-----------------------------------------------------------" << std::endl;
-        currentPathPoint_.X = pathPoints_[indexPath_].Location.X;
-        currentPathPoint_.Y = pathPoints_[indexPath_].Location.Y;
-        indexPath_++;
-    }
+    Navigation::Singleton(vehicle_pawn).generateTrajectory();
 
     // We want to reset the physics state of OpenBot, so we are inlining the below code from
     // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleDrive.cpp::setToRestState(), and

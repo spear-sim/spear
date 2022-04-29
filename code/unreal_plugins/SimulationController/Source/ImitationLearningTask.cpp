@@ -4,9 +4,6 @@
 
 #include <EngineUtils.h>
 #include <UObject/UObjectGlobals.h>
-#include <NavMesh/NavMeshBoundsVolume.h>
-#include <NavMesh/RecastNavMesh.h>
-#include <NavigationSystem.h>
 
 #include "ActorHitEvent.h"
 #include "Assert.h"
@@ -50,7 +47,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_->RegisterComponent();
     actor_hit_event_->subscribeToActor(agent_actor_);
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
-    hit_goal_buffer_ = std::vector<float>(10, 0.0f);
 }
 
 ImitationLearningTask::~ImitationLearningTask()
@@ -91,14 +87,6 @@ void ImitationLearningTask::endFrame()
 float ImitationLearningTask::getReward() const
 {
     float reward;
-    float normPos = agent_actor_->GetActorLocation().Size();
-    
-    // Hack to get the hit_goal event when the actor reaches the target location (i.e. the autopilot send a zero command for more than 10 epochs)
-    hit_goal_buffer_.at(index_goal_buffer_ >= hit_goal_buffer_.size()-1 ? 0 : index_goal_buffer_++) = agent_actor_->GetActorLocation().Size();
-    if (std::all_of(hit_goal_buffer_.begin(), hit_goal_buffer_.end(), [float normPos](float value) { return std::abs(value-normPos) <= 0.1; });) {
-        hit_goal_ = true;
-    }
-
 
     if (hit_goal_) {
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_GOAL"});
@@ -154,25 +142,9 @@ void ImitationLearningTask::reset()
     float position_x, position_y, position_z;
     FVector agent_position(0), goal_position(0);
 
-    // Spawn the agent in a random location within the navigation mesh: 
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "SPAWN_ON_NAV_MESH"})) {
-
-        UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(agent_actor_->GetWorld());
-        auto navData = NavSys->GetMainNavData();
-        ARecastNavMesh* navMesh = Cast<ARecastNavMesh>(navData);
-
-        if (navMesh) {
-            int trial = 0;
-            while (trial < Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NUMBER_RANDOM_RELOCATION_TRIALS"})) {
-                FNavLocation navLocation = navMesh->GetRandomPoint();
-                if (Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "ACTOR_HEIGHT"}) <= 0.0f or navLocation.Location.Z < Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "ACTOR_HEIGHT"})) {
-                    agent_position = navLocation.Location;
-                    return;
-                }
-                trial++;
-            }
-        }
-    }
+    APawn* vehicle_pawn = dynamic_cast<APawn*>(agent_actor_);
+    ASSERT(vehicle_pawn);
+    agent_position = Navigation::Singleton(vehicle_pawn).generateRandomInitialPosition();
 
     while ((agent_position - goal_position).Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "SPAWN_DISTANCE_THRESHOLD"})) {
         position_x = random_stream_.FRandRange(

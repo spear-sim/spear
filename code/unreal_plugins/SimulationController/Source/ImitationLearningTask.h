@@ -3,6 +3,7 @@
 #include <Engine/EngineTypes.h>
 #include <Math/RandomStream.h>
 
+#include "Navigation.h"
 #include "Task.h"
 
 class AActor;
@@ -46,4 +47,5 @@ private:
     FDelegateHandle actor_hit_event_delegate_handle_;
 
     std::vector<AActor*> obstacle_ignore_actors_;
+
 };

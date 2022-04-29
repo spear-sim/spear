@@ -1,7 +1,7 @@
 #pragma once
 
-#include <algorithm>
-#include <map>
+#include <iostream>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -11,32 +11,111 @@
 #include <NavMesh/RecastNavMesh.h>
 #include <NavigationSystem.h>
 
-class Navigation
-{
+#include "Assert.h"
+#include "Config.h"
+
+class Navigation {
 public:
-    Navigation(/* args */);
+    /**
+     * @brief Delete the copy constructor in singleton class
+     * 
+     */
+    Navigation(const Navigation&) = delete;
+
+    /**
+     * @brief 
+     * 
+     * @param pawnAgent 
+     * @return Navigation& 
+     */
+    static Navigation& Singleton(APawn* pawnAgent)
+    {
+        static Navigation navInstance(pawnAgent);
+        return navInstance;
+    }
+
+    /**
+     * @brief Destroy the Navigation object
+     *
+     */
     virtual ~Navigation();
 
+    /**
+     * @brief 
+     * 
+     * @return FVector 
+     */
+    FVector generateRandomInitialPosition();
+
+    /**
+     * @brief
+     *
+     */
     void generateTrajectory();
+
+    /**
+     * @brief Get the trajectory point at a given index
+     *
+     * @param index
+     * @return FVector2D
+     */
+    FVector2D getPathPoint(size_t index);
+
+    /**
+     * @brief Get the current trajectory point
+     *
+     * @return FVector2D
+     */
+    FVector2D getCurrentPathPoint();
+
+    /**
+     * @brief Get the next trajectory point
+     *
+     * @return FVector2D
+     */
+    FVector2D getNextPathPoint();
+
+    /**
+     * @brief Returns the updated waypoint based on the agent location 
+     * 
+     * @param relative_position_to_goal 
+     * @return FVector2D 
+     */
+    FVector2D updateNavigation();
+
+    inline bool targetReached()
+    {
+        return targetReached_;
+    }
 
 private:
 
+    /**
+     * @brief Private Singleton constructor
+     *
+     */
+    Navigation(APawn* pawnAgent);
+
     UNavigationSystemV1* navSys_;
     ANavigationData* navData_;
+    ARecastNavMesh* navMesh_;
+    APawn* pawnAgent_;
 
     int numberOfWayPoints_ = 0;
     int numIter_ = 0;
     float pathCriterion_ = 0.f;
     FVector initialPosition_;
     FNavLocation bestTargetLocation_;
+    FPathFindingQuery navQuery_;
 
     // An array containing the different waypoints to be followed by the agent:
-    static TArray<FNavPathPoint> pathPoints_;
+    TArray<FNavPathPoint> pathPoints_;
 
     // The path point begin considered by the PID controller:
-    static FVector2D currentPathPoint_;
-    static FNavLocation targetLocation_;
+    FNavLocation targetLocation_;
 
-    // Index of the considered path point (starts at one since 0 is the initial position):
-    static unsigned int indexPath_ = 1;
+    // Index of the considered path point:
+    size_t indexPath_;
+
+    bool targetReached_ = false;
 };
