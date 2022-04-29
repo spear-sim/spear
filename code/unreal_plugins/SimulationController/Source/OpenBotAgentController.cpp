@@ -31,14 +31,14 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_ACTOR_NAME"})) {
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
+            ASSERT(agent_actor_);
         }
-        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
+        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}) and not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
+            ASSERT(goal_actor_);
         }
     }
-    ASSERT(agent_actor_);
-    // ASSERT(goal_actor_);
 
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
@@ -118,8 +118,6 @@ OpenBotAgentController::~OpenBotAgentController()
 
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
-
-    // ASSERT(goal_actor_);
     goal_actor_ = nullptr;
 }
 
@@ -288,9 +286,14 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
     const FVector agent_current_location = agent_actor_->GetActorLocation();
     const FRotator agent_current_orientation = agent_actor_->GetActorRotation();
+
     // Get relative position to the goal in the global coordinate system:
-    // const FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
-    const FVector2D relative_position_to_goal(currentPathPoint_.X - agent_current_location.X, currentPathPoint_.Y - agent_current_location.Y);
+    if (not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
+        const FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
+    }
+    else {
+        const FVector2D relative_position_to_goal(currentPathPoint_.X - agent_current_location.X, currentPathPoint_.Y - agent_current_location.Y);
+    }
 
     // Compute Euclidean distance to target:
     float mag_relative_position_to_goal = relative_position_to_goal.Size();
@@ -366,6 +369,7 @@ void OpenBotAgentController::reset()
 
     // Trajectory planning:
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AUTOPILOT", "ACTIVATE"})) {
+        
         // Initialize navigation variables:
         int numberOfWayPoints = 0;
         int numIter = 0;
@@ -375,25 +379,17 @@ void OpenBotAgentController::reset()
         FVector2D relativePositionToTarget(0.0f, 0.0f);
 
         // Initialize navigation:
-        // UNavigationSystemV1* navSys = Cast<UNavigationSystemV1>(agent_actor_->GetWorld()->GetNavigationSystem());
         UNavigationSystemV1* navSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(vehicle_pawn->GetWorld());
 
         if (not navSys) {
             ASSERT(false);
         }
 
-        // auto navData = navSys->GetNavDataForAgentName(FName(agent_actor_->GetName()));
-
         ANavigationData* navData = (navSys == nullptr) ? nullptr : navSys->GetNavDataForProps(vehicle_pawn->GetNavAgentPropertiesRef());
+        
         if (not navData) {
             ASSERT(false);
         }
-
-        // ARecastNavMesh* navMesh = Cast<ARecastNavMesh>(navData);
-
-        // if (not navMesh) {
-        //     ASSERT(false);
-        // }
 
         indexPath_ = 1;
 

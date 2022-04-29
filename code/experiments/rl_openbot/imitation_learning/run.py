@@ -96,11 +96,11 @@ def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, K
         
         action = np.array([leftWheelCommand,rightWheelCommand])
 
-    print(f"dist: {dist} m")
-    print(f"deltaYaw: {deltaYaw}")
-    print(f"rightCtrl: {rightCtrl}")
-    print(f"forwardCtrl: {forwardCtrl}")
-    print(f"action: {action[0]}, {action[1]}")
+    #print(f"dist: {dist} m")
+    #print(f"deltaYaw: {deltaYaw}")
+    #print(f"rightCtrl: {rightCtrl}")
+    #print(f"forwardCtrl: {forwardCtrl}")
+    #print(f"action: {action[0]}, {action[1]}")
 
     return action, targetLocationReached
     
@@ -173,7 +173,7 @@ if __name__ == "__main__":
             # Create Env object:
             env = Env(config)
 
-            run = 0
+            run = 59
             while run < runs:
 
                 collisionFlag = False
@@ -287,7 +287,7 @@ if __name__ == "__main__":
                     writer_rgb = csv.writer(f_rgb, delimiter=",")
                     writer_rgb.writerow( ('timestamp[ns]','frame') )
 
-                    goalLocation = np.array([array_obs[numIter-1][2],array_obs[numIter-1][3]]) # use the vehicle last location as goal
+                    goalLocation = np.array([array_obs[executedIterations-1][2],array_obs[executedIterations-1][3]]) # use the vehicle last location as goal
                     forward = np.array([1,0]) # Front axis is the X axis.
                     forwardRotated = np.array([0,0])
 
@@ -320,17 +320,17 @@ if __name__ == "__main__":
                         cosYaw = cos(deltaYaw);
 
                         # Write pose data
-                        writer_pose.writerow( (int(array_obs[i][8]), array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]) )
+                        writer_pose.writerow( (int(array_obs[i][10]), array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]) )
 
                         # Write the low-level control observation into a file:
-                        writer_ctrl.writerow( (int(array_obs[i][8]), array_obs[i][0], array_obs[i][1]) )
+                        writer_ctrl.writerow( (int(array_obs[i][10]), array_obs[i][0], array_obs[i][1]) )
 
                         # Write the corresponding image index into a file:
-                        writer_rgb.writerow( (int(array_obs[i][8]), i) )
+                        writer_rgb.writerow( (int(array_obs[i][10]), i) )
 
                         # Write the corresponding high level command into a file:
                         # For imitation learning, use the latest position as a goal
-                        writer_goal.writerow( (int(array_obs[i][8]), dist/100, sinYaw, cosYaw) )
+                        writer_goal.writerow( (int(array_obs[i][10]), dist/100, sinYaw, cosYaw) )
 
                     f_ctrl.close()
                     f_pose.close()

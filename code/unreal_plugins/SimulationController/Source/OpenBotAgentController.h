@@ -5,9 +5,6 @@
 #include <vector>
 
 #include "AgentController.h"
-#include <NavMesh/NavMeshBoundsVolume.h>
-#include <NavMesh/RecastNavMesh.h>
-#include <NavigationSystem.h>
 
 class AActor;
 class USceneCaptureComponent2D;

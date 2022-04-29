@@ -12,12 +12,12 @@ class UActorHitEvent;
 
 struct Box;
 
-class PointGoalNavTask: public Task
+class ImitationLearningTask: public Task
 {
 public:
 
-    PointGoalNavTask(UWorld* world);
-    ~PointGoalNavTask();
+    ImitationLearningTask(UWorld* world);
+    ~ImitationLearningTask();
 
     // Task overrides
     void beginFrame() override;
@@ -47,4 +47,3 @@ private:
 
     std::vector<AActor*> obstacle_ignore_actors_;
 };
-

@@ -281,18 +281,16 @@ void ASimpleVehiclePawn::ComputeMotorTorques(float DeltaTime)
     actionVec_(0) = (dutyCycle_(0) + dutyCycle_(2)) / 2; // leftCtrl
     actionVec_(1) = (dutyCycle_(1) + dutyCycle_(3)) / 2; // rightCtrl
 
-    // std::cout << " ----------------------------------------------- " <<
-    // std::endl; std::cout << "actionVec_ = " << actionVec_.transpose() <<
-    // std::endl; std::cout << "dutyCycle_ = " << dutyCycle_.transpose() <<
-    // std::endl; std::cout << "motorVelocity_ = " << motorVelocity_.transpose()
-    // << std::endl; std::cout << "wheelVelocity_ = " <<
-    // wheelVelocity_.transpose() << std::endl; std::cout << "appliedVoltage = "
-    // << (batteryVoltage_*dutyCycle_).transpose() << std::endl; std::cout <<
-    // "counterElectromotiveForce_ = " << counterElectromotiveForce_.transpose()
-    // << std::endl; std::cout << "motorWindingCurrent_ = " <<
-    // motorWindingCurrent_.transpose() << std::endl; std::cout << "motorTorque_
-    // = " << motorTorque_.transpose() << std::endl; std::cout << "wheelTorque_
-    // = " << wheelTorque_.transpose() << std::endl;
+    // std::cout << " ----------------------------------------------- " << std::endl; 
+    // std::cout << "actionVec_ = " << actionVec_.transpose() << std::endl; 
+    // std::cout << "dutyCycle_ = " << dutyCycle_.transpose() << std::endl; 
+    // std::cout << "motorVelocity_ = " << motorVelocity_.transpose() << std::endl; 
+    // std::cout << "wheelVelocity_ = " << wheelVelocity_.transpose() << std::endl; 
+    // std::cout << "appliedVoltage = " << (batteryVoltage_*dutyCycle_).transpose() << std::endl; 
+    // std::cout << "counterElectromotiveForce_ = " << counterElectromotiveForce_.transpose() << std::endl; 
+    // std::cout << "motorWindingCurrent_ = " << motorWindingCurrent_.transpose() << std::endl; 
+    // std::cout << "motorTorque_ = " << motorTorque_.transpose() << std::endl; 
+    // std::cout << "wheelTorque_ = " << wheelTorque_.transpose() << std::endl;
 
     // Reset duty cycle value:
     dutyCycle_.setZero();
@@ -371,9 +369,6 @@ void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
 
         // Compute yaw in [rad]:
         float deltaYaw = std::atan2f(forwardAxisRotated.Y, forwardAxisRotated.X) - std::atan2f(relativePositionToTarget.Y, relativePositionToTarget.X);
-
-        // std::cout << "std::atan2f(forwardAxisRotated.Y, forwardAxisRotated.X) " << std::atan2f(forwardAxisRotated.Y, forwardAxisRotated.X) << std::endl;
-        // std::cout << "std::atan2f(relativePositionToTarget.Y, relativePositionToTarget.X) " << std::atan2f(relativePositionToTarget.Y, relativePositionToTarget.X) << std::endl;
 
         // Fit to range [-pi, pi]:
         if (deltaYaw > PI)
