@@ -1,10 +1,20 @@
 import json
 import os
+import sys
 
 SCRIPT_DIR_PATH      = os.path.dirname(os.path.abspath(__file__))
 UNREAL_PROJECTS_PATH = os.path.join(SCRIPT_DIR_PATH, "..", "unreal_projects")
 UNREAL_PLUGINS_PATH  = os.path.join(SCRIPT_DIR_PATH, "..", "unreal_plugins")
 THIRD_PARTY_PATH     = os.path.join(SCRIPT_DIR_PATH, "..", "third_party")
+
+
+def create_single_symlink(src, dst):
+    if sys.platform == "win32":
+        # use different way for windows to avoid privilege requirement
+        os.system(f"mklink /J {dst} {src}")
+    else:
+        os.symlink(src, dst)
+
 
 def create_symbolic_links():
 
@@ -26,7 +36,7 @@ def create_symbolic_links():
             symlink_third_party_path = os.path.join(UNREAL_PLUGINS_PATH, plugin, "ThirdParty")
             if not os.path.exists(symlink_third_party_path):
                 print(f"    Creating symlink: {symlink_third_party_path} -> {THIRD_PARTY_PATH}")
-                os.symlink(THIRD_PARTY_PATH, symlink_third_party_path)
+                create_single_symlink(THIRD_PARTY_PATH, symlink_third_party_path)
             else:
                 print(f"    {symlink_third_party_path} already exists, so we do not create a symlink...")
     print()
@@ -45,7 +55,7 @@ def create_symbolic_links():
             symlink_third_party_path = os.path.join(UNREAL_PROJECTS_PATH, project, "ThirdParty")
             if not os.path.exists(symlink_third_party_path):
                 print(f"    Creating symlink: {symlink_third_party_path} -> {THIRD_PARTY_PATH}")
-                os.symlink(THIRD_PARTY_PATH, symlink_third_party_path)
+                create_single_symlink(THIRD_PARTY_PATH, symlink_third_party_path)
             else:
                 print(f"    {symlink_third_party_path} already exists, so we do not create a symlink...")
 
@@ -61,12 +71,12 @@ def create_symbolic_links():
 
             # create symlink for each plugin listed in the project, if the plugin is maintained by us
             for project_plugin in project_plugins:
-                if project_plugin in our_plugins:                
+                if project_plugin in our_plugins:
                     our_plugin_path = os.path.abspath(os.path.join(UNREAL_PLUGINS_PATH, project_plugin))
                     symlink_plugin_path = os.path.abspath(os.path.join(project_plugins_dir, project_plugin))
                     if not os.path.exists(symlink_plugin_path):
                         print(f"        Creating symlink: {symlink_plugin_path} -> {our_plugin_path}")
-                        os.symlink(our_plugin_path, symlink_plugin_path)
+                        create_single_symlink(our_plugin_path, symlink_plugin_path)
                     else:
                         print(f"        {symlink_plugin_path} already exists, so we do not create a symlink...")
                 else:
@@ -77,5 +87,5 @@ def create_symbolic_links():
     print(f"Done.")
 
 
-if __name__ == "__main__":    
-    create_symbolic_links()    
+if __name__ == "__main__":
+    create_symbolic_links()
