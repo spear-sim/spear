@@ -34,7 +34,7 @@ public:
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
 private:
-    bool hit_goal_ = false;
+    mutable bool hit_goal_ = false;
     bool hit_obstacle_ = false;
     
     FRandomStream random_stream_;

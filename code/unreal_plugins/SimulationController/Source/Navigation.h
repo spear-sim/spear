@@ -83,7 +83,7 @@ public:
      */
     FVector2D updateNavigation();
 
-    inline bool targetReached()
+    inline bool goalReached()
     {
         return targetReached_;
     }

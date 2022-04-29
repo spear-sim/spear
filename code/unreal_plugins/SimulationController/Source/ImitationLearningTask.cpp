@@ -33,7 +33,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         }
     }
     
-    ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
+    //ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
 
     // read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SEED"}));
@@ -87,6 +87,14 @@ void ImitationLearningTask::endFrame()
 float ImitationLearningTask::getReward() const
 {
     float reward;
+
+    // TEMPORARY HACK !!
+    APawn* vehicle_pawn = dynamic_cast<APawn*>(agent_actor_);
+    ASSERT(vehicle_pawn);
+    if (Navigation::Singleton(vehicle_pawn).goalReached())
+    {
+        hit_goal_ = true;
+    }
 
     if (hit_goal_) {
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_GOAL"});
