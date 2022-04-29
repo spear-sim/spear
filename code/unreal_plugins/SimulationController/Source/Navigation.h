@@ -17,8 +17,6 @@ public:
     Navigation(/* args */);
     virtual ~Navigation();
 
-    void generateReachableGoal();
-
     void generateTrajectory();
 
 private:
