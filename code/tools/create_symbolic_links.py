@@ -8,7 +8,7 @@ UNREAL_PLUGINS_PATH  = os.path.join(SCRIPT_DIR_PATH, "..", "unreal_plugins")
 THIRD_PARTY_PATH     = os.path.join(SCRIPT_DIR_PATH, "..", "third_party")
 
 
-def create_single_symlink(src, dst):
+def create_symlink(src, dst):
     if sys.platform == "win32":
         # use different way for windows to avoid privilege requirement
         os.system(f"mklink /J {dst} {src}")
@@ -36,7 +36,7 @@ def create_symbolic_links():
             symlink_third_party_path = os.path.join(UNREAL_PLUGINS_PATH, plugin, "ThirdParty")
             if not os.path.exists(symlink_third_party_path):
                 print(f"    Creating symlink: {symlink_third_party_path} -> {THIRD_PARTY_PATH}")
-                create_single_symlink(THIRD_PARTY_PATH, symlink_third_party_path)
+                create_symlink(THIRD_PARTY_PATH, symlink_third_party_path)
             else:
                 print(f"    {symlink_third_party_path} already exists, so we do not create a symlink...")
     print()
@@ -55,7 +55,7 @@ def create_symbolic_links():
             symlink_third_party_path = os.path.join(UNREAL_PROJECTS_PATH, project, "ThirdParty")
             if not os.path.exists(symlink_third_party_path):
                 print(f"    Creating symlink: {symlink_third_party_path} -> {THIRD_PARTY_PATH}")
-                create_single_symlink(THIRD_PARTY_PATH, symlink_third_party_path)
+                create_symlink(THIRD_PARTY_PATH, symlink_third_party_path)
             else:
                 print(f"    {symlink_third_party_path} already exists, so we do not create a symlink...")
 
@@ -76,7 +76,7 @@ def create_symbolic_links():
                     symlink_plugin_path = os.path.abspath(os.path.join(project_plugins_dir, project_plugin))
                     if not os.path.exists(symlink_plugin_path):
                         print(f"        Creating symlink: {symlink_plugin_path} -> {our_plugin_path}")
-                        create_single_symlink(our_plugin_path, symlink_plugin_path)
+                        create_symlink(our_plugin_path, symlink_plugin_path)
                     else:
                         print(f"        {symlink_plugin_path} already exists, so we do not create a symlink...")
                 else:
