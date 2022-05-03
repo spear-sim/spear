@@ -16,19 +16,21 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
 
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
+
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
 
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "AGENT_ACTOR_NAME"}) and not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
+        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "AGENT_ACTOR_NAME"})) {
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
             ASSERT(agent_actor_);
         }
-        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"})) {
+        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) and not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
             ASSERT(goal_actor_);
         }
         else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
+            
             obstacle_ignore_actors_.emplace_back(*actor_itr);
         }
     }
@@ -44,9 +46,13 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     // create and initialize actor hit handler
     actor_hit_event_ = NewObject<UActorHitEvent>(new_object_parent_actor_, TEXT("ActorHitEvent"));
     ASSERT(actor_hit_event_);
+    
     actor_hit_event_->RegisterComponent();
+    
     actor_hit_event_->subscribeToActor(agent_actor_);
+    
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
+
 }
 
 ImitationLearningTask::~ImitationLearningTask()
@@ -152,6 +158,7 @@ void ImitationLearningTask::reset()
 
     APawn* vehicle_pawn = dynamic_cast<APawn*>(agent_actor_);
     ASSERT(vehicle_pawn);
+    
     agent_position = Navigation::Singleton(vehicle_pawn).generateRandomInitialPosition();
 
     while ((agent_position - goal_position).Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "SPAWN_DISTANCE_THRESHOLD"})) {
@@ -178,7 +185,7 @@ void ImitationLearningTask::reset()
 
     // TODO: set goal location based on the navigation system...
     agent_actor_->SetActorLocation(agent_position);
-    goal_actor_->SetActorLocation(goal_position);
+    //goal_actor_->SetActorLocation(goal_position);
 }
 
 bool ImitationLearningTask::isReady() const

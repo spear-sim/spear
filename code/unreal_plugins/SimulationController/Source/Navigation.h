@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include <Engine/EngineTypes.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
@@ -99,7 +100,7 @@ private:
     UNavigationSystemV1* navSys_;
     ANavigationData* navData_;
     ARecastNavMesh* navMesh_;
-    APawn* pawnAgent_;
+    const APawn* pawnAgent_;
 
     int numberOfWayPoints_ = 0;
     int numIter_ = 0;

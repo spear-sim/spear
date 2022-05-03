@@ -22,6 +22,7 @@
 #include "NullTask.h"
 #include "OpenBotAgentController.h"
 #include "PointGoalNavTask.h"
+#include "ImitationLearningTask.h"
 #include "Rpclib.h"
 #include "RpcServer.h"
 #include "SphereAgentController.h"

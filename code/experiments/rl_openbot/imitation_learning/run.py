@@ -173,7 +173,7 @@ if __name__ == "__main__":
             # Create Env object:
             env = Env(config)
 
-            run = 59
+            run = 0
             while run < runs:
 
                 collisionFlag = False
