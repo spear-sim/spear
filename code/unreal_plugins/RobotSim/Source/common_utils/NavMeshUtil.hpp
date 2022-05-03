@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NavMesh/NavMeshBoundsVolume.h"
+#include "NavMesh/RecastNavMesh.h"
 #include "NavigationSystem.h"
 
 namespace RobotSim {

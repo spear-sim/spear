@@ -1,0 +1,33 @@
+INTERIORSIM:
+  LAUNCH_MODE: "standalone_executable"
+  STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/LinuxNoEditor/RobotProject.sh"
+  TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/experiments/image_captures/"
+  VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 1200.0
+  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-RobotSimSettingPath=/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json" ]
+  RENDER_OFFSCREEN: True
+  # MAP_ID: "/Game/Maps/Map_235556528"
+
+SIMULATION_CONTROLLER:
+  TASK_NAME: "NullTask"
+  AGENT_CONTROLLER_NAME: "ImageSamplingAgentController"
+  
+  IMAGE_SAMPLING_AGENT_CONTROLLER:
+    CAMERA_ACTOR_NAME: "TestCamera"
+    IMAGE_HEIGHT: 512
+    IMAGE_WIDTH: 512
+    SCENES: []
+    AGENT_PROPERTIES:
+      AGENT_HEIGHT: 160.0
+      AGENT_RADIUS: 10.0
+
+IMAGE_SAMPLING_EXPERIMENT:
+  PITCH_LOW: -10.0
+  PITCH_HIGH: 10.0
+  YAW_LOW: -180.0
+  YAW_HIGH: 180.0
+  ROLL_LOW: -1.0
+  ROLL_HIGH: 1.0
+
+  VISUALIZER:
+   CAMERA_ACTOR_NAME: "TestCamera"

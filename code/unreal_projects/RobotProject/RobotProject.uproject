@@ -22,6 +22,10 @@
         {
             "Name": "SimulationController",
             "Enabled": true
-        }        
+        },
+	{
+	    "Name": "VirtualWorldManager",
+	    "Enabled": true
+	} 
     ]
 }

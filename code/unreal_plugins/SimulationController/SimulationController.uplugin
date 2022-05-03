@@ -29,6 +29,10 @@
         {
             "Name": "RobotSim",
             "Enabled": true
+        },
+        {
+            "Name": "VirtualWorldManager",
+            "Enabled": true
         }
     ]
 }

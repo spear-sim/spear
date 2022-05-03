@@ -61,7 +61,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         scene_capture_component_ = pip_camera->GetSceneCaptureComponent();
         ASSERT(scene_capture_component_);
 
-        // Set Camera Properties
+        // set camera properties
         scene_capture_component_->bAlwaysPersistRenderingState = 1;
         scene_capture_component_->bCaptureEveryFrame = 0;
         scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "SMARTPHONE_FOV"}); // Smartphone FOV
@@ -72,7 +72,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         new_object_parent_actor_ = world->SpawnActor<AActor>();
         ASSERT(new_object_parent_actor_);
 
-        // Adjust RenderTarget
+        // adjust renderTarget
         texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
         ASSERT(texture_render_target_);
 
@@ -87,7 +87,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU
         scene_capture_component_->TextureTarget = texture_render_target_;
 
-        // Set post processing parameters:
+        // set post processing parameters
         FPostProcessSettings post_process_settings;
         post_process_settings.MotionBlurAmount = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_AMOUNT"}); // Strength of motion blur, 0:off, should be renamed to intensity
         post_process_settings.MotionBlurMax = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_MAX"});    // Max distortion caused by motion blur, in percent of the screen width, 0:off

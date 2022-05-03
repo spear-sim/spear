@@ -147,6 +147,9 @@ class Env(gym.Env):
 
         if self._config.INTERIORSIM.RENDER_OFFSCREEN:
             launch_params.append("-RenderOffscreen")
+            self._config.defrost()
+            self._config.SIMULATION_CONTROLLER.ENABLE_VISUALIZER = False
+            self._config.freeze()
 
         if len(self._config.INTERIORSIM.UNREAL_INTERNAL_LOG_FILE) > 0:
             launch_params.append("-log={}".format(self._config.INTERIORSIM.UNREAL_INTERNAL_LOG_FILE))

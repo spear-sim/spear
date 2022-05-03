@@ -19,6 +19,7 @@
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "ImageSamplingAgentController.h"
 #include "NullTask.h"
 #include "OpenBotAgentController.h"
 #include "PointGoalNavTask.h"
@@ -112,11 +113,13 @@ void SimulationController::worldBeginPlayEventHandler()
     UGameplayStatics::SetGamePaused(world_, true);
 
     // read config to decide which type of AgentController to create
-    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
-    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
         agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
-    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "ImageSamplingAgentController") {
+        agent_controller_ = std::make_unique<ImageSamplingAgentController>(world_);
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
         agent_controller_ = std::make_unique<DebugAgentController>(world_);
     } else {
         ASSERT(false);
@@ -124,7 +127,7 @@ void SimulationController::worldBeginPlayEventHandler()
     ASSERT(agent_controller_);
 
     // read config to decide which type of Task class to create
-    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
         task_ = std::make_unique<PointGoalNavTask>(world_);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
         task_ = std::make_unique<NullTask>();
@@ -134,8 +137,10 @@ void SimulationController::worldBeginPlayEventHandler()
     ASSERT(task_);
 
     // create a visualizer that is responsible for the camera view
-    visualizer_ = std::make_unique<Visualizer>(world_);
-    ASSERT(visualizer_);
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "ENABLE_VISUALIZER"})) {
+        visualizer_ = std::make_unique<Visualizer>(world_);
+        ASSERT(visualizer_);
+    }
 
     // initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
@@ -167,8 +172,10 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
             rpc_server_ = nullptr;
 
-            ASSERT(visualizer_);
-            visualizer_ = nullptr;
+            if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "ENABLE_VISUALIZER"})) {
+                ASSERT(visualizer_);
+                visualizer_ = nullptr;
+            }
 
             ASSERT(task_);
             task_ = nullptr;
