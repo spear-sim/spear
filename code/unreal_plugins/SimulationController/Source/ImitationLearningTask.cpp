@@ -185,7 +185,10 @@ void ImitationLearningTask::reset()
 
     // TODO: set goal location based on the navigation system...
     agent_actor_->SetActorLocation(agent_position);
-    //goal_actor_->SetActorLocation(goal_position);
+    
+    if (not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
+        goal_actor_->SetActorLocation(goal_position);
+    }
 }
 
 bool ImitationLearningTask::isReady() const
