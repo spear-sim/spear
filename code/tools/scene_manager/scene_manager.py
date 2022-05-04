@@ -548,6 +548,13 @@ def download_single_virtualworld_pak(vw_id, version, param=None):
     # download asset data
     vw_data = json.load(open(data_local_path, mode='r'))
     asset_mode = vw_data['default_asset_mode']
+    if "content_type" in param:
+        content_type = param['content_type']
+        if content_type in vw_data[asset_mode]:
+            asset_mode = content_type
+        else:
+            print(f"invalid content type {content_type} for {vw_id}")
+            return False
     assets_relative_path = vw_data[asset_mode]
     result_local_path = []
     for asset_relative_path in assets_relative_path:
@@ -582,14 +589,15 @@ if __name__ == "__main__":
     param = {
         "output_directory": "",
         "is_down_ddc": False,
-        "is_force_update": False
+        "is_force_update": False,
+        "content_type": ''
     }
 
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
-            "h:i:v:d:f:p:o:",
-            ["help=", "infile=", "version=", "downDDC=", "forceUpdate=", "proxy=", "outputDir="],
+            "h:i:v:d:f:p:o:c:",
+            ["help=", "infile=", "version=", "downDDC=", "forceUpdate=", "proxy=", "outputDir=", "contentType="],
         )
     except getopt.GetoptError:
         print_help()
@@ -610,6 +618,8 @@ if __name__ == "__main__":
                 param["is_down_ddc"] = True
         elif opt in ("-o", "--outputDir"):
             param["output_directory"] = str(arg)
+        elif opt in ("-c", "--contentType"):
+            param["content_type"] = str(arg)
         elif opt in ("-p", "--proxy"):
             PROXY_URL = str(arg)
 
