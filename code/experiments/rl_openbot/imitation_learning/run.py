@@ -53,11 +53,8 @@ def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, K
     # Compute Euclidean distance to target in [m]:
     dist = np.linalg.norm(relativePositionToTarget)*0.01
 
-    # If the waypoint is reached, send zero command:
     if dist < acceptanceRadius :
-
         targetLocationReached = True;
-        print("Target reached !")
 
     # Otherwise compute the PID command:
     else:
@@ -96,11 +93,11 @@ def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, K
         
         action = np.array([leftWheelCommand,rightWheelCommand])
 
-    #print(f"dist: {dist} m")
+    print(f"dist: {dist} m")
     #print(f"deltaYaw: {deltaYaw}")
     #print(f"rightCtrl: {rightCtrl}")
     #print(f"forwardCtrl: {forwardCtrl}")
-    #print(f"action: {action[0]}, {action[1]}")
+    print(f"action: {action[0]}, {action[1]}")
 
     return action, targetLocationReached
     

@@ -37,26 +37,29 @@ FVector Navigation::generateRandomInitialPosition()
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "NAVIGATION", "SPAWN_ON_NAV_MESH"})) {
 
         int trial = 0;
-        while (trial < 10) { 
-            FNavLocation navLocation = navMesh_->GetRandomPoint();
+        FNavLocation navLocation = navMesh_->GetRandomPoint();
+        while (trial < 100) { 
             if (navLocation.Location.Z >= Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_POSITION_Z_MIN"}) and navLocation.Location.Z <= Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_POSITION_Z_MAX"})) {
-                initialPosition_ = navLocation.Location;
                 break;
             }
+            std::cout << "navLocation.Location = [" << navLocation.Location.X << ", " << navLocation.Location.Y << ", " << navLocation.Location.Z << "]" << std::endl;
             trial++;
-        }        
+        } 
+        initialPosition_ = navLocation.Location;       
     }
     else { // Spawn the agent in a random location:
         initialPosition_ = FVector(0);
     }
 
     // use BoxTracing to adjust pawn spawn height.
-    // use mesh bounding box instead of setting
-
+    // use mesh bounding box instead of setting.
+    std::cout << "-------------------------------------------" << std::endl;
     FRotator spawnRotation = pawnAgent_->GetActorRotation();
     FVector center = FVector(0.0f, 0.0f, 3.0f);
+    std::cout << "initialPosition = [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]" << std::endl;
     traceGround(initialPosition_, spawnRotation, FVector(10.0f, 10.0f, 10.0f));
     initialPosition_ = initialPosition_ + FVector(0.0f, 0.0f, -3.0f);
+    std::cout << "initialPosition_GND = [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]" << std::endl;
     return initialPosition_;
 }
 
@@ -149,13 +152,12 @@ FVector2D Navigation::updateNavigation()
     if ((relative_position_to_goal.Size() * 0.01) < Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "ACCEPTANCE_RADIUS"})) { 
 
         if (indexPath_ < pathPoints_.Num() - 1) { // Move to the next waypoint
-            std::cout << "######## Reached waypoint " << indexPath_ << " ########" << std::endl;
+            std::cout << "######## Reached waypoint " << indexPath_ << " over " << pathPoints_.Num() - 1 << " ########" << std::endl;
             indexPath_++;
         }
         else { // We reached the final target
             std::cout << "############ Reached the target location ! ############" << std::endl;
             targetReached_ = true;
-            indexPath_ = 0;
         }
     }
 

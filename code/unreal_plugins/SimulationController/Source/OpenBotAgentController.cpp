@@ -293,13 +293,13 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
     // Get relative position to the goal in the global coordinate system:
     FVector2D relative_position_to_goal;
-    if (not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
-        relative_position_to_goal = FVector2D((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
-    }
-    else {
+    // if (not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
+    //     relative_position_to_goal = FVector2D((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
+    // }
+    // else {
         FVector2D currentPathPoint = Navigation::Singleton(vehicle_pawn).getCurrentPathPoint();
         relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
-    }
+    // }
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
 
