@@ -12,12 +12,8 @@
 
 ImitationLearningTask::ImitationLearningTask(UWorld* world)
 {
-    // append all actors that need to be ignored during collision check
-    std::cout << "-----------------------------------------------------------" << std::endl;
-    std::cout << "-----------------------------------------------------------" << std::endl;
-    std::cout << "-----------------------------------------------------------" << std::endl;
     std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
-    std::cout << __LINE__ << std::endl;
+
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
 
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
@@ -177,10 +173,6 @@ void ImitationLearningTask::reset()
     Navigation::Singleton(vehicle_pawn).generateTrajectory();
     goal_position = Navigation::Singleton(vehicle_pawn).getGoal();
     goal_actor_->SetActorLocation(goal_position);
-    
-    std::cout << "-----------------------------------------------------------" << std::endl;
-    std::cout << "-----------------------------------------------------------" << std::endl;
-    std::cout << "-----------------------------------------------------------" << std::endl;
 }
 
 bool ImitationLearningTask::isReady() const

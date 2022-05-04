@@ -1,33 +1,35 @@
 #pragma once
 
+#include <CoreMinimal.h>
+#include <Engine/EngineTypes.h>
+#include <NavMesh/NavMeshBoundsVolume.h>
+#include <NavMesh/RecastNavMesh.h>
+#include <NavigationSystem.h>
+#include "Kismet/KismetSystemLibrary.h"
+
 #include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include <iostream>
-
-#include <Engine/EngineTypes.h>
-#include <NavMesh/NavMeshBoundsVolume.h>
-#include <NavMesh/RecastNavMesh.h>
-#include <NavigationSystem.h>
 
 #include "Assert.h"
 #include "Config.h"
 
-class Navigation {
+class Navigation
+{
 public:
     /**
      * @brief Delete the copy constructor in singleton class
-     * 
+     *
      */
     Navigation(const Navigation&) = delete;
 
     /**
-     * @brief 
-     * 
-     * @param pawnAgent 
-     * @return Navigation& 
+     * @brief
+     *
+     * @param pawnAgent
+     * @return Navigation&
      */
     static Navigation& Singleton(APawn* pawnAgent)
     {
@@ -42,9 +44,9 @@ public:
     virtual ~Navigation();
 
     /**
-     * @brief 
-     * 
-     * @return FVector 
+     * @brief
+     *
+     * @return FVector
      */
     FVector generateRandomInitialPosition();
 
@@ -77,18 +79,18 @@ public:
     FVector2D getNextPathPoint();
 
     /**
-     * @brief Returns the updated waypoint based on the agent location 
-     * 
-     * @param relative_position_to_goal 
-     * @return FVector2D 
+     * @brief Returns the updated waypoint based on the agent location
+     *
+     * @param relative_position_to_goal
+     * @return FVector2D
      */
     FVector2D updateNavigation();
 
     /**
-     * @brief Returns the updated waypoint based on the agent location 
-     * 
-     * @param relative_position_to_goal 
-     * @return FVector2D 
+     * @brief Returns the updated waypoint based on the agent location
+     *
+     * @param relative_position_to_goal
+     * @return FVector2D
      */
     inline FVector getGoal()
     {
@@ -96,10 +98,10 @@ public:
     }
 
     /**
-     * @brief 
-     * 
-     * @return true 
-     * @return false 
+     * @brief
+     *
+     * @return true
+     * @return false
      */
     inline bool goalReached()
     {
@@ -107,16 +109,43 @@ public:
     }
 
 private:
-
     /**
      * @brief Private Singleton constructor
      *
      */
     Navigation(APawn* pawnAgent);
 
+    /**
+     * @brief
+     *
+     * @param AgentRadius
+     * @return true
+     * @return false
+     */
+    bool navSystemRebuild(float AgentRadius);
+
+    /**
+     * @brief Get the World Bounding Box object
+     *
+     * @param bScaleCeiling
+     * @return FBox
+     */
+    FBox GetWorldBoundingBox(bool bScaleCeiling = true);
+
+    /**
+     * @brief
+     *
+     * @param spawnPosition
+     * @param spawnRotator
+     * @param boxHalfSize
+     */
+    void traceGround(FVector& spawnPosition, FRotator& spawnRotator, const FVector& boxHalfSize);
+
     UNavigationSystemV1* navSys_;
+    INavigationDataInterface* navDataInterface_;
     ANavigationData* navData_;
     ARecastNavMesh* navMesh_;
+    ANavMeshBoundsVolume* navmeshBounds_;
     const APawn* pawnAgent_;
 
     int numberOfWayPoints_ = 0;

@@ -5,18 +5,20 @@ Navigation::Navigation(APawn* pawnAgent): pawnAgent_(pawnAgent)
     // Initialize navigation:
     indexPath_ = 0; 
 
-    navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent->GetWorld());
-    ASSERT(navSys_ != nullptr);
+    // navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent->GetWorld());
+    // ASSERT(navSys_ != nullptr);
 
-    navData_ = navSys_->GetNavDataForProps(pawnAgent->GetNavAgentPropertiesRef());
-    ASSERT(navData_ != nullptr);
+    // navData_ = navSys_->GetNavDataForProps(pawnAgent->GetNavAgentPropertiesRef());
+    // ASSERT(navData_ != nullptr);
 
-    navMesh_ = Cast<ARecastNavMesh>(navData_);
-    ASSERT(navMesh_ != nullptr);
+    // navMesh_ = Cast<ARecastNavMesh>(navData_);
+    // ASSERT(navMesh_ != nullptr);
 
-    initialPosition_ = pawnAgent->GetActorLocation(); // Initial position of the agent
+    navSystemRebuild(Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_NAV_RADIUS"}));
 
-    navQuery_ = FPathFindingQuery(pawnAgent, *navData_, initialPosition_, targetLocation_.Location);
+    initialPosition_ = pawnAgent_->GetActorLocation(); // Initial position of the agent
+
+    navQuery_ = FPathFindingQuery(pawnAgent_, *navData_, initialPosition_, FVector(0.0f, 0.0f, 0.0f));
 
     // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
     navQuery_.SetAllowPartialPaths(true);
@@ -29,19 +31,33 @@ Navigation::~Navigation()
 FVector Navigation::generateRandomInitialPosition()
 {
     indexPath_ = 0; 
+    FVector initialPosition;
 
     // Spawn the agent in a random location within the navigation mesh:
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "NAVIGATION", "SPAWN_ON_NAV_MESH"})) {
 
-        FNavLocation navLocation = navMesh_->GetRandomPoint();
-
-        initialPosition_ = navLocation.Location;
-
-        return navLocation.Location;
+        int trial = 0;
+        while (trial < 10) { 
+            FNavLocation navLocation = navMesh_->GetRandomPoint();
+            if (navLocation.Location.Z >= Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_POSITION_Z_MIN"}) and navLocation.Location.Z <= Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_POSITION_Z_MAX"})) {
+                initialPosition_ = navLocation.Location;
+                break;
+            }
+            trial++;
+        }        
     }
     else { // Spawn the agent in a random location:
-        return FVector(0);
+        initialPosition_ = FVector(0);
     }
+
+    // use BoxTracing to adjust pawn spawn height.
+    // use mesh bounding box instead of setting
+
+    FRotator spawnRotation = pawnAgent_->GetActorRotation();
+    FVector center = FVector(0.0f, 0.0f, 3.0f);
+    traceGround(initialPosition_, spawnRotation, FVector(10.0f, 10.0f, 10.0f));
+    initialPosition_ = initialPosition_ + FVector(0.0f, 0.0f, -3.0f);
+    return initialPosition_;
 }
 
 void Navigation::generateTrajectory()
@@ -144,5 +160,77 @@ FVector2D Navigation::updateNavigation()
     }
 
     return getCurrentPathPoint();
+}
+
+bool Navigation::navSystemRebuild(float AgentRadius)
+{
+    navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent_->GetWorld());
+    ASSERT(navSys_ != nullptr);
+
+    navDataInterface_ = navSys_->GetMainNavData();
+    ASSERT(navDataInterface_ != nullptr);
+
+    navData_ = Cast<ANavigationData>(navDataInterface_);
+    ASSERT(navData_ != nullptr);
+
+    navMesh_ = Cast<ARecastNavMesh>(navData_);
+    ASSERT(navMesh_ != nullptr);
+
+    navmeshBounds_ = nullptr;
+    for (TActorIterator<ANavMeshBoundsVolume> it(pawnAgent_->GetWorld()); it; ++it) {
+        navmeshBounds_ = *it;
+    }
+    ASSERT(navmeshBounds_ != nullptr);
+
+    // TODO Quentin: replace with yaml parameters
+    // Set the NavMesh properties:
+    navMesh_->AgentRadius = AgentRadius;
+    navMesh_->AgentHeight = AgentRadius;
+    navMesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_SIZE"});
+    navMesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_HEIGHT"});
+    navMesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_SLOPE"});
+    navMesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+    navMesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MERGE_REGION_SIZE"});
+    navMesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
+    navMesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
+
+    // Dynamic update navMesh location and size
+    navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+
+    FBox worldBox = GetWorldBoundingBox();
+    navmeshBounds_->SetActorLocation(worldBox.GetCenter(), false); // Place the navmesh at the center of the map
+    navmeshBounds_->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f); // Rescae the navmesh
+    navmeshBounds_->GetRootComponent()->UpdateBounds();
+    // NavmeshBounds->SupportedAgents.bSupportsAgent;
+    navSys_->OnNavigationBoundsUpdated(navmeshBounds_);
+    navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Static); // Redo modify frequency change
+    navSys_->Build();                                                            // Rebuild NavMesh, required for update AgentRadius
+
+    return true;
+}
+
+void Navigation::traceGround(FVector& spawnPosition, FRotator& spawnRotator, const FVector& boxHalfSize)
+{
+    FVector startLoc = spawnPosition + FVector(0, 0, 100);
+    FVector endLoc = spawnPosition + FVector(0, 0, -1000);
+
+    FCollisionQueryParams collisionParams(FName(TEXT("trace2ground")), true, pawnAgent_);
+    FHitResult hit(ForceInit);
+
+    if (UKismetSystemLibrary::BoxTraceSingle(pawnAgent_->GetWorld(), startLoc, endLoc, boxHalfSize, spawnRotator, ETraceTypeQuery::TraceTypeQuery1, false, TArray<AActor*>(), EDrawDebugTrace::Type::ForDuration, hit, true)) {
+        spawnPosition = hit.Location;
+    }
+}
+
+FBox Navigation::GetWorldBoundingBox(bool bScaleCeiling)
+{
+    FBox box(ForceInit);
+    for (TActorIterator<AActor> it(pawnAgent_->GetWorld()); it; ++it) {
+        if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
+            box += it->GetComponentsBoundingBox(false, true);
+        }
+    }
+    // Remove ceiling
+    return !bScaleCeiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
 }
 

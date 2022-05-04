@@ -53,7 +53,7 @@ void ASimModeSimpleVehicle::cycleVisibleCamera(bool forward)
     this->cameras_[this->camera_index_]->ActivateCamera();
 }
 
-// TODO what is this?
+
 void ASimModeSimpleVehicle::setupVehiclesAndCamera()
 {
     FTransform uu_origin = this->getGlobalNedTransform().getGlobalTransform();
