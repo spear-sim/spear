@@ -51,7 +51,7 @@
 
 	```
    `-o`: optional. Content saved directory. Default saved directory is `Saved/<version>/<relative_file_path>`.
-   `-c`: optional. Download content type for supplementary data. valid content types: `topview`, `topview_semantic`,`panorama`.
+   `-c`: optional. Download content type for supplementary data. If not specified, download scene data. Valid content types: `topview`, `topview_semantic`,`panorama`.
    ```bash
    python scene_manager.py -i 235554690 -v v4 -c panorama
    ```

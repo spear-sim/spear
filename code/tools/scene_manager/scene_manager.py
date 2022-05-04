@@ -550,8 +550,10 @@ def download_single_virtualworld_pak(vw_id, version, param=None):
     asset_mode = vw_data['default_asset_mode']
     if "content_type" in param:
         content_type = param['content_type']
-        if content_type in vw_data[asset_mode]:
+        if content_type in vw_data:
             asset_mode = content_type
+        elif content_type is None or content_type == '':
+            asset_mode = vw_data['default_asset_mode']
         else:
             print(f"invalid content type {content_type} for {vw_id}")
             return False
@@ -578,6 +580,7 @@ e.g: scene_manager.py -v v1
  -d: if you want to donwload DerivedDataCache, set '-d true'. 
  -f: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version information(MD5 in it) to remote version information and decide whether to download asset.
  -o: content saved directory, content will be saved at `<output_dir>/<version>/<relative_file_path>`. if not specified, content will be saved in Saved/<version>/<relative_file_path>
+ -c: optional. Download content type for supplementary data. If not specified, download scene data. Valid content types: `topview`, `topview_semantic`,`panorama`.
 """
     )
     sys.exit(2)
