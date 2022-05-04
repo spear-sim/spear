@@ -1,9 +1,9 @@
 #include "Navigation.h"
 
-Navigation::Navigation(APawn* pawnAgent)
+Navigation::Navigation(APawn* pawnAgent): pawnAgent_(pawnAgent)
 {
     // Initialize navigation:
-    indexPath_ = 0; // Initialized at 1 since index 0 refers to the initial position of the agent.
+    indexPath_ = 0; 
 
     navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent->GetWorld());
     ASSERT(navSys_ != nullptr);
@@ -14,14 +14,12 @@ Navigation::Navigation(APawn* pawnAgent)
     navMesh_ = Cast<ARecastNavMesh>(navData_);
     ASSERT(navMesh_ != nullptr);
 
-    initialPosition_ = pawnAgent->GetActorLocation();
+    initialPosition_ = pawnAgent->GetActorLocation(); // Initial position of the agent
 
     navQuery_ = FPathFindingQuery(pawnAgent, *navData_, initialPosition_, targetLocation_.Location);
 
     // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
     navQuery_.SetAllowPartialPaths(true);
-
-    pawnAgent_ = pawnAgent;
 }
 
 Navigation::~Navigation()
@@ -30,10 +28,14 @@ Navigation::~Navigation()
 
 FVector Navigation::generateRandomInitialPosition()
 {
+    indexPath_ = 0; 
+
     // Spawn the agent in a random location within the navigation mesh:
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "NAVIGATION", "SPAWN_ON_NAV_MESH"})) {
 
         FNavLocation navLocation = navMesh_->GetRandomPoint();
+
+        initialPosition_ = navLocation.Location;
 
         return navLocation.Location;
     }
@@ -91,7 +93,7 @@ void Navigation::generateTrajectory()
         }
     }
 
-    ASSERT(pathPoints_.Num() != 0);
+    ASSERT(pathPoints_.Num() > 0);
 
     targetLocation_ = bestTargetLocation;
 
@@ -103,7 +105,7 @@ void Navigation::generateTrajectory()
         std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
     }
     std::cout << "-----------------------------------------------------------" << std::endl;
-    indexPath_++; // Path point 0 is the initial robot position. getCurrentPathPoint() should therefore return the next point.
+    indexPath_ = 1; // Path point 0 is the initial robot position. getCurrentPathPoint() should therefore return the next point.
 }
 
 FVector2D Navigation::getPathPoint(size_t index)
@@ -115,6 +117,8 @@ FVector2D Navigation::getPathPoint(size_t index)
 
 FVector2D Navigation::getCurrentPathPoint()
 {
+    ASSERT(pathPoints_.Num() != 0);
+    ASSERT(indexPath_ < pathPoints_.Num());
     return FVector2D(pathPoints_[indexPath_].Location.X, pathPoints_[indexPath_].Location.Y);
 }
 
@@ -135,6 +139,7 @@ FVector2D Navigation::updateNavigation()
         else { // We reached the final target
             std::cout << "############ Reached the target location ! ############" << std::endl;
             targetReached_ = true;
+            indexPath_ = 0;
         }
     }
 

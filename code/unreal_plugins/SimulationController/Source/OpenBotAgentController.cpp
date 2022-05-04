@@ -256,7 +256,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
             FIntRect rect_;
             FReadSurfaceDataFlags flags_;
         };
-
+        
         FReadSurfaceContext context = {target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
 
         // Required for uint8 read mode
@@ -282,6 +282,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         }
 
         observation["visual_observation"] = std::move(image);
+        
     }
 
     const FVector agent_current_location = agent_actor_->GetActorLocation();
@@ -327,11 +328,13 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), relative_position_to_goal.Size(), sin_yaw, cos_yaw});
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
-
+        
         FVector2D updatedPathPoint = Navigation::Singleton(vehicle_pawn).updateNavigation();
-
+        
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
+        
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), updatedPathPoint.X, updatedPathPoint.Y});
+        
     }
     else {
         ASSERT(false);
@@ -354,9 +357,6 @@ void OpenBotAgentController::reset()
 
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component->PVehicle->getRigidDynamicActor();
     ASSERT(rigid_body_dynamic_actor);
-
-    // Trajectory planning:
-    Navigation::Singleton(vehicle_pawn).generateTrajectory();
 
     // We want to reset the physics state of OpenBot, so we are inlining the below code from
     // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleDrive.cpp::setToRestState(), and

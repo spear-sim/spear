@@ -1,7 +1,7 @@
 #include "ImitationLearningTask.h"
 
 #include <algorithm>
-
+#include <iostream>
 #include <EngineUtils.h>
 #include <UObject/UObjectGlobals.h>
 
@@ -13,8 +13,11 @@
 ImitationLearningTask::ImitationLearningTask(UWorld* world)
 {
     // append all actors that need to be ignored during collision check
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
     std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
-
+    std::cout << __LINE__ << std::endl;
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
 
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
@@ -24,15 +27,26 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
             agent_actor_ = *actor_itr;
             ASSERT(agent_actor_);
         }
-        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) and not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
+        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) and Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
             ASSERT(!goal_actor_);
-            goal_actor_ = *actor_itr;
+            goal_actor_ = *actor_itr;;
             ASSERT(goal_actor_);
         }
         else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
             
             obstacle_ignore_actors_.emplace_back(*actor_itr);
+            std::cout << "actor_name: " << actor_name << std::endl;
         }
+    }
+
+
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) == "") {
+        ASSERT(!goal_actor_);
+        goal_actor_ = world->SpawnActor<AActor>();
+        ASSERT(goal_actor_);
+        goal_actor_hit_event_ = NewObject<UActorHitEvent>(goal_actor_, TEXT("GoalHitEvent"));
+        ASSERT(goal_actor_hit_event_);
+        goal_actor_hit_event_->RegisterComponent();
     }
     
     //ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
@@ -48,9 +62,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     ASSERT(actor_hit_event_);
     
     actor_hit_event_->RegisterComponent();
-    
     actor_hit_event_->subscribeToActor(agent_actor_);
-    
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
 }
@@ -70,7 +82,7 @@ ImitationLearningTask::~ImitationLearningTask()
 
     random_stream_.Reset();
 
-    // ASSERT(goal_actor_);
+    ASSERT(goal_actor_);
     goal_actor_ = nullptr;
 
     ASSERT(agent_actor_);
@@ -109,8 +121,7 @@ float ImitationLearningTask::getReward() const
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_OBSTACLE"});
     }
     else {
-        // const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
-        const FVector agent_to_goal = agent_actor_->GetActorLocation();
+        const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
         reward = -agent_to_goal.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
     }
     return reward;
@@ -153,42 +164,23 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
-    float position_x, position_y, position_z;
     FVector agent_position(0), goal_position(0);
 
     APawn* vehicle_pawn = dynamic_cast<APawn*>(agent_actor_);
     ASSERT(vehicle_pawn);
     
+    // Random initial position:
     agent_position = Navigation::Singleton(vehicle_pawn).generateRandomInitialPosition();
-
-    while ((agent_position - goal_position).Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "SPAWN_DISTANCE_THRESHOLD"})) {
-        position_x = random_stream_.FRandRange(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "AGENT_POSITION_X_MIN"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "AGENT_POSITION_X_MAX"}));
-        position_y = random_stream_.FRandRange(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "AGENT_POSITION_Y_MIN"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "AGENT_POSITION_Y_MAX"}));
-        position_z = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "AGENT_POSITION_Z"});
-
-        agent_position = FVector(position_x, position_y, position_z);
-
-        position_x = random_stream_.FRandRange(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "GOAL_POSITION_X_MIN"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "GOAL_POSITION_X_MAX"}));
-        position_y = random_stream_.FRandRange(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "GOAL_POSITION_Y_MIN"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "GOAL_POSITION_Y_MAX"}));
-        position_z = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "EPISODE_BEGIN", "GOAL_POSITION_Z"});
-
-        goal_position = FVector(position_x, position_y, position_z);
-    }
-
-    // TODO: set goal location based on the navigation system...
     agent_actor_->SetActorLocation(agent_position);
+
+    // Trajectory planning:
+    Navigation::Singleton(vehicle_pawn).generateTrajectory();
+    goal_position = Navigation::Singleton(vehicle_pawn).getGoal();
+    goal_actor_->SetActorLocation(goal_position);
     
-    if (not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
-        goal_actor_->SetActorLocation(goal_position);
-    }
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
 }
 
 bool ImitationLearningTask::isReady() const

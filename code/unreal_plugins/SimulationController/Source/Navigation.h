@@ -84,6 +84,23 @@ public:
      */
     FVector2D updateNavigation();
 
+    /**
+     * @brief Returns the updated waypoint based on the agent location 
+     * 
+     * @param relative_position_to_goal 
+     * @return FVector2D 
+     */
+    inline FVector getGoal()
+    {
+        return FVector(pathPoints_.Last().Location.X, pathPoints_.Last().Location.Y, pathPoints_.Last().Location.Z);
+    }
+
+    /**
+     * @brief 
+     * 
+     * @return true 
+     * @return false 
+     */
     inline bool goalReached()
     {
         return targetReached_;
