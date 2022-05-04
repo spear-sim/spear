@@ -164,6 +164,8 @@ void ImitationLearningTask::reset()
 
     APawn* vehicle_pawn = dynamic_cast<APawn*>(agent_actor_);
     ASSERT(vehicle_pawn);
+
+    Navigation::Singleton(vehicle_pawn).reset();
     
     // Random initial position:
     agent_position = Navigation::Singleton(vehicle_pawn).generateRandomInitialPosition();

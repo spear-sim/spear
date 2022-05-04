@@ -57,6 +57,12 @@ public:
     void generateTrajectory();
 
     /**
+     * @brief 
+     * 
+     */
+    void reset();
+
+    /**
      * @brief Get the trajectory point at a given index
      *
      * @param index

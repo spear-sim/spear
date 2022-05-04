@@ -114,7 +114,7 @@ ROBOT_SIM:
   DERIVATIVE_GAIN_HEADING: 2.1
   
   # PID proportional gain for the autopilot
-  PROPORTIONAL_GAIN_DIST: 3.0
+  PROPORTIONAL_GAIN_DIST: 5.0
   
   # PID derivative gain for the autopilot
   DERIVATIVE_GAIN_DIST: -0.1

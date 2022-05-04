@@ -334,9 +334,6 @@ if __name__ == "__main__":
                     f_goal.close()
                     f_rgb.close()
 
-                # Reset the environment after each run:
-                env.reset()
-
         # Close the environment:
         env.close()
         time.sleep(3)

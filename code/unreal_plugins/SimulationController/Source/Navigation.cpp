@@ -3,17 +3,28 @@
 Navigation::Navigation(APawn* pawnAgent): pawnAgent_(pawnAgent)
 {
     // Initialize navigation:
-    indexPath_ = 0; 
+    
 
     // navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent->GetWorld());
     // ASSERT(navSys_ != nullptr);
 
-    // navData_ = navSys_->GetNavDataForProps(pawnAgent->GetNavAgentPropertiesRef());
+    // navData_ = navSys_->GetNavDataForProps(pawnAgent_->GetNavAgentPropertiesRef());
     // ASSERT(navData_ != nullptr);
 
     // navMesh_ = Cast<ARecastNavMesh>(navData_);
     // ASSERT(navMesh_ != nullptr);
 
+    reset();
+    
+}
+
+Navigation::~Navigation()
+{
+}
+
+void Navigation::reset()
+{
+    indexPath_ = 0; 
     navSystemRebuild(Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_NAV_RADIUS"}));
 
     initialPosition_ = pawnAgent_->GetActorLocation(); // Initial position of the agent
@@ -22,10 +33,6 @@ Navigation::Navigation(APawn* pawnAgent): pawnAgent_(pawnAgent)
 
     // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
     navQuery_.SetAllowPartialPaths(true);
-}
-
-Navigation::~Navigation()
-{
 }
 
 FVector Navigation::generateRandomInitialPosition()
@@ -43,23 +50,24 @@ FVector Navigation::generateRandomInitialPosition()
                 break;
             }
             std::cout << "navLocation.Location = [" << navLocation.Location.X << ", " << navLocation.Location.Y << ", " << navLocation.Location.Z << "]" << std::endl;
+            navLocation = navMesh_->GetRandomPoint();
             trial++;
         } 
         initialPosition_ = navLocation.Location;       
     }
-    else { // Spawn the agent in a random location:
+    else { 
         initialPosition_ = FVector(0);
     }
 
     // use BoxTracing to adjust pawn spawn height.
     // use mesh bounding box instead of setting.
-    std::cout << "-------------------------------------------" << std::endl;
-    FRotator spawnRotation = pawnAgent_->GetActorRotation();
-    FVector center = FVector(0.0f, 0.0f, 3.0f);
-    std::cout << "initialPosition = [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]" << std::endl;
-    traceGround(initialPosition_, spawnRotation, FVector(10.0f, 10.0f, 10.0f));
-    initialPosition_ = initialPosition_ + FVector(0.0f, 0.0f, -3.0f);
-    std::cout << "initialPosition_GND = [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]" << std::endl;
+    //std::cout << "-------------------------------------------" << std::endl;
+    //FRotator spawnRotation = pawnAgent_->GetActorRotation();
+    //FVector center = FVector(0.0f, 0.0f, 3.0f);
+    //std::cout << "initialPosition = [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]" << std::endl;
+    //traceGround(initialPosition_, spawnRotation, FVector(10.0f, 10.0f, 10.0f));
+    //initialPosition_ = initialPosition_ + FVector(0.0f, 0.0f, -3.0f);
+    //std::cout << "initialPosition_GND = [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]" << std::endl;
     return initialPosition_;
 }
 
@@ -169,10 +177,11 @@ bool Navigation::navSystemRebuild(float AgentRadius)
     navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent_->GetWorld());
     ASSERT(navSys_ != nullptr);
 
-    navDataInterface_ = navSys_->GetMainNavData();
-    ASSERT(navDataInterface_ != nullptr);
+    // navDataInterface_ = navSys_->GetMainNavData();
+    // ASSERT(navDataInterface_ != nullptr);
 
-    navData_ = Cast<ANavigationData>(navDataInterface_);
+    //navData_ = Cast<ANavigationData>(navDataInterface_);
+    navData_ = navSys_->GetNavDataForProps(pawnAgent_->GetNavAgentPropertiesRef());
     ASSERT(navData_ != nullptr);
 
     navMesh_ = Cast<ARecastNavMesh>(navData_);
