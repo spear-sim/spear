@@ -33,11 +33,10 @@ public:
 
 private:
 
-    FVector getRandomPointOnNavMesh();
+    FVector getRandomPointOnNavMesh(float agent_height);
     
     FNavAgentProperties agent_properties_;
     UWorld* world_;
-    std::vector<std::string> scenes_;
 
     AActor* camera_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
