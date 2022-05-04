@@ -159,7 +159,7 @@ ROBOT_SIM:
   GEAR_RATIO: 50.0
 
   # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle 
-  CONTROL_DEAD_ZONE: 5.0
+  CONTROL_DEAD_ZONE: 2.5
 
   # Motor maximal torque
   MOTOR_TORQUE_MAX: 0.19
