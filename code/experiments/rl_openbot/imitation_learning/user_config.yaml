@@ -29,7 +29,7 @@ INTERIORSIM:
 
   # True if unreal engine instance should be launched in headless mode
   # Note: This flag is unused if your launch_mode is "running_instance"
-  RENDER_OFFSCREEN: False
+  RENDER_OFFSCREEN: True
   
   # Specify the location of the settings.json parameter file used in the InteriorSim executable. 
   # Allows avoiding the "settings.json not found" error at simulation start:
@@ -114,7 +114,7 @@ ROBOT_SIM:
   DERIVATIVE_GAIN_HEADING: 2.1
   
   # PID proportional gain for the autopilot
-  PROPORTIONAL_GAIN_DIST: 5.0
+  PROPORTIONAL_GAIN_DIST: 4.0
   
   # PID derivative gain for the autopilot
   DERIVATIVE_GAIN_DIST: -0.1

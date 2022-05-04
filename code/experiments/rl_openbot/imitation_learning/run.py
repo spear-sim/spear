@@ -334,9 +334,9 @@ if __name__ == "__main__":
                     f_goal.close()
                     f_rgb.close()
 
-        # Close the environment:
-        env.close()
-        time.sleep(3)
+            # Close the environment:
+            env.close()
+            time.sleep(3)
 
     elif learningMode == "Infer":
 
