@@ -207,7 +207,7 @@ if __name__ == "__main__":
                     Kd_lin = config.ROBOT_SIM.DERIVATIVE_GAIN_DIST
                     Kp_ang = config.ROBOT_SIM.PROPORTIONAL_GAIN_HEADING
                     Kd_ang = config.ROBOT_SIM.DERIVATIVE_GAIN_HEADING
-                    acceptanceRadius = config.ROBOT_SIM.ACCEPTANCE_RADIUS
+                    acceptanceRadius = config.SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS
                     forwardMinAngle = config.ROBOT_SIM.FORWARD_MIN_ANGLE
                     controlSaturation = config.ROBOT_SIM.CONTROL_SATURATION
                     dt = 0.1
@@ -483,7 +483,7 @@ if __name__ == "__main__":
             Kd_lin = config.ROBOT_SIM.DERIVATIVE_GAIN_DIST
             Kp_ang = config.ROBOT_SIM.PROPORTIONAL_GAIN_HEADING
             Kd_ang = config.ROBOT_SIM.DERIVATIVE_GAIN_HEADING
-            acceptanceRadius = config.ROBOT_SIM.ACCEPTANCE_RADIUS
+            acceptanceRadius = config.SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS
             forwardMinAngle = config.ROBOT_SIM.FORWARD_MIN_ANGLE
             controlSaturation = config.ROBOT_SIM.CONTROL_SATURATION
             dt = 0.1

@@ -124,11 +124,10 @@ private:
     /**
      * @brief
      *
-     * @param AgentRadius
      * @return true
      * @return false
      */
-    bool navSystemRebuild(float AgentRadius);
+    bool navSystemRebuild();
 
     /**
      * @brief Get the World Bounding Box object

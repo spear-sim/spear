@@ -25,7 +25,7 @@ Navigation::~Navigation()
 void Navigation::reset()
 {
     indexPath_ = 0; 
-    navSystemRebuild(Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_NAV_RADIUS"}));
+    navSystemRebuild();
 
     initialPosition_ = pawnAgent_->GetActorLocation(); // Initial position of the agent
 
@@ -172,7 +172,7 @@ FVector2D Navigation::updateNavigation()
     return getCurrentPathPoint();
 }
 
-bool Navigation::navSystemRebuild(float AgentRadius)
+bool Navigation::navSystemRebuild()
 {
     navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent_->GetWorld());
     ASSERT(navSys_ != nullptr);
@@ -195,8 +195,8 @@ bool Navigation::navSystemRebuild(float AgentRadius)
 
     // TODO Quentin: replace with yaml parameters
     // Set the NavMesh properties:
-    navMesh_->AgentRadius = AgentRadius;
-    navMesh_->AgentHeight = AgentRadius;
+    navMesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_RADIUS"});
+    navMesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_HEIGHT"});
     navMesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_SIZE"});
     navMesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_HEIGHT"});
     navMesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_SLOPE"});

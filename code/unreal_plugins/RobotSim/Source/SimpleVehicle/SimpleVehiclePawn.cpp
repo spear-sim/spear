@@ -84,7 +84,6 @@ ASimpleVehiclePawn::ASimpleVehiclePawn(const FObjectInitializer& ObjectInitializ
     dutyCycle_.setZero();
     motorWindingCurrent_.setZero();
     actionVec_.setZero();
-    targetLocation_ = FVector2D::ZeroVector;
 
     gearRatio_ = Config::getValue<float>({"ROBOT_SIM", "GEAR_RATIO"});
     motorVelocityConstant_ = Config::getValue<float>({"ROBOT_SIM", "MOTOR_VELOCITY_CONSTANT"});
@@ -201,14 +200,6 @@ void ASimpleVehiclePawn::MoveLeftRight(float leftCtrl, float rightCtrl)
     dutyCycle_(3) += rightCtrl; // in [%]
 }
 
-// This command is meant to be used by the python client interface.
-bool ASimpleVehiclePawn::MoveTo(const FVector2D& target)
-{
-    targetLocation_ = target;
-    useAutopilot_ = true;
-    return targetLocationReached_;
-}
-
 // Provides feedback on the action executed by the robot. This action can either
 // be defined through the python client or by keyboard/game controller input.
 Eigen::Vector2f ASimpleVehiclePawn::GetControlState()
@@ -301,11 +292,6 @@ void ASimpleVehiclePawn::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (useAutopilot_)
-    {
-        TrackWayPoint(DeltaTime);
-    }
-
     ComputeMotorTorques(DeltaTime);
 
     // Display the tick number to the simulation screen:
@@ -340,72 +326,6 @@ void ASimpleVehiclePawn::OnComponentCollision(UPrimitiveComponent* HitComponent,
                                               const FHitResult& Hit)
 {
     URobotBlueprintLib::LogMessage(FString("OnComponentCollision: ") + OtherActor->GetName(), " location: " + Hit.Location.ToString() + " normal: " + Hit.Normal.ToString(), LogDebugLevel::Informational, 30);
-}
-
-void ASimpleVehiclePawn::TrackWayPoint(float DeltaTime)
-{
-    const FVector currentLocation = this->GetActorLocation();     // Relative to global coordinate system
-    const FRotator currentOrientation = this->GetActorRotation(); // Relative to global coordinate system
-    const FVector2D relativePositionToTarget(targetLocation_.X - currentLocation.X, targetLocation_.Y - currentLocation.Y);
-    float forwardCtrl = 0.0f;
-    float rightCtrl = 0.0f;
-
-    targetLocationReached_ = false;
-
-    // If the waypoint is reached:
-    if ((relativePositionToTarget.Size() * 0.01) < Config::getValue<float>({"ROBOT_SIM", "ACCEPTANCE_RADIUS"}))
-    {
-        targetLocationReached_ = true;
-    }
-
-    if (targetLocationReached_ == false)
-    {
-        // Compute Euclidean distance to target:
-        float dist = relativePositionToTarget.Size();
-
-        // Compute robot forward axis (global coordinate system)
-        FVector forwardAxis = FVector(1.f, 0.f, 0.f); // Front axis is the X axis.
-        FVector forwardAxisRotated = currentOrientation.RotateVector(forwardAxis);
-
-        // Compute yaw in [rad]:
-        float deltaYaw = std::atan2f(forwardAxisRotated.Y, forwardAxisRotated.X) - std::atan2f(relativePositionToTarget.Y, relativePositionToTarget.X);
-
-        // Fit to range [-pi, pi]:
-        if (deltaYaw > PI)
-        {
-            deltaYaw -= 2 * PI;
-        }
-        else
-        {
-            if (deltaYaw <= -PI)
-            {
-                deltaYaw += 2 * PI;
-            }
-        }
-        FVector2D vel2D(this->GetVelocity().X, this->GetVelocity().Y);
-        float linVel = vel2D.Size() * 0.036; // In [m/s]
-        float yawVel = (FMath::DegreesToRadians(currentOrientation.Yaw) - yaw_) / DeltaTime;
-        yaw_ = FMath::DegreesToRadians(currentOrientation.Yaw);
-
-        rightCtrl = -Config::getValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_HEADING"}) * deltaYaw + Config::getValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_HEADING"}) * yawVel;
-
-        if (std::abs(deltaYaw) < Config::getValue<float>({"ROBOT_SIM", "FORWARD_MIN_ANGLE"}))
-        {
-            forwardCtrl = Config::getValue<float>({"ROBOT_SIM", "PROPORTIONAL_GAIN_DIST"}) * relativePositionToTarget.Size() * 0.01 - Config::getValue<float>({"ROBOT_SIM", "DERIVATIVE_GAIN_DIST"}) * linVel;
-            forwardCtrl = Clamp(forwardCtrl, -Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}));
-            forwardCtrl *= std::cosf(deltaYaw); // Full throttle if the vehicle face the objective. Otherwise give more priority to the yaw command.
-        }
-        else
-        {
-            forwardCtrl = 0.0f;
-        }
-        // std::cout << "dist " << relativePositionToTarget.Size() * 0.01 << std::endl;
-        // std::cout << "deltaYaw " << deltaYaw << std::endl;
-        // std::cout << "rightCtrl " << rightCtrl << std::endl;
-        // std::cout << "forwardCtrl " << forwardCtrl << std::endl;
-    }
-    MoveRight(Clamp(rightCtrl, -Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
-    MoveForward(Clamp(forwardCtrl, -Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"}), Config::getValue<float>({"ROBOT_SIM", "CONTROL_SATURATION"})));
 }
 
 // Called when the game starts or when spawned

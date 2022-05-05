@@ -58,8 +58,9 @@ SIMULATION_CONTROLLER:
     SPAWN_ON_NAV_MESH: True
     AGENT_POSITION_Z_MIN: 5.0
     AGENT_POSITION_Z_MAX: 20.0
-    AGENT_NAV_RADIUS: 20.0
     NAVMESH:
+      AGENT_RADIUS: 20.0
+      AGENT_HEIGHT: 20.0
       CELL_SIZE: 1.0
       CELL_HEIGHT: 1.0
       AGENT_MAX_SLOPE: 0.1
@@ -86,7 +87,7 @@ SIMULATION_CONTROLLER:
       MOTION_BLUR_AMOUNT: 0.0     # Strength of motion blur, 0:off, should be renamed to intensity
       MOTION_BLUR_MAX: 0.0        # Max distortion caused by motion blur, in percent of the screen width, 0:off
       POST_PROC_BLEND_WEIGHT: 0.0 # Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect
-
+    READY_CHECK_ITERATIONS_MAX: 200 # Maximum number of times the isReady() function can be called before returning true (set to -1 for intinity)
 
   SPHERE_AGENT_CONTROLLER:
     OBSERVATION_MODE: "mixed" # "mixed" or "physical"
