@@ -26,7 +26,7 @@ public:
     Navigation(const Navigation&) = delete;
 
     /**
-     * @brief
+     * @brief Access the singleton navigation object
      *
      * @param pawnAgent
      * @return Navigation&
@@ -38,29 +38,29 @@ public:
     }
 
     /**
-     * @brief Destroy the Navigation object
+     * @brief Destroy the singleton navigation object
      *
      */
     virtual ~Navigation();
 
     /**
-     * @brief
+     * @brief Generate an random initial position for the agent  
      *
      * @return FVector
      */
     FVector generateRandomInitialPosition();
 
     /**
-     * @brief
+     * @brief From the generated initial position, generate a target point and a collision-free trajectory between them.
      *
      */
     void generateTrajectory();
 
     /**
-     * @brief 
+     * @brief Reset the navigation object. This allows regenerating a navmesh and changing its properties. 
      * 
      */
-    void reset();
+    void resetNavigation();
 
     /**
      * @brief Get the trajectory point at a given index
@@ -71,18 +71,11 @@ public:
     FVector2D getPathPoint(size_t index);
 
     /**
-     * @brief Get the current trajectory point
+     * @brief Get the current trajectory point (does not update the waypoint based on the agent location)
      *
      * @return FVector2D
      */
     FVector2D getCurrentPathPoint();
-
-    /**
-     * @brief Get the next trajectory point
-     *
-     * @return FVector2D
-     */
-    FVector2D getNextPathPoint();
 
     /**
      * @brief Returns the updated waypoint based on the agent location
@@ -93,7 +86,7 @@ public:
     FVector2D updateNavigation();
 
     /**
-     * @brief Returns the updated waypoint based on the agent location
+     * @brief Get the goal position 
      *
      * @param relative_position_to_goal
      * @return FVector2D
@@ -104,7 +97,7 @@ public:
     }
 
     /**
-     * @brief
+     * @brief Returns true if the goal has been reached (with a tolerance SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS)
      *
      * @return true
      * @return false
@@ -116,7 +109,7 @@ public:
 
 private:
     /**
-     * @brief Private Singleton constructor
+     * @brief Private constructor for the singleton design template
      *
      */
     Navigation(APawn* pawnAgent);
@@ -138,7 +131,7 @@ private:
     FBox GetWorldBoundingBox(bool bScaleCeiling = true);
 
     /**
-     * @brief
+     * @brief Ensure the agent spawns on the ground surface 
      *
      * @param spawnPosition
      * @param spawnRotator
@@ -147,7 +140,6 @@ private:
     void traceGround(FVector& spawnPosition, FRotator& spawnRotator, const FVector& boxHalfSize);
 
     UNavigationSystemV1* navSys_;
-    INavigationDataInterface* navDataInterface_;
     ANavigationData* navData_;
     ARecastNavMesh* navMesh_;
     ANavMeshBoundsVolume* navmeshBounds_;

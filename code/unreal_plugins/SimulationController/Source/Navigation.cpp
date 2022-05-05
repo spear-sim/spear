@@ -3,33 +3,21 @@
 Navigation::Navigation(APawn* pawnAgent): pawnAgent_(pawnAgent)
 {
     // Initialize navigation:
-    
-
-    // navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent->GetWorld());
-    // ASSERT(navSys_ != nullptr);
-
-    // navData_ = navSys_->GetNavDataForProps(pawnAgent_->GetNavAgentPropertiesRef());
-    // ASSERT(navData_ != nullptr);
-
-    // navMesh_ = Cast<ARecastNavMesh>(navData_);
-    // ASSERT(navMesh_ != nullptr);
-
-    reset();
-    
+    resetNavigation(); 
 }
 
 Navigation::~Navigation()
 {
 }
 
-void Navigation::reset()
+void Navigation::resetNavigation()
 {
     indexPath_ = 0; 
     navSystemRebuild();
 
     initialPosition_ = pawnAgent_->GetActorLocation(); // Initial position of the agent
 
-    navQuery_ = FPathFindingQuery(pawnAgent_, *navData_, initialPosition_, FVector(0.0f, 0.0f, 0.0f));
+    navQuery_ = FPathFindingQuery(*pawnAgent_, *navData_, initialPosition_, FVector(0.0f, 0.0f, 0.0f));
 
     // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
     navQuery_.SetAllowPartialPaths(true);
@@ -59,6 +47,7 @@ FVector Navigation::generateRandomInitialPosition()
         initialPosition_ = FVector(0);
     }
 
+    // TODO: debug this mess after the paper submission... 
     // use BoxTracing to adjust pawn spawn height.
     // use mesh bounding box instead of setting.
     //std::cout << "-------------------------------------------" << std::endl;
@@ -177,10 +166,6 @@ bool Navigation::navSystemRebuild()
     navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent_->GetWorld());
     ASSERT(navSys_ != nullptr);
 
-    // navDataInterface_ = navSys_->GetMainNavData();
-    // ASSERT(navDataInterface_ != nullptr);
-
-    //navData_ = Cast<ANavigationData>(navDataInterface_);
     navData_ = navSys_->GetNavDataForProps(pawnAgent_->GetNavAgentPropertiesRef());
     ASSERT(navData_ != nullptr);
 
@@ -193,7 +178,6 @@ bool Navigation::navSystemRebuild()
     }
     ASSERT(navmeshBounds_ != nullptr);
 
-    // TODO Quentin: replace with yaml parameters
     // Set the NavMesh properties:
     navMesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_RADIUS"});
     navMesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_HEIGHT"});
@@ -206,16 +190,21 @@ bool Navigation::navSystemRebuild()
     navMesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
 
     // Dynamic update navMesh location and size
-    navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-
     FBox worldBox = GetWorldBoundingBox();
-    navmeshBounds_->SetActorLocation(worldBox.GetCenter(), false); // Place the navmesh at the center of the map
-    navmeshBounds_->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f); // Rescae the navmesh
+    navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    navmeshBounds_->SetActorLocation(worldBox.GetCenter(), false);          // Place the navmesh at the center of the map
+    navmeshBounds_->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);   // Rescae the navmesh
     navmeshBounds_->GetRootComponent()->UpdateBounds();
-    // NavmeshBounds->SupportedAgents.bSupportsAgent;
     navSys_->OnNavigationBoundsUpdated(navmeshBounds_);
-    navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Static); // Redo modify frequency change
-    navSys_->Build();                                                            // Rebuild NavMesh, required for update AgentRadius
+
+    if (Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "USE_STATIC_NAVMESH"})) {
+        navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    }
+    else { // A dynmic navmesh will account for changes occuring in the environment at runtime. But this is more computationally intensive...
+        navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Dynamic); 
+    }
+
+    navSys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 
     return true;
 }
