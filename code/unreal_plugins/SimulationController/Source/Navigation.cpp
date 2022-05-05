@@ -197,11 +197,11 @@ bool Navigation::navSystemRebuild()
     navmeshBounds_->GetRootComponent()->UpdateBounds();
     navSys_->OnNavigationBoundsUpdated(navmeshBounds_);
 
-    if (Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "USE_STATIC_NAVMESH"})) {
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "USE_STATIC_NAVMESH"})) {
         navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Static);
     }
     else { // A dynmic navmesh will account for changes occuring in the environment at runtime. But this is more computationally intensive...
-        navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Dynamic); 
+        navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Movable); 
     }
 
     navSys_->Build(); // Rebuild NavMesh, required for update AgentRadius
