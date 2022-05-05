@@ -242,6 +242,9 @@ if __name__ == "__main__":
                     array_obs[i][9] = obs["physical_observation"][9] # desired (waypoint) agent pos Y wrt. world
                     array_obs[i][10] = ts # time stamp
                     
+                    if array_obs[i][4] < 0: # For now we don't simuate underground ! 
+                        collisionFlag = True
+                        break
                     
                     print(f"Action: {array_obs[i][0]}, {array_obs[i][1]}")
                     print(f"Pose: {array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]}")
