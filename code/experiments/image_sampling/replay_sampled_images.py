@@ -13,7 +13,7 @@ from interiorsim.config import get_config
 
 def read_recorded_data(scene):
     pose_data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{scene}/pose.txt")
-    image_data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{scene}/images")
+    image_data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{scene}/images/SEG")
 
     with open(pose_data_path, 'r') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     with open(scene_list_path, 'r') as f:
         csv_reader = csv.reader(f, delimiter=',')
         scenes = next(csv_reader)
-        scenes = scenes[2:4]    
+        scenes = scenes[:-1]   
 
     # load config
     config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
@@ -50,6 +50,7 @@ if __name__ == "__main__":
 
         # check if path exists
         assert os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{scene}"))
+        assert config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.ACTION_MODE == "replay_sampled_images"
 
         poses, images = read_recorded_data(scene)
 
@@ -59,8 +60,6 @@ if __name__ == "__main__":
         # reset the simulation
         _ = env.reset()
 
-        assert config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.ACTION_MODE == "replay_sampled_images"
-
         # iterate over recorded poses
         for index, data in poses.items():
 
@@ -68,9 +67,10 @@ if __name__ == "__main__":
 
             assert obs["pose"].all() == np.array(data).all()
 
-            # cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-            # cv2.waitKey(0)
-            
+            cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            cv2.imshow(f"recorded image", images[index]) # OpenCV expects BGR instead of RGB
+            cv2.waitKey(0)
+
             # write data
             # ts = datetime.datetime.now().timestamp() * 1e9
             # return_status = cv2.imwrite(os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{scenes[count-1]}/images/{i%100}.png"), obs["visual_observation"])

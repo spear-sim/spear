@@ -1,12 +1,12 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import csv
+from unittest import skip
 import cv2
 import datetime
 import json
 import numpy as np
 import os
-import subprocess
 import time
 
 from interiorsim import Env
@@ -28,11 +28,19 @@ if __name__ == "__main__":
     # random generator
     rng = np.random.default_rng(config.IMAGE_SAMPLING_EXPERIMENT.SEED)
 
+    # choose from scenes in content folder
+    scenes_on_disk = os.listdir("/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/LinuxNoEditor/RobotProject/Content/Paks")
+    chosen_scenes = []
+    for scene in scenes_on_disk:
+        split_string_list = scene.split('_')
+        if len(split_string_list) > 1 and split_string_list[1] == "Linux.pak":
+            chosen_scenes.append(split_string_list[0])
+
     # choose 10 random scenes
-    print(f"number of scenes: {len(scenes)}")
-    ri = rng.integers(low=0, high=len(scenes), size=(10))
-    chosen_scenes = [scenes[x] for x in ri]
-    print(f"chosen scenes {chosen_scenes}")
+    # print(f"number of scenes: {len(scenes)}")
+    # ri = rng.integers(low=0, high=len(scenes), size=(138))
+    # chosen_scenes = [scenes[x] for x in ri]
+    # print(f"chosen scenes {chosen_scenes}")
 
     # download chosen scenes
     # script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../tools/scene_manager/scene_manager.py")
@@ -51,15 +59,18 @@ if __name__ == "__main__":
     if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")):
         os.mkdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data"))
 
-    scenes_sampled = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/scenes.txt".format(scenes[count])), "w")
+    scenes_sampled = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/scenes.txt"), "w")
+    bad_scenes = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/bad_scenes.txt"), "w")
+    skipped_scenes = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/skipped_scenes.txt"), "w")
     
-    for i in range(1000):
+    i = 0
+    while i < 41100:
 
         # reset condition
-        if i%100 == 0:
+        if i%300 == 0:
             try:
                 env.close()
-                time.sleep(5)
+                time.sleep(10)
                 pose_output_file.close()
                 frame_output_file.close()
             except:
@@ -67,29 +78,47 @@ if __name__ == "__main__":
 
             # choose map to load
             config.defrost()
-            config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_{}".format(chosen_scenes[count]) # set first scene in the list as starting scene
+            config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_{}".format(chosen_scenes[count]) # set scene in the list as starting scene
             config.freeze()
 
             # check if path exists
-            if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/scene_{}".format(scenes[count]))):
-                os.makedirs(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/scene_{}/images".format(scenes[count])))
+            if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{chosen_scenes[count]}/images/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
+                os.makedirs(os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{chosen_scenes[count]}/images/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
+                print(f"collecting images for scene {chosen_scenes[count]}")
+            else:
+                images = os.listdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{chosen_scenes[count]}/images/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
+                print(f"scene {chosen_scenes[count]}, num_images = {len(images)}")
+                if len(images) == 300:
+                    print(f"scene - {chosen_scenes[count]} has {len(images)} images already, so skipping.")
+                    skipped_scenes.write(chosen_scenes[count])
+                    skipped_scenes.write("\n")
+                    i = 300*(int(i/300)+1)
+                    count += 1
+                    continue
             
             # write headers
-            scenes_sampled.write(scenes[count])
+            scenes_sampled.write(chosen_scenes[count])
             scenes_sampled.write(",")
-            pose_output_file = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/scene_{}/pose.txt".format(scenes[count])), "w")
+            pose_output_file = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/scene_{}/pose.txt".format(chosen_scenes[count])), "w")
             pose_csv_writer = csv.writer(pose_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             pose_csv_writer.writerow(["scene_id", "timestamp (ns)", "pos_x_cm", "pos_y_cm", "pos_z_cm", "roll_deg", "pitch_deg", "yaw_deg"])
 
-            frame_output_file = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/scene_{}/frames.txt".format(scenes[count])), "w")
+            frame_output_file = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/scene_{}/frames.txt".format(chosen_scenes[count])), "w")
             frame_csv_writer = csv.writer(frame_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             frame_csv_writer.writerow(["scene_id", "timestamp (ns)", "frame_number"])
 
             # create Env object
-            env = Env(config)
+            try:
+                env = Env(config)
+            except:
+                bad_scenes.write(chosen_scenes[count])
+                bad_scenes.write("\n")
+                i = 300*(int(i/300)+1)
+                count += 1
+                continue
 
             # reset the simulation
-            obs = env.reset()
+            _ = env.reset()
 
             count += 1
 
@@ -103,14 +132,20 @@ if __name__ == "__main__":
         
         # write data
         ts = datetime.datetime.now().timestamp() * 1e9
-        return_status = cv2.imwrite(os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{scenes[count-1]}/images/{i%100}.png"), obs["visual_observation"])
+        output_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{chosen_scenes[count-1]}/images/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
+
+        assert os.path.exists(output_path) == True
+        return_status = cv2.imwrite(output_path +f"/{i%300}.png", obs["visual_observation"])
         assert return_status == True
-        pose_csv_writer.writerow([scenes[count-1], int(ts), obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
-        frame_csv_writer.writerow([scenes[count-1], int(ts), i%100])
+
+        pose_csv_writer.writerow([chosen_scenes[count-1], int(ts), obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
+        frame_csv_writer.writerow([chosen_scenes[count-1], int(ts), i%300])
+        i+=1
 
     env.close()
     pose_output_file.close()
     frame_output_file.close()
     scenes_sampled.close()
+    bad_scenes.close()
 
     cv2.destroyAllWindows()

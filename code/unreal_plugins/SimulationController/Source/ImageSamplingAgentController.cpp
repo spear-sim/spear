@@ -272,7 +272,7 @@ FVector ImageSamplingAgentController::getRandomPointOnNavMesh(float agent_height
     RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh, position, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "AGENT_PROPERTIES", "AGENT_HEIGHT"}));
     ASSERT(position.Size() > 0);
     position.Z = agent_height;
-    UE_LOG(LogTemp, Warning, TEXT("Spawn position is %f, %f, %f"), position.X, position.Y, position.Z);
+    // UE_LOG(LogTemp, Warning, TEXT("Spawn position is %f, %f, %f"), position.X, position.Y, position.Z);
 
     return position;
 }
