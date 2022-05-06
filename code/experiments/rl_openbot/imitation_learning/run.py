@@ -93,11 +93,11 @@ def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, K
         
         action = np.array([leftWheelCommand,rightWheelCommand])
 
-    print(f"dist: {dist} m")
+    #print(f"dist: {dist} m")
     #print(f"deltaYaw: {deltaYaw}")
     #print(f"rightCtrl: {rightCtrl}")
     #print(f"forwardCtrl: {forwardCtrl}")
-    print(f"action: {action[0]}, {action[1]}")
+    #print(f"action: {action[0]}, {action[1]}")
 
     return action, targetLocationReached
     
@@ -246,8 +246,8 @@ if __name__ == "__main__":
                         collisionFlag = True
                         break
                     
-                    print(f"Action: {array_obs[i][0]}, {array_obs[i][1]}")
-                    print(f"Pose: {array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]}")
+                    #print(f"Action: {array_obs[i][0]}, {array_obs[i][1]}")
+                    #print(f"Pose: {array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]}")
 
                     # Save the images:
                     im = Image.fromarray(obs["visual_observation"])
