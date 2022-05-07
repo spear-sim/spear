@@ -10,13 +10,13 @@ import shutil
 # the corresponding dist-sin-cos measurements. This is useful for debug purposes. 
 
 
-unzippedFolderName = "dataset/uploaded/unzipped/"
+unzippedFolderName = "dataset/uploaded/"
 
-for folder in os.listdir(f"dataset/uploaded"):
+for folder in os.listdir(f"dataset/zip"):
     
     if folder.endswith(".zip"):
     
-        path = f"dataset/uploaded/{folder}" 
+        path = f"dataset/zip/{folder}" 
         unzippedFileName = os.path.join(unzippedFolderName, folder[:-4])
         with zipfile.ZipFile(path, "r") as zip_ref:
             
