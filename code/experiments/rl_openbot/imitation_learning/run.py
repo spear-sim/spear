@@ -24,7 +24,7 @@ from PIL import Image
 import os
 import random
 import shutil
-#import tensorflow as tf
+import tensorflow as tf
 import tflite_runtime.interpreter as tflite
 import time
 
@@ -358,7 +358,7 @@ if __name__ == "__main__":
         config.freeze()
 
         # Load TFLite model and allocate tensors.
-        interpreter = tflite.Interpreter("./models/TestSession_1_pilot_net_lr0.0001_bz64_bn/checkpoints/best-val.tflite")
+        interpreter = tflite.Interpreter("./models/TestSession_1_pilot_net_lr0.0001_bz128_bn/checkpoints/best-val.tflite")
         interpreter.allocate_tensors()
 
         # Get input and output tensors.
@@ -403,7 +403,7 @@ if __name__ == "__main__":
 
                     # Process (crop) visual observations:
                     img_input = np.float32(obs["visual_observation"])/255
-                    ##img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
+                    img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
 
                     # Physical observations
                     cmd_input[0][0] = np.float32(obs["physical_observation"][2])/100
