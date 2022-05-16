@@ -78,7 +78,9 @@ SIMULATION_CONTROLLER:
     # - "full-pose" the observation vector is set to be the vehicle's x/y/z position concatenated with its roll/pitch/yaw angles in the world frame.
     # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal
     PHYSICAL_OBSERVATION_MODE: "full-pose"
-
+    # "waypoint": in full-pose mode, the robot tracks a sequence of trajectory waypoints leading to the goal. No effect in "dist-sin-cos" mode.
+    # "goal": in full-pose mode, the robot tracks the goal and moves to it in straight line. No effect in "dist-sin-cos" mode.
+    GOAL_TRACKING_MODE: "waypoint"
     AGENT_READY_VELOCITY_THRESHOLD: 0.0
     MIXED_MODE:
       OBSERVATION_CAMERA_ACTOR_NAME: ""

@@ -292,13 +292,13 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     ASSERT(vehicle_pawn);
 
     // Get relative position to the goal in the global coordinate system:
-    FVector2D relative_position_to_goal;
+    // FVector2D relative_position_to_goal;
     // if (not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
     //     relative_position_to_goal = FVector2D((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
     // }
     // else {
-        FVector2D currentPathPoint = Navigation::Singleton(vehicle_pawn).getCurrentPathPoint();
-        relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
+        // FVector2D currentPathPoint = Navigation::Singleton(vehicle_pawn).getCurrentPathPoint();
+        // relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
     // }
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
@@ -306,6 +306,9 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         // Compute robot forward axis (global coordinate system)
         FVector forward_axis = FVector(1.f, 0.f, 0.f); // Front axis is the X axis.
         FVector forward_axis_rotated = agent_current_orientation.RotateVector(forward_axis);
+
+        FVector2D currentPathPoint = Navigation::Singleton(vehicle_pawn).getCurrentPathPoint();
+        FVector2D relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
 
         // Compute yaw in [rad]:
         float delta_yaw = std::atan2f(forward_axis_rotated.Y, forward_axis_rotated.X) - std::atan2f(relative_position_to_goal.Y, relative_position_to_goal.X);
@@ -328,13 +331,22 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), relative_position_to_goal.Size(), sin_yaw, cos_yaw});
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
-        
+
         FVector2D updatedPathPoint = Navigation::Singleton(vehicle_pawn).updateNavigation();
-        
+        FVector goalPathPoint = Navigation::Singleton(vehicle_pawn).getGoal();
+
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
-        
-        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), updatedPathPoint.X, updatedPathPoint.Y});
-        
+
+        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "waypoint") {
+            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), updatedPathPoint.X, updatedPathPoint.Y});
+        }
+        else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "goal") {
+            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), goalPathPoint.X, goalPathPoint.Y});
+        }
+        else {
+            ASSERT(false);
+        }
+
     }
     else {
         ASSERT(false);

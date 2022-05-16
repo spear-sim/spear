@@ -37,6 +37,49 @@ from interiorsim.constants import INTERIORSIM_ROOT_DIR
 def Clamp(n, smallest, largest):
     return max(smallest, min(n, largest))
 
+def computeNeurNetInput(goalPositionXY, actualPoseYawXY, acceptanceRadius):
+
+    targetLocationReached = False
+    obsNet = np.array([0.0,0.0,1.0])
+    deltaYaw = 0.0
+    forward = np.array([1,0]) # Front axis is the X axis.
+    forwardRotated = np.array([0,0])
+
+    # Target error vector (global coordinate system):
+    relativePositionToTarget = desiredPositionXY - np.array([actualPoseYawXY[1],actualPoseYawXY[2]])
+    
+    # Compute Euclidean distance to target in [m]:
+    dist = np.linalg.norm(relativePositionToTarget)*0.01
+
+    if dist < acceptanceRadius :
+        targetLocationReached = True;
+
+    # Otherwise compute the PID command:
+    else:
+    
+        # Compute robot forward axis (global coordinate system):
+        yawVehicle = actualPoseYawXY[0];
+        rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
+
+        forwardRotated = np.dot(rot, forward)
+
+        # Compute yaw:
+        deltaYaw = atan2(forwardRotated[1], forwardRotated[0]) - atan2(relativePositionToTarget[1], relativePositionToTarget[0])
+
+        # Fit to range [-pi, pi]:
+        if deltaYaw > math.pi:
+            deltaYaw -= 2 * math.pi
+        elif deltaYaw <= -math.pi:
+            deltaYaw += 2 * math.pi
+        
+        sinYaw = sin(deltaYaw)
+        cosYaw = cos(deltaYaw)
+        
+        obsNet = np.array([dist,sinYaw,cosYaw])
+
+    return obsNet, targetLocationReached
+    
+
 def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation):
 
     targetLocationReached = False
@@ -156,6 +199,7 @@ if __name__ == "__main__":
 
         config.defrost()
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "full-pose"
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.GOAL_TRACKING_MODE = "waypoint"
         config.freeze()
 
         speedMultiplier = 1
@@ -349,16 +393,22 @@ if __name__ == "__main__":
 
         # ---> left wheel commands in the range [-1, 1]
         # ---> right wheel commands in the range [-1, 1]
-        # ---> Euclidean distance between current x-y position and target x-y position.
-        # ---> Sinus of the relative yaw between current pose and target pose.
-        # ---> Cosinus of the relative yaw between current pose and target pose.
+        # ---> X position in world frame.
+        # ---> Y position in world frame.
+        # ---> Z position in world frame.
+        # ---> Roll in world frame.
+        # ---> Pitch in world frame.
+        # ---> Yaw in world frame.
+        # ---> X position of the goal in world frame.
+        # ---> Y position of the goal in world frame.
 
         config.defrost()
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "dist-sin-cos" # Owerwrite observation mode to prevent crash.
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "full-pose"
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.GOAL_TRACKING_MODE = "goal"
         config.freeze()
 
         # Load TFLite model and allocate tensors.
-        interpreter = tflite.Interpreter("./models/TestSession_1_pilot_net_lr0.0001_bz128_bn/checkpoints/best-val.tflite")
+        interpreter = tflite.Interpreter("./models/navigation.tflite")
         interpreter.allocate_tensors()
 
         # Get input and output tensors.
@@ -388,6 +438,12 @@ if __name__ == "__main__":
                 goalReachedFlag = False
                 result = np.empty((0, 2), dtype=float)
                 executedIterations = 0
+                
+                folderName = f"dataset/uploaded/run_{mapName}_{run}"
+                dataFolderName = folderName+"/data/"
+                os.makedirs(dataFolderName, exist_ok=True)
+                os.makedirs(dataFolderName+"sensor_data", exist_ok=True)
+                os.makedirs(dataFolderName+"images", exist_ok=True)
 
                 print("----------------------")
                 print(f"run {run} over {runs}")
@@ -395,20 +451,42 @@ if __name__ == "__main__":
 
                 # Reset the simulation to get the first observation
                 obs = env.reset()
+                reward = 0.0
+                #actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y], for velocity initialization
+                #desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
+
+                
+                f_infer = open(dataFolderName+"sensor_data/Inference.txt", 'w') # Low-level commands sent to the motors
+                writer_infer = csv.writer(f_infer , delimiter=",")
+                writer_infer.writerow( ('Iteration','posX','posY','posZ','rollAngle','pitchAngle','yawAngle','goalX','goalY','dist','sinYaw','cosYaw', 'ctrl_left', 'ctrl_right', 'inference_time', 'reward') )
+
 
                 # Take a few steps:
                 for i in range(numIter):
 
                     print(f"iteration {i} over {numIter}")
+                    
+                    #executedIterations = i+1
+                    ct = datetime.datetime.now()
+                    ts = 10000*ct.timestamp()
+                    acceptanceRadius = config.SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS
 
                     # Process (crop) visual observations:
                     img_input = np.float32(obs["visual_observation"])/255
                     img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
 
                     # Physical observations
-                    cmd_input[0][0] = np.float32(obs["physical_observation"][2])/100
-                    cmd_input[0][1] = np.float32(obs["physical_observation"][3])
-                    cmd_input[0][2] = np.float32(obs["physical_observation"][4])
+                    desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
+                    actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y]
+                    cmd, targetLocationReached = computeNeurNetInput(desiredPositionXY, actualPoseYawXY, acceptanceRadius) # here desiredPositionXY directly refers to the goal position rather than any waypoint...
+                    #cmd_input[0][0] = np.float32(obs["physical_observation"][2])/100
+                    #cmd_input[0][1] = np.float32(obs["physical_observation"][3])
+                    #cmd_input[0][2] = np.float32(obs["physical_observation"][4])
+                    cmd_input[0][0] = np.float32(cmd[0])
+                    cmd_input[0][1] = np.float32(cmd[1])
+                    cmd_input[0][2] = np.float32(cmd[2])
+                    
+                    print(f"cmd_input: {cmd}")
 
                     # Inference:
                     interpreter.set_tensor(input_details[0]["index"], np.expand_dims(img_input, axis=0))
@@ -416,37 +494,58 @@ if __name__ == "__main__":
                     start_time = time.time()
                     interpreter.invoke()
                     stop_time = time.time()
-                    print('Infererence time: {:.3f}ms'.format((stop_time - start_time) * 1000))
+                    executionTime = (stop_time - start_time) * 1000
+                    #print('Infererence time: {:.3f}ms'.format(executionTime))
 
                     # Output of the Artificial Neural Network
                     output = interpreter.get_tensor(output_details[0]["index"])
 
                     # Command
-                    action = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
-                    print(action)
+                    act = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
+                    action = np.array([act[0][0],act[0][1]])
+                    #print(action)
+                    
+                    writer_infer.writerow( (i, obs["physical_observation"][2], obs["physical_observation"][3], obs["physical_observation"][4], obs["physical_observation"][5], obs["physical_observation"][6], obs["physical_observation"][7], obs["physical_observation"][8], obs["physical_observation"][9], cmd[0], cmd[1], cmd[2], action[0], action[1], executionTime, reward) )
 
                     # Send action to the agent:
-                    obs, reward, done, info = env.step({"apply_voltage": action})
+                    obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1]]})
+                    
+                    # Save the images:
+                    im = Image.fromarray(obs["visual_observation"])
+                    im.save(dataFolderName+"images/%d.jpeg" % i)
+                    
+                    if run >= numIter-1:
+                        done = True
 
                     # Interrupt the step loop if the done flag is raised:
                     if done:
+                        f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') # Low-level commands sent to the motors
+                        writer_status = csv.writer(f_status , delimiter=",")          
+                        writer_status.writerow( ('Status','Iterations') )
+                        
                         if info["hit_obstacle"]:
-                            print("Collision detected ! Killing simulation and restarting run...")
+                            print("Collision detected !")
                             collisionFlag = True
+                            writer_status.writerow( ('Collision',i) )
+                            f_status.close()
 
-                        if info["hit_goal"]:
+                        elif info["hit_goal"]:
                             print("Goal reached !")
                             goalReachedFlag = True
+                            writer_status.writerow( ('Goal',i) )
+                            f_status.close()
+                            
+                        else: 
+                            print("limit numer of iterations reached !")
+                            writer_status.writerow( ('Iteration Limit',i) )
+                            f_status.close()
 
                         break
 
-                # If the run was executed with a collision event, re-execute it:
-                if collisionFlag == True:
-                    print("Restarting run...")
-
-                # Otherwise move to the next run:
-                else:
-                    run = run + 1
+                run = run + 1
+                
+                f_infer.close()
+                
 
         # Close the environment:
         env.close()
