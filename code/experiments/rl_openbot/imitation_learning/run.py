@@ -518,8 +518,7 @@ if __name__ == "__main__":
                         f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') 
                         writer_status = csv.writer(f_status , delimiter=",")          
                         writer_status.writerow( ('Status','Iterations') )
-                        goalReachedFlag = True
-                        writer_status.writerow( ('Goal',i) )
+                        writer_status.writerow( ('Iteration Limit',i) )
                         f_status.close()
                         break
                     
@@ -528,7 +527,7 @@ if __name__ == "__main__":
                         writer_status = csv.writer(f_status , delimiter=",")          
                         writer_status.writerow( ('Status','Iterations') )
                         goalReachedFlag = True
-                        writer_status.writerow( ('Iteration Limit',i) )
+                        writer_status.writerow( ('Goal',i) )
                         f_status.close()
                         break
                     
