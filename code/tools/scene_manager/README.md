@@ -51,7 +51,10 @@
 
 	```
    `-o`: optional. Content saved directory. Default saved directory is `Saved/<version>/<relative_file_path>`.
-
+   `-c`: optional. Download content type for supplementary data. If not specified, download scene data. Valid content types: `topview`, `topview_semantic`,`panorama`.
+   ```bash
+   python scene_manager.py -i 235554690 -v v4 -c panorama
+   ```
 
 2. If download fails or there are materials missing in Virtual World (mostly due to internet issues), try run 'scene_manager.py -v v1 -f true -i <virtualworld-id>' to reload the scene. Download log can be found in `Saved/UpdateLog/{virtualworld-id}_failed.txt`.
 3. Start from v4, SceneManger delivers virtual worlds in `.pak` format which can be used directly in standalone executable without scene cooking step. Currently, it only supports Linux.
@@ -106,3 +109,6 @@ y_unreal = - width / 2 + x_image + y_center
 x_image = width / 2 + y_unreal - y_center
 y_image = width / 2 - x_unreal + x_center
 ```
+
+### panorama
+For each scene, we generate panorama images for five largest rooms for each scene, with camera placed in the center of each room. The images are in the order of the room size.
