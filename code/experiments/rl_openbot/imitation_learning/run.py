@@ -515,11 +515,26 @@ if __name__ == "__main__":
                     im.save(dataFolderName+"images/%d.jpeg" % i)
                     
                     if run >= numIter-1:
-                        done = True
-
+                        f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') 
+                        writer_status = csv.writer(f_status , delimiter=",")          
+                        writer_status.writerow( ('Status','Iterations') )
+                        goalReachedFlag = True
+                        writer_status.writerow( ('Goal',i) )
+                        f_status.close()
+                        break
+                    
+                    if targetLocationReached:
+                        f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') 
+                        writer_status = csv.writer(f_status , delimiter=",")          
+                        writer_status.writerow( ('Status','Iterations') )
+                        goalReachedFlag = True
+                        writer_status.writerow( ('Iteration Limit',i) )
+                        f_status.close()
+                        break
+                    
                     # Interrupt the step loop if the done flag is raised:
                     if done:
-                        f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') # Low-level commands sent to the motors
+                        f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') 
                         writer_status = csv.writer(f_status , delimiter=",")          
                         writer_status.writerow( ('Status','Iterations') )
                         
