@@ -51,6 +51,20 @@ public:
     FVector generateRandomInitialPosition();
 
     /**
+     * @brief Use the yaml parameter system to store a starting point which can be changed at every run in python (hack to be removed)
+     * 
+     * @return FVector 
+     */
+    FVector generateInitialPositionFromYaml();
+
+    /**
+     * @brief Use the yaml parameter system to store a goal point which can be changed at every run in python (hack to be removed)
+     * 
+     * @return FVector 
+     */
+    FVector generateGoalPositionFromYaml();
+
+    /**
      * @brief From the generated initial position, generate a target point and a collision-free trajectory between them.
      *
      */
@@ -105,6 +119,15 @@ public:
     inline bool goalReached()
     {
         return targetReached_;
+    }
+
+    /**
+     * @brief DIRTY hack for neurips
+     * 
+     */
+    inline void iterateIndex()
+    {
+        executionCounter_++;
     }
 
 private:
@@ -162,4 +185,6 @@ private:
     size_t indexPath_;
 
     bool targetReached_ = false;
+
+    int executionCounter_ = 0;
 };

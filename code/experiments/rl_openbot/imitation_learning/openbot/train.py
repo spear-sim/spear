@@ -407,7 +407,8 @@ def do_evaluation(tr: Training, callback: tf.keras.callbacks.Callback, verbose=0
         np.array(history.history["val_angle_metric"])
         + np.array(history.history["val_direction_metric"])
     )
-    best_checkpoint = str("cp-%04d.ckpt" % (best_index + 1))
+    #best_checkpoint = str("cp-%04d.ckpt" % (best_index + 1))
+    best_checkpoint = "cp-best-train.ckpt"
     best_tflite = utils.generate_tflite(checkpoint_path, best_checkpoint)
     utils.save_tflite(best_tflite, checkpoint_path, "best")
     print(
@@ -419,7 +420,8 @@ def do_evaluation(tr: Training, callback: tf.keras.callbacks.Callback, verbose=0
         )
     )
 
-    last_checkpoint = sorted(utils.list_dirs(checkpoint_path))[-1]
+    #last_checkpoint = sorted(utils.list_dirs(checkpoint_path))[-1]
+    last_checkpoint = "cp-last.ckpt"
     last_tflite = utils.generate_tflite(checkpoint_path, last_checkpoint)
     utils.save_tflite(last_tflite, checkpoint_path, "last")
     print(
