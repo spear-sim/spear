@@ -15,6 +15,7 @@
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include "Kismet/GameplayStatics.h"
+#include <NavMesh/NavMeshBoundsVolume.h>
 #include <UObject/UObjectGlobals.h>
 
 #include <common_utils/NavMeshUtil.hpp>
@@ -31,10 +32,10 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
     // store ref to world
     world_ = world;
 
-    agent_properties_.AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "AGENT_PROPERTIES", "AGENT_HEIGHT"});
-    agent_properties_.AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "AGENT_PROPERTIES", "AGENT_RADIUS"});
+    rebuildNavSystem();
 
-    FVector spawn_location = getRandomPointOnNavMesh(agent_properties_.AgentHeight);
+    FVector spawn_location;
+    RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, spawn_location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
 
     FActorSpawnParameters spawn_params;
     spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "CAMERA_ACTOR_NAME"}).c_str());
@@ -51,7 +52,7 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
 
     // set camera properties
     scene_capture_component_->bAlwaysPersistRenderingState = 1;
-    scene_capture_component_->FOVAngle = 60.f;
+    scene_capture_component_->FOVAngle = 90.f;
     scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
     // scene_capture_component_->ShowFlags.SetTemporalAA(false);
     // scene_capture_component_->ShowFlags.SetAntiAliasing(true);
@@ -80,7 +81,7 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
     ASSERT(vw_level_manager);
     
     // set post processing parameters
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE"}) == "SEG") {
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE"}) == "seg") {
         scene_capture_component_->AddOrUpdateBlendable(vw_level_manager->getPostProcessMaterial(EPostProcessMaterialType::Semantic));
     }
 }
@@ -176,7 +177,14 @@ void ImageSamplingAgentController::applyAction(const std::map<std::string, std::
         ASSERT(std::all_of(action.at("set_random_agent_height_cms").begin(), action.at("set_random_agent_height_cms").end(), [](float i) -> bool {return isfinite(i);}));
 
         const FRotator random_orientation {action.at("set_random_orientation_pyr_deg").at(0), action.at("set_random_orientation_pyr_deg").at(1), action.at("set_random_orientation_pyr_deg").at(2)};
-        const FVector random_position = getRandomPointOnNavMesh(action.at("set_random_agent_height_cms").at(0));
+
+        FVector random_position = FVector(0);
+        int count = 0;
+        while(random_position.Size() <= 0 and count < 20) {
+            RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, random_position, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
+            count++;
+        }
+        random_position.Z = action.at("set_random_agent_height_cms").at(0);
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
@@ -257,22 +265,51 @@ bool ImageSamplingAgentController::isReady() const
     return true;
 }
 
-FVector ImageSamplingAgentController::getRandomPointOnNavMesh(float agent_height)
+void ImageSamplingAgentController::rebuildNavSystem()
 {
-    // get position
     UNavigationSystemV1* nav_sys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world_);
     ASSERT(nav_sys);
-    // agent_properties_.AgentHeight = agent_height;
-    ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties_);
+
+    FNavAgentProperties agent_properties;
+    agent_properties.AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
+    agent_properties.AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
+
+    ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
     ASSERT(nav_data);
-    ARecastNavMesh* nav_mesh = Cast<ARecastNavMesh>(nav_data);
-    ASSERT(nav_mesh);
 
-    FVector position;
-    RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh, position, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "AGENT_PROPERTIES", "AGENT_HEIGHT"}));
-    ASSERT(position.Size() > 0);
-    position.Z = agent_height;
-    // UE_LOG(LogTemp, Warning, TEXT("Spawn position is %f, %f, %f"), position.X, position.Y, position.Z);
+    nav_mesh_ = Cast<ARecastNavMesh>(nav_data);
+    ASSERT(nav_mesh_);
 
-    return position;
+    ANavMeshBoundsVolume* nav_mesh_bounds = nullptr;
+    for (TActorIterator<ANavMeshBoundsVolume> it(world_); it; ++it) {
+        nav_mesh_bounds = *it;
+    }
+    ASSERT(nav_mesh_bounds);
+
+    // Set the NavMesh properties:
+    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "CELL_SIZE"});
+    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "CELL_HEIGHT"});
+    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+
+    // Dynamic update navMesh location and size
+    FBox worldBox = getWorldBoundingBox();
+    nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    nav_mesh_bounds->SetActorLocation(worldBox.GetCenter(), false);          // Place the navmesh at the center of the map
+    nav_mesh_bounds->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);   // Rescae the navmesh
+    nav_mesh_bounds->GetRootComponent()->UpdateBounds();
+    nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds);        
+
+    nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
+}
+
+FBox ImageSamplingAgentController::getWorldBoundingBox(bool bScaleCeiling)
+{
+    FBox box(ForceInit);
+    for (TActorIterator<AActor> it(world_); it; ++it) {
+        if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
+            box += it->GetComponentsBoundingBox(false, true);
+        }
+    }
+    // Remove ceiling
+    return !bScaleCeiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
 }

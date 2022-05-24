@@ -7,10 +7,12 @@
 #include "AgentController.h"
 
 class AActor;
+class ARecastNavMesh;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
 
+struct FBox;
 struct FNavAgentProperties;
 struct FVector;
 
@@ -33,10 +35,12 @@ public:
 
 private:
 
-    FVector getRandomPointOnNavMesh(float agent_height);
+    void rebuildNavSystem();
+    FBox getWorldBoundingBox(bool bScaleCeiling = true);
     
-    FNavAgentProperties agent_properties_;
     UWorld* world_;
+
+    ARecastNavMesh* nav_mesh_ = nullptr;
 
     AActor* camera_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
