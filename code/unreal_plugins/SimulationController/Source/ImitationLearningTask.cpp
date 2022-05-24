@@ -166,16 +166,25 @@ void ImitationLearningTask::reset()
     ASSERT(vehicle_pawn);
 
     Navigation::Singleton(vehicle_pawn).resetNavigation();
-    
-    // Random initial position:
-    // agent_position = Navigation::Singleton(vehicle_pawn).generateRandomInitialPosition();
-    agent_position = Navigation::Singleton(vehicle_pawn).generateInitialPositionFromYaml(); // DIRTY HACK for neurips
-    agent_actor_->SetActorLocation(agent_position);
 
-    // Trajectory planning:
-    Navigation::Singleton(vehicle_pawn).generateTrajectory();
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"}) == true) {
+        // Random initial position:
+        agent_position = Navigation::Singleton(vehicle_pawn).generateRandomInitialPosition();
+        agent_actor_->SetActorLocation(agent_position);
+
+        // Trajectory planning:
+        Navigation::Singleton(vehicle_pawn).generateTrajectoryToRandomTarget();
+    }
+    else {
+        // Predefined initial position:
+        agent_position = Navigation::Singleton(vehicle_pawn).getPredefinedInitialPosition(); // DIRTY HACK for neurips
+        agent_actor_->SetActorLocation(agent_position);
+
+        // Trajectory planning:
+        Navigation::Singleton(vehicle_pawn).generateTrajectoryToPredefinedTarget();
+    }
+
     goal_position = Navigation::Singleton(vehicle_pawn).getGoal();
-    Navigation::Singleton(vehicle_pawn).iterateIndex();
     goal_actor_->SetActorLocation(goal_position);
 }
 

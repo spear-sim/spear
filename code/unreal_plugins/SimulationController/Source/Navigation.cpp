@@ -3,7 +3,15 @@
 Navigation::Navigation(APawn* pawnAgent): pawnAgent_(pawnAgent)
 {
     // Initialize navigation:
-    resetNavigation(); 
+    indexPath_ = 0; 
+    navSystemRebuild();
+
+    initialPosition_ = pawnAgent_->GetActorLocation(); // Initial position of the agent
+
+    navQuery_ = FPathFindingQuery(*pawnAgent_, *navData_, initialPosition_, FVector(0.0f, 0.0f, 0.0f));
+
+    // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
+    navQuery_.SetAllowPartialPaths(true);
     
     std::string id = Config::getValue<std::string>({"INTERIORSIM", "MAP_ID"});
 
@@ -34,14 +42,14 @@ Navigation::~Navigation()
 void Navigation::resetNavigation()
 {
     indexPath_ = 0; 
-    navSystemRebuild();
+    // navSystemRebuild();
 
-    initialPosition_ = pawnAgent_->GetActorLocation(); // Initial position of the agent
+    // initialPosition_ = pawnAgent_->GetActorLocation(); // Initial position of the agent
 
-    navQuery_ = FPathFindingQuery(*pawnAgent_, *navData_, initialPosition_, FVector(0.0f, 0.0f, 0.0f));
+    // navQuery_ = FPathFindingQuery(*pawnAgent_, *navData_, initialPosition_, FVector(0.0f, 0.0f, 0.0f));
 
-    // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
-    navQuery_.SetAllowPartialPaths(true);
+    // // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
+    // navQuery_.SetAllowPartialPaths(true);
 
     
 }
@@ -83,7 +91,7 @@ FVector Navigation::generateRandomInitialPosition()
     return initialPosition_;
 }
 
-void Navigation::generateTrajectory()
+void Navigation::generateTrajectoryToRandomTarget()
 {
     int numIter = 0;
     int numberOfWayPoints = 0;
@@ -92,14 +100,11 @@ void Navigation::generateTrajectory()
     FNavLocation bestTargetLocation;
     FVector2D relativePositionToTarget(0.0f, 0.0f);
 
-    // DIRTY HACK for neurips:
-    
-
     // Path generation polling to get "interesting" paths in every experiment:
-    /*while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
+    while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
     {
         // Get a random target point, to be reached by the agent:
-        //ASSERT(navSys_->GetRandomReachablePointInRadius(initialPosition_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), targetLocation_));
+        ASSERT(navSys_->GetRandomReachablePointInRadius(initialPosition_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), targetLocation_));
 
         // Update relative position between the agent and its new target:
         relativePositionToTarget.X = (targetLocation_.Location - initialPosition_).X;
@@ -135,19 +140,73 @@ void Navigation::generateTrajectory()
         }
     }
 
-    ASSERT(pathPoints_.Num() > 0);
+    ASSERT(pathPoints_.Num() > 1);
 
-    targetLocation_ = bestTargetLocation;*/
-    
-    FNavPathPoint start;
-    FNavPathPoint stop;
-    
-    start.Location = initialPosition_;
-    stop.Location = generateGoalPositionFromYaml();
-    pathPoints_.Empty();
-    pathPoints_.Push(start);
-    pathPoints_.Push(stop);
-   
+    targetLocation_ = bestTargetLocation;
+
+    std::cout << "Initial position: [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]." << std::endl;
+    std::cout << "Reachable position: [" << bestTargetLocation.Location.X << ", " << bestTargetLocation.Location.Y << ", " << bestTargetLocation.Location.Z << "]." << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "Way points: " << std::endl;
+    for (auto wayPoint : pathPoints_) {
+        std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
+    }
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    indexPath_ = 1; // Path point 0 is the initial robot position. getCurrentPathPoint() should therefore return the next point.
+}
+
+void Navigation::generateTrajectoryToPredefinedTarget()
+{
+    int numIter = 0;
+    int numberOfWayPoints = 0;
+    float pathCriterion = 0.0f;
+    float bestPathCriterion = 0.0f;
+    FNavLocation bestTargetLocation;
+    FVector2D relativePositionToTarget(0.0f, 0.0f);
+
+    // DIRTY HACK for neurips:
+    FVector pos = getPredefinedGoalPosition();
+
+    // Path generation polling to get "interesting" paths in every experiment:
+    while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
+    {
+        // Update relative position between the agent and its new target:
+        relativePositionToTarget.X = (targetLocation_.Location - initialPosition_).X;
+        relativePositionToTarget.Y = (targetLocation_.Location - initialPosition_).Y;
+
+        // Update navigation query with the new target:
+        navQuery_ = FPathFindingQuery(*pawnAgent_, *navData_, initialPosition_, targetLocation_.Location);
+
+        // Genrate a collision-free path between the robot position and the target point:
+        FPathFindingResult collisionFreePath = navSys_->FindPathSync(navQuery_, EPathFindingMode::Type::Regular);
+
+        // If path generation is sucessful, analyze the obtained path (it should not be too simple):
+        if (collisionFreePath.IsSuccessful() and collisionFreePath.Path.IsValid()) {
+
+            if (collisionFreePath.IsPartial()) {
+                std::cout << "Only a partial path could be found by the planner..." << std::endl;
+            }
+
+            numberOfWayPoints = collisionFreePath.Path->GetPathPoints().Num();
+            pathCriterion = relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_DIST"}) + numberOfWayPoints * relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_NUM_WAYPOINTS"});
+
+            if (bestPathCriterion <= pathCriterion) {
+                bestPathCriterion = pathCriterion;
+                bestTargetLocation = targetLocation_;
+                pathPoints_.Empty();
+                pathPoints_ = collisionFreePath.Path->GetPathPoints();
+                std::cout << "Iteration: " << numIter << std::endl;
+                std::cout << "Cost: " << bestPathCriterion << std::endl;
+                std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
+                std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
+            }
+        }
+        numIter++;
+    }
+
+    ASSERT(pathPoints_.Num() > 1);
+
+    targetLocation_ = bestTargetLocation;
 
     std::cout << "Initial position: [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]." << std::endl;
     std::cout << "Reachable position: [" << targetLocation_.Location.X << ", " << targetLocation_.Location.Y << ", " << targetLocation_.Location.Z << "]." << std::endl;
@@ -158,6 +217,7 @@ void Navigation::generateTrajectory()
     }
     std::cout << "-----------------------------------------------------------" << std::endl;
     indexPath_ = 1; // Path point 0 is the initial robot position. getCurrentPathPoint() should therefore return the next point.
+    executionCounter_++;
 }
 
 FVector2D Navigation::getPathPoint(size_t index)
@@ -197,7 +257,7 @@ FVector2D Navigation::updateNavigation()
     return getCurrentPathPoint();
 }
 
-FVector Navigation::generateInitialPositionFromYaml()
+FVector Navigation::getPredefinedInitialPosition()
 {
 std::cout << "#################################################################################################" << std::endl;
     // Dirty hack ...
@@ -212,7 +272,7 @@ std::cout << "##################################################################
 }
 
 
-FVector Navigation::generateGoalPositionFromYaml()
+FVector Navigation::getPredefinedGoalPosition()
 {
     // Dirty hack ...
     std::vector<float> goal_x = {157.707, 422.3461, 25.281965, 63.621063, 166.7038, 158.72296, 172.13914, 3.5349429, -627.5409, 164.53569, -44.64239, 508.2923, -29.323458, -550.6401, 30.598104, -70.265015, 556.2668, -511.09097, 164.31155, 54.295006, -39.521145, 138.6601, 103.65701, 47.704037, -620.82263, -99.76218, 344.09497, 254.0091, 123.05524, 49.49785, -218.63974, 176.48691, 357.2368, 18.109606, -37.400383, 133.35387, 21.53685, -407.1042, -32.721165, -74.34788, 15.726837, 615.9711, 134.34651, -553.8288, 84.55586, 130.44722, -62.239574, 534.12195, 418.86728, -582.5182, -496.78595, 346.81525, 185.0401, 74.34524, 115.12254, 45.849625, 372.35538, 74.96592, 77.741, 224.32065, 93.30401, 129.90593, 178.39017, -33.263233, 212.83823, 88.05075, 186.58162, 346.11853, 114.60882, 159.59172, 51.34323, -10.135539, 494.26663, -170.72867, 233.10588, -592.13257, 322.34827, 238.79347, 8.132667, 20.029795, -69.37199, 4.3162017, 166.94992, 398.06732, -594.4677, 305.5453, -5.8244286, -139.75674, 7.5890303, 3.6112297, -101.9528, 350.49973, 22.984522, 34.799763, 60.59014, -52.11557, -86.58078, -77.04921, -420.6376, 23.59903, 166.78008, 119.660614, -516.6589, 72.65854, 62.24891, 451.02762, -59.25768, 377.50568, 421.06274, 35.855137, 330.13495, 149.16463, -27.397984, -96.83397, -622.37555, -7.5407267, 314.84042, 164.59302, 373.9321, 26.453747, -181.85815, 101.51834, 59.132847, 5.6408973, -0.48667273, 19.864666, 22.156736, -48.737038, -649.2855, -30.986269, 43.34425, -318.6377, -64.132195, -63.791035, 226.54607, 303.69348, 210.50055, 262.58524, 85.273026, 111.25717, 383.9652, 191.77397, 406.48465, -21.827484, 226.50943, 190.54762, 69.636505, 72.65977, 356.55737, -70.541115, 308.87802, -619.6947, -215.26236, -60.31297, 380.56085, 140.17749, -201.61478, 110.73778, 60.276085, 120.6438, 185.22522, 68.843185, 211.72609, -39.1529, -10.519984, 185.95183, 239.3079, -594.4576, 232.13354, 137.99127, -28.120304, -528.2142, 622.69104, 65.70015, -420.668, -50.848164, 308.35648, 97.84331, -51.6377, 32.656837, 86.80582, -59.48654, 176.96477, -32.752266, 631.7219, 40.828655, -72.04836, -207.28998, 109.71492, 175.82524, 419.7357, 226.43594, 228.97755, 84.76065, 97.507965, -63.576145, 38.274475, 104.23372, -484.59586, 165.53046, 386.78424, -45.252136, -43.31202, 212.66669, 147.07196, 166.93921, 479.25424, -288.92493, 95.286194, 416.32202, 84.285545, -532.61505, 330.66956, 26.3772, 355.66736, 181.57675, -3.8301165, -83.22685, 336.28162, 120.620125, 310.50497, 187.82622, 219.333, 69.783104, 102.61734, 128.69104, 94.72142, -210.94745, 7.542214, 42.703484, 136.62662, -334.98877, -277.07697, 202.50955, 194.45178, 91.762886, -10.40832, -61.58084, -46.561035, 332.43466, 335.72003, 7.030134, -427.399, -253.78716, -75.322784, 317.74097, 103.224236, -39.5421, 65.62176, -427.08774, 172.09639, 139.31723, -364.04214, 145.48393, -551.557, 122.87939, 118.85826, 3.6217117, -474.08484, 90.12181, -591.2762, -67.32789, 130.30515, 322.67505, -272.6164, 386.49377, 55.95419, 427.85025, 129.87892, -270.9997, 583.50134, -44.888584, -0.020034911, 453.5779, 370.49164, 182.82385, 86.2838, -42.41909, 349.94556, 96.51033, 171.60901, 362.55322, -475.84448, 125.98268, 182.193, -20.616777, 615.36523, 249.9183, 317.7644, 322.9273, 178.36403, -272.31793, 112.190285, 354.74863, 610.81287, -259.1912, 493.89386, 121.657745, 22.86837, 86.56967, 234.87384, -56.15409, 91.12288, 0.33041596, -48.857872, 164.09938, 364.14444, 151.92256, 161.84177, 586.2482, 403.8207, -20.969315, 133.38455, 388.96948, 65.2579, 328.78204, -32.174934, 115.2259, -43.70887, 228.8258, 229.11426, -56.700623, 34.641464, 133.12999, -14.586372, 190.2307, 370.13348, 320.85684, 211.19899, 155.08641, -653.56604, 106.853325, 24.62932, -23.931423, -353.47778, 21.013348, 112.89074, -39.799942, 147.90578, -233.5934, 447.9212, 106.72604, 381.388, 73.60552, -31.397297, -30.463549, 109.82133, 233.0256, -96.64135, -166.3463, -57.209663, -76.84709, 225.46033, -351.7478, 594.2192, 4.332248, 77.77454, 135.72176, 118.77229, 58.1481, -526.4966, 204.12515, -4.7343254, 230.08807, -569.73175, 325.7207, 163.79224, -607.2589, -494.68195, 71.60318, 325.6995, 27.302467, 202.44124, -141.48288, 208.95476, -33.46559, -457.4607, 119.907265, 154.40535, 183.70178, 162.40233, -68.58885, 154.32011, 159.93001, -34.815723, 195.49776, 399.67102, 155.90732, 120.74024, 341.84625, 156.84909, -48.927864, 88.608, -542.01874, 28.853127, 99.05816, 120.45326, 541.3333, -524.9528, 58.938744, 398.46143, -472.02478, -358.80862, 331.78595, 139.14113, -66.536934, 76.69519, 42.06695, -65.02037, 206.83759, 408.76312, 158.11345, 98.384415, -293.4057, 164.34082, -71.80895, 201.99496, 190.06561, 313.68228, 181.29121, 540.47644, 400.84387, -44.565083, -476.0181, 304.0642, 384.29663, -209.9375, -304.38425, 87.55, -16.705063, -156.50409, -15.740604, 32.906746, 218.48206, 377.23718, 100.39727, -45.18952, -13.248393, -53.51919, 64.59949, 17.692856, 137.44939, 121.13669, 22.284061, -89.28781, -57.686974, -196.71109, 137.64256, 74.19797, 423.50342, -603.23596, -30.16965, -217.94684, 143.364, 220.7331, 302.3077, -327.08603, 412.02374, 103.52823, -597.7164, 506.74963, -18.39285, -276.47287, 189.62912, 93.945885, 121.95481, -38.400124, -247.15543, -498.73254, 120.34449, 47.97619, -329.09647, -69.07906, -270.0794, 308.73138, 422.01862, 129.94136, -61.527, 83.39937, 110.71396, 323.73465, -77.29692, 388.46533, 525.94196, 378.221, 82.9926, 416.0025, -36.30726, -334.784, 348.34048, -75.96022, 98.78359, 303.86005, -41.250816, -48.853924, 62.9634, -45.59901, -68.319916, 35.597847, 136.06207, -519.59766, -245.60526, -50.040226, 613.7775, 20.575027, 57.041626, 146.67886, 174.62779, 396.81525, 175.86319, 27.249844, -226.54065, 111.96133, -446.01257, 90.32057, -18.628752, -22.067764, -341.3962, 320.30817, 70.1752, -104.83066, 205.09381, -220.48685, 226.4099, -14.289564, -1.2757956, 240.68517, -26.33854, 17.574688, 138.52083, 326.40277, 325.50366, -407.1554, 163.15607, -22.351665, -71.07019, 90.38871, 468.7221, -590.83215, -17.432878, -370.73538, 381.69058, 74.06006, 80.1124, -224.14218, 385.52133, 406.54547, 596.603, 25.150602, 220.17557};

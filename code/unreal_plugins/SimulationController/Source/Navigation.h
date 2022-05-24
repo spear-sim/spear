@@ -55,20 +55,26 @@ public:
      * 
      * @return FVector 
      */
-    FVector generateInitialPositionFromYaml();
+    FVector getPredefinedInitialPosition();
 
     /**
      * @brief Use the yaml parameter system to store a goal point which can be changed at every run in python (hack to be removed)
      * 
      * @return FVector 
      */
-    FVector generateGoalPositionFromYaml();
+    FVector getPredefinedGoalPosition();
 
     /**
-     * @brief From the generated initial position, generate a target point and a collision-free trajectory between them.
+     * @brief From the generated initial position, generate a random reachale target point and a collision-free trajectory between them.
      *
      */
-    void generateTrajectory();
+    void generateTrajectoryToRandomTarget();
+
+    /**
+     * @brief From the generated initial and final positions, generate a collision-free trajectory between them.
+     * 
+     */
+    void generateTrajectoryToPredefinedTarget();
 
     /**
      * @brief Reset the navigation object. This allows regenerating a navmesh and changing its properties. 

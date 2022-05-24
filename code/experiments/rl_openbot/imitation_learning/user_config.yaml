@@ -44,10 +44,12 @@ INTERIORSIM:
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 120.0
   
 SIMULATION_CONTROLLER: 
+  SIMULATION_STEP_TIME_SECONDS: 0.01
   TASK_NAME: "ImitationLearning"
   AGENT_CONTROLLER_NAME: "OpenBotAgentController"
   
   IMITATION_LEARNING_TASK:
+    RANDOM_SPAWN_TRAJ: True
     AGENT_ACTOR_NAME: "SimpleVehicle_0"
     GOAL_ACTOR_NAME: ""
     REWARD:
@@ -57,12 +59,12 @@ SIMULATION_CONTROLLER:
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
   
   NAVIGATION:
-    TARGET_RADIUS: 100000
+    TARGET_RADIUS: 500
     # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
     ACCEPTANCE_RADIUS: 0.15
     PATH_WEIGHT_DIST: 1.0
-    PATH_WEIGHT_NUM_WAYPOINTS: 1.0
-    MAX_ITER_REPLAN: 1
+    PATH_WEIGHT_NUM_WAYPOINTS: 0.0
+    MAX_ITER_REPLAN: 500
     SPAWN_ON_NAV_MESH: True
     AGENT_POSITION_Z_MIN: 0.5
     AGENT_POSITION_Z_MAX: 20.0
