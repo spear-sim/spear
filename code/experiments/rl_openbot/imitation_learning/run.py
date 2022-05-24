@@ -599,7 +599,7 @@ if __name__ == "__main__":
                 
                 f_infer.close()
                 if args.create_video:
-                    GenerateVideo(config, mapName, run)
+                    GenerateVideo(config, mapName, run-1)
                 
 
         # Close the environment:
