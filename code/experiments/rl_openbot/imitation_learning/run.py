@@ -27,12 +27,34 @@ import shutil
 import tensorflow as tf
 import tflite_runtime.interpreter as tflite
 import time
+import re
 
 from interiorsim import Env
 from interiorsim.config import get_config
 from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
 
+def GenerateVideo(config, mapName, run):
+    print("Generating video from the sequence of observations")
+    image_folder = f"dataset/uploaded/run_{mapName}_{run}/data/images"
+    video_name = f"run_{mapName}_{run}.avi"
+
+    images = [img for img in os.listdir(image_folder)]
+    frame = cv2.imread(os.path.join(image_folder, images[0]))
+    height, width, layers = frame.shape
+    
+    rate = int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS)
+
+    video = cv2.VideoWriter(video_name, 0, 100, (width,height))
+
+    images.sort(key=lambda f: int(re.sub('\D', '', f))) #good initial sort but doesnt sort numerically very well
+
+    for image in images:
+        #print(image)
+        video.write(cv2.imread(os.path.join(image_folder, image)))
+
+    cv2.destroyAllWindows()
+    video.release()
 
 def Clamp(n, smallest, largest):
     return max(smallest, min(n, largest))
@@ -160,6 +182,7 @@ if __name__ == "__main__":
 
     # Parse input script arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
     parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Debug (for debug purposes only)", required=True)
@@ -314,6 +337,8 @@ if __name__ == "__main__":
                     shutil.rmtree(folderName)
 
                 else:
+                    if args.create_video:
+                        GenerateVideo(config, mapName, run)
                     run = run + 1
 
                     print("Filling database...")
@@ -472,6 +497,11 @@ if __name__ == "__main__":
                     acceptanceRadius = config.SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS
 
                     # Process (crop) visual observations:
+                    
+                    if not obs["visual_observation"].any():
+                        print(obs["visual_observation"])
+                        break; # Something went wrong and the robot was spawed out of the map... 
+                        
                     img_input = np.float32(obs["visual_observation"])/255
                     img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
 
@@ -523,16 +553,23 @@ if __name__ == "__main__":
                         break
                     
                     if targetLocationReached:
+                        
                         f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') 
                         writer_status = csv.writer(f_status , delimiter=",")          
                         writer_status.writerow( ('Status','Iterations') )
                         goalReachedFlag = True
                         writer_status.writerow( ('Goal',i) )
                         f_status.close()
-                        break
-                    
+                        
+                        if i < 50: # There is some issue related to initial collision
+                            break # re-execute the run
+                        else:
+                            run = run + 1
+                            break
+
                     # Interrupt the step loop if the done flag is raised:
                     if done:
+                     
                         f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') 
                         writer_status = csv.writer(f_status , delimiter=",")          
                         writer_status.writerow( ('Status','Iterations') )
@@ -554,11 +591,15 @@ if __name__ == "__main__":
                             writer_status.writerow( ('Iteration Limit',i) )
                             f_status.close()
 
-                        break
-
-                run = run + 1
+                        if i < 50: # There is some issue related to initial collision
+                            break # re-execute the run
+                        else:
+                            run = run + 1
+                            break
                 
                 f_infer.close()
+                if args.create_video:
+                    GenerateVideo(config, mapName, run)
                 
 
         # Close the environment:
