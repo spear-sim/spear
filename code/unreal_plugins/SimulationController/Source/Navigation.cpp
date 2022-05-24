@@ -101,6 +101,7 @@ void Navigation::generateTrajectoryToRandomTarget()
     FVector2D relativePositionToTarget(0.0f, 0.0f);
 
     // Path generation polling to get "interesting" paths in every experiment:
+    float trajLength = 0.0;
     while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
     {
         // Get a random target point, to be reached by the agent:
@@ -135,6 +136,12 @@ void Navigation::generateTrajectoryToRandomTarget()
                 std::cout << "Cost: " << bestPathCriterion << std::endl;
                 std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
                 std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
+
+                trajLength = 0.0;
+                for (size_t i = 0; i < numberOfWayPoints-1; i++) {
+                    trajLength += FVector::Dist(pathPoints_[i].Location, pathPoints_[i+1].Location);
+                }           
+                std::cout << "Path length " << trajLength * 0.01 << "m" << std::endl;
             }
             numIter++;
         }
@@ -143,6 +150,8 @@ void Navigation::generateTrajectoryToRandomTarget()
     ASSERT(pathPoints_.Num() > 1);
 
     targetLocation_ = bestTargetLocation;
+
+    trajectoryLength_ = trajLength * 0.01;
 
     std::cout << "Initial position: [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]." << std::endl;
     std::cout << "Reachable position: [" << bestTargetLocation.Location.X << ", " << bestTargetLocation.Location.Y << ", " << bestTargetLocation.Location.Z << "]." << std::endl;
@@ -168,6 +177,7 @@ void Navigation::generateTrajectoryToPredefinedTarget()
     FVector pos = getPredefinedGoalPosition();
 
     // Path generation polling to get "interesting" paths in every experiment:
+    float trajLength = 0.0;
     while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
     {
         // Update relative position between the agent and its new target:
@@ -199,6 +209,12 @@ void Navigation::generateTrajectoryToPredefinedTarget()
                 std::cout << "Cost: " << bestPathCriterion << std::endl;
                 std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
                 std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
+
+                trajLength = 0.0;
+                for (size_t i = 0; i < numberOfWayPoints-1; i++) {
+                    trajLength += FVector::Dist(pathPoints_[i].Location, pathPoints_[i+1].Location);
+                }           
+                std::cout << "Path length " << trajLength * 0.01 << "m" << std::endl;
             }
         }
         numIter++;
@@ -207,6 +223,8 @@ void Navigation::generateTrajectoryToPredefinedTarget()
     ASSERT(pathPoints_.Num() > 1);
 
     targetLocation_ = bestTargetLocation;
+
+    trajectoryLength_ = trajLength * 0.01;
 
     std::cout << "Initial position: [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]." << std::endl;
     std::cout << "Reachable position: [" << targetLocation_.Location.X << ", " << targetLocation_.Location.Y << ", " << targetLocation_.Location.Z << "]." << std::endl;
@@ -270,7 +288,6 @@ std::cout << "##################################################################
 
     return initialPosition_;
 }
-
 
 FVector Navigation::getPredefinedGoalPosition()
 {

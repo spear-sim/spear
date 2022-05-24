@@ -106,6 +106,16 @@ public:
     FVector2D updateNavigation();
 
     /**
+     * @brief Returns a first order appromination of the desired trajectory length 
+     * 
+     * @return float 
+     */
+    inline float getTrajectoryLength()
+    {
+        return trajectoryLength_;
+    }
+
+    /**
      * @brief Get the goal position 
      *
      * @param relative_position_to_goal
@@ -193,4 +203,6 @@ private:
     bool targetReached_ = false;
 
     int executionCounter_ = 0;
+
+    float trajectoryLength_ = 0.0;
 };

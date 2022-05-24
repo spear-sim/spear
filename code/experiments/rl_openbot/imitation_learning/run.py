@@ -37,7 +37,10 @@ from interiorsim.constants import INTERIORSIM_ROOT_DIR
 def GenerateVideo(config, mapName, run):
     print("Generating video from the sequence of observations")
     image_folder = f"dataset/uploaded/run_{mapName}_{run}/data/images"
-    video_name = f"run_{mapName}_{run}.avi"
+    video_name = f"videos/run_{mapName}_{run}.avi"
+    
+    if not (os.path.exists("videos")):
+        os.makedirs("videos")
 
     images = [img for img in os.listdir(image_folder)]
     frame = cv2.imread(os.path.join(image_folder, images[0]))
@@ -186,6 +189,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
     parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Debug (for debug purposes only)", required=True)
+    parser.add_argument("-p", "--policy", type=str, help="1_env, 5_envs,  25_envs, 50_envs or real_envs", required=False)
     parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the MAP_ID argument and allows collecting data in multiple environments programatically", required=False)
     args = parser.parse_args()
 
@@ -433,7 +437,25 @@ if __name__ == "__main__":
         config.freeze()
 
         # Load TFLite model and allocate tensors.
-        interpreter = tflite.Interpreter("./models/navigation.tflite")
+        policyName = ""
+        if args.policy == "1_env":
+            policyName = "./models/1_env.tflite"
+        elif args.policy == "5_envs":
+            policyName = "./models/5_envs.tflite"
+        elif args.policy == "25_envs":
+            policyName = "./models/25_envs.tflite"
+        elif args.policy == "50_envs":
+            policyName = "./models/50_envs.tflite"
+        elif args.policy == "real":
+            policyName = "./models/real.tflite"
+        elif args.policy == "":
+            print("Warning: no policy name was provided. Trying Navigation.tflite as default...")
+            policyName = "./models/navigation.tflite"
+        else:
+            print("Warning: no policy name was provided. Trying navigation.tflite as default...")
+            policyName = "./models/navigation.tflite"
+        
+        interpreter = tflite.Interpreter(policyName)
         interpreter.allocate_tensors()
 
         # Get input and output tensors.
@@ -483,7 +505,7 @@ if __name__ == "__main__":
                 
                 f_infer = open(dataFolderName+"sensor_data/Inference.txt", 'w') # Low-level commands sent to the motors
                 writer_infer = csv.writer(f_infer , delimiter=",")
-                writer_infer.writerow( ('Iteration','posX','posY','posZ','rollAngle','pitchAngle','yawAngle','goalX','goalY','dist','sinYaw','cosYaw', 'ctrl_left', 'ctrl_right', 'inference_time', 'reward') )
+                writer_infer.writerow( ('Iteration','posX','posY','posZ','rollAngle','pitchAngle','yawAngle','goalX','goalY','dist','sinYaw','cosYaw', 'ctrl_left', 'ctrl_right', 'inference_time', 'reward', 'distTrajToGoal') )
 
 
                 # Take a few steps:
@@ -535,7 +557,7 @@ if __name__ == "__main__":
                     action = np.array([act[0][0],act[0][1]])
                     #print(action)
                     
-                    writer_infer.writerow( (i, obs["physical_observation"][2], obs["physical_observation"][3], obs["physical_observation"][4], obs["physical_observation"][5], obs["physical_observation"][6], obs["physical_observation"][7], obs["physical_observation"][8], obs["physical_observation"][9], cmd[0], cmd[1], cmd[2], action[0], action[1], executionTime, reward) )
+                    writer_infer.writerow( (i, obs["physical_observation"][2], obs["physical_observation"][3], obs["physical_observation"][4], obs["physical_observation"][5], obs["physical_observation"][6], obs["physical_observation"][7], obs["physical_observation"][8], obs["physical_observation"][9], cmd[0], cmd[1], cmd[2], action[0], action[1], executionTime, reward, obs["physical_observation"][10]) )
 
                     # Send action to the agent:
                     obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1]]})

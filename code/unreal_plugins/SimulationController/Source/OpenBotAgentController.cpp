@@ -165,7 +165,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
             box.shape = {5};
         }
         else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
-            box.shape = {10};
+            box.shape = {11};
         }
         else {
             ASSERT(false);
@@ -189,7 +189,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
             box.shape = {5};
         }
         else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
-            box.shape = {10};
+            box.shape = {11};
         }
         else {
             ASSERT(false);
@@ -334,14 +334,14 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
         FVector2D updatedPathPoint = Navigation::Singleton(vehicle_pawn).updateNavigation();
         FVector goalPathPoint = Navigation::Singleton(vehicle_pawn).getGoal();
-
+        float trajLenth = Navigation::Singleton(vehicle_pawn).getTrajectoryLength();
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
 
         if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "waypoint") {
-            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), updatedPathPoint.X, updatedPathPoint.Y});
+            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), updatedPathPoint.X, updatedPathPoint.Y, trajLenth});
         }
         else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "goal") {
-            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), goalPathPoint.X, goalPathPoint.Y});
+            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), goalPathPoint.X, goalPathPoint.Y, trajLenth});
         }
         else {
             ASSERT(false);

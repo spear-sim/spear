@@ -18,6 +18,13 @@ INTERIORSIM:
   
   # Allows convenient selection of the map to be loaded by your executable. 
   # For instance MAP_ID: "/Game/Maps/Map_235553720"
+  # "/Game/Maps/Map_235114801"
+  # "/Game/Maps/Map_235114775"
+  # "/Game/Maps/Map_235576087"
+  # "/Game/Maps/Map_243638368"
+  # "/Game/Maps/Map_243649209"
+  # "/Game/Maps/Map_235559331"
+  # "/Game/Maps/Map_237210227"
   # MAP_ID: "235114824"
 
   # True if unreal engine instance should be launched in headless mode
@@ -37,10 +44,12 @@ INTERIORSIM:
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 120.0
   
 SIMULATION_CONTROLLER: 
+  SIMULATION_STEP_TIME_SECONDS: 0.01
   TASK_NAME: "ImitationLearning"
   AGENT_CONTROLLER_NAME: "OpenBotAgentController"
   
   IMITATION_LEARNING_TASK:
+    RANDOM_SPAWN_TRAJ: True
     AGENT_ACTOR_NAME: "SimpleVehicle_0"
     GOAL_ACTOR_NAME: ""
     REWARD:
@@ -50,17 +59,17 @@ SIMULATION_CONTROLLER:
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
   
   NAVIGATION:
-    TARGET_RADIUS: 100000
+    TARGET_RADIUS: 500
     # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
-    ACCEPTANCE_RADIUS: 0.2 
+    ACCEPTANCE_RADIUS: 0.15
     PATH_WEIGHT_DIST: 1.0
-    PATH_WEIGHT_NUM_WAYPOINTS: 1.0
-    MAX_ITER_REPLAN: 50000
+    PATH_WEIGHT_NUM_WAYPOINTS: 0.0
+    MAX_ITER_REPLAN: 500
     SPAWN_ON_NAV_MESH: True
     AGENT_POSITION_Z_MIN: 0.5
     AGENT_POSITION_Z_MAX: 20.0
     NAVMESH:
-      AGENT_RADIUS: 20.0
+      AGENT_RADIUS: 17.0
       AGENT_HEIGHT: 20.0
       CELL_SIZE: 1.0
       CELL_HEIGHT: 1.0
