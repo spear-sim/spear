@@ -191,7 +191,12 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Debug (for debug purposes only)", required=True)
     parser.add_argument("-p", "--policy", type=str, help="1_env, 5_envs,  25_envs, 50_envs or real_envs", required=False)
     parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the MAP_ID argument and allows collecting data in multiple environments programatically", required=False)
+    parser.add_argument("-c", "--connect", type=int, help="id of the connection port", required=True)
     args = parser.parse_args()
+
+    config.defrost()
+    config.SIMULATION_CONTROLLER.PORT = 30000 + args.connect
+    config.freeze()
 
     if args.map == [""]: # Use the default MAP_ID argument from parameter file
         if config.INTERIORSIM.MAP_ID == "":

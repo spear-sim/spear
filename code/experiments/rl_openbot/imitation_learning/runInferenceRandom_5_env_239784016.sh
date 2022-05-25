@@ -5,4 +5,4 @@
 #SBATCH -c 14
 
 source /home/qleboute/anaconda3/bin/activate interiorsim-env
-python run.py -i 1000 -r 100 -s "Infer" -m "239784016" -c 3 -p "1_env"
+python run.py -i 1000 -r 100 -s "Infer" -m "239784016" -c 1 -p "5_envs"
