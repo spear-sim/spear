@@ -39,6 +39,7 @@ public class VirtualWorldManager : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"PhysicsCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
