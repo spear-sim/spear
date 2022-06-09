@@ -1,5 +1,7 @@
 #include "VWPhysicsManager.h"
 
+#include "PhysicalMaterials/PhysicalMaterial.h"
+
 bool VWPhysicsManager::updatePhysicalMaterial(TArray<AActor*>& actors, int physical_material_id)
 {
     FString val = FString::FromInt(physical_material_id);

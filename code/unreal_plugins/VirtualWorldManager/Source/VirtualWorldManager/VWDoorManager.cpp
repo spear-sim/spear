@@ -8,13 +8,13 @@ UVWDoorManager::UVWDoorManager()
     static ConstructorHelpers::FObjectFinder<UDataTable> doorsDataTableFinder(TEXT("DataTable'/VirtualWorldManager/Koolab/SceneInfo/doors_info.doors_info'"));
     if (doorsDataTableFinder.Succeeded()) {
         doorsDataTable = doorsDataTableFinder.Object;
-        if (this->isLoadSuccess || this->LoadData()) {
-            this->MatchDoorActor();
+        if (this->isLoadSuccess || this->loadData()) {
+            this->matchDoorActor();
         }
     }
 }
 
-bool UVWDoorManager::LoadData()
+bool UVWDoorManager::loadData()
 {
     //cleanup previous data
     this->doorsData.Empty();
@@ -35,7 +35,7 @@ bool UVWDoorManager::LoadData()
     return true;
 }
 
-void UVWDoorManager::MatchDoorActor()
+void UVWDoorManager::matchDoorActor()
 {
     for (TActorIterator<AActor> it(this->GetWorld()); it; ++it) {
         // TODO use other way to identify door actors
@@ -67,7 +67,7 @@ void UVWDoorManager::MatchDoorActor()
     }
 }
 
-bool UVWDoorManager::MoveAllDoor(bool open)
+bool UVWDoorManager::moveAllDoor(bool open)
 {
     for (auto& doordata : this->doorsData) {
         AActor* DoorActor = doordata.doorActor;
