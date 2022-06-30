@@ -56,7 +56,7 @@ python create_symbolic_links.py
 Our Unreal projects assume that all of their required parameters are declared in a config file. We usually launch our projects via high-level Python code, and this Python code takes care of generating the appropriate config file automatically. However, a valid config file is also required when building our projects, and we must generate this config file explicitly before attempting to build. A valid config file is also required if you want to launch one of our projects directly from the Unreal Editor. To generate a config file, rename the following file and edit the paths in the file for your system.
 
 ```
-code/github/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml.example -> user_config.yaml
+code/unreal_projects/PlayEnvironment/user_config.yaml.example -> user_config.yaml
 ```
 
 Next, run the following command-line tool.
