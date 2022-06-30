@@ -308,10 +308,10 @@ class Env(gym.Env):
         print(space)
         for name, component in space.items():
             print(name, component)
-            low = component[b"low"]
-            high = component[b"high"]
-            shape = tuple(component[b"shape"])
-            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component[b"dtype"]]
+            low = component["low"]
+            high = component["high"]
+            shape = tuple(component["shape"])
+            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype"]]
             gym_spaces[name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces)
