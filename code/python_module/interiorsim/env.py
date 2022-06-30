@@ -303,13 +303,14 @@ class Env(gym.Env):
             assert False
 
     def _get_gym_space(self, space):
-
+	print(space)
         gym_spaces = {}
         for name, component in space.items():
-            low = component["low"]
-            high = component["high"]
-            shape = tuple(component["shape"])
-            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype"]]
+            print(name, component)
+            low = component[b"low"]
+            high = component[b"high"]
+            shape = tuple(component[b"shape"])
+            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component[b"dtype"]]
             gym_spaces[name] = spaces.Box(low, high, shape, dtype)
 
         return spaces.Dict(gym_spaces)

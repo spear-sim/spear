@@ -4,6 +4,11 @@ import shutil
 import subprocess
 import sys
 
+#basepath = "/home/adas/ue4_versions/UnrealEngine/Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/Linux_x64/v17_clang-10.0.1-centos7/x86_64-unknown-linux-gnu/bin/"
+#compilercpp = "clang++"
+#compilerc = "clang"
+#linker = "lld"
+
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 MIN_CMAKE_VERSION = "3.5.1"
 
@@ -24,8 +29,8 @@ def check_cmake_version():
 def build_libs(num_parallel_jobs):
     
     if sys.platform == "linux":
-        os.environ["CC"] = "clang"
-        os.environ["CXX"] = "clang++"
+        os.environ["CC"] = "clang-10"
+        os.environ["CXX"] = "clang++-10"
 
     print("building rbdl...")
     rbdl_build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "rbdl", "build")
@@ -36,7 +41,7 @@ def build_libs(num_parallel_jobs):
     os.chdir(rbdl_build_dir)
 
     if sys.platform == "linux":
-        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_COMPILER='clang++'", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_COMPILER='clang++-10'", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     else:
@@ -107,3 +112,4 @@ if __name__ == "__main__":
 
     # build third party libs
     build_libs(num_parallel_jobs=args.num_parallel_jobs)
+    
