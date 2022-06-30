@@ -1,12 +1,17 @@
 import argparse
 import os 
 import shutil
+import string
 import subprocess
 import sys
 
+from distutils.spawn import find_executable
+
+
+
 #basepath = "/home/adas/ue4_versions/UnrealEngine/Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/Linux_x64/v17_clang-10.0.1-centos7/x86_64-unknown-linux-gnu/bin/"
-#compilercpp = "clang++"
-#compilerc = "clang"
+compilercpp = "clang++-10"
+compilerc = "clang-10"
 #linker = "lld"
 
 SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -26,11 +31,26 @@ def check_cmake_version():
             break
     print("cmake version looks good...")
 
+def check_clang_version():
+    clang_version = find_executable(compilerc)
+    clangxx_version = find_executable(compilercpp)
+    if clang_version != None:
+        print(f"clang version found: V - {compilerc} -- PATH {clang_version} ")
+    else:
+        print("clang version not found. Set a proper clang version")
+
+    if clangxx_version != None:
+        print(f"clang++ version found: V - {compilercpp} -- PATH {clangxx_version}")
+    else:
+        print("clang++ version not found. Set a proper clang version")
+
+
+
 def build_libs(num_parallel_jobs):
     
     if sys.platform == "linux":
-        os.environ["CC"] = "clang-10"
-        os.environ["CXX"] = "clang++-10"
+        os.environ["CC"] = compilerc
+        os.environ["CXX"] = compilercpp
 
     print("building rbdl...")
     rbdl_build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "rbdl", "build")
@@ -41,7 +61,7 @@ def build_libs(num_parallel_jobs):
     os.chdir(rbdl_build_dir)
 
     if sys.platform == "linux":
-        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_COMPILER='clang++-10'", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  f"-DCMAKE_CXX_COMPILER={compilercpp}", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     else:
@@ -105,10 +125,20 @@ def build_libs(num_parallel_jobs):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_parallel_jobs", "-n", type=int, default=1, required=False)
+    parser.add_argument("--clang_version", "-cv", default="clang", required=False)
+    parser.add_argument("--clangxx_version", "-cxxv", default="clang++", required=False)
     args = parser.parse_args()
 
     # check cmake version requirement
     check_cmake_version()
+
+    # modify clang version if its necessary
+    compilerc = args.clang_version
+    compilercpp = args.clangxx_version
+
+    check_clang_version()
+
+    #print(compilerc, compilercpp)
 
     # build third party libs
     build_libs(num_parallel_jobs=args.num_parallel_jobs)

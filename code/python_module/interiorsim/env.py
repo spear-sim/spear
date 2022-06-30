@@ -303,8 +303,9 @@ class Env(gym.Env):
             assert False
 
     def _get_gym_space(self, space):
-	print(space)
+	    
         gym_spaces = {}
+        print(space)
         for name, component in space.items():
             print(name, component)
             low = component[b"low"]
