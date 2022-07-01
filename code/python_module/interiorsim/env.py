@@ -305,9 +305,7 @@ class Env(gym.Env):
     def _get_gym_space(self, space):
 	    
         gym_spaces = {}
-        print(space)
         for name, component in space.items():
-            print(name, component)
             low = component["low"]
             high = component["high"]
             shape = tuple(component["shape"])
