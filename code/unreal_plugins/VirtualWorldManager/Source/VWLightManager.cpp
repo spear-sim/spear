@@ -6,14 +6,14 @@
 
 #include "Assert.h"
 
-void VWLightManager::SetGI(UWorld* world, float scale)
+void VWLightManager::SetGlobalIlluminationIntensity(UWorld* world, float intensity_scale)
 {
     APostProcessVolume* post_process_volume = Cast<APostProcessVolume>(UGameplayStatics::GetActorOfClass(world, APostProcessVolume::StaticClass()));
 
     ASSERT(post_process_volume);
 
     post_process_volume->Settings.bOverride_IndirectLightingIntensity = true;
-    post_process_volume->Settings.IndirectLightingIntensity = scale;
+    post_process_volume->Settings.IndirectLightingIntensity = intensity_scale;
 }
 
 void VWLightManager::EnableDistanceFieldShadows(UWorld* world, bool enable)
