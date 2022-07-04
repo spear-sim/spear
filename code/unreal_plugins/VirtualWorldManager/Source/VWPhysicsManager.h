@@ -1,7 +1,9 @@
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include <vector>
+
+#include <CoreMinimal.h>
+#include <GameFramework/Actor.h>
 
 class VWPhysicsManager
 {
@@ -14,5 +16,5 @@ public:
     * @param physical_material_id: target physical material id, valid range (1000-1081)
     * @return true if physical_material_id is valid and override existing value
     */
-    static bool updatePhysicalMaterial(TArray<AActor*>& actors, int physical_material_id);
+    static bool updatePhysicalMaterial(std::vector<AActor*>& actors, int physical_material_id);
 };
