@@ -1,17 +1,17 @@
 #pragma once
 
-#include "CoreMinimal.h"
-#include "Engine/Light.h"
-#include "Components/LightComponent.h"
-#include "VWLightManager.generated.h"
+#include <CoreMinimal.h>
+#include <Components/LightComponent.h>
+#include <Engine/Light.h>
 
-UCLASS()
-class VIRTUALWORLDMANAGER_API UVWLightManager : public UObject
+class VIRTUALWORLDMANAGER_API VWLightManager
 {
 public:
-    GENERATED_BODY()
-         
-    static void SetGI(UWorld* world, float val);
+    // tune global illumination scale
+    static void SetGI(UWorld* world, float scale);
 
-    static void SetDistanceField(UWorld* world, bool enable);
+    // enable or disable distance field shadows for all lights in current world.
+    // Distance Field Shadows will calculate real time shadow with better efficiency and soft shadow boundary.
+    // However, it introduces artifact for interior scene, and Skeletal Mesh(OpenBot) have no shadow when it is enabled.
+    static void EnableDistanceFieldShadows(UWorld* world, bool enable);
 };
