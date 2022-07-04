@@ -35,6 +35,9 @@ conda activate interiorsim-env
 # install pip
 conda install -c anaconda pip
 
+#install openCV
+pip install opencv-python
+
 # install msgpack-rpc-python separately from other Python dependencies
 pip install -e code/third_party/msgpack-rpc-python
 

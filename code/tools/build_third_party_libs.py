@@ -21,11 +21,10 @@ def check_cmake_version():
             break
     print("cmake version looks good...")
 
-def build_libs(num_parallel_jobs,clang_bin,clang_xx_bin):
-
+def build_libs(p_args):
     if sys.platform == "linux":
-        os.environ["CC"] = clang_bin
-        os.environ["CXX"] = clang_xx_bin
+        os.environ["CC"] = p_args.clang_c_bin
+        os.environ["CXX"] = p_args.clang_cxx_bin
 
     print("building rbdl...")
     rbdl_build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "rbdl", "build")
@@ -36,7 +35,7 @@ def build_libs(num_parallel_jobs,clang_bin,clang_xx_bin):
     os.chdir(rbdl_build_dir)
 
     if sys.platform == "linux":
-        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON '-stdlib=libc++'", ".."]
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     else:
@@ -44,7 +43,7 @@ def build_libs(num_parallel_jobs,clang_bin,clang_xx_bin):
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
-    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
+    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(p_args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(args)}")
     rbld_build_cmd = subprocess.run(args)
     assert rbld_build_cmd.returncode == 0
@@ -67,7 +66,7 @@ def build_libs(num_parallel_jobs,clang_bin,clang_xx_bin):
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
-    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
+    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(p_args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(args)}")
     rpclib_build_cmd = subprocess.run(args)
     assert rpclib_build_cmd.returncode == 0
@@ -90,7 +89,7 @@ def build_libs(num_parallel_jobs,clang_bin,clang_xx_bin):
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
-    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
+    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(p_args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(args)}")
     yamlcpp_build_cmd = subprocess.run(args)
     assert yamlcpp_build_cmd.returncode == 0
@@ -100,13 +99,13 @@ def build_libs(num_parallel_jobs,clang_bin,clang_xx_bin):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_parallel_jobs", "-n", type=int, default=1, required=False)
-    parser.add_argument("--clang_bin", "-cb", default="clang", required=False)
-    parser.add_argument("--clang_xx_bin", "-cxxb", default="clang++", required=False)
+    parser.add_argument("--clang_c_bin", "-cb", default="clang", required=False)
+    parser.add_argument("--clang_cxx_bin", "-cxxb", default="clang++", required=False)
     args = parser.parse_args()
 
     # check cmake version requirement
     check_cmake_version()
 
     # build third party libs
-    build_libs(num_parallel_jobs=args.num_parallel_jobs,clang_bin=args.clang_bin,clang_xx_bin=args.clang_xx_bin)
+    build_libs(args)
     
