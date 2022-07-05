@@ -21,10 +21,10 @@ def check_cmake_version():
             break
     print("cmake version looks good...")
 
-def build_libs(p_args):
+def build_libs(args):
     if sys.platform == "linux":
-        os.environ["CC"] = p_args.clang_c_bin
-        os.environ["CXX"] = p_args.clang_cxx_bin
+        os.environ["CC"] = args.clang_cc_bin
+        os.environ["CXX"] = args.clang_cxx_bin
 
     print("building rbdl...")
     rbdl_build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "rbdl", "build")
@@ -99,7 +99,7 @@ def build_libs(p_args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_parallel_jobs", "-n", type=int, default=1, required=False)
-    parser.add_argument("--clang_c_bin", "-cb", default="clang", required=False)
+    parser.add_argument("--clang_cc_bin", "-ccb", default="clang", required=False)
     parser.add_argument("--clang_cxx_bin", "-cxxb", default="clang++", required=False)
     args = parser.parse_args()
 

@@ -303,7 +303,6 @@ class Env(gym.Env):
             assert False
 
     def _get_gym_space(self, space):
-	    
         gym_spaces = {}
         for name, component in space.items():
             low = component["low"]
