@@ -10,12 +10,15 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
-//#include "VWPhysicsManager.h"
-//#include "VWLightManager.h"
-//#include "VWLevelManager.h"
+#include "VWPhysicsManager.h"
+#include "VWLightManager.h"
+#include "VWLevelManager.h"
+#include "VWCustomRenderingManager.h"
+
 
 AExamplePawn::AExamplePawn()
 {
+    doorManager = CreateDefaultSubobject<UVWDoorManager>(TEXT("AVWLevelManager"));
 }
 
 void AExamplePawn::BeginPlay()
@@ -27,31 +30,38 @@ void AExamplePawn::BeginPlay()
     this->GetCollisionComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 
-    // test only
+    // test key binders
     GetWorld()->GetFirstPlayerController()->InputComponent->BindAction("Handbrake", IE_Pressed, this,
                                                                        &AExamplePawn::test);
 
 	GetWorld()->GetFirstPlayerController()->InputComponent->BindAction("ActionOne", IE_Pressed, this,
-		&AExamplePawn::test);
+		&AExamplePawn::switchDoor);
+	GetWorld()->GetFirstPlayerController()->InputComponent->BindAction("ActionTwo", IE_Pressed, this,
+		&AExamplePawn::switchRenderingMode);
+
+
 }
 
 void AExamplePawn::test()
 {
     UE_LOG(LogTemp, Warning, TEXT("AExamplePawn::test"));
-//    std::vector<AActor*> actors;
-//    for (TActorIterator<AActor> actor_itr(GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) {
-//        actors.emplace_back(*actor_itr);
-//    }
-//
-//    VWPhysicsManager::updatePhysicalMaterial(actors,stat?1065:1074);
-//    std::vector<std::string> maps;
-//    VWLevelManager::getAllMapsInPak(maps);
-//    std::string local_pak_file_path = "/home/xichen/Downloads/Map_235551809_linux.pak";
-//    VWLevelManager::mountPakFromPath(local_pak_file_path);
-//    for (auto& map:maps){
-//        std::cout<<"map - "<<map<<std::endl;
-//    }
+}
 
-    VWLightManager::EnableDistanceFieldShadows(GetWorld(), stat);
-    stat =!stat;
+void AExamplePawn::switchRenderingMode()
+{
+    UE_LOG(LogTemp, Warning, TEXT("AExamplePawn::switchRenderingMode"));
+    std::vector<AActor*> actors;
+    for (TActorIterator<AActor> actor_itr(GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) {
+        actors.emplace_back(*actor_itr);
+    }
+    UVWCustomRenderingManager::setLambertianRendering(actors,rendering_mode_%2==1);
+    rendering_mode_++;
+}
+
+void AExamplePawn::switchDoor(){
+    UE_LOG(LogTemp, Warning, TEXT("AExamplePawn::switchDoor"));
+
+    doorManager->moveAllDoor(door_stat_);
+
+    door_stat_ = !door_stat_;
 }

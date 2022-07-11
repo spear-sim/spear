@@ -4,6 +4,8 @@
 #include "GameFramework/SpectatorPawn.h"
 #include "Camera/PlayerCameraManager.h"
 
+#include "VWDoorManager.h"
+
 #include "ExamplePawn.generated.h"
 
 UCLASS()
@@ -15,7 +17,15 @@ public:
     virtual void BeginPlay() override;
 
 	void test();
+
+	void switchDoor();
+
+	void switchRenderingMode();
 private:
 
-    bool stat;
+    int rendering_mode_;
+
+    UVWDoorManager* doorManager;
+    bool door_stat_ = true;
+
 };
