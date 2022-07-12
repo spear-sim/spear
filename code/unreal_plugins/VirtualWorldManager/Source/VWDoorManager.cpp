@@ -1,15 +1,14 @@
 #include "VWDoorManager.h"
-#include "EngineUtils.h"
-#include "PhysicsEngine/PhysicsConstraintComponent.h"
+
+#include <iostream>
+
+#include <EngineUtils.h>
+#include <PhysicsEngine/PhysicsConstraintComponent.h>
 
 TArray<FDoorInfo> UVWDoorManager::level_door_info_;
 
 bool UVWDoorManager::initLevelDoorInfo(UWorld* world)
-{    
-    //cleanup previous data
-    level_door_info_.Empty();
-    UDataTable* door_data_table = LoadObject<UDataTable>(nullptr,TEXT("DataTable'/VirtualWorldManager/Koolab/SceneInfo/doors_info.doors_info'"));
-
+{
     if (world == nullptr) {
         return false;
     }
@@ -18,11 +17,16 @@ bool UVWDoorManager::initLevelDoorInfo(UWorld* world)
         return false;
     }
 
-    FSceneDoorInfo* info = door_data_table->FindRow<FSceneDoorInfo>(FName(map_name.Mid(4)), "doors");
-    if (info == nullptr) {
+    UDataTable* door_data_table = LoadObject<UDataTable>(nullptr,TEXT("DataTable'/VirtualWorldManager/Koolab/SceneInfo/doors_info.doors_info'"));
+    FSceneDoorInfo* level_door_info_table = door_data_table->FindRow<FSceneDoorInfo>(FName(map_name.Mid(4)), "doors");
+    if (level_door_info_table == nullptr) {
         return false;
     }
-    level_door_info_.Append(info->doors);
+    //cleanup previous data
+    level_door_info_.Empty();
+    //load door info
+    level_door_info_.Append(level_door_info_table->doors);
+    //find corresponding door actor in current world
     matchDoorActor(world);
     return true;
 }
@@ -32,128 +36,124 @@ void UVWDoorManager::matchDoorActor(UWorld* world)
     for (TActorIterator<AActor> it(world); it; ++it) {
         // TODO use other way to identify door actors
         if (it->GetName().StartsWith("Group_")) {
-            for (auto& child : it->GetComponents()) {
-                // mark if child name containes door component (INSTid1216)
-                if (child->GetName().StartsWith("Architecture_") && child->GetName().Contains("INSTid1216")) {
+            for (auto& child_component : it->GetComponents()) {
+                // mark if child name is door component (INSTid1216)
+                if (child_component->GetName().StartsWith("Architecture_") && child_component->GetName().Contains("INSTid1216")) {
                     it->Tags.Add("door");
-                    FBox doorBBox = it->GetComponentsBoundingBox(false, true);
-                    for (auto& doordata : level_door_info_) {
-                        // check if is position is in door bbox
-                        FVector doorCenter = doordata.position;
-                        FVector result = doorBBox.GetClosestPointTo(doorCenter);
-                        if (doordata.doorActor == nullptr && doorCenter.Equals(result)) {
-                            doordata.doorActor = *it;
+                    FBox door_actor_bbox = it->GetComponentsBoundingBox(false, true);
+                    for (auto& door_info : level_door_info_) {
+                        if (door_info.doorActor != nullptr){
+                            //skip registered door_info
+                            continue;
+                        }
+                        // check if its position is in door bbox
+                        FVector closest_point_to_expected = door_actor_bbox.GetClosestPointTo(door_info.position);
+                        if (door_info.position.Equals(closest_point_to_expected)) {
+                            //position from door info is inside actor
+                            door_info.doorActor = *it;
                             break;
                         }
                     }
+                    //only need to match first child component as door
                     break;
                 }
             }
         }
     }
-    // check if all matcked
-    for (auto& doordata : level_door_info_) {
-        if (doordata.doorActor == nullptr) {
-            UE_LOG(LogTemp, Warning, TEXT("ADoorProcessor::MatchDoorActor missing actor at %s"), *(doordata.position.ToString()));
+    // check if all matched
+    for (auto& door_info : level_door_info_) {
+        if (door_info.doorActor == nullptr) {
+            UE_LOG(LogTemp, Warning, TEXT("UVWDoorManager::matchDoorActor: missing actor at %s"), *(door_info.position.ToString()));
         }
     }
 }
 
 bool UVWDoorManager::moveAllDoor(bool open)
 {
-    for (auto& doordata : level_door_info_) {
-        AActor* DoorActor = doordata.doorActor;
-        if (DoorActor == nullptr) {
+    for (auto& door_info : level_door_info_) {
+        AActor* door_actor = door_info.doorActor;
+        if (door_actor == nullptr) {
             continue;
         }
-        if (doordata.mode == "counter-clockwise" || doordata.mode == "clockwise") {
-            for (auto& child : DoorActor->GetComponentsByClass(UStaticMeshComponent::StaticClass())) {
+        if (door_info.mode == "counter-clockwise" || door_info.mode == "clockwise") {
+            TArray<UStaticMeshComponent*> child_components;
+            door_actor->GetComponents(child_components);
+            for (auto& child_component : child_components) {
                 // find Animation component
-                if (child->GetName().StartsWith("Animation_")) {
-                    UStaticMeshComponent* anmiComponent = Cast<UStaticMeshComponent>(child);
-                    FTransform anmiTransform = FTransform(anmiComponent->GetRelativeTransform());
-                    if (doordata.isInnerDoor) {
-                        if (doordata.mode == "counter-clockwise") {
-                            if (open) {
-                                anmiTransform.SetRotation(FRotator(0, -85, 0).Quaternion());
+                if (child_component->GetName().StartsWith("Animation_")) {
+                    UStaticMeshComponent* animation_component = Cast<UStaticMeshComponent>(child_component);
+                    FTransform animation_transform = FTransform(animation_component->GetRelativeTransform());
+                    //only open inner door. skip if it goes to outside
+                    if (door_info.isInnerDoor) {
+                        if (open){
+                            if (door_info.mode == "counter-clockwise") {
+                                animation_transform.SetRotation(FRotator(0, -85, 0).Quaternion());
+                            }else if (door_info.mode == "clockwise"){
+                                animation_transform.SetRotation(FRotator(0, 85, 0).Quaternion());
                             }
-                            else {
-                                anmiTransform.SetRotation(FRotator(0, 0, 0).Quaternion());
-                            }
+                        }else{
+                            animation_transform.SetRotation(FRotator(0, 0, 0).Quaternion());
                         }
-                        else if (doordata.mode == "clockwise") {
-                            if (open) {
-                                anmiTransform.SetRotation(FRotator(0, 85, 0).Quaternion());
-                            }
-                            else {
-                                anmiTransform.SetRotation(FRotator(0, 0, 0).Quaternion());
-                            }
-                        }
-                        anmiComponent->SetRelativeTransform(anmiTransform, false, nullptr, ETeleportType::ResetPhysics);
+                        animation_component->SetRelativeTransform(animation_transform, false, nullptr, ETeleportType::ResetPhysics);
                     }
                 }
             }
         }
-        else if (doordata.mode == "sliding") {
-            TArray<UStaticMeshComponent*> animations;
-            if (DoorActor == nullptr) {
-                continue;
-            }
-            for (auto& child : DoorActor->GetComponentsByClass(UStaticMeshComponent::StaticClass())) {
-                // find Animation component
-                if (child->GetName().StartsWith("Animation_")) {
-                    animations.Add(Cast<UStaticMeshComponent>(child));
-                }
-            }
-            int AnmiSize = animations.Num();
-            if (AnmiSize < 2 || AnmiSize > 4) {
+        else if (door_info.mode == "sliding") {
+            // find all animation components for movement
+            TArray<UStaticMeshComponent*> animation_components;
+            door_actor->GetComponents(animation_components);
+            animation_components.RemoveAll([](UStaticMeshComponent* child_component) {
+                return !child_component->GetName().StartsWith("Animation_");
+            });
+            // check if animation_components_size is in [2,3,4]
+            int animation_components_size = animation_components.Num();
+            if (animation_components_size < 2 || animation_components_size > 4) {
                 // not sure what to do with unexpected number of sliding door
-                UE_LOG(LogTemp, Log, TEXT("ADoorProcessor::MoveDoor: unknown sliding count: %s %s"), *(DoorActor->GetName()), animations.Num());
+                UE_LOG(LogTemp, Log, TEXT("ADoorProcessor::MoveDoor: unknown sliding count: %s %s"), *(door_actor->GetName()), animation_components_size);
                 continue;
             }
-            FBox doorBBox = DoorActor->GetComponentsBoundingBox(false, true);
 
-            UStaticMeshComponent* TargetMax = nullptr;
-            float TargetMaxDistance = 0;
-            UStaticMeshComponent* TargetMin = nullptr;
-            float TargetMinDistance = TNumericLimits<float>::Max();
+            // if there are multiple movable animation component, only move one of them 
+            UStaticMeshComponent* farthest_component = nullptr;
+            float farthest_distance = 0;
+            UStaticMeshComponent* closest_component = nullptr;
+            float closest_distance = TNumericLimits<float>::Max();
 
-            for (auto& anmi : animations) {
+            for (auto& animation_component : animation_components) {
                 // calculate anmi bounding box
-                TArray<USceneComponent*> childs;
-                anmi->GetChildrenComponents(true, childs);
-                FBox anmiBox = FBox(EForceInit::ForceInit);
-
-                for (auto& child : childs) {
-                    if (child->IsRegistered() && child->IsCollisionEnabled()) {
-                        anmiBox += child->Bounds.GetBox();
+                FBox animation_component_bbox = FBox(EForceInit::ForceInit);
+                TArray<USceneComponent*> children_scene_components;
+                animation_component->GetChildrenComponents(true, children_scene_components);
+                for (auto& child_scene_component : children_scene_components) {
+                    if (child_scene_component->IsRegistered() && child_scene_component->IsCollisionEnabled()) {
+                        animation_component_bbox += child_scene_component->Bounds.GetBox();
                     }
                 }
-                // find farest and nearest anmi as target
-                float distance = FVector::Distance(anmi->GetComponentLocation(), anmiBox.GetCenter());
-                if (distance > TargetMaxDistance) {
-                    TargetMaxDistance = distance;
-                    TargetMax = anmi;
+                // find farthest and nearest component as target
+                float distance = FVector::Distance(animation_component->GetComponentLocation(), animation_component_bbox.GetCenter());
+                if (distance > farthest_distance) {
+                    farthest_distance = distance;
+                    farthest_component = animation_component;
                 }
-                if (distance < TargetMinDistance) {
-                    TargetMinDistance = distance;
-                    TargetMin = anmi;
+                if (distance < closest_distance) {
+                    closest_distance = distance;
+                    closest_component = animation_component;
                 }
             }
             // move sliding anmi depending on total Anmi number
-            if (AnmiSize == 2 || AnmiSize == 3) {
+            if (animation_components_size == 2 || animation_components_size == 3) {
                 // only move max door
-                FVector OldLocation = TargetMax->GetRelativeLocation() * FVector(1.75f, 1, 1);
-                TargetMax->SetRelativeLocation(OldLocation, false, nullptr, ETeleportType::ResetPhysics);
+                FVector old_location = farthest_component->GetRelativeLocation() * FVector(1.75f, 1, 1);
+                farthest_component->SetRelativeLocation(old_location, false, nullptr, ETeleportType::ResetPhysics);
             }
-            if (AnmiSize == 4) {
-                TargetMax->SetRelativeLocation(TargetMax->GetRelativeLocation() * FVector(1.75f, 1, 1), false, nullptr, ETeleportType::ResetPhysics);
-                FVector OldMinLocation = TargetMin->GetRelativeLocation();
-                TargetMin->SetRelativeLocation(TargetMax->GetRelativeLocation() * FVector(-0.75f, 1, 1), false, nullptr, ETeleportType::ResetPhysics);
+            if (animation_components_size == 4) {
+                farthest_component->SetRelativeLocation(farthest_component->GetRelativeLocation() * FVector(1.75f, 1, 1), false, nullptr, ETeleportType::ResetPhysics);
+                closest_component->SetRelativeLocation(farthest_component->GetRelativeLocation() * FVector(-0.75f, 1, 1), false, nullptr, ETeleportType::ResetPhysics);
             }
         }
         else {
-            UE_LOG(LogTemp, Warning, TEXT("ADoorProcessor::MoveDoor: Unknown doordata.mode:%s %s "), *(DoorActor->GetName()), *(doordata.mode));
+            UE_LOG(LogTemp, Warning, TEXT("ADoorProcessor::MoveDoor: Unknown door_info.mode:%s %s "), *(door_actor->GetName()), *(door_info.mode));
         }
     }
     return true;

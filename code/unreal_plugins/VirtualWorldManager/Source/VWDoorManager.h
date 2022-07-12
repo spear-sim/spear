@@ -38,14 +38,14 @@ struct FSceneDoorInfo : public FTableRowBase
 class VIRTUALWORLDMANAGER_API UVWDoorManager
 {
 public:
-    // load door settings
+    // initialize door info for current level. only valid for InteriorSim scene
     static bool initLevelDoorInfo(UWorld* world);
     // move each door respectively
     static bool moveAllDoor(bool open);
 
 private:
-    // match setting door to actor in current level
+    // match door info with actor in current level by position
     static void matchDoorActor(UWorld* world);
-    // storing all door info and door actor
+    // storing all door infos and their door actor
     static TArray<FDoorInfo> level_door_info_;
 };
