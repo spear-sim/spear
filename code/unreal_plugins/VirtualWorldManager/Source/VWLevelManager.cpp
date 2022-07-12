@@ -1,9 +1,9 @@
 #include "VWLevelManager.h"
 
-bool UVWLevelManager::mountPakFromPath(const FString& PakPath)
+bool VWLevelManager::mountPakFromPath(const std::string& PakPath)
 {
     if (FCoreDelegates::MountPak.IsBound()) {
-        if (FCoreDelegates::MountPak.Execute(FPaths::ProjectContentDir() + PakPath, 2)) {
+        if (FCoreDelegates::MountPak.Execute(FString(PakPath.c_str()), 2)) {
             UE_LOG(LogTemp, Warning, TEXT("[AVWLevelManager] MountPak success"));
             return true;
         }
@@ -18,20 +18,20 @@ bool UVWLevelManager::mountPakFromPath(const FString& PakPath)
     }
 }
 
-void UVWLevelManager::getAllMapsInPak(TArray<FString>& map_list)
+void VWLevelManager::getAllMapsInPak(std::vector<std::string>& map_list)
 {
     // init FPakPlatformFile
     FPakPlatformFile* pak_platform_file;
-    FString platform_file_name =
-        FPlatformFileManager::Get().GetPlatformFile().GetName();
+    FString platform_file_name = FPlatformFileManager::Get().GetPlatformFile().GetName();
+    UE_LOG(LogTemp, Warning, TEXT("[AVWLevelManager] platform_file_name %s"),*platform_file_name);
     if (platform_file_name.Equals(FString(TEXT("PakFile")))) {
-        pak_platform_file = static_cast<FPakPlatformFile*>(
-            &FPlatformFileManager::Get().GetPlatformFile());
+        UE_LOG(LogTemp, Warning, TEXT("[AVWLevelManager] FPakPlatformFile exist"));
+        pak_platform_file = static_cast<FPakPlatformFile*>(&FPlatformFileManager::Get().GetPlatformFile());
     }
     else {
         pak_platform_file = new FPakPlatformFile;
-        if (!pak_platform_file->Initialize(
-                &FPlatformFileManager::Get().GetPlatformFile(), TEXT(""))) {
+            UE_LOG(LogTemp, Error, TEXT("[AVWLevelManager] FPakPlatformFile initialize"));
+        if (!pak_platform_file->Initialize(&FPlatformFileManager::Get().GetPlatformFile(), TEXT(""))) {
             UE_LOG(LogTemp, Error, TEXT("[AVWLevelManager] FPakPlatformFile failed to initialize"));
             return;
         }
@@ -59,7 +59,7 @@ void UVWLevelManager::getAllMapsInPak(TArray<FString>& map_list)
                 FPackageName::TryConvertFilenameToLongPackageName(asset_name, new_map_path, &failure_reason);
                 // add all maps from /Game, ignore maps from /Engine
                 if (new_map_path.StartsWith("/Game")) {
-                    map_list.Add(new_map_path);
+                    map_list.emplace_back(TCHAR_TO_UTF8(*new_map_path));
                 }
             }
         }

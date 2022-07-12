@@ -1,16 +1,16 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "CoreMinimal.h"
 #include "IPlatformFilePak.h"
-#include "VWLevelManager.generated.h"
 
-UCLASS()
-class VIRTUALWORLDMANAGER_API UVWLevelManager : public UObject
+class VIRTUALWORLDMANAGER_API VWLevelManager
 {
 public:
-    GENERATED_BODY()
-
-    bool mountPakFromPath(const FString& pak_path);
-
-    void getAllMapsInPak(TArray<FString>& map_list);
+    // load DLC from external .pak files
+    static bool mountPakFromPath(const std::string& pak_file_path);
+    // find all available levels in mounted paks.
+    static void getAllMapsInPak(std::vector<std::string>& map_list);
 };
