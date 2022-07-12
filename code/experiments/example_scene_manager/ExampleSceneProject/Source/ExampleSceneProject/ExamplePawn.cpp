@@ -18,10 +18,6 @@
 
 AExamplePawn::AExamplePawn()
 {
-    doorManager = CreateDefaultSubobject<UVWDoorManager>(TEXT("AVWLevelManager"));
-    if (doorManager->loadData(GetWorld())) {
-        doorManager->matchDoorActor(GetWorld());
-    }
 }
 
 void AExamplePawn::BeginPlay()
@@ -32,6 +28,8 @@ void AExamplePawn::BeginPlay()
     this->GetCollisionComponent()->SetCollisionObjectType(ECollisionChannel::ECC_Camera);
     this->GetCollisionComponent()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
+    // initialize UVWDoorManager
+    UVWDoorManager::initLevelDoorInfo(GetWorld());
 
     // test key binders
     GetWorld()->GetFirstPlayerController()->InputComponent->BindAction("Handbrake", IE_Pressed, this,
@@ -64,7 +62,7 @@ void AExamplePawn::switchRenderingMode()
 void AExamplePawn::switchDoor(){
     UE_LOG(LogTemp, Warning, TEXT("AExamplePawn::switchDoor"));
 
-    doorManager->moveAllDoor(door_stat_);
+    UVWDoorManager::moveAllDoor(door_stat_);
 
     door_stat_ = !door_stat_;
 }

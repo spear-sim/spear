@@ -25,4 +25,16 @@ example project for VirtualWorldManager showcases.
 
 4. world set GameMode as `AExampleSceneProjectGameModeBase`
 
-5. play around with key `1`, `2`, `3` 
+5. play around with key `SpaceBar`,``1`, `2`, `3` 
+
+
+### How to Use DoorManager
+1. load an IS scene level otherwise it does not work.
+2. initialize level door info  
+   ```
+   UVWDoorManager::initLevelDoorInfo(GetWorld());
+   ```
+3. open or close doors in current level. Note that some doors might not be stable after movement
+   ```buildoutcfg
+   UVWDoorManager::moveAllDoor(door_stat_);
+   ```

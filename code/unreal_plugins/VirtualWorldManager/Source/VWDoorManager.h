@@ -35,25 +35,17 @@ struct FSceneDoorInfo : public FTableRowBase
     TArray<FDoorInfo> doors;
 };
 
-UCLASS()
-class VIRTUALWORLDMANAGER_API UVWDoorManager : public UObject
+class VIRTUALWORLDMANAGER_API UVWDoorManager
 {
-    GENERATED_BODY()
 public:
-    UVWDoorManager();
-
     // load door settings
-    bool loadData(UWorld* world);
-    // match setting door to actor in VW
-    void matchDoorActor(UWorld* world);
+    static bool initLevelDoorInfo(UWorld* world);
     // move each door respectively
-    bool moveAllDoor(bool open);
-
+    static bool moveAllDoor(bool open);
 
 private:
-    bool isLoadSuccess = false;
-
-    TArray<FDoorInfo> doorsData;
-
-    UDataTable* doorsDataTable;
+    // match setting door to actor in current level
+    static void matchDoorActor(UWorld* world);
+    // storing all door info and door actor
+    static TArray<FDoorInfo> level_door_info_;
 };

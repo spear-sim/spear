@@ -25,7 +25,6 @@ private:
 
     int rendering_mode_;
 
-    UVWDoorManager* doorManager;
     bool door_stat_ = true;
 
 };

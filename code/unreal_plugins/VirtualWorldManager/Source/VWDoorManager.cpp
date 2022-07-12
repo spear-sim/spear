@@ -2,20 +2,14 @@
 #include "EngineUtils.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 
-UVWDoorManager::UVWDoorManager()
-{
-    // load previlege information about doors
-    static ConstructorHelpers::FObjectFinder<UDataTable> doorsDataTableFinder(TEXT("DataTable'/VirtualWorldManager/Koolab/SceneInfo/doors_info.doors_info'"));
-    if (doorsDataTableFinder.Succeeded()) {
-        doorsDataTable = doorsDataTableFinder.Object;
+TArray<FDoorInfo> UVWDoorManager::level_door_info_;
 
-    }
-}
-
-bool UVWDoorManager::loadData(UWorld* world)
-{
+bool UVWDoorManager::initLevelDoorInfo(UWorld* world)
+{    
     //cleanup previous data
-    this->doorsData.Empty();
+    level_door_info_.Empty();
+    UDataTable* door_data_table = LoadObject<UDataTable>(nullptr,TEXT("DataTable'/VirtualWorldManager/Koolab/SceneInfo/doors_info.doors_info'"));
+
     if (world == nullptr) {
         return false;
     }
@@ -24,12 +18,12 @@ bool UVWDoorManager::loadData(UWorld* world)
         return false;
     }
 
-    FSceneDoorInfo* info = doorsDataTable->FindRow<FSceneDoorInfo>(FName(map_name.Mid(4)), "doors");
+    FSceneDoorInfo* info = door_data_table->FindRow<FSceneDoorInfo>(FName(map_name.Mid(4)), "doors");
     if (info == nullptr) {
         return false;
     }
-    this->doorsData.Append(info->doors);
-    this->isLoadSuccess = true;
+    level_door_info_.Append(info->doors);
+    matchDoorActor(world);
     return true;
 }
 
@@ -43,7 +37,7 @@ void UVWDoorManager::matchDoorActor(UWorld* world)
                 if (child->GetName().StartsWith("Architecture_") && child->GetName().Contains("INSTid1216")) {
                     it->Tags.Add("door");
                     FBox doorBBox = it->GetComponentsBoundingBox(false, true);
-                    for (auto& doordata : this->doorsData) {
+                    for (auto& doordata : level_door_info_) {
                         // check if is position is in door bbox
                         FVector doorCenter = doordata.position;
                         FVector result = doorBBox.GetClosestPointTo(doorCenter);
@@ -58,7 +52,7 @@ void UVWDoorManager::matchDoorActor(UWorld* world)
         }
     }
     // check if all matcked
-    for (auto& doordata : this->doorsData) {
+    for (auto& doordata : level_door_info_) {
         if (doordata.doorActor == nullptr) {
             UE_LOG(LogTemp, Warning, TEXT("ADoorProcessor::MatchDoorActor missing actor at %s"), *(doordata.position.ToString()));
         }
@@ -67,7 +61,7 @@ void UVWDoorManager::matchDoorActor(UWorld* world)
 
 bool UVWDoorManager::moveAllDoor(bool open)
 {
-    for (auto& doordata : this->doorsData) {
+    for (auto& doordata : level_door_info_) {
         AActor* DoorActor = doordata.doorActor;
         if (DoorActor == nullptr) {
             continue;
