@@ -16,7 +16,7 @@ bool DoorManager::initLevelDoorInfo(UWorld* world)
     // check if map name follows InteriorSim scene
     ASSERT(map_name.StartsWith("Map_"));
 
-    UDataTable* door_data_table = LoadObject<UDataTable>(nullptr,TEXT("DataTable'/SceneManager/Koolab/SceneInfo/doors_info.doors_info'"));
+    UDataTable* door_data_table = LoadObject<UDataTable>(nullptr, TEXT("DataTable'/SceneManager/Koolab/SceneInfo/DT_scene_door_info.DT_scene_door_info'"));
     FSceneDoorInfo* level_door_info_table = door_data_table->FindRow<FSceneDoorInfo>(FName(map_name.Mid(4)), "doors");
     // check if level_door_info_table is available
     ASSERT(level_door_info_table);

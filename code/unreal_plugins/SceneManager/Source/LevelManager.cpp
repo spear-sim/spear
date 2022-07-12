@@ -1,21 +1,15 @@
 #include "LevelManager.h"
 
-bool LevelManager::mountPakFromPath(const std::string& PakPath)
+#include "Assert.h"
+
+bool LevelManager::mountPakFromPath(const std::string& pak_file_path)
 {
     if (FCoreDelegates::MountPak.IsBound()) {
-        if (FCoreDelegates::MountPak.Execute(FString(PakPath.c_str()), 2)) {
-            UE_LOG(LogTemp, Warning, TEXT("[AVWLevelManager] MountPak success"));
+        if (FCoreDelegates::MountPak.Execute(FString(pak_file_path.c_str()), 2)) {
             return true;
         }
-        else {
-            UE_LOG(LogTemp, Warning, TEXT("[AVWLevelManager] MountPak Failed"));
-            return false;
-        }
     }
-    else {
-        UE_LOG(LogTemp, Warning, TEXT("[AVWLevelManager] OnMountPak.IsBound() Failed"));
-        return false;
-    }
+    return false;
 }
 
 void LevelManager::getAllMapsInPak(std::vector<std::string>& map_list)
@@ -23,16 +17,12 @@ void LevelManager::getAllMapsInPak(std::vector<std::string>& map_list)
     // init FPakPlatformFile
     FPakPlatformFile* pak_platform_file;
     FString platform_file_name = FPlatformFileManager::Get().GetPlatformFile().GetName();
-    UE_LOG(LogTemp, Warning, TEXT("[AVWLevelManager] platform_file_name %s"),*platform_file_name);
     if (platform_file_name.Equals(FString(TEXT("PakFile")))) {
-        UE_LOG(LogTemp, Warning, TEXT("[AVWLevelManager] FPakPlatformFile exist"));
         pak_platform_file = static_cast<FPakPlatformFile*>(&FPlatformFileManager::Get().GetPlatformFile());
     }
     else {
         pak_platform_file = new FPakPlatformFile;
-            UE_LOG(LogTemp, Error, TEXT("[AVWLevelManager] FPakPlatformFile initialize"));
         if (!pak_platform_file->Initialize(&FPlatformFileManager::Get().GetPlatformFile(), TEXT(""))) {
-            UE_LOG(LogTemp, Error, TEXT("[AVWLevelManager] FPakPlatformFile failed to initialize"));
             return;
         }
         FPlatformFileManager::Get().SetPlatformFile(*pak_platform_file);

@@ -30,7 +30,7 @@ example project for VirtualWorldManager showcases.
 
 ### How to Use DoorManager
 1. load an IS scene level otherwise it does not work.
-2. initialize level door info  
+2. initialize level door info required only once per level
    ```
    UVWDoorManager::initLevelDoorInfo(GetWorld());
    ```
@@ -38,3 +38,10 @@ example project for VirtualWorldManager showcases.
    ```buildoutcfg
    UVWDoorManager::moveAllDoor(open);
    ```
+   
+
+### How to use LevelManager
+1. InteriorSim scene are in .pak format, and only available for RobotProject standalone executable. Other project might not open levels from .pak properly.
+2. By default Unreal standalone load all .pak files in `<path_to_standalone>/RobotProject/Content/Paks`. If .pak files is in other location, use `mountPakFromPath` to mount it.
+3. Use `getAllMapsInPak` to find all maps in mounted .pak files.
+4. `switchScene` function in ExampleSceneProject just show how to use above function, yet does not successfully load InteriorSim scene from .pak correctly.

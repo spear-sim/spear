@@ -39,6 +39,8 @@ void AExamplePawn::BeginPlay()
 		&AExamplePawn::switchDoor);
 	GetWorld()->GetFirstPlayerController()->InputComponent->BindAction("ActionTwo", IE_Pressed, this,
 		&AExamplePawn::switchRenderingMode);
+	GetWorld()->GetFirstPlayerController()->InputComponent->BindAction("ActionThree", IE_Pressed, this,
+		&AExamplePawn::switchScene);
 
 
 }
@@ -47,20 +49,6 @@ void AExamplePawn::test()
 {
     UE_LOG(LogTemp, Warning, TEXT("AExamplePawn::test"));
 
-//    std::vector<AActor*> actors;
-//    for (TActorIterator<AActor> actor_itr(GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) {
-//        actors.emplace_back(*actor_itr);
-//    }
-//    UE_LOG(LogTemp, Warning, TEXT("ACapturePawn::test"));
-//
-//    VWPhysicsManager::updatePhysicalMaterial(actors,stat?1065:1074);
-//    std::vector<std::string> maps;
-//    VWLevelManager::getAllMapsInPak(maps);
-//    std::string local_pak_file_path = "/home/xichen/Downloads/Map_235551809_linux.pak";
-//    VWLevelManager::mountPakFromPath(local_pak_file_path);
-//    for (auto& map:maps){
-//        std::cout<<"map - "<<map<<std::endl;
-//    }
 }
 
 void AExamplePawn::switchRenderingMode()
@@ -76,8 +64,42 @@ void AExamplePawn::switchRenderingMode()
 
 void AExamplePawn::switchDoor(){
     UE_LOG(LogTemp, Warning, TEXT("AExamplePawn::switchDoor"));
-
-    //UVWDoorManager::moveAllDoor(door_stat_);
+    // initialization is required
+    // DoorManager::initLevelDoorInfo(GetWorld());
+    //change door status
+    DoorManager::moveAllDoor(door_stat_);
 
     door_stat_ = !door_stat_;
+}
+
+void AExamplePawn::switchScene(){
+    UE_LOG(LogTemp, Warning, TEXT("AExamplePawn::switchScene"));
+
+    std::string local_pak_file_path = "/home/xichen/Downloads/Map_235551809_linux.pak";
+    bool val = LevelManager::mountPakFromPath(local_pak_file_path);
+    UE_LOG(LogTemp, Log, TEXT("LevelManager::mountPakFromPath: %d"), val?1:0);
+
+    std::vector<std::string> maps;
+    LevelManager::getAllMapsInPak(maps);
+    UE_LOG(LogTemp, Log, TEXT("AExamplePawn::switchScene #maps found: %d"), maps.size());
+
+    for (auto& map:maps){
+        UE_LOG(LogTemp, Log, TEXT("AExamplePawn::switchScene found map %s"),*UTF8_TO_TCHAR(maps[0].c_str()));
+    }
+    // move to next scene if available
+    if (maps.size()>0){
+        UGameplayStatics::OpenLevel(this, FName(UTF8_TO_TCHAR(maps[0].c_str())), false);
+    }else{
+        UE_LOG(LogTemp, Log, TEXT("AExamplePawn::switchScene zero map found"));
+    }
+}
+
+void AExamplePawn::switchPhysicalMaterial()
+{
+    UE_LOG(LogTemp, Warning, TEXT("AExamplePawn::switchPhysicalMaterial"));
+    std::vector<AActor*> actors;
+    for (TActorIterator<AActor> actor_itr(GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) {
+        actors.emplace_back(*actor_itr);
+    }
+    PhysicsManager::updatePhysicalMaterial(actors, 1074);
 }
