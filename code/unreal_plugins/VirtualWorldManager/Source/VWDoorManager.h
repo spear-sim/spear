@@ -43,9 +43,9 @@ public:
     UVWDoorManager();
 
     // load door settings
-    bool loadData();
+    bool loadData(UWorld* world);
     // match setting door to actor in VW
-    void matchDoorActor();
+    void matchDoorActor(UWorld* world);
     // move each door respectively
     bool moveAllDoor(bool open);
 

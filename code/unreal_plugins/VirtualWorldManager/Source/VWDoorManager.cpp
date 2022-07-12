@@ -8,25 +8,23 @@ UVWDoorManager::UVWDoorManager()
     static ConstructorHelpers::FObjectFinder<UDataTable> doorsDataTableFinder(TEXT("DataTable'/VirtualWorldManager/Koolab/SceneInfo/doors_info.doors_info'"));
     if (doorsDataTableFinder.Succeeded()) {
         doorsDataTable = doorsDataTableFinder.Object;
-        if (this->isLoadSuccess || this->loadData()) {
-            this->matchDoorActor();
-        }
+
     }
 }
 
-bool UVWDoorManager::loadData()
+bool UVWDoorManager::loadData(UWorld* world)
 {
     //cleanup previous data
     this->doorsData.Empty();
-    if (GetWorld() == nullptr) {
+    if (world == nullptr) {
         return false;
     }
-    FString data = GetWorld()->GetName();
-    if (!data.StartsWith("Map_")) {
+    FString map_name = world->GetName();
+    if (!map_name.StartsWith("Map_")) {
         return false;
     }
 
-    FSceneDoorInfo* info = doorsDataTable->FindRow<FSceneDoorInfo>(FName(data.Mid(4)), "doors");
+    FSceneDoorInfo* info = doorsDataTable->FindRow<FSceneDoorInfo>(FName(map_name.Mid(4)), "doors");
     if (info == nullptr) {
         return false;
     }
@@ -35,9 +33,9 @@ bool UVWDoorManager::loadData()
     return true;
 }
 
-void UVWDoorManager::matchDoorActor()
+void UVWDoorManager::matchDoorActor(UWorld* world)
 {
-    for (TActorIterator<AActor> it(this->GetWorld()); it; ++it) {
+    for (TActorIterator<AActor> it(world); it; ++it) {
         // TODO use other way to identify door actors
         if (it->GetName().StartsWith("Group_")) {
             for (auto& child : it->GetComponents()) {

@@ -19,6 +19,9 @@
 AExamplePawn::AExamplePawn()
 {
     doorManager = CreateDefaultSubobject<UVWDoorManager>(TEXT("AVWLevelManager"));
+    if (doorManager->loadData(GetWorld())) {
+        doorManager->matchDoorActor(GetWorld());
+    }
 }
 
 void AExamplePawn::BeginPlay()
