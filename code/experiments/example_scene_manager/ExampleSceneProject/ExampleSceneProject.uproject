@@ -10,14 +10,18 @@
 			"LoadingPhase": "Default"
 		}
 	],
-    "Plugins": [
-        {
-            "Name": "CoreUtils",
-            "Enabled": true
-        },
-        {
-            "Name": "VirtualWorldManager",
-            "Enabled": true
-        }
-    ]
+	"Plugins": [
+		{
+			"Name": "CoreUtils",
+			"Enabled": true
+		},
+		{
+			"Name": "SceneManager",
+			"Enabled": true
+		},
+		{
+			"Name": "RenderDocPlugin",
+			"Enabled": true
+		}
+	]
 }

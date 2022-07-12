@@ -1,6 +1,6 @@
-#include "VWCustomRenderingManager.h"
+#include "CustomRenderingManager.h"
 
-void UVWCustomRenderingManager::setLambertianRendering(std::vector<AActor*>& actors, bool enable)
+void CustomRenderingManager::setLambertianRendering(std::vector<AActor*>& actors, bool enable)
 {
     for (auto& actor : actors) {
         TArray<UStaticMeshComponent*> components;

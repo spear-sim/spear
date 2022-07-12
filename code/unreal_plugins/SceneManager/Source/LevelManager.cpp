@@ -1,6 +1,6 @@
-#include "VWLevelManager.h"
+#include "LevelManager.h"
 
-bool VWLevelManager::mountPakFromPath(const std::string& PakPath)
+bool LevelManager::mountPakFromPath(const std::string& PakPath)
 {
     if (FCoreDelegates::MountPak.IsBound()) {
         if (FCoreDelegates::MountPak.Execute(FString(PakPath.c_str()), 2)) {
@@ -18,7 +18,7 @@ bool VWLevelManager::mountPakFromPath(const std::string& PakPath)
     }
 }
 
-void VWLevelManager::getAllMapsInPak(std::vector<std::string>& map_list)
+void LevelManager::getAllMapsInPak(std::vector<std::string>& map_list)
 {
     // init FPakPlatformFile
     FPakPlatformFile* pak_platform_file;
@@ -46,7 +46,8 @@ void VWLevelManager::getAllMapsInPak(std::vector<std::string>& map_list)
         FPakFile pak_file(pak_platform_file, *pak_file_name_full, false);
         TArray<FString> file_list;
         FString MountPoint = pak_file.GetMountPoint();
-        pak_file.FindFilesAtPath(file_list, *MountPoint, true, false, true);
+        //pak_file.FindFilesAtPath(file_list, *MountPoint, true, false, true);
+        pak_file.FindPrunedFilesAtPath(file_list, *MountPoint, true, false, true);
         for (int32 i = 0; i < file_list.Num(); i++) {
             FString asset_name = file_list[i];
             FString asset_short_name = FPackageName::GetShortName(asset_name);

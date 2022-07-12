@@ -5,7 +5,7 @@
 #include <CoreMinimal.h>
 #include <GameFramework/Actor.h>
 
-class VWPhysicsManager
+class SCENEMANAGER_API PhysicsManager
 {
 public:
     /**

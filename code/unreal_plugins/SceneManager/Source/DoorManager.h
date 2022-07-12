@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
 #include "Engine/DataTable.h"
-#include "VWDoorManager.generated.h"
+
+#include "DoorManager.generated.h"
 
 USTRUCT(BlueprintType)
 struct FDoorInfo
@@ -35,7 +35,7 @@ struct FSceneDoorInfo : public FTableRowBase
     TArray<FDoorInfo> doors;
 };
 
-class VIRTUALWORLDMANAGER_API UVWDoorManager
+class SCENEMANAGER_API DoorManager
 {
 public:
     // initialize door info for current level. only valid for InteriorSim scene

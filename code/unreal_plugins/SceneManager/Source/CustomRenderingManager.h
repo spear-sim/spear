@@ -4,7 +4,7 @@
 
 #include <vector>
 
-class VIRTUALWORLDMANAGER_API UVWCustomRenderingManager
+class SCENEMANAGER_API CustomRenderingManager
 {
 public:
 	/**

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-class FVirtualWorldManagerModule : public IModuleInterface
+class FSceneManagerModule : public IModuleInterface
 {
 public:
 

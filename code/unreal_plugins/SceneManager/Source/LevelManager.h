@@ -6,7 +6,7 @@
 #include "CoreMinimal.h"
 #include "IPlatformFilePak.h"
 
-class VIRTUALWORLDMANAGER_API VWLevelManager
+class SCENEMANAGER_API LevelManager
 {
 public:
     // load DLC from external .pak files

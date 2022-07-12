@@ -2,10 +2,10 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "VirtualWorldManager",
-	"Description": "provide API to load Virtual World and apply modifications",
+	"FriendlyName": "SceneManager",
+	"Description": "Scene manipulation for InteriorSim scenes",
 	"Category": "Other",
-	"CreatedBy": "kujiale",
+	"CreatedBy": "",
 	"CreatedByURL": "",
 	"DocsURL": "",
 	"MarketplaceURL": "",
@@ -16,7 +16,7 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "VirtualWorldManager",
+			"Name": "SceneManager",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}

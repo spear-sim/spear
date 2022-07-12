@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class VirtualWorldManager : ModuleRules
+public class SceneManager : ModuleRules
 {
-	public VirtualWorldManager(ReadOnlyTargetRules Target) : base(Target)
+	public SceneManager(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		

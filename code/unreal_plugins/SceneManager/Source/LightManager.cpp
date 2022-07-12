@@ -1,4 +1,4 @@
-#include "VWLightManager.h"
+#include "LightManager.h"
 
 #include <EngineUtils.h>
 #include <Engine/PostProcessVolume.h>
@@ -6,7 +6,7 @@
 
 #include "Assert.h"
 
-void VWLightManager::SetGlobalIlluminationIntensity(UWorld* world, float intensity_scale)
+void LightManager::SetGlobalIlluminationIntensity(UWorld* world, float intensity_scale)
 {
     APostProcessVolume* post_process_volume = Cast<APostProcessVolume>(UGameplayStatics::GetActorOfClass(world, APostProcessVolume::StaticClass()));
 
@@ -16,7 +16,7 @@ void VWLightManager::SetGlobalIlluminationIntensity(UWorld* world, float intensi
     post_process_volume->Settings.IndirectLightingIntensity = intensity_scale;
 }
 
-void VWLightManager::EnableDistanceFieldShadows(UWorld* world, bool enable)
+void LightManager::EnableDistanceFieldShadows(UWorld* world, bool enable)
 {
     for (TActorIterator<ALight> it(world, ALight::StaticClass()); it; ++it) {
         ALight* light = *it;

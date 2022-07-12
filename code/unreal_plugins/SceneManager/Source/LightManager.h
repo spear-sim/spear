@@ -4,7 +4,7 @@
 #include <Components/LightComponent.h>
 #include <Engine/Light.h>
 
-class VIRTUALWORLDMANAGER_API VWLightManager
+class SCENEMANAGER_API LightManager
 {
 public:
     // tune global illumination scale

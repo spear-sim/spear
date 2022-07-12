@@ -4,7 +4,7 @@
 #include "GameFramework/SpectatorPawn.h"
 #include "Camera/PlayerCameraManager.h"
 
-#include "VWDoorManager.h"
+#include "DoorManager.h"
 
 #include "ExamplePawn.generated.h"
 

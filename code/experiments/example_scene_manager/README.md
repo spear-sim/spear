@@ -8,7 +8,7 @@ example project for VirtualWorldManager showcases.
     ```buildoutcfg
     ln -s /home/xichen/intel/robotproject/code/unreal_plugins/CoreUtils /home/xichen/intel/robotproject/code/experiments/example_scene_manager/ExampleSceneProject/Plugins/CoreUtils
 
-    ln -s /home/xichen/intel/robotproject/code/unreal_plugins/VirtualWorldManager /home/xichen/intel/ robotproject/code/experiments/example_scene_manager/ExampleSceneProject/Plugins/VirtualWorldManager
+    ln -s /home/xichen/intel/robotproject/code/unreal_plugins/SceneManager /home/xichen/intel/robotproject/code/experiments/example_scene_manager/ExampleSceneProject/Plugins/SceneManager
     ```
 
 2. build project
@@ -36,5 +36,5 @@ example project for VirtualWorldManager showcases.
    ```
 3. open or close doors in current level. Note that some doors might not be stable after movement
    ```buildoutcfg
-   UVWDoorManager::moveAllDoor(door_stat_);
+   UVWDoorManager::moveAllDoor(open);
    ```

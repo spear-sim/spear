@@ -1,10 +1,10 @@
-#include "VWPhysicsManager.h"
+#include "PhysicsManager.h"
 
 #include <iostream>
 
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
-bool VWPhysicsManager::updatePhysicalMaterial(std::vector<AActor*>& actors, int physical_material_id)
+bool PhysicsManager::updatePhysicalMaterial(std::vector<AActor*>& actors, int physical_material_id)
 {
         std::cout << "VWPhysicsManager::updatePhysicalMaterial " <<std::endl;
     FString physical_material_id_str = FString::FromInt(physical_material_id);

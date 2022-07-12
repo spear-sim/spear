@@ -1,13 +1,15 @@
-#include "VWDoorManager.h"
+#include "DoorManager.h"
 
 #include <iostream>
 
 #include <EngineUtils.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 
-TArray<FDoorInfo> UVWDoorManager::level_door_info_;
+#include "Assert.h"
 
-bool UVWDoorManager::initLevelDoorInfo(UWorld* world)
+TArray<FDoorInfo> DoorManager::level_door_info_;
+
+bool DoorManager::initLevelDoorInfo(UWorld* world)
 {
     if (world == nullptr) {
         return false;
@@ -17,7 +19,7 @@ bool UVWDoorManager::initLevelDoorInfo(UWorld* world)
         return false;
     }
 
-    UDataTable* door_data_table = LoadObject<UDataTable>(nullptr,TEXT("DataTable'/VirtualWorldManager/Koolab/SceneInfo/doors_info.doors_info'"));
+    UDataTable* door_data_table = LoadObject<UDataTable>(nullptr,TEXT("DataTable'/SceneManager/Koolab/SceneInfo/doors_info.doors_info'"));
     FSceneDoorInfo* level_door_info_table = door_data_table->FindRow<FSceneDoorInfo>(FName(map_name.Mid(4)), "doors");
     if (level_door_info_table == nullptr) {
         return false;
@@ -31,7 +33,7 @@ bool UVWDoorManager::initLevelDoorInfo(UWorld* world)
     return true;
 }
 
-void UVWDoorManager::matchDoorActor(UWorld* world)
+void DoorManager::matchDoorActor(UWorld* world)
 {
     for (TActorIterator<AActor> it(world); it; ++it) {
         // TODO use other way to identify door actors
@@ -60,19 +62,20 @@ void UVWDoorManager::matchDoorActor(UWorld* world)
             }
         }
     }
-    // check if all matched
+    // check if all matched. May be valid if scene is modified.
     for (auto& door_info : level_door_info_) {
         if (door_info.doorActor == nullptr) {
-            UE_LOG(LogTemp, Warning, TEXT("UVWDoorManager::matchDoorActor: missing actor at %s"), *(door_info.position.ToString()));
+            std::cout<< "DoorManager::matchDoorActor - door not matched at"<< TCHAR_TO_UTF8(*door_info.position.ToString())<< std::endl;
         }
     }
 }
 
-bool UVWDoorManager::moveAllDoor(bool open)
+bool DoorManager::moveAllDoor(bool open)
 {
     for (auto& door_info : level_door_info_) {
         AActor* door_actor = door_info.doorActor;
-        if (door_actor == nullptr) {
+        // skip door_actor if unmatched in case if changed by other scene manipulation.
+        if (!door_actor) {
             continue;
         }
         if (door_info.mode == "counter-clockwise" || door_info.mode == "clockwise") {
@@ -109,8 +112,8 @@ bool UVWDoorManager::moveAllDoor(bool open)
             // check if animation_components_size is in [2,3,4]
             int animation_components_size = animation_components.Num();
             if (animation_components_size < 2 || animation_components_size > 4) {
-                // not sure what to do with unexpected number of sliding door
-                UE_LOG(LogTemp, Log, TEXT("ADoorProcessor::MoveDoor: unknown sliding count: %s %s"), *(door_actor->GetName()), animation_components_size);
+                //unexpected number of sliding door
+                ASSERT(false);
                 continue;
             }
 
@@ -153,7 +156,8 @@ bool UVWDoorManager::moveAllDoor(bool open)
             }
         }
         else {
-            UE_LOG(LogTemp, Warning, TEXT("ADoorProcessor::MoveDoor: Unknown door_info.mode:%s %s "), *(door_actor->GetName()), *(door_info.mode));
+            // Unknown door_info.mode， should not occur
+            ASSERT(false);
         }
     }
     return true;

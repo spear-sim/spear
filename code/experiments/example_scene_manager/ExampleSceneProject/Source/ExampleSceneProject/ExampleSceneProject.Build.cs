@@ -10,7 +10,7 @@ public class ExampleSceneProject : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", });
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  "VirtualWorldManager"});
+		PrivateDependencyModuleNames.AddRange(new string[] { "SceneManager", });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
