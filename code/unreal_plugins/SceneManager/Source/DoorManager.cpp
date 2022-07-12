@@ -11,19 +11,15 @@ TArray<FDoorInfo> DoorManager::level_door_info_;
 
 bool DoorManager::initLevelDoorInfo(UWorld* world)
 {
-    if (world == nullptr) {
-        return false;
-    }
+    ASSERT(world);
     FString map_name = world->GetName();
-    if (!map_name.StartsWith("Map_")) {
-        return false;
-    }
+    // check if map name follows InteriorSim scene
+    ASSERT(map_name.StartsWith("Map_"));
 
     UDataTable* door_data_table = LoadObject<UDataTable>(nullptr,TEXT("DataTable'/SceneManager/Koolab/SceneInfo/doors_info.doors_info'"));
     FSceneDoorInfo* level_door_info_table = door_data_table->FindRow<FSceneDoorInfo>(FName(map_name.Mid(4)), "doors");
-    if (level_door_info_table == nullptr) {
-        return false;
-    }
+    // check if level_door_info_table is available
+    ASSERT(level_door_info_table);
     //cleanup previous data
     level_door_info_.Empty();
     //load door info
@@ -62,10 +58,10 @@ void DoorManager::matchDoorActor(UWorld* world)
             }
         }
     }
-    // check if all matched. May be valid if scene is modified.
+    // check all door_info find its actor. Warn in case if changed by other scene manipulation
     for (auto& door_info : level_door_info_) {
         if (door_info.doorActor == nullptr) {
-            std::cout<< "DoorManager::matchDoorActor - door not matched at"<< TCHAR_TO_UTF8(*door_info.position.ToString())<< std::endl;
+            std::cout << "DoorManager::matchDoorActor - door not matched at" << TCHAR_TO_UTF8(*door_info.position.ToString()) << std::endl;
         }
     }
 }
@@ -114,7 +110,6 @@ bool DoorManager::moveAllDoor(bool open)
             if (animation_components_size < 2 || animation_components_size > 4) {
                 //unexpected number of sliding door
                 ASSERT(false);
-                continue;
             }
 
             // if there are multiple movable animation component, only move one of them 
@@ -156,7 +151,7 @@ bool DoorManager::moveAllDoor(bool open)
             }
         }
         else {
-            // Unknown door_info.mode， should not occur
+            // Unknown door_info.mode, should not occur
             ASSERT(false);
         }
     }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CoreMinimal.h"
-#include "Engine/DataTable.h"
+#include <CoreMinimal.h>
+#include <Engine/DataTable.h>
 
 #include "DoorManager.generated.h"
 

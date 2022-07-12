@@ -1,19 +1,18 @@
 #include "PhysicsManager.h"
 
-#include <iostream>
+#include <PhysicalMaterials/PhysicalMaterial.h>
 
-#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Assert.h"
 
 bool PhysicsManager::updatePhysicalMaterial(std::vector<AActor*>& actors, int physical_material_id)
 {
-        std::cout << "VWPhysicsManager::updatePhysicalMaterial " <<std::endl;
     FString physical_material_id_str = FString::FromInt(physical_material_id);
     FString physical_material_name = FString::Printf(TEXT("/Game/Scene/PhyMaterials/PM_%s.PM_%s"), *physical_material_id_str, *physical_material_id_str);
     UPhysicalMaterial* override_physical_material = LoadObject<UPhysicalMaterial>(nullptr, *physical_material_name);
-    if (override_physical_material == nullptr) {
-        std::cout << "override_physical_material not found "<< physical_material_id <<std::endl;
-        return false;
-    }
+
+    // invalid physical material
+    ASSERT(override_physical_material);
+
     for (auto& actor : actors) {
         TArray<UStaticMeshComponent*> components;
         actor->GetComponents<UStaticMeshComponent>(components);

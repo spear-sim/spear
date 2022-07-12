@@ -1,8 +1,8 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include <vector>
+
+#include <CoreMinimal.h>
 
 class SCENEMANAGER_API CustomRenderingManager
 {
