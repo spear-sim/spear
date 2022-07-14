@@ -4,44 +4,62 @@
 UPostProcessCaptureComponent2D::UPostProcessCaptureComponent2D(const FObjectInitializer &ObjectInitializer)
 : Super(ObjectInitializer){
         //Load PostProcess Materials
+        //AddPostProcessingMaterial(TEXT("Material'/SimulationController/PostProcessMaterials/PostProcess_Segmentation.PostProcess_Segmentation'"));
         AddPostProcessingMaterial(TEXT("Material'/SimulationController/PostProcessMaterials/PostProcessBlendable.PostProcessBlendable'"));
 
         //Set Default Camera Parameters
         SetCameraDefaultOverrides();
 
-        this->bCaptureEveryFrame = false;
+        this->bCaptureEveryFrame = true;
 }
 
 bool UPostProcessCaptureComponent2D::AddPostProcessingMaterial(const FString &Path){
 	ConstructorHelpers::FObjectFinder<UMaterial> Loader(*Path);
   	if (Loader.Succeeded()){
-    	        this->materialsFound.push_back(Loader.Object);
+    	        this->materialsFound.Add(Loader.Object);
   	}
   	return Loader.Succeeded();
 }
 
 void UPostProcessCaptureComponent2D::SetPostProcessBlendables(){
-        if(this->materialsFound.size() == 0){
+        if(this->materialsFound.Num() == 0){
+                UE_LOG(LogTemp, Warning, TEXT("no materials found"));
                 return;
         }
+        //UE_LOG(LogTemp, Warning, TEXT("Materials in array,%s"), this->materialsFound.Num());
 
-        for(auto* m : this->materialsFound){
-                ASSERT(m)
+        for(const auto &m : this->materialsFound){
+                //ASSERT(m);
+                UE_LOG(LogTemp, Warning, TEXT("material found"));
                 AddPostProcessBlendable(m);  
         }
 }
 
 void UPostProcessCaptureComponent2D::AddPostProcessBlendable(UMaterial* mat){
-	ASSERT(mat)
-	this->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this), 0.0f);
+	ASSERT(mat);
+	this->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this), 1.0f);
 }
 
-bool ActivateBlendablePass(uint8 pass_id){
-        if(pass_id )
+bool UPostProcessCaptureComponent2D::ActivateBlendablePass(uint8 pass_id){
+        if(pass_id > this->materialsFound.Num()){
+                return false;
+        }
+        //for(uint8 pass = 0;pass < this->PostProcessSettings.WeightedBlendables.Array.Num(); pass++){
+        //        if(pass == pass_id){
+        //                this->PostProcessSettings.WeightedBlendables.Array[pass].Weight = 1.0f;
+        //       }else{
+        //                this->PostProcessSettings.WeightedBlendables.Array[pass].Weight = 0.0f;
+        //        } 
+        //}
+        for(auto passes : this->PostProcessSettings.WeightedBlendables.Array){
+                passes.Weight = .0f;
+        }
+        this->PostProcessSettings.WeightedBlendables.Array[pass_id].Weight = 1.0f;
         return true;
 }
 
-bool ActivateBlendablePass(std::string pass_name){
+bool UPostProcessCaptureComponent2D::ActivateBlendablePass(std::string pass_name){
+        //SEARCH THE BEST WAY TO PARSE DIFERENT PASSES FFROM PYTHON AND GIVE THE HAB TO GIVE CUSTOM PASSES FROM CLIENT
         return true;
 }
 
@@ -62,9 +80,9 @@ void UPostProcessCaptureComponent2D::SetCameraComponent(){
 
 void UPostProcessCaptureComponent2D::OnComponentDestroyed(bool bDestroyingHierarchy){
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
-        for(auto* m : this->materialsFound){
-                m = nullptr;
-        }
+        //for(const auto &m : this->materialsFound){
+        //        m = nullptr;
+        //}
 }
 
 void UPostProcessCaptureComponent2D::OnRegister(){

@@ -6,6 +6,12 @@
 #include "Engine/BlendableInterface.h"
 #include "Camera/CameraTypes.h"
 #include "Components/SceneCaptureComponent2D.h"
+
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "PostProcessCaptureComponent2D.generated.h"
 
 UCLASS(hidecategories=(Collision, Object, Physics, SceneComponent), ClassGroup=Rendering, editinlinenew, meta=(BlueprintSpawnableComponent))
@@ -36,7 +42,7 @@ public:
 
 private:
 
-	std::vector<UMaterial*> materialsFound;
+	TArray<UMaterial*> materialsFound;
 
 	void SetCameraDefaultOverrides();
 	void ConfigureShowFlags(bool bPostProcessing);

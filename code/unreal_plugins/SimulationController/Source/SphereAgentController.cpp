@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
-#include "SubPassCaptureComponent2D.h"
 #include <Components/StaticMeshComponent.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
@@ -14,6 +13,7 @@
 #include <GameFramework/Actor.h>
 #include <UObject/UObjectGlobals.h>
 
+#include "PostProcessCaptureComponent2D.h"
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
@@ -53,14 +53,14 @@ SphereAgentController::SphereAgentController(UWorld* world)
         
         // create SceneCaptureComponent2D and TextureRenderTarget2D
         //scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
-        scene_capture_component_ = NewObject<USubPassCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
+        scene_capture_component_ = NewObject<UPostProcessCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
         ASSERT(scene_capture_component_);
 
         scene_capture_component_->AttachToComponent(observation_camera_actor_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         scene_capture_component_->SetVisibility(true);
-        scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+        //scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
         scene_capture_component_->FOVAngle = 60.f;
-        scene_capture_component_->ShowFlags.SetTemporalAA(false);
+        //scene_capture_component_->ShowFlags.SetTemporalAA(false);
 
         texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
         ASSERT(texture_render_target_);
