@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
+#include "SubPassCaptureComponent2D.h"
 #include <Components/StaticMeshComponent.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
@@ -51,7 +52,8 @@ SphereAgentController::SphereAgentController(UWorld* world)
         ASSERT(new_object_parent_actor_);
         
         // create SceneCaptureComponent2D and TextureRenderTarget2D
-        scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
+        //scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
+        scene_capture_component_ = NewObject<USubPassCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
         ASSERT(scene_capture_component_);
 
         scene_capture_component_->AttachToComponent(observation_camera_actor_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);

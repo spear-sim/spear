@@ -8,6 +8,7 @@
 
 class AActor;
 class USceneCaptureComponent2D;
+class USubPassCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
 
@@ -41,7 +42,7 @@ private:
 
     UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
     UStaticMeshComponent* goal_static_mesh_component_ = nullptr;
-    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
+    USubPassCaptureComponent2D* scene_capture_component_ = nullptr;
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
 
     UTickEvent* post_physics_pre_render_tick_event_ = nullptr;
