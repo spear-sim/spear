@@ -21,10 +21,10 @@ def check_cmake_version():
             break
     print("cmake version looks good...")
 
-def build_libs(args):
+def build_libs(p_args):
     if sys.platform == "linux":
-        os.environ["CC"] = args.clang_cc_bin
-        os.environ["CXX"] = args.clang_cxx_bin
+        os.environ["CC"] = p_args.clang_cc_bin
+        os.environ["CXX"] = p_args.clang_cxx_bin
 
     print("building rbdl...")
     rbdl_build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "rbdl", "build")
@@ -35,7 +35,7 @@ def build_libs(args):
     os.chdir(rbdl_build_dir)
 
     if sys.platform == "linux":
-        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     else:
