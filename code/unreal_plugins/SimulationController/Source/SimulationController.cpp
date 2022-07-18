@@ -25,6 +25,7 @@
 #include "PointGoalNavTask.h"
 #include "Rpclib.h"
 #include "RpcServer.h"
+#include "SlamDatasetAgentController.h"
 #include "SphereAgentController.h"
 #include "Task.h"
 #include "Visualizer.h"
@@ -119,6 +120,8 @@ void SimulationController::worldBeginPlayEventHandler()
         agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "ImageSamplingAgentController") {
         agent_controller_ = std::make_unique<ImageSamplingAgentController>(world_);
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SlamDatasetAgentController") {
+        agent_controller_ = std::make_unique<SlamDatasetAgentController>(world_);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
         agent_controller_ = std::make_unique<DebugAgentController>(world_);
     } else {
