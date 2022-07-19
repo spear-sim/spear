@@ -1,1 +1,50 @@
-#include "CameraSensor.h"
+#pragma once
+
+#include <map>
+#include <string>
+#include <vector>
+
+class AActor;
+class USceneCaptureComponent2D;
+class UTextureRenderTarget2D;
+class UWorld;
+
+class CameraSensor
+{
+public:
+
+    // This UWorld pointer passed here points to the only running game world.
+    CameraSensor(UWorld* world);
+    ~CameraSensor();
+
+    bool bEnablePostProcessingEffects = true;
+
+    void AddPostProcessingMaterial(const FString &Path);
+
+	void SetPostProcessBlendables();
+	void AddPostProcessBlendable(UMaterial* mat);
+
+	bool ActivateBlendablePass(uint8 pass_id);
+	bool ActivateBlendablePass(std::string pass_name);
+    
+    //void reset() override;
+    //bool isReady() const override;
+
+    FTextureRenderTargetResource* GetRenderResource();
+
+    FRotator GetCameraRotation(){return this->camera_actor_->GetActorRotation();}
+    void SetCameraRotation(FRotator r){this->camera_actor_->SetActorRotation(r);}
+
+private:
+
+    AActor* camera_actor_ = nullptr;
+    AActor* new_object_parent_actor_ = nullptr;
+
+    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
+    UTextureRenderTarget2D* texture_render_target_ = nullptr;
+
+    std::vector<UMaterial*> materialsFound;
+
+    void SetCameraDefaultOverrides();
+	void ConfigureShowFlags(bool bPostProcessing);
+};

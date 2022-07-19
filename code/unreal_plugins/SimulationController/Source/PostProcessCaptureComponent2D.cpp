@@ -5,7 +5,8 @@ UPostProcessCaptureComponent2D::UPostProcessCaptureComponent2D(const FObjectInit
 : Super(ObjectInitializer){
         //Load PostProcess Materials
         //AddPostProcessingMaterial(TEXT("Material'/SimulationController/PostProcessMaterials/PostProcess_Segmentation.PostProcess_Segmentation'"));
-        AddPostProcessingMaterial(TEXT("Material'/SimulationController/PostProcessMaterials/PostProcessBlendable.PostProcessBlendable'"));
+        //AddPostProcessingMaterial(TEXT("Material'/SimulationController/PostProcessMaterials/PostProcessBlendable.PostProcessBlendable'"));
+        AddPostProcessingMaterial(TEXT("/SimulationController/PostProcessMaterials/PostProcessBlendable.PostProcessBlendable"));
 
         //Set Default Camera Parameters
         SetCameraDefaultOverrides();
@@ -14,11 +15,18 @@ UPostProcessCaptureComponent2D::UPostProcessCaptureComponent2D(const FObjectInit
 }
 
 bool UPostProcessCaptureComponent2D::AddPostProcessingMaterial(const FString &Path){
-	ConstructorHelpers::FObjectFinder<UMaterial> Loader(*Path);
-  	if (Loader.Succeeded()){
-    	        this->materialsFound.Add(Loader.Object);
-  	}
-  	return Loader.Succeeded();
+        UMaterial* mat = LoadObject<UMaterial>(nullptr, *Path);
+        if(mat != nullptr){
+                this->materialsFound.Add(mat);
+                return true;
+        }else{
+                return false;
+        }
+	//ConstructorHelpers::FObjectFinder<UMaterial> Loader(*Path);
+  	//if (Loader.Succeeded()){
+    	//        this->materialsFound.Add(Loader.Object);
+  	//}
+  	//return Loader.Succeeded();
 }
 
 void UPostProcessCaptureComponent2D::SetPostProcessBlendables(){
