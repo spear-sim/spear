@@ -12,8 +12,6 @@ class UWorld;
 class CameraSensor
 {
 public:
-
-    // This UWorld pointer passed here points to the only running game world.
     CameraSensor(UWorld* world);
     ~CameraSensor();
 
@@ -26,9 +24,6 @@ public:
 
 	bool ActivateBlendablePass(uint8 pass_id);
 	bool ActivateBlendablePass(std::string pass_name);
-    
-    //void reset() override;
-    //bool isReady() const override;
 
     FTextureRenderTargetResource* GetRenderResource();
 

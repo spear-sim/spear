@@ -7,6 +7,8 @@
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Engine/TextureRenderTarget2D.h>
+#include "Kismet/KismetSystemLibrary.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
@@ -89,8 +91,8 @@ CameraSensor::~CameraSensor(){
 
     ASSERT(this->camera_actor_);
     this->camera_actor_ = nullptr;
-    
-    for(const auto &m : this->materialsFound){
+
+    for(auto &m : this->materialsFound){
         m = nullptr;
     }
 }
@@ -114,12 +116,12 @@ void CameraSensor::SetPostProcessBlendables(){
 
 void CameraSensor::AddPostProcessBlendable(UMaterial* mat){
 	ASSERT(mat);
-	this->scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this), 1.0f);
+	this->scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this->scene_capture_component_), 1.0f);
 }
 
 bool CameraSensor::ActivateBlendablePass(uint8 pass_id){
         //change check lines with ASSERTs
-        if(pass_id > this->materialsFound.Num()){
+        if(pass_id > this->materialsFound.size()){
                 return false;
         }
         for(auto passes : this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array){
@@ -135,22 +137,22 @@ bool CameraSensor::ActivateBlendablePass(std::string pass_name){
 }
 
 FTextureRenderTargetResource* CameraSensor::GetRenderResource(){
-    return scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+    return this->scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
 }
 
 void CameraSensor::SetCameraDefaultOverrides(){
 	this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMethod = true;
-        this->scene_capture_component_->ostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
-        this->scene_capture_component_->ostProcessSettings.bOverride_AutoExposureBias = true;
-        this->scene_capture_component_->ostProcessSettings.bOverride_AutoExposureMinBrightness = true;
-        this->scene_capture_component_->ostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
-        this->scene_capture_component_->ostProcessSettings.bOverride_AutoExposureSpeedUp = true;
-        this->scene_capture_component_->ostProcessSettings.bOverride_AutoExposureSpeedDown = true;
-        this->scene_capture_component_->ostProcessSettings.bOverride_AutoExposureCalibrationConstant_DEPRECATED = true;
-        this->scene_capture_component_->ostProcessSettings.bOverride_HistogramLogMin = true;
-        this->scene_capture_component_->ostProcessSettings.HistogramLogMin = 1.0f;
-        this->scene_capture_component_->ostProcessSettings.bOverride_HistogramLogMax = true;
-        this->scene_capture_component_->ostProcessSettings.HistogramLogMax = 12.0f;
+        this->scene_capture_component_->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
+        this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureBias = true;
+        this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
+        this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
+        this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp = true;
+        this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = true;
+        this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureCalibrationConstant_DEPRECATED = true;
+        this->scene_capture_component_->PostProcessSettings.bOverride_HistogramLogMin = true;
+        this->scene_capture_component_->PostProcessSettings.HistogramLogMin = 1.0f;
+        this->scene_capture_component_->PostProcessSettings.bOverride_HistogramLogMax = true;
+        this->scene_capture_component_->PostProcessSettings.HistogramLogMax = 12.0f;
 
         // Camera
         this->scene_capture_component_->PostProcessSettings.bOverride_CameraShutterSpeed = true;
