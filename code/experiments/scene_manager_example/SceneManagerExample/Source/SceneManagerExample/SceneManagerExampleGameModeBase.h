@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "ExampleProjectGameModeBase.generated.h"
+#include "SceneManagerExampleGameModeBase.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class EXAMPLEPROJECT_API AExampleProjectGameModeBase : public AGameModeBase
+class SCENEMANAGEREXAMPLE_API ASceneManagerExampleGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	

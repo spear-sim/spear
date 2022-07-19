@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class ExampleProject : ModuleRules
+public class SceneManagerExample : ModuleRules
 {
-	public ExampleProject(ReadOnlyTargetRules Target) : base(Target)
+	public SceneManagerExample(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	

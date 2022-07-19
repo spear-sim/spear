@@ -5,7 +5,7 @@
 	"Description": "",
 	"Modules": [
 		{
-			"Name": "ExampleProject",
+			"Name": "SceneManagerExample",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
