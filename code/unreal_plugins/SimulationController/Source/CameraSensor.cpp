@@ -1,6 +1,5 @@
 #include "CameraSensor.h"
 
-#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -37,7 +36,7 @@ CameraSensor::CameraSensor(UWorld* world){
 
         // load blendable materials 
         //TESTING PURPOUSES
-        AddPostProcessingMaterial(TEXT("/SimulationController/PostProcessMaterials/PostProcessBlendable.PostProcessBlendable"));
+        //AddPostProcessingMaterial(TEXT("/SimulationController/PostProcessMaterials/PostProcessBlendable.PostProcessBlendable"));
 
         // create SceneCaptureComponent2D and TextureRenderTarget2D
         this->scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
@@ -51,9 +50,6 @@ CameraSensor::CameraSensor(UWorld* world){
         SetCameraDefaultOverrides();
 
         ConfigureShowFlags(this->bEnablePostProcessingEffects);
-
-        //Set Blendable Materials
-        SetPostProcessBlendables(); 
 
         UKismetSystemLibrary::ExecuteConsoleCommand(world, FString("g.TimeoutForBlockOnRenderFence 300000"));
 

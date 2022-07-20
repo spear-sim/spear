@@ -5,15 +5,15 @@
 #include <utility>
 #include <vector>
 
-//#include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
-//#include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "CameraSensor.h"
+#include "DepthCameraSensor.h"
+#include "SegmentationCameraSensor.h"
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
@@ -38,51 +38,12 @@ SphereAgentController::SphereAgentController(UWorld* world)
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
-        //for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
-        //    std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-        //    if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_NAME"})) {
-        //        ASSERT(!observation_camera_actor_);
-        //        observation_camera_actor_ = *actor_itr;
-        //        break;
-        //    }
-        //}
         observation_camera_sensor_ = new CameraSensor(world);
         ASSERT(observation_camera_sensor_);
 
         new_object_parent_actor_ = world->SpawnActor<AActor>();
         ASSERT(new_object_parent_actor_);
-        
-        //// create SceneCaptureComponent2D and TextureRenderTarget2D
-        ////scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
-        //scene_capture_component_ = NewObject<UPostProcessCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
-        //ASSERT(scene_capture_component_);
-//
-        //scene_capture_component_->AttachToComponent(observation_camera_actor_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-        //scene_capture_component_->SetVisibility(true);
-        ////scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-        //scene_capture_component_->FOVAngle = 60.f;
-        ////scene_capture_component_->ShowFlags.SetTemporalAA(false);
-//
-        //texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
-        //ASSERT(texture_render_target_);
-//
-        //// texture_render_target_->bHDR_DEPRECATED = false;
-        //texture_render_target_->InitCustomFormat(
-        //    Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-        //    Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
-        //    PF_B8G8R8A8,
-        //    true); // PF_B8G8R8A8 disables HDR;
-        //texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-        //texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
-        //texture_render_target_->TargetGamma = 1;
-        //texture_render_target_->SRGB = false; // false for pixels to be stored in linear space
-        //texture_render_target_->bAutoGenerateMips = false;
-        //texture_render_target_->UpdateResourceImmediate(true);
-//
-        //scene_capture_component_->TextureTarget = texture_render_target_;
-        //scene_capture_component_->RegisterComponent();
 
-        // assign observation camera to post physics tick group
         post_physics_pre_render_tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
         ASSERT(post_physics_pre_render_tick_event_);
         post_physics_pre_render_tick_event_->RegisterComponent();
@@ -125,14 +86,6 @@ SphereAgentController::~SphereAgentController()
         post_physics_pre_render_tick_event_->DestroyComponent();
         post_physics_pre_render_tick_event_ = nullptr;
         
-        //ASSERT(texture_render_target_);
-        //texture_render_target_->MarkPendingKill();
-        //texture_render_target_ = nullptr;
-//
-        //ASSERT(scene_capture_component_);
-        //scene_capture_component_->DestroyComponent();
-        //scene_capture_component_ = nullptr;
-
         ASSERT(new_object_parent_actor_);
         new_object_parent_actor_->Destroy();
         new_object_parent_actor_ = nullptr;
@@ -258,7 +211,6 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
 
         ASSERT(IsInGameThread());
 
-        //FTextureRenderTargetResource* target_resource = scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
         FTextureRenderTargetResource* target_resource = observation_camera_sensor_->GetRenderResource();
         ASSERT(target_resource);
 
