@@ -40,6 +40,9 @@ pip install -e code/third_party/msgpack-rpc-python
 
 # install interiorsim
 pip install -e code/python_module
+
+# install OpenCV (not a core requirement, but used in some of our examples) 
+pip install opencv-python
 ```
 
 ## Create symbolic links
