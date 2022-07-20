@@ -7,9 +7,9 @@
 #include "AgentController.h"
 
 class AActor;
-class USceneCaptureComponent2D;
-class UPostProcessCaptureComponent2D;
-class UTextureRenderTarget2D;
+//class USceneCaptureComponent2D;
+class CameraSensor;
+//class UTextureRenderTarget2D;
 class UWorld;
 
 class UTickEvent;
@@ -37,13 +37,15 @@ private:
 
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
-    AActor* observation_camera_actor_ = nullptr;
+    //AActor* observation_camera_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
+
+    CameraSensor* observation_camera_sensor_ = nullptr;
 
     UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
     UStaticMeshComponent* goal_static_mesh_component_ = nullptr;
-    UPostProcessCaptureComponent2D* scene_capture_component_ = nullptr;
-    UTextureRenderTarget2D* texture_render_target_ = nullptr;
+    //UPostProcessCaptureComponent2D* scene_capture_component_ = nullptr;
+    //UTextureRenderTarget2D* texture_render_target_ = nullptr;
 
     UTickEvent* post_physics_pre_render_tick_event_ = nullptr;
     FDelegateHandle post_physics_pre_render_tick_event_handle_;

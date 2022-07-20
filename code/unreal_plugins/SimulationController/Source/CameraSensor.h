@@ -30,6 +30,8 @@ public:
     FRotator GetCameraRotation(){return this->camera_actor_->GetActorRotation();}
     void SetCameraRotation(FRotator r){this->camera_actor_->SetActorRotation(r);}
 
+    void SetCameraLocation(FVector l){this->camera_actor_->SetActorLocation(l);}
+
 private:
 
     AActor* camera_actor_ = nullptr;

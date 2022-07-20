@@ -36,6 +36,7 @@ CameraSensor::CameraSensor(UWorld* world){
         ASSERT(new_object_parent_actor_);
 
         // load blendable materials 
+        //TESTING PURPOUSES
         AddPostProcessingMaterial(TEXT("/SimulationController/PostProcessMaterials/PostProcessBlendable.PostProcessBlendable"));
 
         // create SceneCaptureComponent2D and TextureRenderTarget2D
@@ -48,6 +49,7 @@ CameraSensor::CameraSensor(UWorld* world){
         this->scene_capture_component_->FOVAngle = 60.f;
         //scene_capture_component_->ShowFlags.SetTemporalAA(false);
         SetCameraDefaultOverrides();
+
         ConfigureShowFlags(this->bEnablePostProcessingEffects);
 
         //Set Blendable Materials
@@ -99,17 +101,14 @@ CameraSensor::~CameraSensor(){
 
 void CameraSensor::AddPostProcessingMaterial(const FString &Path){
         UMaterial* mat = LoadObject<UMaterial>(nullptr, *Path);
-        //ASSERT(mat);
         if(mat == nullptr) 
             return;
-
         this->materialsFound.push_back(mat);
 }
 
 void CameraSensor::SetPostProcessBlendables(){
-        ASSERT(this->materialsFound.size() == 0);
+        ASSERT_WARNING(this->materialsFound.size() != 0);
         for(const auto &m : this->materialsFound){
-                UE_LOG(LogTemp, Warning, TEXT("material found"));
                 AddPostProcessBlendable(m);  
         }
 }
