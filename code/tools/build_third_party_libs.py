@@ -45,8 +45,8 @@ def build_libs(args):
     assert cmake_cmd.returncode == 0
     cmake_args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(cmake_args)}")
-    rbld_build_cmd = subprocess.run(cmake_args)
-    assert rbld_build_cmd.returncode == 0
+    build_cmd = subprocess.run(cmake_args)
+    assert build_cmd.returncode == 0
     print("rbdl built successfully...")
 
     print("building rpclib...")
@@ -68,8 +68,8 @@ def build_libs(args):
     assert cmake_cmd.returncode == 0
     cmake_args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(cmake_args)}")
-    rpclib_build_cmd = subprocess.run(cmake_args)
-    assert rpclib_build_cmd.returncode == 0
+    build_cmd = subprocess.run(cmake_args)
+    assert build_cmd.returncode == 0
     print("rpclib built successfully...")
 
     print("building yaml-cpp...")
@@ -91,8 +91,8 @@ def build_libs(args):
     assert cmake_cmd.returncode == 0
     cmake_args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(cmake_args)}")
-    yamlcpp_build_cmd = subprocess.run(cmake_args)
-    assert yamlcpp_build_cmd.returncode == 0
+    build_cmd = subprocess.run(cmake_args)
+    assert build_cmd.returncode == 0
     print("yaml-cpp built successfully...")
 
 
