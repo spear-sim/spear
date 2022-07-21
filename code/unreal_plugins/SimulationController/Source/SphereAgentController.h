@@ -8,8 +8,6 @@
 
 class AActor;
 class CameraSensor;
-class DepthCameraSensor;
-class SegmentationCameraSensor;
 class UWorld;
 
 class UTickEvent;
@@ -40,8 +38,6 @@ private:
     AActor* new_object_parent_actor_ = nullptr;
 
     CameraSensor* observation_camera_sensor_ = nullptr;
-    //DepthCameraSensor* observation_camera_sensor_ = nullptr;
-    //SegmentationCameraSensor* observation_camera_sensor_ = nullptr;
 
     UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
     UStaticMeshComponent* goal_static_mesh_component_ = nullptr;

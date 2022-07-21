@@ -8,39 +8,49 @@ class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
 
+const TArray<FString> PASS_PATHS_ = 
+{
+    TEXT("/SimulationController/PostProcessMaterials/Depth.Depth"),
+    TEXT("/SimulationController/PostProcessMaterials/Segmentation.Segmentation")
+};
+
+enum passes{
+    Depth,
+    Segmentation
+};
+
 class CameraSensor
 {
 public:
-    CameraSensor(UWorld* world);
+    CameraSensor(UWorld* world, AActor* actor_);
     ~CameraSensor();
 
-    bool bEnablePostProcessingEffects = true;
+    bool enable_postprocessing_effects_ = true;
 
-    void AddPostProcessingMaterial(const FString &Path);
+    //DEPRECATED
+    void SetPostProcessingMaterial(const FString &Path);
+    //DEPRECATED
+    void SetPostProcessBlendable(UMaterial* mat);
 
-	void SetPostProcessBlendables();
-	void AddPostProcessBlendable(UMaterial* mat);
+	//void SetPostProcessBlendables();
+    void SetPostProcessBlendables(std::vector<passes> blendables);
 
-	bool ActivateBlendablePass(uint8 pass_id);
-	bool ActivateBlendablePass(std::string pass_name);
+	void ActivateBlendablePass(passes pass_id);
+	void ActivateBlendablePass(std::string pass_name);
 
-    FTextureRenderTargetResource* GetRenderResource();
+    TArray<FColor> GetRenderData();
 
-    FRotator GetCameraRotation(){return this->camera_actor_->GetActorRotation();}
-    void SetCameraRotation(FRotator r){this->camera_actor_->SetActorRotation(r);}
-
-    void SetCameraLocation(FVector l){this->camera_actor_->SetActorLocation(l);}
+    AActor* camera_actor_ = nullptr;
 
 private:
 
-    AActor* camera_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
 
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
 
-    std::vector<UMaterial*> materialsFound;
-
     void SetCameraDefaultOverrides();
 	void ConfigureShowFlags(bool bPostProcessing);
 };
+// pass basic material transformation into the CameraSensor class
+//find directly all the materials in the PostProcessMaterials folder

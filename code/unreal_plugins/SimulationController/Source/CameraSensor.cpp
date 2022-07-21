@@ -17,44 +17,33 @@
 #include "Config.h"
 #include "Serialize.h"
 
-CameraSensor::CameraSensor(UWorld* world){
-    // Find actor in scene
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-
-        for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
-            std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-            if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_NAME"})) {
-                ASSERT(!camera_actor_);
-                camera_actor_ = *actor_itr;
-                break;
-            }
-        }
+CameraSensor::CameraSensor(UWorld* world, AActor* actor_){
+        camera_actor_ = actor_;
         ASSERT(camera_actor_);
 
         new_object_parent_actor_ = world->SpawnActor<AActor>();
         ASSERT(new_object_parent_actor_);
 
-        // load blendable materials 
-        //TESTING PURPOUSES
-        //AddPostProcessingMaterial(TEXT("/SimulationController/PostProcessMaterials/PostProcessBlendable.PostProcessBlendable"));
-
         // create SceneCaptureComponent2D and TextureRenderTarget2D
         this->scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
-        ASSERT(scene_capture_component_);
-
+        ASSERT(scene_capture_component_);       
         this->scene_capture_component_->AttachToComponent(camera_actor_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         this->scene_capture_component_->SetVisibility(true);
         this->scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
         this->scene_capture_component_->FOVAngle = 60.f;
         //scene_capture_component_->ShowFlags.SetTemporalAA(false);
-        SetCameraDefaultOverrides();
 
-        ConfigureShowFlags(this->bEnablePostProcessingEffects);
+        SetCameraDefaultOverrides();    
+        ConfigureShowFlags(this->enable_postprocessing_effects_); 
+
+        //AddPostProcessingMaterial(TEXT("/SimulationController/PostProcessMaterials/Segmentation.Segmentation"));
+        //AddPostProcessingMaterial(TEXT("/SimulationController/PostProcessMaterials/Depth.Depth"));
+
 
         UKismetSystemLibrary::ExecuteConsoleCommand(world, FString("g.TimeoutForBlockOnRenderFence 300000"));
 
         this->texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
-        ASSERT(texture_render_target_);
+        ASSERT(texture_render_target_); 
 
         // texture_render_target_->bHDR_DEPRECATED = false;
         this->texture_render_target_->InitCustomFormat(
@@ -67,11 +56,10 @@ CameraSensor::CameraSensor(UWorld* world){
         this->texture_render_target_->TargetGamma = 1;
         this->texture_render_target_->SRGB = false; // false for pixels to be stored in linear space
         this->texture_render_target_->bAutoGenerateMips = false;
-        this->texture_render_target_->UpdateResourceImmediate(true);
-
+        this->texture_render_target_->UpdateResourceImmediate(true);    
         this->scene_capture_component_->TextureTarget = texture_render_target_;
         this->scene_capture_component_->RegisterComponent();
-    }
+    
 }
 
 CameraSensor::~CameraSensor(){
@@ -90,49 +78,68 @@ CameraSensor::~CameraSensor(){
     ASSERT(this->camera_actor_);
     this->camera_actor_ = nullptr;
 
-    for(auto &m : this->materialsFound){
-        m = nullptr;
-    }
+    //for(auto &m : this->materials){
+    //    m = nullptr;
+    //}
 }
 
-void CameraSensor::AddPostProcessingMaterial(const FString &Path){
+void CameraSensor::SetPostProcessingMaterial(const FString &Path){
         UMaterial* mat = LoadObject<UMaterial>(nullptr, *Path);
-        if(mat == nullptr) 
-            return;
-        this->materialsFound.push_back(mat);
+        ASSERT(mat);
+        //this->materials.push_back(mat);
 }
 
-void CameraSensor::SetPostProcessBlendables(){
-        ASSERT_WARNING(this->materialsFound.size() != 0);
-        for(const auto &m : this->materialsFound){
-                AddPostProcessBlendable(m);  
-        }
-}
-
-void CameraSensor::AddPostProcessBlendable(UMaterial* mat){
+void CameraSensor::SetPostProcessBlendable(UMaterial* mat){
 	ASSERT(mat);
 	this->scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this->scene_capture_component_), 1.0f);
 }
 
-bool CameraSensor::ActivateBlendablePass(uint8 pass_id){
-        //change check lines with ASSERTs
-        if(pass_id > this->materialsFound.size()){
-                return false;
+void CameraSensor::SetPostProcessBlendables(std::vector<passes> blendables){
+        for(passes pass : blendables){
+                UMaterial* mat = LoadObject<UMaterial>(nullptr, *PASS_PATHS_[pass]);
+                ASSERT(mat);
+                this->scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this->scene_capture_component_), 1.0f);
         }
-        for(auto passes : this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array){
-                passes.Weight = .0f;
-        }
-        this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array[pass_id].Weight = 1.0f;
-        return true;
 }
 
-bool CameraSensor::ActivateBlendablePass(std::string pass_name){
+void CameraSensor::ActivateBlendablePass(passes pass_){
+        for(auto pass : this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array){
+                pass.Weight = .0f;
+        }
+        this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array[int(pass_)].Weight = 1.0f;
+}
+
+void CameraSensor::ActivateBlendablePass(std::string pass_name){
         //SEARCH THE BEST WAY TO PARSE DIFERENT PASSES FFROM PYTHON AND GIVE THE HAB TO GIVE CUSTOM PASSES FROM CLIENT
-        return true;
 }
 
-FTextureRenderTargetResource* CameraSensor::GetRenderResource(){
-    return this->scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+TArray<FColor> CameraSensor::GetRenderData(){
+        FTextureRenderTargetResource* target_resource = this->scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+        ASSERT(target_resource);
+        TArray<FColor> pixels;
+
+        struct FReadSurfaceContext
+        {
+            FRenderTarget* src_render_target_;
+            TArray<FColor>& out_data_;
+            FIntRect rect_;
+            FReadSurfaceDataFlags flags_;
+        };
+
+        FReadSurfaceContext context = {target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
+
+        // Required for uint8 read mode
+        context.flags_.SetLinearToGamma(false);
+
+        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([context](FRHICommandListImmediate& RHICmdList) {
+            RHICmdList.ReadSurfaceData(context.src_render_target_->GetRenderTargetTexture(), context.rect_, context.out_data_, context.flags_);
+        });
+
+        FRenderCommandFence ReadPixelFence;
+        ReadPixelFence.BeginFence(true);
+        ReadPixelFence.Wait(true);
+        
+        return pixels;
 }
 
 void CameraSensor::SetCameraDefaultOverrides(){
