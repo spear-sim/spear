@@ -36,30 +36,10 @@ CameraSensor::CameraSensor(UWorld* world, AActor* actor_){
         SetCameraDefaultOverrides();    
         ConfigureShowFlags(this->enable_postprocessing_effects_); 
 
-        //AddPostProcessingMaterial(TEXT("/SimulationController/PostProcessMaterials/Segmentation.Segmentation"));
-        //AddPostProcessingMaterial(TEXT("/SimulationController/PostProcessMaterials/Depth.Depth"));
-
-
         UKismetSystemLibrary::ExecuteConsoleCommand(world, FString("g.TimeoutForBlockOnRenderFence 300000"));
 
         this->texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
-        ASSERT(texture_render_target_); 
-
-        // texture_render_target_->bHDR_DEPRECATED = false;
-        this->texture_render_target_->InitCustomFormat(
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
-            PF_B8G8R8A8,
-            true); // PF_B8G8R8A8 disables HDR;
-        this->texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-        this->texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
-        this->texture_render_target_->TargetGamma = 1;
-        this->texture_render_target_->SRGB = false; // false for pixels to be stored in linear space
-        this->texture_render_target_->bAutoGenerateMips = false;
-        this->texture_render_target_->UpdateResourceImmediate(true);    
-        this->scene_capture_component_->TextureTarget = texture_render_target_;
-        this->scene_capture_component_->RegisterComponent();
-    
+        ASSERT(texture_render_target_);     
 }
 
 CameraSensor::~CameraSensor(){
@@ -77,16 +57,23 @@ CameraSensor::~CameraSensor(){
 
     ASSERT(this->camera_actor_);
     this->camera_actor_ = nullptr;
+}
 
-    //for(auto &m : this->materials){
-    //    m = nullptr;
-    //}
+void CameraSensor::SetRenderTarget(unsigned long w, unsigned long h){
+        this->texture_render_target_->InitCustomFormat(w ,h ,PF_B8G8R8A8 ,true ); // PF_B8G8R8A8 disables HDR;
+        this->texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+        this->texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
+        this->texture_render_target_->TargetGamma = 1;
+        this->texture_render_target_->SRGB = false; // false for pixels to be stored in linear space
+        this->texture_render_target_->bAutoGenerateMips = false;
+        this->texture_render_target_->UpdateResourceImmediate(true);    
+        this->scene_capture_component_->TextureTarget = texture_render_target_;
+        this->scene_capture_component_->RegisterComponent();
 }
 
 void CameraSensor::SetPostProcessingMaterial(const FString &Path){
         UMaterial* mat = LoadObject<UMaterial>(nullptr, *Path);
         ASSERT(mat);
-        //this->materials.push_back(mat);
 }
 
 void CameraSensor::SetPostProcessBlendable(UMaterial* mat){
@@ -102,11 +89,36 @@ void CameraSensor::SetPostProcessBlendables(std::vector<passes> blendables){
         }
 }
 
+void CameraSensor::SetPostProcessBlendables(std::vector<std::string> blendables){
+        //Parse blendable names into enum passes
+        std::vector<passes> blendable_passes_;
+        for(std::string pass_name_ : blendables){
+            if(pass_name_ == "depth"){
+                blendable_passes_.push_back(passes::Depth);
+            }else if(pass_name_ == "segmentation"){
+                blendable_passes_.push_back(passes::Segmentation);
+            }
+        }
+        //sort passes
+        std::sort(blendable_passes_.begin(), blendable_passes_.end());
+        //Set blendables
+        for(passes pass : blendable_passes_){
+                UMaterial* mat = LoadObject<UMaterial>(nullptr, *PASS_PATHS_[pass]);
+                ASSERT(mat);
+                this->scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this->scene_capture_component_), 0.0f);
+        } 
+}
+
 void CameraSensor::ActivateBlendablePass(passes pass_){
         for(auto pass : this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array){
                 pass.Weight = .0f;
         }
-        this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array[int(pass_)].Weight = 1.0f;
+        printf("num of weightedBlendables: %d ", this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array.Num());
+        printf("input pass : %d ", int(pass_));
+
+        if(pass_ != passes::Any){
+                this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array[int(pass_)].Weight = 1.0f;
+        }
 }
 
 void CameraSensor::ActivateBlendablePass(std::string pass_name){

@@ -16,7 +16,8 @@ const TArray<FString> PASS_PATHS_ =
 
 enum passes{
     Depth,
-    Segmentation
+    Segmentation,
+    Any
 };
 
 class CameraSensor
@@ -25,20 +26,21 @@ public:
     CameraSensor(UWorld* world, AActor* actor_);
     ~CameraSensor();
 
-    bool enable_postprocessing_effects_ = true;
-
+    void SetRenderTarget(unsigned long w, unsigned long h);
     //DEPRECATED
     void SetPostProcessingMaterial(const FString &Path);
     //DEPRECATED
     void SetPostProcessBlendable(UMaterial* mat);
 
-	//void SetPostProcessBlendables();
     void SetPostProcessBlendables(std::vector<passes> blendables);
+    void SetPostProcessBlendables(std::vector<std::string> blendables);
 
 	void ActivateBlendablePass(passes pass_id);
 	void ActivateBlendablePass(std::string pass_name);
 
     TArray<FColor> GetRenderData();
+
+    bool enable_postprocessing_effects_ = true;
 
     AActor* camera_actor_ = nullptr;
 
@@ -52,5 +54,5 @@ private:
     void SetCameraDefaultOverrides();
 	void ConfigureShowFlags(bool bPostProcessing);
 };
-// pass basic material transformation into the CameraSensor class
+
 //find directly all the materials in the PostProcessMaterials folder

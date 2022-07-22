@@ -51,9 +51,17 @@ SphereAgentController::SphereAgentController(UWorld* world)
         ASSERT(observation_camera_sensor_);
 
         //Set blendables
-        std::vector<passes> blendable_passes_;
-        blendable_passes_.push_back(passes::Depth);
-        observation_camera_sensor_->SetPostProcessBlendables(blendable_passes_);
+        std::vector<std::string> passes_ = Config::getValue<std::vector<std::string>>(
+            {"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "POSTPROCESS_PASSES" });
+
+        observation_camera_sensor_->SetPostProcessBlendables(passes_);
+
+        //Set RenderTarget
+        observation_camera_sensor_->SetRenderTarget(
+                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}));
+
+        observation_camera_sensor_->ActivateBlendablePass(passes::Any);
 
         new_object_parent_actor_ = world->SpawnActor<AActor>();
         ASSERT(new_object_parent_actor_);
