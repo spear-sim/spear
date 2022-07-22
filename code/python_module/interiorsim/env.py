@@ -60,9 +60,10 @@ class Env(gym.Env):
         self.observation_space = self._get_observation_space()
         self.step_info_space = self._get_step_info_space()
 
-    def step(self, action):
+    def step(self, action, camera_args = []):
         
         self._begin_tick()
+        self._change_camera_pass(camera_args["camera_pass"])
         self._apply_action(action)
         self._tick()
         obs = self._get_observation()
@@ -365,6 +366,9 @@ class Env(gym.Env):
 
     def _apply_action(self, action):
         self._client.call("applyAction", action)
+
+    def _change_camera_pass(self, pass_):
+        self._client.call("changeCameraPass", pass_)
 
     def _get_observation(self):
         observation = self._client.call("getObservation")

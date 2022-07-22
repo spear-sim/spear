@@ -2,11 +2,13 @@
 
 import cv2
 import os
+import random
 
 from interiorsim import Env
 from interiorsim.config import get_config
 from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
+passes = ["depth", "segmentation", "finalColor"]
 
 if __name__ == "__main__":
 
@@ -26,7 +28,11 @@ if __name__ == "__main__":
 
     # take a few steps
     for i in range(10):
-        obs, reward, done, info = env.step({"apply_force": [1, 1]})
+        camera_args = {"camera_pass": passes[random.randint(0,2)]}
+        #env._change_camera_pass(random_pass)
+        #print(random_pass)
+
+        obs, reward, done, info = env.step({"apply_force": [1, 1]}, camera_args)
         print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
 
         cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB

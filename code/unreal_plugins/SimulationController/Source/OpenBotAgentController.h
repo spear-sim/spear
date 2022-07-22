@@ -24,6 +24,7 @@ public:
     std::map<std::string, Box> getActionSpace() const override;
     std::map<std::string, Box> getObservationSpace() const override;
     void applyAction(const std::map<std::string, std::vector<float>>& action) override;
+    void changeCameraPass(const std::string& pass) override{}
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
     void reset() override;
     bool isReady() const override;

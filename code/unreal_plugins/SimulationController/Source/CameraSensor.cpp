@@ -31,6 +31,7 @@ CameraSensor::CameraSensor(UWorld* world, AActor* actor_){
         this->scene_capture_component_->SetVisibility(true);
         this->scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
         this->scene_capture_component_->FOVAngle = 60.f;
+        this->scene_capture_component_->bAlwaysPersistRenderingState = true;
         //scene_capture_component_->ShowFlags.SetTemporalAA(false);
 
         SetCameraDefaultOverrides();    
@@ -99,8 +100,10 @@ void CameraSensor::SetPostProcessBlendables(std::vector<std::string> blendables)
                 blendable_passes_.push_back(passes::Segmentation);
             }
         }
+        
         //sort passes
         std::sort(blendable_passes_.begin(), blendable_passes_.end());
+
         //Set blendables
         for(passes pass : blendable_passes_){
                 UMaterial* mat = LoadObject<UMaterial>(nullptr, *PASS_PATHS_[pass]);
@@ -110,11 +113,14 @@ void CameraSensor::SetPostProcessBlendables(std::vector<std::string> blendables)
 }
 
 void CameraSensor::ActivateBlendablePass(passes pass_){
+        printf("UE4 num of weightedBlendables: %d \n", this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array.Num());
+
         for(auto pass : this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array){
                 pass.Weight = .0f;
+                printf("UE4 pass weight: %f \n", pass.Weight);
         }
-        printf("num of weightedBlendables: %d ", this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array.Num());
-        printf("input pass : %d ", int(pass_));
+        
+        printf("UE4 cameraSensor - input pass : %d \n", int(pass_));
 
         if(pass_ != passes::Any){
                 this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array[int(pass_)].Weight = 1.0f;
