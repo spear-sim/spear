@@ -6,12 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "SceneManagerExampleGameModeBase.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class SCENEMANAGEREXAMPLE_API ASceneManagerExampleGameModeBase : public AGameModeBase
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
 };

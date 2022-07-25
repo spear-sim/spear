@@ -4,7 +4,6 @@
 #include <GameFramework/SpectatorPawn.h>
 #include <Camera/PlayerCameraManager.h>
 
-
 #include "ExamplePawn.generated.h"
 
 UCLASS()
@@ -15,9 +14,13 @@ public:
     AExamplePawn();
     virtual void BeginPlay() override;
     // test only
-	void test();
-    // change physical material for correct physcial property such as friction and density
-	void switchPhysicalMaterial();
+    void test();
+    // test only
+    void test2();
+    // change physical material for correct physical property such as friction and density
+    void switchPhysicalMaterial();
+    // create a new physical material with specific friction and density, then assign to all floor actors
+    void switchNewPhysicalMaterial();
 
 private:
     int physical_material_stat_ = 0;

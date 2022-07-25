@@ -3,4 +3,4 @@
 #include "SceneManagerExample.h"
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, SceneManagerExample, "SceneManagerExample" );
+IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, SceneManagerExample, "SceneManagerExample");
