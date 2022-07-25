@@ -3,6 +3,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Engine/TextureRenderTarget2D.h>
@@ -16,6 +17,7 @@
 #include "Assert.h"
 #include "Config.h"
 #include "Serialize.h"
+#include "TickEvent.h"
 
 CameraSensor::CameraSensor(UWorld* world, AActor* actor_){
         camera_actor_ = actor_;
@@ -40,24 +42,37 @@ CameraSensor::CameraSensor(UWorld* world, AActor* actor_){
         UKismetSystemLibrary::ExecuteConsoleCommand(world, FString("g.TimeoutForBlockOnRenderFence 300000"));
 
         this->texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
-        ASSERT(texture_render_target_);     
+        ASSERT(texture_render_target_);  
+
+        pre_render_tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PreRenderTickEvent"));
+        ASSERT(pre_render_tick_event_);
+        pre_render_tick_event_->RegisterComponent();
+        pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
+        pre_render_tick_event_handle_ = pre_render_tick_event_->delegate_.AddRaw(this, &CameraSensor::PreRenderTickEventHandler);   
 }
 
 CameraSensor::~CameraSensor(){
-    ASSERT(this->texture_render_target_);
-    this->texture_render_target_->MarkPendingKill();
-    this->texture_render_target_ = nullptr;
 
-    ASSERT(this->scene_capture_component_);
-    this->scene_capture_component_->DestroyComponent();
-    this->scene_capture_component_ = nullptr;
+        ASSERT(pre_render_tick_event_);
+        pre_render_tick_event_->delegate_.Remove(pre_render_tick_event_handle_);
+        pre_render_tick_event_handle_.Reset();
+        pre_render_tick_event_->DestroyComponent();
+        pre_render_tick_event_ = nullptr;
 
-    ASSERT(this->new_object_parent_actor_);
-    this->new_object_parent_actor_->Destroy();
-    this->new_object_parent_actor_ = nullptr;
+        ASSERT(this->texture_render_target_);
+        this->texture_render_target_->MarkPendingKill();
+        this->texture_render_target_ = nullptr;
 
-    ASSERT(this->camera_actor_);
-    this->camera_actor_ = nullptr;
+        ASSERT(this->scene_capture_component_);
+        this->scene_capture_component_->DestroyComponent();
+        this->scene_capture_component_ = nullptr;
+
+        ASSERT(this->new_object_parent_actor_);
+        this->new_object_parent_actor_->Destroy();
+        this->new_object_parent_actor_ = nullptr; 
+
+        ASSERT(this->camera_actor_);
+        this->camera_actor_ = nullptr;
 }
 
 void CameraSensor::SetRenderTarget(unsigned long w, unsigned long h){
@@ -72,63 +87,42 @@ void CameraSensor::SetRenderTarget(unsigned long w, unsigned long h){
         this->scene_capture_component_->RegisterComponent();
 }
 
-void CameraSensor::SetPostProcessingMaterial(const FString &Path){
-        UMaterial* mat = LoadObject<UMaterial>(nullptr, *Path);
-        ASSERT(mat);
-}
-
-void CameraSensor::SetPostProcessBlendable(UMaterial* mat){
-	ASSERT(mat);
-	this->scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this->scene_capture_component_), 1.0f);
-}
-
-void CameraSensor::SetPostProcessBlendables(std::vector<passes> blendables){
-        for(passes pass : blendables){
-                UMaterial* mat = LoadObject<UMaterial>(nullptr, *PASS_PATHS_[pass]);
-                ASSERT(mat);
-                this->scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this->scene_capture_component_), 1.0f);
-        }
-}
-
 void CameraSensor::SetPostProcessBlendables(std::vector<std::string> blendables){
-        //Parse blendable names into enum passes
-        std::vector<passes> blendable_passes_;
         for(std::string pass_name_ : blendables){
-            if(pass_name_ == "depth"){
-                blendable_passes_.push_back(passes::Depth);
-            }else if(pass_name_ == "segmentation"){
-                blendable_passes_.push_back(passes::Segmentation);
-            }
+            ASSERT(std::find(PASSES_.begin(), PASSES_.end(), pass_name_) != PASSES_.end());
         }
-        
-        //sort passes
-        std::sort(blendable_passes_.begin(), blendable_passes_.end());
 
         //Set blendables
-        for(passes pass : blendable_passes_){
-                UMaterial* mat = LoadObject<UMaterial>(nullptr, *PASS_PATHS_[pass]);
+        unsigned long pass_index_ = 0;
+        for(std::string pass_name_ : blendables){
+                FString path_ = MATERIALS_PATH_ + pass_name_.c_str() + "." + pass_name_.c_str();
+                UMaterial* mat = LoadObject<UMaterial>(nullptr, *path_);
                 ASSERT(mat);
                 this->scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this->scene_capture_component_), 0.0f);
-        } 
-}
-
-void CameraSensor::ActivateBlendablePass(passes pass_){
-        printf("UE4 num of weightedBlendables: %d \n", this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array.Num());
-
-        for(auto pass : this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array){
-                pass.Weight = .0f;
-                printf("UE4 pass weight: %f \n", pass.Weight);
-        }
-        
-        printf("UE4 cameraSensor - input pass : %d \n", int(pass_));
-
-        if(pass_ != passes::Any){
-                this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array[int(pass_)].Weight = 1.0f;
-        }
+                
+                passes_.insert( std::pair<std::string, unsigned long> (pass_name_, pass_index_));
+                pass_index_++;
+        }   
 }
 
 void CameraSensor::ActivateBlendablePass(std::string pass_name){
-        //SEARCH THE BEST WAY TO PARSE DIFERENT PASSES FFROM PYTHON AND GIVE THE HAB TO GIVE CUSTOM PASSES FROM CLIENT
+        ASSERT(pass_name != "");
+
+        this->scene_capture_component_->PostProcessBlendWeight = 0.0f;
+        for(int i=0;i < this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array.Num();i++){
+                this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array[i].Weight = 0.0f;
+        }
+
+        if(pass_name != "finalColor"){
+                this->scene_capture_component_->PostProcessBlendWeight = 1.0f;
+                this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array[int(passes_.find(pass_name)->second)].Weight = 1.0f;
+        }
+        //pre_loaded_pass_ = pass_name;
+}
+
+void CameraSensor::PreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
+{
+        printf("UE4 cameraSensor - tick event : executing tick pre render \n");
 }
 
 TArray<FColor> CameraSensor::GetRenderData(){

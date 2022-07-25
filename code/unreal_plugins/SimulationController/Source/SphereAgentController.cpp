@@ -61,7 +61,7 @@ SphereAgentController::SphereAgentController(UWorld* world)
                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}));
 
-        observation_camera_sensor_->ActivateBlendablePass(passes::Any);
+        observation_camera_sensor_->ActivateBlendablePass("finalColor");
 
         new_object_parent_actor_ = world->SpawnActor<AActor>();
         ASSERT(new_object_parent_actor_);
@@ -216,19 +216,8 @@ void SphereAgentController::applyAction(const std::map<std::string, std::vector<
 void SphereAgentController::changeCameraPass(const std::string& pass)
 {
     ASSERT(pass != "");
-    passes pass_ ;
 
-    printf("UE4 server: pass recieved %s \n", pass.c_str());
-    //----------temporal--------------
-    if(pass == "depth")
-        pass_ = passes::Depth;
-    if(pass == "segmentation")
-        pass_ = passes::Segmentation;
-    if(pass == "finalColor")
-        pass_ = passes::Any;
-    //----------temporal--------------
-
-    observation_camera_sensor_->ActivateBlendablePass(pass_);
+    observation_camera_sensor_->ActivateBlendablePass(pass);
 }
 
 std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservation() const

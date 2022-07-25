@@ -8,7 +8,7 @@ from interiorsim import Env
 from interiorsim.config import get_config
 from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
-passes = ["depth", "segmentation", "finalColor"]
+passes = ["Depth", "Segmentation", "finalColor"]
 
 if __name__ == "__main__":
 
