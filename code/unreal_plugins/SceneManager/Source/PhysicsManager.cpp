@@ -27,14 +27,7 @@ void PhysicsManager::initialize()
 
 void PhysicsManager::terminate()
 {
-//    for (auto& kvp : physical_material_map_)
-//    {
-//        UPhysicalMaterial* physical_material = kvp.second;
-//        if (physical_material)
-//        {
-//            physical_material->ConditionalBeginDestroy();
-//        }
-//    }
+    //clear pointer
     physical_material_map_.clear();
 }
 

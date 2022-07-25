@@ -7,6 +7,7 @@ public class SceneManager : ModuleRules
 	public SceneManager(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        bEnableExceptions = true;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
