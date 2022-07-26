@@ -8,7 +8,7 @@ from interiorsim import Env
 from interiorsim.config import get_config
 from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
-passes = ["Depth", "Segmentation", "finalColor"]
+passes = ["Segmentation", "Depth", "Depth_GLSL", "Normals", "finalColor"]
 
 if __name__ == "__main__":
 
@@ -28,7 +28,8 @@ if __name__ == "__main__":
 
     # take a few steps
     for i in range(10):
-        camera_args = {"camera_pass": passes[random.randint(0,2)]}
+        #camera_args = {"camera_pass": passes[random.randint(0,4)]}
+        camera_args = {"camera_pass": passes[2]}
         #env._change_camera_pass(random_pass)
         #print(random_pass)
 

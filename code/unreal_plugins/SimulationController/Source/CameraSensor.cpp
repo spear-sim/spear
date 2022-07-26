@@ -14,6 +14,9 @@
 #include <GameFramework/Actor.h>
 #include <UObject/UObjectGlobals.h>
 
+#include "HAL/FileManager.h"
+#include "Misc/Paths.h"
+
 #include "Assert.h"
 #include "Config.h"
 #include "Serialize.h"
@@ -48,11 +51,22 @@ CameraSensor::CameraSensor(UWorld* world, AActor* actor_){
         ASSERT(pre_render_tick_event_);
         pre_render_tick_event_->RegisterComponent();
         pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
-        pre_render_tick_event_handle_ = pre_render_tick_event_->delegate_.AddRaw(this, &CameraSensor::PreRenderTickEventHandler);   
+        pre_render_tick_event_handle_ = pre_render_tick_event_->delegate_.AddRaw(this, &CameraSensor::PreRenderTickEventHandler);
+
+        TArray<FString> materials_in_folder_;
+        const FString& FullPath = FPaths::ProjectPluginsDir();
+        FString full_path_ =TEXT("/SimulationController/PostProcessMaterials/");
+        FString extension_ = TEXT("uasset");
+        printf("fullPath : %s . number of assets in directory : %d  \n", TCHAR_TO_UTF8(*full_path_), materials_in_folder_.Num());
+        IFileManager::Get().FindFiles(materials_in_folder_, *full_path_,*extension_);
+        for(FString mat : materials_in_folder_){
+                printf("material found : %s \n", TCHAR_TO_UTF8(*mat));
+        }
+  
 }
 
 CameraSensor::~CameraSensor(){
-
+        //check if we need it 
         ASSERT(pre_render_tick_event_);
         pre_render_tick_event_->delegate_.Remove(pre_render_tick_event_handle_);
         pre_render_tick_event_handle_.Reset();
@@ -152,6 +166,17 @@ TArray<FColor> CameraSensor::GetRenderData(){
         ReadPixelFence.Wait(true);
         
         return pixels;
+}
+
+//depth codification
+//decode formula : depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
+void CameraSensor::FcolorArrayToUintVector(std::vector<uint32_t>& out, TArray<FColor> data)
+{
+        ASSERT(out.size() == data.Num());
+        for (uint32 i = 0; i < static_cast<uint32>(data.Num()); ++i) {
+            float depth = ((data[i].R  + (data[i].G * 256) + (data[i].B * 256 * 256)) / ((256 * 256 * 256) - 1)) * 10; 
+            out.at(i) = (uint32_t)(*(uint32_t*)&depth);
+        }
 }
 
 void CameraSensor::SetCameraDefaultOverrides(){

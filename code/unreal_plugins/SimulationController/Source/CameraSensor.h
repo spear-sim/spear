@@ -16,7 +16,11 @@ const FString MATERIALS_PATH_ = "/SimulationController/PostProcessMaterials/";
 const std::vector<std::string> PASSES_ =
 {
     "Depth",
-    "Segmentation"
+    "Depth_GLSL",
+    "Segmentation",
+    "LensDistortion",
+    "Normals",
+    "PixelVelocity"
 };
 
 class CameraSensor
@@ -34,6 +38,8 @@ public:
     void PreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
 
     TArray<FColor> GetRenderData();
+
+    void FcolorArrayToUintVector(std::vector<uint32_t>& out, TArray<FColor> data);
 
     bool enable_postprocessing_effects_ = true;
 

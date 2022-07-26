@@ -246,12 +246,31 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
                                    Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
                                    3);
 
+        //depth codification
+        //far clip plane is defined to 1000 meters
+        //decode formula :
+        //                  depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
+        //far clip plane will be defined in the camera or in the shader ??
+        //take UE4 info and convert to meters directly 
+        float max_depth = 0.0f;
+        float min_depth = 100.0f;
         for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
+            //printf("pixel id: %d \n", i);
+            //printf("RAW color output - <R: %d , G: %d , B:%d > \n",pixels[i].R,pixels[i].G,pixels[i].B);
+            float depth = pixels[i].R  + (pixels[i].G * 256) + (pixels[i].B * 256 * 256); 
+            float normalized_depth = depth / ((256 * 256 * 256) - 1);
+            float dist = normalized_depth * 10; // apply 1000 meters as a far clip plane as a test purpouse
+            if(max_depth < dist) max_depth = dist;
+            if(min_depth > dist) min_depth = dist;
+            //printf("pixel depth: %f  --  normalized: %f  --  dist: %f \n", depth, normalized_depth, dist);
+
             image.at(3 * i + 0) = pixels[i].R;
             image.at(3 * i + 1) = pixels[i].G;
             image.at(3 * i + 2) = pixels[i].B;
         }
 
+        printf("min depth: %f  --  max depth %f \n", min_depth, max_depth);
+        
         observation["visual_observation"] = std::move(image);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{
