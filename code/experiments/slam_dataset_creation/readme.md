@@ -2,7 +2,7 @@ To compile InteriorSim on windows, there needs to be some changes made;
 
 Thirdparty libs 
 - Need to add  "-DCMAKE_CXX_FLAGS='/bigobj'" (https://stackoverflow.com/questions/69903253/cmake-bigobj-no-such-file-or-directory) to cmake command for rbdl build.
-- For compile error C2059, fix by defining NOMINMAX for windows platform only. https://github.com/google/flatbuffers/issues/105, https://stackoverflow.com/questions/11544073/how-do-i-deal-with-the-max-macro-in-windows-h-colliding-with-max-in-std.
+- For compile error C2059, fix by defining NOMINMAX for windows platform only. https://github.com/google/flatbuffers/issues/105, https://stackoverflow.com/questions/11544073/how-do-i-deal-with-the-max-macro-in-windows-h-colliding-with-max-in-std. Add the following to this file -  addons/urdfreader/urdfreader.cc
   - #ifdef _MSC_VER
         #define NOMINMAX
     #endif
