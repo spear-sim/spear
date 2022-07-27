@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import sys
 
 SCRIPT_DIR_PATH      = os.path.dirname(os.path.abspath(__file__))
@@ -11,7 +12,7 @@ THIRD_PARTY_PATH     = os.path.join(SCRIPT_DIR_PATH, "..", "third_party")
 def create_symlink(src, dst):
     if sys.platform == "win32":
         # use different way for windows to avoid privilege requirement
-        os.system(f"mklink /J {dst} {src}")
+        subprocess.run(["mklink", "/D", dst, src], shell=True)
     else:
         os.symlink(src, dst)
 

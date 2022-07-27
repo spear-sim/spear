@@ -5,7 +5,6 @@
 #include "GameFramework/Pawn.h"
 #include "NavigationSystem.h"
 
-#include "Config.h"
 #include "PIPCamera.h"
 #include "PawnEvents.h"
 #include "PhysXIncludes.h"

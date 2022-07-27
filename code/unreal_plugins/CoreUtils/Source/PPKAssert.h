@@ -504,7 +504,7 @@
   #if defined(PPK_ASSERT_CXX11)
 
     template<int level, typename T>
-    class COREUTILS_API AssertUsedWrapper
+    class AssertUsedWrapper
     {
       public:
       AssertUsedWrapper(T&& t);

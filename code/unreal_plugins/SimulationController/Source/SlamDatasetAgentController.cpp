@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <map>
+#include <math.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -157,7 +158,7 @@ std::map<std::string, Box> SlamDatasetAgentController::getObservationSpace() con
     box.high = std::numeric_limits<float>::max();
     box.shape = {1};
     box.dtype = DataType::Float32;
-    observation_space["camera_aspect_ratio"] = std::move(box);
+    observation_space["camera_vertical_fov"] = std::move(box);
     
     return observation_space;
 }
@@ -205,7 +206,8 @@ std::map<std::string, std::vector<uint8_t>> SlamDatasetAgentController::getObser
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
 
     observation["camera_horizontal_fov"] = Serialize::toUint8(std::vector<float>{scene_capture_component_->FOVAngle});
-    observation["camera_aspect_ratio"] = Serialize::toUint8(std::vector<float>{(float)Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH"}) / Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT"})});
+    float vfov = 2 * 180.0 * atan(tan(scene_capture_component_->FOVAngle * 3.14159 / 360.0) * (float)Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }) / Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" })) / 3.14159;
+    observation["camera_vertical_fov"] = Serialize::toUint8(std::vector<float>{vfov});
 
     ASSERT(IsInGameThread());
 
@@ -260,7 +262,7 @@ bool SlamDatasetAgentController::isReady() const
 
 void SlamDatasetAgentController::rebuildNavSystem()
 {
-    UNavigationSystemV1* nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world_);
+    nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world_);
     ASSERT(nav_sys_);
 
     FNavAgentProperties agent_properties;

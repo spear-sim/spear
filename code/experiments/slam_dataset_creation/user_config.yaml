@@ -1,10 +1,11 @@
 INTERIORSIM:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/LinuxNoEditor/RobotProject.sh"
-  TEMP_DIR: "/home/rachithp/code/github/interiorsim/code/experiments/slam_dataset_creation/"
-  VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
+  # STANDALONE_EXECUTABLE: "C:/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject/Binaries/Win64/RobotProject.exe"
+  STANDALONE_EXECUTABLE: "C:/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject.exe"
+  TEMP_DIR: "C:/github/interiorsim/code/experiments/slam_dataset_creation"
+  # VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 60.0
-  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-RobotSimSettingPath=/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json" ]
+  # CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-RobotSimSettingPath=/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json" ]
   RENDER_OFFSCREEN: True
   # MAP_ID: "/Game/Maps/Map_235556528"
 
@@ -15,7 +16,7 @@ SIMULATION_CONTROLLER:
   SLAM_DATASET_AGENT_CONTROLLER:
     CAMERA_ACTOR_NAME: "IMAGE_SAMPLING_CAMERA"
     CAMERA_FOV: 60.0
-    ACTION_MODE: "follow_trajectory" # "get_ceiling_images" or "follow_trajectory"
+    ACTION_MODE: "get_ceiling_images" # "get_ceiling_images" or "follow_trajectory"
     IMAGE_TYPE: "rgb" # "rgb" OR "seg"
     IMAGE_HEIGHT: 2560 #480
     IMAGE_WIDTH: 1920 #852

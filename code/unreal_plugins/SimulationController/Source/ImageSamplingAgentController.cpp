@@ -20,7 +20,7 @@
 
 #include <common_utils/NavMeshUtil.hpp>
 
-#include <VWLevelManager.h>
+//#include <VWLevelManager.h>
 
 #include "Assert.h"
 #include "Box.h"
@@ -75,22 +75,22 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
     scene_capture_component_->TextureTarget = texture_render_target_;
 
     // spawn vwlevelmanager
-    virtual_world_level_manager_ = world->SpawnActor<AVWLevelManager>();
-    ASSERT(virtual_world_level_manager_);
-    AVWLevelManager* vw_level_manager = dynamic_cast<AVWLevelManager*>(virtual_world_level_manager_);
-    ASSERT(vw_level_manager);
+    //virtual_world_level_manager_ = world->SpawnActor<AVWLevelManager>();
+    //ASSERT(virtual_world_level_manager_);
+    //AVWLevelManager* vw_level_manager = dynamic_cast<AVWLevelManager*>(virtual_world_level_manager_);
+    //ASSERT(vw_level_manager);
     
     // set post processing parameters
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE"}) == "seg") {
-        scene_capture_component_->AddOrUpdateBlendable(vw_level_manager->getPostProcessMaterial(EPostProcessMaterialType::Semantic));
-    }
+    //if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE"}) == "seg") {
+        //scene_capture_component_->AddOrUpdateBlendable(vw_level_manager->getPostProcessMaterial(EPostProcessMaterialType::Semantic));
+    //}
 }
 
 ImageSamplingAgentController::~ImageSamplingAgentController()
 {
-    ASSERT(virtual_world_level_manager_);
-    virtual_world_level_manager_->Destroy();
-    virtual_world_level_manager_ = nullptr;
+    //ASSERT(virtual_world_level_manager_);
+    //virtual_world_level_manager_->Destroy();
+    //virtual_world_level_manager_ = nullptr;
 
     ASSERT(texture_render_target_);
     texture_render_target_->MarkPendingKill();
@@ -180,7 +180,7 @@ void ImageSamplingAgentController::applyAction(const std::map<std::string, std::
 
         FVector random_position = FVector(0);
         int count = 0;
-        while(random_position.Size() <= 0 and count < 20) {
+        while(random_position.Size() <= 0 && count < 20) {
             RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, random_position, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
             count++;
         }
