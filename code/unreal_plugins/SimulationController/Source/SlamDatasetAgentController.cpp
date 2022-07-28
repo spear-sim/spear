@@ -130,8 +130,12 @@ SlamDatasetAgentController::~SlamDatasetAgentController()
     rgb_camera_sensor_->Destroy();
     rgb_camera_sensor_ = nullptr;
 
+<<<<<<< HEAD
     ASSERT(rgb_camera_sensor_);
     depth_camera_sensor_->Destroy();
+=======
+    ASSERT(depth_camera_sensor_);
+>>>>>>> origin/marti/slam-dataset
     depth_camera_sensor_ = nullptr;
 
     ASSERT(world_);
