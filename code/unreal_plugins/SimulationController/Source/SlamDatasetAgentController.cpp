@@ -62,9 +62,9 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
 
     rgb_camera_sensor_->scene_capture_component_->bAlwaysPersistRenderingState = 1;
     rgb_camera_sensor_->scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "CAMERA_FOV"});
-    rgb_camera_sensor_->scene_capture_component_->bUseRayTracingIfEnabled = true;
-    rgb_camera_sensor_->scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
-    rgb_camera_sensor_->scene_capture_component_->PostProcessSettings.TranslucencyType = ETranslucencyType::RayTracing;
+    //rgb_camera_sensor_->scene_capture_component_->bUseRayTracingIfEnabled = true;
+    //rgb_camera_sensor_->scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
+    //rgb_camera_sensor_->scene_capture_component_->PostProcessSettings.TranslucencyType = ETranslucencyType::RayTracing;
     //scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = 32;
     //scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 1000;
     //scene_capture_component_->PostProcessSettings.RayTracingReflectionsTranslucency = 1u;
@@ -127,15 +127,9 @@ SlamDatasetAgentController::~SlamDatasetAgentController()
     new_object_parent_actor_ = nullptr;
 
     ASSERT(rgb_camera_sensor_);
-    rgb_camera_sensor_->Destroy();
     rgb_camera_sensor_ = nullptr;
 
-<<<<<<< HEAD
-    ASSERT(rgb_camera_sensor_);
-    depth_camera_sensor_->Destroy();
-=======
     ASSERT(depth_camera_sensor_);
->>>>>>> origin/marti/slam-dataset
     depth_camera_sensor_ = nullptr;
 
     ASSERT(world_);
