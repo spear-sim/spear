@@ -107,7 +107,7 @@ SlamDatasetAgentController::~SlamDatasetAgentController()
     ASSERT(rgb_camera_sensor_);
     rgb_camera_sensor_ = nullptr;
 
-    ASSERT(rgb_camera_sensor_);
+    ASSERT(depth_camera_sensor_);
     depth_camera_sensor_ = nullptr;
 
     ASSERT(world_);
