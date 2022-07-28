@@ -42,7 +42,7 @@ if __name__ == "__main__":
     chosen_scenes = []
     for scene in scenes_on_disk:
         split_string_list = scene.split('_')
-        if len(split_string_list) > 1 and split_string_list[1] == "Linux.pak":
+        if len(split_string_list) > 1 and split_string_list[1] == f"{PLATFORM}.pak":
             chosen_scenes.append(split_string_list[0])
 
     for scene in chosen_scenes:
@@ -58,8 +58,8 @@ if __name__ == "__main__":
         config.freeze()
 
         # copy pak from ssd to disk
-        # if not os.path.exists(f"{args.path_to_executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_Linux.pak"):
-            # shutil.copy(os.path.join(args.scenes_path, f"{scene}_Linux.pak"), f"{args.path_to_executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
+        # if not os.path.exists(f"{args.path_to_executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak"):
+            # shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.path_to_executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
 
         # check if data path for storing images exists
         if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), f"data/scene_{scene}/{config.SIMULATION_CONTROLLER.SLAM_DATASET_AGENT_CONTROLLER.ACTION_MODE}/{config.SIMULATION_CONTROLLER.SLAM_DATASET_AGENT_CONTROLLER.IMAGE_TYPE}")):
@@ -110,6 +110,6 @@ if __name__ == "__main__":
         env.close()
         time.sleep(10)
         frame_output_file.close()
-        # os.remove(f"{args.path_to_executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_Linux.pak")
+        # os.remove(f"{args.path_to_executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")
 
     cv2.destroyAllWindows()

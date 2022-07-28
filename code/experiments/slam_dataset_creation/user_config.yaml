@@ -1,11 +1,15 @@
 INTERIORSIM:
   LAUNCH_MODE: "standalone_executable"
+  # LAUNCH_MODE: "uproject"
+  # UPROJECT: "C:/github/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject"
+  # UNREAL_EDITOR_EXECUTABLE: "C:/Program Files/Epic Games/UE_4.27/Engine/Binaries/Win64/UE4Editor.exe"
   # STANDALONE_EXECUTABLE: "C:/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject/Binaries/Win64/RobotProject.exe"
   STANDALONE_EXECUTABLE: "C:/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject.exe"
   TEMP_DIR: "C:/github/interiorsim/code/experiments/slam_dataset_creation"
   # VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 60.0
   # CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-RobotSimSettingPath=/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json" ]
+  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-dx12" ] # dx12 to use path tracing mode
   RENDER_OFFSCREEN: True
   # MAP_ID: "/Game/Maps/Map_235556528"
 

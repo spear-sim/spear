@@ -33,6 +33,7 @@
       r.SSGI.Enable=True
       r.GenerateMeshDistanceFields=True
       r.DistanceFieldBuild.Compress=True
+	r.Vulkan.EnableDefrag=0
 	```
    
    -d: default false, whether download ddc. See [UE4 DerivedDataCache](https://docs.unrealengine.com/4.26/en-US/ProductionPipelines/DerivedDataCache/) for more information.  Modify .\Epic Games\UE_4.26\Engine\Config\BaseEngine.ini as bellow:

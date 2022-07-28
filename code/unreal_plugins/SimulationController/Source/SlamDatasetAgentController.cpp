@@ -53,10 +53,34 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
     scene_capture_component_->bAlwaysPersistRenderingState = 1;
     scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "CAMERA_FOV"});
     scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-    // scene_capture_component_->ShowFlags.SetTemporalAA(false);
+     //scene_capture_component_->ShowFlags.SetTemporalAA(false);
     // scene_capture_component_->ShowFlags.SetAntiAliasing(true);
     scene_capture_component_->AttachToComponent(camera_actor_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
     scene_capture_component_->SetVisibility(true);
+    scene_capture_component_->bUseRayTracingIfEnabled = true;
+    scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
+    scene_capture_component_->PostProcessSettings.TranslucencyType = ETranslucencyType::RayTracing;
+    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = 32;
+    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 1000;
+    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsTranslucency = 1u;
+    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxRoughness
+    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencyMaxRoughness
+    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefractionRays
+    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencySamplesPerPixel
+    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencyShadows
+    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefraction
+    //scene_capture_component_->PostProcessSettings.RayTracingGI
+    //scene_capture_component_->PostProcessSettings.RayTracingGIMaxBounces
+    //scene_capture_component_->PostProcessSettings.RayTracingGISamplesPerPixel
+    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Hard_shadows;
+
+    //scene_capture_component_->PostProcessSettings.PathTracingMaxBounces = 32;
+    //scene_capture_component_->PostProcessSettings.PathTracingSamplesPerPixel = 2000;
+    //scene_capture_component_->PostProcessSettings.PathTracingFilterWidth
+    //scene_capture_component_->PostProcessSettings.PathTracingEnableEmissive = 1u;
+    //scene_capture_component_->PostProcessSettings.PathTracingMaxPathExposure
+    //scene_capture_component_->PostProcessSettings.PathTracingEnablDenoiser = 1u;
+
     scene_capture_component_->RegisterComponent();
 
 
@@ -210,6 +234,12 @@ std::map<std::string, std::vector<uint8_t>> SlamDatasetAgentController::getObser
     observation["camera_vertical_fov"] = Serialize::toUint8(std::vector<float>{vfov});
 
     ASSERT(IsInGameThread());
+
+  
+    //APlayerController* controller = world_->GetFirstPlayerController();
+    //controller->SetViewTarget(camera_actor_);
+    //FScreenshotRequest::RequestScreenshot("C:/github/interiorsim/code/unreal_projects/RobotProject/ScreenshotImages/image", false, true);
+
 
     FTextureRenderTargetResource* target_resource = scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
     ASSERT(target_resource);
