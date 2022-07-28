@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <Camera/CameraActor.h>
+#include "CameraSensor.h"
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
 #include <Engine/EngineTypes.h>
@@ -39,56 +40,75 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
     FActorSpawnParameters spawn_params;
     spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "CAMERA_ACTOR_NAME"}).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    camera_actor_ = world->SpawnActor<ACameraActor>(spawn_location, FRotator(0,0,0), spawn_params);
-    ASSERT(camera_actor_);
+
+    //camera
+    AActor* new_camera_ = world->SpawnActor<ACameraActor>(spawn_location, FRotator(0, 0, 0), spawn_params);
+    rgb_camera_sensor_ = new CameraSensor(world, new_camera_);
+    ASSERT(rgb_camera_sensor_);
+
+    depth_camera_sensor_ = new CameraSensor(world, new_camera_);
+    ASSERT(depth_camera_sensor_);
+    
+    std::vector<std::string> passes_ = {"Depth_GLSL"};
+    rgb_camera_sensor_->SetPostProcessBlendables(passes_);
+    depth_camera_sensor_->SetPostProcessBlendables(passes_);
 
     new_object_parent_actor_ = world->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
     // create SceneCaptureComponent2D and TextureRenderTarget2D
-    scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
-    ASSERT(scene_capture_component_);
+    //scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, TEXT("SceneCaptureComponent2D"));
+    //ASSERT(scene_capture_component_);
 
     // set camera properties
-    scene_capture_component_->bAlwaysPersistRenderingState = 1;
-    scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "CAMERA_FOV"});
-    scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+    rgb_camera_sensor_->scene_capture_component_->bAlwaysPersistRenderingState = 1;
+    rgb_camera_sensor_->scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "CAMERA_FOV"});
+    
+    depth_camera_sensor_->scene_capture_component_->bAlwaysPersistRenderingState = 1;
+    depth_camera_sensor_->scene_capture_component_->FOVAngle = Config::getValue<float>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "CAMERA_FOV" });
+    //scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
     // scene_capture_component_->ShowFlags.SetTemporalAA(false);
     // scene_capture_component_->ShowFlags.SetAntiAliasing(true);
-    scene_capture_component_->AttachToComponent(camera_actor_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-    scene_capture_component_->SetVisibility(true);
-    scene_capture_component_->RegisterComponent();
+    //scene_capture_component_->AttachToComponent(camera_actor_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+    //scene_capture_component_->SetVisibility(true);
+    //scene_capture_component_->RegisterComponent();
 
 
     // adjust renderTarget
-    texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
-    ASSERT(texture_render_target_);
+    rgb_camera_sensor_->SetRenderTarget(
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
 
-    texture_render_target_->TargetGamma = GEngine->GetDisplayGamma(); // Set FrameWidth and FrameHeight: 1.2f; for Vulkan | GEngine->GetDisplayGamma(); for DX11/12
-    texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH"}),
-                                             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT"}),
-                                             PF_B8G8R8A8,
-                                             true); // PF_B8G8R8A8 disables HDR which will boost storing to disk due to less image information
-    texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-    texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU
-    scene_capture_component_->TextureTarget = texture_render_target_;
+    depth_camera_sensor_->SetRenderTarget(
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
+
+    rgb_camera_sensor_->ActivateBlendablePass("finalColor");
+    depth_camera_sensor_->ActivateBlendablePass("Depth_GLSL");
+    //texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
+    //ASSERT(texture_render_target_);
+
+    //texture_render_target_->TargetGamma = GEngine->GetDisplayGamma(); // Set FrameWidth and FrameHeight: 1.2f; for Vulkan | GEngine->GetDisplayGamma(); for DX11/12
+    //texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH"}),
+    //                                         Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT"}),
+    //                                         PF_B8G8R8A8,
+    //                                         true); // PF_B8G8R8A8 disables HDR which will boost storing to disk due to less image information
+    //texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+    //texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU
+    //scene_capture_component_->TextureTarget = texture_render_target_;
 }
 
 SlamDatasetAgentController::~SlamDatasetAgentController()
 {
-    ASSERT(texture_render_target_);
-    texture_render_target_->MarkPendingKill();
-    texture_render_target_ = nullptr;
-
-    ASSERT(scene_capture_component_);
-    scene_capture_component_ = nullptr;
-
     ASSERT(new_object_parent_actor_);
     new_object_parent_actor_->Destroy();
     new_object_parent_actor_ = nullptr;
 
-    ASSERT(camera_actor_);
-    camera_actor_ = nullptr;
+    ASSERT(rgb_camera_sensor_);
+    rgb_camera_sensor_ = nullptr;
+
+    ASSERT(rgb_camera_sensor_);
+    depth_camera_sensor_ = nullptr;
 
     ASSERT(world_);
     world_ = nullptr;
@@ -144,6 +164,13 @@ std::map<std::string, Box> SlamDatasetAgentController::getObservationSpace() con
 
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
+    box.shape = { Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT"}),
+                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH"})};
+    box.dtype = DataType::Float32;
+    observation_space["visual_observation_depth"] = std::move(box);
+
+    box.low = std::numeric_limits<float>::lowest();
+    box.high = std::numeric_limits<float>::max();
     box.shape = {6};
     box.dtype = DataType::Float32;
     observation_space["pose"] = std::move(box);
@@ -177,7 +204,7 @@ void SlamDatasetAgentController::applyAction(const std::map<std::string, std::ve
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
 
-        camera_actor_->SetActorLocationAndRotation(position, orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
+        rgb_camera_sensor_->camera_actor_->SetActorLocationAndRotation(position, orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "ACTION_MODE"}) == "follow_trajectory") {
         // generateTrajectoryToPredefinedTarget();
         ASSERT(action.count("set_orientation_pyr_deg"));
@@ -191,7 +218,7 @@ void SlamDatasetAgentController::applyAction(const std::map<std::string, std::ve
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
 
-        camera_actor_->SetActorLocationAndRotation(position, orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
+        rgb_camera_sensor_->camera_actor_->SetActorLocationAndRotation(position, orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
     } else {
         ASSERT(false);
     }
@@ -201,53 +228,78 @@ std::map<std::string, std::vector<uint8_t>> SlamDatasetAgentController::getObser
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    const FVector position = camera_actor_->GetActorLocation();
-    const FRotator orientation = camera_actor_->GetActorRotation();
+    const FVector position = rgb_camera_sensor_->camera_actor_->GetActorLocation();
+    const FRotator orientation = rgb_camera_sensor_->camera_actor_->GetActorRotation();
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
 
-    observation["camera_horizontal_fov"] = Serialize::toUint8(std::vector<float>{scene_capture_component_->FOVAngle});
-    float vfov = 2 * 180.0 * atan(tan(scene_capture_component_->FOVAngle * 3.14159 / 360.0) * (float)Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }) / Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" })) / 3.14159;
+    observation["camera_horizontal_fov"] = Serialize::toUint8(std::vector<float>{rgb_camera_sensor_->scene_capture_component_->FOVAngle});
+    float vfov = 2 * 180.0 * atan(tan(rgb_camera_sensor_->scene_capture_component_->FOVAngle * 3.14159 / 360.0) * (float)Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }) / Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" })) / 3.14159;
     observation["camera_vertical_fov"] = Serialize::toUint8(std::vector<float>{vfov});
 
     ASSERT(IsInGameThread());
 
-    FTextureRenderTargetResource* target_resource = scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
-    ASSERT(target_resource);
+    //FTextureRenderTargetResource* target_resource = camera_sensor_->scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+    //ASSERT(target_resource);
 
-    TArray<FColor> pixels;
+    TArray<FColor> rgb_pixels = rgb_camera_sensor_->GetRenderData();
+    TArray<FColor> depth_pixels = depth_camera_sensor_->GetRenderData();
 
-    struct FReadSurfaceContext
-    {
-        FRenderTarget* src_render_target_;
-        TArray<FColor>& out_data_;
-        FIntRect rect_;
-        FReadSurfaceDataFlags flags_;
-    };
+    //struct FReadSurfaceContext
+    //{
+    //    FRenderTarget* src_render_target_;
+    //    TArray<FColor>& out_data_;
+    //    FIntRect rect_;
+    //    FReadSurfaceDataFlags flags_;
+    //};
 
-    FReadSurfaceContext context = {target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
+    //FReadSurfaceContext context = {target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
 
     // Required for uint8 read mode
-    context.flags_.SetLinearToGamma(false);
+    //context.flags_.SetLinearToGamma(false);
 
-    ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([context](FRHICommandListImmediate& RHICmdList) {
-        RHICmdList.ReadSurfaceData(context.src_render_target_->GetRenderTargetTexture(), context.rect_, context.out_data_, context.flags_);
-    });
+    //ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([context](FRHICommandListImmediate& RHICmdList) {
+    //    RHICmdList.ReadSurfaceData(context.src_render_target_->GetRenderTargetTexture(), context.rect_, context.out_data_, context.flags_);
+    //});
 
-    FRenderCommandFence ReadPixelFence;
-    ReadPixelFence.BeginFence(true);
-    ReadPixelFence.Wait(true);
+    //FRenderCommandFence ReadPixelFence;
+    //ReadPixelFence.BeginFence(true);
+    //ReadPixelFence.Wait(true);
 
     std::vector<uint8_t> image(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT"}) *
                                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH"}) *
                                 3);
+    std::vector<float> depth_image(Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" }) *
+                                    Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }));
 
-    for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
-        image.at(3 * i + 0) = pixels[i].R;
-        image.at(3 * i + 1) = pixels[i].G;
-        image.at(3 * i + 2) = pixels[i].B;
+    for (uint32 i = 0; i < static_cast<uint32>(rgb_pixels.Num()); ++i) {
+        image.at(3 * i + 0) = rgb_pixels[i].R;
+        image.at(3 * i + 1) = rgb_pixels[i].G;
+        image.at(3 * i + 2) = rgb_pixels[i].B;
     }
+
+    //depth codification
+    //far clip plane is defined to 1000 meters
+    //decode formula :
+    //                  depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
+    //far clip plane will be defined in the camera or in the shader ??
+    //take UE4 info and convert to meters directly 
+    float max_depth = 0.0f;
+    float min_depth = 100.0f;
+
+    for (uint32 i = 0; i < static_cast<uint32>(depth_pixels.Num()); ++i) {
+        float depth = depth_pixels[i].R + (depth_pixels[i].G * 256) + (depth_pixels[i].B * 256 * 256);
+        float normalized_depth = depth / ((256 * 256 * 256) - 1);
+        float dist = normalized_depth * 10; // apply 1000 meters as a far clip plane as a test purpouse
+
+        if (max_depth < dist) max_depth = dist;
+        if (min_depth > dist) min_depth = dist;
+
+        depth_image.at(i) = dist;
+    }
+    printf("min depth: %f  --  max depth %f \n", min_depth, max_depth);
     
     observation["visual_observation"] = std::move(image);
+    observation["visual_observation_depth"] = Serialize::toUint8(depth_image);
     
     return observation;
 }
@@ -323,7 +375,7 @@ void SlamDatasetAgentController::generateTrajectoryToPredefinedTarget()
                              Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "TRAJECTORY", "TARGET_POS_Y"}),
                              Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "TRAJECTORY", "TARGET_POS_Z"})};
 
-    FVector initial_position = camera_actor_->GetActorLocation();
+    FVector initial_position = rgb_camera_sensor_->camera_actor_->GetActorLocation();
 
     // Path generation polling to get "interesting" paths in every experiment:
     float trajLength = 0.0;
@@ -334,7 +386,7 @@ void SlamDatasetAgentController::generateTrajectoryToPredefinedTarget()
         relativePositionToTarget.Y = (target_position - initial_position).Y;
 
         // Update navigation query with the new target:
-        nav_query_ = FPathFindingQuery(camera_actor_, *nav_data_, initial_position, target_position);
+        nav_query_ = FPathFindingQuery(rgb_camera_sensor_->camera_actor_, *nav_data_, initial_position, target_position);
         nav_query_.SetAllowPartialPaths(true);
 
         // Genrate a collision-free path between the initial position and the target point:
