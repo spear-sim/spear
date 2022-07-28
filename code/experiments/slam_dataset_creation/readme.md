@@ -6,6 +6,7 @@ Thirdparty libs
   - #ifdef _MSC_VER
         #define NOMINMAX
     #endif
+- yaml-cpp.dll needs to be built (Already changed cmake build command to add this)
 - Run `create_symbolic_links.py` in an anaconda prompt in Admin mode.
 
 
@@ -22,3 +23,22 @@ RobotProject
   - For this error, include both of these in coreutils.build.cs
       - PublicDelayLoadDLLs.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "build", "Release", "yaml-cpp.dll"));
       - RuntimeDependencies.Add("$(TargetOutputDir)/yaml-cpp.dll", Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "build", "Release", "yaml-cpp.dll"));
+
+
+To try and compile with UE 4.27
+- Got error `1>C:\github\interiorsim\code\unreal_projects\RobotProject\Plugins\SimulationController\ThirdParty\rpclib\include\rpc/msgpack/v1/adaptor/array_ref.hpp(262): error C4668: '__GNUC__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'`
+and `1>C:\github\interiorsim\code\unreal_projects\RobotProject\Plugins\SimulationController\ThirdParty\rpclib\include\rpc/msgpack/predef/other/endian.h(151): error C4668: 'MSGPACK_ARCH_AMD64' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'`
+	- Fixed by adding bEnableUndefinedIdentifierWarnings = false to SimulationController.Build.cs 
+	- Also, can be fixed by modifying Rpclib.h to
+`#ifdef _MSC_VER
+    __pragma(warning(push)) __pragma(warning(disable : 4668))
+#endif
+
+#include <rpc/config.h>
+#include <rpc/msgpack.hpp>
+#include <rpc/server.h>
+
+#ifdef _MSC_VER
+    __pragma(warning(pop))
+#endif
+`
