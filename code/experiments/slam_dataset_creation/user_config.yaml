@@ -20,7 +20,7 @@ SIMULATION_CONTROLLER:
   SLAM_DATASET_AGENT_CONTROLLER:
     CAMERA_ACTOR_NAME: "IMAGE_SAMPLING_CAMERA"
     CAMERA_FOV: 60.0
-    ACTION_MODE: "get_ceiling_images" # "get_ceiling_images" or "follow_trajectory"
+    ACTION_MODE: "follow_trajectory" # "get_ceiling_images" or "follow_trajectory"
     IMAGE_TYPE: "rgb" # "rgb" OR "seg"
     IMAGE_HEIGHT: 2560 #480
     IMAGE_WIDTH: 1920 #852
