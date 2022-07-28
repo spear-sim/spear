@@ -7,6 +7,7 @@
 #include "AgentController.h"
 
 class AActor;
+class CameraSensor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
@@ -42,9 +43,15 @@ private:
     FPathFindingQuery nav_query_;
     UNavigationSystemV1* nav_sys_;
 
-    AActor* camera_actor_ = nullptr;
+
+    //AActor* camera_actor_ = nullptr;
+    CameraSensor* rgb_camera_sensor_ = nullptr;
+    CameraSensor* depth_camera_sensor_ = nullptr;
+
     AActor* new_object_parent_actor_ = nullptr;
 
-    UTextureRenderTarget2D* texture_render_target_ = nullptr;
-    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
+    //UTextureRenderTarget2D* texture_render_target_ = nullptr;
+    //USceneCaptureComponent2D* scene_capture_component_ = nullptr;
 };
+
+//swap AActor, scenecapture and texturerendertarget for CameraActor
