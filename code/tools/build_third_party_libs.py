@@ -35,7 +35,7 @@ def build_libs(args):
     os.chdir(build_dir)
 
     if sys.platform == "linux":
-        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
     else:
