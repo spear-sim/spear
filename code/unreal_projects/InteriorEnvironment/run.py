@@ -2,13 +2,10 @@
 
 import cv2
 import os
-import random
 
 from interiorsim import Env
 from interiorsim.config import get_config
 from interiorsim.constants import INTERIORSIM_ROOT_DIR
-
-passes = ["Segmentation", "Depth", "Depth_GLSL", "Normals", "finalColor"]
 
 if __name__ == "__main__":
 
@@ -20,7 +17,7 @@ if __name__ == "__main__":
     env = Env(config)
 
     # set camera pass
-    env._change_camera_pass("Segmentation")
+    # env._change_camera_pass("Pass_name_") to change postprocess camera pass
 
     # reset the simulation to get the first observation    
     obs = env.reset()

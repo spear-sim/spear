@@ -14,9 +14,6 @@
 #include <GameFramework/Actor.h>
 #include <UObject/UObjectGlobals.h>
 
-#include "HAL/FileManager.h"
-#include "Misc/Paths.h"
-
 #include "Assert.h"
 #include "Config.h"
 #include "Serialize.h"
@@ -52,17 +49,6 @@ CameraSensor::CameraSensor(UWorld* world, AActor* actor_){
         pre_render_tick_event_->RegisterComponent();
         pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
         pre_render_tick_event_handle_ = pre_render_tick_event_->delegate_.AddRaw(this, &CameraSensor::PreRenderTickEventHandler);
-
-        TArray<FString> materials_in_folder_;
-        const FString& FullPath = FPaths::ProjectPluginsDir();
-        FString full_path_ =TEXT("/SimulationController/PostProcessMaterials/");
-        FString extension_ = TEXT("uasset");
-        printf("fullPath : %s . number of assets in directory : %d  \n", TCHAR_TO_UTF8(*full_path_), materials_in_folder_.Num());
-        IFileManager::Get().FindFiles(materials_in_folder_, *full_path_,*extension_);
-        for(FString mat : materials_in_folder_){
-                printf("material found : %s \n", TCHAR_TO_UTF8(*mat));
-        }
-  
 }
 
 CameraSensor::~CameraSensor(){
@@ -131,12 +117,11 @@ void CameraSensor::ActivateBlendablePass(std::string pass_name){
                 this->scene_capture_component_->PostProcessBlendWeight = 1.0f;
                 this->scene_capture_component_->PostProcessSettings.WeightedBlendables.Array[int(passes_.find(pass_name)->second)].Weight = 1.0f;
         }
-        //pre_loaded_pass_ = pass_name;
 }
 
 void CameraSensor::PreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
 {
-        printf("UE4 cameraSensor - tick event : executing tick pre render \n");
+        //printf("UE4 cameraSensor - tick event : executing tick pre render \n");
 }
 
 TArray<FColor> CameraSensor::GetRenderData(){
