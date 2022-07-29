@@ -19,8 +19,6 @@ public:
     void test2();
     // change physical material for correct physical property such as friction and density
     void switchPhysicalMaterial();
-    // create a new physical material with specific friction and density, then assign to all floor actors
-    void switchNewPhysicalMaterial();
 
 private:
     int physical_material_stat_ = 0;

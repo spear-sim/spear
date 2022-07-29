@@ -7,7 +7,6 @@
 #include "Assert.h"
 
 std::map<int, UPhysicalMaterial*> PhysicsManager::physical_material_map_;
-int PhysicsManager::physical_material_counter;
 
 void PhysicsManager::initialize()
 {
@@ -21,13 +20,11 @@ void PhysicsManager::initialize()
             physical_material_map_[physical_material_id] = physical_material;
         }
     }
-    // initialize counter from 2000 to avoid conflict with existing pm
-    physical_material_counter = 2000;
 }
 
 void PhysicsManager::terminate()
 {
-    //clear pointer
+    // clear pointer
     physical_material_map_.clear();
 }
 
@@ -44,26 +41,30 @@ void PhysicsManager::setActorPhysicalMaterials(const std::vector<AActor*>& actor
         actor->GetComponents<UStaticMeshComponent>(components);
         for (auto& component : components)
         {
-            FBodyInstance* body_instance = component->GetBodyInstance();
-            body_instance->SetPhysMaterialOverride(physical_material);
+            TArray<UMaterialInterface*> materials;
+            component->GetUsedMaterials(materials);
+            for (int32 i = 0; i < materials.Num(); i++)
+            {
+                auto& material = materials[i];
+                if (!material->IsA(UMaterialInstanceDynamic::StaticClass()))
+                {
+                    UMaterialInstanceDynamic* dynamic_material = UMaterialInstanceDynamic::Create(material, component, FName(material->GetName() + "_Dynamic"));
+                    dynamic_material->PhysMaterial = physical_material;
+                    // update material
+                    component->SetMaterial(i, dynamic_material);
+                }
+                else
+                {
+                    UMaterialInstanceDynamic* dynamic_material = Cast<UMaterialInstanceDynamic>(material);
+                    dynamic_material->PhysMaterial = physical_material;
+                    // update physical material if material is not changed
+                    FBodyInstance* body_instance = component->GetBodyInstance();
+                    if (body_instance && body_instance->IsValidBodyInstance())
+                    {
+                        body_instance->UpdatePhysicalMaterials();
+                    }
+                }
+            }
         }
     }
-}
-
-int PhysicsManager::createPhysicalMaterial(float friction, float density)
-{
-    int physical_material_id = physical_material_counter;
-    std::ostringstream oss;
-    oss << "PM_" << physical_material_id;
-    UPhysicalMaterial* physical_material = NewObject<UPhysicalMaterial>((UObject*)GetTransientPackage(), FName(UTF8_TO_TCHAR(oss.str().c_str())), EObjectFlags::RF_Standalone);
-
-    ASSERT(physical_material);
-
-    physical_material->Friction = friction;
-    physical_material->Density = density;
-
-    physical_material_map_[physical_material_id] = physical_material;
-    physical_material_counter++;
-
-    return physical_material_id;
 }

@@ -22,12 +22,6 @@ public:
     // @return true if physical_material_id is valid and override existing value
     static void setActorPhysicalMaterials(const std::vector<AActor*>& actors, int physical_material_id);
 
-    // create new physical material
-    // @return physical_material_id
-    static int createPhysicalMaterial(float friction, float density);
-
 private:
     static std::map<int, UPhysicalMaterial*> physical_material_map_;
-    // start at 2000 to avoid conflict with default physical material
-    static int physical_material_counter;
 };
