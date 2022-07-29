@@ -60,10 +60,10 @@ class Env(gym.Env):
         self.observation_space = self._get_observation_space()
         self.step_info_space = self._get_step_info_space()
 
-    def step(self, action, camera_args = []):
+    def step(self, action):
         
         self._begin_tick()
-        self._change_camera_pass(camera_args["camera_pass"])
+        #self._change_camera_pass(camera_args["camera_pass"])
         self._apply_action(action)
         self._tick()
         obs = self._get_observation()

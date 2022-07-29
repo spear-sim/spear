@@ -19,6 +19,9 @@ if __name__ == "__main__":
     # create Env object
     env = Env(config)
 
+    # set camera pass
+    env._change_camera_pass("Segmentation")
+
     # reset the simulation to get the first observation    
     obs = env.reset()
     print(obs["visual_observation"].shape, obs["visual_observation"].dtype)
@@ -28,12 +31,7 @@ if __name__ == "__main__":
 
     # take a few steps
     for i in range(10):
-        #camera_args = {"camera_pass": passes[random.randint(0,4)]}
-        camera_args = {"camera_pass": passes[2]}
-        #env._change_camera_pass(random_pass)
-        #print(random_pass)
-
-        obs, reward, done, info = env.step({"apply_force": [1, 1]}, camera_args)
+        obs, reward, done, info = env.step({"apply_force": [1, 1]})
         print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
 
         cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB

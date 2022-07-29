@@ -39,7 +39,7 @@ public:
 
     TArray<FColor> GetRenderData();
 
-    void FcolorArrayToUintVector(std::vector<uint32_t>& out, TArray<FColor> data);
+    void FColorToFloatImage(std::vector<float>& out, TArray<FColor> data);
 
     bool enable_postprocessing_effects_ = true;
 
