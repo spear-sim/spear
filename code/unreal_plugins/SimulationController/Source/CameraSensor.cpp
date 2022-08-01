@@ -243,27 +243,31 @@ void CameraSensor::SetCameraDefaultOverrides(){
 
     // Raytracing
     this->scene_capture_component_->PostProcessSettings.RayTracingAO = 1; // Default value
-    this->scene_capture_component_->PostProcessSettings.RayTracingAOSamplesPerPixel = 1; // min 1 - max 64
-    //this->scene_capture_component_->PostProcessSettings.RayTracingAOIntensity = 1.0f; // min 0.0 - max 1.0
-    //this->scene_capture_component_->PostProcessSettings.RayTracingAORadius = 1.0f; // min 0.0 - max 10000.0
+    this->scene_capture_component_->PostProcessSettings.RayTracingAOSamplesPerPixel = 32; // min 1 - max 64
+    this->scene_capture_component_->PostProcessSettings.RayTracingAOIntensity = 1.0f; // min 0.0 - max 1.0
+    this->scene_capture_component_->PostProcessSettings.RayTracingAORadius = 1000.0f; // min 0.0 - max 10000.0
 
     this->scene_capture_component_->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::FinalGather;
-    //this->scene_capture_component_->PostProcessSettings.RayTracingGIMaxBounces = 1; // min 0 - max 50
-    //this->scene_capture_component_->PostProcessSettings.RayTracingGISamplesPerPixel = 1; // min 1 - max 64
+    this->scene_capture_component_->PostProcessSettings.RayTracingGIMaxBounces = 30; // min 0 - max 50
+    this->scene_capture_component_->PostProcessSettings.RayTracingGISamplesPerPixel = 32; // min 1 - max 64
 
     this->scene_capture_component_->PostProcessSettings.TranslucencyType = ETranslucencyType::RayTracing;
-    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
-    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyMaxRoughness = 0.1; // min 0.01 - max 1.0
-    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefractionRays = 1; // min 0 - max 50
-    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencySamplesPerPixel = 1; // min 1 - max 64
-    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefraction = 1; // default value
+    this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
+    this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyMaxRoughness = 1.0f; // min 0.01 - max 1.0
+    this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefractionRays = 30; // min 0 - max 50
+    this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencySamplesPerPixel = 32; // min 1 - max 64
+    this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefraction = 1; // default value
 
     this->scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
-    //this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxRoughness = 0.1f; // min 0.01 - max 1.0
-    //this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = 1; // min 0 - max 50
-    //this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 1; // min 1 - max 64
-    //this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsTranslucency = 1; // Default value
-    //this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
+    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxRoughness = 1.0f; // min 0.01 - max 1.0
+    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = 30; // min 0 - max 50
+    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 32; // min 1 - max 64
+    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsTranslucency = 1; // Default value
+    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
+
+    // Pathtracing
+    this->scene_capture_component_->PostProcessSettings.PathTracingMaxBounces = 30;      // min 0 - max 50
+    this->scene_capture_component_->PostProcessSettings.PathTracingSamplesPerPixel = 32; // min 1 - max 64
 }
 
 void CameraSensor::ConfigureShowFlags(bool bPostProcessing){
