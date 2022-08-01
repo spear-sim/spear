@@ -96,19 +96,17 @@ void ImitationLearningTask::beginFrame()
 
 void ImitationLearningTask::endFrame()
 {
-}
-
-float ImitationLearningTask::getReward() const
-{
-    float reward;
-
-    // TEMPORARY HACK !!
     APawn* vehicle_pawn = dynamic_cast<APawn*>(agent_actor_);
     ASSERT(vehicle_pawn);
     if (Navigation::Singleton(vehicle_pawn).goalReached())
     {
         hit_goal_ = true;
     }
+}
+
+float ImitationLearningTask::getReward() const
+{
+    float reward;
 
     if (hit_goal_) {
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_GOAL"});
