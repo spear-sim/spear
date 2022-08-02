@@ -1,34 +1,34 @@
 #include "Navigation.h"
 
-Navigation::Navigation(APawn* pawnAgent): pawnAgent_(pawnAgent)
+Navigation::Navigation(AActor* agent_actor): agent_actor_(agent_actor)
 {
     // Initialize navigation:
-    indexPath_ = 0; 
+    index_path_ = 0; 
     navSystemRebuild();
 
-    initialPosition_ = pawnAgent_->GetActorLocation(); // Initial position of the agent
+    initial_position_ = agent_actor_->GetActorLocation(); // Initial position of the agent
 
-    navQuery_ = FPathFindingQuery(*pawnAgent_, *navData_, initialPosition_, FVector(0.0f, 0.0f, 0.0f));
+    nav_query_ = FPathFindingQuery(agent_actor_, *nav_data_, initial_position_, FVector(0.0f, 0.0f, 0.0f));
 
     // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
-    navQuery_.SetAllowPartialPaths(true);
+    nav_query_.SetAllowPartialPaths(true);
     
     std::string id = Config::getValue<std::string>({"INTERIORSIM", "MAP_ID"});
 
     if (id == "/Game/Maps/Map_237081640"){
-        executionCounter_ = 0;
+        execution_counter_ = 0;
     }
     else if (id == "/Game/Maps/Map_237081739"){
-        executionCounter_ = 100;
+        execution_counter_ = 100;
     }
     else if (id == "/Game/Maps/Map_239748000"){
-        executionCounter_ = 200;
+        execution_counter_ = 200;
     }
     else if (id == "/Game/Maps/Map_239784016"){
-        executionCounter_ = 300;
+        execution_counter_ = 300;
     }
     else if (id == "/Game/Maps/Map_239784069"){
-        executionCounter_ = 400;
+        execution_counter_ = 400;
     }
     else {
             ASSERT(false);
@@ -41,234 +41,234 @@ Navigation::~Navigation()
 
 void Navigation::resetNavigation()
 {
-    indexPath_ = 0; 
+    index_path_ = 0; 
     // navSystemRebuild();
 
-    // initialPosition_ = pawnAgent_->GetActorLocation(); // Initial position of the agent
+    // initial_position_ = agent_actor_->GetActorLocation(); // Initial position of the agent
 
-    // navQuery_ = FPathFindingQuery(*pawnAgent_, *navData_, initialPosition_, FVector(0.0f, 0.0f, 0.0f));
+    // nav_query_ = FPathFindingQuery(*agent_actor_, *nav_data_, initial_position_, FVector(0.0f, 0.0f, 0.0f));
 
     // // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
-    // navQuery_.SetAllowPartialPaths(true);
+    // nav_query_.SetAllowPartialPaths(true);
 
     
 }
 
 FVector Navigation::generateRandomInitialPosition()
 {
-    indexPath_ = 0; 
+    index_path_ = 0; 
     FVector initialPosition;
 
     // Spawn the agent in a random location within the navigation mesh:
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "NAVIGATION", "SPAWN_ON_NAV_MESH"})) {
 
         int trial = 0;
-        FNavLocation navLocation = navMesh_->GetRandomPoint();
+        FNavLocation navLocation = nav_mesh_->GetRandomPoint();
         while (trial < 100) { 
             if (navLocation.Location.Z >= Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_POSITION_Z_MIN"}) and navLocation.Location.Z <= Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_POSITION_Z_MAX"})) {
                 break;
             }
             std::cout << "navLocation.Location = [" << navLocation.Location.X << ", " << navLocation.Location.Y << ", " << navLocation.Location.Z << "]" << std::endl;
-            navLocation = navMesh_->GetRandomPoint();
+            navLocation = nav_mesh_->GetRandomPoint();
             trial++;
         } 
-        initialPosition_ = navLocation.Location;       
+        initial_position_ = navLocation.Location;       
     }
     else { 
-        initialPosition_ = FVector(0);
+        initial_position_ = FVector(0);
     }
 
     // TODO: debug this mess after the paper submission... 
     // use BoxTracing to adjust pawn spawn height.
     // use mesh bounding box instead of setting.
     //std::cout << "-------------------------------------------" << std::endl;
-    //FRotator spawnRotation = pawnAgent_->GetActorRotation();
+    //FRotator spawnRotation = agent_actor_->GetActorRotation();
     //FVector center = FVector(0.0f, 0.0f, 3.0f);
-    //std::cout << "initialPosition = [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]" << std::endl;
-    //traceGround(initialPosition_, spawnRotation, FVector(10.0f, 10.0f, 10.0f));
-    //initialPosition_ = initialPosition_ + FVector(0.0f, 0.0f, -3.0f);
-    //std::cout << "initialPosition_GND = [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]" << std::endl;
-    return initialPosition_;
+    //std::cout << "initialPosition = [" << initial_position_.X << ", " << initial_position_.Y << ", " << initial_position_.Z << "]" << std::endl;
+    //traceGround(initial_position_, spawnRotation, FVector(10.0f, 10.0f, 10.0f));
+    //initial_position_ = initial_position_ + FVector(0.0f, 0.0f, -3.0f);
+    //std::cout << "initial_position_GND = [" << initial_position_.X << ", " << initial_position_.Y << ", " << initial_position_.Z << "]" << std::endl;
+    return initial_position_;
 }
 
 void Navigation::generateTrajectoryToRandomTarget()
 {
-    int numIter = 0;
-    int numberOfWayPoints = 0;
-    float pathCriterion = 0.0f;
-    float bestPathCriterion = 0.0f;
-    FNavLocation bestTargetLocation;
-    FVector2D relativePositionToTarget(0.0f, 0.0f);
+    int number_iterations = 0;
+    int number_of_way_points = 0;
+    float path_criterion = 0.0f;
+    float best_path_criterion = 0.0f;
+    FNavLocation best_target_location;
+    FVector2D relative_position_to_target(0.0f, 0.0f);
 
     // Path generation polling to get "interesting" paths in every experiment:
     float trajLength = 0.0;
-    while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
+    while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
     {
         // Get a random target point, to be reached by the agent:
-        ASSERT(navSys_->GetRandomReachablePointInRadius(initialPosition_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), targetLocation_));
+        ASSERT(nav_sys_->GetRandomReachablePointInRadius(initial_position_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location_));
 
         // Update relative position between the agent and its new target:
-        relativePositionToTarget.X = (targetLocation_.Location - initialPosition_).X;
-        relativePositionToTarget.Y = (targetLocation_.Location - initialPosition_).Y;
+        relative_position_to_target.X = (target_location_.Location - initial_position_).X;
+        relative_position_to_target.Y = (target_location_.Location - initial_position_).Y;
 
         // Update navigation query with the new target:
-        navQuery_ = FPathFindingQuery(*pawnAgent_, *navData_, initialPosition_, targetLocation_.Location);
+        nav_query_ = FPathFindingQuery(agent_actor_, *nav_data_, initial_position_, target_location_.Location);
 
         // Genrate a collision-free path between the robot position and the target point:
-        FPathFindingResult collisionFreePath = navSys_->FindPathSync(navQuery_, EPathFindingMode::Type::Regular);
+        FPathFindingResult collision_free_path = nav_sys_->FindPathSync(nav_query_, EPathFindingMode::Type::Regular);
 
         // If path generation is sucessful, analyze the obtained path (it should not be too simple):
-        if (collisionFreePath.IsSuccessful() and collisionFreePath.Path.IsValid()) {
+        if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
 
-            if (collisionFreePath.IsPartial()) {
+            if (collision_free_path.IsPartial()) {
                 std::cout << "Only a partial path could be found by the planner..." << std::endl;
             }
 
-            numberOfWayPoints = collisionFreePath.Path->GetPathPoints().Num();
-            pathCriterion = relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_DIST"}) + numberOfWayPoints * relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_NUM_WAYPOINTS"});
+            number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
+            path_criterion = relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_DIST"}) + number_of_way_points * relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_NUM_WAYPOINTS"});
 
-            if (bestPathCriterion <= pathCriterion) {
-                bestPathCriterion = pathCriterion;
-                bestTargetLocation = targetLocation_;
-                pathPoints_.Empty();
-                pathPoints_ = collisionFreePath.Path->GetPathPoints();
-                std::cout << "Iteration: " << numIter << std::endl;
-                std::cout << "Cost: " << bestPathCriterion << std::endl;
-                std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
-                std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
+            if (best_path_criterion <= path_criterion) {
+                best_path_criterion = path_criterion;
+                best_target_location = target_location_;
+                path_points_.Empty();
+                path_points_ = collision_free_path.Path->GetPathPoints();
+                std::cout << "Iteration: " << number_iterations << std::endl;
+                std::cout << "Cost: " << best_path_criterion << std::endl;
+                std::cout << "Number of way points: " << number_of_way_points << std::endl;
+                std::cout << "Target distance: " << relative_position_to_target.Size() * 0.01 << "m" << std::endl;
 
                 trajLength = 0.0;
-                for (size_t i = 0; i < numberOfWayPoints-1; i++) {
-                    trajLength += FVector::Dist(pathPoints_[i].Location, pathPoints_[i+1].Location);
+                for (size_t i = 0; i < number_of_way_points-1; i++) {
+                    trajLength += FVector::Dist(path_points_[i].Location, path_points_[i+1].Location);
                 }           
                 std::cout << "Path length " << trajLength * 0.01 << "m" << std::endl;
             }
-            numIter++;
+            number_iterations++;
         }
     }
 
-    ASSERT(pathPoints_.Num() > 1);
+    ASSERT(path_points_.Num() > 1);
 
-    targetLocation_ = bestTargetLocation;
+    target_location_ = best_target_location;
 
-    trajectoryLength_ = trajLength * 0.01;
+    trajectory_length_ = trajLength * 0.01;
 
-    std::cout << "Initial position: [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]." << std::endl;
-    std::cout << "Reachable position: [" << bestTargetLocation.Location.X << ", " << bestTargetLocation.Location.Y << ", " << bestTargetLocation.Location.Z << "]." << std::endl;
+    std::cout << "Initial position: [" << initial_position_.X << ", " << initial_position_.Y << ", " << initial_position_.Z << "]." << std::endl;
+    std::cout << "Reachable position: [" << best_target_location.Location.X << ", " << best_target_location.Location.Y << ", " << best_target_location.Location.Z << "]." << std::endl;
     std::cout << "-----------------------------------------------------------" << std::endl;
     std::cout << "Way points: " << std::endl;
-    for (auto wayPoint : pathPoints_) {
+    for (auto wayPoint : path_points_) {
         std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
     }
     std::cout << "-----------------------------------------------------------" << std::endl;
-    indexPath_ = 1; // Path point 0 is the initial robot position. getCurrentPathPoint() should therefore return the next point.
+    index_path_ = 1; // Path point 0 is the initial robot position. getCurrentPathPoint() should therefore return the next point.
 }
 
 void Navigation::generateTrajectoryToPredefinedTarget()
 {
-    int numIter = 0;
-    int numberOfWayPoints = 0;
-    float pathCriterion = 0.0f;
-    float bestPathCriterion = 0.0f;
-    FNavLocation bestTargetLocation;
-    FVector2D relativePositionToTarget(0.0f, 0.0f);
+    int number_iterations = 0;
+    int number_of_way_points = 0;
+    float path_criterion = 0.0f;
+    float best_path_criterion = 0.0f;
+    FNavLocation best_target_location;
+    FVector2D relative_position_to_target(0.0f, 0.0f);
 
     // DIRTY HACK for neurips:
     FVector pos = getPredefinedGoalPosition();
 
     // Path generation polling to get "interesting" paths in every experiment:
     float trajLength = 0.0;
-    while (numIter < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
+    while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
     {
         // Update relative position between the agent and its new target:
-        relativePositionToTarget.X = (targetLocation_.Location - initialPosition_).X;
-        relativePositionToTarget.Y = (targetLocation_.Location - initialPosition_).Y;
+        relative_position_to_target.X = (target_location_.Location - initial_position_).X;
+        relative_position_to_target.Y = (target_location_.Location - initial_position_).Y;
 
         // Update navigation query with the new target:
-        navQuery_ = FPathFindingQuery(*pawnAgent_, *navData_, initialPosition_, targetLocation_.Location);
+        nav_query_ = FPathFindingQuery(agent_actor_, *nav_data_, initial_position_, target_location_.Location);
 
         // Genrate a collision-free path between the robot position and the target point:
-        FPathFindingResult collisionFreePath = navSys_->FindPathSync(navQuery_, EPathFindingMode::Type::Regular);
+        FPathFindingResult collision_free_path = nav_sys_->FindPathSync(nav_query_, EPathFindingMode::Type::Regular);
 
         // If path generation is sucessful, analyze the obtained path (it should not be too simple):
-        if (collisionFreePath.IsSuccessful() and collisionFreePath.Path.IsValid()) {
+        if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
 
-            if (collisionFreePath.IsPartial()) {
+            if (collision_free_path.IsPartial()) {
                 std::cout << "Only a partial path could be found by the planner..." << std::endl;
             }
 
-            numberOfWayPoints = collisionFreePath.Path->GetPathPoints().Num();
-            pathCriterion = relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_DIST"}) + numberOfWayPoints * relativePositionToTarget.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_NUM_WAYPOINTS"});
+            number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
+            path_criterion = relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_DIST"}) + number_of_way_points * relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_NUM_WAYPOINTS"});
 
-            if (bestPathCriterion <= pathCriterion) {
-                bestPathCriterion = pathCriterion;
-                bestTargetLocation = targetLocation_;
-                pathPoints_.Empty();
-                pathPoints_ = collisionFreePath.Path->GetPathPoints();
-                std::cout << "Iteration: " << numIter << std::endl;
-                std::cout << "Cost: " << bestPathCriterion << std::endl;
-                std::cout << "Number of way points: " << numberOfWayPoints << std::endl;
-                std::cout << "Target distance: " << relativePositionToTarget.Size() * 0.01 << "m" << std::endl;
+            if (best_path_criterion <= path_criterion) {
+                best_path_criterion = path_criterion;
+                best_target_location = target_location_;
+                path_points_.Empty();
+                path_points_ = collision_free_path.Path->GetPathPoints();
+                std::cout << "Iteration: " << number_iterations << std::endl;
+                std::cout << "Cost: " << best_path_criterion << std::endl;
+                std::cout << "Number of way points: " << number_of_way_points << std::endl;
+                std::cout << "Target distance: " << relative_position_to_target.Size() * 0.01 << "m" << std::endl;
 
                 trajLength = 0.0;
-                for (size_t i = 0; i < numberOfWayPoints-1; i++) {
-                    trajLength += FVector::Dist(pathPoints_[i].Location, pathPoints_[i+1].Location);
+                for (size_t i = 0; i < number_of_way_points-1; i++) {
+                    trajLength += FVector::Dist(path_points_[i].Location, path_points_[i+1].Location);
                 }           
                 std::cout << "Path length " << trajLength * 0.01 << "m" << std::endl;
             }
         }
-        numIter++;
+        number_iterations++;
     }
 
-    ASSERT(pathPoints_.Num() > 1);
+    ASSERT(path_points_.Num() > 1);
 
-    targetLocation_ = bestTargetLocation;
+    target_location_ = best_target_location;
 
-    trajectoryLength_ = trajLength * 0.01;
+    trajectory_length_ = trajLength * 0.01;
 
-    std::cout << "Initial position: [" << initialPosition_.X << ", " << initialPosition_.Y << ", " << initialPosition_.Z << "]." << std::endl;
-    std::cout << "Reachable position: [" << targetLocation_.Location.X << ", " << targetLocation_.Location.Y << ", " << targetLocation_.Location.Z << "]." << std::endl;
+    std::cout << "Initial position: [" << initial_position_.X << ", " << initial_position_.Y << ", " << initial_position_.Z << "]." << std::endl;
+    std::cout << "Reachable position: [" << target_location_.Location.X << ", " << target_location_.Location.Y << ", " << target_location_.Location.Z << "]." << std::endl;
     std::cout << "-----------------------------------------------------------" << std::endl;
     std::cout << "Way points: " << std::endl;
-    for (auto wayPoint : pathPoints_) {
+    for (auto wayPoint : path_points_) {
         std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
     }
     std::cout << "-----------------------------------------------------------" << std::endl;
-    indexPath_ = 1; // Path point 0 is the initial robot position. getCurrentPathPoint() should therefore return the next point.
-    executionCounter_++;
+    index_path_ = 1; // Path point 0 is the initial robot position. getCurrentPathPoint() should therefore return the next point.
+    execution_counter_++;
 }
 
 FVector2D Navigation::getPathPoint(size_t index)
 {
-    ASSERT(pathPoints_.Num() != 0);
-    ASSERT(index < pathPoints_.Num());
-    return FVector2D(pathPoints_[index].Location.X, pathPoints_[index].Location.Y);
+    ASSERT(path_points_.Num() != 0);
+    ASSERT(index < path_points_.Num());
+    return FVector2D(path_points_[index].Location.X, path_points_[index].Location.Y);
 }
 
 FVector2D Navigation::getCurrentPathPoint()
 {
-    ASSERT(pathPoints_.Num() != 0);
-    ASSERT(indexPath_ < pathPoints_.Num());
-    return FVector2D(pathPoints_[indexPath_].Location.X, pathPoints_[indexPath_].Location.Y);
+    ASSERT(path_points_.Num() != 0);
+    ASSERT(index_path_ < path_points_.Num());
+    return FVector2D(path_points_[index_path_].Location.X, path_points_[index_path_].Location.Y);
 }
 
 FVector2D Navigation::updateNavigation()
 {
-    const FVector agent_current_location = pawnAgent_->GetActorLocation();
+    const FVector agent_current_location = agent_actor_->GetActorLocation();
     FVector2D relative_position_to_goal = getCurrentPathPoint() - FVector2D(agent_current_location.X, agent_current_location.Y);
 
-    targetReached_ = false;
+    target_reached_ = false;
 
     // If a waypoint is reached
     if ((relative_position_to_goal.Size() * 0.01) < Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "ACCEPTANCE_RADIUS"})) { 
 
-        if (indexPath_ < pathPoints_.Num() - 1) { // Move to the next waypoint
-            std::cout << "######## Reached waypoint " << indexPath_ << " over " << pathPoints_.Num() - 1 << " ########" << std::endl;
-            indexPath_++;
+        if (index_path_ < path_points_.Num() - 1) { // Move to the next waypoint
+            std::cout << "######## Reached waypoint " << index_path_ << " over " << path_points_.Num() - 1 << " ########" << std::endl;
+            index_path_++;
         }
         else { // We reached the final target
             std::cout << "############ Reached the target location ! ############" << std::endl;
-            targetReached_ = true;
+            target_reached_ = true;
         }
     }
 
@@ -285,11 +285,11 @@ std::cout << "##################################################################
  std::vector<float> init_x = {-596.20276, -97.29434, 325.73154, 188.44614, -66.23915, -50.70931, -64.23439, -318.4336, 473.17258, 85.39743, -1.8153155, 663.266, -6.723584, 60.714928, 418.43567, -385.75385, 105.72305, 142.24751, 76.76, -60.583145, 44.72416, -30.154402, 35.19332, 194.40678, -125.16911, -52.909393, 315.8367, -582.1124, -19.474586, 91.746445, 319.9929, -22.333035, -6.125653, -64.97491, -65.904335, -36.922974, -16.892382, -106.19228, -86.59517, -409.13983, 363.46185, -34.392826, 118.801994, -13.563286, -443.53076, 189.5063, 147.56851, 80.96048, 114.65841, 160.5389, -92.06831, 142.87846, 237.90442, 340.3476, -0.8310233, -20.166557, 59.47429, 204.03496, 144.1152, 67.990326, 10.321786, 211.90233, -112.238144, -27.750828, -2.2459624, -60.014557, 556.6998, -1.8515015, -81.8117, -484.0198, 104.97824, 157.90121, -261.82654, -528.1931, -53.239746, -0.79030967, -61.977486, 209.27763, 358.7602, 4.8041606, -543.81177, 390.2465, -49.61621, -55.2673, -75.83725, -185.60321, 173.12772, -2.1754909, 59.03643, -49.989677, -26.1151, 349.61807, 81.113396, 118.20025, -29.697111, -63.869953, 547.2724, -543.22577, 106.82825, -1.2191973, -139.11969, -73.00008, 111.64206, 45.158, -590.37335, 63.38391, -507.4865, 57.222946, 81.542, -48.818913, -512.8125, -289.83472, -152.21796, -513.46185, -588.1302, 47.49143, -482.14264, -433.69754, -370.69232, -468.84042, 58.170574, -559.5122, 49.51697, -85.16721, 46.662426, 44.384007, -122.137054, 54.78935, -79.50766, 85.83324, -505.84857, -572.255, -451.98343, -40.16523, -510.31366, -229.69998, 112.115776, -180.25641, -570.3333, -62.21259, -167.83357, 162.98315, -335.1633, -375.89948, -194.85805, -489.65808, -31.106834, 67.56499, 87.11972, -447.28693, -141.22935, 60.538696, 72.204315, -486.079, 95.60226, -110.44458, 55.34986, -610.64026, 81.21411, -527.2461, -221.16566, -556.8551, 42.824593, 114.12154, -604.952, -209.74506, 56.03044, 40.287933, -435.63898, 40.678467, 79.07394, -559.65234, 67.17421, -557.375, 103.658554, -148.8657, -243.62006, 39.270653, -264.72928, -196.20901, 43.17632, -367.34137, -130.31642, -582.17664, -197.59943, -58.835697, 48.060238, 62.767506, -344.55917, -220.5326, -343.91144, -235.33261, -222.2172, 56.224937, 22.55457, -513.56335, -252.00732, 88.21452, -611.8136, -22.150972, -191.12604, -14.48435, -337.7006, 376.40387, -440.34882, -741.014, -561.8467, 499.126, 3.5902839, 171.28633, 62.130993, -308.11884, -319.8484, 147.44908, -355.11688, -334.4356, 655.3305, 24.55641, -158.59853, 263.76828, 526.74115, 216.51071, -495.67087, 493.49466, 387.4091, -374.21585, 72.420746, 70.995026, 677.92474, -256.7288, -353.0101, -363.31848, -241.5933, -219.38046, -292.2347, -180.28014, -342.43506, -117.01171, -290.46884, -510.2508, -469.17636, -264.60547, 642.34326, -307.25192, -374.54733, 53.513546, -299.39078, -284.4409, -258.61264, 230.93448, -558.2315, 137.16379, -646.224, -203.44724, -309.32114, -148.20549, 453.60117, -625.5889, 115.67433, -144.1001, -179.08884, -327.69125, 282.67938, -321.4932, 172.01392, -198.63376, 412.99673, -122.86316, -716.7763, 152.71552, 603.3902, 564.5241, 132.05052, -352.95557, 12.2182865, -350.02493, -202.41068, -317.1745, -260.51965, 255.11505, -203.6412, -471.59436, 625.3736, 115.16531, -174.25531, -310.36212, -149.27399, 11.794833, -262.2422, 65.43692, 90.91973, 589.056, -108.51807, 611.9805, 487.19565, -174.17537, 285.01096, -329.52628, -110.25638, -394.213, -309.69473, -100.63306, -58.463757, -78.783875, 270.28006, -94.50361, -632.9562, 321.69528, -60.975136, -47.44074, -49.167625, -32.833393, -186.06468, 465.50064, -543.55414, 475.67105, 508.6612, -51.40459, 529.801, -69.90204, -94.418755, -268.9323, 490.30148, -161.33832, 521.5715, -58.68007, -134.87717, -124.65425, 474.73187, 117.9695, -370.28757, -83.9089, -357.9926, 516.728, -65.43953, -79.5844, -55.336845, -58.94418, 446.62537, -71.76813, 443.65985, 121.377235, 467.71994, 247.22762, 493.8375, -68.45182, 292.2686, -703.5144, 493.9926, 218.90479, -443.7345, -38.52068, -306.5731, -65.11431, -91.71401, -49.95622, 135.47552, -53.98176, -20.807486, -99.1472, 490.16064, 501.03043, 480.9655, -38.3691, -87.482124, -679.4198, 77.59204, -100.40011, -88.411606, -78.1773, -62.60064, 550.9227, 481.15125, -253.9735, 293.90607, 531.0634, -49.91175, -99.189575, 480.10852, 493.19025, 410.14288, 39.573547, 386.4891, -155.09113, -37.84836, 526.54846, 490.09088, -91.59949, 440.34595, -85.68613, -603.81934, 491.02365, 67.81733, -80.90942, -194.2728, -78.546005, 529.67096, -54.437134, -324.34836, 481.96555, -47.40541, 536.26746, -663.67175, 57.304626, -68.73661, 509.44824, -179.75441, 244.12418, -74.826126, -479.0678, -102.37817, -229.37816, 153.58206, 609.50336, -71.8198, -461.5287, -134.22516, 187.16652, -292.9209, -232.55443, -43.910667, -201.22487, 375.6735, -208.53835, 633.30084, -334.9532, -833.84827, 202.10085, -220.80109, -86.69472, -153.98178, 16.84125, 418.82864, 451.24915, -71.23903, 681.50903, 51.252865, -93.39342, -240.18803, -46.174416, 46.210968, 620.24976, 75.07381, -9.761791, -782.25903, 23.275452, -421.82742, -450.21014, -70.71313, -168.02515, 12.417848, -158.10445, 32.790184, -255.71269, -191.20015, 645.9724, 607.62866, -32.90389, -99.543655, 608.8558, 365.06595, -47.883442, -521.7229, -35.796722, 607.76575, -163.22774, -35.400246, 360.33835, 653.14343, 423.78418, -264.86868, -250.43793, 23.684229, 485.16852, 16.497854, -577.1813, -790.4529, 30.418638, 305.33777, -302.40167, -471.99127, 171.09464, 327.04355, -342.69614, 11.040913, 484.38324, -165.75537, -91.230576, -85.05441, -30.435148, 636.989, -333.28058, -810.1389, -478.9917, 29.801693, -108.99415, 14.022915, 203.21362, 661.55475, 493.45914};   
 std::vector<float> init_y = {-180.76048, -165.48738, 57.510296, 353.79114, 121.17541, 321.6137, 259.61212, -144.2881, 430.21683, -190.38953, 473.12177, 424.71075, 541.33417, -335.81842, 415.96417, -193.18909, 88.8214, 212.73828, 371.66833, 9.384034, -172.87518, 462.64893, -186.47406, -5.961397, 337.3813, 523.375, -207.45541, -206.85216, 455.44293, -155.93263, -82.59795, 451.70996, -317.0502, 450.38724, -73.20915, 351.61136, 459.55597, 335.52045, 269.65192, -208.90427, 229.61327, 577.63043, 325.74698, 460.61264, -281.6235, -127.102264, -101.437164, -200.68344, 486.755, 197.8103, 326.61047, -198.27365, -213.50525, -182.90222, 334.58722, 243.04436, 343.65283, -85.12666, 148.87106, -185.90634, 437.32147, 3.9142215, 345.81604, 324.26364, 296.82346, 254.75139, 75.624, -141.76808, 462.0461, -325.3761, 334.0004, -204.43588, -139.79282, -308.14346, 453.8876, 560.7672, -286.14795, 5.8121595, -121.81766, 493.01846, -279.32315, -62.015106, 474.1891, 4.065644, 470.9176, -189.00177, 138.11249, 436.2498, -204.72656, 0.15524115, 315.67657, -140.95789, 325.1058, -138.79778, 372.8006, 436.904, 437.86435, -196.82599, 306.39996, 435.32043, -866.003, -819.7493, -247.77107, -1029.1422, -1090.0352, -1005.7521, -872.125, -1016.4888, -920.4471, -829.5642, -1066.0862, -929.2591, -1002.9337, -1049.4465, -916.53314, -1037.7843, -848.00684, -1105.0642, -1091.1036, -1022.25775, -942.3159, -1037.4985, -885.7249, -777.2773, -1027.8907, -1029.1125, -865.54395, -1039.8883, -352.34714, -944.04553, -992.1013, -825.6626, -1052.5269, -502.89618, -1047.7634, -1008.87775, -248.76587, -796.31067, -1003.60394, -831.63403, -1033.3513, -1005.2156, -1100.4048, -1054.7555, -1054.4734, -799.92554, -833.03687, -943.8864, -1018.89685, -815.83075, -1000.5096, -892.65906, -1013.1042, -783.99396, -1026.7437, -806.2762, -1002.1647, -941.05786, -492.6013, -1057.8279, -785.56146, -1003.98425, -1003.63293, -519.2858, -929.6048, -1041.7236, -887.5271, -975.5349, -985.2012, -1054.8165, -1004.3635, -1035.6968, -1020.59875, -1000.7609, -1012.12286, -1023.7474, -1099.1959, -1047.582, -1020.15485, -973.0552, -1021.6968, -1001.5879, -1019.14294, -1065.6083, -1057.0728, -854.9756, -506.00546, -1029.1167, -1066.6104, -1048.7969, -1007.35754, -1023.9032, -1018.3706, -939.0525, -246.19667, -1057.8645, -1095.8318, -1019.0484, -919.01227, -677.4538, -329.0995, 5.9206805, 526.5471, 8.78591, -11.550168, 338.68262, 70.65573, 344.33243, -387.63162, -22.875648, -390.31125, -179.77867, -227.09343, 505.51813, 81.459206, -310.41574, 360.60434, -389.44193, -150.13762, -18.0874, 365.94897, -26.785837, -1.0275768, -16.088366, 39.95142, 322.05756, -374.00702, -367.10864, 401.02948, 584.60364, -53.9745, 99.61872, -213.75887, 483.17142, -15.249582, -264.8218, -163.32576, -180.85197, -325.75903, -8.302235, 23.408245, 114.1758, 61.38623, 306.63425, 44.748936, -361.0301, 109.9747, -53.067024, -259.13763, -22.813885, 24.745323, 508.9375, 412.92004, -226.11525, 508.98862, 55.97133, -2.52987, 65.24829, -358.7205, 541.4222, -64.886215, -137.88255, -21.872871, 352.01227, -3.79455, -0.9500429, 341.51065, 65.06566, 130.8758, 519.9003, 363.36957, -21.764135, 17.53241, -125.2164, -370.2408, -198.7479, -230.06068, 398.93835, -164.20377, -0.005177391, -51.877235, -19.779587, -4.633951, -2.9504347, -259.08588, -332.17383, 568.67896, -370.42145, -283.46567, -389.47968, 561.00494, -29.92037, 495.73093, -31.090338, -14.871153, -126.8046, 61.394432, -302.79297, 14.657529, 170.73416, 229.89857, -48.058224, -38.73429, -137.3115, 444.66394, -77.896965, 663.33435, 405.4737, -16.27047, -115.06753, 351.90985, -79.6308, 542.1437, -17.166887, 661.23, -99.95002, -140.96786, -80.20755, -148.6217, -86.39148, 27.083666, 503.91467, -68.09356, 580.6018, -48.659092, -270.02478, 472.43103, 327.3089, 22.295927, 320.40533, 551.1818, -272.781, 620.52466, -136.55138, -237.37439, -218.08907, -197.35475, -216.9431, 275.67853, -238.07874, -149.18117, 116.5725, 378.19482, 387.03635, -84.69639, 393.6032, 303.04816, 566.1809, -39.547215, 134.54639, 459.2679, -303.3985, 550.36646, -131.42857, 446.89185, -251.02446, 148.05092, -207.0017, -260.21628, -74.73446, -122.69507, -69.34299, -124.804756, -311.03784, -36.328156, 577.33466, 127.23547, 347.8679, -9.421292, -270.0712, -38.4561, -115.36181, -136.45625, 454.59845, 142.18304, -105.56113, 207.02144, -149.84521, -77.83261, -44.8537, 399.70615, 344.48108, 45.03264, 564.99976, 218.09848, -101.62294, -133.42024, -68.38954, 324.7691, -57.46261, 617.9518, -145.61464, 348.56052, -105.77828, 523.8422, -159.86502, -108.85244, -171.32893, 598.6467, -67.78232, 281.43704, 228.97487, 167.29199, 690.0692, -29.457952, 291.44653, -115.36213, 296.24146, 256.9909, 230.20409, 277.60297, 276.48193, 472.37515, -23.729956, 521.1715, 412.0288, 541.35095, 312.51303, 383.97394, 389.0345, -130.48254, -95.14333, 93.07201, 116.62416, 118.62972, 638.2439, 15.440934, 450.65955, -60.104774, -64.60353, -5.636321, 422.55917, 157.97037, 155.19868, -196.2752, -39.042015, 624.5758, -121.8241, -119.4844, -36.814556, 419.1057, 110.07576, 411.87894, -87.566475, -60.83484, -103.21606, 440.868, 414.82855, 54.981415, -67.2189, 622.5019, -116.70374, 101.04901, 391.21893, -194.0567, -46.204304, 293.16724, 376.79636, -48.27884, 289.8433, 117.98436, -73.28834, 178.28279, -41.348064, -89.27139, -71.156265, -163.01863, -11.609739, -21.149418, 210.70096, 363.29962, 262.15033, -18.649834, 181.75818, 286.47064, 220.51479, -32.969723, 445.50275, 291.16248, -239.59784, 141.03949, 292.4823, 316.32678, 664.5542, -253.7092, 161.37518, -34.728546, -3.5805001, 655.4238, -97.692505, -11.898935, -45.769005, -63.121284, 87.02932, -60.486156, -34.033573, 371.8642, 440.5948, 149.97955, 183.8726};
 std::vector<float> init_z = {5.372074, 5.381999, 5.391045, 5.3720665, 5.3728924, 5.3726234, 5.3729553, 5.3728523, 5.3720665, 5.372884, 5.3720665, 5.372491, 5.3728857, 6.1158953, 5.3720703, 5.3720665, 5.3720703, 5.3720703, 5.3720703, 5.372115, 5.3998394, 5.3720665, 5.37253, 5.3729706, 5.3729286, 5.3720703, 5.372881, 5.372816, 5.372073, 5.3720665, 5.372879, 5.3720665, 5.7463236, 5.3720665, 5.372875, 5.3720665, 5.3720856, 5.372074, 5.3728514, 5.3721848, 7.0524344, 5.3720665, 5.3720827, 5.372896, 5.372072, 5.372078, 5.3720665, 5.372074, 5.3720665, 5.372058, 5.373005, 5.3720665, 5.3725624, 5.3728876, 5.372759, 5.372492, 5.372259, 5.3720493, 5.372425, 5.3720665, 5.373001, 5.372692, 5.372882, 5.372099, 5.3720827, 5.3722324, 5.3720665, 5.3720684, 5.3720665, 5.3720913, 5.3721523, 5.372135, 5.3729267, 5.3728085, 5.372095, 5.3720665, 5.3725357, 5.372072, 5.3720665, 5.3727245, 5.3720665, 5.3720827, 5.3720703, 5.3720503, 5.3721104, 5.3720665, 5.3721037, 5.3724194, 5.372201, 5.37286, 5.372343, 5.3720665, 5.372449, 5.372669, 5.3728867, 5.3720846, 5.372875, 5.3721046, 5.372883, 5.3726463, 5.372072, 5.3720665, 5.3720503, 5.3724117, 5.3720703, 5.3720703, 5.372876, 5.3729286, 5.3728046, 5.3720665, 5.3720665, 5.3720665, 5.3720665, 5.3723736, 5.391936, 5.372877, 5.372486, 5.3720856, 5.372878, 5.3751326, 5.372637, 5.372057, 5.3720694, 5.3720665, 5.3727818, 5.3728733, 5.372877, 5.393618, 5.3724813, 5.373918, 5.3720665, 5.3725986, 5.372881, 5.3720665, 5.3729534, 5.38324, 5.3728743, 5.373006, 5.3720665, 5.3789144, 5.3724747, 17.183334, 5.372322, 5.3728657, 5.3720665, 5.3720665, 5.3726387, 5.3725376, 5.372614, 5.3720665, 5.372101, 5.3720665, 5.3720665, 5.372057, 5.3720684, 5.886388, 5.372881, 5.3720503, 5.376722, 5.372734, 5.3720665, 5.372671, 5.372057, 5.392333, 5.372054, 5.3923254, 5.3720503, 5.3720665, 5.3720665, 5.3720837, 5.3726826, 5.372593, 5.3729076, 5.372471, 5.37274, 5.376068, 5.372505, 5.3720603, 5.372882, 5.372057, 5.372732, 5.372734, 5.3728848, 5.3720665, 5.3720665, 5.3720694, 5.395313, 5.372878, 5.3724794, 5.3720913, 5.3725767, 5.3720665, 5.3789167, 5.3720665, 5.3720675, 5.3720665, 5.372349, 5.3720655, 5.372058, 5.3720703, 5.3723555, 5.3720665, 5.372654, 5.375705, 5.3720646, 5.3720665, 5.3721275, 5.4451, 5.3720665, 5.3721046, 5.3720665, 5.3720665, 5.398638, 5.372875, 5.3720665, 5.409154, 5.376775, 5.3720665, 5.3720694, 5.372575, 5.372073, 5.425055, 5.372573, 5.397259, 5.372733, 5.372882, 5.372057, 5.372116, 5.37241, 5.3720665, 5.3720665, 5.3727646, 5.3720665, 5.3720665, 5.3724937, 5.3720665, 5.3720603, 5.3720665, 5.372405, 5.3720655, 5.3720603, 5.3727207, 5.421481, 5.3804827, 5.379393, 5.37245, 5.3727264, 5.372879, 5.3720665, 5.372078, 5.3720665, 5.372076, 5.372099, 5.374148, 5.3724213, 5.3727646, 5.3720503, 5.3726826, 5.372074, 5.3720665, 5.3721027, 6.534572, 5.3724213, 5.37235, 5.372875, 5.3720684, 5.37249, 5.3725796, 5.372326, 5.372387, 5.3720665, 5.372217, 5.3720665, 5.37288, 5.3723335, 5.37206, 5.372813, 5.3720818, 5.3720665, 5.3720665, 5.3722887, 6.6508155, 5.3720913, 5.3720694, 5.3730135, 5.3720703, 5.3724365, 5.3728657, 5.372057, 5.3720665, 5.372383, 5.3720665, 5.3720503, 5.3720646, 5.3728924, 5.3720665, 5.372057, 5.3728676, 5.3721905, 5.3745213, 5.3916388, 5.3724985, 5.3730717, 5.372777, 6.493224, 5.3728704, 5.3720675, 6.482006, 5.3720512, 5.3720655, 5.372102, 5.3728848, 5.3720675, 6.393582, 5.372609, 5.3720675, 5.372567, 5.3720684, 5.3720675, 5.372055, 5.3720675, 5.3720613, 6.3887415, 5.3720675, 5.3728857, 5.37267, 5.7562118, 5.7581816, 6.3940597, 5.372776, 5.373288, 5.3728685, 5.372362, 5.372778, 5.372554, 5.3728876, 5.3725796, 5.3728952, 5.372802, 5.372079, 5.3914485, 5.372964, 5.3720613, 5.9196014, 5.859476, 5.3724966, 5.372463, 5.3720512, 20.119184, 5.3728447, 5.3720675, 5.372485, 5.3724966, 5.3722057, 5.3724833, 5.3725014, 5.372693, 5.3720827, 5.3720613, 5.3720675, 5.3725557, 6.0196776, 5.3721075, 5.372062, 5.3720675, 5.3721, 5.372115, 5.373069, 5.3729525, 5.3720675, 5.37271, 5.3727655, 5.372488, 6.7014894, 5.3720675, 5.3720675, 5.3720684, 5.3720512, 6.3933263, 5.8682647, 5.943721, 5.372674, 6.709605, 5.372081, 5.372058, 5.3720675, 5.372876, 5.3720675, 5.3720675, 5.3720512, 5.372117, 5.372939, 5.372546, 5.3720675, 5.3726034, 5.3720675, 5.3720675, 5.372635, 5.3720675, 7.6031547, 5.3720655, 5.3720713, 5.3720675, 5.3720894, 5.3721437, 5.372532, 5.3720655, 5.3720675, 5.3720675, 5.3724785, 5.3722258, 5.3720675, 5.3720512, 5.3730183, 5.3720675, 5.372055, 5.372486, 5.372059, 5.3720503, 5.3720512, 5.3720503, 5.3720675, 5.372821, 5.372079, 5.869624, 5.3720827, 5.3720675, 5.372075, 5.3720675, 5.3720512, 5.3720512, 5.3720627, 5.3728285, 5.372493, 5.3720675, 5.3720675, 5.3720703, 5.372344, 5.3720675, 5.3720503, 5.3720675, 5.3720675, 5.372776, 5.3720503, 5.3726883, 5.3725214, 5.3728456, 5.3720675, 5.3720703, 5.3725014, 5.37234, 5.3720903, 5.3728514, 5.372361, 5.3720617, 6.3880615, 5.3726835, 5.3727617, 5.3720665, 5.37251, 5.3720613, 5.372054, 5.3722544, 5.3720636, 5.3720675, 5.3720675, 5.5332556, 5.3720675, 5.8704896, 5.3720675, 5.3721046, 5.372058, 5.3720675, 5.3720675, 5.3720703, 5.3720675, 5.372095, 5.3729057, 5.3720684, 5.3720675, 5.3725824, 5.3720512, 5.372941, 5.372113, 5.3720675, 5.3723097, 5.3720675, 5.37253, 5.372079, 5.3720675, 6.000577, 5.372527, 5.3720675, 5.3728876, 5.3723288, 5.3720675, 5.3720675, 5.3720675, 5.8696475, 5.372779};
- std::cout << "executionCounter_ : " << executionCounter_ << std::endl;
+ std::cout << "execution_counter_ : " << execution_counter_ << std::endl;
 std::cout << "#################################################################################################" << std::endl;
-    initialPosition_ = FVector(init_x.at(executionCounter_), init_y.at(executionCounter_), init_z.at(executionCounter_) < 5.37f ? 5.38f : init_z.at(executionCounter_));
+    initial_position_ = FVector(init_x.at(execution_counter_), init_y.at(execution_counter_), init_z.at(execution_counter_) < 5.37f ? 5.38f : init_z.at(execution_counter_));
 
-    return initialPosition_;
+    return initial_position_;
 }
 
 FVector Navigation::getPredefinedGoalPosition()
@@ -301,82 +301,85 @@ FVector Navigation::getPredefinedGoalPosition()
 std::vector<float> goal_x = {-352.76187, -166.1195, 378.14343, 228.04933, -93.007614, 121.25244, 144.50974, -431.98456, 561.15826, -247.01164, 108.592415, 508.54178, 126.75961, 68.519196, 385.69946, -493.55133, 134.7883, 152.96402, -18.75237, 157.9078, 221.14049, 172.88828, 90.757645, 123.38121, -40.85567, -44.27873, 306.20035, 110.14581, 156.35341, -101.35513, 488.61456, -11.648458, -55.10822, -70.9519, 175.97723, 238.24454, -34.981033, 23.319193, 42.32489, 125.78856, 439.4588, 17.86525, 193.0358, 60.321434, -91.7206, -265.7604, 6.482785, -554.1745, 4.1967773, -44.684845, 49.675148, -69.240395, 21.384893, 325.5131, -595.64404, -174.9992, 122.33687, -295.8097, -598.4771, 118.30317, 123.95122, -470.43982, -586.0336, -144.75883, 187.4404, -322.69022, 322.408, -510.6762, -65.68394, -607.17017, 115.60839, 234.63634, 137.45004, -258.25977, -76.665665, -37.73737, -61.759224, 202.79092, 392.10034, 106.53114, 169.26128, 547.3367, 124.3337, 167.67325, -54.65931, -654.121, -562.1965, 104.9417, 169.19322, 90.37951, 132.90532, 440.49756, 90.63006, 75.55773, -87.65826, 26.126163, 317.5366, -254.54791, 183.38371, -15.035797, -313.4278, -473.08994, 60.677322, 122.55589, -474.34274, 83.86284, -570.5866, 64.63236, 73.07205, -609.6439, -496.01276, -181.4805, -507.8658, -558.19446, -256.8083, 114.59199, -376.67352, -346.891, -328.37027, -576.4098, 55.162445, -555.4601, 109.5087, -462.02957, 41.206657, 112.32085, -363.20004, 108.68176, -70.8345, 61.45504, -23.854824, -401.4013, -403.62112, 100.461136, -121.301865, -245.17062, 39.847507, -350.41104, -475.7657, -149.05228, -270.4497, 165.26872, -515.39465, -539.15643, -121.51242, -162.0517, -600.57074, 101.06735, 55.334137, -380.3487, -290.48096, 56.05369, 42.25042, -553.6247, 41.012196, -372.89832, 113.3967, -412.05334, -66.25959, -410.56247, -204.06458, -473.64856, 45.964817, -74.639145, -382.24756, -199.35074, 72.89718, 87.58229, -325.77222, 71.371826, 73.29657, -477.73813, 109.09179, -322.85327, 38.738853, -251.57016, -230.9075, 39.413048, -355.69315, -147.43867, 63.91557, -570.2382, -575.5502, -251.62834, -245.96976, -140.01176, -82.952805, 117.39444, -268.1458, -242.87903, -227.26056, -498.61816, -393.78906, 104.630424, 100.80482, -135.07469, -418.68365, 117.91005, -380.01965, -571.81433, -295.53577, -422.0415, 107.585686, 546.66144, -295.00864, -687.0674, -224.99675, 413.12244, 99.35881, -134.027, -5.074687, -160.23631, -619.275, -281.53458, 251.96695, -356.15594, 468.53088, 1.4766135, -238.10141, -325.1841, 530.4513, -21.376665, -279.04578, 412.9355, 456.981, -235.03317, 52.19545, -13.669481, 458.5087, -292.31573, -150.79858, 182.32135, 254.85175, -150.86346, -335.44052, 25.573702, -233.29984, -344.15778, 11.241044, -185.97733, -281.78247, -632.661, 624.12006, -363.76212, -583.2178, 102.90934, -402.6439, -140.5139, 232.99612, -320.06393, -244.50888, -344.26752, -647.07825, -603.2995, -175.32759, -485.39804, 435.14655, -315.0424, -7.031288, -187.55257, -314.9372, -249.59842, -392.63965, 269.41498, -287.86163, -276.05902, 458.79114, -577.29694, -533.6685, -138.83466, 560.7442, 450.47186, -160.50792, -263.63535, -2.0900948, -185.76218, -246.8324, -135.65845, -271.6239, 174.97748, -293.97318, -336.06006, 375.01935, -145.00146, -230.18906, -238.08733, -247.7365, 92.36575, -242.31058, 66.19733, 48.297157, 416.06412, -44.355774, 495.44672, 475.66855, -268.34442, -123.23194, -284.0359, -325.43115, -245.95007, -83.40597, -42.61824, -61.440765, 257.29968, -540.1941, -330.1388, -312.76367, -50.22526, 160.41841, -60.697216, -401.92444, -83.99494, -267.98703, 551.1817, 4.7313395, 357.22238, 485.46243, -512.62396, 494.67413, -20.348797, -109.456055, 274.99384, 67.61864, -338.4237, 337.2787, -34.44687, -176.59912, 203.69345, 501.42682, 240.92068, -76.4888, -102.81118, -655.237, 218.25468, -135.66525, -64.73816, -38.381416, -107.28062, -286.53787, -40.91057, 445.68152, 62.35383, 1.7495438, -80.78301, 506.58862, -424.68085, -401.9446, -375.34772, 536.27795, 60.20575, 294.44556, -24.654232, -13.278529, 323.59027, -361.59497, -366.01215, 90.41276, -70.23189, 435.63443, 207.81757, 335.8821, 454.9455, 550.1973, -151.43442, -64.495544, -375.83087, 340.63525, -38.35308, -18.088787, -36.115547, -277.84082, 241.85342, 481.98273, -493.1046, 501.42136, 208.56302, -13.292375, -395.17697, 501.6762, 522.16815, 323.17957, -38.06712, 290.1888, 72.54394, -61.94508, 439.66992, 262.00034, -191.91408, -516.8048, -258.5591, -405.7507, 494.09604, 337.14545, -146.03763, -196.52762, -90.00039, 279.30725, -410.5232, -660.33594, 192.57425, -138.90425, 327.8538, -514.1155, -10.652191, -251.34694, 555.9089, -131.82129, 353.87784, -170.06462, -145.97485, 56.850006, 13.049484, -122.572365, 389.25067, -472.75732, 63.015835, -408.62024, 670.3059, -391.87317, -316.48282, -141.75438, 17.05906, 429.7462, -295.99414, 405.32648, 43.034092, -773.57886, -156.26855, -118.559906, 17.823084, -11.921897, -10.985301, 693.55817, 340.40112, -213.08505, 648.9182, -219.72289, -223.10223, -41.862774, -280.29138, -58.521637, 421.21887, -125.27088, -176.52481, -755.56805, -78.63021, -248.19937, -112.20992, -13.425113, -191.8771, -37.764526, -62.977253, -125.62195, -203.85994, -147.99207, 554.4435, 388.1936, -52.717083, -519.2492, 336.34595, 599.2179, -72.508514, -440.43475, -603.3957, 353.63373, -67.86185, -165.77534, 442.02164, 596.6059, 450.09705, 1.3110753, -483.2138, -84.977875, 644.64496, 128.12779, -306.10092, -800.01697, -107.05296, 133.40518, -61.13343, -73.92122, 686.66144, 687.29504, -225.93765, -84.739426, 644.50085, -47.151993, -159.30551, -21.909573, -186.66231, 602.5305, -4.54325, -755.73083, -455.85318, -99.540665, -41.26416, -138.55339, -77.86391, 408.44965, 179.04776};
 std::vector<float> goal_y = {-196.10913, -146.97357, 44.7948, -58.346848, 313.0045, 294.6808, 94.9718, -275.7445, 411.85718, -132.44284, 559.64575, 376.09875, 449.4834, -583.0758, -86.6233, -264.0197, 114.57469, -203.30252, 327.01654, 158.69989, -180.64534, 524.1732, 11.849993, -174.24782, 375.14612, 550.8784, 88.96525, 205.10638, 430.73993, -192.8883, 420.3717, 429.93732, -305.52292, 505.63632, -163.88538, 300.20538, 419.20285, 341.2671, 329.1228, 373.1886, 104.935356, 504.46252, 296.48837, 555.8087, 339.6975, -153.61232, 1.3794461, -204.84714, 532.9456, -132.47783, -141.75542, -153.08862, -159.68825, 362.3567, -287.57153, -171.07965, -99.54363, -192.93135, -228.16017, -124.63001, 552.4321, -265.286, -175.33382, -181.12463, 216.61447, -175.89255, 189.60487, -270.61868, 541.9789, -147.5423, -191.9089, -41.79051, -116.36362, -155.95804, 502.63092, 569.3567, -501.92023, -204.30641, 102.27583, 580.0016, 204.88644, 382.504, 472.15967, -65.77142, 537.33124, -134.64207, -303.1471, 519.37506, 292.07602, 16.862635, 355.4497, 364.37762, 183.16391, 332.55872, 354.58237, 467.3891, -123.21657, -169.56189, 290.67218, 504.26685, -968.22217, -987.7148, -246.77724, -992.8663, -1057.2312, -929.25696, -803.69525, -891.4281, -907.26575, -852.4062, -809.4153, -1060.6774, -881.2452, -986.886, -932.3092, -990.2614, -897.8547, -883.1323, -983.22314, -906.16376, -885.38257, -902.43097, -924.8605, -888.2387, -977.32434, -996.1363, -852.6953, -932.73517, -428.85345, -899.69116, -696.15063, -1039.788, -784.68207, -495.00275, -828.01874, -942.8517, -248.5206, -980.7725, -858.44006, -914.2279, -947.2028, -957.22205, -877.60126, -1040.1067, -891.5885, -854.35144, -892.6214, -1043.3142, -1008.8446, -826.7658, -908.997, -1027.8307, -1037.6982, -949.25165, -1053.4247, -965.93396, -990.3852, -852.7534, -437.3402, -783.73395, -984.97906, -985.973, -971.6326, -381.90802, -839.7146, -980.28394, -1042.0779, -1054.4669, -1064.7354, -1021.4437, -861.4681, -808.1529, -877.44745, -933.8526, -1032.6938, -1044.7224, -834.59485, -947.9127, -1076.7302, -931.277, -978.84814, -1052.8679, -1044.3123, -1055.4747, -1106.4017, -891.72394, -490.12378, -974.574, -911.73505, -849.6481, -986.6314, -862.1693, -970.1823, -952.8628, -246.4565, -824.7805, -1019.25415, -881.5353, -873.6525, -1072.3842, 12.710711, 6.8891964, 555.62787, 377.91443, 58.889957, 129.57498, 385.67792, 121.03204, -331.97754, -215.04454, -369.23715, -213.27374, 44.50831, 570.9905, 37.939793, -65.319984, 279.73926, -349.56723, -143.86298, 85.983955, 14.749507, 9.237339, 87.21642, 269.3598, 11.68607, -46.225304, -390.99048, -364.68488, 87.044464, 554.3044, 33.880493, -23.3203, 23.980917, 527.6382, 54.4599, -14.737756, -336.73108, -81.85837, 53.35633, 36.21534, 152.61154, 54.262833, -2.2416296, 38.696766, -18.882523, -334.96463, 335.12347, -215.29137, 15.485579, 97.67885, 41.723618, 510.8966, 344.94843, 43.605644, 572.39856, -2.4438353, -2.5662274, 146.45169, -368.23682, 586.7981, 83.05087, 113.712975, -12.238641, 53.349136, 359.96533, 3.7885833, 272.81476, 22.098326, 220.72653, 563.7253, 317.21085, 244.79694, -31.201569, 405.40286, -337.45892, 360.40866, -19.946577, 48.153183, -47.093887, -14.2096, 105.694626, -277.0837, 35.069244, 108.72354, -316.65808, -310.7719, 583.25256, -348.58154, -231.77223, -360.56183, 502.44656, 69.40252, 487.81195, 348.8796, 238.96906, 323.17834, -209.63155, 151.67163, -310.67575, 64.107216, 402.45172, 489.56036, 288.92154, 278.82477, 580.82697, 250.07727, 573.59515, 415.27438, 300.96686, 250.45366, 559.42535, -215.64542, 324.54416, -131.15503, 411.78955, 60.85447, -138.125, 630.5148, 76.900894, 185.31339, 259.14618, 342.90594, 118.07189, 602.56506, 141.22447, -46.866776, 328.3779, 432.10107, 60.483414, 344.7225, 237.17976, 28.300697, 597.69476, 129.87376, 258.762, -131.77393, -123.10869, 302.84714, 557.0583, 288.93524, 101.387115, 170.00159, 314.1013, -150.32875, -18.87408, 461.8847, 478.47556, 585.5111, -166.96979, 132.0686, 283.01578, 109.07775, 326.8717, 271.7234, 415.44952, 345.03882, 149.26141, 473.5924, 267.18573, 408.72076, 115.53411, 68.9036, -148.81648, 439.65237, 90.26245, 350.8123, 74.474014, 359.2587, 443.98303, 182.8086, 572.4276, 131.56747, 118.05325, 582.16266, -145.66554, 139.45544, -143.66925, 612.47943, 35.02925, -101.3769, 467.8449, -37.73966, 148.32333, 373.5005, -108.19353, 69.977, 119.48392, 365.45105, 598.9154, 293.8657, 441.82443, -40.438114, 364.38278, 318.0733, 415.78058, 186.28036, 45.654434, 418.60474, 631.047, 112.16533, 230.83257, 160.13286, 213.95709, 599.9618, -110.654724, 98.01492, 212.54556, 36.279724, 428.39716, -13.406361, 377.63623, 280.94366, 434.52063, 102.027596, 199.1919, 129.89575, 380.04376, 57.085194, 427.36407, 531.7788, 517.01953, -32.458897, 215.62766, -6.024719, 256.65033, 401.03223, -134.29672, 497.20096, 231.45123, 18.190378, -245.56409, 448.73743, 108.64096, 271.35092, -146.20772, 0.7110627, 333.55154, -169.6172, 218.14494, -108.42284, 363.87372, 96.33247, 449.69424, -248.06924, -137.99496, -221.14902, 264.52814, 0.9543872, -98.950294, -9.2428875, 432.21893, 554.6367, -94.99444, 265.811, -77.4063, 223.36156, 173.005, 259.88864, 202.38794, 264.066, 209.79752, 232.77875, 223.09418, 223.96832, 109.6497, -153.9638, -197.07323, 296.45172, -81.7901, 152.2843, -32.95476, 70.04819, -141.20177, 175.1368, 426.95734, 565.5367, -64.93646, 558.1359, 300.73785, 456.7551, 662.7216, 25.988373, 144.9783, 392.83868, -138.03397, 109.83766, 318.54688, 164.16351, -105.125534, -67.82923, 49.11869, -50.534733, -69.27995, -7.33047, 2.0106661, 6.7437606, 338.94147, 494.13, 283.27252, 256.5902};
 std::vector<float> goal_z = {5.372074, 5.381999, 5.391045, 5.3720665, 5.3728924, 5.3726234, 5.3729553, 5.3728523, 5.3720665, 5.372884, 5.3720665, 5.372491, 5.3728857, 6.1158953, 5.3720703, 5.3720665, 5.3720703, 5.3720703, 5.3720703, 5.372115, 5.3998394, 5.3720665, 5.37253, 5.3729706, 5.3729286, 5.3720703, 5.372881, 5.372816, 5.372073, 5.3720665, 5.372879, 5.3720665, 5.7463236, 5.3720665, 5.372875, 5.3720665, 5.3720856, 5.372074, 5.3728514, 5.3721848, 7.0524344, 5.3720665, 5.3720827, 5.372896, 5.372072, 5.372078, 5.3720665, 5.372074, 5.3720665, 5.372058, 5.373005, 5.3720665, 5.3725624, 5.3728876, 5.372759, 5.372492, 5.372259, 5.3720493, 5.372425, 5.3720665, 5.373001, 5.372692, 5.372882, 5.372099, 5.3720827, 5.3722324, 5.3720665, 5.3720684, 5.3720665, 5.3720913, 5.3721523, 5.372135, 5.3729267, 5.3728085, 5.372095, 5.3720665, 5.3725357, 5.372072, 5.3720665, 5.3727245, 5.3720665, 5.3720827, 5.3720703, 5.3720503, 5.3721104, 5.3720665, 5.3721037, 5.3724194, 5.372201, 5.37286, 5.372343, 5.3720665, 5.372449, 5.372669, 5.3728867, 5.3720846, 5.372875, 5.3721046, 5.372883, 5.3726463, 5.372072, 5.3720665, 5.3720503, 5.3724117, 5.3720703, 5.3720703, 5.372876, 5.3729286, 5.3728046, 5.3720665, 5.3720665, 5.3720665, 5.3720665, 5.3723736, 5.391936, 5.372877, 5.372486, 5.3720856, 5.372878, 5.3751326, 5.372637, 5.372057, 5.3720694, 5.3720665, 5.3727818, 5.3728733, 5.372877, 5.393618, 5.3724813, 5.373918, 5.3720665, 5.3725986, 5.372881, 5.3720665, 5.3729534, 5.38324, 5.3728743, 5.373006, 5.3720665, 5.3789144, 5.3724747, 17.183334, 5.372322, 5.3728657, 5.3720665, 5.3720665, 5.3726387, 5.3725376, 5.372614, 5.3720665, 5.372101, 5.3720665, 5.3720665, 5.372057, 5.3720684, 5.886388, 5.372881, 5.3720503, 5.376722, 5.372734, 5.3720665, 5.372671, 5.372057, 5.392333, 5.372054, 5.3923254, 5.3720503, 5.3720665, 5.3720665, 5.3720837, 5.3726826, 5.372593, 5.3729076, 5.372471, 5.37274, 5.376068, 5.372505, 5.3720603, 5.372882, 5.372057, 5.372732, 5.372734, 5.3728848, 5.3720665, 5.3720665, 5.3720694, 5.395313, 5.372878, 5.3724794, 5.3720913, 5.3725767, 5.3720665, 5.3789167, 5.3720665, 5.3720675, 5.3720665, 5.372349, 5.3720655, 5.372058, 5.3720703, 5.3723555, 5.3720665, 5.372654, 5.375705, 5.3720646, 5.3720665, 5.3721275, 5.4451, 5.3720665, 5.3721046, 5.3720665, 5.3720665, 5.398638, 5.372875, 5.3720665, 5.409154, 5.376775, 5.3720665, 5.3720694, 5.372575, 5.372073, 5.425055, 5.372573, 5.397259, 5.372733, 5.372882, 5.372057, 5.372116, 5.37241, 5.3720665, 5.3720665, 5.3727646, 5.3720665, 5.3720665, 5.3724937, 5.3720665, 5.3720603, 5.3720665, 5.372405, 5.3720655, 5.3720603, 5.3727207, 5.421481, 5.3804827, 5.379393, 5.37245, 5.3727264, 5.372879, 5.3720665, 5.372078, 5.3720665, 5.372076, 5.372099, 5.374148, 5.3724213, 5.3727646, 5.3720503, 5.3726826, 5.372074, 5.3720665, 5.3721027, 6.534572, 5.3724213, 5.37235, 5.372875, 5.3720684, 5.37249, 5.3725796, 5.372326, 5.372387, 5.3720665, 5.372217, 5.3720665, 5.37288, 5.3723335, 5.37206, 5.372813, 5.3720818, 5.3720665, 5.3720665, 5.3722887, 6.6508155, 5.3720913, 5.3720694, 5.3730135, 5.3720703, 5.3724365, 5.3728657, 5.372057, 5.3720665, 5.372383, 5.3720665, 5.3720503, 5.3720646, 5.3728924, 5.3720665, 5.372057, 5.3728676, 5.3721905, 5.3745213, 5.3916388, 5.3724985, 5.3730717, 5.372777, 6.493224, 5.3728704, 5.3720675, 6.482006, 5.3720512, 5.3720655, 5.372102, 5.3728848, 5.3720675, 6.393582, 5.372609, 5.3720675, 5.372567, 5.3720684, 5.3720675, 5.372055, 5.3720675, 5.3720613, 6.3887415, 5.3720675, 5.3728857, 5.37267, 5.7562118, 5.7581816, 6.3940597, 5.372776, 5.373288, 5.3728685, 5.372362, 5.372778, 5.372554, 5.3728876, 5.3725796, 5.3728952, 5.372802, 5.372079, 5.3914485, 5.372964, 5.3720613, 5.9196014, 5.859476, 5.3724966, 5.372463, 5.3720512, 20.119184, 5.3728447, 5.3720675, 5.372485, 5.3724966, 5.3722057, 5.3724833, 5.3725014, 5.372693, 5.3720827, 5.3720613, 5.3720675, 5.3725557, 6.0196776, 5.3721075, 5.372062, 5.3720675, 5.3721, 5.372115, 5.373069, 5.3729525, 5.3720675, 5.37271, 5.3727655, 5.372488, 6.7014894, 5.3720675, 5.3720675, 5.3720684, 5.3720512, 6.3933263, 5.8682647, 5.943721, 5.372674, 6.709605, 5.372081, 5.372058, 5.3720675, 5.372876, 5.3720675, 5.3720675, 5.3720512, 5.372117, 5.372939, 5.372546, 5.3720675, 5.3726034, 5.3720675, 5.3720675, 5.372635, 5.3720675, 7.6031547, 5.3720655, 5.3720713, 5.3720675, 5.3720894, 5.3721437, 5.372532, 5.3720655, 5.3720675, 5.3720675, 5.3724785, 5.3722258, 5.3720675, 5.3720512, 5.3730183, 5.3720675, 5.372055, 5.372486, 5.372059, 5.3720503, 5.3720512, 5.3720503, 5.3720675, 5.372821, 5.372079, 5.869624, 5.3720827, 5.3720675, 5.372075, 5.3720675, 5.3720512, 5.3720512, 5.3720627, 5.3728285, 5.372493, 5.3720675, 5.3720675, 5.3720703, 5.372344, 5.3720675, 5.3720503, 5.3720675, 5.3720675, 5.372776, 5.3720503, 5.3726883, 5.3725214, 5.3728456, 5.3720675, 5.3720703, 5.3725014, 5.37234, 5.3720903, 5.3728514, 5.372361, 5.3720617, 6.3880615, 5.3726835, 5.3727617, 5.3720665, 5.37251, 5.3720613, 5.372054, 5.3722544, 5.3720636, 5.3720675, 5.3720675, 5.5332556, 5.3720675, 5.8704896, 5.3720675, 5.3721046, 5.372058, 5.3720675, 5.3720675, 5.3720703, 5.3720675, 5.372095, 5.3729057, 5.3720684, 5.3720675, 5.3725824, 5.3720512, 5.372941, 5.372113, 5.3720675, 5.3723097, 5.3720675, 5.37253, 5.372079, 5.3720675, 6.000577, 5.372527, 5.3720675, 5.3728876, 5.3723288, 5.3720675, 5.3720675, 5.3720675, 5.8696475, 5.372779};
-    targetLocation_.Location = FVector(goal_x.at(executionCounter_), goal_y.at(executionCounter_), goal_z.at(executionCounter_) < 5.37f ? 5.38f : goal_z.at(executionCounter_));
+    target_location_.Location = FVector(goal_x.at(execution_counter_), goal_y.at(execution_counter_), goal_z.at(execution_counter_) < 5.37f ? 5.38f : goal_z.at(execution_counter_));
 
-    return targetLocation_.Location;
+    return target_location_.Location;
 }
 
 bool Navigation::navSystemRebuild()
 {
-    navSys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(pawnAgent_->GetWorld());
-    ASSERT(navSys_ != nullptr);
+    nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(agent_actor_->GetWorld());
+    ASSERT(nav_sys_ != nullptr);
 
-    navData_ = navSys_->GetNavDataForProps(pawnAgent_->GetNavAgentPropertiesRef());
-    ASSERT(navData_ != nullptr);
+    const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(agent_actor_);
+    ASSERT(actor_as_nav_agent != nullptr);
 
-    navMesh_ = Cast<ARecastNavMesh>(navData_);
-    ASSERT(navMesh_ != nullptr);
+    nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
+    ASSERT(nav_data_ != nullptr);
 
-    navmeshBounds_ = nullptr;
-    for (TActorIterator<ANavMeshBoundsVolume> it(pawnAgent_->GetWorld()); it; ++it) {
-        navmeshBounds_ = *it;
+    nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
+    ASSERT(nav_mesh_ != nullptr);
+
+    nav_mesh_bounds_ = nullptr;
+    for (TActorIterator<ANavMeshBoundsVolume> it(agent_actor_->GetWorld()); it; ++it) {
+        nav_mesh_bounds_ = *it;
     }
-    ASSERT(navmeshBounds_ != nullptr);
+    ASSERT(nav_mesh_bounds_ != nullptr);
 
     // Set the NavMesh properties:
-    navMesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_RADIUS"});
-    navMesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_HEIGHT"});
-    navMesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_SIZE"});
-    navMesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_HEIGHT"});
-    navMesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_SLOPE"});
-    navMesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
-    navMesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MERGE_REGION_SIZE"});
-    navMesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
-    navMesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
+    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_RADIUS"});
+    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_HEIGHT"});
+    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_SIZE"});
+    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_HEIGHT"});
+    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_SLOPE"});
+    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MERGE_REGION_SIZE"});
+    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
+    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
 
     // Dynamic update navMesh location and size
     FBox worldBox = GetWorldBoundingBox();
-    navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    navmeshBounds_->SetActorLocation(worldBox.GetCenter(), false);          // Place the navmesh at the center of the map
-    navmeshBounds_->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);   // Rescae the navmesh
-    navmeshBounds_->GetRootComponent()->UpdateBounds();
-    navSys_->OnNavigationBoundsUpdated(navmeshBounds_);
+    nav_mesh_bounds_->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    nav_mesh_bounds_->SetActorLocation(worldBox.GetCenter(), false);          // Place the navmesh at the center of the map
+    nav_mesh_bounds_->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);   // Rescae the navmesh
+    nav_mesh_bounds_->GetRootComponent()->UpdateBounds();
+    nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_);
 
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "USE_STATIC_NAVMESH"})) {
-        navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Static);
+        nav_mesh_bounds_->GetRootComponent()->SetMobility(EComponentMobility::Static);
     }
     else { // A dynmic navmesh will account for changes occuring in the environment at runtime. But this is more computationally intensive...
-        navmeshBounds_->GetRootComponent()->SetMobility(EComponentMobility::Movable); 
+        nav_mesh_bounds_->GetRootComponent()->SetMobility(EComponentMobility::Movable); 
     }
 
-    navSys_->Build(); // Rebuild NavMesh, required for update AgentRadius
+    nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 
     return true;
 }
 
-void Navigation::traceGround(FVector& spawnPosition, FRotator& spawnRotator, const FVector& boxHalfSize)
+void Navigation::traceGround(FVector& spawn_position, FRotator& spawn_rotator, const FVector& box_half_size)
 {
-    FVector startLoc = spawnPosition + FVector(0, 0, 100);
-    FVector endLoc = spawnPosition + FVector(0, 0, -1000);
+    FVector startLoc = spawn_position + FVector(0, 0, 100);
+    FVector endLoc = spawn_position + FVector(0, 0, -1000);
 
-    FCollisionQueryParams collisionParams(FName(TEXT("trace2ground")), true, pawnAgent_);
+    FCollisionQueryParams collisionParams(FName(TEXT("trace2ground")), true, agent_actor_);
     FHitResult hit(ForceInit);
 
-    if (UKismetSystemLibrary::BoxTraceSingle(pawnAgent_->GetWorld(), startLoc, endLoc, boxHalfSize, spawnRotator, ETraceTypeQuery::TraceTypeQuery1, false, TArray<AActor*>(), EDrawDebugTrace::Type::ForDuration, hit, true)) {
-        spawnPosition = hit.Location;
+    if (UKismetSystemLibrary::BoxTraceSingle(agent_actor_->GetWorld(), startLoc, endLoc, box_half_size, spawn_rotator, ETraceTypeQuery::TraceTypeQuery1, false, TArray<AActor*>(), EDrawDebugTrace::Type::ForDuration, hit, true)) {
+        spawn_position = hit.Location;
     }
 }
 
-FBox Navigation::GetWorldBoundingBox(bool bScaleCeiling)
+FBox Navigation::GetWorldBoundingBox(bool scale_ceiling)
 {
     FBox box(ForceInit);
-    for (TActorIterator<AActor> it(pawnAgent_->GetWorld()); it; ++it) {
+    for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
         if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
             box += it->GetComponentsBoundingBox(false, true);
         }
     }
     // Remove ceiling
-    return !bScaleCeiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
+    return !scale_ceiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
 }
 
 

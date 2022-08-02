@@ -5,7 +5,7 @@
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
 #include <NavigationSystem.h>
-#include "Kismet/KismetSystemLibrary.h"
+#include <Kismet/KismetSystemLibrary.h>
 
 #include <iostream>
 #include <memory>
@@ -13,8 +13,8 @@
 #include <utility>
 #include <vector>
 
-#include "Assert.h"
-#include "Config.h"
+#include <Assert.h>
+#include <Config.h>
 
 class Navigation
 {
@@ -28,12 +28,12 @@ public:
     /**
      * @brief Access the singleton navigation object
      *
-     * @param pawnAgent
+     * @param agent_actor
      * @return Navigation&
      */
-    static Navigation& Singleton(APawn* pawnAgent)
+    static Navigation& Singleton(AActor* agent_actor)
     {
-        static Navigation navInstance(pawnAgent);
+        static Navigation navInstance(agent_actor);
         return navInstance;
     }
 
@@ -112,7 +112,7 @@ public:
      */
     inline float getTrajectoryLength()
     {
-        return trajectoryLength_;
+        return trajectory_length_;
     }
 
     /**
@@ -123,7 +123,7 @@ public:
      */
     inline FVector getGoal()
     {
-        return FVector(pathPoints_.Last().Location.X, pathPoints_.Last().Location.Y, pathPoints_.Last().Location.Z);
+        return FVector(path_points_.Last().Location.X, path_points_.Last().Location.Y, path_points_.Last().Location.Z);
     }
 
     /**
@@ -134,7 +134,7 @@ public:
      */
     inline bool goalReached()
     {
-        return targetReached_;
+        return target_reached_;
     }
 
     /**
@@ -143,7 +143,7 @@ public:
      */
     inline void iterateIndex()
     {
-        executionCounter_++;
+        execution_counter_++;
     }
 
 private:
@@ -151,7 +151,7 @@ private:
      * @brief Private constructor for the singleton design template
      *
      */
-    Navigation(APawn* pawnAgent);
+    Navigation(AActor* agent_actor);
 
     /**
      * @brief
@@ -164,45 +164,43 @@ private:
     /**
      * @brief Get the World Bounding Box object
      *
-     * @param bScaleCeiling
+     * @param scale_ceiling
      * @return FBox
      */
-    FBox GetWorldBoundingBox(bool bScaleCeiling = true);
+    FBox GetWorldBoundingBox(bool scale_ceiling = true);
 
     /**
      * @brief Ensure the agent spawns on the ground surface 
      *
-     * @param spawnPosition
-     * @param spawnRotator
-     * @param boxHalfSize
+     * @param spawn_position
+     * @param spawn_rotator
+     * @param box_half_size
      */
-    void traceGround(FVector& spawnPosition, FRotator& spawnRotator, const FVector& boxHalfSize);
+    void traceGround(FVector& spawn_position, FRotator& spawn_rotator, const FVector& box_half_size);
 
-    UNavigationSystemV1* navSys_;
-    ANavigationData* navData_;
-    ARecastNavMesh* navMesh_;
-    ANavMeshBoundsVolume* navmeshBounds_;
-    const APawn* pawnAgent_;
+    UNavigationSystemV1* nav_sys_;
+    ANavigationData* nav_data_;
+    ARecastNavMesh* nav_mesh_;
+    ANavMeshBoundsVolume* nav_mesh_bounds_;
+    AActor* agent_actor_ = nullptr;
 
-    int numberOfWayPoints_ = 0;
-    int numIter_ = 0;
-    float pathCriterion_ = 0.f;
-    FVector initialPosition_;
-    FNavLocation bestTargetLocation_;
-    FPathFindingQuery navQuery_;
+    int number_iterations_ = 0;
+    FVector initial_position_;
+    FNavLocation best_target_location_;
+    FPathFindingQuery nav_query_;
 
     // An array containing the different waypoints to be followed by the agent:
-    TArray<FNavPathPoint> pathPoints_;
+    TArray<FNavPathPoint> path_points_;
 
     // The path point begin considered by the PID controller:
-    FNavLocation targetLocation_;
+    FNavLocation target_location_;
 
     // Index of the considered path point:
-    size_t indexPath_;
+    size_t index_path_;
 
-    bool targetReached_ = false;
+    bool target_reached_ = false;
 
-    int executionCounter_ = 0;
+    int execution_counter_ = 0;
 
-    float trajectoryLength_ = 0.0;
+    float trajectory_length_ = 0.0;
 };
