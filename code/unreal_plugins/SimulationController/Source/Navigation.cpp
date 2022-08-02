@@ -1,4 +1,4 @@
-#include "Navigation.h"
+#include <Navigation.h>
 
 Navigation::Navigation(AActor* agent_actor): agent_actor_(agent_actor)
 {
@@ -13,26 +13,26 @@ Navigation::Navigation(AActor* agent_actor): agent_actor_(agent_actor)
     // Set the path query such that case no path to the target can be found, a path that brings the agent as close as possible to the target can still be generated
     nav_query_.SetAllowPartialPaths(true);
     
-    std::string id = Config::getValue<std::string>({"INTERIORSIM", "MAP_ID"});
-
-    if (id == "/Game/Maps/Map_237081640"){
-        execution_counter_ = 0;
-    }
-    else if (id == "/Game/Maps/Map_237081739"){
-        execution_counter_ = 100;
-    }
-    else if (id == "/Game/Maps/Map_239748000"){
-        execution_counter_ = 200;
-    }
-    else if (id == "/Game/Maps/Map_239784016"){
-        execution_counter_ = 300;
-    }
-    else if (id == "/Game/Maps/Map_239784069"){
-        execution_counter_ = 400;
-    }
-    else {
-            ASSERT(false);
-    }
+    // std::string id = Config::getValue<std::string>({"INTERIORSIM", "MAP_ID"});
+    // 
+    // if (id == "/Game/Maps/Map_237081640"){
+    //     execution_counter_ = 0;
+    // }
+    // else if (id == "/Game/Maps/Map_237081739"){
+    //     execution_counter_ = 100;
+    // }
+    // else if (id == "/Game/Maps/Map_239748000"){
+    //     execution_counter_ = 200;
+    // }
+    // else if (id == "/Game/Maps/Map_239784016"){
+    //     execution_counter_ = 300;
+    // }
+    // else if (id == "/Game/Maps/Map_239784069"){
+    //     execution_counter_ = 400;
+    // }
+    // else {
+    //         ASSERT(false);
+    // }
 }
 
 Navigation::~Navigation()

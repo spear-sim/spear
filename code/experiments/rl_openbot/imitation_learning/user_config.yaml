@@ -9,12 +9,12 @@ INTERIORSIM:
   
   # If launch_mode is "standalone_exectuable", specify this path to an Unreal application.
   #STANDALONE_EXECUTABLE: "/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
-  #STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
-  STANDALONE_EXECUTABLE: "/home/qleboute/UnrealEngine/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
+  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
+  #STANDALONE_EXECUTABLE: "/home/qleboute/UnrealEngine/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
 
   #TEMP_DIR: "/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/Temp"
-  #TEMP_DIR: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/Temp"
-  TEMP_DIR: "/home/qleboute/UnrealEngine/interiorsim/code/unreal_projects/RobotProject/Temp"  
+  TEMP_DIR: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/Temp"
+  #TEMP_DIR: "/home/qleboute/UnrealEngine/interiorsim/code/unreal_projects/RobotProject/Temp"  
 
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   
@@ -36,8 +36,8 @@ INTERIORSIM:
   # Specify the location of the settings.json parameter file used in the InteriorSim executable. 
   # Allows avoiding the "settings.json not found" error at simulation start:
   #CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json"]
-  #CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json", "-game"]
-  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/qleboute/UnrealEngine/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json"]
+  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json", "-game"]
+  #CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/qleboute/UnrealEngine/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json"]
 
   # Once a connection has been established, the RPC client will wait for this amount of
   # time before throwing when calling a server function.
@@ -53,7 +53,7 @@ SIMULATION_CONTROLLER:
   AGENT_CONTROLLER_NAME: "OpenBotAgentController"
   
   IMITATION_LEARNING_TASK:
-    RANDOM_SPAWN_TRAJ: False
+    RANDOM_SPAWN_TRAJ: True
     AGENT_ACTOR_NAME: "SimpleVehicle_0"
     GOAL_ACTOR_NAME: ""
     REWARD:

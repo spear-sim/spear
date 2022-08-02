@@ -98,8 +98,7 @@ void ImitationLearningTask::endFrame()
 {
     APawn* vehicle_pawn = dynamic_cast<APawn*>(agent_actor_);
     ASSERT(vehicle_pawn);
-    if (Navigation::Singleton(vehicle_pawn).goalReached())
-    {
+    if (Navigation::Singleton(vehicle_pawn).goalReached()){
         hit_goal_ = true;
     }
 }
@@ -165,7 +164,7 @@ void ImitationLearningTask::reset()
 
     Navigation::Singleton(vehicle_pawn).resetNavigation();
 
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"}) == true) {
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
         // Random initial position:
         agent_position = Navigation::Singleton(vehicle_pawn).generateRandomInitialPosition();
         agent_actor_->SetActorLocation(agent_position);
