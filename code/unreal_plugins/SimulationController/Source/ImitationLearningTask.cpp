@@ -1,14 +1,16 @@
-#include "ImitationLearningTask.h"
+#include <ImitationLearningTask.h>
 
 #include <algorithm>
 #include <iostream>
+
+#include <ActorHitEvent.h>
+#include <Assert.h>
+#include <Box.h>
+#include <Config.h>
+
 #include <EngineUtils.h>
 #include <UObject/UObjectGlobals.h>
 
-#include "ActorHitEvent.h"
-#include "Assert.h"
-#include "Box.h"
-#include "Config.h"
 
 ImitationLearningTask::ImitationLearningTask(UWorld* world)
 {

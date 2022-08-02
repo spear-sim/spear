@@ -39,6 +39,10 @@ code/unreal_plugins/VirtualWorldManager/Binaries
 code/unreal_plugins/VirtualWorldManager/Intermediate
 code/unreal_plugins/VirtualWorldManager/ThirdParty
 
+code/unreal_plugins/SceneManager/Binaries
+code/unreal_plugins/SceneManager/Intermediate
+code/unreal_plugins/SceneManager/ThirdParty
+
 code/unreal_projects/InteriorEnvironment/Binaries
 code/unreal_projects/InteriorEnvironment/Build
 code/unreal_projects/InteriorEnvironment/CMakeLists.txt
