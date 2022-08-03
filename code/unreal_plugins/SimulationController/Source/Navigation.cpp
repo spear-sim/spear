@@ -57,26 +57,10 @@ void Navigation::resetNavigation()
 FVector Navigation::generateRandomInitialPosition()
 {
     index_path_ = 0; 
-    FVector initialPosition;
 
     // Spawn the agent in a random location within the navigation mesh:
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "NAVIGATION", "SPAWN_ON_NAV_MESH"})) {
-
-        int trial = 0;
-        FNavLocation navLocation = nav_mesh_->GetRandomPoint();
-        while (trial < 100) { 
-            if (navLocation.Location.Z >= Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_POSITION_Z_MIN"}) and navLocation.Location.Z <= Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "AGENT_POSITION_Z_MAX"})) {
-                break;
-            }
-            std::cout << "navLocation.Location = [" << navLocation.Location.X << ", " << navLocation.Location.Y << ", " << navLocation.Location.Z << "]" << std::endl;
-            navLocation = nav_mesh_->GetRandomPoint();
-            trial++;
-        } 
-        initial_position_ = navLocation.Location;       
-    }
-    else { 
-        initial_position_ = FVector(0);
-    }
+    FNavLocation navLocation = nav_mesh_->GetRandomPoint();
+    FVector initial_position_ = navLocation.Location;       
 
     // TODO: debug this mess after the paper submission... 
     // use BoxTracing to adjust pawn spawn height.
