@@ -7,6 +7,7 @@
 #include "Assert.h"
 
 std::map<int, UPhysicalMaterial*> PhysicsManager::physical_material_map_;
+int PhysicsManager::physical_material_id_counter_;
 
 void PhysicsManager::initialize()
 {
@@ -20,6 +21,7 @@ void PhysicsManager::initialize()
             physical_material_map_[physical_material_id] = physical_material;
         }
     }
+    physical_material_id_counter_ = 2000;
 }
 
 void PhysicsManager::terminate()
@@ -67,4 +69,18 @@ void PhysicsManager::setActorPhysicalMaterials(const std::vector<AActor*>& actor
             }
         }
     }
+}
+
+int PhysicsManager::createPhysicalMaterial(float friction, float density)
+{
+    int physical_material_id = physical_material_id_counter_;
+    std::ostringstream oss;
+    oss << "PM_" << physical_material_id;
+    UPhysicalMaterial* physical_material = NewObject<UPhysicalMaterial>((UObject*)GetTransientPackage(), FName(UTF8_TO_TCHAR(oss.str().c_str())), EObjectFlags::RF_Standalone);
+    physical_material->Friction = friction;
+    physical_material->Density = density;
+
+    physical_material_map_[physical_material_id] = physical_material;
+    physical_material_id_counter_++;
+    return physical_material_id;
 }

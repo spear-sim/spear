@@ -22,6 +22,11 @@ public:
     // @return true if physical_material_id is valid and override existing value
     static void setActorPhysicalMaterials(const std::vector<AActor*>& actors, int physical_material_id);
 
+    // create new physical material
+    static int createPhysicalMaterial(float friction, float density);
+
 private:
     static std::map<int, UPhysicalMaterial*> physical_material_map_;
+
+    static int physical_material_id_counter_;
 };

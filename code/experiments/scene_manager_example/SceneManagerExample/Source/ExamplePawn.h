@@ -19,6 +19,8 @@ public:
     void test2();
     // change physical material for correct physical property such as friction and density
     void switchPhysicalMaterial();
+    // create new physical material and assign friction and density
+    void switchNewPhysicalMaterial();
 
 private:
     int physical_material_stat_ = 0;
