@@ -17,6 +17,7 @@ code/experiments/teleport_mode/user_config.yaml
 code/experiments/rl_openbot/imitation_learning/dataset
 code/experiments/rl_openbot/imitation_learning/Temp
 code/experiments/rl_openbot/imitation_learning/videos
+code/experiments/rl_openbot/imitation_learning/models
 code/experiments/rl_openbot/imitation_learning/user_config.yaml
 
 code/python_module/interiorsim.egg-info
@@ -102,6 +103,7 @@ code/unreal_projects/PlayEnvironment/.kdev4
 
 code/unreal_projects/RobotProject/Binaries
 code/unreal_projects/RobotProject/Build
+code/unreal_projects/RobotProject/build
 code/unreal_projects/RobotProject/CMakeLists.txt
 code/unreal_projects/RobotProject/Content/Maps
 code/unreal_projects/RobotProject/Content/Scene

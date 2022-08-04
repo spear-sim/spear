@@ -24,8 +24,8 @@ from PIL import Image
 import os
 import random
 import shutil
-import tensorflow as tf
-import tflite_runtime.interpreter as tflite
+#import tensorflow as tf
+#import tflite_runtime.interpreter as tflite
 import time
 import re
 
