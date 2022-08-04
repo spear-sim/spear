@@ -391,16 +391,11 @@ void OpenBotAgentController::reset()
 bool OpenBotAgentController::isReady() const
 {
     ASSERT(agent_actor_);
-    if (Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "READY_CHECK_ITERATIONS_MAX"}) < 0) {
+    if (Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "READY_CHECK_ITERATIONS_MAX"}) < 0 or isReadyCheckIterations++ < Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "READY_CHECK_ITERATIONS_MAX"})) {
         return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
     }   
     else {
-        if (isReadyCheckIterations++ < Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "READY_CHECK_ITERATIONS_MAX"})) {  
-            return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
-        }
-        else {
             return true;
-        }
     }
     
 }

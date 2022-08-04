@@ -3,7 +3,6 @@
 Navigation::Navigation(AActor* agent_actor): agent_actor_(agent_actor)
 {
     // Initialize navigation:
-    index_path_ = 0; 
     navSystemRebuild();
 
     initial_position_ = agent_actor_->GetActorLocation(); // Initial position of the agent
@@ -41,7 +40,6 @@ Navigation::~Navigation()
 
 void Navigation::resetNavigation()
 {
-    index_path_ = 0; 
     // navSystemRebuild();
 
     // initial_position_ = agent_actor_->GetActorLocation(); // Initial position of the agent
@@ -56,23 +54,11 @@ void Navigation::resetNavigation()
 
 FVector Navigation::generateRandomInitialPosition()
 {
-    index_path_ = 0; 
-
     // Spawn the agent in a random location within the navigation mesh:
-    FNavLocation navLocation = nav_mesh_->GetRandomPoint();
-    FVector initial_position_ = navLocation.Location;       
+    ASSERT(nav_mesh_ != nullptr);  
+    // TODO: ensure that the location is on the navmesh 
 
-    // TODO: debug this mess after the paper submission... 
-    // use BoxTracing to adjust pawn spawn height.
-    // use mesh bounding box instead of setting.
-    //std::cout << "-------------------------------------------" << std::endl;
-    //FRotator spawnRotation = agent_actor_->GetActorRotation();
-    //FVector center = FVector(0.0f, 0.0f, 3.0f);
-    //std::cout << "initialPosition = [" << initial_position_.X << ", " << initial_position_.Y << ", " << initial_position_.Z << "]" << std::endl;
-    //traceGround(initial_position_, spawnRotation, FVector(10.0f, 10.0f, 10.0f));
-    //initial_position_ = initial_position_ + FVector(0.0f, 0.0f, -3.0f);
-    //std::cout << "initial_position_GND = [" << initial_position_.X << ", " << initial_position_.Y << ", " << initial_position_.Z << "]" << std::endl;
-    return initial_position_;
+    return nav_mesh_->GetRandomPoint().Location;
 }
 
 void Navigation::generateTrajectoryToRandomTarget()
