@@ -211,8 +211,6 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
         ASSERT(action.count("apply_voltage"));
-        ASSERT(std::all_of(action.at("apply_voltage").begin(), action.at("apply_voltage").end(), [](float i) -> bool { return isfinite(i); }));
-
         // @TODO: This can be checked in python?
         ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
         ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
@@ -256,7 +254,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
             FIntRect rect_;
             FReadSurfaceDataFlags flags_;
         };
-        
+
         FReadSurfaceContext context = {target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
 
         // Required for uint8 read mode
@@ -282,7 +280,6 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         }
 
         observation["visual_observation"] = std::move(image);
-        
     }
 
     const FVector agent_current_location = agent_actor_->GetActorLocation();
@@ -297,8 +294,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     //     relative_position_to_goal = FVector2D((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
     // }
     // else {
-        // FVector2D currentPathPoint = Navigation::Singleton(vehicle_pawn).getCurrentPathPoint();
-        // relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
+    // FVector2D currentPathPoint = Navigation::Singleton(vehicle_pawn).getCurrentPathPoint();
+    // relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
     // }
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
@@ -332,7 +329,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
 
-        FVector2D updatedPathPoint = Navigation::Singleton(vehicle_pawn).updateNavigation();
+        FVector2D updatedPathPoint = Navigation::Singleton(vehicle_pawn).update();
         FVector goalPathPoint = Navigation::Singleton(vehicle_pawn).getGoal();
         float trajLenth = Navigation::Singleton(vehicle_pawn).getTrajectoryLength();
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
@@ -346,7 +343,6 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         else {
             ASSERT(false);
         }
-
     }
     else {
         ASSERT(false);
@@ -391,11 +387,7 @@ void OpenBotAgentController::reset()
 bool OpenBotAgentController::isReady() const
 {
     ASSERT(agent_actor_);
-    if (Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "READY_CHECK_ITERATIONS_MAX"}) < 0 or isReadyCheckIterations++ < Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "READY_CHECK_ITERATIONS_MAX"})) {
-        return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
-    }   
-    else {
-            return true;
-    }
-    
+    std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+
+    return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
 }

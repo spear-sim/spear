@@ -161,7 +161,7 @@ void ImitationLearningTask::reset()
 {
     FVector agent_position(0), goal_position(0);
 
-    Navigation::Singleton(agent_actor_).resetNavigation();
+    Navigation::Singleton(agent_actor_).reset();
 
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
         // Random initial position:

@@ -2,10 +2,10 @@
 
 #include <CoreMinimal.h>
 #include <Engine/EngineTypes.h>
+#include <Kismet/KismetSystemLibrary.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
 #include <NavigationSystem.h>
-#include <Kismet/KismetSystemLibrary.h>
 
 #include <iostream>
 #include <memory>
@@ -16,8 +16,7 @@
 #include <Assert.h>
 #include <Config.h>
 
-class Navigation
-{
+class Navigation {
 public:
     /**
      * @brief Delete the copy constructor in singleton class
@@ -44,7 +43,7 @@ public:
     virtual ~Navigation();
 
     /**
-     * @brief Generate an random initial position for the agent  
+     * @brief Generate an random initial position for the agent
      *
      * @return FVector
      */
@@ -52,15 +51,15 @@ public:
 
     /**
      * @brief Use the yaml parameter system to store a starting point which can be changed at every run in python (hack to be removed)
-     * 
-     * @return FVector 
+     *
+     * @return FVector
      */
     FVector getPredefinedInitialPosition();
 
     /**
      * @brief Use the yaml parameter system to store a goal point which can be changed at every run in python (hack to be removed)
-     * 
-     * @return FVector 
+     *
+     * @return FVector
      */
     FVector getPredefinedGoalPosition();
 
@@ -72,15 +71,15 @@ public:
 
     /**
      * @brief From the generated initial and final positions, generate a collision-free trajectory between them.
-     * 
+     *
      */
     void generateTrajectoryToPredefinedTarget();
 
     /**
-     * @brief Reset the navigation object. This allows regenerating a navmesh and changing its properties. 
-     * 
+     * @brief Reset the navigation object. This allows regenerating a navmesh and changing its properties.
+     *
      */
-    void resetNavigation();
+    void reset();
 
     /**
      * @brief Get the trajectory point at a given index
@@ -103,12 +102,12 @@ public:
      * @param relative_position_to_goal
      * @return FVector2D
      */
-    FVector2D updateNavigation();
+    FVector2D update();
 
     /**
-     * @brief Returns a first order appromination of the desired trajectory length 
-     * 
-     * @return float 
+     * @brief Returns a first order appromination of the desired trajectory length
+     *
+     * @return float
      */
     inline float getTrajectoryLength()
     {
@@ -116,7 +115,7 @@ public:
     }
 
     /**
-     * @brief Get the goal position 
+     * @brief Get the goal position
      *
      * @param relative_position_to_goal
      * @return FVector2D
@@ -139,7 +138,7 @@ public:
 
     /**
      * @brief DIRTY hack for neurips
-     * 
+     *
      */
     inline void iterateIndex()
     {
@@ -159,7 +158,7 @@ private:
      * @return true
      * @return false
      */
-    bool navSystemRebuild();
+    bool rebuild();
 
     /**
      * @brief Get the World Bounding Box object
@@ -167,10 +166,10 @@ private:
      * @param scale_ceiling
      * @return FBox
      */
-    FBox GetWorldBoundingBox(bool scale_ceiling = true);
+    FBox getWorldBoundingBox(bool scale_ceiling = true);
 
     /**
-     * @brief Ensure the agent spawns on the ground surface 
+     * @brief Ensure the agent spawns on the ground surface
      *
      * @param spawn_position
      * @param spawn_rotator
@@ -181,7 +180,6 @@ private:
     UNavigationSystemV1* nav_sys_;
     ANavigationData* nav_data_;
     ARecastNavMesh* nav_mesh_;
-    ANavMeshBoundsVolume* nav_mesh_bounds_;
     AActor* agent_actor_ = nullptr;
 
     int number_iterations_ = 0;
