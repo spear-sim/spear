@@ -9,16 +9,23 @@
 
 #include <Camera/CameraActor.h>
 #include "CameraSensor.h"
+
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
+
 #include <Engine/EngineTypes.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
+
+#include <Engine/PointLight.h>
+#include <Engine/SpotLight.h>
+#include <Engine/DirectionalLight.h>
+#include <Engine/RectLight.h>
+
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include "Kismet/GameplayStatics.h"
 #include <UObject/UObjectGlobals.h>
-
 
 #include "Assert.h"
 #include "Box.h"
@@ -31,6 +38,8 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
     world_ = world;
 
     rebuildNavSystem();
+
+    //world_->Exec(world_, TEXT("r.RayTracing.SceneCaptures 1"));
 
     FVector spawn_location {Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "TRAJECTORY", "START_POS_X"}),
                             Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "TRAJECTORY", "START_POS_Y"}),
@@ -50,7 +59,7 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
     ASSERT(depth_camera_sensor_);
     
     std::vector<std::string> passes_ = {"Depth_GLSL"};
-    rgb_camera_sensor_->SetPostProcessBlendables(passes_);
+    //rgb_camera_sensor_->SetPostProcessBlendables(passes_);
     depth_camera_sensor_->SetPostProcessBlendables(passes_);
 
     new_object_parent_actor_ = world->SpawnActor<AActor>();
@@ -83,7 +92,7 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
 
-    rgb_camera_sensor_->ActivateBlendablePass("finalColor");
+    //rgb_camera_sensor_->ActivateBlendablePass("finalColor");
     depth_camera_sensor_->ActivateBlendablePass("Depth_GLSL");
     //texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
     //ASSERT(texture_render_target_);
@@ -96,6 +105,7 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
     //texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     //texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU
     //scene_capture_component_->TextureTarget = texture_render_target_;
+    RemoveVirtualLights();
 }
 
 SlamDatasetAgentController::~SlamDatasetAgentController()
@@ -232,10 +242,10 @@ std::map<std::string, std::vector<uint8_t>> SlamDatasetAgentController::getObser
     const FRotator orientation = rgb_camera_sensor_->camera_actor_->GetActorRotation();
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
 
-    observation["camera_horizontal_fov"] = Serialize::toUint8(std::vector<float>{rgb_camera_sensor_->scene_capture_component_->FOVAngle});
-    float vfov = 2 * 180.0 * atan(tan(rgb_camera_sensor_->scene_capture_component_->FOVAngle * 3.14159 / 360.0) * (float)Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }) / Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" })) / 3.14159;
-    observation["camera_vertical_fov"] = Serialize::toUint8(std::vector<float>{vfov});
-
+    observation["camera_vertical_fov"] = Serialize::toUint8(std::vector<float>{rgb_camera_sensor_->scene_capture_component_->FOVAngle});
+    float vfov = 2 * 180.0 * atan(tan(rgb_camera_sensor_->scene_capture_component_->FOVAngle * 3.14159 / 360.0) * (float)Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" }) / Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" })) / 3.14159;
+    observation["camera_horizontal_fov"] = Serialize::toUint8(std::vector<float>{vfov});
+    
     ASSERT(IsInGameThread());
 
     //FTextureRenderTargetResource* target_resource = camera_sensor_->scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
@@ -310,6 +320,26 @@ void SlamDatasetAgentController::reset()
 bool SlamDatasetAgentController::isReady() const
 {
     return true;
+}
+
+void SlamDatasetAgentController::RemoveVirtualLights(){
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), FoundActors);
+
+    for (int i = 0; i < FoundActors.Num(); i++) {
+        //ASpotLight* sl = Cast<ASpotLight>(FoundActors[i]);
+        //APointLight* pl = Cast<APointLight>(FoundActors[i]);
+        //ARectLight* rl = Cast<ARectLight>(FoundActors[i]);
+        ////ADirectionalLight* dl = Cast<ADirectionalLight>(FoundActors[i]);
+        //if (rl != nullptr) {
+        //    rl->SetEnabled(false);
+        //    UE_LOG(LogTemp, Warning, TEXT("virtual light founded"));
+        //}
+        //ALight* l = Cast<ALight>(FoundActors[i]);
+        //if (l != nullptr) {
+        //    l->SetMobility(EComponentMobility::Movable);
+        //}
+    }
 }
 
 void SlamDatasetAgentController::rebuildNavSystem()

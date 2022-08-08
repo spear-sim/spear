@@ -29,6 +29,9 @@ public:
     void reset() override;
     bool isReady() const override;
 
+    //testing
+    void RemoveVirtualLights();
+
 private:
 
     void rebuildNavSystem();
