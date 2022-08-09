@@ -23,6 +23,7 @@ public:
     // Task overrides
     void beginFrame() override;
     void endFrame() override;
+    float getReward() const override;
     bool isEpisodeDone() const override;
     std::map<std::string, Box> getStepInfoSpace() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;

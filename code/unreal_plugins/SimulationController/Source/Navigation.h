@@ -34,11 +34,11 @@ public:
     // Generate an random initial position for the agent
     FVector generateRandomInitialPosition();
 
-    // se the yaml parameter system to store a starting point which can be changed at every run in python (hack to be removed)
-    FVector getPredefinedInitialPosition();
+    // Set the initial agent position from a data file
+    void setInitialPosition(const FVector& initial_position);
 
-    // Use the yaml parameter system to store a goal point which can be changed at every run in python (hack to be removed)
-    FVector getPredefinedGoalPosition();
+    // Set the goal position from a data file
+    void setGoalPosition(const FVector& goal_position);
 
     // From the generated initial position, generate a random reachale target point and a collision-free trajectory between them.
     void generateTrajectoryToRandomTarget();

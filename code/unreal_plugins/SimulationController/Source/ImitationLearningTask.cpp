@@ -101,6 +101,23 @@ void ImitationLearningTask::endFrame()
     }
 }
 
+float ImitationLearningTask::getReward() const
+{
+    float reward;
+
+    if (hit_goal_) {
+        reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_GOAL"});
+    }
+    else if (hit_obstacle_) {
+        reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_OBSTACLE"});
+    }
+    else {
+        const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
+        reward = -agent_to_goal.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
+    }
+    return reward;
+}
+
 bool ImitationLearningTask::isEpisodeDone() const
 {
     return hit_goal_ or hit_obstacle_;
@@ -152,7 +169,7 @@ void ImitationLearningTask::reset()
     }
     else {
         // Predefined initial position:
-        agent_position = Navigation::Singleton(agent_actor_).getPredefinedInitialPosition(); // DIRTY HACK for neurips
+        // TODO agent_position = Navigation::Singleton(agent_actor_).getPredefinedInitialPosition(); // DIRTY HACK for neurips
         agent_actor_->SetActorLocation(agent_position);
 
         // Trajectory planning:
