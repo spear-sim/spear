@@ -18,163 +18,81 @@
 
 class Navigation {
 public:
-    /**
-     * @brief Delete the copy constructor in singleton class
-     *
-     */
+    // Delete the copy constructor in singleton class
     Navigation(const Navigation&) = delete;
 
-    /**
-     * @brief Access the singleton navigation object
-     *
-     * @param agent_actor
-     * @return Navigation&
-     */
+    // Access the singleton navigation object
     static Navigation& Singleton(AActor* agent_actor)
     {
         static Navigation navInstance(agent_actor);
         return navInstance;
     }
 
-    /**
-     * @brief Destroy the singleton navigation object
-     *
-     */
+    // Destroy the singleton navigation object
     virtual ~Navigation();
 
-    /**
-     * @brief Generate an random initial position for the agent
-     *
-     * @return FVector
-     */
+    // Generate an random initial position for the agent
     FVector generateRandomInitialPosition();
 
-    /**
-     * @brief Use the yaml parameter system to store a starting point which can be changed at every run in python (hack to be removed)
-     *
-     * @return FVector
-     */
+    // se the yaml parameter system to store a starting point which can be changed at every run in python (hack to be removed)
     FVector getPredefinedInitialPosition();
 
-    /**
-     * @brief Use the yaml parameter system to store a goal point which can be changed at every run in python (hack to be removed)
-     *
-     * @return FVector
-     */
+    // Use the yaml parameter system to store a goal point which can be changed at every run in python (hack to be removed)
     FVector getPredefinedGoalPosition();
 
-    /**
-     * @brief From the generated initial position, generate a random reachale target point and a collision-free trajectory between them.
-     *
-     */
+    // From the generated initial position, generate a random reachale target point and a collision-free trajectory between them.
     void generateTrajectoryToRandomTarget();
 
-    /**
-     * @brief From the generated initial and final positions, generate a collision-free trajectory between them.
-     *
-     */
+    // From the generated initial and final positions, generate a collision-free trajectory between them.
     void generateTrajectoryToPredefinedTarget();
 
-    /**
-     * @brief Reset the navigation object. This allows regenerating a navmesh and changing its properties.
-     *
-     */
+    // Reset the navigation object. This allows regenerating a navmesh and changing its properties.
     void reset();
 
-    /**
-     * @brief Get the trajectory point at a given index
-     *
-     * @param index
-     * @return FVector2D
-     */
+    // Get the trajectory point at a given index
     FVector2D getPathPoint(size_t index);
 
-    /**
-     * @brief Get the current trajectory point (does not update the waypoint based on the agent location)
-     *
-     * @return FVector2D
-     */
+    // Get the current trajectory point (does not update the waypoint based on the agent location)
     FVector2D getCurrentPathPoint();
 
-    /**
-     * @brief Returns the updated waypoint based on the agent location
-     *
-     * @param relative_position_to_goal
-     * @return FVector2D
-     */
+    // Returns the updated waypoint based on the agent location
     FVector2D update();
 
-    /**
-     * @brief Returns a first order appromination of the desired trajectory length
-     *
-     * @return float
-     */
+    // Returns a first order appromination of the desired trajectory length
     inline float getTrajectoryLength()
     {
         return trajectory_length_;
     }
 
-    /**
-     * @brief Get the goal position
-     *
-     * @param relative_position_to_goal
-     * @return FVector2D
-     */
+    // Get the goal position
     inline FVector getGoal()
     {
         return FVector(path_points_.Last().Location.X, path_points_.Last().Location.Y, path_points_.Last().Location.Z);
     }
 
-    /**
-     * @brief Returns true if the goal has been reached (with a tolerance SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS)
-     *
-     * @return true
-     * @return false
-     */
+    // Returns true if the goal has been reached (with a tolerance SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS)
     inline bool goalReached()
     {
         return target_reached_;
     }
 
-    /**
-     * @brief DIRTY hack for neurips
-     *
-     */
+    // DIRTY hack for neurips
     inline void iterateIndex()
     {
         execution_counter_++;
     }
 
 private:
-    /**
-     * @brief Private constructor for the singleton design template
-     *
-     */
+    // Private constructor for the singleton design template
     Navigation(AActor* agent_actor);
 
-    /**
-     * @brief
-     *
-     * @return true
-     * @return false
-     */
+    //
     bool rebuild();
 
-    /**
-     * @brief Get the World Bounding Box object
-     *
-     * @param scale_ceiling
-     * @return FBox
-     */
+    // Get the World Bounding Box object
     FBox getWorldBoundingBox(bool scale_ceiling = true);
 
-    /**
-     * @brief Ensure the agent spawns on the ground surface
-     *
-     * @param spawn_position
-     * @param spawn_rotator
-     * @param box_half_size
-     */
+    // Ensure the agent spawns on the ground surface
     void traceGround(FVector& spawn_position, FRotator& spawn_rotator, const FVector& box_half_size);
 
     UNavigationSystemV1* nav_sys_;

@@ -23,7 +23,6 @@ public:
     // Task overrides
     void beginFrame() override;
     void endFrame() override;
-    float getReward() const override;
     bool isEpisodeDone() const override;
     std::map<std::string, Box> getStepInfoSpace() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
@@ -44,7 +43,6 @@ private:
     AActor* new_object_parent_actor_ = nullptr;
 
     UActorHitEvent* actor_hit_event_ = nullptr;
-    UActorHitEvent* goal_actor_hit_event_ = nullptr;
     FDelegateHandle actor_hit_event_delegate_handle_;
 
     std::vector<AActor*> obstacle_ignore_actors_;

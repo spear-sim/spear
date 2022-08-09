@@ -125,9 +125,9 @@ void SimulationController::worldBeginPlayEventHandler()
     ASSERT(agent_controller_);
 
     // read config to decide which type of Task class to create
-    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
+    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
         task_ = std::make_unique<PointGoalNavTask>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearning") {
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearningTask") {
         task_ = std::make_unique<ImitationLearningTask>(world_);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
         task_ = std::make_unique<NullTask>();

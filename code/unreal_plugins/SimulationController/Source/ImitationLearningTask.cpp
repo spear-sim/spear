@@ -31,7 +31,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
             ASSERT(goal_actor_);
         }
         else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
-            
             obstacle_ignore_actors_.emplace_back(*actor_itr);
             std::cout << "actor_name: " << actor_name << std::endl;
         }
@@ -42,9 +41,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         ASSERT(!goal_actor_);
         goal_actor_ = world->SpawnActor<AActor>();
         ASSERT(goal_actor_);
-        goal_actor_hit_event_ = NewObject<UActorHitEvent>(goal_actor_, TEXT("GoalHitEvent"));
-        ASSERT(goal_actor_hit_event_);
-        goal_actor_hit_event_->RegisterComponent();
     }
     
     //ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
@@ -103,23 +99,6 @@ void ImitationLearningTask::endFrame()
     if (Navigation::Singleton(vehicle_pawn).goalReached()){
         hit_goal_ = true;
     }
-}
-
-float ImitationLearningTask::getReward() const
-{
-    float reward;
-
-    if (hit_goal_) {
-        reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_GOAL"});
-    }
-    else if (hit_obstacle_) {
-        reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_OBSTACLE"});
-    }
-    else {
-        const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
-        reward = -agent_to_goal.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
-    }
-    return reward;
 }
 
 bool ImitationLearningTask::isEpisodeDone() const
