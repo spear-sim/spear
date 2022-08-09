@@ -19,4 +19,7 @@ public:
     virtual std::map<std::string, std::vector<uint8_t>> getObservation() const = 0;
     virtual void reset() = 0;
     virtual bool isReady() const = 0;
+
+    // TODO: 
+    // Navigation navigation_interface;
 };

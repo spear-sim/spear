@@ -18,105 +18,89 @@
 
 class Navigation {
 public:
-    // Delete the copy constructor in singleton class
-    Navigation(const Navigation&) = delete;
+    // Build the navigation object
+    Navigation(AActor* agent_actor);
 
-    // Access the singleton navigation object
-    static Navigation& Singleton(AActor* agent_actor)
-    {
-        static Navigation navInstance(agent_actor);
-        return navInstance;
-    }
-
-    // Destroy the singleton navigation object
+    // Destroy the navigation object
     virtual ~Navigation();
 
     // Generate an random initial position for the agent
-    FVector generateRandomInitialPosition();
+    static FVector generateRandomInitialPosition();
 
     // Set the initial agent position from a data file
-    void setInitialPosition(const FVector& initial_position);
+    static void setInitialPosition(const FVector& initial_position);
 
     // Set the goal position from a data file
-    void setGoalPosition(const FVector& goal_position);
+    static void setGoalPosition(const FVector& goal_position);
 
     // From the generated initial position, generate a random reachale target point and a collision-free trajectory between them.
-    void generateTrajectoryToRandomTarget();
+    static void generateTrajectoryToRandomTarget();
 
     // From the generated initial and final positions, generate a collision-free trajectory between them.
-    void generateTrajectoryToPredefinedTarget();
+    static void generateTrajectoryToPredefinedTarget();
 
     // Reset the navigation object. This allows regenerating a navmesh and changing its properties.
-    void reset();
+    static void reset();
 
     // Get the trajectory point at a given index
-    FVector2D getPathPoint(size_t index);
+    static FVector2D getPathPoint(size_t index);
 
     // Get the current trajectory point (does not update the waypoint based on the agent location)
-    FVector2D getCurrentPathPoint();
+    static FVector2D getCurrentPathPoint();
 
     // Returns the updated waypoint based on the agent location
-    FVector2D update();
+    static FVector2D update();
 
     // Returns a first order appromination of the desired trajectory length
-    inline float getTrajectoryLength()
+    static inline float getTrajectoryLength()
     {
-        return trajectory_length_;
+        return Navigation::trajectory_length_;
     }
 
     // Get the goal position
-    inline FVector getGoal()
+    static inline FVector getGoal()
     {
-        return FVector(path_points_.Last().Location.X, path_points_.Last().Location.Y, path_points_.Last().Location.Z);
+        return FVector(Navigation::path_points_.Last().Location.X, Navigation::path_points_.Last().Location.Y, Navigation::path_points_.Last().Location.Z);
     }
 
     // Returns true if the goal has been reached (with a tolerance SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS)
-    inline bool goalReached()
+    static inline bool goalReached()
     {
         return target_reached_;
     }
 
-    // DIRTY hack for neurips
-    inline void iterateIndex()
-    {
-        execution_counter_++;
-    }
-
 private:
-    // Private constructor for the singleton design template
-    Navigation(AActor* agent_actor);
+    
+    // Rebuild the navigation mesh with, with the properties stored in the .yaml parameter files
+    static bool rebuild();
 
-    //
-    bool rebuild();
-
-    // Get the World Bounding Box object
-    FBox getWorldBoundingBox(bool scale_ceiling = true);
+    // Get the World bounding box dimensions
+    static FBox getWorldBoundingBox(bool scale_ceiling = true);
 
     // Ensure the agent spawns on the ground surface
-    void traceGround(FVector& spawn_position, FRotator& spawn_rotator, const FVector& box_half_size);
+    static void traceGround(FVector& spawn_position, FRotator& spawn_rotator, const FVector& box_half_size);
 
-    UNavigationSystemV1* nav_sys_;
-    ANavigationData* nav_data_;
-    ARecastNavMesh* nav_mesh_;
-    AActor* agent_actor_ = nullptr;
+    static UNavigationSystemV1* nav_sys_;
+    static ANavigationData* nav_data_;
+    static ARecastNavMesh* nav_mesh_;
+    static AActor* agent_actor_;
 
-    int number_iterations_ = 0;
-    FVector initial_position_;
-    FNavLocation best_target_location_;
-    FPathFindingQuery nav_query_;
+    static int number_iterations_;
+    static FNavLocation best_target_location_;
+    static FPathFindingQuery nav_query_;
+
+    static FVector initial_position_;
 
     // An array containing the different waypoints to be followed by the agent:
-    TArray<FNavPathPoint> path_points_;
+    static TArray<FNavPathPoint> path_points_;
 
     // The path point begin considered by the PID controller:
-    FNavLocation target_location_;
+    static FNavLocation target_location_;
 
     // Index of the considered path point:
-    size_t index_path_;
+    static size_t index_path_;
 
-    bool target_reached_ = false;
+    static bool target_reached_;
 
-    int execution_counter_ = 0;
-
-    float trajectory_length_ = 0.0;
+    static float trajectory_length_;
 };

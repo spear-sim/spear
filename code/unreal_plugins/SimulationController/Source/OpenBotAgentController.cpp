@@ -1,4 +1,4 @@
-#include "OpenBotAgentController.h"
+#include <OpenBotAgentController.h>
 
 #include <algorithm>
 #include <map>
@@ -19,10 +19,10 @@
 #include <PIPCamera.h>
 #include <SimpleVehicle/SimpleVehiclePawn.h>
 
-#include "Assert.h"
-#include "Box.h"
-#include "Config.h"
-#include "Serialize.h"
+#include <Assert.h>
+#include <Box.h>
+#include <Config.h>
+#include <Serialize.h>
 
 OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
@@ -40,7 +40,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         }
     }
 
-    // setup observation camera
+    // Setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
         TArray<AActor*> all_attached_actors;
@@ -94,6 +94,9 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         post_process_settings.MotionBlurMax = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_MAX"});       // Max distortion caused by motion blur, in percent of the screen width, 0:off
         scene_capture_component_->PostProcessSettings = post_process_settings;
         scene_capture_component_->PostProcessBlendWeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "POST_PROC_BLEND_WEIGHT"}); // Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
+    
+        // Navigation system: 
+        agent_navigation_ = new Navigation(agent_actor_);
     }
 }
 
@@ -118,7 +121,12 @@ OpenBotAgentController::~OpenBotAgentController()
 
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
+
+    ASSERT(goal_actor_);
     goal_actor_ = nullptr;
+
+    ASSERT(agent_navigation_);
+    agent_navigation_ = nullptr;
 }
 
 std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
@@ -294,7 +302,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     //     relative_position_to_goal = FVector2D((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
     // }
     // else {
-    // FVector2D currentPathPoint = Navigation::Singleton(vehicle_pawn).getCurrentPathPoint();
+    // FVector2D currentPathPoint = agent_navigation_->getCurrentPathPoint();
     // relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
     // }
 
@@ -304,7 +312,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         FVector forward_axis = FVector(1.f, 0.f, 0.f); // Front axis is the X axis.
         FVector forward_axis_rotated = agent_current_orientation.RotateVector(forward_axis);
 
-        FVector2D currentPathPoint = Navigation::Singleton(vehicle_pawn).getCurrentPathPoint();
+        FVector2D currentPathPoint = agent_navigation_->getCurrentPathPoint();
         FVector2D relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
 
         // Compute yaw in [rad]:
@@ -329,9 +337,9 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
 
-        FVector2D updatedPathPoint = Navigation::Singleton(vehicle_pawn).update();
-        FVector goalPathPoint = Navigation::Singleton(vehicle_pawn).getGoal();
-        float trajLenth = Navigation::Singleton(vehicle_pawn).getTrajectoryLength();
+        FVector2D updatedPathPoint = agent_navigation_->update();
+        FVector goalPathPoint = agent_navigation_->getGoal();
+        float trajLenth = agent_navigation_->getTrajectoryLength();
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
 
         if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "waypoint") {

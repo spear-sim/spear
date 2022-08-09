@@ -3,8 +3,8 @@
 #include <Engine/EngineTypes.h>
 #include <Math/RandomStream.h>
 
-#include "Navigation.h"
-#include "Task.h"
+#include <Navigation.h>
+#include <Task.h>
 
 class AActor;
 class UWorld;

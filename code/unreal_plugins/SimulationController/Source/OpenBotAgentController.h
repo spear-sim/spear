@@ -35,6 +35,8 @@ private:
     AActor* goal_actor_ = nullptr;
     AActor* observation_camera_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
+    
+    Navigation* agent_navigation_ = nullptr;
 
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
