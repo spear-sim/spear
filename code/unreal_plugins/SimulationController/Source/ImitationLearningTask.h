@@ -95,6 +95,6 @@ private:
     TArray<FNavPathPoint> path_points_; // An array containing the different waypoints to be followed by the agent
     float trajectory_length_;           // Approximate length of the trajctory between agent_initial_position_ and agent_goal_position_
     float world_to_meters_;             // Scaling factor of the environment
-    bool initial_point_generated = false; 
-    bool target_point_generated = false; 
+    bool initial_point_generated_ = false; 
+    bool target_point_generated_ = false; 
 };
