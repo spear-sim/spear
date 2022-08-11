@@ -51,6 +51,9 @@ struct Navigation {
     // Returns true if successful.
     static bool sampleRandomTrajectory(AActor* agent_actor, TArray<FNavPathPoint> &path_points);
 
+    // Returns a first order approximation of the trajectory length.
+    static float computeTrajectoryLength(AActor* agent_actor, const TArray<FNavPathPoint> &path_points);
+
     // Rebuild the navigation mesh with, with the properties stored in the .yaml parameter files
     static bool rebuildNavmesh(AActor* agent_actor);
 

@@ -94,9 +94,6 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         post_process_settings.MotionBlurMax = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_MAX"});       // Max distortion caused by motion blur, in percent of the screen width, 0:off
         scene_capture_component_->PostProcessSettings = post_process_settings;
         scene_capture_component_->PostProcessBlendWeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "POST_PROC_BLEND_WEIGHT"}); // Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
-    
-        // Navigation system: 
-        agent_navigation_ = new Navigation(agent_actor_);
     }
 }
 
@@ -124,9 +121,6 @@ OpenBotAgentController::~OpenBotAgentController()
 
     ASSERT(goal_actor_);
     goal_actor_ = nullptr;
-
-    ASSERT(agent_navigation_);
-    agent_navigation_ = nullptr;
 }
 
 std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
@@ -312,7 +306,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         FVector forward_axis = FVector(1.f, 0.f, 0.f); // Front axis is the X axis.
         FVector forward_axis_rotated = agent_current_orientation.RotateVector(forward_axis);
 
-        FVector2D currentPathPoint = agent_navigation_->getCurrentPathPoint();
+        // TODO
+        FVector2D currentPathPoint; // = agent_navigation_->getCurrentPathPoint();
         FVector2D relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
 
         // Compute yaw in [rad]:
@@ -337,9 +332,12 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
 
-        FVector2D updatedPathPoint = agent_navigation_->update();
-        FVector goalPathPoint = agent_navigation_->getGoal();
-        float trajLenth = agent_navigation_->getTrajectoryLength();
+        // TODO
+        FVector2D updatedPathPoint; // = agent_navigation_->update();
+        // TODO
+        FVector goalPathPoint; //  = agent_navigation_->getGoal();
+        // TODO
+        float trajLenth; // = agent_navigation_->getTrajectoryLength();
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
 
         if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "waypoint") {

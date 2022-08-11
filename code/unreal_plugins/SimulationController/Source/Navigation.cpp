@@ -27,7 +27,7 @@ FVector Navigation::generateRandomReachableTargetPoint(AActor* agent_actor)
     // Finds a random target point, reachable by the agent from initial_point
     FNavLocation target_location;
     ASSERT(nav_sys->GetRandomReachablePointInRadius(agent_actor->GetActorLocation(), Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));
-    
+
     return target_location.Location;
 }
 
@@ -40,12 +40,11 @@ FVector Navigation::generateRandomReachableTargetPoint(AActor* agent_actor, floa
     // Finds a random target point, reachable by the agent from initial_point
     FNavLocation target_location;
     ASSERT(nav_sys->GetRandomReachablePointInRadius(agent_actor->GetActorLocation(), radius, target_location));
-    
+
     return target_location.Location;
 }
 
-
-bool Navigation::generateTrajectoryToTarget(AActor* agent_actor, const FVector &initial_point, const FVector &target_point, TArray<FNavPathPoint> &path_points)
+bool Navigation::generateTrajectoryToTarget(AActor* agent_actor, const FVector& initial_point, const FVector& target_point, TArray<FNavPathPoint>& path_points)
 {
     bool status = false;
     int number_of_way_points = 0;
@@ -118,7 +117,7 @@ bool Navigation::generateTrajectoryToTarget(AActor* agent_actor, const FVector &
     return status;
 }
 
-bool Navigation::generateTrajectoryToRandomTarget(AActor* agent_actor, const FVector &initial_point, TArray<FNavPathPoint> &path_points)
+bool Navigation::generateTrajectoryToRandomTarget(AActor* agent_actor, const FVector& initial_point, TArray<FNavPathPoint>& path_points)
 {
     bool status = false;
     int number_of_way_points = 0;
@@ -143,8 +142,8 @@ bool Navigation::generateTrajectoryToRandomTarget(AActor* agent_actor, const FVe
     ASSERT(nav_sys->GetRandomReachablePointInRadius(initial_point, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));
 
     // Update relative position between the agent and its new target:
-    relative_position_to_target.X = (target_location.Location- initial_point).X;
-    relative_position_to_target.Y = (target_location.Location- initial_point).Y;
+    relative_position_to_target.X = (target_location.Location - initial_point).X;
+    relative_position_to_target.Y = (target_location.Location - initial_point).Y;
 
     // Update navigation query with the new target:
     nav_query = FPathFindingQuery(agent_actor, *nav_data, initial_point, target_location.Location);
@@ -194,7 +193,7 @@ bool Navigation::generateTrajectoryToRandomTarget(AActor* agent_actor, const FVe
     return status;
 }
 
-bool Navigation::generateRandomTrajectory(AActor* agent_actor, TArray<FNavPathPoint> &path_points)
+bool Navigation::generateRandomTrajectory(AActor* agent_actor, TArray<FNavPathPoint>& path_points)
 {
     bool status = false;
     int number_of_way_points = 0;
@@ -274,7 +273,7 @@ bool Navigation::generateRandomTrajectory(AActor* agent_actor, TArray<FNavPathPo
     return status;
 }
 
-bool Navigation::sampleTrajectoryToRandomTarget(AActor* agent_actor, const FVector &initial_point, TArray<FNavPathPoint> &path_points)
+bool Navigation::sampleTrajectoryToRandomTarget(AActor* agent_actor, const FVector& initial_point, TArray<FNavPathPoint>& path_points)
 {
     bool status = false;
     int number_iterations = 0;
@@ -341,7 +340,7 @@ bool Navigation::sampleTrajectoryToRandomTarget(AActor* agent_actor, const FVect
                 for (size_t i = 0; i < number_of_way_points - 1; i++) {
                     trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
                 }
-                std::cout << "Path length " << trajectory_length/agent_actor->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+                std::cout << "Path length " << trajectory_length / agent_actor->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
             }
             number_iterations++;
             status = true;
@@ -365,7 +364,7 @@ bool Navigation::sampleTrajectoryToRandomTarget(AActor* agent_actor, const FVect
     return status;
 }
 
-bool Navigation::sampleRandomTrajectory(AActor* agent_actor, TArray<FNavPathPoint> &path_points)
+bool Navigation::sampleRandomTrajectory(AActor* agent_actor, TArray<FNavPathPoint>& path_points)
 {
     bool status = false;
     int number_iterations = 0;
@@ -438,7 +437,7 @@ bool Navigation::sampleRandomTrajectory(AActor* agent_actor, TArray<FNavPathPoin
                 for (size_t i = 0; i < number_of_way_points - 1; i++) {
                     trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
                 }
-                std::cout << "Path length " << trajectory_length/agent_actor->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+                std::cout << "Path length " << trajectory_length / agent_actor->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
             }
             number_iterations++;
             status = true;
@@ -490,7 +489,7 @@ bool Navigation::rebuildNavmesh(AActor* agent_actor)
     nav_mesh->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
 
     // Bounding box around the appartment (in the world coordinate system)
-    FBox environment_bounds = getWorldBoundingBox(); 
+    FBox environment_bounds = getWorldBoundingBox();
 
     // Dynamic update navMesh location and size:
     ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
@@ -499,15 +498,15 @@ bool Navigation::rebuildNavmesh(AActor* agent_actor)
     }
     ASSERT(nav_meshbounds_volume != nullptr);
 
-    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable); // Hack
-    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false); // Place the navmesh at the center of the map
+    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);  // Hack
+    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);       // Place the navmesh at the center of the map
     nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
     nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys->OnNavigationBoundsUpdated(nav_meshbounds_volume);
     nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
-    
+
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
-    
+
     return true;
 }
 
@@ -534,4 +533,19 @@ FBox Navigation::getWorldBoundingBox(AActor* agent_actor, bool scale_ceiling)
     }
     // Remove ceiling
     return !scale_ceiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
+}
+
+float Navigation::computeTrajectoryLength(AActor* agent_actor, const TArray<FNavPathPoint>& path_points)
+{
+    ASSERT(path_points.Num() > 1);
+    
+    float trajectory_length = 0.0;
+    for (size_t i = 0; i < number_of_way_points - 1; i++) {
+        trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
+    }
+
+    // Scaling to meters
+    trajectory_length /= agent_actor->GetWorld()->GetWorldSettings()->WorldToMeters;
+
+    return trajectory_length;
 }
