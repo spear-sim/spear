@@ -51,23 +51,12 @@ struct Navigation {
     // Returns true if successful.
     static bool sampleRandomTrajectory(AActor* agent_actor, TArray<FNavPathPoint> &path_points);
 
-
-
-
-
-
-    // Reset the navigation object. This allows regenerating a navmesh and changing its properties.
-    static void reset();
-
-    // Returns the updated waypoint based on the agent location
-    static FVector2D update();
-
     // Rebuild the navigation mesh with, with the properties stored in the .yaml parameter files
-    static bool rebuildNavmesh(UNavigationSystemV1* nav_sys, ARecastNavMesh* nav_mesh);
+    static bool rebuildNavmesh(AActor* agent_actor);
 
     // Get the World bounding box dimensions
-    static FBox getWorldBoundingBox(bool scale_ceiling = true);
+    static FBox getWorldBoundingBox(AActor* agent_actor, bool scale_ceiling = true);
 
     // Ensure the agent spawns on the ground surface
-    static void traceGround(FVector& spawn_position, FRotator& spawn_rotator, const FVector& box_half_size);
+    static void traceGround(AActor* agent_actor, FVector& spawn_position, FRotator& spawn_rotator, const FVector& box_half_size);
 };

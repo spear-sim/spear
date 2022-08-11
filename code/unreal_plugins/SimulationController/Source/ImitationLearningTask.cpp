@@ -110,13 +110,6 @@ void ImitationLearningTask::beginFrame()
 
 void ImitationLearningTask::endFrame()
 {
-    APawn* vehicle_pawn = dynamic_cast<APawn*>(agent_actor_);
-    ASSERT(vehicle_pawn);
-
-    // TODO: unclean...
-    if (goalReached()) {
-        hit_goal_ = true;
-    }
 }
 
 float ImitationLearningTask::getReward() const
@@ -187,10 +180,10 @@ void ImitationLearningTask::reset()
     }
     else {
         // Predefined initial position:
-        agent_actor_->SetActorLocation(agent_position);
+        agent_actor_->SetActorLocation(agent_initial_position_);
 
         // Trajectory planning:
-        generateTrajectoryToTarget(goal_position);
+        generateTrajectoryToTarget(agent_goal_position_);
     }
 
     agent_actor_->SetActorLocation(agent_initial_position);
