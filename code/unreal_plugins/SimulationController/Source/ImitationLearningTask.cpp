@@ -176,14 +176,14 @@ void ImitationLearningTask::reset()
         agent_initial_position = agent_location.Location;
 
         // Trajectory planning:
-        generateTrajectoryToRandomTarget();
+        sampleTrajectoryToRandomTarget();
     }
     else {
         // Predefined initial position:
         agent_actor_->SetActorLocation(agent_initial_position_);
 
         // Trajectory planning:
-        generateTrajectoryToTarget(agent_goal_position_);
+        generateTrajectoryToTarget();
     }
 
     agent_actor_->SetActorLocation(agent_initial_position);

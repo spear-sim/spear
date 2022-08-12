@@ -71,8 +71,6 @@ private:
     // Returns true if successful.
     bool sampleRandomTrajectory();
 
-    
-
     mutable bool hit_goal_ = false;
     bool hit_obstacle_ = false;
 
