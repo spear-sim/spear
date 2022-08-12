@@ -34,6 +34,9 @@ public:
 
 private:
 
+    // Rebuild the navigation mesh of the agent
+    void rebuildNavMesh();
+
     // Get an initial position for the agent from a parameter file 
     void updateInitialPositionFromParameterFile();
 
@@ -43,6 +46,9 @@ private:
     // Generate a collision-free trajectory between an initial and a target location.
     // Returns true if successful.
     bool generateTrajectoryToTarget();
+
+    // Get the World bounding box dimensions
+    FBox getWorldBoundingBox(bool scale_ceiling = true);
 
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
@@ -63,5 +69,5 @@ private:
     float world_to_meters_;             // Scaling factor of the environment
     bool initial_point_generated_ = false; 
     bool target_point_generated_ = false; 
-    unsigned int index_path_point_ = 0;
+    unsigned int index_path_point_ = 1; // Because index 0 is the initial position of the agent...
 };

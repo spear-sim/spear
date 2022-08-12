@@ -253,6 +253,7 @@ if __name__ == "__main__":
                 goalReachedFlag = False
                 array_obs = np.empty([numIter, 11])
                 executedIterations = 0
+                index_waypoint = 1
 
                 folderName = f"dataset/uploaded/run_{mapName}_{run}"
                 dataFolderName = folderName+"/data/"
@@ -300,10 +301,10 @@ if __name__ == "__main__":
                     linVelNorm = np.linalg.norm(dXY/dt)
                     yawVel = dYaw/dt
 
-                    action, targetLocationReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
+                    action, waypointReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
 
                     # Send action to the agent and collect observations:
-                    obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1]]})
+                    obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1], index_waypoint]})
 
                     # Fill an array with the different observations:
                     array_obs[i][0] = speedMultiplier*obs["physical_observation"][0] # ctrl left
@@ -318,7 +319,7 @@ if __name__ == "__main__":
                     array_obs[i][9] = obs["physical_observation"][9] # desired (waypoint) agent pos Y wrt. world
                     array_obs[i][10] = ts # time stamp
                     
-                    if array_obs[i][4] < 0: # For now we don't simuate underground ! 
+                    if array_obs[i][4] < 0: # For now we don't consider underground operation ! 
                         collisionFlag = True
                         break
                     
@@ -328,6 +329,15 @@ if __name__ == "__main__":
                     # Save the images:
                     im = Image.fromarray(obs["visual_observation"])
                     im.save(dataFolderName+"images/%d.jpeg" % i)
+
+                    if waypointReached:
+                        if index_waypoint < obs["physical_observation"][11] - 1: # if the waypoint is not the goal
+                            print(f"Waypoint {index_waypoint} over {obs["physical_observation"][11] - 1} reached !")
+                            index_waypoint = index_waypoint + 1
+                        else: # Goal reached !
+                            print("Goal reached !")
+                            goalReachedFlag = True
+                            break
 
                     # Interrupt the step loop if the done flag is raised:
                     if done:

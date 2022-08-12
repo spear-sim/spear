@@ -95,6 +95,27 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         scene_capture_component_->PostProcessSettings = post_process_settings;
         scene_capture_component_->PostProcessBlendWeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "POST_PROC_BLEND_WEIGHT"}); // Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
     }
+
+    // Agent Navigation:
+    // Get a pointer to the navigation system
+    nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
+    ASSERT(nav_sys_ != nullptr);
+
+    // Get a pointer to the agent's navigation data
+    const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(agent_actor_);
+    ASSERT(actor_as_nav_agent != nullptr);
+    nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
+    ASSERT(nav_data_ != nullptr);
+
+    // Get a pointer to the navigation mesh
+    nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
+    ASSERT(nav_mesh_ != nullptr);
+
+    // Environment scaling factor
+    world_to_meters_ = agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
+
+    // Rebuild navigation mesh with the desired properties before executing trajectory planning
+    rebuildNavMesh();
 }
 
 OpenBotAgentController::~OpenBotAgentController()
@@ -191,7 +212,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
             box.shape = {5};
         }
         else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
-            box.shape = {11};
+            box.shape = {12};
         }
         else {
             ASSERT(false);
@@ -216,6 +237,9 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
         // @TODO: This can be checked in python?
         ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
         ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
+        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "waypoint") {
+            index_path_point_ = action.at("apply_voltage").at(2); 
+        }
 
         vehicle_pawn->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
     }
@@ -307,7 +331,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         FVector forward_axis_rotated = agent_current_orientation.RotateVector(forward_axis);
 
         // TODO
-        FVector2D currentPathPoint; // = agent_navigation_->getCurrentPathPoint();
+        FVector currentPathPoint = path_points_[index_path_point_].Location;
         FVector2D relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
 
         // Compute yaw in [rad]:
@@ -337,10 +361,10 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
 
         if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "waypoint") {
-            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), updatedPathPoint.X, updatedPathPoint.Y, trajectory_length_});
+            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), updatedPathPoint.X, updatedPathPoint.Y, trajectory_length_, (float)path_points_.Num()});
         }
         else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "goal") {
-            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), goalPathPoint.X, goalPathPoint.Y, trajectory_length_});
+            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), goalPathPoint.X, goalPathPoint.Y, trajectory_length_, (float)path_points_.Num()});
         }
         else {
             ASSERT(false);
@@ -392,6 +416,42 @@ bool OpenBotAgentController::isReady() const
     std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
 
     return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
+}
+
+void OpenBotAgentController::rebuildNavMesh()
+{
+    ASSERT(nav_sys_ != nullptr);
+    ASSERT(nav_mesh_ != nullptr);
+
+    // Set the navigation mesh properties:
+    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_RADIUS"});
+    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_HEIGHT"});
+    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_SIZE"});
+    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_HEIGHT"});
+    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_SLOPE"});
+    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MERGE_REGION_SIZE"});
+    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
+    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
+
+    // Bounding box around the appartment (in the world coordinate system)
+    FBox environment_bounds = getWorldBoundingBox();
+
+    // Dynamic update navMesh location and size:
+    ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
+    for (TActorIterator<ANavMeshBoundsVolume> it(agent_actor_->GetWorld()); it; ++it) {
+        nav_meshbounds_volume = *it;
+    }
+    ASSERT(nav_meshbounds_volume != nullptr);
+
+    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);  // Hack
+    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);       // Place the navmesh at the center of the map
+    nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
+    nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
+    nav_sys_->OnNavigationBoundsUpdated(nav_meshbounds_volume);
+    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
+
+    nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 }
 
 void OpenBotAgentController::updateInitialPositionFromParameterFile()
@@ -473,4 +533,16 @@ bool OpenBotAgentController::generateTrajectoryToTarget()
     std::cout << "-----------------------------------------------------------" << std::endl;
 
     return status;
+}
+
+FBox OpenBotAgentController::getWorldBoundingBox(bool scale_ceiling)
+{
+    FBox box(ForceInit);
+    for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
+        if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
+            box += it->GetComponentsBoundingBox(false, true);
+        }
+    }
+    // Remove ceiling
+    return !scale_ceiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
 }

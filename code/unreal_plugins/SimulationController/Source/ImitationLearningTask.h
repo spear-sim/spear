@@ -35,6 +35,9 @@ public:
 
 private:
 
+    // Rebuild the navigation mesh of the agent
+    void rebuildNavMesh();
+
     // Get an initial position for the agent from a parameter file 
     void updateInitialPositionFromParameterFile();
 
@@ -70,6 +73,9 @@ private:
     // Only the best pair is kept.
     // Returns true if successful.
     bool sampleRandomTrajectory();
+
+    // Get the World bounding box dimensions
+    FBox getWorldBoundingBox(bool scale_ceiling = true);
 
     mutable bool hit_goal_ = false;
     bool hit_obstacle_ = false;

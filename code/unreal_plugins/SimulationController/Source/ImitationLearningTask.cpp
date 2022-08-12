@@ -75,6 +75,9 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
 
     // Environment scaling factor
     world_to_meters_ = agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
+
+    // Rebuild navigation mesh with the desired properties before executing trajectory planning
+    rebuildNavMesh();
 }
 
 ImitationLearningTask::~ImitationLearningTask()
@@ -180,7 +183,12 @@ void ImitationLearningTask::reset()
     }
     else {
         // Predefined initial position:
+        updateInitialPositionFromParameterFile();
         agent_actor_->SetActorLocation(agent_initial_position_);
+
+        // Predefined goal position:
+        updateTargetPositionFromParameterFile();
+        goal_actor_->SetActorLocation(agent_goal_position_);
 
         // Trajectory planning:
         generateTrajectoryToTarget();
@@ -205,6 +213,42 @@ void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* oth
     else if (std::find(obstacle_ignore_actors_.begin(), obstacle_ignore_actors_.end(), other_actor) == obstacle_ignore_actors_.end()) {
         hit_obstacle_ = true;
     }
+}
+
+void ImitationLearningTask::rebuildNavMesh()
+{
+    ASSERT(nav_sys_ != nullptr);
+    ASSERT(nav_mesh_ != nullptr);
+
+    // Set the navigation mesh properties:
+    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_RADIUS"});
+    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_HEIGHT"});
+    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_SIZE"});
+    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_HEIGHT"});
+    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_SLOPE"});
+    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MERGE_REGION_SIZE"});
+    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
+    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
+
+    // Bounding box around the appartment (in the world coordinate system)
+    FBox environment_bounds = getWorldBoundingBox();
+
+    // Dynamic update navMesh location and size:
+    ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
+    for (TActorIterator<ANavMeshBoundsVolume> it(agent_actor_->GetWorld()); it; ++it) {
+        nav_meshbounds_volume = *it;
+    }
+    ASSERT(nav_meshbounds_volume != nullptr);
+
+    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);  // Hack
+    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);       // Place the navmesh at the center of the map
+    nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
+    nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
+    nav_sys_->OnNavigationBoundsUpdated(nav_meshbounds_volume);
+    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
+
+    nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 }
 
 void ImitationLearningTask::updateInitialPositionFromParameterFile()
@@ -642,4 +686,16 @@ bool ImitationLearningTask::sampleRandomTrajectory()
     std::cout << "-----------------------------------------------------------" << std::endl;
 
     return status;
+}
+
+FBox ImitationLearningTask::getWorldBoundingBox(bool scale_ceiling)
+{
+    FBox box(ForceInit);
+    for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
+        if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
+            box += it->GetComponentsBoundingBox(false, true);
+        }
+    }
+    // Remove ceiling
+    return !scale_ceiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
 }
