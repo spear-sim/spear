@@ -11,10 +11,11 @@ We have implemented these guidelines recently, and there is a significant amount
 - Be as consistent as possible with everything (e.g., data flow, interface design, naming conventions, documentation, etc)
 - Avoid trivial pass-through layers
 - Avoid excessive folder hierarchy
-- System behavior should be as symmetric as possible (e.g., if there is an `Initialize()` method, there should also be a `Terminate()` method that returns the system into the state it was in before being initialized)
+- System behavior should be as symmetric as possible (e.g., if there is an `initialize()` method, there should also be a `terminate()` method that returns the system into the state it was in before being initialized)
 - System behavior should be as stateless as possible
 - Interfaces should be as narrow as possible
 - Classes, functions, and variables should be as private and as local as possible
+- If system behavior only needs to be set once during startup, then use our config system rather than creating `get()`/`set()` methods throughout the code
 - Integrate code into the `main` branch as frequently as possible (e.g., in one-week intervals or less)
 - Clean and re-factor as you go
 
@@ -166,4 +167,34 @@ i += 1;
 #include <UnrealEngine/UnrealHeader.hpp>
 
 #include "MyHeader.h"
+```
+
+**Prefer `std` types (e.g., `std::string`, `std::vector`) over Unreal types (e.g., `FString`, `TArray`).** It is ok to use Unreal types, but there should be a good reason for doing so (e.g., you need to interact with an Unreal function). Using `std` types make it easier for new developers to understand the code and to contribute.
+
+```cpp
+// bad
+FString my_string = "My String";
+
+// good
+std::string = "My string";
+```
+
+**Prefer `std::unique_ptr` over a raw pointer, when an object owns a pointer to another object.** It is easy to accidentally forget to delete raw pointers.
+
+```cpp
+// bad
+Object* my_object = new Object(123.0f);
+
+// good
+std::unique_ptr<Object> my_object = std::make_unique<Object>(123.0f);
+```
+
+**Always use `at()` to get an existing item from an `std::map`.** Using `[]` to get an existing item will silently create a default item if it doesn't already exist, which is not desirable behavior. For consistency, always use `[]` to insert a new item.
+
+```cpp
+// bad
+int index = names_to_indices["name"];
+
+// good
+int index = names_to_indices.at("name");
 ```
