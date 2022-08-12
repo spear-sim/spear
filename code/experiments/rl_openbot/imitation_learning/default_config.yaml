@@ -59,12 +59,11 @@ SIMULATION_CONTROLLER:
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
   
   NAVIGATION:
-    TARGET_RADIUS: 500
-    # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+    TARGET_RADIUS: 10000 # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
     ACCEPTANCE_RADIUS: 0.15
     PATH_WEIGHT_DIST: 1.0
-    PATH_WEIGHT_NUM_WAYPOINTS: 0.0
-    MAX_ITER_REPLAN: 500
+    PATH_WEIGHT_NUM_WAYPOINTS: 1.0
+    MAX_ITER_REPLAN: 10000
     AGENT_POSITION_Z_MIN: 0.5
     AGENT_POSITION_Z_MAX: 20.0
     NAVMESH:

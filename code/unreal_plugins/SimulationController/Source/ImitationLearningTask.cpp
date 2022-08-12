@@ -59,27 +59,25 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
     // Agent Navigation:
-    std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
     // Get a pointer to the navigation system
     nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
     ASSERT(nav_sys_ != nullptr);
-std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+
     // Get a pointer to the agent's navigation data
     const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(agent_actor_);
     ASSERT(actor_as_nav_agent != nullptr);
     nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
     ASSERT(nav_data_ != nullptr);
-std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+
     // Get a pointer to the navigation mesh
     nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
     ASSERT(nav_mesh_ != nullptr);
-std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+
     // Environment scaling factor
     world_to_meters_ = agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
-std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+
     // Rebuild navigation mesh with the desired properties before executing trajectory planning
     rebuildNavMesh();
-    std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
 }
 
 ImitationLearningTask::~ImitationLearningTask()
@@ -171,38 +169,33 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
-    std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
-    FVector agent_initial_position(0), agent_goal_position(0);
-    std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+    ASSERT(nav_sys_ != nullptr);
+    ASSERT(nav_data_ != nullptr);
+    std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
-std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
-        // Random initial position:
-        FNavLocation agent_location;
-        ASSERT(nav_sys_->GetRandomPoint(agent_location, nav_data_) == true);
-        agent_initial_position = agent_location.Location;
-std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+        std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
         // Trajectory planning:
-        sampleTrajectoryToRandomTarget();
-        std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+        sampleRandomTrajectory();
+        std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
     }
     else {
-        std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+        std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+        ASSERT(false);
         // Predefined initial position:
         updateInitialPositionFromParameterFile();
         agent_actor_->SetActorLocation(agent_initial_position_);
-std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+
         // Predefined goal position:
         updateTargetPositionFromParameterFile();
         goal_actor_->SetActorLocation(agent_goal_position_);
-std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+
         // Trajectory planning:
         generateTrajectoryToTarget();
-        std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+        std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
     }
-std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
-    agent_actor_->SetActorLocation(agent_initial_position);
-    goal_actor_->SetActorLocation(agent_goal_position);
-    std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
+    std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    agent_actor_->SetActorLocation(agent_initial_position_);
+    goal_actor_->SetActorLocation(agent_goal_position_);
 }
 
 bool ImitationLearningTask::isReady() const
@@ -248,9 +241,11 @@ void ImitationLearningTask::rebuildNavMesh()
     }
     ASSERT(nav_meshbounds_volume != nullptr);
 
-    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);  // Hack
-    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);       // Place the navmesh at the center of the map
+    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable); // Hack
+    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);      // Place the navmesh at the center of the map
+    std::cout << "environment_bounds: X: " << environment_bounds.GetCenter().X << ", Y: " << environment_bounds.GetCenter().Y << ", Z: " << environment_bounds.GetCenter().Z << std::endl;
     nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
+    std::cout << "environment_bounds.GetSize(): X: " << environment_bounds.GetSize().X << ", Y: " << environment_bounds.GetSize().Y << ", Z: " << environment_bounds.GetSize().Z << std::endl;
     nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys_->OnNavigationBoundsUpdated(nav_meshbounds_volume);
     nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
@@ -289,7 +284,7 @@ void ImitationLearningTask::generateRandomReachableTargetPoint()
 
     // Finds a random target point, reachable by the agent from agent_initial_position_:
     FNavLocation target_location;
-    ASSERT(nav_sys_->GetRandomReachablePointInRadius(agent_initial_position_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));    
+    ASSERT(nav_sys_->GetRandomReachablePointInRadius(agent_initial_position_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));
     agent_goal_position_ = target_location.Location;
     target_point_generated_ = true;
 }
@@ -532,8 +527,9 @@ bool ImitationLearningTask::sampleTrajectoryToRandomTarget()
     while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
     {
         // Get a random reachable target point, to be reached by the agent from agent_initial_position_:
+        std::cout << "Initial position: X: " << agent_initial_position_.X << ", Y: " << agent_initial_position_.Y << ", Z: " << agent_initial_position_.Z << std::endl;
         ASSERT(nav_sys_->GetRandomReachablePointInRadius(agent_initial_position_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));
-
+        std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
         // Update relative position between the agent and its new target:
         relative_position_to_target.X = (target_location.Location - agent_initial_position_).X;
         relative_position_to_target.Y = (target_location.Location - agent_initial_position_).Y;
@@ -570,12 +566,18 @@ bool ImitationLearningTask::sampleTrajectoryToRandomTarget()
                 for (size_t i = 0; i < number_of_way_points - 1; i++) {
                     trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
                 }
-                std::cout << "Path length " << trajectory_length_/world_to_meters_ << "m" << std::endl;
+                std::cout << "Path length " << trajectory_length_ / world_to_meters_ << "m" << std::endl;
             }
             number_iterations++;
+
+            if (number_iterations % 1000 == 0) {
+                std::cout << ".";
+            }
+
             status = true;
         }
     }
+    std::cout << "" << std::endl;
 
     ASSERT(path_points_.Num() > 1);
 
@@ -617,6 +619,8 @@ bool ImitationLearningTask::sampleRandomTrajectory()
     // Sanity checks
     ASSERT(nav_data_ != nullptr);
     ASSERT(nav_sys_ != nullptr);
+
+    std::cout << "MAX_ITER_REPLAN: " << Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"}) << std::endl;
 
     // Path generation polling to get "interesting" paths in every experiment:
     while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
@@ -664,12 +668,17 @@ bool ImitationLearningTask::sampleRandomTrajectory()
                 for (size_t i = 0; i < number_of_way_points - 1; i++) {
                     trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
                 }
-                std::cout << "Path length " << trajectory_length_/world_to_meters_ << "m" << std::endl;
+                std::cout << "Path length " << trajectory_length_ / world_to_meters_ << "m" << std::endl;
             }
             number_iterations++;
+            if (number_iterations % 1000 == 0) {
+                std::cout << ".";
+            }
+
             status = true;
         }
     }
+    std::cout << "" << std::endl;
 
     ASSERT(path_points_.Num() > 1);
 
