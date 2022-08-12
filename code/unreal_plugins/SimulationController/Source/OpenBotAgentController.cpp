@@ -98,24 +98,26 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
 
     // Agent Navigation:
     // Get a pointer to the navigation system
+    std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
     nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
     ASSERT(nav_sys_ != nullptr);
-
+std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
     // Get a pointer to the agent's navigation data
     const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(agent_actor_);
     ASSERT(actor_as_nav_agent != nullptr);
     nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
     ASSERT(nav_data_ != nullptr);
-
+std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
     // Get a pointer to the navigation mesh
     nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
     ASSERT(nav_mesh_ != nullptr);
-
+std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
     // Environment scaling factor
     world_to_meters_ = agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
-
+std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
     // Rebuild navigation mesh with the desired properties before executing trajectory planning
     rebuildNavMesh();
+    std::cout << "############################### " << __FILE__ << ", Line: " << __LINE__ << " ###############################" << std::endl;
 }
 
 OpenBotAgentController::~OpenBotAgentController()

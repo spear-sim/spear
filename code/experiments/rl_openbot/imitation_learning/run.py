@@ -270,6 +270,8 @@ if __name__ == "__main__":
                 actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y], for velocity initialization
                 desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
 
+                numWaypoints = obs["physical_observation"][11] - 1
+
                 # Take a few steps:
                 for i in range(numIter):
 
@@ -332,7 +334,7 @@ if __name__ == "__main__":
 
                     if waypointReached:
                         if index_waypoint < obs["physical_observation"][11] - 1: # if the waypoint is not the goal
-                            print(f"Waypoint {index_waypoint} over {obs["physical_observation"][11] - 1} reached !")
+                            print(f"Waypoint {index_waypoint} over {numWaypoints} reached !")
                             index_waypoint = index_waypoint + 1
                         else: # Goal reached !
                             print("Goal reached !")
