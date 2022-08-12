@@ -397,3 +397,440 @@ bool OpenBotAgentController::isReady() const
 
     return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
 }
+
+void OpenBotAgentController::updateInitialPositionFromParameterFile()
+{
+    // TODO: import from csv
+    initial_point_generated_ = true;
+}
+
+void OpenBotAgentController::updateTargetPositionFromParameterFile()
+{
+    // TODO: import from csv
+    target_point_generated_ = true;
+}
+
+FVector OpenBotAgentController::generateRandomNavigablePoint()
+{
+    // Sanity checks
+    ASSERT(nav_data_ != nullptr);
+    ASSERT(nav_sys_ != nullptr);
+
+    // Generate a random point in navigable space
+    FNavLocation result_location;
+    ASSERT(nav_sys_->GetRandomPoint(result_location, nav_data_) == true);
+    return result_location.Location;
+}
+
+void OpenBotAgentController::generateRandomReachableTargetPoint()
+{
+    // Sanity check
+    ASSERT(nav_sys_ != nullptr);
+
+    // Finds a random target point, reachable by the agent from agent_initial_position_:
+    FNavLocation target_location;
+    ASSERT(nav_sys_->GetRandomReachablePointInRadius(agent_initial_position_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));    
+    agent_goal_position_ = target_location.Location;
+    target_point_generated_ = true;
+}
+
+bool OpenBotAgentController::generateTrajectoryToTarget()
+{
+    bool status = false;
+    int number_of_way_points = 0;
+    FNavLocation target_location;
+    FVector2D relative_position_to_target(0.0f, 0.0f);
+    FPathFindingQuery nav_query;
+    FPathFindingResult collision_free_path;
+    path_points_.Empty();
+
+    // Sanity checks
+    ASSERT(nav_data_ != nullptr);
+    ASSERT(nav_sys_ != nullptr);
+    ASSERT(initial_point_generated_ and target_point_generated_);
+
+    // Update relative position between the agent and its new target:
+    relative_position_to_target.X = (agent_goal_position_ - agent_initial_position_).X;
+    relative_position_to_target.Y = (agent_goal_position_ - agent_initial_position_).Y;
+
+    // Update navigation query with the new target:
+    nav_query = FPathFindingQuery(agent_actor_, *nav_data_, agent_initial_position_, agent_goal_position_);
+
+    // Genrate a collision-free path between the robot position and the target point:
+    collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+
+    // If path generation is sucessful, analyze the obtained path (it should not be too simple):
+    if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
+
+        if (collision_free_path.IsPartial()) {
+            std::cout << "Only a partial path could be found by the planner..." << std::endl;
+        }
+
+        number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
+
+        path_points_ = collision_free_path.Path->GetPathPoints();
+
+        std::cout << "Number of way points: " << number_of_way_points << std::endl;
+        std::cout << "Target distance: " << relative_position_to_target.Size() / world_to_meters_ << "m" << std::endl;
+
+        trajectory_length_ = 0.0;
+        for (size_t i = 0; i < number_of_way_points - 1; i++) {
+            trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
+        }
+
+        // Scaling to meters
+        trajectory_length_ /= world_to_meters_;
+
+        // Update status
+        status = true;
+
+        std::cout << "Path length " << trajectory_length_ << "m" << std::endl;
+    }
+
+    ASSERT(path_points_.Num() > 1);
+
+    std::cout << "Initial position: [" << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << "]." << std::endl;
+    std::cout << "Reachable position: [" << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << "]." << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "Way points: " << std::endl;
+    for (auto wayPoint : path_points_) {
+        std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
+    }
+    std::cout << "-----------------------------------------------------------" << std::endl;
+
+    return status;
+}
+
+bool OpenBotAgentController::generateTrajectoryToRandomTarget()
+{
+    bool status = false;
+    int number_of_way_points = 0;
+    FNavLocation target_location;
+    FVector2D relative_position_to_target(0.0f, 0.0f);
+    FPathFindingQuery nav_query;
+    FPathFindingResult collision_free_path;
+    path_points_.Empty();
+
+    // Sanity checks
+    ASSERT(nav_data_ != nullptr);
+    ASSERT(nav_sys_ != nullptr);
+
+    // Get a random reachable target point, to be reached by the agent from agent_initial_position_:
+    ASSERT(initial_point_generated_);
+    ASSERT(nav_sys_->GetRandomReachablePointInRadius(agent_initial_position_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));
+    agent_goal_position_ = target_location.Location;
+    target_point_generated_ = true;
+
+    // Update relative position between the agent and its new target:
+    relative_position_to_target.X = (agent_goal_position_ - agent_initial_position_).X;
+    relative_position_to_target.Y = (agent_goal_position_ - agent_initial_position_).Y;
+
+    // Update navigation query with the new target:
+    nav_query = FPathFindingQuery(agent_actor_, *nav_data_, agent_initial_position_, agent_goal_position_);
+
+    // Genrate a collision-free path between the robot position and the target point:
+    collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+
+    // If path generation is sucessful, analyze the obtained path (it should not be too simple):
+    if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
+
+        if (collision_free_path.IsPartial()) {
+            std::cout << "Only a partial path could be found by the planner..." << std::endl;
+        }
+
+        number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
+
+        path_points_ = collision_free_path.Path->GetPathPoints();
+
+        std::cout << "Number of way points: " << number_of_way_points << std::endl;
+        std::cout << "Target distance: " << relative_position_to_target.Size() / world_to_meters_ << "m" << std::endl;
+
+        trajectory_length_ = 0.0;
+        for (size_t i = 0; i < number_of_way_points - 1; i++) {
+            trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
+        }
+
+        // Scaling to meters
+        trajectory_length_ /= world_to_meters_;
+
+        // Update status
+        status = true;
+
+        std::cout << "Path length " << trajectory_length_ << "m" << std::endl;
+    }
+
+    ASSERT(path_points_.Num() > 1);
+
+    std::cout << "Initial position: [" << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << "]." << std::endl;
+    std::cout << "Reachable position: [" << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << "]." << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "Way points: " << std::endl;
+    for (auto wayPoint : path_points_) {
+        std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
+    }
+    std::cout << "-----------------------------------------------------------" << std::endl;
+
+    return status;
+}
+
+bool OpenBotAgentController::generateRandomTrajectory()
+{
+    bool status = false;
+    int number_of_way_points = 0;
+    FNavLocation init_location;
+    FNavLocation target_location;
+    FVector2D relative_position_to_target(0.0f, 0.0f);
+    FPathFindingQuery nav_query;
+    FPathFindingResult collision_free_path;
+    path_points_.Empty();
+
+    // Sanity checks
+    ASSERT(nav_data_ != nullptr);
+    ASSERT(nav_sys_ != nullptr);
+
+    // Get a random initial point:
+    ASSERT(nav_sys_->GetRandomPoint(init_location, nav_data_) == true);
+    agent_initial_position_ = init_location.Location;
+    initial_point_generated_ = true;
+
+    // Get a random reachable target point, to be reached by the agent from agent_initial_position_:
+    ASSERT(nav_sys_->GetRandomReachablePointInRadius(agent_initial_position_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));
+    agent_goal_position_ = target_location.Location;
+    target_point_generated_ = true;
+
+    // Update relative position between the agent and its new target:
+    relative_position_to_target.X = (agent_goal_position_ - agent_initial_position_).X;
+    relative_position_to_target.Y = (agent_goal_position_ - agent_initial_position_).Y;
+
+    // Update navigation query with the new target:
+    nav_query = FPathFindingQuery(agent_actor_, *nav_data_, agent_initial_position_, agent_goal_position_);
+
+    // Genrate a collision-free path between the robot position and the target point:
+    collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+
+    // If path generation is sucessful, analyze the obtained path (it should not be too simple):
+    if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
+
+        if (collision_free_path.IsPartial()) {
+            std::cout << "Only a partial path could be found by the planner..." << std::endl;
+        }
+
+        number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
+
+        path_points_ = collision_free_path.Path->GetPathPoints();
+
+        std::cout << "Number of way points: " << number_of_way_points << std::endl;
+        std::cout << "Target distance: " << relative_position_to_target.Size() / world_to_meters_ << "m" << std::endl;
+
+        trajectory_length_ = 0.0;
+        for (size_t i = 0; i < number_of_way_points - 1; i++) {
+            trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
+        }
+
+        // Scaling to meters
+        trajectory_length_ /= world_to_meters_;
+
+        // Update status
+        status = true;
+
+        std::cout << "Path length " << trajectory_length_ << "m" << std::endl;
+    }
+
+    ASSERT(path_points_.Num() > 1);
+
+    std::cout << "Initial position: [" << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << "]." << std::endl;
+    std::cout << "Reachable position: [" << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << "]." << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "Way points: " << std::endl;
+    for (auto wayPoint : path_points_) {
+        std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
+    }
+    std::cout << "-----------------------------------------------------------" << std::endl;
+
+    return status;
+}
+
+bool OpenBotAgentController::sampleTrajectoryToRandomTarget()
+{
+    bool status = false;
+    int number_iterations = 0;
+    int number_of_way_points = 0;
+    float path_criterion = 0.0f;
+    float best_path_criterion = 0.0f;
+    FNavLocation best_target_location;
+    FNavLocation target_location;
+    FVector2D relative_position_to_target(0.0f, 0.0f);
+    FPathFindingQuery nav_query;
+    FPathFindingResult collision_free_path;
+    path_points_.Empty();
+
+    // Sanity checks
+    ASSERT(nav_data_ != nullptr);
+    ASSERT(nav_sys_ != nullptr);
+
+    // Path generation polling to get "interesting" paths in every experiment:
+    while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
+    {
+        // Get a random reachable target point, to be reached by the agent from agent_initial_position_:
+        ASSERT(nav_sys_->GetRandomReachablePointInRadius(agent_initial_position_, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));
+
+        // Update relative position between the agent and its new target:
+        relative_position_to_target.X = (target_location.Location - agent_initial_position_).X;
+        relative_position_to_target.Y = (target_location.Location - agent_initial_position_).Y;
+
+        // Update navigation query with the new target:
+        nav_query = FPathFindingQuery(agent_actor_, *nav_data_, agent_initial_position_, target_location.Location);
+
+        // Genrate a collision-free path between the robot position and the target point:
+        collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+
+        // If path generation is sucessful, make sure that it is not too simple for better training results:
+        if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
+
+            // Partial paths are supported. In this case, the agent is expected to move as close as possible to its target
+            if (collision_free_path.IsPartial()) {
+                std::cout << "Only a partial path could be found by the planner..." << std::endl;
+            }
+
+            // Compute a path metric to evaluate its complexity and determine if it can be used for training purposes
+            number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
+            path_criterion = relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_DIST"}) + number_of_way_points * relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_NUM_WAYPOINTS"});
+
+            if (best_path_criterion <= path_criterion) {
+                best_path_criterion = path_criterion;
+                best_target_location = target_location;
+                path_points_.Empty();
+                path_points_ = collision_free_path.Path->GetPathPoints();
+                std::cout << "Iteration: " << number_iterations << std::endl;
+                std::cout << "Cost: " << best_path_criterion << std::endl;
+                std::cout << "Number of way points: " << number_of_way_points << std::endl;
+                std::cout << "Target distance: " << relative_position_to_target.Size() / world_to_meters_ << "m" << std::endl;
+
+                trajectory_length_ = 0.0;
+                for (size_t i = 0; i < number_of_way_points - 1; i++) {
+                    trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
+                }
+                std::cout << "Path length " << trajectory_length_/world_to_meters_ << "m" << std::endl;
+            }
+            number_iterations++;
+            status = true;
+        }
+    }
+
+    ASSERT(path_points_.Num() > 1);
+
+    // Update the goal position
+    agent_goal_position_ = best_target_location.Location;
+    target_point_generated_ = true;
+
+    // Scaling to meters
+    trajectory_length_ /= world_to_meters_;
+
+    std::cout << "Initial position: [" << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << "]." << std::endl;
+    std::cout << "Reachable position: [" << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << "]." << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "Way points: " << std::endl;
+    for (auto wayPoint : path_points_) {
+        std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
+    }
+    std::cout << "-----------------------------------------------------------" << std::endl;
+
+    return status;
+}
+
+bool OpenBotAgentController::sampleRandomTrajectory()
+{
+    bool status = false;
+    int number_iterations = 0;
+    int number_of_way_points = 0;
+    float path_criterion = 0.0f;
+    float best_path_criterion = 0.0f;
+    FNavLocation best_target_location;
+    FNavLocation best_init_location;
+    FNavLocation target_location;
+    FNavLocation init_location;
+    FVector2D relative_position_to_target(0.0f, 0.0f);
+    FPathFindingQuery nav_query;
+    FPathFindingResult collision_free_path;
+    path_points_.Empty();
+
+    // Sanity checks
+    ASSERT(nav_data_ != nullptr);
+    ASSERT(nav_sys_ != nullptr);
+
+    // Path generation polling to get "interesting" paths in every experiment:
+    while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
+    {
+        // Get a random initial point:
+        ASSERT(nav_sys_->GetRandomPoint(init_location, nav_data_) == true);
+
+        // Get a random reachable target point, to be reached by the agent from init_location.Location:
+        ASSERT(nav_sys_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));
+
+        // Update relative position between the agent and its new target:
+        relative_position_to_target.X = (target_location.Location - init_location.Location).X;
+        relative_position_to_target.Y = (target_location.Location - init_location.Location).Y;
+
+        // Update navigation query with the new target:
+        nav_query = FPathFindingQuery(agent_actor_, *nav_data_, init_location.Location, target_location.Location);
+
+        // Genrate a collision-free path between the robot position and the target point:
+        collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+
+        // If path generation is sucessful, make sure that it is not too simple for better training results:
+        if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
+
+            // Partial paths are supported. In this case, the agent is expected to move as close as possible to its target
+            if (collision_free_path.IsPartial()) {
+                std::cout << "Only a partial path could be found by the planner..." << std::endl;
+            }
+
+            // Compute a path metric to evaluate its complexity and determine if it can be used for training purposes
+            number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
+            path_criterion = relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_DIST"}) + number_of_way_points * relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_NUM_WAYPOINTS"});
+
+            if (best_path_criterion <= path_criterion) {
+                best_path_criterion = path_criterion;
+                best_target_location = target_location;
+                best_init_location = init_location;
+                path_points_.Empty();
+                path_points_ = collision_free_path.Path->GetPathPoints();
+                std::cout << "Iteration: " << number_iterations << std::endl;
+                std::cout << "Cost: " << best_path_criterion << std::endl;
+                std::cout << "Number of way points: " << number_of_way_points << std::endl;
+                std::cout << "Target distance: " << relative_position_to_target.Size() / world_to_meters_ << "m" << std::endl;
+
+                trajectory_length_ = 0.0;
+                for (size_t i = 0; i < number_of_way_points - 1; i++) {
+                    trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
+                }
+                std::cout << "Path length " << trajectory_length_/world_to_meters_ << "m" << std::endl;
+            }
+            number_iterations++;
+            status = true;
+        }
+    }
+
+    ASSERT(path_points_.Num() > 1);
+
+    // Update the goal position
+    agent_initial_position_ = best_init_location.Location;
+    initial_point_generated_ = true;
+
+    agent_goal_position_ = best_target_location.Location;
+    target_point_generated_ = true;
+
+    // Scaling to meters
+    trajectory_length_ /= world_to_meters_;
+
+    std::cout << "Initial position: [" << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << "]." << std::endl;
+    std::cout << "Reachable position: [" << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << "]." << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "Way points: " << std::endl;
+    for (auto wayPoint : path_points_) {
+        std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
+    }
+    std::cout << "-----------------------------------------------------------" << std::endl;
+
+    return status;
+}
