@@ -4,6 +4,10 @@
 #include <string>
 #include <vector>
 
+#include <NavMesh/NavMeshBoundsVolume.h>
+#include <NavMesh/RecastNavMesh.h>
+#include <NavigationSystem.h>
+
 #include <AgentController.h>
 
 class AActor;

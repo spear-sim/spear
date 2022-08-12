@@ -2,6 +2,9 @@
 
 #include <Engine/EngineTypes.h>
 #include <Math/RandomStream.h>
+#include <NavMesh/NavMeshBoundsVolume.h>
+#include <NavMesh/RecastNavMesh.h>
+#include <NavigationSystem.h>
 
 #include <Task.h>
 
