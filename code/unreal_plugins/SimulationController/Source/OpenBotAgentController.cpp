@@ -32,13 +32,16 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
             ASSERT(agent_actor_);
-        }
-        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}) and not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
+        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}) or actor_name == "Dummy_goal" ){
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
             ASSERT(goal_actor_);
         }
+        std::cout << "actor_name: " << actor_name << std::endl;
     }
+
+    ASSERT(agent_actor_);
+    ASSERT(goal_actor_);
 
     // Setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
@@ -155,11 +158,10 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
         if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "waypoint") {
             box.shape = {3};
         }
-        else
-        {
+        else {
             box.shape = {2};
         }
-        
+
         box.dtype = DataType::Float32;
         action_space["apply_voltage"] = std::move(box);
     }
@@ -245,7 +247,7 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
         ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
         ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
         if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "waypoint") {
-            index_path_point_ = action.at("apply_voltage").at(2); 
+            index_path_point_ = action.at("apply_voltage").at(2);
         }
 
         vehicle_pawn->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
@@ -388,7 +390,7 @@ void OpenBotAgentController::reset()
 {
     ASSERT(agent_actor_);
     ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
-    
+
     ASSERT(vehicle_pawn);
     const FVector agent_location = agent_actor_->GetActorLocation();
     vehicle_pawn->SetActorLocationAndRotation(agent_location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
@@ -414,15 +416,15 @@ void OpenBotAgentController::reset()
     // PVehicleDrive is not intiliazed, and so PVehicleDrive->mDriveDynData.setToRestState() is commented out. We want to know if this changes at some point.
     ASSERT(!vehicle_movement_component->PVehicleDrive);
     // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
     generateTrajectoryToTarget();
-    std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
 }
 
 bool OpenBotAgentController::isReady() const
 {
     ASSERT(agent_actor_);
-    std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
 
     return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
 }
@@ -453,11 +455,11 @@ void OpenBotAgentController::rebuildNavMesh()
     }
     ASSERT(nav_meshbounds_volume != nullptr);
 
-    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);  // Hack
-    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);       // Place the navmesh at the center of the map
-    std::cout << "environment_bounds: X: " <<environment_bounds.GetCenter().X << ", Y: " <<environment_bounds.GetCenter().Y << ", Z: " <<environment_bounds.GetCenter().Z << std::endl;
+    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable); // Hack
+    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);      // Place the navmesh at the center of the map
+    std::cout << "environment_bounds: X: " << environment_bounds.GetCenter().X << ", Y: " << environment_bounds.GetCenter().Y << ", Z: " << environment_bounds.GetCenter().Z << std::endl;
     nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
-    std::cout << "environment_bounds.GetSize(): X: " <<environment_bounds.GetSize().X << ", Y: " <<environment_bounds.GetSize().Y << ", Z: " <<environment_bounds.GetSize().Z << std::endl;
+    std::cout << "environment_bounds.GetSize(): X: " << environment_bounds.GetSize().X << ", Y: " << environment_bounds.GetSize().Y << ", Z: " << environment_bounds.GetSize().Z << std::endl;
     nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys_->OnNavigationBoundsUpdated(nav_meshbounds_volume);
     nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
@@ -486,28 +488,28 @@ bool OpenBotAgentController::generateTrajectoryToTarget()
     FPathFindingQuery nav_query;
     FPathFindingResult collision_free_path;
     path_points_.Empty();
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
     // Sanity checks
     ASSERT(nav_data_ != nullptr);
     ASSERT(nav_sys_ != nullptr);
     ASSERT(agent_actor_);
-    std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
     ASSERT(goal_actor_);
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
     agent_initial_position_ = agent_actor_->GetActorLocation();
-    std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
     agent_goal_position_ = goal_actor_->GetActorLocation();
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
+    std::cout << "agent_initial_position_  " << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << std::endl;
+    std::cout << "agent_goal_position_  " << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << std::endl;
     // Update relative position between the agent and its new target:
     relative_position_to_target.X = (agent_goal_position_ - agent_initial_position_).X;
     relative_position_to_target.Y = (agent_goal_position_ - agent_initial_position_).Y;
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
     // Update navigation query with the new target:
     nav_query = FPathFindingQuery(agent_actor_, *nav_data_, agent_initial_position_, agent_goal_position_);
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
     // Genrate a collision-free path between the robot position and the target point:
     collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
     // If path generation is sucessful, analyze the obtained path (it should not be too simple):
     if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
 
@@ -535,11 +537,11 @@ std::cout << "############################  " << __FILE__ << " --> Line: " << __
 
         std::cout << "Path length " << trajectory_length_ << "m" << std::endl;
     }
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
     ASSERT(path_points_.Num() > 1);
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
-    index_path_point_ = 1; 
-std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
+    index_path_point_ = 1;
+    
     std::cout << "Initial position: [" << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << "]." << std::endl;
     std::cout << "Reachable position: [" << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << "]." << std::endl;
     std::cout << "-----------------------------------------------------------" << std::endl;

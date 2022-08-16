@@ -5,6 +5,7 @@
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
 #include <NavigationSystem.h>
+#include <DefaultGoalActor.h>
 
 #include <Task.h>
 

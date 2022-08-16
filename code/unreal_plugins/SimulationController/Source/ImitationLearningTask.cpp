@@ -27,7 +27,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) and Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
-            ;
             ASSERT(goal_actor_);
         }
         else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
@@ -36,9 +35,14 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         }
     }
 
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) == "") {
+    if (!goal_actor_ and Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) == "") {
         ASSERT(!goal_actor_);
-        goal_actor_ = world->SpawnActor<AActor>();
+        FActorSpawnParameters goal_spawn_params;
+        std::string goal_name = "Dummy_goal";
+        goal_spawn_params.Name = FName(goal_name.c_str());
+        goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+        goal_actor_ = world->SpawnActor<ADefaultGoalActor>(ADefaultGoalActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
+        // alternative: add scene component
         ASSERT(goal_actor_);
     }
 
@@ -171,31 +175,40 @@ void ImitationLearningTask::reset()
 {
     ASSERT(nav_sys_ != nullptr);
     ASSERT(nav_data_ != nullptr);
-    std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
-        std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+        
         // Trajectory planning:
         sampleRandomTrajectory();
-        std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+        
     }
     else {
-        std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+        
         ASSERT(false);
         // Predefined initial position:
         updateInitialPositionFromParameterFile();
-        agent_actor_->SetActorLocation(agent_initial_position_);
 
         // Predefined goal position:
         updateTargetPositionFromParameterFile();
-        goal_actor_->SetActorLocation(agent_goal_position_);
 
         // Trajectory planning:
         generateTrajectoryToTarget();
-        std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+        
     }
-    std::cout << "############################  " << __FILE__ << " --> Line: " << __LINE__ << "  ############################" << std::endl;
+    
     agent_actor_->SetActorLocation(agent_initial_position_);
-    goal_actor_->SetActorLocation(agent_goal_position_);
+
+    FHitResult OutSweepHitResult;
+
+    goal_actor_->SetActorLocation(agent_goal_position_, true, &OutSweepHitResult);
+
+    if(OutSweepHitResult.IsValidBlockingHit()) {
+     
+    }
+
+    FVector agent_goal_position = goal_actor_->GetActorLocation();
+    std::cout << "agent_goal_position_  " << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << std::endl;
+    std::cout << "agent_goal_position  " << agent_goal_position.X << ", " << agent_goal_position.Y << ", " << agent_goal_position.Z << std::endl;
 }
 
 bool ImitationLearningTask::isReady() const
@@ -619,8 +632,6 @@ bool ImitationLearningTask::sampleRandomTrajectory()
     // Sanity checks
     ASSERT(nav_data_ != nullptr);
     ASSERT(nav_sys_ != nullptr);
-
-    std::cout << "MAX_ITER_REPLAN: " << Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"}) << std::endl;
 
     // Path generation polling to get "interesting" paths in every experiment:
     while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints

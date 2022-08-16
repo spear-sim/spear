@@ -112,18 +112,6 @@ void SimulationController::worldBeginPlayEventHandler()
     // pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
-    // read config to decide which type of AgentController to create
-    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
-        agent_controller_ = std::make_unique<SphereAgentController>(world_);
-    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
-        agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
-    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
-        agent_controller_ = std::make_unique<DebugAgentController>(world_);
-    } else {
-        ASSERT(false);
-    }
-    ASSERT(agent_controller_);
-
     // read config to decide which type of Task class to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
         task_ = std::make_unique<PointGoalNavTask>(world_);
@@ -135,6 +123,18 @@ void SimulationController::worldBeginPlayEventHandler()
         ASSERT(false);
     }
     ASSERT(task_);
+
+    // read config to decide which type of AgentController to create
+    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
+        agent_controller_ = std::make_unique<SphereAgentController>(world_);
+    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+        agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
+    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
+        agent_controller_ = std::make_unique<DebugAgentController>(world_);
+    } else {
+        ASSERT(false);
+    }
+    ASSERT(agent_controller_);
 
     // create a visualizer that is responsible for the camera view
     visualizer_ = std::make_unique<Visualizer>(world_);
