@@ -1,5 +1,12 @@
 #pragma once
 
+#include <iterator>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+
 #include <Engine/EngineTypes.h>
 #include <Math/RandomStream.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
@@ -39,29 +46,12 @@ private:
     // Rebuild the navigation mesh of the agent
     void rebuildNavMesh();
 
-    // Get an initial position for the agent from a parameter file 
-    void updateInitialPositionFromParameterFile();
-
-    // Get an initial position for the agent from a parameter file 
-    void updateTargetPositionFromParameterFile();
-
-    // Generate a random point in the agent's navigable space
-    FVector generateRandomNavigablePoint();
-
-    // Generate a random target point reachable by the agent from its initial position
-    void generateRandomReachableTargetPoint();
+    // Get an initial and target positions from a parameter file 
+    void getPositionsFromParameterFile();
 
     // Generate a collision-free trajectory between an initial and a target location.
     // Returns true if successful.
     bool generateTrajectoryToTarget();
-
-    // From a given initial position, generate a random reachable target point as well as a collision-free trajectory between them.
-    // Returns true if successful.
-    bool generateTrajectoryToRandomTarget();
-
-    // Generate a pair of random (initial point - reachable target point) as well as a collision-free trajectory between them.
-    // Returns true if successful.
-    bool generateRandomTrajectory();
 
     // From a given initial position, generate a random reachable target point as well as a collision-free trajectory between them.
     // Multiple target points as well as the trajectories between the initial and target points are generated and evaluated. 
@@ -96,11 +86,13 @@ private:
     UNavigationSystemV1* nav_sys_;
     ANavigationData* nav_data_;
     ARecastNavMesh* nav_mesh_;
-    FVector agent_initial_position_;    // Initial position of the learning agent
-    FVector agent_goal_position_;       // Goal position of the learning agent (should be the position of the goal agent)
+    std::vector<FVector> agent_initial_position_;    // Initial position of the learning agent
+    std::vector<FVector> agent_goal_position_;       // Goal position of the learning agent (should be the position of the goal agent)
     TArray<FNavPathPoint> path_points_; // An array containing the different waypoints to be followed by the agent
     float trajectory_length_;           // Approximate length of the trajctory between agent_initial_position_ and agent_goal_position_
     float world_to_meters_;             // Scaling factor of the environment
     bool initial_point_generated_ = false; 
     bool target_point_generated_ = false; 
+    unsigned int trajectory_index_ = 0;          // Index of the pair 
+    unsigned int number_start_goal_pairs_ = 0;  // Number of pairs of start/stop points
 };

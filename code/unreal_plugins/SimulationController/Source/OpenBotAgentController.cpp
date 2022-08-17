@@ -37,7 +37,6 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
             goal_actor_ = *actor_itr;
             ASSERT(goal_actor_);
         }
-        std::cout << "actor_name: " << actor_name << std::endl;
     }
 
     ASSERT(agent_actor_);
@@ -457,9 +456,7 @@ void OpenBotAgentController::rebuildNavMesh()
 
     nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable); // Hack
     nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);      // Place the navmesh at the center of the map
-    std::cout << "environment_bounds: X: " << environment_bounds.GetCenter().X << ", Y: " << environment_bounds.GetCenter().Y << ", Z: " << environment_bounds.GetCenter().Z << std::endl;
     nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
-    std::cout << "environment_bounds.GetSize(): X: " << environment_bounds.GetSize().X << ", Y: " << environment_bounds.GetSize().Y << ", Z: " << environment_bounds.GetSize().Z << std::endl;
     nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys_->OnNavigationBoundsUpdated(nav_meshbounds_volume);
     nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
@@ -498,8 +495,6 @@ bool OpenBotAgentController::generateTrajectoryToTarget()
     agent_initial_position_ = agent_actor_->GetActorLocation();
     agent_goal_position_ = goal_actor_->GetActorLocation();
     
-    std::cout << "agent_initial_position_  " << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << std::endl;
-    std::cout << "agent_goal_position_  " << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << std::endl;
     // Update relative position between the agent and its new target:
     relative_position_to_target.X = (agent_goal_position_ - agent_initial_position_).X;
     relative_position_to_target.Y = (agent_goal_position_ - agent_initial_position_).Y;

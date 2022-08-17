@@ -58,6 +58,7 @@ SIMULATION_CONTROLLER:
     MAX_ITER_REPLAN: 10000
     AGENT_POSITION_Z_MIN: 5.0
     AGENT_POSITION_Z_MAX: 20.0
+    PATH_TRAJECTORY_PAIRS: "/home/quentin/Desktop/ISL/interiorsim/code/experiments/rl_openbot/imitation_learning/trajectory_pairs.csv"
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0

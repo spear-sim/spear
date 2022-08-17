@@ -52,7 +52,7 @@ SIMULATION_CONTROLLER:
   AGENT_CONTROLLER_NAME: "OpenBotAgentController"
   
   IMITATION_LEARNING_TASK:
-    RANDOM_SPAWN_TRAJ: True
+    RANDOM_SPAWN_TRAJ: False
     AGENT_ACTOR_NAME: "SimpleVehicle_0"
     GOAL_ACTOR_NAME: ""
     REWARD:
@@ -67,9 +67,10 @@ SIMULATION_CONTROLLER:
     ACCEPTANCE_RADIUS: 0.15
     PATH_WEIGHT_DIST: 1.0
     PATH_WEIGHT_NUM_WAYPOINTS: 1.0
-    MAX_ITER_REPLAN: 50000
+    MAX_ITER_REPLAN: 5000
     AGENT_POSITION_Z_MIN: 0.5
     AGENT_POSITION_Z_MAX: 20.0
+    PATH_TRAJECTORY_PAIRS: "/home/quentin/Desktop/ISL/interiorsim/code/experiments/rl_openbot/imitation_learning/trajectory_pairs.csv"
     NAVMESH:
       AGENT_RADIUS: 17.0
       AGENT_HEIGHT: 20.0
