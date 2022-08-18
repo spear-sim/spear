@@ -6,6 +6,10 @@
 #include <utility>
 #include <vector>
 
+// remove before commit
+#include <fstream>
+
+#include "AI/NavDataGenerator.h"
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
@@ -27,12 +31,17 @@
 #include "Config.h"
 #include "Serialize.h"
 
+#include "NavMeshManager.h"
+
 ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
 {
     // store ref to world
     world_ = world;
 
     rebuildNavSystem();
+
+    // NavMeshManager::navSystemRebuild(world,10);
+    NavMeshManager::exportData(world);
 
     FVector spawn_location;
     RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, spawn_location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
@@ -178,12 +187,15 @@ void ImageSamplingAgentController::applyAction(const std::map<std::string, std::
 
         const FRotator random_orientation {action.at("set_random_orientation_pyr_deg").at(0), action.at("set_random_orientation_pyr_deg").at(1), action.at("set_random_orientation_pyr_deg").at(2)};
 
-        FVector random_position = FVector(0);
-        int count = 0;
-        while(random_position.Size() <= 0 and count < 20) {
-            RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, random_position, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
-            count++;
-        }
+        // sample directly from navmesh
+        FVector random_position = nav_mesh_->GetRandomPoint().Location;
+
+        // FVector random_position = FVector(0);
+        // int count = 0;
+        // while(random_position.Size() <= 0 and count < 20) {
+            // RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, random_position, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
+            // count++;
+        // }
         random_position.Z = action.at("set_random_agent_height_cms").at(0);
 
         constexpr bool sweep = false;
@@ -213,6 +225,15 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
     const FVector position = camera_actor_->GetActorLocation();
     const FRotator orientation = camera_actor_->GetActorRotation();
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
+
+    // std::ofstream myfile;
+    // myfile.open("/media/rachithp/Extreme SSD/new_isim_images/scene_235114803/poses.txt");
+    // myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
+    // for (size_t i = 0u; i<1000000; ++i) {
+    //     FVector random_position = nav_mesh_->GetRandomPoint().Location;
+    //     myfile << random_position.X << "," << random_position.Y << "," << random_position.Z << "\n";
+    // }
+    // myfile.close();
 
     ASSERT(IsInGameThread());
 
@@ -273,6 +294,7 @@ void ImageSamplingAgentController::rebuildNavSystem()
     FNavAgentProperties agent_properties;
     agent_properties.AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
     agent_properties.AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
+    agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
 
     ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
     ASSERT(nav_data);
@@ -289,20 +311,30 @@ void ImageSamplingAgentController::rebuildNavSystem()
     // Set the NavMesh properties:
     nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "CELL_SIZE"});
     nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "CELL_HEIGHT"});
+    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "MERGE_REGION_SIZE"});
+    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "MIN_REGION_AREA"});
     nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
-
+    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_SLOPE"});
+    nav_mesh_->TileSizeUU = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "TILE_SIZE_UU"});
+    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
+    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
     // Dynamic update navMesh location and size
-    FBox worldBox = getWorldBoundingBox();
-    nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
+
+    nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    FBox worldBox = getWorldBoundingBox(true);
+    // std::cout << "worldbox center (X,Y,Z) : (" << worldBox.GetCenter().X << worldBox.GetCenter().Y << worldBox.GetCenter().Z << ")" << std::endl;
+    // UE_LOG(LogTemp, Warning, TEXT("worldbox center (X,Y,Z) : (%f, %f, %f)"), worldBox.GetCenter().X, worldBox.GetCenter().Y, worldBox.GetCenter().Z);
     nav_mesh_bounds->SetActorLocation(worldBox.GetCenter(), false);          // Place the navmesh at the center of the map
-    nav_mesh_bounds->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);   // Rescae the navmesh
+    nav_mesh_bounds->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);   // Rescale the navmesh
     nav_mesh_bounds->GetRootComponent()->UpdateBounds();
     nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds);        
-
+    nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
+
+    // nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::ProjectSavedDir() + "/" + world_->GetName() + "/");
 }
 
-FBox ImageSamplingAgentController::getWorldBoundingBox(bool bScaleCeiling)
+FBox ImageSamplingAgentController::getWorldBoundingBox(bool remove_ceiling)
 {
     FBox box(ForceInit);
     for (TActorIterator<AActor> it(world_); it; ++it) {
@@ -311,5 +343,6 @@ FBox ImageSamplingAgentController::getWorldBoundingBox(bool bScaleCeiling)
         }
     }
     // Remove ceiling
-    return !bScaleCeiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
+    return remove_ceiling ? FBox(box.Min, box.Max - FVector(0, 0, 0.7f * box.GetSize().Z)) : box;
+    // return remove_ceiling ? box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z)) : box;
 }

@@ -33,12 +33,12 @@ if __name__ == "__main__":
     rng = np.random.default_rng(config.IMAGE_SAMPLING_EXPERIMENT.SEED)
     
     # check if path exists
-    if not os.path.exists(os.path.join(args.output_dir, "data")):
-        os.makedirs(os.path.join(args.output_dir, "data"))
+    if not os.path.exists(os.path.join(args.output_dir)):
+        os.makedirs(os.path.join(args.output_dir))
 
-    scenes_sampled = open(os.path.join(args.output_dir, "data/scenes.txt"), "w")
-    bad_scenes = open(os.path.join(args.output_dir, "data/bad_scenes.txt"), "w")
-    skipped_scenes = open(os.path.join(args.output_dir, "data/skipped_scenes.txt"), "w")
+    scenes_sampled = open(os.path.join(args.output_dir, "scenes.txt"), "w")
+    bad_scenes = open(os.path.join(args.output_dir, "bad_scenes.txt"), "w")
+    skipped_scenes = open(os.path.join(args.output_dir, "skipped_scenes.txt"), "w")
 
     # choose scenes from input dir
     scenes_on_disk = os.listdir(args.scenes_path)
@@ -48,10 +48,10 @@ if __name__ == "__main__":
         if len(split_string_list) > 1 and split_string_list[1] == "Linux.pak":
             chosen_scenes.append(split_string_list[0])
 
-    # NUM_IMAGES_PER_SCENE = int(TOTAL_NUM_IMAGES / len(chosen_scenes)) + 1
-    NUM_IMAGES_PER_SCENE = 20
+    NUM_IMAGES_PER_SCENE = int(TOTAL_NUM_IMAGES / len(chosen_scenes)) + 1
+    # NUM_IMAGES_PER_SCENE = 10
 
-    for scene in chosen_scenes[:2]:
+    for scene in chosen_scenes[:]:
         print(f"processing scene {scene}")
 
         # choose map to load
@@ -64,11 +64,11 @@ if __name__ == "__main__":
             shutil.copy(os.path.join(args.scenes_path, f"{scene}_Linux.pak"), f"{args.executable_dir}/LinuxNoEditor/RobotProject/Content/Paks")
 
         # check if data path for storing images exists
-        if not os.path.exists(os.path.join(args.output_dir, f"data/scene_{scene}/images/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
-            os.makedirs(os.path.join(args.output_dir, f"data/scene_{scene}/images/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
+        if not os.path.exists(os.path.join(args.output_dir, f"scene_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
+            os.makedirs(os.path.join(args.output_dir, f"scene_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
             print(f"collecting images for scene {scene}")
         else:
-            images = os.listdir(os.path.join(args.output_dir, f"data/scene_{scene}/images/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
+            images = os.listdir(os.path.join(args.output_dir, f"scene_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
             print(f"scene {scene}, num_images = {len(images)}")
             # if len(images) == NUM_IMAGES_PER_SCENE:
                 # print(f"scene - {scene} has {len(images)} images already, so skipping.")
@@ -79,13 +79,13 @@ if __name__ == "__main__":
         # write headers
         scenes_sampled.write(scene)
         scenes_sampled.write(",")
-        pose_output_file = open(os.path.join(args.output_dir, "data/scene_{}/pose.txt".format(scene)), "w")
+        pose_output_file = open(os.path.join(args.output_dir, "scene_{}/poses.txt".format(scene)), "w")
         pose_csv_writer = csv.writer(pose_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        pose_csv_writer.writerow(["scene_id", "timestamp (ns)", "pos_x_cm", "pos_y_cm", "pos_z_cm", "roll_deg", "pitch_deg", "yaw_deg"])
+        pose_csv_writer.writerow(["pos_x_cm", "pos_y_cm", "pos_z_cm", "roll_deg", "pitch_deg", "yaw_deg"])
 
-        frame_output_file = open(os.path.join(args.output_dir, "data/scene_{}/frames.txt".format(scene)), "w")
-        frame_csv_writer = csv.writer(frame_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        frame_csv_writer.writerow(["scene_id", "timestamp (ns)", "frame_number"])
+        # frame_output_file = open(os.path.join(args.output_dir, "scene_{}/frames.txt".format(scene)), "w")
+        # frame_csv_writer = csv.writer(frame_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        # frame_csv_writer.writerow(["timestamp (ns)", "frame_number"])
 
         # create Env object
         try:
@@ -103,26 +103,26 @@ if __name__ == "__main__":
                                                                         rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.YAW_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.YAW_HIGH_DEG),
                                                                         rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_HIGH_DEG)],
                                      "set_random_agent_height_cms"   :  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_LOW_CMS, high=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_HIGH_CMS)]})
-                                                                            
+
             # cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
             # cv2.waitKey(0)
             
             # write data
-            ts = datetime.datetime.now().timestamp() * 1e9
-            output_path = os.path.join(args.output_dir, f"data/scene_{scene}/images/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
+            # ts = datetime.datetime.now().timestamp() * 1e9
+            output_path = os.path.join(args.output_dir, f"scene_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
 
             assert os.path.exists(output_path) == True
             return_status = cv2.imwrite(output_path +f"/{i}.png", obs["visual_observation"][:,:,[2,1,0]])
             assert return_status == True
 
-            pose_csv_writer.writerow([scene, int(ts), obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
-            frame_csv_writer.writerow([scene, int(ts), i])
-        
+            pose_csv_writer.writerow([obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
+            # frame_csv_writer.writerow([i])
+
         # close the current environment after collecting required number of images
         env.close()
         time.sleep(10)
         pose_output_file.close()
-        frame_output_file.close()
+        # frame_output_file.close()
         os.remove(f"{args.executable_dir}/LinuxNoEditor/RobotProject/Content/Paks/{scene}_Linux.pak")
 
     scenes_sampled.close()

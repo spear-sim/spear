@@ -90,7 +90,11 @@ SIMULATION_CONTROLLER:
       CELL_SIZE: 1.0
       CELL_HEIGHT: 1.0
       AGENT_MAX_STEP_HEIGHT: -1.0
+      AGENT_MAX_SLOPE: 1.0
       HEIGHT_LIMIT: 190
+      MERGE_REGION_SIZE: 0.0
+      MIN_REGION_AREA: 0.0
+      TILE_SIZE_UU: 1000
 
 
   # Used in code/experiments/debug_synchronization_model/DebugProject
