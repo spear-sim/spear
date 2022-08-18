@@ -71,3 +71,8 @@ Version: v4
 Contents:
     1. v4 provides all 300 virtualworlds in .pak format for Linux, while virtualworld contents remain the same as v3.
     2. The file storage structure and download API is optimized.
+
+Time:20220819
+Version: v5
+Contents:
+    1. v5 provide scenes in pak file for Windows with manual light fixing for RTX.
