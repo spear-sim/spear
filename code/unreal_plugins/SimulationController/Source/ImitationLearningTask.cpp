@@ -180,7 +180,7 @@ void ImitationLearningTask::reset()
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
 
         // Trajectory planning between randomly sampled initial/final positions:
-        ASSERT(getPositionsFromSamplingCandidateTrajectories());
+        ASSERT(generateTrajectoryFromSamplingRandomPositions());
 
         // Reset trajectory index:
         trajectory_index_ = 0;
@@ -388,7 +388,7 @@ bool ImitationLearningTask::generateTrajectoryFromPredefinedFilePositions()
     return status;
 }
 
-bool ImitationLearningTask::getTrajectoryFromSamplingRandomPositions()
+bool ImitationLearningTask::generateTrajectoryFromSamplingRandomPositions()
 {
     agent_initial_position_.resize(1);
     agent_goal_position_.resize(1);

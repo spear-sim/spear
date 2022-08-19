@@ -53,7 +53,7 @@ private:
     // Multiple pairs of (initial point - reachable target point) as well as trajectories between them are generated and evaluated. 
     // Only the best pair is kept.
     // Returns true if successful.
-    bool getTrajectoryFromSamplingRandomPositions();
+    bool generateTrajectoryFromSamplingRandomPositions();
 
     // Get the World bounding box dimensions
     FBox getWorldBoundingBox(bool scale_ceiling = true);
