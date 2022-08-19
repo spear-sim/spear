@@ -388,7 +388,7 @@ bool ImitationLearningTask::generateTrajectoryFromPredefinedFilePositions()
     return status;
 }
 
-bool ImitationLearningTask::getPositionsFromSamplingCandidateTrajectories()
+bool ImitationLearningTask::getTrajectoryFromSamplingRandomPositions()
 {
     agent_initial_position_.resize(1);
     agent_goal_position_.resize(1);
