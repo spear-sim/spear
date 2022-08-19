@@ -180,7 +180,7 @@ void ImitationLearningTask::reset()
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
 
         // Trajectory planning:
-        sampleRandomTrajectory();
+        getPositionsFromSamplingCandidateTrajectories();
 
         // Set agent and goal positions:
         agent_actor_->SetActorLocation(agent_initial_position_.at(0), sweep, hit_result_info, ETeleportType::ResetPhysics);
@@ -399,7 +399,7 @@ bool ImitationLearningTask::generateTrajectoryToTarget()
     return status;
 }
 
-bool ImitationLearningTask::sampleRandomTrajectory()
+bool ImitationLearningTask::getPositionsFromSamplingCandidateTrajectories()
 {
     agent_initial_position_.resize(1);
     agent_goal_position_.resize(1);
