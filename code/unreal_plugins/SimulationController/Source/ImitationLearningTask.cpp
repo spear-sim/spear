@@ -51,8 +51,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         ASSERT(goal_actor_);
     }
 
-    // ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
-
     // Read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SEED"}));
 
@@ -82,11 +80,13 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
     ASSERT(nav_mesh_ != nullptr);
 
-    // Environment scaling factor
-    world_to_meters_ = agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
-
     // Rebuild navigation mesh with the desired properties before executing trajectory planning
     buildNavMesh();
+
+    // If the start/goal positions are not randomly generated 
+    if (not Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
+        getPositionsFromFile();
+    } 
 }
 
 ImitationLearningTask::~ImitationLearningTask()
@@ -185,23 +185,16 @@ void ImitationLearningTask::reset()
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
 
         // Trajectory planning between randomly sampled initial/final positions:
-        ASSERT(generateTrajectoryFromSamplingRandomPositions());
+        getPositionsFromTrajectorySampling();
 
         // Reset trajectory index:
         trajectory_index_ = 0;
-        
-    } else {
-
-        // Trajectory planning using predefined initial position:
-        ASSERT(generateTrajectoryFromPredefinedFilePositions()); 
-
-        // Iterate in the list of initial/final positions:
-        trajectory_index_++;
-    }
+    } 
 
     // Set agent and goal positions:
     agent_actor_->SetActorLocation(agent_initial_position_.at(trajectory_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
     goal_actor_->SetActorLocation(agent_goal_position_.at(trajectory_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
+    trajectory_index_++;
 }
 
 bool ImitationLearningTask::isReady() const
@@ -258,24 +251,17 @@ void ImitationLearningTask::buildNavMesh()
     nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 }
 
-bool ImitationLearningTask::generateTrajectoryFromPredefinedFilePositions()
+void ImitationLearningTask::getPositionsFromFile()
 {
-    number_start_goal_pairs_ = 0;
     std::string line;
     std::string field;
     float value = 0.0f;
     int column_index = 0;
     FVector init, goal;
-    bool status = false;
-    int number_of_way_points = 0;
-    FNavLocation target_location;
-    FVector2D relative_position_to_target(0.0f, 0.0f);
-    FPathFindingQuery nav_query;
-    FPathFindingResult collision_free_path;
-    path_points_.Empty();
 
     // Create an input filestream
-    std::ifstream trajectory_pairs_file(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "PATH_TRAJECTORY_PAIRS"}));
+    std::string map_id = Config::getValue<std::string>({"INTERIORSIM", "MAP_ID"}); 
+    std::ifstream trajectory_pairs_file(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_FOLDER"})+"InitGoalAgentPositions_" + map_id.substr(map_id.size() - 9) + ".csv"); // MAP_IDs are described by a sequence of 9 integers
     ASSERT(trajectory_pairs_file.is_open());
 
     // Read file data, line by line in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z"
@@ -323,7 +309,6 @@ bool ImitationLearningTask::generateTrajectoryFromPredefinedFilePositions()
             column_index++;
         }
         ASSERT(column_index == 6);
-        number_start_goal_pairs_++;
 
         agent_initial_position_.push_back(init);
         agent_goal_position_.push_back(goal);
@@ -333,72 +318,14 @@ bool ImitationLearningTask::generateTrajectoryFromPredefinedFilePositions()
     // Close file
     trajectory_pairs_file.close();
 
-    // Sanity checks
-    ASSERT(nav_data_ != nullptr);
-    ASSERT(nav_sys_ != nullptr);
-    ASSERT(trajectory_index_ < number_start_goal_pairs_);
-
-    // Update relative position between the agent and its new target:
-    relative_position_to_target.X = (agent_goal_position_.at(trajectory_index_) - agent_initial_position_.at(trajectory_index_)).X;
-    relative_position_to_target.Y = (agent_goal_position_.at(trajectory_index_) - agent_initial_position_.at(trajectory_index_)).Y;
-
-    // Update navigation query with the new target:
-    nav_query = FPathFindingQuery(agent_actor_, *nav_data_, agent_initial_position_.at(trajectory_index_), agent_goal_position_.at(trajectory_index_));
-
-    // Genrate a collision-free path between the robot position and the target point:
-    collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
-
-    // If path generation is sucessful, analyze the obtained path (it should not be too simple):
-    if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
-
-        if (collision_free_path.IsPartial()) {
-            std::cout << "Only a partial path could be found by the planner..." << std::endl;
-        }
-
-        number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
-
-        path_points_ = collision_free_path.Path->GetPathPoints();
-
-        std::cout << "Number of way points: " << number_of_way_points << std::endl;
-        std::cout << "Target distance: " << relative_position_to_target.Size() / world_to_meters_ << "m" << std::endl;
-
-        trajectory_length_ = 0.0;
-
-        for (size_t i = 0; i < number_of_way_points - 1; i++) {
-            trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
-        }
-
-        // Scaling to meters
-        trajectory_length_ /= world_to_meters_;
-
-        // Update status
-        status = true;
-
-        std::cout << "Path length " << trajectory_length_ << "m" << std::endl;
-    }
-
-    ASSERT(path_points_.Num() > 1);
-
-    std::cout << "Initial position: [" << agent_initial_position_.at(trajectory_index_).X << ", " << agent_initial_position_.at(trajectory_index_).Y << ", " << agent_initial_position_.at(trajectory_index_).Z << "]." << std::endl;
-    std::cout << "Reachable position: [" << agent_goal_position_.at(trajectory_index_).X << ", " << agent_goal_position_.at(trajectory_index_).Y << ", " << agent_goal_position_.at(trajectory_index_).Z << "]." << std::endl;
-    std::cout << "-----------------------------------------------------------" << std::endl;
-    std::cout << "Way points: " << std::endl;
-
-    for (auto wayPoint : path_points_) {
-        std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
-    }
-
-    std::cout << "-----------------------------------------------------------" << std::endl;
-
-    return status;
+    // Initialize trajectory index
+    trajectory_index_ = 0;
 }
 
-bool ImitationLearningTask::generateTrajectoryFromSamplingRandomPositions()
+void ImitationLearningTask::getPositionsFromTrajectorySampling()
 {
     agent_initial_position_.resize(1);
     agent_goal_position_.resize(1);
-    number_start_goal_pairs_ = 1;
-    bool status = false;
     int number_iterations = 0;
     int number_of_way_points = 0;
     float path_criterion = 0.0f;
@@ -410,7 +337,7 @@ bool ImitationLearningTask::generateTrajectoryFromSamplingRandomPositions()
     FVector2D relative_position_to_target(0.0f, 0.0f);
     FPathFindingQuery nav_query;
     FPathFindingResult collision_free_path;
-    path_points_.Empty();
+    TArray<FNavPathPoint> path_points;
 
     // Sanity checks
     ASSERT(nav_data_ != nullptr);
@@ -451,18 +378,18 @@ bool ImitationLearningTask::generateTrajectoryFromSamplingRandomPositions()
                 best_path_criterion = path_criterion;
                 best_target_location = target_location;
                 best_init_location = init_location;
-                path_points_.Empty();
-                path_points_ = collision_free_path.Path->GetPathPoints();
+                path_points.Empty();
+                path_points = collision_free_path.Path->GetPathPoints();
                 std::cout << "Iteration: " << number_iterations << std::endl;
                 std::cout << "Cost: " << best_path_criterion << std::endl;
                 std::cout << "Number of way points: " << number_of_way_points << std::endl;
-                std::cout << "Target distance: " << relative_position_to_target.Size() / world_to_meters_ << "m" << std::endl;
+                std::cout << "Target distance: " << relative_position_to_target.Size() / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
 
-                trajectory_length_ = 0.0;
+                float trajectory_length = 0.0;
                 for (size_t i = 0; i < number_of_way_points - 1; i++) {
-                    trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
+                    trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
                 }
-                std::cout << "Path length " << trajectory_length_ / world_to_meters_ << "m" << std::endl;
+                std::cout << "Path length " << trajectory_length / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
             }
 
             number_iterations++;
@@ -471,46 +398,35 @@ bool ImitationLearningTask::generateTrajectoryFromSamplingRandomPositions()
                 std::cout << ".";
             }
 
-            status = true;
         }
     }
     std::cout << "" << std::endl;
 
-    ASSERT(path_points_.Num() > 1);
+    ASSERT(path_points.Num() > 1);
 
     // Update positions
     agent_initial_position_.at(0) = best_init_location.Location;
     agent_goal_position_.at(0) = best_target_location.Location;
-
-    // Scaling to meters
-    trajectory_length_ /= world_to_meters_;
 
     std::cout << "Initial position: [" << agent_initial_position_.at(0).X << ", " << agent_initial_position_.at(0).Y << ", " << agent_initial_position_.at(0).Z << "]." << std::endl;
     std::cout << "Reachable position: [" << agent_goal_position_.at(0).X << ", " << agent_goal_position_.at(0).Y << ", " << agent_goal_position_.at(0).Z << "]." << std::endl;
     std::cout << "-----------------------------------------------------------" << std::endl;
     std::cout << "Way points: " << std::endl;
 
-    for (auto wayPoint : path_points_) {
+    for (auto wayPoint : path_points) {
         std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
     }
 
     std::cout << "-----------------------------------------------------------" << std::endl;
-
-    return status;
 }
 
 FBox ImitationLearningTask::getWorldBoundingBox(bool scale_ceiling)
 {
     FBox box(ForceInit);
-
     for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
-
         if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
-
             box += it->GetComponentsBoundingBox(false, true);
-
         }
-
     }
     // Remove ceiling
     return !scale_ceiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));

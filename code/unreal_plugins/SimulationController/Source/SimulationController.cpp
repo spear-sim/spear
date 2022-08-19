@@ -29,7 +29,7 @@
 #include "Task.h"
 #include "Visualizer.h"
 
-// different possible frame states for thread synchronization
+// Different possible frame states for thread synchronization
 enum class FrameState : uint8_t
 {
     Idle,
@@ -51,13 +51,13 @@ void SimulationController::StartupModule()
 {
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 
-    // required to add ActorSpawnedEventHandler
+    // Required to add ActorSpawnedEventHandler
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
 
-    // required to reset any custom logic during world cleanup
+    // Required to reset any custom logic during world cleanup
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
-    // required for adding thread synchronization logic
+    // Required for adding thread synchronization logic
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
     end_frame_delegate_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
 }
@@ -109,10 +109,10 @@ void SimulationController::worldBeginPlayEventHandler()
     FApp::SetBenchmarking(true);
     FApp::SetFixedDeltaTime(Config::getValue<double>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));
 
-    // pause gameplay
+    // Pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
-    // read config to decide which type of Task class to create
+    // Read config to decide which type of Task class to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
         task_ = std::make_unique<PointGoalNavTask>(world_);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearningTask") {
@@ -124,7 +124,7 @@ void SimulationController::worldBeginPlayEventHandler()
     }
     ASSERT(task_);
 
-    // read config to decide which type of AgentController to create
+    // Read config to decide which type of AgentController to create
     if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
     } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
@@ -136,14 +136,14 @@ void SimulationController::worldBeginPlayEventHandler()
     }
     ASSERT(agent_controller_);
 
-    // create a visualizer that is responsible for the camera view
+    // Create a visualizer that is responsible for the camera view
     visualizer_ = std::make_unique<Visualizer>(world_);
     ASSERT(visualizer_);
 
-    // initialize frame state used for thread synchronization
+    // Initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
 
-    // config values required for rpc communication
+    // Config values required for rpc communication
     const std::string hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
     const int port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
 
@@ -191,50 +191,50 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
 void SimulationController::beginFrameEventHandler()
 {
-    // if beginTick() has indicated (via RequestPreTick framestate) that we should execute a frame of work
+    // If beginTick() has indicated (via RequestPreTick framestate) that we should execute a frame of work
     if (frame_state_ == FrameState::RequestPreTick) {
 
-        // update local state
+        // Update local state
         frame_state_ = FrameState::ExecutingPreTick;
 
-        // unpause the game
+        // Unpause the game
         UGameplayStatics::SetGamePaused(world_, false);
 
-        // execute all pre-tick sync work, wait here for tick() to reset work guard
+        // Execute all pre-tick sync work, wait here for tick() to reset work guard
         rpc_server_->runSync();
 
-        // execute pre-tick work inside the task
+        // Execute pre-tick work inside the task
         task_->beginFrame();
 
-        // update local state
+        // Update local state
         frame_state_ = FrameState::ExecutingTick;
     }
 }
 
 void SimulationController::endFrameEventHandler()
 {
-    // if beginFrameEventHandler() has indicated that we are currently executing a frame of work
+    // If beginFrameEventHandler() has indicated that we are currently executing a frame of work
     if (frame_state_ == FrameState::ExecutingTick) {
 
-        // update local state
+        // Update local state
         frame_state_ = FrameState::ExecutingPostTick;
 
-        // execute post-tick work inside the task
+        // Execute post-tick work inside the task
         task_->endFrame();
 
-        // allow tick() to finish executing
+        // Allow tick() to finish executing
         end_frame_started_executing_promise_.set_value();
 
-        // execute all post-tick sync work, wait here for endTick() to reset work guard
+        // Execute all post-tick sync work, wait here for endTick() to reset work guard
         rpc_server_->runSync();
 
-        // pause the game
+        // Pause the game
         UGameplayStatics::SetGamePaused(world_, true);
 
-        // update local state
+        // Update local state
         frame_state_ = FrameState::Idle;
 
-        // allow endTick() to finish executing
+        // Allow endTick() to finish executing
         end_frame_finished_executing_promise_.set_value();
     }
 }
@@ -258,25 +258,25 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("beginTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::Idle);
 
-        // reinitialize end_frame_started_executing promise and future
+        // Reinitialize end_frame_started_executing promise and future
         end_frame_started_executing_promise_ = std::promise<void>();
         end_frame_started_executing_future_ = end_frame_started_executing_promise_.get_future();
 
-        // reinitialize end_frame_finished_executing promise and future
+        // Reinitialize end_frame_finished_executing promise and future
         end_frame_finished_executing_promise_ = std::promise<void>();
         end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
 
-        // indicate that we want the game thread to execute one frame of work
+        // Indicate that we want the game thread to execute one frame of work
         frame_state_ = FrameState::RequestPreTick;
     });
 
     rpc_server_->bindAsync("tick", [this]() -> void {
         ASSERT((frame_state_ == FrameState::ExecutingPreTick) || (frame_state_ == FrameState::RequestPreTick));
 
-        // indicate that we want the game thread to stop blocking in beginFrame()
+        // Indicate that we want the game thread to stop blocking in beginFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // wait here until the game thread has started executing endFrame()
+        // Wait here until the game thread has started executing endFrame()
         end_frame_started_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
@@ -285,10 +285,10 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("endTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
-        // indicate that we want the game thread to stop blocking in endFrame()
+        // Indicate that we want the game thread to stop blocking in endFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // wait here until the game thread has finished executing endFrame()
+        // Wait here until the game thread has finished executing endFrame()
         end_frame_finished_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::Idle);

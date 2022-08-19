@@ -231,7 +231,7 @@ if __name__ == "__main__":
 
         config.defrost()
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "full-pose"
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.GOAL_TRACKING_MODE = "waypoint"
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.GOAL_TRACKING_MODE = "trajectory"
         config.freeze()
 
         speedMultiplier = 1
@@ -270,7 +270,7 @@ if __name__ == "__main__":
                 actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y], for velocity initialization
                 desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
 
-                numWaypoints = obs["physical_observation"][11] - 1
+                numWaypoints = obs["physical_observation"][10] - 1
 
                 # Take a few steps:
                 for i in range(numIter):
@@ -286,7 +286,7 @@ if __name__ == "__main__":
                     Kd_lin = config.ROBOT_SIM.DERIVATIVE_GAIN_DIST
                     Kp_ang = config.ROBOT_SIM.PROPORTIONAL_GAIN_HEADING
                     Kd_ang = config.ROBOT_SIM.DERIVATIVE_GAIN_HEADING
-                    acceptanceRadius = config.SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS
+                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
                     forwardMinAngle = config.ROBOT_SIM.FORWARD_MIN_ANGLE
                     controlSaturation = config.ROBOT_SIM.CONTROL_SATURATION
                     dt = 0.1
@@ -333,7 +333,7 @@ if __name__ == "__main__":
                     im.save(dataFolderName+"images/%d.jpeg" % i)
 
                     if waypointReached:
-                        if index_waypoint < obs["physical_observation"][11] - 1: # if the waypoint is not the goal
+                        if index_waypoint < obs["physical_observation"][10] - 1: # if the waypoint is not the goal
                             print(f"Waypoint {index_waypoint} over {numWaypoints} reached !")
                             index_waypoint = index_waypoint + 1
                         else: # Goal reached !
@@ -533,7 +533,7 @@ if __name__ == "__main__":
                     #executedIterations = i+1
                     ct = datetime.datetime.now()
                     ts = 10000*ct.timestamp()
-                    acceptanceRadius = config.SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS
+                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
 
                     # Process (crop) visual observations:
                     
@@ -679,7 +679,7 @@ if __name__ == "__main__":
             Kd_lin = config.ROBOT_SIM.DERIVATIVE_GAIN_DIST
             Kp_ang = config.ROBOT_SIM.PROPORTIONAL_GAIN_HEADING
             Kd_ang = config.ROBOT_SIM.DERIVATIVE_GAIN_HEADING
-            acceptanceRadius = config.SIMULATION_CONTROLLER.NAVIGATION.ACCEPTANCE_RADIUS
+            acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
             forwardMinAngle = config.ROBOT_SIM.FORWARD_MIN_ANGLE
             controlSaturation = config.ROBOT_SIM.CONTROL_SATURATION
             dt = 0.1

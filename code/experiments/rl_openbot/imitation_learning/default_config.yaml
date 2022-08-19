@@ -64,7 +64,7 @@ SIMULATION_CONTROLLER:
     MAX_ITER_REPLAN: 10000
     AGENT_POSITION_Z_MIN: 0.5
     AGENT_POSITION_Z_MAX: 20.0
-    PATH_TRAJECTORY_PAIRS: "/home/quentin/Desktop/ISL/interiorsim/code/experiments/rl_openbot/imitation_learning/trajectory_pairs.csv"
+    TRAJECTORY_FOLDER: "/home/quentin/Desktop/ISL/interiorsim/code/experiments/rl_openbot/imitation_learning/Trajectories/"
     NAVMESH:
       AGENT_RADIUS: 17.0
       AGENT_HEIGHT: 20.0
@@ -78,7 +78,7 @@ SIMULATION_CONTROLLER:
 
   OPENBOT_AGENT_CONTROLLER:
     AGENT_ACTOR_NAME: "SimpleVehicle_0"
-    GOAL_ACTOR_NAME: ""
+    GOAL_ACTOR_NAME: "GoalActor"
     # "low_level_control" or "teleport"
     ACTION_MODE: "low_level_control"
     OBSERVATION_MODE: "mixed"

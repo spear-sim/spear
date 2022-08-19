@@ -2,9 +2,9 @@
 
 #include <Engine/EngineTypes.h>
 #include <Math/RandomStream.h>
-#include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
+#include <NavigationSystem.h>
 
 #include "Task.h"
 
@@ -34,19 +34,18 @@ public:
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
 private:
-
     // Rebuild the navigation mesh of the agent
     void buildNavMesh();
 
-    // Generate a collision-free trajectory between an initial and a target location imported from a parameter file.
-    // Returns true if successful.
-    bool generateTrajectoryFromPredefinedFilePositions();
+    // Get a list of the different initial and final positions the agent is expected to navigate to. 
+    // Positions are in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z".
+    void getPositionsFromFile();
 
     // Generate a pair of random (initial point - reachable target point) as well as a collision-free trajectory between them.
-    // Multiple pairs of (initial point - reachable target point) as well as trajectories between them are generated and evaluated. 
+    // Multiple pairs of (initial point - reachable target point) as well as trajectories between them are generated and evaluated.
     // Only the best pair is kept.
     // Returns true if successful.
-    bool generateTrajectoryFromSamplingRandomPositions();
+    void getPositionsFromTrajectorySampling();
 
     // Get the World bounding box dimensions
     FBox getWorldBoundingBox(bool scale_ceiling = true);
@@ -69,11 +68,7 @@ private:
     UNavigationSystemV1* nav_sys_;
     ANavigationData* nav_data_;
     ARecastNavMesh* nav_mesh_;
-    std::vector<FVector> agent_initial_position_;    // Initial position of the learning agent
-    std::vector<FVector> agent_goal_position_;       // Goal position of the learning agent (should be the position of the goal agent)
-    TArray<FNavPathPoint> path_points_; // An array containing the different waypoints to be followed by the agent
-    float trajectory_length_;           // Approximate length of the trajctory between agent_initial_position_ and agent_goal_position_
-    float world_to_meters_;             // Scaling factor of the environment
-    unsigned int trajectory_index_ = 0;          // Index of the pair 
-    unsigned int number_start_goal_pairs_ = 0;  // Number of pairs of start/stop points
+    std::vector<FVector> agent_initial_position_; // Initial position of the learning agent
+    std::vector<FVector> agent_goal_position_;    // Goal position of the learning agent (should be the position of the goal agent)
+    unsigned int trajectory_index_ = 0;           // Index of the pair
 };

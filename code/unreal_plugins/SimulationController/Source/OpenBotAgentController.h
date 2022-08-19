@@ -56,7 +56,5 @@ private:
     FVector agent_initial_position_;    // Initial position of the learning agent
     FVector agent_goal_position_;       // Goal position of the learning agent (should be the position of the goal agent)
     TArray<FNavPathPoint> path_points_; // An array containing the different waypoints to be followed by the agent
-    float trajectory_length_;           // Approximate length of the trajctory between agent_initial_position_ and agent_goal_position_
-    float world_to_meters_;             // Scaling factor of the environment
     unsigned int index_path_point_ = 1; // Because index 0 is the initial position of the agent...
 };

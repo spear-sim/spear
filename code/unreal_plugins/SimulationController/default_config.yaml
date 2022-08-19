@@ -28,6 +28,7 @@ SIMULATION_CONTROLLER:
     OBSTACLE_IGNORE_ACTOR_NAMES: []
 
   IMITATION_LEARNING_TASK:
+    TRAJECTORY_FOLDER: "/home/quentin/Desktop/ISL/interiorsim/code/experiments/rl_openbot/imitation_learning/Trajectories/"
     RANDOM_SPAWN_TRAJ: True
     AGENT_ACTOR_NAME: ""
     GOAL_ACTOR_NAME: ""
