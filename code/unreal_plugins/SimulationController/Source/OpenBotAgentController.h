@@ -9,7 +9,6 @@
 #include <NavigationSystem.h>
 
 #include <AgentController.h>
-#include <DefaultGoalActor.h>
 
 class AActor;
 class USceneCaptureComponent2D;

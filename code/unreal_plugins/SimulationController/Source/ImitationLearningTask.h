@@ -12,7 +12,6 @@
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
 #include <NavigationSystem.h>
-#include <DefaultGoalActor.h>
 
 #include <Task.h>
 
@@ -44,7 +43,7 @@ public:
 private:
 
     // Rebuild the navigation mesh of the agent
-    void rebuildNavMesh();
+    void buildNavMesh();
 
     // Get an initial and target positions from a parameter file 
     void getPositionsFromParameterFile();

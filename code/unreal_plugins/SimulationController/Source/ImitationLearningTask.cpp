@@ -39,7 +39,10 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         std::string goal_name = "GoalActor";
         goal_spawn_params.Name = FName(goal_name.c_str());
         goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-        goal_actor_ = world->SpawnActor<ADefaultGoalActor>(ADefaultGoalActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
+        goal_actor_ = world->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
+        USceneComponent* SceneComponent = NewObject<USceneComponent>(goal_actor_);
+	    SceneComponent->SetMobility(EComponentMobility::Movable);
+        goal_actor_->SetRootComponent(SceneComponent);
         ASSERT(goal_actor_);
     }
 
@@ -78,7 +81,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     world_to_meters_ = agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
     // Rebuild navigation mesh with the desired properties before executing trajectory planning
-    rebuildNavMesh();
+    buildNavMesh();
 }
 
 ImitationLearningTask::~ImitationLearningTask()
@@ -215,7 +218,7 @@ void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* oth
     }
 }
 
-void ImitationLearningTask::rebuildNavMesh()
+void ImitationLearningTask::buildNavMesh()
 {
     ASSERT(nav_sys_ != nullptr);
     ASSERT(nav_mesh_ != nullptr);
@@ -605,7 +608,7 @@ bool ImitationLearningTask::sampleRandomTrajectory()
 FBox ImitationLearningTask::getWorldBoundingBox(bool scale_ceiling)
 {
     FBox box(ForceInit);
-    
+
     for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
 
         if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
