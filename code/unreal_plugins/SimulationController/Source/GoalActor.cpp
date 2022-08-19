@@ -1,6 +1,6 @@
-#include <DefaultGoalActor.h>
+#include <GoalActor.h>
 
-ADefaultGoalActor::ADefaultGoalActor(const FObjectInitializer& ObjectInitializer) :
+AGoalActor::AGoalActor(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = false;
