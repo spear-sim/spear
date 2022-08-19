@@ -1,19 +1,12 @@
 #pragma once
 
-#include <iterator>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <string>
-
 #include <Engine/EngineTypes.h>
 #include <Math/RandomStream.h>
+#include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
-#include <NavigationSystem.h>
 
-#include <Task.h>
+#include "Task.h"
 
 class AActor;
 class UWorld;

@@ -1,4 +1,4 @@
-#include <OpenBotAgentController.h>
+#include "OpenBotAgentController.h"
 
 #include <algorithm>
 #include <map>
@@ -16,13 +16,13 @@
 #include <SimpleWheeledVehicleMovementComponent.h>
 #include <UObject/UObjectGlobals.h>
 
-#include <PIPCamera.h>
-#include <SimpleVehicle/SimpleVehiclePawn.h>
+#include "PIPCamera.h"
+#include "SimpleVehicle/SimpleVehiclePawn.h"
 
-#include <Assert.h>
-#include <Box.h>
-#include <Config.h>
-#include <Serialize.h>
+#include "Assert.h"
+#include "Box.h"
+#include "Config.h"
+#include "Serialize.h"
 
 OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
@@ -115,9 +115,6 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
 
     // Environment scaling factor
     world_to_meters_ = agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
-
-    // Rebuild navigation mesh with the desired properties before executing trajectory planning
-    rebuildNavMesh();
 }
 
 OpenBotAgentController::~OpenBotAgentController()
@@ -426,42 +423,6 @@ bool OpenBotAgentController::isReady() const
     
 
     return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
-}
-
-void OpenBotAgentController::rebuildNavMesh()
-{
-    ASSERT(nav_sys_ != nullptr);
-    ASSERT(nav_mesh_ != nullptr);
-
-    // Set the navigation mesh properties:
-    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_RADIUS"});
-    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_HEIGHT"});
-    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_SIZE"});
-    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_HEIGHT"});
-    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_SLOPE"});
-    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
-    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MERGE_REGION_SIZE"});
-    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
-    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
-
-    // Bounding box around the appartment (in the world coordinate system)
-    FBox environment_bounds = getWorldBoundingBox();
-
-    // Dynamic update navMesh location and size:
-    ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
-    for (TActorIterator<ANavMeshBoundsVolume> it(agent_actor_->GetWorld()); it; ++it) {
-        nav_meshbounds_volume = *it;
-    }
-    ASSERT(nav_meshbounds_volume != nullptr);
-
-    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable); // Hack
-    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);      // Place the navmesh at the center of the map
-    nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
-    nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
-    nav_sys_->OnNavigationBoundsUpdated(nav_meshbounds_volume);
-    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
-
-    nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 }
 
 bool OpenBotAgentController::generateTrajectoryToTarget()

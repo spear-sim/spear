@@ -4,11 +4,11 @@
 #include <string>
 #include <vector>
 
+#include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
-#include <NavigationSystem.h>
 
-#include <AgentController.h>
+#include "AgentController.h"
 
 class AActor;
 class USceneCaptureComponent2D;
@@ -34,9 +34,6 @@ public:
 
 private:
 
-    // Rebuild the navigation mesh of the agent
-    void rebuildNavMesh();
-
     // Generate a collision-free trajectory between an initial and a target location.
     // Returns true if successful.
     bool generateTrajectoryToTarget();
@@ -61,7 +58,5 @@ private:
     TArray<FNavPathPoint> path_points_; // An array containing the different waypoints to be followed by the agent
     float trajectory_length_;           // Approximate length of the trajctory between agent_initial_position_ and agent_goal_position_
     float world_to_meters_;             // Scaling factor of the environment
-    bool initial_point_generated_ = false; 
-    bool target_point_generated_ = false; 
     unsigned int index_path_point_ = 1; // Because index 0 is the initial position of the agent...
 };
