@@ -221,15 +221,15 @@ void ImitationLearningTask::buildNavMesh()
     ASSERT(nav_mesh_ != nullptr);
 
     // Set the navigation mesh properties:
-    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_RADIUS"});
-    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_HEIGHT"});
-    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_SIZE"});
-    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "CELL_HEIGHT"});
-    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_SLOPE"});
-    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
-    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MERGE_REGION_SIZE"});
-    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
-    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
+    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_RADIUS"});
+    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_HEIGHT"});
+    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "CELL_SIZE"});
+    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "CELL_HEIGHT"});
+    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_MAX_SLOPE"});
+    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "MERGE_REGION_SIZE"});
+    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
+    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
 
     // Bounding box around the appartment (in the world coordinate system)
     FBox environment_bounds = getWorldBoundingBox();
@@ -270,7 +270,7 @@ bool ImitationLearningTask::generateTrajectoryFromPredefinedFilePositions()
     path_points_.Empty();
 
     // Create an input filestream
-    std::ifstream trajectory_pairs_file(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_TRAJECTORY_PAIRS"}));
+    std::ifstream trajectory_pairs_file(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "PATH_TRAJECTORY_PAIRS"}));
     ASSERT(trajectory_pairs_file.is_open());
 
     // Read file data, line by line in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z"
@@ -412,13 +412,13 @@ bool ImitationLearningTask::generateTrajectoryFromSamplingRandomPositions()
     ASSERT(nav_sys_ != nullptr);
 
     // Path generation polling to get "interesting" paths in every experiment:
-    while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "NAVIGATION", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
+    while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
     {
         // Get a random initial point:
         ASSERT(nav_sys_->GetRandomPoint(init_location, nav_data_) == true);
 
         // Get a random reachable target point, to be reached by the agent from init_location.Location:
-        ASSERT(nav_sys_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "TARGET_RADIUS"}), target_location));
+        ASSERT(nav_sys_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TARGET_RADIUS"}), target_location));
 
         // Update relative position between the agent and its new target:
         relative_position_to_target.X = (target_location.Location - init_location.Location).X;
@@ -440,7 +440,7 @@ bool ImitationLearningTask::generateTrajectoryFromSamplingRandomPositions()
 
             // Compute a path metric to evaluate its complexity and determine if it can be used for training purposes
             number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
-            path_criterion = relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_DIST"}) + number_of_way_points * relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_WEIGHT_NUM_WAYPOINTS"});
+            path_criterion = relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "PATH_WEIGHT_DIST"}) + number_of_way_points * relative_position_to_target.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "PATH_WEIGHT_NUM_WAYPOINTS"});
 
             if (best_path_criterion <= path_criterion) {
                 best_path_criterion = path_criterion;
