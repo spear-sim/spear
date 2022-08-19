@@ -5,7 +5,7 @@ AGoalActor::AGoalActor(const FObjectInitializer& ObjectInitializer) :
 {
 	PrimaryActorTick.bCanEverTick = false;
 	
-	Scene = ObjectInitializer.CreateDefaultSubobject<USceneComponent>(this, TEXT("Scene"));
-	Scene->SetMobility(EComponentMobility::Movable);
-	SetRootComponent(Scene);
+	SceneComponent = ObjectInitializer.CreateDefaultSubobject<USceneComponent>(this, TEXT("Scene"));
+	SceneComponent->SetMobility(EComponentMobility::Movable);
+	SetRootComponent(SceneComponent);
 }

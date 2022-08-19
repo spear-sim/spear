@@ -15,6 +15,6 @@ public:
 	AGoalActor(const FObjectInitializer& ObjectInitializer);
 	
 	UPROPERTY()
-	class USceneComponent* Scene;
+	class USceneComponent* SceneComponent;
 	
 };
