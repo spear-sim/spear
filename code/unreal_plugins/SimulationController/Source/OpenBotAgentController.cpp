@@ -32,7 +32,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
             ASSERT(agent_actor_);
-        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}) or actor_name == "Dummy_goal" ){
+        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}) or actor_name == "GoalActor" ){
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
             ASSERT(goal_actor_);
