@@ -52,12 +52,6 @@ private:
     // Returns true if successful.
     bool generateTrajectoryToTarget();
 
-    // From a given initial position, generate a random reachable target point as well as a collision-free trajectory between them.
-    // Multiple target points as well as the trajectories between the initial and target points are generated and evaluated. 
-    // Only the best pair of target point / trajectory is kept.
-    // Returns true if successful.
-    bool sampleTrajectoryToRandomTarget();
-
     // Generate a pair of random (initial point - reachable target point) as well as a collision-free trajectory between them.
     // Multiple pairs of (initial point - reachable target point) as well as trajectories between them are generated and evaluated. 
     // Only the best pair is kept.
