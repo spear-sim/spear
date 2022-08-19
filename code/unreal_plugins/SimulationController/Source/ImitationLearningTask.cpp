@@ -188,7 +188,7 @@ void ImitationLearningTask::reset()
     } else {
 
         // Predefined initial position:
-        getPositionsFromParameterFile();
+        getPositionsFromFile();
 
         // Trajectory planning:
         generateTrajectoryToTarget();
@@ -256,7 +256,7 @@ void ImitationLearningTask::buildNavMesh()
     nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 }
 
-void ImitationLearningTask::getPositionsFromParameterFile()
+void ImitationLearningTask::getPositionsFromFile()
 {
     number_start_goal_pairs_ = 0;
     std::string line;

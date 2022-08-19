@@ -46,7 +46,7 @@ private:
     void buildNavMesh();
 
     // Get an initial and target positions from a parameter file 
-    void getPositionsFromParameterFile();
+    void getPositionsFromFile();
 
     // Generate a collision-free trajectory between an initial and a target location.
     // Returns true if successful.
