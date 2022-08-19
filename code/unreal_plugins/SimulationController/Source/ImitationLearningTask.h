@@ -45,18 +45,15 @@ private:
     // Rebuild the navigation mesh of the agent
     void buildNavMesh();
 
-    // Get an initial and target positions from a parameter file 
-    void getPositionsFromFile();
-
-    // Generate a collision-free trajectory between an initial and a target location.
+    // Generate a collision-free trajectory between an initial and a target location imported from a parameter file.
     // Returns true if successful.
-    bool generateTrajectoryToTarget();
+    bool generateTrajectoryFromPredefinedFilePositions();
 
     // Generate a pair of random (initial point - reachable target point) as well as a collision-free trajectory between them.
     // Multiple pairs of (initial point - reachable target point) as well as trajectories between them are generated and evaluated. 
     // Only the best pair is kept.
     // Returns true if successful.
-    bool getPositionsFromSamplingCandidateTrajectories();
+    bool getTrajectoryFromSamplingRandomPositions();
 
     // Get the World bounding box dimensions
     FBox getWorldBoundingBox(bool scale_ceiling = true);
@@ -84,8 +81,6 @@ private:
     TArray<FNavPathPoint> path_points_; // An array containing the different waypoints to be followed by the agent
     float trajectory_length_;           // Approximate length of the trajctory between agent_initial_position_ and agent_goal_position_
     float world_to_meters_;             // Scaling factor of the environment
-    bool initial_point_generated_ = false; 
-    bool target_point_generated_ = false; 
     unsigned int trajectory_index_ = 0;          // Index of the pair 
     unsigned int number_start_goal_pairs_ = 0;  // Number of pairs of start/stop points
 };

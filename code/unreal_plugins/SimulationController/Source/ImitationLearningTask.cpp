@@ -179,27 +179,24 @@ void ImitationLearningTask::reset()
 
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
 
-        // Trajectory planning:
-        getPositionsFromSamplingCandidateTrajectories();
+        // Trajectory planning between randomly sampled initial/final positions:
+        ASSERT(getPositionsFromSamplingCandidateTrajectories());
 
-        // Set agent and goal positions:
-        agent_actor_->SetActorLocation(agent_initial_position_.at(0), sweep, hit_result_info, ETeleportType::ResetPhysics);
-        goal_actor_->SetActorLocation(agent_goal_position_.at(0), sweep, hit_result_info, ETeleportType::ResetPhysics);
+        // Reset trajectory index:
+        trajectory_index_ = 0;
+        
     } else {
 
-        // Predefined initial position:
-        getPositionsFromFile();
-
-        // Trajectory planning:
-        generateTrajectoryToTarget();
-
-        // Set agent and goal positions:
-        agent_actor_->SetActorLocation(agent_initial_position_.at(trajectory_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
-        goal_actor_->SetActorLocation(agent_goal_position_.at(trajectory_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
+        // Trajectory planning using predefined initial position:
+        ASSERT(generateTrajectoryFromPredefinedFilePositions()); 
 
         // Iterate in the list of initial/final positions:
         trajectory_index_++;
     }
+
+    // Set agent and goal positions:
+    agent_actor_->SetActorLocation(agent_initial_position_.at(trajectory_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
+    goal_actor_->SetActorLocation(agent_goal_position_.at(trajectory_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
 }
 
 bool ImitationLearningTask::isReady() const
@@ -256,7 +253,7 @@ void ImitationLearningTask::buildNavMesh()
     nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 }
 
-void ImitationLearningTask::getPositionsFromFile()
+bool ImitationLearningTask::generateTrajectoryFromPredefinedFilePositions()
 {
     number_start_goal_pairs_ = 0;
     std::string line;
@@ -264,6 +261,13 @@ void ImitationLearningTask::getPositionsFromFile()
     float value = 0.0f;
     int column_index = 0;
     FVector init, goal;
+    bool status = false;
+    int number_of_way_points = 0;
+    FNavLocation target_location;
+    FVector2D relative_position_to_target(0.0f, 0.0f);
+    FPathFindingQuery nav_query;
+    FPathFindingResult collision_free_path;
+    path_points_.Empty();
 
     // Create an input filestream
     std::ifstream trajectory_pairs_file(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "NAVIGATION", "PATH_TRAJECTORY_PAIRS"}));
@@ -324,24 +328,9 @@ void ImitationLearningTask::getPositionsFromFile()
     // Close file
     trajectory_pairs_file.close();
 
-    initial_point_generated_ = true;
-    target_point_generated_ = true;
-}
-
-bool ImitationLearningTask::generateTrajectoryToTarget()
-{
-    bool status = false;
-    int number_of_way_points = 0;
-    FNavLocation target_location;
-    FVector2D relative_position_to_target(0.0f, 0.0f);
-    FPathFindingQuery nav_query;
-    FPathFindingResult collision_free_path;
-    path_points_.Empty();
-
     // Sanity checks
     ASSERT(nav_data_ != nullptr);
     ASSERT(nav_sys_ != nullptr);
-    ASSERT(initial_point_generated_ and target_point_generated_);
     ASSERT(trajectory_index_ < number_start_goal_pairs_);
 
     // Update relative position between the agent and its new target:
@@ -484,12 +473,9 @@ bool ImitationLearningTask::getPositionsFromSamplingCandidateTrajectories()
 
     ASSERT(path_points_.Num() > 1);
 
-    // Update the goal position
+    // Update positions
     agent_initial_position_.at(0) = best_init_location.Location;
-    initial_point_generated_ = true;
-
     agent_goal_position_.at(0) = best_target_location.Location;
-    target_point_generated_ = true;
 
     // Scaling to meters
     trajectory_length_ /= world_to_meters_;
