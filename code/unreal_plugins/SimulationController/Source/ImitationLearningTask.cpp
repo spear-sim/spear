@@ -23,13 +23,11 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
             ASSERT(agent_actor_);
-        }
-        else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) and Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
+        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) and Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
             ASSERT(goal_actor_);
-        }
-        else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
+        } else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
             obstacle_ignore_actors_.emplace_back(*actor_itr);
             std::cout << "actor_name: " << actor_name << std::endl;
         }
@@ -124,11 +122,9 @@ float ImitationLearningTask::getReward() const
 
     if (hit_goal_) {
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_GOAL"});
-    }
-    else if (hit_obstacle_) {
+    } else if (hit_obstacle_) {
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_OBSTACLE"});
-    }
-    else {
+    } else {
         const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
         reward = -agent_to_goal.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
     }
@@ -186,8 +182,7 @@ void ImitationLearningTask::reset()
         // Set agent and goal positions:
         agent_actor_->SetActorLocation(agent_initial_position_.at(0), sweep, hit_result_info, ETeleportType::ResetPhysics);
         goal_actor_->SetActorLocation(agent_goal_position_.at(0), sweep, hit_result_info, ETeleportType::ResetPhysics);
-    }
-    else {
+    } else {
 
         // Predefined initial position:
         getPositionsFromParameterFile();
@@ -215,8 +210,7 @@ void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* oth
 
     if (other_actor == goal_actor_) {
         hit_goal_ = true;
-    }
-    else if (std::find(obstacle_ignore_actors_.begin(), obstacle_ignore_actors_.end(), other_actor) == obstacle_ignore_actors_.end()) {
+    } else if (std::find(obstacle_ignore_actors_.begin(), obstacle_ignore_actors_.end(), other_actor) == obstacle_ignore_actors_.end()) {
         hit_obstacle_ = true;
     }
 }
@@ -242,6 +236,7 @@ void ImitationLearningTask::rebuildNavMesh()
 
     // Dynamic update navMesh location and size:
     ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
+    
     for (TActorIterator<ANavMeshBoundsVolume> it(agent_actor_->GetWorld()); it; ++it) {
         nav_meshbounds_volume = *it;
     }
@@ -371,6 +366,7 @@ bool ImitationLearningTask::generateTrajectoryToTarget()
         std::cout << "Target distance: " << relative_position_to_target.Size() / world_to_meters_ << "m" << std::endl;
 
         trajectory_length_ = 0.0;
+
         for (size_t i = 0; i < number_of_way_points - 1; i++) {
             trajectory_length_ += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
         }
@@ -390,9 +386,11 @@ bool ImitationLearningTask::generateTrajectoryToTarget()
     std::cout << "Reachable position: [" << agent_goal_position_.at(trajectory_index_).X << ", " << agent_goal_position_.at(trajectory_index_).Y << ", " << agent_goal_position_.at(trajectory_index_).Z << "]." << std::endl;
     std::cout << "-----------------------------------------------------------" << std::endl;
     std::cout << "Way points: " << std::endl;
+
     for (auto wayPoint : path_points_) {
         std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
     }
+
     std::cout << "-----------------------------------------------------------" << std::endl;
 
     return status;
@@ -485,9 +483,11 @@ bool ImitationLearningTask::sampleTrajectoryToRandomTarget()
     std::cout << "Reachable position: [" << agent_goal_position_.at(trajectory_index_).X << ", " << agent_goal_position_.at(trajectory_index_).Y << ", " << agent_goal_position_.at(trajectory_index_).Z << "]." << std::endl;
     std::cout << "-----------------------------------------------------------" << std::endl;
     std::cout << "Way points: " << std::endl;
+
     for (auto wayPoint : path_points_) {
         std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
     }
+
     std::cout << "-----------------------------------------------------------" << std::endl;
 
     return status;
@@ -564,7 +564,9 @@ bool ImitationLearningTask::sampleRandomTrajectory()
                 }
                 std::cout << "Path length " << trajectory_length_ / world_to_meters_ << "m" << std::endl;
             }
+
             number_iterations++;
+
             if (number_iterations % 1000 == 0) {
                 std::cout << ".";
             }
@@ -590,9 +592,11 @@ bool ImitationLearningTask::sampleRandomTrajectory()
     std::cout << "Reachable position: [" << agent_goal_position_.at(0).X << ", " << agent_goal_position_.at(0).Y << ", " << agent_goal_position_.at(0).Z << "]." << std::endl;
     std::cout << "-----------------------------------------------------------" << std::endl;
     std::cout << "Way points: " << std::endl;
+
     for (auto wayPoint : path_points_) {
         std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
     }
+
     std::cout << "-----------------------------------------------------------" << std::endl;
 
     return status;
@@ -601,10 +605,15 @@ bool ImitationLearningTask::sampleRandomTrajectory()
 FBox ImitationLearningTask::getWorldBoundingBox(bool scale_ceiling)
 {
     FBox box(ForceInit);
+    
     for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
+
         if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
+
             box += it->GetComponentsBoundingBox(false, true);
+
         }
+
     }
     // Remove ceiling
     return !scale_ceiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
