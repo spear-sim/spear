@@ -464,18 +464,6 @@ void OpenBotAgentController::rebuildNavMesh()
     nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 }
 
-void OpenBotAgentController::updateInitialPositionFromParameterFile()
-{
-    // TODO: import from csv
-    initial_point_generated_ = true;
-}
-
-void OpenBotAgentController::updateTargetPositionFromParameterFile()
-{
-    // TODO: import from csv
-    target_point_generated_ = true;
-}
-
 bool OpenBotAgentController::generateTrajectoryToTarget()
 {
     bool status = false;

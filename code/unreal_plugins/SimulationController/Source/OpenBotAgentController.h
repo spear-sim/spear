@@ -38,12 +38,6 @@ private:
     // Rebuild the navigation mesh of the agent
     void rebuildNavMesh();
 
-    // Get an initial position for the agent from a parameter file 
-    void updateInitialPositionFromParameterFile();
-
-    // Get an initial position for the agent from a parameter file 
-    void updateTargetPositionFromParameterFile();
-
     // Generate a collision-free trajectory between an initial and a target location.
     // Returns true if successful.
     bool generateTrajectoryToTarget();
