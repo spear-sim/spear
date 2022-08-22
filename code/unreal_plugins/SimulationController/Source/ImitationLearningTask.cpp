@@ -38,7 +38,9 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         }
     }
 
-    if (!goal_actor_) {
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
+        ASSERT(goal_actor_);
+    } else {
         FActorSpawnParameters goal_spawn_params;
         std::string goal_name = "GoalActor";
         goal_spawn_params.Name = FName(goal_name.c_str());
@@ -49,6 +51,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         goal_actor_->SetRootComponent(SceneComponent);
         ASSERT(goal_actor_);
     }
+    
 
     // Read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SEED"}));
