@@ -42,8 +42,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         ASSERT(goal_actor_);
     } else {
         FActorSpawnParameters goal_spawn_params;
-        std::string goal_name = "GoalActor";
-        goal_spawn_params.Name = FName(goal_name.c_str());
+        goal_spawn_params.Name = FName("GoalActor");
         goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
         goal_actor_ = world->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
         USceneComponent* SceneComponent = NewObject<USceneComponent>(goal_actor_);
@@ -128,17 +127,7 @@ void ImitationLearningTask::endFrame()
 
 float ImitationLearningTask::getReward() const
 {
-    float reward;
-
-    if (hit_goal_) {
-        reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_GOAL"});
-    } else if (hit_obstacle_) {
-        reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "HIT_OBSTACLE"});
-    } else {
-        const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
-        reward = -agent_to_goal.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
-    }
-    return reward;
+    return -std::numeric_limits<float>::infinity();
 }
 
 bool ImitationLearningTask::isEpisodeDone() const
