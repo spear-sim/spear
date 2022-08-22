@@ -38,15 +38,13 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         }
     }
 
-    if (!goal_actor_ and Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) == "") {
-        ASSERT(!goal_actor_);
+    if (!goal_actor_) {
         FActorSpawnParameters goal_spawn_params;
-        std::string goal_name = "GoalActor";
-        goal_spawn_params.Name = FName(goal_name.c_str());
+        goal_spawn_params.Name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"});
         goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
         goal_actor_ = world->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
         USceneComponent* SceneComponent = NewObject<USceneComponent>(goal_actor_);
-	    SceneComponent->SetMobility(EComponentMobility::Movable);
+        SceneComponent->SetMobility(EComponentMobility::Movable);
         goal_actor_->SetRootComponent(SceneComponent);
         ASSERT(goal_actor_);
     }
