@@ -35,11 +35,7 @@ public:
 private:
 
     // Generate a collision-free trajectory between an initial and a target location.
-    // Returns true if successful.
-    bool generateTrajectoryToTarget();
-
-    // Get the World bounding box dimensions
-    FBox getWorldBoundingBox(bool scale_ceiling = true);
+    void generateTrajectoryToTarget();
 
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;

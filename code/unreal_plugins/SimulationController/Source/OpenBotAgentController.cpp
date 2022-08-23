@@ -422,9 +422,8 @@ bool OpenBotAgentController::isReady() const
     return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
 }
 
-bool OpenBotAgentController::generateTrajectoryToTarget()
+void OpenBotAgentController::generateTrajectoryToTarget()
 {
-    bool status = false;
     int number_of_way_points = 0;
     FNavLocation target_location;
     FVector2D relative_position_to_target(0.0f, 0.0f);
@@ -476,9 +475,6 @@ bool OpenBotAgentController::generateTrajectoryToTarget()
         // Scaling to meters
         trajectory_length /= agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
-        // Update status
-        status = true;
-
         std::cout << "Path length " << trajectory_length << "m" << std::endl;
     }
     
@@ -494,18 +490,4 @@ bool OpenBotAgentController::generateTrajectoryToTarget()
         std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
     }
     std::cout << "-----------------------------------------------------------" << std::endl;
-
-    return status;
-}
-
-FBox OpenBotAgentController::getWorldBoundingBox(bool scale_ceiling)
-{
-    FBox box(ForceInit);
-    for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
-        if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
-            box += it->GetComponentsBoundingBox(false, true);
-        }
-    }
-    // Remove ceiling
-    return !scale_ceiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
 }

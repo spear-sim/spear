@@ -47,9 +47,6 @@ private:
     // Returns true if successful.
     void getPositionsFromTrajectorySampling();
 
-    // Get the World bounding box dimensions
-    FBox getWorldBoundingBox(bool scale_ceiling = true);
-
     mutable bool hit_goal_ = false;
     bool hit_obstacle_ = false;
 

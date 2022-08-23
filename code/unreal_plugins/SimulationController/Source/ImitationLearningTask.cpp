@@ -221,7 +221,13 @@ void ImitationLearningTask::buildNavMesh()
     nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
 
     // Bounding box around the appartment (in the world coordinate system)
-    FBox environment_bounds = getWorldBoundingBox();
+    FBox box(ForceInit);
+    for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
+        if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
+            box += it->GetComponentsBoundingBox(false, true);
+        }
+    }
+    FBox environment_bounds = box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z)); // Remove ceiling
 
     // Dynamic update navMesh location and size:
     ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
@@ -309,6 +315,23 @@ void ImitationLearningTask::getPositionsFromFile()
     // Close file
     trajectory_pairs_file.close();
 
+
+    // std::ifstream fs(trajectory_pairs_file(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_FOLDER"})+"InitGoalAgentPositions_" + map_id.substr(map_id.size() - 9) + ".csv"); // MAP_IDs are described by a sequence of 9 integers);
+    // std::string line;
+    // std::getline(fs, line); // get csv header
+    // ASSERT(fs);
+    // while (std::getline(fs, line)) {
+    //     std::istringstream ss(line);
+    //     std::string token;
+    //     std::getline(ss, token, ','); assert(ss); auto semantic_id      = std::stoi(token);
+    //     std::getline(ss, token, ','); assert(ss); auto semantic_name    = string_trim(token);
+    //     std::getline(ss, token, ','); assert(ss); auto semantic_color_r = std::stoi(token);
+    //     std::getline(ss, token, ','); assert(ss); auto semantic_color_g = std::stoi(token);
+    //     std::getline(ss, token, ','); assert(ss); auto semantic_color_b = std::stoi(token);
+
+    //     g_semantic_descs.insert({semantic_id, {semantic_name, {semantic_color_r,semantic_color_g,semantic_color_b}}});
+    // }
+
     // Initialize trajectory index
     trajectory_index_ = 0;
 }
@@ -335,8 +358,8 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     ASSERT(nav_sys_ != nullptr);
 
     // Path generation polling to get "interesting" paths in every experiment:
-    while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "MAX_ITER_REPLAN"})) // Try to generate interesting trajectories with multiple waypoints
-    {
+    while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "MAX_ITER_REPLAN"})) { // Try to generate interesting trajectories with multiple waypoints
+
         // Get a random initial point:
         ASSERT(nav_sys_->GetRandomPoint(init_location, nav_data_) == true);
 
@@ -409,16 +432,4 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     }
 
     std::cout << "-----------------------------------------------------------" << std::endl;
-}
-
-FBox ImitationLearningTask::getWorldBoundingBox(bool scale_ceiling)
-{
-    FBox box(ForceInit);
-    for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
-        if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
-            box += it->GetComponentsBoundingBox(false, true);
-        }
-    }
-    // Remove ceiling
-    return !scale_ceiling ? box : box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
 }
