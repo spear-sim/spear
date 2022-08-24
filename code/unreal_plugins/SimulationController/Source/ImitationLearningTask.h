@@ -34,17 +34,13 @@ public:
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
 private:
-    // Rebuild the navigation mesh of the agent
-    void buildNavMesh();
-
-    // Get a list of the different initial and final positions the agent is expected to navigate to. 
+    // Get a list of the different initial and final positions the agent is expected to navigate to.
     // Positions are in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z".
     void getPositionsFromFile();
 
     // Generate a pair of random (initial point - reachable target point) as well as a collision-free trajectory between them.
     // Multiple pairs of (initial point - reachable target point) as well as trajectories between them are generated and evaluated.
     // Only the best pair is kept.
-    // Returns true if successful.
     void getPositionsFromTrajectorySampling();
 
     mutable bool hit_goal_ = false;
@@ -67,5 +63,7 @@ private:
     ARecastNavMesh* nav_mesh_;
     std::vector<FVector> agent_initial_position_; // Initial position of the learning agent
     std::vector<FVector> agent_goal_position_;    // Goal position of the learning agent (should be the position of the goal agent)
-    unsigned int trajectory_index_ = 0;           // Index of the pair
+    std::vector<int> number_of_episodes_;         // Nuber of episodes for a given trajectory pair
+    unsigned int position_index_ = 0;             // Index of the trajectory pair
+    unsigned int episode_index_ = 0;             // Index of the trajectory pair
 };

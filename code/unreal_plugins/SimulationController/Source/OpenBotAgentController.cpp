@@ -112,6 +112,9 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
     // Get a pointer to the navigation mesh
     nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
     ASSERT(nav_mesh_ != nullptr);
+
+    // Rebuild navigation mesh with the desired properties before executing trajectory planning
+    buildNavMesh();
 }
 
 OpenBotAgentController::~OpenBotAgentController()
@@ -420,6 +423,55 @@ bool OpenBotAgentController::isReady() const
     
 
     return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
+}
+
+void OpenBotAgentController::buildNavMesh()
+{
+    ASSERT(nav_sys_ != nullptr);
+    ASSERT(nav_mesh_ != nullptr);
+
+    // Set the navigation mesh properties:
+    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
+    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
+    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "CELL_SIZE"});
+    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "CELL_HEIGHT"});
+    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_SLOPE"});
+    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "MERGE_REGION_SIZE"});
+    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
+    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
+
+    // Bounding box around the appartment (in the world coordinate system)
+    FBox box(ForceInit);
+    std::vector<std::string> world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "WORLD_BOUND_TAG_NAMES"});
+
+    for (TActorIterator<AActor> actor_itr(agent_actor_->GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) { 
+        
+        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
+        
+        if (std::find(world_bound_tag_names.begin(), world_bound_tag_names.end(), actor_name) != world_bound_tag_names.end()) { // it->ActorHasTag(
+            box += actor_itr->GetComponentsBoundingBox(false, true);
+        }
+    }
+    FBox environment_bounds = box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z)); // Remove ceiling
+
+    // Dynamic update navMesh location and size:
+    ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
+    
+    for (TActorIterator<ANavMeshBoundsVolume> it(agent_actor_->GetWorld()); it; ++it) {
+        nav_meshbounds_volume = *it;
+    }
+    ASSERT(nav_meshbounds_volume != nullptr);
+
+    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable); // Hack
+    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);      // Place the navmesh at the center of the map
+    std::cout << "environment_bounds: X: " << environment_bounds.GetCenter().X << ", Y: " << environment_bounds.GetCenter().Y << ", Z: " << environment_bounds.GetCenter().Z << std::endl;
+    nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
+    std::cout << "environment_bounds.GetSize(): X: " << environment_bounds.GetSize().X << ", Y: " << environment_bounds.GetSize().Y << ", Z: " << environment_bounds.GetSize().Z << std::endl;
+    nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
+    nav_sys_->OnNavigationBoundsUpdated(nav_meshbounds_volume);
+    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
 }
 
 void OpenBotAgentController::generateTrajectoryToTarget()

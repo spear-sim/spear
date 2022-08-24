@@ -50,7 +50,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         goal_actor_->SetRootComponent(SceneComponent);
         ASSERT(goal_actor_);
     }
-    
 
     // Read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SEED"}));
@@ -76,13 +75,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     ASSERT(actor_as_nav_agent != nullptr);
     nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
     ASSERT(nav_data_ != nullptr);
-
-    // Get a pointer to the navigation mesh
-    nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
-    ASSERT(nav_mesh_ != nullptr);
-
-    // Rebuild navigation mesh with the desired properties before executing trajectory planning
-    buildNavMesh();
 
     // If the start/goal positions are not randomly generated 
     if (not Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
@@ -167,9 +159,6 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
-    ASSERT(nav_sys_ != nullptr);
-    ASSERT(nav_data_ != nullptr);
-
     constexpr bool sweep = false;                    // Whether we sweep to the destination location, triggering overlaps along the way and stopping short of the target if blocked by something.
     constexpr FHitResult* hit_result_info = nullptr; // The hit result from the move if swept.
 
@@ -179,13 +168,24 @@ void ImitationLearningTask::reset()
         getPositionsFromTrajectorySampling();
 
         // Reset trajectory index:
-        trajectory_index_ = 0;
+        position_index_ = 0;
+        episode_index_ = 0;
     } 
 
     // Set agent and goal positions:
-    agent_actor_->SetActorLocation(agent_initial_position_.at(trajectory_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
-    goal_actor_->SetActorLocation(agent_goal_position_.at(trajectory_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
-    trajectory_index_++;
+    agent_actor_->SetActorLocation(agent_initial_position_.at(position_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
+    goal_actor_->SetActorLocation(agent_goal_position_.at(position_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
+    
+    if (episode_index_ < number_of_episodes_(position_index_)){ // If the desired number of repetitions for a given trajectory has not been reached
+        episode_index_++;   // Iterate number of episodes
+    } else {
+        episode_index_ = 0; // Reset number of episodes
+        if (position_index_ < agent_goal_position_.size()-1){ 
+            position_index_++; // Move to the next pair of points (if available)
+        }  else { 
+            position_index_ = 0; // wrap around
+        }
+    }
 }
 
 bool ImitationLearningTask::isReady() const
@@ -204,136 +204,39 @@ void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* oth
     }
 }
 
-void ImitationLearningTask::buildNavMesh()
-{
-    ASSERT(nav_sys_ != nullptr);
-    ASSERT(nav_mesh_ != nullptr);
-
-    // Set the navigation mesh properties:
-    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_RADIUS"});
-    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_HEIGHT"});
-    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "CELL_SIZE"});
-    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "CELL_HEIGHT"});
-    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_MAX_SLOPE"});
-    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
-    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "MERGE_REGION_SIZE"});
-    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "MIN_REGION_AREA"}); // ignore region that are too small
-    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
-
-    // Bounding box around the appartment (in the world coordinate system)
-    FBox box(ForceInit);
-    for (TActorIterator<AActor> it(agent_actor_->GetWorld()); it; ++it) {
-        if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
-            box += it->GetComponentsBoundingBox(false, true);
-        }
-    }
-    FBox environment_bounds = box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z)); // Remove ceiling
-
-    // Dynamic update navMesh location and size:
-    ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
-    
-    for (TActorIterator<ANavMeshBoundsVolume> it(agent_actor_->GetWorld()); it; ++it) {
-        nav_meshbounds_volume = *it;
-    }
-    ASSERT(nav_meshbounds_volume != nullptr);
-
-    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable); // Hack
-    nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);      // Place the navmesh at the center of the map
-    std::cout << "environment_bounds: X: " << environment_bounds.GetCenter().X << ", Y: " << environment_bounds.GetCenter().Y << ", Z: " << environment_bounds.GetCenter().Z << std::endl;
-    nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
-    std::cout << "environment_bounds.GetSize(): X: " << environment_bounds.GetSize().X << ", Y: " << environment_bounds.GetSize().Y << ", Z: " << environment_bounds.GetSize().Z << std::endl;
-    nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
-    nav_sys_->OnNavigationBoundsUpdated(nav_meshbounds_volume);
-    nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
-    nav_sys_->Build(); // Rebuild NavMesh, required for update AgentRadius
-}
-
 void ImitationLearningTask::getPositionsFromFile()
 {
     std::string line;
-    std::string field;
-    float value = 0.0f;
-    int column_index = 0;
+    std::string token;
     FVector init, goal;
+    int episodes;
 
-    // Create an input filestream
-    std::string map_id = Config::getValue<std::string>({"INTERIORSIM", "MAP_ID"}); 
-    std::ifstream trajectory_pairs_file(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_FOLDER"})+"InitGoalAgentPositions_" + map_id.substr(map_id.size() - 9) + ".csv"); // MAP_IDs are described by a sequence of 9 integers
-    ASSERT(trajectory_pairs_file.is_open());
+    // Create an input filestream 
+    std::ifstream fs(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_FILE"})); 
+    ASSERT(fs.is_open());
 
-    // Read file data, line by line in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z"
-    std::getline(trajectory_pairs_file, line); // The first line contains the names of the fields
-
-    while (std::getline(trajectory_pairs_file, line)) {
-
-        // Extract coordinates
-        std::istringstream line_stream(line);
-        while (std::getline(line_stream, field, ',')) {
-
-            value = std::stof(field);
-
-            switch (column_index) {
-            case 0:
-                init.X = value;
-                break;
-
-            case 1:
-                init.Y = value;
-                break;
-
-            case 2:
-                init.Z = value;
-                break;
-
-            case 3:
-                goal.X = value;
-                break;
-
-            case 4:
-                goal.Y = value;
-                break;
-
-            case 5:
-                goal.Z = value;
-                break;
-
-            default:
-                ASSERT(false);
-                break;
-            }
-
-            // Iterate in the columns
-            column_index++;
-        }
-        ASSERT(column_index == 6);
-
+    // Read file data, line by line in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z, episodes"
+    std::getline(fs, line); // get csv header
+    while (std::getline(fs, line)) {
+        std::istringstream ss(line);
+        std::getline(ss, token, ','); ASSERT(ss); auto init.X = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); auto init.Y = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); auto init.Z = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); auto goal.X = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); auto goal.Y = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); auto goal.Z = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); auto episodes = std::stoi(token);
         agent_initial_position_.push_back(init);
         agent_goal_position_.push_back(goal);
-        column_index = 0;
+        number_of_episodes_.push_back(episodes);
     }
 
     // Close file
-    trajectory_pairs_file.close();
-
-
-    // std::ifstream fs(trajectory_pairs_file(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_FOLDER"})+"InitGoalAgentPositions_" + map_id.substr(map_id.size() - 9) + ".csv"); // MAP_IDs are described by a sequence of 9 integers);
-    // std::string line;
-    // std::getline(fs, line); // get csv header
-    // ASSERT(fs);
-    // while (std::getline(fs, line)) {
-    //     std::istringstream ss(line);
-    //     std::string token;
-    //     std::getline(ss, token, ','); assert(ss); auto semantic_id      = std::stoi(token);
-    //     std::getline(ss, token, ','); assert(ss); auto semantic_name    = string_trim(token);
-    //     std::getline(ss, token, ','); assert(ss); auto semantic_color_r = std::stoi(token);
-    //     std::getline(ss, token, ','); assert(ss); auto semantic_color_g = std::stoi(token);
-    //     std::getline(ss, token, ','); assert(ss); auto semantic_color_b = std::stoi(token);
-
-    //     g_semantic_descs.insert({semantic_id, {semantic_name, {semantic_color_r,semantic_color_g,semantic_color_b}}});
-    // }
+    fs.close();
 
     // Initialize trajectory index
-    trajectory_index_ = 0;
+    position_index_ = 0;
+    episode_index_ = 0;
 }
 
 void ImitationLearningTask::getPositionsFromTrajectorySampling()

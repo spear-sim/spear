@@ -34,6 +34,9 @@ public:
 
 private:
 
+    // Rebuild the navigation mesh of the agent
+    void buildNavMesh();
+
     // Generate a collision-free trajectory between an initial and a target location.
     void generateTrajectoryToTarget();
 
