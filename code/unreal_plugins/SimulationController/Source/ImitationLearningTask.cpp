@@ -68,13 +68,13 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     // Agent Navigation:
     // Get a pointer to the navigation system
     nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-    ASSERT(nav_sys_ != nullptr);
+    ASSERT(nav_sys_);
 
     // Get a pointer to the agent's navigation data
     const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(agent_actor_);
-    ASSERT(actor_as_nav_agent != nullptr);
+    ASSERT(actor_as_nav_agent);
     nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
-    ASSERT(nav_data_ != nullptr);
+    ASSERT(nav_data_);
 
     // If the start/goal positions are not randomly generated 
     if (not Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
@@ -248,14 +248,14 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     TArray<FNavPathPoint> path_points;
 
     // Sanity checks
-    ASSERT(nav_data_ != nullptr);
-    ASSERT(nav_sys_ != nullptr);
+    ASSERT(nav_data_);
+    ASSERT(nav_sys_);
 
     // Path generation polling to get "interesting" paths in every experiment:
     while (number_iterations < Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "MAX_ITER_REPLAN"})) { // Try to generate interesting trajectories with multiple waypoints
 
         // Get a random initial point:
-        ASSERT(nav_sys_->GetRandomPoint(init_location, nav_data_) == true);
+        ASSERT(nav_sys_->GetRandomPoint(init_location, nav_data_));
 
         // Get a random reachable target point, to be reached by the agent from init_location.Location:
         ASSERT(nav_sys_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TARGET_RADIUS"}), target_location));

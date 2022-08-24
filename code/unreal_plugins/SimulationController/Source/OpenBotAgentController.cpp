@@ -102,17 +102,17 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
     // Agent Navigation:
     // Get a pointer to the navigation system
     nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-    ASSERT(nav_sys_ != nullptr);
+    ASSERT(nav_sys_);
 
     // Get a pointer to the agent's navigation data
     const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(simple_vehicle_pawn_);
-    ASSERT(actor_as_nav_agent != nullptr);
+    ASSERT(actor_as_nav_agent);
     nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
-    ASSERT(nav_data_ != nullptr);
+    ASSERT(nav_data_);
 
     // Get a pointer to the navigation mesh
     nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
-    ASSERT(nav_mesh_ != nullptr);
+    ASSERT(nav_mesh_);
 
     // Rebuild navigation mesh with the desired properties before executing trajectory planning
     buildNavMesh();
@@ -339,8 +339,8 @@ bool OpenBotAgentController::isReady() const
 
 void OpenBotAgentController::buildNavMesh()
 {
-    ASSERT(nav_sys_ != nullptr);
-    ASSERT(nav_mesh_ != nullptr);
+    ASSERT(nav_sys_);
+    ASSERT(nav_mesh_);
 
     // Set the navigation mesh properties:
     nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
@@ -373,7 +373,7 @@ void OpenBotAgentController::buildNavMesh()
     for (TActorIterator<ANavMeshBoundsVolume> it(simple_vehicle_pawn_->GetWorld()); it; ++it) {
         nav_meshbounds_volume = *it;
     }
-    ASSERT(nav_meshbounds_volume != nullptr);
+    ASSERT(nav_meshbounds_volume);
 
     nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable); // Hack
     nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);      // Place the navmesh at the center of the map
@@ -397,8 +397,8 @@ void OpenBotAgentController::generateTrajectoryToTarget()
     trajectory_.clear();
     
     // Sanity checks
-    ASSERT(nav_data_ != nullptr);
-    ASSERT(nav_sys_ != nullptr);
+    ASSERT(nav_data_);
+    ASSERT(nav_sys_);
     
     // Initial agent position
     ASSERT(simple_vehicle_pawn_);
