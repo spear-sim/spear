@@ -292,22 +292,23 @@ if __name__ == "__main__":
                     dt = 0.1
 
                     # XY position of the next waypoint in world frame:
-                    dXY = np.array([obs["physical_observation"][2], obs["physical_observation"][3]]) - desiredPositionXY
-                    desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
+                    # dXY = np.array([obs["physical_observation"][2], obs["physical_observation"][3]]) - desiredPositionXY
+                    # desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
 
                     # Current position and heading of the vehicle in world frame:
-                    dYaw = obs["physical_observation"][7] - actualPoseYawXY[0]
-                    actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y]
+                    # dYaw = obs["physical_observation"][7] - actualPoseYawXY[0]
+                    # actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y]
 
                     # Numerical diff:
                     linVelNorm = np.linalg.norm(dXY/dt)
                     yawVel = dYaw/dt
 
-                    action, waypointReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
+                    # action, waypointReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
 
                     # Send action to the agent and collect observations:
-                    obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1], index_waypoint]})
-
+                    obs, reward, done, info = env.step({"apply_voltage": [0.0, 0.0]})
+                    print(obs)
+                    assert False
                     # Fill an array with the different observations:
                     array_obs[i][0] = speedMultiplier*obs["physical_observation"][0] # ctrl left
                     array_obs[i][1] = speedMultiplier*obs["physical_observation"][1] # ctrl right
