@@ -75,10 +75,6 @@ SIMULATION_CONTROLLER:
     # "low_level_control" or "teleport"
     ACTION_MODE: "low_level_control"
     OBSERVATION_MODE: "mixed"
-    # - "full-pose" the observation vector is set to be the vehicle's x/y/z position concatenated with its roll/pitch/yaw angles in the world frame.
-    # - "dist-sin-cos" the observation vector is set to be the vehicle's distance to the goal, the cos and sin components of the relative yaw between the vehicle's front (x) axis and the vector connecting the vehicle to its goal
-    PHYSICAL_OBSERVATION_MODE: "full-pose"
-    GOAL_TRACKING_MODE: "trajectory"
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 1.0
     MIXED_MODE:

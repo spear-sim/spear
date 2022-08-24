@@ -54,6 +54,5 @@ private:
     ARecastNavMesh* nav_mesh_;
     FVector agent_initial_position_;    // Initial position of the learning agent
     FVector agent_goal_position_;       // Goal position of the learning agent (should be the position of the goal agent)
-    TArray<FNavPathPoint> path_points_; // An array containing the different waypoints to be followed by the agent
-    unsigned int index_path_point_ = 1; // Because index 0 is the initial position of the agent...
+    std::vector<float> serialized_trajectory_; // An array containing the different waypoints to be followed by the agent, converted into a serialized format X0, Y0, Z0, X1, Y1, Z1, ... Xn, Yn, Zn 
 };

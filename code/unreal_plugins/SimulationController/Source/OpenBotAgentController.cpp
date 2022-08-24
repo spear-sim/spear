@@ -151,13 +151,7 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
         box.low = -1.f;
         box.high = 1.f;
-        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "trajectory") {
-            box.shape = {3};
-        }
-        else {
-            box.shape = {2};
-        }
-
+        box.shape = {2};
         box.dtype = DataType::Float32;
         action_space["apply_voltage"] = std::move(box);
     }
@@ -189,18 +183,16 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
-        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
-            box.shape = {5};
-        }
-        else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
-            box.shape = {11};
-        }
-        else {
-            ASSERT(false);
-        }
-
         box.dtype = DataType::Float32;
-        observation_space["physical_observation"] = std::move(box);
+        
+        box.shape = {2};
+        observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
+
+        box.shape = {6};
+        observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
+
+        box.shape = {-1};
+        observation_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
 
         box.low = 0;
         box.high = 255;
@@ -213,17 +205,16 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
-        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
-            box.shape = {5};
-        }
-        else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
-            box.shape = {11};
-        }
-        else {
-            ASSERT(false);
-        }
         box.dtype = DataType::Float32;
-        observation_space["physical_observation"] = std::move(box);
+        
+        box.shape = {2};
+        observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
+
+        box.shape = {6};
+        observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
+
+        box.shape = {-1};
+        observation_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
     }
     else {
         ASSERT(false);
@@ -242,10 +233,6 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
         // @TODO: This can be checked in python?
         ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
         ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
-        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "trajectory") {
-            index_path_point_ = action.at("apply_voltage").at(2);
-        }
-
         vehicle_pawn->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
@@ -319,65 +306,11 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
     ASSERT(vehicle_pawn);
 
-    // Get relative position to the goal in the global coordinate system:
-    // FVector2D relative_position_to_goal;
-    // if (not Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"}).empty()) {
-    //     relative_position_to_goal = FVector2D((goal_actor_->GetActorLocation() - agent_current_location).X, (goal_actor_->GetActorLocation() - agent_current_location).Y);
-    // }
-    // else {
-    // FVector2D currentPathPoint = agent_navigation_->getCurrentPathPoint();
-    // relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
-    // }
+    Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
 
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "dist-sin-cos") {
-
-        // Compute robot forward axis (global coordinate system)
-        FVector forward_axis = FVector(1.f, 0.f, 0.f); // Front axis is the X axis.
-        FVector forward_axis_rotated = agent_current_orientation.RotateVector(forward_axis);
-
-        // TODO
-        FVector currentPathPoint = path_points_[index_path_point_].Location;
-        FVector2D relative_position_to_goal = FVector2D(currentPathPoint.X - agent_current_location.X, currentPathPoint.Y - agent_current_location.Y);
-
-        // Compute yaw in [rad]:
-        float delta_yaw = std::atan2f(forward_axis_rotated.Y, forward_axis_rotated.X) - std::atan2f(relative_position_to_goal.Y, relative_position_to_goal.X);
-
-        // Fit to range [-pi, pi]:
-        if (delta_yaw > PI) {
-            delta_yaw -= 2 * PI;
-        }
-        else if (delta_yaw <= -PI) {
-            delta_yaw += 2 * PI;
-        }
-
-        // Check the actual OpenBot code:
-        // https://github.com/isl-org/OpenBot/blob/7868c54742f8ba3df0ba2a886247a753df982772/android/app/src/main/java/org/openbot/pointGoalNavigation/PointGoalNavigationFragment.java#L103
-        float sin_yaw = std::sinf(delta_yaw);
-        float cos_yaw = std::cosf(delta_yaw);
-
-        // Fuses the actions received from the python client with those received from the keyboard interface (if this interface is activated in the settings.json file)
-        Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
-        observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), relative_position_to_goal.Size(), sin_yaw, cos_yaw});
-    }
-    else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "PHYSICAL_OBSERVATION_MODE"}) == "full-pose") {
-
-        FVector updatedPathPoint = path_points_[index_path_point_].Location;
-        FVector goalPathPoint = goal_actor_->GetActorLocation();
-        Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
-
-        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "trajectory") {
-            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), updatedPathPoint.X, updatedPathPoint.Y, (float)path_points_.Num()});
-        }
-        else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_TRACKING_MODE"}) == "goal") {
-            observation["physical_observation"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1), agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw), goalPathPoint.X, goalPathPoint.Y, (float)path_points_.Num()});
-        }
-        else {
-            ASSERT(false);
-        }
-    }
-    else {
-        ASSERT(false);
-    }
+    observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
+    observation["state_data"] = Serialize::toUint8(std::vector<float>{agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw)});
+    observation["trajectory_data"] = Serialize::toUint8(serialized_trajectory_);
 
     return observation;
 }
@@ -481,7 +414,8 @@ void OpenBotAgentController::generateTrajectoryToTarget()
     FVector2D relative_position_to_target(0.0f, 0.0f);
     FPathFindingQuery nav_query;
     FPathFindingResult collision_free_path;
-    path_points_.Empty();
+    TArray<FNavPathPoint> path_points;
+    serialized_trajectory_.clear();
     
     // Sanity checks
     ASSERT(nav_data_ != nullptr);
@@ -514,14 +448,20 @@ void OpenBotAgentController::generateTrajectoryToTarget()
 
         number_of_way_points = collision_free_path.Path->GetPathPoints().Num();
 
-        path_points_ = collision_free_path.Path->GetPathPoints();
+        path_points = collision_free_path.Path->GetPathPoints();
+        
+        for(auto path_point : path_points) {
+            serialized_trajectory_.push_back(path_point.Location.X);
+            serialized_trajectory_.push_back(path_point.Location.Y);
+            serialized_trajectory_.push_back(path_point.Location.Z);
+        }
 
         std::cout << "Number of way points: " << number_of_way_points << std::endl;
         std::cout << "Target distance: " << relative_position_to_target.Size() / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
 
         float trajectory_length = 0.0;
         for (size_t i = 0; i < number_of_way_points - 1; i++) {
-            trajectory_length += FVector::Dist(path_points_[i].Location, path_points_[i + 1].Location);
+            trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
         }
 
         // Scaling to meters
@@ -530,15 +470,13 @@ void OpenBotAgentController::generateTrajectoryToTarget()
         std::cout << "Path length " << trajectory_length << "m" << std::endl;
     }
     
-    ASSERT(path_points_.Num() > 1);
-    
-    index_path_point_ = 1;
+    ASSERT(path_points.Num() > 1);
     
     std::cout << "Initial position: [" << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << "]." << std::endl;
     std::cout << "Reachable position: [" << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << "]." << std::endl;
     std::cout << "-----------------------------------------------------------" << std::endl;
     std::cout << "Way points: " << std::endl;
-    for (auto wayPoint : path_points_) {
+    for (auto wayPoint : path_points) {
         std::cout << "[" << wayPoint.Location.X << ", " << wayPoint.Location.Y << ", " << wayPoint.Location.Z << "]" << std::endl;
     }
     std::cout << "-----------------------------------------------------------" << std::endl;
