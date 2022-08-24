@@ -7,6 +7,7 @@ public class SceneManager : ModuleRules
 	public SceneManager(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        bEnableExceptions = true;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
@@ -39,6 +40,7 @@ public class SceneManager : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"PhysicsCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

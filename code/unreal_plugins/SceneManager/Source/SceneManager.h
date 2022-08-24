@@ -3,11 +3,10 @@
 #include <CoreMinimal.h>
 #include <Modules/ModuleManager.h>
 
-class FSceneManagerModule : public IModuleInterface
+class SceneManager : public IModuleInterface
 {
 public:
-
-	/** IModuleInterface implementation */
-	virtual void StartupModule() override;
-	virtual void ShutdownModule() override;
+    /** IModuleInterface implementation */
+    virtual void StartupModule() override;
+    virtual void ShutdownModule() override;
 };
