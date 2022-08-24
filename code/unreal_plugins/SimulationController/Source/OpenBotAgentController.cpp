@@ -12,6 +12,9 @@
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <NavigationSystem.h>
+#include <NavMesh/NavMeshBoundsVolume.h>
+#include <NavMesh/RecastNavMesh.h>
 #include <PxRigidDynamic.h>
 #include <SimpleWheeledVehicleMovementComponent.h>
 #include <UObject/UObjectGlobals.h>
@@ -29,9 +32,9 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_ACTOR_NAME"})) {
-            ASSERT(!agent_actor_);
-            agent_actor_ = *actor_itr;
-            ASSERT(agent_actor_);
+            ASSERT(!simple_vehicle_pawn_);
+            simple_vehicle_pawn_ = dynamic_cast<ASimpleVehiclePawn*>(*actor_itr);
+            ASSERT(simple_vehicle_pawn_);
         } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})){
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
@@ -39,29 +42,27 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         }
     }
 
-    ASSERT(agent_actor_);
+    ASSERT(simple_vehicle_pawn_);
     ASSERT(goal_actor_);
 
     // Setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
         TArray<AActor*> all_attached_actors;
-        agent_actor_->GetAttachedActors(all_attached_actors, true);
+        simple_vehicle_pawn_->GetAttachedActors(all_attached_actors, true);
 
         for (const auto& actor : all_attached_actors) {
             std::string actor_name = TCHAR_TO_UTF8(*actor->GetName());
             if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_NAME"})) {
-                ASSERT(!observation_camera_actor_);
-                observation_camera_actor_ = actor;
+                ASSERT(!pip_camera_);
+                pip_camera_ = dynamic_cast<APIPCamera*>(actor);
                 break;
             }
         }
-        ASSERT(observation_camera_actor_);
+        ASSERT(pip_camera_);
 
         // create SceneCaptureComponent2D and TextureRenderTarget2D
-        APIPCamera* pip_camera = dynamic_cast<APIPCamera*>(observation_camera_actor_);
-        ASSERT(pip_camera);
-        scene_capture_component_ = pip_camera->GetSceneCaptureComponent();
+        scene_capture_component_ = pip_camera_->GetSceneCaptureComponent();
         ASSERT(scene_capture_component_);
 
         // Set Camera Properties
@@ -104,7 +105,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
     ASSERT(nav_sys_ != nullptr);
 
     // Get a pointer to the agent's navigation data
-    const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(agent_actor_);
+    const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(simple_vehicle_pawn_);
     ASSERT(actor_as_nav_agent != nullptr);
     nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
     ASSERT(nav_data_ != nullptr);
@@ -132,12 +133,12 @@ OpenBotAgentController::~OpenBotAgentController()
         ASSERT(scene_capture_component_);
         scene_capture_component_ = nullptr;
 
-        ASSERT(observation_camera_actor_);
-        observation_camera_actor_ = nullptr;
+        ASSERT(pip_camera_);
+        pip_camera_ = nullptr;
     }
 
-    ASSERT(agent_actor_);
-    agent_actor_ = nullptr;
+    ASSERT(simple_vehicle_pawn_);
+    simple_vehicle_pawn_ = nullptr;
 
     ASSERT(goal_actor_);
     goal_actor_ = nullptr;
@@ -180,73 +181,58 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     std::map<std::string, Box> observation_space;
     Box box;
 
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.dtype = DataType::Float32;
+    box.low = std::numeric_limits<float>::lowest();
+    box.high = std::numeric_limits<float>::max();
+    box.dtype = DataType::Float32;
         
-        box.shape = {2};
-        observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
+    box.shape = {2};
+    observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
 
-        box.shape = {6};
-        observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
+    box.shape = {6};
+    observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
 
-        box.shape = {-1};
-        observation_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
+    box.shape = {-1};
+    observation_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
 
+    ASSERT(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed" or Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical");
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = 0;
         box.high = 255;
-        box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-                     Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+        box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                     Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
                      3};
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
     }
-    else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.dtype = DataType::Float32;
-        
-        box.shape = {2};
-        observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
-
-        box.shape = {6};
-        observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
-
-        box.shape = {-1};
-        observation_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
-    }
-    else {
-        ASSERT(false);
-    }
-
+    
     return observation_space;
 }
 
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
-    ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
-    ASSERT(vehicle_pawn);
-
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
-        ASSERT(action.count("apply_voltage"));
+        ASSERT(action.count("apply_voltage") == 2);
         // @TODO: This can be checked in python?
-        ASSERT(action.at("apply_voltage").at(0) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(0) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(0));
-        ASSERT(action.at("apply_voltage").at(1) >= getActionSpace()["apply_voltage"].low && action.at("apply_voltage").at(1) <= getActionSpace()["apply_voltage"].high, "%f", action.at("apply_voltage").at(1));
-        vehicle_pawn->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
+        ASSERT(action.at("apply_voltage").at(0) >= getActionSpace().at("apply_voltage").low && action.at("apply_voltage").at(0) <= getActionSpace().at("apply_voltage").high, "%f", action.at("apply_voltage").at(0));
+        ASSERT(action.at("apply_voltage").at(1) >= getActionSpace().at("apply_voltage").low && action.at("apply_voltage").at(1) <= getActionSpace().at("apply_voltage").high, "%f", action.at("apply_voltage").at(1));
+        simple_vehicle_pawn_->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
-        ASSERT(action.count("set_position_xyz_centimeters"));
-        ASSERT(std::all_of(action.at("set_position_xyz_centimeters").begin(), action.at("set_position_xyz_centimeters").end(), [](float i) -> bool { return isfinite(i); }));
+        ASSERT(action.count("set_position_xyz_centimeters") == 3);
+        ASSERT(isfinite(action.at("set_position_xyz_centimeters").at(0)));
+        ASSERT(isfinite(action.at("set_position_xyz_centimeters").at(1)));
+        ASSERT(isfinite(action.at("set_position_xyz_centimeters").at(2)));
         const FVector agent_location{action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
 
-        ASSERT(action.count("set_orientation_pyr_radians"));
-        ASSERT(std::all_of(action.at("set_orientation_pyr_radians").begin(), action.at("set_orientation_pyr_radians").end(), [](float i) -> bool { return isfinite(i); }));
+        ASSERT(action.count("set_orientation_pyr_radians") == 3);
+        ASSERT(isfinite(action.at("set_orientation_pyr_radians").at(0)));
+        ASSERT(isfinite(action.at("set_orientation_pyr_radians").at(1)));
+        ASSERT(isfinite(action.at("set_orientation_pyr_radians").at(2)));
         const FRotator agent_rotation{FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
-        vehicle_pawn->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
+        simple_vehicle_pawn_->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
     }
     else {
         ASSERT(false);
@@ -300,31 +286,24 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         observation["visual_observation"] = std::move(image);
     }
 
-    const FVector agent_current_location = agent_actor_->GetActorLocation();
-    const FRotator agent_current_orientation = agent_actor_->GetActorRotation();
+    const FVector agent_current_location = simple_vehicle_pawn_->GetActorLocation();
+    const FRotator agent_current_orientation = simple_vehicle_pawn_->GetActorRotation();
 
-    ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
-    ASSERT(vehicle_pawn);
-
-    Eigen::Vector2f control_state = vehicle_pawn->GetControlState();
+    Eigen::Vector2f control_state = simple_vehicle_pawn_->GetControlState();
 
     observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
     observation["state_data"] = Serialize::toUint8(std::vector<float>{agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw)});
-    observation["trajectory_data"] = Serialize::toUint8(serialized_trajectory_);
+    observation["trajectory_data"] = Serialize::toUint8(trajectory_);
 
     return observation;
 }
 
 void OpenBotAgentController::reset()
 {
-    ASSERT(agent_actor_);
-    ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
+    const FVector agent_location = simple_vehicle_pawn_->GetActorLocation();
+    simple_vehicle_pawn_->SetActorLocationAndRotation(agent_location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
 
-    ASSERT(vehicle_pawn);
-    const FVector agent_location = agent_actor_->GetActorLocation();
-    vehicle_pawn->SetActorLocationAndRotation(agent_location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
-
-    USimpleWheeledVehicleMovementComponent* vehicle_movement_component = dynamic_cast<USimpleWheeledVehicleMovementComponent*>(vehicle_pawn->GetVehicleMovementComponent());
+    USimpleWheeledVehicleMovementComponent* vehicle_movement_component = dynamic_cast<USimpleWheeledVehicleMovementComponent*>(simple_vehicle_pawn_->GetVehicleMovementComponent());
     ASSERT(vehicle_movement_component);
 
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component->PVehicle->getRigidDynamicActor();
@@ -352,10 +331,10 @@ void OpenBotAgentController::reset()
 
 bool OpenBotAgentController::isReady() const
 {
-    ASSERT(agent_actor_);
+    ASSERT(simple_vehicle_pawn_);
     
 
-    return agent_actor_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
+    return simple_vehicle_pawn_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
 }
 
 void OpenBotAgentController::buildNavMesh()
@@ -378,7 +357,7 @@ void OpenBotAgentController::buildNavMesh()
     FBox box(ForceInit);
     std::vector<std::string> world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "WORLD_BOUND_TAG_NAMES"});
 
-    for (TActorIterator<AActor> actor_itr(agent_actor_->GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) { 
+    for (TActorIterator<AActor> actor_itr(simple_vehicle_pawn_->GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) { 
         
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
         
@@ -391,7 +370,7 @@ void OpenBotAgentController::buildNavMesh()
     // Dynamic update navMesh location and size:
     ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
     
-    for (TActorIterator<ANavMeshBoundsVolume> it(agent_actor_->GetWorld()); it; ++it) {
+    for (TActorIterator<ANavMeshBoundsVolume> it(simple_vehicle_pawn_->GetWorld()); it; ++it) {
         nav_meshbounds_volume = *it;
     }
     ASSERT(nav_meshbounds_volume != nullptr);
@@ -415,15 +394,15 @@ void OpenBotAgentController::generateTrajectoryToTarget()
     FPathFindingQuery nav_query;
     FPathFindingResult collision_free_path;
     TArray<FNavPathPoint> path_points;
-    serialized_trajectory_.clear();
+    trajectory_.clear();
     
     // Sanity checks
     ASSERT(nav_data_ != nullptr);
     ASSERT(nav_sys_ != nullptr);
     
     // Initial agent position
-    ASSERT(agent_actor_);
-    agent_initial_position_ = agent_actor_->GetActorLocation();
+    ASSERT(simple_vehicle_pawn_);
+    agent_initial_position_ = simple_vehicle_pawn_->GetActorLocation();
 
     // Goal position
     ASSERT(goal_actor_);
@@ -434,7 +413,7 @@ void OpenBotAgentController::generateTrajectoryToTarget()
     relative_position_to_target.Y = (agent_goal_position_ - agent_initial_position_).Y;
     
     // Update navigation query with the new target:
-    nav_query = FPathFindingQuery(agent_actor_, *nav_data_, agent_initial_position_, agent_goal_position_);
+    nav_query = FPathFindingQuery(simple_vehicle_pawn_, *nav_data_, agent_initial_position_, agent_goal_position_);
     
     // Genrate a collision-free path between the robot position and the target point:
     collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
@@ -451,13 +430,13 @@ void OpenBotAgentController::generateTrajectoryToTarget()
         path_points = collision_free_path.Path->GetPathPoints();
         
         for(auto path_point : path_points) {
-            serialized_trajectory_.push_back(path_point.Location.X);
-            serialized_trajectory_.push_back(path_point.Location.Y);
-            serialized_trajectory_.push_back(path_point.Location.Z);
+            trajectory_.push_back(path_point.Location.X);
+            trajectory_.push_back(path_point.Location.Y);
+            trajectory_.push_back(path_point.Location.Z);
         }
 
         std::cout << "Number of way points: " << number_of_way_points << std::endl;
-        std::cout << "Target distance: " << relative_position_to_target.Size() / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+        std::cout << "Target distance: " << relative_position_to_target.Size() / simple_vehicle_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
 
         float trajectory_length = 0.0;
         for (size_t i = 0; i < number_of_way_points - 1; i++) {
@@ -465,7 +444,7 @@ void OpenBotAgentController::generateTrajectoryToTarget()
         }
 
         // Scaling to meters
-        trajectory_length /= agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
+        trajectory_length /= simple_vehicle_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
         std::cout << "Path length " << trajectory_length << "m" << std::endl;
     }

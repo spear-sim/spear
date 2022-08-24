@@ -4,17 +4,18 @@
 #include <string>
 #include <vector>
 
-#include <NavigationSystem.h>
-#include <NavMesh/NavMeshBoundsVolume.h>
-#include <NavMesh/RecastNavMesh.h>
-
 #include "AgentController.h"
 
 class AActor;
+class ANavigationData;
+class ARecastNavMesh;
+class UNavigationSystemV1;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
 
+class APIPCamera;
+class ASimpleVehiclePawn;
 struct Box;
 
 class OpenBotAgentController : public AgentController
@@ -40,9 +41,9 @@ private:
     // Generate a collision-free trajectory between an initial and a target location.
     void generateTrajectoryToTarget();
 
-    AActor* agent_actor_ = nullptr;
+    ASimpleVehiclePawn* simple_vehicle_pawn_ = nullptr;
+    APIPCamera* pip_camera_ = nullptr;
     AActor* goal_actor_ = nullptr;
-    AActor* observation_camera_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
 
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
@@ -54,5 +55,5 @@ private:
     ARecastNavMesh* nav_mesh_;
     FVector agent_initial_position_;    // Initial position of the learning agent
     FVector agent_goal_position_;       // Goal position of the learning agent (should be the position of the goal agent)
-    std::vector<float> serialized_trajectory_; // An array containing the different waypoints to be followed by the agent, converted into a serialized format X0, Y0, Z0, X1, Y1, Z1, ... Xn, Yn, Zn 
+    std::vector<float> trajectory_; // An array containing the different waypoints to be followed by the agent, converted into a serialized format X0, Y0, Z0, X1, Y1, Z1, ... Xn, Yn, Zn 
 };

@@ -43,7 +43,7 @@ private:
     // Only the best pair is kept.
     void getPositionsFromTrajectorySampling();
 
-    mutable bool hit_goal_ = false;
+    bool hit_goal_ = false;
     bool hit_obstacle_ = false;
 
     FRandomStream random_stream_;
@@ -63,7 +63,5 @@ private:
     ARecastNavMesh* nav_mesh_;
     std::vector<FVector> agent_initial_position_; // Initial position of the learning agent
     std::vector<FVector> agent_goal_position_;    // Goal position of the learning agent (should be the position of the goal agent)
-    std::vector<int> number_of_episodes_;         // Nuber of episodes for a given trajectory pair
     unsigned int position_index_ = 0;             // Index of the trajectory pair
-    unsigned int episode_index_ = 0;             // Index of the trajectory pair
 };

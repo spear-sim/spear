@@ -151,16 +151,16 @@ std::map<std::string, Box> DebugAgentController::getObservationSpace() const
 
     box.low = 0;
     box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}),
-                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}),
+    box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_HEIGHT"}),
+                 Config::getValue<long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "FIRST_OBSERVATION_CAMERA_WIDTH"}),
                  3};
     box.dtype = DataType::UInteger8;
     observation_space["camera_1_image"] = std::move(box);
 
     box.low = 0;
     box.high = 255;
-    box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}),
-                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}),
+    box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_HEIGHT"}),
+                 Config::getValue<long>({"SIMULATION_CONTROLLER", "DEBUG_AGENT_CONTROLLER", "SECOND_OBSERVATION_CAMERA_WIDTH"}),
                  3};
     box.dtype = DataType::UInteger8;
     observation_space["camera_2_image"] = std::move(box);

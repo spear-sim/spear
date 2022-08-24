@@ -169,23 +169,17 @@ void ImitationLearningTask::reset()
 
         // Reset trajectory index:
         position_index_ = 0;
-        episode_index_ = 0;
     } 
 
     // Set agent and goal positions:
     agent_actor_->SetActorLocation(agent_initial_position_.at(position_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
     goal_actor_->SetActorLocation(agent_goal_position_.at(position_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
     
-    if (episode_index_ < number_of_episodes_.at(position_index_)){ // If the desired number of repetitions for a given trajectory has not been reached
-        episode_index_++;   // Iterate number of episodes
-    } else {
-        episode_index_ = 0; // Reset number of episodes
-        if (position_index_ < agent_goal_position_.size()-1){ 
-            position_index_++; // Move to the next pair of points (if available)
-        }  else { 
-            position_index_ = 0; // wrap around
-        }
-    }
+    if (position_index_ < agent_goal_position_.size()-1){ 
+        position_index_++; // Move to the next pair of points (if available)
+    }  else { 
+        position_index_ = 0; // wrap around
+    } 
 }
 
 bool ImitationLearningTask::isReady() const
@@ -225,10 +219,8 @@ void ImitationLearningTask::getPositionsFromFile()
         std::getline(ss, token, ','); ASSERT(ss); goal.X = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); goal.Y = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); goal.Z = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); episodes = std::stoi(token);
         agent_initial_position_.push_back(init);
         agent_goal_position_.push_back(goal);
-        number_of_episodes_.push_back(episodes);
     }
 
     // Close file
@@ -236,7 +228,6 @@ void ImitationLearningTask::getPositionsFromFile()
 
     // Initialize trajectory index
     position_index_ = 0;
-    episode_index_ = 0;
 }
 
 void ImitationLearningTask::getPositionsFromTrajectorySampling()
