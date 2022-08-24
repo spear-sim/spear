@@ -176,7 +176,7 @@ void ImitationLearningTask::reset()
     agent_actor_->SetActorLocation(agent_initial_position_.at(position_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
     goal_actor_->SetActorLocation(agent_goal_position_.at(position_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
     
-    if (episode_index_ < number_of_episodes_(position_index_)){ // If the desired number of repetitions for a given trajectory has not been reached
+    if (episode_index_ < number_of_episodes_.at(position_index_)){ // If the desired number of repetitions for a given trajectory has not been reached
         episode_index_++;   // Iterate number of episodes
     } else {
         episode_index_ = 0; // Reset number of episodes
@@ -219,13 +219,13 @@ void ImitationLearningTask::getPositionsFromFile()
     std::getline(fs, line); // get csv header
     while (std::getline(fs, line)) {
         std::istringstream ss(line);
-        std::getline(ss, token, ','); ASSERT(ss); auto init.X = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); auto init.Y = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); auto init.Z = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); auto goal.X = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); auto goal.Y = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); auto goal.Z = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); auto episodes = std::stoi(token);
+        std::getline(ss, token, ','); ASSERT(ss); init.X = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); init.Y = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); init.Z = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); goal.X = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); goal.Y = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); goal.Z = std::stof(token);
+        std::getline(ss, token, ','); ASSERT(ss); episodes = std::stoi(token);
         agent_initial_position_.push_back(init);
         agent_goal_position_.push_back(goal);
         number_of_episodes_.push_back(episodes);
