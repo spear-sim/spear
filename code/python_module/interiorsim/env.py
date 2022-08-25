@@ -383,7 +383,6 @@ class Env(gym.Env):
     def _get_observation_space(self):
         space = self._client.call("getObservationSpace")
         assert len(space) > 0
-        print(space)
         return self._get_gym_space(space)
 
     def _get_task_step_info_space(self):

@@ -229,11 +229,6 @@ if __name__ == "__main__":
         # ---> X position of the next waypoint in world frame.
         # ---> Y position of the next waypoint in world frame.
 
-        config.defrost()
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "full-pose"
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.GOAL_TRACKING_MODE = "trajectory"
-        config.freeze()
-
         speedMultiplier = 1
 
         for mapName in mapNames: # For each map
@@ -267,10 +262,13 @@ if __name__ == "__main__":
 
                 # Reset the simulation to get the first observation
                 obs = env.reset()
-                actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y], for velocity initialization
-                desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
+                
+                # Send Zero action to the agent and collect initial trajectory observations:
+                obs, reward, done, info = env.step({"apply_voltage": [0.0, 0.0]})
+                actualPoseYawXY = np.array([obs["state_data"][5], obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y], for velocity initialization
+                desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][3*index_waypoint], info["agent_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
 
-                numWaypoints = obs["physical_observation"][10] - 1
+                numWaypoints = len(info["agent_step_info"]["trajectory_data"])/3 - 1
 
                 # Take a few steps:
                 for i in range(numIter):
@@ -292,34 +290,33 @@ if __name__ == "__main__":
                     dt = 0.1
 
                     # XY position of the next waypoint in world frame:
-                    # dXY = np.array([obs["physical_observation"][2], obs["physical_observation"][3]]) - desiredPositionXY
-                    # desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
+                    dXY = np.array([obs["state_data"][0], obs["state_data"][1]]) - desiredPositionXY
+                    desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][3*index_waypoint], info["agent_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
 
                     # Current position and heading of the vehicle in world frame:
-                    # dYaw = obs["physical_observation"][7] - actualPoseYawXY[0]
-                    # actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y]
+                    dYaw = obs["state_data"][5] - actualPoseYawXY[0]
+                    actualPoseYawXY = np.array([obs["state_data"][5], obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y]
 
                     # Numerical diff:
                     linVelNorm = np.linalg.norm(dXY/dt)
                     yawVel = dYaw/dt
 
-                    # action, waypointReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
+                    action, waypointReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
 
                     # Send action to the agent and collect observations:
-                    obs, reward, done, info = env.step({"apply_voltage": [0.0, 0.0]})
-                    print(obs)
-                    assert False
+                    obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1]]})
+
                     # Fill an array with the different observations:
-                    array_obs[i][0] = speedMultiplier*obs["physical_observation"][0] # ctrl left
-                    array_obs[i][1] = speedMultiplier*obs["physical_observation"][1] # ctrl right
-                    array_obs[i][2] = obs["physical_observation"][2] # agent pos X wrt. world
-                    array_obs[i][3] = obs["physical_observation"][3] # agent pos Y wrt. world
-                    array_obs[i][4] = obs["physical_observation"][4] # agent pos Z wrt. world
-                    array_obs[i][5] = obs["physical_observation"][5] # agent Roll wrt. world
-                    array_obs[i][6] = obs["physical_observation"][6] # agent Pitch wrt. world
-                    array_obs[i][7] = obs["physical_observation"][7] # agent Yaw wrt. world
-                    array_obs[i][8] = obs["physical_observation"][8] # desired (waypoint) agent pos X wrt. world
-                    array_obs[i][9] = obs["physical_observation"][9] # desired (waypoint) agent pos Y wrt. world
+                    array_obs[i][0] = speedMultiplier*obs["control_data"][0] # ctrl left
+                    array_obs[i][1] = speedMultiplier*obs["control_data"][1] # ctrl right
+                    array_obs[i][2] = obs["state_data"][0] # agent pos X wrt. world
+                    array_obs[i][3] = obs["state_data"][1] # agent pos Y wrt. world
+                    array_obs[i][4] = obs["state_data"][2] # agent pos Z wrt. world
+                    array_obs[i][5] = obs["state_data"][3] # agent Roll wrt. world
+                    array_obs[i][6] = obs["state_data"][4] # agent Pitch wrt. world
+                    array_obs[i][7] = obs["state_data"][5] # agent Yaw wrt. world
+                    array_obs[i][8] = info["agent_step_info"]["trajectory_data"][3*index_waypoint] # desired (waypoint) agent pos X wrt. world
+                    array_obs[i][9] = info["agent_step_info"]["trajectory_data"][3*index_waypoint + 1] # desired (waypoint) agent pos Y wrt. world
                     array_obs[i][10] = ts # time stamp
                     
                     if array_obs[i][4] < 0: # For now we don't consider underground operation ! 
@@ -334,7 +331,7 @@ if __name__ == "__main__":
                     im.save(dataFolderName+"images/%d.jpeg" % i)
 
                     if waypointReached:
-                        if index_waypoint < obs["physical_observation"][10] - 1: # if the waypoint is not the goal
+                        if index_waypoint < numWaypoints-1: # if the waypoint is not the goal
                             print(f"Waypoint {index_waypoint} over {numWaypoints} reached !")
                             index_waypoint = index_waypoint + 1
                         else: # Goal reached !
@@ -344,11 +341,11 @@ if __name__ == "__main__":
 
                     # Interrupt the step loop if the done flag is raised:
                     if done:
-                        if info["hit_obstacle"]:
+                        if info["task_step_info"]["hit_obstacle"]:
                             print("Collision detected ! Killing simulation and restarting run...")
                             collisionFlag = True
 
-                        if info["hit_goal"]:
+                        if info["task_step_info"]["hit_goal"]:
                             print("Goal reached !")
                             goalReachedFlag = True
 
@@ -448,11 +445,6 @@ if __name__ == "__main__":
         # ---> Yaw in world frame.
         # ---> X position of the goal in world frame.
         # ---> Y position of the goal in world frame.
-
-        config.defrost()
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "full-pose"
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.GOAL_TRACKING_MODE = "goal"
-        config.freeze()
 
         # Load TFLite model and allocate tensors.
         policyName = ""
@@ -614,13 +606,13 @@ if __name__ == "__main__":
                         writer_status = csv.writer(f_status , delimiter=",")          
                         writer_status.writerow( ('Status','Iterations') )
                         
-                        if info["hit_obstacle"]:
+                        if info["task_step_info"]["hit_obstacle"]:
                             print("Collision detected !")
                             collisionFlag = True
                             writer_status.writerow( ('Collision',i) )
                             f_status.close()
 
-                        elif info["hit_goal"]:
+                        elif info["task_step_info"]["hit_goal"]:
                             print("Goal reached !")
                             goalReachedFlag = True
                             writer_status.writerow( ('Goal',i) )

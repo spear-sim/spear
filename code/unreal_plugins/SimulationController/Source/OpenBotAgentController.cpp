@@ -146,9 +146,10 @@ OpenBotAgentController::~OpenBotAgentController()
 
 std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
 {
+    
     std::map<std::string, Box> action_space;
     Box box;
-std::cout << __LINE__ << std::endl;
+
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
         box.low = -1.f;
         box.high = 1.f;
@@ -172,7 +173,7 @@ std::cout << __LINE__ << std::endl;
     else {
         ASSERT(false);
     }
-std::cout << __LINE__ << std::endl;
+
     return action_space;
 }
 
@@ -180,17 +181,17 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
     Box box;
-std::cout << __LINE__ << std::endl;
+
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
     box.dtype = DataType::Float32;
-        std::cout << __LINE__ << std::endl;
+        
     box.shape = {2};
     observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
-std::cout << __LINE__ << std::endl;
+
     box.shape = {6};
     observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
-std::cout << __LINE__ << std::endl;
+
     ASSERT(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed" or Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical");
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = 0;
@@ -201,30 +202,29 @@ std::cout << __LINE__ << std::endl;
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
     }
-    std::cout << __LINE__ << std::endl;
+    
     return observation_space;
 }
 
 std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
 {
-    std::cout << __LINE__ << std::endl;
     std::map<std::string, Box> step_info_space;
     Box box;
-std::cout << __LINE__ << std::endl;
+
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
     box.dtype = DataType::Float32;
-std::cout << __LINE__ << std::endl;
+
     box.shape = {-1};
     step_info_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
-std::cout << __LINE__ << std::endl;
+
     return step_info_space;
 }
 
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
-        ASSERT(action.count("apply_voltage") == 2);
+        //ASSERT(action.count("apply_voltage") == 2);
         // @TODO: This can be checked in python?
         ASSERT(action.at("apply_voltage").at(0) >= getActionSpace().at("apply_voltage").low && action.at("apply_voltage").at(0) <= getActionSpace().at("apply_voltage").high, "%f", action.at("apply_voltage").at(0));
         ASSERT(action.at("apply_voltage").at(1) >= getActionSpace().at("apply_voltage").low && action.at("apply_voltage").at(1) <= getActionSpace().at("apply_voltage").high, "%f", action.at("apply_voltage").at(1));
