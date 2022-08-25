@@ -67,7 +67,7 @@ SIMULATION_CONTROLLER:
     MAX_ITER_REPLAN: 5000
     AGENT_POSITION_Z_MIN: 0.5
     AGENT_POSITION_Z_MAX: 20.0
-    TRAJECTORY_FILE: "/home/quentin/Desktop/ISL/interiorsim/code/experiments/rl_openbot/imitation_learning/Trajectories/"
+    TRAJECTORY_FILE: "/home/quentin/Desktop/ISL/interiorsim/code/experiments/rl_openbot/imitation_learning/Trajectories/InitGoalAgentPositions_235388780.csv"
       
   OPENBOT_AGENT_CONTROLLER:
     AGENT_ACTOR_NAME: "SimpleVehicle_0"

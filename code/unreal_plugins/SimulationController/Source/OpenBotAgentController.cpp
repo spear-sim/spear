@@ -358,11 +358,12 @@ void OpenBotAgentController::buildNavMesh()
     std::vector<std::string> world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "WORLD_BOUND_TAG_NAMES"});
 
     for (TActorIterator<AActor> actor_itr(simple_vehicle_pawn_->GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) { 
-        
-        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-        
-        if (std::find(world_bound_tag_names.begin(), world_bound_tag_names.end(), actor_name) != world_bound_tag_names.end()) { // it->ActorHasTag(
-            box += actor_itr->GetComponentsBoundingBox(false, true);
+    
+        for (std::string tag_itr : world_bound_tag_names) { 
+
+            if (actor_itr->ActorHasTag(tag_itr.c_str())) { 
+                box += actor_itr->GetComponentsBoundingBox(false, true);
+            }
         }
     }
     FBox environment_bounds = box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z)); // Remove ceiling
