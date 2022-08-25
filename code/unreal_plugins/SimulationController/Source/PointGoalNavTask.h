@@ -47,3 +47,4 @@ private:
 
     std::vector<AActor*> obstacle_ignore_actors_;
 };
+
