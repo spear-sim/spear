@@ -144,15 +144,9 @@ void SimulationController::worldBeginPlayEventHandler()
     // Initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
 
-<<<<<<< HEAD
-    // Config values required for rpc communication
-    const std::string hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
-    const int port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
-=======
     // config values required for rpc communication
     const auto hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
     const auto port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
->>>>>>> origin/main
 
     rpc_server_ = std::make_unique<RpcServer>(hostname, port);
     ASSERT(rpc_server_);
