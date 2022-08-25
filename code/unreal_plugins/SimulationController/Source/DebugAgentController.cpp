@@ -168,6 +168,11 @@ std::map<std::string, Box> DebugAgentController::getObservationSpace() const
     return observation_space;
 }
 
+std::map<std::string, Box> DebugAgentController::getStepInfoSpace() const
+{
+    return {};
+}
+
 void DebugAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     std::cout << "c++: Received actions!" << std::endl;
@@ -267,6 +272,11 @@ std::map<std::string, std::vector<uint8_t>> DebugAgentController::getObservation
     observation["camera_2_image"] = std::move(image);
 
     return observation;
+}
+
+std::map<std::string, std::vector<uint8_t>> DebugAgentController::getStepInfo() const
+{
+    return {};
 }
 
 void DebugAgentController::reset()

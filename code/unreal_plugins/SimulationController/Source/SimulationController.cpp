@@ -86,6 +86,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     ASSERT(world);
 
     if (world->IsGameWorld()) {
+
         // Check if world_ is valid, and if it is, we do not support mulitple Game worlds and we need to know about this. There should only be one Game World..
         ASSERT(!world_);
 
@@ -141,8 +142,8 @@ void SimulationController::worldBeginPlayEventHandler()
     frame_state_ = FrameState::Idle;
 
     // config values required for rpc communication
-    const std::string hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
-    const int port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
+    const auto hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
+    const auto port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
 
     rpc_server_ = std::make_unique<RpcServer>(hostname, port);
     ASSERT(rpc_server_);
@@ -243,13 +244,13 @@ void SimulationController::bindFunctionsToRpcServer()
     });
 
     rpc_server_->bindAsync("close", []() -> void {
-        constexpr bool immediate_shutdown = false;
+        constexpr auto immediate_shutdown = false;
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
     rpc_server_->bindAsync("getEndianness", []() -> Endianness {
-        uint32_t Num = 0x01020304;
-        return (reinterpret_cast<const char*>(&Num)[3] == 1) ? Endianness::LittleEndian : Endianness::BigEndian;
+        uint32_t dummy = 0x01020304;
+        return (reinterpret_cast<const char*>(&dummy)[3] == 1) ? Endianness::LittleEndian : Endianness::BigEndian;
     });
 
     rpc_server_->bindAsync("beginTick", [this]() -> void {
@@ -301,53 +302,64 @@ void SimulationController::bindFunctionsToRpcServer()
         return agent_controller_->getObservationSpace();
     });
 
-    rpc_server_->bindAsync("getStepInfoSpace", [this]() -> std::map<std::string, Box> {
+    rpc_server_->bindAsync("getTaskStepInfoSpace", [this]() -> std::map<std::string, Box> {
         ASSERT(task_);
         return task_->getStepInfoSpace();
     });
 
-    rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
+    rpc_server_->bindAsync("getAgentControllerStepInfoSpace", [this]() -> std::map<std::string, Box> {
         ASSERT(agent_controller_);
+        return agent_controller_->getStepInfoSpace();
+    });
+
+    rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPreTick);
+        ASSERT(agent_controller_);
         agent_controller_->applyAction(action);
     });
 
     rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
-        ASSERT(agent_controller_);
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(agent_controller_);
         return agent_controller_->getObservation();
     });
 
     rpc_server_->bindSync("getReward", [this]() -> float {
-        ASSERT(task_);
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(task_);
         return task_->getReward();
     });
 
     rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
-        ASSERT(task_);
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(task_);
         return task_->isEpisodeDone();
     });
 
-    rpc_server_->bindSync("getStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
-        ASSERT(task_);
+    rpc_server_->bindSync("getTaskStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(task_);
         return task_->getStepInfo();
     });
 
+    rpc_server_->bindSync("getAgentControllerStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(task_);
+        return agent_controller_->getStepInfo();
+    });
+
     rpc_server_->bindSync("reset", [this]() -> void {
+        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         ASSERT(task_);
         ASSERT(agent_controller_);
-        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         task_->reset();
         agent_controller_->reset();
     });
 
     rpc_server_->bindSync("isReady", [this]() -> bool{
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         ASSERT(task_);
         ASSERT(agent_controller_);
-        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         return task_->isReady() && agent_controller_->isReady();
     });
 }
