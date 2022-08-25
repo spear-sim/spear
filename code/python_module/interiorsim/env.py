@@ -36,12 +36,6 @@ DATA_TYPE_TO_NUMPY_DTYPE = {
 }
 
 
-# Enum values should match SimulationController.cpp in SimulationController plugin
-class EndiannessType(Enum):
-    LittleEndian = 0
-    BigEndian = 1
-
-
 # mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
 class Box():
     def __init__(self, high, low, shape, dtype):
@@ -302,18 +296,14 @@ class Env(gym.Env):
     def _get_byte_order(self):
 
         unreal_instance_endianness = self._client.call("getEndianness")
-
-        if sys.byteorder == "little":
-            client_endianess = EndiannessType.LittleEndian.value
-        elif sys.byteorder == "big":
-            client_endianess = EndiannessType.BigEndian.value
+        client_endianess = sys.byteorder
 
         if unreal_instance_endianness == client_endianess:
             return None
-        elif unreal_instance_endianness == EndiannessType.BigEndian.value:
-            return ">"
-        elif unreal_instance_endianness == EndiannessType.LittleEndian.value:
+        elif unreal_instance_endianness == "little":
             return "<"
+        elif unreal_instance_endianness == "big":
+            return ">"
         else:
             assert False
 

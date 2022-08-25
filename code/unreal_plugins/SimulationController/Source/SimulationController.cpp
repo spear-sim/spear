@@ -29,6 +29,7 @@
 #include "Task.h"
 #include "Visualizer.h"
 
+
 // Different possible frame states for thread synchronization
 enum class FrameState : uint8_t
 {
@@ -39,13 +40,6 @@ enum class FrameState : uint8_t
     ExecutingPostTick
 };
 
-// enum values should match values in python module (env.py)
-enum class Endianness : uint8_t
-{
-    LittleEndian = 0,
-    BigEndian = 1,
-};
-MSGPACK_ADD_ENUM(Endianness);
 
 void SimulationController::StartupModule()
 {
@@ -123,7 +117,7 @@ void SimulationController::worldBeginPlayEventHandler()
     }
     ASSERT(agent_controller_);
 
-    // Create Task (do this second in case the AgentController needs to spawn an Actor)
+    // Create Task (do this second in case the AgentController spawns an Actor that is needed by the Task)
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearningTask") {
         task_ = std::make_unique<ImitationLearningTask>(world_);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
@@ -249,9 +243,9 @@ void SimulationController::bindFunctionsToRpcServer()
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
-    rpc_server_->bindAsync("getEndianness", []() -> Endianness {
+    rpc_server_->bindAsync("getEndianness", []() -> std::string {
         uint32_t dummy = 0x01020304;
-        return (reinterpret_cast<const char*>(&dummy)[3] == 1) ? Endianness::LittleEndian : Endianness::BigEndian;
+        return (reinterpret_cast<const char*>(&dummy)[3] == 1) ? "little" : "big";
     });
 
     rpc_server_->bindAsync("beginTick", [this]() -> void {
