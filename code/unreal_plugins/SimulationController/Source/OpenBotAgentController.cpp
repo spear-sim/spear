@@ -191,9 +191,6 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     box.shape = {6};
     observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
 
-    box.shape = {-1};
-    observation_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
-
     ASSERT(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed" or Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical");
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = 0;
@@ -210,7 +207,17 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
 
 std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
 {
-    return {};
+    std::map<std::string, Box> step_info_space;
+    Box box;
+
+    box.low = std::numeric_limits<float>::lowest();
+    box.high = std::numeric_limits<float>::max();
+    box.dtype = DataType::Float32;
+
+    box.shape = {-1};
+    step_info_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
+
+    return step_info_space;
 }
 
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
@@ -248,7 +255,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    // get observations
+    // Get observations
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         ASSERT(IsInGameThread());
 
@@ -293,19 +300,21 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
     const FVector agent_current_location = simple_vehicle_pawn_->GetActorLocation();
     const FRotator agent_current_orientation = simple_vehicle_pawn_->GetActorRotation();
-
     Eigen::Vector2f control_state = simple_vehicle_pawn_->GetControlState();
 
     observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
     observation["state_data"] = Serialize::toUint8(std::vector<float>{agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw)});
-    observation["trajectory_data"] = Serialize::toUint8(trajectory_);
 
     return observation;
 }
 
 std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getStepInfo() const
 {
-    return {};
+    std::map<std::string, std::vector<uint8_t>> step_info;
+
+    step_info["trajectory_data"] = Serialize::toUint8(trajectory_);
+
+    return step_info;
 }
 
 void OpenBotAgentController::reset()

@@ -8,12 +8,12 @@ INTERIORSIM:
   LAUNCH_MODE: "standalone_executable"
   
   # If launch_mode is "standalone_exectuable", specify this path to an Unreal application.
-  #STANDALONE_EXECUTABLE: "/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
-  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
+  STANDALONE_EXECUTABLE: "/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
+  # STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
 
 
-  #TEMP_DIR: "/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/Temp"
-  TEMP_DIR: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/Temp"
+  TEMP_DIR: "/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/Temp"
+  #TEMP_DIR: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/Temp"
 
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   
@@ -34,8 +34,8 @@ INTERIORSIM:
   
   # Specify the location of the settings.json parameter file used in the InteriorSim executable. 
   # Allows avoiding the "settings.json not found" error at simulation start:
-  #CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json"]
-  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json", "-game"]
+  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json"]
+  #CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json", "-game"]
 
 
   # Once a connection has been established, the RPC client will wait for this amount of
@@ -67,7 +67,8 @@ SIMULATION_CONTROLLER:
     MAX_ITER_REPLAN: 5000
     AGENT_POSITION_Z_MIN: 0.5
     AGENT_POSITION_Z_MAX: 20.0
-    TRAJECTORY_FILE: "/home/quentin/Desktop/ISL/interiorsim/code/experiments/rl_openbot/imitation_learning/Trajectories/InitGoalAgentPositions_235388780.csv"
+    #TRAJECTORY_FILE: "/home/quentin/Desktop/ISL/interiorsim/code/experiments/rl_openbot/imitation_learning/Trajectories/InitGoalAgentPositions_235388780.csv"
+    TRAJECTORY_FILE: "/home/qleboute/Documents/Git/interiorsim/code/experiments/rl_openbot/imitation_learning/Trajectories/InitGoalAgentPositions_235388780.csv"
       
   OPENBOT_AGENT_CONTROLLER:
     AGENT_ACTOR_NAME: "SimpleVehicle_0"
