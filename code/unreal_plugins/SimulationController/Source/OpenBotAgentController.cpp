@@ -193,6 +193,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
 
     ASSERT(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed" or Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical");
+
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = 0;
         box.high = 255;
@@ -214,7 +215,6 @@ std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
     box.dtype = DataType::Float32;
-
     box.shape = {-1};
     step_info_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
 

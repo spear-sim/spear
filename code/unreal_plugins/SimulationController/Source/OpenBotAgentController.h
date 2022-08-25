@@ -57,7 +57,7 @@ private:
     UNavigationSystemV1* nav_sys_ = nullptr;
     ANavigationData* nav_data_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
-    FVector agent_initial_position_;    // Initial position of the learning agent
-    FVector agent_goal_position_;       // Goal position of the learning agent (should be the position of the goal agent)
-    std::vector<float> trajectory_; // An array containing the different waypoints to be followed by the agent, converted into a serialized format X0, Y0, Z0, X1, Y1, Z1, ... Xn, Yn, Zn 
+    FVector agent_initial_position_; // Initial position of the learning agent
+    FVector agent_goal_position_;    // Goal position of the learning agent (should be the position of the goal agent)
+    std::vector<float> trajectory_;  // An array containing the different waypoints to be followed by the agent, converted into a serialized format X0, Y0, Z0, X1, Y1, Z1, ... Xn, Yn, Zn 
 };
