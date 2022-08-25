@@ -208,6 +208,11 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     return observation_space;
 }
 
+std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
+{
+    return {};
+}
+
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
@@ -296,6 +301,11 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     observation["trajectory_data"] = Serialize::toUint8(trajectory_);
 
     return observation;
+}
+
+std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getStepInfo() const
+{
+    return {};
 }
 
 void OpenBotAgentController::reset()

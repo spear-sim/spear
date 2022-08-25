@@ -191,6 +191,11 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
     return observation_space;
 }
 
+std::map<std::string, Box> SphereAgentController::getStepInfoSpace() const
+{
+    return {};
+}
+
 void SphereAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     ASSERT(action.count("apply_force"));
@@ -304,6 +309,11 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     }
 
     return observation;
+}
+
+std::map<std::string, std::vector<uint8_t>> SphereAgentController::getStepInfo() const
+{
+    return {};
 }
 
 void SphereAgentController::reset()
