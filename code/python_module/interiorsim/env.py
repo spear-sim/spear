@@ -8,7 +8,7 @@ from subprocess import Popen
 import sys
 import time
 
-import msgpackrpc   # pip install -e code/third_party/msgpack-rpc-python
+import msgpackrpc # pip install -e code/third_party/msgpack-rpc-python
 
 
 # Enum values should match Box.h in SimulationController plugin
