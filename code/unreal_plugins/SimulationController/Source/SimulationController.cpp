@@ -112,29 +112,27 @@ void SimulationController::worldBeginPlayEventHandler()
     // pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
-    // read config to decide which type of AgentController to create
-    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
-        agent_controller_ = std::make_unique<SphereAgentController>(world_);
-    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+    // create AgentController (do this first in case the Task needs to find an Actor that gets spawned by the AgentController)
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
         agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
-    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
-        agent_controller_ = std::make_unique<DebugAgentController>(world_);
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
+        agent_controller_ = std::make_unique<SphereAgentController>(world_);
     } else {
         ASSERT(false);
     }
     ASSERT(agent_controller_);
 
-    // read config to decide which type of Task class to create
-    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
-        task_ = std::make_unique<PointGoalNavTask>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
+    // create Task (do this second in case the AgentController needs to spawn an Actor)
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
         task_ = std::make_unique<NullTask>();
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
+        task_ = std::make_unique<PointGoalNavTask>(world_);
     } else {
         ASSERT(false);
     }
     ASSERT(task_);
 
-    // create a visualizer that is responsible for the camera view
+    // create Visualizer
     visualizer_ = std::make_unique<Visualizer>(world_);
     ASSERT(visualizer_);
 
@@ -302,14 +300,14 @@ void SimulationController::bindFunctionsToRpcServer()
         return agent_controller_->getObservationSpace();
     });
 
-    rpc_server_->bindAsync("getTaskStepInfoSpace", [this]() -> std::map<std::string, Box> {
-        ASSERT(task_);
-        return task_->getStepInfoSpace();
-    });
-
     rpc_server_->bindAsync("getAgentControllerStepInfoSpace", [this]() -> std::map<std::string, Box> {
         ASSERT(agent_controller_);
         return agent_controller_->getStepInfoSpace();
+    });
+
+    rpc_server_->bindAsync("getTaskStepInfoSpace", [this]() -> std::map<std::string, Box> {
+        ASSERT(task_);
+        return task_->getStepInfoSpace();
     });
 
     rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
@@ -336,31 +334,40 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->isEpisodeDone();
     });
 
-    rpc_server_->bindSync("getTaskStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
-        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
-        ASSERT(task_);
-        return task_->getStepInfo();
-    });
-
     rpc_server_->bindSync("getAgentControllerStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         ASSERT(task_);
         return agent_controller_->getStepInfo();
     });
 
-    rpc_server_->bindSync("reset", [this]() -> void {
-        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
+    rpc_server_->bindSync("getTaskStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         ASSERT(task_);
+        return task_->getStepInfo();
+    });
+
+    rpc_server_->bindSync("resetAgentController", [this]() -> void {
+        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         ASSERT(agent_controller_);
-        task_->reset();
         agent_controller_->reset();
     });
 
-    rpc_server_->bindSync("isReady", [this]() -> bool{
+    rpc_server_->bindSync("resetTask", [this]() -> void {
+        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
+        ASSERT(task_);
+        task_->reset();
+    });
+
+    rpc_server_->bindSync("isAgentControllerReady", [this]() -> bool{
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(agent_controller_);
+        return agent_controller_->isReady();
+    });
+
+    rpc_server_->bindSync("isTaskReady", [this]() -> bool{
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         ASSERT(task_);
-        ASSERT(agent_controller_);
-        return task_->isReady() && agent_controller_->isReady();
+        return task_->isReady();
     });
 }
 

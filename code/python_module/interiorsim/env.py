@@ -42,6 +42,20 @@ class EndiannessType(Enum):
     BigEndian = 1
 
 
+# mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
+class Box():
+    def __init__(self, high, low, shape, dtype):
+        self.high = high
+        self.low = low
+        self.shape = shape
+        self.dtype = dtype
+
+# mimics the behavior of gym.spaces.Dict
+class Dict():
+    def __init__(self, spaces):
+        self.spaces = spaces
+
+
 class Env(gym.Env):
 
     def __init__(self, config):
@@ -303,42 +317,17 @@ class Env(gym.Env):
         else:
             assert False
 
-    def _get_gym_space(self, space):
-        
-        gym_space_components = {}
+    def _get_dict_space(self, space, box_space_type, dict_space_type):
+
+        dict_space_components = {}
         for name, component in space.items():
             low = component["low"]
             high = component["high"]
             shape = tuple(component["shape"])
             dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype"]]
-            gym_space_components[name] = spaces.Box(low, high, shape, dtype)
+            dict_space_components[name] = box_space_type(low, high, shape, dtype)
 
-        return spaces.Dict(gym_space_components)
-
-    def _get_interiorsim_space(self, space):
-
-        # mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
-        class InteriorSimBox():
-            def __init__(self, high, low, shape, dtype):
-                self.high = high
-                self.low = low
-                self.shape = shape
-                self.dtype = dtype
-
-        # mimics the behavior of gym.spaces.Dict
-        class InteriorSimDict():
-            def __init__(self, spaces):
-                self.spaces = spaces
-
-        interiorsim_space_components = {}
-        for name, component in space.items():
-            low = component["low"]
-            high = component["high"]
-            shape = tuple(component["shape"])
-            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype"]]
-            interiorsim_space_components[name] = InteriorSimBox(low, high, shape, dtype)
-
-        return InteriorSimDict(interiorsim_space_components)
+        return dict_space_type(dict_space_components)
 
     def _deserialize(self, data, space):
 
@@ -378,20 +367,20 @@ class Env(gym.Env):
     def _get_action_space(self):
         space = self._client.call("getActionSpace")
         assert len(space) > 0
-        return self._get_gym_space(space)
+        return self._get_dict_space(space, spaces.Box, spaces.Dict)
 
     def _get_observation_space(self):
         space = self._client.call("getObservationSpace")
         assert len(space) > 0
-        return self._get_gym_space(space)
+        return self._get_dict_space(space, spaces.Box, spaces.Dict)
 
     def _get_task_step_info_space(self):
         space = self._client.call("getTaskStepInfoSpace")
-        return self._get_interiorsim_space(space)
+        return self._get_dict_space(space, Box, Dict)
 
     def _get_agent_controller_step_info_space(self):
         space = self._client.call("getAgentControllerStepInfoSpace")
-        return self._get_interiorsim_space(space)
+        return self._get_dict_space(space, Box, Dict)
 
     def _apply_action(self, action):
         self._client.call("applyAction", action)
@@ -410,10 +399,11 @@ class Env(gym.Env):
         task_step_info = self._client.call("getTaskStepInfo")
         agent_controller_step_info = self._client.call("getAgentControllerStepInfo")
         return { "task_step_info": self._deserialize(task_step_info, self._task_step_info_space),
-                 "agent_step_info": self._deserialize(agent_controller_step_info, self._agent_controller_step_info_space) }
+                 "agent_controller_step_info": self._deserialize(agent_controller_step_info, self._agent_controller_step_info_space) }
 
     def _reset(self):
-        self._client.call("reset")
+        self._client.call("resetTask") # reset the Task first in case it needs to set the position of Actors
+        self._client.call("resetAgentController") # reset the AgentController second in case it needs to refine the position of Actors
 
     def _is_ready(self):
-        return self._client.call("isReady")
+        return self._client.call("isTaskReady") and self._client.call("isAgentControllerReady")
