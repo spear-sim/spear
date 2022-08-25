@@ -26,12 +26,12 @@ public:
 
     std::map<std::string, Box> getStepInfoSpace() const override
     {
-        return std::map<std::string, Box>{};
+        return {};
     }
 
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override
     {   
-        return std::map<std::string, std::vector<uint8_t>>{};
+        return {};
     }
 
     void reset() override {}

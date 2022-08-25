@@ -111,6 +111,9 @@ def compare_tf_tflite(model, tflite_model, img=None, goal=None):
     # Get input and output tensors.
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
+    
+    print("input_details:", input_details)
+    print("output_details:", output_details)
 
     # Test the TensorFlow Lite model on input data. If no data provided, generate random data.
     input_data = {}

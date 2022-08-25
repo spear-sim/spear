@@ -169,9 +169,11 @@ def process_data(tr: Training, redo_matching=False, remove_zeros=True):
     )
 
 
-def load_tfrecord(tr: Training, verbose=0):
+def load_tfrecord(tr: Training, verbose=0, is_crop=True):
     def process_train_sample(features):
         image = features["image"]
+        if is_crop:
+            image = tf.image.crop_to_bounding_box(image, tf.shape(image)[0] - 90, tf.shape(image)[1] - 160, 90, 160)
         goal = [features["dist"], features["sinYaw"], features["cosYaw"]]
         label = [features["left"], features["right"]]
         image = data_augmentation.augment_img(image)
@@ -179,6 +181,8 @@ def load_tfrecord(tr: Training, verbose=0):
 
     def process_test_sample(features):
         image = features["image"]
+        if is_crop:
+            image = tf.image.crop_to_bounding_box(image, tf.shape(image)[0] - 90, tf.shape(image)[1] - 160, 90, 160)
         goal = [features["dist"], features["sinYaw"], features["cosYaw"]]
         label = [features["left"], features["right"]]
         return (image, goal), label
@@ -403,7 +407,8 @@ def do_evaluation(tr: Training, callback: tf.keras.callbacks.Callback, verbose=0
         np.array(history.history["val_angle_metric"])
         + np.array(history.history["val_direction_metric"])
     )
-    best_checkpoint = str("cp-%04d.ckpt" % (best_index + 1))
+    #best_checkpoint = str("cp-%04d.ckpt" % (best_index + 1))
+    best_checkpoint = "cp-best-train.ckpt"
     best_tflite = utils.generate_tflite(checkpoint_path, best_checkpoint)
     utils.save_tflite(best_tflite, checkpoint_path, "best")
     print(
@@ -415,7 +420,8 @@ def do_evaluation(tr: Training, callback: tf.keras.callbacks.Callback, verbose=0
         )
     )
 
-    last_checkpoint = sorted(utils.list_dirs(checkpoint_path))[-1]
+    #last_checkpoint = sorted(utils.list_dirs(checkpoint_path))[-1]
+    last_checkpoint = "cp-last.ckpt"
     last_tflite = utils.generate_tflite(checkpoint_path, last_checkpoint)
     utils.save_tflite(last_tflite, checkpoint_path, "last")
     print(
