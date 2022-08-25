@@ -1,6 +1,6 @@
-// Modified from Carla (https://carla.org) project, thanks to MIT license.
-
 #pragma once
+
+// Modified from Carla (https://carla.org) project, thanks to MIT license.
 
 #include <future>
 #include <mutex>
