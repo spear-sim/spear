@@ -9,7 +9,6 @@
 #include <utility>
 
 #include "Asio.h"
-#include "MoveHandler.h"
 #include "Rpclib.h"
 
 // An RPC server in which functions can be bound to run synchronously or asynchronously. Use
