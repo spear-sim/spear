@@ -331,7 +331,7 @@ if __name__ == "__main__":
                     im.save(dataFolderName+"images/%d.jpeg" % i)
 
                     if waypointReached:
-                        if index_waypoint < numWaypoints-1: # if the waypoint is not the goal
+                        if index_waypoint < numWaypoints: # if the waypoint is not the goal
                             print(f"Waypoint {index_waypoint} over {numWaypoints} reached !")
                             index_waypoint = index_waypoint + 1
                         else: # Goal reached !
