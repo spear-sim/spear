@@ -184,6 +184,11 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     return observation_space;
 }
 
+std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
+{
+    return {};
+}
+
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     ASimpleVehiclePawn* vehicle_pawn = dynamic_cast<ASimpleVehiclePawn*>(agent_actor_);
@@ -309,6 +314,11 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     }
     
     return observation;
+}
+
+std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getStepInfo() const
+{
+    return {};
 }
 
 void OpenBotAgentController::reset()

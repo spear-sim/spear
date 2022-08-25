@@ -54,11 +54,12 @@ class Env(gym.Env):
         self._connect_to_unreal_instance()
         self._initialize_unreal_instance()
 
-        self._byte_order = self._get_byte_order()
-
         self.action_space = self._get_action_space()
         self.observation_space = self._get_observation_space()
-        self.step_info_space = self._get_step_info_space()
+
+        self._byte_order = self._get_byte_order()
+        self._task_step_info_space = self._get_task_step_info_space()
+        self._agent_controller_step_info_space = self._get_agent_controller_step_info_space()
 
     def step(self, action):
         
@@ -304,35 +305,60 @@ class Env(gym.Env):
 
     def _get_gym_space(self, space):
         
-        gym_spaces = {}
+        gym_space_components = {}
         for name, component in space.items():
             low = component["low"]
             high = component["high"]
             shape = tuple(component["shape"])
             dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype"]]
-            gym_spaces[name] = spaces.Box(low, high, shape, dtype)
+            gym_space_components[name] = spaces.Box(low, high, shape, dtype)
 
-        return spaces.Dict(gym_spaces)
+        return spaces.Dict(gym_space_components)
+
+    def _get_interiorsim_space(self, space):
+
+        # mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
+        class InteriorSimBox():
+            def __init__(self, high, low, shape, dtype):
+                self.high = high
+                self.low = low
+                self.shape = shape
+                self.dtype = dtype
+
+        # mimics the behavior of gym.spaces.Dict
+        class InteriorSimDict():
+            def __init__(self, spaces):
+                self.spaces = spaces
+
+        interiorsim_space_components = {}
+        for name, component in space.items():
+            low = component["low"]
+            high = component["high"]
+            shape = tuple(component["shape"])
+            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype"]]
+            interiorsim_space_components[name] = InteriorSimBox(low, high, shape, dtype)
+
+        return InteriorSimDict(interiorsim_space_components)
 
     def _deserialize(self, data, space):
 
-        assert data.keys() == space.keys()
+        assert data.keys() == space.spaces.keys()
 
-        return_data = {}
+        return_dict = {}
         for name, component in data.items():
             
             assert len(component) > 0
             # get shape and dtype of the data component
-            shape = space[name].shape
-            dtype = space[name].dtype
+            shape = space.spaces[name].shape
+            dtype = space.spaces[name].dtype
 
             # change byte order based on Unreal instance and client endianness
             if self._byte_order is not None:
                 dtype = dtype.newbyteorder(self._byte_order)
 
-            return_data[name] = np.frombuffer(component, dtype=dtype, count=-1).reshape(shape)
+            return_dict[name] = np.frombuffer(component, dtype=dtype, count=-1).reshape(shape)
 
-        return return_data
+        return return_dict
 
     def _ping(self):
         return self._client.call("ping")
@@ -359,9 +385,13 @@ class Env(gym.Env):
         assert len(space) > 0
         return self._get_gym_space(space)
 
-    def _get_step_info_space(self):
-        space = self._client.call("getStepInfoSpace")
-        return self._get_gym_space(space)
+    def _get_task_step_info_space(self):
+        space = self._client.call("getTaskStepInfoSpace")
+        return self._get_interiorsim_space(space)
+
+    def _get_agent_controller_step_info_space(self):
+        space = self._client.call("getAgentControllerStepInfoSpace")
+        return self._get_interiorsim_space(space)
 
     def _apply_action(self, action):
         self._client.call("applyAction", action)
@@ -377,8 +407,10 @@ class Env(gym.Env):
         return self._client.call("isEpisodeDone")
 
     def _get_step_info(self):
-        step_info = self._client.call("getStepInfo")
-        return self._deserialize(step_info, self.step_info_space)
+        task_step_info = self._client.call("getTaskStepInfo")
+        agent_controller_step_info = self._client.call("getAgentControllerStepInfo")
+        return { "task_step_info": self._deserialize(task_step_info, self._task_step_info_space),
+                 "agent_step_info": self._deserialize(agent_controller_step_info, self._agent_controller_step_info_space) }
 
     def _reset(self):
         self._client.call("reset")
