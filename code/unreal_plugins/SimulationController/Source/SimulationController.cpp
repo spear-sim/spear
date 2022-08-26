@@ -107,31 +107,36 @@ void SimulationController::worldBeginPlayEventHandler()
     // Pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
-    // Create AgentController (do this first in case the Task needs to find an Actor that gets spawned by the AgentController)
+    // Create AgentController
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
-        agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
+        agent_controller_ = std::make_unique<OpenBotAgentController>();
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
-        agent_controller_ = std::make_unique<SphereAgentController>(world_);
+        agent_controller_ = std::make_unique<SphereAgentController>();
     } else {
         ASSERT(false);
     }
     ASSERT(agent_controller_);
 
-    // Create Task (do this second in case the AgentController spawns an Actor that is needed by the Task)
+    // Create Task
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearningTask") {
-        task_ = std::make_unique<ImitationLearningTask>(world_);
+        task_ = std::make_unique<ImitationLearningTask>();
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
         task_ = std::make_unique<NullTask>();
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
-        task_ = std::make_unique<PointGoalNavTask>(world_);
+        task_ = std::make_unique<PointGoalNavTask>();
     } else {
         ASSERT(false);
     }
     ASSERT(task_);
 
     // Create Visualizer
-    visualizer_ = std::make_unique<Visualizer>(world_);
+    visualizer_ = std::make_unique<Visualizer>();
     ASSERT(visualizer_);
+
+    // Deferred initialization for AgentController, Task, and Visualizer
+    agent_controller_->findObjectReferences(world_);
+    task_->findObjectReferences(world_);
+    visualizer_->findObjectReferences(world_);
 
     // Initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
@@ -159,17 +164,21 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
         // OnWorldCleanUp is called for all worlds. rpc_server_ and agent_controller_ is created only when a Game World's begin play event is launched.
         if(is_world_begin_play_executed_) {
+
             ASSERT(rpc_server_);
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
             rpc_server_ = nullptr;
 
             ASSERT(visualizer_);
+            visualizer_->cleanUpObjectReferences();
             visualizer_ = nullptr;
 
             ASSERT(task_);
+            task_->cleanUpObjectReferences();
             task_ = nullptr;
 
             ASSERT(agent_controller_);
+            agent_controller_->cleanUpObjectReferences();
             agent_controller_ = nullptr;
         }
 

@@ -10,7 +10,9 @@ public:
     NullTask() = default;
     ~NullTask() = default;
 
-    // Task overrides
+    void findObjectReferences(UWorld* world) override {}
+    void cleanUpObjectReferences() override {}
+
     void beginFrame() override {}
     void endFrame() override {}
 

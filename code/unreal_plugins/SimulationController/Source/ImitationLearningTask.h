@@ -17,10 +17,13 @@ struct Box;
 
 class ImitationLearningTask : public Task {
 public:
-    ImitationLearningTask(UWorld* world);
-    ~ImitationLearningTask();
 
-    // Task overrides
+    ImitationLearningTask() = default;
+    ~ImitationLearningTask() = default;
+
+    void findObjectReferences(UWorld* world) override;
+    void cleanUpObjectReferences() override;
+
     void beginFrame() override;
     void endFrame() override;
     float getReward() const override;
@@ -30,7 +33,6 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    // Handles collision-related logic
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
 private:

@@ -392,8 +392,9 @@ class Env(gym.Env):
                  "agent_controller_step_info": self._deserialize(agent_controller_step_info, self._agent_controller_step_info_space) }
 
     def _reset(self):
-        self._client.call("resetTask") # reset the Task first in case it needs to set the position of Actors
-        self._client.call("resetAgentController") # reset the AgentController second in case it needs to refine the position of Actors
+        # reset the Task first in case it needs to set the position of Actors, then reset AgentController so it can refine the position of actors
+        self._client.call("resetTask")
+        self._client.call("resetAgentController")
 
     def _is_ready(self):
         return self._client.call("isTaskReady") and self._client.call("isAgentControllerReady")

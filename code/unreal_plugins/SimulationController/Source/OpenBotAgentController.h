@@ -22,10 +22,12 @@ class OpenBotAgentController : public AgentController
 {
 public:
 
-    // This UWorld pointer passed here points to the only running game world.
-    OpenBotAgentController(UWorld* world);
-    ~OpenBotAgentController();
-    
+    OpenBotAgentController() = default;
+    ~OpenBotAgentController() = default;
+
+    void findObjectReferences(UWorld* world) override;
+    void cleanUpObjectReferences() override;
+
     std::map<std::string, Box> getActionSpace() const override;
     std::map<std::string, Box> getObservationSpace() const override;
     std::map<std::string, Box> getStepInfoSpace() const override;
@@ -42,7 +44,7 @@ private:
     // Rebuild the navigation mesh of the agent
     void buildNavMesh();
 
-    // Generate a collision-free trajectory between an initial and a target location.
+    // Generate a collision-free trajectory between an initial and a target location
     void generateTrajectoryToTarget();
 
     ASimpleVehiclePawn* simple_vehicle_pawn_ = nullptr;
