@@ -139,10 +139,6 @@ void SphereAgentController::cleanUpObjectReferences()
         scene_capture_component_->DestroyComponent();
         scene_capture_component_ = nullptr;
 
-        ASSERT(new_object_parent_actor_);
-        new_object_parent_actor_->Destroy();
-        new_object_parent_actor_ = nullptr;
-
         ASSERT(observation_camera_actor_);
         observation_camera_actor_ = nullptr;
     }
