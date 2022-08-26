@@ -1,6 +1,5 @@
 from enum import Enum
-import gym
-from gym import spaces
+import gym.spaces
 import numpy as np
 import os
 import psutil
@@ -357,12 +356,12 @@ class Env(gym.Env):
     def _get_action_space(self):
         space = self._client.call("getActionSpace")
         assert len(space) > 0
-        return self._get_dict_space(space, spaces.Box, spaces.Dict)
+        return self._get_dict_space(space, gym.spaces.Box, gym.spaces.Dict)
 
     def _get_observation_space(self):
         space = self._client.call("getObservationSpace")
         assert len(space) > 0
-        return self._get_dict_space(space, spaces.Box, spaces.Dict)
+        return self._get_dict_space(space, gym.spaces.Box, gym.spaces.Dict)
 
     def _get_task_step_info_space(self):
         space = self._client.call("getTaskStepInfoSpace")
