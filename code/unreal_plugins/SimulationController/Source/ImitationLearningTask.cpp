@@ -16,31 +16,12 @@
 #include "Box.h"
 #include "Config.h"
 
-void ImitationLearningTask::findObjectReferences(UWorld* world)
-{    
-    std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
+ImitationLearningTask::ImitationLearningTask(UWorld* world)
+{
+    random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SEED"}));
 
-    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
-
-        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "AGENT_ACTOR_NAME"})) {
-            ASSERT(!agent_actor_);
-            agent_actor_ = *actor_itr;
-            ASSERT(agent_actor_);
-        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) and Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
-            ASSERT(!goal_actor_);
-            goal_actor_ = *actor_itr;
-            ASSERT(goal_actor_);
-        } else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
-            obstacle_ignore_actors_.emplace_back(*actor_itr);
-            std::cout << "actor_name: " << actor_name << std::endl;
-        }
-    }
-
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
-        ASSERT(goal_actor_);
-    } else {
+    // If GOAL_ACTOR_NAME is "", then spawn a new actor
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) == "") {
         FActorSpawnParameters goal_spawn_params;
         goal_spawn_params.Name = FName("GoalActor");
         goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
@@ -51,20 +32,78 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
         ASSERT(goal_actor_);
     }
 
-    // Read config value for random stream initialization
-    random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SEED"}));
-
-    // We spawn a new actor in findObjectReferences(...) because we don't need another systems to be able to find it
     new_object_parent_actor_ = world->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
-    // Create and initialize actor hit handler
+    // Create UActorHitEvent but don't subscribe to any actors yet
     actor_hit_event_ = NewObject<UActorHitEvent>(new_object_parent_actor_, TEXT("ActorHitEvent"));
     ASSERT(actor_hit_event_);
-
     actor_hit_event_->RegisterComponent();
-    actor_hit_event_->subscribeToActor(agent_actor_);
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
+
+    // If the start/goal positions are not randomly generated 
+    if (not Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
+        getPositionsFromFile();
+    } 
+}
+
+ImitationLearningTask::~ImitationLearningTask()
+{
+    if (not Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
+        position_index_ = -1;
+        agent_initial_position_.clear();
+        agent_goal_position_.clear();
+    }
+    
+    ASSERT(actor_hit_event_);
+    actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);
+    actor_hit_event_delegate_handle_.Reset();
+    actor_hit_event_->DestroyComponent();
+    actor_hit_event_ = nullptr;
+
+    ASSERT(new_object_parent_actor_);
+    new_object_parent_actor_->Destroy();
+    new_object_parent_actor_ = nullptr;
+
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) == "") {
+        ASSERT(goal_actor_);
+        goal_actor_ = nullptr;
+    }
+
+    random_stream_.Reset();
+}
+
+void ImitationLearningTask::findObjectReferences(UWorld* world)
+{
+    std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
+
+    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
+
+        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
+
+        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "AGENT_ACTOR_NAME"})) {
+            ASSERT(!agent_actor_);
+            agent_actor_ = *actor_itr;
+        } else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
+            obstacle_ignore_actors_.emplace_back(*actor_itr);
+            std::cout << "actor_name: " << actor_name << std::endl;
+        }
+
+        // If GOAL_ACTOR_NAME is not "", then assign goal_actor_ pointer to existing actor if the name matches
+        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
+            if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"})) {
+                ASSERT(!goal_actor_);
+                goal_actor_ = *actor_itr;
+            }
+        }
+    }
+    ASSERT(agent_actor_);
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
+        ASSERT(goal_actor_);
+    }
+
+    // Subscribe to the agent actor now that we have obtained a reference to it
+    actor_hit_event_->subscribeToActor(agent_actor_);
 
     // Agent Navigation:
     // Get a pointer to the navigation system
@@ -76,11 +115,6 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     ASSERT(actor_as_nav_agent);
     nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
     ASSERT(nav_data_);
-
-    // If the start/goal positions are not randomly generated 
-    if (not Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
-        getPositionsFromFile();
-    } 
 }
 
 void ImitationLearningTask::cleanUpObjectReferences()
@@ -92,25 +126,17 @@ void ImitationLearningTask::cleanUpObjectReferences()
     nav_sys_ = nullptr;
 
     ASSERT(actor_hit_event_);
-    actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);
-    actor_hit_event_delegate_handle_.Reset();
     actor_hit_event_->unsubscribeFromActor(agent_actor_);
-    actor_hit_event_->DestroyComponent();
-    actor_hit_event_ = nullptr;
 
-    ASSERT(new_object_parent_actor_);
-    new_object_parent_actor_->Destroy();
-    new_object_parent_actor_ = nullptr;
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
+        ASSERT(goal_actor_);
+        goal_actor_ = nullptr;
+    }
 
-    random_stream_.Reset();
-
-    ASSERT(goal_actor_);
-    goal_actor_ = nullptr;
+    obstacle_ignore_actors_.clear();
 
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
-
-    obstacle_ignore_actors_.clear();
 }
 
 void ImitationLearningTask::beginFrame()

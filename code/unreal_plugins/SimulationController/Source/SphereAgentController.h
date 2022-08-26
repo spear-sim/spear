@@ -19,8 +19,8 @@ class SphereAgentController : public AgentController
 {
 public:
 
-    SphereAgentController() = default;
-    ~SphereAgentController() = default;
+    SphereAgentController();
+    ~SphereAgentController();
  
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;

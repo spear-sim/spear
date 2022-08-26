@@ -111,7 +111,7 @@ void SimulationController::worldBeginPlayEventHandler()
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
         agent_controller_ = std::make_unique<OpenBotAgentController>();
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
-        agent_controller_ = std::make_unique<SphereAgentController>();
+        agent_controller_ = std::make_unique<SphereAgentController>(world_);
     } else {
         ASSERT(false);
     }
@@ -119,11 +119,11 @@ void SimulationController::worldBeginPlayEventHandler()
 
     // Create Task
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearningTask") {
-        task_ = std::make_unique<ImitationLearningTask>();
+        task_ = std::make_unique<ImitationLearningTask>(world_);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
         task_ = std::make_unique<NullTask>();
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
-        task_ = std::make_unique<PointGoalNavTask>();
+        task_ = std::make_unique<PointGoalNavTask>(world_);
     } else {
         ASSERT(false);
     }

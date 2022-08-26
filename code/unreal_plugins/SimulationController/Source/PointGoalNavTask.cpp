@@ -10,6 +10,35 @@
 #include "Box.h"
 #include "Config.h"
 
+void PointGoalNavTask::PointGoalNavTask(UWorld* world)
+{
+    random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
+
+    new_object_parent_actor_ = world->SpawnActor<AActor>();
+    ASSERT(new_object_parent_actor_);
+
+    // create UActorHitEvent but don't subscribe to any actors yet
+    actor_hit_event_ = NewObject<UActorHitEvent>(new_object_parent_actor_, TEXT("ActorHitEvent"));
+    ASSERT(actor_hit_event_);
+    actor_hit_event_->RegisterComponent();
+    actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
+}
+
+void PointGoalNavTask::~PointGoalNavTask()
+{
+    ASSERT(actor_hit_event_);
+    actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);
+    actor_hit_event_delegate_handle_.Reset();
+    actor_hit_event_->DestroyComponent();
+    actor_hit_event_ = nullptr;
+
+    ASSERT(new_object_parent_actor_);
+    new_object_parent_actor_->Destroy();
+    new_object_parent_actor_ = nullptr;
+
+    random_stream_.Reset();
+}
+
 void PointGoalNavTask::findObjectReferences(UWorld* world)
 {
     // append all actors that need to be ignored during collision check
@@ -32,43 +61,22 @@ void PointGoalNavTask::findObjectReferences(UWorld* world)
     ASSERT(goal_actor_);
     ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
 
-    // read config value for random stream initialization
-    random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
-
-    // We spawn a new actor in findObjectReferences(...) because we don't need another systems to be able to find it
-    new_object_parent_actor_ = world->SpawnActor<AActor>();
-    ASSERT(new_object_parent_actor_);
-
-    // create and initialize actor hit handler
-    actor_hit_event_ = NewObject<UActorHitEvent>(new_object_parent_actor_, TEXT("ActorHitEvent"));
-    ASSERT(actor_hit_event_);
-    actor_hit_event_->RegisterComponent();
+    // subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_->subscribeToActor(agent_actor_);
-    actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
 }
 
 void PointGoalNavTask::cleanUpObjectReferences()
 {
     ASSERT(actor_hit_event_);
-    actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);
-    actor_hit_event_delegate_handle_.Reset();
     actor_hit_event_->unsubscribeFromActor(agent_actor_);
-    actor_hit_event_->DestroyComponent();
-    actor_hit_event_ = nullptr;
 
-    ASSERT(new_object_parent_actor_);
-    new_object_parent_actor_->Destroy();
-    new_object_parent_actor_ = nullptr;
-
-    random_stream_.Reset();
+    obstacle_ignore_actors_.clear();
 
     ASSERT(goal_actor_);    
     goal_actor_ = nullptr;
 
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
-
-    obstacle_ignore_actors_.clear();
 }
 
 void PointGoalNavTask::beginFrame()

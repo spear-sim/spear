@@ -16,8 +16,8 @@ class PointGoalNavTask: public Task
 {
 public:
 
-    PointGoalNavTask() = default;
-    ~PointGoalNavTask() = default;
+    PointGoalNavTask(UWorld* world);
+    ~PointGoalNavTask();
 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
