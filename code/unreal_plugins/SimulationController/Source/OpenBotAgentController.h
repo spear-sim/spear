@@ -22,8 +22,8 @@ class OpenBotAgentController : public AgentController
 {
 public:
 
-    OpenBotAgentController();
-    ~OpenBotAgentController();
+    OpenBotAgentController() = default;
+    ~OpenBotAgentController() = default;
 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;

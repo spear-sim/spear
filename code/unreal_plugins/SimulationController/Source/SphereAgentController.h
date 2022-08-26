@@ -19,7 +19,7 @@ class SphereAgentController : public AgentController
 {
 public:
 
-    SphereAgentController();
+    SphereAgentController(UWorld* world);
     ~SphereAgentController();
  
     void findObjectReferences(UWorld* world) override;

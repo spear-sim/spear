@@ -10,7 +10,7 @@
 #include "Box.h"
 #include "Config.h"
 
-void PointGoalNavTask::PointGoalNavTask(UWorld* world)
+PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
 
@@ -24,7 +24,7 @@ void PointGoalNavTask::PointGoalNavTask(UWorld* world)
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
 }
 
-void PointGoalNavTask::~PointGoalNavTask()
+PointGoalNavTask::~PointGoalNavTask()
 {
     ASSERT(actor_hit_event_);
     actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);

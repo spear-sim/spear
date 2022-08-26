@@ -19,7 +19,7 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-void SphereAgentController::SphereAgentController(UWorld* world)
+SphereAgentController::SphereAgentController(UWorld* world)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         new_object_parent_actor_ = world->SpawnActor<AActor>();
@@ -33,7 +33,7 @@ void SphereAgentController::SphereAgentController(UWorld* world)
     }
 }
 
-void SphereAgentController::~SphereAgentController()
+SphereAgentController::~SphereAgentController()
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         ASSERT(post_physics_pre_render_tick_event_);
