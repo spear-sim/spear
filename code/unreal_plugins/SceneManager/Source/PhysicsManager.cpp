@@ -21,9 +21,10 @@ void PhysicsManager::initialize()
         std::ostringstream oss;
         oss << "/Game/Scene/PhyMaterials/PM_" << physical_material_id << ".PM_" << physical_material_id;
         UPhysicalMaterial* physical_material = LoadObject<UPhysicalMaterial>(nullptr, UTF8_TO_TCHAR(oss.str().c_str()));
-        if (physical_material){
-            physical_material_map_[physical_material_id] = physical_material;
-        }
+
+        ASSERT(physical_material);
+
+        physical_material_map_[physical_material_id] = physical_material;
     }
     physical_material_id_counter_ = PHYSICAL_MATERIAL_ID_DYNAMIC_START;
 }
