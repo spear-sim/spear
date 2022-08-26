@@ -10,7 +10,7 @@
 #include "Box.h"
 #include "Config.h"
 
-PointGoalNavTask::PointGoalNavTask(UWorld* world)
+void PointGoalNavTask::findObjectReferences(UWorld* world)
 {
     // append all actors that need to be ignored during collision check
     std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
@@ -35,6 +35,7 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     // read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
 
+    // We spawn a new actor in findObjectReferences(...) because we don't need another systems to be able to find it
     new_object_parent_actor_ = world->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
@@ -46,7 +47,7 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
 }
 
-PointGoalNavTask::~PointGoalNavTask()
+void PointGoalNavTask::cleanUpObjectReferences()
 {
     ASSERT(actor_hit_event_);
     actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);

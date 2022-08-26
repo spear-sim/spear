@@ -19,7 +19,7 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-SphereAgentController::SphereAgentController(UWorld* world)
+void SphereAgentController::findObjectReferences(UWorld* world)
 {
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
@@ -47,6 +47,7 @@ SphereAgentController::SphereAgentController(UWorld* world)
         }
         ASSERT(observation_camera_actor_);
 
+        // we spawn a new actor in findObjectReferences(...) because we don't need another systems to be able to find it
         new_object_parent_actor_ = world->SpawnActor<AActor>();
         ASSERT(new_object_parent_actor_);
         
@@ -107,7 +108,7 @@ SphereAgentController::SphereAgentController(UWorld* world)
     sphere_static_mesh_component_->SetNotifyRigidBodyCollision(true);
 }
 
-SphereAgentController::~SphereAgentController()
+void SphereAgentController::cleanUpObjectReferences()
 {
     ASSERT(goal_static_mesh_component_);
     goal_static_mesh_component_ = nullptr;

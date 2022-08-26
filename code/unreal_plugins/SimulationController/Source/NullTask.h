@@ -10,7 +10,9 @@ public:
     NullTask() = default;
     ~NullTask() = default;
 
-    // Task overrides
+    void findObjectReferences(UWorld* world) override {}
+    void cleanUpObjectReferences() override {}
+
     void beginFrame() override {}
     void endFrame() override {}
 
@@ -26,12 +28,12 @@ public:
 
     std::map<std::string, Box> getStepInfoSpace() const override
     {
-        return std::map<std::string, Box>{};
+        return {};
     }
 
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override
     {   
-        return std::map<std::string, std::vector<uint8_t>>{};
+        return {};
     }
 
     void reset() override {}

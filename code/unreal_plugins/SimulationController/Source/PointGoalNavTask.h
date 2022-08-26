@@ -16,10 +16,12 @@ class PointGoalNavTask: public Task
 {
 public:
 
-    PointGoalNavTask(UWorld* world);
-    ~PointGoalNavTask();
+    PointGoalNavTask() = default;
+    ~PointGoalNavTask() = default;
 
-    // Task overrides
+    void findObjectReferences(UWorld* world) override;
+    void cleanUpObjectReferences() override;
+
     void beginFrame() override;
     void endFrame() override;
     float getReward() const override;
@@ -47,4 +49,3 @@ private:
 
     std::vector<AActor*> obstacle_ignore_actors_;
 };
-

@@ -29,6 +29,7 @@
 #include "Task.h"
 #include "Visualizer.h"
 
+
 // Different possible frame states for thread synchronization
 enum class FrameState : uint8_t
 {
@@ -39,13 +40,6 @@ enum class FrameState : uint8_t
     ExecutingPostTick
 };
 
-// enum values should match values in python module (env.py)
-enum class Endianness : uint8_t
-{
-    LittleEndian = 0,
-    BigEndian = 1,
-};
-MSGPACK_ADD_ENUM(Endianness);
 
 void SimulationController::StartupModule()
 {
@@ -113,33 +107,36 @@ void SimulationController::worldBeginPlayEventHandler()
     // Pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
-    // Read config to decide which type of Task class to create
-    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
-        task_ = std::make_unique<PointGoalNavTask>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearningTask") {
-        task_ = std::make_unique<ImitationLearningTask>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
-        task_ = std::make_unique<NullTask>();
-    } else {
-        ASSERT(false);
-    }
-    ASSERT(task_);
-
-    // Read config to decide which type of AgentController to create
-    if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
-        agent_controller_ = std::make_unique<SphereAgentController>(world_);
-    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
-        agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
-    } else if(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
-        agent_controller_ = std::make_unique<DebugAgentController>(world_);
+    // Create AgentController
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+        agent_controller_ = std::make_unique<OpenBotAgentController>();
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
+        agent_controller_ = std::make_unique<SphereAgentController>();
     } else {
         ASSERT(false);
     }
     ASSERT(agent_controller_);
 
-    // Create a visualizer that is responsible for the camera view
-    visualizer_ = std::make_unique<Visualizer>(world_);
+    // Create Task
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearningTask") {
+        task_ = std::make_unique<ImitationLearningTask>();
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
+        task_ = std::make_unique<NullTask>();
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
+        task_ = std::make_unique<PointGoalNavTask>();
+    } else {
+        ASSERT(false);
+    }
+    ASSERT(task_);
+
+    // Create Visualizer
+    visualizer_ = std::make_unique<Visualizer>();
     ASSERT(visualizer_);
+
+    // Deferred initialization for AgentController, Task, and Visualizer
+    agent_controller_->findObjectReferences(world_);
+    task_->findObjectReferences(world_);
+    visualizer_->findObjectReferences(world_);
 
     // Initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
@@ -167,17 +164,21 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
         // OnWorldCleanUp is called for all worlds. rpc_server_ and agent_controller_ is created only when a Game World's begin play event is launched.
         if(is_world_begin_play_executed_) {
+
             ASSERT(rpc_server_);
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
             rpc_server_ = nullptr;
 
             ASSERT(visualizer_);
+            visualizer_->cleanUpObjectReferences();
             visualizer_ = nullptr;
 
             ASSERT(task_);
+            task_->cleanUpObjectReferences();
             task_ = nullptr;
 
             ASSERT(agent_controller_);
+            agent_controller_->cleanUpObjectReferences();
             agent_controller_ = nullptr;
         }
 
@@ -251,9 +252,9 @@ void SimulationController::bindFunctionsToRpcServer()
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
-    rpc_server_->bindAsync("getEndianness", []() -> Endianness {
+    rpc_server_->bindAsync("getEndianness", []() -> std::string {
         uint32_t dummy = 0x01020304;
-        return (reinterpret_cast<const char*>(&dummy)[3] == 1) ? Endianness::LittleEndian : Endianness::BigEndian;
+        return (reinterpret_cast<const char*>(&dummy)[3] == 1) ? "little" : "big";
     });
 
     rpc_server_->bindAsync("beginTick", [this]() -> void {
@@ -305,14 +306,14 @@ void SimulationController::bindFunctionsToRpcServer()
         return agent_controller_->getObservationSpace();
     });
 
-    rpc_server_->bindAsync("getTaskStepInfoSpace", [this]() -> std::map<std::string, Box> {
-        ASSERT(task_);
-        return task_->getStepInfoSpace();
-    });
-
     rpc_server_->bindAsync("getAgentControllerStepInfoSpace", [this]() -> std::map<std::string, Box> {
         ASSERT(agent_controller_);
         return agent_controller_->getStepInfoSpace();
+    });
+
+    rpc_server_->bindAsync("getTaskStepInfoSpace", [this]() -> std::map<std::string, Box> {
+        ASSERT(task_);
+        return task_->getStepInfoSpace();
     });
 
     rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
@@ -339,31 +340,40 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->isEpisodeDone();
     });
 
-    rpc_server_->bindSync("getTaskStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
-        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
-        ASSERT(task_);
-        return task_->getStepInfo();
-    });
-
     rpc_server_->bindSync("getAgentControllerStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         ASSERT(task_);
         return agent_controller_->getStepInfo();
     });
 
-    rpc_server_->bindSync("reset", [this]() -> void {
-        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
+    rpc_server_->bindSync("getTaskStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         ASSERT(task_);
+        return task_->getStepInfo();
+    });
+
+    rpc_server_->bindSync("resetAgentController", [this]() -> void {
+        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         ASSERT(agent_controller_);
-        task_->reset();
         agent_controller_->reset();
     });
 
-    rpc_server_->bindSync("isReady", [this]() -> bool{
+    rpc_server_->bindSync("resetTask", [this]() -> void {
+        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
+        ASSERT(task_);
+        task_->reset();
+    });
+
+    rpc_server_->bindSync("isAgentControllerReady", [this]() -> bool{
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(agent_controller_);
+        return agent_controller_->isReady();
+    });
+
+    rpc_server_->bindSync("isTaskReady", [this]() -> bool{
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         ASSERT(task_);
-        ASSERT(agent_controller_);
-        return task_->isReady() && agent_controller_->isReady();
+        return task_->isReady();
     });
 }
 

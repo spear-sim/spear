@@ -17,10 +17,13 @@ struct Box;
 
 class ImitationLearningTask : public Task {
 public:
-    ImitationLearningTask(UWorld* world);
-    ~ImitationLearningTask();
 
-    // Task overrides
+    ImitationLearningTask() = default;
+    ~ImitationLearningTask() = default;
+
+    void findObjectReferences(UWorld* world) override;
+    void cleanUpObjectReferences() override;
+
     void beginFrame() override;
     void endFrame() override;
     float getReward() const override;
@@ -30,7 +33,6 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    // Handles collision-related logic
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
 private:
@@ -58,9 +60,9 @@ private:
     std::vector<AActor*> obstacle_ignore_actors_;
 
     // Navigation
-    UNavigationSystemV1* nav_sys_;
-    ANavigationData* nav_data_;
-    ARecastNavMesh* nav_mesh_;
+    UNavigationSystemV1* nav_sys_ = nullptr;
+    ANavigationData* nav_data_ = nullptr;
+    ARecastNavMesh* nav_mesh_ = nullptr;
     std::vector<FVector> agent_initial_position_; // Initial position of the learning agent
     std::vector<FVector> agent_goal_position_;    // Goal position of the learning agent (should be the position of the goal agent)
     unsigned int position_index_ = 0;             // Index of the trajectory pair

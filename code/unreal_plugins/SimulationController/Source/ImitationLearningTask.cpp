@@ -16,9 +16,8 @@
 #include "Box.h"
 #include "Config.h"
 
-ImitationLearningTask::ImitationLearningTask(UWorld* world)
-{
-    
+void ImitationLearningTask::findObjectReferences(UWorld* world)
+{    
     std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
 
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
@@ -55,6 +54,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     // Read config value for random stream initialization
     random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SEED"}));
 
+    // We spawn a new actor in findObjectReferences(...) because we don't need another systems to be able to find it
     new_object_parent_actor_ = world->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
@@ -83,8 +83,14 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     } 
 }
 
-ImitationLearningTask::~ImitationLearningTask()
+void ImitationLearningTask::cleanUpObjectReferences()
 {
+    ASSERT(nav_data_);
+    nav_data_ = nullptr;
+
+    ASSERT(nav_sys_);
+    nav_sys_ = nullptr;
+
     ASSERT(actor_hit_event_);
     actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);
     actor_hit_event_delegate_handle_.Reset();
@@ -109,7 +115,6 @@ ImitationLearningTask::~ImitationLearningTask()
 
 void ImitationLearningTask::beginFrame()
 {
-    // Reset hit states
     hit_goal_ = false;
     hit_obstacle_ = false;
 }

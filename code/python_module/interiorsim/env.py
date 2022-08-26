@@ -1,6 +1,5 @@
 from enum import Enum
-import gym
-from gym import spaces
+import gym.spaces
 import numpy as np
 import os
 import psutil
@@ -8,7 +7,7 @@ from subprocess import Popen
 import sys
 import time
 
-import msgpackrpc   # pip install -e code/third_party/msgpack-rpc-python
+import msgpackrpc # pip install -e code/third_party/msgpack-rpc-python
 
 
 # Enum values should match Box.h in SimulationController plugin
@@ -36,10 +35,18 @@ DATA_TYPE_TO_NUMPY_DTYPE = {
 }
 
 
-# Enum values should match SimulationController.cpp in SimulationController plugin
-class EndiannessType(Enum):
-    LittleEndian = 0
-    BigEndian = 1
+# mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
+class Box():
+    def __init__(self, high, low, shape, dtype):
+        self.high = high
+        self.low = low
+        self.shape = shape
+        self.dtype = dtype
+
+# mimics the behavior of gym.spaces.Dict
+class Dict():
+    def __init__(self, spaces):
+        self.spaces = spaces
 
 
 class Env(gym.Env):
@@ -288,57 +295,28 @@ class Env(gym.Env):
     def _get_byte_order(self):
 
         unreal_instance_endianness = self._client.call("getEndianness")
-
-        if sys.byteorder == "little":
-            client_endianess = EndiannessType.LittleEndian.value
-        elif sys.byteorder == "big":
-            client_endianess = EndiannessType.BigEndian.value
+        client_endianess = sys.byteorder
 
         if unreal_instance_endianness == client_endianess:
             return None
-        elif unreal_instance_endianness == EndiannessType.BigEndian.value:
-            return ">"
-        elif unreal_instance_endianness == EndiannessType.LittleEndian.value:
+        elif unreal_instance_endianness == "little":
             return "<"
+        elif unreal_instance_endianness == "big":
+            return ">"
         else:
             assert False
 
-    def _get_gym_space(self, space):
-        
-        gym_space_components = {}
+    def _get_dict_space(self, space, box_space_type, dict_space_type):
+
+        dict_space_components = {}
         for name, component in space.items():
             low = component["low"]
             high = component["high"]
             shape = tuple(component["shape"])
             dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype"]]
-            gym_space_components[name] = spaces.Box(low, high, shape, dtype)
+            dict_space_components[name] = box_space_type(low, high, shape, dtype)
 
-        return spaces.Dict(gym_space_components)
-
-    def _get_interiorsim_space(self, space):
-
-        # mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
-        class InteriorSimBox():
-            def __init__(self, high, low, shape, dtype):
-                self.high = high
-                self.low = low
-                self.shape = shape
-                self.dtype = dtype
-
-        # mimics the behavior of gym.spaces.Dict
-        class InteriorSimDict():
-            def __init__(self, spaces):
-                self.spaces = spaces
-
-        interiorsim_space_components = {}
-        for name, component in space.items():
-            low = component["low"]
-            high = component["high"]
-            shape = tuple(component["shape"])
-            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype"]]
-            interiorsim_space_components[name] = InteriorSimBox(low, high, shape, dtype)
-
-        return InteriorSimDict(interiorsim_space_components)
+        return dict_space_type(dict_space_components)
 
     def _deserialize(self, data, space):
 
@@ -378,20 +356,20 @@ class Env(gym.Env):
     def _get_action_space(self):
         space = self._client.call("getActionSpace")
         assert len(space) > 0
-        return self._get_gym_space(space)
+        return self._get_dict_space(space, gym.spaces.Box, gym.spaces.Dict)
 
     def _get_observation_space(self):
         space = self._client.call("getObservationSpace")
         assert len(space) > 0
-        return self._get_gym_space(space)
+        return self._get_dict_space(space, gym.spaces.Box, gym.spaces.Dict)
 
     def _get_task_step_info_space(self):
         space = self._client.call("getTaskStepInfoSpace")
-        return self._get_interiorsim_space(space)
+        return self._get_dict_space(space, Box, Dict)
 
     def _get_agent_controller_step_info_space(self):
         space = self._client.call("getAgentControllerStepInfoSpace")
-        return self._get_interiorsim_space(space)
+        return self._get_dict_space(space, Box, Dict)
 
     def _apply_action(self, action):
         self._client.call("applyAction", action)
@@ -410,10 +388,12 @@ class Env(gym.Env):
         task_step_info = self._client.call("getTaskStepInfo")
         agent_controller_step_info = self._client.call("getAgentControllerStepInfo")
         return { "task_step_info": self._deserialize(task_step_info, self._task_step_info_space),
-                 "agent_step_info": self._deserialize(agent_controller_step_info, self._agent_controller_step_info_space) }
+                 "agent_controller_step_info": self._deserialize(agent_controller_step_info, self._agent_controller_step_info_space) }
 
     def _reset(self):
-        self._client.call("reset")
+        # reset the Task first in case it needs to set the position of Actors, then reset AgentController so it can refine the position of actors
+        self._client.call("resetTask")
+        self._client.call("resetAgentController")
 
     def _is_ready(self):
-        return self._client.call("isReady")
+        return self._client.call("isTaskReady") and self._client.call("isAgentControllerReady")
