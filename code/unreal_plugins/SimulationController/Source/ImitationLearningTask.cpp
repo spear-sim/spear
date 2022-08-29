@@ -44,7 +44,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     // If the start/goal positions are not randomly generated 
     if (not Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
         getPositionsFromFile();
-    } 
+    }
 }
 
 ImitationLearningTask::~ImitationLearningTask()
