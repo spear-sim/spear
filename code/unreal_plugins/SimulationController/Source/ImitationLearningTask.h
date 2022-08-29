@@ -18,8 +18,8 @@ struct Box;
 class ImitationLearningTask : public Task {
 public:
 
-    ImitationLearningTask() = default;
-    ~ImitationLearningTask() = default;
+    ImitationLearningTask(UWorld* world);
+    ~ImitationLearningTask();
 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
@@ -65,5 +65,5 @@ private:
     ARecastNavMesh* nav_mesh_ = nullptr;
     std::vector<FVector> agent_initial_position_; // Initial position of the learning agent
     std::vector<FVector> agent_goal_position_;    // Goal position of the learning agent (should be the position of the goal agent)
-    unsigned int position_index_ = 0;             // Index of the trajectory pair
+    int position_index_ = -1;                     // Index of the trajectory pair
 };

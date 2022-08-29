@@ -12,7 +12,7 @@ class AgentController
 {
 public:
 
-    // An AgentController class must must spawn new objects in the constructor if they are
+    // An AgentController class must spawn new objects in the constructor if they are
     // intended to be findable by other classes. An AgentController class must not attempt
     // to find object references in the constructor, because these objects might not be spawned
     // yet. Use findObjectReferences(...) instead.

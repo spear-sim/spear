@@ -34,14 +34,11 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_ACTOR_NAME"})) {
             ASSERT(!simple_vehicle_pawn_);
             simple_vehicle_pawn_ = dynamic_cast<ASimpleVehiclePawn*>(*actor_itr);
-            ASSERT(simple_vehicle_pawn_);
-        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})){
+        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
-            ASSERT(goal_actor_);
         }
     }
-
     ASSERT(simple_vehicle_pawn_);
     ASSERT(goal_actor_);
 
