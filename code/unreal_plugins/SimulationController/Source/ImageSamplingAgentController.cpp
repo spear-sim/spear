@@ -226,14 +226,15 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
     const FRotator orientation = camera_actor_->GetActorRotation();
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
 
-    // std::ofstream myfile;
-    // myfile.open("/media/rachithp/Extreme SSD/new_isim_images/scene_235114803/poses.txt");
-    // myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
-    // for (size_t i = 0u; i<1000000; ++i) {
-    //     FVector random_position = nav_mesh_->GetRandomPoint().Location;
-    //     myfile << random_position.X << "," << random_position.Y << "," << random_position.Z << "\n";
-    // }
-    // myfile.close();
+    std::ofstream myfile;
+    std::string file = "/media/rachithp/Extreme SSD/new_isim_images/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/poses_for_debug.txt";
+    myfile.open(file);
+    myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
+    for (size_t i = 0u; i<1000000; ++i) {
+        FVector random_position = nav_mesh_->GetRandomPoint().Location;
+        myfile << random_position.X << "," << random_position.Y << "," << random_position.Z << "\n";
+    }
+    myfile.close();
 
     ASSERT(IsInGameThread());
 
@@ -331,7 +332,7 @@ void ImageSamplingAgentController::rebuildNavSystem()
     nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
 
-    // nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::ProjectSavedDir() + "/" + world_->GetName() + "/");
+    nav_mesh_->GetGenerator()->ExportNavigationData(FString("/media/rachithp/Extreme SSD/new_isim_images/" + world_->GetName() + "/"));
 }
 
 FBox ImageSamplingAgentController::getWorldBoundingBox(bool remove_ceiling)
@@ -343,6 +344,14 @@ FBox ImageSamplingAgentController::getWorldBoundingBox(bool remove_ceiling)
         }
     }
     // Remove ceiling
+    // UE_LOG(LogTemp, Warning, TEXT("Before: Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
+    // UE_LOG(LogTemp, Warning, TEXT("Before: Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Max.Z);
     return remove_ceiling ? FBox(box.Min, box.Max - FVector(0, 0, 0.7f * box.GetSize().Z)) : box;
+    // UE_LOG(LogTemp, Warning, TEXT("After Max-(0,0,0.7*(Max-Min).Z): Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, (box.Max-FVector(0, 0, 0.7f * box.GetSize().Z)).Z);
+    // FBox new_box = box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
+    // UE_LOG(LogTemp, Warning, TEXT("After box.expandby: Box Min Vector is (%f, %f, %f)"), new_box.Min.X, new_box.Min.Y, new_box.Min.Z);
+    // UE_LOG(LogTemp, Warning, TEXT("After box.expandby: Box Max Vector is (%f, %f, %f)"), new_box.Max.X, new_box.Max.Y, new_box.Max.Z);
+    
     // return remove_ceiling ? box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z)) : box;
+    // return remove_ceiling ? box.ExpandBy(box.GetSize() * 0.1f) : box; // export full box + some buffer
 }
