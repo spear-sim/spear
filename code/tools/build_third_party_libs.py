@@ -39,12 +39,18 @@ def build_libs(num_parallel_jobs):
         args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_COMPILER='clang++'", "-DCMAKE_CXX_FLAGS='-fPIC -stdlib=libc++'", ".."]
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
-    else:
+    elif sys.platform == "darwin":
         args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", ".."]
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
+    elif sys.platform == "win32":
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_FLAGS='/bigobj'", ".."]
+        print(f"Executing cmd: {' '.join(args)}")
+        cmake_cmd = subprocess.run(args)
+    else:
+        assert False, "This OS is not supported."
     assert cmake_cmd.returncode == 0
-    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
+    args = ["cmake",  "--build", ".", "--config", "Release"]
     print(f"Executing cmd: {' '.join(args)}")
     rbld_build_cmd = subprocess.run(args)
     assert rbld_build_cmd.returncode == 0
@@ -67,7 +73,7 @@ def build_libs(num_parallel_jobs):
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
-    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
+    args = ["cmake",  "--build", ".", "--config", "Release"]
     print(f"Executing cmd: {' '.join(args)}")
     rpclib_build_cmd = subprocess.run(args)
     assert rpclib_build_cmd.returncode == 0
@@ -86,11 +92,11 @@ def build_libs(num_parallel_jobs):
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     else:
-        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", "-DYAML_BUILD_SHARED_LIBS=ON", ".."]
         print(f"Executing cmd: {' '.join(args)}")
         cmake_cmd = subprocess.run(args)
     assert cmake_cmd.returncode == 0
-    args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(num_parallel_jobs)]
+    args = ["cmake",  "--build", ".", "--config", "Release"]
     print(f"Executing cmd: {' '.join(args)}")
     yamlcpp_build_cmd = subprocess.run(args)
     assert yamlcpp_build_cmd.returncode == 0

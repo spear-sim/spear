@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "CoreUtils.h"
+#include "Config.h"
 
 void CoreUtils::StartupModule()
 {

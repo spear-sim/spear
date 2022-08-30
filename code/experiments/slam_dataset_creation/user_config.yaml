@@ -1,0 +1,46 @@
+INTERIORSIM:
+  LAUNCH_MODE: "standalone_executable"
+  # LAUNCH_MODE: "uproject"
+  # UPROJECT: "C:/github/interiorsim/code/unreal_projects/RobotProject/RobotProject.uproject"
+  # UNREAL_EDITOR_EXECUTABLE: "C:/Program Files/Epic Games/UE_4.27/Engine/Binaries/Win64/UE4Editor.exe"
+  # STANDALONE_EXECUTABLE: "C:/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject/Binaries/Win64/RobotProject.exe"
+  STANDALONE_EXECUTABLE: "C:/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject.exe"
+  TEMP_DIR: "C:/github/interiorsim/code/experiments/slam_dataset_creation"
+  # VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 60.0
+  # CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-RobotSimSettingPath=/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json" ]
+  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-dx12" ] # dx12 to use path tracing mode
+  RENDER_OFFSCREEN: True
+  # MAP_ID: "/Game/Maps/Map_235556528"
+
+SIMULATION_CONTROLLER:
+  TASK_NAME: "NullTask"
+  AGENT_CONTROLLER_NAME: "SlamDatasetAgentController"
+
+  SLAM_DATASET_AGENT_CONTROLLER:
+    CAMERA_ACTOR_NAME: "IMAGE_SAMPLING_CAMERA"
+    CAMERA_FOV: 60.0
+    ACTION_MODE: "follow_trajectory" # "get_ceiling_images" or "follow_trajectory"
+    IMAGE_TYPE: "rgb" # "rgb" OR "seg"
+    IMAGE_HEIGHT: 2560 #480
+    IMAGE_WIDTH: 1920 #852
+    NAVMESH:
+      AGENT_HEIGHT: 1.0
+      AGENT_RADIUS: 1.0
+      CELL_SIZE: 1.0
+      CELL_HEIGHT: 1.0
+      AGENT_MAX_STEP_HEIGHT: -1.0
+      HEIGHT_LIMIT: 200
+    TRAJECTORY:
+      PATH_WEIGHT_DIST: 1.0
+      PATH_WEIGHT_NUM_WAYPOINTS: 1.0
+      MAX_ITER_REPLAN: 50000
+      TARGET_POS_X: -310.0
+      TARGET_POS_Y: 200.0
+      TARGET_POS_Z: 160.0
+      START_POS_X: -430.0
+      START_POS_Y: -360.0
+      START_POS_Z: 160.0
+
+  VISUALIZER:
+   CAMERA_ACTOR_NAME: "IMAGE_SAMPLING_CAMERA"

@@ -74,7 +74,7 @@ namespace RobotSim {
                     FVector center;
                     navMesh->GetPolyCenter(PolyId, center);
                     TArray<FVector> OutVerts;
-                    if (navMesh->GetPolyVerts(PolyId, OutVerts) and (!FilterFlat or IsFlat(center, OutVerts))) {
+                    if (navMesh->GetPolyVerts(PolyId, OutVerts) && (!FilterFlat || IsFlat(center, OutVerts))) {
                         float area = FindArea(OutVerts);
                         areaMap[kvp.Key] += area;
                     }
@@ -97,7 +97,7 @@ namespace RobotSim {
                 int trial = 0;
                 while (trial < 10) {
                     FNavLocation navLocation = navMesh->GetRandomPoint();
-                    if (heightLimit <= 0.0f or navLocation.Location.Z < heightLimit) {
+                    if (heightLimit <= 0.0f || navLocation.Location.Z < heightLimit) {
                         spawnLocation = navLocation.Location;
                         return;
                     }

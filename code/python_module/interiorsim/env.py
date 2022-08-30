@@ -267,7 +267,7 @@ class Env(gym.Env):
                 elapsed_time_seconds = time.time() - start_time_seconds
 
         if not connected:
-            if self._self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
+            if self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
                 print("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
                 self._force_kill_unreal_instance()
                 self._close_client_server_connection()

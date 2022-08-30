@@ -23,9 +23,17 @@
 #undef check
 #endif
 
+#ifdef _MSC_VER
+    __pragma(warning(push)) __pragma(warning(disable : 4668))
+#endif
+
 #include <rpc/config.h>
 #include <rpc/msgpack.hpp>
 #include <rpc/server.h>
+
+#ifdef _MSC_VER
+    __pragma(warning(pop))
+#endif
 
 // check's definition will be changed at this point by 'rpc/msgpack.hpp'. We
 // need to redefine check to have the same definition as Unreal defines it.

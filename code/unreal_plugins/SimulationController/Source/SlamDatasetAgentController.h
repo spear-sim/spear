@@ -7,24 +7,20 @@
 #include "AgentController.h"
 
 class AActor;
-class ARecastNavMesh;
+class CameraSensor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
 
-struct FBox;
-struct FNavAgentProperties;
-struct FVector;
-
 struct Box;
 
-class ImageSamplingAgentController : public AgentController
+class SlamDatasetAgentController : public AgentController
 {
 public:
 
     // This UWorld pointer passed here points to the only running game world.
-    ImageSamplingAgentController(UWorld* world);
-    ~ImageSamplingAgentController();
+    SlamDatasetAgentController(UWorld* world);
+    ~SlamDatasetAgentController();
     
     std::map<std::string, Box> getActionSpace() const override;
     std::map<std::string, Box> getObservationSpace() const override;
@@ -37,15 +33,25 @@ private:
 
     void rebuildNavSystem();
     FBox getWorldBoundingBox(bool bScaleCeiling = true);
+    void generateTrajectoryToPredefinedTarget();
     
     UWorld* world_;
 
     ARecastNavMesh* nav_mesh_ = nullptr;
+    TArray<FNavPathPoint> way_points_;
+    ANavigationData* nav_data_;
+    FPathFindingQuery nav_query_;
+    UNavigationSystemV1* nav_sys_;
 
-    AActor* camera_actor_ = nullptr;
+
+    //AActor* camera_actor_ = nullptr;
+    CameraSensor* rgb_camera_sensor_ = nullptr;
+    CameraSensor* depth_camera_sensor_ = nullptr;
+
     AActor* new_object_parent_actor_ = nullptr;
-    //AActor* virtual_world_level_manager_ = nullptr;
 
-    UTextureRenderTarget2D* texture_render_target_ = nullptr;
-    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
+    //UTextureRenderTarget2D* texture_render_target_ = nullptr;
+    //USceneCaptureComponent2D* scene_capture_component_ = nullptr;
 };
+
+//swap AActor, scenecapture and texturerendertarget for CameraActor
