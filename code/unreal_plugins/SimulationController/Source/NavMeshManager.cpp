@@ -52,7 +52,8 @@ void NavMeshManager::exportData(UWorld* world)
         }
     }
 
-    FString fileName = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }).c_str() + world->GetName() +"/" + world->GetName() + ".csv";
+    FString fileName = FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }).c_str()) + "/" + world->GetName() + "/" + world->GetName() + ".csv";
+    UE_LOG(LogTemp, Warning, TEXT("Printing filename of navmeshmanager csv %s"), *fileName);
     FFileHelper::SaveStringArrayToFile(
         lines, *fileName, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 }
