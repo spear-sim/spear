@@ -227,10 +227,10 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
 
     std::ofstream myfile;
-    std::string file = "/media/rachithp/Extreme SSD/new_isim_images/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/poses_for_debug.txt";
+    std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/poses_for_debug.txt";
     myfile.open(file);
     myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
-    for (size_t i = 0u; i<1000000; ++i) {
+    for (size_t i = 0u; i < Config::getValue<size_t>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_NUM"}); ++i) {
         FVector random_position = nav_mesh_->GetRandomPoint().Location;
         myfile << random_position.X << "," << random_position.Y << "," << random_position.Z << "\n";
     }

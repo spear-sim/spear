@@ -9,6 +9,8 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
 
+#include <Config.h>
+
 void NavMeshManager::exportData(UWorld* world)
 {
 
@@ -50,7 +52,7 @@ void NavMeshManager::exportData(UWorld* world)
         }
     }
 
-    FString fileName = "/media/rachithp/Extreme SSD/new_isim_images/" + world->GetName() +"/" + world->GetName() + ".csv";
+    FString fileName = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }).c_str() + world->GetName() +"/" + world->GetName() + ".csv";
     FFileHelper::SaveStringArrayToFile(
         lines, *fileName, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 }

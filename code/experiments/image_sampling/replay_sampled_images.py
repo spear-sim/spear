@@ -7,9 +7,19 @@ import numpy as np
 import os
 import time
 import shutil
+import sys
 
 from interiorsim import Env
 from interiorsim.config import get_config
+
+
+if sys.platform == "linux":    
+    PLATFORM = "Linux"
+elif sys.platform == "darwin":
+    PLATFORM = "MacOS"
+elif sys.platform == "win32":
+    PLATFORM = "Windows"
+
 
 def read_recorded_data(args, scene):
     pose_data_path = os.path.join(args.input_dir, f"scene_{scene}/poses.txt")
@@ -24,6 +34,7 @@ def read_recorded_data(args, scene):
             images[index] = cv2.imread(os.path.join(image_data_path, f"{index}.png"))
             
     return poses, images
+
     
 if __name__ == "__main__":
 
@@ -55,8 +66,8 @@ if __name__ == "__main__":
         config.freeze()
 
         # copy pak from ssd to disk
-        if not os.path.exists(f"{args.executable_dir}/LinuxNoEditor/RobotProject/Content/Paks/{scene}_Linux.pak"):
-            shutil.copy(os.path.join(args.scenes_path, f"{scene}_Linux.pak"), f"{args.executable_dir}/LinuxNoEditor/RobotProject/Content/Paks")
+        if not os.path.exists(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak"):
+            shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
 
         # check if data path for storing images, exists
         if not os.path.exists(os.path.join(args.input_dir, f"scene_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
@@ -92,5 +103,5 @@ if __name__ == "__main__":
 
         env.close()
         time.sleep(5)
-        os.remove(f"{args.executable_dir}/LinuxNoEditor/RobotProject/Content/Paks/{scene}_Linux.pak")     
+        os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")     
         cv2.destroyAllWindows()

@@ -8,12 +8,18 @@ import numpy as np
 import os
 import time
 import shutil
+import sys
 
 from interiorsim import Env
 from interiorsim.config import get_config
 
+if sys.platform == "linux":
+    PLATFORM = "Linux"
+elif sys.platform == "darwin":
+    PLATFORM = "MacOS"
+elif sys.platform == "win32":
+    PLATFORM = "Windows"
 
-TOTAL_NUM_IMAGES = 54000
 
 if __name__ == "__main__":
 
@@ -21,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--scenes_path", type=str, default="/media/rachithp/Extreme SSD/interiorsim_all_scene_paks")
     parser.add_argument("--executable_dir", type=str, default="/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development")
     parser.add_argument("--output_dir", "-o", type=str, required=True)
+    parser.add_argument("-num_images", type=int, default=54000)
     args = parser.parse_args()
 
     # load config
@@ -45,10 +52,11 @@ if __name__ == "__main__":
     chosen_scenes = []
     for scene in scenes_on_disk:
         split_string_list = scene.split('_')
-        if len(split_string_list) > 1 and split_string_list[1] == "Linux.pak":
+        if len(split_string_list) > 1 and split_string_list[1] == f"{PLATFORM}.pak":
             chosen_scenes.append(split_string_list[0])
 
-    NUM_IMAGES_PER_SCENE = int(TOTAL_NUM_IMAGES / len(chosen_scenes)) + 1
+    # NUM_IMAGES_PER_SCENE = int(args.num_images / len(chosen_scenes)) + 1
+    NUM_IMAGES_PER_SCENE = 5
 
     # selected_scenes_for_debug = [
         # "235114819",
@@ -75,7 +83,7 @@ if __name__ == "__main__":
     for scene in chosen_scenes[:]:
         print(f"processing scene {scene}")
 
-        if scene not in selected_scenes_for_debug:
+        if scene != "235114803":
             continue
 
         # choose map to load
@@ -84,8 +92,8 @@ if __name__ == "__main__":
         config.freeze()
 
         # copy pak from ssd to disk
-        if not os.path.exists(f"{args.executable_dir}/LinuxNoEditor/RobotProject/Content/Paks/{scene}_Linux.pak"):
-            shutil.copy(os.path.join(args.scenes_path, f"{scene}_Linux.pak"), f"{args.executable_dir}/LinuxNoEditor/RobotProject/Content/Paks")
+        if not os.path.exists(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak"):
+            shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
 
         # check if data path for storing images exists
         if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
@@ -103,9 +111,9 @@ if __name__ == "__main__":
         # write headers
         scenes_sampled.write(scene)
         scenes_sampled.write(",")
-        # pose_output_file = open(os.path.join(args.output_dir, "Map_{}/poses.txt".format(scene)), "w")
-        # pose_csv_writer = csv.writer(pose_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        # pose_csv_writer.writerow(["pos_x_cm", "pos_y_cm", "pos_z_cm", "roll_deg", "pitch_deg", "yaw_deg"])
+        pose_output_file = open(os.path.join(args.output_dir, "Map_{}/poses.txt".format(scene)), "w")
+        pose_csv_writer = csv.writer(pose_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        pose_csv_writer.writerow(["pos_x_cm", "pos_y_cm", "pos_z_cm", "roll_deg", "pitch_deg", "yaw_deg"])
 
         # create Env object
         try:
@@ -118,7 +126,7 @@ if __name__ == "__main__":
         # reset the simulation
         _ = env.reset()
 
-        """
+        
         for i in range(0, NUM_IMAGES_PER_SCENE):
             obs, _, _, _ = env.step({"set_random_orientation_pyr_deg":  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
                                                                         rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.YAW_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.YAW_HIGH_DEG),
@@ -138,13 +146,18 @@ if __name__ == "__main__":
 
             pose_csv_writer.writerow([obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
             # frame_csv_writer.writerow([i])
-        """
+        
 
         # close the current environment after collecting required number of images
         env.close()
         time.sleep(10)
-        # pose_output_file.close()
-        os.remove(f"{args.executable_dir}/LinuxNoEditor/RobotProject/Content/Paks/{scene}_Linux.pak")
+        pose_output_file.close()
+        try:
+            os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")
+        except OSError as e: # name the Exception `e`
+            print("Failed with:", e.strerror) # look what it says
+            print("Error code:", e.code) 
+        
 
     scenes_sampled.close()
     bad_scenes.close()

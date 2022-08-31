@@ -114,7 +114,10 @@ class Env(gym.Env):
         status = self._process.status()
         while status in ["running", "sleeping", "disk-sleep"]:
             time.sleep(1.0)
-            status = self._process.status()
+            try:
+                status = self._process.status()
+            except psutil.NoSuchProcess:
+                break
 
         print("Finished closing Unreal instance.")
         print()
