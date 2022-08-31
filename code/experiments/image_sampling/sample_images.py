@@ -55,21 +55,18 @@ if __name__ == "__main__":
         if len(split_string_list) > 1 and split_string_list[1] == f"{PLATFORM}.pak":
             chosen_scenes.append(split_string_list[0])
 
-    # NUM_IMAGES_PER_SCENE = int(args.num_images / len(chosen_scenes)) + 1
-    NUM_IMAGES_PER_SCENE = 5
+    NUM_IMAGES_PER_SCENE = int(args.num_images / len(chosen_scenes)) + 1
 
-    # selected_scenes_for_debug = [
-        # "235114819",
-        # "235544958",
-        # "235570109",
-        # "238257877",
-        # "239769313",
-        # "239777068",
-        # "239789063",
-        # "243637340",
-        # "245102056"
-    # ]
     selected_scenes_for_debug = [
+        "235114819",
+        "235544958",
+        "235570109",
+        "238257877",
+        "239769313",
+        "239777068",
+        "239789063",
+        "243637340",
+        "245102056"
         "236889001",
         "236874354",
         "243652124",
@@ -111,9 +108,9 @@ if __name__ == "__main__":
         # write headers
         scenes_sampled.write(scene)
         scenes_sampled.write(",")
-        pose_output_file = open(os.path.join(args.output_dir, "Map_{}/poses.txt".format(scene)), "w")
-        pose_csv_writer = csv.writer(pose_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        pose_csv_writer.writerow(["pos_x_cm", "pos_y_cm", "pos_z_cm", "roll_deg", "pitch_deg", "yaw_deg"])
+        # pose_output_file = open(os.path.join(args.output_dir, "Map_{}/poses.txt".format(scene)), "w")
+        # pose_csv_writer = csv.writer(pose_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        # pose_csv_writer.writerow(["pos_x_cm", "pos_y_cm", "pos_z_cm", "roll_deg", "pitch_deg", "yaw_deg"])
 
         # create Env object
         try:
@@ -126,7 +123,7 @@ if __name__ == "__main__":
         # reset the simulation
         _ = env.reset()
 
-        
+        """
         for i in range(0, NUM_IMAGES_PER_SCENE):
             obs, _, _, _ = env.step({"set_random_orientation_pyr_deg":  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
                                                                         rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.YAW_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.YAW_HIGH_DEG),
@@ -147,11 +144,11 @@ if __name__ == "__main__":
             pose_csv_writer.writerow([obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
             # frame_csv_writer.writerow([i])
         
-
+        """
         # close the current environment after collecting required number of images
         env.close()
         time.sleep(10)
-        pose_output_file.close()
+        # pose_output_file.close()
         try:
             os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")
         except OSError as e: # name the Exception `e`

@@ -40,8 +40,9 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
 
     rebuildNavSystem();
 
-    // NavMeshManager::navSystemRebuild(world,10);
-    NavMeshManager::exportData(world);
+    if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_POLY_CSV" })) {
+        NavMeshManager::exportData(world);
+    }
 
     FVector spawn_location;
     RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, spawn_location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
@@ -226,16 +227,19 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
     const FRotator orientation = camera_actor_->GetActorRotation();
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
 
-    std::ofstream myfile;
-    std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/poses_for_debug.txt";
-    UE_LOG(LogTemp, Warning, TEXT("printing filename for storing debug poses %s"), UTF8_TO_TCHAR(file.c_str()));
-    myfile.open(file);
-    myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
-    for (size_t i = 0u; i < Config::getValue<size_t>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_NUM"}); ++i) {
-        FVector random_position = nav_mesh_->GetRandomPoint().Location;
-        myfile << random_position.X << "," << random_position.Y << "," << random_position.Z << "\n";
+
+    if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_DEBUG_POSES" })) {
+        std::ofstream myfile;
+        std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/poses_for_debug.txt";
+        UE_LOG(LogTemp, Warning, TEXT("printing filename for storing debug poses %s"), UTF8_TO_TCHAR(file.c_str()));
+        myfile.open(file);
+        myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
+        for (size_t i = 0u; i < Config::getValue<size_t>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_NUM" }); ++i) {
+            FVector random_position = nav_mesh_->GetRandomPoint().Location;
+            myfile << random_position.X << "," << random_position.Y << "," << random_position.Z << "\n";
+        }
+        myfile.close();
     }
-    myfile.close();
 
     ASSERT(IsInGameThread());
 
@@ -333,7 +337,9 @@ void ImageSamplingAgentController::rebuildNavSystem()
     nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
 
-    nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }).c_str()) + "/" + world_->GetName() + "/");
+    if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_OBJ"})) {
+        nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }).c_str()) + "/" + world_->GetName() + "/");
+    }
 }
 
 FBox ImageSamplingAgentController::getWorldBoundingBox(bool remove_ceiling)
@@ -347,7 +353,8 @@ FBox ImageSamplingAgentController::getWorldBoundingBox(bool remove_ceiling)
     // Remove ceiling
     // UE_LOG(LogTemp, Warning, TEXT("Before: Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
     // UE_LOG(LogTemp, Warning, TEXT("Before: Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Max.Z);
-    return remove_ceiling ? FBox(box.Min, box.Max - FVector(0, 0, 0.7f * box.GetSize().Z)) : box;
+    const float height = Config::getValue<float>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "NAV_BOUND_BOX_HEIGHT_REDUCTION_FRACTION" });
+    return remove_ceiling ? FBox(box.Min, box.Max - FVector(0, 0, height * box.GetSize().Z)) : box;
     // UE_LOG(LogTemp, Warning, TEXT("After Max-(0,0,0.7*(Max-Min).Z): Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, (box.Max-FVector(0, 0, 0.7f * box.GetSize().Z)).Z);
     // FBox new_box = box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
     // UE_LOG(LogTemp, Warning, TEXT("After box.expandby: Box Min Vector is (%f, %f, %f)"), new_box.Min.X, new_box.Min.Y, new_box.Min.Z);
