@@ -79,6 +79,7 @@ void CameraSensor::SetRenderTarget(unsigned long w, unsigned long h){
     this->texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     this->texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
     this->texture_render_target_->TargetGamma = GEngine->GetDisplayGamma();
+    //this->texture_render_target_->TargetGamma = 1.2f;
     //this->texture_render_target_->SRGB = false; // false for pixels to be stored in linear space
     //this->texture_render_target_->bAutoGenerateMips = false;
     this->texture_render_target_->UpdateResourceImmediate(true);    
@@ -168,9 +169,14 @@ void CameraSensor::FcolorArrayToUintVector(std::vector<uint32_t>& out, TArray<FC
 void CameraSensor::SetCameraDefaultOverrides(){
 	//this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMethod = true;
  //   this->scene_capture_component_->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
- //   this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureBias = true;
- //   this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
- //   this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
+    this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureBias = true;
+    this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
+    this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
+
+    this->scene_capture_component_->PostProcessSettings.AutoExposureBias = 1.0f;
+    this->scene_capture_component_->PostProcessSettings.AutoExposureMaxBrightness = 1.0f;
+    this->scene_capture_component_->PostProcessSettings.AutoExposureMinBrightness = 1.0f;
+
  //   this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp = true;
  //   this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = true;
  //   this->scene_capture_component_->PostProcessSettings.bOverride_AutoExposureCalibrationConstant_DEPRECATED = true;
@@ -248,30 +254,49 @@ void CameraSensor::SetCameraDefaultOverrides(){
     //this->scene_capture_component_->PostProcessSettings.bOverride_IndirectLightingIntensity = true;
     //this->scene_capture_component_->PostProcessSettings.bOverride_IndirectLightingIntensity = 0.0f;
 
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingGI = 1;
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingGI = true;
+    this->scene_capture_component_->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
     //this->scene_capture_component_->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingGIMaxBounces = 16;
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = 64;
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingGIMaxBounces = true;
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = true;
 
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingAO = 1; // Default value
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingAOSamplesPerPixel = 64; // min 1 - max 64
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingAOIntensity = 1.0f; // min 0.0 - max 1.0
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingAORadius = 5000.0f; // min 0.0 - max 10000.0
+    this->scene_capture_component_->PostProcessSettings.RayTracingGIMaxBounces = 6;
+    this->scene_capture_component_->PostProcessSettings.RayTracingGISamplesPerPixel = 16;
 
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingAO = true; // Default value
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingAOSamplesPerPixel = true; // min 1 - max 64
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingAOIntensity = true; // min 0.0 - max 1.0
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingAORadius = true; // min 0.0 - max 10000.0
+
+    //this->scene_capture_component_->PostProcessSettings.RayTracingAO = 1; // Default value
+    this->scene_capture_component_->PostProcessSettings.RayTracingAOSamplesPerPixel = 8; // min 1 - max 64
+    this->scene_capture_component_->PostProcessSettings.RayTracingAOIntensity = 1.0f; // min 0.0 - max 1.0
+    this->scene_capture_component_->PostProcessSettings.RayTracingAORadius = 4000.0f; // min 0.0 - max 10000.0
+
+    //this->scene_capture_component_->PostProcessSettings.bOverride_TranslucencyType = true;
     //this->scene_capture_component_->PostProcessSettings.TranslucencyType = ETranslucencyType::RayTracing;
-    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyShadows = EReflectedAndRefractedRayTracedShadows::Hard_shadows;
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingTranslucencyMaxRoughness = 1.0f; // min 0.01 - max 1.0
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingTranslucencyRefractionRays = 20; // min 0 - max 50
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingTranslucencySamplesPerPixel = 64; // min 1 - max 64
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingTranslucencyRefraction = 1; // default value
+    ////this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyShadows = EReflectedAndRefractedRayTracedShadows::Hard_shadows;
+    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingTranslucencyMaxRoughness = true; // min 0.01 - max 1.0
+    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingTranslucencyRefractionRays = true; // min 0 - max 50
+    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingTranslucencySamplesPerPixel = true; // min 1 - max 64
+    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingTranslucencyRefraction = true; // default value
 
-    //this->scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
+    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyMaxRoughness = 1.0f; // min 0.01 - max 1.0
+    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefractionRays = 4; // min 0 - max 50
+    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencySamplesPerPixel = 4; // min 1 - max 64
+    //this->scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefraction = 1; // default value
+
+    this->scene_capture_component_->PostProcessSettings.bOverride_ReflectionsType = true;
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces = true; // min 0 - max 50
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = true; // min 1 - max 64
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency = true; // Default value
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsShadows = true;
+
+    this->scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
     //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxRoughness = 0.6f; // min 0.01 - max 1.0
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces = 16; // min 0 - max 50
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingTranslucencyRefractionRays = 4;
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = 64; // min 1 - max 64
-    //this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency = 1; // Default value
-    //this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Hard_shadows;
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces = 2; // min 0 - max 50
+    this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = 8; // min 1 - max 64
+    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
 
     //// Pathtracing
     //this->scene_capture_component_->PostProcessSettings.PathTracingMaxBounces = 2;      // min 0 - max 50
@@ -291,7 +316,7 @@ void CameraSensor::ConfigureShowFlags(bool bPostProcessing){
         }
 
     this->scene_capture_component_->ShowFlags.SetTemporalAA(false);
-    this->scene_capture_component_->ShowFlags.SetAntiAliasing(false);
+    this->scene_capture_component_->ShowFlags.SetAntiAliasing(true);
 
     //this->scene_capture_component_->ShowFlags.SetAmbientOcclusion(false);
     //this->scene_capture_component_->ShowFlags.SetAntiAliasing(false);
@@ -321,21 +346,21 @@ void CameraSensor::ConfigureShowFlags(bool bPostProcessing){
     //// ShowFlags.SetDebugAI(false);
     //// ShowFlags.SetDecals(false);
     //// ShowFlags.SetDeferredLighting(false);
-    this->scene_capture_component_->ShowFlags.SetDepthOfField(false);
+    //this->scene_capture_component_->ShowFlags.SetDepthOfField(false);
     //this->scene_capture_component_->ShowFlags.SetDiffuse(false);
     //this->scene_capture_component_->ShowFlags.SetDirectionalLights(false);
     //this->scene_capture_component_->ShowFlags.SetDirectLighting(false);
     //// ShowFlags.SetDistanceCulledPrimitives(false);
-    //// ShowFlags.SetDistanceFieldAO(false);
-    //// ShowFlags.SetDistanceFieldGI(false);
-    //this->scene_capture_component_->ShowFlags.SetDynamicShadows(false);
+    scene_capture_component_->ShowFlags.SetDistanceFieldAO(false);
+    scene_capture_component_->ShowFlags.SetRayTracedDistanceFieldShadows(true);
+    scene_capture_component_->ShowFlags.SetDynamicShadows(false);
     //// ShowFlags.SetEditor(false);
-    //this->scene_capture_component_->ShowFlags.SetEyeAdaptation(false);
+    scene_capture_component_->ShowFlags.SetEyeAdaptation(false);
     //this->scene_capture_component_->ShowFlags.SetFog(false);
     //// ShowFlags.SetGame(false);
     //// ShowFlags.SetGameplayDebug(false);
     //// ShowFlags.SetGBufferHints(false);
-    //this->scene_capture_component_->ShowFlags.SetGlobalIllumination(false);
+    //scene_capture_component_->ShowFlags.SetGlobalIllumination(false);
     //this->scene_capture_component_->ShowFlags.SetGrain(false);
     //// ShowFlags.SetGrid(false);
     //// ShowFlags.SetHighResScreenshotMask(false);

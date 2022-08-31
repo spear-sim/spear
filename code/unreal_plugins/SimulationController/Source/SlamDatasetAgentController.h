@@ -38,6 +38,9 @@ private:
     FBox getWorldBoundingBox(bool bScaleCeiling = true);
     void generateTrajectoryToPredefinedTarget();
     
+    void ChangeTranslucentToOpaque();
+    void EnableTranslucency(bool activate) const;
+
     UWorld* world_;
 
     ARecastNavMesh* nav_mesh_ = nullptr;
@@ -46,12 +49,13 @@ private:
     FPathFindingQuery nav_query_;
     UNavigationSystemV1* nav_sys_;
 
-
     //AActor* camera_actor_ = nullptr;
     CameraSensor* rgb_camera_sensor_ = nullptr;
     CameraSensor* depth_camera_sensor_ = nullptr;
 
     AActor* new_object_parent_actor_ = nullptr;
+
+    TArray<UMaterialInstanceDynamic*> translucent_materials_;
 
     //UTextureRenderTarget2D* texture_render_target_ = nullptr;
     //USceneCaptureComponent2D* scene_capture_component_ = nullptr;
