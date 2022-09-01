@@ -9,16 +9,23 @@
 
 #include <Camera/CameraActor.h>
 #include "CameraSensor.h"
+
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
+
 #include <Engine/EngineTypes.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
+
+#include <Engine/PointLight.h>
+#include <Engine/SpotLight.h>
+#include <Engine/DirectionalLight.h>
+#include <Engine/RectLight.h>
+
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include "Kismet/GameplayStatics.h"
 #include <UObject/UObjectGlobals.h>
-
 
 #include "Assert.h"
 #include "Box.h"
@@ -31,6 +38,8 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
     world_ = world;
 
     rebuildNavSystem();
+
+    //world_->Exec(world_, TEXT("r.RayTracing.SceneCaptures 1"));
 
     FVector spawn_location {Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "TRAJECTORY", "START_POS_X"}),
                             Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "TRAJECTORY", "START_POS_Y"}),
@@ -50,7 +59,7 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
     ASSERT(depth_camera_sensor_);
     
     std::vector<std::string> passes_ = {"Depth_GLSL"};
-    rgb_camera_sensor_->SetPostProcessBlendables(passes_);
+    //rgb_camera_sensor_->SetPostProcessBlendables(passes_);
     depth_camera_sensor_->SetPostProcessBlendables(passes_);
 
     new_object_parent_actor_ = world->SpawnActor<AActor>();
@@ -62,33 +71,12 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
 
     rgb_camera_sensor_->scene_capture_component_->bAlwaysPersistRenderingState = 1;
     rgb_camera_sensor_->scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "CAMERA_FOV"});
-    //rgb_camera_sensor_->scene_capture_component_->bUseRayTracingIfEnabled = true;
-    //rgb_camera_sensor_->scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
-    //rgb_camera_sensor_->scene_capture_component_->PostProcessSettings.TranslucencyType = ETranslucencyType::RayTracing;
-    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = 32;
-    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 1000;
-    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsTranslucency = 1u;
-    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxRoughness
-    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencyMaxRoughness
-    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefractionRays
-    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencySamplesPerPixel
-    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencyShadows
-    //scene_capture_component_->PostProcessSettings.RayTracingTranslucencyRefraction
-    //scene_capture_component_->PostProcessSettings.RayTracingGI
-    //scene_capture_component_->PostProcessSettings.RayTracingGIMaxBounces
-    //scene_capture_component_->PostProcessSettings.RayTracingGISamplesPerPixel
-    //scene_capture_component_->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Hard_shadows;
 
-    //scene_capture_component_->PostProcessSettings.PathTracingMaxBounces = 32;
-    //scene_capture_component_->PostProcessSettings.PathTracingSamplesPerPixel = 2000;
-    //scene_capture_component_->PostProcessSettings.PathTracingFilterWidth
-    //scene_capture_component_->PostProcessSettings.PathTracingEnableEmissive = 1u;
-    //scene_capture_component_->PostProcessSettings.PathTracingMaxPathExposure
-    //scene_capture_component_->PostProcessSettings.PathTracingEnablDenoiser = 1u;
+    //rgb_camera_sensor_->scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
 
     depth_camera_sensor_->scene_capture_component_->bAlwaysPersistRenderingState = 1;
     depth_camera_sensor_->scene_capture_component_->FOVAngle = Config::getValue<float>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "CAMERA_FOV" });
-    //scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+    //depth_camera_sensor_->scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
     // scene_capture_component_->ShowFlags.SetTemporalAA(false);
     // scene_capture_component_->ShowFlags.SetAntiAliasing(true);
     //scene_capture_component_->AttachToComponent(camera_actor_->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
@@ -105,7 +93,7 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
 
-    rgb_camera_sensor_->ActivateBlendablePass("finalColor");
+    //rgb_camera_sensor_->ActivateBlendablePass("finalColor");
     depth_camera_sensor_->ActivateBlendablePass("Depth_GLSL");
     //texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
     //ASSERT(texture_render_target_);
@@ -118,6 +106,8 @@ SlamDatasetAgentController::SlamDatasetAgentController(UWorld* world)
     //texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     //texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU
     //scene_capture_component_->TextureTarget = texture_render_target_;
+    RemoveVirtualLights();
+    //ChangeTranslucentToOpaque();
 }
 
 SlamDatasetAgentController::~SlamDatasetAgentController()
@@ -255,9 +245,9 @@ std::map<std::string, std::vector<uint8_t>> SlamDatasetAgentController::getObser
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
 
     observation["camera_horizontal_fov"] = Serialize::toUint8(std::vector<float>{rgb_camera_sensor_->scene_capture_component_->FOVAngle});
-    float vfov = 2 * 180.0 * atan(tan(rgb_camera_sensor_->scene_capture_component_->FOVAngle * 3.14159 / 360.0) * (float)Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" }) / Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" })) / 3.14159;
+    float vfov = 2 * 180.0 * atan(tan(rgb_camera_sensor_->scene_capture_component_->FOVAngle * 3.14159 / 360.0) * (float)Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_HEIGHT" }) / Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SLAM_DATASET_AGENT_CONTROLLER", "IMAGE_WIDTH" })) / 3.14159;
     observation["camera_vertical_fov"] = Serialize::toUint8(std::vector<float>{vfov});
-
+    
     ASSERT(IsInGameThread());
   
     //APlayerController* controller = world_->GetFirstPlayerController();
@@ -309,20 +299,20 @@ std::map<std::string, std::vector<uint8_t>> SlamDatasetAgentController::getObser
     //                  depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
     //far clip plane will be defined in the camera or in the shader ??
     //take UE4 info and convert to meters directly 
-    float max_depth = 0.0f;
-    float min_depth = 100.0f;
+    //float max_depth = 0.0f;
+    //float min_depth = 100.0f;
 
     for (uint32 i = 0; i < static_cast<uint32>(depth_pixels.Num()); ++i) {
         float depth = depth_pixels[i].R + (depth_pixels[i].G * 256) + (depth_pixels[i].B * 256 * 256);
         float normalized_depth = depth / ((256 * 256 * 256) - 1);
         float dist = normalized_depth * 10; // apply 1000 meters as a far clip plane as a test purpouse
 
-        if (max_depth < dist) max_depth = dist;
-        if (min_depth > dist) min_depth = dist;
-
+        //if (max_depth < dist) max_depth = dist;
+        //if (min_depth > dist) min_depth = dist;
+        if (dist > 9.9) dist = 10.0f;
         depth_image.at(i) = dist;
     }
-    printf("min depth: %f  --  max depth %f \n", min_depth, max_depth);
+    //printf("min depth: %f  --  max depth %f \n", min_depth, max_depth);
     
     observation["visual_observation"] = std::move(image);
     observation["visual_observation_depth"] = Serialize::toUint8(depth_image);
@@ -336,6 +326,26 @@ void SlamDatasetAgentController::reset()
 bool SlamDatasetAgentController::isReady() const
 {
     return true;
+}
+
+void SlamDatasetAgentController::RemoveVirtualLights(){
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), FoundActors);
+
+    for (int i = 0; i < FoundActors.Num(); i++) {
+        //ASpotLight* sl = Cast<ASpotLight>(FoundActors[i]);
+        //APointLight* pl = Cast<APointLight>(FoundActors[i]);
+        //ARectLight* rl = Cast<ARectLight>(FoundActors[i]);
+        ////ADirectionalLight* dl = Cast<ADirectionalLight>(FoundActors[i]);
+        //if (rl != nullptr) {
+        //    rl->SetEnabled(false);
+        //    UE_LOG(LogTemp, Warning, TEXT("virtual light founded"));
+        //}
+        //ALight* l = Cast<ALight>(FoundActors[i]);
+        //if (l != nullptr) {
+        //    l->SetMobility(EComponentMobility::Movable);
+        //}
+    }
 }
 
 void SlamDatasetAgentController::rebuildNavSystem()
@@ -465,3 +475,41 @@ void SlamDatasetAgentController::generateTrajectoryToPredefinedTarget()
     // indexPath_ = 1; // Path point 0 is the initial robot position. getCurrentPathPoint() should therefore return the next point.
     // executionCounter_++;
 }
+
+void SlamDatasetAgentController::ChangeTranslucentToOpaque()
+{
+    translucent_materials_.Empty();
+    //find all static meshes
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(world_, AActor::StaticClass(), FoundActors);
+
+    for (int i = 0; i < FoundActors.Num(); i++) {
+        TArray<UStaticMeshComponent*> staticComps;
+        FoundActors[i]->GetComponents<UStaticMeshComponent>(staticComps);
+        if (staticComps.Num() != 0) {
+            for (int j = 0; j < staticComps.Num(); j++) {
+                UMaterialInterface* current_mat = staticComps[j]->GetMaterial(0);
+                if (current_mat->GetBlendMode() == EBlendMode::BLEND_Translucent) {
+                    FString path_ = "/SimulationController/PostProcessMaterials/Opaque.Opaque";
+                    UMaterial* mat = LoadObject<UMaterial>(nullptr, *path_);
+                    UMaterialInstanceDynamic* dynamicMat = UMaterialInstanceDynamic::Create(mat, FoundActors[i]);
+                    staticComps[j]->SetMaterial(0, dynamicMat);
+                    //translucent_materials_.Add(dynamicMat);
+                }
+            }
+        }
+    }
+}
+
+void SlamDatasetAgentController::EnableTranslucency(bool activate) const
+{
+    for (int i = 0; i < translucent_materials_.Num(); i++) {
+        if (activate) {
+            translucent_materials_[i]->BlendMode = EBlendMode::BLEND_Translucent;
+        }
+        else {
+            translucent_materials_[i]->BlendMode = EBlendMode::BLEND_Opaque;
+        }
+    }
+}
+
