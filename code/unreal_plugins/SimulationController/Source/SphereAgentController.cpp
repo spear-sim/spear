@@ -85,7 +85,6 @@ void SphereAgentController::findObjectReferences(UWorld* world)
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
-        AActor* camera_actor_ = nullptr;
         for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
             std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
             if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_NAME"})) {
@@ -137,6 +136,7 @@ void SphereAgentController::cleanUpObjectReferences()
         new_object_parent_actor_ = nullptr;
 
         ASSERT(observation_camera_sensor_);
+        observation_camera_sensor_->Destroy();
         observation_camera_sensor_ = nullptr;
     }
     
@@ -216,7 +216,7 @@ void SphereAgentController::applyAction(const std::map<std::string, std::vector<
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         // Get yaw from the observation camera, apply force to the sphere in that direction
-        FVector force = observation_camera_sensor_->camera_actor_->GetActorRotation().RotateVector(FVector(action.at("apply_force").at(0), 0.0f, 0.0f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "ACTION_APPLY_FORCE_SCALE"});
+        FVector force = camera_actor_->GetActorRotation().RotateVector(FVector(action.at("apply_force").at(0), 0.0f, 0.0f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "ACTION_APPLY_FORCE_SCALE"});
 
         ASSERT(isfinite(force.X));
         ASSERT(isfinite(force.Y));
@@ -225,7 +225,7 @@ void SphereAgentController::applyAction(const std::map<std::string, std::vector<
         sphere_static_mesh_component_->AddForce(force);
 
         // Set observation camera yaw by adding to the current observation camera yaw
-        FRotator rotation = observation_camera_sensor_->camera_actor_->GetActorRotation().Add(0.0f, action.at("apply_force").at(1) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "ACTION_ROTATE_OBSERVATION_CAMERA_SCALE"}), 0.0f);
+        FRotator rotation = camera_actor_->GetActorRotation().Add(0.0f, action.at("apply_force").at(1) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "ACTION_ROTATE_OBSERVATION_CAMERA_SCALE"}), 0.0f);
 
         ASSERT(isfinite(rotation.Pitch));
         ASSERT(isfinite(rotation.Yaw));
@@ -234,7 +234,7 @@ void SphereAgentController::applyAction(const std::map<std::string, std::vector<
         ASSERT(rotation.Yaw   >= -360.0 && rotation.Yaw   <= 360.0, "%f", rotation.Yaw);
         ASSERT(rotation.Roll  >= -360.0 && rotation.Roll  <= 360.0, "%f", rotation.Roll);
 
-        observation_camera_sensor_->camera_actor_->SetActorRotation(rotation);
+        camera_actor_->SetActorRotation(rotation);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         FVector force = FVector(action.at("apply_force").at(0), action.at("apply_force").at(1), 0.0f) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "ACTION_APPLY_FORCE_SCALE"});
 
@@ -248,13 +248,6 @@ void SphereAgentController::applyAction(const std::map<std::string, std::vector<
     }
 }
 
-void SphereAgentController::changeCameraPass(const std::string& pass)
-{
-    ASSERT(pass != "");
-
-    observation_camera_sensor_->ActivateBlendablePass(pass);
-}
-
 std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
@@ -265,7 +258,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
 
     // get observations
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        const float observation_camera_yaw = observation_camera_sensor_->camera_actor_->GetActorRotation().Yaw;
+        const float observation_camera_yaw = camera_actor_->GetActorRotation().Yaw;
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.X,
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.Y,
@@ -329,7 +322,7 @@ void SphereAgentController::postPhysicsPreRenderTickEventHandler(float delta_tim
                 FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_POSITION_OFFSET_X"}),
                         Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_POSITION_OFFSET_Y"}),
                         Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_POSITION_OFFSET_Z"})));
-            observation_camera_sensor_->camera_actor_->SetActorLocation(observation_camera_pose);
+            camera_actor_->SetActorLocation(observation_camera_pose);
         }
     }
 }

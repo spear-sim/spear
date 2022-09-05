@@ -29,7 +29,6 @@ public:
     std::map<std::string, Box> getStepInfoSpace() const override;
 
     void applyAction(const std::map<std::string, std::vector<float>>& action) override;
-    void changeCameraPass(const std::string& pass) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
 
@@ -42,6 +41,8 @@ private:
 
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
+    AActor* camera_actor_ = nullptr;
+    
     AActor* new_object_parent_actor_ = nullptr;
 
     CameraSensor* observation_camera_sensor_ = nullptr;

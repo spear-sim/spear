@@ -27,7 +27,6 @@ public:
     virtual std::map<std::string, Box> getStepInfoSpace() const = 0;   
  
     virtual void applyAction(const std::map<std::string, std::vector<float>>& action) = 0;
-    virtual void changeCameraPass(const std::string& pass) = 0;
     virtual std::map<std::string, std::vector<uint8_t>> getObservation() const = 0;
     virtual std::map<std::string, std::vector<uint8_t>> getStepInfo() const = 0;
     

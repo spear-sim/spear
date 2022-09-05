@@ -316,11 +316,6 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->getStepInfoSpace();
     });
 
-    rpc_server_->bindAsync("changeCameraPass", [this](std::string& pass) -> void {
-        ASSERT(task_);
-        agent_controller_->changeCameraPass(pass);
-    });
-
     rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         ASSERT(agent_controller_);
