@@ -1,22 +1,24 @@
 __pycache__
 .ipynb_checkpoints
 
-code/experiments/debug_synchronization_model/DebugProject/Binaries
-code/experiments/debug_synchronization_model/DebugProject/Build
-code/experiments/debug_synchronization_model/DebugProject/DerivedDataCache
-code/experiments/debug_synchronization_model/DebugProject/Intermediate
-code/experiments/debug_synchronization_model/DebugProject/Saved
-code/experiments/debug_synchronization_model/DebugProject/Standalone-Development
-code/experiments/debug_synchronization_model/DebugProject/Standalone-Shipping
-code/experiments/debug_synchronization_model/DebugProject/Temp
-code/experiments/debug_synchronization_model/DebugProject/user_config.yaml
-code/experiments/debug_synchronization_model/DebugProject/.vscode
+code/experimental/debug_synchronization_model/DebugProject/Binaries
+code/experimental/debug_synchronization_model/DebugProject/Build
+code/experimental/debug_synchronization_model/DebugProject/DerivedDataCache
+code/experimental/debug_synchronization_model/DebugProject/Intermediate
+code/experimental/debug_synchronization_model/DebugProject/Saved
+code/experimental/debug_synchronization_model/DebugProject/Standalone-Development
+code/experimental/debug_synchronization_model/DebugProject/Standalone-Shipping
+code/experimental/debug_synchronization_model/DebugProject/Temp
+code/experimental/debug_synchronization_model/DebugProject/user_config.yaml
+code/experimental/debug_synchronization_model/DebugProject/.vscode
 
-code/experiments/teleport_mode/user_config.yaml
+code/experimental/rl_openbot/imitation_learning/dataset
+code/experimental/rl_openbot/imitation_learning/Temp
+code/experimental/rl_openbot/imitation_learning/videos
+code/experimental/rl_openbot/imitation_learning/models
+code/experimental/rl_openbot/imitation_learning/user_config.yaml
 
-code/experiments/rl_openbot/imitation_learning/dataset
-code/experiments/rl_openbot/imitation_learning/models
-code/experiments/rl_openbot/imitation_learning/Temp
+code/experimental/teleport_mode/user_config.yaml
 
 code/python_module/interiorsim.egg-info
 
@@ -26,17 +28,21 @@ code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
 code/unreal_plugins/CoreUtils/ThirdParty
 
-code/unreal_plugins/InteriorSimBridge/Binaries
-code/unreal_plugins/InteriorSimBridge/Intermediate
-code/unreal_plugins/InteriorSimBridge/ThirdParty
-
 code/unreal_plugins/RobotSim/Binaries
 code/unreal_plugins/RobotSim/Intermediate
 code/unreal_plugins/RobotSim/ThirdParty
 
+code/unreal_plugins/SceneManager/Binaries
+code/unreal_plugins/SceneManager/Intermediate
+code/unreal_plugins/SceneManager/ThirdParty
+
 code/unreal_plugins/SimulationController/Binaries
 code/unreal_plugins/SimulationController/Intermediate
 code/unreal_plugins/SimulationController/ThirdParty
+
+code/unreal_plugins/VirtualWorldManager/Binaries
+code/unreal_plugins/VirtualWorldManager/Intermediate
+code/unreal_plugins/VirtualWorldManager/ThirdParty
 
 code/unreal_projects/InteriorEnvironment/Binaries
 code/unreal_projects/InteriorEnvironment/Build
@@ -124,8 +130,3 @@ code/unreal_projects/RobotProject/user_config.yaml
 code/unreal_projects/RobotProject/.vscode
 code/unreal_projects/RobotProject/.ignore
 code/unreal_projects/RobotProject/.kdev4
-
-code/unreal_plugins/InteriorSimBridge/Binaries
-code/unreal_plugins/InteriorSimBridge/Intermediate
-
-code/user

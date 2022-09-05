@@ -1612,11 +1612,6 @@ TMap<FString, float> AUrdfBotPawn::GetCurrentQPosByLinkName()
     return map;
 }
 
-void AUrdfBotPawn::SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings)
-{
-    // Nothing to do so far...
-}
-
 void AUrdfBotPawn::SetTargetQPosByLinkName(const TMap<FString, float>& map)
 {
     for (const TPair<FString, float>& pair : map)

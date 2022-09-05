@@ -18,15 +18,21 @@ class SphereAgentController : public AgentController
 {
 public:
 
-    // This UWorld pointer passed here points to the only running game world.
     SphereAgentController(UWorld* world);
     ~SphereAgentController();
-    
+ 
+    void findObjectReferences(UWorld* world) override;
+    void cleanUpObjectReferences() override;
+
     std::map<std::string, Box> getActionSpace() const override;
     std::map<std::string, Box> getObservationSpace() const override;
+    std::map<std::string, Box> getStepInfoSpace() const override;
+
     void applyAction(const std::map<std::string, std::vector<float>>& action) override;
     void changeCameraPass(const std::string& pass) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
+    std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
+
     void reset() override;
     bool isReady() const override;
 

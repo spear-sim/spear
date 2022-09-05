@@ -9,8 +9,16 @@ struct Box;
 class Task
 {
 public:
+
+    // A Task class must spawn new objects in the constructor if they are
+    // intended to be findable by other classes. A Task class must not attempt
+    // to find object references in the constructor, because these objects might
+    // not be spawned yet. Use findObjectReferences(...) instead.
     Task() = default;
     virtual ~Task() = default;
+
+    virtual void findObjectReferences(UWorld* world) = 0;
+    virtual void cleanUpObjectReferences() = 0;
 
     virtual void beginFrame() = 0;
     virtual void endFrame() = 0;

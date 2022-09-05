@@ -4,7 +4,7 @@ INTERIORSIM:
   TEMP_DIR: "/Users/mroberts/code/github/interiorsim/code/unreal_projects/PlayEnvironment/Temp"
 
 SIMULATION_CONTROLLER:
-  TASK_NAME: "PointGoalNavigation"
+  TASK_NAME: "PointGoalNavigationTask"
   AGENT_CONTROLLER_NAME: "SphereAgentController"
   
   POINT_GOAL_NAV_TASK:

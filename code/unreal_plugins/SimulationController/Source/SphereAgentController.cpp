@@ -20,6 +20,35 @@
 
 SphereAgentController::SphereAgentController(UWorld* world)
 {
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
+        new_object_parent_actor_ = world->SpawnActor<AActor>();
+        ASSERT(new_object_parent_actor_);
+
+        post_physics_pre_render_tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
+        ASSERT(post_physics_pre_render_tick_event_);
+        post_physics_pre_render_tick_event_->RegisterComponent();
+        post_physics_pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
+        post_physics_pre_render_tick_event_handle_ = post_physics_pre_render_tick_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTickEventHandler);        
+    }
+}
+
+SphereAgentController::~SphereAgentController()
+{
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
+        ASSERT(post_physics_pre_render_tick_event_);
+        post_physics_pre_render_tick_event_->delegate_.Remove(post_physics_pre_render_tick_event_handle_);
+        post_physics_pre_render_tick_event_handle_.Reset();
+        post_physics_pre_render_tick_event_->DestroyComponent();
+        post_physics_pre_render_tick_event_ = nullptr;
+
+        ASSERT(new_object_parent_actor_);
+        new_object_parent_actor_->Destroy();
+        new_object_parent_actor_ = nullptr;
+    }
+}
+
+void SphereAgentController::findObjectReferences(UWorld* world)
+{
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "AGENT_ACTOR_NAME"})) { 
@@ -32,6 +61,26 @@ SphereAgentController::SphereAgentController(UWorld* world)
     }
     ASSERT(agent_actor_);
     ASSERT(goal_actor_);
+
+    // get references to mesh components
+    sphere_static_mesh_component_ = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
+    ASSERT(sphere_static_mesh_component_);
+
+    goal_static_mesh_component_ = Cast<UStaticMeshComponent>(goal_actor_->GetRootComponent());
+    ASSERT(goal_static_mesh_component_);
+
+    // need to set this to apply forces or move objects
+    sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
+    goal_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
+
+    // set physics state
+    sphere_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
+    sphere_static_mesh_component_->SetSimulatePhysics(true);
+    sphere_static_mesh_component_->SetAngularDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "ANGULAR_DAMPING"}));
+    sphere_static_mesh_component_->SetLinearDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "LINEAR_DAMPING"}));
+    sphere_static_mesh_component_->BodyInstance.MaxAngularVelocity = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "MAX_ANGULAR_VELOCITY"}));
+    sphere_static_mesh_component_->BodyInstance.MassScale = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "MASS_SCALE"}));
+    sphere_static_mesh_component_->SetNotifyRigidBodyCollision(true);
 
     // setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
@@ -72,35 +121,10 @@ SphereAgentController::SphereAgentController(UWorld* world)
         post_physics_pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
         post_physics_pre_render_tick_event_handle_ = post_physics_pre_render_tick_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTickEventHandler);
     }
-
-    sphere_static_mesh_component_ = Cast<UStaticMeshComponent>(agent_actor_->GetRootComponent());
-    ASSERT(sphere_static_mesh_component_);
-
-    goal_static_mesh_component_ = Cast<UStaticMeshComponent>(goal_actor_->GetRootComponent());
-    ASSERT(goal_static_mesh_component_);
-
-    // need to set this to apply forces or move objects
-    sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
-    goal_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
-
-    // set physics state
-    sphere_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
-    sphere_static_mesh_component_->SetSimulatePhysics(true);
-    sphere_static_mesh_component_->SetAngularDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "ANGULAR_DAMPING"}));
-    sphere_static_mesh_component_->SetLinearDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "LINEAR_DAMPING"}));
-    sphere_static_mesh_component_->BodyInstance.MaxAngularVelocity = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "MAX_ANGULAR_VELOCITY"}));
-    sphere_static_mesh_component_->BodyInstance.MassScale = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "SPHERE", "MASS_SCALE"}));
-    sphere_static_mesh_component_->SetNotifyRigidBodyCollision(true);
 }
 
-SphereAgentController::~SphereAgentController()
+void SphereAgentController::cleanUpObjectReferences()
 {
-    ASSERT(goal_static_mesh_component_);
-    goal_static_mesh_component_ = nullptr;
-
-    ASSERT(sphere_static_mesh_component_);   
-    sphere_static_mesh_component_ = nullptr;
-
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         ASSERT(post_physics_pre_render_tick_event_);
         post_physics_pre_render_tick_event_->delegate_.Remove(post_physics_pre_render_tick_event_handle_);
@@ -116,11 +140,17 @@ SphereAgentController::~SphereAgentController()
         observation_camera_sensor_ = nullptr;
     }
     
-    ASSERT(agent_actor_);
-    agent_actor_ = nullptr;
+    ASSERT(goal_static_mesh_component_);
+    goal_static_mesh_component_ = nullptr;
+
+    ASSERT(sphere_static_mesh_component_);   
+    sphere_static_mesh_component_ = nullptr;
 
     ASSERT(goal_actor_);
     goal_actor_ = nullptr;
+
+    ASSERT(agent_actor_);
+    agent_actor_ = nullptr;
 }
 
 std::map<std::string, Box> SphereAgentController::getActionSpace() const
@@ -151,8 +181,8 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
 
         box.low = 0;
         box.high = 255;
-        box.shape = {Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-                     Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+        box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                     Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
                      3};
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
@@ -167,6 +197,11 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
     }
 
     return observation_space;
+}
+
+std::map<std::string, Box> SphereAgentController::getStepInfoSpace() const
+{
+    return {};
 }
 
 void SphereAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
@@ -265,6 +300,11 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
     }
 
     return observation;
+}
+
+std::map<std::string, std::vector<uint8_t>> SphereAgentController::getStepInfo() const
+{
+    return {};
 }
 
 void SphereAgentController::reset()
