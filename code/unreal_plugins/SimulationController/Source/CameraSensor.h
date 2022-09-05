@@ -11,9 +11,9 @@ class UWorld;
 
 class UTickEvent;
 
-const FString MATERIALS_PATH_ = "/SimulationController/PostProcessMaterials/";
+const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
 //Find a way to find assets in path
-const std::vector<std::string> PASSES_ =
+const std::vector<std::string> PASSES =
 {
     "Depth",
     "Depth_GLSL",

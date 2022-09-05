@@ -52,7 +52,6 @@ CameraSensor::CameraSensor(UWorld* world, AActor* actor_){
 }
 
 CameraSensor::~CameraSensor(){
-        //check if we need it 
         ASSERT(pre_render_tick_event_);
         pre_render_tick_event_->delegate_.Remove(pre_render_tick_event_handle_);
         pre_render_tick_event_handle_.Reset();
@@ -89,13 +88,13 @@ void CameraSensor::SetRenderTarget(unsigned long w, unsigned long h){
 
 void CameraSensor::SetPostProcessBlendables(std::vector<std::string> blendables){
         for(std::string pass_name_ : blendables){
-            ASSERT(std::find(PASSES_.begin(), PASSES_.end(), pass_name_) != PASSES_.end());
+            ASSERT(std::find(PASSES.begin(), PASSES.end(), pass_name_) != PASSES.end());
         }
 
         //Set blendables
         unsigned long pass_index_ = 0;
         for(std::string pass_name_ : blendables){
-                FString path_ = MATERIALS_PATH_ + pass_name_.c_str() + "." + pass_name_.c_str();
+                FString path_ = MATERIALS_PATH.c_str() + pass_name_.c_str() + "." + pass_name_.c_str();
                 UMaterial* mat = LoadObject<UMaterial>(nullptr, *path_);
                 ASSERT(mat);
                 this->scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, this->scene_capture_component_), 0.0f);
