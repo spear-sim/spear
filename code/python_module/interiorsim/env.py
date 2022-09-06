@@ -374,9 +374,6 @@ class Env(gym.Env):
     def _apply_action(self, action):
         self._client.call("applyAction", action)
 
-    def _change_camera_pass(self, pass_):
-        self._client.call("changeCameraPass", pass_)
-
     def _get_observation(self):
         observation = self._client.call("getObservation")
         return self._deserialize(observation, self.observation_space)

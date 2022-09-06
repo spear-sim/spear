@@ -8,47 +8,30 @@ class AActor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
-
 class UTickEvent;
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
-//Find a way to find assets in path
-const std::vector<std::string> PASSES =
+
+struct CameraPass
 {
-    "Depth",
-    "Depth_GLSL",
-    "Segmentation",
-    "LensDistortion",
-    "Normals",
-    "PixelVelocity"
+    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
+    UTextureRenderTarget2D* texture_render_target_ = nullptr;
 };
 
 class CameraSensor
 {
 public:
-    CameraSensor(UWorld* world, AActor* actor_);
+    CameraSensor(UWorld* world, AActor* actor, std::vector<std::string> passes. unsigned long w, unsigned long h);
     ~CameraSensor();
 
-    void SetRenderTarget(unsigned long w, unsigned long h);
+    std::map<std::string, TArray<FColor>> GetRenderData();
 
-    void SetPostProcessBlendables(std::vector<std::string> blendables);
-
-	void ActivateBlendablePass(std::string pass_name);
-
-    TArray<FColor> GetRenderData();
-
-    void FColorToFloatImage(std::vector<float>& out, TArray<FColor> data);
-
-    bool enable_postprocessing_effects_ = true;
+    //Remove this function from here
+    std::vector<float> FColorToFloatImage(TArray<FColor> data);
 
 private:
-    //used on pre_load functionality
-    std::string pre_loaded_pass_ = "";
-    std::map<std::string, unsigned long> passes_;
+    std::map<std::string, CameraPass> passes_;
 
-    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
-    UTextureRenderTarget2D* texture_render_target_ = nullptr;
-
-    void SetCameraDefaultOverrides();
-	void ConfigureShowFlags(bool bPostProcessing);
+    void SetCameraDefaultOverrides(USceneCaptureComponent2D* camera);
+	void ConfigureShowFlags(USceneCaptureComponent2D* camera, bool bPostProcessing);
 };
