@@ -28,6 +28,7 @@
 
 #include "Assert.h"
 #include "Box.h"
+#include "CameraSensor.h"
 #include "Config.h"
 #include "Serialize.h"
 
@@ -50,9 +51,23 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
     FActorSpawnParameters spawn_params;
     spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "CAMERA_ACTOR_NAME"}).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    //camera
+    AActor* camera_actor = world->SpawnActor<ACameraActor>(spawn_location, FRotator(0, 0, 0), spawn_params);
+    ASSERT(camera_actor);
+    rgb_camera_sensor_ = new CameraSensor(world_, camera_actor);
+    ASSERT(rgb_camera_sensor_);
+
+    rgb_camera_sensor_->scene_capture_component_->bAlwaysPersistRenderingState = 1;
+    rgb_camera_sensor_->scene_capture_component_->FOVAngle = 90.f;
+
+    rgb_camera_sensor_->SetRenderTarget(
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
+
+    /*
     camera_actor_ = world->SpawnActor<ACameraActor>(spawn_location, FRotator(0,0,0), spawn_params);
     ASSERT(camera_actor_);
-
     new_object_parent_actor_ = world->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
@@ -94,6 +109,7 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
     //if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE"}) == "seg") {
         //scene_capture_component_->AddOrUpdateBlendable(vw_level_manager->getPostProcessMaterial(EPostProcessMaterialType::Semantic));
     //}
+    */
 }
 
 ImageSamplingAgentController::~ImageSamplingAgentController()
@@ -102,19 +118,25 @@ ImageSamplingAgentController::~ImageSamplingAgentController()
     //virtual_world_level_manager_->Destroy();
     //virtual_world_level_manager_ = nullptr;
 
-    ASSERT(texture_render_target_);
-    texture_render_target_->MarkPendingKill();
-    texture_render_target_ = nullptr;
+    //ASSERT(texture_render_target_);
+    //texture_render_target_->MarkPendingKill();
+    //texture_render_target_ = nullptr;
 
-    ASSERT(scene_capture_component_);
-    scene_capture_component_ = nullptr;
+    //ASSERT(scene_capture_component_);
+    //scene_capture_component_ = nullptr;
 
-    ASSERT(new_object_parent_actor_);
-    new_object_parent_actor_->Destroy();
-    new_object_parent_actor_ = nullptr;
+    //ASSERT(new_object_parent_actor_);
+    //new_object_parent_actor_->Destroy();
+    //new_object_parent_actor_ = nullptr;
 
-    ASSERT(camera_actor_);
-    camera_actor_ = nullptr;
+    ASSERT(rgb_camera_sensor_);
+    rgb_camera_sensor_ = nullptr;
+
+    //ASSERT(camera_actor_);
+    //camera_actor_ = nullptr;
+
+    //ASSERT(dummy_navmesh_bound_volume_);
+    //dummy_navmesh_bound_volume_ = nullptr;
 
     ASSERT(world_);
     world_ = nullptr;
@@ -201,7 +223,7 @@ void ImageSamplingAgentController::applyAction(const std::map<std::string, std::
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
-        camera_actor_->SetActorLocationAndRotation(random_position, random_orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
+        rgb_camera_sensor_->camera_actor_->SetActorLocationAndRotation(random_position, random_orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "replay_sampled_images") {
         ASSERT(action.count("set_position_xyz_centimeters"));
         ASSERT(action.count("set_orientation_pyr_degrees"));
@@ -213,7 +235,7 @@ void ImageSamplingAgentController::applyAction(const std::map<std::string, std::
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
-        camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
+        rgb_camera_sensor_->camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
     } else {
         ASSERT(false);
     }
@@ -223,15 +245,15 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    const FVector position = camera_actor_->GetActorLocation();
-    const FRotator orientation = camera_actor_->GetActorRotation();
+    const FVector position = rgb_camera_sensor_->camera_actor_->GetActorLocation();
+    const FRotator orientation = rgb_camera_sensor_->camera_actor_->GetActorRotation();
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
 
 
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_DEBUG_POSES" })) {
         std::ofstream myfile;
         std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/poses_for_debug.txt";
-        UE_LOG(LogTemp, Warning, TEXT("printing filename for storing debug poses %s"), UTF8_TO_TCHAR(file.c_str()));
+        //UE_LOG(LogTemp, Warning, TEXT("printing filename for storing debug poses %s"), UTF8_TO_TCHAR(file.c_str()));
         myfile.open(file);
         myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
         for (size_t i = 0u; i < Config::getValue<size_t>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_NUM" }); ++i) {
@@ -243,7 +265,7 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
 
     ASSERT(IsInGameThread());
 
-    FTextureRenderTargetResource* target_resource = scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+    FTextureRenderTargetResource* target_resource = rgb_camera_sensor_->scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
     ASSERT(target_resource);
 
     TArray<FColor> pixels;
@@ -337,12 +359,26 @@ void ImageSamplingAgentController::rebuildNavSystem()
     nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
 
+    /*
+    // spawn dummy navmesh volume bounds; UE bug
+    FActorSpawnParameters spawn_params;
+    spawn_params.Name = FName("DummyNavMeshBoundsVolume");
+    spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    FVector spawn_location = FVector(0.f, 0.f, nav_mesh_bounds->GetComponentsBoundingBox(false, true).Min.Z - 1000.f);
+    UE_LOG(LogTemp, Warning, TEXT("Spawning second navmesh at (%f, %f, %f)"), spawn_location.X, spawn_location.Y, spawn_location.Z);
+    dummy_navmesh_bound_volume_ = world_->SpawnActor<ANavMeshBoundsVolume>(spawn_location, FRotator(0, 0, 0), spawn_params);
+    dummy_navmesh_bound_volume_->SetActorScale3D(FVector(1.f, 1.f, 1.f));
+    FBox second_box = dummy_navmesh_bound_volume_->GetComponentsBoundingBox(false, true);
+    UE_LOG(LogTemp, Warning, TEXT("after second navmesh rescale Min: (%f, %f, %f)"), second_box.Min.X, second_box.Min.Y, second_box.Min.Z);
+    UE_LOG(LogTemp, Warning, TEXT("after second navmesh rescale Max: (%f, %f, %f)"), second_box.Max.X, second_box.Max.Y, second_box.Max.Z);
+    */
+
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_OBJ"})) {
         nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }).c_str()) + "/" + world_->GetName() + "/");
     }
 }
 
-FBox ImageSamplingAgentController::getWorldBoundingBox(bool remove_ceiling)
+FBox ImageSamplingAgentController::getWorldBoundingBox(bool alter_height)
 {
     FBox box(ForceInit);
     for (TActorIterator<AActor> it(world_); it; ++it) {
@@ -350,16 +386,31 @@ FBox ImageSamplingAgentController::getWorldBoundingBox(bool remove_ceiling)
             box += it->GetComponentsBoundingBox(false, true);
         }
     }
-    // Remove ceiling
-    // UE_LOG(LogTemp, Warning, TEXT("Before: Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
-    // UE_LOG(LogTemp, Warning, TEXT("Before: Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Max.Z);
-    const float height = Config::getValue<float>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "NAV_BOUND_BOX_HEIGHT_REDUCTION_FRACTION" });
-    return remove_ceiling ? FBox(box.Min, box.Max - FVector(0, 0, height * box.GetSize().Z)) : box;
-    // UE_LOG(LogTemp, Warning, TEXT("After Max-(0,0,0.7*(Max-Min).Z): Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, (box.Max-FVector(0, 0, 0.7f * box.GetSize().Z)).Z);
+
+    // alter height of bouding box to cover only certain region above ground
+     UE_LOG(LogTemp, Warning, TEXT("Before: Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
+     UE_LOG(LogTemp, Warning, TEXT("Before: Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Max.Z);
+     const float height = Config::getValue<float>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "NAV_BOUND_BOX_HEIGHT_ABOVE_MIN" });
+     UE_LOG(LogTemp, Warning, TEXT("Return Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Min.Z + height);
+     return alter_height ? FBox(box.Min, FVector(box.Max.X, box.Max.Y, box.Min.Z + height)) : box ;
+
+
+     //FBox floor_bounding_box(ForceInit);
+     //for (TActorIterator<AActor> it(world_); it; ++it) {
+     //    if (it->ActorHasTag("floor")) {
+     //        floor_bounding_box += it->GetComponentsBoundingBox(false, true);
+     //    }
+     //}
+     //UE_LOG(LogTemp, Warning, TEXT("Before: Floor Box Min Vector is (%f, %f, %f)"), floor_bounding_box.Min.X, floor_bounding_box.Min.Y, floor_bounding_box.Min.Z);
+     //UE_LOG(LogTemp, Warning, TEXT("Before: Floor Box Max Vector is (%f, %f, %f)"), floor_bounding_box.Max.X, floor_bounding_box.Max.Y, floor_bounding_box.Max.Z);
+     //UE_LOG(LogTemp, Warning, TEXT("After: Max-(0,0,x*(Max-Min).Z): Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, (box.Max-FVector(0, 0, height * box.GetSize().Z)).Z);
+     //UE_LOG(LogTemp, Warning, TEXT("After: floor bounding box height adjustment box: Box Min Vector is (%f, %f, %f) and Max Vector is  (%f, %f, %f)"), box.Min.X, box.Min.Y, floor_bounding_box.Min.Z, box.Max.X, box.Max.Y, floor_bounding_box.Max.Z);
+     //return alter_height ? FBox(FVector(box.Min.X, box.Min.Y,floor_bounding_box.Min.Z), FVector(box.Max.X, box.Max.Y, floor_bounding_box.Max.Z)) : box;
+    
+
     // FBox new_box = box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z));
     // UE_LOG(LogTemp, Warning, TEXT("After box.expandby: Box Min Vector is (%f, %f, %f)"), new_box.Min.X, new_box.Min.Y, new_box.Min.Z);
     // UE_LOG(LogTemp, Warning, TEXT("After box.expandby: Box Max Vector is (%f, %f, %f)"), new_box.Max.X, new_box.Max.Y, new_box.Max.Z);
     
     // return remove_ceiling ? box.ExpandBy(box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * box.GetSize().Z)) : box;
-    // return remove_ceiling ? box.ExpandBy(box.GetSize() * 0.1f) : box; // export full box + some buffer
 }

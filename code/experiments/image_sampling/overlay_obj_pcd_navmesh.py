@@ -16,6 +16,7 @@ if __name__ == "__main__":
     parser.add_argument("--obj_file", type=str)
     parser.add_argument("--hdf5_dir", type=str)
     parser.add_argument("--save_as_hdf5", action="store_true")
+    parser.add_argument("--hdf5_save_folder_name", type=str, default="navmesh_export")
     args = parser.parse_args()
 
     if args.obj_file is None:
@@ -39,7 +40,7 @@ if __name__ == "__main__":
             
             assert args.hdf5_dir is not None, "input hdf5_dir param to save as hdf5 files"
 
-            hdf5_files_path = os.path.join(args.hdf5_dir, "navmesh_original_export")
+            hdf5_files_path = os.path.join(args.hdf5_dir, args.hdf5_save_folder_name)
             print(f"INFO: saving hdf5 files in {hdf5_files_path}")
             
             if not os.path.exists(hdf5_files_path):

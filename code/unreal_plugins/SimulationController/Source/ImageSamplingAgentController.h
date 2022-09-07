@@ -7,7 +7,9 @@
 #include "AgentController.h"
 
 class AActor;
+class ANavMeshBoundsVolume;
 class ARecastNavMesh;
+class CameraSensor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
@@ -41,11 +43,12 @@ private:
     UWorld* world_;
 
     ARecastNavMesh* nav_mesh_ = nullptr;
+    ANavMeshBoundsVolume* dummy_navmesh_bound_volume_ = nullptr;
 
-    AActor* camera_actor_ = nullptr;
-    AActor* new_object_parent_actor_ = nullptr;
+    CameraSensor* rgb_camera_sensor_ = nullptr;
+    //AActor* camera_actor_ = nullptr;
     //AActor* virtual_world_level_manager_ = nullptr;
 
-    UTextureRenderTarget2D* texture_render_target_ = nullptr;
-    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
+    //UTextureRenderTarget2D* texture_render_target_ = nullptr;
+    //USceneCaptureComponent2D* scene_capture_component_ = nullptr;
 };

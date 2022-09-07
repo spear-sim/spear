@@ -1,6 +1,6 @@
 {
     "SettingsVersion": 1.2,
-    "SimMode": "SimpleVehicle",
+    "SimMode": "",
     "PawnPaths": {
         "UrdfBot": {
             "UrdfFile": "fetch.xml",

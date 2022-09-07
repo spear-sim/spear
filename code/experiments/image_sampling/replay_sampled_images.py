@@ -22,8 +22,8 @@ elif sys.platform == "win32":
 
 
 def read_recorded_data(args, scene):
-    pose_data_path = os.path.join(args.input_dir, f"scene_{scene}/poses.txt")
-    image_data_path = os.path.join(args.input_dir, f"scene_{scene}/rgb")
+    pose_data_path = os.path.join(args.input_dir, f"Map_{scene}/poses.txt")
+    image_data_path = os.path.join(args.input_dir, f"Map_{scene}/rgb")
 
     with open(pose_data_path, 'r') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -38,10 +38,62 @@ def read_recorded_data(args, scene):
     
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
+    description = "This script expects a certain directory structure for the scenes_path argument. scenes_path folder should be as follows:\n"\
+                    "scenes_path/\n"\
+                    "|-- 2355*.pak\n"\
+                    "|-- 2382*.pak\n"\
+                    "|-- ...\n"\
+                    "\n"\
+                    "This script also expects a certain directory structure for your input_dir. It should be as follows:\n"\
+                    "output_dir/\n"\
+                    "|-- scenes.txt/\n"\
+                    "|-- Map_2355*/\n"\
+                    "|  |--poses.txt\n"\
+                    "|  |--rgb or seg\n"\
+                    "|  |  |-- 0.png\n"\
+                    "|  |  |-- 1.png\n"\
+                    "|  |  |-- ...\n"\
+                    "|  |  |-- x.png\n"\
+                    "|-- Map_2342*/\n"\
+                    "|  |--poses.txt\n"\
+                    "|  |--rgb or seg\n"\
+                    "|  |  |-- 0.png\n"\
+                    "|  |  |-- 1.png\n"\
+                    "|  |  |-- ...\n"\
+                    "|  |  |-- x.png\n"\
+                    "|-- .../\n"\
+                    "|  |--poses.txt\n"\
+                    "|  |--rgb or seg\n"\
+                    "|  |  |-- 0.png\n"\
+                    "|  |  |-- 1.png\n"\
+                    "|  |  |-- ...\n"\
+                    "|  |  |-- x.png\n"\
+                    "After you run this script, expect a output_dir directory like this:\n"\
+                    "output_dir/\n"\
+                    "|-- Map_2355*/\n"\
+                    "|  |--IMAGE_TYPE\n"\
+                    "|  |  |-- 0.png\n"\
+                    "|  |  |-- 1.png\n"\
+                    "|  |  |-- ...\n"\
+                    "|  |  |-- x.png\n"\
+                    "|-- Map_2342*/\n"\
+                    "|  |--IMAGE_TYPE\n"\
+                    "|  |  |-- 0.png\n"\
+                    "|  |  |-- 1.png\n"\
+                    "|  |  |-- ...\n"\
+                    "|  |  |-- x.png\n"\
+                    "|-- .../\n"\
+                    "|  |--IMAGE_TYPE\n"\
+                    "|  |  |-- 0.png\n"\
+                    "|  |  |-- 1.png\n"\
+                    "|  |  |-- ...\n"\
+                    "|  |  |-- x.png\n"
+                    
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--scenes_path", type=str, default="/media/rachithp/Extreme SSD/interiorsim_all_scene_paks")
     parser.add_argument("--executable_dir", type=str, default="/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development")
     parser.add_argument("--input_dir", type=str, required=True)
+    parser.add_argument("--output_dir", type=str, required=True)
     args = parser.parse_args()
 
     # read scenes list
@@ -55,11 +107,11 @@ if __name__ == "__main__":
     config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
     config = get_config(config_files)
 
-    for scene in scenes[:]:
-        
+    for scene in scenes:
+
         print()
         print(f"running through scene {scene}...")
-
+        
         # choose map to load
         config.defrost()
         config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_{}".format(scene) # set first scene in the list as starting scene
@@ -70,8 +122,8 @@ if __name__ == "__main__":
             shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
 
         # check if data path for storing images, exists
-        if not os.path.exists(os.path.join(args.input_dir, f"scene_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
-            os.makedirs(os.path.join(args.input_dir, f"scene_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
+        if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
+            os.makedirs(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
 
         assert config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.ACTION_MODE == "replay_sampled_images"
 
@@ -95,13 +147,13 @@ if __name__ == "__main__":
             # cv2.waitKey(0)
 
             # write data
-            output_path = os.path.join(args.input_dir, f"scene_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
+            output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
             assert os.path.exists(output_path) == True
 
             return_status = cv2.imwrite(output_path +f"/{index}.png", obs["visual_observation"][:,:,[2,1,0]])
             assert return_status == True
 
         env.close()
-        time.sleep(5)
-        os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")     
+        time.sleep(10)
+        os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")  
         cv2.destroyAllWindows()
