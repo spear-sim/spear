@@ -45,7 +45,7 @@ private:
     
     AActor* new_object_parent_actor_ = nullptr;
 
-    CameraSensor* observation_camera_sensor_ = nullptr;
+    std::unique_ptr<CameraSensor> observation_camera_sensor_;
 
     UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
     UStaticMeshComponent* goal_static_mesh_component_ = nullptr;

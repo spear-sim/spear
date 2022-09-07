@@ -23,81 +23,80 @@ CameraSensor::CameraSensor(UWorld* world, AActor* actor , std::vector<std::strin
         ASSERT(actor);
 
         for(std::string pass_name : pass_names){
-                CameraPass new_pass_;
+                CameraPass new_pass;
 
                 // create SceneCaptureComponent2D
-                USceneCaptureComponent2D* scene_capture_component_ = NewObject<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent2D"));
-                ASSERT(scene_capture_component_);
+                USceneCaptureComponent2D* new_scene_capture_component = NewObject<USceneCaptureComponent2D>(actor, TEXT("SceneCaptureComponent2D"));
+                ASSERT(new_scene_capture_component);
 
-                scene_capture_component_->AttachToComponent(actor->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-                scene_capture_component_->SetVisibility(true);
-                scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-                scene_capture_component_->FOVAngle = 60.f;
-                scene_capture_component_->bAlwaysPersistRenderingState = true;
+                new_scene_capture_component->AttachToComponent(actor->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+                new_scene_capture_component->SetVisibility(true);
+                new_scene_capture_component->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+                new_scene_capture_component->FOVAngle = 60.f;
+                new_scene_capture_component->bAlwaysPersistRenderingState = true;
 
-                // Set Defaults and Flags
-                SetCameraDefaultOverrides(scene_capture_component_);    
-                ConfigureShowFlags(scene_capture_component_, (pass_name != "finalColor") ? true : false); 
+                // Set Camera Parameters
+                SetCameraParameters(new_scene_capture_component, (pass_name != "finalColor") ? true : false);
 
                 UKismetSystemLibrary::ExecuteConsoleCommand(world, FString("g.TimeoutForBlockOnRenderFence 300000"));
 
                 // create TextureRenderTarget2D
-                UTextureRenderTarget2D* texture_render_target_ = NewObject<UTextureRenderTarget2D>(this, TEXT("TextureRenderTarget2D"));
-                ASSERT(texture_render_target_);
+                UTextureRenderTarget2D* new_texture_render_target = NewObject<UTextureRenderTarget2D>(actor, TEXT("TextureRenderTarget2D"));
+                ASSERT(new_texture_render_target);
 
-                texture_render_target_->InitCustomFormat(w ,h ,PF_B8G8R8A8 ,true ); // PF_B8G8R8A8 disables HDR;
-                texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-                texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
-                texture_render_target_->TargetGamma = GEngine->GetDisplayGamma();
-                texture_render_target_->SRGB = false; // false for pixels to be stored in linear space
-                texture_render_target_->bAutoGenerateMips = false;
-                texture_render_target_->UpdateResourceImmediate(true);    
-                scene_capture_component_->TextureTarget = texture_render_target_;
-                scene_capture_component_->RegisterComponent();
+                new_texture_render_target->InitCustomFormat(w ,h ,PF_B8G8R8A8 ,true ); // PF_B8G8R8A8 disables HDR;
+                new_texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+                new_texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
+                new_texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
+                new_texture_render_target->SRGB = false; // false for pixels to be stored in linear space
+                new_texture_render_target->bAutoGenerateMips = false;
+                new_texture_render_target->UpdateResourceImmediate(true);    
+                new_scene_capture_component->TextureTarget = new_texture_render_target;
+                new_scene_capture_component->RegisterComponent();
 
                 if(pass_name != "finalColor"){
                         // Load PostProcessMaterial
-                        FString path_ = MATERIALS_PATH.c_str() + pass_name.c_str() + "." + pass_name.c_str();
+                        FString path_ = (MATERIALS_PATH + pass_name + "." + pass_name).c_str();
                         UMaterial* mat = LoadObject<UMaterial>(nullptr, *path_);
                         ASSERT(mat);
 
                         // Set PostProcessMaterial
-                        scene_capture_component_->PostProcessSettings.AddBlendable(
-                                UMaterialInstanceDynamic::Create(mat, this->scene_capture_component_), 1.0f);
+                        new_scene_capture_component->PostProcessSettings.AddBlendable(
+                                UMaterialInstanceDynamic::Create(mat, new_scene_capture_component), 1.0f);
                 }
                 
                 // Set camera pass
-                new_pass_.scene_capture_component_ = scene_capture_component;
-                new_pass_.texture_render_target_ = texture_render_target;
+                new_pass.scene_capture_component_ = new_scene_capture_component;
+                new_pass.texture_render_target_ = new_texture_render_target;
 
                 //Insert into map
-                passes_.insert(std::pair<std::string, CameraPass> (pass_name, new_pass_));
+                camera_passes_.insert(std::pair<std::string, CameraPass> (pass_name, new_pass));
 
         }
 }
 
 CameraSensor::~CameraSensor(){
-        std::map<std::string, CameraPass>::iterator it;
+        std::map<std::string, CameraPass>::iterator pass;
 
-        for (it = passes_.begin(); it != passes_.end(); it++)
+        for (pass = camera_passes_.begin(); pass != camera_passes_.end(); pass++)
         {
-                ASSERT(it->second);
-                it->second->MarkPendingKill();
-                it->second = nullptr;
+                ASSERT(pass->second.scene_capture_component_);
+                pass->second.texture_render_target_->MarkPendingKill();
+                pass->second.texture_render_target_ = nullptr;
 
-                ASSERT(it->first);
-                it->first->DestroyComponent();
-                it->first = nullptr;
+                ASSERT(pass->second.texture_render_target_);
+                pass->second.scene_capture_component_->DestroyComponent();
+                pass->second.scene_capture_component_ = nullptr;
         }
 }
 
 std::map<std::string, TArray<FColor>> CameraSensor::GetRenderData(){
         std::map<std::string, TArray<FColor>> data;
-        std::map<std::string, CameraPass>::iterator it;
+        std::map<std::string, CameraPass>::iterator pass;
 
         //Get data from all passes
-        for (it = passes_.begin(); it != passes_.end(); it++){
-                FTextureRenderTargetResource* target_resource = scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+        for (pass = camera_passes_.begin(); pass != camera_passes_.end(); pass++){
+                FTextureRenderTargetResource* target_resource = pass->second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
                 ASSERT(target_resource);
                 TArray<FColor> pixels;
 
@@ -122,7 +121,7 @@ std::map<std::string, TArray<FColor>> CameraSensor::GetRenderData(){
                 ReadPixelFence.BeginFence(true);
                 ReadPixelFence.Wait(true);
 
-                data.insert(std::pair<std::string, TArray<FColor>> (it->first, pixels));
+                data.insert(std::pair<std::string, TArray<FColor>> (pass->first, pixels));
         }
 
         return data;
@@ -142,8 +141,9 @@ std::vector<float> CameraSensor::FColorToFloatImage(TArray<FColor> data)
         return out;
 }
 
-void CameraSensor::SetCameraDefaultOverrides(USceneCaptureComponent2D* camera){
-	camera->PostProcessSettings.bOverride_AutoExposureMethod = true;
+void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* camera, bool bPostProcessing){
+        //SET OVERRIDES
+        camera->PostProcessSettings.bOverride_AutoExposureMethod = true;
         camera->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
         camera->PostProcessSettings.bOverride_AutoExposureBias = true;
         camera->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
@@ -220,71 +220,67 @@ void CameraSensor::SetCameraDefaultOverrides(USceneCaptureComponent2D* camera){
         camera->PostProcessSettings.bOverride_LensFlareIntensity = true;
         camera->PostProcessSettings.LensFlareIntensity = 0.1;
 
-}
-
-void CameraSensor::ConfigureShowFlags(USceneCaptureComponent2D* camera, bool bPostProcessing){
-	if (bPostProcessing)
+        if (bPostProcessing)
         {
             camera->ShowFlags.EnableAdvancedFeatures();
             camera->ShowFlags.SetMotionBlur(true);
             return;
         }
-
         //camera->ShowFlags.SetAmbientOcclusion(false);
         //camera->ShowFlags.SetAntiAliasing(false);
         //camera->ShowFlags.SetVolumetricFog(false);
-        //// camera->ShowFlags.SetAtmosphericFog(false);
-        //// camera->ShowFlags.SetAudioRadius(false);
-        //// camera->ShowFlags.SetBillboardSprites(false);
+        //camera->ShowFlags.SetAtmosphericFog(false);
+        //camera->ShowFlags.SetAudioRadius(false);
+        //camera->ShowFlags.SetBillboardSprites(false);
         //camera->ShowFlags.SetBloom(false);
-        //// camera->ShowFlags.SetBounds(false);
-        //// camera->ShowFlags.SetBrushes(false);
-        //// camera->ShowFlags.SetBSP(false);
-        //// camera->ShowFlags.SetBSPSplit(false);
-        //// camera->ShowFlags.SetBSPTriangles(false);
-        //// camera->ShowFlags.SetBuilderBrush(false);
-        //// camera->ShowFlags.SetCameraAspectRatioBars(false);
-        //// camera->ShowFlags.SetCameraFrustums(false);
+        //camera->ShowFlags.SetBounds(false);
+        //camera->ShowFlags.SetBrushes(false);
+        //camera->ShowFlags.SetBSP(false);
+        //camera->ShowFlags.SetBSPSplit(false);
+        //camera->ShowFlags.SetBSPTriangles(false);
+        //camera->ShowFlags.SetBuilderBrush(false);
+        //camera->ShowFlags.SetCameraAspectRatioBars(false);
+        //camera->ShowFlags.SetCameraFrustums(false);
         //camera->ShowFlags.SetCameraImperfections(false);
         //camera->ShowFlags.SetCameraInterpolation(false);
-        //// camera->ShowFlags.SetCameraSafeFrames(false);
-        //// camera->ShowFlags.SetCollision(false);
-        //// camera->ShowFlags.SetCollisionPawn(false);
-        //// camera->ShowFlags.SetCollisionVisibility(false);
+        //camera->ShowFlags.SetCameraSafeFrames(false);
+        //camera->ShowFlags.SetCollision(false);
+        //camera->ShowFlags.SetCollisionPawn(false);
+        //camera->ShowFlags.SetCollisionVisibility(false);
         //camera->ShowFlags.SetColorGrading(false);
-        //// camera->ShowFlags.SetCompositeEditorPrimitives(false);
-        //// camera->ShowFlags.SetConstraints(false);
-        //// camera->ShowFlags.SetCover(false);
-        //// camera->ShowFlags.SetDebugAI(false);
-        //// camera->ShowFlags.SetDecals(false);
-        //// camera->ShowFlags.SetDeferredLighting(false);
+        //camera->ShowFlags.SetCompositeEditorPrimitives(false);
+        //camera->ShowFlags.SetConstraints(false);
+        //camera->ShowFlags.SetCover(false);
+        //camera->ShowFlags.SetDebugAI(false);
+        //camera->ShowFlags.SetDecals(false);
+        //camera->ShowFlags.SetDeferredLighting(false);
         //camera->ShowFlags.SetDepthOfField(false);
         //camera->ShowFlags.SetDiffuse(false);
         //camera->ShowFlags.SetDirectionalLights(false);
         //camera->ShowFlags.SetDirectLighting(false);
-        //// camera->ShowFlags.SetDistanceCulledPrimitives(false);
-        //// camera->ShowFlags.SetDistanceFieldAO(false);
-        //// camera->ShowFlags.SetDistanceFieldGI(false);
+        //camera->ShowFlags.SetDistanceCulledPrimitives(false);
+        //camera->ShowFlags.SetDistanceFieldAO(false);
+        //camera->ShowFlags.SetDistanceFieldGI(false);
         //camera->ShowFlags.SetDynamicShadows(false);
-        //// camera->ShowFlags.SetEditor(false);
+        //camera->ShowFlags.SetEditor(false);
         //camera->ShowFlags.SetEyeAdaptation(false);
         //camera->ShowFlags.SetFog(false);
-        //// camera->ShowFlags.SetGame(false);
-        //// camera->ShowFlags.SetGameplayDebug(false);
-        //// camera->ShowFlags.SetGBufferHints(false);
+        //camera->ShowFlags.SetGame(false);
+        //camera->ShowFlags.SetGameplayDebug(false);
+        //camera->ShowFlags.SetGBufferHints(false);
         //camera->ShowFlags.SetGlobalIllumination(false);
         //camera->ShowFlags.SetGrain(false);
-        //// camera->ShowFlags.SetGrid(false);
-        //// camera->ShowFlags.SetHighResScreenshotMask(false);
-        //// camera->ShowFlags.SetHitProxies(false);
+        //camera->ShowFlags.SetGrid(false);
+        //camera->ShowFlags.SetHighResScreenshotMask(false);
+        //camera->ShowFlags.SetHitProxies(false);
         //camera->ShowFlags.SetHLODColoration(false);
         //camera->ShowFlags.SetHMDDistortion(false);
-        //// camera->ShowFlags.SetIndirectLightingCache(false);
-        //// camera->ShowFlags.SetInstancedFoliage(false);
-        //// camera->ShowFlags.SetInstancedGrass(false);
-        //// camera->ShowFlags.SetInstancedStaticMeshes(false);
-        //// camera->ShowFlags.SetLandscape(false);
-        //// camera->ShowFlags.SetLargeVertices(false);
+        //camera->ShowFlags.SetIndirectLightingCache(false);
+        //camera->ShowFlags.SetInstancedFoliage(false);
+        //camera->ShowFlags.SetInstancedGrass(false);
+        //camera->ShowFlags.SetInstancedStaticMeshes(false);
+        //camera->ShowFlags.SetLandscape(false);
+        //camera->ShowFlags.SetLargeVertices(false);
         //camera->ShowFlags.SetLensFlares(false);
         //camera->ShowFlags.SetLevelColoration(false);
         //camera->ShowFlags.SetLightComplexity(false);
@@ -294,69 +290,69 @@ void CameraSensor::ConfigureShowFlags(USceneCaptureComponent2D* camera, bool bPo
         //camera->ShowFlags.SetLightMapDensity(false);
         //camera->ShowFlags.SetLightRadius(false);
         //camera->ShowFlags.SetLightShafts(false);
-        //// camera->ShowFlags.SetLOD(false);
+        //camera->ShowFlags.SetLOD(false);
         //camera->ShowFlags.SetLODColoration(false);
-        //// camera->ShowFlags.SetMaterials(false);
-        //// camera->ShowFlags.SetMaterialTextureScaleAccuracy(false);
-        //// camera->ShowFlags.SetMeshEdges(false);
-        //// camera->ShowFlags.SetMeshUVDensityAccuracy(false);
-        //// camera->ShowFlags.SetModeWidgets(false);
+        //camera->ShowFlags.SetMaterials(false);
+        //camera->ShowFlags.SetMaterialTextureScaleAccuracy(false);
+        //camera->ShowFlags.SetMeshEdges(false);
+        //camera->ShowFlags.SetMeshUVDensityAccuracy(false);
+        //camera->ShowFlags.SetModeWidgets(false);
         //camera->ShowFlags.SetMotionBlur(false);
-        //// camera->ShowFlags.SetNavigation(false);
+        //camera->ShowFlags.SetNavigation(false);
         //camera->ShowFlags.SetOnScreenDebug(false);
-        //// camera->ShowFlags.SetOutputMaterialTextureScales(false);
-        //// camera->ShowFlags.SetOverrideDiffuseAndSpecular(false);
-        //// camera->ShowFlags.SetPaper2DSprites(false);
+        //camera->ShowFlags.SetOutputMaterialTextureScales(false);
+        //camera->ShowFlags.SetOverrideDiffuseAndSpecular(false);
+        //camera->ShowFlags.SetPaper2DSprites(false);
         //camera->ShowFlags.SetParticles(false);
-        //// camera->ShowFlags.SetPivot(false);
+        //camera->ShowFlags.SetPivot(false);
         //camera->ShowFlags.SetPointLights(false);
-        //// camera->ShowFlags.SetPostProcessing(false);
-        //// camera->ShowFlags.SetPostProcessMaterial(false);
-        //// camera->ShowFlags.SetPrecomputedVisibility(false);
-        //// camera->ShowFlags.SetPrecomputedVisibilityCells(false);
-        //// camera->ShowFlags.SetPreviewShadowsIndicator(false);
-        //// camera->ShowFlags.SetPrimitiveDistanceAccuracy(false);
+        //camera->ShowFlags.SetPostProcessing(false);
+        //camera->ShowFlags.SetPostProcessMaterial(false);
+        //camera->ShowFlags.SetPrecomputedVisibility(false);
+        //camera->ShowFlags.SetPrecomputedVisibilityCells(false);
+        //camera->ShowFlags.SetPreviewShadowsIndicator(false);
+        //camera->ShowFlags.SetPrimitiveDistanceAccuracy(false);
         //camera->ShowFlags.SetPropertyColoration(false);
-        //// camera->ShowFlags.SetQuadOverdraw(false);
-        //// camera->ShowFlags.SetReflectionEnvironment(false);
-        //// camera->ShowFlags.SetReflectionOverride(false);
+        //camera->ShowFlags.SetQuadOverdraw(false);
+        //camera->ShowFlags.SetReflectionEnvironment(false);
+        //camera->ShowFlags.SetReflectionOverride(false);
         //camera->ShowFlags.SetRefraction(false);
-        //// camera->ShowFlags.SetRendering(false);
+        //camera->ShowFlags.SetRendering(false);
         //camera->ShowFlags.SetSceneColorFringe(false);
-        //// camera->ShowFlags.SetScreenPercentage(false);
+        //camera->ShowFlags.SetScreenPercentage(false);
         //camera->ShowFlags.SetScreenSpaceAO(false);
         //camera->ShowFlags.SetScreenSpaceReflections(false);
-        //// camera->ShowFlags.SetSelection(false);
-        //// camera->ShowFlags.SetSelectionOutline(false);
-        //// camera->ShowFlags.SetSeparateTranslucency(false);
-        //// camera->ShowFlags.SetShaderComplexity(false);
-        //// camera->ShowFlags.SetShaderComplexityWithQuadOverdraw(false);
-        //// camera->ShowFlags.SetShadowFrustums(false);
-        //// camera->ShowFlags.SetSkeletalMeshes(false);
-        //// camera->ShowFlags.SetSkinCache(false);
+        //camera->ShowFlags.SetSelection(false);
+        //camera->ShowFlags.SetSelectionOutline(false);
+        //camera->ShowFlags.SetSeparateTranslucency(false);
+        //camera->ShowFlags.SetShaderComplexity(false);
+        //camera->ShowFlags.SetShaderComplexityWithQuadOverdraw(false);
+        //camera->ShowFlags.SetShadowFrustums(false);
+        //camera->ShowFlags.SetSkeletalMeshes(false);
+        //camera->ShowFlags.SetSkinCache(false);
         //camera->ShowFlags.SetSkyLighting(false);
-        //// camera->ShowFlags.SetSnap(false);
-        //// camera->ShowFlags.SetSpecular(false);
-        //// camera->ShowFlags.SetSplines(false);
+        //camera->ShowFlags.SetSnap(false);
+        //camera->ShowFlags.SetSpecular(false);
+        //camera->ShowFlags.SetSplines(false);
         //camera->ShowFlags.SetSpotLights(false);
-        //// camera->ShowFlags.SetStaticMeshes(false);
+        //camera->ShowFlags.SetStaticMeshes(false);
         //camera->ShowFlags.SetStationaryLightOverlap(false);
-        //// camera->ShowFlags.SetStereoRendering(false);
-        //// camera->ShowFlags.SetStreamingBounds(false);
+        //camera->ShowFlags.SetStereoRendering(false);
+        //camera->ShowFlags.SetStreamingBounds(false);
         //camera->ShowFlags.SetSubsurfaceScattering(false);
-        //// camera->ShowFlags.SetTemporalAA(false);
-        //// camera->ShowFlags.SetTessellation(false);
-        //// camera->ShowFlags.SetTestImage(false);
-        //// camera->ShowFlags.SetTextRender(false);
-        //// camera->ShowFlags.SetTexturedLightProfiles(false);
+        //camera->ShowFlags.SetTemporalAA(false);
+        //camera->ShowFlags.SetTessellation(false);
+        //camera->ShowFlags.SetTestImage(false);
+        //camera->ShowFlags.SetTextRender(false);
+        //camera->ShowFlags.SetTexturedLightProfiles(false);
         //camera->ShowFlags.SetTonemapper(false);
-        //// camera->ShowFlags.SetTranslucency(false);
-        //// camera->ShowFlags.SetVectorFields(false);
-        //// camera->ShowFlags.SetVertexColors(false);
-        //// camera->ShowFlags.SetVignette(false);
-        //// camera->ShowFlags.SetVisLog(false);
-        //// camera->ShowFlags.SetVisualizeAdaptiveDOF(false);
-        //// camera->ShowFlags.SetVisualizeBloom(false);
+        //camera->ShowFlags.SetTranslucency(false);
+        //camera->ShowFlags.SetVectorFields(false);
+        //camera->ShowFlags.SetVertexColors(false);
+        //camera->ShowFlags.SetVignette(false);
+        //camera->ShowFlags.SetVisLog(false);
+        //camera->ShowFlags.SetVisualizeAdaptiveDOF(false);
+        //camera->ShowFlags.SetVisualizeBloom(false);
         //camera->ShowFlags.SetVisualizeBuffer(false);
         //camera->ShowFlags.SetVisualizeDistanceFieldAO(false);
         //camera->ShowFlags.SetVisualizeDOF(false);
@@ -370,9 +366,8 @@ void CameraSensor::ConfigureShowFlags(USceneCaptureComponent2D* camera, bool bPo
         //camera->ShowFlags.SetVisualizeShadingModels(false);
         //camera->ShowFlags.SetVisualizeSSR(false);
         //camera->ShowFlags.SetVisualizeSSS(false);
-        //// camera->ShowFlags.SetVolumeLightingSamples(false);
-        //// camera->ShowFlags.SetVolumes(false);
-        //// camera->ShowFlags.SetWidgetComponents(false);
-        //// camera->ShowFlags.SetWireframe(false);
-
+        //camera->ShowFlags.SetVolumeLightingSamples(false);
+        //camera->ShowFlags.SetVolumes(false);
+        //camera->ShowFlags.SetWidgetComponents(false);
+        //camera->ShowFlags.SetWireframe(false);
 }

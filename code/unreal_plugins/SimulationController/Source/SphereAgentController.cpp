@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <memory>
 
 #include <Components/StaticMeshComponent.h>
 #include <Engine/World.h>
@@ -44,6 +45,9 @@ SphereAgentController::~SphereAgentController()
         ASSERT(new_object_parent_actor_);
         new_object_parent_actor_->Destroy();
         new_object_parent_actor_ = nullptr;
+
+        ASSERT(observation_camera_sensor_);
+        observation_camera_sensor_ = nullptr;
 
         ASSERT(camera_actor_);
         camera_actor_->Destroy();
@@ -102,7 +106,7 @@ void SphereAgentController::findObjectReferences(UWorld* world)
         std::vector<std::string> passes_ = Config::getValue<std::vector<std::string>>(
             {"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "POSTPROCESS_PASSES" });
 
-        observation_camera_sensor_ = new CameraSensor(world, camera_actor_, passes_, 
+        observation_camera_sensor_ = std::make_unique<CameraSensor>(world, camera_actor_, passes_, 
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}));
         ASSERT(observation_camera_sensor_);
@@ -132,7 +136,6 @@ void SphereAgentController::cleanUpObjectReferences()
         new_object_parent_actor_ = nullptr;
 
         ASSERT(observation_camera_sensor_);
-        observation_camera_sensor_->Destroy();
         observation_camera_sensor_ = nullptr;
     }
     
@@ -265,25 +268,32 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
         ASSERT(IsInGameThread());
 
         //get render data
-        std::map<std::string, TArray<FColor>> pixels = observation_camera_sensor_->GetRenderData();
+        std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->GetRenderData();
         std::map<std::string, std::vector<uint8_t>> images;
 
         std::map<std::string, TArray<FColor>>::iterator it;
-        for (it = pixels.begin(); it != pixels.end(); it++){
+        for (it = render_data.begin(); it != render_data.end(); it++){
             std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
                                    Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
                                    3);
 
-            for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
-                image.at(3 * i + 0) = pixels[i].R;
-                image.at(3 * i + 1) = pixels[i].G;
-                image.at(3 * i + 2) = pixels[i].B;
+            for (uint32 i = 0; i < static_cast<uint32>(it->second.Num()); ++i) {
+                image.at(3 * i + 0) = it->second[i].R;
+                image.at(3 * i + 1) = it->second[i].G;
+                image.at(3 * i + 2) = it->second[i].B;
             }
 
             images.insert(std::pair<std::string, std::vector<uint8_t>>(it->first, image));
         }
 
-        observation["visual_observation"] = std::move(image);
+        //TEST PURPOUSES
+        std::map<std::string, std::vector<uint8_t>>::iterator data_pass;
+        for (data_pass = images.begin(); data_pass != images.end(); data_pass++){
+            observation["visual_observation"] = std::move(data_pass->second);
+            break;
+        }
+        //END TEST PURPOUSES
+
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "PHYSICAL_MODE", "OFFSET_TO_GOAL_SCALE"}) * sphere_to_goal.X,

@@ -21,7 +21,7 @@ struct CameraPass
 class CameraSensor
 {
 public:
-    CameraSensor(UWorld* world, AActor* actor, std::vector<std::string> passes. unsigned long w, unsigned long h);
+    CameraSensor(UWorld* world, AActor* actor, std::vector<std::string> passes, unsigned long w, unsigned long h);
     ~CameraSensor();
 
     std::map<std::string, TArray<FColor>> GetRenderData();
@@ -30,8 +30,7 @@ public:
     std::vector<float> FColorToFloatImage(TArray<FColor> data);
 
 private:
-    std::map<std::string, CameraPass> passes_;
+    std::map<std::string, CameraPass> camera_passes_;
 
-    void SetCameraDefaultOverrides(USceneCaptureComponent2D* camera);
-	void ConfigureShowFlags(USceneCaptureComponent2D* camera, bool bPostProcessing);
+    void SetCameraParameters(USceneCaptureComponent2D* camera, bool bPostProcessing);
 };
