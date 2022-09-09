@@ -1,10 +1,10 @@
 INTERIORSIM:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "/Users/mroberts/code/github/interiorsim/code/unreal_projects/InteriorEnvironment/Standalone-Development/MacNoEditor/InteriorEnvironment.app"
-  TEMP_DIR: "/Users/mroberts/code/github/interiorsim/code/unreal_projects/InteriorEnvironment/Temp"
+  STANDALONE_EXECUTABLE: "/home/adas/interiorsim/code/unreal_projects/InteriorEnvironment/Standalone-Development/LinuxNoEditor/InteriorEnvironment.sh"
+  TEMP_DIR: "/home/adas/interiorsim/code/unreal_projects/InteriorEnvironment/Temp"
 
 SIMULATION_CONTROLLER:
-  TASK_NAME: "PointGoalNavigation"
+  TASK_NAME: "PointGoalNavigationTask"
   AGENT_CONTROLLER_NAME: "SphereAgentController"
 
   POINT_GOAL_NAV_TASK:
@@ -40,8 +40,8 @@ SIMULATION_CONTROLLER:
     MIXED_MODE:
       OBSERVATION_CAMERA_ACTOR_NAME: "ObservationCameraActor"
       SET_OBSERVATION_CAMERA_POSE_EGOCENTRIC: True
-      IMAGE_HEIGHT: 128
-      IMAGE_WIDTH: 128
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
       ACTION_APPLY_FORCE_SCALE: 1000.0
       ACTION_ROTATE_OBSERVATION_CAMERA_SCALE: 10.0
       OBSERVATION_CAMERA_POSITION_OFFSET_X: 0.0
@@ -50,6 +50,7 @@ SIMULATION_CONTROLLER:
       OFFSET_TO_GOAL_SCALE: 0.01
       LINEAR_VELOCITY_SCALE: 0.01
       YAW_SCALE: 1.0
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
     PHYSICAL_MODE:
       ACTION_APPLY_FORCE_SCALE: 1000.0
       OFFSET_TO_GOAL_SCALE: 0.01

@@ -103,10 +103,10 @@ void SphereAgentController::findObjectReferences(UWorld* world)
         }
         ASSERT(camera_actor_);
 
-        std::vector<std::string> passes_ = Config::getValue<std::vector<std::string>>(
-            {"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "POSTPROCESS_PASSES" });
+        std::vector<std::string> passes = Config::getValue<std::vector<std::string>>(
+            {"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" });
 
-        observation_camera_sensor_ = std::make_unique<CameraSensor>(world, camera_actor_, passes_, 
+        observation_camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_, passes, 
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}));
         ASSERT(observation_camera_sensor_);
@@ -178,13 +178,18 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
         box.dtype = DataType::Float32;
         observation_space["physical_observation"] = std::move(box);
 
-        box.low = 0;
-        box.high = 255;
-        box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-                     Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
-                     3};
-        box.dtype = DataType::UInteger8;
-        observation_space["visual_observation"] = std::move(box);
+        std::vector<std::string> passes = Config::getValue<std::vector<std::string>>(
+            {"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" });
+        for (std::string pass : passes) {
+            box.low = 0;
+            box.high = 255;
+            box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                         Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+                         3};
+            box.dtype = DataType::UInteger8;
+            observation_space["visual_observation_" + pass] = std::move(box);
+        }
+        
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
@@ -269,30 +274,20 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
 
         //get render data
         std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->GetRenderData();
-        std::map<std::string, std::vector<uint8_t>> images;
-
-        std::map<std::string, TArray<FColor>>::iterator it;
-        for (it = render_data.begin(); it != render_data.end(); it++){
+        
+        for (auto const& data: render_data) {
             std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
-                                   Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
-                                   3);
+                                       Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
+                                       3);
 
-            for (uint32 i = 0; i < static_cast<uint32>(it->second.Num()); ++i) {
-                image.at(3 * i + 0) = it->second[i].R;
-                image.at(3 * i + 1) = it->second[i].G;
-                image.at(3 * i + 2) = it->second[i].B;
+            for (uint32 i = 0; i < static_cast<uint32>(data.second.Num()); ++i) {
+                image.at(3 * i + 0) = data.second[i].R;
+                image.at(3 * i + 1) = data.second[i].G;
+                image.at(3 * i + 2) = data.second[i].B;
             }
 
-            images.insert(std::pair<std::string, std::vector<uint8_t>>(it->first, image));
+            observation["visual_observation_" + data.first] = std::move(image);
         }
-
-        //TEST PURPOUSES
-        std::map<std::string, std::vector<uint8_t>>::iterator data_pass;
-        for (data_pass = images.begin(); data_pass != images.end(); data_pass++){
-            observation["visual_observation"] = std::move(data_pass->second);
-            break;
-        }
-        //END TEST PURPOUSES
 
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         observation["physical_observation"] = Serialize::toUint8(std::vector<float>{
