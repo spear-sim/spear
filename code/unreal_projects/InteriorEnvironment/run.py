@@ -16,9 +16,6 @@ if __name__ == "__main__":
     # create Env object
     env = Env(config)
 
-    # set camera pass
-    camera_passes = config["SIMULATION_CONTROLLER"]["SPHERE_AGENT_CONTROLLER"]["MIXED_MODE"]["RENDER_PASSES"]
-
     # reset the simulation to get the first observation    
     obs = env.reset()
     print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype)
