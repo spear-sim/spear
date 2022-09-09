@@ -39,13 +39,17 @@ CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, 
         UTextureRenderTarget2D* texture_render_target = NewObject<UTextureRenderTarget2D>(actor, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), pass_name.c_str()));
         ASSERT(texture_render_target);
 
-        texture_render_target->InitCustomFormat(w, h, PF_B8G8R8A8, true ); // PF_B8G8R8A8 disables HDR;
+        //Inicialize TextureRenderTarget2D format. 
+        //You must create a new TextureRenderTarget2D each time you want to change the width and height
+        texture_render_target->InitCustomFormat(w, h, PF_B8G8R8A8, true ); // PF_B8G8R8A8 disables HDR; 
         texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
         texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
         texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
         texture_render_target->SRGB = false; // false for pixels to be stored in linear space
         texture_render_target->bAutoGenerateMips = false;
-        texture_render_target->UpdateResourceImmediate(true);    
+        texture_render_target->UpdateResourceImmediate(true);
+
+        // Set TextureRenderTarget2D it into SceneCaptureComponent2D   
         scene_capture_component->TextureTarget = texture_render_target;
         scene_capture_component->RegisterComponent();
         

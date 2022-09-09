@@ -24,7 +24,7 @@ public:
 
     std::map<std::string, TArray<FColor>> GetRenderData();
 
-    static std::vector<float> FColorToFloatImage(TArray<FColor> data);
+    static std::vector<float> FColorDepthToFloatDepth(TArray<FColor> data);
 
     std::map<std::string, CameraPass> camera_passes_;
 
