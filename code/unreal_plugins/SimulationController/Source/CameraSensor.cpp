@@ -1,17 +1,17 @@
 #include "CameraSensor.h"
 
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
-#include <map>
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Engine/TextureRenderTarget2D.h>
-#include "Kismet/KismetSystemLibrary.h"
-#include "Materials/MaterialInstanceDynamic.h"
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include "Kismet/KismetSystemLibrary.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include <UObject/UObjectGlobals.h>
 
 #include "Assert.h"

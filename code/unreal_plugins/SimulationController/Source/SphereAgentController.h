@@ -7,11 +7,10 @@
 #include "AgentController.h"
 
 class AActor;
-class CameraSensor;
+class UTickEvent;
 class UWorld;
 
-class UTickEvent;
-
+class CameraSensor;
 struct Box;
 
 class SphereAgentController : public AgentController
@@ -45,7 +44,7 @@ private:
     
     AActor* new_object_parent_actor_ = nullptr;
 
-    std::unique_ptr<CameraSensor> observation_camera_sensor_;
+    std::unique_ptr<CameraSensor> observation_camera_sensor_ = nullptr;
 
     UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
     UStaticMeshComponent* goal_static_mesh_component_ = nullptr;

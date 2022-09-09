@@ -1,10 +1,10 @@
 #include "SphereAgentController.h"
 
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include <memory>
 
 #include <Components/StaticMeshComponent.h>
 #include <Engine/World.h>
@@ -12,10 +12,10 @@
 #include <GameFramework/Actor.h>
 #include <UObject/UObjectGlobals.h>
 
-#include "CameraSensor.h"
 #include "Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "CameraSensor.h"
 #include "Serialize.h"
 #include "TickEvent.h"
 
@@ -50,7 +50,6 @@ SphereAgentController::~SphereAgentController()
         observation_camera_sensor_ = nullptr;
 
         ASSERT(camera_actor_);
-        camera_actor_->Destroy();
         camera_actor_ = nullptr;
     }
 }
@@ -103,10 +102,8 @@ void SphereAgentController::findObjectReferences(UWorld* world)
         }
         ASSERT(camera_actor_);
 
-        std::vector<std::string> passes = Config::getValue<std::vector<std::string>>(
-            {"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" });
-
-        observation_camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_, passes, 
+        observation_camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_, 
+            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }), 
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}));
         ASSERT(observation_camera_sensor_);
@@ -150,6 +147,9 @@ void SphereAgentController::cleanUpObjectReferences()
 
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
+
+    ASSERT(camera_actor_);
+    camera_actor_ = nullptr;
 }
 
 std::map<std::string, Box> SphereAgentController::getActionSpace() const

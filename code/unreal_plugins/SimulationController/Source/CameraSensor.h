@@ -7,8 +7,8 @@
 class AActor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
-class UWorld;
 class UTickEvent;
+class UWorld;
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
 
