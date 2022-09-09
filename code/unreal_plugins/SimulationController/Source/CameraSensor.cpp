@@ -10,7 +10,6 @@
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
-#include "Kismet/KismetSystemLibrary.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include <UObject/UObjectGlobals.h>
 
@@ -18,6 +17,8 @@
 #include "Config.h"
 #include "Serialize.h"
 #include "TickEvent.h"
+
+const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
 
 CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, unsigned long w, unsigned long h)
 {
@@ -34,13 +35,11 @@ CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, 
         scene_capture_component->FOVAngle = 60.f;
         scene_capture_component->bAlwaysPersistRenderingState = true;
 
-        UKismetSystemLibrary::ExecuteConsoleCommand(actor->GetWorld(), FString("g.TimeoutForBlockOnRenderFence 300000"));
-
         // create TextureRenderTarget2D
         UTextureRenderTarget2D* texture_render_target = NewObject<UTextureRenderTarget2D>(actor, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), pass_name.c_str()));
         ASSERT(texture_render_target);
 
-        texture_render_target->InitCustomFormat(w ,h ,PF_B8G8R8A8 ,true ); // PF_B8G8R8A8 disables HDR;
+        texture_render_target->InitCustomFormat(w, h, PF_B8G8R8A8, true ); // PF_B8G8R8A8 disables HDR;
         texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
         texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
         texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
@@ -54,16 +53,15 @@ CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, 
         SetCameraParameters(scene_capture_component);
 
         if (pass_name != "final_color") {
-            SetPostProcessParameters(scene_capture_component);
+            SetCameraParametersNonFinalColor(scene_capture_component);
 
             // Load PostProcessMaterial
-            FString path_ = (MATERIALS_PATH + pass_name + "." + pass_name).c_str();
-            UMaterial* mat = LoadObject<UMaterial>(nullptr, *path_);
+            FString path = (MATERIALS_PATH + pass_name + "." + pass_name).c_str();
+            UMaterial* mat = LoadObject<UMaterial>(nullptr, *path);
             ASSERT(mat);
 
             // Set PostProcessMaterial
-            scene_capture_component->PostProcessSettings.AddBlendable(
-                    UMaterialInstanceDynamic::Create(mat, scene_capture_component), 1.0f);
+            scene_capture_component->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, scene_capture_component), 1.0f);
         }
 
         CameraPass pass;
@@ -72,7 +70,7 @@ CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, 
         pass.scene_capture_component_ = scene_capture_component;
         pass.texture_render_target_ = texture_render_target;
 
-        //Insert into map
+        // Insert into map
         camera_passes_[pass_name] = std::move(pass);
 
     }
@@ -132,7 +130,7 @@ std::map<std::string, TArray<FColor>> CameraSensor::GetRenderData()
 
 //depth codification
 //decode formula : depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
-std::vector<float> CameraSensor::FColorToFloatImage(TArray<FColor> data)
+std::vector<float> CameraSensor::FColorDepthToFloatDepth(TArray<FColor> data)
 {
     std::vector<float> out;
     for (uint32 i = 0; i < static_cast<uint32>(data.Num()); ++i) {
@@ -370,7 +368,7 @@ void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_c
     //scene_capture_component->ShowFlags.SetWireframe(false);
 }
 
-void CameraSensor::SetPostProcessParameters(USceneCaptureComponent2D* scene_capture_component)
+void CameraSensor::SetCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component)
 {
     scene_capture_component->ShowFlags.EnableAdvancedFeatures();
     scene_capture_component->ShowFlags.SetMotionBlur(true);

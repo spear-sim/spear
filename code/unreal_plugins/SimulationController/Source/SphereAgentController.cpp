@@ -134,6 +134,9 @@ void SphereAgentController::cleanUpObjectReferences()
 
         ASSERT(observation_camera_sensor_);
         observation_camera_sensor_ = nullptr;
+
+        ASSERT(camera_actor_);
+        camera_actor_ = nullptr;
     }
     
     ASSERT(goal_static_mesh_component_);
@@ -147,9 +150,6 @@ void SphereAgentController::cleanUpObjectReferences()
 
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
-
-    ASSERT(camera_actor_);
-    camera_actor_ = nullptr;
 }
 
 std::map<std::string, Box> SphereAgentController::getActionSpace() const

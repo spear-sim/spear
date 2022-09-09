@@ -1,16 +1,14 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 class AActor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UTickEvent;
 class UWorld;
-
-const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
 
 struct CameraPass
 {
@@ -32,5 +30,5 @@ public:
 
 private:
     void SetCameraParameters(USceneCaptureComponent2D* scene_capture_component);
-    void SetPostProcessParameters(USceneCaptureComponent2D* scene_capture_component);
+    void SetCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component);
 };
