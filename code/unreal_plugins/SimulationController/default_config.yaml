@@ -107,7 +107,7 @@ SIMULATION_CONTROLLER:
       YAW_SCALE: 1.0
       OFFSET_TO_GOAL_SCALE: 1.0
       LINEAR_VELOCITY_SCALE: 1.0
-      RENDER_PASSES: ["final_color"]
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
     PHYSICAL_MODE:
       ACTION_APPLY_FORCE_SCALE: 1.0
       OFFSET_TO_GOAL_SCALE: 1.0

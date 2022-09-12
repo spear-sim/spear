@@ -39,9 +39,8 @@ public:
 private:
 
     AActor* agent_actor_ = nullptr;
-    AActor* goal_actor_ = nullptr;
     AActor* camera_actor_ = nullptr;
-    
+    AActor* goal_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
 
     std::unique_ptr<CameraSensor> observation_camera_sensor_ = nullptr;
