@@ -20,11 +20,11 @@
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
 
-CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, unsigned long w, unsigned long h)
+CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, unsigned long width, unsigned long height)
 {
     ASSERT(actor);
 
-    for (std::string pass_name : pass_names) {
+    for (const auto& pass_name : pass_names) {
         // create SceneCaptureComponent2D
         USceneCaptureComponent2D* scene_capture_component = NewObject<USceneCaptureComponent2D>(actor, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), pass_name.c_str()));
         ASSERT(scene_capture_component);
@@ -39,9 +39,9 @@ CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, 
         UTextureRenderTarget2D* texture_render_target = NewObject<UTextureRenderTarget2D>(actor, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), pass_name.c_str()));
         ASSERT(texture_render_target);
 
-        //Inicialize TextureRenderTarget2D format. 
-        //You must create a new TextureRenderTarget2D each time you want to change the width and height
-        texture_render_target->InitCustomFormat(w, h, PF_B8G8R8A8, true ); // PF_B8G8R8A8 disables HDR; 
+        // Inicialize TextureRenderTarget2D format. 
+        // Changing the dimensions of a TextureRenderTarget2D after they have been set initially can lead to unexpected behavior. So we only set the dimensions once at object creation time, and we require width and height be passed into the CameraSensor constructor.
+        texture_render_target->InitCustomFormat(width, height, PF_B8G8R8A8, true ); // PF_B8G8R8A8 disables HDR; 
         texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
         texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
         texture_render_target->TargetGamma = GEngine->GetDisplayGamma();

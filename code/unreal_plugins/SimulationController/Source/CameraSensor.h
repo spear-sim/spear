@@ -19,7 +19,7 @@ struct CameraPass
 class CameraSensor
 {
 public:
-    CameraSensor(AActor* actor, std::vector<std::string> passes, unsigned long w, unsigned long h);
+    CameraSensor(AActor* actor, std::vector<std::string> passes, unsigned long width, unsigned long height);
     ~CameraSensor();
 
     std::map<std::string, TArray<FColor>> GetRenderData();
