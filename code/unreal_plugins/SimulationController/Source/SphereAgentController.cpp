@@ -180,7 +180,7 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
 
         std::vector<std::string> passes = Config::getValue<std::vector<std::string>>(
             {"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" });
-        for (std::string pass : passes) {
+        for (const auto& pass : passes) {
             box.low = 0;
             box.high = 255;
             box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
@@ -272,7 +272,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
 
         ASSERT(IsInGameThread());
 
-        //get render data
+        // get render data
         std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->GetRenderData();
         
         for (auto const& data: render_data) {

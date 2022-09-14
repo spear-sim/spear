@@ -99,7 +99,7 @@ std::map<std::string, TArray<FColor>> CameraSensor::GetRenderData()
 {
     std::map<std::string, TArray<FColor>> data;
 
-    //Get data from all passes
+    // Get data from all passes
     for (auto const& pass: camera_passes_) {
         FTextureRenderTargetResource* target_resource = pass.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
         ASSERT(target_resource);
@@ -132,8 +132,8 @@ std::map<std::string, TArray<FColor>> CameraSensor::GetRenderData()
     return data;
 }
 
-//depth codification
-//decode formula : depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
+// depth codification
+// decode formula : depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
 std::vector<float> CameraSensor::FColorDepthToFloatDepth(TArray<FColor> data)
 {
     std::vector<float> out;
@@ -148,7 +148,7 @@ std::vector<float> CameraSensor::FColorDepthToFloatDepth(TArray<FColor> data)
 
 void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_component)
 {
-    //SET OVERRIDES
+    // SET OVERRIDES
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureMethod = true;
     scene_capture_component->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureBias = true;
