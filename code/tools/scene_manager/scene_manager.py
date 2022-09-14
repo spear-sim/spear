@@ -510,6 +510,8 @@ def get_version_process_mode(version):
         return "raw"
     elif version in ['v4']:
         return "pak"
+    elif version in ['v5']:
+        return "pak"
     else:
         return "unknown"
 
