@@ -45,12 +45,6 @@ SphereAgentController::~SphereAgentController()
         ASSERT(new_object_parent_actor_);
         new_object_parent_actor_->Destroy();
         new_object_parent_actor_ = nullptr;
-
-        ASSERT(observation_camera_sensor_);
-        observation_camera_sensor_ = nullptr;
-
-        ASSERT(camera_actor_);
-        camera_actor_ = nullptr;
     }
 }
 
@@ -107,31 +101,12 @@ void SphereAgentController::findObjectReferences(UWorld* world)
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}));
         ASSERT(observation_camera_sensor_);
-
-        new_object_parent_actor_ = world->SpawnActor<AActor>();
-        ASSERT(new_object_parent_actor_);
-
-        post_physics_pre_render_tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
-        ASSERT(post_physics_pre_render_tick_event_);
-        post_physics_pre_render_tick_event_->RegisterComponent();
-        post_physics_pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
-        post_physics_pre_render_tick_event_handle_ = post_physics_pre_render_tick_event_->delegate_.AddRaw(this, &SphereAgentController::postPhysicsPreRenderTickEventHandler);
     }
 }
 
 void SphereAgentController::cleanUpObjectReferences()
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        ASSERT(post_physics_pre_render_tick_event_);
-        post_physics_pre_render_tick_event_->delegate_.Remove(post_physics_pre_render_tick_event_handle_);
-        post_physics_pre_render_tick_event_handle_.Reset();
-        post_physics_pre_render_tick_event_->DestroyComponent();
-        post_physics_pre_render_tick_event_ = nullptr;
-        
-        ASSERT(new_object_parent_actor_);
-        new_object_parent_actor_->Destroy();
-        new_object_parent_actor_ = nullptr;
-
         ASSERT(observation_camera_sensor_);
         observation_camera_sensor_ = nullptr;
 
@@ -275,7 +250,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
         // get render data
         std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->GetRenderData();
         
-        for (auto const& data: render_data) {
+        for (const auto& data: render_data) {
             std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
                                        Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
                                        3);

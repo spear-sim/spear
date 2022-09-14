@@ -10,7 +10,7 @@
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
-#include "Materials/MaterialInstanceDynamic.h"
+#include <Materials/MaterialInstanceDynamic.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "Assert.h"
@@ -20,7 +20,7 @@
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
 
-CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, unsigned long width, unsigned long height)
+CameraSensor::CameraSensor(AActor* actor, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
 {
     ASSERT(actor);
 
@@ -31,33 +31,16 @@ CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, 
 
         scene_capture_component->AttachToComponent(actor->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         scene_capture_component->SetVisibility(true);
-        scene_capture_component->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-        scene_capture_component->FOVAngle = 60.f;
-        scene_capture_component->bAlwaysPersistRenderingState = true;
 
         // create TextureRenderTarget2D
         UTextureRenderTarget2D* texture_render_target = NewObject<UTextureRenderTarget2D>(actor, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), pass_name.c_str()));
         ASSERT(texture_render_target);
-
-        // Inicialize TextureRenderTarget2D format. 
-        // Changing the dimensions of a TextureRenderTarget2D after they have been set initially can lead to unexpected behavior. So we only set the dimensions once at object creation time, and we require width and height be passed into the CameraSensor constructor.
-        texture_render_target->InitCustomFormat(width, height, PF_B8G8R8A8, true ); // PF_B8G8R8A8 disables HDR; 
-        texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-        texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
-        texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
-        texture_render_target->SRGB = false; // false for pixels to be stored in linear space
-        texture_render_target->bAutoGenerateMips = false;
-        texture_render_target->UpdateResourceImmediate(true);
-
-        // Set TextureRenderTarget2D it into SceneCaptureComponent2D   
-        scene_capture_component->TextureTarget = texture_render_target;
-        scene_capture_component->RegisterComponent();
         
         // Set Camera Parameters
-        SetCameraParameters(scene_capture_component);
+        SetCameraParameters(scene_capture_component, texture_render_target, width, height);
 
         if (pass_name != "final_color") {
-            SetCameraParametersNonFinalColor(scene_capture_component);
+            SetCameraParametersNonFinalColor(scene_capture_component, texture_render_target, width, height);
 
             // Load PostProcessMaterial
             FString path = (MATERIALS_PATH + pass_name + "." + pass_name).c_str();
@@ -100,7 +83,7 @@ std::map<std::string, TArray<FColor>> CameraSensor::GetRenderData()
     std::map<std::string, TArray<FColor>> data;
 
     // Get data from all passes
-    for (auto const& pass: camera_passes_) {
+    for (const auto& pass: camera_passes_) {
         FTextureRenderTargetResource* target_resource = pass.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
         ASSERT(target_resource);
         TArray<FColor> pixels;
@@ -146,8 +129,28 @@ std::vector<float> CameraSensor::FColorDepthToFloatDepth(TArray<FColor> data)
     return out;
 }
 
-void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_component)
+void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height)
 {
+    // SET BASIC PARAMETERS
+    scene_capture_component->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+    scene_capture_component->FOVAngle = 60.f;
+    scene_capture_component->bAlwaysPersistRenderingState = true;
+
+    // Initialize TextureRenderTarget2D format. 
+    // Changing the dimensions of a TextureRenderTarget2D after they have been set initially can lead to unexpected behavior. 
+    // So we only set the dimensions once at object creation time, and we require width and height be passed into the CameraSensor constructor.
+    texture_render_target->InitCustomFormat(width, height, PF_B8G8R8A8, true ); // PF_B8G8R8A8 disables HDR; 
+    texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+    texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
+    texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
+    texture_render_target->SRGB = false; // false for pixels to be stored in linear space
+    texture_render_target->bAutoGenerateMips = false;
+    texture_render_target->UpdateResourceImmediate(true);
+
+    // Set TextureRenderTarget2D it into SceneCaptureComponent2D   
+    scene_capture_component->TextureTarget = texture_render_target;
+    scene_capture_component->RegisterComponent();
+
     // SET OVERRIDES
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureMethod = true;
     scene_capture_component->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
@@ -372,7 +375,7 @@ void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_c
     //scene_capture_component->ShowFlags.SetWireframe(false);
 }
 
-void CameraSensor::SetCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component)
+void CameraSensor::SetCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height)
 {
     scene_capture_component->ShowFlags.EnableAdvancedFeatures();
     scene_capture_component->ShowFlags.SetMotionBlur(true);

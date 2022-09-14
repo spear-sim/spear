@@ -29,6 +29,6 @@ public:
     std::map<std::string, CameraPass> camera_passes_;
 
 private:
-    void SetCameraParameters(USceneCaptureComponent2D* scene_capture_component);
-    void SetCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component);
+    void SetCameraParameters(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height);
+    void SetCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height);
 };
