@@ -82,7 +82,7 @@ CameraSensor::CameraSensor(AActor* actor , std::vector<std::string> pass_names, 
 
 CameraSensor::~CameraSensor()
 {
-    for (auto&& pass: camera_passes_) {
+    for (auto& pass: camera_passes_) {
         ASSERT(pass.second.scene_capture_component_);
         pass.second.texture_render_target_->MarkPendingKill();
         pass.second.texture_render_target_ = nullptr;
