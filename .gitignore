@@ -1,6 +1,25 @@
 __pycache__
 .ipynb_checkpoints
 
+code/experimental/rl_openbot/imitation_learning/dataset
+code/experimental/rl_openbot/imitation_learning/Temp
+code/experimental/rl_openbot/imitation_learning/videos
+code/experimental/rl_openbot/imitation_learning/models
+code/experimental/rl_openbot/imitation_learning/user_config.yaml
+
+code/experimental/wheeled_vehicle/WheeledVehicle/Binaries
+code/experimental/wheeled_vehicle/WheeledVehicle/Build
+code/experimental/wheeled_vehicle/WheeledVehicle/DerivedDataCache
+code/experimental/wheeled_vehicle/WheeledVehicle/Intermediate
+code/experimental/wheeled_vehicle/WheeledVehicle/Plugins
+code/experimental/wheeled_vehicle/WheeledVehicle/Saved
+code/experimental/wheeled_vehicle/WheeledVehicle/Standalone-Development
+code/experimental/wheeled_vehicle/WheeledVehicle/Standalone-Shipping
+code/experimental/wheeled_vehicle/WheeledVehicle/Temp
+code/experimental/wheeled_vehicle/WheeledVehicle/user_config.yaml
+code/experimental/wheeled_vehicle/WheeledVehicle/.vscode
+code/experimental/wheeled_vehicle/WheeledVehicle/WheeledVehicle.xcworkspace
+
 code/experiments/debug_synchronization_model/DebugProject/Binaries
 code/experiments/debug_synchronization_model/DebugProject/Build
 code/experiments/debug_synchronization_model/DebugProject/DerivedDataCache
@@ -12,6 +31,19 @@ code/experiments/debug_synchronization_model/DebugProject/Temp
 code/experiments/debug_synchronization_model/DebugProject/user_config.yaml
 code/experiments/debug_synchronization_model/DebugProject/.vscode
 
+code/experiments/navmeshdebugproject/Binaries
+code/experiments/navmeshdebugproject/Build
+code/experiments/navmeshdebugproject/DerivedDataCache
+code/experiments/navmeshdebugproject/Intermediate
+code/experiments/navmeshdebugproject/Plugins
+code/experiments/navmeshdebugproject/Saved
+code/experiments/navmeshdebugproject/Standalone-Development
+code/experiments/navmeshdebugproject/Standalone-Shipping
+code/experiments/navmeshdebugproject/Temp
+code/experiments/navmeshdebugproject/user_config.yaml
+code/experiments/navmeshdebugproject/.vscode
+code/experiments/navmeshdebugproject/NavMeshDebugProject.xcworkspace
+
 code/experiments/teleport_mode/user_config.yaml
 
 code/experiments/rl_openbot/imitation_learning/dataset
@@ -21,6 +53,10 @@ code/experiments/rl_openbot/imitation_learning/Temp
 code/python_module/interiorsim.egg-info
 
 code/tools/scene_manager/download_data
+
+code/unreal_plugins/Agents/Binaries
+code/unreal_plugins/Agents/Intermediate
+code/unreal_plugins/Agents/ThirdParty
 
 code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
@@ -34,9 +70,17 @@ code/unreal_plugins/RobotSim/Binaries
 code/unreal_plugins/RobotSim/Intermediate
 code/unreal_plugins/RobotSim/ThirdParty
 
+code/unreal_plugins/SceneManager/Binaries
+code/unreal_plugins/SceneManager/Intermediate
+code/unreal_plugins/SceneManager/ThirdParty
+
 code/unreal_plugins/SimulationController/Binaries
 code/unreal_plugins/SimulationController/Intermediate
 code/unreal_plugins/SimulationController/ThirdParty
+
+code/unreal_plugins/VirtualWorldManager/Binaries
+code/unreal_plugins/VirtualWorldManager/Intermediate
+code/unreal_plugins/VirtualWorldManager/ThirdParty
 
 code/unreal_projects/InteriorEnvironment/Binaries
 code/unreal_projects/InteriorEnvironment/Build
