@@ -113,7 +113,7 @@ AUrdfBotPawn::AUrdfBotPawn()
 
         this->staticMeshGenerator_.Initialize(this->baseBoxMesh_, this->baseCylinderMesh_, this->baseSphereMesh_, this->user_static_meshes_);
     }
-    catch (std::exception e)
+    catch (...)
     {
         int j = 0;
     }
