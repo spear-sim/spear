@@ -31,18 +31,18 @@ code/experiments/debug_synchronization_model/DebugProject/Temp
 code/experiments/debug_synchronization_model/DebugProject/user_config.yaml
 code/experiments/debug_synchronization_model/DebugProject/.vscode
 
-code/experiments/navmeshdebugproject/Binaries
-code/experiments/navmeshdebugproject/Build
-code/experiments/navmeshdebugproject/DerivedDataCache
-code/experiments/navmeshdebugproject/Intermediate
-code/experiments/navmeshdebugproject/Plugins
-code/experiments/navmeshdebugproject/Saved
-code/experiments/navmeshdebugproject/Standalone-Development
-code/experiments/navmeshdebugproject/Standalone-Shipping
-code/experiments/navmeshdebugproject/Temp
-code/experiments/navmeshdebugproject/user_config.yaml
-code/experiments/navmeshdebugproject/.vscode
-code/experiments/navmeshdebugproject/NavMeshDebugProject.xcworkspace
+code/experiments/NavMeshDebugProject/Binaries
+code/experiments/NavMeshDebugProject/Build
+code/experiments/NavMeshDebugProject/DerivedDataCache
+code/experiments/NavMeshDebugProject/Intermediate
+code/experiments/NavMeshDebugProject/Plugins
+code/experiments/NavMeshDebugProject/Saved
+code/experiments/NavMeshDebugProject/Standalone-Development
+code/experiments/NavMeshDebugProject/Standalone-Shipping
+code/experiments/NavMeshDebugProject/Temp
+code/experiments/NavMeshDebugProject/user_config.yaml
+code/experiments/NavMeshDebugProject/.vscode
+code/experiments/NavMeshDebugProject/NavMeshDebugProject.xcworkspace
 
 code/experiments/teleport_mode/user_config.yaml
 
