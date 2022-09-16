@@ -1,4 +1,5 @@
 __pycache__
+.DS_Store
 .ipynb_checkpoints
 
 code/experimental/nav_mesh_debug_project/NavMeshDebugProject/Binaries
@@ -24,12 +25,6 @@ code/experimental/debug_synchronization_model/DebugProject/Standalone-Shipping
 code/experimental/debug_synchronization_model/DebugProject/Temp
 code/experimental/debug_synchronization_model/DebugProject/user_config.yaml
 code/experimental/debug_synchronization_model/DebugProject/.vscode
-
-code/experimental/rl_openbot/imitation_learning/dataset
-code/experimental/rl_openbot/imitation_learning/Temp
-code/experimental/rl_openbot/imitation_learning/videos
-code/experimental/rl_openbot/imitation_learning/models
-code/experimental/rl_openbot/imitation_learning/user_config.yaml
 
 code/experimental/teleport_mode/user_config.yaml
 
