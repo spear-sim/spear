@@ -38,9 +38,6 @@ public:
     //testing
     void TweakLights();
 
-    int current_frame_ = -1;
-    bool render_frame_ = false;
-
 private:
 
     void rebuildNavSystem();

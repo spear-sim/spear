@@ -73,6 +73,30 @@ class Env(gym.Env):
 
         return obs, reward, is_done, step_info
 
+    def customSetActionTick(self, action):
+        
+        self._begin_tick()
+        self._apply_action(action)
+        self._tick()
+        self._end_tick()
+
+    def customEmptyTick(self):
+        self._begin_tick()
+        self._tick()
+        self._end_tick()
+
+    def customGetObservationTick(self):
+        self._begin_tick()
+        self._tick()
+        obs = self._get_observation()
+        reward = self._get_reward()
+        is_done = self._is_episode_done()
+        step_info = self._get_step_info()
+        self._end_tick()
+
+        return obs, reward, is_done, step_info
+
+
     def reset(self):
 
         ready = False
@@ -271,7 +295,7 @@ class Env(gym.Env):
 
         if not connected:
             if self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
-                print("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
+                print("ERROR: Couldn't connect, killing process. " + str(self._process.pid) + "...")
                 self._force_kill_unreal_instance()
                 self._close_client_server_connection()
             assert False

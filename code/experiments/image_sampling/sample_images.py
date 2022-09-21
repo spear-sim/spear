@@ -56,11 +56,11 @@ if __name__ == "__main__":
                     "|  |  |-- x.png\n"
                     
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("--scenes_path", type=str, default="D:/paks", help="input path to where all .pak files are stored.")
+    parser.add_argument("--scenes_path", type=str, default="D:/paks_4k", help="input path to where all .pak files are stored.")
     parser.add_argument("--executable_dir", type=str, default="C:/Users/ADAS/repos/interiorsim/code/unreal_projects/RobotProject/Standalone-Development", help="this should point to the directory that contains the UE executable. Eg. <path_to_executable_dir>/WinNoEditor/RobotProject.exe can be your path to executable, so your input should be just the outer dir path.")
     #parser.add_argument("--output_dir", "-o", type=str, required=True)
     parser.add_argument("--output_dir", "-o", type=str, default="C:/Users/ADAS/repos/interiorsim/code/experiments/image_sampling/results", help="this path need to points at the output location")
-    parser.add_argument("-num_images", type=int, default=28400)
+    parser.add_argument("-num_images", type=int, default=100)
     parser.add_argument("--num_images_per_frame", "-ipf", type=int, default=6)
     args = parser.parse_args()
 
@@ -140,27 +140,27 @@ if __name__ == "__main__":
 
         # for NUM_IMAGES_PER_SCENE capture images and pose data
         for i in range(0, NUM_IMAGES_PER_SCENE):
-            for j in range(0, NUM_IMAGES_PER_FRAME):
-                obs, _, _, _ = env.step({"set_random_orientation_pyr_deg":  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
-                                                              rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.YAW_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.YAW_HIGH_DEG),
-                                                              rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_HIGH_DEG)],
-                                         "set_random_agent_height_cms"   :  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_LOW_CMS, high=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_HIGH_CMS)],
-                                         "current_frame"                 :  [i],
-                                         "render_frame"                  :  [1 if j == (NUM_IMAGES_PER_FRAME - 1) else 0]})
+            env.customSetActionTick({"set_random_orientation_pyr_deg":  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
+                                                                         rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.YAW_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.YAW_HIGH_DEG),
+                                                                         rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_HIGH_DEG)],
+                                     "set_random_agent_height_cms"   :  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_LOW_CMS, high=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_HIGH_CMS)]})
 
+            for j in range(0, NUM_IMAGES_PER_FRAME - 2):
+                env.customEmptyTick()
                 # cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
                 # cv2.waitKey(0)
             
                 # write data
-                if j == (NUM_IMAGES_PER_FRAME - 1) :
-                    output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
 
-                    assert os.path.exists(output_path) == True
-                    return_status = cv2.imwrite(output_path +f"/{i}_{j}.png", obs["visual_observation"][:,:,[2,1,0]])
-                    assert return_status == True
+            obs, _, _, _ = env.customGetObservationTick()
+            output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
 
-                    pose_csv_writer.writerow([obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])        
-        
+            assert os.path.exists(output_path) == True
+            return_status = cv2.imwrite(output_path +f"/{i}_{j}.png", obs["visual_observation"][:,:,[2,1,0]])
+            assert return_status == True
+
+            pose_csv_writer.writerow([obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
+
         # close the current environment after collecting required number of images
         env.close()
         time.sleep(10)
