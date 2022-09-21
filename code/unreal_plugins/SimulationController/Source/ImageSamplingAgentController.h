@@ -35,6 +35,12 @@ public:
     void reset() override;
     bool isReady() const override;
 
+    //testing
+    void TweakLights();
+
+    int current_frame_ = -1;
+    bool render_frame_ = false;
+
 private:
 
     void rebuildNavSystem();
@@ -46,6 +52,7 @@ private:
     ANavMeshBoundsVolume* dummy_navmesh_bound_volume_ = nullptr;
 
     CameraSensor* rgb_camera_sensor_ = nullptr;
+    
     //AActor* camera_actor_ = nullptr;
     //AActor* virtual_world_level_manager_ = nullptr;
 

@@ -22,6 +22,11 @@
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <UObject/UObjectGlobals.h>
 
+#include <Engine/DirectionalLight.h>
+#include <Engine/PointLight.h>
+#include <Engine/RectLight.h>
+#include <Engine/SpotLight.h>
+
 #include <common_utils/NavMeshUtil.hpp>
 
 //#include <VWLevelManager.h>
@@ -64,6 +69,8 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
     rgb_camera_sensor_->SetRenderTarget(
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
+
+    //TweakLights();
 
     /*
     camera_actor_ = world->SpawnActor<ACameraActor>(spawn_location, FRotator(0,0,0), spawn_params);
@@ -204,26 +211,42 @@ void ImageSamplingAgentController::applyAction(const std::map<std::string, std::
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "sample_images") {
         ASSERT(action.count("set_random_orientation_pyr_deg"));
         ASSERT(action.count("set_random_agent_height_cms"));
+        ASSERT(action.count("current_frame"));
+        ASSERT(action.count("render_frame"));
 
         ASSERT(std::all_of(action.at("set_random_orientation_pyr_deg").begin(), action.at("set_random_orientation_pyr_deg").end(), [](float i) -> bool {return isfinite(i);}));
         ASSERT(std::all_of(action.at("set_random_agent_height_cms").begin(), action.at("set_random_agent_height_cms").end(), [](float i) -> bool {return isfinite(i);}));
+        ASSERT(std::all_of(action.at("current_frame").begin(), action.at("current_frame").end(), [](float i) -> bool {return isfinite(i); }));
+        ASSERT(std::all_of(action.at("render_frame").begin(), action.at("render_frame").end(), [](float i) -> bool {return isfinite(i); }));
 
-        const FRotator random_orientation {action.at("set_random_orientation_pyr_deg").at(0), action.at("set_random_orientation_pyr_deg").at(1), action.at("set_random_orientation_pyr_deg").at(2)};
+        if (current_frame_ != action.at("current_frame").at(0)) {
+            current_frame_ = action.at("current_frame").at(0);
 
-        // sample directly from navmesh
-        FVector random_position = nav_mesh_->GetRandomPoint().Location;
+            const FRotator random_orientation{ action.at("set_random_orientation_pyr_deg").at(0), action.at("set_random_orientation_pyr_deg").at(1), action.at("set_random_orientation_pyr_deg").at(2) };
 
-        // FVector random_position = FVector(0);
-        // int count = 0;
-        // while(random_position.Size() <= 0 and count < 20) {
-            // RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, random_position, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
-            // count++;
-        // }
-        random_position.Z = action.at("set_random_agent_height_cms").at(0);
+            // sample directly from navmesh
+            FVector random_position = nav_mesh_->GetRandomPoint().Location;
 
-        constexpr bool sweep = false;
-        constexpr FHitResult* hit_result_info = nullptr;
-        rgb_camera_sensor_->camera_actor_->SetActorLocationAndRotation(random_position, random_orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
+            // FVector random_position = FVector(0);
+            // int count = 0;
+            // while(random_position.Size() <= 0 and count < 20) {
+                // RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, random_position, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
+                // count++;
+            // }
+            random_position.Z = action.at("set_random_agent_height_cms").at(0);
+
+            constexpr bool sweep = false;
+            constexpr FHitResult* hit_result_info = nullptr;
+            rgb_camera_sensor_->camera_actor_->SetActorLocationAndRotation(random_position, random_orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
+        }
+
+        if (action.at("render_frame").at(0) == 1) {
+            render_frame_ = true;
+        }
+        else {
+            render_frame_ = false;
+        }
+        
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "replay_sampled_images") {
         ASSERT(action.count("set_position_xyz_centimeters"));
         ASSERT(action.count("set_orientation_pyr_degrees"));
@@ -265,53 +288,94 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
 
     ASSERT(IsInGameThread());
 
-    FTextureRenderTargetResource* target_resource = rgb_camera_sensor_->scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
-    ASSERT(target_resource);
+    if (render_frame_) {
+        FTextureRenderTargetResource* target_resource = rgb_camera_sensor_->scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+        ASSERT(target_resource);
 
-    TArray<FColor> pixels;
+        TArray<FColor> pixels;
 
-    struct FReadSurfaceContext
-    {
-        FRenderTarget* src_render_target_;
-        TArray<FColor>& out_data_;
-        FIntRect rect_;
-        FReadSurfaceDataFlags flags_;
-    };
+        struct FReadSurfaceContext
+        {
+            FRenderTarget* src_render_target_;
+            TArray<FColor>& out_data_;
+            FIntRect rect_;
+            FReadSurfaceDataFlags flags_;
+        };
 
-    FReadSurfaceContext context = {target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
+        FReadSurfaceContext context = { target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX) };
 
-    // Required for uint8 read mode
-    context.flags_.SetLinearToGamma(false);
+        // Required for uint8 read mode
+        context.flags_.SetLinearToGamma(false);
 
-    ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([context](FRHICommandListImmediate& RHICmdList) {
-        RHICmdList.ReadSurfaceData(context.src_render_target_->GetRenderTargetTexture(), context.rect_, context.out_data_, context.flags_);
-    });
+        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([context](FRHICommandListImmediate& RHICmdList) {
+            RHICmdList.ReadSurfaceData(context.src_render_target_->GetRenderTargetTexture(), context.rect_, context.out_data_, context.flags_);
+            });
 
-    FRenderCommandFence ReadPixelFence;
-    ReadPixelFence.BeginFence(true);
-    ReadPixelFence.Wait(true);
+        FRenderCommandFence ReadPixelFence;
+        ReadPixelFence.BeginFence(true);
+        ReadPixelFence.Wait(true);
 
-    std::vector<uint8_t> image(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT"}) *
-                                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH"}) *
-                                3);
+        std::vector<uint8_t> image(Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT" }) *
+            Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH" }) *
+            3);
 
-    for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
-        image.at(3 * i + 0) = pixels[i].R;
-        image.at(3 * i + 1) = pixels[i].G;
-        image.at(3 * i + 2) = pixels[i].B;
+        for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
+            image.at(3 * i + 0) = pixels[i].R;
+            image.at(3 * i + 1) = pixels[i].G;
+            image.at(3 * i + 2) = pixels[i].B;
+        }
+
+        observation["visual_observation"] = std::move(image);
     }
-    
-    observation["visual_observation"] = std::move(image);
+    else {
+        std::vector<uint8_t> image(Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT" }) *
+            Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH" }) *
+            3);
+        observation["visual_observation"] = std::move(image);
+    }
     
     return observation;
 }
 
 void ImageSamplingAgentController::reset()
-{}
+{
+}
 
 bool ImageSamplingAgentController::isReady() const
 {
     return true;
+}
+
+void ImageSamplingAgentController::TweakLights()
+{
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), FoundActors);
+
+    for (int i = 0; i < FoundActors.Num(); i++) {
+        ASpotLight* sl = Cast<ASpotLight>(FoundActors[i]);
+        APointLight* pl = Cast<APointLight>(FoundActors[i]);
+        ARectLight* rl = Cast<ARectLight>(FoundActors[i]);
+        //ADirectionalLight* dl = Cast<ADirectionalLight>(FoundActors[i]);
+        if (rl != nullptr) {
+            rl->SetMobility(EComponentMobility::Movable);
+            if (rl->GetBrightness() <= 8.0) {
+                rl->SetBrightness(rl->GetBrightness() * 2);
+            }
+        }
+        if (pl != nullptr) {
+            pl->SetMobility(EComponentMobility::Movable);
+            if (pl->GetBrightness() <= 8.0) {
+                pl->SetBrightness(pl->GetBrightness() * 2);
+            }
+        }
+        if (sl != nullptr) {
+            sl->SetEnabled(false);
+        }
+        /*ALight* l = Cast<ALight>(FoundActors[i]);
+        if (l != nullptr) {
+            l->SetMobility(EComponentMobility::Movable);
+        }*/
+    }
 }
 
 void ImageSamplingAgentController::rebuildNavSystem()
