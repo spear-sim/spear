@@ -20,6 +20,7 @@
 #include <GameFramework/Actor.h>
 #include "Kismet/GameplayStatics.h"
 #include <NavMesh/NavMeshBoundsVolume.h>
+#include <NavModifierVolume.h>
 #include <UObject/UObjectGlobals.h>
 
 #include <Engine/DirectionalLight.h>
@@ -400,6 +401,12 @@ void ImageSamplingAgentController::rebuildNavSystem()
     }
     ASSERT(nav_mesh_bounds);
 
+    ANavModifierVolume* nav_modifier_volume = nullptr;
+    for (TActorIterator<ANavModifierVolume> it(world_); it; ++it) {
+        nav_modifier_volume = *it;
+    }
+    check(nav_modifier_volume);
+ 
     // Set the NavMesh properties:
     nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "CELL_SIZE"});
     nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "CELL_HEIGHT"});
@@ -412,30 +419,35 @@ void ImageSamplingAgentController::rebuildNavSystem()
     nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
     // Dynamic update navMesh location and size
 
-    nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     FBox worldBox = getWorldBoundingBox(true);
-    // std::cout << "worldbox center (X,Y,Z) : (" << worldBox.GetCenter().X << worldBox.GetCenter().Y << worldBox.GetCenter().Z << ")" << std::endl;
-    // UE_LOG(LogTemp, Warning, TEXT("worldbox center (X,Y,Z) : (%f, %f, %f)"), worldBox.GetCenter().X, worldBox.GetCenter().Y, worldBox.GetCenter().Z);
-    nav_mesh_bounds->SetActorLocation(worldBox.GetCenter(), false);          // Place the navmesh at the center of the map
-    nav_mesh_bounds->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);   // Rescale the navmesh
+
+    nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    nav_mesh_bounds->SetActorLocation(worldBox.GetCenter(), false);      
+    nav_mesh_bounds->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);
     nav_mesh_bounds->GetRootComponent()->UpdateBounds();
     nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds);        
     nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
+
+    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    nav_modifier_volume->SetActorLocation(worldBox.GetCenter(), false);
+    nav_modifier_volume->SetActorRelativeScale3D(worldBox.GetSize() / 200.f);
+    nav_modifier_volume->AddActorWorldOffset(FVector(0, 0, 10.f));
+    nav_modifier_volume->GetRootComponent()->UpdateBounds();
+    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    nav_modifier_volume->RebuildNavigationData();
+
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
 
-    /*
-    // spawn dummy navmesh volume bounds; UE bug
-    FActorSpawnParameters spawn_params;
-    spawn_params.Name = FName("DummyNavMeshBoundsVolume");
-    spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    FVector spawn_location = FVector(0.f, 0.f, nav_mesh_bounds->GetComponentsBoundingBox(false, true).Min.Z - 1000.f);
-    UE_LOG(LogTemp, Warning, TEXT("Spawning second navmesh at (%f, %f, %f)"), spawn_location.X, spawn_location.Y, spawn_location.Z);
-    dummy_navmesh_bound_volume_ = world_->SpawnActor<ANavMeshBoundsVolume>(spawn_location, FRotator(0, 0, 0), spawn_params);
-    dummy_navmesh_bound_volume_->SetActorScale3D(FVector(1.f, 1.f, 1.f));
-    FBox second_box = dummy_navmesh_bound_volume_->GetComponentsBoundingBox(false, true);
-    UE_LOG(LogTemp, Warning, TEXT("after second navmesh rescale Min: (%f, %f, %f)"), second_box.Min.X, second_box.Min.Y, second_box.Min.Z);
-    UE_LOG(LogTemp, Warning, TEXT("after second navmesh rescale Max: (%f, %f, %f)"), second_box.Max.X, second_box.Max.Y, second_box.Max.Z);
-    */
+
+    const FVector nav_mesh_scale_relative = nav_mesh_bounds->GetActorRelativeScale3D();
+    const FVector nav_modifier_scale_relative = nav_modifier_volume->GetActorRelativeScale3D();
+    UE_LOG(LogTemp, Warning, TEXT("navmesh relative scale 3D is (%f, %f, %f)"), nav_mesh_scale_relative.X, nav_mesh_scale_relative.Y, nav_mesh_scale_relative.Z);
+    UE_LOG(LogTemp, Warning, TEXT("navmodifier relative scale 3D is (%f, %f, %f)"), nav_modifier_scale_relative.X, nav_modifier_scale_relative.Y, nav_modifier_scale_relative.Z);
+
+    const FVector nav_mesh_scale_world = nav_mesh_bounds->GetActorScale3D();
+    const FVector nav_modifier_scale_world = nav_modifier_volume->GetActorScale3D();
+    UE_LOG(LogTemp, Warning, TEXT("navmesh world scale 3D is (%f, %f, %f)"), nav_mesh_scale_world.X, nav_mesh_scale_world.Y, nav_mesh_scale_world.Z);
+    UE_LOG(LogTemp, Warning, TEXT("navmodifier world scale 3D is (%f, %f, %f)"), nav_modifier_scale_world.X, nav_modifier_scale_world.Y, nav_modifier_scale_world.Z);
 
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_OBJ"})) {
         nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }).c_str()) + "/" + world_->GetName() + "/");
@@ -454,9 +466,10 @@ FBox ImageSamplingAgentController::getWorldBoundingBox(bool alter_height)
     // alter height of bouding box to cover only certain region above ground
      UE_LOG(LogTemp, Warning, TEXT("Before: Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
      UE_LOG(LogTemp, Warning, TEXT("Before: Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Max.Z);
-     const float height = Config::getValue<float>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "NAV_BOUND_BOX_HEIGHT_ABOVE_MIN" });
-     UE_LOG(LogTemp, Warning, TEXT("Return Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Min.Z + height);
-     return alter_height ? FBox(box.Min, FVector(box.Max.X, box.Max.Y, box.Min.Z + height)) : box ;
+     //const float height = Config::getValue<float>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "NAV_BOUND_BOX_HEIGHT_ABOVE_MIN" });
+     //UE_LOG(LogTemp, Warning, TEXT("Return Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Min.Z + height);
+     //return alter_height ? FBox(box.Min, FVector(box.Max.X, box.Max.Y, box.Min.Z + height)) : box ;
+     return box;
 
 
      //FBox floor_bounding_box(ForceInit);

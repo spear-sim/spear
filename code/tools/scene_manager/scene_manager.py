@@ -508,9 +508,7 @@ def download_single_virtualworld(
 def get_version_process_mode(version):
     if version in ['v1', 'v2', 'v3']:
         return "raw"
-    elif version in ['v4']:
-        return "pak"
-    elif version in ['v5']:
+    elif version in ['v4', 'v5', 'v6']:
         return "pak"
     else:
         return "unknown"
