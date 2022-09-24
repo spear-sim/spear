@@ -25,7 +25,7 @@
 		},
 		{
 			"Name": "VirtualWorldManager",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "PythonScriptPlugin",

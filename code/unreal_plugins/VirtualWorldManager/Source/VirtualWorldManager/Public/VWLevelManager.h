@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "IPlatformFilePak.h"
+//#include "IPlatformFilePak.h"
 #include "VWLevelManager.generated.h"
 
 enum EPostProcessMaterialType

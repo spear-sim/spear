@@ -4,7 +4,7 @@ INTERIORSIM:
   TEMP_DIR: "C:/github/interiorsim/code/experiments/image_sampling/"
   # VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json" # required only for Linux
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 60.0
-  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-dx12" ]
+  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-dx12", "-RobotSimSettingPath=C:/github/interiorsim/code/unreal_plugins/RobotSim/setting/settings.json"]
   RENDER_OFFSCREEN: True
 
 SIMULATION_CONTROLLER:
@@ -24,7 +24,7 @@ SIMULATION_CONTROLLER:
     DEBUG_POSES_DIR: "E:/new_isim_images"
     DEBUG_POSES_NUM: 1000000
     NAVMESH:
-      AGENT_HEIGHT: 150.0
+      AGENT_HEIGHT: 180.0
       AGENT_RADIUS: 5.0
       CELL_SIZE: 1.0
       CELL_HEIGHT: 1.0

@@ -13,7 +13,7 @@ public class SimulationController : ModuleRules
         bEnableExceptions = true;
         bEnableUndefinedIdentifierWarnings = false;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "NavigationSystem", "PhysX", "PhysXVehicles", "PhysXVehicleLib", "RenderCore", "RHI", "RobotSim" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "NavigationSystem", "PhysX", "PhysXVehicles", "PhysXVehicleLib", "RenderCore", "RHI", "RobotSim", "VirtualWorldManager" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //

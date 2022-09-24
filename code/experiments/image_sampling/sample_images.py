@@ -58,9 +58,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--scenes_path", type=str, default="D:/paks_4k", help="input path to where all .pak files are stored.")
     parser.add_argument("--executable_dir", type=str, default="C:/Users/ADAS/repos/interiorsim/code/unreal_projects/RobotProject/Standalone-Development", help="this should point to the directory that contains the UE executable. Eg. <path_to_executable_dir>/WinNoEditor/RobotProject.exe can be your path to executable, so your input should be just the outer dir path.")
-    #parser.add_argument("--output_dir", "-o", type=str, required=True)
-    parser.add_argument("--output_dir", "-o", type=str, default="C:/Users/ADAS/repos/interiorsim/code/experiments/image_sampling/results", help="this path need to points at the output location")
-    parser.add_argument("-num_images", type=int, default=100)
+    parser.add_argument("--output_dir", "-o", type=str, required=True)
+    parser.add_argument("--num_images", type=int, default=54000)
     parser.add_argument("--num_images_per_frame", "-ipf", type=int, default=6)
     args = parser.parse_args()
 
@@ -82,16 +81,18 @@ if __name__ == "__main__":
     skipped_scenes = open(os.path.join(args.output_dir, "skipped_scenes.txt"), "w")
 
     # choose scenes from input dir
-    scenes_on_disk = os.listdir(args.scenes_path)
-    chosen_scenes = []
-    for scene in scenes_on_disk:
-        split_string_list = scene.split('_')
-        if len(split_string_list) > 1 and split_string_list[1] == f"{PLATFORM}.pak":
-            chosen_scenes.append(split_string_list[0])
+    # scenes_on_disk = os.listdir(args.scenes_path)
+    # chosen_scenes = []
+    # for scene in scenes_on_disk:
+    #     split_string_list = scene.split('_')
+    #     if len(split_string_list) > 1 and split_string_list[1] == f"{PLATFORM}.pak":
+    #         chosen_scenes.append(split_string_list[0])
+
+    chosen_scenes = os.listdir(args.scenes_path)
 
     # number of images per scene based on # of scenes.
     # while debugging just few images from scenes, you can change this number to 10 or 20 or something small
-    NUM_IMAGES_PER_SCENE = int(args.num_images / len(chosen_scenes)) + 1
+    NUM_IMAGES_PER_SCENE = 181 # int(args.num_images / len(chosen_scenes)) + 1
     NUM_IMAGES_PER_FRAME = int(args.num_images_per_frame)
 
     for scene in chosen_scenes:
@@ -105,15 +106,17 @@ if __name__ == "__main__":
 
         # copy pak from ssd to the executable dir as this is required for launching the appropriate pak file
         if not os.path.exists(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak"):
-            shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
+            # shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
+            shutil.copy(os.path.join(args.scenes_path, f"{scene}/paks/Windows/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
+
 
         # check if data path for storing images exists
         if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
             os.makedirs(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
             print(f"collecting images for scene {scene}")
-        else:
-            images = os.listdir(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
-            print(f"scene {scene}, num_images = {len(images)}")
+        # else:
+            # images = os.listdir(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
+            # print(f"scene {scene}, num_images = {len(images)}")
             # if len(images) == NUM_IMAGES_PER_SCENE:
                 # print(f"scene - {scene} has {len(images)} images already, so skipping.")
                 # skipped_scenes.write(scene)
@@ -123,7 +126,10 @@ if __name__ == "__main__":
         # write headers
         scenes_sampled.write(scene)
         scenes_sampled.write(",")
-        pose_output_file = open(os.path.join(args.output_dir, "Map_{}/poses.txt".format(scene)), "w")
+        if PLATFORM == "Windows":
+            pose_output_file = open(os.path.join(args.output_dir, "Map_{}/poses.txt".format(scene)), "w", newline='')
+        else:
+            pose_output_file = open(os.path.join(args.output_dir, "Map_{}/poses.txt".format(scene)), "w")
         pose_csv_writer = csv.writer(pose_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         pose_csv_writer.writerow(["pos_x_cm", "pos_y_cm", "pos_z_cm", "roll_deg", "pitch_deg", "yaw_deg"])
 
@@ -156,14 +162,14 @@ if __name__ == "__main__":
             output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
 
             assert os.path.exists(output_path) == True
-            return_status = cv2.imwrite(output_path +f"/{i}_{j}.png", obs["visual_observation"][:,:,[2,1,0]])
+            return_status = cv2.imwrite(output_path +f"/{i}.png", obs["visual_observation"][:,:,[2,1,0]])
             assert return_status == True
 
             pose_csv_writer.writerow([obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
 
         # close the current environment after collecting required number of images
         env.close()
-        time.sleep(10)
+        time.sleep(5)
         pose_output_file.close()
         os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")        
 

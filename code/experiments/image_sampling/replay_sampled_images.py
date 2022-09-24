@@ -23,7 +23,7 @@ elif sys.platform == "win32":
 
 def read_recorded_data(args, scene):
     pose_data_path = os.path.join(args.input_dir, f"Map_{scene}/poses.txt")
-    image_data_path = os.path.join(args.input_dir, f"Map_{scene}/rgb")
+    # image_data_path = os.path.join(args.input_dir, f"Map_{scene}/seg")
 
     with open(pose_data_path, 'r') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -31,9 +31,9 @@ def read_recorded_data(args, scene):
         images = {}
         for index, row in enumerate(list(csv_reader)[1:]):
             poses[index] = [float(i) for i in row[:]]
-            images[index] = cv2.imread(os.path.join(image_data_path, f"{index}.png"))
-            
-    return poses, images
+            # images[index] = cv2.imread(os.path.join(image_data_path, f"{index}.png"))
+    
+    return poses#, images
 
     
 if __name__ == "__main__":
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         csv_reader = csv.reader(f, delimiter=',')
         scenes = next(csv_reader)
         scenes = scenes[:-1]
-
+    
     # load config
     config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
     config = get_config(config_files)
@@ -119,7 +119,8 @@ if __name__ == "__main__":
 
         # copy pak from ssd to disk
         if not os.path.exists(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak"):
-            shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
+            # shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
+            shutil.copy(os.path.join(args.scenes_path, f"{scene}/paks/Windows/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
 
         # check if data path for storing images, exists
         if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
@@ -127,7 +128,7 @@ if __name__ == "__main__":
 
         assert config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.ACTION_MODE == "replay_sampled_images"
 
-        poses, images = read_recorded_data(args, scene)
+        poses = read_recorded_data(args, scene)
 
         # create Env object
         env = Env(config)
@@ -137,7 +138,7 @@ if __name__ == "__main__":
 
         # iterate over recorded poses
         for index, data in poses.items():
-
+            
             obs, _, _, _ = env.step({"set_position_xyz_centimeters": [data[0], data[1], data[2]], "set_orientation_pyr_degrees": [data[4], data[5], data[3]]}) # set_orientation_pyr_degrees: [pitch, yaw, roll]
 
             assert obs["pose"].all() == np.array(data).all()
@@ -154,6 +155,6 @@ if __name__ == "__main__":
             assert return_status == True
 
         env.close()
-        time.sleep(10)
+        time.sleep(5)
         os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")  
         cv2.destroyAllWindows()
