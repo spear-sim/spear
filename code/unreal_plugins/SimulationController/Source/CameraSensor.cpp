@@ -296,9 +296,9 @@ void CameraSensor::SetCameraDefaultOverrides(){
     this->scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsShadows = true;
 
     this->scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
-    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxRoughness = 0.4f; // min 0.01 - max 1.0
-    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = 2; // min 0 - max 50
-    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 4; // min 1 - max 64
+    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxRoughness = 0.6f; // min 0.01 - max 1.0
+    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = 1; // min 0 - max 50
+    this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 6; // min 1 - max 64
     this->scene_capture_component_->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
 
     //// Pathtracing

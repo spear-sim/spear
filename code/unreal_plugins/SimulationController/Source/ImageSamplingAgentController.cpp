@@ -71,7 +71,7 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
 
-    //TweakLights();
+    TweakLights();
 
     /*
     camera_actor_ = world->SpawnActor<ACameraActor>(spawn_location, FRotator(0,0,0), spawn_params);
@@ -326,33 +326,14 @@ bool ImageSamplingAgentController::isReady() const
 
 void ImageSamplingAgentController::TweakLights()
 {
-    TArray<AActor*> FoundActors;
-    UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), FoundActors);
+    TArray<AActor*> actors;
+    UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), actors);
 
-    for (int i = 0; i < FoundActors.Num(); i++) {
-        ASpotLight* sl = Cast<ASpotLight>(FoundActors[i]);
-        APointLight* pl = Cast<APointLight>(FoundActors[i]);
-        ARectLight* rl = Cast<ARectLight>(FoundActors[i]);
-        //ADirectionalLight* dl = Cast<ADirectionalLight>(FoundActors[i]);
-        if (rl != nullptr) {
-            rl->SetMobility(EComponentMobility::Movable);
-            if (rl->GetBrightness() <= 8.0) {
-                rl->SetBrightness(rl->GetBrightness() * 2);
-            }
+    for (int i = 0; i < actors.Num(); i++) {
+        ASpotLight* spot_light = Cast<ASpotLight>(actors[i]);
+        if (spot_light != nullptr) {
+            spot_light->Destroy();
         }
-        if (pl != nullptr) {
-            pl->SetMobility(EComponentMobility::Movable);
-            if (pl->GetBrightness() <= 8.0) {
-                pl->SetBrightness(pl->GetBrightness() * 2);
-            }
-        }
-        if (sl != nullptr) {
-            sl->SetEnabled(false);
-        }
-        /*ALight* l = Cast<ALight>(FoundActors[i]);
-        if (l != nullptr) {
-            l->SetMobility(EComponentMobility::Movable);
-        }*/
     }
 }
 
