@@ -41,7 +41,7 @@ private:
     void TweakLights();
 
     void rebuildNavSystem();
-    FBox getWorldBoundingBox(bool bScaleCeiling = true);
+    FBox getWorldBoundingBox();
     
     UWorld* world_;
 

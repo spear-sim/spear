@@ -378,16 +378,43 @@ void ImageSamplingAgentController::rebuildNavSystem()
     agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
 
     ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
+    //auto nav_data = nav_sys->GetMainNavData();
     ASSERT(nav_data);
 
     nav_mesh_ = Cast<ARecastNavMesh>(nav_data);
     ASSERT(nav_mesh_);
 
-    ANavMeshBoundsVolume* nav_mesh_bounds = nullptr;
+    ANavMeshBoundsVolume* nav_mesh_bounds_volume_1 = nullptr;
+    ANavMeshBoundsVolume* nav_mesh_bounds_volume_2 = nullptr;
+    //ANavMeshBoundsVolume* nav_mesh_bounds_volume = nullptr;
+
     for (TActorIterator<ANavMeshBoundsVolume> it(world_); it; ++it) {
-        nav_mesh_bounds = *it;
+        std::string actor_name = TCHAR_TO_UTF8(*(*it)->GetName());
+        UE_LOG(LogTemp, Warning, TEXT("NavmeshBoundvVolume name is %s"), *(*it)->GetName());
+        //nav_mesh_bounds_volume = *it;
+
+        if (!nav_mesh_bounds_volume_1) {
+            nav_mesh_bounds_volume_1 = *it;
+        }
+        else if (!nav_mesh_bounds_volume_2) {
+            nav_mesh_bounds_volume_2 = *it;
+        }
     }
-    ASSERT(nav_mesh_bounds);
+   
+    //ASSERT(nav_mesh_bounds_volume);
+    ASSERT(nav_mesh_bounds_volume_1);
+    //ASSERT(nav_mesh_bounds_volume_2);
+    
+
+    // move bound volume 2 to somwhere outside the area, far far away
+    
+    //nav_mesh_bounds_volume_2->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    //nav_mesh_bounds_volume_2->SetActorLocation(FVector(0,0,-1000000.f), false);
+    //nav_mesh_bounds_volume_2->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    if (nav_mesh_bounds_volume_2) {
+        nav_mesh_bounds_volume_2->Destroy();
+        nav_mesh_bounds_volume_2 = nullptr;
+    }
 
     ANavModifierVolume* nav_modifier_volume = nullptr;
     for (TActorIterator<ANavModifierVolume> it(world_); it; ++it) {
@@ -407,14 +434,14 @@ void ImageSamplingAgentController::rebuildNavSystem()
     nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
     // Dynamic update navMesh location and size
 
-    FBox worldBox = getWorldBoundingBox(true);
+    FBox worldBox = getWorldBoundingBox();
 
-    nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    nav_mesh_bounds->SetActorLocation(worldBox.GetCenter(), false);      
-    nav_mesh_bounds->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);
-    nav_mesh_bounds->GetRootComponent()->UpdateBounds();
-    nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds);        
-    nav_mesh_bounds->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    nav_mesh_bounds_volume_1->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    nav_mesh_bounds_volume_1->SetActorLocation(worldBox.GetCenter(), false);
+    nav_mesh_bounds_volume_1->SetActorRelativeScale3D(worldBox.GetSize() / 200.0f);
+    nav_mesh_bounds_volume_1->GetRootComponent()->UpdateBounds();
+    nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds_volume_1);
+    nav_mesh_bounds_volume_1->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_modifier_volume->SetActorLocation(worldBox.GetCenter(), false);
@@ -426,23 +453,55 @@ void ImageSamplingAgentController::rebuildNavSystem()
 
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
 
+    const FBox box = nav_mesh_bounds_volume_1->GetComponentsBoundingBox(true, true);
 
-    //const FVector nav_mesh_scale_relative = nav_mesh_bounds->GetActorRelativeScale3D();
-    //const FVector nav_modifier_scale_relative = nav_modifier_volume->GetActorRelativeScale3D();
-    //UE_LOG(LogTemp, Warning, TEXT("navmesh relative scale 3D is (%f, %f, %f)"), nav_mesh_scale_relative.X, nav_mesh_scale_relative.Y, nav_mesh_scale_relative.Z);
-    //UE_LOG(LogTemp, Warning, TEXT("navmodifier relative scale 3D is (%f, %f, %f)"), nav_modifier_scale_relative.X, nav_modifier_scale_relative.Y, nav_modifier_scale_relative.Z);
+    UE_LOG(LogTemp, Warning, TEXT("1 After nav_mesh_bounds_volume_1 : Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
+    UE_LOG(LogTemp, Warning, TEXT("1 After nav_mesh_bounds_volume_1 : Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Max.Z);
 
-    //const FVector nav_mesh_scale_world = nav_mesh_bounds->GetActorScale3D();
-    //const FVector nav_modifier_scale_world = nav_modifier_volume->GetActorScale3D();
-    //UE_LOG(LogTemp, Warning, TEXT("navmesh world scale 3D is (%f, %f, %f)"), nav_mesh_scale_world.X, nav_mesh_scale_world.Y, nav_mesh_scale_world.Z);
-    //UE_LOG(LogTemp, Warning, TEXT("navmodifier world scale 3D is (%f, %f, %f)"), nav_modifier_scale_world.X, nav_modifier_scale_world.Y, nav_modifier_scale_world.Z);
+    //if (nav_mesh_bounds_volume_2) {
+    //    const FBox box_2 = nav_mesh_bounds_volume_2->GetComponentsBoundingBox(true, true);
+    //    UE_LOG(LogTemp, Warning, TEXT("1 After nav_mesh_bounds_volume_2 : Box Min Vector is (%f, %f, %f)"), box_2.Min.X, box_2.Min.Y, box_2.Min.Z);
+    //    UE_LOG(LogTemp, Warning, TEXT("1 After nav_mesh_bounds_volume_2 : Box Max Vector is (%f, %f, %f)"), box_2.Max.X, box_2.Max.Y, box_2.Max.Z);
+    //}
+
+    const FBox box_mod = nav_modifier_volume->GetComponentsBoundingBox(true, true);
+
+    UE_LOG(LogTemp, Warning, TEXT("1 After nav_modifier_volume : Box Min Vector is (%f, %f, %f)"), box_mod.Min.X, box_mod.Min.Y, box_mod.Min.Z);
+    UE_LOG(LogTemp, Warning, TEXT("1 After nav_modifier_volume : Box Max Vector is (%f, %f, %f)"), box_mod.Max.X, box_mod.Max.Y, box_mod.Max.Z);
+
+    const FVector nav_mesh_scale_relative = nav_mesh_bounds_volume_1->GetActorRelativeScale3D();
+    const FVector nav_modifier_scale_relative = nav_modifier_volume->GetActorRelativeScale3D();
+    UE_LOG(LogTemp, Warning, TEXT("navmesh relative scale 3D is (%f, %f, %f)"), nav_mesh_scale_relative.X, nav_mesh_scale_relative.Y, nav_mesh_scale_relative.Z);
+    UE_LOG(LogTemp, Warning, TEXT("navmodifier relative scale 3D is (%f, %f, %f)"), nav_modifier_scale_relative.X, nav_modifier_scale_relative.Y, nav_modifier_scale_relative.Z);
+
+    const FVector nav_mesh_scale_world = nav_mesh_bounds_volume_1->GetActorScale3D();
+    const FVector nav_modifier_scale_world = nav_modifier_volume->GetActorScale3D();
+    UE_LOG(LogTemp, Warning, TEXT("navmesh world scale 3D is (%f, %f, %f)"), nav_mesh_scale_world.X, nav_mesh_scale_world.Y, nav_mesh_scale_world.Z);
+    UE_LOG(LogTemp, Warning, TEXT("navmodifier world scale 3D is (%f, %f, %f)"), nav_modifier_scale_world.X, nav_modifier_scale_world.Y, nav_modifier_scale_world.Z);
+
+    if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_DEBUG_POSES" })) {
+        std::ofstream myfile;
+        std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/nav_bounds_for_debug.txt";
+        myfile.open(file);
+        myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
+        myfile << box.Min.X << "," << box.Min.Y << "," << box.Min.Z << "\n";
+        myfile << box.Max.X << "," << box.Max.Y << "," << box.Max.Z << "\n";
+        myfile.close();
+
+        file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/nav_mod_bounds_for_debug.txt";
+        myfile.open(file);
+        myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
+        myfile << box_mod.Min.X << "," << box_mod.Min.Y << "," << box_mod.Min.Z << "\n";
+        myfile << box_mod.Max.X << "," << box_mod.Max.Y << "," << box_mod.Max.Z << "\n";
+        myfile.close();
+    }
 
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_OBJ"})) {
         nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }).c_str()) + "/" + world_->GetName() + "/");
     }
 }
 
-FBox ImageSamplingAgentController::getWorldBoundingBox(bool alter_height)
+FBox ImageSamplingAgentController::getWorldBoundingBox()
 {
     FBox box(ForceInit);
     for (TActorIterator<AActor> it(world_); it; ++it) {
@@ -453,5 +512,8 @@ FBox ImageSamplingAgentController::getWorldBoundingBox(bool alter_height)
 
     //UE_LOG(LogTemp, Warning, TEXT("Before: Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
     //UE_LOG(LogTemp, Warning, TEXT("Before: Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Max.Z);
-    return box;
+    //UE_LOG(LogTemp, Warning, TEXT("0 Afer: Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
+    //UE_LOG(LogTemp, Warning, TEXT("0 Afer: Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Min.Z+10.0);
+    //return box;
+    return FBox(box.Min, FVector(box.Max.X, box.Max.Y, box.Min.Z + Config::getValue<float>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "NAV_BOUND_BOX_HEIGHT_ABOVE_MIN" })));
 }

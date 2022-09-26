@@ -10,13 +10,7 @@ if __name__ == "__main__":
     # Parse input script arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_dir", type=str, help="enter path to stored dataset.", required=True)
-    parser.add_argument("--semantic_mappings_file", type=str, required=True)
-    args = parser.parse_args()
-    
-    # output semantic_mappings_interiorsim.txt
-    semantic_labels_file = open(args.semantic_mappings_file, "w")
-    sem_csv_writer = csv.writer(semantic_labels_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    sem_csv_writer.writerow(["id"])
+    args = parser.parse_args()     
 
     # get stencil id to rgb mapping
     possible_stencil_values = np.arange(start=0, stop=114)
@@ -28,22 +22,22 @@ if __name__ == "__main__":
             stencil_id_color_map[stencil_value] = (all_possible_colors[3*(stencil_value-1)+0], all_possible_colors[3*(stencil_value-1)+1], all_possible_colors[3*(stencil_value-1)+2])
         else:
             stencil_id_color_map[stencil_value] = (0, 0, 0)
-        
-        sem_csv_writer.writerow([stencil_value])
-    semantic_labels_file.close() # close file
-
-    print(stencil_id_color_map)
 
     scenes = [fp for fp in os.listdir(args.input_dir) if os.path.isdir(os.path.join(args.input_dir, fp))]
 
-    for scene in scenes[:]:
+    for scene in scenes:
         print(f"processing scene {scene}")
+
         semantic_images = os.listdir(os.path.join(args.input_dir, scene, "seg"))
         
         if not os.path.exists(os.path.join(args.input_dir, scene, f"sem_seg")):
             os.makedirs(os.path.join(args.input_dir, scene, f"sem_seg"))
+        else:
+            print(f"already processed {scene}")
+            continue
 
         for image in semantic_images:
+            
             mat = cv2.imread(os.path.join(args.input_dir, scene, f"seg/{image}"))
             # cv2.imshow("before", mat)
             mat = mat[:,:,[2,1,0]] # bgr to rgb
@@ -51,10 +45,10 @@ if __name__ == "__main__":
             for stencil_id, color in stencil_id_color_map.items():
                 label_seg[(mat==color).all(axis=2)] = stencil_id
 
+            # print(np.unique(label_seg))
             # cv2.imshow("after", label_seg)
             # cv2.waitKey(0)
-            idx = image.split('/')[-1]
-            ret = cv2.imwrite(os.path.join(args.input_dir, scene, f"sem_seg/{idx}"), label_seg)
+            ret = cv2.imwrite(os.path.join(args.input_dir, scene, f"sem_seg/{image}"), label_seg)
             assert ret == True
         
         cv2.destroyAllWindows()
