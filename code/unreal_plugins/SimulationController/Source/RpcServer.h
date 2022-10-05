@@ -1,14 +1,14 @@
-// Modified from Carla (https://carla.org) project, thanks to MIT license.
-
 #pragma once
+
+// Modified from Carla (https://carla.org) project, thanks to MIT license.
 
 #include <future>
 #include <mutex>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 #include "Asio.h"
-#include "MoveHandler.h"
 #include "Rpclib.h"
 
 // An RPC server in which functions can be bound to run synchronously or asynchronously. Use
@@ -20,6 +20,32 @@
 // unblockRunSyncWhenFinishedExecuting() from another thread to make runSync() return as soon
 // as it is finished executing all scheduled work. This design gives us precise control over
 // where and when function calls are executed within the Unreal Engine game loop.
+
+
+namespace detail
+{
+template <typename FunctorT>
+struct MoveWrapper : FunctorT
+{
+    MoveWrapper(FunctorT&& f): FunctorT(std::move(f)) {}
+
+    MoveWrapper(MoveWrapper&&) = default;
+    MoveWrapper& operator=(MoveWrapper&&) = default;
+
+    MoveWrapper(const MoveWrapper&);
+    MoveWrapper& operator=(const MoveWrapper&);
+};
+
+} // namespace detail
+
+// Hack to trick asio into accepting move-only handlers, if the handler were actually copied it would result in a link error. @see https://stackoverflow.com/a/22891509.
+template <typename FunctorT>
+auto moveHandler(FunctorT&& func)
+{
+    using F = typename std::decay<FunctorT>::type;
+    return detail::MoveWrapper<F>{std::move(func)};
+}
+
 
 class RpcServer
 {

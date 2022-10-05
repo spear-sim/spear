@@ -20,6 +20,7 @@
 #include "Box.h"
 #include "Config.h"
 #include "ImageSamplingAgentController.h"
+#include "ImitationLearningTask.h"
 #include "NullTask.h"
 #include "OpenBotAgentController.h"
 #include "PointGoalNavTask.h"
@@ -30,7 +31,8 @@
 #include "Task.h"
 #include "Visualizer.h"
 
-// different possible frame states for thread synchronization
+
+// Different possible frame states for thread synchronization
 enum class FrameState : uint8_t
 {
     Idle,
@@ -40,25 +42,18 @@ enum class FrameState : uint8_t
     ExecutingPostTick
 };
 
-// enum values should match values in python module (env.py)
-enum class Endianness : uint8_t
-{
-    LittleEndian = 0,
-    BigEndian = 1,
-};
-MSGPACK_ADD_ENUM(Endianness);
 
 void SimulationController::StartupModule()
 {
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 
-    // required to add ActorSpawnedEventHandler
+    // Required to add ActorSpawnedEventHandler
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
 
-    // required to reset any custom logic during world cleanup
+    // Required to reset any custom logic during world cleanup
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
-    // required for adding thread synchronization logic
+    // Required for adding thread synchronization logic
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
     end_frame_delegate_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
 }
@@ -88,6 +83,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     ASSERT(world);
 
     if (world->IsGameWorld()) {
+
         // Check if world_ is valid, and if it is, we do not support mulitple Game worlds and we need to know about this. There should only be one Game World..
         ASSERT(!world_);
 
@@ -110,47 +106,50 @@ void SimulationController::worldBeginPlayEventHandler()
     FApp::SetBenchmarking(true);
     FApp::SetFixedDeltaTime(Config::getValue<double>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));
 
-    // pause gameplay
+    // Pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
-    // read config to decide which type of AgentController to create
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
-        agent_controller_ = std::make_unique<SphereAgentController>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
-        agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "ImageSamplingAgentController") {
+    // Create AgentController
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "ImageSamplingAgentController") {
         agent_controller_ = std::make_unique<ImageSamplingAgentController>(world_);
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+        agent_controller_ = std::make_unique<OpenBotAgentController>();
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SlamDatasetAgentController") {
         agent_controller_ = std::make_unique<SlamDatasetAgentController>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "DebugAgentController") {
-        agent_controller_ = std::make_unique<DebugAgentController>(world_);
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
+        agent_controller_ = std::make_unique<SphereAgentController>(world_);
     } else {
         ASSERT(false);
     }
     ASSERT(agent_controller_);
 
-    // read config to decide which type of Task class to create
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigation") {
-        task_ = std::make_unique<PointGoalNavTask>(world_);
+    // Create Task
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearningTask") {
+        task_ = std::make_unique<ImitationLearningTask>(world_);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
         task_ = std::make_unique<NullTask>();
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
+        task_ = std::make_unique<PointGoalNavTask>(world_);
     } else {
         ASSERT(false);
     }
     ASSERT(task_);
 
-    // create a visualizer that is responsible for the camera view
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "ENABLE_VISUALIZER"})) {
-        visualizer_ = std::make_unique<Visualizer>(world_);
-        ASSERT(visualizer_);
-    }
+    // Create Visualizer
+    visualizer_ = std::make_unique<Visualizer>();
+    ASSERT(visualizer_);
 
-    // initialize frame state used for thread synchronization
+    // Deferred initialization for AgentController, Task, and Visualizer
+    agent_controller_->findObjectReferences(world_);
+    task_->findObjectReferences(world_);
+    visualizer_->findObjectReferences(world_);
+
+    // Initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
 
     // config values required for rpc communication
-    const std::string hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
-    const int port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
+    const auto hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
+    const auto port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
 
     rpc_server_ = std::make_unique<RpcServer>(hostname, port);
     ASSERT(rpc_server_);
@@ -171,19 +170,21 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
         // OnWorldCleanUp is called for all worlds. rpc_server_ and agent_controller_ is created only when a Game World's begin play event is launched.
         if(is_world_begin_play_executed_) {
+
             ASSERT(rpc_server_);
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
             rpc_server_ = nullptr;
 
-            if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "ENABLE_VISUALIZER"})) {
-                ASSERT(visualizer_);
-                visualizer_ = nullptr;
-            }
+            ASSERT(visualizer_);
+            visualizer_->cleanUpObjectReferences();
+            visualizer_ = nullptr;
 
             ASSERT(task_);
+            task_->cleanUpObjectReferences();
             task_ = nullptr;
 
             ASSERT(agent_controller_);
+            agent_controller_->cleanUpObjectReferences();
             agent_controller_ = nullptr;
         }
 
@@ -198,50 +199,50 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
 void SimulationController::beginFrameEventHandler()
 {
-    // if beginTick() has indicated (via RequestPreTick framestate) that we should execute a frame of work
+    // If beginTick() has indicated (via RequestPreTick framestate) that we should execute a frame of work
     if (frame_state_ == FrameState::RequestPreTick) {
 
-        // update local state
+        // Update local state
         frame_state_ = FrameState::ExecutingPreTick;
 
-        // unpause the game
+        // Unpause the game
         UGameplayStatics::SetGamePaused(world_, false);
 
-        // execute all pre-tick sync work, wait here for tick() to reset work guard
+        // Execute all pre-tick sync work, wait here for tick() to reset work guard
         rpc_server_->runSync();
 
-        // execute pre-tick work inside the task
+        // Execute pre-tick work inside the task
         task_->beginFrame();
 
-        // update local state
+        // Update local state
         frame_state_ = FrameState::ExecutingTick;
     }
 }
 
 void SimulationController::endFrameEventHandler()
 {
-    // if beginFrameEventHandler() has indicated that we are currently executing a frame of work
+    // If beginFrameEventHandler() has indicated that we are currently executing a frame of work
     if (frame_state_ == FrameState::ExecutingTick) {
 
-        // update local state
+        // Update local state
         frame_state_ = FrameState::ExecutingPostTick;
 
-        // execute post-tick work inside the task
+        // Execute post-tick work inside the task
         task_->endFrame();
 
-        // allow tick() to finish executing
+        // Allow tick() to finish executing
         end_frame_started_executing_promise_.set_value();
 
-        // execute all post-tick sync work, wait here for endTick() to reset work guard
+        // Execute all post-tick sync work, wait here for endTick() to reset work guard
         rpc_server_->runSync();
 
-        // pause the game
+        // Pause the game
         UGameplayStatics::SetGamePaused(world_, true);
 
-        // update local state
+        // Update local state
         frame_state_ = FrameState::Idle;
 
-        // allow endTick() to finish executing
+        // Allow endTick() to finish executing
         end_frame_finished_executing_promise_.set_value();
     }
 }
@@ -253,37 +254,37 @@ void SimulationController::bindFunctionsToRpcServer()
     });
 
     rpc_server_->bindAsync("close", []() -> void {
-        constexpr bool immediate_shutdown = false;
+        constexpr auto immediate_shutdown = false;
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
-    rpc_server_->bindAsync("getEndianness", []() -> Endianness {
-        uint32_t Num = 0x01020304;
-        return (reinterpret_cast<const char*>(&Num)[3] == 1) ? Endianness::LittleEndian : Endianness::BigEndian;
+    rpc_server_->bindAsync("getEndianness", []() -> std::string {
+        uint32_t dummy = 0x01020304;
+        return (reinterpret_cast<const char*>(&dummy)[3] == 1) ? "little" : "big";
     });
 
     rpc_server_->bindAsync("beginTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::Idle);
 
-        // reinitialize end_frame_started_executing promise and future
+        // Reinitialize end_frame_started_executing promise and future
         end_frame_started_executing_promise_ = std::promise<void>();
         end_frame_started_executing_future_ = end_frame_started_executing_promise_.get_future();
 
-        // reinitialize end_frame_finished_executing promise and future
+        // Reinitialize end_frame_finished_executing promise and future
         end_frame_finished_executing_promise_ = std::promise<void>();
         end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
 
-        // indicate that we want the game thread to execute one frame of work
+        // Indicate that we want the game thread to execute one frame of work
         frame_state_ = FrameState::RequestPreTick;
     });
 
     rpc_server_->bindAsync("tick", [this]() -> void {
         ASSERT((frame_state_ == FrameState::ExecutingPreTick) || (frame_state_ == FrameState::RequestPreTick));
 
-        // indicate that we want the game thread to stop blocking in beginFrame()
+        // Indicate that we want the game thread to stop blocking in beginFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // wait here until the game thread has started executing endFrame()
+        // Wait here until the game thread has started executing endFrame()
         end_frame_started_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
@@ -292,10 +293,10 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("endTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
-        // indicate that we want the game thread to stop blocking in endFrame()
+        // Indicate that we want the game thread to stop blocking in endFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // wait here until the game thread has finished executing endFrame()
+        // Wait here until the game thread has finished executing endFrame()
         end_frame_finished_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::Idle);
@@ -311,54 +312,74 @@ void SimulationController::bindFunctionsToRpcServer()
         return agent_controller_->getObservationSpace();
     });
 
-    rpc_server_->bindAsync("getStepInfoSpace", [this]() -> std::map<std::string, Box> {
+    rpc_server_->bindAsync("getAgentControllerStepInfoSpace", [this]() -> std::map<std::string, Box> {
+        ASSERT(agent_controller_);
+        return agent_controller_->getStepInfoSpace();
+    });
+
+    rpc_server_->bindAsync("getTaskStepInfoSpace", [this]() -> std::map<std::string, Box> {
         ASSERT(task_);
         return task_->getStepInfoSpace();
     });
 
     rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
-        ASSERT(agent_controller_);
         ASSERT(frame_state_ == FrameState::ExecutingPreTick);
+        ASSERT(agent_controller_);
         agent_controller_->applyAction(action);
     });
 
     rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
-        ASSERT(agent_controller_);
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(agent_controller_);
         return agent_controller_->getObservation();
     });
 
     rpc_server_->bindSync("getReward", [this]() -> float {
-        ASSERT(task_);
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(task_);
         return task_->getReward();
     });
 
     rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
-        ASSERT(task_);
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(task_);
         return task_->isEpisodeDone();
     });
 
-    rpc_server_->bindSync("getStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
-        ASSERT(task_);
+    rpc_server_->bindSync("getAgentControllerStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(task_);
+        return agent_controller_->getStepInfo();
+    });
+
+    rpc_server_->bindSync("getTaskStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(task_);
         return task_->getStepInfo();
     });
 
-    rpc_server_->bindSync("reset", [this]() -> void {
-        ASSERT(task_);
-        ASSERT(agent_controller_);
+    rpc_server_->bindSync("resetAgentController", [this]() -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPreTick);
-        task_->reset();
+        ASSERT(agent_controller_);
         agent_controller_->reset();
     });
 
-    rpc_server_->bindSync("isReady", [this]() -> bool{
+    rpc_server_->bindSync("resetTask", [this]() -> void {
+        ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         ASSERT(task_);
-        ASSERT(agent_controller_);
+        task_->reset();
+    });
+
+    rpc_server_->bindSync("isAgentControllerReady", [this]() -> bool{
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
-        return task_->isReady() && agent_controller_->isReady();
+        ASSERT(agent_controller_);
+        return agent_controller_->isReady();
+    });
+
+    rpc_server_->bindSync("isTaskReady", [this]() -> bool{
+        ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        ASSERT(task_);
+        return task_->isReady();
     });
 }
 
