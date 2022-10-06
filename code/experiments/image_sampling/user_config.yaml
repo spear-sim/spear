@@ -1,9 +1,12 @@
 INTERIORSIM:
   LAUNCH_MODE: "standalone_executable"
   STANDALONE_EXECUTABLE: "C:/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject.exe"
+  # STANDALONE_EXECUTABLE: "E:/nav_mesh_debug_isim/Standalone-Development/WindowsNoEditor/RobotProject.exe"
   TEMP_DIR: "C:/github/interiorsim/code/experiments/image_sampling/"
   # VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json" # required only for Linux
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 60.0
+  RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 240.0
+  RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 2.0
   CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-dx12", "-RobotSimSettingPath=C:/github/interiorsim/code/unreal_plugins/RobotSim/setting/settings.json"]
   RENDER_OFFSCREEN: True
 
@@ -14,14 +17,14 @@ SIMULATION_CONTROLLER:
 
   IMAGE_SAMPLING_AGENT_CONTROLLER:
     CAMERA_ACTOR_NAME: "IMAGE_SAMPLING_CAMERA"
-    ACTION_MODE: "sample_images" # "sample_images" or "replay_sampled_images"
+    ACTION_MODE: "replay_sampled_images" # "sample_images" or "replay_sampled_images"
     IMAGE_TYPE: "rgb" # "rgb" OR "seg"
     IMAGE_HEIGHT: 480 #160 #480
     IMAGE_WIDTH: 852 #284 #852
     EXPORT_NAV_DATA_POLY_CSV: False
     EXPORT_NAV_DATA_OBJ: False
     EXPORT_NAV_DATA_DEBUG_POSES: False
-    DEBUG_POSES_DIR: "E:/new_isim_images"
+    DEBUG_POSES_DIR: "E:/nav_mesh_debug_isim"
     DEBUG_POSES_NUM: 1000000
     NAVMESH:
       AGENT_HEIGHT: 180.0
@@ -33,7 +36,7 @@ SIMULATION_CONTROLLER:
       MERGE_REGION_SIZE: 0.0
       MIN_REGION_AREA: 100.0
       TILE_SIZE_UU: 300
-      NAV_BOUND_BOX_HEIGHT_ABOVE_MIN: 10.0
+      NAV_BOUND_BOX_HEIGHT_ABOVE_MIN: 80.0
       HEIGHT_LIMIT: 200
 
 IMAGE_SAMPLING_EXPERIMENT:

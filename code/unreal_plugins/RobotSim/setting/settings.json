@@ -2,12 +2,12 @@
     "SettingsVersion": 1.2,
     "SimMode": "",
     "PawnPaths": {
-        "UrdfBot": {
-            "UrdfFile": "fetch.xml",
-            "EndEffectorLink": "gripper_link",
-            "ScaleFactor": 0.5,
-            "EnableKeyboard": false
-        },
+      "UrdfBot": {
+        "UrdfFile": "C:/github/interiorsim/code/unreal_plugins/RobotSim/setting/fetch.xml",
+        "EndEffectorLink": "gripper_link",
+        "ScaleFactor": 0.5,
+        "EnableKeyboard": false
+      },
         "SimpleVehicle": {
             "PawnBP": "/RobotSim/SimpleVehicle/OpenBot/BP_OpenBot.BP_OpenBot_C",
             "EnableKeyboard": true
