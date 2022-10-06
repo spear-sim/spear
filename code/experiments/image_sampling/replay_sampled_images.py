@@ -28,7 +28,7 @@ def read_recorded_data(args, scene):
     with open(pose_data_path, 'r') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         poses = {}
-        images = {}
+        # images = {}
         for index, row in enumerate(list(csv_reader)[1:]):
             poses[index] = [float(i) for i in row[:]]
             # images[index] = cv2.imread(os.path.join(image_data_path, f"{index}.png"))
@@ -96,16 +96,25 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", type=str, required=True)
     args = parser.parse_args()
 
-    # read scenes list
-    scene_list_path = os.path.join(args.input_dir, "scenes.txt")
-    with open(scene_list_path, 'r') as f:
-        csv_reader = csv.reader(f, delimiter=',')
-        scenes = next(csv_reader)
-        scenes = scenes[:-1]
+    # # read scenes list
+    # scene_list_path = os.path.join(args.input_dir, "scenes.txt")
+    # with open(scene_list_path, 'r') as f:
+        # csv_reader = csv.reader(f, delimiter=',')
+        # scenes = next(csv_reader)
+        # scenes = scenes[:-1]
     
+    # choose scenes from input dir
+    scenes_on_disk = [foldr for foldr in os.listdir(args.input_dir) if os.path.isdir(os.path.join(args.input_dir, foldr))]
+    scenes = []
+    for scene in scenes_on_disk:
+        split_string_list = scene.split('_')
+        scenes.append(split_string_list[1])
+
     # load config
     config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
     config = get_config(config_files)
+
+    NUM_IMAGES_PER_FRAME = 6
 
     for scene in scenes:
 
@@ -136,10 +145,15 @@ if __name__ == "__main__":
         # reset the simulation
         _ = env.reset()
 
+        start_time = time.time()
         # iterate over recorded poses
         for index, data in poses.items():
-            
-            obs, _, _, _ = env.step({"set_position_xyz_centimeters": [data[0], data[1], data[2]], "set_orientation_pyr_degrees": [data[4], data[5], data[3]]}) # set_orientation_pyr_degrees: [pitch, yaw, roll]
+            env.customSetActionTick({"set_position_xyz_centimeters": [data[0], data[1], data[2]], "set_orientation_pyr_degrees": [data[4], data[5], data[3]]}) # set_orientation_pyr_degrees: [pitch, yaw, roll]
+            for j in range(0, NUM_IMAGES_PER_FRAME - 2):
+                env.customEmptyTick()
+            obs, _, _, _ = env.customGetObservationTick()
+
+            # obs, _, _, _ = env.step({"set_position_xyz_centimeters": [data[0], data[1], data[2]], "set_orientation_pyr_degrees": [data[4], data[5], data[3]]}) # set_orientation_pyr_degrees: [pitch, yaw, roll]
 
             assert obs["pose"].all() == np.array(data).all()
 
@@ -153,8 +167,10 @@ if __name__ == "__main__":
 
             return_status = cv2.imwrite(output_path +f"/{index}.png", obs["visual_observation"][:,:,[2,1,0]])
             assert return_status == True
-
+        
+        stop_time = time.time()
         env.close()
+        print(f"elapsed time for scene {scene}", stop_time-start_time)
         time.sleep(5)
         os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")  
         cv2.destroyAllWindows()

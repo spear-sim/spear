@@ -8,6 +8,7 @@ import os
 import time
 import shutil
 import sys
+import time
 
 from interiorsim import Env
 from interiorsim.config import get_config
@@ -76,9 +77,10 @@ if __name__ == "__main__":
     if not os.path.exists(os.path.join(args.output_dir)):
         os.makedirs(os.path.join(args.output_dir))
 
+    time_per_scene = open(os.path.join(args.output_dir, "time_per_scene.txt"), "w")
     scenes_sampled = open(os.path.join(args.output_dir, "scenes.txt"), "w")
     bad_scenes = open(os.path.join(args.output_dir, "bad_scenes.txt"), "w")
-    skipped_scenes = open(os.path.join(args.output_dir, "skipped_scenes.txt"), "w")
+    # skipped_scenes = open(os.path.join(args.output_dir, "skipped_scenes.txt"), "w")
 
     # choose scenes from input dir
     # scenes_on_disk = os.listdir(args.scenes_path)
@@ -88,6 +90,10 @@ if __name__ == "__main__":
     #     if len(split_string_list) > 1 and split_string_list[1] == f"{PLATFORM}.pak":
     #         chosen_scenes.append(split_string_list[0])
 
+    # make a list of scenes already completed
+    # completed_scenes = [fp for fp in os.listdir(args.output_dir) if os.path.isdir(os.path.join(args.output_dir, fp))]
+
+    # get all scenes
     chosen_scenes = os.listdir(args.scenes_path)
 
     # number of images per scene based on # of scenes.
@@ -95,7 +101,11 @@ if __name__ == "__main__":
     NUM_IMAGES_PER_SCENE = 181 # int(args.num_images / len(chosen_scenes)) + 1
     NUM_IMAGES_PER_FRAME = int(args.num_images_per_frame)
 
-    for scene in chosen_scenes:
+    for scene in chosen_scenes[:1]:
+
+        # skip completed scenes
+        # if f"Map_{scene}" in completed_scenes:
+            # continue
 
         print(f"processing scene {scene}")
 
@@ -144,6 +154,9 @@ if __name__ == "__main__":
         # reset the simulation
         _ = env.reset()
 
+
+        start_time = time.time()
+        
         # for NUM_IMAGES_PER_SCENE capture images and pose data
         for i in range(0, NUM_IMAGES_PER_SCENE):
             env.customSetActionTick({"set_random_orientation_pyr_deg":  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
@@ -168,6 +181,12 @@ if __name__ == "__main__":
             pose_csv_writer.writerow([obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
 
         # close the current environment after collecting required number of images
+        stop_time = time.time()
+        print(stop_time-start_time)
+        time_per_scene.write(f"{scene},")
+        time_per_scene.write(str(stop_time - start_time))
+        time_per_scene.write("\n")
+
         env.close()
         time.sleep(5)
         pose_output_file.close()
@@ -175,4 +194,5 @@ if __name__ == "__main__":
 
     scenes_sampled.close()
     bad_scenes.close()
+    time_per_scene.close()
     cv2.destroyAllWindows()
