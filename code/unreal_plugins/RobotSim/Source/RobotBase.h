@@ -62,11 +62,4 @@ public:
             this->GetPawn()->SetActorLocationAndRotation(position, orientation, true);
         }
     }
-
-    /**
-     * @brief Set the Robot Parameters object
-     *
-     * @param settings
-     */
-    virtual void SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings) = 0;
 };

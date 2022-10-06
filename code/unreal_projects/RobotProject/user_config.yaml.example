@@ -6,7 +6,7 @@ INTERIORSIM:
   CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-RobotSimSettingPath=/home/rachithp/code/github/interiorsim/code/unreal_projects/RobotProject/Plugins/RobotSim/setting/settings.json" ]
 
 SIMULATION_CONTROLLER:
-  TASK_NAME: "PointGoalNavigation"
+  TASK_NAME: "PointGoalNavigationTask"
   AGENT_CONTROLLER_NAME: "OpenBotAgentController"
   
   POINT_GOAL_NAV_TASK:

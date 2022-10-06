@@ -14,7 +14,7 @@ If you're working on Linux, you will need to build the Unreal Engine from source
 
 ## Install XCode
 
-In order to open and run our example Unreal projects (and for general Unreal plugin development), you need to install a specific version of XCode that matches your Unreal Engine version. For Unreal Engine version 4.26, you must install XCode 11.1. See [this tutorial](https://github.com/botman99/ue4-xcode-vscode-mac) for details.
+In order to open and run our example Unreal projects (and for general Unreal plugin development), you need to install a specific version of XCode that matches your Unreal Engine version. For Unreal Engine version 4.26, we have verified that XCode 13.0 behaves as expected. See [this tutorial](https://github.com/botman99/ue4-xcode-vscode-mac) for details.
 
 ## Build third-party C++ libraries
 
@@ -41,7 +41,7 @@ pip install -e code/third_party/msgpack-rpc-python
 # install interiorsim
 pip install -e code/python_module
 
-# install OpenCV (not a core requirement, but used in some of our examples) 
+# install OpenCV (not a core requirement, but used by some of our examples) 
 pip install opencv-python
 ```
 

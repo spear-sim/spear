@@ -113,7 +113,7 @@ AUrdfBotPawn::AUrdfBotPawn()
 
         this->staticMeshGenerator_.Initialize(this->baseBoxMesh_, this->baseCylinderMesh_, this->baseSphereMesh_, this->user_static_meshes_);
     }
-    catch (std::exception e)
+    catch (...)
     {
         int j = 0;
     }
@@ -1610,11 +1610,6 @@ TMap<FString, float> AUrdfBotPawn::GetCurrentQPosByLinkName()
         map.Add(pair.Key, pair.Value->GetDriveTarget());
     }
     return map;
-}
-
-void AUrdfBotPawn::SetRobotParameters(const RobotSim::RobotSimSettings::VehicleSetting& settings)
-{
-    // Nothing to do so far...
 }
 
 void AUrdfBotPawn::SetTargetQPosByLinkName(const TMap<FString, float>& map)

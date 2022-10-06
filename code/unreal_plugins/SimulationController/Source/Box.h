@@ -25,7 +25,7 @@ struct Box
 {
     float low;
     float high;
-    std::vector<uint64_t> shape;
+    std::vector<int64_t> shape;
     DataType dtype;
 
     MSGPACK_DEFINE_MAP(low, high, shape, dtype);

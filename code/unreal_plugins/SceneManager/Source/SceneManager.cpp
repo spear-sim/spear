@@ -1,11 +1,15 @@
 #include "SceneManager.h"
 
-void FSceneManagerModule::StartupModule()
+#include "PhysicsManager.h"
+
+void SceneManager::StartupModule()
 {
+    PhysicsManager::initialize();
 }
 
-void FSceneManagerModule::ShutdownModule()
+void SceneManager::ShutdownModule()
 {
+    PhysicsManager::terminate();
 }
 
-IMPLEMENT_MODULE(FSceneManagerModule, SceneManager)
+IMPLEMENT_MODULE(SceneManager, SceneManager)

@@ -19,7 +19,9 @@ public:
     PointGoalNavTask(UWorld* world);
     ~PointGoalNavTask();
 
-    // Task overrides
+    void findObjectReferences(UWorld* world) override;
+    void cleanUpObjectReferences() override;
+
     void beginFrame() override;
     void endFrame() override;
     float getReward() const override;

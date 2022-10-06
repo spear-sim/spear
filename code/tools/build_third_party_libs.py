@@ -92,7 +92,7 @@ def build_libs(args):
         cmake_cmd = subprocess.run(cmake_args)
     else:
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", "-DYAML_BUILD_SHARED_LIBS=ON", ".."]
-        print(f"Executing cmd: {' '.join(args)}")
+        print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
     assert cmake_cmd.returncode == 0
     cmake_args = ["cmake",  "--build", ".", "--config", "Release", "--", "-j", "{0}".format(args.num_parallel_jobs)]
