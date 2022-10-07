@@ -1,35 +1,31 @@
 #include "ImageSamplingAgentController.h"
 
 #include <algorithm>
+#include <fstream>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
-// remove before commit
-#include <fstream>
-
-#include "AI/NavDataGenerator.h"
+#include <AI/NavDataGenerator.h>
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
+#include <Engine/DirectionalLight.h>
 #include <Engine/EngineTypes.h>
+#include <Engine/PointLight.h>
+#include <Engine/RectLight.h>
+#include <Engine/SpotLight.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
-#include "Kismet/GameplayStatics.h"
+#include <Kismet/GameplayStatics.h>
+#include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
+#include <NavMesh/RecastNavMesh.h>
 #include <NavModifierVolume.h>
 #include <UObject/UObjectGlobals.h>
-
-#include <Engine/DirectionalLight.h>
-#include <Engine/PointLight.h>
-#include <Engine/RectLight.h>
-#include <Engine/SpotLight.h>
-
-#include <common_utils/NavMeshUtil.hpp>
-
 #include <VWLevelManager.h>
 
 #include "Assert.h"
@@ -38,48 +34,28 @@
 #include "Config.h"
 #include "Serialize.h"
 
-#include "NavMeshManager.h"
-
 ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
 {
     // store ref to world
     world_ = world;
 
-    rebuildNavSystem();
-
-    if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_POLY_CSV" })) {
-        NavMeshManager::exportData(world);
-    }
-
-    FVector spawn_location;
-    RobotSim::NavMeshUtil::GetRandomPoint(nav_mesh_, spawn_location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "HEIGHT_LIMIT"}));
-
+    //camera
     FActorSpawnParameters spawn_params;
     spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "CAMERA_ACTOR_NAME"}).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    // remove spotlights
-    TweakLights();
-
-    //camera
-
     if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "rgb") {
-        AActor* camera_actor = world->SpawnActor<ACameraActor>(spawn_location, FRotator(0, 0, 0), spawn_params);
-        ASSERT(camera_actor);
-        camera_sensor_ = new CameraSensor(world_, camera_actor);
+        camera_actor_ = world->SpawnActor<ACameraActor>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
+        ASSERT(camera_actor_);
+        camera_sensor_ = new CameraSensor(camera_actor_, {"final_color"}, Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT"}), Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH"}));
         ASSERT(camera_sensor_);
 
-        camera_sensor_->scene_capture_component_->bAlwaysPersistRenderingState = 1;
-        camera_sensor_->scene_capture_component_->FOVAngle = 90.f;
-
-        camera_sensor_->SetRenderTarget(
-            Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
-            Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
-
+        // update FOV as required by this controller
+        camera_sensor_->camera_passes_.at("final_color").scene_capture_component_->FOVAngle = 90.f;
 
     } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "seg"){
 
-        camera_actor_ = world->SpawnActor<ACameraActor>(spawn_location, FRotator(0,0,0), spawn_params);
+        camera_actor_ = world->SpawnActor<ACameraActor>(FVector(0, 0, 0), FRotator(0,0,0), spawn_params);
         ASSERT(camera_actor_);
         new_object_parent_actor_ = world->SpawnActor<AActor>();
         ASSERT(new_object_parent_actor_);
@@ -127,7 +103,7 @@ ImageSamplingAgentController::~ImageSamplingAgentController()
         ASSERT(camera_sensor_);
         camera_sensor_ = nullptr;
     }
-    else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "seg") {   
+    else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "seg") {
         ASSERT(virtual_world_level_manager_);
         virtual_world_level_manager_->Destroy();
         virtual_world_level_manager_ = nullptr;
@@ -142,10 +118,10 @@ ImageSamplingAgentController::~ImageSamplingAgentController()
         ASSERT(new_object_parent_actor_);
         new_object_parent_actor_->Destroy();
         new_object_parent_actor_ = nullptr;
-
-        ASSERT(camera_actor_);
-        camera_actor_ = nullptr;
     }
+
+    ASSERT(camera_actor_);
+    camera_actor_ = nullptr;
 
 
     //ASSERT(dummy_navmesh_bound_volume_);
@@ -153,6 +129,19 @@ ImageSamplingAgentController::~ImageSamplingAgentController()
 
     ASSERT(world_);
     world_ = nullptr;
+}
+
+void ImageSamplingAgentController::findObjectReferences(UWorld* world)
+{
+    rebuildNavSystem();
+
+    // remove spotlights
+    TweakLights();
+}
+
+void ImageSamplingAgentController::cleanUpObjectReferences()
+{
+
 }
 
 std::map<std::string, Box> ImageSamplingAgentController::getActionSpace() const
@@ -212,6 +201,11 @@ std::map<std::string, Box> ImageSamplingAgentController::getObservationSpace() c
     return observation_space;
 }
 
+std::map<std::string, Box> ImageSamplingAgentController::getStepInfoSpace() const
+{
+    return {};
+}
+
 void ImageSamplingAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "sample_images") {
@@ -237,11 +231,8 @@ void ImageSamplingAgentController::applyAction(const std::map<std::string, std::
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
 
-        if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "rgb") {
-            camera_sensor_->camera_actor_->SetActorLocationAndRotation(random_position, random_orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
-        } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "seg") {
-            camera_actor_->SetActorLocationAndRotation(random_position, random_orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
-        }
+
+        camera_actor_->SetActorLocationAndRotation(random_position, random_orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
         
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "replay_sampled_images") {
         ASSERT(action.count("set_position_xyz_centimeters"));
@@ -255,12 +246,7 @@ void ImageSamplingAgentController::applyAction(const std::map<std::string, std::
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
 
-        if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "rgb") {
-            camera_sensor_->camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
-        }
-        else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "seg") {
-            camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
-        }
+        camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
         
     } else {
         ASSERT(false);
@@ -271,16 +257,9 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "rgb") {
-        const FVector position = camera_sensor_->camera_actor_->GetActorLocation();
-        const FRotator orientation = camera_sensor_->camera_actor_->GetActorRotation();
-        observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
-    }
-    else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "seg") {
-        const FVector position = camera_actor_->GetActorLocation();
-        const FRotator orientation = camera_actor_->GetActorRotation();
-        observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
-    }
+    const FVector position = camera_actor_->GetActorLocation();
+    const FRotator orientation = camera_actor_->GetActorRotation();
+    observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
 
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_DEBUG_POSES" })) {
         std::ofstream myfile;
@@ -299,7 +278,7 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
 
     FTextureRenderTargetResource* target_resource = nullptr;
     if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "rgb") {
-        target_resource = camera_sensor_->scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+        target_resource = camera_sensor_->camera_passes_.at("final_color").scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
     }
     else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "seg") {
         target_resource = scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
@@ -343,6 +322,11 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
     observation["visual_observation"] = std::move(image);
 
     return observation;
+}
+
+std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getStepInfo() const
+{
+    return {};
 }
 
 void ImageSamplingAgentController::reset()

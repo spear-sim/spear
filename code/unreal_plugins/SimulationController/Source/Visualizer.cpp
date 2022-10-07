@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Visualizer.h"
+
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 

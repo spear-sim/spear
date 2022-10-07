@@ -11,7 +11,6 @@ public class SimulationController : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         bEnableExceptions = true;
-        bEnableUndefinedIdentifierWarnings = false;
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "NavigationSystem", "PhysX", "PhysXVehicles", "PhysXVehicleLib", "RenderCore", "RHI", "RobotSim", "VirtualWorldManager" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
