@@ -1,19 +1,6 @@
 __pycache__
 .ipynb_checkpoints
 
-code/experimental/wheeled_vehicle/WheeledVehicle/Binaries
-code/experimental/wheeled_vehicle/WheeledVehicle/Build
-code/experimental/wheeled_vehicle/WheeledVehicle/DerivedDataCache
-code/experimental/wheeled_vehicle/WheeledVehicle/Intermediate
-code/experimental/wheeled_vehicle/WheeledVehicle/Plugins
-code/experimental/wheeled_vehicle/WheeledVehicle/Saved
-code/experimental/wheeled_vehicle/WheeledVehicle/Standalone-Development
-code/experimental/wheeled_vehicle/WheeledVehicle/Standalone-Shipping
-code/experimental/wheeled_vehicle/WheeledVehicle/Temp
-code/experimental/wheeled_vehicle/WheeledVehicle/user_config.yaml
-code/experimental/wheeled_vehicle/WheeledVehicle/.vscode
-code/experimental/wheeled_vehicle/WheeledVehicle/WheeledVehicle.xcworkspace
-
 code/experimental/NavMeshDebugProject/Binaries
 code/experimental/NavMeshDebugProject/Build
 code/experimental/NavMeshDebugProject/DerivedDataCache
