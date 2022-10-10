@@ -31,10 +31,6 @@
             "Enabled": true
         },
         {
-            "Name": "VirtualWorldManager",
-            "Enabled": false
-        },
-        {
             "Name": "PhysXVehicles",
             "Enabled": true
         }

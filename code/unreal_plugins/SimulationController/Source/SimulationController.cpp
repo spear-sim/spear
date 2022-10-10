@@ -16,7 +16,7 @@
 #include <Kismet/GameplayStatics.h>
 
 #include "AgentController.h"
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
 #include "ImageSamplingAgentController.h"
@@ -26,7 +26,6 @@
 #include "PointGoalNavTask.h"
 #include "Rpclib.h"
 #include "RpcServer.h"
-#include "SlamDatasetAgentController.h"
 #include "SphereAgentController.h"
 #include "Task.h"
 #include "Visualizer.h"
@@ -110,12 +109,10 @@ void SimulationController::worldBeginPlayEventHandler()
     UGameplayStatics::SetGamePaused(world_, true);
 
     // Create AgentController
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "ImageSamplingAgentController") {
+    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "ImageSamplingAgentController") {
         agent_controller_ = std::make_unique<ImageSamplingAgentController>(world_);
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "OpenBotAgentController") {
         agent_controller_ = std::make_unique<OpenBotAgentController>();
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SlamDatasetAgentController") {
-        agent_controller_ = std::make_unique<SlamDatasetAgentController>(world_);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
     } else {

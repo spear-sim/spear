@@ -10,10 +10,11 @@
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <Kismet/KismetSystemLibrary.h>
 #include <Materials/MaterialInstanceDynamic.h>
 #include <UObject/UObjectGlobals.h>
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Config.h"
 #include "Serialize.h"
 #include "TickEvent.h"
@@ -60,17 +61,18 @@ CameraSensor::CameraSensor(AActor* actor, std::vector<std::string> pass_names, u
         // Insert into map
         camera_passes_[pass_name] = std::move(pass);
 
+        UKismetSystemLibrary::ExecuteConsoleCommand(actor->GetWorld(), FString("g.TimeoutForBlockOnRenderFence 300000"));
     }
 }
 
 CameraSensor::~CameraSensor()
 {
     for (auto& pass: camera_passes_) {
-        ASSERT(pass.second.scene_capture_component_);
+        ASSERT(pass.second.texture_render_target_);
         pass.second.texture_render_target_->MarkPendingKill();
         pass.second.texture_render_target_ = nullptr;
 
-        ASSERT(pass.second.texture_render_target_);
+        ASSERT(pass.second.scene_capture_component_);
         pass.second.scene_capture_component_->DestroyComponent();
         pass.second.scene_capture_component_ = nullptr;
     }
@@ -154,16 +156,24 @@ void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_c
     // SET OVERRIDES
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureMethod = true;
     scene_capture_component->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
+
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureBias = true;
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
+    scene_capture_component->PostProcessSettings.AutoExposureBias = 1.0f;
+    scene_capture_component->PostProcessSettings.AutoExposureMaxBrightness = 5.0f; //-1
+    scene_capture_component->PostProcessSettings.AutoExposureMinBrightness = -10.0f; //-1
+    
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedUp = true;
+    scene_capture_component->PostProcessSettings.AutoExposureSpeedUp = 10.0f;
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedDown = true;
+    scene_capture_component->PostProcessSettings.AutoExposureSpeedDown = 10.0f;
+
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureCalibrationConstant_DEPRECATED = true;
     scene_capture_component->PostProcessSettings.bOverride_HistogramLogMin = true;
-    scene_capture_component->PostProcessSettings.HistogramLogMin = 1.0f;
+    scene_capture_component->PostProcessSettings.HistogramLogMin = -10.f; // 1.0f;
     scene_capture_component->PostProcessSettings.bOverride_HistogramLogMax = true;
-    scene_capture_component->PostProcessSettings.HistogramLogMax = 12.0f;
+    scene_capture_component->PostProcessSettings.HistogramLogMax = 10.f; // 12.0f;
 
     // Camera
     scene_capture_component->PostProcessSettings.bOverride_CameraShutterSpeed = true;
@@ -173,64 +183,121 @@ void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_c
     scene_capture_component->PostProcessSettings.bOverride_DepthOfFieldBladeCount = true;
 
     // Film (Tonemapper)
-    scene_capture_component->PostProcessSettings.bOverride_FilmSlope = true;
-    scene_capture_component->PostProcessSettings.bOverride_FilmToe = true;
-    scene_capture_component->PostProcessSettings.bOverride_FilmShoulder = true;
-    scene_capture_component->PostProcessSettings.bOverride_FilmWhiteClip = true;
-    scene_capture_component->PostProcessSettings.bOverride_FilmBlackClip = true;
+    //scene_capture_component->PostProcessSettings.bOverride_FilmSlope = true;
+    //scene_capture_component->PostProcessSettings.bOverride_FilmToe = true;
+    //scene_capture_component->PostProcessSettings.bOverride_FilmShoulder = true;
+    //scene_capture_component->PostProcessSettings.bOverride_FilmWhiteClip = true;
+    //scene_capture_component->PostProcessSettings.bOverride_FilmBlackClip = true;
 
     // Motion blur
     scene_capture_component->PostProcessSettings.bOverride_MotionBlurAmount = true;
-    scene_capture_component->PostProcessSettings.MotionBlurAmount = 0.45f;
+    scene_capture_component->PostProcessSettings.MotionBlurAmount = 0.6f;//0.45f;
     scene_capture_component->PostProcessSettings.bOverride_MotionBlurMax = true;
-    scene_capture_component->PostProcessSettings.MotionBlurMax = 0.35f;
+    scene_capture_component->PostProcessSettings.MotionBlurMax = 60.f;//0.35f;
     scene_capture_component->PostProcessSettings.bOverride_MotionBlurPerObjectSize = true;
-    scene_capture_component->PostProcessSettings.MotionBlurPerObjectSize = 0.1f;
+    scene_capture_component->PostProcessSettings.MotionBlurPerObjectSize = 4.0f;//0.1f;
 
     // Color Grading
-    scene_capture_component->PostProcessSettings.bOverride_WhiteTemp = true;
-    scene_capture_component->PostProcessSettings.bOverride_WhiteTint = true;
-    scene_capture_component->PostProcessSettings.bOverride_ColorContrast = true;
-#if PLATFORM_LINUX
-    // Looks like Windows and Linux have different outputs with the
-    // same exposure compensation, this fixes it.
-    scene_capture_component->PostProcessSettings.ColorContrast = FVector4(1.2f, 1.2f, 1.2f, 1.0f);
-#endif
+//    scene_capture_component->PostProcessSettings.bOverride_WhiteTemp = true;
+//    scene_capture_component->PostProcessSettings.bOverride_WhiteTint = true;
+//    scene_capture_component->PostProcessSettings.bOverride_ColorContrast = true;
+//#if PLATFORM_LINUX
+//    // Looks like Windows and Linux have different outputs with the
+//    // same exposure compensation, this fixes it.
+//    scene_capture_component->PostProcessSettings.ColorContrast = FVector4(1.2f, 1.2f, 1.2f, 1.0f);
+//#endif
 
     // Chromatic Aberration
-    scene_capture_component->PostProcessSettings.bOverride_SceneFringeIntensity = true;
-    scene_capture_component->PostProcessSettings.bOverride_ChromaticAberrationStartOffset = true;
+    //scene_capture_component->PostProcessSettings.bOverride_SceneFringeIntensity = true;
+    //scene_capture_component->PostProcessSettings.bOverride_ChromaticAberrationStartOffset = true;
 
     // Ambient Occlusion
-    scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionIntensity = true;
-    scene_capture_component->PostProcessSettings.AmbientOcclusionIntensity = 0.5f;
-    scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionRadius = true;
-    scene_capture_component->PostProcessSettings.AmbientOcclusionRadius = 100.0f;
-    scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionStaticFraction = true;
-    scene_capture_component->PostProcessSettings.AmbientOcclusionStaticFraction = 1.0f;
-    scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionFadeDistance = true;
-    scene_capture_component->PostProcessSettings.AmbientOcclusionFadeDistance = 50000.0f;
-    scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionPower = true;
-    scene_capture_component->PostProcessSettings.AmbientOcclusionPower = 2.0f;
-    scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionBias = true;
-    scene_capture_component->PostProcessSettings.AmbientOcclusionBias = 3.0f;
-    scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionQuality = true;
-    scene_capture_component->PostProcessSettings.AmbientOcclusionQuality = 100.0f;
+    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionIntensity = true;
+    //scene_capture_component->PostProcessSettings.AmbientOcclusionIntensity = 0.5f;
+    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionRadius = true;
+    //scene_capture_component->PostProcessSettings.AmbientOcclusionRadius = 100.0f;
+    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionStaticFraction = true;
+    //scene_capture_component->PostProcessSettings.AmbientOcclusionStaticFraction = 1.0f;
+    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionFadeDistance = true;
+    //scene_capture_component->PostProcessSettings.AmbientOcclusionFadeDistance = 50000.0f;
+    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionPower = true;
+    //scene_capture_component->PostProcessSettings.AmbientOcclusionPower = 2.0f;
+    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionBias = true;
+    //scene_capture_component->PostProcessSettings.AmbientOcclusionBias = 3.0f;
+    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionQuality = true;
+    //scene_capture_component->PostProcessSettings.AmbientOcclusionQuality = 100.0f;
 
     // Bloom
     scene_capture_component->PostProcessSettings.bOverride_BloomMethod = true;
     scene_capture_component->PostProcessSettings.BloomMethod = EBloomMethod::BM_SOG;
     scene_capture_component->PostProcessSettings.bOverride_BloomIntensity = true;
-    scene_capture_component->PostProcessSettings.BloomIntensity = 0.675f;
+    scene_capture_component->PostProcessSettings.BloomIntensity = 0.4f;
     scene_capture_component->PostProcessSettings.bOverride_BloomThreshold = true;
     scene_capture_component->PostProcessSettings.BloomThreshold = -1.0f;
 
     // Lens
-    scene_capture_component->PostProcessSettings.bOverride_LensFlareIntensity = true;
-    scene_capture_component->PostProcessSettings.LensFlareIntensity = 0.1;
+    //scene_capture_component->PostProcessSettings.bOverride_LensFlareIntensity = true;
+    //scene_capture_component->PostProcessSettings.LensFlareIntensity = 0.1;
+
+    // Raytracing
+    scene_capture_component->bUseRayTracingIfEnabled = true;
+    scene_capture_component->PostProcessSettings.bOverride_IndirectLightingIntensity = true;
+    scene_capture_component->PostProcessSettings.IndirectLightingIntensity = 0.2f;
+
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingGI = true;
+    scene_capture_component->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
+    //scene_capture_component->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingGIMaxBounces = true;
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = true;
+
+    scene_capture_component->PostProcessSettings.RayTracingGIMaxBounces = 4;
+    scene_capture_component->PostProcessSettings.RayTracingGISamplesPerPixel = 16;
+
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAO = true; // Default value
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOSamplesPerPixel = true; // min 1 - max 64
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOIntensity = true; // min 0.0 - max 1.0
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAORadius = true; // min 0.0 - max 10000.0
+
+    //scene_capture_component->PostProcessSettings.RayTracingAO = 1; // Default value
+    scene_capture_component->PostProcessSettings.RayTracingAOSamplesPerPixel = 8; // min 1 - max 64
+    scene_capture_component->PostProcessSettings.RayTracingAOIntensity = 0.6f; // min 0.0 - max 1.0
+    scene_capture_component->PostProcessSettings.RayTracingAORadius = 4000.0f; // min 0.0 - max 10000.0
+
+    //scene_capture_component->PostProcessSettings.bOverride_TranslucencyType = true;
+    //scene_capture_component->PostProcessSettings.TranslucencyType = ETranslucencyType::RayTracing;
+    ////scene_capture_component->PostProcessSettings.RayTracingTranslucencyShadows = EReflectedAndRefractedRayTracedShadows::Hard_shadows;
+    //scene_capture_component->PostProcessSettings.bOverride_RayTracingTranslucencyMaxRoughness = true; // min 0.01 - max 1.0
+    //scene_capture_component->PostProcessSettings.bOverride_RayTracingTranslucencyRefractionRays = true; // min 0 - max 50
+    //scene_capture_component->PostProcessSettings.bOverride_RayTracingTranslucencySamplesPerPixel = true; // min 1 - max 64
+    //scene_capture_component->PostProcessSettings.bOverride_RayTracingTranslucencyRefraction = true; // default value
+
+    //scene_capture_component->PostProcessSettings.RayTracingTranslucencyMaxRoughness = 0.6f; // min 0.01 - max 1.0
+    //scene_capture_component->PostProcessSettings.RayTracingTranslucencyRefractionRays = 4; // min 0 - max 50
+    //scene_capture_component->PostProcessSettings.RayTracingTranslucencySamplesPerPixel = 4; // min 1 - max 64
+    //scene_capture_component->PostProcessSettings.RayTracingTranslucencyRefraction = 1; // default value
+
+    scene_capture_component->PostProcessSettings.bOverride_ReflectionsType = true;
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces = true; // min 0 - max 50
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = true; // min 1 - max 64
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency = true; // Default value
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsShadows = true;
+
+    scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::ScreenSpace;
+    //scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxRoughness = 0.6f; // min 0.01 - max 1.0
+    //scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxBounces = 1; // min 0 - max 50
+    //scene_capture_component->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 6; // min 1 - max 64
+    //scene_capture_component->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
+
+    //// Pathtracing
+    //scene_capture_component->PostProcessSettings.PathTracingMaxBounces = 2;      // min 0 - max 50
+    //scene_capture_component->PostProcessSettings.PathTracingSamplesPerPixel = 32; // min 1 - max 64
+    //scene_capture_component->PostProcessSettings.bOverride_PathTracingEnableEmissive = 1;      // min 0 - max 50
+    //scene_capture_component->PostProcessSettings.PathTracingMaxPathExposure = 20.0f;      // min -10 - max 30
+    //scene_capture_component->PostProcessSettings.bOverride_PathTracingEnableDenoiser = 1;
+
 
     //scene_capture_component->ShowFlags.SetAmbientOcclusion(false);
-    //scene_capture_component->ShowFlags.SetAntiAliasing(false);
+    scene_capture_component->ShowFlags.SetAntiAliasing(true);
     //scene_capture_component->ShowFlags.SetVolumetricFog(false);
     //scene_capture_component->ShowFlags.SetAtmosphericFog(false);
     //scene_capture_component->ShowFlags.SetAudioRadius(false);
@@ -262,11 +329,12 @@ void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_c
     //scene_capture_component->ShowFlags.SetDirectionalLights(false);
     //scene_capture_component->ShowFlags.SetDirectLighting(false);
     //scene_capture_component->ShowFlags.SetDistanceCulledPrimitives(false);
-    //scene_capture_component->ShowFlags.SetDistanceFieldAO(false);
+    scene_capture_component->ShowFlags.SetDistanceFieldAO(false);
     //scene_capture_component->ShowFlags.SetDistanceFieldGI(false);
-    //scene_capture_component->ShowFlags.SetDynamicShadows(false);
+    scene_capture_component->ShowFlags.SetRayTracedDistanceFieldShadows(true);
+    scene_capture_component->ShowFlags.SetDynamicShadows(true);
     //scene_capture_component->ShowFlags.SetEditor(false);
-    //scene_capture_component->ShowFlags.SetEyeAdaptation(false);
+    scene_capture_component->ShowFlags.SetEyeAdaptation(true);
     //scene_capture_component->ShowFlags.SetFog(false);
     //scene_capture_component->ShowFlags.SetGame(false);
     //scene_capture_component->ShowFlags.SetGameplayDebug(false);
@@ -343,7 +411,7 @@ void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_c
     //scene_capture_component->ShowFlags.SetStereoRendering(false);
     //scene_capture_component->ShowFlags.SetStreamingBounds(false);
     //scene_capture_component->ShowFlags.SetSubsurfaceScattering(false);
-    //scene_capture_component->ShowFlags.SetTemporalAA(false);
+    scene_capture_component->ShowFlags.SetTemporalAA(false);
     //scene_capture_component->ShowFlags.SetTessellation(false);
     //scene_capture_component->ShowFlags.SetTestImage(false);
     //scene_capture_component->ShowFlags.SetTextRender(false);

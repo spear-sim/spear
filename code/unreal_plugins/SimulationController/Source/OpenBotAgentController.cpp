@@ -22,7 +22,7 @@
 #include "PIPCamera.h"
 #include "SimpleVehicle/SimpleVehiclePawn.h"
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
 #include "Serialize.h"

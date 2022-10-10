@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{00046394-08D9-EC0F-60B2-558CF37E7854}",
+	"EngineAssociation": "4.26",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -26,12 +26,6 @@
 		{
 			"Name": "SimulationController",
 			"Enabled": true
-		},
-		{
-			"Name": "VirtualWorldManager",
-			"Enabled": true
 		}
 	]
 }
-
-

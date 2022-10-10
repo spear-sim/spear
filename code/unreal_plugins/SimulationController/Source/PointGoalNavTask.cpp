@@ -6,7 +6,7 @@
 #include <UObject/UObjectGlobals.h>
 
 #include "ActorHitEvent.h"
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
 
