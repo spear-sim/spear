@@ -3,15 +3,12 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 #include "SimpleVehiclePawn.h"
 
-#include <iostream>
-
 //#include "Camera/CameraComponent.h"
 //#include "GameFramework/SpringArmComponent.h"
 #include "SimpleWheel.h"
 #include "TireConfig.h"
 #include "VehicleWheel.h"
-
-#include "Config.h"
+#include <iostream>
 
 FName ASimpleVehiclePawn::VehicleMovementComponentName(TEXT("SimpleWheeledVehicleMovement"));
 FName ASimpleVehiclePawn::VehicleMeshComponentName(TEXT("VehicleMesh'"));

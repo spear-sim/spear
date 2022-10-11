@@ -22,7 +22,6 @@ public class CoreUtils : ModuleRules
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "include"));
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicDelayLoadDLLs.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "build", "Release", "yaml-cpp.dll"));
             RuntimeDependencies.Add("$(TargetOutputDir)/yaml-cpp.dll", Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "build", "Release", "yaml-cpp.dll"));
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "build", "Release", "yaml-cpp.lib"));
         } else if (Target.Platform == UnrealTargetPlatform.Mac) {

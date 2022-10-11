@@ -81,30 +81,6 @@ class Env(gym.Env):
 
         return obs, reward, is_done, step_info
 
-    def customSetActionTick(self, action):
-        
-        self._begin_tick()
-        self._apply_action(action)
-        self._tick()
-        self._end_tick()
-
-    def customEmptyTick(self):
-        self._begin_tick()
-        self._tick()
-        self._end_tick()
-
-    def customGetObservationTick(self):
-        self._begin_tick()
-        self._tick()
-        obs = self._get_observation()
-        reward = self._get_reward()
-        is_done = self._is_episode_done()
-        step_info = self._get_step_info()
-        self._end_tick()
-
-        return obs, reward, is_done, step_info
-
-
     def reset(self):
 
         ready = False
@@ -182,9 +158,6 @@ class Env(gym.Env):
 
         if self._config.INTERIORSIM.RENDER_OFFSCREEN:
             launch_params.append("-RenderOffscreen")
-            self._config.defrost()
-            self._config.SIMULATION_CONTROLLER.ENABLE_VISUALIZER = False
-            self._config.freeze()
 
         if len(self._config.INTERIORSIM.UNREAL_INTERNAL_LOG_FILE) > 0:
             launch_params.append("-log={}".format(self._config.INTERIORSIM.UNREAL_INTERNAL_LOG_FILE))

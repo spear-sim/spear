@@ -1,23 +1,14 @@
 #include "ImageSamplingAgentController.h"
 
-#include <algorithm>
 #include <fstream>
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <AI/NavDataGenerator.h>
 #include <Camera/CameraActor.h>
-#include <Components/SceneCaptureComponent2D.h>
-#include <Components/StaticMeshComponent.h>
-#include <Engine/DirectionalLight.h>
-#include <Engine/EngineTypes.h>
-#include <Engine/PointLight.h>
-#include <Engine/RectLight.h>
 #include <Engine/SpotLight.h>
-#include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
@@ -26,7 +17,6 @@
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
 #include <NavModifierVolume.h>
-#include <UObject/UObjectGlobals.h>
 
 #include "Assert/Assert.h"
 #include "Box.h"
@@ -39,7 +29,7 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
     // store ref to world
     world_ = world;
 
-    //camera
+    // create camera sensor
     FActorSpawnParameters spawn_params;
     spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "CAMERA_ACTOR_NAME"}).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -49,8 +39,8 @@ ImageSamplingAgentController::ImageSamplingAgentController(UWorld* world)
 
     camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_,
         Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "RENDER_PASSES" }),
-        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT" }),
-        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH" }));
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
     ASSERT(camera_sensor_);
 
     // update FOV as required by this controller
@@ -76,14 +66,16 @@ ImageSamplingAgentController::~ImageSamplingAgentController()
 
 void ImageSamplingAgentController::findObjectReferences(UWorld* world)
 {
+    // find references to navmeshboundvolume and navmodifier volume and rebuild navsystem. Storing nav_mesh_ reference here
     rebuildNavSystem();
 
-    // remove spotlights
+    // find references to spotlights and remove them
     TweakLights();
 }
 
 void ImageSamplingAgentController::cleanUpObjectReferences()
 {
+    // unassign nav_mesh_ reference
     nav_mesh_ = nullptr;
 }
 
@@ -92,30 +84,24 @@ std::map<std::string, Box> ImageSamplingAgentController::getActionSpace() const
     std::map<std::string, Box> action_space;
     Box box;
 
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "sample_images") {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {3};
-        box.dtype = DataType::Float32;
-        action_space["set_random_orientation_pyr_deg"] = std::move(box);
+    box.low = std::numeric_limits<float>::lowest();
+    box.high = std::numeric_limits<float>::max();
+    box.shape = { 3 };
+    box.dtype = DataType::Float32;
+    action_space["set_orientation_pyr_deg"] = std::move(box);
 
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "sample_images") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
         box.shape = {1};
         box.dtype = DataType::Float32;
-        action_space["set_random_agent_height_cms"] = std::move(box);
+        action_space["set_agent_height_cm"] = std::move(box);
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "replay_sampled_images") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
         box.shape = {3};
         box.dtype = DataType::Float32;
-        action_space["set_position_xyz_centimeters"] = std::move(box);
-
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {3};
-        box.dtype = DataType::Float32;
-        action_space["set_orientation_pyr_degrees"] = std::move(box);
+        action_space["set_position_xyz_cm"] = std::move(box);
     } else {
         ASSERT(false);
     }
@@ -133,7 +119,7 @@ std::map<std::string, Box> ImageSamplingAgentController::getObservationSpace() c
                  Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH"}),
                  3};
     box.dtype = DataType::UInteger8;
-    observation_space["visual_observation"] = std::move(box);
+    observation_space["image"] = std::move(box);
 
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
@@ -152,18 +138,18 @@ std::map<std::string, Box> ImageSamplingAgentController::getStepInfoSpace() cons
 void ImageSamplingAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "sample_images") {
-        ASSERT(action.count("set_random_orientation_pyr_deg"));
-        ASSERT(action.count("set_random_agent_height_cms"));
+        ASSERT(action.count("set_orientation_pyr_deg"));
+        ASSERT(action.count("set_agent_height_cm"));
 
-        ASSERT(std::all_of(action.at("set_random_orientation_pyr_deg").begin(), action.at("set_random_orientation_pyr_deg").end(), [](float i) -> bool {return isfinite(i);}));
-        ASSERT(std::all_of(action.at("set_random_agent_height_cms").begin(), action.at("set_random_agent_height_cms").end(), [](float i) -> bool {return isfinite(i);}));
+        ASSERT(std::all_of(action.at("set_orientation_pyr_deg").begin(), action.at("set_orientation_pyr_deg").end(), [](float i) -> bool {return isfinite(i);}));
+        ASSERT(std::all_of(action.at("set_agent_height_cm").begin(), action.at("set_agent_height_cm").end(), [](float i) -> bool {return isfinite(i);}));
 
-        const FRotator random_orientation{ action.at("set_random_orientation_pyr_deg").at(0), action.at("set_random_orientation_pyr_deg").at(1), action.at("set_random_orientation_pyr_deg").at(2) };
+        const FRotator random_orientation{ action.at("set_orientation_pyr_deg").at(0), action.at("set_orientation_pyr_deg").at(1), action.at("set_orientation_pyr_deg").at(2) };
 
         // sample directly from navmesh
         FVector random_position = nav_mesh_->GetRandomPoint().Location;
 
-        random_position.Z = action.at("set_random_agent_height_cms").at(0);
+        random_position.Z = action.at("set_agent_height_cm").at(0);
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
@@ -171,13 +157,13 @@ void ImageSamplingAgentController::applyAction(const std::map<std::string, std::
         camera_actor_->SetActorLocationAndRotation(random_position, random_orientation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
         
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "ACTION_MODE"}) == "replay_sampled_images") {
-        ASSERT(action.count("set_position_xyz_centimeters"));
-        ASSERT(action.count("set_orientation_pyr_degrees"));
-        ASSERT(std::all_of(action.at("set_position_xyz_centimeters").begin(), action.at("set_position_xyz_centimeters").end(), [](float i) -> bool {return isfinite(i);}));
-        ASSERT(std::all_of(action.at("set_orientation_pyr_degrees").begin(), action.at("set_orientation_pyr_degrees").end(), [](float i) -> bool {return isfinite(i);}));
+        ASSERT(action.count("set_position_xyz_cm"));
+        ASSERT(action.count("set_orientation_pyr_deg"));
+        ASSERT(std::all_of(action.at("set_position_xyz_cm").begin(), action.at("set_position_xyz_cm").end(), [](float i) -> bool {return isfinite(i);}));
+        ASSERT(std::all_of(action.at("set_orientation_pyr_deg").begin(), action.at("set_orientation_pyr_deg").end(), [](float i) -> bool {return isfinite(i);}));
 
-        const FVector agent_location {action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
-        const FRotator agent_rotation {action.at("set_orientation_pyr_degrees").at(0), action.at("set_orientation_pyr_degrees").at(1), action.at("set_orientation_pyr_degrees").at(2)};
+        const FVector agent_location {action.at("set_position_xyz_cm").at(0), action.at("set_position_xyz_cm").at(1), action.at("set_position_xyz_cm").at(2)};
+        const FRotator agent_rotation {action.at("set_orientation_pyr_deg").at(0), action.at("set_orientation_pyr_deg").at(1), action.at("set_orientation_pyr_deg").at(2)};
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
@@ -197,26 +183,29 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getObs
     const FRotator orientation = camera_actor_->GetActorRotation();
     observation["pose"] = Serialize::toUint8(std::vector<float>{position.X, position.Y, position.Z, orientation.Roll, orientation.Pitch, orientation.Yaw});
     
-    // get render data
-    std::map<std::string, TArray<FColor>> render_data = camera_sensor_->GetRenderData();
-    TArray<FColor> pixels;
-
-    FTextureRenderTargetResource* target_resource = nullptr;
-    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "rgb") {
-        pixels = render_data.at("final_color");
-    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "seg") {
-        pixels = render_data.at("segmentation");
-    }
-
+    // initialize image data
     std::vector<uint8_t> image(Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_HEIGHT" }) * Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_WIDTH" }) * 3);
 
-    for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
-        image.at(3 * i + 0) = pixels[i].R;
-        image.at(3 * i + 1) = pixels[i].G;
-        image.at(3 * i + 2) = pixels[i].B;
+    // get render data
+    std::map<std::string, TArray<FColor>> render_data = camera_sensor_->GetRenderData();
+
+    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "rgb") {
+        TArray<FColor>& pixels = render_data.at("final_color");
+        for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
+            image.at(3 * i + 0) = pixels[i].R;
+            image.at(3 * i + 1) = pixels[i].G;
+            image.at(3 * i + 2) = pixels[i].B;
+        }
+    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "IMAGE_TYPE" }) == "seg") {
+        TArray<FColor>& pixels = render_data.at("segmentation");
+        for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
+            image.at(3 * i + 0) = pixels[i].R;
+            image.at(3 * i + 1) = pixels[i].G;
+            image.at(3 * i + 2) = pixels[i].B;
+        }
     }
 
-    observation["visual_observation"] = std::move(image);
+    observation["image"] = std::move(image);
 
     return observation;
 }
@@ -228,6 +217,7 @@ std::map<std::string, std::vector<uint8_t>> ImageSamplingAgentController::getSte
 
 void ImageSamplingAgentController::reset()
 {
+    // for debugging purposes
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_DEBUG_POSES" })) {
         std::ofstream myfile;
         std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/poses_for_debug.txt";
