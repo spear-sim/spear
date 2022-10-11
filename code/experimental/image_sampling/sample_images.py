@@ -13,6 +13,36 @@ import time
 from interiorsim import Env
 from interiorsim.config import get_config
 
+
+class CustomEnv(Env):
+
+    def __init__(self, *args, **kwargs):
+        super(CustomEnv, self).__init__(*args, **kwargs)
+
+    def customSetActionTick(self, action):
+        
+        self._begin_tick()
+        self._apply_action(action)
+        self._tick()
+        self._end_tick()
+
+    def customEmptyTick(self):
+        self._begin_tick()
+        self._tick()
+        self._end_tick()
+
+    def customGetObservationTick(self):
+        self._begin_tick()
+        self._tick()
+        obs = self._get_observation()
+        reward = self._get_reward()
+        is_done = self._is_episode_done()
+        step_info = self._get_step_info()
+        self._end_tick()
+
+        return obs, reward, is_done, step_info
+
+
 if sys.platform == "linux":
     PLATFORM = "Linux"
 elif sys.platform == "darwin":
@@ -23,17 +53,10 @@ elif sys.platform == "win32":
 
 if __name__ == "__main__":
 
-    description = "This script expects a certain directory structure for the scenes_path argument. scenes_path folder should be as follows:\n"\
-                    "scenes_path/\n"\
-                    "|-- 2355*.pak\n"\
-                    "|-- 2382*.pak\n"\
-                    "|-- ...\n"\
-                    "\n"\
-                    "After you run this script, expect a output_dir directory like this:\n"\
+    description = "After you run this script, expect a output_dir directory like this:\n"\
                     "output_dir/\n"\
                     "|-- scenes.txt/\n"\
                     "|-- bad_scenes.txt/\n"\
-                    "|-- skipped_scenes.txt/\n"\
                     "|-- Map_2355*/\n"\
                     "|  |--poses.txt\n"\
                     "|  |--IMAGE_TYPE\n"\
@@ -80,7 +103,6 @@ if __name__ == "__main__":
     time_per_scene = open(os.path.join(args.output_dir, "time_per_scene.txt"), "w")
     scenes_sampled = open(os.path.join(args.output_dir, "scenes.txt"), "w")
     bad_scenes = open(os.path.join(args.output_dir, "bad_scenes.txt"), "w")
-    # skipped_scenes = open(os.path.join(args.output_dir, "skipped_scenes.txt"), "w")
 
     # choose scenes from input dir
     # scenes_on_disk = os.listdir(args.scenes_path)
@@ -98,14 +120,16 @@ if __name__ == "__main__":
 
     # number of images per scene based on # of scenes.
     # while debugging just few images from scenes, you can change this number to 10 or 20 or something small
-    NUM_IMAGES_PER_SCENE = 181 # int(args.num_images / len(chosen_scenes)) + 1
+    NUM_IMAGES_PER_SCENE = int(args.num_images / len(chosen_scenes)) + 1
     NUM_IMAGES_PER_FRAME = int(args.num_images_per_frame)
 
-    for scene in chosen_scenes[:1]:
+    for scene in chosen_scenes:
 
         # skip completed scenes
         # if f"Map_{scene}" in completed_scenes:
             # continue
+        if scene != "235554690":
+            continue
 
         print(f"processing scene {scene}")
 
@@ -119,20 +143,11 @@ if __name__ == "__main__":
             # shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
             shutil.copy(os.path.join(args.scenes_path, f"{scene}/paks/Windows/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
 
-
         # check if data path for storing images exists
         if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
             os.makedirs(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
             print(f"collecting images for scene {scene}")
-        # else:
-            # images = os.listdir(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
-            # print(f"scene {scene}, num_images = {len(images)}")
-            # if len(images) == NUM_IMAGES_PER_SCENE:
-                # print(f"scene - {scene} has {len(images)} images already, so skipping.")
-                # skipped_scenes.write(scene)
-                # skipped_scenes.write("\n")
-                # continue
-        
+
         # write headers
         scenes_sampled.write(scene)
         scenes_sampled.write(",")
@@ -145,7 +160,7 @@ if __name__ == "__main__":
 
         # create Env object
         try:
-            env = Env(config)
+            env = CustomEnv(config)
         except:
             bad_scenes.write(scene)
             bad_scenes.write("\n")
@@ -154,39 +169,36 @@ if __name__ == "__main__":
         # reset the simulation
         _ = env.reset()
 
-
         start_time = time.time()
         
         # for NUM_IMAGES_PER_SCENE capture images and pose data
         for i in range(0, NUM_IMAGES_PER_SCENE):
-            env.customSetActionTick({"set_random_orientation_pyr_deg":  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
+            env.customSetActionTick({"set_orientation_pyr_deg":  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
                                                                          rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.YAW_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.YAW_HIGH_DEG),
                                                                          rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_HIGH_DEG)],
-                                     "set_random_agent_height_cms"   :  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_LOW_CMS, high=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_HIGH_CMS)]})
+                                     "set_agent_height_cm"   :  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_LOW_CMS, high=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_HIGH_CMS)]})
 
             for j in range(0, NUM_IMAGES_PER_FRAME - 2):
                 env.customEmptyTick()
-                # cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+                # cv2.imshow("image", obs["image"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
                 # cv2.waitKey(0)
-            
-                # write data
 
             obs, _, _, _ = env.customGetObservationTick()
             output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
 
             assert os.path.exists(output_path) == True
-            return_status = cv2.imwrite(output_path +f"/{i}.png", obs["visual_observation"][:,:,[2,1,0]])
+            return_status = cv2.imwrite(output_path +f"/{i}.png", obs["image"][:,:,[2,1,0]])
             assert return_status == True
 
             pose_csv_writer.writerow([obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
 
-        # close the current environment after collecting required number of images
         stop_time = time.time()
         print(stop_time-start_time)
         time_per_scene.write(f"{scene},")
         time_per_scene.write(str(stop_time - start_time))
         time_per_scene.write("\n")
 
+        # close the current environment after collecting required number of images
         env.close()
         time.sleep(5)
         pose_output_file.close()

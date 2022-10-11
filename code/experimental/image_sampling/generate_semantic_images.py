@@ -7,8 +7,10 @@ import cv2
 
 if __name__ == "__main__":
     
+    description = "This script converts segmentation images in RGB format to 2D images with class labels as pixel values.\n"
+
     # Parse input script arguments
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--input_dir", type=str, help="enter path to stored dataset.", required=True)
     args = parser.parse_args()     
 

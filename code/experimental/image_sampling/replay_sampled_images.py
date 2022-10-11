@@ -38,14 +38,8 @@ def read_recorded_data(args, scene):
     
 if __name__ == "__main__":
 
-    description = "This script expects a certain directory structure for the scenes_path argument. scenes_path folder should be as follows:\n"\
-                    "scenes_path/\n"\
-                    "|-- 2355*.pak\n"\
-                    "|-- 2382*.pak\n"\
-                    "|-- ...\n"\
-                    "\n"\
-                    "This script also expects a certain directory structure for your input_dir. It should be as follows:\n"\
-                    "output_dir/\n"\
+    description = "This script expects a certain directory structure for your input_dir. It should be as follows:\n"\
+                    "input_dir/\n"\
                     "|-- scenes.txt/\n"\
                     "|-- Map_2355*/\n"\
                     "|  |--poses.txt\n"\
@@ -146,14 +140,18 @@ if __name__ == "__main__":
         _ = env.reset()
 
         start_time = time.time()
+
         # iterate over recorded poses
         for index, data in poses.items():
-            env.customSetActionTick({"set_position_xyz_centimeters": [data[0], data[1], data[2]], "set_orientation_pyr_degrees": [data[4], data[5], data[3]]}) # set_orientation_pyr_degrees: [pitch, yaw, roll]
-            for j in range(0, NUM_IMAGES_PER_FRAME - 2):
-                env.customEmptyTick()
-            obs, _, _, _ = env.customGetObservationTick()
-
-            # obs, _, _, _ = env.step({"set_position_xyz_centimeters": [data[0], data[1], data[2]], "set_orientation_pyr_degrees": [data[4], data[5], data[3]]}) # set_orientation_pyr_degrees: [pitch, yaw, roll]
+            if config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE == "rgb":
+                env.customSetActionTick({"set_position_xyz_cm": [data[0], data[1], data[2]], "set_orientation_pyr_deg": [data[4], data[5], data[3]]}) # set_orientation_pyr_deg: [pitch, yaw, roll]
+                for j in range(0, NUM_IMAGES_PER_FRAME - 2):
+                    env.customEmptyTick()
+                obs, _, _, _ = env.customGetObservationTick()
+            elif config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE == "seg":
+                obs, _, _, _ = env.step({"set_position_xyz_cm": [data[0], data[1], data[2]], "set_orientation_pyr_deg": [data[4], data[5], data[3]]}) # set_orientation_pyr_deg: [pitch, yaw, roll]
+            else:
+                assert False, "image_type in config file is not supported. Supported types are 'rgb' and 'seg'."
 
             assert obs["pose"].all() == np.array(data).all()
 
@@ -161,15 +159,16 @@ if __name__ == "__main__":
             # cv2.imshow(f"recorded image", images[index]) # OpenCV expects BGR instead of rgb
             # cv2.waitKey(0)
 
-            # write data
             output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
             assert os.path.exists(output_path) == True
 
+            # write data
             return_status = cv2.imwrite(output_path +f"/{index}.png", obs["visual_observation"][:,:,[2,1,0]])
             assert return_status == True
         
         stop_time = time.time()
         env.close()
+
         print(f"elapsed time for scene {scene}", stop_time-start_time)
         time.sleep(5)
         os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")  
