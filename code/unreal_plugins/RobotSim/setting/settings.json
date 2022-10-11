@@ -3,10 +3,10 @@
     "SimMode": "",
     "PawnPaths": {
         "UrdfBot": {
-          "UrdfFile": "fetch.xml",
-          "EndEffectorLink": "gripper_link",
-          "ScaleFactor": 0.5,
-          "EnableKeyboard": false
+            "UrdfFile": "fetch.xml",
+            "EndEffectorLink": "gripper_link",
+            "ScaleFactor": 0.5,
+            "EnableKeyboard": false
         },
         "SimpleVehicle": {
             "PawnBP": "/RobotSim/SimpleVehicle/OpenBot/BP_OpenBot.BP_OpenBot_C",
