@@ -2,7 +2,6 @@
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 #include "SimpleVehiclePawn.h"
-
 //#include "Camera/CameraComponent.h"
 //#include "GameFramework/SpringArmComponent.h"
 #include "SimpleWheel.h"

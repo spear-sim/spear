@@ -10,7 +10,6 @@
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
-#include <Kismet/KismetSystemLibrary.h>
 #include <Materials/MaterialInstanceDynamic.h>
 #include <UObject/UObjectGlobals.h>
 
@@ -60,8 +59,6 @@ CameraSensor::CameraSensor(AActor* actor, std::vector<std::string> pass_names, u
 
         // Insert into map
         camera_passes_[pass_name] = std::move(pass);
-
-        UKismetSystemLibrary::ExecuteConsoleCommand(actor->GetWorld(), FString("g.TimeoutForBlockOnRenderFence 300000"));
     }
 }
 
