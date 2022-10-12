@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import h5py
 
-import mayavi.mlab
+import mayavi.mlab # https://docs.enthought.com/mayavi/mayavi/installation.html
 
 import os
 
