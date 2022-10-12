@@ -42,5 +42,4 @@ private:
     UWorld* world_ = nullptr;
 
     void rebuildNavSystem();
-    void TweakLights();
 };

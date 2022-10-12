@@ -70,7 +70,15 @@ void ImageSamplingAgentController::findObjectReferences(UWorld* world)
     rebuildNavSystem();
 
     // find references to spotlights and remove them
-    TweakLights();
+    TArray<AActor*> actors;
+    UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), actors);
+
+    for (int i = 0; i < actors.Num(); i++) {
+        ASpotLight* spot_light = Cast<ASpotLight>(actors[i]);
+        if (spot_light != nullptr) {
+            spot_light->Destroy();
+        }
+    }
 }
 
 void ImageSamplingAgentController::cleanUpObjectReferences()
@@ -237,19 +245,6 @@ bool ImageSamplingAgentController::isReady() const
     return true;
 }
 
-void ImageSamplingAgentController::TweakLights()
-{
-    TArray<AActor*> actors;
-    UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), actors);
-
-    for (int i = 0; i < actors.Num(); i++) {
-        ASpotLight* spot_light = Cast<ASpotLight>(actors[i]);
-        if (spot_light != nullptr) {
-            spot_light->Destroy();
-        }
-    }
-}
-
 void ImageSamplingAgentController::rebuildNavSystem()
 {
     UNavigationSystemV1* nav_sys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world_);
@@ -272,7 +267,7 @@ void ImageSamplingAgentController::rebuildNavSystem()
 
     for (TActorIterator<ANavMeshBoundsVolume> it(world_); it; ++it) {
         std::string actor_name = TCHAR_TO_UTF8(*(*it)->GetName());
-        UE_LOG(LogTemp, Warning, TEXT("NavmeshBoundvVolume name is %s"), *(*it)->GetName());
+        UE_LOG(LogTemp, Warning, TEXT("NavmeshBoundsVolume name is %s"), *(*it)->GetName());
         //nav_mesh_bounds_volume = *it;
 
         if (!nav_mesh_bounds_volume_1) {
@@ -284,7 +279,7 @@ void ImageSamplingAgentController::rebuildNavSystem()
    
     //ASSERT(nav_mesh_bounds_volume);
     ASSERT(nav_mesh_bounds_volume_1);
-    //ASSERT(nav_mesh_bounds_volume_2);
+    ASSERT(nav_mesh_bounds_volume_2);
     
     if (nav_mesh_bounds_volume_2) {
         nav_mesh_bounds_volume_2->Destroy();
@@ -307,23 +302,16 @@ void ImageSamplingAgentController::rebuildNavSystem()
     nav_mesh_->TileSizeUU = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "TILE_SIZE_UU"});
     nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
     nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
-    // Dynamic update navMesh location and size
 
     // get world bounding box
-    FBox box(ForceInit);
+    FBox worldBox(ForceInit);
     for (TActorIterator<AActor> it(world_); it; ++it) {
         if (it->ActorHasTag("architecture") || it->ActorHasTag("furniture")) {
-            box += it->GetComponentsBoundingBox(false, true);
+            worldBox += it->GetComponentsBoundingBox(false, true);
         }
     }
 
-    //UE_LOG(LogTemp, Warning, TEXT("Before: Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
-    //UE_LOG(LogTemp, Warning, TEXT("Before: Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Max.Z);
-    //UE_LOG(LogTemp, Warning, TEXT("0 Afer: Box Min Vector is (%f, %f, %f)"), box.Min.X, box.Min.Y, box.Min.Z);
-    //UE_LOG(LogTemp, Warning, TEXT("0 Afer: Box Max Vector is (%f, %f, %f)"), box.Max.X, box.Max.Y, box.Min.Z+10.0);
-    //return box;
-
-    FBox worldBox(box.Min, FVector(box.Max.X, box.Max.Y, box.Min.Z + Config::getValue<float>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "NAV_BOUND_BOX_HEIGHT_ABOVE_MIN" })));
+    //FBox worldBox(box.Min, FVector(box.Max.X, box.Max.Y, box.Min.Z + Config::getValue<float>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "NAVMESH", "NAV_BOUND_BOX_HEIGHT_ABOVE_MIN" })));
 
     nav_mesh_bounds_volume_1->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_mesh_bounds_volume_1->SetActorLocation(worldBox.GetCenter(), false);
@@ -344,19 +332,13 @@ void ImageSamplingAgentController::rebuildNavSystem()
 
     const FBox box_1 = nav_mesh_bounds_volume_1->GetComponentsBoundingBox(true, true);
 
-    UE_LOG(LogTemp, Warning, TEXT("1 After nav_mesh_bounds_volume_1 : Box Min Vector is (%f, %f, %f)"), box_1.Min.X, box_1.Min.Y, box_1.Min.Z);
-    UE_LOG(LogTemp, Warning, TEXT("1 After nav_mesh_bounds_volume_1 : Box Max Vector is (%f, %f, %f)"), box_1.Max.X, box_1.Max.Y, box_1.Max.Z);
-
-    //if (nav_mesh_bounds_volume_2) {
-    //    const FBox box_2 = nav_mesh_bounds_volume_2->GetComponentsBoundingBox(true, true);
-    //    UE_LOG(LogTemp, Warning, TEXT("1 After nav_mesh_bounds_volume_2 : Box Min Vector is (%f, %f, %f)"), box_2.Min.X, box_2.Min.Y, box_2.Min.Z);
-    //    UE_LOG(LogTemp, Warning, TEXT("1 After nav_mesh_bounds_volume_2 : Box Max Vector is (%f, %f, %f)"), box_2.Max.X, box_2.Max.Y, box_2.Max.Z);
-    //}
+    UE_LOG(LogTemp, Warning, TEXT("After nav_mesh_bounds_volume_1 : Box Min Vector is (%f, %f, %f)"), box_1.Min.X, box_1.Min.Y, box_1.Min.Z);
+    UE_LOG(LogTemp, Warning, TEXT("After nav_mesh_bounds_volume_1 : Box Max Vector is (%f, %f, %f)"), box_1.Max.X, box_1.Max.Y, box_1.Max.Z);
 
     const FBox box_mod = nav_modifier_volume->GetComponentsBoundingBox(true, true);
 
-    UE_LOG(LogTemp, Warning, TEXT("1 After nav_modifier_volume : Box Min Vector is (%f, %f, %f)"), box_mod.Min.X, box_mod.Min.Y, box_mod.Min.Z);
-    UE_LOG(LogTemp, Warning, TEXT("1 After nav_modifier_volume : Box Max Vector is (%f, %f, %f)"), box_mod.Max.X, box_mod.Max.Y, box_mod.Max.Z);
+    UE_LOG(LogTemp, Warning, TEXT("After nav_modifier_volume : Box Min Vector is (%f, %f, %f)"), box_mod.Min.X, box_mod.Min.Y, box_mod.Min.Z);
+    UE_LOG(LogTemp, Warning, TEXT("After nav_modifier_volume : Box Max Vector is (%f, %f, %f)"), box_mod.Max.X, box_mod.Max.Y, box_mod.Max.Z);
 
     const FVector nav_mesh_scale_relative = nav_mesh_bounds_volume_1->GetActorRelativeScale3D();
     const FVector nav_modifier_scale_relative = nav_modifier_volume->GetActorRelativeScale3D();
@@ -370,14 +352,14 @@ void ImageSamplingAgentController::rebuildNavSystem()
 
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "EXPORT_NAV_DATA_DEBUG_POSES" })) {
         std::ofstream myfile;
-        std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/nav_bounds_for_debug.txt";
+        std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/navmeshboundsvolume_bounds.txt";
         myfile.open(file);
         myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
-        myfile << box.Min.X << "," << box.Min.Y << "," << box.Min.Z << "\n";
-        myfile << box.Max.X << "," << box.Max.Y << "," << box.Max.Z << "\n";
+        myfile << box_1.Min.X << "," << box_1.Min.Y << "," << box_1.Min.Z << "\n";
+        myfile << box_1.Max.X << "," << box_1.Max.Y << "," << box_1.Max.Z << "\n";
         myfile.close();
 
-        file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/nav_mod_bounds_for_debug.txt";
+        file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IMAGE_SAMPLING_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/navmodvolume_bounds.txt";
         myfile.open(file);
         myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
         myfile << box_mod.Min.X << "," << box_mod.Min.Y << "," << box_mod.Min.Z << "\n";
