@@ -124,7 +124,7 @@ class Env(gym.Env):
             time.sleep(1.0)
             try:
                 status = self._process.status()
-            except psutil.NoSuchProcess:
+            except psutil.NoSuchProcess: # On Windows OS, psutil.Process.status() throws psutil.NoSuchProcess exception if the process does not exist anymore.
                 break
 
         print("Finished closing Unreal instance.")
@@ -276,7 +276,7 @@ class Env(gym.Env):
 
         if not connected:
             if self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
-                print("ERROR: Couldn't connect, killing process. " + str(self._process.pid) + "...")
+                print("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
                 self._force_kill_unreal_instance()
                 self._close_client_server_connection()
             assert False
