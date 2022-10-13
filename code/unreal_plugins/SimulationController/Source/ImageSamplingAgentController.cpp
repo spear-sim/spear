@@ -66,15 +66,15 @@ ImageSamplingAgentController::~ImageSamplingAgentController()
 
 void ImageSamplingAgentController::findObjectReferences(UWorld* world)
 {
-    // find references to navmeshboundvolume and navmodifier volume and rebuild navsystem. Storing nav_mesh_ reference here
+    // find references to navmeshboundvolume and navmodifiervolume, update navmesh properties and rebuild navsystem. Store nav_mesh_ reference here
     rebuildNavSystem();
 
     // find references to spotlights and remove them
-    TArray<AActor*> actors;
-    UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), actors);
+    TArray<AActor*> light_actors;
+    UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), light_actors);
 
-    for (int i = 0; i < actors.Num(); i++) {
-        ASpotLight* spot_light = Cast<ASpotLight>(actors[i]);
+    for (int i = 0; i < light_actors.Num(); i++) {
+        ASpotLight* spot_light = Cast<ASpotLight>(light_actors[i]);
         if (spot_light != nullptr) {
             spot_light->Destroy();
         }
@@ -279,7 +279,7 @@ void ImageSamplingAgentController::rebuildNavSystem()
    
     //ASSERT(nav_mesh_bounds_volume);
     ASSERT(nav_mesh_bounds_volume_1);
-    ASSERT(nav_mesh_bounds_volume_2);
+    //ASSERT(nav_mesh_bounds_volume_2);
     
     if (nav_mesh_bounds_volume_2) {
         nav_mesh_bounds_volume_2->Destroy();
