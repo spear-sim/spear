@@ -12,7 +12,7 @@ public class SimulationController : ModuleRules
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "NavigationSystem", "PhysX", "PhysXVehicles", "PhysXVehicleLib", "RenderCore", "RHI", "RobotSim"});
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "NavigationSystem", "PhysX", "PhysXVehicles", "PhysXVehicleLib", "RenderCore", "RHI", "RobotSim" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
