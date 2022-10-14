@@ -37,10 +37,10 @@ CameraSensor::CameraSensor(AActor* actor, std::vector<std::string> pass_names, u
         ASSERT(texture_render_target);
         
         // Set Camera Parameters
-        SetCameraParameters(scene_capture_component, texture_render_target, width, height);
+        setCameraParameters(scene_capture_component, texture_render_target, width, height);
 
         if (pass_name != "final_color") {
-            SetCameraParametersNonFinalColor(scene_capture_component, texture_render_target, width, height);
+            setCameraParametersNonFinalColor(scene_capture_component, texture_render_target, width, height);
 
             // Load PostProcessMaterial
             FString path = (MATERIALS_PATH + pass_name + "." + pass_name).c_str();
@@ -77,7 +77,7 @@ CameraSensor::~CameraSensor()
     camera_passes_.clear();
 }
 
-std::map<std::string, TArray<FColor>> CameraSensor::GetRenderData()
+std::map<std::string, TArray<FColor>> CameraSensor::getRenderData()
 {
     std::map<std::string, TArray<FColor>> data;
 
@@ -116,7 +116,7 @@ std::map<std::string, TArray<FColor>> CameraSensor::GetRenderData()
 
 // depth codification
 // decode formula : depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
-std::vector<float> CameraSensor::FColorDepthToFloatDepth(TArray<FColor> data)
+std::vector<float> CameraSensor::fColorDepthToFloatDepth(TArray<FColor> data)
 {
     std::vector<float> out;
     for (uint32 i = 0; i < static_cast<uint32>(data.Num()); ++i) {
@@ -128,7 +128,7 @@ std::vector<float> CameraSensor::FColorDepthToFloatDepth(TArray<FColor> data)
     return out;
 }
 
-void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height)
+void CameraSensor::setCameraParameters(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height)
 {
     // SET BASIC PARAMETERS
     scene_capture_component->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
@@ -440,7 +440,7 @@ void CameraSensor::SetCameraParameters(USceneCaptureComponent2D* scene_capture_c
     //scene_capture_component->ShowFlags.SetWireframe(false);
 }
 
-void CameraSensor::SetCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height)
+void CameraSensor::setCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height)
 {
     scene_capture_component->ShowFlags.EnableAdvancedFeatures();
     scene_capture_component->ShowFlags.SetMotionBlur(true);
