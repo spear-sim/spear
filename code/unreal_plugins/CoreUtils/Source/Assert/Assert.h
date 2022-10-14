@@ -276,7 +276,7 @@
     #define PPK_STATIC_ASSERT_0(expression, message) static_assert(expression, message)
   #else
     #define PPK_STATIC_ASSERT_0(expression, message)\
-      struct  COREUTILS_API PPK_ASSERT_JOIN(_ppk_static_assertion_at_line_, PPK_ASSERT_LINE)\
+      struct PPK_ASSERT_JOIN(_ppk_static_assertion_at_line_, PPK_ASSERT_LINE)\
       {\
         ppk::assert::implementation::StaticAssertion<static_cast<bool>((expression))> PPK_ASSERT_JOIN(STATIC_ASSERTION_FAILED_AT_LINE_, PPK_ASSERT_LINE);\
       };\
@@ -294,15 +294,15 @@
     namespace implementation {
 
       template <bool>
-      struct COREUTILS_API StaticAssertion;
+      struct StaticAssertion;
 
       template <>
-      struct COREUTILS_API StaticAssertion<true>
+      struct StaticAssertion<true>
       {
       }; // StaticAssertion<true>
 
       template<int i>
-      struct COREUTILS_API StaticAssertionTest
+      struct StaticAssertionTest
       {
       }; // StaticAssertionTest<int>
 
@@ -341,9 +341,9 @@
   namespace assert {
 
   #if !defined(PPK_ASSERT_DISABLE_STL)
-    class COREUTILS_API AssertionException: public std::exception
+    class AssertionException: public std::exception
   #else
-    class COREUTILS_API AssertionException
+    class AssertionException
   #endif
     {
       public:
@@ -541,7 +541,7 @@
   #else
 
     template<int level, typename T>
-    class COREUTILS_API AssertUsedWrapper
+    class AssertUsedWrapper
     {
       public:
       AssertUsedWrapper(const T& t);
