@@ -77,7 +77,7 @@ def build_libs(args):
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    elif sys.platform == "win32" or sys.platform == "darwin":
+    elif sys.platform == "darwin" or sys.platform == "win32":
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)

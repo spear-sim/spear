@@ -1,6 +1,7 @@
-    #pragma once
+#pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -13,13 +14,13 @@ class UWorld;
 
 struct Box;
 
-class ImageSamplingAgentController : public AgentController
+class CameraAgentController : public AgentController
 {
 public:
 
     // This UWorld pointer passed here points to the only running game world.
-    ImageSamplingAgentController(UWorld* world);
-    ~ImageSamplingAgentController();
+    CameraAgentController(UWorld* world);
+    ~CameraAgentController();
     
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
@@ -36,10 +37,11 @@ public:
     bool isReady() const override;
     
 private:
+
+    void buildNavMesh();
+
     AActor* camera_actor_ = nullptr; 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
-    UWorld* world_ = nullptr;
-
-    void rebuildNavSystem();
+    UWorld* world_ = nullptr;    
 };
