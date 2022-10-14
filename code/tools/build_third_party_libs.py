@@ -43,19 +43,23 @@ def build_libs(args):
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
     elif sys.platform == "darwin":
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
     elif sys.platform == "win32":
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_FLAGS='/bigobj'", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
     else:
         assert False, "This OS is not supported."
-    assert cmake_cmd.returncode == 0
-
-    cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
+    
     print(f"Executing cmd: {' '.join(cmake_args)}")
     cmake_cmd = subprocess.run(cmake_args)
     assert cmake_cmd.returncode == 0
@@ -77,15 +81,21 @@ def build_libs(args):
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    elif sys.platform == "darwin" or sys.platform == "win32":
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "darwin":
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    else:
-        assert False, "This OS is not supported."
-    assert cmake_cmd.returncode == 0
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "win32":
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        print(f"Executing cmd: {' '.join(cmake_args)}")
+        cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
 
-    cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(cmake_args)}")
     cmake_cmd = subprocess.run(cmake_args)
     assert cmake_cmd.returncode == 0
@@ -107,15 +117,21 @@ def build_libs(args):
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    elif sys.platform == "darwin" or sys.platform == "win32":
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "darwin":
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    else:
-        assert False, "This OS is not supported."
-    assert cmake_cmd.returncode == 0
-
-    cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "win32":
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        print(f"Executing cmd: {' '.join(cmake_args)}")
+        cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
+    
     print(f"Executing cmd: {' '.join(cmake_args)}")
     cmake_cmd = subprocess.run(cmake_args)
     assert cmake_cmd.returncode == 0
