@@ -57,8 +57,8 @@ def build_libs(args):
 
     cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(cmake_args)}")
-    build_cmd = subprocess.run(cmake_args)
-    assert build_cmd.returncode == 0
+    cmake_cmd = subprocess.run(cmake_args)
+    assert cmake_cmd.returncode == 0
     print("rbdl built successfully...")
 
     #
@@ -87,8 +87,8 @@ def build_libs(args):
 
     cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(cmake_args)}")
-    build_cmd = subprocess.run(cmake_args)
-    assert build_cmd.returncode == 0
+    cmake_cmd = subprocess.run(cmake_args)
+    assert cmake_cmd.returncode == 0
     print("rpclib built successfully...")
 
     #
@@ -107,22 +107,18 @@ def build_libs(args):
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    elif sys.platform == "darwin":
+    elif sys.platform == "darwin" or sys.platform == "win32":
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    elif sys.platform == "win32":
-        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", "-DYAML_BUILD_SHARED_LIBS=ON", ".."]
-        print(f"Executing cmd: {' '.join(cmake_args)}")
-        cmake_cmd = subprocess.run(cmake_args)    
     else:
         assert False, "This OS is not supported."
     assert cmake_cmd.returncode == 0
 
     cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
     print(f"Executing cmd: {' '.join(cmake_args)}")
-    build_cmd = subprocess.run(cmake_args)
-    assert build_cmd.returncode == 0
+    cmake_cmd = subprocess.run(cmake_args)
+    assert cmake_cmd.returncode == 0
     print("yaml-cpp built successfully...")
 
 
