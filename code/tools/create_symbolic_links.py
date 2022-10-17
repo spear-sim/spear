@@ -1,7 +1,6 @@
 import json
 import os
-import subprocess
-import sys
+
 
 SCRIPT_DIR_PATH      = os.path.dirname(os.path.abspath(__file__))
 UNREAL_PROJECTS_PATH = os.path.join(SCRIPT_DIR_PATH, "..", "unreal_projects")
@@ -10,12 +9,12 @@ THIRD_PARTY_PATH     = os.path.join(SCRIPT_DIR_PATH, "..", "third_party")
 
 
 def create_symlink(src, dst):
-    if sys.platform == "win32":
-        # use different way for windows to avoid privilege requirement
-        subprocess.run(["mklink", "/D", dst, src], shell=True)
-    else:
+    try:
         os.symlink(src, dst)
-
+    except OSError as e:
+        print(e)
+        print("\n\n\nIf you are running this script on Windows OS, you need to run it in a terminal with admin privileges.\n\n")
+        exit(1)
 
 def create_symbolic_links():
 
