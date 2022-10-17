@@ -8,8 +8,11 @@
 #include "AgentController.h"
 
 class AActor;
+class ANavMeshBoundsVolume;
+class ANavModifierVolume;
 class ARecastNavMesh;
 class CameraSensor;
+class UNavigationSystemV1;
 class UWorld;
 
 struct Box;
@@ -38,7 +41,7 @@ public:
     
 private:
 
-    void buildNavMesh();
+    void buildNavMesh(UNavigationSystemV1* nav_sys, ANavMeshBoundsVolume* nav_mesh_bounds_volume, ANavModifierVolume* nav_modifier_volume);
 
     AActor* camera_actor_ = nullptr; 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;

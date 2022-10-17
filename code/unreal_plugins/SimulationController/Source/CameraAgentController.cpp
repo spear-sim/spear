@@ -64,9 +64,6 @@ CameraAgentController::~CameraAgentController()
 
 void CameraAgentController::findObjectReferences(UWorld* world)
 {
-    // find necessary references to navmeshboundvolume and navmodifiervolume, update navmesh properties and build navmesh. Store nav_mesh_ reference here
-    buildNavMesh();
-
     // HACK: find references to spotlights and remove them
     TArray<AActor*> light_actors;
     UGameplayStatics::GetAllActorsOfClass(world_, ALight::StaticClass(), light_actors);
@@ -77,6 +74,37 @@ void CameraAgentController::findObjectReferences(UWorld* world)
             spot_light->Destroy();
         }
     }
+
+    // find necessary references to navmeshboundvolume and navmodifiervolume
+    UNavigationSystemV1* nav_sys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world_);
+    ASSERT(nav_sys);
+
+    FNavAgentProperties agent_properties;
+    agent_properties.AgentHeight = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT" });
+    agent_properties.AgentRadius = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS" });
+    agent_properties.AgentStepHeight = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT" });
+
+    ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
+    ASSERT(nav_data);
+
+    nav_mesh_ = Cast<ARecastNavMesh>(nav_data);
+    ASSERT(nav_mesh_);
+
+    ANavMeshBoundsVolume* nav_mesh_bounds_volume = nullptr;
+
+    for (TActorIterator<ANavMeshBoundsVolume> it(world_); it; ++it) {
+        nav_mesh_bounds_volume = *it;
+    }
+    ASSERT(nav_mesh_bounds_volume);
+
+    ANavModifierVolume* nav_modifier_volume = nullptr;
+    for (TActorIterator<ANavModifierVolume> it(world_); it; ++it) {
+        nav_modifier_volume = *it;
+    }
+    ASSERT(nav_modifier_volume);
+
+    // build navmesh based on properties from config file
+    buildNavMesh(nav_sys, nav_mesh_bounds_volume, nav_modifier_volume);
 }
 
 void CameraAgentController::cleanUpObjectReferences()
@@ -191,7 +219,6 @@ void CameraAgentController::reset()
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "EXPORT_NAV_DATA_DEBUG_POSES" })) {
         std::ofstream myfile;
         std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/poses_for_debug.txt";
-        //UE_LOG(LogTemp, Warning, TEXT("printing filename for storing debug poses %s"), UTF8_TO_TCHAR(file.c_str()));
         myfile.open(file);
         myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
         for (size_t i = 0u; i < Config::getValue<size_t>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "DEBUG_POSES_NUM" }); ++i) {
@@ -207,53 +234,8 @@ bool CameraAgentController::isReady() const
     return true;
 }
 
-void CameraAgentController::buildNavMesh()
-{
-    UNavigationSystemV1* nav_sys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world_);
-    ASSERT(nav_sys);
-
-    FNavAgentProperties agent_properties;
-    agent_properties.AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
-    agent_properties.AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
-    agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
-
-    ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
-    ASSERT(nav_data);
-
-    nav_mesh_ = Cast<ARecastNavMesh>(nav_data);
-    ASSERT(nav_mesh_);
-
-    ANavMeshBoundsVolume* nav_mesh_bounds_volume_1 = nullptr;
-    ANavMeshBoundsVolume* nav_mesh_bounds_volume_2 = nullptr;
-    //ANavMeshBoundsVolume* nav_mesh_bounds_volume = nullptr;
-
-    for (TActorIterator<ANavMeshBoundsVolume> it(world_); it; ++it) {
-        std::string actor_name = TCHAR_TO_UTF8(*(*it)->GetName());
-        UE_LOG(LogTemp, Warning, TEXT("NavmeshBoundsVolume name is %s"), *(*it)->GetName());
-        //nav_mesh_bounds_volume = *it;
-
-        if (!nav_mesh_bounds_volume_1) {
-            nav_mesh_bounds_volume_1 = *it;
-        } else if (!nav_mesh_bounds_volume_2) {
-            nav_mesh_bounds_volume_2 = *it;
-        }
-    }
-   
-    //ASSERT(nav_mesh_bounds_volume);
-    ASSERT(nav_mesh_bounds_volume_1);
-    //ASSERT(nav_mesh_bounds_volume_2);
-    
-    if (nav_mesh_bounds_volume_2) {
-        nav_mesh_bounds_volume_2->Destroy();
-        nav_mesh_bounds_volume_2 = nullptr;
-    }
-
-    ANavModifierVolume* nav_modifier_volume = nullptr;
-    for (TActorIterator<ANavModifierVolume> it(world_); it; ++it) {
-        nav_modifier_volume = *it;
-    }
-    ASSERT(nav_modifier_volume);
- 
+void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys, ANavMeshBoundsVolume* nav_mesh_bounds_volume, ANavModifierVolume* nav_modifier_volume)
+{ 
     // Set the NavMesh properties:
     nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "CELL_SIZE"});
     nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "CELL_HEIGHT"});
@@ -279,60 +261,23 @@ void CameraAgentController::buildNavMesh()
     }
 
     // update navmeshboundsvolume
-    nav_mesh_bounds_volume_1->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    nav_mesh_bounds_volume_1->SetActorLocation(world_box.GetCenter(), false);
-    nav_mesh_bounds_volume_1->SetActorRelativeScale3D(world_box.GetSize() / 200.0f);
-    nav_mesh_bounds_volume_1->GetRootComponent()->UpdateBounds();
-    nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds_volume_1);
-    nav_mesh_bounds_volume_1->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    nav_mesh_bounds_volume->SetActorLocation(world_box.GetCenter(), false);
+    nav_mesh_bounds_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.0f);
+    nav_mesh_bounds_volume->GetRootComponent()->UpdateBounds();
+    nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
+    nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
     // update navmodifiervolume
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
     nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
-    nav_modifier_volume->AddActorWorldOffset(FVector(0, 0, 10.f));
+    nav_modifier_volume->AddActorWorldOffset(FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "NAV_MODIFIER_OFFSET_Z" })));
     nav_modifier_volume->GetRootComponent()->UpdateBounds();
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
     nav_modifier_volume->RebuildNavigationData();
 
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
-
-    const FBox box_1 = nav_mesh_bounds_volume_1->GetComponentsBoundingBox(true, true);
-
-    UE_LOG(LogTemp, Warning, TEXT("After nav_mesh_bounds_volume_1 : Box Min Vector is (%f, %f, %f)"), box_1.Min.X, box_1.Min.Y, box_1.Min.Z);
-    UE_LOG(LogTemp, Warning, TEXT("After nav_mesh_bounds_volume_1 : Box Max Vector is (%f, %f, %f)"), box_1.Max.X, box_1.Max.Y, box_1.Max.Z);
-
-    const FBox box_mod = nav_modifier_volume->GetComponentsBoundingBox(true, true);
-
-    UE_LOG(LogTemp, Warning, TEXT("After nav_modifier_volume : Box Min Vector is (%f, %f, %f)"), box_mod.Min.X, box_mod.Min.Y, box_mod.Min.Z);
-    UE_LOG(LogTemp, Warning, TEXT("After nav_modifier_volume : Box Max Vector is (%f, %f, %f)"), box_mod.Max.X, box_mod.Max.Y, box_mod.Max.Z);
-
-    const FVector nav_mesh_scale_relative = nav_mesh_bounds_volume_1->GetActorRelativeScale3D();
-    const FVector nav_modifier_scale_relative = nav_modifier_volume->GetActorRelativeScale3D();
-    UE_LOG(LogTemp, Warning, TEXT("navmesh relative scale 3D is (%f, %f, %f)"), nav_mesh_scale_relative.X, nav_mesh_scale_relative.Y, nav_mesh_scale_relative.Z);
-    UE_LOG(LogTemp, Warning, TEXT("navmodifier relative scale 3D is (%f, %f, %f)"), nav_modifier_scale_relative.X, nav_modifier_scale_relative.Y, nav_modifier_scale_relative.Z);
-
-    const FVector nav_mesh_scale_world = nav_mesh_bounds_volume_1->GetActorScale3D();
-    const FVector nav_modifier_scale_world = nav_modifier_volume->GetActorScale3D();
-    UE_LOG(LogTemp, Warning, TEXT("navmesh world scale 3D is (%f, %f, %f)"), nav_mesh_scale_world.X, nav_mesh_scale_world.Y, nav_mesh_scale_world.Z);
-    UE_LOG(LogTemp, Warning, TEXT("navmodifier world scale 3D is (%f, %f, %f)"), nav_modifier_scale_world.X, nav_modifier_scale_world.Y, nav_modifier_scale_world.Z);
-
-    if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "EXPORT_NAV_DATA_DEBUG_POSES" })) {
-        std::ofstream myfile;
-        std::string file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/navmeshboundsvolume_bounds.txt";
-        myfile.open(file);
-        myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
-        myfile << box_1.Min.X << "," << box_1.Min.Y << "," << box_1.Min.Z << "\n";
-        myfile << box_1.Max.X << "," << box_1.Max.Y << "," << box_1.Max.Z << "\n";
-        myfile.close();
-
-        file = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }) + "/" + std::string(TCHAR_TO_UTF8(*(world_->GetName()))) + "/navmodvolume_bounds.txt";
-        myfile.open(file);
-        myfile << "pos_x_cm,pos_y_cm,pos_z_cm\n";
-        myfile << box_mod.Min.X << "," << box_mod.Min.Y << "," << box_mod.Min.Z << "\n";
-        myfile << box_mod.Max.X << "," << box_mod.Max.Y << "," << box_mod.Max.Z << "\n";
-        myfile.close();
-    }
 
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "EXPORT_NAV_DATA_OBJ"})) {
         nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "DEBUG_POSES_DIR" }).c_str()) + "/" + world_->GetName() + "/");
