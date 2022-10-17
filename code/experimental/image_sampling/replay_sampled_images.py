@@ -112,6 +112,9 @@ if __name__ == "__main__":
 
     for scene in scenes:
 
+        if scene != "237101160":
+            continue
+
         print()
         print(f"running through scene {scene}...")
         
@@ -121,15 +124,13 @@ if __name__ == "__main__":
         config.freeze()
 
         # copy pak from ssd to disk
-        if not os.path.exists(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak"):
+        # if not os.path.exists(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak"):
             # shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
-            shutil.copy(os.path.join(args.scenes_path, f"{scene}/paks/Windows/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
+            # shutil.copy(os.path.join(args.scenes_path, f"{scene}/paks/Windows/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
 
         # check if data path for storing images, exists
-        if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
-            os.makedirs(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
-
-        assert config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.ACTION_MODE == "replay_sampled_images"
+        if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}")):
+            os.makedirs(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}"))
 
         poses = read_recorded_data(args, scene)
 
@@ -143,27 +144,25 @@ if __name__ == "__main__":
 
         # iterate over recorded poses
         for index, data in poses.items():
-            if config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE == "rgb":
-                env.customSetActionTick({"set_position_xyz_cm": [data[0], data[1], data[2]], "set_orientation_pyr_deg": [data[4], data[5], data[3]]}) # set_orientation_pyr_deg: [pitch, yaw, roll]
+            if "final_color" in config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES:
+                env.customSetActionTick({"set_pose": [data[0], data[1], data[2], data[4], data[5], data[3]]}) # set_pose: [x, y, z, pitch, yaw, roll]
                 for j in range(0, NUM_IMAGES_PER_FRAME - 2):
                     env.customEmptyTick()
                 obs, _, _, _ = env.customGetObservationTick()
-            elif config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE == "seg":
-                obs, _, _, _ = env.step({"set_position_xyz_cm": [data[0], data[1], data[2]], "set_orientation_pyr_deg": [data[4], data[5], data[3]]}) # set_orientation_pyr_deg: [pitch, yaw, roll]
+            elif "segmentation" in config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES:
+                obs, _, _, _ = env.step({"set_pose": [data[0], data[1], data[2], data[4], data[5], data[3]]}) # set_pose: [x, y, z, pitch, yaw, roll]
             else:
-                assert False, "image_type in config file is not supported. Supported types are 'rgb' and 'seg'."
+                assert False, "render pass mode in config file is not supported. Supported types are 'final_color' and 'segmentation'."
 
-            assert obs["pose"].all() == np.array(data).all()
-
-            # cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of rgb
+            # cv2.imshow(f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}", obs[f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
             # cv2.imshow(f"recorded image", images[index]) # OpenCV expects BGR instead of rgb
             # cv2.waitKey(0)
 
-            output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
+            output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}")
             assert os.path.exists(output_path) == True
 
             # write data
-            return_status = cv2.imwrite(output_path +f"/{index}.png", obs["visual_observation"][:,:,[2,1,0]])
+            return_status = cv2.imwrite(output_path +f"/{index}.png", obs[f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}"][:,:,[2,1,0]])
             assert return_status == True
         
         stop_time = time.time()

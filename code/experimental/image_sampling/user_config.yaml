@@ -12,19 +12,20 @@ INTERIORSIM:
 
 SIMULATION_CONTROLLER:
   TASK_NAME: "NullTask"
-  AGENT_CONTROLLER_NAME: "ImageSamplingAgentController"
+  AGENT_CONTROLLER_NAME: "CameraAgentController"
   VISUALIZER:
    CAMERA_ACTOR_NAME: "IMAGE_SAMPLING_CAMERA"
 
-  IMAGE_SAMPLING_AGENT_CONTROLLER:
+  CAMERA_AGENT_CONTROLLER:
     CAMERA_ACTOR_NAME: "IMAGE_SAMPLING_CAMERA"
-    ACTION_MODE: "sample_images" # "sample_images" or "replay_sampled_images"
-    IMAGE_TYPE: "rgb" # "rgb" OR "seg"
+    ACTION_MODE: "set_pose"
     IMAGE_HEIGHT: 480 #160 #480
     IMAGE_WIDTH: 852 #284 #852
-    RENDER_PASSES: ["final_color"] #"final_color", "segmentation"]
-    EXPORT_NAV_DATA_OBJ: True
-    EXPORT_NAV_DATA_DEBUG_POSES: True
+    FOV: 90.0
+    RENDER_PASSES: ["segmentation"] #, ["final_color", "segmentation"]
+    WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+    EXPORT_NAV_DATA_OBJ: False
+    EXPORT_NAV_DATA_DEBUG_POSES: False
     DEBUG_POSES_DIR: "E:/nav_mesh_debug_isim"
     DEBUG_POSES_NUM: 1000000
     NAVMESH:
@@ -37,8 +38,7 @@ SIMULATION_CONTROLLER:
       MERGE_REGION_SIZE: 0.0
       MIN_REGION_AREA: 100.0
       TILE_SIZE_UU: 300
-      NAV_BOUND_BOX_HEIGHT_ABOVE_MIN: 80.0
-      HEIGHT_LIMIT: 200
+      HEIGHT_LIMIT: 200.0
 
 IMAGE_SAMPLING_EXPERIMENT:
   SEED: 19
@@ -48,5 +48,3 @@ IMAGE_SAMPLING_EXPERIMENT:
   YAW_HIGH_DEG: 180.0
   ROLL_LOW_DEG: 0.0
   ROLL_HIGH_DEG: 0.0
-  AGENT_HEIGHT_LOW_CMS: 150
-  AGENT_HEIGHT_HIGH_CMS: 150

@@ -91,8 +91,6 @@ if __name__ == "__main__":
     config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
     config = get_config(config_files)
     
-    assert config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.ACTION_MODE == "sample_images"
-    
     # random generator
     rng = np.random.default_rng(config.IMAGE_SAMPLING_EXPERIMENT.SEED)
     
@@ -120,7 +118,7 @@ if __name__ == "__main__":
 
     # number of images per scene based on # of scenes.
     # while debugging just few images from scenes, you can change this number to 10 or 20 or something small
-    NUM_IMAGES_PER_SCENE = int(args.num_images / len(chosen_scenes)) + 1
+    NUM_IMAGES_PER_SCENE = 10 # int(args.num_images / len(chosen_scenes)) + 1
     NUM_IMAGES_PER_FRAME = int(args.num_images_per_frame)
 
     for scene in chosen_scenes:
@@ -128,7 +126,7 @@ if __name__ == "__main__":
         # skip completed scenes
         # if f"Map_{scene}" in completed_scenes:
             # continue
-        if scene != "235554690":
+        if scene != "237101160":
             continue
 
         print(f"processing scene {scene}")
@@ -139,13 +137,13 @@ if __name__ == "__main__":
         config.freeze()
 
         # copy pak from ssd to the executable dir as this is required for launching the appropriate pak file
-        if not os.path.exists(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak"):
+        # if not os.path.exists(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak"):
             # shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
-            shutil.copy(os.path.join(args.scenes_path, f"{scene}/paks/Windows/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
+            # shutil.copy(os.path.join(args.scenes_path, f"{scene}/paks/Windows/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
 
         # check if data path for storing images exists
-        if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")):
-            os.makedirs(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}"))
+        if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}")):
+            os.makedirs(os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}"))
             print(f"collecting images for scene {scene}")
 
         # write headers
@@ -167,30 +165,34 @@ if __name__ == "__main__":
             continue
 
         # reset the simulation
-        _ = env.reset()
+        obs = env.reset()
 
         start_time = time.time()
         
         # for NUM_IMAGES_PER_SCENE capture images and pose data
         for i in range(0, NUM_IMAGES_PER_SCENE):
-            env.customSetActionTick({"set_orientation_pyr_deg":  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
-                                                                         rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.YAW_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.YAW_HIGH_DEG),
-                                                                         rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_HIGH_DEG)],
-                                     "set_agent_height_cm"   :  [rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_LOW_CMS, high=config.IMAGE_SAMPLING_EXPERIMENT.AGENT_HEIGHT_HIGH_CMS)]})
+            
+            pose = [float(obs["get_random_position"][0]), float(obs["get_random_position"][1]),
+                    config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.NAVMESH.AGENT_HEIGHT,
+                    rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
+                    rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.YAW_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.YAW_HIGH_DEG),
+                    rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.ROLL_HIGH_DEG)]
+
+            pose_csv_writer.writerow([pose[0], pose[1], pose[2], pose[5], pose[3], pose[4]])
+
+            env.customSetActionTick({"set_pose": pose})
 
             for j in range(0, NUM_IMAGES_PER_FRAME - 2):
                 env.customEmptyTick()
-                # cv2.imshow("image", obs["image"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+                # cv2.imshow(f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]", obs[f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
                 # cv2.waitKey(0)
 
             obs, _, _, _ = env.customGetObservationTick()
-            output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.IMAGE_SAMPLING_AGENT_CONTROLLER.IMAGE_TYPE}")
+            output_path = os.path.join(args.output_dir, f"Map_{scene}/{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}")
 
             assert os.path.exists(output_path) == True
-            return_status = cv2.imwrite(output_path +f"/{i}.png", obs["image"][:,:,[2,1,0]])
+            return_status = cv2.imwrite(output_path +f"/{i}.png", obs[f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]}"][:,:,[2,1,0]])
             assert return_status == True
-
-            pose_csv_writer.writerow([obs["pose"][0], obs["pose"][1], obs["pose"][2], obs["pose"][3], obs["pose"][4], obs["pose"][5]])
 
         stop_time = time.time()
         print(stop_time-start_time)
@@ -202,7 +204,7 @@ if __name__ == "__main__":
         env.close()
         time.sleep(5)
         pose_output_file.close()
-        os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")        
+        # os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")
 
     scenes_sampled.close()
     bad_scenes.close()
