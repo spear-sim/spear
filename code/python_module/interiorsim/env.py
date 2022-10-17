@@ -118,14 +118,18 @@ class Env(gym.Env):
         self._close_unreal_instance()
         self._close_client_server_connection()
 
-        # do not return until Unreal application is closed
-        status = self._process.status()
-        while status in ["running", "sleeping", "disk-sleep"]:
-            time.sleep(1.0)
-            try:
-                status = self._process.status()
-            except psutil.NoSuchProcess: # On Windows OS, psutil.Process.status() throws psutil.NoSuchProcess exception if the process does not exist anymore.
-                break
+        try:
+            status = self._process.status()
+        except psutil.NoSuchProcess: # On Windows OS, psutil.Process.status() throws psutil.NoSuchProcess exception if the process does not exist anymore.
+            pass
+        else:
+            # do not return until Unreal application is closed
+            while status in ["running", "sleeping", "disk-sleep"]:
+                time.sleep(1.0)
+                try:
+                    status = self._process.status()
+                except psutil.NoSuchProcess: # On Windows OS, psutil.Process.status() throws psutil.NoSuchProcess exception if the process does not exist anymore.
+                    break
 
         print("Finished closing Unreal instance.")
         print()
