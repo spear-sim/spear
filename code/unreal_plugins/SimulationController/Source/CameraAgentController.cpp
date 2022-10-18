@@ -76,7 +76,6 @@ void CameraAgentController::findObjectReferences(UWorld* world)
         }
     }
 
-    // find necessary references to navmeshboundvolume and navmodifiervolume
     UNavigationSystemV1* nav_sys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world_);
     ASSERT(nav_sys);
 
@@ -173,7 +172,7 @@ void CameraAgentController::applyAction(const std::map<std::string, std::vector<
 
     camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result_info, ETeleportType::TeleportPhysics);
 
-    // store action
+    // store action because we are using it in getStepInfo(...)
     action_ = action;
 }
 
@@ -281,7 +280,9 @@ void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys)
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
     nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
-    nav_modifier_volume->AddActorWorldOffset(FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "NAV_MODIFIER_OFFSET_Z" })));
+    nav_modifier_volume->AddActorWorldOffset(FVector(Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "NAV_MODIFIER_OFFSET_X" }),
+                                                     Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "NAV_MODIFIER_OFFSET_Y" }),
+                                                     Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "NAV_MODIFIER_OFFSET_Z" })));
     nav_modifier_volume->GetRootComponent()->UpdateBounds();
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
     nav_modifier_volume->RebuildNavigationData();

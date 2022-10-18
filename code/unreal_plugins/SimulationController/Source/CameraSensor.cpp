@@ -116,7 +116,7 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData()
 
 // depth codification
 // decode formula : depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
-std::vector<float> CameraSensor::fColorDepthToFloatDepth(TArray<FColor> data)
+std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor> data)
 {
     std::vector<float> out;
     for (uint32 i = 0; i < static_cast<uint32>(data.Num()); ++i) {
