@@ -36,8 +36,8 @@ public class RobotSim : ModuleRules
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty"));
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "build", "rbdl.lib"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "build", "addons", "urdfreader", "rbdl_urdfreader.lib"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "build", "Release", "rbdl.lib"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "build", "addons", "urdfreader", "Release", "rbdl_urdfreader.lib"));
         } else if (Target.Platform == UnrealTargetPlatform.Mac) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "build", "librbdl.a"));
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "build", "addons", "urdfreader", "librbdl_urdfreader.a"));

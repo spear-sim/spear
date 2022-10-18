@@ -12,7 +12,7 @@ public class SimulationController : ModuleRules
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "NavigationSystem", "PhysX", "PhysXVehicles", "RenderCore", "RHI", "RobotSim" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "NavigationSystem", "PhysX", "PhysXVehicles", "PhysXVehicleLib", "RenderCore", "RHI", "RobotSim" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
@@ -29,7 +29,7 @@ public class SimulationController : ModuleRules
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "include"));
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "build", "rpc.lib"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "build", "Release", "rpc.lib"));
         } else if (Target.Platform == UnrealTargetPlatform.Mac) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "build", "librpc.a"));
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {

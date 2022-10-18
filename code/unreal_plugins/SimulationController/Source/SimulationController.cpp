@@ -16,9 +16,10 @@
 #include <Kismet/GameplayStatics.h>
 
 #include "AgentController.h"
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "CameraAgentController.h"
 #include "ImitationLearningTask.h"
 #include "NullTask.h"
 #include "OpenBotAgentController.h"
@@ -108,7 +109,9 @@ void SimulationController::worldBeginPlayEventHandler()
     UGameplayStatics::SetGamePaused(world_, true);
 
     // Create AgentController
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "OpenBotAgentController") {
+    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "CameraAgentController") {
+        agent_controller_ = std::make_unique<CameraAgentController>(world_);
+    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "OpenBotAgentController") {
         agent_controller_ = std::make_unique<OpenBotAgentController>();
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);

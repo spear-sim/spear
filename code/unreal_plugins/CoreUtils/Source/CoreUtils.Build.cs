@@ -22,7 +22,8 @@ public class CoreUtils : ModuleRules
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "include"));
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "build", "yaml-cpp.lib"));
+            PublicDefinitions.Add("YAML_CPP_STATIC_DEFINE");
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "build", "Release", "yaml-cpp.lib"));
         } else if (Target.Platform == UnrealTargetPlatform.Mac) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "yaml-cpp", "build", "libyaml-cpp.a"));
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {

@@ -9,7 +9,7 @@ ENABLE_IGNORE_COMPILER_WARNINGS
 #include <yaml-cpp/yaml.h>
 DISABLE_IGNORE_COMPILER_WARNINGS
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 
 class COREUTILS_API Config
 {

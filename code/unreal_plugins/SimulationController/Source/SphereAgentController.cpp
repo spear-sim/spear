@@ -12,7 +12,7 @@
 #include <GameFramework/Actor.h>
 #include <UObject/UObjectGlobals.h>
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
 #include "CameraSensor.h"
@@ -98,8 +98,8 @@ void SphereAgentController::findObjectReferences(UWorld* world)
 
         observation_camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_, 
             Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }), 
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}));
+            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));
         ASSERT(observation_camera_sensor_);
     }
 }
@@ -248,7 +248,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
         ASSERT(IsInGameThread());
 
         // get render data
-        std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->GetRenderData();
+        std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->getRenderData();
         
         for (const auto& data: render_data) {
             std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *

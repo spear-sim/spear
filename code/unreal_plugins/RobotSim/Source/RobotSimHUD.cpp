@@ -129,7 +129,8 @@ bool ARobotSimHUD::readSettingsTextFromFile(FString settingsFilepath,
 
 std::string ARobotSimHUD::getSimModeFromUser()
 {
-    return "UrdfBot";
+    return "";
+    //return "UrdfBot";
 }
 void ARobotSimHUD::setUnrealEngineSettings()
 {
