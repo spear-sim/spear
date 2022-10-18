@@ -145,12 +145,12 @@ if __name__ == "__main__":
         # iterate over recorded poses
         for index, data in poses.items():
             if "final_color" in config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES:
-                env.customSetActionTick({"set_pose": [data[0], data[1], data[2], data[4], data[5], data[3]]}) # set_pose: [x, y, z, pitch, yaw, roll]
+                env.customSetActionTick({"set_pose": [data[0], data[1], data[2], data[4], data[5], data[3]], "set_num_random_points": [1]}) # set_pose: [x, y, z, pitch, yaw, roll]
                 for j in range(0, NUM_IMAGES_PER_FRAME - 2):
                     env.customEmptyTick()
                 obs, _, _, _ = env.customGetObservationTick()
             elif "segmentation" in config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES:
-                obs, _, _, _ = env.step({"set_pose": [data[0], data[1], data[2], data[4], data[5], data[3]]}) # set_pose: [x, y, z, pitch, yaw, roll]
+                obs, _, _, _ = env.step({"set_pose": [data[0], data[1], data[2], data[4], data[5], data[3]], "set_num_random_points": [1]}) # set_pose: [x, y, z, pitch, yaw, roll]
             else:
                 assert False, "render pass mode in config file is not supported. Supported types are 'final_color' and 'segmentation'."
 

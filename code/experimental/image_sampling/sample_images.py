@@ -165,14 +165,29 @@ if __name__ == "__main__":
             continue
 
         # reset the simulation
-        obs = env.reset()
+        _ = env.reset()
+
+        # only for debug purposes
+        if config.IMAGE_SAMPLING_EXPERIMENT.EXPORT_NAV_DATA_DEBUG_POSES:
+            _, _, _, step_info = env.step({"set_pose":[0,0,config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.NAVMESH.AGENT_HEIGHT,0,0,0], "set_num_random_points": [config.IMAGE_SAMPLING_EXPERIMENT.DEBUG_POSES_NUM]})
+            random_positions = step_info["agent_controller_step_info"]["random_points"]
+            if PLATFORM == "Windows":
+                debug_poses_output_file = open(os.path.join(config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.EXPORT_NAV_DATA_OBJ_DIR, f"Map_{scene}/poses_for_debug.txt"), "w", newline='')
+            else:
+                debug_poses_output_file = open(os.path.join(config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.EXPORT_NAV_DATA_OBJ_DIR, f"Map_{scene}/poses_for_debug.txt"), "w")
+            csv_writer = csv.writer(debug_poses_output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            csv_writer.writerow(["pos_x_cm", "pos_y_cm", "pos_z_cm"])
+            for random_position in random_positions:
+                csv_writer.writerow([random_position[0], random_position[1], random_position[2]])
+
+        _, _, _, step_info = env.step({"set_pose":[0,0,config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.NAVMESH.AGENT_HEIGHT,0,0,0], "set_num_random_points": [NUM_IMAGES_PER_SCENE]})
+        random_positions = step_info["agent_controller_step_info"]["random_points"]
 
         start_time = time.time()
-        
         # for NUM_IMAGES_PER_SCENE capture images and pose data
-        for i in range(0, NUM_IMAGES_PER_SCENE):
+        for i, position in enumerate(random_positions):
             
-            pose = [float(obs["get_random_position"][0]), float(obs["get_random_position"][1]),
+            pose = [float(position[0]), float(position[1]),
                     config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.NAVMESH.AGENT_HEIGHT,
                     rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.PITCH_HIGH_DEG),
                     rng.uniform(low=config.IMAGE_SAMPLING_EXPERIMENT.YAW_LOW_DEG, high=config.IMAGE_SAMPLING_EXPERIMENT.YAW_HIGH_DEG),
@@ -180,7 +195,7 @@ if __name__ == "__main__":
 
             pose_csv_writer.writerow([pose[0], pose[1], pose[2], pose[5], pose[3], pose[4]])
 
-            env.customSetActionTick({"set_pose": pose})
+            env.customSetActionTick({"set_pose": pose, "set_num_random_points": [1]})
 
             for j in range(0, NUM_IMAGES_PER_FRAME - 2):
                 env.customEmptyTick()
