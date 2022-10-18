@@ -95,6 +95,8 @@ def build_libs(args):
         cmake_cmd = subprocess.run(cmake_args)
         assert cmake_cmd.returncode == 0
         cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
+    else:
+        assert False, "This OS is not supported."
 
     print(f"Executing cmd: {' '.join(cmake_args)}")
     cmake_cmd = subprocess.run(cmake_args)
@@ -131,6 +133,8 @@ def build_libs(args):
         cmake_cmd = subprocess.run(cmake_args)
         assert cmake_cmd.returncode == 0
         cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
+    else:
+        assert False, "This OS is not supported."
     
     print(f"Executing cmd: {' '.join(cmake_args)}")
     cmake_cmd = subprocess.run(cmake_args)
