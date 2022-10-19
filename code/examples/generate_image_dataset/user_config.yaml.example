@@ -2,7 +2,6 @@ INTERIORSIM:
   LAUNCH_MODE: "standalone_executable"
   STANDALONE_EXECUTABLE: "C:/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject.exe"
   TEMP_DIR: "C:/github/interiorsim/code/examples/generate_image_dataset/"
-  MAP_ID: "/Game/Maps/Map_235114780"
   CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-dx12", "-RobotSimSettingPath=C:/github/interiorsim/code/unreal_plugins/RobotSim/setting/settings.json"]
   RENDER_OFFSCREEN: True
 
