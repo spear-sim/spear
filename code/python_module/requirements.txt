@@ -1,5 +1,4 @@
 numpy
 gym
-pandas
 psutil
 yacs==0.1.8
