@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--pak_file", type=str, required=True)
     parser.add_argument("--executable_content_dir", type=str, required=True)
-    parser.add_argument("--num_images_per_scene", type=int, default=10)
+    parser.add_argument("--num_images", type=int, default=10)
     parser.add_argument("--output_dir", "-o", type=str, required=True)
     args = parser.parse_args()
 
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     _ = env.reset()
 
     # get random positions based on number of images requested
-    _, _, _, step_info = env.step({"set_pose":[0,0,config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.NAVMESH.AGENT_HEIGHT,0,0,0], "set_num_random_points": [args.num_images_per_scene]})
+    _, _, _, step_info = env.step({"set_pose":[0,0,config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.NAVMESH.AGENT_HEIGHT,0,0,0], "set_num_random_points": [args.num_images]})
     random_positions = step_info["agent_controller_step_info"]["random_points"]
 
     # iterate over these positions can capture images at each position
