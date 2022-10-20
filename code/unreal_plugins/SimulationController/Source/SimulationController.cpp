@@ -345,7 +345,7 @@ void SimulationController::bindFunctionsToRpcServer()
 
     rpc_server_->bindSync("getAgentControllerStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
-        ASSERT(task_);
+        ASSERT(agent_controller_);
         return agent_controller_->getStepInfo();
     });
 
