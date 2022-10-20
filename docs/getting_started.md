@@ -121,12 +121,12 @@ env = interiorsim.Env(config)
 
 # reset the simulation to get the first observation
 obs = env.reset()
-print(obs["visual_observation"].shape, obs["visual_observation"].dtype)
+print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype)
 
 # take a few steps; in this example, each action is specified as a 2D point, you should see the ball move in the Unreal game window
 for i in range(10):
     obs, reward, done, info = env.step({"apply_force": [1, 1]})
-    print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
+    print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype, reward, done, info)
 
 # close the environment
 env.close()
