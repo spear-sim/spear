@@ -332,7 +332,6 @@ class Env(gym.Env):
         return_dict = {}
         for name, component in data.items():
             
-            assert len(component) > 0
             # get shape and dtype of the data component
             shape = space.spaces[name].shape
             dtype = space.spaces[name].dtype

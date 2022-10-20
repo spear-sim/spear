@@ -180,7 +180,16 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
 
 std::map<std::string, Box> SphereAgentController::getStepInfoSpace() const
 {
-    return {};
+    std::map<std::string, Box> step_info_space;
+    Box box;
+
+    box.low = std::numeric_limits<float>::lowest();
+    box.high = std::numeric_limits<float>::max();
+    box.shape = {-1,3};
+    box.dtype = DataType::Float32;
+    step_info_space["debug_info"] = std::move(box);
+
+    return step_info_space;
 }
 
 void SphereAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
@@ -279,7 +288,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
 
 std::map<std::string, std::vector<uint8_t>> SphereAgentController::getStepInfo() const
 {
-    return {};
+    return { {"debug_info", {} } };
 }
 
 void SphereAgentController::reset()
