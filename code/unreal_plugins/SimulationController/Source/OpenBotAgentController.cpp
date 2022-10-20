@@ -203,8 +203,8 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = 0;
         box.high = 255;
-        box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-                     Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+        box.shape = {Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                     Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
                      3};
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
@@ -291,8 +291,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         ReadPixelFence.BeginFence(true);
         ReadPixelFence.Wait(true);
 
-        std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
-                                   Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
+        std::vector<uint8_t> image(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
+                                   Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
                                    3);
 
         for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {

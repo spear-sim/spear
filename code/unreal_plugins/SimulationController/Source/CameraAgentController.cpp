@@ -80,8 +80,8 @@ void CameraAgentController::findObjectReferences(UWorld* world)
     ASSERT(nav_sys);
 
     FNavAgentProperties agent_properties;
-    agent_properties.AgentHeight     = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT" });
-    agent_properties.AgentRadius     = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS" });
+    agent_properties.AgentHeight = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT" });
+    agent_properties.AgentRadius = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS" });
     agent_properties.AgentStepHeight = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT" });
 
     ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
@@ -124,13 +124,13 @@ std::map<std::string, Box> CameraAgentController::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
     Box box;
-    
+
     std::vector<std::string> passes = Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "RENDER_PASSES" });
     for (const auto& pass : passes) {
         box.low = 0;
         box.high = 255;
-        box.shape = { Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_HEIGHT" }),
-                      Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
+        box.shape = { Config::getValue<int64_t>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_HEIGHT" }),
+                      Config::getValue<int64_t>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
                       3 };
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation_" + pass] = std::move(box);
@@ -206,7 +206,7 @@ std::map<std::string, std::vector<uint8_t>> CameraAgentController::getStepInfo()
     std::map<std::string, std::vector<uint8_t>> step_info;
     std::vector<float> random_points;
 
-    for (size_t i = 0u; i < action_.at("set_num_random_points").at(0); ++i) {
+    for (float i = 0; i < action_.at("set_num_random_points").at(0); ++i) {
         FVector random_position = nav_mesh_->GetRandomPoint().Location;
         random_points.emplace_back(random_position.X);
         random_points.emplace_back(random_position.Y);

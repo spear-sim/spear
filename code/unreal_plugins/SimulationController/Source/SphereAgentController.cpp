@@ -158,8 +158,8 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
         for (const auto& pass : passes) {
             box.low = 0;
             box.high = 255;
-            box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-                         Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+            box.shape = {Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                         Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
                          3};
             box.dtype = DataType::UInteger8;
             observation_space["visual_observation_" + pass] = std::move(box);

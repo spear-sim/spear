@@ -60,7 +60,7 @@ if __name__ == "__main__":
         _ = env.reset()
 
         # get random positions based on number of poses requested
-        _, _, _, step_info = env.step({"set_pose":[0,0,0,0,0,0], "set_num_random_points": [args.num_poses_per_scene]})
+        _, _, _, step_info = env.step({"set_pose": [0,0,0,0,0,0], "set_num_random_points": [args.num_poses_per_scene]})
         random_positions = step_info["agent_controller_step_info"]["random_points"]
 
         # genearte random arrays for orientation
