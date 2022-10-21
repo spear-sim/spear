@@ -1,7 +1,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-# import cv2
+import cv2
 import os
 import pandas as pd
 import shutil
