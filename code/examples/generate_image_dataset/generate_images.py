@@ -2,6 +2,7 @@
 
 import argparse
 import cv2
+import numpy as np
 import os
 import pandas as pd
 import shutil
@@ -65,7 +66,7 @@ if __name__ == "__main__":
         for pose in df.loc[df["map_id"] == scene].to_records():
 
             # set the pose and obtain corresponding images
-            obs, _, _, _ = env.step({"set_pose": [pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], "set_num_random_points": [0]})
+            obs, _, _, _ = env.step({"set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32), "set_num_random_points": np.array([0], np.uint32)})
 
             # view image
             # cv2.imshow(f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]", obs[f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB

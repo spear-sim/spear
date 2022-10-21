@@ -37,9 +37,9 @@ DATA_TYPE_TO_NUMPY_DTYPE = {
 
 # mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
 class Box():
-    def __init__(self, high, low, shape, dtype):
-        self.high = high
+    def __init__(self, low, high, shape, dtype):
         self.low = low
+        self.high = high
         self.shape = shape
         self.dtype = dtype
 
@@ -341,6 +341,9 @@ class Env(gym.Env):
                 dtype = dtype.newbyteorder(self._byte_order)
 
             return_dict[name] = np.frombuffer(component, dtype=dtype, count=-1).reshape(shape)
+            
+            assert (return_dict[name] >= space.spaces[name].low).all()
+            assert (return_dict[name] <= space.spaces[name].high).all()
 
         return return_dict
 
@@ -378,7 +381,19 @@ class Env(gym.Env):
         return self._get_dict_space(space, Box, Dict)
 
     def _apply_action(self, action):
-        self._client.call("applyAction", action)
+
+        assert action.keys() == self.action_space.spaces.keys()
+        
+        action_dict = {}
+        for name, component in action.items():
+            assert isinstance(component, np.ndarray)
+            assert component.shape == self.action_space.spaces[name].shape
+            assert component.dtype == self.action_space.spaces[name].dtype
+            assert (component >= self.action_space.spaces[name].low).all()
+            assert (component <= self.action_space.spaces[name].high).all()
+            action_dict[name] = component.tolist()
+        
+        self._client.call("applyAction", action_dict)
 
     def _get_observation(self):
         observation = self._client.call("getObservation")

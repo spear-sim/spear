@@ -230,22 +230,10 @@ std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
-        ASSERT(action.count("apply_voltage") && action.at("apply_voltage").size() == 2);
-        ASSERT(action.at("apply_voltage").at(0) >= getActionSpace().at("apply_voltage").low && action.at("apply_voltage").at(0) <= getActionSpace().at("apply_voltage").high, "%f", action.at("apply_voltage").at(0));
-        ASSERT(action.at("apply_voltage").at(1) >= getActionSpace().at("apply_voltage").low && action.at("apply_voltage").at(1) <= getActionSpace().at("apply_voltage").high, "%f", action.at("apply_voltage").at(1));
         simple_vehicle_pawn_->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
-        ASSERT(action.count("set_position_xyz_centimeters") && action.at("set_position_xyz_centimeters").size() == 3);
-        ASSERT(isfinite(action.at("set_position_xyz_centimeters").at(0)));
-        ASSERT(isfinite(action.at("set_position_xyz_centimeters").at(1)));
-        ASSERT(isfinite(action.at("set_position_xyz_centimeters").at(2)));
         const FVector agent_location{action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
-
-        ASSERT(action.count("set_orientation_pyr_radians") && action.at("set_orientation_pyr_radians").size() == 3);
-        ASSERT(isfinite(action.at("set_orientation_pyr_radians").at(0)));
-        ASSERT(isfinite(action.at("set_orientation_pyr_radians").at(1)));
-        ASSERT(isfinite(action.at("set_orientation_pyr_radians").at(2)));
         const FRotator agent_rotation{FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
 
         constexpr bool sweep = false;

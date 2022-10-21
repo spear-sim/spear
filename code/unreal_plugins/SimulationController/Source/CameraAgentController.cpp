@@ -155,15 +155,6 @@ std::map<std::string, Box> CameraAgentController::getStepInfoSpace() const
 
 void CameraAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
-    ASSERT(action.count("set_pose") && action.at("set_pose").size() == 6);
-
-    ASSERT(isfinite(action.at("set_pose").at(0)), "%f", action.at("set_pose").at(0));
-    ASSERT(isfinite(action.at("set_pose").at(1)), "%f", action.at("set_pose").at(1));
-    ASSERT(isfinite(action.at("set_pose").at(2)), "%f", action.at("set_pose").at(2));
-    ASSERT(isfinite(action.at("set_pose").at(3)), "%f", action.at("set_pose").at(3));
-    ASSERT(isfinite(action.at("set_pose").at(4)), "%f", action.at("set_pose").at(4));
-    ASSERT(isfinite(action.at("set_pose").at(5)), "%f", action.at("set_pose").at(5));
-
     const FVector agent_location{ action.at("set_pose").at(0), action.at("set_pose").at(1), action.at("set_pose").at(2) };
     const FRotator agent_rotation{ action.at("set_pose").at(3), action.at("set_pose").at(4), action.at("set_pose").at(5) };
 
@@ -187,7 +178,7 @@ std::map<std::string, std::vector<uint8_t>> CameraAgentController::getObservatio
         std::vector<uint8_t> image(Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_HEIGHT" }) *
                                    Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_WIDTH" })  * 3);
 
-        for (uint32 i = 0; i < static_cast<uint32>(data.second.Num()); ++i) {
+        for (uint32 i = 0u; i < static_cast<uint32>(data.second.Num()); ++i) {
             image.at(3 * i + 0) = data.second[i].R;
             image.at(3 * i + 1) = data.second[i].G;
             image.at(3 * i + 2) = data.second[i].B;
@@ -206,7 +197,9 @@ std::map<std::string, std::vector<uint8_t>> CameraAgentController::getStepInfo()
     std::map<std::string, std::vector<uint8_t>> step_info;
     std::vector<float> random_points;
 
-    for (float i = 0; i < action_.at("set_num_random_points").at(0); ++i) {
+    uint32_t num_random_points = static_cast<uint32_t>(action_.at("set_num_random_points").at(0));
+
+    for (uint32_t i = 0u; i < num_random_points; ++i) {
         FVector random_position = nav_mesh_->GetRandomPoint().Location;
         random_points.emplace_back(random_position.X);
         random_points.emplace_back(random_position.Y);

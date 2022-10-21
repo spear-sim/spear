@@ -194,14 +194,6 @@ std::map<std::string, Box> SphereAgentController::getStepInfoSpace() const
 
 void SphereAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
-    ASSERT(action.count("apply_force"));
-    ASSERT(isfinite(action.at("apply_force").at(0)));
-    ASSERT(isfinite(action.at("apply_force").at(1)));
-
-    // @TODO: This can be checked in python?
-    ASSERT(action.at("apply_force").at(0) >= getActionSpace()["apply_force"].low && action.at("apply_force").at(0) <= getActionSpace()["apply_force"].high, "%f", action.at("apply_force").at(0));
-    ASSERT(action.at("apply_force").at(1) >= getActionSpace()["apply_force"].low && action.at("apply_force").at(1) <= getActionSpace()["apply_force"].high, "%f", action.at("apply_force").at(1));
-
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         // Get yaw from the observation camera, apply force to the sphere in that direction
         FVector force = camera_actor_->GetActorRotation().RotateVector(FVector(action.at("apply_force").at(0), 0.0f, 0.0f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "ACTION_APPLY_FORCE_SCALE"});
