@@ -106,6 +106,7 @@ path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/
 At this point, you should be able to control the environment in an interactive IPython session. Here is a minimal example program that you should be able to execute one line at a time from IPython. We also provide a `run.py` script with each of our examples that executes similar code.
 
 ```python
+import numpy as np
 import os
 
 import interiorsim
@@ -125,7 +126,7 @@ print(obs["visual_observation_final_color"].shape, obs["visual_observation_final
 
 # take a few steps; in this example, each action is specified as a 2D point, you should see the ball move in the Unreal game window
 for i in range(10):
-    obs, reward, done, info = env.step({"apply_force": [1, 1]})
+    obs, reward, done, info = env.step({"apply_force": np.array([1, 1], dtype=np.float32)})
     print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype, reward, done, info)
 
 # close the environment

@@ -1,6 +1,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import cv2
+import numpy as np
 import os
 
 from interiorsim import Env
@@ -29,7 +30,7 @@ if __name__ == "__main__":
         
         assert config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.ACTION_MODE == "low_level_control"
 
-        obs, reward, done, info = env.step({"apply_voltage": [1, 0.5]})
+        obs, reward, done, info = env.step({"apply_voltage": np.array([1, 0.5], dtype=np.float32)})
         print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
 
         cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB

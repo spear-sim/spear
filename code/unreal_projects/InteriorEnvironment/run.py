@@ -1,6 +1,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import cv2
+import numpy as np
 import os
 
 from interiorsim import Env
@@ -25,7 +26,7 @@ if __name__ == "__main__":
 
     # take a few steps
     for i in range(10):
-        obs, reward, done, info = env.step({"apply_force": [1, 1]})
+        obs, reward, done, info = env.step({"apply_force": np.array([1, 1], dtype=np.float32)})
 
         print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype, reward, done, info)
 
