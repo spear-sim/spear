@@ -1,0 +1,76 @@
+
+ROBOT_SIM:
+
+  # Used to prevent RobotSim from attempting to load a segmentation material stored directly in RobotProject/Content.
+  # This is useful when RobotSim is loaded in projects other than RobotProject (e.g., PlayEnvironment or InteriorEnvironment).
+  PIP_CAMERA_LOAD_SEGMENTATION_MATERIAL: True
+
+  # PID proportional gain for the autopilot
+  PROPORTIONAL_GAIN_HEADING: 5.25
+
+  # PID derivative gain for the autopilot
+  DERIVATIVE_GAIN_HEADING: 2.1
+
+  # PID proportional gain for the autopilot
+  PROPORTIONAL_GAIN_DIST: 4.0
+
+  # PID derivative gain for the autopilot
+  DERIVATIVE_GAIN_DIST: -0.1
+
+  # Angular range within which the vehicle moves forward to the target in [rad]
+  FORWARD_MIN_ANGLE: 0.5
+
+  # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+  CONTROL_SATURATION: 0.9
+
+  # Radius of the wheel in [m]
+  WHEEL_SHAPE_RADIUS: 0.03
+
+  # Width of the wheel in [m]
+  WHEEL_SHAPE_WIDTH: 0.025
+
+  # How far the wheel can go above the resting position in [m]
+  WHEEL_SUSPENSION_MAX_RAISE: 0.0
+
+  # How far the wheel can drop below the resting position in [m]
+  WHEEL_SUSPENSION_MAX_DROP: 0.0
+
+  # Mass of this wheel in [kg]
+  WHEEL_MASS: 0.033
+
+  # DragCoefficient of the vehicle chassis.
+  DRAG_COEFFICIENT: 1.0
+
+  # Chassis width used for drag force computation in [cm]
+  CHASSIS_WIDTH: 15.0
+
+  # Chassis height used for drag force computation in [cm]
+  CHASSIS_HEIGHT: 15.0
+
+  # Max RPM for engine
+  MOTOR_MAX_RPM: 20000.0
+
+  # Velocity constant of the OpenBot motors
+  MOTOR_VELOCITY_CONSTANT: 65.89
+
+  # Gear ratio of the OpenBot motors
+  GEAR_RATIO: 50.0
+
+  # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
+  CONTROL_DEAD_ZONE: 2.5
+
+  # Motor maximal torque
+  MOTOR_TORQUE_MAX: 0.19
+
+  # Motor winding electrical resistance
+  ELECTRICAL_RESISTANCE: 0.5
+
+  # Motor winding electrical inductance
+  ELECTRICAL_INDUCTANCE: 0.5
+
+  # OpenBot action scaling factor
+  ACTION_SCALE: 255
+
+  # Voltage of the battery powering the OpenBot
+  BATTERY_VOLTAGE: 12.0
+
