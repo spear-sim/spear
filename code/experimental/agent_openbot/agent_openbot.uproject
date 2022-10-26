@@ -16,7 +16,7 @@
 			"Enabled": true
 		},
 		{
-			"Name": "Agents",
+			"Name": "OpenBot",
 			"Enabled": true
 		},
 	]

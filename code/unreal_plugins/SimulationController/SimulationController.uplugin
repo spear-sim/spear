@@ -31,6 +31,10 @@
             "Enabled": true
         },
         {
+            "Name": "OpenBot",
+            "Enabled": true
+        },
+        {
             "Name": "PhysXVehicles",
             "Enabled": true
         }

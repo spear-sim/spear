@@ -20,6 +20,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "OpenBot",
+			"Enabled": true
+		},
+		{
 			"Name": "SceneManager",
 			"Enabled": true
 		},

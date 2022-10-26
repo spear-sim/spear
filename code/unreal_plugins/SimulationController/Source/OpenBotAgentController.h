@@ -5,7 +5,8 @@
 #include <vector>
 
 #include "AgentController.h"
-
+#include "OpenBotPawn.h"
+#include "Camera/CameraComponent.h"
 class AActor;
 class ANavigationData;
 class ARecastNavMesh;
@@ -15,7 +16,7 @@ class UTextureRenderTarget2D;
 class UWorld;
 
 class APIPCamera;
-class ASimpleVehiclePawn;
+class AOpenBotPawn;
 struct Box;
 
 class OpenBotAgentController : public AgentController
@@ -47,8 +48,8 @@ private:
     // Generate a collision-free trajectory between an initial and a target location
     void generateTrajectoryToTarget();
 
-    ASimpleVehiclePawn* simple_vehicle_pawn_ = nullptr;
-    APIPCamera* pip_camera_ = nullptr;
+    AOpenBotPawn* simple_vehicle_pawn_ = nullptr;
+    //UCameraComponent* pip_camera_ = nullptr;
     AActor* goal_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
 

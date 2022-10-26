@@ -33,11 +33,12 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_ACTOR_NAME"})) {
             ASSERT(!simple_vehicle_pawn_);
-            simple_vehicle_pawn_ = dynamic_cast<ASimpleVehiclePawn*>(*actor_itr);
+            simple_vehicle_pawn_ = dynamic_cast<AOpenBotPawn*>(*actor_itr);
         } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
         }
+        std::cout<< "---- ----" << actor_name << std::endl;
     }
     ASSERT(simple_vehicle_pawn_);
     ASSERT(goal_actor_);
@@ -45,21 +46,11 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
     // Setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
-        TArray<AActor*> all_attached_actors;
-        simple_vehicle_pawn_->GetAttachedActors(all_attached_actors, true);
-
-        for (const auto& actor : all_attached_actors) {
-            std::string actor_name = TCHAR_TO_UTF8(*actor->GetName());
-            if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_NAME"})) {
-                ASSERT(!pip_camera_);
-                pip_camera_ = dynamic_cast<APIPCamera*>(actor);
-                break;
-            }
-        }
-        ASSERT(pip_camera_);
+//        pip_camera_ = simple_vehicle_pawn_->GetCamera();
+//        ASSERT(pip_camera_);
 
         // Create SceneCaptureComponent2D and TextureRenderTarget2D
-        scene_capture_component_ = pip_camera_->GetSceneCaptureComponent();
+        scene_capture_component_ = simple_vehicle_pawn_->scene_capture_;
         ASSERT(scene_capture_component_);
 
         // We spawn a new actor in findObjectReferences(...) because we don't need another systems to be able to find it
@@ -139,8 +130,8 @@ void OpenBotAgentController::cleanUpObjectReferences()
         ASSERT(scene_capture_component_);
         scene_capture_component_ = nullptr;
 
-        ASSERT(pip_camera_);
-        pip_camera_ = nullptr;
+//        ASSERT(pip_camera_);
+//        pip_camera_ = nullptr;
     }
 
     ASSERT(simple_vehicle_pawn_);
@@ -316,7 +307,7 @@ void OpenBotAgentController::reset()
     const FVector agent_location = simple_vehicle_pawn_->GetActorLocation();
     simple_vehicle_pawn_->SetActorLocationAndRotation(agent_location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
 
-    USimpleWheeledVehicleMovementComponent* vehicle_movement_component = dynamic_cast<USimpleWheeledVehicleMovementComponent*>(simple_vehicle_pawn_->GetVehicleMovementComponent());
+    USimpleWheeledVehicleMovementComponent* vehicle_movement_component = simple_vehicle_pawn_->vehicle_movement_;
     ASSERT(vehicle_movement_component);
 
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component->PVehicle->getRigidDynamicActor();
