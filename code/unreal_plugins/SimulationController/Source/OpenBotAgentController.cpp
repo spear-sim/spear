@@ -38,7 +38,6 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
         }
-        std::cout<< "---- ----" << actor_name << std::endl;
     }
     ASSERT(simple_vehicle_pawn_);
     ASSERT(goal_actor_);
@@ -46,11 +45,8 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
     // Setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
-//        pip_camera_ = simple_vehicle_pawn_->GetCamera();
-//        ASSERT(pip_camera_);
-
         // Create SceneCaptureComponent2D and TextureRenderTarget2D
-        scene_capture_component_ = simple_vehicle_pawn_->scene_capture_;
+        scene_capture_component_ = simple_vehicle_pawn_->scene_capture_component_;
         ASSERT(scene_capture_component_);
 
         // We spawn a new actor in findObjectReferences(...) because we don't need another systems to be able to find it
@@ -130,8 +126,6 @@ void OpenBotAgentController::cleanUpObjectReferences()
         ASSERT(scene_capture_component_);
         scene_capture_component_ = nullptr;
 
-//        ASSERT(pip_camera_);
-//        pip_camera_ = nullptr;
     }
 
     ASSERT(simple_vehicle_pawn_);
@@ -221,7 +215,9 @@ std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
-        simple_vehicle_pawn_->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
+        Eigen::Vector4f duty_cycle;
+        duty_cycle << action.at("apply_voltage").at(0),action.at("apply_voltage").at(1),action.at("apply_voltage").at(0),action.at("apply_voltage").at(1);
+        simple_vehicle_pawn_->setDutyCycleAndClamp(duty_cycle);
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
         const FVector agent_location{action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
@@ -305,32 +301,10 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getStepInfo(
 void OpenBotAgentController::reset()
 {
     const FVector agent_location = simple_vehicle_pawn_->GetActorLocation();
-    simple_vehicle_pawn_->SetActorLocationAndRotation(agent_location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
+    simple_vehicle_pawn_->reset(agent_location,FQuat(FRotator(0)));
 
-    USimpleWheeledVehicleMovementComponent* vehicle_movement_component = simple_vehicle_pawn_->vehicle_movement_;
-    ASSERT(vehicle_movement_component);
-
-    PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component->PVehicle->getRigidDynamicActor();
-    ASSERT(rigid_body_dynamic_actor);
-
-    // We want to reset the physics state of OpenBot, so we are inlining the below code from
-    // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleDrive.cpp::setToRestState(), and
-    // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleWheels.cpp::setToRestState(), because these functions are protected.
-    if (!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC)) {
-        rigid_body_dynamic_actor->setLinearVelocity(PxVec3(0, 0, 0));
-        rigid_body_dynamic_actor->setAngularVelocity(PxVec3(0, 0, 0));
-        rigid_body_dynamic_actor->clearForce(PxForceMode::eACCELERATION);
-        rigid_body_dynamic_actor->clearForce(PxForceMode::eVELOCITY_CHANGE);
-        rigid_body_dynamic_actor->clearTorque(PxForceMode::eACCELERATION);
-        rigid_body_dynamic_actor->clearTorque(PxForceMode::eVELOCITY_CHANGE);
-    }
-    vehicle_movement_component->PVehicle->mWheelsDynData.setToRestState();
-    // PVehicleDrive is not intiliazed, and so PVehicleDrive->mDriveDynData.setToRestState() is commented out. We want to know if this changes at some point.
-    ASSERT(!vehicle_movement_component->PVehicleDrive);
-    // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
-    
     // Trajectory generation between the start and goal points
-    generateTrajectoryToTarget();
+    //generateTrajectoryToTarget();
 }
 
 bool OpenBotAgentController::isReady() const

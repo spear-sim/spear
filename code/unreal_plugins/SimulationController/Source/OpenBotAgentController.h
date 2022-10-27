@@ -49,7 +49,7 @@ private:
     void generateTrajectoryToTarget();
 
     AOpenBotPawn* simple_vehicle_pawn_ = nullptr;
-    //UCameraComponent* pip_camera_ = nullptr;
+
     AActor* goal_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
 
