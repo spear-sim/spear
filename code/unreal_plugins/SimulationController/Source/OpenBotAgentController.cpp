@@ -15,12 +15,7 @@
 #include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
-#include <PxRigidDynamic.h>
-#include <SimpleWheeledVehicleMovementComponent.h>
 #include <UObject/UObjectGlobals.h>
-
-#include "PIPCamera.h"
-#include "SimpleVehicle/SimpleVehiclePawn.h"
 
 #include "Assert/Assert.h"
 #include "Box.h"
@@ -31,56 +26,24 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
 {
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_ACTOR_NAME"})) {
-            ASSERT(!simple_vehicle_pawn_);
-            simple_vehicle_pawn_ = dynamic_cast<AOpenBotPawn*>(*actor_itr);
-        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
+        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
         }
     }
-    ASSERT(simple_vehicle_pawn_);
+    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>();
+    ASSERT(open_bot_pawn_);
     ASSERT(goal_actor_);
 
     // Setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
         // Create SceneCaptureComponent2D and TextureRenderTarget2D
-        scene_capture_component_ = simple_vehicle_pawn_->scene_capture_component_;
-        ASSERT(scene_capture_component_);
-
-        // We spawn a new actor in findObjectReferences(...) because we don't need another systems to be able to find it
-        new_object_parent_actor_ = world->SpawnActor<AActor>();
-        ASSERT(new_object_parent_actor_);
-
-        texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, TEXT("TextureRenderTarget2D"));
-        ASSERT(texture_render_target_);
-
-        texture_render_target_->TargetGamma = GEngine->GetDisplayGamma(); // Set FrameWidth and FrameHeight: 1.2f; for Vulkan | GEngine->GetDisplayGamma(); for DX11/12
-        texture_render_target_->InitAutoFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
-                                               Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"})); // Setup the RenderTarget capture format: some random format, got crashing otherwise frameWidht = 2048 and frameHeight = 2048.
-        texture_render_target_->InitCustomFormat(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
-                                                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-                                                 PF_B8G8R8A8,
-                                                 true); // PF_B8G8R8A8 disables HDR which will boost storing to disk due to less image information
-        texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-        texture_render_target_->bGPUSharedFlag = true; // demand buffer on GPU
-
-        // Set Camera Properties
-        scene_capture_component_->bAlwaysPersistRenderingState = 1;
-        scene_capture_component_->bCaptureEveryFrame = 0;
-        scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "SMARTPHONE_FOV"}); // Smartphone FOV
-        scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-        scene_capture_component_->ShowFlags.SetTemporalAA(false);
-        scene_capture_component_->ShowFlags.SetAntiAliasing(true);
-        scene_capture_component_->TextureTarget = texture_render_target_;
-
-        // Set post-processing parameters
-        FPostProcessSettings post_process_settings;
-        post_process_settings.MotionBlurAmount = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_AMOUNT"}); // Strength of motion blur, 0:off, should be renamed to intensity
-        post_process_settings.MotionBlurMax = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "MOTION_BLUR_MAX"});       // Max distortion caused by motion blur, in percent of the screen width, 0:off
-        scene_capture_component_->PostProcessSettings = post_process_settings;
-        scene_capture_component_->PostProcessBlendWeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "POST_PROC_BLEND_WEIGHT"}); // Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
+        observation_camera_sensor_ = std::make_unique<CameraSensor>(open_bot_pawn_,
+            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }),
+            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));
+        ASSERT(observation_camera_sensor_);
     }
 
     // Agent Navigation:
@@ -89,7 +52,7 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
     ASSERT(nav_sys_);
 
     // Get a pointer to the agent's navigation data
-    const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(simple_vehicle_pawn_);
+    const INavAgentInterface* actor_as_nav_agent = CastChecked<INavAgentInterface>(open_bot_pawn_);
     ASSERT(actor_as_nav_agent);
     nav_data_ = nav_sys_->GetNavDataForProps(actor_as_nav_agent->GetNavAgentPropertiesRef(), actor_as_nav_agent->GetNavAgentLocation());
     ASSERT(nav_data_);
@@ -114,22 +77,12 @@ void OpenBotAgentController::cleanUpObjectReferences()
     nav_sys_ = nullptr;
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-
-        ASSERT(texture_render_target_);
-        texture_render_target_->MarkPendingKill();
-        texture_render_target_ = nullptr;
-
-        ASSERT(new_object_parent_actor_);
-        new_object_parent_actor_->Destroy();
-        new_object_parent_actor_ = nullptr;
-
-        ASSERT(scene_capture_component_);
-        scene_capture_component_ = nullptr;
-
+        ASSERT(observation_camera_sensor_);
+        observation_camera_sensor_ = nullptr;
     }
 
-    ASSERT(simple_vehicle_pawn_);
-    simple_vehicle_pawn_ = nullptr;
+    ASSERT(open_bot_pawn_);
+    open_bot_pawn_ = nullptr;
 
     ASSERT(goal_actor_);
     goal_actor_ = nullptr;
@@ -217,7 +170,7 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
         Eigen::Vector4f duty_cycle;
         duty_cycle << action.at("apply_voltage").at(0),action.at("apply_voltage").at(1),action.at("apply_voltage").at(0),action.at("apply_voltage").at(1);
-        simple_vehicle_pawn_->setDutyCycleAndClamp(duty_cycle);
+        open_bot_pawn_->setDutyCycleAndClamp(duty_cycle);
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
         const FVector agent_location{action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
@@ -225,7 +178,7 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
-        simple_vehicle_pawn_->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
+        open_bot_pawn_->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
     }
     else {
         ASSERT(false);
@@ -240,48 +193,27 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         ASSERT(IsInGameThread());
 
-        FTextureRenderTargetResource* target_resource = scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
-        ASSERT(target_resource);
+        // get render data
+        std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->getRenderData();
+        ASSERT(render_data.size() > 0);
 
-        TArray<FColor> pixels;
-
-        struct FReadSurfaceContext {
-            FRenderTarget* src_render_target_;
-            TArray<FColor>& out_data_;
-            FIntRect rect_;
-            FReadSurfaceDataFlags flags_;
-        };
-
-        FReadSurfaceContext context = {target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
-
-        // Required for uint8 read mode
-        context.flags_.SetLinearToGamma(false);
-
-        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)
-        ([context](FRHICommandListImmediate& RHICmdList) {
-            RHICmdList.ReadSurfaceData(context.src_render_target_->GetRenderTargetTexture(), context.rect_, context.out_data_, context.flags_);
-        });
-
-        FRenderCommandFence ReadPixelFence;
-        ReadPixelFence.BeginFence(true);
-        ReadPixelFence.Wait(true);
-
-        std::vector<uint8_t> image(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
-                                   Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
+        const auto& data = *(render_data.begin());
+        std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
+                                   Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
                                    3);
 
-        for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {
-            image.at(3 * i + 0) = pixels[i].R;
-            image.at(3 * i + 1) = pixels[i].G;
-            image.at(3 * i + 2) = pixels[i].B;
+        for (uint32 i = 0; i < static_cast<uint32>(data.second.Num()); ++i) {
+            image.at(3 * i + 0) = data.second[i].R;
+            image.at(3 * i + 1) = data.second[i].G;
+            image.at(3 * i + 2) = data.second[i].B;
         }
 
         observation["visual_observation"] = std::move(image);
     }
 
-    const FVector agent_current_location = simple_vehicle_pawn_->GetActorLocation();
-    const FRotator agent_current_orientation = simple_vehicle_pawn_->GetActorRotation();
-    Eigen::Vector2f control_state = simple_vehicle_pawn_->GetControlState();
+    const FVector agent_current_location = open_bot_pawn_->GetActorLocation();
+    const FRotator agent_current_orientation = open_bot_pawn_->GetActorRotation();
+    Eigen::Vector2f control_state = open_bot_pawn_->GetControlState();
 
     observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
     observation["state_data"] = Serialize::toUint8(std::vector<float>{agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw)});
@@ -300,19 +232,19 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getStepInfo(
 
 void OpenBotAgentController::reset()
 {
-    const FVector agent_location = simple_vehicle_pawn_->GetActorLocation();
-    simple_vehicle_pawn_->reset(agent_location,FQuat(FRotator(0)));
+    const FVector agent_location = open_bot_pawn_->GetActorLocation();
+    open_bot_pawn_->reset(agent_location,FQuat(FRotator(0)));
 
     // Trajectory generation between the start and goal points
-    //generateTrajectoryToTarget();
+    generateTrajectoryToTarget();
 }
 
 bool OpenBotAgentController::isReady() const
 {
-    ASSERT(simple_vehicle_pawn_);
+    ASSERT(open_bot_pawn_);
     
 
-    return simple_vehicle_pawn_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
+    return open_bot_pawn_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
 }
 
 void OpenBotAgentController::buildNavMesh()
@@ -335,7 +267,7 @@ void OpenBotAgentController::buildNavMesh()
     FBox box(ForceInit);
     std::vector<std::string> world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "WORLD_BOUND_TAG_NAMES"});
 
-    for (TActorIterator<AActor> actor_itr(simple_vehicle_pawn_->GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) { 
+    for (TActorIterator<AActor> actor_itr(open_bot_pawn_->GetWorld(), AActor::StaticClass()); actor_itr; ++actor_itr) { 
     
         for (std::string tag_itr : world_bound_tag_names) { 
 
@@ -349,7 +281,7 @@ void OpenBotAgentController::buildNavMesh()
     // Dynamic update navMesh location and size:
     ANavMeshBoundsVolume* nav_meshbounds_volume = nullptr;
     
-    for (TActorIterator<ANavMeshBoundsVolume> it(simple_vehicle_pawn_->GetWorld()); it; ++it) {
+    for (TActorIterator<ANavMeshBoundsVolume> it(open_bot_pawn_->GetWorld()); it; ++it) {
         nav_meshbounds_volume = *it;
     }
     ASSERT(nav_meshbounds_volume);
@@ -380,8 +312,8 @@ void OpenBotAgentController::generateTrajectoryToTarget()
     ASSERT(nav_sys_);
     
     // Initial agent position
-    ASSERT(simple_vehicle_pawn_);
-    agent_initial_position_ = simple_vehicle_pawn_->GetActorLocation();
+    ASSERT(open_bot_pawn_);
+    agent_initial_position_ = open_bot_pawn_->GetActorLocation();
 
     // Goal position
     ASSERT(goal_actor_);
@@ -392,7 +324,7 @@ void OpenBotAgentController::generateTrajectoryToTarget()
     relative_position_to_target.Y = (agent_goal_position_ - agent_initial_position_).Y;
     
     // Update navigation query with the new target:
-    nav_query = FPathFindingQuery(simple_vehicle_pawn_, *nav_data_, agent_initial_position_, agent_goal_position_);
+    nav_query = FPathFindingQuery(open_bot_pawn_, *nav_data_, agent_initial_position_, agent_goal_position_);
     
     // Genrate a collision-free path between the robot position and the target point:
     collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
@@ -415,7 +347,7 @@ void OpenBotAgentController::generateTrajectoryToTarget()
         }
 
         std::cout << "Number of way points: " << number_of_way_points << std::endl;
-        std::cout << "Target distance: " << relative_position_to_target.Size() / simple_vehicle_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+        std::cout << "Target distance: " << relative_position_to_target.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
 
         float trajectory_length = 0.0;
         for (size_t i = 0; i < number_of_way_points - 1; i++) {
@@ -423,12 +355,10 @@ void OpenBotAgentController::generateTrajectoryToTarget()
         }
 
         // Scaling to meters
-        trajectory_length /= simple_vehicle_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
+        trajectory_length /= open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
         std::cout << "Path length " << trajectory_length << "m" << std::endl;
     }
-    
-    ASSERT(path_points.Num() > 1);
     
     std::cout << "Initial position: [" << agent_initial_position_.X << ", " << agent_initial_position_.Y << ", " << agent_initial_position_.Z << "]." << std::endl;
     std::cout << "Reachable position: [" << agent_goal_position_.X << ", " << agent_goal_position_.Y << ", " << agent_goal_position_.Z << "]." << std::endl;

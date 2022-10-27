@@ -15,7 +15,7 @@ class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
 
-class APIPCamera;
+class CameraSensor;
 class AOpenBotPawn;
 struct Box;
 
@@ -48,13 +48,11 @@ private:
     // Generate a collision-free trajectory between an initial and a target location
     void generateTrajectoryToTarget();
 
-    AOpenBotPawn* simple_vehicle_pawn_ = nullptr;
+    AOpenBotPawn* open_bot_pawn_ = nullptr;
 
     AActor* goal_actor_ = nullptr;
-    AActor* new_object_parent_actor_ = nullptr;
 
-    UTextureRenderTarget2D* texture_render_target_ = nullptr;
-    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
+    std::unique_ptr<CameraSensor> observation_camera_sensor_ = nullptr;
 
     // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;

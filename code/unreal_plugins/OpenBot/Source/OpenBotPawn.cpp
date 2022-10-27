@@ -17,13 +17,19 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn
     // To create components, you can use CreateDefaultSubobject<Type>("InternalName").
     mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VehicleMesh'"));
 
+    std::string version = Config::getValue<std::string>({"OPENBOT", "VERSION"});
+    std::ostringstream oss_mesh_component_;
+    oss_mesh_component_ << "/OpenBot/" <<version << "/Meshes/OpenBot_" << version << "_Mesh.OpenBot_" << version << "_Mesh"; //<< version << ".OPENBOT_" << version;
     // Setup skeletal mesh
-    static ConstructorHelpers::FObjectFinder<USkeletalMesh> openbot_mesh_finder(TEXT("/OpenBot/v0/Meshes/OpenBot_Mesh.OpenBot_Mesh"));
+    //static ConstructorHelpers::FObjectFinder<USkeletalMesh> openbot_mesh_finder(TEXT("/OpenBot/v0/Meshes/OpenBot_Mesh.OpenBot_Mesh"));
+    static ConstructorHelpers::FObjectFinder<USkeletalMesh> openbot_mesh_finder(UTF8_TO_TCHAR(oss_mesh_component_.str().c_str()));
     ASSERT(openbot_mesh_finder.Succeeded());
     mesh_component_->SetSkeletalMesh(openbot_mesh_finder.Object);
 
+    std::ostringstream oss_animation_component_;
+    oss_animation_component_ << "/OpenBot/" << version << "/Meshes/OpenBot_" << version << "_Animation.OpenBot_" << version << "_Animation_C"; //<< version << ".OPENBOT_" << version;
     // Setup animation
-    static ConstructorHelpers::FClassFinder<UAnimInstance> openbot_animation_finder(TEXT("/OpenBot/v0/Meshes/OpenBot_Animation.OpenBot_Animation_C"));
+    static ConstructorHelpers::FClassFinder<UAnimInstance> openbot_animation_finder(UTF8_TO_TCHAR(oss_animation_component_.str().c_str()));
     ASSERT(openbot_animation_finder.Succeeded());
     mesh_component_->SetAnimClass(openbot_animation_finder.Class);
 
@@ -69,24 +75,8 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn
     vehicle_movement_component_->WheelSetups[3].AdditionalOffset = FVector(0.f, 0.f, 0.f); // If BoneName is specified, offset the wheel from the bone's location.
     // Otherwise this offsets the wheel from the vehicle's origin.
 
-    wheelVelocity_.setZero();
-    motorVelocity_.setZero();
-    counterElectromotiveForce_.setZero();
-    motorTorque_.setZero();
-    wheelTorque_.setZero();
     duty_cycle_.setZero();
-    motorWindingCurrent_.setZero();
-    actionVec_.setZero();
-
-    gearRatio_ = Config::getValue<float>({"OPENBOT", "GEAR_RATIO"});
-    motorVelocityConstant_ = Config::getValue<float>({"OPENBOT", "MOTOR_VELOCITY_CONSTANT"});
-    motorTorqueConstant_ = 1 / motorVelocityConstant_;
-    controlDeadZone_ = Config::getValue<float>({"OPENBOT", "CONTROL_DEAD_ZONE"});
-    motorTorqueMax_ = Config::getValue<float>({"OPENBOT", "MOTOR_TORQUE_MAX"});
-    electricalResistance_ = Config::getValue<float>({"OPENBOT", "ELECTRICAL_RESISTANCE"});
-    electricalInductance_ = Config::getValue<float>({"OPENBOT", "ELECTRICAL_INDUCTANCE"});
-    actionScale_ = Config::getValue<float>({"OPENBOT", "ACTION_SCALE"});
-    batteryVoltage_ = Config::getValue<float>({"OPENBOT", "BATTERY_VOLTAGE"});
+    action_vec_.setZero();
 
     // Vehicle dynamics:
     vehicle_movement_component_->DragCoefficient = Config::getValue<float>({"OPENBOT", "DRAG_COEFFICIENT"}); // DragCoefficient of the vehicle chassis.
@@ -101,46 +91,14 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn
 
     // TODO read from config or fixed position?
     // Create camera component
-    FVector CameraPos(5.0f, 5.0f, 5.0f);
-    FRotator CameraOri(0.0f, 0.0f, 0.0f);
+    FVector camera_pos(5.0f, 5.0f, 5.0f);
+    FRotator camera_ori(0.0f, 0.0f, 0.0f);
 
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("OpenBotSmartPhoneCamera"));
-    camera_component_->SetRelativeLocationAndRotation(CameraPos, CameraOri);
+    camera_component_->SetRelativeLocationAndRotation(camera_pos, camera_ori);
     camera_component_->SetupAttachment(mesh_component_);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = 90.f;
-
-    //CaptureComponent = this->GetWorld()->SpawnActor<ASceneCapture2D>(FVector::ZeroVector, FRotator::ZeroRotator);
-
-    scene_capture_component_ = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("OpenBotSmartPhoneCapture"));
-    scene_capture_component_->SetRelativeLocationAndRotation(CameraPos, CameraOri);
-    scene_capture_component_->SetupAttachment(mesh_component_);
-
-    // Create RenderTargets
-    UTextureRenderTarget2D* render_target = NewObject<UTextureRenderTarget2D>();
-
-    //renderTarget2D->TargetGamma = GEngine->GetDisplayGamma();           // 1.2f; for Vulkan | GEngine->GetDisplayGamma(); for DX11/12
-    render_target->InitAutoFormat(32,32);                         // Setup the RenderTarget capture format: some random format, got crashing otherwise frameWidht = 2048 and frameHeight = 2048.
-    render_target->InitCustomFormat(32,32, PF_B8G8R8A8, true);    // PF_B8G8R8A8 disables HDR which will boost storing to disk due to less image information
-    render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-    render_target->bGPUSharedFlag = true; // demand buffer on GPU
-
-    // Set Camera Properties
-    scene_capture_component_->bAlwaysPersistRenderingState = 1;
-    scene_capture_component_->bCaptureEveryFrame = 0;
-    scene_capture_component_->FOVAngle = 90.0f;               // Standard FOV
-    scene_capture_component_->TextureTarget = render_target; // Assign RenderTarget
-    scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-    scene_capture_component_->ShowFlags.SetTemporalAA(false);
-    scene_capture_component_->ShowFlags.SetAntiAliasing(true);
-    // Lookup more showflags in the UE4 documentation..
-
-    // Set post processing parameters:
-    FPostProcessSettings prost_process_setting;
-    prost_process_setting.MotionBlurAmount = 10.f; // Strength of motion blur, 0:off, should be renamed to intensity
-    prost_process_setting.MotionBlurMax = 10.f;    // Max distortion caused by motion blur, in percent of the screen width, 0:off
-    scene_capture_component_->PostProcessSettings = prost_process_setting;
-    scene_capture_component_->PostProcessBlendWeight = 1.f; // Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect.
 
 }
 
@@ -206,53 +164,71 @@ void AOpenBotPawn::setDutyCycleAndClamp(Eigen::Vector4f duty_cycle)
 // be defined through the python client or by keyboard/game controller input.
 Eigen::Vector2f AOpenBotPawn::GetControlState()
 {
-    return actionVec_;
+    return action_vec_;
 }
 
 void AOpenBotPawn::setDriveTorques(float DeltaTime)
 {
+    // Openbot motor torque: 1200 gf.cm (gram force centimeter) = 0.1177 N.m
+    // https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html)
+    // Gear ratio: 50 => max. wheel torque = 5.88399 N.m
 
+    float gear_ratio = Config::getValue<float>({"OPENBOT", "GEAR_RATIO"});  // Gear ratio of the OpenBot motors.
+    float motor_velocity_constant = Config::getValue<float>({"OPENBOT", "MOTOR_VELOCITY_CONSTANT"}); // Motor torque constant in [N.m/A]
+    float motor_torque_constant = 1 / motor_velocity_constant;    // Motor torque constant in [rad/s/V]
+    float battery_voltage = Config::getValue<float>({"OPENBOT", "BATTERY_VOLTAGE"});    // Expressed in [V]
+
+    float control_dead_zone = Config::getValue<float>({"OPENBOT", "CONTROL_DEAD_ZONE"}); // Below this command threshold, the torque is set to zero if the motor velocity is "small enough"
+    float motor_torque_max = Config::getValue<float>({"OPENBOT", "MOTOR_TORQUE_MAX"}); // Maximum ammount of torque an OpenBot motor can generate [N.m].
+    float electrical_resistance = Config::getValue<float>({"OPENBOT", "ELECTRICAL_RESISTANCE"}); // Electrical resistance of the DC motor windings in [Ohms]
+    float electrical_inductance = Config::getValue<float>({"OPENBOT", "ELECTRICAL_INDUCTANCE"});  // Electrical inductance of the DC motor windings in [Henry]
+    // Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to
+    // be processed by the low-level microcontroller. For more details, feel free
+    // to check the "speedMultiplier" command in the OpenBot code:
+    // https://github.com/isl-org/OpenBot/blob/d4362e688435155f6c20dfdb756e55556fc12cc8/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
+    float action_scale = Config::getValue<float>({"OPENBOT", "ACTION_SCALE"});
+
+    // The ground truth velocity of the robot wheels in [RPM]
+    Eigen::Vector4f wheel_velocity; 
     // Acquire the ground truth motor and wheel velocity for motor counter-electromotive force computation purposes
     // (or alternatively friction computation purposes):
-    wheelVelocity_(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
-    wheelVelocity_(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
-    wheelVelocity_(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
-    wheelVelocity_(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
+    wheel_velocity(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
+    wheel_velocity(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
+    wheel_velocity(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
+    wheel_velocity(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
 
-    // vehicle_movement_component_->PVehicleDrive->setToRestState();
-    // vehicle_movement_component_->PVehicleDrive->mDriveDynData.setToRestState();
-    // vehicle_movement_component_->PVehicle->mWheelsDynData.setToRestState();
-
-    motorVelocity_ = gearRatio_ * RPMToRadSec(wheelVelocity_); // Expressed in [rad/s]
+    // The ground truth velocity of the motors in [rad/s]
+    Eigen::Vector4f motor_velocity = gear_ratio * RPMToRadSec(wheel_velocity); // Expressed in [rad/s]
 
     // Compute the counter electromotive force using the motor torque constant:
-    counterElectromotiveForce_ = motorTorqueConstant_ * motorVelocity_; // Expressed in [V]
+    Eigen::Vector4f counter_electromotive_force = motor_torque_constant * motor_velocity; // Expressed in [V]
 
-    // The current allowed to circulate in the motor is the result of the
+    // The electrical current allowed to circulate in the motor is the result of the
     // difference between the applied voltage and the counter electromotive force:
-    motorWindingCurrent_ = ((batteryVoltage_ * duty_cycle_) - counterElectromotiveForce_) / electricalResistance_; // Expressed in [A]
-    // motorWindingCurrent_ = motorWindingCurrent_ *
-    // (1-(electricalResistance_/electricalInductance_)*DeltaTime) +
-    // ((batteryVoltage_*duty_cycle_)-counterElectromotiveForce_)*DeltaTime/electricalInductance_;
+    Eigen::Vector4f motor_winding_current = ((battery_voltage * duty_cycle_) - counter_electromotive_force) / electrical_resistance; // Expressed in [A]
+
+    // motor_winding_current = motor_winding_current *
+    // (1-(electrical_resistance/electrical_inductance)*DeltaTime) +
+    // ((batteryVoltage_*duty_cycle_)-counter_electromotive_force)*delta_time/electrical_inductance;
     // If deltaTime is "small enouth" (which is definitely not the case here)
 
-    // The torque is then obtained using the torque coefficient of the motor:
-    motorTorque_ = motorTorqueConstant_ * motorWindingCurrent_;
+    // The torque is then obtained using the torque coefficient of the motor in [N.m]:
+    Eigen::Vector4f motor_torque = motor_torque_constant * motor_winding_current;
 
     // Motor torque is saturated to match the motor limits:
-    motorTorque_ = Clamp(motorTorque_, Eigen::Vector4f::Constant(-motorTorqueMax_), Eigen::Vector4f::Constant(motorTorqueMax_));
+    motor_torque = Clamp(motor_torque, Eigen::Vector4f::Constant(-motor_torque_max), Eigen::Vector4f::Constant(motor_torque_max));
 
-    // The torque applied to the robot wheels is finally computed acounting for the gear ratio:
-    wheelTorque_ = gearRatio_ * motorTorque_;
+    // The torque applied to the robot wheels is finally computed accounting for the gear ratio:
+    Eigen::Vector4f wheel_torque = gear_ratio * motor_torque;
 
     // Control dead zone at near-zero velocity:
     // Note: this is a simplified but reliable way to deal with the friction
     // behavior observed on the real vehicle in the low-velocities/low-duty-cycle dommain.
     for (size_t i = 0; i < duty_cycle_.size(); i++)
     {
-        if (std::abs(motorVelocity_(i)) < 1e-5 and std::abs(duty_cycle_(i)) <= controlDeadZone_ / actionScale_) // If the motor is "nearly" stopped
+        if (std::abs(motor_velocity(i)) < 1e-5 and std::abs(duty_cycle_(i)) <= control_dead_zone / action_scale) // If the motor is "nearly" stopped
         {
-            wheelTorque_(i) = 0.f;
+            wheel_torque(i) = 0.f;
         }
     }
 
@@ -261,14 +237,14 @@ void AOpenBotPawn::setDriveTorques(float DeltaTime)
     // UnrealEngine-4.26.2-release/Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/SimpleWheeledVehicleMovementComponent.h.
     // This file also contains a bunch of useful functions such as "SetBrakeTorque" or "SetSteerAngle". Please take a look if you want to
     // modify the way the simulated vehicle is being controlled.
-    vehicle_movement_component_->SetDriveTorque(wheelTorque_(0), 0); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetDriveTorque(wheelTorque_(1), 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetDriveTorque(wheelTorque_(2), 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetDriveTorque(wheelTorque_(3), 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetDriveTorque(wheel_torque(0), 0); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetDriveTorque(wheel_torque(1), 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetDriveTorque(wheel_torque(2), 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetDriveTorque(wheel_torque(3), 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
 
     // Fill the observed action vector to be used for RL purposes:
-    actionVec_(0) = (duty_cycle_(0) + duty_cycle_(2)) / 2; // leftCtrl
-    actionVec_(1) = (duty_cycle_(1) + duty_cycle_(3)) / 2; // rightCtrl
+    action_vec_(0) = (duty_cycle_(0) + duty_cycle_(2)) / 2; // leftCtrl
+    action_vec_(1) = (duty_cycle_(1) + duty_cycle_(3)) / 2; // rightCtrl
 
     // Reset duty cycle value:
     duty_cycle_.setZero();
@@ -295,6 +271,7 @@ void AOpenBotPawn::NotifyHit(class UPrimitiveComponent* hit_component,
 
     std::cout << "    COLLISION    " << std::string(TCHAR_TO_UTF8(*hit_component_name)) << "  ---  " << std::string(TCHAR_TO_UTF8(*other_component_name)) << std::endl;
 }
+
 void AOpenBotPawn::reset(FVector location, FQuat rotation)
 {
     this->SetActorLocationAndRotation(location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
@@ -319,7 +296,7 @@ void AOpenBotPawn::reset(FVector location, FQuat rotation)
     // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
 }
 
-    //@brief Clamp a vector between two values.
+// Clamp a vector between two values.
 Eigen::Vector4f AOpenBotPawn::Clamp(Eigen::Vector4f v, Eigen::Vector4f vMin, Eigen::Vector4f vMax)
 {
     Eigen::Vector4f v_clamped;
@@ -338,13 +315,13 @@ Eigen::Vector4f AOpenBotPawn::Clamp(Eigen::Vector4f v, Eigen::Vector4f vMin, Eig
     return v_clamped;
 }
 
-//Rev per minute to rad/s
+// Rev per minute to rad/s
 Eigen::VectorXf AOpenBotPawn::RPMToRadSec(Eigen::VectorXf RPM)
 {
     return RPM * PI / 30.f;
 }
 
-//rad/s to rev per minute
+// rad/s to rev per minute
 Eigen::VectorXf AOpenBotPawn::RadSecToRPM(Eigen::VectorXf Omega)
 {
     return Omega * 30.f / PI;

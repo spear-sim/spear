@@ -1,4 +1,6 @@
 OPENBOT:
+  # OpenBot mesh version
+  VERSION: V0
   # Radius of the wheel in [m]
   WHEEL_SHAPE_RADIUS: 0.03
 
