@@ -101,6 +101,11 @@ void SimulationController::worldBeginPlayEventHandler()
     GEngine->Exec(world_, TEXT("r.GTSyncType 1"));
     GEngine->Exec(world_, TEXT("r.OneFrameThreadLag 0"));
 
+    // execute optional console commands from python client
+    for (std::string& command : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS"})) {
+        GEngine->Exec(world_, UTF8_TO_TCHAR(command.c_str()));
+    }
+
     // Set fixed simulation step time in seconds
     FApp::SetBenchmarking(true);
     FApp::SetFixedDeltaTime(Config::getValue<double>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));

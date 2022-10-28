@@ -44,9 +44,20 @@ CameraAgentController::CameraAgentController(UWorld* world)
                                                     Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
     ASSERT(camera_sensor_);
 
-    // update FOV
+    
+    // update camera parameters
     for (auto& camera_pass : camera_sensor_->camera_passes_) {
+        
+        // update FOV
         camera_pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "FOV" });
+        
+        // update auto-exposure settings
+        if (camera_pass.first == "final_color") {
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "AUTO_EXPOSURE_OVERRIDE_SPEED_UP" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "AUTO_EXPOSURE_SPEED_UP" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedDown = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "AUTO_EXPOSURE_SPEED_DOWN" });
+        }
     }
 }
 
