@@ -56,6 +56,7 @@ if __name__ == "__main__":
     parser.add_argument("--scenes_path", type=str, required=True)
     parser.add_argument("--executable_dir", type=str, required=True)
     parser.add_argument("--poses_file", type=str, required=True)
+    parser.add_argument("--num_images_per_pose", type=int, required=True)
     parser.add_argument("--output_dir", type=str, required=True)
     args = parser.parse_args()
     
@@ -65,8 +66,6 @@ if __name__ == "__main__":
     # load config
     config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
     config = get_config(config_files)
-
-    NUM_IMAGES_PER_FRAME = 6
 
     for scene in df["map_id"].unique():
 
@@ -83,10 +82,13 @@ if __name__ == "__main__":
             # shutil.copy(os.path.join(args.scenes_path, f"{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
             # shutil.copy(os.path.join(args.scenes_path, f"{scene}/paks/Windows/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks")
 
+        render_pass = "final_color"
+
+        assert len(config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES) == 1 and config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0] == render_pass
+
         # check if data path for storing images exists
-        for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES:
-            if not os.path.exists(os.path.join(args.output_dir, f"Map_{scene}/{render_pass}")):
-                os.makedirs(os.path.join(args.output_dir, f"Map_{scene}/{render_pass}"))
+        if not os.path.exists(os.path.join(args.output_dir, f"{render_pass}")):
+            os.makedirs(os.path.join(args.output_dir, f"{render_pass}"))
 
         # create Env object
         env = CustomEnv(config)
@@ -99,29 +101,23 @@ if __name__ == "__main__":
         # iterate over recorded poses
         for pose in df.loc[df["map_id"] == scene].to_records():
 
-            if "final_color" in config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES:
-                env.customSetActionTick({"set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32), "set_num_random_points": np.array([0], np.uint32)})
-                for j in range(0, NUM_IMAGES_PER_FRAME - 2):
-                    env.customEmptyTick()
-                obs, _, _, _ = env.customGetObservationTick()
-            elif "segmentation" in config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES:
-                env.step({"set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32), "set_num_random_points": np.array([0], np.uint32)})
-            else:
-                assert False, "render pass mode in config file is not supported. Supported types are 'final_color' and 'segmentation'."
+            obs, _, _, _ = env.step({"set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32), "set_num_random_points": np.array([0], np.uint32)})
 
-            for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES:
+            output_path = os.path.join(args.output_dir, f"{render_pass}")
+            return_status = cv2.imwrite(output_path +f"/{pose['index']}_frame_0.png", obs[f"visual_observation_{render_pass}"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            assert return_status == True
 
-                # cv2.imshow(f"visual_observation_{render_pass}", obs[f"visual_observation_{render_pass}"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-                # cv2.waitKey(0)
-                output_path = os.path.join(args.output_dir, f"Map_{scene}/{render_pass}")
-                assert os.path.exists(output_path)
-                return_status = cv2.imwrite(output_path +f"/{pose['index']}.png", obs[f"visual_observation_{render_pass}"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            for j in range(1, args.num_images_per_pose + 1):
+                # obs, _, _, _ = env.customGetObservationTick()
+                obs, _, _, _ = env.step({"set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"] + j, pose["roll_degs"]], np.float32), "set_num_random_points": np.array([0], np.uint32)})
+                return_status = cv2.imwrite(output_path +f"/{pose['index']}_frame_{j}.png", obs[f"visual_observation_{render_pass}"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
                 assert return_status == True
         
         stop_time = time.time()
         env.close()
 
         print(f"elapsed time for scene {scene}", stop_time-start_time)
-        time.sleep(5)
+        fps = len(df.loc[df["map_id"] == scene].to_records()) * (args.num_images_per_pose+1)/(stop_time-start_time)
+        print(f"fps is {fps}")
         # os.remove(f"{args.executable_dir}/{PLATFORM}NoEditor/RobotProject/Content/Paks/{scene}_{PLATFORM}.pak")  
         cv2.destroyAllWindows()
