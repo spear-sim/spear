@@ -102,13 +102,13 @@ void SimulationController::worldBeginPlayEventHandler()
     GEngine->Exec(world_, TEXT("r.OneFrameThreadLag 0"));
 
     // execute optional console commands from python client
-    for (std::string& command : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS"})) {
+    for (const auto& command : Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS" })) {
         GEngine->Exec(world_, UTF8_TO_TCHAR(command.c_str()));
     }
 
     // Set fixed simulation step time in seconds
     FApp::SetBenchmarking(true);
-    FApp::SetFixedDeltaTime(Config::getValue<double>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));
+    FApp::SetFixedDeltaTime(Config::getValue<double>({ "SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS" }));
 
     // Pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
@@ -118,7 +118,7 @@ void SimulationController::worldBeginPlayEventHandler()
         agent_controller_ = std::make_unique<CameraAgentController>(world_);
     } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "OpenBotAgentController") {
         agent_controller_ = std::make_unique<OpenBotAgentController>();
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME"}) == "SphereAgentController") {
+    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
     } else {
         ASSERT(false);
@@ -126,11 +126,11 @@ void SimulationController::worldBeginPlayEventHandler()
     ASSERT(agent_controller_);
 
     // Create Task
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "ImitationLearningTask") {
+    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "TASK_NAME" }) == "ImitationLearningTask") {
         task_ = std::make_unique<ImitationLearningTask>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "NullTask") {
+    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "TASK_NAME" }) == "NullTask") {
         task_ = std::make_unique<NullTask>();
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK_NAME"}) == "PointGoalNavigationTask") {
+    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "TASK_NAME" }) == "PointGoalNavigationTask") {
         task_ = std::make_unique<PointGoalNavTask>(world_);
     } else {
         ASSERT(false);
@@ -150,8 +150,8 @@ void SimulationController::worldBeginPlayEventHandler()
     frame_state_ = FrameState::Idle;
 
     // config values required for rpc communication
-    const auto hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
-    const auto port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
+    const auto hostname = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "IP" });
+    const auto port = Config::getValue<int>({ "SIMULATION_CONTROLLER", "PORT" });
 
     rpc_server_ = std::make_unique<RpcServer>(hostname, port);
     ASSERT(rpc_server_);

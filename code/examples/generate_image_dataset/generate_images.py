@@ -21,23 +21,27 @@ elif sys.platform == "win32":
 
 
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
-# However, in this example, we are teleporting the camera in an incoherent way. Hence, we implement 
-# a CustomEnv that takes extra steps (i.e., renders extra frames) so that Unreal Engine's rendering system 
-# is warmed up by the time we get observations. Doing this avoids, texture pop-in, auto-exposure artifacts,
-# and improves overall image quality due to temporal anti-aliasing. These extra steps are not necessary in 
-# typical embodied AI scenarios, but are necessary when teleporting a camera.
+# However, in this example, we are teleporting the camera in an incoherent way. Hence, we implement a 
+# CustomEnv that can render multiple frames per step, so that Unreal Engine's rendering system is 
+# warmed up by the time we get observations. Doing this improves overall image quality due to Unreal's
+# use of temporal anti-aliasing. These extra frames are not necessary in typical embodied AI scenarios, 
+# but are necessary when teleporting a camera.
 class CustomEnv(Env):
 
-    def __init__(self, config, num_extra_single_steps):
+    def __init__(self, config, num_internal_steps):
         super(CustomEnv, self).__init__(config)
-        self.num_extra_single_steps = num_extra_single_steps
+        assert num_internal_steps > 0
+        self.num_internal_steps = num_internal_steps
 
     def step(self, action):
 
-        self.single_step(action)
-        for _ in range(self.num_extra_single_steps):
-            self.single_step()
-        return self.single_step(get_observation=True)
+        if self.num_internal_steps == 1:
+            return self.single_step(action, get_observation=True)
+        else:
+            self.single_step(action)
+            for _ in range(1, self.num_internal_steps - 1):
+                self.single_step()
+            return self.single_step(get_observation=True)
 
     def single_step(self, action=None, get_observation=False):
     
@@ -94,7 +98,7 @@ if __name__ == "__main__":
                 os.makedirs(os.path.join(args.output_dir, f"{scene}/{render_pass}"))
 
         # create Env object
-        env = CustomEnv(config, num_extra_single_steps=0)
+        env = CustomEnv(config, num_internal_steps=1)
 
         # reset the simulation
         _ = env.reset()
@@ -107,8 +111,8 @@ if __name__ == "__main__":
         for pose in df.loc[df["map_id"] == scene].to_records():
 
             # set the pose and obtain corresponding images
-            obs, _, _, _ = env.single_step(action={"set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32), "set_num_random_points": np.array([0], np.uint32)}, get_observation=True)
-
+            obs, _, _, _ = env.step(action={"set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32), "set_num_random_points": np.array([0], np.uint32)})
+            
             # view image
             # cv2.imshow(f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]", obs[f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
             # cv2.waitKey(0)

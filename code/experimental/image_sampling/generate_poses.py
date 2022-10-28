@@ -61,9 +61,6 @@ if __name__ == "__main__":
         # if f"Map_{scene}" in completed_scenes:
             # continue
 
-        if scene != "235114814" and scene != "235388780" and scene != "245072783":
-            continue
-
         print(f"processing scene {scene}")
 
         # choose map to load
@@ -95,7 +92,7 @@ if __name__ == "__main__":
             df = pd.DataFrame({ "pos_x_cms" : random_positions[:, 0],
                                 "pos_y_cms" : random_positions[:, 1],
                                 "pos_z_cms" : random_positions[:, 2] })
-            df.to_csv(os.path.join(config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.EXPORT_NAV_DATA_OBJ_DIR, f"Map_{scene}/poses_for_debug.csv"), mode='w', index=False)
+            df.to_csv(os.path.join(config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR, f"Map_{scene}/poses_for_debug.csv"), mode='w', index=False)
 
         
         _, _, _, step_info = env.step({"set_pose": np.array([0,0,config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.NAVMESH.AGENT_HEIGHT,0,0,0], dtype=np.float32), "set_num_random_points": np.array([args.num_poses_per_scene], dtype=np.uint32)})
