@@ -38,7 +38,7 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
     // Setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
-        // Create SceneCaptureComponent2D and TextureRenderTarget2D
+        // Create camera sensor
         observation_camera_sensor_ = std::make_unique<CameraSensor>(open_bot_pawn_,
             Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
@@ -233,7 +233,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getStepInfo(
 void OpenBotAgentController::reset()
 {
     const FVector agent_location = open_bot_pawn_->GetActorLocation();
-    open_bot_pawn_->reset(agent_location,FQuat(FRotator(0)));
+    open_bot_pawn_->SetActorLocationAndRotation(agent_location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
 
     // Trajectory generation between the start and goal points
     generateTrajectoryToTarget();

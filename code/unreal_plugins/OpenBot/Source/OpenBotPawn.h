@@ -5,19 +5,13 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #include <Eigen/Dense>
 
 #include <CoreMinimal.h>
-#include <Components/SceneCaptureComponent2D.h>
-#include <Engine/CollisionProfile.h>
-#include <Engine/SceneCapture2D.h>
 #include <GameFramework/Pawn.h>
-#include <PhysicsPublic.h>
-#include <PhysXIncludes.h>
-#include <PhysXPublic.h>
-#include <PhysXVehicleManager.h>
-#include <SimpleWheeledVehicleMovementComponent.h>
 
 #include "Config.h"
 
 #include "OpenBotPawn.generated.h"
+
+class USimpleWheeledVehicleMovementComponent;
 
 // This class is inspired by the WheeledVehicle class, define in:
 // UnrealEngine-4.26.2-release/Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/WheeledVehicle.h
@@ -26,15 +20,6 @@ class OPENBOT_API AOpenBotPawn : public APawn
 {
     GENERATED_BODY()
 public:
-    // The main skeletal mesh associated with this Vehicle
-    class USkeletalMeshComponent* mesh_component_;
-
-    // Vehicle simulation component
-    class USimpleWheeledVehicleMovementComponent* vehicle_movement_component_;
-
-    // Camera component that will be our viewpoint
-    class UCameraComponent* camera_component_;
-
     // Construct a new AOpenBotPawn object
     AOpenBotPawn(const FObjectInitializer& object_initializer);
 
@@ -83,7 +68,16 @@ public:
     // the keyboard (imitation learning scenario//
     Eigen::Vector2f GetControlState();
 
-    void reset(FVector location, FQuat rotation);
+    void resetPhysicsState();
+
+    // The main skeletal mesh associated with this Vehicle
+    class USkeletalMeshComponent* mesh_component_;
+
+    // Vehicle simulation component
+    class USimpleWheeledVehicleMovementComponent* vehicle_movement_component_;
+
+    // Camera component that will be our viewpoint
+    class UCameraComponent* camera_component_;
 
 private:
      // Computes the motor torque corresponding to a given command.

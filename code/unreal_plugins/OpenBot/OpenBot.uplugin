@@ -1,26 +1,26 @@
 {
-	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "1.0",
-	"FriendlyName": "OpenBot",
-	"Description": "WARNING: The loading phases for {CoreUtils, OpenBot} must be ordered as follows: CoreUtils < OpenBot",
-	"Category": "Other",
-	"CreatedBy": "",
-	"CreatedByURL": "",
-	"DocsURL": "",
-	"MarketplaceURL": "",
-	"SupportURL": "",
-	"CanContainContent": true,
-	"IsBetaVersion": true,
-	"IsExperimentalVersion": true,
-	"Installed": false,
-	"Modules": [
-		{
-			"Name": "OpenBot",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		}
-	],
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0",
+    "FriendlyName": "OpenBot",
+    "Description": "WARNING: The loading phases for {CoreUtils, OpenBot} must be ordered as follows: CoreUtils < OpenBot",
+    "Category": "Other",
+    "CreatedBy": "",
+    "CreatedByURL": "",
+    "DocsURL": "",
+    "MarketplaceURL": "",
+    "SupportURL": "",
+    "CanContainContent": true,
+    "IsBetaVersion": true,
+    "IsExperimentalVersion": true,
+    "Installed": false,
+    "Modules": [
+        {
+            "Name": "OpenBot",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        }
+    ],
     "Plugins": [
         {
             "Name": "CoreUtils",

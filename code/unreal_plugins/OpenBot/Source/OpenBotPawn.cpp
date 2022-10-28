@@ -5,10 +5,12 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #include <iostream>
 
 #include <Camera/CameraComponent.h>
-#include <Components/SceneCaptureComponent2D.h>
-#include <Engine/TextureRenderTarget2D.h>
-#include <TireConfig.h>
-#include <VehicleWheel.h>
+#include <Engine/CollisionProfile.h>
+#include <PhysicsPublic.h>
+#include <PhysXIncludes.h>
+#include <PhysXPublic.h>
+#include <PhysXVehicleManager.h>
+#include <SimpleWheeledVehicleMovementComponent.h>
 
 #include "OpenBotWheel.h"
 
@@ -272,10 +274,8 @@ void AOpenBotPawn::NotifyHit(class UPrimitiveComponent* hit_component,
     std::cout << "    COLLISION    " << std::string(TCHAR_TO_UTF8(*hit_component_name)) << "  ---  " << std::string(TCHAR_TO_UTF8(*other_component_name)) << std::endl;
 }
 
-void AOpenBotPawn::reset(FVector location, FQuat rotation)
+void AOpenBotPawn::resetPhysicsState()
 {
-    this->SetActorLocationAndRotation(location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
-
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component_->PVehicle->getRigidDynamicActor();
     ASSERT(rigid_body_dynamic_actor);
 

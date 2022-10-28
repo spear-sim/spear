@@ -1,6 +1,6 @@
 from yacs.config import CfgNode
 
-from interiorsim.constants import INTERIORSIM_DEFAULT_CONFIG_FILE, SIMULATION_CONTROLLER_DEFAULT_CONFIG_FILE, ROBOTSIM_DEFAULT_CONFIG_FILE, OPENBOT_DEFAULT_CONFIG_FILE
+from interiorsim.constants import INTERIORSIM_DEFAULT_CONFIG_FILE, OPENBOT_DEFAULT_CONFIG_FILE, SIMULATION_CONTROLLER_DEFAULT_CONFIG_FILE, ROBOTSIM_DEFAULT_CONFIG_FILE
 
 
 # This function returns a config object, obtained by loading and merging a list of config
@@ -15,10 +15,10 @@ def get_config(config_files):
     # create a single CfgNode that will eventually contain data from all config files
     config = CfgNode(new_allowed=True)
 
+    config.merge_from_file(OPENBOT_DEFAULT_CONFIG_FILE)
     config.merge_from_file(ROBOTSIM_DEFAULT_CONFIG_FILE)
     config.merge_from_file(SIMULATION_CONTROLLER_DEFAULT_CONFIG_FILE)
     config.merge_from_file(INTERIORSIM_DEFAULT_CONFIG_FILE)
-    config.merge_from_file(OPENBOT_DEFAULT_CONFIG_FILE)
 
     for c in config_files:
         config.merge_from_file(c)
