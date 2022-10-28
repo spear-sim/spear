@@ -292,7 +292,11 @@ void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys)
 
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
 
+    // We need to wrap this call with guards because ExportNavigationData is only implemented in non-shipping builds
+#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
     if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "EXPORT_NAV_DATA_OBJ" })) {
         nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "EXPORT_NAV_DATA_OBJ_DIR" }).c_str()) + "/" + world_->GetName() + "/");
     }
+#endif
+
 }
