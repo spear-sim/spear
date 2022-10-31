@@ -7,6 +7,7 @@
 #include "AgentController.h"
 #include "OpenBotPawn.h"
 #include "Camera/CameraComponent.h"
+
 class AActor;
 class ANavigationData;
 class ARecastNavMesh;
@@ -15,8 +16,8 @@ class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 class UWorld;
 
-class CameraSensor;
 class AOpenBotPawn;
+class CameraSensor;
 struct Box;
 
 class OpenBotAgentController : public AgentController
@@ -52,7 +53,7 @@ private:
 
     AActor* goal_actor_ = nullptr;
 
-    std::unique_ptr<CameraSensor> observation_camera_sensor_ = nullptr;
+    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
 
     // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;

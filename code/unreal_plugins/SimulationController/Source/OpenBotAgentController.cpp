@@ -39,11 +39,11 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
 
         // Create camera sensor
-        observation_camera_sensor_ = std::make_unique<CameraSensor>(open_bot_pawn_,
+        camera_sensor_ = std::make_unique<CameraSensor>(open_bot_pawn_,
             Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));
-        ASSERT(observation_camera_sensor_);
+        ASSERT(camera_sensor_);
     }
 
     // Agent Navigation:
@@ -77,8 +77,8 @@ void OpenBotAgentController::cleanUpObjectReferences()
     nav_sys_ = nullptr;
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        ASSERT(observation_camera_sensor_);
-        observation_camera_sensor_ = nullptr;
+        ASSERT(camera_sensor_);
+        camera_sensor_ = nullptr;
     }
 
     ASSERT(open_bot_pawn_);
@@ -194,7 +194,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         ASSERT(IsInGameThread());
 
         // get render data
-        std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->getRenderData();
+        std::map<std::string, TArray<FColor>> render_data = camera_sensor_->getRenderData();
         ASSERT(render_data.size() > 0);
 
         const auto& data = *(render_data.begin());
@@ -213,7 +213,12 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
     const FVector agent_current_location = open_bot_pawn_->GetActorLocation();
     const FRotator agent_current_orientation = open_bot_pawn_->GetActorRotation();
-    Eigen::Vector2f control_state = open_bot_pawn_->GetControlState();
+
+    Eigen::Vector4f duty_cycle = open_bot_pawn_->getDutyCycle();
+    Eigen::Vector2f control_state;
+    // Fill the observed action vector to be used for RL purposes:
+    control_state(0) = (duty_cycle(0) + duty_cycle(2)) / 2; // leftCtrl
+    control_state(1) = (duty_cycle(1) + duty_cycle(3)) / 2; // rightCtrl
 
     observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
     observation["state_data"] = Serialize::toUint8(std::vector<float>{agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw)});

@@ -1,16 +1,13 @@
 #include "OpenBotWheel.h"
 
-PRAGMA_DISABLE_DEPRECATION_WARNINGS
+#include "Config.h"
 
 UOpenBotWheel::UOpenBotWheel()
 {
-    bAffectedByHandbrake = true;
-    ShapeRadius = 3.3f;
-    ShapeWidth = 1.5f;
-    SteerAngle = 0.f;
-    // Disable suspension
-    SuspensionMaxRaise = 0.f;
-    SuspensionMaxDrop = 0.f;
+    bAffectedByHandbrake = Config::getValue<bool>({"OPENBOT", "WHEEL", "AFFECTED_BY_HANDBRAKE"});
+    ShapeRadius = Config::getValue<float>({"OPENBOT", "WHEEL", "SHAPE_RADIUS"});
+    ShapeWidth = Config::getValue<float>({"OPENBOT", "WHEEL", "SHAPE_WIDTH"});
+    SteerAngle = Config::getValue<float>({"OPENBOT", "WHEEL", "STEER_ANGLE"});
+    SuspensionMaxRaise = Config::getValue<float>({"OPENBOT", "WHEEL", "SUSPENSION_MAX_RAISE"});
+    SuspensionMaxDrop = Config::getValue<float>({"OPENBOT", "WHEEL", "SUSPENSION_MAX_DROP"});
 }
-
-PRAGMA_ENABLE_DEPRECATION_WARNINGS

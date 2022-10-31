@@ -1,6 +1,18 @@
 OPENBOT:
-  # OpenBot mesh version
-  VERSION: V0
+  OPENBOT_PAWN:
+  # OpenBot mesh uasset path
+    MESH: /OpenBot/V0/Meshes/OpenBot_V0_Mesh.OpenBot_V0_Mesh
+    # OpenBot Animation uasset class path
+    ANIMATION: /OpenBot/V0/Meshes/OpenBot_V0_Animation.OpenBot_V0_Animation_C
+  CAMERA:
+    CAMERA_POSITION_X: 5.0
+    CAMERA_POSITION_Y: 5.0
+    CAMERA_POSITION_Z: 5.0
+    CAMERA_ROLL: 0.0
+    CAMERA_YAW: 0.0
+    CAMERA_PITCH: 0.0
+    FOV: 90.0
+
   # Radius of the wheel in [m]
   WHEEL_SHAPE_RADIUS: 0.03
 
@@ -51,3 +63,12 @@ OPENBOT:
 
   # Voltage of the battery powering the OpenBot
   BATTERY_VOLTAGE: 12.0
+
+  WHEEL:
+    AFFECTED_BY_HANDBRAKE: True
+    SHAPE_RADIUS: 3.3
+    SHAPE_WIDTH: 1.5
+    STEER_ANGLE: 0.0
+    SUSPENSION_MAX_RAISE: 0.0
+    SUSPENSION_MAX_DROP: 0.0
+
