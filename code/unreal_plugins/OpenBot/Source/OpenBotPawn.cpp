@@ -16,34 +16,33 @@
 AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(object_initializer)
 {
     // To create components, you can use CreateDefaultSubobject<Type>("InternalName").
-    mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VehicleMesh"));
+    skeletal_mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VehicleMesh"));
 
     // Setup skeletal mesh
     std::string mesh_name = Config::getValue<std::string>({"OPENBOT", "OPENBOT_PAWN", "MESH"});
     ConstructorHelpers::FObjectFinder<USkeletalMesh> openbot_mesh_finder(UTF8_TO_TCHAR(mesh_name.c_str()));
     ASSERT(openbot_mesh_finder.Succeeded());
-    mesh_component_->SetSkeletalMesh(openbot_mesh_finder.Object);
+    skeletal_mesh_component_->SetSkeletalMesh(openbot_mesh_finder.Object);
 
     // Setup animation
     std::string animation_name = Config::getValue<std::string>({"OPENBOT", "OPENBOT_PAWN", "ANIMATION"});
     ConstructorHelpers::FClassFinder<UAnimInstance> openbot_animation_finder(UTF8_TO_TCHAR(animation_name.c_str()));
     ASSERT(openbot_animation_finder.Succeeded());
-    mesh_component_->SetAnimClass(openbot_animation_finder.Class);
+    skeletal_mesh_component_->SetAnimClass(openbot_animation_finder.Class);
 
-    mesh_component_->SetCollisionProfileName(UCollisionProfile::Vehicle_ProfileName);
-    mesh_component_->BodyInstance.bSimulatePhysics = true;
-    mesh_component_->BodyInstance.bNotifyRigidBodyCollision = true;
-    mesh_component_->BodyInstance.bUseCCD = true;
-    mesh_component_->bBlendPhysics = true;
-    mesh_component_->SetGenerateOverlapEvents(true);
-    mesh_component_->SetCanEverAffectNavigation(false);
-    // example for adding user-defined collision callback
-    // Mesh->OnComponentHit.AddDynamic(this,&ASimpleVehiclePawn::OnComponentCollision);
-    RootComponent = mesh_component_;
+    skeletal_mesh_component_->SetCollisionProfileName(UCollisionProfile::Vehicle_ProfileName);
+    skeletal_mesh_component_->BodyInstance.bSimulatePhysics = true;
+    skeletal_mesh_component_->BodyInstance.bNotifyRigidBodyCollision = true;
+    skeletal_mesh_component_->BodyInstance.bUseCCD = true;
+    skeletal_mesh_component_->bBlendPhysics = true;
+    skeletal_mesh_component_->SetGenerateOverlapEvents(true);
+    skeletal_mesh_component_->SetCanEverAffectNavigation(false);
+
+    RootComponent = skeletal_mesh_component_;
 
     vehicle_movement_component_ = CreateDefaultSubobject<USimpleWheeledVehicleMovementComponent>(TEXT("SimpleWheeledVehicleMovement"));
     vehicle_movement_component_->SetIsReplicated(true); // Enable replication by default
-    vehicle_movement_component_->UpdatedComponent = mesh_component_;
+    vehicle_movement_component_->UpdatedComponent = skeletal_mesh_component_;
 
     // Setup wheels:
     vehicle_movement_component_->WheelSetups.SetNum(4);
@@ -54,23 +53,19 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     // Wheels to create:
     vehicle_movement_component_->WheelSetups[0].WheelClass = wheel_class;
     vehicle_movement_component_->WheelSetups[0].BoneName = FName("FL");
-    vehicle_movement_component_->WheelSetups[0].AdditionalOffset = FVector(0.f, 0.f, 0.f); // If BoneName is specified, offset the wheel from the bone's location.
-                                                                                           // Otherwise this offsets the wheel from the vehicle's origin.
+    vehicle_movement_component_->WheelSetups[0].AdditionalOffset = FVector(0.f, 0.f, 0.f); // offset the wheel from the bone's location
 
     vehicle_movement_component_->WheelSetups[1].WheelClass = wheel_class;
     vehicle_movement_component_->WheelSetups[1].BoneName = FName("FR");
-    vehicle_movement_component_->WheelSetups[1].AdditionalOffset = FVector(0.f, 0.f, 0.f); // If BoneName is specified, offset the wheel from the bone's location.
-                                                                                           // Otherwise this offsets the wheel from the vehicle's origin.
+    vehicle_movement_component_->WheelSetups[1].AdditionalOffset = FVector(0.f, 0.f, 0.f); // offset the wheel from the bone's location
 
     vehicle_movement_component_->WheelSetups[2].WheelClass = wheel_class;
     vehicle_movement_component_->WheelSetups[2].BoneName = FName("RL");
-    vehicle_movement_component_->WheelSetups[2].AdditionalOffset = FVector(0.f, 0.f, 0.f); // If BoneName is specified, offset the wheel from the bone's location.
-                                                                                           // Otherwise this offsets the wheel from the vehicle's origin.
+    vehicle_movement_component_->WheelSetups[2].AdditionalOffset = FVector(0.f, 0.f, 0.f); // offset the wheel from the bone's location
 
     vehicle_movement_component_->WheelSetups[3].WheelClass = wheel_class;
     vehicle_movement_component_->WheelSetups[3].BoneName = FName("RR");
-    vehicle_movement_component_->WheelSetups[3].AdditionalOffset = FVector(0.f, 0.f, 0.f); // If BoneName is specified, offset the wheel from the bone's location.
-    // Otherwise this offsets the wheel from the vehicle's origin.
+    vehicle_movement_component_->WheelSetups[3].AdditionalOffset = FVector(0.f, 0.f, 0.f); // offset the wheel from the bone's location
 
     duty_cycle_.setZero();
 
@@ -85,7 +80,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     FRotator camera_orientation(Config::getValue<float>({"OPENBOT", "CAMERA", "CAMERA_PITCH"}), Config::getValue<float>({"OPENBOT", "CAMERA", "CAMERA_YAW"}), Config::getValue<float>({"OPENBOT", "CAMERA", "CAMERA_ROLL"}));
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("OpenBotSmartPhoneCamera"));
     camera_component_->SetRelativeLocationAndRotation(camera_pose, camera_orientation);
-    camera_component_->SetupAttachment(mesh_component_);
+    camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::getValue<float>({"OPENBOT", "CAMERA", "FOV"});
 }
@@ -201,10 +196,9 @@ void AOpenBotPawn::setDriveTorques(float delta_time)
     // Control dead zone at near-zero velocity:
     // Note: this is a simplified but reliable way to deal with the friction
     // behavior observed on the real vehicle in the low-velocities/low-duty-cycle dommain.
-    for (size_t i = 0; i < duty_cycle_.size(); i++)
-    {
-        if (std::abs(motor_velocity(i)) < 1e-5 and std::abs(duty_cycle_(i)) <= control_dead_zone / action_scale) // If the motor is "nearly" stopped
-        {
+    for (size_t i = 0; i < duty_cycle_.size(); i++) {
+        // set torque zeror if the motor is "nearly" stopped
+        if (std::abs(motor_velocity(i)) < 1e-5 and std::abs(duty_cycle_(i)) <= control_dead_zone / action_scale) {
             wheel_torque(i) = 0.f;
         }
     }
@@ -232,10 +226,6 @@ void AOpenBotPawn::Tick(float delta_time)
 
 void AOpenBotPawn::NotifyHit(class UPrimitiveComponent* hit_component, class AActor* other_actor, class UPrimitiveComponent* other_component, bool bself_moved, FVector hit_location, FVector hit_normal, FVector normal_impulse, const FHitResult& hit)
 {
-    FString hit_component_name = hit_component->GetName();
-    FString other_component_name = other_component->GetName();
-
-    std::cout << "    COLLISION    " << std::string(TCHAR_TO_UTF8(*hit_component_name)) << "  ---  " << std::string(TCHAR_TO_UTF8(*other_component_name)) << std::endl;
 }
 
 void AOpenBotPawn::resetPhysicsState()
@@ -246,8 +236,7 @@ void AOpenBotPawn::resetPhysicsState()
     // We want to reset the physics state of OpenBot, so we are inlining the below code from
     // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleDrive.cpp::setToRestState(), and
     // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleWheels.cpp::setToRestState(), because these functions are protected.
-    if (!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
-    {
+    if (!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC)) {
         rigid_body_dynamic_actor->setLinearVelocity(PxVec3(0, 0, 0));
         rigid_body_dynamic_actor->setAngularVelocity(PxVec3(0, 0, 0));
         rigid_body_dynamic_actor->clearForce(PxForceMode::eACCELERATION);
@@ -266,14 +255,11 @@ Eigen::Vector4f AOpenBotPawn::clamp(Eigen::Vector4f v, Eigen::Vector4f v_min, Ei
 {
     Eigen::Vector4f v_clamped;
     v_clamped = v;
-    for (unsigned int i = 0; i < v.size(); i++)
-    {
-        if (v(i) > v_max(i))
-        {
+    for (unsigned int i = 0; i < v.size(); i++) {
+        if (v(i) > v_max(i)) {
             v_clamped(i) = v_max(i);
         }
-        if (v(i) < v_min(i))
-        {
+        if (v(i) < v_min(i)) {
             v_clamped(i) = v_min(i);
         }
     }

@@ -59,7 +59,7 @@ public:
     void resetPhysicsState();
 
     // The main skeletal mesh associated with this Vehicle
-    USkeletalMeshComponent* mesh_component_ = nullptr;
+    USkeletalMeshComponent* skeletal_mesh_component_ = nullptr;
 
     // Vehicle simulation component
     USimpleWheeledVehicleMovementComponent* vehicle_movement_component_ = nullptr;
