@@ -5,15 +5,11 @@
 #include <vector>
 
 #include "AgentController.h"
-#include "OpenBotPawn.h"
-#include "Camera/CameraComponent.h"
 
 class AActor;
 class ANavigationData;
 class ARecastNavMesh;
 class UNavigationSystemV1;
-class USceneCaptureComponent2D;
-class UTextureRenderTarget2D;
 class UWorld;
 
 class AOpenBotPawn;

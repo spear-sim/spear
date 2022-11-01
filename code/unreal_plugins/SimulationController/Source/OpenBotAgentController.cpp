@@ -20,19 +20,22 @@
 #include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "OpenBotPawn.h"
 #include "Serialize.h"
 
 void OpenBotAgentController::findObjectReferences(UWorld* world)
 {
+    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>();
+    ASSERT(open_bot_pawn_);
+
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
             ASSERT(!goal_actor_);
             goal_actor_ = *actor_itr;
+            break;
         }
     }
-    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>();
-    ASSERT(open_bot_pawn_);
     ASSERT(goal_actor_);
 
     // Setup observation camera
@@ -40,7 +43,7 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
 
         // Create camera sensor
         camera_sensor_ = std::make_unique<CameraSensor>(open_bot_pawn_,
-            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }),
+            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
@@ -100,8 +103,7 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
         box.shape = {2};
         box.dtype = DataType::Float32;
         action_space["apply_voltage"] = std::move(box);
-    }
-    else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
         box.shape = {3};
@@ -113,8 +115,7 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
         box.shape = {3};
         box.dtype = DataType::Float32;
         action_space["set_orientation_pyr_radians"] = std::move(box);
-    }
-    else {
+    } else {
         ASSERT(false);
     }
 
@@ -171,16 +172,14 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
         Eigen::Vector4f duty_cycle;
         duty_cycle << action.at("apply_voltage").at(0),action.at("apply_voltage").at(1),action.at("apply_voltage").at(0),action.at("apply_voltage").at(1);
         open_bot_pawn_->setDutyCycleAndClamp(duty_cycle);
-    }
-    else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
+    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
         const FVector agent_location{action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
         const FRotator agent_rotation{FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
 
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
         open_bot_pawn_->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
-    }
-    else {
+    } else {
         ASSERT(false);
     }
 }
@@ -197,10 +196,10 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         std::map<std::string, TArray<FColor>> render_data = camera_sensor_->getRenderData();
         ASSERT(render_data.size() > 0);
 
-        const auto& data = *(render_data.begin());
         std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
                                    Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
                                    3);
+        const auto& data = *(render_data.begin());
 
         for (uint32 i = 0; i < static_cast<uint32>(data.second.Num()); ++i) {
             image.at(3 * i + 0) = data.second[i].R;
@@ -239,6 +238,7 @@ void OpenBotAgentController::reset()
 {
     const FVector agent_location = open_bot_pawn_->GetActorLocation();
     open_bot_pawn_->SetActorLocationAndRotation(agent_location, FQuat(FRotator(0)), false, nullptr, ETeleportType::TeleportPhysics);
+    open_bot_pawn_->resetPhysicsState();
 
     // Trajectory generation between the start and goal points
     generateTrajectoryToTarget();
