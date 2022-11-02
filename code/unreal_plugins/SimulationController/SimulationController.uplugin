@@ -27,11 +27,15 @@
             "Enabled": true
         },
         {
-            "Name": "RobotSim",
+            "Name": "OpenBot",
             "Enabled": true
         },
         {
             "Name": "PhysXVehicles",
+            "Enabled": true
+        },
+        {
+            "Name": "RobotSim",
             "Enabled": true
         }
     ]

@@ -75,6 +75,7 @@ SIMULATION_CONTROLLER:
       MOTION_BLUR_AMOUNT: 0.0     # Strength of motion blur, 0:off, should be renamed to intensity
       MOTION_BLUR_MAX: 0.0        # Max distortion caused by motion blur, in percent of the screen width, 0:off
       POST_PROC_BLEND_WEIGHT: 0.0 # Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect
+      RENDER_PASSES: ["final_color"]
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0

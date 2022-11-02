@@ -117,7 +117,7 @@ void SimulationController::worldBeginPlayEventHandler()
     if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "CameraAgentController") {
         agent_controller_ = std::make_unique<CameraAgentController>(world_);
     } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "OpenBotAgentController") {
-        agent_controller_ = std::make_unique<OpenBotAgentController>();
+        agent_controller_ = std::make_unique<OpenBotAgentController>(world_);
     } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "SphereAgentController") {
         agent_controller_ = std::make_unique<SphereAgentController>(world_);
     } else {
