@@ -13,7 +13,7 @@ class USkeletalMeshComponent;
 
 // This class is inspired by the WheeledVehicle class, define in:
 // UnrealEngine-4.26.2-release/Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/WheeledVehicle.h
-UCLASS(meta = (ShortTooltip = "OpenBot Pawn"))
+UCLASS()
 class OPENBOT_API AOpenBotPawn : public APawn
 {
     GENERATED_BODY()

@@ -225,7 +225,7 @@ void AOpenBotPawn::setDriveTorques(float delta_time)
     // Control dead zone at near-zero velocity:
     // Note: this is a simplified but reliable way to deal with the friction
     // behavior observed on the real vehicle in the low-velocities/low-duty-cycle dommain.
-    for (size_t i = 0; i < duty_cycle_.size(); i++) {
+    for (int i = 0; i < duty_cycle_.size(); i++) {
         // set torque zeror if the motor is "nearly" stopped
         if (std::abs(motor_velocity(i)) < 1e-5 and std::abs(duty_cycle_(i)) <= control_dead_zone / action_scale) {
             wheel_torque(i) = 0.f;

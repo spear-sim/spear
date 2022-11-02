@@ -107,7 +107,7 @@ float PointGoalNavTask::getReward() const
 
 bool PointGoalNavTask::isEpisodeDone() const
 {
-    return hit_goal_ or hit_obstacle_;
+    return hit_goal_ || hit_obstacle_;
 }
 
 std::map<std::string, Box> PointGoalNavTask::getStepInfoSpace() const
