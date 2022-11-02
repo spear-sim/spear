@@ -143,7 +143,13 @@ Let's now take a look on how to build the Unreal Engine:
     ```console
     srun -p g24 --gres=gpu:1 -c 14  --qos=inter --pty bash
     ```
-    otherwise the following message will appear: `LogLinux: Warning: MessageBox: Cannot find a compatible Vulkan driver (ICD). Please look at the Getting Started guide for additional information.: Incompatible Vulkan driver found!: Cursors are not currently supported.`
+    otherwise the following message will appear:
+    ```
+    LogLinux: Warning: MessageBox: Cannot find a compatible Vulkan driver (ICD). 
+    Please look at the Getting Started guide for additional information.
+    Incompatible Vulkan driver found!: Cursors are not currently supported.
+    ```
+    
 - Create symbolic links to the different .pak files stored in `/export/share/projects/InteriorSim/scene_manager/download_data/v4/` to be able to load each environment (replace `<PATH_INTERIOR_SIM>` with real path):
     ```console
     cd /export/share/projects/InteriorSim/scene_manager/download_data/v4
