@@ -33,13 +33,13 @@
     ```
 - *Optionally*, update anaconda:
   - update the conda package manager to the latest version (may have to `source $HOME/.bashrc` first)
-        ```console
-        conda update conda
-        ```
+    ```console
+    conda update conda
+    ```
   - use conda to update Anaconda to the latest version
-        ```console
-        conda update anaconda
-        ```
+    ```console
+    conda update anaconda
+    ```
 ### Pytorch
 The following shows how to set a pytorch environment, with access to GPU computing power:
 - Use either an existing conda environment or create and activate your pytorch environment:
@@ -96,48 +96,52 @@ Let's now take a look on how to build the Unreal Engine:
   - Requirements: C++11 compatible compiler (>= g++-4.8), zlib, make
   - **Important**: It is assumed that all ThirdParty libraries are installed to `$HOME/ThirdParty`. The prefix argument will point to there and specifies where the binary files are located, ensure that it aligns with `PATH`/`LD_LIBRARY_PATH`.
   - We need to extend the paths (ideally, put this into `.bashrc`/`.zshrc`):
-        ```console
-        export PATH=$HOME/ThirdParty/bin:$PATH
-        export LD_LIBRARY_PATH=$HOME/ThirdParty/lib/:$LD_LIBRARY_PATH
-        ```
+    ```console
+    export PATH=$HOME/ThirdParty/bin:$PATH
+    export LD_LIBRARY_PATH=$HOME/ThirdParty/lib/:$LD_LIBRARY_PATH
+    ```
   - download Cmake from [website](https://cmake.org/download/)
   - Install Cmake to the folder `$HOME/ThirdParty` (or any other path that was specified in prefix and where `PATH` includes it):
-        ```console
-        tar -xf cmake*.tar.gz
-        cd cmake*
-        ./configure --prefix=$HOME/ThirdParty
-        make
-        make install
-        ```
+    ```console
+    tar -xf cmake*.tar.gz
+    cd cmake*
+    ./configure --prefix=$HOME/ThirdParty
+    make
+    make install
+    ```
   - Ensure correct installation by running
-        ```console
-        cmake --version
-        ```
+    ```console
+    cmake --version
+    ```
 - It is also necessary to download `clang 11.0.0` to build UE4 on the cluster.
   - The most convenient is to download the prebuilt binaries:
-        ```console
-        cd $HOME
-        mkdir -p ThirdParty/clang
-        cd ThirdParty/clang
-        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
-        tar -xzvf clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
-        mv clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04/* $HOME/ThirdParty/
-        ```
+    ```console
+    cd $HOME
+    mkdir -p ThirdParty/clang
+    cd ThirdParty/clang
+    wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
+    tar -xzvf clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
+    mv clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04/* $HOME/ThirdParty/
+    ```
   - Note: if not done in the `cmake` step, add the path to the clang binaries to `PATH` via (ideally, put it into `.bashrc`/`.zshrc`):
-        ```console
-        export PATH=$HOME/ThirdParty/bin:$PATH
-        ```
-- Build UE4. To that end, we will need more CPU cores. Let's exit the current session and create a 32 xeon cores slurm session:
-        ```console
-        exit
-        srun -p cpu  -c 32 --qos=inter --pty bash
-        cd UnrealEngine/UnrealEngine-4.26.2-release
-        ./Setup.sh
-        ./GenerateProjectFiles.sh
-        make
-        ```
+    ```console
+    export PATH=$HOME/ThirdParty/bin:$PATH
+    ```
+- We should by now be able to build UE4. To that end, we will need more CPU cores. Let's exit the current session and create a 32 Xeon cores slurm session:
+    ```console
+    exit
+    srun -p cpu  -c 32 --qos=inter --pty bash
+    ```
+- Let's finally run Unreal's main build scripts:
+    ``console
+    cd UnrealEngine/UnrealEngine-4.26.2-release
+    ./Setup.sh
+    ./GenerateProjectFiles.sh
+    make
+    ```
+    
 ### SPEAR
-- Install SPEAR (following the tutorial in the main readme file)
+- Install SPEAR following the tutorial in the main [ReadMe](https://github.com/isl-org/interiorsim/blob/main/docs/getting_started.md) file.
 - On Slurm, ensure to have at least one GPU using e.g.,
     ```console
     srun -p g24 --gres=gpu:1 -c 14  --qos=inter --pty bash
