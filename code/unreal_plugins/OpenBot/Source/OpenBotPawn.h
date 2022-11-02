@@ -24,7 +24,6 @@ public:
     // APawn interface
     virtual void SetupPlayerInputComponent(UInputComponent* input_component) override;
     virtual void Tick(float delta_time) override;
-    virtual void NotifyHit(class UPrimitiveComponent* hit_component, class AActor* other_actor, class UPrimitiveComponent* other_component, bool bself_moved, FVector hit_location, FVector hit_normal, FVector normal_impulse, const FHitResult& hit) override;
 
     // Keyboard callback allowing to apply wheel torque on a vehicle to
     // generate linear forward/backward motions. This command is meant to be

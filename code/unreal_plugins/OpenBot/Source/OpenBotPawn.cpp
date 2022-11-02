@@ -101,9 +101,6 @@ void AOpenBotPawn::Tick(float delta_time)
     setDriveTorques(delta_time);
 }
 
-void AOpenBotPawn::NotifyHit(class UPrimitiveComponent* hit_component, class AActor* other_actor, class UPrimitiveComponent* other_component, bool bself_moved, FVector hit_location, FVector hit_normal, FVector normal_impulse, const FHitResult& hit)
-{}
-
 // This command is meant to be bound to keyboard input. It will be executed at
 // each press or unpress event.
 void AOpenBotPawn::moveForward(float forward)
