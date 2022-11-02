@@ -40,13 +40,23 @@ CameraAgentController::CameraAgentController(UWorld* world)
 
     camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_,
                                                     Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "RENDER_PASSES" }),
-                                                    Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
-                                                    Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_HEIGHT" }));
+                                                    Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH" }),
+                                                    Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT" }));
     ASSERT(camera_sensor_);
 
-    // update FOV
+
+    // update camera parameters
     for (auto& camera_pass : camera_sensor_->camera_passes_) {
-        camera_pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "FOV" });
+
+        camera_pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FOV" });
+
+        // update auto-exposure settings
+        if (camera_pass.first == "final_color") {
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedDown = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN" });
+        }
     }
 }
 
@@ -129,8 +139,8 @@ std::map<std::string, Box> CameraAgentController::getObservationSpace() const
     for (const auto& pass : passes) {
         box.low = 0;
         box.high = 255;
-        box.shape = { Config::getValue<int64_t>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_HEIGHT" }),
-                      Config::getValue<int64_t>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_WIDTH" }),
+        box.shape = { Config::getValue<int64_t>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT" }),
+                      Config::getValue<int64_t>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH" }),
                       3 };
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation_" + pass] = std::move(box);
@@ -175,8 +185,8 @@ std::map<std::string, std::vector<uint8_t>> CameraAgentController::getObservatio
     std::map<std::string, TArray<FColor>> render_data = camera_sensor_->getRenderData();
 
     for (const auto& data : render_data) {
-        std::vector<uint8_t> image(Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_HEIGHT" }) *
-                                   Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "IMAGE_WIDTH" })  * 3);
+        std::vector<uint8_t> image(Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT" }) *
+                                   Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH" })  * 3);
 
         for (uint32 i = 0u; i < static_cast<uint32>(data.second.Num()); ++i) {
             image.at(3 * i + 0) = data.second[i].R;
@@ -225,19 +235,19 @@ void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys)
     ASSERT(nav_sys);
 
     // Set the NavMesh properties:
-    nav_mesh_->CellSize           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "CELL_SIZE"});
-    nav_mesh_->CellHeight         = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "CELL_HEIGHT"});
-    nav_mesh_->MergeRegionSize    = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "MERGE_REGION_SIZE"});
-    nav_mesh_->MinRegionArea      = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "MIN_REGION_AREA"});
-    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
-    nav_mesh_->AgentMaxSlope      = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_SLOPE"});
-    nav_mesh_->TileSizeUU         = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "TILE_SIZE_UU"});
-    nav_mesh_->AgentRadius        = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
-    nav_mesh_->AgentHeight        = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
+    nav_mesh_->CellSize           = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "CELL_SIZE" });
+    nav_mesh_->CellHeight         = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "CELL_HEIGHT" });
+    nav_mesh_->MergeRegionSize    = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "MERGE_REGION_SIZE" });
+    nav_mesh_->MinRegionArea      = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "MIN_REGION_AREA" });
+    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT" });
+    nav_mesh_->AgentMaxSlope      = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_SLOPE" });
+    nav_mesh_->TileSizeUU         = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "TILE_SIZE_UU" });
+    nav_mesh_->AgentRadius        = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS" });
+    nav_mesh_->AgentHeight        = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT" });
 
     // get world bounding box
     FBox world_box(ForceInit);
-    std::vector<std::string> world_bound_tag_names = Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "WORLD_BOUND_TAG_NAMES" });
+    std::vector<std::string> world_bound_tag_names = Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "WORLD_BOUND_TAG_NAMES" });
     for (TActorIterator<AActor> actor_itr(world_); actor_itr; ++actor_itr) {
 
         for (std::string& tag_itr : world_bound_tag_names) {
@@ -282,7 +292,14 @@ void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys)
 
     nav_sys->Build(); // Rebuild NavMesh, required for update AgentRadius
 
-    if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "EXPORT_NAV_DATA_OBJ"})) {
-        nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "EXPORT_NAV_DATA_OBJ_DIR" }).c_str()) + "/" + world_->GetName() + "/");
+    // We need to wrap this call with guards because ExportNavigationData(...) is only implemented in non-shipping builds, see:
+    //     Engine/Source/Runtime/Engine/Public/AI/NavDataGenerator.h
+    //     Engine/Source/Runtime/NavigationSystem/Public/NavMesh/RecastNavMeshGenerator.h
+    //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
+#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
+    if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "EXPORT_NAV_DATA_OBJ" })) {
+        nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "EXPORT_NAV_DATA_OBJ_DIR" }).c_str()) + "/" + world_->GetName() + "/");
     }
+#endif
+
 }
