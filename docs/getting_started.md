@@ -132,3 +132,6 @@ for i in range(10):
 # close the environment
 env.close()
 ```
+## Deploy SPEAR on a slurm cluster
+
+Check the dedicated [ReadMe file](https://github.com/isl-org/interiorsim/blob/quentin-leboutet/cluster_doc/docs/cluster_setup.md) describing how to setup Unreal Engine and SPEAR on a cluster for large-scale training purposes. 
