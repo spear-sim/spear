@@ -133,7 +133,7 @@ Let's now take a look on how to build the Unreal Engine:
     srun -p cpu  -c 32 --qos=inter --pty bash
     ```
 - Let's finally run Unreal's main build scripts:
-    ``console
+    ```console
     cd UnrealEngine/UnrealEngine-4.26.2-release
     ./Setup.sh
     ./GenerateProjectFiles.sh
