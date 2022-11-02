@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{0004CB53-08D9-7EC8-E30E-79C0A84B81EC}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "agent_openbot",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "CoreUtils",
+			"Enabled": true
+		},
+		{
+			"Name": "OpenBot",
+			"Enabled": true
+		},
+	]
+}
