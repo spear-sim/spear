@@ -14,9 +14,6 @@
   - `$HOME` is a fast 300Gb space that should be used for installing software (e.g. Unreal, Conda, ...)
   - `$WORK` is a 1Tb space for storing data
 - The SPEAR project also comes with a dedicated shared storage space located in `/export/share/projects/InteriorSim/`, containing in particular the packaged `.pak` files of every environment within the subfolder `/export/share/projects/InteriorSim/scene_manager_download_data/v4.`
-
-## Cluster setup for SPEAR
-
 - The classic execution scheme of a process on the cluster first consists of allocating computational resources -- such as CPUs or GPUs -- to be used by this process. Computations can then either be executed in the background (classic session) or in a dedicated terminal interface (interative session). 
 - The setup of your environment must be carried out in a dedicated cluster _interactive session_ (i.e. with feedback in a terminal). To do so, you may use  the following command (with the flags `--qos=inter --pty bash` to specify that your session should be interactive):
     ```console
@@ -24,7 +21,7 @@
     ```
 - Be aware that although interactive sessions have the highest priority on the cluster, they only have a 2h lifetime. They are therefore ideal for building or debugging purposes but should typically not be used for large-scale computations that may often be distributed over several days. In the previous command, a set of 2 Xeon CPUs are allocated to the interactive session (using the flag `-c 2`) which is unually enough for most download/install/monitoring processes, but can of course be adjusted depending on your needs.  
 
-### Anaconda3
+## Anaconda3
 
 - Once logged into your slurm interactive session, the first step is to install anaconda, which will provide a powerful interface for managing virtual python environments and allow you to install the required drivers and learning frameworks you will later need in your applications:
     ```console
@@ -40,7 +37,7 @@
     ```console
     conda update anaconda
     ```
-### Pytorch
+## Pytorch
 The following shows how to set a pytorch environment, with access to GPU computing power:
 - Use either an existing conda environment or create and activate your pytorch environment:
     ```console
@@ -59,7 +56,7 @@ The following shows how to set a pytorch environment, with access to GPU computi
     ```console
     conda install pytorch torchvision -c pytorch
     ```
-### Tensorflow
+## Tensorflow
 The following shows how to set a tensorflow environment, with access to GPU computing power:
 - Use either an existing conda environment or create and activate your tensorflow environment:
     ```console
@@ -78,7 +75,7 @@ The following shows how to set a tensorflow environment, with access to GPU comp
     ```console
     pip install tensorflow==2.5.2
     ```
-### Unreal Engine
+## Unreal Engine
 Let's now take a look on how to build the Unreal Engine:
 - I here assume that you already took the Required Setup (c.f. Step 1 in [Unreal Engine Documentation](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Linux/BeginnerLinuxDeveloper/SettingUpAnUnrealWorkflow/)) to get access to the UE4 git repo
 - **Don't clone this repo**: it's HUGE. Download the 4.26 release instead. As follows
@@ -140,7 +137,7 @@ Let's now take a look on how to build the Unreal Engine:
     make
     ```
     
-### SPEAR
+## SPEAR
 - Install SPEAR following the tutorial in the main [ReadMe](https://github.com/isl-org/interiorsim/blob/main/docs/getting_started.md) file.
 - On Slurm, ensure to have at least one GPU using e.g.,
     ```console
