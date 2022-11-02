@@ -1,6 +1,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import cv2
+import numpy as np
 import os
 
 from interiorsim import Env
@@ -19,17 +20,17 @@ if __name__ == "__main__":
 
     # reset the simulation to get the first observation    
     obs = env.reset()
-    print(obs["visual_observation"].shape, obs["visual_observation"].dtype)
+    print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype)
 
-    cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+    cv2.imshow("visual_observation_final_color", obs["visual_observation_final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
     cv2.waitKey(0)
 
     # take a few steps
     for i in range(10):
-        obs, reward, done, info = env.step({"apply_force": [1, 1]})
-        print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
+        obs, reward, done, info = env.step({"apply_force": np.array([1, 1], dtype=np.float32)})
+        print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype, reward, done, info)
 
-        cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+        cv2.imshow("visual_observation_final_color", obs["visual_observation_final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
         cv2.waitKey(0)
 
         if done:

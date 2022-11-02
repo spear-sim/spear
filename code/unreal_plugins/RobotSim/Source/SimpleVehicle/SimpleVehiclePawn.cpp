@@ -250,7 +250,7 @@ void ASimpleVehiclePawn::ComputeMotorTorques(float DeltaTime)
     // Control dead zone at near-zero velocity:
     // Note: this is a simplified but reliable way to deal with the friction
     // behavior observed on the real vehicle in the low-velocities/low-duty-cycle dommain.
-    for (size_t i = 0; i < dutyCycle_.size(); i++)
+    for (int i = 0; i < dutyCycle_.size(); i++)
     {
         if (std::abs(motorVelocity_(i)) < 1e-5 and std::abs(dutyCycle_(i)) <= controlDeadZone_ / actionScale_) // If the motor is "nearly" stopped
         {
@@ -396,6 +396,7 @@ void ASimpleVehiclePawn::SetWheelsFrictionScale(TArray<float>& WheelsFrictionSca
 USceneComponent* ASimpleVehiclePawn::GetComponent(FString componentName)
 {
     ASSERT(false);
+    return nullptr;
 }
 
 void ASimpleVehiclePawn::GetComponentReferenceTransform(FString componentName,

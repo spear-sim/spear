@@ -22,7 +22,7 @@
 #include "PIPCamera.h"
 #include "SimpleVehicle/SimpleVehiclePawn.h"
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
 #include "Serialize.h"
@@ -203,8 +203,8 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = 0;
         box.high = 255;
-        box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-                     Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+        box.shape = {Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                     Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
                      3};
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
@@ -230,23 +230,10 @@ std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
-        //ASSERT(action.count("apply_voltage") == 2);
-        // @TODO: This can be checked in python?
-        ASSERT(action.at("apply_voltage").at(0) >= getActionSpace().at("apply_voltage").low && action.at("apply_voltage").at(0) <= getActionSpace().at("apply_voltage").high, "%f", action.at("apply_voltage").at(0));
-        ASSERT(action.at("apply_voltage").at(1) >= getActionSpace().at("apply_voltage").low && action.at("apply_voltage").at(1) <= getActionSpace().at("apply_voltage").high, "%f", action.at("apply_voltage").at(1));
         simple_vehicle_pawn_->MoveLeftRight(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
     }
     else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
-        ASSERT(action.count("set_position_xyz_centimeters") == 3);
-        ASSERT(isfinite(action.at("set_position_xyz_centimeters").at(0)));
-        ASSERT(isfinite(action.at("set_position_xyz_centimeters").at(1)));
-        ASSERT(isfinite(action.at("set_position_xyz_centimeters").at(2)));
         const FVector agent_location{action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
-
-        ASSERT(action.count("set_orientation_pyr_radians") == 3);
-        ASSERT(isfinite(action.at("set_orientation_pyr_radians").at(0)));
-        ASSERT(isfinite(action.at("set_orientation_pyr_radians").at(1)));
-        ASSERT(isfinite(action.at("set_orientation_pyr_radians").at(2)));
         const FRotator agent_rotation{FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
 
         constexpr bool sweep = false;
@@ -292,8 +279,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         ReadPixelFence.BeginFence(true);
         ReadPixelFence.Wait(true);
 
-        std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
-                                   Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
+        std::vector<uint8_t> image(Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
+                                   Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
                                    3);
 
         for (uint32 i = 0; i < static_cast<uint32>(pixels.Num()); ++i) {

@@ -37,9 +37,9 @@ DATA_TYPE_TO_NUMPY_DTYPE = {
 
 # mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
 class Box():
-    def __init__(self, high, low, shape, dtype):
-        self.high = high
+    def __init__(self, low, high, shape, dtype):
         self.low = low
+        self.high = high
         self.shape = shape
         self.dtype = dtype
 
@@ -118,11 +118,18 @@ class Env(gym.Env):
         self._close_unreal_instance()
         self._close_client_server_connection()
 
-        # do not return until Unreal application is closed
-        status = self._process.status()
-        while status in ["running", "sleeping", "disk-sleep"]:
-            time.sleep(1.0)
+        try:
             status = self._process.status()
+        except psutil.NoSuchProcess: # On Windows OS, psutil.Process.status() throws psutil.NoSuchProcess exception if the process does not exist anymore.
+            pass
+        else:
+            # do not return until Unreal application is closed
+            while status in ["running", "sleeping", "disk-sleep"]:
+                time.sleep(1.0)
+                try:
+                    status = self._process.status()
+                except psutil.NoSuchProcess: # On Windows OS, psutil.Process.status() throws psutil.NoSuchProcess exception if the process does not exist anymore.
+                    break
 
         print("Finished closing Unreal instance.")
         print()
@@ -272,7 +279,7 @@ class Env(gym.Env):
                 elapsed_time_seconds = time.time() - start_time_seconds
 
         if not connected:
-            if self._self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
+            if self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
                 print("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
                 self._force_kill_unreal_instance()
                 self._close_client_server_connection()
@@ -325,7 +332,6 @@ class Env(gym.Env):
         return_dict = {}
         for name, component in data.items():
             
-            assert len(component) > 0
             # get shape and dtype of the data component
             shape = space.spaces[name].shape
             dtype = space.spaces[name].dtype
@@ -335,6 +341,9 @@ class Env(gym.Env):
                 dtype = dtype.newbyteorder(self._byte_order)
 
             return_dict[name] = np.frombuffer(component, dtype=dtype, count=-1).reshape(shape)
+            
+            assert (return_dict[name] >= space.spaces[name].low).all()
+            assert (return_dict[name] <= space.spaces[name].high).all()
 
         return return_dict
 
@@ -372,7 +381,19 @@ class Env(gym.Env):
         return self._get_dict_space(space, Box, Dict)
 
     def _apply_action(self, action):
-        self._client.call("applyAction", action)
+
+        assert action.keys() == self.action_space.spaces.keys()
+        
+        action_dict = {}
+        for name, component in action.items():
+            assert isinstance(component, np.ndarray)
+            assert component.shape == self.action_space.spaces[name].shape
+            assert component.dtype == self.action_space.spaces[name].dtype
+            assert (component >= self.action_space.spaces[name].low).all()
+            assert (component <= self.action_space.spaces[name].high).all()
+            action_dict[name] = component.tolist()
+        
+        self._client.call("applyAction", action_dict)
 
     def _get_observation(self):
         observation = self._client.call("getObservation")

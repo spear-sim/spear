@@ -1,0 +1,38 @@
+INTERIORSIM:
+  LAUNCH_MODE: "standalone_executable"
+  STANDALONE_EXECUTABLE: "C:/github/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject.exe"
+  TEMP_DIR: "C:/github/interiorsim/code/examples/generate_image_dataset"
+  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-dx12", "-RobotSimSettingPath=C:/github/interiorsim/code/unreal_plugins/RobotSim/setting/settings.json"]
+  RENDER_OFFSCREEN: True
+
+SIMULATION_CONTROLLER:
+  TASK_NAME: "NullTask"
+  AGENT_CONTROLLER_NAME: "CameraAgentController"
+  CUSTOM_UNREAL_CONSOLE_COMMANDS: ["r.EyeAdaptation.ExponentialTransitionDistance 0", "r.Streaming.FullyLoadUsedTextures 1"]
+
+  CAMERA_AGENT_CONTROLLER:
+    CAMERA_ACTOR_NAME: "IMAGE_SAMPLING_CAMERA"
+    RENDER_PASSES: ["final_color"]
+    CAMERA_PARAMETERS:
+      IMAGE_HEIGHT: 480
+      IMAGE_WIDTH: 852
+      FOV: 90.0
+      FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP: True
+      FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP: 9999.0
+      FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN: True
+      FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN: 9999.0
+    NAVMESH:
+      AGENT_HEIGHT: 180.0
+      AGENT_RADIUS: 5.0
+      CELL_SIZE: 1.0
+      CELL_HEIGHT: 1.0
+      AGENT_MAX_STEP_HEIGHT: 1.0
+      AGENT_MAX_SLOPE: 1.0
+      MERGE_REGION_SIZE: 0.0
+      MIN_REGION_AREA: 100.0
+      TILE_SIZE_UU: 300
+      NAV_MODIFIER_OFFSET_Z: 10.0
+      WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+
+  VISUALIZER:
+    CAMERA_ACTOR_NAME: "IMAGE_SAMPLING_CAMERA"

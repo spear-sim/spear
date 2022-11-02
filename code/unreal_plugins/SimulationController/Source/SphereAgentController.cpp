@@ -12,7 +12,7 @@
 #include <GameFramework/Actor.h>
 #include <UObject/UObjectGlobals.h>
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
 #include "CameraSensor.h"
@@ -98,8 +98,8 @@ void SphereAgentController::findObjectReferences(UWorld* world)
 
         observation_camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_, 
             Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }), 
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}));
+            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));
         ASSERT(observation_camera_sensor_);
     }
 }
@@ -158,8 +158,8 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
         for (const auto& pass : passes) {
             box.low = 0;
             box.high = 255;
-            box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-                         Config::getValue<long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+            box.shape = {Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
+                         Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
                          3};
             box.dtype = DataType::UInteger8;
             observation_space["visual_observation_" + pass] = std::move(box);
@@ -180,19 +180,20 @@ std::map<std::string, Box> SphereAgentController::getObservationSpace() const
 
 std::map<std::string, Box> SphereAgentController::getStepInfoSpace() const
 {
-    return {};
+    std::map<std::string, Box> step_info_space;
+    Box box;
+
+    box.low = std::numeric_limits<float>::lowest();
+    box.high = std::numeric_limits<float>::max();
+    box.shape = {-1,3};
+    box.dtype = DataType::Float32;
+    step_info_space["debug_info"] = std::move(box);
+
+    return step_info_space;
 }
 
 void SphereAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
-    ASSERT(action.count("apply_force"));
-    ASSERT(isfinite(action.at("apply_force").at(0)));
-    ASSERT(isfinite(action.at("apply_force").at(1)));
-
-    // @TODO: This can be checked in python?
-    ASSERT(action.at("apply_force").at(0) >= getActionSpace()["apply_force"].low && action.at("apply_force").at(0) <= getActionSpace()["apply_force"].high, "%f", action.at("apply_force").at(0));
-    ASSERT(action.at("apply_force").at(1) >= getActionSpace()["apply_force"].low && action.at("apply_force").at(1) <= getActionSpace()["apply_force"].high, "%f", action.at("apply_force").at(1));
-
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         // Get yaw from the observation camera, apply force to the sphere in that direction
         FVector force = camera_actor_->GetActorRotation().RotateVector(FVector(action.at("apply_force").at(0), 0.0f, 0.0f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "ACTION_APPLY_FORCE_SCALE"});
@@ -248,7 +249,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
         ASSERT(IsInGameThread());
 
         // get render data
-        std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->GetRenderData();
+        std::map<std::string, TArray<FColor>> render_data = observation_camera_sensor_->getRenderData();
         
         for (const auto& data: render_data) {
             std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
@@ -279,7 +280,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgentController::getObservatio
 
 std::map<std::string, std::vector<uint8_t>> SphereAgentController::getStepInfo() const
 {
-    return {};
+    return { {"debug_info", {} } };
 }
 
 void SphereAgentController::reset()

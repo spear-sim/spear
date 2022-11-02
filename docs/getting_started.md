@@ -14,7 +14,7 @@ If you're working on Linux, you will need to build the Unreal Engine from source
 
 ## Install XCode
 
-In order to open and run our example Unreal projects (and for general Unreal plugin development), you need to install a specific version of XCode that matches your Unreal Engine version. For Unreal Engine version 4.26, you must install XCode 11.1. See [this tutorial](https://github.com/botman99/ue4-xcode-vscode-mac) for details.
+In order to open and run our example Unreal projects (and for general Unreal plugin development), you need to install a specific version of XCode that matches your Unreal Engine version. For Unreal Engine version 4.26, we have verified that XCode 13.0 behaves as expected. See [this tutorial](https://github.com/botman99/ue4-xcode-vscode-mac) for details.
 
 ## Build third-party C++ libraries
 
@@ -41,7 +41,7 @@ pip install -e code/third_party/msgpack-rpc-python
 # install interiorsim
 pip install -e code/python_module
 
-# install OpenCV (not a core requirement, but used in some of our examples) 
+# install OpenCV (not a core requirement, but used by some of our examples) 
 pip install opencv-python
 ```
 
@@ -106,6 +106,7 @@ path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/
 At this point, you should be able to control the environment in an interactive IPython session. Here is a minimal example program that you should be able to execute one line at a time from IPython. We also provide a `run.py` script with each of our examples that executes similar code.
 
 ```python
+import numpy as np
 import os
 
 import interiorsim
@@ -121,12 +122,12 @@ env = interiorsim.Env(config)
 
 # reset the simulation to get the first observation
 obs = env.reset()
-print(obs["visual_observation"].shape, obs["visual_observation"].dtype)
+print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype)
 
 # take a few steps; in this example, each action is specified as a 2D point, you should see the ball move in the Unreal game window
 for i in range(10):
-    obs, reward, done, info = env.step({"apply_force": [1, 1]})
-    print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
+    obs, reward, done, info = env.step({"apply_force": np.array([1, 1], dtype=np.float32)})
+    print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype, reward, done, info)
 
 # close the environment
 env.close()

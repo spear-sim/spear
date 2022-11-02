@@ -12,7 +12,7 @@
 #include <UObject/UObjectGlobals.h>
 
 #include "ActorHitEvent.h"
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
 
@@ -42,14 +42,14 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
     // If the start/goal positions are not randomly generated 
-    if (not Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
+    if (!Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
         getPositionsFromFile();
     }
 }
 
 ImitationLearningTask::~ImitationLearningTask()
 {
-    if (not Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
+    if (!Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "RANDOM_SPAWN_TRAJ"})) {
         position_index_ = -1;
         agent_initial_position_.clear();
         agent_goal_position_.clear();
@@ -156,7 +156,7 @@ float ImitationLearningTask::getReward() const
 
 bool ImitationLearningTask::isEpisodeDone() const
 {
-    return hit_goal_ or hit_obstacle_;
+    return hit_goal_ || hit_obstacle_;
 }
 
 std::map<std::string, Box> ImitationLearningTask::getStepInfoSpace() const
@@ -235,7 +235,6 @@ void ImitationLearningTask::getPositionsFromFile()
     std::string line;
     std::string token;
     FVector init, goal;
-    int episodes;
 
     // Create an input filestream 
     std::ifstream fs(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_FILE"})); 
@@ -303,7 +302,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
         collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
 
         // If path generation is sucessful, make sure that it is not too simple for better training results:
-        if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
+        if (collision_free_path.IsSuccessful() && collision_free_path.Path.IsValid()) {
 
             // Partial paths are supported. In this case, the agent is expected to move as close as possible to its target
             if (collision_free_path.IsPartial()) {

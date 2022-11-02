@@ -12,9 +12,11 @@ public:
         std::vector<uint8_t> dest;
 
         // copy src to dest
-        const uint8_t* begin_itr = reinterpret_cast<const uint8_t*>(&src.at(0));
-        size_t size = src.size() * sizeof(T);
-        dest.assign(begin_itr, begin_itr + size);
+        if (src.size() > 0) {
+            const uint8_t* begin_itr = reinterpret_cast<const uint8_t*>(&src.at(0));
+            size_t size = src.size() * sizeof(T);
+            dest.assign(begin_itr, begin_itr + size);
+        }
 
         return dest;
     }

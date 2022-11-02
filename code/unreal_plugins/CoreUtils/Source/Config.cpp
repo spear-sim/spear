@@ -9,7 +9,7 @@ DISABLE_IGNORE_COMPILER_WARNINGS
 #include <Misc/Parse.h>
 #include <Misc/Paths.h>
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 
 // define static member variable
 YAML::Node Config::config_node_;

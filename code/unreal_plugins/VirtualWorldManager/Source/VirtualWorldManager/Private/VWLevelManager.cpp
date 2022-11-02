@@ -44,6 +44,7 @@ bool AVWLevelManager::mountPakFromPath(const FString& PakPath)
         UE_LOG(LogTemp, Warning, TEXT("[AVWLevelManager] OnMountPak.IsBound() Failed"));
         return false;
     }
+    return false;
 }
 
 void AVWLevelManager::getAllMapsInPak(TArray<FString>& map_list)

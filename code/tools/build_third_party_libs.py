@@ -22,9 +22,14 @@ def check_cmake_version():
     print("cmake version looks good...")
 
 def build_libs(args):
+
     if sys.platform == "linux":
         os.environ["CC"] = args.clang_cc_bin
         os.environ["CXX"] = args.clang_cxx_bin
+
+    #
+    # rbdl
+    #
 
     print("building rbdl...")
     build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "rbdl", "build")
@@ -38,16 +43,31 @@ def build_libs(args):
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    else:
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "darwin":
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    assert cmake_cmd.returncode == 0
-    cmake_args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(args.num_parallel_jobs)]
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "win32":
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DRBDL_BUILD_STATIC=ON", "-DRBDL_BUILD_ADDON_URDFREADER=ON",  "-DCMAKE_CXX_FLAGS='/bigobj /DNOMINMAX'", ".."]
+        print(f"Executing cmd: {' '.join(cmake_args)}")
+        cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
+    else:
+        assert False, "This OS is not supported."
+    
     print(f"Executing cmd: {' '.join(cmake_args)}")
-    build_cmd = subprocess.run(cmake_args)
-    assert build_cmd.returncode == 0
+    cmake_cmd = subprocess.run(cmake_args)
+    assert cmake_cmd.returncode == 0
     print("rbdl built successfully...")
+
+    #
+    # rpclib
+    #
 
     print("building rpclib...")
     build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "rpclib", "build")
@@ -61,16 +81,31 @@ def build_libs(args):
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    else:
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "darwin":
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    assert cmake_cmd.returncode == 0
-    cmake_args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(args.num_parallel_jobs)]
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "win32":
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        print(f"Executing cmd: {' '.join(cmake_args)}")
+        cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
+    else:
+        assert False, "This OS is not supported."
+
     print(f"Executing cmd: {' '.join(cmake_args)}")
-    build_cmd = subprocess.run(cmake_args)
-    assert build_cmd.returncode == 0
+    cmake_cmd = subprocess.run(cmake_args)
+    assert cmake_cmd.returncode == 0
     print("rpclib built successfully...")
+
+    #
+    # yamp-cpp
+    #
 
     print("building yaml-cpp...")
     build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "yaml-cpp", "build")
@@ -84,15 +119,26 @@ def build_libs(args):
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    else:
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "darwin":
         cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
-    assert cmake_cmd.returncode == 0
-    cmake_args = ["cmake",  "--build", ".", "--", "-j", "{0}".format(args.num_parallel_jobs)]
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "win32":
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        print(f"Executing cmd: {' '.join(cmake_args)}")
+        cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
+    else:
+        assert False, "This OS is not supported."
+    
     print(f"Executing cmd: {' '.join(cmake_args)}")
-    build_cmd = subprocess.run(cmake_args)
-    assert build_cmd.returncode == 0
+    cmake_cmd = subprocess.run(cmake_args)
+    assert cmake_cmd.returncode == 0
     print("yaml-cpp built successfully...")
 
 

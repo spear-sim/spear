@@ -4,7 +4,7 @@
 
 #include <PhysicalMaterials/PhysicalMaterial.h>
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 
 // range for default physical material id
 const static int PHYSICAL_MATERIAL_ID_DEFAULT_START = 1000;

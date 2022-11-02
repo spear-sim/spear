@@ -23,8 +23,8 @@ MSGPACK_ADD_ENUM(DataType);
 
 struct Box
 {
-    float low;
-    float high;
+    double low;
+    double high;
     std::vector<int64_t> shape;
     DataType dtype;
 
