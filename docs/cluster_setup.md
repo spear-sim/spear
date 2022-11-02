@@ -33,11 +33,11 @@
     ```
 - *Optionally*, update anaconda:
   - update the conda package manager to the latest version (may have to `source $HOME/.bashrc` first)
-        ```
+        ```console
         conda update conda
         ```
   - use conda to update Anaconda to the latest version
-        ```
+        ```console
         conda update anaconda
         ```
 ### Pytorch
