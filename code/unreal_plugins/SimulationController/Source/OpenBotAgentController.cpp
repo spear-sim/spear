@@ -23,20 +23,10 @@
 #include "OpenBotPawn.h"
 #include "Serialize.h"
 
-void OpenBotAgentController::findObjectReferences(UWorld* world)
+OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
     open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>();
     ASSERT(open_bot_pawn_);
-
-    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
-        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
-            ASSERT(!goal_actor_);
-            goal_actor_ = *actor_itr;
-            break;
-        }
-    }
-    ASSERT(goal_actor_);
 
     // Setup observation camera
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
@@ -48,6 +38,31 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
     }
+}
+
+OpenBotAgentController::~OpenBotAgentController()
+{
+    ASSERT(open_bot_pawn_);
+    open_bot_pawn_->Destroy();
+    open_bot_pawn_ = nullptr;
+
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
+        ASSERT(camera_sensor_);
+        camera_sensor_ = nullptr;
+    }
+}
+
+void OpenBotAgentController::findObjectReferences(UWorld* world)
+{
+    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
+        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
+        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
+            ASSERT(!goal_actor_);
+            goal_actor_ = *actor_itr;
+            break;
+        }
+    }
+    ASSERT(goal_actor_);
 
     // Agent Navigation:
     // Get a pointer to the navigation system
@@ -78,14 +93,6 @@ void OpenBotAgentController::cleanUpObjectReferences()
 
     ASSERT(nav_sys_);
     nav_sys_ = nullptr;
-
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        ASSERT(camera_sensor_);
-        camera_sensor_ = nullptr;
-    }
-
-    ASSERT(open_bot_pawn_);
-    open_bot_pawn_ = nullptr;
 
     ASSERT(goal_actor_);
     goal_actor_ = nullptr;

@@ -70,19 +70,19 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     duty_cycle_.setZero();
 
     // Vehicle dynamics:
-    vehicle_movement_component_->DragCoefficient = Config::getValue<float>({"OPENBOT", "DRAG_COEFFICIENT"}); // DragCoefficient of the vehicle chassis.
-    vehicle_movement_component_->ChassisWidth = Config::getValue<float>({"OPENBOT", "CHASSIS_WIDTH"});       // Chassis width used for drag force computation in [cm]
-    vehicle_movement_component_->ChassisHeight = Config::getValue<float>({"OPENBOT", "CHASSIS_HEIGHT"});     // Chassis height used for drag force computation in [cm]
-    vehicle_movement_component_->MaxEngineRPM = Config::getValue<float>({"OPENBOT", "MOTOR_MAX_RPM"});       // Max RPM for engine
+    vehicle_movement_component_->DragCoefficient = Config::getValue<float>({"OPENBOT", "VEHICLE_COMPONENT", "DRAG_COEFFICIENT"}); // DragCoefficient of the vehicle chassis.
+    vehicle_movement_component_->ChassisWidth = Config::getValue<float>({"OPENBOT", "VEHICLE_COMPONENT", "CHASSIS_WIDTH"});       // Chassis width used for drag force computation in [cm]
+    vehicle_movement_component_->ChassisHeight = Config::getValue<float>({"OPENBOT", "VEHICLE_COMPONENT", "CHASSIS_HEIGHT"});     // Chassis height used for drag force computation in [cm]
+    vehicle_movement_component_->MaxEngineRPM = Config::getValue<float>({"OPENBOT", "VEHICLE_COMPONENT", "MOTOR_MAX_RPM"});       // Max RPM for engine
 
     // Create camera component
-    FVector camera_pose(Config::getValue<float>({"OPENBOT", "CAMERA", "CAMERA_POSITION_X"}), Config::getValue<float>({"OPENBOT", "CAMERA", "CAMERA_POSITION_Y"}), Config::getValue<float>({"OPENBOT", "CAMERA", "CAMERA_POSITION_Z"}));
-    FRotator camera_orientation(Config::getValue<float>({"OPENBOT", "CAMERA", "CAMERA_PITCH"}), Config::getValue<float>({"OPENBOT", "CAMERA", "CAMERA_YAW"}), Config::getValue<float>({"OPENBOT", "CAMERA", "CAMERA_ROLL"}));
+    FVector camera_pose(Config::getValue<float>({"OPENBOT", "CAMERA_COMPONENT", "POSITION_X"}), Config::getValue<float>({"OPENBOT", "CAMERA_COMPONENT", "POSITION_Y"}), Config::getValue<float>({"OPENBOT", "CAMERA_COMPONENT", "POSITION_Z"}));
+    FRotator camera_orientation(Config::getValue<float>({"OPENBOT", "CAMERA_COMPONENT", "PITCH"}), Config::getValue<float>({"OPENBOT", "CAMERA_COMPONENT", "YAW"}), Config::getValue<float>({"OPENBOT", "CAMERA_COMPONENT", "ROLL"}));
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("OpenBotSmartPhoneCamera"));
     camera_component_->SetRelativeLocationAndRotation(camera_pose, camera_orientation);
     camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;
-    camera_component_->FieldOfView = Config::getValue<float>({"OPENBOT", "CAMERA", "FOV"});
+    camera_component_->FieldOfView = Config::getValue<float>({"OPENBOT", "CAMERA_COMPONENT", "FOV"});
 }
 
 void AOpenBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
@@ -93,6 +93,16 @@ void AOpenBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
     input_component->BindAxis("MoveForward", this, &AOpenBotPawn::moveForward);
     input_component->BindAxis("MoveRight", this, &AOpenBotPawn::moveRight);
 }
+
+// Called every simulator update
+void AOpenBotPawn::Tick(float delta_time)
+{
+    Super::Tick(delta_time);
+    setDriveTorques(delta_time);
+}
+
+void AOpenBotPawn::NotifyHit(class UPrimitiveComponent* hit_component, class AActor* other_actor, class UPrimitiveComponent* other_component, bool bself_moved, FVector hit_location, FVector hit_normal, FVector normal_impulse, const FHitResult& hit)
+{}
 
 // This command is meant to be bound to keyboard input. It will be executed at
 // each press or unpress event.
@@ -139,26 +149,48 @@ Eigen::Vector4f AOpenBotPawn::getDutyCycle()
     return duty_cycle_;
 }
 
+void AOpenBotPawn::resetPhysicsState()
+{
+    PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component_->PVehicle->getRigidDynamicActor();
+    ASSERT(rigid_body_dynamic_actor);
+
+    // We want to reset the physics state of OpenBot, so we are inlining the below code from
+    // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleDrive.cpp::setToRestState(), and
+    // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleWheels.cpp::setToRestState(), because these functions are protected.
+    if (!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC)) {
+        rigid_body_dynamic_actor->setLinearVelocity(PxVec3(0, 0, 0));
+        rigid_body_dynamic_actor->setAngularVelocity(PxVec3(0, 0, 0));
+        rigid_body_dynamic_actor->clearForce(PxForceMode::eACCELERATION);
+        rigid_body_dynamic_actor->clearForce(PxForceMode::eVELOCITY_CHANGE);
+        rigid_body_dynamic_actor->clearTorque(PxForceMode::eACCELERATION);
+        rigid_body_dynamic_actor->clearTorque(PxForceMode::eVELOCITY_CHANGE);
+    }
+    vehicle_movement_component_->PVehicle->mWheelsDynData.setToRestState();
+    // PVehicleDrive is not intiliazed, and so PVehicleDrive->mDriveDynData.setToRestState() is commented out. We want to know if this changes at some point.
+    ASSERT(!vehicle_movement_component_->PVehicleDrive);
+    // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
+}
+
 void AOpenBotPawn::setDriveTorques(float delta_time)
 {
     // Openbot motor torque: 1200 gf.cm (gram force centimeter) = 0.1177 N.m
     // https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html)
     // Gear ratio: 50 => max. wheel torque = 5.88399 N.m
 
-    float gear_ratio = Config::getValue<float>({"OPENBOT", "GEAR_RATIO"});                           // Gear ratio of the OpenBot motors.
-    float motor_velocity_constant = Config::getValue<float>({"OPENBOT", "MOTOR_VELOCITY_CONSTANT"}); // Motor torque constant in [N.m/A]
+    float gear_ratio = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "GEAR_RATIO"});                           // Gear ratio of the OpenBot motors.
+    float motor_velocity_constant = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_VELOCITY_CONSTANT"}); // Motor torque constant in [N.m/A]
     float motor_torque_constant = 1 / motor_velocity_constant;                                       // Motor torque constant in [rad/s/V]
-    float battery_voltage = Config::getValue<float>({"OPENBOT", "BATTERY_VOLTAGE"});                 // Expressed in [V]
+    float battery_voltage = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "BATTERY_VOLTAGE"});                 // Expressed in [V]
 
-    float control_dead_zone = Config::getValue<float>({"OPENBOT", "CONTROL_DEAD_ZONE"});         // Below this command threshold, the torque is set to zero if the motor velocity is "small enough"
-    float motor_torque_max = Config::getValue<float>({"OPENBOT", "MOTOR_TORQUE_MAX"});           // Maximum ammount of torque an OpenBot motor can generate [N.m].
-    float electrical_resistance = Config::getValue<float>({"OPENBOT", "ELECTRICAL_RESISTANCE"}); // Electrical resistance of the DC motor windings in [Ohms]
-    float electrical_inductance = Config::getValue<float>({"OPENBOT", "ELECTRICAL_INDUCTANCE"}); // Electrical inductance of the DC motor windings in [Henry]
+    float control_dead_zone = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CONTROL_DEAD_ZONE"});         // Below this command threshold, the torque is set to zero if the motor velocity is "small enough"
+    float motor_torque_max = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_TORQUE_MAX"});           // Maximum ammount of torque an OpenBot motor can generate [N.m].
+    float electrical_resistance = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ELECTRICAL_RESISTANCE"}); // Electrical resistance of the DC motor windings in [Ohms]
+    float electrical_inductance = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ELECTRICAL_INDUCTANCE"}); // Electrical inductance of the DC motor windings in [Henry]
     // Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to
     // be processed by the low-level microcontroller. For more details, feel free
     // to check the "speedMultiplier" command in the OpenBot code:
     // https://github.com/isl-org/OpenBot/blob/d4362e688435155f6c20dfdb756e55556fc12cc8/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
-    float action_scale = Config::getValue<float>({"OPENBOT", "ACTION_SCALE"});
+    float action_scale = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ACTION_SCALE"});
 
     // The ground truth velocity of the robot wheels in [RPM]
     Eigen::Vector4f wheel_rotation_speed;
@@ -215,39 +247,6 @@ void AOpenBotPawn::setDriveTorques(float delta_time)
 
     // Reset duty cycle value:
     duty_cycle_.setZero();
-}
-
-// Called every simulator update
-void AOpenBotPawn::Tick(float delta_time)
-{
-    Super::Tick(delta_time);
-    setDriveTorques(delta_time);
-}
-
-void AOpenBotPawn::NotifyHit(class UPrimitiveComponent* hit_component, class AActor* other_actor, class UPrimitiveComponent* other_component, bool bself_moved, FVector hit_location, FVector hit_normal, FVector normal_impulse, const FHitResult& hit)
-{
-}
-
-void AOpenBotPawn::resetPhysicsState()
-{
-    PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component_->PVehicle->getRigidDynamicActor();
-    ASSERT(rigid_body_dynamic_actor);
-
-    // We want to reset the physics state of OpenBot, so we are inlining the below code from
-    // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleDrive.cpp::setToRestState(), and
-    // Engine/Source/ThirdParty/PhysX3/PhysX_3.4/Source/PhysXVehicle/src/PxVehicleWheels.cpp::setToRestState(), because these functions are protected.
-    if (!(rigid_body_dynamic_actor->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC)) {
-        rigid_body_dynamic_actor->setLinearVelocity(PxVec3(0, 0, 0));
-        rigid_body_dynamic_actor->setAngularVelocity(PxVec3(0, 0, 0));
-        rigid_body_dynamic_actor->clearForce(PxForceMode::eACCELERATION);
-        rigid_body_dynamic_actor->clearForce(PxForceMode::eVELOCITY_CHANGE);
-        rigid_body_dynamic_actor->clearTorque(PxForceMode::eACCELERATION);
-        rigid_body_dynamic_actor->clearTorque(PxForceMode::eVELOCITY_CHANGE);
-    }
-    vehicle_movement_component_->PVehicle->mWheelsDynData.setToRestState();
-    // PVehicleDrive is not intiliazed, and so PVehicleDrive->mDriveDynData.setToRestState() is commented out. We want to know if this changes at some point.
-    ASSERT(!vehicle_movement_component_->PVehicleDrive);
-    // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
 }
 
 // clamp a vector between two values.

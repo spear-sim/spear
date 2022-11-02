@@ -21,12 +21,9 @@ public:
     // Construct a new AOpenBotPawn object
     AOpenBotPawn(const FObjectInitializer& object_initializer);
 
-    // Pawn interface
+    // APawn interface
     virtual void SetupPlayerInputComponent(UInputComponent* input_component) override;
-
     virtual void Tick(float delta_time) override;
-
-    // Collision callback
     virtual void NotifyHit(class UPrimitiveComponent* hit_component, class AActor* other_actor, class UPrimitiveComponent* other_component, bool bself_moved, FVector hit_location, FVector hit_normal, FVector normal_impulse, const FHitResult& hit) override;
 
     // Keyboard callback allowing to apply wheel torque on a vehicle to
@@ -56,6 +53,7 @@ public:
     // the keyboard (imitation learning scenario//
     Eigen::Vector4f getDutyCycle();
 
+    // reset the physical state of the wheels
     void resetPhysicsState();
 
     // The main skeletal mesh associated with this Vehicle
