@@ -103,43 +103,43 @@ def build_libs(args):
     assert cmake_cmd.returncode == 0
     print("rpclib built successfully...")
 
-    # #
-    # # yamp-cpp
-    # #
+    #
+    # yamp-cpp
+    #
 
-    # print("building yaml-cpp...")
-    # build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "yaml-cpp", "build")
-    # if os.path.isdir(build_dir):
-    #     shutil.rmtree(build_dir, ignore_errors=True)
+    print("building yaml-cpp...")
+    build_dir = os.path.join(SCRIPT_DIR_PATH, "..", "third_party", "yaml-cpp", "build")
+    if os.path.isdir(build_dir):
+        shutil.rmtree(build_dir, ignore_errors=True)
 
-    # os.makedirs(build_dir)
-    # os.chdir(build_dir)
+    os.makedirs(build_dir)
+    os.chdir(build_dir)
 
-    # if sys.platform == "linux":
-    #     cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
-    #     print(f"Executing cmd: {' '.join(cmake_args)}")
-    #     cmake_cmd = subprocess.run(cmake_args)
-    #     assert cmake_cmd.returncode == 0
-    #     cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
-    # elif sys.platform == "darwin":
-    #     cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_CXX_FLAGS='-mmacosx-version-min=10.14'", ".."]
-    #     print(f"Executing cmd: {' '.join(cmake_args)}")
-    #     cmake_cmd = subprocess.run(cmake_args)
-    #     assert cmake_cmd.returncode == 0
-    #     cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
-    # elif sys.platform == "win32":
-    #     cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
-    #     print(f"Executing cmd: {' '.join(cmake_args)}")
-    #     cmake_cmd = subprocess.run(cmake_args)
-    #     assert cmake_cmd.returncode == 0
-    #     cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
-    # else:
-    #     assert False, "This OS is not supported."
+    if sys.platform == "linux":
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release" , "-DCMAKE_CXX_FLAGS='-stdlib=libc++'", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", ".."]
+        print(f"Executing cmd: {' '.join(cmake_args)}")
+        cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "darwin":
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_CXX_FLAGS='-mmacosx-version-min=10.14'", ".."]
+        print(f"Executing cmd: {' '.join(cmake_args)}")
+        cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
+    elif sys.platform == "win32":
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        print(f"Executing cmd: {' '.join(cmake_args)}")
+        cmake_cmd = subprocess.run(cmake_args)
+        assert cmake_cmd.returncode == 0
+        cmake_args = ["cmake",  "--build", ".", "--config", "Release", "-j", "{0}".format(args.num_parallel_jobs)]
+    else:
+        assert False, "This OS is not supported."
     
-    # print(f"Executing cmd: {' '.join(cmake_args)}")
-    # cmake_cmd = subprocess.run(cmake_args)
-    # assert cmake_cmd.returncode == 0
-    # print("yaml-cpp built successfully...")
+    print(f"Executing cmd: {' '.join(cmake_args)}")
+    cmake_cmd = subprocess.run(cmake_args)
+    assert cmake_cmd.returncode == 0
+    print("yaml-cpp built successfully...")
 
 
 if __name__ == "__main__":
