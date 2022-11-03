@@ -40,12 +40,12 @@ if __name__ == "__main__":
 
     # iterate through all scenes
     for idx, scene in enumerate(scenes):
-        
+
         print(f"processing scene {scene}")
 
         # change config based on current scene
         config.defrost()
-        config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_{}".format(scene)
+        config.SIMULATION_CONTROLLER.LEVEL_ID = scene
         config.freeze()
 
         # copy pak to the executable dir as this is required for launching the appropriate pak file

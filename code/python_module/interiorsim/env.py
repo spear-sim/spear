@@ -151,7 +151,6 @@ class Env(gym.Env):
             assert False
 
         # Read params required for launching the Unreal Engine executable:
-        launch_params.append("{}".format(self._config.INTERIORSIM.MAP_ID)) # Allows convenient selection of the map to be loaded by your executable. 
         launch_params.append("-game")
         launch_params.append("-windowed")
         launch_params.append("-novsync")
