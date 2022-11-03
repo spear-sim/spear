@@ -10,7 +10,7 @@ public class OpenBot : ModuleRules
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "PhysXVehicles" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "PhysX", "PhysXVehicles", "PhysXVehicleLib" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
