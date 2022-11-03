@@ -81,9 +81,6 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 {
     ASSERT(world);
 
-    // When an UE project executable is launched, two GameWorlds are created sequentially by default.
-    // First world is called "Untitled" and this world does not have a valid world context. We skip this world.
-    // Second world is called "Entry" and this world has a valid world context. We use this to open a desired Level.
     if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world) != nullptr) {
         
         const auto level_name = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_PATH" }) + "/" + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_PREFIX" }) + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_ID" });
