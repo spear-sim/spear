@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "IgnoreCompilerWarnings.h"
-ENABLE_IGNORE_COMPILER_WARNINGS
+BEGIN_IGNORE_COMPILER_WARNINGS
 #include <yaml-cpp/yaml.h>
-DISABLE_IGNORE_COMPILER_WARNINGS
+END_IGNORE_COMPILER_WARNINGS
 
 #include "Assert/Assert.h"
 

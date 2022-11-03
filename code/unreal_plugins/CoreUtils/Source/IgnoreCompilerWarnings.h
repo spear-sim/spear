@@ -28,91 +28,81 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+
+// keep these warnings sorted
 #ifdef _MSC_VER
-//'=': conversion from 'double' to 'float', possible loss of data
-#define ENABLE_IGNORE_COMPILER_WARNINGS                                        \
-    __pragma(warning(push)) __pragma(warning(                                  \
-        disable : 4005 4100 4189 4244 4245 4239 4267 4365 4464 4456 4505 4514 4571 4624 4625 4626 4668 4701 4710 4820 4917 5026 5027 5031))
-#define DISABLE_IGNORE_COMPILER_WARNINGS __pragma(warning(pop))
+    #define BEGIN_IGNORE_COMPILER_WARNINGS \
+        __pragma(warning(push))                                                                                                                                   \
+        __pragma(warning(disable : 4005 4100 4189 4244 4245 4239 4267 4365 4456 4464 4505 4514 4571 4624 4625 4626 4668 4701 4710 4820 4917 4996 5026 5027 5031)) \
+        __pragma(push_macro("_CRT_SECURE_NO_WARNINGS"))                                                                                                           \
+        #define _CRT_SECURE_NO_WARNINGS 1
 
-// TODO: limit scope of below statements required to suppress VC++ warnings
-#define _CRT_SECURE_NO_WARNINGS 1
-#pragma warning(disable : 4996)
+    #define END_IGNORE_COMPILER_WARNINGS           \
+        __pragma(pop_macro("_CRT_SECURE_NO_WARNINGS")) \
+        __pragma(warning(pop))
 #endif
 
-// special way to quiet the warning:  warning: format string is not a string
-// literal
+// keep these warnings sorted
 #ifdef __CLANG__
-#define IGNORE_FORMAT_STRING_ON                                                \
-    _Pragma("clang diagnostic push")                                           \
-        _Pragma("clang diagnostic ignored \"-Wformat-nonliteral\"")
+    #define BEGIN_IGNORE_COMPILER_WARNINGS \
+        _Pragma("clang diagnostic push")                                     \
+        _Pragma("clang diagnostic ignored \"-Wcast-qual\"")                  \
+        _Pragma("clang diagnostic ignored \"-Wctor-dtor-privacy\"")          \
+        _Pragma("clang diagnostic ignored \"-Wdelete-non-virtual-dtor\"")    \
+        _Pragma("clang diagnostic ignored \"-Wdeprecated-declarations\"")    \
+        _Pragma("clang diagnostic ignored \"-Wmissing-field-initializers\"") \
+        _Pragma("clang diagnostic ignored \"-Wold-style-cast\"")             \
+        _Pragma("clang diagnostic ignored \"-Wredundant-decls\"")            \
+        _Pragma("clang diagnostic ignored \"-Wreturn-type\"")                \
+        _Pragma("clang diagnostic ignored \"-Wshadow\"")                     \
+        _Pragma("clang diagnostic ignored \"-Wstrict-overflow\"")            \
+        _Pragma("clang diagnostic ignored \"-Wswitch-default\"")             \
+        _Pragma("clang diagnostic ignored \"-Wundef\"")                      \
+        _Pragma("clang diagnostic ignored \"-Wunused-variable\"")            \
+        _Pragma("clang diagnostic ignored \"-Wunused-parameter\"")
 
-#define IGNORE_FORMAT_STRING_OFF _Pragma("clang diagnostic pop")
-#else
-#define IGNORE_FORMAT_STRING_ON
-#define IGNORE_FORMAT_STRING_OFF
+        // Need /**/ style comments here
+        /*
+        _Pragma("clang diagnostic ignored \"-Werror\"")                      \
+        _Pragma("clang diagnostic ignored \"-Werror=\"")                     \
+        _Pragma("clang diagnostic ignored \"-Wformat=\"")                    \
+        _Pragma("clang diagnostic ignored \"-Wpedantic\"")                   \
+        _Pragma("clang diagnostic ignored \"-Wunused-variable\"")            \
+        */
+
+    #define END_IGNORE_COMPILER_WARNINGS \
+        _Pragma("clang diagnostic pop")
 #endif
 
-// Please keep this list sorted so it is easier to find stuff, also make sure there 
-// is no whitespace after the trailing \, GCC doesn't like that.
-#ifdef __CLANG__
-#define ENABLE_IGNORE_COMPILER_WARNINGS                                           \
-    _Pragma("clang diagnostic push")                                  \
-    _Pragma("clang diagnostic ignored \"-Wctor-dtor-privacy\"")        \
-    _Pragma("clang diagnostic ignored \"-Wdelete-non-virtual-dtor\"") \
-    _Pragma("clang diagnostic ignored \"-Wmissing-field-initializers\"") \
-    _Pragma("clang diagnostic ignored \"-Wold-style-cast\"")          \
-    _Pragma("clang diagnostic ignored \"-Wredundant-decls\"")         \
-    _Pragma("clang diagnostic ignored \"-Wreturn-type\"")             \
-    _Pragma("clang diagnostic ignored \"-Wshadow\"")                  \
-    _Pragma("clang diagnostic ignored \"-Wstrict-overflow\"")         \
-    _Pragma("clang diagnostic ignored \"-Wswitch-default\"")          \
-    _Pragma("clang diagnostic ignored \"-Wundef\"")                   \
-    _Pragma("clang diagnostic ignored \"-Wunused-variable\"")         \
-    _Pragma("clang diagnostic ignored \"-Wcast-qual\"")               \
-    _Pragma("clang diagnostic ignored \"-Wunused-parameter\"")
-
-/* Addition options that can be enabled
-_Pragma("clang diagnostic ignored \"-Wpedantic\"")                \
-_Pragma("clang diagnostic ignored \"-Wformat=\"")                 \
-_Pragma("clang diagnostic ignored \"-Werror\"")                   \
-_Pragma("clang diagnostic ignored \"-Werror=\"")                  \
-_Pragma("clang diagnostic ignored \"-Wunused-variable\"")         \
-*/
-
-#define DISABLE_IGNORE_COMPILER_WARNINGS                                            \
-    _Pragma("clang diagnostic pop")          
-
-
-#else
+// keep these warnings sorted
 #ifdef __GNUC__
-#define ENABLE_IGNORE_COMPILER_WARNINGS                                           \
-    _Pragma("GCC diagnostic push")                                  \
-    _Pragma("GCC diagnostic ignored \"-Wctor-dtor-privacy\"")        \
-    _Pragma("GCC diagnostic ignored \"-Wdelete-non-virtual-dtor\"") \
-    _Pragma("GCC diagnostic ignored \"-Wmissing-field-initializers\"") \
-    _Pragma("GCC diagnostic ignored \"-Wold-style-cast\"")          \
-    _Pragma("GCC diagnostic ignored \"-Wredundant-decls\"")         \
-    _Pragma("GCC diagnostic ignored \"-Wreturn-type\"")             \
-    _Pragma("GCC diagnostic ignored \"-Wshadow\"")                  \
-    _Pragma("GCC diagnostic ignored \"-Wstrict-overflow\"")         \
-    _Pragma("GCC diagnostic ignored \"-Wswitch-default\"")          \
-    _Pragma("GCC diagnostic ignored \"-Wundef\"")                   \
-    _Pragma("GCC diagnostic ignored \"-Wunused-variable\"")         \
-    _Pragma("GCC diagnostic ignored \"-Wcast-qual\"")               \
-    _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
+    #define BEGIN_IGNORE_COMPILER_WARNINGS \
+        _Pragma("GCC diagnostic push")                                     \
+        _Pragma("GCC diagnostic ignored \"-Wcast-qual\"")                  \
+        _Pragma("GCC diagnostic ignored \"-Wctor-dtor-privacy\"")          \
+        _Pragma("GCC diagnostic ignored \"-Wdelete-non-virtual-dtor\"")    \
+        _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")    \
+        _Pragma("GCC diagnostic ignored \"-Wmissing-field-initializers\"") \
+        _Pragma("GCC diagnostic ignored \"-Wold-style-cast\"")             \
+        _Pragma("GCC diagnostic ignored \"-Wredundant-decls\"")            \
+        _Pragma("GCC diagnostic ignored \"-Wreturn-type\"")                \
+        _Pragma("GCC diagnostic ignored \"-Wshadow\"")                     \
+        _Pragma("GCC diagnostic ignored \"-Wstrict-overflow\"")            \
+        _Pragma("GCC diagnostic ignored \"-Wswitch-default\"")             \
+        _Pragma("GCC diagnostic ignored \"-Wundef\"")                      \
+        _Pragma("GCC diagnostic ignored \"-Wunused-variable\"")            \
+        _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
 
-/* Addition options that can be enabled
-_Pragma("GCC diagnostic ignored \"-Wpedantic\"")                \
-_Pragma("GCC diagnostic ignored \"-Wformat=\"")                 \
-_Pragma("GCC diagnostic ignored \"-Werror\"")                   \
-_Pragma("GCC diagnostic ignored \"-Werror=\"")                  \
-_Pragma("GCC diagnostic ignored \"-Wunused-variable\"")         \
-_Pragma("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")		\
-*/
-#define DISABLE_IGNORE_COMPILER_WARNINGS                                            \
-    _Pragma("GCC diagnostic pop")          
+        // Need /**/ style comments here
+        /*
+        _Pragma("GCC diagnostic ignored \"-Wpedantic\"")                   \
+        _Pragma("GCC diagnostic ignored \"-Wformat=\"")                    \
+        _Pragma("GCC diagnostic ignored \"-Werror\"")                      \
+        _Pragma("GCC diagnostic ignored \"-Werror=\"")                     \
+        _Pragma("GCC diagnostic ignored \"-Wunused-variable\"")            \
+        _Pragma("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")        \
+        */
 
-#endif
-
+    #define END_IGNORE_COMPILER_WARNINGS \
+        _Pragma("GCC diagnostic pop")
 #endif

@@ -176,9 +176,9 @@ std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
 void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "low_level_control") {
-        Eigen::Vector4f duty_cycle;
-        duty_cycle << action.at("apply_voltage").at(0),action.at("apply_voltage").at(1),action.at("apply_voltage").at(0),action.at("apply_voltage").at(1);
+        Eigen::Vector4f duty_cycle(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1), action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
         open_bot_pawn_->setDutyCycleAndClamp(duty_cycle);
+
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_MODE"}) == "teleport") {
         const FVector agent_location{action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2)};
         const FRotator agent_rotation{FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
@@ -186,6 +186,7 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
         constexpr bool sweep = false;
         constexpr FHitResult* hit_result_info = nullptr;
         open_bot_pawn_->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
+        
     } else {
         ASSERT(false);
     }

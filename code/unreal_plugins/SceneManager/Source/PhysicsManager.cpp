@@ -2,7 +2,10 @@
 
 #include <sstream>
 
+#include <Components/StaticMeshComponent.h>
+#include <GameFramework/Actor.h>
 #include <PhysicalMaterials/PhysicalMaterial.h>
+#include <Materials/MaterialInstanceDynamic.h>
 
 #include "Assert/Assert.h"
 

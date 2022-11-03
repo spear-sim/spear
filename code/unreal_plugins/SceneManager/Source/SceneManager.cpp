@@ -4,12 +4,14 @@
 
 void SceneManager::StartupModule()
 {
-    PhysicsManager::initialize();
+    // TODO: need a config flag to enable/disable, because SceneManager won't work when a non-Kujiale scene is loaded
+    // PhysicsManager::initialize();
 }
 
 void SceneManager::ShutdownModule()
 {
-    PhysicsManager::terminate();
+    // TODO: see above
+    // PhysicsManager::terminate();
 }
 
 IMPLEMENT_MODULE(SceneManager, SceneManager)

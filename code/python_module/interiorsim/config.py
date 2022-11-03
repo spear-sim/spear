@@ -15,7 +15,6 @@ def get_config(config_files):
     config = CfgNode(new_allowed=True)
 
     config.merge_from_file(constants.OPENBOT_DEFAULT_CONFIG_FILE)
-    config.merge_from_file(constants.ROBOTSIM_DEFAULT_CONFIG_FILE)
     config.merge_from_file(constants.SIMULATION_CONTROLLER_DEFAULT_CONFIG_FILE)
     config.merge_from_file(constants.INTERIORSIM_DEFAULT_CONFIG_FILE)
 
