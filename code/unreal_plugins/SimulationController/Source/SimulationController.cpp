@@ -166,9 +166,9 @@ void SimulationController::worldBeginPlayEventHandler()
 
     rpc_server_ = std::make_unique<RpcServer>(hostname, port);
     ASSERT(rpc_server_);
-    
+
     bindFunctionsToRpcServer();
-    
+
     rpc_server_->launchWorkerThreads(1u);
 
     is_world_begin_play_executed_ = true;

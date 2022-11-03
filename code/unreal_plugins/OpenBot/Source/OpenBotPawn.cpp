@@ -11,6 +11,7 @@
 #include <SimpleWheeledVehicleMovementComponent.h>
 
 #include "Config.h"
+#include "IgnoreCompilerWarnings.h"
 #include "OpenBotWheel.h"
 
 AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(object_initializer)
@@ -40,7 +41,10 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
 
     RootComponent = skeletal_mesh_component_;
 
+BEGIN_IGNORE_COMPILER_WARNINGS
     vehicle_movement_component_ = CreateDefaultSubobject<USimpleWheeledVehicleMovementComponent>(TEXT("SimpleWheeledVehicleMovement"));
+END_IGNORE_COMPILER_WARNINGS
+
     vehicle_movement_component_->SetIsReplicated(true); // Enable replication by default
     vehicle_movement_component_->UpdatedComponent = skeletal_mesh_component_;
 

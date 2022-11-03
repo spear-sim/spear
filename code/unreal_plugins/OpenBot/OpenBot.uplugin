@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "OpenBot",
-    "Description": "WARNING: The loading phases for {CoreUtils, OpenBot} must be ordered as follows: CoreUtils < OpenBot",
+    "Description": "WARNING: The loading phases for {CoreUtils, OpenBot} must be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(OpenBot)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",

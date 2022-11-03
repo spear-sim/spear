@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "SimulationController",
-    "Description": "WARNING: The loading phases for CoreUtils, RobotSim, and SimulationController need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(RobotSim) < LoadingPhase(SimulationController)",
+    "Description": "WARNING: The loading phases for {CoreUtils, OpenBot, SceneManager, SimulationController} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(OpenBot), LoadingPhase(SceneManager) < LoadingPhase(SimulationController)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -31,11 +31,7 @@
             "Enabled": true
         },
         {
-            "Name": "PhysXVehicles",
-            "Enabled": true
-        },
-        {
-            "Name": "RobotSim",
+            "Name": "SceneManager",
             "Enabled": true
         }
     ]
