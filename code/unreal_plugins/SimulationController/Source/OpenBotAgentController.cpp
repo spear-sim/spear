@@ -42,14 +42,14 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
 
 OpenBotAgentController::~OpenBotAgentController()
 {
-    ASSERT(open_bot_pawn_);
-    open_bot_pawn_->Destroy();
-    open_bot_pawn_ = nullptr;
-
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
+    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE" }) == "mixed") {
         ASSERT(camera_sensor_);
         camera_sensor_ = nullptr;
     }
+
+    ASSERT(open_bot_pawn_);
+    open_bot_pawn_->Destroy();
+    open_bot_pawn_ = nullptr;
 }
 
 void OpenBotAgentController::findObjectReferences(UWorld* world)
@@ -144,7 +144,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     box.shape = {6};
     observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
 
-    ASSERT(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed" or Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical");
+    ASSERT(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed" || Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical");
 
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = 0;
@@ -255,8 +255,6 @@ void OpenBotAgentController::reset()
 bool OpenBotAgentController::isReady() const
 {
     ASSERT(open_bot_pawn_);
-    
-
     return open_bot_pawn_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
 }
 
@@ -343,7 +341,7 @@ void OpenBotAgentController::generateTrajectoryToTarget()
     collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
     
     // If path generation is sucessful, analyze the obtained path (it should not be too simple):
-    if (collision_free_path.IsSuccessful() and collision_free_path.Path.IsValid()) {
+    if (collision_free_path.IsSuccessful() && collision_free_path.Path.IsValid()) {
 
         if (collision_free_path.IsPartial()) {
             std::cout << "Only a partial path could be found by the planner..." << std::endl;
