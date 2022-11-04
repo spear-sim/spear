@@ -5,7 +5,8 @@
 #include <vector>
 
 #include <CoreMinimal.h>
-#include <GameFramework/Actor.h>
+
+class AActor;
 
 class SCENEMANAGER_API PhysicsManager
 {

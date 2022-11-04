@@ -84,7 +84,8 @@ if __name__ == "__main__":
 
         # change config based on current scene
         config.defrost()
-        config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_{}".format(scene)
+        # scene type is a numpy int, yaml config doesn't recognise it, so we need to explicitly cast it, otherwise we get an Invalid type error
+        config.SIMULATION_CONTROLLER.LEVEL_ID = str(scene)
         config.freeze()
 
         # copy pak to the executable dir as this is required for launching the appropriate pak file

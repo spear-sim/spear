@@ -16,21 +16,22 @@
 // that it can be used later to redefine check. We use push_macro() to copy and
 // store check's definition in a stack.
 #pragma push_macro("check")
-
-// Now that we have stored check's definition, we undefine it to avoid conflict
-// with 'rpc/msgpack.hpp' include below.
 #ifdef check
 #undef check
+#endif
+
+// For the TEXT macro, we do something similar to the check macro. The TEXT macro
+// is defined in 'winnt.h', which is included by 'rpc/msgpack.hpp' on Windows.
+#pragma push_macro("TEXT")
+#ifdef TEXT
+#undef TEXT
 #endif
 
 #include <rpc/config.h>
 #include <rpc/msgpack.hpp>
 #include <rpc/server.h>
 
-// check's definition will be changed at this point by 'rpc/msgpack.hpp'. We
-// need to redefine check to have the same definition as Unreal defines it.
-// Hence, we pop the check value that was stored before. This redefines check to
-// have the same definition as Unreal defines it.
+#pragma pop_macro("TEXT")
 #pragma pop_macro("check")
 
 // We need to undefine InterlockedCompareExchange for the following reason.

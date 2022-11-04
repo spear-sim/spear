@@ -13,9 +13,9 @@
 #endif
 
 #include "IgnoreCompilerWarnings.h"
-ENABLE_IGNORE_COMPILER_WARNINGS
+BEGIN_IGNORE_COMPILER_WARNINGS
 #include <asio.hpp>
-DISABLE_IGNORE_COMPILER_WARNINGS
+END_IGNORE_COMPILER_WARNINGS
 
 // We need to undefine InterlockedCompareExchange for the following reason.
 // InterlockedCompareExchange macro was defined above to avoid errors with

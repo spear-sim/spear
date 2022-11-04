@@ -10,26 +10,22 @@
 			"LoadingPhase": "Default"
 		}
 	],
-	"Plugins": [
-		{
-			"Name": "CoreUtils",
-			"Enabled": true
-		},
-		{
-			"Name": "RobotSim",
-			"Enabled": true
-		},
-		{
-			"Name": "OpenBot",
-			"Enabled": true
-		},
-		{
-			"Name": "SceneManager",
-			"Enabled": true
-		},
-		{
-			"Name": "SimulationController",
-			"Enabled": true
-		}
-	]
+    "Plugins": [
+        {
+            "Name": "CoreUtils",
+            "Enabled": true
+        },
+        {
+            "Name": "OpenBot",
+            "Enabled": true
+        },
+        {
+            "Name": "SceneManager",
+            "Enabled": true
+        },
+        {
+            "Name": "SimulationController",
+            "Enabled": true
+        }
+    ]
 }

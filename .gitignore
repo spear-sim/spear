@@ -41,9 +41,9 @@ code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
 code/unreal_plugins/CoreUtils/ThirdParty
 
-code/unreal_plugins/RobotSim/Binaries
-code/unreal_plugins/RobotSim/Intermediate
-code/unreal_plugins/RobotSim/ThirdParty
+code/unreal_plugins/OpenBot/Binaries
+code/unreal_plugins/OpenBot/Intermediate
+code/unreal_plugins/OpenBot/ThirdParty
 
 code/unreal_plugins/SceneManager/Binaries
 code/unreal_plugins/SceneManager/Intermediate

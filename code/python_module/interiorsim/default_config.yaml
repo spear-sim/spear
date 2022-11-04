@@ -15,10 +15,6 @@ INTERIORSIM:
   # If launch_mode is "uproject", specify this path to your uproject file.
   UPROJECT: ""
   
-  # Allows convenient selection of the map to be loaded by your executable. 
-  # For instance MAP_ID: "/Game/Maps/Map_235553720"
-  MAP_ID: ""
-
   # Set this parameter to true True to launch the executable in headless mode. Has no effect
   # if launch_mode is "running_instance".
   RENDER_OFFSCREEN: False
@@ -46,7 +42,7 @@ INTERIORSIM:
   
   # List of custom command-line arguments passed to the Unreal application. This is useful
   # when the Unreal application is built with a plugin that expects its own set of
-  # command-line arguments (e.g., RobotSim).
+  # command-line arguments.
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
 
   # This parameter can be used for additional control over which Vulkan devices are recognized

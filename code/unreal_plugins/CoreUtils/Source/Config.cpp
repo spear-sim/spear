@@ -1,10 +1,5 @@
 #include "Config.h"
 
-#include "IgnoreCompilerWarnings.h"
-ENABLE_IGNORE_COMPILER_WARNINGS
-#include <yaml-cpp/yaml.h>
-DISABLE_IGNORE_COMPILER_WARNINGS
-
 #include <Misc/CommandLine.h>
 #include <Misc/Parse.h>
 #include <Misc/Paths.h>

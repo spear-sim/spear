@@ -84,7 +84,7 @@ def build_libs(args):
         assert cmake_cmd.returncode == 0
         cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
     elif sys.platform == "darwin":
-        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_CXX_FLAGS='-mmacosx-version-min=10.14'", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
         assert cmake_cmd.returncode == 0
@@ -122,7 +122,7 @@ def build_libs(args):
         assert cmake_cmd.returncode == 0
         cmake_args = ["cmake",  "--build", ".", "-j", "{0}".format(args.num_parallel_jobs)]
     elif sys.platform == "darwin":
-        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."]
+        cmake_args = ["cmake", "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_CXX_FLAGS='-mmacosx-version-min=10.14'", ".."]
         print(f"Executing cmd: {' '.join(cmake_args)}")
         cmake_cmd = subprocess.run(cmake_args)
         assert cmake_cmd.returncode == 0
