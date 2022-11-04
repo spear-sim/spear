@@ -50,12 +50,41 @@ CameraAgentController::CameraAgentController(UWorld* world)
 
         camera_pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FOV" });
 
-        // update auto-exposure settings
         if (camera_pass.first == "final_color") {
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedDown = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN" });
+            // enable denoiser
+            world_->Exec(world_, TEXT("r.Reflections.Denoiser 1"));
+
+            // update auto-exposure settings
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp = 
+                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp = 
+                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = 
+                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedDown = 
+                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN" });
+
+            // update raytracing settings
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingGIMaxBounces = 
+                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_GI_OVERRIDE_BOUNCES" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingGIMaxBounces = 
+                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_GI_BOUNCES" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = 
+                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_GI_OVERRIDE_SAMPLES_PER_PIXEL" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingGISamplesPerPixel = 
+                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_GI_SAMPLES_PER_PIXEL" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces = 
+                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_R_OVERRIDE_BOUNCES" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = 
+                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_R_BOUNCES" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxRoughness = 
+                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_R_OVERRIDE_MAX_ROUGHNESS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxRoughness = 
+                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_R_MAX_ROUGHNESS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = 
+                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_R_OVERRIDE_SAMPLES_PER_PIXEL" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 
+                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RAYTRACING_R_SAMPLES_PER_PIXEL" });
         }
     }
 }
@@ -94,6 +123,7 @@ void CameraAgentController::findObjectReferences(UWorld* world)
     agent_properties.AgentRadius = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS" });
     agent_properties.AgentStepHeight = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT" });
 
+#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
     ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
     ASSERT(nav_data);
 
@@ -102,6 +132,7 @@ void CameraAgentController::findObjectReferences(UWorld* world)
 
     // build navmesh based on properties from config file
     buildNavMesh(nav_sys);
+#endif
 }
 
 void CameraAgentController::cleanUpObjectReferences()
