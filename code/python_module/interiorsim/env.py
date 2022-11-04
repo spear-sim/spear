@@ -175,6 +175,11 @@ class Env(gym.Env):
         for a in self._config.INTERIORSIM.CUSTOM_COMMAND_LINE_ARGUMENTS:
             launch_params.append("{}".format(a))
 
+        # On Windows platform, we need to enable extra params to enable UE log and std log to print on console
+        if sys.platform == "win32":
+            launch_params.append("-stdout")
+            launch_params.append("-FullStdOutLogOutput")
+
         # Provides additional control over which Vulkan devices are recognized by Unreal
         if len(self._config.INTERIORSIM.VULKAN_DEVICE_FILES) > 0:
             print("Setting VK_ICD_FILENAMES environment variable: " + self._config.INTERIORSIM.VULKAN_DEVICE_FILES)

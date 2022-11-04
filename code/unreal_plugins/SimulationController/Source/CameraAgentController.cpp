@@ -39,6 +39,7 @@ CameraAgentController::CameraAgentController(UWorld* world)
     ASSERT(camera_actor_);
 
     camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_,
+                                                    camera_actor_->GetRootComponent(),
                                                     Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "RENDER_PASSES" }),
                                                     Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH" }),
                                                     Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT" }));
@@ -258,7 +259,7 @@ void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys)
         }
     }
 
-    // get referencest to NavMeshBoundsVolume and NavModifierVolume
+    // get references to NavMeshBoundsVolume and NavModifierVolume
     ANavMeshBoundsVolume* nav_mesh_bounds_volume = nullptr;
     for (TActorIterator<ANavMeshBoundsVolume> it(world_); it; ++it) {
         nav_mesh_bounds_volume = *it;

@@ -6,6 +6,7 @@
 
 class AActor;
 class USceneCaptureComponent2D;
+class USceneComponent;
 class UTextureRenderTarget2D;
 
 struct CameraPass
@@ -17,7 +18,7 @@ struct CameraPass
 class CameraSensor
 {
 public:
-    CameraSensor(AActor* actor, std::vector<std::string> passes, unsigned long width, unsigned long height);
+    CameraSensor(AActor* actor, USceneComponent* component_to_attach_to, std::vector<std::string> passes, unsigned long width, unsigned long height);
     ~CameraSensor();
 
     std::map<std::string, TArray<FColor>> getRenderData();

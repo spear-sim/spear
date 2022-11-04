@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
+#include <Components/SceneComponent.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -20,7 +21,7 @@
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
 
-CameraSensor::CameraSensor(AActor* actor, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
+CameraSensor::CameraSensor(AActor* actor, USceneComponent* component_to_attach_to, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
 {
     ASSERT(actor);
 
@@ -29,7 +30,7 @@ CameraSensor::CameraSensor(AActor* actor, std::vector<std::string> pass_names, u
         USceneCaptureComponent2D* scene_capture_component = NewObject<USceneCaptureComponent2D>(actor, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), pass_name.c_str()));
         ASSERT(scene_capture_component);
 
-        scene_capture_component->AttachToComponent(actor->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        scene_capture_component->AttachToComponent(component_to_attach_to, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         scene_capture_component->SetVisibility(true);
 
         // create TextureRenderTarget2D

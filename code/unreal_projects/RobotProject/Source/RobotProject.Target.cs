@@ -10,5 +10,9 @@ public class RobotProjectTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.AddRange( new string[] { "RobotProject" } );
-	}
+
+		if (Target.Platform == UnrealTargetPlatform.Win64) {
+			bBuildAdditionalConsoleApp = true;
+		}
+    }
 }
