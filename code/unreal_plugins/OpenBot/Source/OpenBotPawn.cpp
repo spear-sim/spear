@@ -14,6 +14,8 @@
 #include "IgnoreCompilerWarnings.h"
 #include "OpenBotWheel.h"
 
+BEGIN_IGNORE_COMPILER_WARNINGS
+
 AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(object_initializer)
 {
     // To create components, you can use CreateDefaultSubobject<Type>("InternalName").
@@ -41,9 +43,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
 
     RootComponent = skeletal_mesh_component_;
 
-BEGIN_IGNORE_COMPILER_WARNINGS
     vehicle_movement_component_ = CreateDefaultSubobject<USimpleWheeledVehicleMovementComponent>(TEXT("SimpleWheeledVehicleMovement"));
-END_IGNORE_COMPILER_WARNINGS
 
     vehicle_movement_component_->SetIsReplicated(true); // Enable replication by default
     vehicle_movement_component_->UpdatedComponent = skeletal_mesh_component_;
@@ -88,6 +88,7 @@ END_IGNORE_COMPILER_WARNINGS
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::getValue<float>({"OPENBOT", "CAMERA_COMPONENT", "FOV"});
 }
+END_IGNORE_COMPILER_WARNINGS
 
 void AOpenBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
 {
@@ -150,6 +151,7 @@ Eigen::Vector4f AOpenBotPawn::getDutyCycle()
     return duty_cycle_;
 }
 
+BEGIN_IGNORE_COMPILER_WARNINGS
 void AOpenBotPawn::resetPhysicsState()
 {
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component_->PVehicle->getRigidDynamicActor();
@@ -171,7 +173,9 @@ void AOpenBotPawn::resetPhysicsState()
     ASSERT(!vehicle_movement_component_->PVehicleDrive);
     // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState(); // throws seg fault
 }
+END_IGNORE_COMPILER_WARNINGS
 
+BEGIN_IGNORE_COMPILER_WARNINGS
 void AOpenBotPawn::setDriveTorques(float delta_time)
 {
     // Openbot motor torque: 1200 gf.cm (gram force centimeter) = 0.1177 N.m
@@ -249,6 +253,7 @@ void AOpenBotPawn::setDriveTorques(float delta_time)
     // Reset duty cycle value:
     duty_cycle_.setZero();
 }
+END_IGNORE_COMPILER_WARNINGS
 
 // clamp a vector between two values.
 Eigen::Vector4f AOpenBotPawn::clamp(Eigen::Vector4f v, Eigen::Vector4f v_min, Eigen::Vector4f v_max)

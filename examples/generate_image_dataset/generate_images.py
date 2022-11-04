@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
         # change config based on current scene
         config.defrost()
-        config.SIMULATION_CONTROLLER.LEVEL_ID = str(scene)
+        config.SIMULATION_CONTROLLER.LEVEL_ID = str(scene) # scene type is a numpy int, yaml config doesn't recognise it
         config.freeze()
 
         # copy pak to the executable dir as this is required for launching the appropriate pak file

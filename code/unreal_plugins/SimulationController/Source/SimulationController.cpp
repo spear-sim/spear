@@ -46,10 +46,8 @@ void SimulationController::StartupModule()
 {
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 
-    // required to handle any custom logic for a world
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
 
-    // required to reset any custom logic during world cleanup
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
     // required for adding thread synchronization logic
@@ -60,10 +58,9 @@ void SimulationController::StartupModule()
 void SimulationController::ShutdownModule()
 {
     // If this module is unloaded in the middle of simulation for some reason, raise an error because we do not support this and we want to know when this happens.
-    // We expect worldCleanUpEvenHandler() to be called before ShutdownModule(). 
+    // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule(...).
     ASSERT(!world_begin_play_delegate_handle_.IsValid());
 
-    // remove event handlers used by this module
     FCoreDelegates::OnEndFrame.Remove(end_frame_delegate_handle_);
     end_frame_delegate_handle_.Reset();
 
@@ -93,7 +90,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
             // Check if world_ is valid, and if it is, we do not support mulitple Game worlds and we need to know about this. There should only be one Game World..
             ASSERT(!world_);
 
-            // Cache local reference of World instance as this is required in other parts of this class.
+            // We do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
             world_ = world;
 
             // required to assign an AgentController based on config param
@@ -175,11 +172,14 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 {
     ASSERT(world);
 
-    // clean up only if world is cached to world_
+    // We only need to perform any additional steps if the world being cleaned up is the world we cached in our world_ member variable.
     if (world == world_) {
 
-        // worldCleanupEventHandler() is called for all worlds, but some local state (such as rpc_server_ and agent_controller_) is initialized only when worldBeginPlayEventHandler() is called for a particular world.
+        // worldCleanupEventHandler(...) is called for all worlds, but some local state (such as rpc_server_ and agent_controller_) is initialized only when worldBeginPlayEventHandler(...) is called for a particular world.
+        // So we check if worldBeginPlayEventHandler(...) has been executed.
         if(is_world_begin_play_executed_) {
+
+            is_world_begin_play_executed_ = false;
 
             ASSERT(rpc_server_);
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
@@ -209,7 +209,7 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
 void SimulationController::beginFrameEventHandler()
 {
-    // If beginTick() has indicated (via RequestPreTick framestate) that we should execute a frame of work
+    // If beginTick(...) has indicated (via RequestPreTick framestate) that we should execute a frame of work
     if (frame_state_ == FrameState::RequestPreTick) {
 
         // update local state
@@ -218,7 +218,7 @@ void SimulationController::beginFrameEventHandler()
         // unpause the game
         UGameplayStatics::SetGamePaused(world_, false);
 
-        // execute all pre-tick sync work, wait here for tick() to reset work guard
+        // execute all pre-tick sync work, wait here for tick(...) to reset work guard
         rpc_server_->runSync();
 
         // execute pre-tick work inside the task
@@ -231,7 +231,7 @@ void SimulationController::beginFrameEventHandler()
 
 void SimulationController::endFrameEventHandler()
 {
-    // if beginFrameEventHandler() has indicated that we are currently executing a frame of work
+    // if beginFrameEventHandler(...) has indicated that we are currently executing a frame of work
     if (frame_state_ == FrameState::ExecutingTick) {
 
         // update local state
@@ -252,7 +252,7 @@ void SimulationController::endFrameEventHandler()
         // update local state
         frame_state_ = FrameState::Idle;
 
-        // allow endTick() to finish executing
+        // allow endTick(...) to finish executing
         end_frame_finished_executing_promise_.set_value();
     }
 }
