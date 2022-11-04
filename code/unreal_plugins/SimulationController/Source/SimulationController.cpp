@@ -58,7 +58,7 @@ void SimulationController::StartupModule()
 void SimulationController::ShutdownModule()
 {
     // If this module is unloaded in the middle of simulation for some reason, raise an error because we do not support this and we want to know when this happens.
-    // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule(...).
+    // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
     ASSERT(!world_begin_play_delegate_handle_.IsValid());
 
     FCoreDelegates::OnEndFrame.Remove(end_frame_delegate_handle_);
@@ -87,10 +87,10 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         if (TCHAR_TO_UTF8(*(world->GetPathName())) != world_path_name) {
             UGameplayStatics::OpenLevel(world, level_name.c_str());
         } else {
-            // Check if world_ is valid, and if it is, we do not support mulitple Game worlds and we need to know about this. There should only be one Game World..
+            // We do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
             ASSERT(!world_);
 
-            // We do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
+            // Cache local reference of World instance as this is required in other parts of this class.
             world_ = world;
 
             // required to assign an AgentController based on config param
