@@ -10,20 +10,18 @@ class AActor;
 class ANavigationData;
 class ARecastNavMesh;
 class UNavigationSystemV1;
-class USceneCaptureComponent2D;
-class UTextureRenderTarget2D;
 class UWorld;
 
-class APIPCamera;
-class ASimpleVehiclePawn;
+class AOpenBotPawn;
+class CameraSensor;
 struct Box;
 
 class OpenBotAgentController : public AgentController
 {
 public:
 
-    OpenBotAgentController() = default;
-    ~OpenBotAgentController() = default;
+    OpenBotAgentController(UWorld* world);
+    ~OpenBotAgentController();
 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
@@ -47,13 +45,11 @@ private:
     // Generate a collision-free trajectory between an initial and a target location
     void generateTrajectoryToTarget();
 
-    ASimpleVehiclePawn* simple_vehicle_pawn_ = nullptr;
-    APIPCamera* pip_camera_ = nullptr;
-    AActor* goal_actor_ = nullptr;
-    AActor* new_object_parent_actor_ = nullptr;
+    AOpenBotPawn* open_bot_pawn_ = nullptr;
 
-    UTextureRenderTarget2D* texture_render_target_ = nullptr;
-    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
+    AActor* goal_actor_ = nullptr;
+
+    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
 
     // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;
