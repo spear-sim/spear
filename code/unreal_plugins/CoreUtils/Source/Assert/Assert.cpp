@@ -6,10 +6,27 @@
 
 #include "Assert/Assert.h"
 
+#include "IgnoreCompilerWarnings.h"
+
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #define _CRT_SECURE_NO_WARNINGS
+
+// Both 'winnt.h' and Unreal have different definitions for TEXT macro.
+// This creates conflict below when we include 'windows.h'. To avoid this
+// conflict, we need to undefine TEXT macro before we include 'windows.h',
+// and then redefine TEXT to have the same definition as Unreal defines
+// it. Hence, before we undefine TEXT, we copy its definition so that it
+// can be used later to redefine TEXT. We use push_macro() to copy and
+// store TEXT's definition in a stack.
+#pragma push_macro("TEXT")
+#ifdef TEXT
+#undef TEXT
+#endif
+
 #include <windows.h>
+
+#pragma pop_macro("TEXT")
 #endif
 
 #include <cstdio>  // fprintf() and vsnprintf()
@@ -159,6 +176,7 @@ namespace {
       return print(out, level, "Assertion '%s' failed (level = %d)\n", expression, level);
   }
 
+  BEGIN_IGNORE_COMPILER_WARNINGS
   AssertAction::AssertAction PPK_ASSERT_CALL _defaultHandler( const char* file,
                                                               int line,
                                                               const char* function,
@@ -255,6 +273,7 @@ namespace {
 
     return AssertAction::Abort;
   }
+  END_IGNORE_COMPILER_WARNINGS
 
   void _throw(const char* file,
               int line,

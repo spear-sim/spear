@@ -46,13 +46,11 @@ void SimulationController::StartupModule()
 {
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 
-    // Required to add ActorSpawnedEventHandler
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
 
-    // Required to reset any custom logic during world cleanup
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
-    // Required for adding thread synchronization logic
+    // required for adding thread synchronization logic
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
     end_frame_delegate_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
 }
@@ -60,10 +58,9 @@ void SimulationController::StartupModule()
 void SimulationController::ShutdownModule()
 {
     // If this module is unloaded in the middle of simulation for some reason, raise an error because we do not support this and we want to know when this happens.
-    // We expect worldCleanUpEvenHandler() to be called before ShutdownModule(). 
+    // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
     ASSERT(!world_begin_play_delegate_handle_.IsValid());
 
-    // Remove event handlers used by this module
     FCoreDelegates::OnEndFrame.Remove(end_frame_delegate_handle_);
     end_frame_delegate_handle_.Reset();
 
@@ -81,16 +78,24 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 {
     ASSERT(world);
 
-    if (world->IsGameWorld()) {
-
-        // Check if world_ is valid, and if it is, we do not support mulitple Game worlds and we need to know about this. There should only be one Game World..
-        ASSERT(!world_);
-
-        // Cache local reference of World instance as this is required in other parts of this class.
-        world_ = world;
+    if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world) != nullptr) {
         
-        // Required to assign an AgentController based on config param
-        world_begin_play_delegate_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
+        const auto level_name = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_PATH" }) + "/" + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_PREFIX" }) + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_ID" });
+        const auto world_path_name =  level_name + "." + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_PREFIX" }) + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_ID" });
+
+        // if the current world is not the desired one, launch the desired one using OpenLevel functionality
+        if (TCHAR_TO_UTF8(*(world->GetPathName())) != world_path_name) {
+            UGameplayStatics::OpenLevel(world, level_name.c_str());
+        } else {
+            // We do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
+            ASSERT(!world_);
+
+            // Cache local reference of World instance as this is required in other parts of this class.
+            world_ = world;
+
+            // required to assign an AgentController based on config param
+            world_begin_play_delegate_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
+        }
     }
 }
 
@@ -106,14 +111,14 @@ void SimulationController::worldBeginPlayEventHandler()
         GEngine->Exec(world_, UTF8_TO_TCHAR(command.c_str()));
     }
 
-    // Set fixed simulation step time in seconds
+    // set fixed simulation step time in seconds
     FApp::SetBenchmarking(true);
     FApp::SetFixedDeltaTime(Config::getValue<double>({ "SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS" }));
 
-    // Pause gameplay
+    // pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
-    // Create AgentController
+    // create AgentController
     if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "CameraAgentController") {
         agent_controller_ = std::make_unique<CameraAgentController>(world_);
     } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "OpenBotAgentController") {
@@ -125,7 +130,7 @@ void SimulationController::worldBeginPlayEventHandler()
     }
     ASSERT(agent_controller_);
 
-    // Create Task
+    // create Task
     if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "TASK_NAME" }) == "ImitationLearningTask") {
         task_ = std::make_unique<ImitationLearningTask>(world_);
     } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "TASK_NAME" }) == "NullTask") {
@@ -137,16 +142,16 @@ void SimulationController::worldBeginPlayEventHandler()
     }
     ASSERT(task_);
 
-    // Create Visualizer
+    // create Visualizer
     visualizer_ = std::make_unique<Visualizer>();
     ASSERT(visualizer_);
 
-    // Deferred initialization for AgentController, Task, and Visualizer
+    // deferred initialization for AgentController, Task, and Visualizer
     agent_controller_->findObjectReferences(world_);
     task_->findObjectReferences(world_);
     visualizer_->findObjectReferences(world_);
 
-    // Initialize frame state used for thread synchronization
+    // initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
 
     // config values required for rpc communication
@@ -167,11 +172,14 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 {
     ASSERT(world);
 
-    if (world->IsGameWorld()) {
-        ASSERT(world_);
+    // We only need to perform any additional steps if the world being cleaned up is the world we cached in our world_ member variable.
+    if (world == world_) {
 
-        // OnWorldCleanUp is called for all worlds. rpc_server_ and agent_controller_ is created only when a Game World's begin play event is launched.
+        // worldCleanupEventHandler(...) is called for all worlds, but some local state (such as rpc_server_ and agent_controller_) is initialized only when worldBeginPlayEventHandler(...) is called for a particular world.
+        // So we check if worldBeginPlayEventHandler(...) has been executed.
         if(is_world_begin_play_executed_) {
+
+            is_world_begin_play_executed_ = false;
 
             ASSERT(rpc_server_);
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
@@ -190,61 +198,61 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             agent_controller_ = nullptr;
         }
 
-        // Remove event handlers bound to this world before world gets cleaned up
+        // remove event handlers bound to this world before world gets cleaned up
         world_->OnWorldBeginPlay.Remove(world_begin_play_delegate_handle_);
         world_begin_play_delegate_handle_.Reset();
 
-        // Clear local cache
+        // clear local cache
         world_ = nullptr;
     }
 }
 
 void SimulationController::beginFrameEventHandler()
 {
-    // If beginTick() has indicated (via RequestPreTick framestate) that we should execute a frame of work
+    // If beginTick(...) has indicated (via RequestPreTick framestate) that we should execute a frame of work
     if (frame_state_ == FrameState::RequestPreTick) {
 
-        // Update local state
+        // update local state
         frame_state_ = FrameState::ExecutingPreTick;
 
-        // Unpause the game
+        // unpause the game
         UGameplayStatics::SetGamePaused(world_, false);
 
-        // Execute all pre-tick sync work, wait here for tick() to reset work guard
+        // execute all pre-tick sync work, wait here for tick(...) to reset work guard
         rpc_server_->runSync();
 
-        // Execute pre-tick work inside the task
+        // execute pre-tick work inside the task
         task_->beginFrame();
 
-        // Update local state
+        // update local state
         frame_state_ = FrameState::ExecutingTick;
     }
 }
 
 void SimulationController::endFrameEventHandler()
 {
-    // If beginFrameEventHandler() has indicated that we are currently executing a frame of work
+    // if beginFrameEventHandler(...) has indicated that we are currently executing a frame of work
     if (frame_state_ == FrameState::ExecutingTick) {
 
-        // Update local state
+        // update local state
         frame_state_ = FrameState::ExecutingPostTick;
 
-        // Execute post-tick work inside the task
+        // execute post-tick work inside the task
         task_->endFrame();
 
-        // Allow tick() to finish executing
+        // allow tick() to finish executing
         end_frame_started_executing_promise_.set_value();
 
-        // Execute all post-tick sync work, wait here for endTick() to reset work guard
+        // execute all post-tick sync work, wait here for endTick() to reset work guard
         rpc_server_->runSync();
 
-        // Pause the game
+        // pause the game
         UGameplayStatics::SetGamePaused(world_, true);
 
-        // Update local state
+        // update local state
         frame_state_ = FrameState::Idle;
 
-        // Allow endTick() to finish executing
+        // allow endTick(...) to finish executing
         end_frame_finished_executing_promise_.set_value();
     }
 }
@@ -268,25 +276,25 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("beginTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::Idle);
 
-        // Reinitialize end_frame_started_executing promise and future
+        // reinitialize end_frame_started_executing promise and future
         end_frame_started_executing_promise_ = std::promise<void>();
         end_frame_started_executing_future_ = end_frame_started_executing_promise_.get_future();
 
-        // Reinitialize end_frame_finished_executing promise and future
+        // reinitialize end_frame_finished_executing promise and future
         end_frame_finished_executing_promise_ = std::promise<void>();
         end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
 
-        // Indicate that we want the game thread to execute one frame of work
+        // indicate that we want the game thread to execute one frame of work
         frame_state_ = FrameState::RequestPreTick;
     });
 
     rpc_server_->bindAsync("tick", [this]() -> void {
         ASSERT((frame_state_ == FrameState::ExecutingPreTick) || (frame_state_ == FrameState::RequestPreTick));
 
-        // Indicate that we want the game thread to stop blocking in beginFrame()
+        // indicate that we want the game thread to stop blocking in beginFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // Wait here until the game thread has started executing endFrame()
+        // wait here until the game thread has started executing endFrame()
         end_frame_started_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
@@ -295,10 +303,10 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("endTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
-        // Indicate that we want the game thread to stop blocking in endFrame()
+        // indicate that we want the game thread to stop blocking in endFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // Wait here until the game thread has finished executing endFrame()
+        // wait here until the game thread has finished executing endFrame()
         end_frame_finished_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::Idle);

@@ -31,15 +31,8 @@ THE SOFTWARE.
 
 // keep these warnings sorted
 #ifdef _MSC_VER
-    #define BEGIN_IGNORE_COMPILER_WARNINGS \
-        __pragma(warning(push))                                                                                                                                   \
-        __pragma(warning(disable : 4005 4100 4189 4244 4245 4239 4267 4365 4456 4464 4505 4514 4571 4624 4625 4626 4668 4701 4710 4820 4917 4996 5026 5027 5031)) \
-        __pragma(push_macro("_CRT_SECURE_NO_WARNINGS"))                                                                                                           \
-        #define _CRT_SECURE_NO_WARNINGS 1
-
-    #define END_IGNORE_COMPILER_WARNINGS           \
-        __pragma(pop_macro("_CRT_SECURE_NO_WARNINGS")) \
-        __pragma(warning(pop))
+    #define BEGIN_IGNORE_COMPILER_WARNINGS __pragma(warning(push)) __pragma(warning(disable : 4005 4100 4189 4244 4245 4239 4267 4365 4456 4464 4505 4514 4571 4624 4625 4626 4668 4701 4710 4820 4917 4996 5026 5027 5031))
+    #define END_IGNORE_COMPILER_WARNINGS __pragma(warning(pop))
 #endif
 
 // keep these warnings sorted
