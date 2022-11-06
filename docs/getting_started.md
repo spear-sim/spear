@@ -111,7 +111,7 @@ import os
 import spear
 
 # load config (this function will load the parameter values specified in user_config.yaml, as well as sensible defaults for all other parameters)
-config = spear.get_config(config_files=[ os.path.join(spear.SPEAR_ROOT_DIR, "..", "..", "unreal_projects", "PlayEnvironment", "user_config.yaml") ])
+config = spear.get_config(user_config_files=[ os.path.join(spear.SPEAR_ROOT_DIR, "..", "..", "unreal_projects", "PlayEnvironment", "user_config.yaml") ])
 
 # create Env object
 env = spear.Env(config=config)
