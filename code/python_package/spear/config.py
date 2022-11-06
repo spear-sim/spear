@@ -14,9 +14,10 @@ def get_config(user_config_files):
     # create a single CfgNode that will eventually contain data from all config files
     config = CfgNode(new_allowed=True)
 
+    # merge config files from low-level to high-level
     config.merge_from_file(spear.OPENBOT_DEFAULT_CONFIG_FILE)
     config.merge_from_file(spear.SIMULATION_CONTROLLER_DEFAULT_CONFIG_FILE)
-    config.merge_from_file(spear.INTERIORSIM_DEFAULT_CONFIG_FILE)
+    config.merge_from_file(spear.SPEAR_DEFAULT_CONFIG_FILE)
 
     for c in user_config_files:
         config.merge_from_file(c)
