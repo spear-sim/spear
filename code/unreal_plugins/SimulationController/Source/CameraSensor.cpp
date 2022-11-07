@@ -5,8 +5,8 @@
 #include <utility>
 #include <vector>
 
+#include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
-#include <Components/SceneComponent.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -21,7 +21,7 @@
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
 
-CameraSensor::CameraSensor(USceneComponent* component, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
+CameraSensor::CameraSensor(UCameraComponent* component, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
 {
     ASSERT(component);
 
