@@ -69,6 +69,7 @@ SIMULATION_CONTROLLER:
     GOAL_ACTOR_NAME: ""
     ACTION_MODE: "" # "low_level_control" or "teleport"
     OBSERVATION_MODE: "mixed" # "mixed" or "physical"
+    PHYSICAL_OBSERVATION_MODE: "dist-sin-cos"
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 0.0
     MIXED_MODE:
