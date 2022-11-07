@@ -16,9 +16,13 @@
 			"Enabled": true
 		},
 		{
-			"Name": "RobotSim",
+			"Name": "OpenBot",
 			"Enabled": true
 		},
+        {
+            "Name": "SceneManager",
+            "Enabled": true
+        },
 		{
 			"Name": "SimulationController",
 			"Enabled": true
