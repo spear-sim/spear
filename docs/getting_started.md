@@ -1,6 +1,6 @@
 # Getting Started
 
-This tutorial is intended for InteriorSim developers that are setting up their development environment for the first time.
+This tutorial is intended for SPEAR developers that are setting up their development environment for the first time.
 
 ## Assumptions 
 
@@ -16,6 +16,26 @@ If you're working on Linux, you will need to build the Unreal Engine from source
 
 In order to open and run our example Unreal projects (and for general Unreal plugin development), you need to install a specific version of XCode that matches your Unreal Engine version. For Unreal Engine version 4.26, we have verified that XCode 13.0 behaves as expected. See [this tutorial](https://github.com/botman99/ue4-xcode-vscode-mac) for details.
 
+## Install the spear Python module
+
+```console
+# create environment
+conda create --name spear-env python=3.8
+conda activate spear-env
+
+# install pip
+conda install -c anaconda pip
+
+# install the spear Python package
+pip install -e code/python_package
+
+# install msgpack-rpc-python (do this separately from other Python dependencies so we can use a specific commit from the msgpack-rpc-python GitHub repo)
+pip install -e code/third_party/msgpack-rpc-python
+
+# install OpenCV (this is not a core requirement, but it is used by some of our examples) 
+pip install opencv-python
+```
+
 ## Build third-party C++ libraries
 
 Our Unreal projects require you to build several third-party C++ libraries. We provide a command-line tool for this purpose.
@@ -23,26 +43,6 @@ Our Unreal projects require you to build several third-party C++ libraries. We p
 ```console
 cd code/tools
 python build_third_party_libs.py
-```
-
-## Install the interiorsim Python package
-
-```console
-# create environment
-conda create --name interiorsim-env python=3.8
-conda activate interiorsim-env
-
-# install pip
-conda install -c anaconda pip
-
-# install msgpack-rpc-python separately from other Python dependencies
-pip install -e code/third_party/msgpack-rpc-python
-
-# install interiorsim
-pip install -e code/python_module
-
-# install OpenCV (not a core requirement, but used by some of our examples) 
-pip install opencv-python
 ```
 
 ## Create symbolic links
@@ -66,7 +66,7 @@ Next, run the following command-line tool.
 
 ```console
 cd code/tools
-python generate_config.py --config_files path/to/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/interiorsim/code/unreal_projects/PlayEnvironment
+python generate_config.py --user_config_files path/to/spear/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/spear/code/unreal_projects/PlayEnvironment
 ```
 
 ## Launch your first Unreal project
@@ -81,7 +81,7 @@ Even though it is possible to launch our projects directly from the Unreal Edito
 
 ```console
 # build, cook, stage, package, archive
-path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/interiorsim/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject -build -cook -stage -package -archive -targetPlatform=Mac -target=PlayEnvironment -clientconfig=Development -archivedirectory=path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development
+path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject -build -cook -stage -package -archive -targetPlatform=Mac -target=PlayEnvironment -clientconfig=Development -archivedirectory=path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development
 ```
 
 This step will build a standalone executable at the path `code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app`.
@@ -95,10 +95,10 @@ At this point, you should be able to run your standalone executable directly as 
 ```console
 # generate config directly inside PlayEnvironment.app
 cd code/tools
-python generate_config.py --config_files path/to/interiorsim/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/UE4/PlayEnvironment
+python generate_config.py --user_config_files path/to/spear/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/UE4/PlayEnvironment
 
 # run the executable from the terminal (or double-click on PlayEnvironment.app)
-path/to/interiorsim/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/MacOS/PlayEnvironment
+path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/MacOS/PlayEnvironment
 ```
 
 ## Control the environment via Python
@@ -108,25 +108,21 @@ At this point, you should be able to control the environment in an interactive I
 ```python
 import numpy as np
 import os
+import spear
 
-import interiorsim
-import interiorsim.config
-from interiorsim.constants import INTERIORSIM_ROOT_DIR
-
-# load config
-config_files = [ os.path.join(INTERIORSIM_ROOT_DIR, "../../unreal_projects/PlayEnvironment/user_config.yaml") ]
-config = interiorsim.config.get_config(config_files)
+# load config (this function will load the parameter values specified in user_config.yaml, as well as sensible defaults for all other parameters)
+config = spear.get_config(user_config_files=[ os.path.join(spear.SPEAR_ROOT_DIR, "..", "..", "unreal_projects", "PlayEnvironment", "user_config.yaml") ])
 
 # create Env object
-env = interiorsim.Env(config)
+env = spear.Env(config=config)
 
-# reset the simulation to get the first observation
+# reset the simulation to get an initial observation
 obs = env.reset()
 print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype)
 
-# take a few steps; in this example, each action is specified as a 2D point, you should see the ball move in the Unreal game window
+# take a few steps (you should see the sphere move in the Unreal game window)
 for i in range(10):
-    obs, reward, done, info = env.step({"apply_force": np.array([1, 1], dtype=np.float32)})
+    obs, reward, done, info = env.step(action={"apply_force": np.array([1, 1], dtype=np.float32)})
     print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype, reward, done, info)
 
 # close the environment
