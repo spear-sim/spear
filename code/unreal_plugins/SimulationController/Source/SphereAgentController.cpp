@@ -95,9 +95,10 @@ void SphereAgentController::findObjectReferences(UWorld* world)
             }
         }
         ASSERT(camera_actor_);
+        ASSERT(dynamic_cast<ACameraActor*>(camera_actor_));
 
         observation_camera_sensor_ = std::make_unique<CameraSensor>(
-            Cast<ACameraActor>(camera_actor_)->GetCameraComponent(),
+            dynamic_cast<ACameraActor*>(camera_actor_)->GetCameraComponent(),
             Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));

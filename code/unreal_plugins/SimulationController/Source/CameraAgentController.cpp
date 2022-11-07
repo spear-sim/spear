@@ -37,9 +37,10 @@ CameraAgentController::CameraAgentController(UWorld* world)
 
     camera_actor_ = world_->SpawnActor<ACameraActor>(FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT" })), FRotator(0, 0, 0), spawn_params);
     ASSERT(camera_actor_);
+    ASSERT(dynamic_cast<ACameraActor*>(camera_actor_));
 
     camera_sensor_ = std::make_unique<CameraSensor>(
-        Cast<ACameraActor>(camera_actor_)->GetCameraComponent(),
+        dynamic_cast<ACameraActor*>(camera_actor_)->GetCameraComponent(),
         Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "RENDER_PASSES" }),
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH" }),
         Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT" }));
