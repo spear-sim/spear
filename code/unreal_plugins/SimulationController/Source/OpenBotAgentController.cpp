@@ -37,6 +37,23 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
+        
+        // Create sonar sensor
+        sonar_sensor_ = std::make_unique<SonarSensor>(simple_vehicle_pawn_, 
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MIN"}), 
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MAX"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "HORIZONTAL_FOV"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "VERTICAL_FOV"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "NOISE_STD"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "MAX_REFLECTION_ANGLE"}),
+            FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "OFFSET_POSITION", "X"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "OFFSET_POSITION", "Y"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "OFFSET_POSITION", "Z"})),
+            FRotator(Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "OFFSET_ORIENTATION", "ROLL"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "OFFSET_ORIENTATION", "PITCH"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "OFFSET_ORIENTATION", "YAW"})),
+            Config::getValue<bool>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "DEBUG"}));
+        ASSERT(sonar_sensor_);
     }
 }
 
@@ -140,6 +157,9 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
         
     box.shape = {2};
     observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
+    
+    box.shape = {1};
+    observation_space["sonar_data"] = std::move(box); // Front obstacle distance
 
     box.shape = {6};
     observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
@@ -226,8 +246,13 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     // Fill the observed action vector to be used for RL purposes:
     control_state(0) = (duty_cycle(0) + duty_cycle(2)) / 2; // leftCtrl
     control_state(1) = (duty_cycle(1) + duty_cycle(3)) / 2; // rightCtrl
+    
+    // Get sonar measurement:
+    float sonar_range;
+    sonar_sensor_->update(sonar_range);
 
     observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
+    observation["sonar_data"] = Serialize::toUint8(std::vector<float>{sonar_range});
     observation["state_data"] = Serialize::toUint8(std::vector<float>{agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw)});
 
     return observation;

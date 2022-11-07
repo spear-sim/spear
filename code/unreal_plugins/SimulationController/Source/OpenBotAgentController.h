@@ -14,6 +14,7 @@ class UWorld;
 
 class AOpenBotPawn;
 class CameraSensor;
+class SonarSensor;
 struct Box;
 
 class OpenBotAgentController : public AgentController
@@ -50,6 +51,7 @@ private:
     AActor* goal_actor_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
+    std::unique_ptr<SonarSensor> sonar_sensor_ = nullptr;
 
     // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;
