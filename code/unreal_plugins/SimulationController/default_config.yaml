@@ -71,15 +71,31 @@ SIMULATION_CONTROLLER:
     OBSERVATION_MODE: "mixed" # "mixed" or "physical"
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 0.0
-    MIXED_MODE:
-      OBSERVATION_CAMERA_ACTOR_NAME: ""
+    CAMERA_PARAMETERS:
       IMAGE_HEIGHT: 128
       IMAGE_WIDTH: 128
-      SMARTPHONE_FOV: 90.0        # Field of view of the smartphone camera in [deg]
+      FOV: 90.0                   # Field of view of the smartphone camera in [deg]
       MOTION_BLUR_AMOUNT: 0.0     # Strength of motion blur, 0:off, should be renamed to intensity
       MOTION_BLUR_MAX: 0.0        # Max distortion caused by motion blur, in percent of the screen width, 0:off
       POST_PROC_BLEND_WEIGHT: 0.0 # Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect
-      RENDER_PASSES: ["final_color"]
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+    SONAR_PARAMETERS:
+      MAX_REFLECTION_ANGLE: 45.0
+      OFFSET_POSITION:
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+      OFFSET_ORIENTATION:
+        ROLL: 0.0
+        PITCH: 0.0
+        YAW: 0.0
+      HORIZONTAL_FOV: 30.0
+      VERTICAL_FOV: 10.0
+      DEBUG: False
+      RANGE:
+        MIN: 0.01
+        MAX: 2.5
+      NOISE_STD: 0.0
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0

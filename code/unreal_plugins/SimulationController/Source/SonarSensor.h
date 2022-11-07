@@ -1,15 +1,20 @@
 #pragma once
 
 #include <map>
+#include <random>
 #include <string>
 #include <vector>
-#include <random>
 
 class AActor;
-class UTickEvent;
-class UWorld;
 
-class SonarSensor {
+struct RayData {
+        bool hit;
+        FVector2D azimuth_and_elevation; // in [rad]
+        float distance; // in [m]
+    };
+
+class SonarSensor 
+{
 public:
     SonarSensor(AActor* actor, float range_min, float range_max, float horizontal_fov, float vertical_fov, float noise_std, float max_surface_reflection_angle, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
     ~SonarSensor();
@@ -61,12 +66,6 @@ private:
     float max_surface_reflection_angle_ = 45.0;
 
     FCollisionQueryParams trace_params_;
-
-    struct RayData {
-        bool hit;
-        FVector2D azimuth_and_elevation; // in [rad]
-        float distance; // in [m]
-    };
 
     std::minstd_rand random_gen_;
     std::vector<RayData> rays_;

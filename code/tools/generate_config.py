@@ -7,7 +7,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--config_files", nargs="*")
+    parser.add_argument("--user_config_files", nargs="*")
     parser.add_argument("--output_unreal_project_dir", required=True)
 
     args = parser.parse_args()
@@ -16,8 +16,8 @@ if __name__ == "__main__":
     config_files = []
 
     # add config file from input if valid
-    if args.config_files:
-        for file in args.config_files:
+    if args.user_config_files:
+        for file in args.user_config_files:
             config_files.append(file)
     
     # create a single CfgNode that contains data from all config files

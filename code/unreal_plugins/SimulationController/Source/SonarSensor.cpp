@@ -10,9 +10,10 @@
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <Math/UnrealMathUtility.h>
+#include <PxScene.h>
 #include <UObject/UObjectGlobals.h>
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Config.h"
 #include "Serialize.h"
 #include "TickEvent.h"
@@ -64,26 +65,26 @@ void SonarSensor::update(float& range)
     const FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
     const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
     float min_dist = range_max_;
+    
+    // Draw the sensing cone and the sonar rays
+    if (debug_) {
+        const FVector sensing_cone_vertex_1 = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, max_rx_, max_ry_});
+        const FVector sensing_cone_vertex_2 = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, -max_rx_, max_ry_});
+        const FVector sensing_cone_vertex_3 = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, -max_rx_, -max_ry_});
+        const FVector sensing_cone_vertex_4 = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, max_rx_, -max_ry_});
+        DrawDebugDirectionalArrow(sonar_actor_->GetWorld(), sonar_location, sensing_cone_vertex_1, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugDirectionalArrow(sonar_actor_->GetWorld(), sonar_location, sensing_cone_vertex_2, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugDirectionalArrow(sonar_actor_->GetWorld(), sonar_location, sensing_cone_vertex_3, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugDirectionalArrow(sonar_actor_->GetWorld(), sonar_location, sensing_cone_vertex_4, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugLine(sonar_actor_->GetWorld(), sensing_cone_vertex_1, sensing_cone_vertex_2, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugLine(sonar_actor_->GetWorld(), sensing_cone_vertex_2, sensing_cone_vertex_3, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugLine(sonar_actor_->GetWorld(), sensing_cone_vertex_3, sensing_cone_vertex_4, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugLine(sonar_actor_->GetWorld(), sensing_cone_vertex_4, sensing_cone_vertex_1, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+    }
 
     FCriticalSection Mutex;
     sonar_actor_->GetWorld()->GetPhysicsScene()->GetPxScene()->lockRead();
     {
-        // Draw the sensing cone and the sonar rays
-        if (debug_) {
-            const FVector sensing_cone_vertex_1 = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, max_rx_, max_ry_});
-            const FVector sensing_cone_vertex_2 = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, -max_rx_, max_ry_});
-            const FVector sensing_cone_vertex_3 = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, -max_rx_, -max_ry_});
-            const FVector sensing_cone_vertex_4 = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, max_rx_, -max_ry_});
-            DrawDebugDirectionalArrow(sonar_actor_->GetWorld(), sonar_location, sensing_cone_vertex_1, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
-            DrawDebugDirectionalArrow(sonar_actor_->GetWorld(), sonar_location, sensing_cone_vertex_2, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
-            DrawDebugDirectionalArrow(sonar_actor_->GetWorld(), sonar_location, sensing_cone_vertex_3, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
-            DrawDebugDirectionalArrow(sonar_actor_->GetWorld(), sonar_location, sensing_cone_vertex_4, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
-            DrawDebugLine(sonar_actor_->GetWorld(), sensing_cone_vertex_1, sensing_cone_vertex_2, FColor(255, 0, 0), false, 0.033, 0, 0.15);
-            DrawDebugLine(sonar_actor_->GetWorld(), sensing_cone_vertex_2, sensing_cone_vertex_3, FColor(255, 0, 0), false, 0.033, 0, 0.15);
-            DrawDebugLine(sonar_actor_->GetWorld(), sensing_cone_vertex_3, sensing_cone_vertex_4, FColor(255, 0, 0), false, 0.033, 0, 0.15);
-            DrawDebugLine(sonar_actor_->GetWorld(), sensing_cone_vertex_4, sensing_cone_vertex_1, FColor(255, 0, 0), false, 0.033, 0, 0.15);
-        }
-
         for (int idx = 0; idx < rays_.size(); idx++) {
             FHitResult out_hit(ForceInit);
             float radius = std::uniform_real_distribution<float>()(random_gen_);

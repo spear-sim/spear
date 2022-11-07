@@ -20,8 +20,10 @@
 #include "Assert/Assert.h"
 #include "Box.h"
 #include "Config.h"
+#include "CameraSensor.h"
 #include "OpenBotPawn.h"
 #include "Serialize.h"
+#include "SonarSensor.h"
 
 OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
@@ -33,13 +35,13 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
 
         // Create camera sensor
         camera_sensor_ = std::make_unique<CameraSensor>(open_bot_pawn_,
-            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));
+            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RENDER_PASSES"}),
+            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
         
         // Create sonar sensor
-        sonar_sensor_ = std::make_unique<SonarSensor>(simple_vehicle_pawn_, 
+        sonar_sensor_ = std::make_unique<SonarSensor>(open_bot_pawn_, 
             Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MIN"}), 
             Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MAX"}),
             Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "HORIZONTAL_FOV"}),
@@ -63,6 +65,9 @@ OpenBotAgentController::~OpenBotAgentController()
         ASSERT(camera_sensor_);
         camera_sensor_ = nullptr;
     }
+    
+    ASSERT(sonar_sensor_);
+    sonar_sensor_ = nullptr;
 
     ASSERT(open_bot_pawn_);
     open_bot_pawn_->Destroy();
@@ -169,8 +174,8 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         box.low = 0;
         box.high = 255;
-        box.shape = {Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}),
-                     Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
+        box.shape = {Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT"}),
+                     Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH"}),
                      3};
         box.dtype = DataType::UInteger8;
         observation_space["visual_observation"] = std::move(box);
@@ -224,8 +229,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         std::map<std::string, TArray<FColor>> render_data = camera_sensor_->getRenderData();
         ASSERT(render_data.size() > 0);
 
-        std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}) *
-                                   Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}) *
+        std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT"}) *
+                                   Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH"}) *
                                    3);
         const auto& data = *(render_data.begin());
 
@@ -248,7 +253,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     control_state(1) = (duty_cycle(1) + duty_cycle(3)) / 2; // rightCtrl
     
     // Get sonar measurement:
-    float sonar_range;
+    float sonar_range = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MAX"});
     sonar_sensor_->update(sonar_range);
 
     observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
