@@ -169,7 +169,7 @@ class Env(gym.Env):
         temp_config_file = os.path.join(os.path.abspath(self._config.INTERIORSIM.TEMP_DIR), "config.yaml")
 
         # Unreal Engine server needs to read values from this config file
-        launch_params.append("-configfile={}".format(temp_config_file))
+        launch_params.append("-config_file={}".format(temp_config_file))
 
         # Append any additional command-line arguments
         for a in self._config.INTERIORSIM.CUSTOM_COMMAND_LINE_ARGUMENTS:
