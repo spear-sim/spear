@@ -68,7 +68,6 @@ if __name__ == "__main__":
     parser.add_argument("--executable_content_dir", type=str, required=True)
     parser.add_argument("--poses_file", type=str, required=True)
     parser.add_argument("--output_dir", "-o", type=str, required=True)
-    parser.add_argument("--ticks_per_sample", "-txs", type=int, default=5, required=False)
     args = parser.parse_args()
 
     # load config
@@ -100,7 +99,7 @@ if __name__ == "__main__":
                 os.makedirs(os.path.join(args.output_dir, f"{scene}/{render_pass}"))
 
         # create Env object
-        env = CustomEnv(config, num_internal_steps=args.ticks_per_sample)
+        env = CustomEnv(config, num_internal_steps=1)
 
         # reset the simulation
         _ = env.reset()
@@ -125,7 +124,7 @@ if __name__ == "__main__":
                 return_status = cv2.imwrite(output_path +f"/{pose['index']}.png", obs[f"visual_observation_{render_pass}"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
                 assert return_status == True
 
-        # cv2.destroyAllWindows()
+        #cv2.destroyAllWindows()
 
         # close the current scene
         env.close()
