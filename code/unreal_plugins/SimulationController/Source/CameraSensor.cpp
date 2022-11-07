@@ -21,20 +21,23 @@
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
 
-CameraSensor::CameraSensor(AActor* actor, USceneComponent* component_to_attach_to, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
+CameraSensor::CameraSensor(USceneComponent* component, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
 {
-    ASSERT(actor);
+    ASSERT(component);
+
+    new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
+    ASSERT(new_object_parent_actor_);
 
     for (const auto& pass_name : pass_names) {
         // create SceneCaptureComponent2D
-        USceneCaptureComponent2D* scene_capture_component = NewObject<USceneCaptureComponent2D>(actor, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), pass_name.c_str()));
+        USceneCaptureComponent2D* scene_capture_component = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), pass_name.c_str()));
         ASSERT(scene_capture_component);
 
-        scene_capture_component->AttachToComponent(component_to_attach_to, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        scene_capture_component->AttachToComponent(component, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         scene_capture_component->SetVisibility(true);
 
         // create TextureRenderTarget2D
-        UTextureRenderTarget2D* texture_render_target = NewObject<UTextureRenderTarget2D>(actor, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), pass_name.c_str()));
+        UTextureRenderTarget2D* texture_render_target = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), pass_name.c_str()));
         ASSERT(texture_render_target);
         
         // Set Camera Parameters
@@ -74,8 +77,11 @@ CameraSensor::~CameraSensor()
         pass.second.scene_capture_component_->DestroyComponent();
         pass.second.scene_capture_component_ = nullptr;
     }
-
     camera_passes_.clear();
+
+    ASSERT(new_object_parent_actor_);
+    new_object_parent_actor_->Destroy();
+    new_object_parent_actor_ = nullptr;
 }
 
 std::map<std::string, TArray<FColor>> CameraSensor::getRenderData()

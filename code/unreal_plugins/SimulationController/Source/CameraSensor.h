@@ -18,7 +18,7 @@ struct CameraPass
 class CameraSensor
 {
 public:
-    CameraSensor(AActor* actor, USceneComponent* component_to_attach_to, std::vector<std::string> passes, unsigned long width, unsigned long height);
+    CameraSensor(USceneComponent* component, std::vector<std::string> passes, unsigned long width, unsigned long height);
     ~CameraSensor();
 
     std::map<std::string, TArray<FColor>> getRenderData();
@@ -30,4 +30,6 @@ public:
 private:
     void setCameraParameters(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height);
     void setCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height);
+
+    AActor* new_object_parent_actor_ = nullptr;
 };
