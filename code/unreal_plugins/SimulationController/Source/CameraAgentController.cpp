@@ -37,13 +37,14 @@ CameraAgentController::CameraAgentController(UWorld* world)
 
     camera_actor_ = world_->SpawnActor<ACameraActor>(FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT" })), FRotator(0, 0, 0), spawn_params);
     ASSERT(camera_actor_);
+    ASSERT(dynamic_cast<ACameraActor*>(camera_actor_));
 
-    camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_,
-                                                    Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "RENDER_PASSES" }),
-                                                    Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH" }),
-                                                    Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT" }));
+    camera_sensor_ = std::make_unique<CameraSensor>(
+        dynamic_cast<ACameraActor*>(camera_actor_)->GetCameraComponent(),
+        Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "RENDER_PASSES" }),
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH" }),
+        Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT" }));
     ASSERT(camera_sensor_);
-
 
     // update camera parameters
     for (auto& camera_pass : camera_sensor_->camera_passes_) {
@@ -258,7 +259,7 @@ void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys)
         }
     }
 
-    // get referencest to NavMeshBoundsVolume and NavModifierVolume
+    // get references to NavMeshBoundsVolume and NavModifierVolume
     ANavMeshBoundsVolume* nav_mesh_bounds_volume = nullptr;
     for (TActorIterator<ANavMeshBoundsVolume> it(world_); it; ++it) {
         nav_mesh_bounds_volume = *it;
