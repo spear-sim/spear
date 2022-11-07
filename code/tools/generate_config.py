@@ -20,7 +20,7 @@ if __name__ == "__main__":
     config_node = spear.get_config(user_config_files=user_config_files)
 
     # dump updated config params into a new yaml file
-    output_temp_dir = os.path.join(args.output_unreal_project_dir, "Temp")
+    output_temp_dir = os.path.realpath(os.path.join(args.output_unreal_project_dir, "Temp"))
     if not os.path.exists(output_temp_dir):
         os.makedirs(output_temp_dir)
 
