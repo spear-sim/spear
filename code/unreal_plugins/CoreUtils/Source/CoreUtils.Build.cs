@@ -2,14 +2,20 @@
 
 using UnrealBuildTool;
 using System;
-using System.Diagnostics;
 using System.IO;
 
 public class CoreUtils : ModuleRules
 {
     public CoreUtils(ReadOnlyTargetRules Target) : base(Target)
     {
-        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        // Disable precompiled headers for faster builds, easier debugging, and stricter enforcement of "include what you use"
+        PCHUsage = ModuleRules.PCHUsageMode.NoPCHs;
+        bUseUnity = false;
+
+        // Turn off code optimization except in shipping builds for faster builds
+        OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
+
+        // Enable exceptions because some of our third-party dependencies use them
         bEnableExceptions = true;
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core" });
