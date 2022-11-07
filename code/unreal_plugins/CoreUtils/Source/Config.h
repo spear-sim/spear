@@ -25,8 +25,8 @@ public:
     // SIMULATOR:
     //   TIME_DELTA_SECONDS: 0.1
     //
-    // ...and you want to access to access the configuration parameter TIME_DELTA_SECONDS, you would need to
-    // call this function as follows...
+    // ...and you want to access to access the configuration parameter SIMULATOR.TIME_DELTA_SECONDS, you
+    // would need to call this function as follows...
     //
     // float time_delta_seconds = Config::getValue<float>({"SIMULATOR", "TIME_DELTA_SECONDS"});
     //
