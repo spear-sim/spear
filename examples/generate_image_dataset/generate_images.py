@@ -7,7 +7,6 @@ import os
 import pandas as pd
 import shutil
 import sys
-import time
 
 from interiorsim import Env
 from interiorsim.config import get_config
@@ -69,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("--executable_content_dir", type=str, required=True)
     parser.add_argument("--poses_file", type=str, required=True)
     parser.add_argument("--output_dir", "-o", type=str, required=True)
-    parser.add_argument("--ticks_per_sample", "-txs", type=int, default=1, required=False)
+    parser.add_argument("--ticks_per_sample", "-txs", type=int, default=5, required=False)
     args = parser.parse_args()
 
     # load config
@@ -101,10 +100,7 @@ if __name__ == "__main__":
                 os.makedirs(os.path.join(args.output_dir, f"{scene}/{render_pass}"))
 
         # create Env object
-        env = Env(config)
-
-        # Record time
-        # start = time.time()
+        env = CustomEnv(config, num_internal_steps=args.ticks_per_sample)
 
         # reset the simulation
         _ = env.reset()
@@ -117,8 +113,7 @@ if __name__ == "__main__":
         for pose in df.loc[df["map_id"] == scene].to_records():
 
             # set the pose and obtain corresponding images
-            obs, _, _, _ = env.step(action={"set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32), "set_num_random_points": np.array([0], np.uint32)}, 
-                                    args.ticks_per_sample)
+            obs, _, _, _ = env.step(action={"set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32), "set_num_random_points": np.array([0], np.uint32)})
             
             # view image
             # cv2.imshow(f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]", obs[f"visual_observation_{config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.RENDER_PASSES[0]"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
@@ -131,9 +126,6 @@ if __name__ == "__main__":
                 assert return_status == True
 
         # cv2.destroyAllWindows()
-
-        # end = time.time()
-        # print(end - start)
 
         # close the current scene
         env.close()

@@ -59,7 +59,6 @@ class Env(gym.Env):
 
         self._request_launch_unreal_instance()
         self._connect_to_unreal_instance()
-
         self._initialize_unreal_instance()
 
         self.action_space = self._get_action_space()
@@ -69,7 +68,7 @@ class Env(gym.Env):
         self._task_step_info_space = self._get_task_step_info_space()
         self._agent_controller_step_info_space = self._get_agent_controller_step_info_space()
 
-    def step(self, action, ticks = 1):
+    def step(self, action):
         
         self._begin_tick()
         self._apply_action(action)
