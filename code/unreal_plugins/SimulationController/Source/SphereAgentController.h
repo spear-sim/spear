@@ -4,14 +4,17 @@
 #include <string>
 #include <vector>
 
+#include <Engine/EngineBaseTypes.h>
+
 #include "AgentController.h"
 
 class AActor;
 class UTickEvent;
+class UStaticMeshComponent;
 class UWorld;
 
-class CameraSensor;
 struct Box;
+class CameraSensor;
 
 class SphereAgentController : public AgentController
 {

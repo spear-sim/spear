@@ -31,8 +31,7 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    // Handles collision-related logic
-    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
+    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
 
 private:
     bool hit_goal_ = false;

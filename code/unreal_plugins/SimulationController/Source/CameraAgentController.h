@@ -6,10 +6,10 @@
 #include <vector>
 
 #include "AgentController.h"
+#include "CameraSensor.h"
 
 class AActor;
 class ARecastNavMesh;
-class CameraSensor;
 class UNavigationSystemV1;
 class UWorld;
 

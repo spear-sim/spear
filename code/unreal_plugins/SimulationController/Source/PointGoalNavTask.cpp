@@ -176,7 +176,7 @@ bool PointGoalNavTask::isReady() const
     return true;  
 }
 
-void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
+void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
 {
     ASSERT(self_actor == agent_actor_);
 

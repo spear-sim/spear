@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <CoreMinimal.h>
+#include <Engine/World.h>
 #include <Modules/ModuleManager.h>
 
 class AgentController;

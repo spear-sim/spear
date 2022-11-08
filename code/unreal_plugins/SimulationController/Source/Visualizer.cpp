@@ -1,9 +1,13 @@
-#pragma once
-
 #include "Visualizer.h"
 
-#include <Engine/World.h>
+#include <string>
+
+#include <Containers/StringConv.h>
+#include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <GameFramework/PlayerController.h>
+
+#include "Config.h"
 
 void Visualizer::findObjectReferences(UWorld* world)
 {

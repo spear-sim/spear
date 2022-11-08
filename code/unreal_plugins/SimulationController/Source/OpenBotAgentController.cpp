@@ -19,6 +19,7 @@
 
 #include "Assert/Assert.h"
 #include "Box.h"
+#include "CameraSensor.h"
 #include "Config.h"
 #include "OpenBotPawn.h"
 #include "Serialize.h"

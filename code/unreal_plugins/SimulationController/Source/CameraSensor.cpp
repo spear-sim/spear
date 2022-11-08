@@ -6,11 +6,13 @@
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
+#include <Engine.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <Materials/MaterialInstanceDynamic.h>
+#include <Math/Color.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "Assert/Assert.h"

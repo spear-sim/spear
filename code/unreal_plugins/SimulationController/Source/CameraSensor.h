@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <Math/Color.h>
+
 class AActor;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;

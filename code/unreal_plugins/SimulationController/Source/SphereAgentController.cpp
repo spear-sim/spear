@@ -8,6 +8,7 @@
 
 #include <Components/StaticMeshComponent.h>
 #include <Engine/World.h>
+#include <Engine/CollisionProfile.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <UObject/UObjectGlobals.h>

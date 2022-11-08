@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "SimulationController.h"
 
 #include <future>
@@ -10,7 +8,6 @@
 #include <vector>
 
 #include <Engine/Engine.h>
-#include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/GameModeBase.h>
 #include <Kismet/GameplayStatics.h>
@@ -18,8 +15,8 @@
 #include "AgentController.h"
 #include "Assert/Assert.h"
 #include "Box.h"
-#include "Config.h"
 #include "CameraAgentController.h"
+#include "Config.h"
 #include "ImitationLearningTask.h"
 #include "NullTask.h"
 #include "OpenBotAgentController.h"

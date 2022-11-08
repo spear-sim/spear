@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <Math/Vector.h>
+
 #include "AgentController.h"
 
 class AActor;
