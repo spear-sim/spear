@@ -27,7 +27,9 @@
 
 OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
-    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>();
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(AOpenBotPawn::StaticClass(),FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
     ASSERT(open_bot_pawn_);
 
     // Setup observation camera

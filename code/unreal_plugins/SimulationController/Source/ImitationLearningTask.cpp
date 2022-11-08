@@ -80,13 +80,14 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
 
         std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
+        std::cout << "actor_name: " << actor_name << std::endl;
 
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "AGENT_ACTOR_NAME"})) {
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
         } else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
             obstacle_ignore_actors_.emplace_back(*actor_itr);
-            std::cout << "actor_name: " << actor_name << std::endl;
+            //std::cout << "actor_name: " << actor_name << std::endl;
         }
 
         // If GOAL_ACTOR_NAME is not "", then assign goal_actor_ pointer to existing actor if the name matches

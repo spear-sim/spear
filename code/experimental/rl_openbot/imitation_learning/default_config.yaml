@@ -8,80 +8,88 @@ INTERIORSIM:
   LAUNCH_MODE: "standalone_executable"
   
   # If launch_mode is "standalone_exectuable", specify this path to an Unreal application.
-  STANDALONE_EXECUTABLE: "/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
-  #STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/RobotProject.sh"
-  
-  TEMP_DIR: "/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/Temp"
-  #TEMP_DIR: "/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/Temp"
-  
+  #STANDALONE_EXECUTABLE: "/home/qleboute/Documents/Git/spear/code/unreal_projects/RobotProject/Standalone-Shipping/LinuxNoEditor/RobotProject.sh"
+  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/code/unreal_projects/RobotProject/Standalone-Shipping/LinuxNoEditor/RobotProject.sh"
+
+
+  #TEMP_DIR: "/home/qleboute/Documents/Git/spear/code/unreal_projects/RobotProject/Temp"
+  TEMP_DIR: "/home/quentin/Desktop/ISL/spear/code/unreal_projects/RobotProject/Temp"
+
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
-  
-  # Allows convenient selection of the map to be loaded by your executable. 
-  # For instance MAP_ID: "/Game/Maps/Map_235553720"
-  # "/Game/Maps/Map_235114801"
-  # "/Game/Maps/Map_235114775"
-  # "/Game/Maps/Map_235576087"
-  # "/Game/Maps/Map_243638368"
-  # "/Game/Maps/Map_243649209"
-  # "/Game/Maps/Map_235559331"
-  # "/Game/Maps/Map_237210227"
-  # MAP_ID: "235114824"
 
   # True if unreal engine instance should be launched in headless mode
   # Note: This flag is unused if your launch_mode is "running_instance"
-  RENDER_OFFSCREEN: True
+  RENDER_OFFSCREEN: False
   
   # Specify the location of the settings.json parameter file used in the InteriorSim executable. 
   # Allows avoiding the "settings.json not found" error at simulation start:
-  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/qleboute/Documents/Git/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json"]
-  #CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/quentin/Desktop/ISL/interiorsim/code/unreal_projects/RobotProject/dist/LinuxNoEditor/setting/settings.json", "-game"]
-  
+  #CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/qleboute/Documents/Git/spear/code/unreal_projects/RobotProject/Standalone-Shipping/LinuxNoEditor/setting/settings.json"]
+  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-RobotSimSettingPath=/home/quentin/Desktop/ISL/spear/code/unreal_projects/RobotProject/Standalone-Shipping/LinuxNoEditor/setting/settings.json", "-game"]
+
   # Once a connection has been established, the RPC client will wait for this amount of
   # time before throwing when calling a server function.
-  RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 120.0
+  RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 200.0
   RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 10.0
   RPC_CLIENT_INTERNAL_RECONNECT_LIMIT: 10
-  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 120.0
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 200.0
   
-SIMULATION_CONTROLLER: 
+SIMULATION_CONTROLLER:
+  PORT: 30001 
   SIMULATION_STEP_TIME_SECONDS: 0.01
   TASK_NAME: "ImitationLearningTask"
   AGENT_CONTROLLER_NAME: "OpenBotAgentController"
-  
+
   IMITATION_LEARNING_TASK:
     RANDOM_SPAWN_TRAJ: True
-    AGENT_ACTOR_NAME: "SimpleVehicle_0"
+    AGENT_ACTOR_NAME: "OpenBotPawn_2147482540"
     GOAL_ACTOR_NAME: ""
     REWARD:
       HIT_GOAL: 1000.0
       HIT_OBSTACLE: 500.0
-      DISTANCE_TO_GOAL_SCALE: 0.00001
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
-    TARGET_RADIUS: 10000 # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+    TARGET_RADIUS: 100000 # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
     ACCEPTANCE_RADIUS: 0.15
     PATH_WEIGHT_DIST: 1.0
     PATH_WEIGHT_NUM_WAYPOINTS: 1.0
-    MAX_ITER_REPLAN: 10000
+    MAX_ITER_REPLAN: 5
     AGENT_POSITION_Z_MIN: 0.5
-    AGENT_POSITION_Z_MAX: 20.0
-    TRAJECTORY_FILE: ""
+    AGENT_POSITION_Z_MAX: 100.0
+    TRAJECTORY_FILE: "/home/quentin/Desktop/ISL/spear/code/experimental/openbot/imitation_learning/Trajectories/InitGoalAgentPositions_235388780.csv"
+    #TRAJECTORY_FILE: "/home/qleboute/Documents/Git/spear/code/experimental/openbot/imitation_learning/Trajectories/InitGoalAgentPositions_235388780.csv"
 
   OPENBOT_AGENT_CONTROLLER:
-    AGENT_ACTOR_NAME: "SimpleVehicle_0"
+    AGENT_ACTOR_NAME: "OpenBotPawn_2147482540"
     GOAL_ACTOR_NAME: "GoalActor"
     # "low_level_control" or "teleport"
     ACTION_MODE: "low_level_control"
     OBSERVATION_MODE: "mixed"
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 1.0
-    MIXED_MODE:
-      OBSERVATION_CAMERA_ACTOR_NAME: "Smartphone"
-      IMAGE_HEIGHT: 120
-      IMAGE_WIDTH: 160
-      SMARTPHONE_FOV: 72.0
+    CAMERA_PARAMETERS:
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 70.0
       MOTION_BLUR_AMOUNT: 10.0
       MOTION_BLUR_MAX: 10.0
       POST_PROC_BLEND_WEIGHT: 1.0
+      RENDER_PASSES: ["final_color", "segmentation", "depth_glsl"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+    SONAR_PARAMETERS:
+      MAX_REFLECTION_ANGLE: 45.0
+      OFFSET_POSITION: 
+        X: 0.1
+        Y: 0.0
+        Z: -0.015
+      OFFSET_ORIENTATION:
+        ROLL: 0.0
+        PITCH: 0.0
+        YAW: 0.0
+      HORIZONTAL_FOV: 30.0
+      VERTICAL_FOV: 10.0
+      DEBUG: False
+      RANGE:
+        MIN: 0.01
+        MAX: 2.5
+      NOISE_STD: 0.0
     NAVMESH:
       AGENT_RADIUS: 17.0
       AGENT_HEIGHT: 20.0
@@ -94,81 +102,59 @@ SIMULATION_CONTROLLER:
       MAX_SIMPLIFINCATION_ERROR: 1.3
 
   VISUALIZER:
-    CAMERA_ACTOR_NAME: "Follow"
+    CAMERA_ACTOR_NAME: "Smartphone"
     SET_CAMERA_POSE: False
       
-ROBOT_SIM:
-
-  # Used to prevent RobotSim from attempting to load a segmentation material stored directly in RobotProject/Content.
-  # This is useful when RobotSim is loaded in projects other than RobotProject (e.g., PlayEnvironment or InteriorEnvironment).
-  PIP_CAMERA_LOAD_SEGMENTATION_MATERIAL: True
-
-  # PID proportional gain for the autopilot
-  PROPORTIONAL_GAIN_HEADING: 5.25
-  
-  # PID derivative gain for the autopilot
-  DERIVATIVE_GAIN_HEADING: 2.1
-  
-  # PID proportional gain for the autopilot
-  PROPORTIONAL_GAIN_DIST: 4.0
-  
-  # PID derivative gain for the autopilot
-  DERIVATIVE_GAIN_DIST: -0.1
-  
-  # Angular range within which the vehicle moves forward to the target in [rad]
-  FORWARD_MIN_ANGLE: 0.5
-  
-  # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
-  CONTROL_SATURATION: 0.9
-
-  # Radius of the wheel in [m]
-  WHEEL_SHAPE_RADIUS: 0.03
-
-  # Width of the wheel in [m]
-  WHEEL_SHAPE_WIDTH: 0.025
-
-  # How far the wheel can go above the resting position in [m]
-  WHEEL_SUSPENSION_MAX_RAISE: 0.0
-
-  # How far the wheel can drop below the resting position in [m]
-  WHEEL_SUSPENSION_MAX_DROP: 0.0
-
-  # Mass of this wheel in [kg]
-  WHEEL_MASS: 0.033
-
-  # DragCoefficient of the vehicle chassis.
-  DRAG_COEFFICIENT: 1.0
-
-  # Chassis width used for drag force computation in [cm]
-  CHASSIS_WIDTH: 15.0
-
-  # Chassis height used for drag force computation in [cm]
-  CHASSIS_HEIGHT: 15.0
-
-  # Max RPM for engine
-  MOTOR_MAX_RPM: 20000.0
-
-  # Velocity constant of the OpenBot motors
-  MOTOR_VELOCITY_CONSTANT: 65.89
-
-  # Gear ratio of the OpenBot motors
-  GEAR_RATIO: 50.0
-
-  # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle 
-  CONTROL_DEAD_ZONE: 2.5
-
-  # Motor maximal torque
-  MOTOR_TORQUE_MAX: 0.19
-
-  # Motor winding electrical resistance
-  ELECTRICAL_RESISTANCE: 0.5
-
-  # Motor winding electrical inductance
-  ELECTRICAL_INDUCTANCE: 0.5
-
-  # OpenBot action scaling factor
-  ACTION_SCALE: 255
-
-  # Voltage of the battery powering the OpenBot
-  BATTERY_VOLTAGE: 12.0
-
+OPENBOT:
+  OPENBOT_PAWN:
+  # OpenBot mesh uasset path
+    MESH: /OpenBot/V0/Meshes/OpenBot_V0_Mesh.OpenBot_V0_Mesh
+    # OpenBot Animation uasset class path
+    ANIMATION: /OpenBot/V0/Meshes/OpenBot_V0_Animation.OpenBot_V0_Animation_C
+    # Velocity constant of the OpenBot motors
+    MOTOR_VELOCITY_CONSTANT: 65.89
+    # Gear ratio of the OpenBot motors
+    GEAR_RATIO: 50.0
+    # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
+    CONTROL_DEAD_ZONE: 2.5
+    # Motor maximal torque
+    MOTOR_TORQUE_MAX: 0.19
+    # Motor winding electrical resistance
+    ELECTRICAL_RESISTANCE: 0.5
+    # Motor winding electrical inductance
+    ELECTRICAL_INDUCTANCE: 0.5
+    # OpenBot action scaling factor
+    ACTION_SCALE: 255
+    # Voltage of the battery powering the OpenBot
+    BATTERY_VOLTAGE: 12.0
+  OPENBOT_WHEEL:
+    AFFECTED_BY_HANDBRAKE: True
+    # Radius of the wheel in [m]
+    SHAPE_RADIUS: 3.3
+    # Width of the wheel in [m]
+    SHAPE_WIDTH: 1.5
+    #
+    STEER_ANGLE: 0.0
+    # How far the wheel can go above the resting position in [m]
+    SUSPENSION_MAX_RAISE: 0.0
+    # How far the wheel can drop below the resting position in [m]
+    SUSPENSION_MAX_DROP: 0.0
+    # Mass of this wheel in [kg]
+    MASS: 0.033
+  VEHICLE_COMPONENT:
+    # DragCoefficient of the vehicle chassis.
+    DRAG_COEFFICIENT: 1.0
+    # Chassis width used for drag force computation in [cm]
+    CHASSIS_WIDTH: 15.0
+    # Chassis height used for drag force computation in [cm]
+    CHASSIS_HEIGHT: 15.0
+    # Max RPM for engine
+    MOTOR_MAX_RPM: 20000.0
+  CAMERA_COMPONENT:
+    POSITION_X: 5.0
+    POSITION_Y: 5.0
+    POSITION_Z: 5.0
+    ROLL: 0.0
+    YAW: 0.0
+    PITCH: 0.0
+    FOV: 90.0

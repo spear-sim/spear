@@ -190,7 +190,7 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
     parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Debug (for debug purposes only)", required=True)
     parser.add_argument("-p", "--policy", type=str, help="1_env, 5_envs,  25_envs, 50_envs or real_envs", required=False)
-    parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the MAP_ID argument and allows collecting data in multiple environments programatically", required=False)
+    parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the LEVEL_ID argument and allows collecting data in multiple environments programatically", required=False)
     parser.add_argument("-c", "--connect", type=int, help="id of the connection port", required=True)
     args = parser.parse_args()
 
@@ -198,13 +198,12 @@ if __name__ == "__main__":
     config.SIMULATION_CONTROLLER.PORT = 30000 + args.connect
     config.freeze()
 
-    if args.map == [""]: # Use the default MAP_ID argument from parameter file
-        if config.INTERIORSIM.MAP_ID == "":
+    if args.map == [""]: # Use the default LEVEL_ID argument from parameter file
+        if config.SIMULATION_CONTROLLER.LEVEL_ID == "":
             mapNames = ["simpleMap"]
-        elif config.INTERIORSIM.MAP_ID[0:15] == "/Game/Maps/Map_":
-            mapNames = [config.INTERIORSIM.MAP_ID[15:]]
         else:
-            mapNames = ["errorMap"]
+            mapNames = [config.SIMULATION_CONTROLLER.LEVEL_ID]
+
     else: # Overwrite the map value
         mapNames = args.map
 
@@ -235,7 +234,7 @@ if __name__ == "__main__":
 
             # Load the correct map:
             config.defrost()
-            config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_" + mapName
+            config.SIMULATION_CONTROLLER.LEVEL_ID = mapName
             config.freeze()
 
             # Create Env object:
@@ -280,13 +279,13 @@ if __name__ == "__main__":
                     ts = 10000*ct.timestamp()
 
                     # Run autopilot:
-                    Kp_lin = config.ROBOT_SIM.PROPORTIONAL_GAIN_DIST
-                    Kd_lin = config.ROBOT_SIM.DERIVATIVE_GAIN_DIST
-                    Kp_ang = config.ROBOT_SIM.PROPORTIONAL_GAIN_HEADING
-                    Kd_ang = config.ROBOT_SIM.DERIVATIVE_GAIN_HEADING
+                    Kp_lin = config.OPENBOT.OPENBOT_PAWN.PROPORTIONAL_GAIN_DIST
+                    Kd_lin = config.OPENBOT.OPENBOT_PAWN.DERIVATIVE_GAIN_DIST
+                    Kp_ang = config.OPENBOT.OPENBOT_PAWN.PROPORTIONAL_GAIN_HEADING
+                    Kd_ang = config.OPENBOT.OPENBOT_PAWN.DERIVATIVE_GAIN_HEADING
                     acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
-                    forwardMinAngle = config.ROBOT_SIM.FORWARD_MIN_ANGLE
-                    controlSaturation = config.ROBOT_SIM.CONTROL_SATURATION
+                    forwardMinAngle = config.OPENBOT.OPENBOT_PAWN.FORWARD_MIN_ANGLE
+                    controlSaturation = config.OPENBOT.OPENBOT_PAWN.CONTROL_SATURATION
                     dt = 0.1
 
                     # XY position of the next waypoint in world frame:
@@ -482,7 +481,7 @@ if __name__ == "__main__":
 
             # Load the correct map:
             config.defrost()
-            config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_" + mapName
+            config.SIMULATION_CONTROLLER.LEVEL_PATH = "/Game/Maps/Map_" + mapName
             config.freeze()
 
             # Create Env object:
@@ -641,7 +640,7 @@ if __name__ == "__main__":
 
         # Load the correct map and observation mode:
         config.defrost()
-        config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_" + mapNames[0]
+        config.SIMULATION_CONTROLLER.LEVEL_PATH = "/Game/Maps/Map_" + mapNames[0]
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "full-pose"
         config.freeze()
 
@@ -668,13 +667,13 @@ if __name__ == "__main__":
             ts = 10000*ct.timestamp()
 
             # Run autopilot:
-            Kp_lin = config.ROBOT_SIM.PROPORTIONAL_GAIN_DIST
-            Kd_lin = config.ROBOT_SIM.DERIVATIVE_GAIN_DIST
-            Kp_ang = config.ROBOT_SIM.PROPORTIONAL_GAIN_HEADING
-            Kd_ang = config.ROBOT_SIM.DERIVATIVE_GAIN_HEADING
+            Kp_lin = config.OPENBOT.OPENBOT_PAWN.PROPORTIONAL_GAIN_DIST
+            Kd_lin = config.OPENBOT.OPENBOT_PAWN.DERIVATIVE_GAIN_DIST
+            Kp_ang = config.OPENBOT.OPENBOT_PAWN.PROPORTIONAL_GAIN_HEADING
+            Kd_ang = config.OPENBOT.OPENBOT_PAWN.DERIVATIVE_GAIN_HEADING
             acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
-            forwardMinAngle = config.ROBOT_SIM.FORWARD_MIN_ANGLE
-            controlSaturation = config.ROBOT_SIM.CONTROL_SATURATION
+            forwardMinAngle = config.OPENBOT.OPENBOT_PAWN.FORWARD_MIN_ANGLE
+            controlSaturation = config.OPENBOT.OPENBOT_PAWN.CONTROL_SATURATION
             dt = 0.1
 
             # XY position of the next waypoint in world frame:
