@@ -175,6 +175,11 @@ class Env(gym.Env):
         for a in self._config.INTERIORSIM.CUSTOM_COMMAND_LINE_ARGUMENTS:
             launch_params.append("{}".format(a))
 
+        # On Windows, we need to pass in extra command-line parameters so that calls to UE_Log and writes to std::cout are visible on the command-line.
+        if sys.platform == "win32":
+            launch_params.append("-stdout")
+            launch_params.append("-FullStdOutLogOutput")
+
         # Provides additional control over which Vulkan devices are recognized by Unreal
         if len(self._config.INTERIORSIM.VULKAN_DEVICE_FILES) > 0:
             print("Setting VK_ICD_FILENAMES environment variable: " + self._config.INTERIORSIM.VULKAN_DEVICE_FILES)
@@ -190,7 +195,7 @@ class Env(gym.Env):
 
         assert os.path.exists(launch_executable)
 
-        _, launch_executable_ext = os.path.splitext(launch_executable)
+        launch_executable_name, launch_executable_ext = os.path.splitext(launch_executable)
 
         if sys.platform == "darwin":
             assert launch_executable_ext == ".app"
@@ -201,6 +206,7 @@ class Env(gym.Env):
             launch_executable_internal = launch_executable
         elif sys.platform == "win32":
             assert launch_executable_ext == ".exe"
+            assert launch_executable_name[-4:] == "-Cmd"
             launch_executable_internal = launch_executable
         else:
             assert False
