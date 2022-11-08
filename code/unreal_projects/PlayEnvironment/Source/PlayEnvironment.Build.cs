@@ -6,7 +6,7 @@ public class PlayEnvironment : ModuleRules
 {
     public PlayEnvironment(ReadOnlyTargetRules Target) : base(Target)
     {
-        // Disable precompiled headers for faster builds, easier debugging, and stricter enforcement of "include what you use"
+        // Disable precompiled headers for faster builds, easier debugging of compile errors, and stricter enforcement of "include what you use"
         PCHUsage = ModuleRules.PCHUsageMode.NoPCHs;
         bUseUnity = false;
 
