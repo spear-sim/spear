@@ -41,11 +41,11 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
 
     RootComponent = skeletal_mesh_component_;
 
+    // Setup vehicle movement
     vehicle_movement_component_ = CreateDefaultSubobject<USimpleWheeledVehicleMovementComponent>(TEXT("SimpleWheeledVehicleMovementComponent"));
     vehicle_movement_component_->SetIsReplicated(true); // Enable replication by default
     vehicle_movement_component_->UpdatedComponent = skeletal_mesh_component_;
 
-    // Setup vehicle movement
     UClass* wheel_class = UOpenBotWheel::StaticClass();
 
     vehicle_movement_component_->WheelSetups.SetNum(4);
@@ -181,22 +181,22 @@ void AOpenBotPawn::setDriveTorques(float delta_time)
     // https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html)
     // Gear ratio: 50 => max. wheel torque = 5.88399 N.m
 
-    float motor_velocity_constant = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_VELOCITY_CONSTANT"}); // Motor torque constant in [N.m/A]
-    float gear_ratio              = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "GEAR_RATIO"});              // Gear ratio of the OpenBot motors
-    float motor_torque_constant   = 1.0 / motor_velocity_constant;                                                   // Motor torque constant in [rad/s/V]
+    auto motor_velocity_constant = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_VELOCITY_CONSTANT"}); // Motor torque constant in [N.m/A]
+    auto gear_ratio              = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "GEAR_RATIO"});              // Gear ratio of the OpenBot motors
+    auto motor_torque_constant   = 1.0 / motor_velocity_constant;                                                   // Motor torque constant in [rad/s/V]
 
-    float battery_voltage         = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "BATTERY_VOLTAGE"});         // Voltage of the battery powering the OpenBot [V]
-    float control_dead_zone       = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CONTROL_DEAD_ZONE"});       // Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
-    float motor_torque_max        = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_TORQUE_MAX"});        // Motor maximal torque [N.m]
-    float electrical_resistance   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ELECTRICAL_RESISTANCE"});   // Motor winding electrical resistance [Ohms]
-    float electrical_inductance   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ELECTRICAL_INDUCTANCE"});   // Motor winding electrical inductance [Henry]
+    auto battery_voltage         = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "BATTERY_VOLTAGE"});         // Voltage of the battery powering the OpenBot [V]
+    auto control_dead_zone       = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CONTROL_DEAD_ZONE"});       // Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
+    auto motor_torque_max        = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_TORQUE_MAX"});        // Motor maximal torque [N.m]
+    auto electrical_resistance   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ELECTRICAL_RESISTANCE"});   // Motor winding electrical resistance [Ohms]
+    auto electrical_inductance   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ELECTRICAL_INDUCTANCE"});   // Motor winding electrical inductance [Henry]
 
     // Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to
     // be processed by the low-level microcontroller. For more details, feel free to check the
     // "speedMultiplier" command in the OpenBot code:
     // https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
     
-    float action_scale = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ACTION_SCALE"});
+    auto action_scale = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ACTION_SCALE"});
 
     // Acquire the ground truth motor and wheel velocity for motor counter-electromotive force computation purposes
     // (or alternatively friction computation purposes)
