@@ -24,6 +24,8 @@
 
 SphereAgent::SphereAgent(UWorld* world)
 {
+    // TODO: spawn sphere_actor_ here instead of finding it in findObjectReferences
+
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "OBSERVATION_COMPONENTS"});
 
     //
