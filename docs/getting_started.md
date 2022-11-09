@@ -81,12 +81,12 @@ Even though it is possible to launch our projects directly from the Unreal Edito
 
 ```console
 # build, cook, stage, package, archive
-path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject -build -cook -stage -package -archive -targetPlatform=Mac -target=PlayEnvironment -clientconfig=Development -archivedirectory=path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development
+path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject -nocompileeditor -build -cook -stage -package -archive -targetPlatform=Mac -target=PlayEnvironment -clientconfig=Development -archivedirectory=path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development
 ```
 
 This step will build a standalone executable at the path `code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app`.
 
-You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`. After doing a complete `-build -cook -stage -package -archive`, you only need to `-cook` if you have edited the `.uproject` in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`. If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`. You can replace `Development` with `Shipping` to build a more optimized executable.
+You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`. After doing a complete `-build -cook -stage -package -archive`, you only need to `-cook` if you have edited the `.uproject` in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`. If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`. You can replace `Development` with `Shipping` to build a more optimized executable. You can also add `-UbtArgs="-verbose"` or `-UbtArgs="-VeryVerbose"` for additional build details.
 
 ## Run your first standalone executable
 
@@ -118,12 +118,12 @@ env = spear.Env(config=config)
 
 # reset the simulation to get an initial observation
 obs = env.reset()
-print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype)
+print(obs["camera_final_color"].shape, obs["camera_final_color"].dtype)
 
 # take a few steps (you should see the sphere move in the Unreal game window)
 for i in range(10):
     obs, reward, done, info = env.step(action={"apply_force": np.array([1, 1], dtype=np.float32)})
-    print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype, reward, done, info)
+    print(obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
 
 # close the environment
 env.close()
