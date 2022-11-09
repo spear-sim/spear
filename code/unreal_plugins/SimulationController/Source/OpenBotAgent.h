@@ -1,28 +1,31 @@
 #pragma once
 
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
-#include "AgentController.h"
-#include "CameraSensor.h"
+#include <Math/Vector.h>
+
+#include "Agent.h"
 
 class AActor;
+class ANavigationData;
 class ARecastNavMesh;
 class UNavigationSystemV1;
 class UWorld;
 
+class AOpenBotPawn;
+class CameraSensor;
+
 struct Box;
 
-class CameraAgentController : public AgentController
+class OpenBotAgent : public Agent
 {
 public:
 
-    // This UWorld pointer passed here points to the only running game world.
-    CameraAgentController(UWorld* world);
-    ~CameraAgentController();
-    
+    OpenBotAgent(UWorld* world);
+    ~OpenBotAgent();
+
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
 
@@ -36,14 +39,24 @@ public:
 
     void reset() override;
     bool isReady() const override;
-    
+
 private:
 
-    void buildNavMesh(UNavigationSystemV1* nav_sys);
+    // Rebuild the navigation mesh of the agent
+    void buildNavMesh();
 
-    std::map<std::string, std::vector<float>> action_;
-    AActor* camera_actor_ = nullptr; 
+    // Generate a collision-free trajectory between an initial and a target location
+    void generateTrajectoryToGoal();
+
+    AOpenBotPawn* open_bot_pawn_ = nullptr;
+    AActor* goal_actor_ = nullptr;
+
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
+
+    // Navigation
+    UNavigationSystemV1* nav_sys_ = nullptr;
+    ANavigationData* nav_data_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
-    UWorld* world_ = nullptr;    
+
+    std::vector<float> trajectory_; // An array containing the different waypoints to be followed by the agent, converted into a serialized format X0, Y0, Z0, X1, Y1, Z1, ... Xn, Yn, Zn 
 };

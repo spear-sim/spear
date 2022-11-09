@@ -12,7 +12,15 @@
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
-    random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
+    FActorSpawnParameters goal_spawn_params;
+    goal_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_ACTOR_NAME"}).c_str());
+    goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    goal_actor_ = world->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
+    ASSERT(goal_actor_);
+
+    auto scene_component = NewObject<USceneComponent>(goal_actor_);
+    scene_component->SetMobility(EComponentMobility::Movable);
+    goal_actor_->SetRootComponent(scene_component);
 
     new_object_parent_actor_ = world->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
@@ -22,10 +30,18 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     ASSERT(actor_hit_event_);
     actor_hit_event_->RegisterComponent();
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
+
+    random_stream_.Initialize(Config::getValue<int>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "RANDOM_SEED"}));
+    hit_goal_ = false;
+    hit_obstacle_ = false;
 }
 
 PointGoalNavTask::~PointGoalNavTask()
 {
+    hit_obstacle_ = false;
+    hit_goal_ = false;
+    random_stream_.Reset();
+
     ASSERT(actor_hit_event_);
     actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);
     actor_hit_event_delegate_handle_.Reset();
@@ -36,32 +52,27 @@ PointGoalNavTask::~PointGoalNavTask()
     new_object_parent_actor_->Destroy();
     new_object_parent_actor_ = nullptr;
 
-    random_stream_.Reset();
+    ASSERT(goal_actor_);
+    goal_actor_->Destroy();
+    goal_actor_ = nullptr;    
 }
 
 void PointGoalNavTask::findObjectReferences(UWorld* world)
 {
-    // append all actors that need to be ignored during collision check
-    std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
-
-    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
-        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AGENT_ACTOR_NAME"})) { 
+    auto obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
+    for (TActorIterator<AActor> actor_itr(world); actor_itr; ++actor_itr) {
+        std::string actor_name = TCHAR_TO_UTF8(*((*actor_itr)->GetName()));
+        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AGENT_ACTOR_NAME"})) {
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
-        } else if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_ACTOR_NAME"})) {
-            ASSERT(!goal_actor_);
-            goal_actor_ = *actor_itr;
         } else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
             obstacle_ignore_actors_.emplace_back(*actor_itr);
+            std::cout << "Adding actor to obstacle ignore list: " << actor_name << std::endl;
         }
     }
     ASSERT(agent_actor_);
-    ASSERT(goal_actor_);
-    ASSERT(obstacle_ignore_actors_.size() == obstacle_ignore_actor_names.size());
 
-    // subscribe to the agent actor now that we have obtained a reference to it
+    // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_->subscribeToActor(agent_actor_);
 }
 
@@ -72,16 +83,12 @@ void PointGoalNavTask::cleanUpObjectReferences()
 
     obstacle_ignore_actors_.clear();
 
-    ASSERT(goal_actor_);    
-    goal_actor_ = nullptr;
-
     ASSERT(agent_actor_);
     agent_actor_ = nullptr;
 }
 
 void PointGoalNavTask::beginFrame()
 {
-    // reset hit states
     hit_goal_ = false;
     hit_obstacle_ = false;
 }

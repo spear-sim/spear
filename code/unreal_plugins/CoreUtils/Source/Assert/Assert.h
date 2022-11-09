@@ -630,9 +630,8 @@
   #pragma GCC diagnostic pop
 #endif
 
-// End borrowed code from https://github.com/gpakosz/PPK_ASSERT.
 
-// Expose PPK_ASSERT macros as ASSERT macros
+
 #define ASSERT PPK_ASSERT
 #define ASSERT_WARNING PPK_ASSERT_WARNING
 #define ASSERT_DEBUG PPK_ASSERT_DEBUG

@@ -66,7 +66,7 @@ class Env(gym.Env):
 
         self._byte_order = self._get_byte_order()
         self._task_step_info_space = self._get_task_step_info_space()
-        self._agent_controller_step_info_space = self._get_agent_controller_step_info_space()
+        self._agent_step_info_space = self._get_agent_step_info_space()
 
     def step(self, action):
         
@@ -381,8 +381,8 @@ class Env(gym.Env):
         space = self._client.call("getTaskStepInfoSpace")
         return self._get_dict_space(space, Box, Dict)
 
-    def _get_agent_controller_step_info_space(self):
-        space = self._client.call("getAgentControllerStepInfoSpace")
+    def _get_agent_step_info_space(self):
+        space = self._client.call("getAgentStepInfoSpace")
         return self._get_dict_space(space, Box, Dict)
 
     def _apply_action(self, action):
@@ -412,14 +412,14 @@ class Env(gym.Env):
 
     def _get_step_info(self):
         task_step_info = self._client.call("getTaskStepInfo")
-        agent_controller_step_info = self._client.call("getAgentControllerStepInfo")
+        agent_step_info = self._client.call("getAgentStepInfo")
         return { "task_step_info": self._deserialize(task_step_info, self._task_step_info_space),
-                 "agent_controller_step_info": self._deserialize(agent_controller_step_info, self._agent_controller_step_info_space) }
+                 "agent_step_info": self._deserialize(agent_step_info, self._agent_step_info_space) }
 
     def _reset(self):
-        # reset the Task first in case it needs to set the position of Actors, then reset AgentController so it can refine the position of actors
+        # reset the Task first in case it needs to set the position of Actors, then reset Agent so it can refine the position of actors
         self._client.call("resetTask")
-        self._client.call("resetAgentController")
+        self._client.call("resetAgent")
 
     def _is_ready(self):
-        return self._client.call("isTaskReady") and self._client.call("isAgentControllerReady")
+        return self._client.call("isTaskReady") and self._client.call("isAgentReady")

@@ -46,8 +46,8 @@ public:
             // If key doesn't exist, then print an informative error message and assert
             if (!node[key]) {
                 std::cout << "Invalid key, keys == [";
-                for (size_t j = 0; j < keys.size() - 1; ++j) {
-                    std::cout << "\"" << keys.at(j) << "\", ";
+                for (int i = 0; i < keys.size() - 1; i++) {
+                    std::cout << "\"" << keys.at(i) << "\", ";
                 }
                 std::cout << "\"" << keys.at(keys.size() - 1) << "\"], key " << key << " is invalid." << std::endl;
                 ASSERT(false);

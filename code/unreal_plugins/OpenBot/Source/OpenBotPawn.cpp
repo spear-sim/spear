@@ -142,7 +142,7 @@ void AOpenBotPawn::setDutyCycleAndClamp(Eigen::Vector4f duty_cycle)
     duty_cycle_ = duty_cycle.cwiseMin(1.0).cwiseMax(-1.0);
 }
 
-Eigen::Vector4f AOpenBotPawn::getDutyCycle()
+Eigen::Vector4f AOpenBotPawn::getDutyCycle() const
 {
     return duty_cycle_;
 }

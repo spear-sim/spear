@@ -2,46 +2,71 @@
 
 #include <string>
 
+#include <Camera/CameraActor.h>
 #include <Containers/StringConv.h>
 #include <EngineUtils.h>
-#include <GameFramework/Actor.h>
 #include <GameFramework/PlayerController.h>
 
 #include "Config.h"
 
+Visualizer::Visualizer(UWorld* world)
+{
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA"})) {
+
+        FVector location(
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_POSITION_X"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_POSITION_Y"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_POSITION_Z"}));
+        FRotator orientation(
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_ORIENTATION_PITCH"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_ORIENTATION_YAW"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_ORIENTATION_ROLL"}));
+
+        FActorSpawnParameters spawn_params;
+        spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_ACTOR_NAME"}).c_str());
+        spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        camera_actor_ = world->SpawnActor<ACameraActor>(location, orientation, spawn_params);
+        ASSERT(camera_actor_);
+
+        APlayerController* player_controller = world->GetFirstPlayerController();
+        ASSERT(player_controller);
+        player_controller->SetViewTarget(camera_actor_);
+    }
+}
+
+Visualizer::~Visualizer()
+{
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA"})) {
+        ASSERT(camera_actor_);
+        camera_actor_->Destroy();
+        camera_actor_ = nullptr;
+    }
+}
+
 void Visualizer::findObjectReferences(UWorld* world)
 {
-    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
-        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_ACTOR_NAME"})) {
-            ASSERT(!camera_actor_);
-            camera_actor_ = *actor_itr;
-            break;
+    if (!Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA"})) {
+
+        for (TActorIterator<ACameraActor> actor_itr(world); actor_itr; ++actor_itr) {
+            std::string actor_name = TCHAR_TO_UTF8(*((*actor_itr)->GetName()));
+            if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_ACTOR_NAME"})) {
+                ASSERT(!camera_actor_);
+                camera_actor_ = *actor_itr;
+                break;
+            }
         }
-    }
-    ASSERT(camera_actor_);
+        ASSERT(camera_actor_);
 
-    // set active camera
-    APlayerController* Controller = world->GetFirstPlayerController();
-    ASSERT(Controller);
-    Controller->SetViewTarget(camera_actor_);
-
-    // setup camera pose
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SET_CAMERA_POSE"})) {
-        const FVector camera_pose(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_POSITION_X"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_POSITION_Y"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_POSITION_Z"}));
-        camera_actor_->SetActorLocation(camera_pose);
-        camera_actor_->SetActorRotation(FRotator(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_PITCH"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_YAW"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "CAMERA_ROLL"})));
+        APlayerController* player_controller = world->GetFirstPlayerController();
+        ASSERT(player_controller);
+        player_controller->SetViewTarget(camera_actor_);
     }
 }
 
 void Visualizer::cleanUpObjectReferences()
 {
-    ASSERT(camera_actor_);
-    camera_actor_ = nullptr;
+    if (!Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA"})) {
+        ASSERT(camera_actor_);
+        camera_actor_ = nullptr;
+    }
 }

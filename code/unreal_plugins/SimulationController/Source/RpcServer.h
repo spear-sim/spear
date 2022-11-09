@@ -1,6 +1,6 @@
 #pragma once
 
-// Modified from Carla (https://carla.org) project, thanks to MIT license.
+// Modified from CARLA (https://carla.org)
 
 #include <future>
 #include <mutex>
@@ -11,16 +11,15 @@
 #include "Asio.h"
 #include "Rpclib.h"
 
-// An RPC server in which functions can be bound to run synchronously or asynchronously. Use
-// launchWorkerThreads() to start the worker threads, and use stop() to terminate the server.
-// Functions that are bound using bindAsync() will run asynchronously in the worker threads,
-// and functions that are bound using bindSync() will run synchronously in the game thread
-// when the game thread calls runSync(). By design, runSync() will block indefinitely, even
-// if there is no more synchronous work that has been scheduled. Call
+// This file defines an RPC server in which functions can be bound to run synchronously or
+// asynchronously. Use launchWorkerThreads() to start the worker threads, and use stop() to
+// terminate the server. Functions that are bound using bindAsync() will run asynchronously
+// in the worker threads, and functions that are bound using bindSync() will run synchronously
+// in the game thread when the game thread calls runSync(). By design, runSync() will block
+// indefinitely, even if there is no more synchronous work that has been scheduled. Call
 // unblockRunSyncWhenFinishedExecuting() from another thread to make runSync() return as soon
 // as it is finished executing all scheduled work. This design gives us precise control over
 // where and when function calls are executed within the Unreal Engine game loop.
-
 
 namespace detail
 {
@@ -38,7 +37,7 @@ struct MoveWrapper : FunctorT
 
 } // namespace detail
 
-// Hack to trick asio into accepting move-only handlers, if the handler were actually copied it would result in a link error. @see https://stackoverflow.com/a/22891509.
+// hack to trick asio into accepting move-only handlers, if the handler were actually copied it would result in a link error. @see https://stackoverflow.com/a/22891509.
 template <typename FunctorT>
 auto moveHandler(FunctorT&& func)
 {
@@ -83,7 +82,7 @@ public:
         mutex_.unlock();
     }
 
-    // @warning does not stop the game thread.
+    // warning does not stop the game thread.
     void stop()
     {
         server_.close_sessions();

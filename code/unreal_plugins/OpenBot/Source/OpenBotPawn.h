@@ -42,7 +42,7 @@ public:
     // Provides access to the current command sent to the OpenBot (e.g., to return
     // to a Python client). This function is required because the command to be
     // executed by the OpenBot might come from keyboard user input.
-    Eigen::Vector4f getDutyCycle();
+    Eigen::Vector4f getDutyCycle() const;
 
     // Reset the physical state of the wheels
     void resetPhysicsState();

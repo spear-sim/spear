@@ -21,8 +21,4 @@ public:
 
     // Create new physical material
     static int createPhysicalMaterial(float friction, float density);
-
-private:
-    static std::map<int, UPhysicalMaterial*> physical_materials_;
-    static int current_physical_material_id_;
 };

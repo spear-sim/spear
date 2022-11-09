@@ -18,52 +18,47 @@
 
 #include "Assert/Assert.h"
 #include "Config.h"
-#include "Serialize.h"
-#include "TickEvent.h"
 
-const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials/";
+const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials";
 
-CameraSensor::CameraSensor(UCameraComponent* component, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
+CameraSensor::CameraSensor(UCameraComponent* camera_component, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
 {
-    ASSERT(component);
+    ASSERT(camera_component);
 
-    new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
+    new_object_parent_actor_ = camera_component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
     for (const auto& pass_name : pass_names) {
+
         // create SceneCaptureComponent2D
-        USceneCaptureComponent2D* scene_capture_component = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), pass_name.c_str()));
+        auto scene_capture_component = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), pass_name.c_str()));
         ASSERT(scene_capture_component);
 
-        scene_capture_component->AttachToComponent(component, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        scene_capture_component->AttachToComponent(camera_component, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         scene_capture_component->SetVisibility(true);
 
         // create TextureRenderTarget2D
-        UTextureRenderTarget2D* texture_render_target = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), pass_name.c_str()));
+        auto texture_render_target = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), pass_name.c_str()));
         ASSERT(texture_render_target);
         
-        // Set Camera Parameters
+        // set camera parameters
         setCameraParameters(scene_capture_component, texture_render_target, width, height);
 
         if (pass_name != "final_color") {
             setCameraParametersNonFinalColor(scene_capture_component, texture_render_target, width, height);
 
             // Load PostProcessMaterial
-            FString path = (MATERIALS_PATH + pass_name + "." + pass_name).c_str();
-            UMaterial* mat = LoadObject<UMaterial>(nullptr, *path);
-            ASSERT(mat);
+            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), MATERIALS_PATH.c_str(), pass_name.c_str(), pass_name.c_str()));
+            ASSERT(material);
 
             // Set PostProcessMaterial
-            scene_capture_component->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, scene_capture_component), 1.0f);
+            scene_capture_component->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, scene_capture_component), 1.0f);
         }
 
         CameraPass pass;
-
-        // Set camera pass
         pass.scene_capture_component_ = scene_capture_component;
         pass.texture_render_target_ = texture_render_target;
 
-        // Insert into map
         camera_passes_[pass_name] = std::move(pass);
     }
 }
@@ -128,7 +123,7 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData()
 std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor> data)
 {
     std::vector<float> out;
-    for (uint32 i = 0; i < static_cast<uint32>(data.Num()); ++i) {
+    for (int i = 0; i < data.Num(); i++) {
         float depth = data[i].R  + (data[i].G * 256) + (data[i].B * 256 * 256); 
         float normalized_depth = depth / ((256 * 256 * 256) - 1);
         float dist = normalized_depth * 10; 

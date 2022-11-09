@@ -517,5 +517,3 @@ namespace implementation {
 } // namespace implementation
 } // namespace assert
 } // namespace ppk
-
-// End borrowed code from https://github.com/gpakosz/PPK_ASSERT.

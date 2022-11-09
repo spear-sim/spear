@@ -18,7 +18,7 @@ public:
 
     float getReward() const override
     {
-        return 0.f;
+        return 0.0;
     }
 
     bool isEpisodeDone() const override

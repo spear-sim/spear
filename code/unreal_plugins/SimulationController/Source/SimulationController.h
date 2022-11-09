@@ -8,7 +8,7 @@
 #include <Engine/World.h>
 #include <Modules/ModuleManager.h>
 
-class AgentController;
+class Agent;
 class RpcServer;
 class Task;
 class Visualizer;
@@ -48,7 +48,7 @@ private:
     UWorld* world_ = nullptr;
     
     std::unique_ptr<RpcServer> rpc_server_ = nullptr;
-    std::unique_ptr<AgentController> agent_controller_ = nullptr;
+    std::unique_ptr<Agent> agent_ = nullptr;
     std::unique_ptr<Task> task_ = nullptr;
     std::unique_ptr<Visualizer> visualizer_ = nullptr;
 

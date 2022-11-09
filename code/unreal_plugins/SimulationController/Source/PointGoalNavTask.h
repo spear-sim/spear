@@ -34,11 +34,6 @@ public:
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
 
 private:
-    bool hit_goal_ = false;
-    bool hit_obstacle_ = false;
-    
-    FRandomStream random_stream_;
-
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
@@ -47,4 +42,9 @@ private:
     FDelegateHandle actor_hit_event_delegate_handle_;
 
     std::vector<AActor*> obstacle_ignore_actors_;
+
+    FRandomStream random_stream_;    
+
+    bool hit_goal_ = false;
+    bool hit_obstacle_ = false;
 };

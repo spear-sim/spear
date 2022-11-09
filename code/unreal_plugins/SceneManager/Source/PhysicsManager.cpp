@@ -9,18 +9,18 @@
 
 #include "Assert/Assert.h"
 
-const static int PHYSICAL_MATERIAL_ID_DEFAULT_START = 1000;
-const static int PHYSICAL_MATERIAL_ID_DEFAULT_END   = 1081;
+static const int PHYSICAL_MATERIAL_ID_DEFAULT_START = 1000;
+static const int PHYSICAL_MATERIAL_ID_DEFAULT_END   = 1081;
 
-const static int PHYSICAL_MATERIAL_ID_DYNAMIC_START = 2000;
+static const int PHYSICAL_MATERIAL_ID_DYNAMIC_START = 2000;
 
-std::map<int, UPhysicalMaterial*> PhysicsManager::physical_materials_ = {};
-int PhysicsManager::current_physical_material_id_ = -1;
+static std::map<int, UPhysicalMaterial*> physical_materials_ = {};
+static int current_physical_material_id_ = -1;
 
 void PhysicsManager::initialize()
 {
     for (int physical_material_id = PHYSICAL_MATERIAL_ID_DEFAULT_START; physical_material_id < PHYSICAL_MATERIAL_ID_DEFAULT_END; physical_material_id++) {
-        UPhysicalMaterial* physical_material = LoadObject<UPhysicalMaterial>(nullptr, *FString::Printf(TEXT("/Game/Scene/PhyMaterials/PM_%d.PM_%d"), physical_material_id, physical_material_id));
+        auto physical_material = LoadObject<UPhysicalMaterial>(nullptr, *FString::Printf(TEXT("/Game/Scene/PhyMaterials/PM_%d.PM_%d"), physical_material_id, physical_material_id));
         ASSERT(physical_material);
         physical_materials_[physical_material_id] = physical_material;
     }
@@ -44,7 +44,7 @@ void PhysicsManager::setActorPhysicalMaterials(const std::vector<AActor*>& actor
         actor->GetComponents<UStaticMeshComponent>(components);
 
         // for all components...
-        for (auto& component : components){
+        for (auto& component : components) {
             TArray<UMaterialInterface*> materials;
             component->GetUsedMaterials(materials);
 
