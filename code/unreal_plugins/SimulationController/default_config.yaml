@@ -71,7 +71,7 @@ SIMULATION_CONTROLLER:
     OBSERVATION_MODE: "mixed" # "mixed" or "physical"
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 0.0
-    SENSORS: ["camera", "imu", "sonar"]
+    SENSORS: ["camera", "imu", "sonar"] # "camera", "imu", "sonar"... The type(s) of "camera" sensor is defined by CAMERA_PARAMETERS.RENDER_PASSES
     CAMERA_PARAMETERS:
       IMAGE_HEIGHT: 128
       IMAGE_WIDTH: 128
