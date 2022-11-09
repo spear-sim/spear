@@ -5,10 +5,14 @@ using System.Collections.Generic;
 
 public class PlayEnvironmentTarget : TargetRules
 {
-	public PlayEnvironmentTarget( TargetInfo Target) : base(Target)
-	{
-		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
-		ExtraModuleNames.AddRange( new string[] { "PlayEnvironment" } );
-	}
+    public PlayEnvironmentTarget( TargetInfo Target) : base(Target)
+    {
+        Type = TargetType.Game;
+        DefaultBuildSettings = BuildSettingsVersion.V2;
+        ExtraModuleNames.AddRange( new string[] { "PlayEnvironment" } );
+
+        if (Target.Platform == UnrealTargetPlatform.Win64) {
+            bBuildAdditionalConsoleApp = true;
+        }
+    }
 }
