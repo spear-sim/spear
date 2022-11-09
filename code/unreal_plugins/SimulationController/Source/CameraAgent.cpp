@@ -101,8 +101,8 @@ void CameraAgent::findObjectReferences(UWorld* world)
         ASSERT(nav_sys);
 
         FNavAgentProperties agent_properties;
-        agent_properties.AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_HEIGHT"});
-        agent_properties.AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_RADIUS"});
+        agent_properties.AgentHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_HEIGHT"});
+        agent_properties.AgentRadius     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_RADIUS"});
         agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
 
         ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
