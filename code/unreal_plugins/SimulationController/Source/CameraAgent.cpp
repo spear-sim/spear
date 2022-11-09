@@ -53,7 +53,7 @@ CameraAgent::CameraAgent(UWorld* world)
         }
 
         // update auto-exposure settings
-        if (camera_sensor_->camera_passes_.contains("final_color")) {
+        if (camera_sensor_->camera_passes_.count("final_color")) {
             camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp   = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP"});
             camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP"});
             camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN"});

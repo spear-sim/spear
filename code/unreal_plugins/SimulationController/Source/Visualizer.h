@@ -1,6 +1,6 @@
 #pragma once
 
-class ACameraActor;
+class AActor;
 class UWorld;
 
 class Visualizer
@@ -13,5 +13,5 @@ public:
     void cleanUpObjectReferences();
 
 private:
-    ACameraActor* camera_actor_ = nullptr;
+    AActor* actor_ = nullptr;
 };

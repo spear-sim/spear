@@ -41,5 +41,5 @@ SIMULATION_CONTROLLER:
       WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
 
   VISUALIZER:
-    CAMERA_ACTOR_NAME: "GenerateImageDatasetCamera"
+    ACTOR_NAME: "GenerateImageDatasetCamera"
     SPAWN_CAMERA: false
