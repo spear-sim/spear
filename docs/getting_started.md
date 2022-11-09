@@ -73,7 +73,7 @@ python generate_config.py --user_config_files path/to/spear/code/unreal_projects
 
 At this point, you should be able to double-click on `code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully.
 
-Our other projects require you to download additional content before you can run them. See the README file in each project directory for more details.
+Our other projects require you to download additional content before you can run them. See the `README` file in each project directory for more details.
 
 ## Build your first standalone executable
 
@@ -81,12 +81,19 @@ Even though it is possible to launch our projects directly from the Unreal Edito
 
 ```console
 # build, cook, stage, package, archive
-path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject -nocompileeditor -build -cook -stage -package -archive -targetPlatform=Mac -target=PlayEnvironment -clientconfig=Development -archivedirectory=path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development
+path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject -build -cook -stage -package -archive -targetPlatform=Mac -target=PlayEnvironment -clientconfig=Development -archivedirectory=path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development
 ```
 
-This step will build a standalone executable at the path `code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app`.
+This step will build a standalone executable at the path `code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app`. 
 
-You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`. After doing a complete `-build -cook -stage -package -archive`, you only need to `-cook` if you have edited the `.uproject` in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`. If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`. You can replace `Development` with `Shipping` to build a more optimized executable. You can also add `-UbtArgs="-verbose"` or `-UbtArgs="-VeryVerbose"` for additional build details.
+### Helpful command-line options
+
+- You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`. After doing a complete `-build -cook -stage -package -archive`, you only need to `-cook` if you have edited the `.uproject` in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`
+- If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a special executable that is only required when cooking.
+- If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`.
+- You can replace `Development` with `Shipping` to build a more optimized executable.
+- You can add `-clean` to do a clean build.
+- You can add `-verbose`, `-UbtArgs="-verbose"`, and `-UbtArgs="-VeryVerbose"` to see additional build details (e.g., the exact command-line arguments that Unreal uses when invoking the underlying compiler).
 
 ## Run your first standalone executable
 
