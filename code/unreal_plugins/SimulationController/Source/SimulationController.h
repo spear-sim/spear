@@ -37,7 +37,7 @@ private:
     void worldBeginPlayEventHandler();
     void worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources);
 
-    // DelegateHandles corresponding to each event handler defined in this class
+    // FDelegateHandle objects corresponding to each event handler defined in this class
     FDelegateHandle begin_frame_delegate_handle_;
     FDelegateHandle end_frame_delegate_handle_;
     FDelegateHandle post_world_initialization_delegate_handle_;
