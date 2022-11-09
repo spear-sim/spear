@@ -308,7 +308,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
     Eigen::Vector4f duty_cycle = open_bot_pawn_->getDutyCycle();
     Eigen::Vector2f control_state;
-    
+
     // Fill the observed action vector to be used for RL purposes:
     control_state(0) = (duty_cycle(0) + duty_cycle(2)) / 2; // leftCtrl
     control_state(1) = (duty_cycle(1) + duty_cycle(3)) / 2; // rightCtrl
@@ -325,7 +325,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
             std::map<std::string, TArray<FColor>> render_data = camera_sensor_->getRenderData();
             ASSERT(render_data.size() > 0);
 
-            // Parallelize the camera sampling process
+            // Parallelize the image acquisition process
             std::vector<std::string> render_passes = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RENDER_PASSES"});
             ParallelFor(render_passes.size(), [&](int idx) {
                 // RGB camera
