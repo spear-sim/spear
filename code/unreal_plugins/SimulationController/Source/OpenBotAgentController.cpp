@@ -21,6 +21,7 @@
 #include "Box.h"
 #include "Config.h"
 #include "CameraSensor.h"
+#include "IMUSensor.h"
 #include "OpenBotPawn.h"
 #include "Serialize.h"
 #include "SonarSensor.h"
@@ -29,7 +30,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(AOpenBotPawn::StaticClass(),FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(AOpenBotPawn::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
     ASSERT(open_bot_pawn_);
 
     // Setup observation camera
@@ -59,6 +60,25 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
             Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "OFFSET_ORIENTATION", "YAW"})),
             Config::getValue<bool>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "DEBUG"}));
         ASSERT(sonar_sensor_);
+
+        inertial_sensor_ = std::make_unique<IMUSensor>(open_bot_pawn_,
+            FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "X"}), 
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "Y"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "Z"})), 
+            FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_NOISE_STD", "X"}), 
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_NOISE_STD", "Y"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_NOISE_STD", "Z"})), 
+            FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_BIAS", "X"}), 
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_BIAS", "Y"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_BIAS", "Z"})),
+            FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "OFFSET_POSITION", "X"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "OFFSET_POSITION", "Y"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "OFFSET_POSITION", "Z"})),
+            FRotator(Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "OFFSET_ORIENTATION", "ROLL"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "OFFSET_ORIENTATION", "PITCH"}),
+            Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "OFFSET_ORIENTATION", "YAW"})),
+            Config::getValue<bool>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "DEBUG"}));
+        ASSERT(inertial_sensor_);
     }
 }
 
@@ -71,6 +91,9 @@ OpenBotAgentController::~OpenBotAgentController()
     
     ASSERT(sonar_sensor_);
     sonar_sensor_ = nullptr;
+
+    ASSERT(inertial_sensor_);
+    inertial_sensor_ = nullptr;
 
     ASSERT(open_bot_pawn_);
     open_bot_pawn_->Destroy();
@@ -170,6 +193,9 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     observation_space["sonar_data"] = std::move(box); // Front obstacle distance
 
     box.shape = {6};
+    observation_space["imu_data"] = std::move(box); // a_x, a_y, a_z, g_x, g_y, g_z
+
+    box.shape = {6};
     observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
 
     ASSERT(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed" || Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical");
@@ -259,8 +285,14 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     float sonar_range = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MAX"});
     sonar_sensor_->update(sonar_range);
 
+    // Get IMU measurement:
+    FVector acceleration = FVector::ZeroVector;
+    FVector angular_rate = FVector::ZeroVector;
+    inertial_sensor_->update(acceleration, angular_rate, Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));
+
     observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
     observation["sonar_data"] = Serialize::toUint8(std::vector<float>{sonar_range});
+    observation["imu_data"] = Serialize::toUint8(std::vector<float>{acceleration.X, acceleration.Y, acceleration.Z, angular_rate.X, angular_rate.Y, angular_rate.Z});
     observation["state_data"] = Serialize::toUint8(std::vector<float>{agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw)});
 
     return observation;
