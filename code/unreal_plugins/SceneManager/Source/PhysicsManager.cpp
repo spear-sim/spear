@@ -54,14 +54,14 @@ void PhysicsManager::setActorPhysicalMaterials(const std::vector<AActor*>& actor
 
                 // if material is not a UMaterialInstanceDynamic, then create a new UMaterialInstanceDynamic with the desired properties and assign to the current material slot
                 if (!material->IsA(UMaterialInstanceDynamic::StaticClass())) {
-                    UMaterialInstanceDynamic* dynamic_material = UMaterialInstanceDynamic::Create(material, component, FName(material->GetName() + "_Dynamic"));
-                    dynamic_material->PhysMaterial = physical_material;
-                    component->SetMaterial(i, dynamic_material);
+                    UMaterialInstanceDynamic* material_instance_dynamic = UMaterialInstanceDynamic::Create(material, component, FName(material->GetName() + "_Dynamic"));
+                    material_instance_dynamic->PhysMaterial = physical_material;
+                    component->SetMaterial(i, material_instance_dynamic);
 
                 // otherwise update the material with the desired properties
                 } else {
-                    UMaterialInstanceDynamic* dynamic_material = Cast<UMaterialInstanceDynamic>(material);
-                    dynamic_material->PhysMaterial = physical_material;
+                    auto material_instance_dynamic = dynamic_cast<UMaterialInstanceDynamic*>(material);
+                    material_instance_dynamic->PhysMaterial = physical_material;
 
                     FBodyInstance* body_instance = component->GetBodyInstance();
                     if (body_instance && body_instance->IsValidBodyInstance()) {
@@ -77,7 +77,7 @@ int PhysicsManager::createPhysicalMaterial(float friction, float density)
 {
     int physical_material_id = current_physical_material_id_;
 
-    UPhysicalMaterial* physical_material = NewObject<UPhysicalMaterial>(static_cast<UObject*>(GetTransientPackage()), *FString::Printf(TEXT("PM_%d"), physical_material_id), EObjectFlags::RF_Standalone);
+    auto physical_material = NewObject<UPhysicalMaterial>(static_cast<UObject*>(GetTransientPackage()), *FString::Printf(TEXT("PM_%d"), physical_material_id), EObjectFlags::RF_Standalone);
     physical_material->Friction = friction;
     physical_material->Density = density;
     physical_materials_[physical_material_id] = physical_material;
