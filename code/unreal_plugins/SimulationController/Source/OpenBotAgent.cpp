@@ -276,7 +276,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "OBSERVATION_COMPONENTS"});
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
 
     //
     // observation["state_data"]

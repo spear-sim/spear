@@ -78,20 +78,28 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
     if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world) != nullptr) {
         
-        auto level_name = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_PATH" }) + "/" + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_PREFIX" }) + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_ID" });
-        auto world_path_name = level_name + "." + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_PREFIX" }) + Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_ID" });
+        auto world_path_name = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "WORLD_PATH_NAME" });
+        auto level_name = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_NAME" });
 
-        // if the current world is not the desired one, launch the desired one using OpenLevel functionality
-        if (TCHAR_TO_UTF8(*(world->GetPathName())) != world_path_name) {
+        // If the current world is not the desired one, open the desired one
+        if (world_path_name != "" && TCHAR_TO_UTF8(*(world->GetPathName())) != world_path_name) {
+
+            // Assert that we haven't already tried to open the level, because that means we failed
+            ASSERT(!has_load_level_executed_);
+
             UGameplayStatics::OpenLevel(world, level_name.c_str());
+            has_load_level_executed_ = true;
+
         } else {
+            has_load_level_executed_ = false;
+
             // We do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
             ASSERT(!world_);
 
-            // Cache local reference of World instance as this is required in other parts of this class.
+            // Cache local reference to the UWorld
             world_ = world;
 
-            // required to assign an Agent based on config param
+            // Defer the rest of our initialization code until the OnWorldBeginPlay event
             world_begin_play_delegate_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
         }
     }
@@ -133,7 +141,7 @@ void SimulationController::worldBeginPlayEventHandler()
         task_ = std::make_unique<ImitationLearningTask>(world_);
     } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "TASK" }) == "NullTask") {
         task_ = std::make_unique<NullTask>();
-    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "TASK" }) == "PointGoalNavigationTask") {
+    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "TASK" }) == "PointGoalNavTask") {
         task_ = std::make_unique<PointGoalNavTask>(world_);
     } else {
         ASSERT(false);
@@ -163,7 +171,7 @@ void SimulationController::worldBeginPlayEventHandler()
 
     rpc_server_->launchWorkerThreads(1u);
 
-    is_world_begin_play_executed_ = true;
+    has_world_begin_play_executed_ = true;
 }
 
 void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources)
@@ -176,9 +184,9 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
         // The worldCleanupEventHandler(...) function is called for all worlds, but some local state (such as rpc_server_ and agent_)
         // is initialized only when worldBeginPlayEventHandler(...) is called for a particular world. So we check if worldBeginPlayEventHandler(...)
         // has been executed.
-        if(is_world_begin_play_executed_) {
+        if(has_world_begin_play_executed_) {
 
-            is_world_begin_play_executed_ = false;
+            has_world_begin_play_executed_ = false;
 
             ASSERT(rpc_server_);
             rpc_server_->stop(); // stop the RPC server as we will no longer service client requests

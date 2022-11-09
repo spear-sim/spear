@@ -14,7 +14,7 @@ public class InteriorEnvironment : ModuleRules
         // Enable exceptions because some of our third-party dependencies use them
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

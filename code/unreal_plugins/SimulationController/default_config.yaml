@@ -1,8 +1,8 @@
 SIMULATION_CONTROLLER:
   IP: "127.0.0.1"
   PORT: 30000
-  LEVEL_PATH: "/Game/Maps"
-  LEVEL_PREFIX: "Map_"
+  WORLD_PATH_NAME: "" # "/Game/Maps/NewMap.NewMap"
+  LEVEL_NAME: "" # "/Game/Maps/NewMap"
   LEVEL_ID: ""
   SIMULATION_STEP_TIME_SECONDS: 0.1
   TASK: ""
@@ -10,7 +10,7 @@ SIMULATION_CONTROLLER:
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   CAMERA_AGENT:
-    ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "state_data", "control_data", "camera"
+    ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
     STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
     CAMERA:
@@ -68,10 +68,10 @@ SIMULATION_CONTROLLER:
       WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
 
   SPHERE_AGENT:
-    SPHERE_ACTOR_NAME: ""
+    SPHERE_ACTOR_NAME: "" # TODO: spawn this actor instead of finding it within the scene
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
     OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
-    STEP_INFO_COMPONENTS: ["debug_info"]
+    STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
     COMPASS:
       GOAL_ACTOR_NAME: ""
       OFFSET_TO_GOAL_SCALE: 1.0
@@ -85,7 +85,7 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
       POSITION_OFFSET_X: 0.0
       POSITION_OFFSET_Y: 0.0
-      POSITION_OFFSET_Z: 1.0
+      POSITION_OFFSET_Z: 5.0
     APPLY_FORCE:
       FORCE_SCALE: 1.0
       ROTATE_SCALE: 1.0

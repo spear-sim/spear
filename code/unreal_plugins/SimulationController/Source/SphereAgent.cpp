@@ -49,7 +49,7 @@ SphereAgent::SphereAgent(UWorld* world)
         // update camera parameters
         for (auto& pass : camera_sensor_->camera_passes_) {
             // update FOV
-            pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FOV"});
+            pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "FOV"});
         }
 
         new_object_parent_actor_ = world->SpawnActor<AActor>();
@@ -295,8 +295,8 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
         std::map<std::string, TArray<FColor>> render_data_components = camera_sensor_->getRenderData();
         for (auto& render_data_component : render_data_components) {
             std::vector<uint8_t> image(
-                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_HEIGHT"}) *
-                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_WIDTH"}) *
+                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "IMAGE_HEIGHT"}) *
+                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "IMAGE_WIDTH"}) *
                 3);
 
             for (int i = 0; i < render_data_component.second.Num(); i++) {
