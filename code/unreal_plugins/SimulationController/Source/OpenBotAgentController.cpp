@@ -39,7 +39,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         if (sensor == "camera") {
             // Create camera sensor
             camera_sensor_ = std::make_unique<CameraSensor>(
-                open_bot_pawn_->camera_component_,
+                open_bot_pawn_->camera_component_, 
                 Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RENDER_PASSES"}),
                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH"}),
                 Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT"}));
@@ -86,10 +86,6 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
                                                            Config::getValue<bool>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "DEBUG"}));
             ASSERT(inertial_sensor_);
         }
-    }
-
-    // Setup observation camera
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
     }
 }
 
