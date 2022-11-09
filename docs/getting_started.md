@@ -92,8 +92,8 @@ This step will build a standalone executable at the path `code/unreal_projects/P
 - If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a special executable that is only required when cooking.
 - If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`.
 - You can replace `Development` with `Shipping` to build a more optimized executable.
-- You can add `-clean` to do a clean build.
-- You can add `-verbose`, `-UbtArgs="-verbose"`, and `-UbtArgs="-VeryVerbose"` to see additional build details (e.g., the exact command-line arguments that Unreal uses when invoking the underlying compiler).
+- You can specify `-clean` to do a clean build.
+- You can specify `-verbose`, `-UbtArgs="-verbose"`, and `-UbtArgs="-VeryVerbose"` to see additional build details (e.g., the exact command-line arguments that Unreal uses when invoking the underlying compiler).
 
 ## Run your first standalone executable
 
