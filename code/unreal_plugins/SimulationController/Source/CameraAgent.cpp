@@ -47,19 +47,17 @@ CameraAgent::CameraAgent(UWorld* world)
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
 
-        // update camera parameters
-        for (auto& camera_pass : camera_sensor_->camera_passes_) {
+        // update FOV
+        for (auto& pass : camera_sensor_->camera_passes_) {
+            pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FOV"});
+        }
 
-            // update FOV
-            camera_pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FOV"});
-
-            // update auto-exposure settings
-            if (camera_pass.first == "final_color") {
-                camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp   = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP"});
-                camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP"});
-                camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN"});
-                camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedDown           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN"});
-            }
+        // update auto-exposure settings
+        if (camera_sensor_->camera_passes_.contains("final_color")) {
+            camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp   = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP"});
+            camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP"});
+            camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN"});
+            camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.AutoExposureSpeedDown           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN"});
         }
     }
 }

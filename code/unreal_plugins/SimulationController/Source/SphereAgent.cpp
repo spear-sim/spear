@@ -46,9 +46,8 @@ SphereAgent::SphereAgent(UWorld* world)
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
 
-        // update camera parameters
+        // update FOV
         for (auto& pass : camera_sensor_->camera_passes_) {
-            // update FOV
             pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "FOV"});
         }
 

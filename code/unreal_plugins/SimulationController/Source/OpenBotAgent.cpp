@@ -45,10 +45,9 @@ OpenBotAgent::OpenBotAgent(UWorld* world)
             Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
 
-        // update camera parameters
-        for (auto& camera_pass : camera_sensor_->camera_passes_) {
-            // update FOV
-            camera_pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "FOV"});
+        // update FOV
+        for (auto& pass : camera_sensor_->camera_passes_) {
+            pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "FOV"});
         }
     }
 }

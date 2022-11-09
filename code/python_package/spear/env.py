@@ -291,6 +291,10 @@ class Env(gym.Env):
                 self._close_client_server_connection()
             assert False
 
+        if self._config.SPEAR.LAUNCH_MODE != "running_instance":
+            time.sleep(self._config.SPEAR.RPC_CLIENT_AFTER_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
+
+
     def _initialize_unreal_instance(self):
         # do one tick cyle here to prep Unreal Engine so that we can receive valid observations
         self._begin_tick()
