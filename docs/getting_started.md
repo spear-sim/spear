@@ -118,12 +118,12 @@ env = spear.Env(config=config)
 
 # reset the simulation to get an initial observation
 obs = env.reset()
-print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype)
+print(obs["camera_final_color"].shape, obs["camera_final_color"].dtype)
 
 # take a few steps (you should see the sphere move in the Unreal game window)
 for i in range(10):
     obs, reward, done, info = env.step(action={"apply_force": np.array([1, 1], dtype=np.float32)})
-    print(obs["visual_observation_final_color"].shape, obs["visual_observation_final_color"].dtype, reward, done, info)
+    print(obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
 
 # close the environment
 env.close()
