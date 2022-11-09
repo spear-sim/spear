@@ -467,9 +467,7 @@ void OpenBotAgentController::buildNavMesh()
 
     nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable); // Hack
     nav_meshbounds_volume->SetActorLocation(environment_bounds.GetCenter(), false);      // Place the navmesh at the center of the map
-    std::cout << "environment_bounds: X: " << environment_bounds.GetCenter().X << ", Y: " << environment_bounds.GetCenter().Y << ", Z: " << environment_bounds.GetCenter().Z << std::endl;
     nav_meshbounds_volume->SetActorRelativeScale3D(environment_bounds.GetSize() / 200.f); // Rescale the navmesh so it matches the whole world
-    std::cout << "environment_bounds.GetSize(): X: " << environment_bounds.GetSize().X << ", Y: " << environment_bounds.GetSize().Y << ", Z: " << environment_bounds.GetSize().Z << std::endl;
     nav_meshbounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys_->OnNavigationBoundsUpdated(nav_meshbounds_volume);
     nav_meshbounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
