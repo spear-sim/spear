@@ -65,7 +65,7 @@ void SonarSensor::update(float& range)
     const FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
     const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
     float min_dist = range_max_;
-    
+
     // Draw the sensing cone and the sonar rays
     if (debug_) {
         const FVector sensing_cone_vertex_1 = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, max_rx_, max_ry_});
@@ -85,31 +85,31 @@ void SonarSensor::update(float& range)
     FCriticalSection Mutex;
     sonar_actor_->GetWorld()->GetPhysicsScene()->GetPxScene()->lockRead();
     {
-        for (int idx = 0; idx < rays_.size(); idx++) {
+        ParallelFor(rays_.size(), [&](int idx) {
             FHitResult out_hit(ForceInit);
             float radius = std::uniform_real_distribution<float>()(random_gen_);
             float angle = std::uniform_real_distribution<float>(0.0f, 2 * PI)(random_gen_); // Uniform distibution of vales between 0 and 2*PI
             const FVector end_location = sonar_location + transform_rotator.RotateVector({range_max_ * sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters, max_rx_ * radius * std::cosf(angle), max_ry_ * radius * std::sinf(angle)});
-            const bool hit = sonar_actor_->GetWorld()->LineTraceSingleByChannel(out_hit, sonar_location, end_location, ECollisionChannel::ECC_Visibility, trace_params_, FCollisionResponseParams::DefaultResponseParam);
-            const TWeakObjectPtr<AActor> hit_actor = out_hit.Actor;
+            const bool hitted = sonar_actor_->GetWorld()->LineTraceSingleByChannel(out_hit, sonar_location, end_location, ECollisionChannel::ECC_Visibility, trace_params_, FCollisionResponseParams::DefaultResponseParam);
+            const TWeakObjectPtr<AActor> hitted_actor = out_hit.Actor;
             FVector ray = (out_hit.ImpactPoint - sonar_location) / sonar_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
-            if (hit && hit_actor.Get()) {
+            if (hitted && hitted_actor.Get()) {
 
                 // If the ange of hit surface normal and sonar ray is greater than 45°, then no reflection should be observed
-                if (abs(FVector::DotProduct(out_hit.Normal, ray/ray.Size())) < std::cosf(FMath::DegreesToRadians(max_surface_reflection_angle_))) {
+                if (abs(FVector::DotProduct(out_hit.Normal, ray / ray.Size())) < std::cosf(FMath::DegreesToRadians(max_surface_reflection_angle_))) {
                     if (debug_) {
                         DrawDebugPoint(sonar_actor_->GetWorld(), out_hit.ImpactPoint, 2, FColor(0, 0, 255), false, 0.033, 0);
                     }
 
-                    rays_[idx].hit = false;
+                    rays_[idx].hitted = false;
                 }
                 else { // A proper distance measurement can be made
                     if (debug_) {
                         DrawDebugPoint(sonar_actor_->GetWorld(), out_hit.ImpactPoint, 3, FColor(0, 255, 0), false, 0.033, 0);
                     }
 
-                    rays_[idx].hit = true;
+                    rays_[idx].hitted = true;
                 }
                 if (debug_) {
                     DrawDebugLine(sonar_actor_->GetWorld(), sonar_location, out_hit.ImpactPoint, FColor(200, 0, 200), false, 0.033, 0, 0.15);
@@ -124,15 +124,15 @@ void SonarSensor::update(float& range)
                     DrawDebugPoint(sonar_actor_->GetWorld(), end_location, 2, FColor(255, 0, 0), false, 0.033, 0);
                 }
 
-                rays_[idx].hit = false;
+                rays_[idx].hitted = false;
                 rays_[idx].azimuth_and_elevation = FVector2D::ZeroVector;
                 rays_[idx].distance = range_max_;
             }
 
-            if (rays_[idx].hit == true and rays_[idx].distance < min_dist) {
+            if (rays_[idx].hitted == true and rays_[idx].distance < min_dist) {
                 min_dist = rays_[idx].distance; // TODO: add noise
             }
-        }
+        });
     }
     sonar_actor_->GetWorld()->GetPhysicsScene()->GetPxScene()->unlockRead();
 
