@@ -11,7 +11,7 @@
 #include <GameFramework/Actor.h>
 #include <UObject/UObjectGlobals.h>
 
-#include "Assert.h"
+#include "Assert/Assert.h"
 #include "Config.h"
 #include "Serialize.h"
 #include "TickEvent.h"
