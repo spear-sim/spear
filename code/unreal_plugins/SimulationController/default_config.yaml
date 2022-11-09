@@ -78,7 +78,7 @@ SIMULATION_CONTROLLER:
       MOTION_BLUR_AMOUNT: 0.0     # Strength of motion blur, 0:off, should be renamed to intensity
       MOTION_BLUR_MAX: 0.0        # Max distortion caused by motion blur, in percent of the screen width, 0:off
       POST_PROC_BLEND_WEIGHT: 0.0 # Range (0.0, 1.0) where 0 indicates no effect, 1 indicates full effect
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      RENDER_PASSES: ["final_color", "segmentation", "depth_glsl"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
     SONAR_PARAMETERS:
       MAX_REFLECTION_ANGLE: 45.0
       OFFSET_POSITION:
@@ -96,6 +96,28 @@ SIMULATION_CONTROLLER:
         MIN: 0.01
         MAX: 2.5
       NOISE_STD: 0.0
+    IMU_PARAMETERS:
+      DEBUG: False
+      OFFSET_POSITION:
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+      OFFSET_ORIENTATION:
+        ROLL: 0.0
+        PITCH: 0.0
+        YAW: 0.0
+      ACCELEROMETER_NOISE_STD: 
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+      GYROSCOPE_NOISE_STD: 
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+      GYROSCOPE_BIAS: 
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
