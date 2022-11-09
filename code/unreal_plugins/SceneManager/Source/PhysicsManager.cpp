@@ -9,13 +9,13 @@
 
 #include "Assert/Assert.h"
 
-static const int PHYSICAL_MATERIAL_ID_DEFAULT_START = 1000;
-static const int PHYSICAL_MATERIAL_ID_DEFAULT_END   = 1081;
+const int PHYSICAL_MATERIAL_ID_DEFAULT_START = 1000;
+const int PHYSICAL_MATERIAL_ID_DEFAULT_END   = 1081;
 
-static const int PHYSICAL_MATERIAL_ID_DYNAMIC_START = 2000;
+const int PHYSICAL_MATERIAL_ID_DYNAMIC_START = 2000;
 
-static std::map<int, UPhysicalMaterial*> physical_materials_ = {};
-static int current_physical_material_id_ = -1;
+std::map<int, UPhysicalMaterial*> physical_materials_ = {};
+int current_physical_material_id_ = -1;
 
 void PhysicsManager::initialize()
 {

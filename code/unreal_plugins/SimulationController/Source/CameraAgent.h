@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "Agent.h"
-#include "CameraSensor.h"
+#include "CameraSensor.h" // not sure why CameraSensor can't be forward declared but this causes incomplete type errors on macOS
 
 class ACameraActor;
 class ARecastNavMesh;
