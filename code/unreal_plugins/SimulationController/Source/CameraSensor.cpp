@@ -278,12 +278,12 @@ void CameraSensor::setCameraParameters(USceneCaptureComponent2D* scene_capture_c
 
     // raytracing
     scene_capture_component->bUseRayTracingIfEnabled = true;
-    scene_capture_component->PostProcessSettings.bOverride_IndirectLightingIntensity = true;
-    scene_capture_component->PostProcessSettings.IndirectLightingIntensity = 0.0f;
+    // scene_capture_component->PostProcessSettings.bOverride_IndirectLightingIntensity = true;
+    // scene_capture_component->PostProcessSettings.IndirectLightingIntensity = 0.0f;
 
     // raytracing global illumination
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingGI = true;
-    scene_capture_component->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
+    // scene_capture_component->PostProcessSettings.bOverride_RayTracingGI = true;
+    // scene_capture_component->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
     // scene_capture_component->PostProcessSettings.bOverride_RayTracingGIMaxBounces = true;
     // scene_capture_component->PostProcessSettings.RayTracingGIMaxBounces = 4;
     // scene_capture_component->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = true;
@@ -313,18 +313,18 @@ void CameraSensor::setCameraParameters(USceneCaptureComponent2D* scene_capture_c
     // scene_capture_component->PostProcessSettings.bOverride_RayTracingTranslucencyRefraction = true;
     // scene_capture_component->PostProcessSettings.RayTracingTranslucencyRefraction = 1; // default value
 
-    scene_capture_component->PostProcessSettings.bOverride_ReflectionsType = true;
-    scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
+    // scene_capture_component->PostProcessSettings.bOverride_ReflectionsType = true;
+    // scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
     // scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxRoughness = true;
     // scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxRoughness = 0.1f; // min 0.01 - max 1.0
     // scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces = true;
     // scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxBounces = 2; // min 0 - max 50
     // scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = true;
     // scene_capture_component->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 8; // min 1 - max 64
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency = true;
-    scene_capture_component->PostProcessSettings.RayTracingReflectionsTranslucency = 1; // default value
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsShadows = true;
-    scene_capture_component->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
+    // scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency = true;
+    // scene_capture_component->PostProcessSettings.RayTracingReflectionsTranslucency = 1; // default value
+    // scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsShadows = true;
+    // scene_capture_component->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
 
     // Pathtracing
     // scene_capture_component->PostProcessSettings.bOverride_PathTracingMaxBounces = true;
