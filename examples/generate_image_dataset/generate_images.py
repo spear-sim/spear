@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     # load config
     config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
-    config = get_config(config_files)
+    config = spear.get_config(config_files)
 
     # read data from csv
     df = pd.read_csv(args.poses_file)
@@ -82,8 +82,8 @@ if __name__ == "__main__":
 
         # change config based on current scene
         config.defrost()
-        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + str(scene)
-        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + str(scene) + "." + "Map_" _ str(scene)
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene + "." + "Map_" _ scene
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene
         config.freeze()
 
         # copy pak to the executable dir as this is required for launching the appropriate pak file

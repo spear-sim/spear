@@ -1,4 +1,4 @@
-INTERIORSIM:
+SPEAR:
   LAUNCH_MODE: "standalone_executable"
   # STANDALONE_EXECUTABLE: "C:/github/spear/code/unreal_projects/RobotProject/Standalone-Shipping/WindowsNoEditor/RobotProject.exe"
   STANDALONE_EXECUTABLE: "C:/github/spear/code/unreal_projects/RobotProject/Standalone-Shipping/WindowsNoEditor/RobotProject/Binaries/Win64/RobotProject-Win64-Shipping-Cmd.exe"
@@ -13,7 +13,7 @@ SIMULATION_CONTROLLER:
   CUSTOM_UNREAL_CONSOLE_COMMANDS: ["r.EyeAdaptation.ExponentialTransitionDistance 0", "r.Streaming.FullyLoadUsedTextures 1"]
 
   CAMERA_AGENT:
-    ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "state_data", "control_data", "camera"
+    ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
     STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
     CAMERA:

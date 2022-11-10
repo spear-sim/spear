@@ -35,15 +35,16 @@ public:
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
 
 private:
-    // Get a list of the different initial and final positions the agent is expected to navigate to.
+    // Get a list of the different initial and goal positions the agent is expected to navigate to.
     // Positions are in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z".
     void getPositionsFromFile();
 
-    // Generate a pair of random (initial point - reachable target point) as well as a collision-free trajectory between them.
-    // Multiple pairs of (initial point - reachable target point) as well as trajectories between them are generated and evaluated.
+    // Generate a pair of random (initial point, reachable goal point) as well as a collision-free trajectory between them.
+    // Multiple pairs of (initial point, reachable target point) as well as trajectories between them are generated and evaluated.
     // Only the best pair is kept.
     void getPositionsFromTrajectorySampling();
 
+    // Clear our lists of initial and goal positions.
     void clearPositions();
     
     AActor* agent_actor_ = nullptr;
