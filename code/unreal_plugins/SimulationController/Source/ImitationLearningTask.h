@@ -44,7 +44,7 @@ private:
     // Only the best pair is kept.
     void getPositionsFromTrajectorySampling();
 
-    void cleanUpPositions();
+    void clearPositions();
     
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;

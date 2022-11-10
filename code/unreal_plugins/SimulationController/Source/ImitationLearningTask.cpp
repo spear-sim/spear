@@ -56,7 +56,7 @@ ImitationLearningTask::~ImitationLearningTask()
     hit_goal_ = false;
     position_index_ = -1;
 
-    cleanUpPositions();
+    clearPositions();
     
     ASSERT(actor_hit_event_);
     actor_hit_event_->delegate_.Remove(actor_hit_event_delegate_handle_);
@@ -324,7 +324,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     std::cout << "-----------------------------------------------------------" << std::endl;
 }
 
-void ImitationLearningTask::cleanUpPositions()
+void ImitationLearningTask::clearPositions()
 {
     agent_initial_positions_.clear();
     agent_goal_positions_.clear();
