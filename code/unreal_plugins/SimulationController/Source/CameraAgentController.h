@@ -42,7 +42,7 @@ private:
     void buildNavMesh(UNavigationSystemV1* nav_sys);
 
     std::map<std::string, std::vector<float>> action_;
-    AActor* camera_actor_ = nullptr; 
+    AActor* camera_actor_ = nullptr;
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
     UWorld* world_ = nullptr;    

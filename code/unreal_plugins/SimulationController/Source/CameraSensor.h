@@ -29,7 +29,6 @@ public:
 
 private:
     void setCameraParameters(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height);
-    void setCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height);
 
     AActor* new_object_parent_actor_ = nullptr;
 };
