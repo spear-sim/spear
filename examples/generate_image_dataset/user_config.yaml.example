@@ -2,7 +2,7 @@ INTERIORSIM:
   LAUNCH_MODE: "standalone_executable"
   STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject/Binaries/Win64/RobotProject-Cmd.exe"
   TEMP_DIR: "C:/Users/ADAS/repos/interiorsim/examples/generate_image_dataset"
-  CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-dx12", "-RobotSimSettingPath=C:/Users/ADAS/repos/interiorsim/code/unreal_plugins/RobotSim/setting/settings.json"]
+  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-dx12", "-RobotSimSettingPath=C:/Users/ADAS/repos/interiorsim/code/unreal_plugins/RobotSim/setting/settings.json"]
   RENDER_OFFSCREEN: True
 
 SIMULATION_CONTROLLER:
