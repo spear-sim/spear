@@ -53,82 +53,64 @@ CameraAgentController::CameraAgentController(UWorld* world)
 
         if (camera_pass.first == "final_color") {
             // update auto-exposure settings
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMinBrightness =
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_MIN_BRIGHTNESS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureMinBrightness =
-                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_MIN_BRIGHTNESS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMaxBrightness =
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_MAX_BRIGHTNESS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureMaxBrightness =
-                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_MAX_BRIGHTNESS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp = 
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp = 
-                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = 
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedDown = 
-                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMinBrightness = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MIN_BRIGHTNESS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureMinBrightness = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_MIN_BRIGHTNESS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMaxBrightness = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MAX_BRIGHTNESS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureMaxBrightness = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_MAX_BRIGHTNESS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedDown = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN" });
 
             // update indirect lighting 
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_IndirectLightingIntensity =
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.IndirectLightingIntensity =
-                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_IndirectLightingIntensity = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.IndirectLightingIntensity = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY" });
 
             // update raytracing global illumination
-            if (Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_ENABLE" })) {
-                camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingGI = true;
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingGI = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI" });
+            auto final_color_gi_type = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_TYPE" });
+
+            if (final_color_gi_type == "BruteForce") {
                 camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
             }
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingGIMaxBounces = 
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_OVERRIDE_MAX_BOUNCES" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingGIMaxBounces = 
-                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_MAX_BOUNCES" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = 
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_OVERRIDE_SAMPLES_PER_PIXEL" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingGISamplesPerPixel = 
-                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_SAMPLES_PER_PIXEL" });
+            else if (final_color_gi_type != "") {
+                ASSERT(false);
+            }
+
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingGIMaxBounces = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI_MAX_BOUNCES" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingGIMaxBounces = Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_MAX_BOUNCES" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI_SAMPLES_PER_PIXEL" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingGISamplesPerPixel = Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_SAMPLES_PER_PIXEL" });
 
             // update raytracing ambient occlusion
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingAO =
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_OVERRIDE" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingAO =
-                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingAOSamplesPerPixel =
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_OVERRIDE_SAMPLES_PER_PIXEL" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingAOSamplesPerPixel =
-                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_SAMPLES_PER_PIXEL" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingAOIntensity =
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_OVERRIDE_INTENSITY" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingAOIntensity =
-                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_INTENSITY" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingAORadius =
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_OVERRIDE_RADIUS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingAORadius =
-                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_RADIUS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingAO = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingAO = Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingAOSamplesPerPixel = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO_SAMPLES_PER_PIXEL" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingAOSamplesPerPixel = Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_SAMPLES_PER_PIXEL" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingAOIntensity = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO_INTENSITY" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingAOIntensity = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_INTENSITY" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingAORadius = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO_RADIUS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingAORadius = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_AO_RADIUS" });
 
             // update raytracing reflections
-            if (Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_ENABLE" })) {
-                camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_ReflectionsType = true;
-                camera_pass.second.scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing;
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_ReflectionsType = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE" });
+            auto final_color_reflections_type = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_REFLECTIONS_TYPE" });
+
+            if (final_color_reflections_type == "RayTracing") { 
+                camera_pass.second.scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing; 
             }
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces = 
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_OVERRIDE_MAX_BOUNCES" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = 
-                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_BOUNCES" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxRoughness = 
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_OVERRIDE_MAX_ROUGHNESS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxRoughness = 
-                Config::getValue<float>         ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = 
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_OVERRIDE_SAMPLES_PER_PIXEL" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 
-                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency =
-                Config::getValue<bool>          ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_OVERRIDE_TRANSLUCENCY" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsTranslucency =
-                Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_TRANSLUCENCY" });
+            else if (final_color_reflections_type != "") { 
+                ASSERT(false); 
+            }
+
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxBounces = Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_BOUNCES" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsMaxRoughness = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsMaxRoughness = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_TRANSLUCENCY" });
+            camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingReflectionsTranslucency = Config::getValue<unsigned long> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_REFLECTIONS_TRANSLUCENCY" });
         }
     }
 }
