@@ -10,5 +10,9 @@ public class SimpleSimTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.AddRange( new string[] { "SimpleSim" } );
+
+		if (Target.Platform == UnrealTargetPlatform.Win64) {
+        	bBuildAdditionalConsoleApp = true;
+    	}
 	}
 }
