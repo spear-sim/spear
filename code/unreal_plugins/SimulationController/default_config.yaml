@@ -158,15 +158,10 @@ SIMULATION_CONTROLLER:
       EXPORT_NAV_DATA_OBJ_DIR: ""
 
   SIMPLE_SIM_AGENT_CONTROLLER:    
-    ACTION_MODE: "" # "low_level_control" or "teleport"
-    OBSERVATION_MODE: "mixed"
-    AGENT_ACTOR_NAME: "" 
-    AGENT_ACTOR_MESH: "" # "sphere" or "openBot"
-    AGENT_POSITION_X: 0
-    AGENT_POSITION_Y: 0
+    OBSERVATION_MODE: ""
+    AGENT_ACTOR_NAME: ""
+    AGENT_ACTOR_MESH: "sphere" # "sphere" or "openBot"
     GOAL_ACTOR_NAME: ""
-    GOAL_POSITION_X: 0
-    GOAL_POSITION_Y: 0
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 0.0
     SPHERE:

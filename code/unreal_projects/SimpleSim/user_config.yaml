@@ -1,11 +1,14 @@
 INTERIORSIM:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/interiorsim/code/unreal_projects/SimpleSim/ArchivedBuilds/WindowsNoEditor/SimpleSim.exe"
+  STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/interiorsim/code/unreal_projects/SimpleSim/ArchivedBuilds/WindowsNoEditor/SimpleSim/Binaries/Win64/SimpleSim-Cmd.exe"
   TEMP_DIR: "C:/Users/ADAS/repos/interiorsim/code/unreal_projects/SimpleSim/Temp"
 
 SIMULATION_CONTROLLER:
   TASK_NAME: "PointGoalNavigationTask"
   AGENT_CONTROLLER_NAME: "SimpleSimAgentController"
+  LEVEL_ID: 'PointGoalNavMap'
+  LEVEL_PATH: /Game
+  LEVEL_PREFIX: ''
   
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: "Sphere_8"
@@ -28,18 +31,11 @@ SIMULATION_CONTROLLER:
       SPAWN_DISTANCE_THRESHOLD: 50.0
     OBSTACLE_IGNORE_ACTOR_NAMES: [ "Floor" ]
 
-  SIMPLE_SIM_AGENT_CONTROLLER:    
-    ACTION_MODE: "" # "low_level_control" or "teleport"
+  SIMPLE_SIM_AGENT_CONTROLLER:
     OBSERVATION_MODE: "mixed"
-    AGENT_ACTOR_NAME: "sphere"
-    AGENT_ACTOR_MESH: "sphere" # "sphere" or "openBot"
-    AGENT_POSITION_X: -30.0
-    AGENT_POSITION_Y: -30.0
-    AGENT_POSITION_Z: 5.0
-    GOAL_ACTOR_NAME: "goal"
-    GOAL_POSITION_X: 30.0
-    GOAL_POSITION_Y: 30.0
-    GOAL_POSITION_Z: 5.0
+    AGENT_ACTOR_NAME: "Sphere_8"
+    AGENT_ACTOR_MESH: "openBot" # "sphere" or "openBot"
+    GOAL_ACTOR_NAME: "Goal"
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 0.0
     SPHERE:

@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include <Camera/CameraActor.h>
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>
@@ -18,6 +19,7 @@
 #include "Box.h"
 #include "Config.h"
 #include "CameraSensor.h"
+#include "OpenBotPawn.h"
 #include "Serialize.h"
 #include "TickEvent.h"
 
@@ -26,7 +28,7 @@ SimpleSimAgentController::SimpleSimAgentController(UWorld* world)
     // store ref to world
     world_ = world;
 
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         new_object_parent_actor_ = world->SpawnActor<AActor>();
         ASSERT(new_object_parent_actor_);
 
@@ -36,11 +38,117 @@ SimpleSimAgentController::SimpleSimAgentController(UWorld* world)
         post_physics_pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
         post_physics_pre_render_tick_event_handle_ = post_physics_pre_render_tick_event_->delegate_.AddRaw(this, &SimpleSimAgentController::postPhysicsPreRenderTickEventHandler);
     }
+
+    // spawn agent actor
+    FActorSpawnParameters spawn_params;
+    spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_ACTOR_NAME" }).c_str());
+    spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_ACTOR_MESH" }) == "sphere") {
+        // load agent mesh and agent material
+        agent_actor_ = world_->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(),
+            FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_HEIGHT" })),
+            FRotator(0, 0, 0), spawn_params);
+        ASSERT(dynamic_cast<AStaticMeshActor*>(agent_actor_));
+
+        dynamic_cast<AStaticMeshActor*>(agent_actor_)->SetMobility(EComponentMobility::Type::Movable);
+
+        agent_static_mesh_component_ = dynamic_cast<AStaticMeshActor*>(agent_actor_)->GetStaticMeshComponent();
+        ASSERT(agent_static_mesh_component_);
+
+        UStaticMesh* agent_mesh = LoadObject<UStaticMesh>(world_, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+        UMaterial* agent_mat = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Materials/Agent_MAT.Agent_MAT'"));
+        ASSERT(agent_mesh);
+        ASSERT(agent_mat);
+
+        dynamic_cast<UStaticMeshComponent*>(agent_static_mesh_component_)->SetStaticMesh(agent_mesh);
+        agent_static_mesh_component_->SetMaterial(0, agent_mat);
+    }
+    else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_ACTOR_MESH" }) == "openBot") {
+        agent_actor_ = world_->SpawnActor<AOpenBotPawn>(AOpenBotPawn::StaticClass(),
+            FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_HEIGHT" })),
+            FRotator(0, 0, 0), spawn_params);
+        ASSERT(dynamic_cast<AOpenBotPawn*>(agent_actor_));
+
+        agent_static_mesh_component_ = dynamic_cast<AOpenBotPawn*>(agent_actor_)->skeletal_mesh_component_;
+    }
+    else {
+        ASSERT(false);
+    }
+
+    // spawn goal actor
+    spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "GOAL_ACTOR_NAME" }).c_str());
+    spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    goal_actor_ = world_->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), 
+        FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_HEIGHT" })), 
+        FRotator(0, 0, 0), spawn_params);
+    goal_actor_->SetMobility(EComponentMobility::Type::Movable);
+    ASSERT(goal_actor_);
+
+    goal_static_mesh_component_ = goal_actor_->GetStaticMeshComponent();
+    ASSERT(goal_static_mesh_component_);
+
+    // load goal mesh and goal material
+    UStaticMesh* goal_mesh = LoadObject<UStaticMesh>(world_, TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'"));
+    UMaterial* goal_mat = LoadObject<UMaterial>(world_, TEXT("Material'/Game/Materials/Goal_MAT.Goal_MAT'"));
+    ASSERT(goal_mesh);
+    ASSERT(goal_mat);
+
+    goal_static_mesh_component_->SetStaticMesh(goal_mesh);
+    goal_static_mesh_component_->SetMaterial(0, goal_mat);
+
+    // set physics state
+    agent_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
+    agent_static_mesh_component_->SetSimulatePhysics(true);
+    agent_static_mesh_component_->SetAngularDamping(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "ANGULAR_DAMPING" }));
+    agent_static_mesh_component_->SetLinearDamping(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "LINEAR_DAMPING" }));
+    agent_static_mesh_component_->BodyInstance.MaxAngularVelocity = FMath::RadiansToDegrees(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "MAX_ANGULAR_VELOCITY" }));
+    agent_static_mesh_component_->BodyInstance.MassScale = FMath::RadiansToDegrees(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "MASS_SCALE" }));
+    agent_static_mesh_component_->SetNotifyRigidBodyCollision(true);
+
+    // setup observation camera
+    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "OBSERVATION_MODE" }) == "mixed") {
+
+        spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_NAME" }).c_str());
+        spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+        camera_actor_ = world_->SpawnActor<ACameraActor>(agent_actor_->GetActorLocation(), FRotator(0, 0, 0), spawn_params);
+        ASSERT(camera_actor_);
+        ASSERT(dynamic_cast<ACameraActor*>(camera_actor_));
+
+        observation_camera_sensor_ = std::make_unique<CameraSensor>(
+            dynamic_cast<ACameraActor*>(camera_actor_)->GetCameraComponent(),
+            Config::getValue<std::vector<std::string>>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }),
+            Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH" }),
+            Config::getValue<unsigned long>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT" }));
+        ASSERT(observation_camera_sensor_);
+    }
 }
 
 SimpleSimAgentController::~SimpleSimAgentController()
 {
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
+    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "OBSERVATION_MODE" }) == "mixed") {
+        ASSERT(observation_camera_sensor_);
+        observation_camera_sensor_ = nullptr;
+
+        ASSERT(camera_actor_);
+        camera_actor_ = nullptr;
+    }
+
+    ASSERT(goal_static_mesh_component_);
+    goal_static_mesh_component_ = nullptr;
+
+    ASSERT(goal_actor_);
+    goal_actor_ = nullptr;
+
+    ASSERT(agent_static_mesh_component_);
+    agent_static_mesh_component_ = nullptr;
+
+    ASSERT(agent_actor_);
+    agent_actor_ = nullptr;
+
+    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         ASSERT(post_physics_pre_render_tick_event_);
         post_physics_pre_render_tick_event_->delegate_.Remove(post_physics_pre_render_tick_event_handle_);
         post_physics_pre_render_tick_event_handle_.Reset();
@@ -57,99 +165,11 @@ SimpleSimAgentController::~SimpleSimAgentController()
 }
 
 void SimpleSimAgentController::findObjectReferences(UWorld* world)
-{
-    // spawn agent actor and goal actor
-    FActorSpawnParameters spawn_params;
-    spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "AGENT_ACTOR_NAME" }).c_str());
-    spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-    agent_actor_ = world->SpawnActor<AStaticMeshActor>(FVector(
-        Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_POSITION_X" }),
-        Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_POSITION_Y" }), 
-        Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_POSITION_Z" })),
-        FRotator(0, -180.0f, 0), spawn_params);
-    ASSERT(agent_actor_);
-
-    spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "GOAL_ACTOR_NAME" }).c_str());
-    spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-    goal_actor_ = world->SpawnActor<AStaticMeshActor>(FVector(
-        Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "GOAL_POSITION_X" }),
-        Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "GOAL_POSITION_Y" }),
-        Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "GOAL_POSITION_Z" })),
-        FRotator(0, 180.0f, 0), spawn_params);
-    ASSERT(goal_actor_);
-
-    // load meshes
-    agent_static_mesh_component_ = NewObject<UStaticMeshComponent>(agent_actor_, TEXT("sphere_mesh"));
-    agent_static_mesh_component_->AttachTo(agent_actor_->GetRootComponent());
-
-    static ConstructorHelpers::FObjectFinder<UStaticMesh>agent_mesh(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
-    agent_static_mesh_component_->SetStaticMesh(agent_mesh.Object);
-    ASSERT(agent_static_mesh_component_);
-
-    goal_static_mesh_component_ = NewObject<UStaticMeshComponent>(goal_actor_, TEXT("goal_mesh"));
-    goal_static_mesh_component_->AttachTo(goal_actor_->GetRootComponent());
-
-    static ConstructorHelpers::FObjectFinder<UStaticMesh>goal_mesh(TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'"));
-    goal_static_mesh_component_->SetStaticMesh(goal_mesh.Object);
-    ASSERT(goal_static_mesh_component_);
-
-    // need to set this to apply forces or move objects
-    agent_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
-    goal_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
-
-    // set physics state
-    agent_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
-    agent_static_mesh_component_->SetSimulatePhysics(true);
-    agent_static_mesh_component_->SetAngularDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "ANGULAR_DAMPING"}));
-    agent_static_mesh_component_->SetLinearDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "LINEAR_DAMPING"}));
-    agent_static_mesh_component_->BodyInstance.MaxAngularVelocity = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "MAX_ANGULAR_VELOCITY"}));
-    agent_static_mesh_component_->BodyInstance.MassScale = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "MASS_SCALE"}));
-    agent_static_mesh_component_->SetNotifyRigidBodyCollision(true);
-
-    // setup observation camera
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-
-        spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_NAME" }).c_str());
-        spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-        camera_actor_ = world->SpawnActor<AActor>(FVector(
-            Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_POSITION_X" }),
-            Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_POSITION_Y" }),
-            Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_HEIGHT" })),
-            FRotator(0, -180.0f, 0), spawn_params);
-        ASSERT(camera_actor_);
-
-        observation_camera_sensor_ = std::make_unique<CameraSensor>(camera_actor_, 
-            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "RENDER_PASSES" }), 
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_WIDTH"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "IMAGE_HEIGHT"}));
-        ASSERT(observation_camera_sensor_);
-    }
+{ 
 }
 
 void SimpleSimAgentController::cleanUpObjectReferences()
-{
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
-        ASSERT(observation_camera_sensor_);
-        observation_camera_sensor_ = nullptr;
-
-        ASSERT(camera_actor_);
-        camera_actor_ = nullptr;
-    }
-    
-    ASSERT(goal_static_mesh_component_);
-    goal_static_mesh_component_ = nullptr;
-
-    ASSERT(agent_static_mesh_component_);
-    agent_static_mesh_component_ = nullptr;
-
-    ASSERT(goal_actor_);
-    goal_actor_ = nullptr;
-
-    ASSERT(agent_actor_);
-    agent_actor_ = nullptr;
+{  
 }
 
 std::map<std::string, Box> SimpleSimAgentController::getActionSpace() const
@@ -221,7 +241,7 @@ void SimpleSimAgentController::applyAction(const std::map<std::string, std::vect
 {
     if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "mixed") {
         // Get yaw from the observation camera, apply force to the sphere in that direction
-        FVector force = camera_actor_->GetActorRotation().RotateVector(FVector(action.at("apply_force").at(0), 0.0f, 0.0f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT_CONTROLLER", "MIXED_MODE", "ACTION_APPLY_FORCE_SCALE"});
+        FVector force = camera_actor_->GetActorRotation().RotateVector(FVector(action.at("apply_force").at(0), 0.0f, 0.0f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "ACTION_APPLY_FORCE_SCALE"});
 
         ASSERT(isfinite(force.X));
         ASSERT(isfinite(force.Y));

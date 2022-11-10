@@ -41,14 +41,14 @@ public:
 
 private:
     //sort things 
-    AStaticMeshActor* agent_actor_ = nullptr;
+    AActor* agent_actor_ = nullptr;
     AActor* camera_actor_ = nullptr; // do i need this ?
     AStaticMeshActor* goal_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
 
     std::unique_ptr<CameraSensor> observation_camera_sensor_ = nullptr;
 
-    UStaticMeshComponent* agent_static_mesh_component_ = nullptr;
+    UMeshComponent* agent_static_mesh_component_ = nullptr;
     UStaticMeshComponent* goal_static_mesh_component_ = nullptr;
 
     UTickEvent* post_physics_pre_render_tick_event_ = nullptr;
