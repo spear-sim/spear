@@ -4,7 +4,6 @@ import argparse
 import numpy as np
 import os
 import pandas as pd
-import shutil
 import sys
 
 from interiorsim import Env
@@ -22,8 +21,7 @@ elif sys.platform == "win32":
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--paks_dir", type=str, required=True)
-    parser.add_argument("--executable_content_dir", type=str, required=True)
+    parser.add_argument("--executable_content_paks_dir", type=str, required=True)
     parser.add_argument("--num_poses_per_scene", type=int, default=10)
     parser.add_argument("--poses_file", type=str, required=True)
     args = parser.parse_args()
@@ -35,8 +33,8 @@ if __name__ == "__main__":
     # reset seed
     np.random.seed(0)
 
-    # get list of scenes from pak_dir
-    scenes = os.listdir(args.paks_dir)
+    # get list of scenes from executable_content_paks_dir
+    scenes = [x for x in os.listdir(args.executable_content_paks_dir) if os.path.isdir(os.path.join(args.executable_content_paks_dir, x))]
 
     # iterate through all scenes
     for idx, scene in enumerate(scenes):
@@ -47,11 +45,6 @@ if __name__ == "__main__":
         config.defrost()
         config.SIMULATION_CONTROLLER.LEVEL_ID = scene
         config.freeze()
-
-        # copy pak to the executable dir as this is required for launching the appropriate pak file
-        assert os.path.exists(f"{args.executable_content_dir}/Paks")
-        if not os.path.exists(f"{args.executable_content_dir}/Paks/{scene}_{PLATFORM}.pak"):
-            shutil.copy(os.path.join(args.paks_dir, f"{scene}/paks/{PLATFORM}/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_content_dir}/Paks")
 
         # create Env object
         env = Env(config)
@@ -80,7 +73,3 @@ if __name__ == "__main__":
 
         # close the current scene
         env.close()
-        
-        # remove copied pak file from exectuable dir's Content folder as it is no longer required
-        os.remove(f"{args.executable_content_dir}/Paks/{scene}_{PLATFORM}.pak")
-    
