@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 import os
 import pandas as pd
-import shutil
 import spear
 import sys
 
@@ -62,15 +61,12 @@ class CustomEnv(spear.Env):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--paks_dir", type=str, required=True)
-    parser.add_argument("--executable_content_dir", type=str, required=True)
     parser.add_argument("--poses_file", type=str, required=True)
     parser.add_argument("--output_dir", "-o", type=str, required=True)
     args = parser.parse_args()
 
     # load config
-    config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
-    config = spear.get_config(config_files)
+    config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
 
     # read data from csv
     df = pd.read_csv(args.poses_file)
@@ -86,11 +82,6 @@ if __name__ == "__main__":
         config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene
         config.freeze()
 
-        # copy pak to the executable dir as this is required for launching the appropriate pak file
-        assert os.path.exists(f"{args.executable_content_dir}/Paks")
-        if not os.path.exists(f"{args.executable_content_dir}/Paks/{scene}_{PLATFORM}.pak"):
-            shutil.copy(os.path.join(args.paks_dir, f"{scene}/paks/{PLATFORM}/{scene}/{scene}_{PLATFORM}.pak"), f"{args.executable_content_dir}/Paks")
-
         # create dir for storing images
         for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
             if not os.path.exists(os.path.join(args.output_dir, f"{scene}/{render_pass}")):
@@ -101,14 +92,6 @@ if __name__ == "__main__":
 
         # reset the simulation
         _ = env.reset()
-
-        # iterate over all poses for this scene once before getting observations to warm-up the Unreal Engine rendering system
-        for pose in df.loc[df["map_id"] == scene].to_records():
-            env.single_step(
-                action={
-                    "set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32),
-                    "set_num_random_points": np.array([0], np.uint32)},
-                get_observation=False)
 
         # iterate over all poses to capture images
         for pose in df.loc[df["map_id"] == scene].to_records():
@@ -133,7 +116,4 @@ if __name__ == "__main__":
 
         # close the current scene
         env.close()
-
-        # remove copied pak file from exectuable dir's Content folder as it is no longer required
-        os.remove(f"{args.executable_content_dir}/Paks/{scene}_{PLATFORM}.pak")
     
