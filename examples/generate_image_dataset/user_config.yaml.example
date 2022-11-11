@@ -1,6 +1,5 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  # STANDALONE_EXECUTABLE: "C:/github/spear/code/unreal_projects/RobotProject/Standalone-Shipping/WindowsNoEditor/RobotProject.exe"
   STANDALONE_EXECUTABLE: "C:/github/spear/code/unreal_projects/RobotProject/Standalone-Shipping/WindowsNoEditor/RobotProject/Binaries/Win64/RobotProject-Win64-Shipping-Cmd.exe"
   TEMP_DIR: "C:/github/spear/code/unreal_projects/RobotProject/Temp"
 
