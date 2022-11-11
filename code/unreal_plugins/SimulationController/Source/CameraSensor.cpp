@@ -41,7 +41,25 @@ CameraSensor::CameraSensor(UCameraComponent* component, std::vector<std::string>
         ASSERT(texture_render_target);
         
         // Set Camera Parameters
-        setCameraParameters(scene_capture_component, texture_render_target, width, height);
+        scene_capture_component->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+        scene_capture_component->bAlwaysPersistRenderingState = true;
+
+        // Initialize TextureRenderTarget2D format. 
+        // Changing the dimensions of a TextureRenderTarget2D after they have been set initially can lead to unexpected behavior. So we only
+        // set the dimensions once at object creation time, and we require width and height be passed into the CameraSensor constructor.
+        constexpr bool force_linear_gamma = false;
+        texture_render_target->InitCustomFormat(width, height, PF_B8G8R8A8, force_linear_gamma); // PF_B8G8R8A8 disables HDR; 
+        texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+        texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
+        texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
+        texture_render_target->SRGB = true; // false for pixels to be stored in linear space
+        texture_render_target->bAutoGenerateMips = false;
+        constexpr bool clear_render_target = true;
+        texture_render_target->UpdateResourceImmediate(clear_render_target);
+
+        // Set TextureRenderTarget2D it into SceneCaptureComponent2D   
+        scene_capture_component->TextureTarget = texture_render_target;
+        scene_capture_component->RegisterComponent();
 
         if (pass_name != "final_color") {
             // Load PostProcessMaterial
@@ -51,6 +69,7 @@ CameraSensor::CameraSensor(UCameraComponent* component, std::vector<std::string>
 
             // Set PostProcessMaterial
             scene_capture_component->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, scene_capture_component), 1.0f);
+            scene_capture_component->ShowFlags.SetPostProcessMaterial(true); // enabled by EnableAdvancedFeatures();
         }
 
         CameraPass pass;
@@ -131,51 +150,4 @@ std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor> data
         out.push_back(dist);
     }
     return out;
-}
-
-void CameraSensor::setCameraParameters(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height)
-{
-    // SET BASIC PARAMETERS
-    scene_capture_component->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-    scene_capture_component->bAlwaysPersistRenderingState = true;
-
-    // Initialize TextureRenderTarget2D format. 
-    // Changing the dimensions of a TextureRenderTarget2D after they have been set initially can lead to unexpected behavior. 
-    // So we only set the dimensions once at object creation time, and we require width and height be passed into the CameraSensor constructor.
-    bool force_linear_gamma = false;
-    texture_render_target->InitCustomFormat(width, height, PF_B8G8R8A8, force_linear_gamma); // PF_B8G8R8A8 disables HDR; 
-    texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-    texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
-    texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
-    texture_render_target->SRGB = true; // false for pixels to be stored in linear space
-    texture_render_target->bAutoGenerateMips = false;
-    bool clear_render_target = true;
-    texture_render_target->UpdateResourceImmediate(clear_render_target);
-
-    // Set TextureRenderTarget2D it into SceneCaptureComponent2D   
-    scene_capture_component->TextureTarget = texture_render_target;
-    scene_capture_component->RegisterComponent();
-
-    // raytracing
-    scene_capture_component->bUseRayTracingIfEnabled = true;
-
-    // Set ShowFlags
-    scene_capture_component->ShowFlags.SetAmbientOcclusion(true);               // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetAntiAliasing(true);
-    scene_capture_component->ShowFlags.SetCameraImperfections(true);            // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetColorGrading(true);                   // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetDepthOfField(true);                   // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetDistanceFieldAO(true);                // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetRayTracedDistanceFieldShadows(true);
-    scene_capture_component->ShowFlags.SetDynamicShadows(true);
-    scene_capture_component->ShowFlags.SetEyeAdaptation(true);                  // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetGrain(true);                          // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetIndirectLightingCache(true);          // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetLensFlares(true);                     // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetLightShafts(true);                    // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetPostProcessMaterial(true);            // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetScreenSpaceReflections(true);         // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetSeparateTranslucency(true);           // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetTemporalAA(true);                     // enabled by EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetVignette(true);                       // enabled by EnableAdvancedFeatures();
 }
