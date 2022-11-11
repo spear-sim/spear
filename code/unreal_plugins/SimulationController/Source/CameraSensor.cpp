@@ -137,20 +137,20 @@ void CameraSensor::setCameraParameters(USceneCaptureComponent2D* scene_capture_c
 {
     // SET BASIC PARAMETERS
     scene_capture_component->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-    scene_capture_component->FOVAngle = 60.f;
     scene_capture_component->bAlwaysPersistRenderingState = true;
 
     // Initialize TextureRenderTarget2D format. 
     // Changing the dimensions of a TextureRenderTarget2D after they have been set initially can lead to unexpected behavior. 
     // So we only set the dimensions once at object creation time, and we require width and height be passed into the CameraSensor constructor.
-    bool force_linear_gamma = true;
+    bool force_linear_gamma = false;
     texture_render_target->InitCustomFormat(width, height, PF_B8G8R8A8, force_linear_gamma); // PF_B8G8R8A8 disables HDR; 
     texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
     texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
     texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
     texture_render_target->SRGB = true; // false for pixels to be stored in linear space
     texture_render_target->bAutoGenerateMips = false;
-    texture_render_target->UpdateResourceImmediate(true);
+    bool clear_render_target = true;
+    texture_render_target->UpdateResourceImmediate(clear_render_target);
 
     // Set TextureRenderTarget2D it into SceneCaptureComponent2D   
     scene_capture_component->TextureTarget = texture_render_target;

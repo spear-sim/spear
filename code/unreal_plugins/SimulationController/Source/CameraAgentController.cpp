@@ -53,10 +53,6 @@ CameraAgentController::CameraAgentController(UWorld* world)
 
         if (camera_pass.first == "final_color") {
             // update auto-exposure settings
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMinBrightness = Config::getValue<bool> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MIN_BRIGHTNESS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureMinBrightness           = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_MIN_BRIGHTNESS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureMaxBrightness = Config::getValue<bool> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MAX_BRIGHTNESS" });
-            camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureMaxBrightness           = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_MAX_BRIGHTNESS" });
             camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp       = Config::getValue<bool> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP" });
             camera_pass.second.scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp                 = Config::getValue<float>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP" });
             camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown     = Config::getValue<bool> ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN" });
@@ -68,10 +64,10 @@ CameraAgentController::CameraAgentController(UWorld* world)
 
             // update raytracing global illumination
             camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_RayTracingGI = Config::getValue<bool>       ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI" });
-            auto final_color_gi_type                                                                = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_TYPE" });
-            if (final_color_gi_type == "BruteForce") {
+            auto raytracing_gi_type = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_RAYTRACING_GI_TYPE" });
+            if (raytracing_gi_type == "BruteForce") {
                 camera_pass.second.scene_capture_component_->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
-            } else if (final_color_gi_type != "") {
+            } else if (raytracing_gi_type != "") {
                 ASSERT(false);
             }
 
@@ -92,10 +88,10 @@ CameraAgentController::CameraAgentController(UWorld* world)
 
             // update raytracing reflections
             camera_pass.second.scene_capture_component_->PostProcessSettings.bOverride_ReflectionsType = Config::getValue<bool>       ({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE" });
-            auto final_color_reflections_type                                                          = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_REFLECTIONS_TYPE" });
-            if (final_color_reflections_type == "RayTracing") { 
+            auto reflections_type                                                          = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "FINAL_COLOR_REFLECTIONS_TYPE" });
+            if (reflections_type == "RayTracing") {
                 camera_pass.second.scene_capture_component_->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing; 
-            } else if (final_color_reflections_type != "") { 
+            } else if (reflections_type != "") {
                 ASSERT(false); 
             }
 

@@ -130,10 +130,6 @@ SIMULATION_CONTROLLER:
       # We found these values achieve a good trade off between image quality and speed.
       # When UE defines ClampMin/ClampMax values, UE will clamp those values. If UE
       # defines UIMin/UIMax as min/max values, UE will only clamp input values in editor.
-      FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MIN_BRIGHTNESS: true
-      FINAL_COLOR_AUTO_EXPOSURE_MIN_BRIGHTNESS: -10.0 # ClampMin -10.0, UIMax 20.0
-      FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MAX_BRIGHTNESS: true
-      FINAL_COLOR_AUTO_EXPOSURE_MAX_BRIGHTNESS: 5.0 # ClampMin -10.0, UIMax 20.0
       FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP: true
       FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP: 9999.0 # ClampMin 0.02, UIMax 20.0. 
       FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN: true
