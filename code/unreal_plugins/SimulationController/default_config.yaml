@@ -63,6 +63,24 @@ SIMULATION_CONTROLLER:
     AGENT_POSITION_Z_MIN: 5.0
     AGENT_POSITION_Z_MAX: 20.0
     PATH_TRAJECTORY_PAIRS: ""
+    AUTOPILOT:
+      # PID proportional gain for the autopilot
+      PROPORTIONAL_GAIN_HEADING: 5.25
+  
+      # PID derivative gain for the autopilot
+      DERIVATIVE_GAIN_HEADING: 0.5
+  
+      # PID proportional gain for the autopilot
+      PROPORTIONAL_GAIN_DIST: 4.0
+  
+      # PID derivative gain for the autopilot
+      DERIVATIVE_GAIN_DIST: -0.1
+  
+      # Angular range within which the vehicle moves forward to the target in [rad]
+      FORWARD_MIN_ANGLE: 0.5
+  
+      # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+      CONTROL_SATURATION: 0.9
 
   OPENBOT_AGENT_CONTROLLER:
     AGENT_ACTOR_NAME: ""

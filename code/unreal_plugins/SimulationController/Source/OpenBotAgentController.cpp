@@ -29,6 +29,7 @@
 OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
     FActorSpawnParameters SpawnParams;
+    SpawnParams.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_ACTOR_NAME"}).c_str());
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
     open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(AOpenBotPawn::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
     ASSERT(open_bot_pawn_);
@@ -200,13 +201,15 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
 
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
-    box.dtype = DataType::Float32;
-
     box.shape = {2};
+    box.dtype = DataType::Float32;
     observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
 
-    box.shape = {6};
-    observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
+    box.low = std::numeric_limits<float>::lowest();
+    box.high = std::numeric_limits<float>::max();
+    box.shape = {10};
+    box.dtype = DataType::Float32;
+    observation_space["telemetry_data"] = std::move(box); // agent position (X, Y, Z) in [m] relative to the world frame, orientation quaternion (X, Y, Z, W) relative to the world frame and goal position (X, Y, Z) in [m] relative to the world frame.
 
     for (const auto& sensor : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SENSORS"})) {
 
@@ -220,7 +223,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
                                  Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH"}),
                                  3};
                     box.dtype = DataType::UInteger8;
-                    observation_space["rgb"] = std::move(box);
+                    observation_space["rgb_data"] = std::move(box);
                 }
 
                 // Depth camera
@@ -231,7 +234,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
                                  Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH"}),
                                  1};
                     box.dtype = DataType::UInteger8;
-                    observation_space["depth"] = std::move(box);
+                    observation_space["depth_data"] = std::move(box);
                 }
 
                 // Segmentation camera
@@ -242,18 +245,24 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
                                  Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH"}),
                                  3};
                     box.dtype = DataType::UInteger8;
-                    observation_space["segmentation"] = std::move(box);
+                    observation_space["segmentation_data"] = std::move(box);
                 }
             }
         }
 
         if (sensor == "sonar") {
+            box.low = std::numeric_limits<float>::lowest();
+            box.high = std::numeric_limits<float>::max();
             box.shape = {1};
+            box.dtype = DataType::Float32;
             observation_space["sonar_data"] = std::move(box); // Front obstacle distance
         }
 
         if (sensor == "imu") {
+            box.low = std::numeric_limits<float>::lowest();
+            box.high = std::numeric_limits<float>::max();
             box.shape = {6};
+            box.dtype = DataType::Float32;
             observation_space["imu_data"] = std::move(box); // a_x, a_y, a_z, g_x, g_y, g_z
         }
     }
@@ -268,8 +277,8 @@ std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
 
     box.low = std::numeric_limits<float>::lowest();
     box.high = std::numeric_limits<float>::max();
-    box.dtype = DataType::Float32;
     box.shape = {-1};
+    box.dtype = DataType::Float32;
     step_info_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
 
     return step_info_space;
@@ -298,23 +307,27 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    // Get observations
-    const FVector agent_current_location = open_bot_pawn_->GetActorLocation();
-    const FRotator agent_current_orientation = open_bot_pawn_->GetActorRotation();
+    // Telemetry data:
+    const FVector agent_current_location = open_bot_pawn_->GetActorLocation() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters; // In [m]
+    const FQuat agent_current_quaternion = open_bot_pawn_->GetActorQuat();
+    const FVector goal_location = agent_goal_position_ / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters; // In [m]
+
+    observation["telemetry_data"] = Serialize::toUint8(std::vector<float>{agent_current_location.X, agent_current_location.Y, agent_current_location.Z, agent_current_quaternion.X, agent_current_quaternion.Y, agent_current_quaternion.Z, agent_current_quaternion.W, goal_location.X, goal_location.Y, goal_location.Z});
 
     Eigen::Vector4f duty_cycle = open_bot_pawn_->getDutyCycle();
     Eigen::Vector2f control_state;
 
-    // Fill the observed action vector to be used for RL purposes:
+    // Control data:
     control_state(0) = (duty_cycle(0) + duty_cycle(2)) / 2; // leftCtrl
     control_state(1) = (duty_cycle(1) + duty_cycle(3)) / 2; // rightCtrl
 
     observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
-    observation["state_data"] = Serialize::toUint8(std::vector<float>{agent_current_location.X, agent_current_location.Y, agent_current_location.Z, FMath::DegreesToRadians(agent_current_orientation.Roll), FMath::DegreesToRadians(agent_current_orientation.Pitch), FMath::DegreesToRadians(agent_current_orientation.Yaw)});
 
+    // Sensor data:
     for (const auto& sensor : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SENSORS"})) {
 
         if (sensor == "camera") {
+
             ASSERT(IsInGameThread());
 
             // Get render data
@@ -324,7 +337,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
             // Parallelize the image acquisition process
             std::vector<std::string> render_passes = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RENDER_PASSES"});
             ParallelFor(render_passes.size(), [&](int idx) {
-                // RGB camera
+
+                // RGB camera:
                 if (render_passes.at(idx) == "final_color") {
 
                     std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT"}) *
@@ -339,10 +353,10 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
                         image.at(3 * i + 2) = data[i].B;
                     }
 
-                    observation["rgb"] = std::move(image);
+                    observation["rgb_data"] = std::move(image);
                 }
 
-                // Depth camera
+                // Depth camera:
                 if (render_passes.at(idx) == "depth_glsl") {
 
                     std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT"}) *
@@ -355,10 +369,10 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
                         image.at(i) = static_cast<uint8_t>(25.5 * data[i]);
                     }
 
-                    observation["depth"] = std::move(image);
+                    observation["depth_data"] = std::move(image);
                 }
 
-                // Segmentation camera
+                // Segmentation camera:
                 if (render_passes.at(idx) == "segmentation") {
 
                     std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT"}) *
@@ -373,7 +387,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
                         image.at(3 * i + 2) = data[i].B;
                     }
 
-                    observation["segmentation"] = std::move(image);
+                    observation["segmentation_data"] = std::move(image);
                 }
             });
         }

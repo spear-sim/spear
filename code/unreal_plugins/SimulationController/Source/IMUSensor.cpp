@@ -18,6 +18,9 @@
 
 IMUSensor::IMUSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset, const FRotator& orientation_offset, bool debug)
 {
+    previous_location_ = { FVector::ZeroVector, FVector::ZeroVector };
+    // Initialized to something hight to minimize the artifacts when the initial values are unknown
+    previous_delta_time_ = std::numeric_limits<float>::max();
     imu_actor_ = actor;
     ASSERT(imu_actor_);
     imu_mesh_component_ = Cast<UMeshComponent>(imu_actor_->GetRootComponent());
@@ -34,10 +37,10 @@ IMUSensor::~IMUSensor()
 {
 }
 
-void IMUSensor::update(FVector& Accelerometer, FVector& Gyroscope, const float DeltaTime)
+void IMUSensor::update(FVector& accelerometer, FVector& gyroscope, const float delta_time)
 {
-    Accelerometer = computeAccelerometer(DeltaTime);
-    Gyroscope = computeGyroscope();
+    accelerometer = computeAccelerometer(delta_time);
+    gyroscope = computeGyroscope();
     if (debug_) {
         const FTransform& actor_transform = imu_actor_->GetActorTransform();
         const FRotator& transform_rotator = FRotator(FQuat(orientation_offset_) * FQuat(actor_transform.Rotator()));
@@ -51,35 +54,35 @@ void IMUSensor::update(FVector& Accelerometer, FVector& Gyroscope, const float D
         DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
 
         // Plot acceleration vector
-        DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(Accelerometer), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(accelerometer), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
 
         // Plot angular rate vector
-        DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(Gyroscope), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(gyroscope), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
     }
 }
 
-FVector IMUSensor::computeAccelerometerNoise(const FVector& Accelerometer)
+FVector IMUSensor::computeAccelerometerNoise(const FVector& accelerometer)
 {
     // Normal (or Gaussian or Gauss) distribution will be used as noise function.
     // A mean of 0.0 is used as a first parameter, the standard deviation is determined by the client
     return FVector{
-        Accelerometer.X + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.X)(random_gen_),
-        Accelerometer.Y + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.Y)(random_gen_),
-        Accelerometer.Z + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.Z)(random_gen_)};
+        accelerometer.X + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.X)(random_gen_),
+        accelerometer.Y + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.Y)(random_gen_),
+        accelerometer.Z + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.Z)(random_gen_)};
 }
 
-FVector IMUSensor::computeGyroscopeNoise(const FVector& Gyroscope)
+FVector IMUSensor::computeGyroscopeNoise(const FVector& gyroscope)
 {
     // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
     // A mean of 0.0 is used as a first parameter.The standard deviation and the bias are determined by the client
     return FVector{
-        Gyroscope.X + gyroscope_bias_.X + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.X)(random_gen_),
-        Gyroscope.Y + gyroscope_bias_.Y + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.Y)(random_gen_),
-        Gyroscope.Z + gyroscope_bias_.Z + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.Z)(random_gen_)};
+        gyroscope.X + gyroscope_bias_.X + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.X)(random_gen_),
+        gyroscope.Y + gyroscope_bias_.Y + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.Y)(random_gen_),
+        gyroscope.Z + gyroscope_bias_.Z + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.Z)(random_gen_)};
 }
 
 // Accelerometer: measures linear acceleration in m/s^2
-FVector IMUSensor::computeAccelerometer(const float DeltaTime)
+FVector IMUSensor::computeAccelerometer(const float delta_time)
 {
     // Earth's gravitational acceleration is approximately 9.81 m/s^2
     constexpr float GRAVITY = 9.81f;
@@ -92,7 +95,7 @@ FVector IMUSensor::computeAccelerometer(const float DeltaTime)
     const FVector Y2 = previous_location_[0];
     const FVector Y1 = previous_location_[1];
     const FVector Y0 = current_location;
-    const float H1 = DeltaTime;
+    const float H1 = delta_time;
     const float H2 = previous_delta_time_;
     const float H1AndH2 = H2 + H1;
     const FVector A = Y1 / (H1 * H2);
@@ -103,7 +106,7 @@ FVector IMUSensor::computeAccelerometer(const float DeltaTime)
     // Update the previous locations
     previous_location_[0] = previous_location_[1];
     previous_location_[1] = current_location;
-    previous_delta_time_ = DeltaTime;
+    previous_delta_time_ = delta_time;
 
     // Add gravitational acceleration
     accelerometer_raw.Z += GRAVITY;

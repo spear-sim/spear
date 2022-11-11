@@ -13,27 +13,27 @@ public:
     ~IMUSensor();
 
     // Updates the IMU's linear acceleration and angular rate measurements at once
-    void update(FVector& Accelerometer, FVector& Gyroscope, const float DeltaTime);
+    void update(FVector& accelerometer, FVector& gyroscope, const float delta_time);
 
     // Accelerometer: measures linear acceleration in m/s^2
-    FVector computeAccelerometer(const float DeltaTime);
+    FVector computeAccelerometer(const float delta_time);
 
     // Gyroscope: measures angular velocity in rad/sec
     FVector computeGyroscope();
 
-    inline void setAccelerationStandardDeviation(const FVector& Vec)
+    inline void setAccelerationStandardDeviation(const FVector& vec)
     {
-        accelerometer_noise_std_ = Vec;
+        accelerometer_noise_std_ = vec;
     }
 
-    inline void setGyroscopeStandardDeviation(const FVector& Vec)
+    inline void setGyroscopeStandardDeviation(const FVector& vec)
     {
-        gyroscope_noise_std_ = Vec;
+        gyroscope_noise_std_ = vec;
     }
 
-    inline void setGyroscopeBias(const FVector& Vec)
+    inline void setGyroscopeBias(const FVector& vec)
     {
-        gyroscope_bias_ = Vec;
+        gyroscope_bias_ = vec;
     }
 
     inline const FVector& getAccelerationStandardDeviation() const
@@ -53,10 +53,10 @@ public:
 
 private:
     // Compute the random component of the acceleration sensor measurement 
-    FVector computeAccelerometerNoise(const FVector& Accelerometer);
+    FVector computeAccelerometerNoise(const FVector& accelerometer);
 
     // Compute the random component and bias of the gyroscope sensor measurement
-    FVector computeGyroscopeNoise(const FVector& Gyroscope);
+    FVector computeGyroscopeNoise(const FVector& gyroscope);
 
     AActor* imu_actor_ = nullptr;
     UMeshComponent* imu_mesh_component_ = nullptr;
