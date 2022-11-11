@@ -325,7 +325,10 @@ if __name__ == "__main__":
                 
                 # Send Zero action to the agent and collect initial trajectory observations:
                 obs, reward, done, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
-                actualPoseYawXY = np.array([obs["telemetry_data"][5], obs["telemetry_data"][0], obs["telemetry_data"][1]]) # [Yaw, X, Y], for velocity initialization
+                Q = obs["telemetry_data"][3:7]
+                roll, pitch, yaw = quatToRPY(Q)
+                actualPoseYawXY = np.array([yaw, obs["telemetry_data"][0], obs["telemetry_data"][1]]) # [Yaw, X, Y], for velocity initialization
+                dYaw = yaw - actualPoseYawXY[0]
                 desiredPositionXY = np.array([info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint], info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
 
                 numWaypoints = len(info["agent_controller_step_info"]["trajectory_data"])/3 - 1
@@ -355,7 +358,6 @@ if __name__ == "__main__":
 
                     # Current position and heading of the vehicle in world frame:
                     Q = obs["telemetry_data"][3:7]
-                    print(Q)
                     roll, pitch, yaw = quatToRPY(Q)
                     dYaw = yaw - actualPoseYawXY[0]
                     actualPoseYawXY = np.array([yaw, obs["telemetry_data"][0], obs["telemetry_data"][1]]) # [Yaw, X, Y]
@@ -702,24 +704,30 @@ if __name__ == "__main__":
 
     elif learningMode == "Debug": # Just play with the keyboard while checking the observations
 
-        # Load the correct map and observation mode:
+        # Load the correct map:
         config.defrost()
-        config.SIMULATION_CONTROLLER.LEVEL_PATH = "/Game/Maps/Map_" + mapNames[0]
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "full-pose"
+        config.SIMULATION_CONTROLLER.LEVEL_ID = mapNames[0]
         config.freeze()
+        index_waypoint = 1
 
         # Create Env object:
         env = Env(config)
 
         # Reset the simulation to get the first observation
         obs = env.reset()
-        actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y], for velocity initialization
-        desiredPositionXY = np.array([obs["physical_observation"][2], obs["physical_observation"][3]]) # [X, Y]
+                
+        # Send Zero action to the agent and collect initial trajectory observations:
+        obs, reward, done, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+        Q = obs["telemetry_data"][3:7]
+        roll, pitch, yaw = quatToRPY(Q)
+        actualPoseYawXY = np.array([yaw, obs["telemetry_data"][0], obs["telemetry_data"][1]]) # [Yaw, X, Y], for velocity initialization
+        dYaw = yaw - actualPoseYawXY[0]
+        desiredPositionXY = np.array([info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint], info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
 
-        print(obs["rgb_data"].shape, obs["rgb_data"].dtype)
+        numWaypoints = len(info["agent_controller_step_info"]["trajectory_data"])/3 - 1
 
-        cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-        cv2.waitKey(0)
+        # cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+        # cv2.waitKey(0)
 
         # Take a few steps:
         for i in range(numIter):
@@ -741,12 +749,15 @@ if __name__ == "__main__":
             dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
 
             # XY position of the next waypoint in world frame:
-            dXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) - desiredPositionXY
-            desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
+            dXY = np.array([obs["telemetry_data"][0], obs["telemetry_data"][1]]) - desiredPositionXY
+            desiredPositionXY = np.array([info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint], info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
 
             # Current position and heading of the vehicle in world frame:
-            dYaw = obs["physical_observation"][7] - actualPoseYawXY[0]
-            actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y]
+            Q = obs["telemetry_data"][3:7]
+            roll, pitch, yaw = quatToRPY(Q)
+            actualPoseYawXY = np.array([yaw, obs["telemetry_data"][0], obs["telemetry_data"][1]]) # [Yaw, X, Y]
+            dYaw = yaw - actualPoseYawXY[0]
+            
 
             # Numerical diff:
             linVelNorm = np.linalg.norm(dXY/dt)
@@ -757,10 +768,11 @@ if __name__ == "__main__":
             # Send action to the agent and collect observations:
 
             obs, reward, done, info = env.step({"apply_voltage": action})
-            print(obs["rgb_data"].shape, obs["rgb_data"].dtype, reward, done, info)
-
-            cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-            cv2.waitKey(0)
+            # cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            # cv2.imshow("depth_data", obs["depth_data"][:,:]) # OpenCV expects BGR instead of RGB
+            # cv2.imshow("segmentation_data", obs["segmentation_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            # cv2.imshow("surface_normals_data", obs["surface_normals_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            # cv2.waitKey(0)
 
             #if done:
             #    print("Reset run...")

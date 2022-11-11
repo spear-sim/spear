@@ -247,6 +247,17 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
                     box.dtype = DataType::UInteger8;
                     observation_space["segmentation_data"] = std::move(box);
                 }
+
+                // Surface normals camera
+                if (render_pass == "normals") {
+                    box.low = 0;
+                    box.high = 255;
+                    box.shape = {Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT"}),
+                                 Config::getValue<long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH"}),
+                                 3};
+                    box.dtype = DataType::UInteger8;
+                    observation_space["surface_normals_data"] = std::move(box);
+                }
             }
         }
 
@@ -336,6 +347,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
             // Parallelize the image acquisition process
             std::vector<std::string> render_passes = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "RENDER_PASSES"});
+
+            FCriticalSection Mutex;
             ParallelFor(render_passes.size(), [&](int idx) {
 
                 // RGB camera:
@@ -352,8 +365,9 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
                         image.at(3 * i + 1) = data[i].G;
                         image.at(3 * i + 2) = data[i].B;
                     }
-
+                    Mutex.Lock();
                     observation["rgb_data"] = std::move(image);
+                    Mutex.Unlock();
                 }
 
                 // Depth camera:
@@ -368,8 +382,9 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
                     for (uint32 i = 0; i < static_cast<uint32>(data.size()); ++i) {
                         image.at(i) = static_cast<uint8_t>(25.5 * data[i]);
                     }
-
+                    Mutex.Lock();
                     observation["depth_data"] = std::move(image);
+                    Mutex.Unlock();
                 }
 
                 // Segmentation camera:
@@ -386,8 +401,28 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
                         image.at(3 * i + 1) = data[i].G;
                         image.at(3 * i + 2) = data[i].B;
                     }
-
+                    Mutex.Lock();
                     observation["segmentation_data"] = std::move(image);
+                    Mutex.Unlock();
+                }
+
+                // Surface normals camera:
+                if (render_passes.at(idx) == "normals") {
+
+                    std::vector<uint8_t> image(Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_HEIGHT"}) *
+                                               Config::getValue<int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA_PARAMETERS", "IMAGE_WIDTH"}) *
+                                               3);
+
+                    const auto& data = render_data.at("normals");
+
+                    for (uint32 i = 0; i < static_cast<uint32>(data.Num()); ++i) {
+                        image.at(3 * i + 0) = data[i].R;
+                        image.at(3 * i + 1) = data[i].G;
+                        image.at(3 * i + 2) = data[i].B;
+                    }
+                    Mutex.Lock();
+                    observation["surface_normals_data"] = std::move(image);
+                    Mutex.Unlock();
                 }
             });
         }
