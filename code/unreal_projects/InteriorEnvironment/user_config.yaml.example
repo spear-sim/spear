@@ -20,8 +20,8 @@ SIMULATION_CONTROLLER:
     CAMERA:
       CAMERA_ACTOR_NAME: "InteriorEnvironmentCamera"
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
-      IMAGE_HEIGHT: 128
-      IMAGE_WIDTH: 128
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
       FOV: 90.0
       POSITION_OFFSET_X: 0.0
       POSITION_OFFSET_Y: 0.0

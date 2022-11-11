@@ -44,18 +44,10 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     if (!Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GET_POSITIONS_FROM_TRAJECTORY_SAMPLING"})) {
         getPositionsFromFile();
     }
-
-    position_index_ = 0;
-    hit_goal_ = false;
-    hit_obstacle_ = false;
 }
 
 ImitationLearningTask::~ImitationLearningTask()
 {
-    hit_obstacle_ = false;
-    hit_goal_ = false;
-    position_index_ = -1;
-
     clearPositions();
     
     ASSERT(actor_hit_event_);
@@ -206,6 +198,10 @@ void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* oth
 
 void ImitationLearningTask::getPositionsFromFile()
 {
+    agent_initial_positions_.clear();
+    agent_goal_positions_.clear();
+    position_index_ = -1;
+
     std::string line;
     std::string token;
     FVector init, goal;
@@ -230,6 +226,8 @@ void ImitationLearningTask::getPositionsFromFile()
 
     // Close file
     fs.close();
+
+    position_index_ = 0;
 }
 
 void ImitationLearningTask::getPositionsFromTrajectorySampling()
@@ -240,6 +238,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
 
     agent_initial_positions_.clear();
     agent_goal_positions_.clear();
+    position_index_ = -1;
 
     float best_path_score = 0.0f;
     FNavLocation best_init_location;
@@ -311,6 +310,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     // Update positions
     agent_initial_positions_.push_back(best_init_location.Location);
     agent_goal_positions_.push_back(best_target_location.Location);
+    position_index_ = 0;
 
     // Debug output
     std::cout << std::endl;
@@ -328,4 +328,5 @@ void ImitationLearningTask::clearPositions()
 {
     agent_initial_positions_.clear();
     agent_goal_positions_.clear();
+    position_index_ = -1;
 }

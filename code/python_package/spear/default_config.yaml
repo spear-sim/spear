@@ -51,7 +51,7 @@ SPEAR:
   # https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/blob/master/loader/LoaderAndLayerInterface.md
   VULKAN_DEVICE_FILES: ""
   
-  # Maximum time to wait when initializing the RPC client before asserting
+  # Maximum time to wait when initializing the RPC client
   RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 120.0
 
   # Sleep for this amount of time in-between attempts to initialize the RPC client
