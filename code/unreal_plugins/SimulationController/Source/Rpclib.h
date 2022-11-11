@@ -7,9 +7,9 @@
 // msgpack-c does not define nil, and we avoid the conflicts.
 #define MSGPACK_DISABLE_LEGACY_NIL
 
-// RPCLIB and Unreal have different definitions for check macro. This creates
-// naming conflicts below when we include 'rpc/msgpack.hpp'. To avoid this
-// conflict, we undefine the check macro before we include 'rpc/msgpack.hpp',
+// RPCLIB and Unreal have different definitions for the check macro. This
+// creates naming conflicts when we include 'rpc/msgpack.hpp'. To avoid these
+// conflicts, we undefine the check macro before we include 'rpc/msgpack.hpp',
 // and then redefine check to have the same definition as Unreal defines it
 // after we include 'rpc/msgpack.hpp'. We use push_macro(...) and pop_macro
 // for this purpose.
