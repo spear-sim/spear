@@ -184,7 +184,9 @@ def download_scenes(virtualworld_id, version, scene_config_data, is_force_update
     )
     is_mat_ok = deal_scene_file(mat_url, mat_local, mat_dst)
 
-    map_folder = os.path.join(os.path.dirname(__file__), "../../unreal_projects/RobotProject/Content/Maps")
+    map_folder = os.path.join(
+        os.path.dirname(__file__), "../../unreal_projects/RobotProject/Content/Maps"
+    )
     create_folder(map_folder)
     umap_local = os.path.join(map_folder, scene_config_data["map"])
     download_file_from_url(
@@ -315,7 +317,9 @@ def download_assets(
         )
         dic_curr["asset_local"] = os.path.join(TEMP_FOLDER, materialid + ".zip")
         dic_curr["asset_dst"] = os.path.join(
-            os.path.dirname(__file__), "../../unreal_projects/RobotProject/Content/Scene/Materials", materialid
+            os.path.dirname(__file__),
+            "../../unreal_projects/RobotProject/Content/Scene/Materials",
+            materialid,
         )
         dic_curr["version_info_url"] = (
                 CDN_API
@@ -353,7 +357,9 @@ def download_assets(
         )
         dic_curr["asset_local"] = os.path.join(TEMP_FOLDER, meshid + ".zip")
         dic_curr["asset_dst"] = os.path.join(
-            os.path.dirname(__file__), "../../unreal_projects/RobotProject/Content/Scene/Meshes/Furniture", meshid
+            os.path.dirname(__file__),
+            "../../unreal_projects/RobotProject/Content/Scene/Meshes/Furniture",
+            meshid,
         )
         dic_curr["version_info_url"] = (
                 CDN_API
@@ -427,7 +433,9 @@ def download_assets(
                     CDN_API + "assets/ddc/" + ddc_only_path + "/" + version + "/" + ddc_name
             )
             dic_curr["asset_local"] = os.path.join(
-                os.path.dirname(__file__), "../../unreal_projects/RobotProject/DerivedDataCache", ddc_path
+                os.path.dirname(__file__),
+                "../../unreal_projects/RobotProject/DerivedDataCache",
+                ddc_path,
             )
             if not os.path.exists(os.path.dirname(dic_curr["asset_local"])):
                 try:
@@ -435,7 +443,9 @@ def download_assets(
                 except:
                     pass
             dic_curr["asset_dst"] = os.path.join(
-                os.path.dirname(__file__), "../../unreal_projects/RobotProject/DerivedDataCache", ddc_path
+                os.path.dirname(__file__),
+                "../../unreal_projects/RobotProject/DerivedDataCache",
+                ddc_path,
             )
             dic_curr["version_info_url"] = (
                     CDN_API
@@ -506,25 +516,29 @@ def download_single_virtualworld(
 
 # determine process mode based on version
 def get_version_process_mode(version):
-    if version in ['v1', 'v2', 'v3']:
+    if version in ["v1", "v2", "v3"]:
         return "raw"
-    elif version in ['v4', 'v5', 'v6']:
-        return "pak"
     else:
-        return "unknown"
+        return "pak"
 
 
-def download_file_by_path(vw_id, version, path, output_directory="", is_temp=True, is_force_update=False):
+def download_file_by_path(
+        vw_id, version, path, output_directory="", is_temp=True, is_force_update=False
+):
     """
-        return: local file path
+    return: local file path
     """
     remote_url = f"{CDN_API}{version}/{path}"
     # use user specified directory for target files
-    folder_path = TEMP_FOLDER if is_temp else (
-        output_directory if output_directory != '' else SCENE_DATA_FOLDER)
+    folder_path = (
+        TEMP_FOLDER
+        if is_temp
+        else (output_directory if output_directory != "" else SCENE_DATA_FOLDER)
+    )
     local_path = os.path.abspath(os.path.join(folder_path, version, vw_id, path))
     local_dir, fname = os.path.split(local_path)
     create_folder(local_dir)
+    print(remote_url, local_path)
     if not is_force_update and os.path.exists(local_path):
         return local_path
     if download_file_from_url(remote_url, local_path):
@@ -537,38 +551,94 @@ def download_file_by_path(vw_id, version, path, output_directory="", is_temp=Tru
 def download_single_virtualworld_pak(vw_id, version, param=None):
     if param is None:
         param = {}
+    sceneDownloader = SceneDownloader(vw_id, version)
+    sceneDownloader.process(param)
 
-    # download info for basic info and  asset download path
-    data_relative_path = f"info/{vw_id}_info.json"
-    data_local_path = download_file_by_path(vw_id, version, data_relative_path, is_temp=True)
-    if data_local_path is None or data_local_path == "":
-        print(f"download data failed {vw_id} {version}")
-        return False
 
-    # download asset data
-    vw_data = json.load(open(data_local_path, mode='r'))
-    asset_mode = vw_data['default_asset_mode']
-    if "content_type" in param:
-        content_type = param['content_type']
-        if content_type in vw_data:
-            asset_mode = content_type
-        elif content_type is None or content_type == '':
-            asset_mode = vw_data['default_asset_mode']
+class SceneDownloader():
+    def __init__(self, vw_id, version):
+        self.vw_id = vw_id
+        self.version = version
+        self.vw_info = {}
+        self.vw_data = {}
+
+    def load_info(self):
+        info_path_local = download_file_by_path(
+            self.vw_id, version, f"info/{self.vw_id}_info.json", is_temp=True
+        )
+        self.vw_info = json.load(open(info_path_local, mode="r"))
+
+    def load_data(self):
+        # load scene data including detail scene composition
+        data_path_local = download_file_by_path(
+            self.vw_id, version, f"data/{self.vw_id}_data.json", is_temp=True
+        )
+        self.vw_data = json.load(open(data_path_local, mode="r"))
+
+    def process(self, param):
+        self.load_info()
+        asset_mode: str = self.vw_info["default_asset_mode"]
+        if "content_type" in param:
+            content_type = param["content_type"]
+            if content_type in self.vw_info:
+                asset_mode = content_type
+            elif content_type is None or content_type == "":
+                asset_mode = self.vw_info["default_asset_mode"]
+            else:
+                print(f"invalid content type {content_type} for {self.vw_id}")
+                return False
+
+        if asset_mode.startswith("pak_split_"):
+            self.download_pak(asset_mode.removeprefix("pak_split_"))
         else:
-            print(f"invalid content type {content_type} for {vw_id}")
+            assets_relative_path = self.vw_info[asset_mode]
+            result_local_path = []
+            for asset_relative_path in assets_relative_path:
+                asset_local_path = download_file_by_path(
+                    self.vw_id,
+                    version,
+                    asset_relative_path,
+                    output_directory=param.get("output_directory"),
+                    is_temp=False,
+                    is_force_update=param.get("is_force_update"),
+                )
+                if asset_local_path is None:
+                    print(f"download asset failed for {self.vw_id}: {asset_relative_path}")
+                else:
+                    result_local_path.append(asset_local_path)
+            print(f"download complete for {self.vw_id}: {result_local_path}")
+
+    def download_pak(self, platform):
+        if platform not in ['linux', 'windows', 'mac']:
             return False
-    assets_relative_path = vw_data[asset_mode]
-    result_local_path = []
-    for asset_relative_path in assets_relative_path:
-        asset_local_path = download_file_by_path(vw_id, version, asset_relative_path,
-                                                 output_directory=param.get("output_directory"), is_temp=False,
-                                                 is_force_update=param.get("is_force_update"))
-        if asset_local_path is None:
-            print(f"download asset failed for {vw_id}: {asset_relative_path}")
-        else:
-            result_local_path.append(asset_local_path)
-    print(f"download complete for {vw_id}: {result_local_path}")
-    return True
+        self.load_data()
+        download_paths = []
+        # parse data to find required files
+        umap = f'paks/{platform}/map/{self.vw_id}.pak'
+        download_paths.append(umap)
+        # download scene map
+        for obj in self.vw_data['models']:
+            mesh_name = obj['meshName']
+            mesh_path = f'paks/{platform}/furniture/{mesh_name}.pak'
+            download_paths.append(mesh_path)
+            for component in obj['components']:
+                for material in obj['components'][component]['materials']:
+                    materialName = material['materialName']
+                    material_path = f'paks/{platform}/material/{materialName}.pak'
+                    download_paths.append(material_path)
+        count = 0
+        for remote_path in download_paths:
+            print(remote_path)
+            count += 1
+            local_path = self.download_single_file(remote_path)
+            if local_path is None:
+                print("---- download failed for", remote_path)
+        return True
+
+    def download_single_file(self, path):
+        return download_file_by_path(
+            self.vw_id, self.version, path, is_temp=False
+        )
 
 
 def print_help():
@@ -593,14 +663,23 @@ if __name__ == "__main__":
         "output_directory": "",
         "is_down_ddc": False,
         "is_force_update": False,
-        "content_type": ''
+        "content_type": "",
     }
 
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
             "h:i:v:d:f:p:o:c:",
-            ["help=", "infile=", "version=", "downDDC=", "forceUpdate=", "proxy=", "outputDir=", "contentType="],
+            [
+                "help=",
+                "infile=",
+                "version=",
+                "downDDC=",
+                "forceUpdate=",
+                "proxy=",
+                "outputDir=",
+                "contentType=",
+            ],
         )
     except getopt.GetoptError:
         print_help()
@@ -633,7 +712,7 @@ if __name__ == "__main__":
         print_help()
 
     mode = get_version_process_mode(version)
-    if mode == 'raw':
+    if mode == "raw":
         if virtualworld_id == "":
             virtualworld_ids_file = os.path.join(
                 os.path.dirname(__file__), "data/virtualworld-ids.json"
@@ -656,12 +735,8 @@ if __name__ == "__main__":
             if os.path.exists(virtualworld_ids_file):
                 with open(virtualworld_ids_file) as f:
                     for id in json.load(f):
-                        download_single_virtualworld_pak(
-                            id, version, param
-                        )
+                        download_single_virtualworld_pak(id, version, param)
         else:
-            download_single_virtualworld_pak(
-                virtualworld_id, version, param
-            )
+            download_single_virtualworld_pak(virtualworld_id, version, param)
     else:
         print(f"unknown process mode: {version}")
