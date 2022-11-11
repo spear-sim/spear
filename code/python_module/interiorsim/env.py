@@ -155,6 +155,7 @@ class Env(gym.Env):
         launch_params.append("-windowed")
         launch_params.append("-novsync")
         launch_params.append("-NoSound")
+        launch_params.append("-NoTextureStreaming")
         launch_params.append("-resx={}".format(self._config.INTERIORSIM.WINDOW_RESOLUTION_X))
         launch_params.append("-resy={}".format(self._config.INTERIORSIM.WINDOW_RESOLUTION_Y))
         launch_params.append("-graphicsadapter={}".format(self._config.INTERIORSIM.GPU_ID))
