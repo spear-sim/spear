@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>

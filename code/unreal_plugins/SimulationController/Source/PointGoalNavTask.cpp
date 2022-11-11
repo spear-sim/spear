@@ -67,7 +67,6 @@ void PointGoalNavTask::findObjectReferences(UWorld* world)
             agent_actor_ = *actor_itr;
         } else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
             obstacle_ignore_actors_.emplace_back(*actor_itr);
-            std::cout << "Adding actor to obstacle ignore list: " << actor_name << std::endl;
         }
     }
     ASSERT(agent_actor_);

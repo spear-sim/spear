@@ -1,9 +1,9 @@
 #include "SphereAgent.h"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <Camera/CameraActor.h>

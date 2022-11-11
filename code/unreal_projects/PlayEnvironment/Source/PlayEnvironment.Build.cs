@@ -21,6 +21,6 @@ public class PlayEnvironment : ModuleRules
         bEnableExceptions = true;
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine" });
-        PrivateDependencyModuleNames.AddRange(new string[] {});        
+        PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

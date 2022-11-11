@@ -53,7 +53,7 @@ private:
     std::unique_ptr<Visualizer> visualizer_ = nullptr;
 
     bool has_world_begin_play_executed_ = false;
-    bool has_load_level_executed_ = false;
+    bool has_open_level_executed_ = false;
 
     // thread sychronization elements
     std::atomic<FrameState> frame_state_;

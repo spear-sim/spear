@@ -92,7 +92,7 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData()
 {
     std::map<std::string, TArray<FColor>> data;
 
-    // Get data from all passes
+    // get data from all passes
     for (auto& render_pass : render_passes_) {
 
         FTextureRenderTargetResource* target_resource = render_pass.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
@@ -119,8 +119,6 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData()
     return data;
 }
 
-// depth codification
-// decode formula : depth = ((r) + (g * 256) + (b * 256 * 256)) / ((256 * 256 * 256) - 1) * f
 std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor> data)
 {
     std::vector<float> out;

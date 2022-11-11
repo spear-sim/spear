@@ -1,6 +1,6 @@
 #include "CameraAgent.h"
 
-#include <fstream>
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
@@ -258,7 +258,7 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
     if (std::find(step_info_components.begin(), step_info_components.end(), "random_points") != step_info_components.end()) {
 
         std::vector<float> random_points;
-        uint32_t num_random_points = static_cast<uint32_t>(action_.at("set_num_random_points").at(0));
+        int num_random_points = static_cast<int>(action_.at("set_num_random_points").at(0));
         for (int i = 0; i < num_random_points; i++) {
             FVector random_position = nav_mesh_->GetRandomPoint().Location;
             random_points.emplace_back(random_position.X);

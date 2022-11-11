@@ -85,13 +85,13 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         if (world_path_name != "" && TCHAR_TO_UTF8(*(world->GetPathName())) != world_path_name) {
 
             // Assert that we haven't already tried to open the level, because that means we failed
-            ASSERT(!has_load_level_executed_);
+            ASSERT(!has_open_level_executed_);
 
             UGameplayStatics::OpenLevel(world, level_name.c_str());
-            has_load_level_executed_ = true;
+            has_open_level_executed_ = true;
 
         } else {
-            has_load_level_executed_ = false;
+            has_open_level_executed_ = false;
 
             // We do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
             ASSERT(!world_);
