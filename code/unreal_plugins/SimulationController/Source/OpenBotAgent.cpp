@@ -41,13 +41,13 @@ OpenBotAgent::OpenBotAgent(UWorld* world)
         camera_sensor_ = std::make_unique<CameraSensor>(
             open_bot_pawn_->camera_component_,
             Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "RENDER_PASSES"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_WIDTH"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
 
         // update FOV
-        for (auto& pass : camera_sensor_->camera_passes_) {
-            pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "FOV"});
+        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "RENDER_PASSES"})) {
+            camera_sensor_->render_passes_[pass].scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "FOV"});
         }
     }
 }
@@ -204,8 +204,7 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
 
-        auto passes = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "RENDER_PASSES"});
-        for (auto& pass : passes) {
+        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "RENDER_PASSES"})) {
             box.low = 0;
             box.high = 255;
             box.shape = { Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_HEIGHT"}),

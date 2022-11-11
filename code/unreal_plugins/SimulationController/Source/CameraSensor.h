@@ -7,11 +7,11 @@
 #include <Math/Color.h>
 
 class AActor;
-class USceneCaptureComponent2D;
 class UCameraComponent;
+class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 
-struct CameraPass
+struct RenderPass
 {
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
@@ -20,18 +20,17 @@ struct CameraPass
 class CameraSensor
 {
 public:
-    CameraSensor(UCameraComponent* component, std::vector<std::string> passes, unsigned long width, unsigned long height);
+    CameraSensor(UCameraComponent* component, const std::vector<std::string>& render_pass_names, unsigned int width, unsigned int height);
     ~CameraSensor();
 
     std::map<std::string, TArray<FColor>> getRenderData();
 
     static std::vector<float> getFloatDepthFromColorDepth(TArray<FColor> data);
 
-    std::map<std::string, CameraPass> camera_passes_;
+    std::map<std::string, RenderPass> render_passes_;
 
 private:
-    void setCameraParameters(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height);
-    void setCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height);
+    void initializeSceneCaptureComponentFinalColor(USceneCaptureComponent2D* scene_capture_component);
 
     AActor* new_object_parent_actor_ = nullptr;
 };

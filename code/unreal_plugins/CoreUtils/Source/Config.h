@@ -41,7 +41,7 @@ public:
         ASSERT(config_.IsDefined());
 
         YAML::Node node = config_;
-        for (const auto& key : keys) {
+        for (auto& key : keys) {
 
             // If key doesn't exist, then print an informative error message and assert
             if (!node[key]) {

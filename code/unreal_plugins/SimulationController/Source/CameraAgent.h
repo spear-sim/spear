@@ -19,7 +19,6 @@ class CameraAgent : public Agent
 {
 public:
 
-    // This UWorld pointer passed here points to the only running game world.
     CameraAgent(UWorld* world);
     ~CameraAgent();
     

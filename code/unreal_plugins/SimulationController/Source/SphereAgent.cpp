@@ -42,13 +42,13 @@ SphereAgent::SphereAgent(UWorld* world)
         camera_sensor_ = std::make_unique<CameraSensor>(
             camera_actor_->GetCameraComponent(),
             Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "RENDER_PASSES"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "IMAGE_WIDTH"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
 
         // update FOV
-        for (auto& pass : camera_sensor_->camera_passes_) {
-            pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "FOV"});
+        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "RENDER_PASSES"})) {
+            camera_sensor_->render_passes_[pass].scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "FOV"});
         }
 
         new_object_parent_actor_ = world->SpawnActor<AActor>();
@@ -196,14 +196,14 @@ std::map<std::string, Box> SphereAgent::getObservationSpace() const
     // observation["camera"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
-        for (auto& pass : camera_sensor_->camera_passes_) {
+        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "RENDER_PASSES"})) {
             box.low = 0;
             box.high = 255;
             box.shape = {Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "IMAGE_HEIGHT"}),
                          Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "IMAGE_WIDTH"}),
                          3};
             box.dtype = DataType::UInteger8;
-            observation_space["camera_" + pass.first] = std::move(box);
+            observation_space["camera_" + pass] = std::move(box);
         }
     }
 

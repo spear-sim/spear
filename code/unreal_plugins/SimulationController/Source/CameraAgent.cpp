@@ -43,21 +43,13 @@ CameraAgent::CameraAgent(UWorld* world)
         camera_sensor_ = std::make_unique<CameraSensor>(
             camera_actor_->GetCameraComponent(),
             Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "RENDER_PASSES"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_WIDTH"}),
-            Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
 
         // update FOV
-        for (auto& pass : camera_sensor_->camera_passes_) {
-            pass.second.scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FOV"});
-        }
-
-        // update auto-exposure settings
-        if (camera_sensor_->camera_passes_.count("final_color")) {
-            camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedUp   = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP"});
-            camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.AutoExposureSpeedUp             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP"});
-            camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN"});
-            camera_sensor_->camera_passes_["final_color"].scene_capture_component_->PostProcessSettings.AutoExposureSpeedDown           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN"});
+        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "RENDER_PASSES"})) {
+            camera_sensor_->render_passes_[pass].scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FOV"});
         }
     }
 }
@@ -169,8 +161,7 @@ std::map<std::string, Box> CameraAgent::getObservationSpace() const
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
 
-        auto passes = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "RENDER_PASSES"});
-        for (auto& pass : passes) {
+        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "RENDER_PASSES"})) {
             box.low = 0;
             box.high = 255;
             box.shape = { Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_HEIGHT"}),

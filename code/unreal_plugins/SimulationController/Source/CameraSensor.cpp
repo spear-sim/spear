@@ -21,60 +21,67 @@
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials";
 
-CameraSensor::CameraSensor(UCameraComponent* camera_component, std::vector<std::string> pass_names, unsigned long width, unsigned long height)
+CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector<std::string>& render_pass_names, unsigned int width, unsigned int height)
 {
     ASSERT(camera_component);
 
     new_object_parent_actor_ = camera_component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
-    for (const auto& pass_name : pass_names) {
+    for (auto& render_pass_name : render_pass_names) {
 
-        // create SceneCaptureComponent2D
-        auto scene_capture_component = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), pass_name.c_str()));
-        ASSERT(scene_capture_component);
-
-        scene_capture_component->AttachToComponent(camera_component, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-        scene_capture_component->SetVisibility(true);
+        RenderPass render_pass;
 
         // create TextureRenderTarget2D
-        auto texture_render_target = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), pass_name.c_str()));
-        ASSERT(texture_render_target);
-        
-        // set camera parameters
-        setCameraParameters(scene_capture_component, texture_render_target, width, height);
+        render_pass.texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), render_pass_name.c_str()));
+        ASSERT(render_pass.texture_render_target_);
 
-        if (pass_name != "final_color") {
-            setCameraParametersNonFinalColor(scene_capture_component, texture_render_target, width, height);
+        // TODO: allow returning floating point data instead of hardcoding to PF_B8G8R8A8
+        bool force_linear_gamma = false;
+        bool clear_render_target = true;
+        render_pass.texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
+        render_pass.texture_render_target_->TargetGamma = GEngine->GetDisplayGamma();
+        render_pass.texture_render_target_->SRGB = true;
+        render_pass.texture_render_target_->bGPUSharedFlag = true;
+        render_pass.texture_render_target_->bAutoGenerateMips = false;
+        render_pass.texture_render_target_->InitCustomFormat(width, height, PF_B8G8R8A8, force_linear_gamma);
+        render_pass.texture_render_target_->UpdateResourceImmediate(clear_render_target);
 
-            // Load PostProcessMaterial
-            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), MATERIALS_PATH.c_str(), pass_name.c_str(), pass_name.c_str()));
+        // create SceneCaptureComponent2D
+        render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), render_pass_name.c_str()));
+        ASSERT(render_pass.scene_capture_component_);
+
+        render_pass.scene_capture_component_->TextureTarget = render_pass.texture_render_target_;
+        render_pass.scene_capture_component_->AttachToComponent(camera_component, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        render_pass.scene_capture_component_->SetVisibility(true);
+        render_pass.scene_capture_component_->RegisterComponent();
+
+        if (render_pass_name != "final_color") {
+            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), MATERIALS_PATH.c_str(), render_pass_name.c_str(), render_pass_name.c_str()));
             ASSERT(material);
-
-            // Set PostProcessMaterial
-            scene_capture_component->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, scene_capture_component), 1.0f);
+            render_pass.scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, render_pass.scene_capture_component_), 1.0f);
         }
 
-        CameraPass pass;
-        pass.scene_capture_component_ = scene_capture_component;
-        pass.texture_render_target_ = texture_render_target;
+        if (render_pass_name == "final_color") {
+            initializeSceneCaptureComponentFinalColor(render_pass.scene_capture_component_);
+        }
 
-        camera_passes_[pass_name] = std::move(pass);
+        render_passes_[render_pass_name] = std::move(render_pass);
     }
 }
 
 CameraSensor::~CameraSensor()
 {
-    for (auto& pass: camera_passes_) {
-        ASSERT(pass.second.texture_render_target_);
-        pass.second.texture_render_target_->MarkPendingKill();
-        pass.second.texture_render_target_ = nullptr;
+    for (auto& render_pass : render_passes_) {
+        ASSERT(render_pass.second.scene_capture_component_);
+        render_pass.second.scene_capture_component_->MarkPendingKill();
+        render_pass.second.scene_capture_component_ = nullptr;
 
-        ASSERT(pass.second.scene_capture_component_);
-        pass.second.scene_capture_component_->DestroyComponent();
-        pass.second.scene_capture_component_ = nullptr;
+        ASSERT(render_pass.second.texture_render_target_);
+        render_pass.second.texture_render_target_->MarkPendingKill();
+        render_pass.second.texture_render_target_ = nullptr;
     }
-    camera_passes_.clear();
+    render_passes_.clear();
 
     ASSERT(new_object_parent_actor_);
     new_object_parent_actor_->Destroy();
@@ -86,33 +93,27 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData()
     std::map<std::string, TArray<FColor>> data;
 
     // Get data from all passes
-    for (const auto& pass: camera_passes_) {
-        FTextureRenderTargetResource* target_resource = pass.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+    for (auto& render_pass : render_passes_) {
+
+        FTextureRenderTargetResource* target_resource = render_pass.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
         ASSERT(target_resource);
+
+        FRHITexture* rhi_texture = target_resource->GetRenderTargetTexture();
+        ASSERT(rhi_texture);
+        FIntRect rect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y);
         TArray<FColor> pixels;
+        FReadSurfaceDataFlags read_surface_data_flags(RCM_UNorm, CubeFace_MAX);
+        read_surface_data_flags.SetLinearToGamma(false);
 
-        struct FReadSurfaceContext {
-            FRenderTarget* src_render_target_;
-            TArray<FColor>& out_data_;
-            FIntRect rect_;
-            FReadSurfaceDataFlags flags_;
-        };
-
-        FReadSurfaceContext context = {target_resource, pixels, FIntRect(0, 0, target_resource->GetSizeXY().X, 
-                                       target_resource->GetSizeXY().Y), FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)};
-
-        // Required for uint8 read mode
-        context.flags_.SetLinearToGamma(false);
-
-        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([context](FRHICommandListImmediate& RHICmdList) {
-            RHICmdList.ReadSurfaceData(context.src_render_target_->GetRenderTargetTexture(), context.rect_, context.out_data_, context.flags_);
+        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([rhi_texture, rect, &pixels, read_surface_data_flags](FRHICommandListImmediate& RHICmdList) {
+            RHICmdList.ReadSurfaceData(rhi_texture, rect, pixels, read_surface_data_flags);
         });
 
         FRenderCommandFence ReadPixelFence;
         ReadPixelFence.BeginFence(true);
         ReadPixelFence.Wait(true);
 
-        data[pass.first] = std::move(pixels);
+        data[render_pass.first] = std::move(pixels);
     }
 
     return data;
@@ -132,320 +133,81 @@ std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor> data
     return out;
 }
 
-void CameraSensor::setCameraParameters(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height)
+void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureComponent2D* scene_capture_component)
 {
-    // SET BASIC PARAMETERS
-    scene_capture_component->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-    scene_capture_component->FOVAngle = 60.f;
-    scene_capture_component->bAlwaysPersistRenderingState = true;
+    // update auto-exposure settings
+    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedUp   = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP"});
+    scene_capture_component->PostProcessSettings.AutoExposureSpeedUp             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP"});
+    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN"});
+    scene_capture_component->PostProcessSettings.AutoExposureSpeedDown           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN"});
 
-    // Initialize TextureRenderTarget2D format. 
-    // Changing the dimensions of a TextureRenderTarget2D after they have been set initially can lead to unexpected behavior. 
-    // So we only set the dimensions once at object creation time, and we require width and height be passed into the CameraSensor constructor.
-    texture_render_target->InitCustomFormat(width, height, PF_B8G8R8A8, true ); // PF_B8G8R8A8 disables HDR; 
-    texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-    texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
-    texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
-    texture_render_target->SRGB = false; // false for pixels to be stored in linear space
-    texture_render_target->bAutoGenerateMips = false;
-    texture_render_target->UpdateResourceImmediate(true);
+    // enable raytracing features
+    scene_capture_component->bUseRayTracingIfEnabled = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_USE_RAYTRACING_IF_ENABLED"});
 
-    // Set TextureRenderTarget2D it into SceneCaptureComponent2D   
-    scene_capture_component->TextureTarget = texture_render_target;
-    scene_capture_component->RegisterComponent();
+    // update indirect lighting 
+    scene_capture_component->PostProcessSettings.bOverride_IndirectLightingIntensity = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY"});
+    scene_capture_component->PostProcessSettings.IndirectLightingIntensity           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY"});
 
-    // SET OVERRIDES
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureMethod = true;
-    scene_capture_component->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
+    // update raytracing global illumination
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingGI = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI"});
+    auto raytracing_gi_type = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_GI_TYPE"});
+    if (raytracing_gi_type == "BruteForce") {
+        scene_capture_component->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
+    } else if (raytracing_gi_type != "") {
+        ASSERT(false);
+    }
 
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureBias = true;
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
-    scene_capture_component->PostProcessSettings.AutoExposureBias = 1.0f;
-    scene_capture_component->PostProcessSettings.AutoExposureMaxBrightness = 5.0f; //-1
-    scene_capture_component->PostProcessSettings.AutoExposureMinBrightness = -10.0f; //-1
-    
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedUp = true;
-    scene_capture_component->PostProcessSettings.AutoExposureSpeedUp = 10.0f;
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedDown = true;
-    scene_capture_component->PostProcessSettings.AutoExposureSpeedDown = 10.0f;
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingGIMaxBounces      = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI_MAX_BOUNCES"});
+    scene_capture_component->PostProcessSettings.RayTracingGIMaxBounces                = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_GI_MAX_BOUNCES"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI_SAMPLES_PER_PIXEL"});
+    scene_capture_component->PostProcessSettings.RayTracingGISamplesPerPixel           = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_GI_SAMPLES_PER_PIXEL"});
 
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureCalibrationConstant_DEPRECATED = true;
-    scene_capture_component->PostProcessSettings.bOverride_HistogramLogMin = true;
-    scene_capture_component->PostProcessSettings.HistogramLogMin = -10.f; // 1.0f;
-    scene_capture_component->PostProcessSettings.bOverride_HistogramLogMax = true;
-    scene_capture_component->PostProcessSettings.HistogramLogMax = 10.f; // 12.0f;
+    // update raytracing ambient occlusion
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAO                = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO"});
+    scene_capture_component->PostProcessSettings.RayTracingAO                          = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_AO"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOSamplesPerPixel = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO_SAMPLES_PER_PIXEL"});
+    scene_capture_component->PostProcessSettings.RayTracingAOSamplesPerPixel           = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_AO_SAMPLES_PER_PIXEL"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOIntensity       = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO_INTENSITY"});
+    scene_capture_component->PostProcessSettings.RayTracingAOIntensity                 = Config::getValue<float>        ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_AO_INTENSITY"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAORadius          = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO_RADIUS"});
+    scene_capture_component->PostProcessSettings.RayTracingAORadius                    = Config::getValue<float>        ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_AO_RADIUS"});
 
-    // Camera
-    scene_capture_component->PostProcessSettings.bOverride_CameraShutterSpeed = true;
-    scene_capture_component->PostProcessSettings.bOverride_CameraISO = true;
-    scene_capture_component->PostProcessSettings.bOverride_DepthOfFieldFstop = true;
-    scene_capture_component->PostProcessSettings.bOverride_DepthOfFieldMinFstop = true;
-    scene_capture_component->PostProcessSettings.bOverride_DepthOfFieldBladeCount = true;
+    // update raytracing reflections
+    scene_capture_component->PostProcessSettings.bOverride_ReflectionsType = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE"});
+    auto reflections_type = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_REFLECTIONS_TYPE"});
+    if (reflections_type == "RayTracing") {
+        scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing; 
+    } else if (reflections_type != "") {
+        ASSERT(false); 
+    }
 
-    // Film (Tonemapper)
-    //scene_capture_component->PostProcessSettings.bOverride_FilmSlope = true;
-    //scene_capture_component->PostProcessSettings.bOverride_FilmToe = true;
-    //scene_capture_component->PostProcessSettings.bOverride_FilmShoulder = true;
-    //scene_capture_component->PostProcessSettings.bOverride_FilmWhiteClip = true;
-    //scene_capture_component->PostProcessSettings.bOverride_FilmBlackClip = true;
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces      = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES"});
+    scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxBounces                = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_BOUNCES"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxRoughness    = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS"});
+    scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxRoughness              = Config::getValue<float>        ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL"});
+    scene_capture_component->PostProcessSettings.RayTracingReflectionsSamplesPerPixel           = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency    = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_TRANSLUCENCY"});
+    scene_capture_component->PostProcessSettings.RayTracingReflectionsTranslucency              = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_REFLECTIONS_TRANSLUCENCY"});
 
-    // Motion blur
-    scene_capture_component->PostProcessSettings.bOverride_MotionBlurAmount = true;
-    scene_capture_component->PostProcessSettings.MotionBlurAmount = 0.6f;//0.45f;
-    scene_capture_component->PostProcessSettings.bOverride_MotionBlurMax = true;
-    scene_capture_component->PostProcessSettings.MotionBlurMax = 60.f;//0.35f;
-    scene_capture_component->PostProcessSettings.bOverride_MotionBlurPerObjectSize = true;
-    scene_capture_component->PostProcessSettings.MotionBlurPerObjectSize = 4.0f;//0.1f;
+    // update show flags
+    scene_capture_component->ShowFlags.SetAmbientOcclusion      (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_AMBIENT_OCCLUSION"}));        // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetCameraImperfections   (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_CAMERA_IMPERFECTIONS"}));     // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetColorGrading          (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_COLOR_GRADING"}));            // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetDepthOfField          (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_DEPTH_OF_FIELD"}));           // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetDistanceFieldAO       (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_DISTANCE_FIELD_AO"}));        // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetEyeAdaptation         (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_EYE_ADAPTATION"}));           // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetGrain                 (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_GRAIN"}));                    // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetIndirectLightingCache (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_INDIRECT_LIGHTING_CACHE"}));  // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetLensFlares            (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_LENS_FLARES"}));              // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetLightShafts           (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_LIGHT_SHAFTS"}));             // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetScreenSpaceReflections(Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_SCREEN_SPACE_REFLECTIONS"})); // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetSeparateTranslucency  (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_SEPARATE_TRANSLUCENCY"}));    // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetTemporalAA            (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_TEMPORAL_AA"}));              // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetVignette              (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_VIGNETTE"}));                 // enabled by FEngineShowFlags::EnableAdvancedFeatures()
 
-    // Color Grading
-//    scene_capture_component->PostProcessSettings.bOverride_WhiteTemp = true;
-//    scene_capture_component->PostProcessSettings.bOverride_WhiteTint = true;
-//    scene_capture_component->PostProcessSettings.bOverride_ColorContrast = true;
-//#if PLATFORM_LINUX
-//    // Looks like Windows and Linux have different outputs with the
-//    // same exposure compensation, this fixes it.
-//    scene_capture_component->PostProcessSettings.ColorContrast = FVector4(1.2f, 1.2f, 1.2f, 1.0f);
-//#endif
+    scene_capture_component->ShowFlags.SetAntiAliasing                 (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_ANTI_ALIASING"}));
+    scene_capture_component->ShowFlags.SetRayTracedDistanceFieldShadows(Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_RAYTRACED_DISTANCE_FIELD_SHADOWS"}));
+    scene_capture_component->ShowFlags.SetDynamicShadows               (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_DYNAMIC_SHADOWS"}));
 
-    // Chromatic Aberration
-    //scene_capture_component->PostProcessSettings.bOverride_SceneFringeIntensity = true;
-    //scene_capture_component->PostProcessSettings.bOverride_ChromaticAberrationStartOffset = true;
-
-    // Ambient Occlusion
-    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionIntensity = true;
-    //scene_capture_component->PostProcessSettings.AmbientOcclusionIntensity = 0.5f;
-    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionRadius = true;
-    //scene_capture_component->PostProcessSettings.AmbientOcclusionRadius = 100.0f;
-    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionStaticFraction = true;
-    //scene_capture_component->PostProcessSettings.AmbientOcclusionStaticFraction = 1.0f;
-    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionFadeDistance = true;
-    //scene_capture_component->PostProcessSettings.AmbientOcclusionFadeDistance = 50000.0f;
-    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionPower = true;
-    //scene_capture_component->PostProcessSettings.AmbientOcclusionPower = 2.0f;
-    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionBias = true;
-    //scene_capture_component->PostProcessSettings.AmbientOcclusionBias = 3.0f;
-    //scene_capture_component->PostProcessSettings.bOverride_AmbientOcclusionQuality = true;
-    //scene_capture_component->PostProcessSettings.AmbientOcclusionQuality = 100.0f;
-
-    // Bloom
-    scene_capture_component->PostProcessSettings.bOverride_BloomMethod = true;
-    scene_capture_component->PostProcessSettings.BloomMethod = EBloomMethod::BM_SOG;
-    scene_capture_component->PostProcessSettings.bOverride_BloomIntensity = true;
-    scene_capture_component->PostProcessSettings.BloomIntensity = 0.4f;
-    scene_capture_component->PostProcessSettings.bOverride_BloomThreshold = true;
-    scene_capture_component->PostProcessSettings.BloomThreshold = -1.0f;
-
-    // Lens
-    //scene_capture_component->PostProcessSettings.bOverride_LensFlareIntensity = true;
-    //scene_capture_component->PostProcessSettings.LensFlareIntensity = 0.1;
-
-    // Raytracing
-    scene_capture_component->bUseRayTracingIfEnabled = true;
-    scene_capture_component->PostProcessSettings.bOverride_IndirectLightingIntensity = true;
-    scene_capture_component->PostProcessSettings.IndirectLightingIntensity = 0.2f;
-
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingGI = true;
-    scene_capture_component->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
-    //scene_capture_component->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingGIMaxBounces = true;
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = true;
-
-    scene_capture_component->PostProcessSettings.RayTracingGIMaxBounces = 4;
-    scene_capture_component->PostProcessSettings.RayTracingGISamplesPerPixel = 16;
-
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingAO = true; // Default value
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOSamplesPerPixel = true; // min 1 - max 64
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOIntensity = true; // min 0.0 - max 1.0
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingAORadius = true; // min 0.0 - max 10000.0
-
-    //scene_capture_component->PostProcessSettings.RayTracingAO = 1; // Default value
-    scene_capture_component->PostProcessSettings.RayTracingAOSamplesPerPixel = 8; // min 1 - max 64
-    scene_capture_component->PostProcessSettings.RayTracingAOIntensity = 0.6f; // min 0.0 - max 1.0
-    scene_capture_component->PostProcessSettings.RayTracingAORadius = 4000.0f; // min 0.0 - max 10000.0
-
-    //scene_capture_component->PostProcessSettings.bOverride_TranslucencyType = true;
-    //scene_capture_component->PostProcessSettings.TranslucencyType = ETranslucencyType::RayTracing;
-    ////scene_capture_component->PostProcessSettings.RayTracingTranslucencyShadows = EReflectedAndRefractedRayTracedShadows::Hard_shadows;
-    //scene_capture_component->PostProcessSettings.bOverride_RayTracingTranslucencyMaxRoughness = true; // min 0.01 - max 1.0
-    //scene_capture_component->PostProcessSettings.bOverride_RayTracingTranslucencyRefractionRays = true; // min 0 - max 50
-    //scene_capture_component->PostProcessSettings.bOverride_RayTracingTranslucencySamplesPerPixel = true; // min 1 - max 64
-    //scene_capture_component->PostProcessSettings.bOverride_RayTracingTranslucencyRefraction = true; // default value
-
-    //scene_capture_component->PostProcessSettings.RayTracingTranslucencyMaxRoughness = 0.6f; // min 0.01 - max 1.0
-    //scene_capture_component->PostProcessSettings.RayTracingTranslucencyRefractionRays = 4; // min 0 - max 50
-    //scene_capture_component->PostProcessSettings.RayTracingTranslucencySamplesPerPixel = 4; // min 1 - max 64
-    //scene_capture_component->PostProcessSettings.RayTracingTranslucencyRefraction = 1; // default value
-
-    scene_capture_component->PostProcessSettings.bOverride_ReflectionsType = true;
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces = true; // min 0 - max 50
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = true; // min 1 - max 64
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency = true; // Default value
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsShadows = true;
-
-    scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::ScreenSpace;
-    //scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxRoughness = 0.6f; // min 0.01 - max 1.0
-    //scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxBounces = 1; // min 0 - max 50
-    //scene_capture_component->PostProcessSettings.RayTracingReflectionsSamplesPerPixel = 6; // min 1 - max 64
-    //scene_capture_component->PostProcessSettings.RayTracingReflectionsShadows = EReflectedAndRefractedRayTracedShadows::Area_shadows;
-
-    //// Pathtracing
-    //scene_capture_component->PostProcessSettings.PathTracingMaxBounces = 2;      // min 0 - max 50
-    //scene_capture_component->PostProcessSettings.PathTracingSamplesPerPixel = 32; // min 1 - max 64
-    //scene_capture_component->PostProcessSettings.bOverride_PathTracingEnableEmissive = 1;      // min 0 - max 50
-    //scene_capture_component->PostProcessSettings.PathTracingMaxPathExposure = 20.0f;      // min -10 - max 30
-    //scene_capture_component->PostProcessSettings.bOverride_PathTracingEnableDenoiser = 1;
-
-
-    //scene_capture_component->ShowFlags.SetAmbientOcclusion(false);
-    scene_capture_component->ShowFlags.SetAntiAliasing(true);
-    //scene_capture_component->ShowFlags.SetVolumetricFog(false);
-    //scene_capture_component->ShowFlags.SetAtmosphericFog(false);
-    //scene_capture_component->ShowFlags.SetAudioRadius(false);
-    //scene_capture_component->ShowFlags.SetBillboardSprites(false);
-    //scene_capture_component->ShowFlags.SetBloom(false);
-    //scene_capture_component->ShowFlags.SetBounds(false);
-    //scene_capture_component->ShowFlags.SetBrushes(false);
-    //scene_capture_component->ShowFlags.SetBSP(false);
-    //scene_capture_component->ShowFlags.SetBSPSplit(false);
-    //scene_capture_component->ShowFlags.SetBSPTriangles(false);
-    //scene_capture_component->ShowFlags.SetBuilderBrush(false);
-    //scene_capture_component->ShowFlags.SetCameraAspectRatioBars(false);
-    //scene_capture_component->ShowFlags.SetCameraFrustums(false);
-    //scene_capture_component->ShowFlags.SetCameraImperfections(false);
-    //scene_capture_component->ShowFlags.SetCameraInterpolation(false);
-    //scene_capture_component->ShowFlags.SetCameraSafeFrames(false);
-    //scene_capture_component->ShowFlags.SetCollision(false);
-    //scene_capture_component->ShowFlags.SetCollisionPawn(false);
-    //scene_capture_component->ShowFlags.SetCollisionVisibility(false);
-    //scene_capture_component->ShowFlags.SetColorGrading(false);
-    //scene_capture_component->ShowFlags.SetCompositeEditorPrimitives(false);
-    //scene_capture_component->ShowFlags.SetConstraints(false);
-    //scene_capture_component->ShowFlags.SetCover(false);
-    //scene_capture_component->ShowFlags.SetDebugAI(false);
-    //scene_capture_component->ShowFlags.SetDecals(false);
-    //scene_capture_component->ShowFlags.SetDeferredLighting(false);
-    //scene_capture_component->ShowFlags.SetDepthOfField(false);
-    //scene_capture_component->ShowFlags.SetDiffuse(false);
-    //scene_capture_component->ShowFlags.SetDirectionalLights(false);
-    //scene_capture_component->ShowFlags.SetDirectLighting(false);
-    //scene_capture_component->ShowFlags.SetDistanceCulledPrimitives(false);
-    scene_capture_component->ShowFlags.SetDistanceFieldAO(false);
-    //scene_capture_component->ShowFlags.SetDistanceFieldGI(false);
-    scene_capture_component->ShowFlags.SetRayTracedDistanceFieldShadows(true);
-    scene_capture_component->ShowFlags.SetDynamicShadows(true);
-    //scene_capture_component->ShowFlags.SetEditor(false);
-    scene_capture_component->ShowFlags.SetEyeAdaptation(true);
-    //scene_capture_component->ShowFlags.SetFog(false);
-    //scene_capture_component->ShowFlags.SetGame(false);
-    //scene_capture_component->ShowFlags.SetGameplayDebug(false);
-    //scene_capture_component->ShowFlags.SetGBufferHints(false);
-    //scene_capture_component->ShowFlags.SetGlobalIllumination(false);
-    //scene_capture_component->ShowFlags.SetGrain(false);
-    //scene_capture_component->ShowFlags.SetGrid(false);
-    //scene_capture_component->ShowFlags.SetHighResScreenshotMask(false);
-    //scene_capture_component->ShowFlags.SetHitProxies(false);
-    //scene_capture_component->ShowFlags.SetHLODColoration(false);
-    //scene_capture_component->ShowFlags.SetHMDDistortion(false);
-    //scene_capture_component->ShowFlags.SetIndirectLightingCache(false);
-    //scene_capture_component->ShowFlags.SetInstancedFoliage(false);
-    //scene_capture_component->ShowFlags.SetInstancedGrass(false);
-    //scene_capture_component->ShowFlags.SetInstancedStaticMeshes(false);
-    //scene_capture_component->ShowFlags.SetLandscape(false);
-    //scene_capture_component->ShowFlags.SetLargeVertices(false);
-    //scene_capture_component->ShowFlags.SetLensFlares(false);
-    //scene_capture_component->ShowFlags.SetLevelColoration(false);
-    //scene_capture_component->ShowFlags.SetLightComplexity(false);
-    //scene_capture_component->ShowFlags.SetLightFunctions(false);
-    //scene_capture_component->ShowFlags.SetLightInfluences(false);
-    //scene_capture_component->ShowFlags.SetLighting(false);
-    //scene_capture_component->ShowFlags.SetLightMapDensity(false);
-    //scene_capture_component->ShowFlags.SetLightRadius(false);
-    //scene_capture_component->ShowFlags.SetLightShafts(false);
-    //scene_capture_component->ShowFlags.SetLOD(false);
-    //scene_capture_component->ShowFlags.SetLODColoration(false);
-    //scene_capture_component->ShowFlags.SetMaterials(false);
-    //scene_capture_component->ShowFlags.SetMaterialTextureScaleAccuracy(false);
-    //scene_capture_component->ShowFlags.SetMeshEdges(false);
-    //scene_capture_component->ShowFlags.SetMeshUVDensityAccuracy(false);
-    //scene_capture_component->ShowFlags.SetModeWidgets(false);
-    //scene_capture_component->ShowFlags.SetMotionBlur(false);
-    //scene_capture_component->ShowFlags.SetNavigation(false);
-    //scene_capture_component->ShowFlags.SetOnScreenDebug(false);
-    //scene_capture_component->ShowFlags.SetOutputMaterialTextureScales(false);
-    //scene_capture_component->ShowFlags.SetOverrideDiffuseAndSpecular(false);
-    //scene_capture_component->ShowFlags.SetPaper2DSprites(false);
-    //scene_capture_component->ShowFlags.SetParticles(false);
-    //scene_capture_component->ShowFlags.SetPivot(false);
-    //scene_capture_component->ShowFlags.SetPointLights(false);
-    //scene_capture_component->ShowFlags.SetPostProcessing(false);
-    //scene_capture_component->ShowFlags.SetPostProcessMaterial(false);
-    //scene_capture_component->ShowFlags.SetPrecomputedVisibility(false);
-    //scene_capture_component->ShowFlags.SetPrecomputedVisibilityCells(false);
-    //scene_capture_component->ShowFlags.SetPreviewShadowsIndicator(false);
-    //scene_capture_component->ShowFlags.SetPrimitiveDistanceAccuracy(false);
-    //scene_capture_component->ShowFlags.SetPropertyColoration(false);
-    //scene_capture_component->ShowFlags.SetQuadOverdraw(false);
-    //scene_capture_component->ShowFlags.SetReflectionEnvironment(false);
-    //scene_capture_component->ShowFlags.SetReflectionOverride(false);
-    //scene_capture_component->ShowFlags.SetRefraction(false);
-    //scene_capture_component->ShowFlags.SetRendering(false);
-    //scene_capture_component->ShowFlags.SetSceneColorFringe(false);
-    //scene_capture_component->ShowFlags.SetScreenPercentage(false);
-    //scene_capture_component->ShowFlags.SetScreenSpaceAO(false);
-    //scene_capture_component->ShowFlags.SetScreenSpaceReflections(false);
-    //scene_capture_component->ShowFlags.SetSelection(false);
-    //scene_capture_component->ShowFlags.SetSelectionOutline(false);
-    //scene_capture_component->ShowFlags.SetSeparateTranslucency(false);
-    //scene_capture_component->ShowFlags.SetShaderComplexity(false);
-    //scene_capture_component->ShowFlags.SetShaderComplexityWithQuadOverdraw(false);
-    //scene_capture_component->ShowFlags.SetShadowFrustums(false);
-    //scene_capture_component->ShowFlags.SetSkeletalMeshes(false);
-    //scene_capture_component->ShowFlags.SetSkinCache(false);
-    //scene_capture_component->ShowFlags.SetSkyLighting(false);
-    //scene_capture_component->ShowFlags.SetSnap(false);
-    //scene_capture_component->ShowFlags.SetSpecular(false);
-    //scene_capture_component->ShowFlags.SetSplines(false);
-    //scene_capture_component->ShowFlags.SetSpotLights(false);
-    //scene_capture_component->ShowFlags.SetStaticMeshes(false);
-    //scene_capture_component->ShowFlags.SetStationaryLightOverlap(false);
-    //scene_capture_component->ShowFlags.SetStereoRendering(false);
-    //scene_capture_component->ShowFlags.SetStreamingBounds(false);
-    //scene_capture_component->ShowFlags.SetSubsurfaceScattering(false);
-    scene_capture_component->ShowFlags.SetTemporalAA(false);
-    //scene_capture_component->ShowFlags.SetTessellation(false);
-    //scene_capture_component->ShowFlags.SetTestImage(false);
-    //scene_capture_component->ShowFlags.SetTextRender(false);
-    //scene_capture_component->ShowFlags.SetTexturedLightProfiles(false);
-    //scene_capture_component->ShowFlags.SetTonemapper(false);
-    //scene_capture_component->ShowFlags.SetTranslucency(false);
-    //scene_capture_component->ShowFlags.SetVectorFields(false);
-    //scene_capture_component->ShowFlags.SetVertexColors(false);
-    //scene_capture_component->ShowFlags.SetVignette(false);
-    //scene_capture_component->ShowFlags.SetVisLog(false);
-    //scene_capture_component->ShowFlags.SetVisualizeAdaptiveDOF(false);
-    //scene_capture_component->ShowFlags.SetVisualizeBloom(false);
-    //scene_capture_component->ShowFlags.SetVisualizeBuffer(false);
-    //scene_capture_component->ShowFlags.SetVisualizeDistanceFieldAO(false);
-    //scene_capture_component->ShowFlags.SetVisualizeDOF(false);
-    //scene_capture_component->ShowFlags.SetVisualizeHDR(false);
-    //scene_capture_component->ShowFlags.SetVisualizeLightCulling(false);
-    //scene_capture_component->ShowFlags.SetVisualizeLPV(false);
-    //scene_capture_component->ShowFlags.SetVisualizeMeshDistanceFields(false);
-    //scene_capture_component->ShowFlags.SetVisualizeMotionBlur(false);
-    //scene_capture_component->ShowFlags.SetVisualizeOutOfBoundsPixels(false);
-    //scene_capture_component->ShowFlags.SetVisualizeSenses(false);
-    //scene_capture_component->ShowFlags.SetVisualizeShadingModels(false);
-    //scene_capture_component->ShowFlags.SetVisualizeSSR(false);
-    //scene_capture_component->ShowFlags.SetVisualizeSSS(false);
-    //scene_capture_component->ShowFlags.SetVolumeLightingSamples(false);
-    //scene_capture_component->ShowFlags.SetVolumes(false);
-    //scene_capture_component->ShowFlags.SetWidgetComponents(false);
-    //scene_capture_component->ShowFlags.SetWireframe(false);
-}
-
-void CameraSensor::setCameraParametersNonFinalColor(USceneCaptureComponent2D* scene_capture_component, UTextureRenderTarget2D* texture_render_target, unsigned long width, unsigned long height)
-{
-    scene_capture_component->ShowFlags.EnableAdvancedFeatures();
-    scene_capture_component->ShowFlags.SetMotionBlur(true);
 }
