@@ -23,6 +23,13 @@ ImuSensor::ImuSensor(UPrimitiveComponent* component)
     imu_mesh_component_ = component;
     new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
+
+    post_physics_pre_render_tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
+    ASSERT(post_physics_pre_render_tick_event_);
+    post_physics_pre_render_tick_event_->RegisterComponent();
+    post_physics_pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
+    post_physics_pre_render_tick_event_handle_ = post_physics_pre_render_tick_event_->delegate_.AddRaw(this, &ImuSensor::postPhysicsPreRenderTickEventHandler);
+
     previous_location_ = {FVector::ZeroVector, FVector::ZeroVector};
     previous_delta_time_ = std::numeric_limits<float>::max(); // Initialized to something hight to minimize the artifacts when the initial values are unknown
 
@@ -48,32 +55,7 @@ ImuSensor::~ImuSensor()
     imu_mesh_component_ = nullptr;
 }
 
-void ImuSensor::update(FVector& accelerometer, FVector& gyroscope, const float delta_time)
-{
-    accelerometer = getLinearAcceleration(delta_time);
-    gyroscope = getAngularVelocity();
-    if (debug_) {
-        const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
-        const FRotator& transform_rotator = actor_transform.Rotator();
-        const FVector& imu_location = new_object_parent_actor_->GetActorLocation();
-        const FVector transform_x_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::X));
-        const FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
-        const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
-        // Plot sensor frame
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
-
-        // Plot acceleration vector
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(accelerometer), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
-
-        // Plot angular rate vector
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(gyroscope), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
-    }
-}
-
-// Accelerometer: measures linear acceleration in m/s^2
-FVector ImuSensor::getLinearAcceleration(const float delta_time)
+FVector ImuSensor::getLinearAcceleration(float delta_time)
 {
     // Earth's gravitational acceleration is approximately 9.81 m/s^2
     float GRAVITY = 9.81f;
@@ -92,7 +74,7 @@ FVector ImuSensor::getLinearAcceleration(const float delta_time)
     const FVector A = Y1 / (H1 * H2);
     const FVector B = Y2 / (H2 * (H1AndH2));
     const FVector C = Y0 / (H1 * (H1AndH2));
-    FVector accelerometer_raw = -2.0f * (A - B - C) / new_object_parent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
+    FVector linear_acceleration = -2.0f * (A - B - C) / new_object_parent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
     // Update the previous locations
     previous_location_[0] = previous_location_[1];
@@ -100,20 +82,49 @@ FVector ImuSensor::getLinearAcceleration(const float delta_time)
     previous_delta_time_ = delta_time;
 
     // Add gravitational acceleration
-    accelerometer_raw.Z += GRAVITY;
+    linear_acceleration.Z += GRAVITY;
     // FQuat imu_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
-    // accelerometer_raw = imu_rotation.UnrotateVector(accelerometer_raw);
-    accelerometer_raw = transform_rotator.UnrotateVector(accelerometer_raw);
+    // linear_acceleration = imu_rotation.UnrotateVector(linear_acceleration);
+    linear_acceleration = transform_rotator.UnrotateVector(linear_acceleration);
 
-    return computeAccelerometerNoise(accelerometer_raw);
+    return computeAccelerometerNoise(linear_acceleration);
 }
 
-// Gyroscope: measures angular velocity in [rad/sec]
-FVector ImuSensor::getAngularVelocity()
+FVector ImuSensor::getAngularRate()
 {
     const FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
     const FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
-    FVector angular_velocity = actor_global_rotation.UnrotateVector(imu_mesh_component_->GetPhysicsAngularVelocityInRadians());
+    FVector angular_rate = actor_global_rotation.UnrotateVector(imu_mesh_component_->GetPhysicsAngularVelocityInRadians());
 
-    return computeGyroscopeNoise(sensor_local_rotation.RotateVector(angular_velocity));
+    return computeGyroscopeNoise(sensor_local_rotation.RotateVector(angular_rate));
 }
+
+void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
+{   
+    // Accelerometer: measures linear acceleration in m/s^2
+    linear_acceleration_measuement = getLinearAcceleration(delta_time);
+
+    // Gyroscope: measures angular rate in [rad/sec]
+    angular_rate_measuement = getAngularRate(); 
+
+    if (debug_) {
+        const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
+        const FRotator& transform_rotator = actor_transform.Rotator();
+        const FVector& imu_location = new_object_parent_actor_->GetActorLocation();
+        const FVector transform_x_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::X));
+        const FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
+        const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
+        
+        // Plot sensor frame
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
+
+        // Plot acceleration vector
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_measuement), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
+
+        // Plot angular rate vector
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(angular_rate_measuement), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
+    }
+}
+

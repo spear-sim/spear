@@ -7,6 +7,8 @@
 
 class AActor;
 class UPrimitiveComponent;
+class UTickEvent;
+
 struct RayData {
         bool hit;
         FVector2D azimuth_and_elevation; // in [rad]
@@ -20,24 +22,11 @@ public:
     SonarSensor(AActor* actor, float range_min, float range_max, float horizontal_fov, float vertical_fov, float noise_std, float max_surface_reflection_angle, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
     ~SonarSensor();
 
-    // Sonar update function will shot n_rays rays, randomly distributed in a pyramid parametrized by (range_min, range_max, horizontal_fov, vertical_fov), to the environment and return the closest measured distance. 
-    void update(float& range);
+    // Updates Sonar measurements by shoting n_rays rays, randomly distributed in a pyramid parametrized by (range_min, range_max, horizontal_fov, vertical_fov), and return the closest measured distance. 
+    void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
 
-    inline void setHorizontalFOV(float horizontal_fov)
-    {
-        horizontal_fov_ = horizontal_fov;
-    }
-
-    inline void setVerticalFOV(float vertical_fov)
-    {
-        vertical_fov_ = vertical_fov;
-    }
-
-    inline void setRange(float range_min, float range_max)
-    {
-        range_min_ = range_min;
-        range_max_ = range_max;
-    }
+    // Measured sonar range.
+    float range = 0.0f;
 
 private:
 
@@ -74,4 +63,6 @@ private:
     // Debug flag to enable debug markers 
     bool debug_ = false;
 
+    UTickEvent* post_physics_pre_render_tick_event_ = nullptr;
+    FDelegateHandle post_physics_pre_render_tick_event_handle_;
 };

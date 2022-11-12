@@ -26,10 +26,17 @@ SonarSensor::SonarSensor(UPrimitiveComponent* component)
     new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
+    post_physics_pre_render_tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
+    ASSERT(post_physics_pre_render_tick_event_);
+    post_physics_pre_render_tick_event_->RegisterComponent();
+    post_physics_pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
+    post_physics_pre_render_tick_event_handle_ = post_physics_pre_render_tick_event_->delegate_.AddRaw(this, &SonarSensor::postPhysicsPreRenderTickEventHandler);
+
     range_min_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MIN"});
     ASSERT(range_min_ >= 0.0f);
 
     range_max_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MAX"});
+    range = range_max_;
     ASSERT(range_min_ <= range_max);
 
     horizontal_fov_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_PARAMETERS", "HORIZONTAL_FOV"});
@@ -66,14 +73,15 @@ SonarSensor::~SonarSensor()
     new_object_parent_actor_ = nullptr;
 }
 
-void SonarSensor::update(float& range)
-{
+void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
+{   
     const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
     const FRotator& transform_rotator = actor_transform.Rotator();
     const FVector& sonar_location = new_object_parent_actor_->GetActorLocation();
     const FVector transform_x_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::X));
     const FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
     const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
+    range = range_max_;
     float min_dist = range_max_;
 
     // Draw the sensing cone and the sonar rays
@@ -140,7 +148,7 @@ void SonarSensor::update(float& range)
             }
 
             if (rays_[idx].hit == true and rays_[idx].distance < min_dist) {
-                min_dist = rays_[idx].distance; 
+                min_dist = rays_[idx].distance;
             }
         });
     }

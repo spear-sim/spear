@@ -7,6 +7,7 @@
 
 class AActor;
 class UPrimitiveComponent;
+class UTickEvent;
 
 class ImuSensor {
 public:
@@ -15,45 +16,18 @@ public:
     ~ImuSensor();
 
     // Updates the IMU's linear acceleration and angular rate measurements at once
-    void update(FVector& accelerometer, FVector& gyroscope, const float delta_time);
+    void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
 
-    // Accelerometer: measures linear acceleration in m/s^2
-    FVector getLinearAcceleration(const float delta_time);
-
-    // Gyroscope: measures angular velocity in rad/sec
-    FVector computeGyroscope();
-
-    inline void setAccelerationStandardDeviation(const FVector& vec)
-    {
-        accelerometer_noise_std_ = vec;
-    }
-
-    inline void setGyroscopeStandardDeviation(const FVector& vec)
-    {
-        gyroscope_noise_std_ = vec;
-    }
-
-    inline void setGyroscopeBias(const FVector& vec)
-    {
-        gyroscope_bias_ = vec;
-    }
-
-    inline const FVector& getAccelerationStandardDeviation() const
-    {
-        return accelerometer_noise_std_;
-    }
-
-    inline const FVector& getGyroscopeStandardDeviation() const
-    {
-        return gyroscope_noise_std_;
-    }
-
-    inline const FVector& getGyroscopeBias() const
-    {
-        return gyroscope_bias_;
-    }
+    FVector linear_acceleration_measuement = FVector::ZeroVector;
+    FVector angular_rate_measuement = FVector::ZeroVector;
 
 private:
+    // Accelerometer: measures linear acceleration in m/s^2
+    const FVector getLinearAcceleration(float delta_time);
+
+    // Gyroscope: measures angular rate in rad/sec
+    const FVector getAngularRate();
+
     // Compute the random component of the acceleration sensor measurement
     inline FVector computeAccelerometerNoise(const FVector& accelerometer)
     {
@@ -100,4 +74,7 @@ private:
 
     // Debug flag to enable debug markers 
     bool debug_ = false;
+
+    UTickEvent* post_physics_pre_render_tick_event_ = nullptr;
+    FDelegateHandle post_physics_pre_render_tick_event_handle_;
 };
