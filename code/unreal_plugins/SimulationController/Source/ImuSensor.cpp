@@ -1,4 +1,4 @@
-#include "IMUSensor.h"
+#include "ImuSensor.h"
 
 #include <map>
 #include <string>
@@ -16,7 +16,7 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-IMUSensor::IMUSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset, const FRotator& orientation_offset, bool debug)
+ImuSensor::ImuSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset, const FRotator& orientation_offset, bool debug)
 {
     previous_location_ = { FVector::ZeroVector, FVector::ZeroVector };
     // Initialized to something hight to minimize the artifacts when the initial values are unknown
@@ -33,11 +33,11 @@ IMUSensor::IMUSensor(AActor* actor, const FVector& accelerometer_noise_std, cons
     debug_ = debug;
 }
 
-IMUSensor::~IMUSensor()
+ImuSensor::~ImuSensor()
 {
 }
 
-void IMUSensor::update(FVector& accelerometer, FVector& gyroscope, const float delta_time)
+void ImuSensor::update(FVector& accelerometer, FVector& gyroscope, const float delta_time)
 {
     accelerometer = computeAccelerometer(delta_time);
     gyroscope = computeGyroscope();
@@ -61,7 +61,7 @@ void IMUSensor::update(FVector& accelerometer, FVector& gyroscope, const float d
     }
 }
 
-FVector IMUSensor::computeAccelerometerNoise(const FVector& accelerometer)
+FVector ImuSensor::computeAccelerometerNoise(const FVector& accelerometer)
 {
     // Normal (or Gaussian or Gauss) distribution will be used as noise function.
     // A mean of 0.0 is used as a first parameter, the standard deviation is determined by the client
@@ -71,7 +71,7 @@ FVector IMUSensor::computeAccelerometerNoise(const FVector& accelerometer)
         accelerometer.Z + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.Z)(random_gen_)};
 }
 
-FVector IMUSensor::computeGyroscopeNoise(const FVector& gyroscope)
+FVector ImuSensor::computeGyroscopeNoise(const FVector& gyroscope)
 {
     // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
     // A mean of 0.0 is used as a first parameter.The standard deviation and the bias are determined by the client
@@ -82,7 +82,7 @@ FVector IMUSensor::computeGyroscopeNoise(const FVector& gyroscope)
 }
 
 // Accelerometer: measures linear acceleration in m/s^2
-FVector IMUSensor::computeAccelerometer(const float delta_time)
+FVector ImuSensor::computeAccelerometer(const float delta_time)
 {
     // Earth's gravitational acceleration is approximately 9.81 m/s^2
     constexpr float GRAVITY = 9.81f;
@@ -118,7 +118,7 @@ FVector IMUSensor::computeAccelerometer(const float delta_time)
 }
 
 // Gyroscope: measures angular velocity in [rad/sec]
-FVector IMUSensor::computeGyroscope()
+FVector ImuSensor::computeGyroscope()
 {
     const FQuat actor_global_rotation = imu_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
     const FQuat sensor_local_rotation = imu_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();

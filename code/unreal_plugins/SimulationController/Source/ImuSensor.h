@@ -7,10 +7,10 @@
 
 class AActor;
 
-class IMUSensor {
+class ImuSensor {
 public:
-    IMUSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
-    ~IMUSensor();
+    ImuSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
+    ~ImuSensor();
 
     // Updates the IMU's linear acceleration and angular rate measurements at once
     void update(FVector& accelerometer, FVector& gyroscope, const float delta_time);

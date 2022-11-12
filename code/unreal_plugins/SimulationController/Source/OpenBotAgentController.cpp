@@ -21,7 +21,7 @@
 #include "Box.h"
 #include "CameraSensor.h"
 #include "Config.h"
-#include "IMUSensor.h"
+#include "ImuSensor.h"
 #include "OpenBotPawn.h"
 #include "Serialize.h"
 #include "SonarSensor.h"
@@ -68,7 +68,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
 
         if (sensor == "imu") {
             // Create IMU sensor
-            inertial_sensor_ = std::make_unique<IMUSensor>(open_bot_pawn_,
+            inertial_sensor_ = std::make_unique<ImuSensor>(open_bot_pawn_,
                                                            FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "X"}),
                                                                    Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "Y"}),
                                                                    Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "Z"})),
