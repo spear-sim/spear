@@ -1,14 +1,16 @@
 #pragma once
 
 #include <map>
+#include <random>
 #include <string>
 #include <vector>
-#include <random>
 
 class AActor;
+class UPrimitiveComponent;
 
 class ImuSensor {
 public:
+    ImuSensor(UPrimitiveComponent* component);
     ImuSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
     ~ImuSensor();
 
@@ -16,7 +18,7 @@ public:
     void update(FVector& accelerometer, FVector& gyroscope, const float delta_time);
 
     // Accelerometer: measures linear acceleration in m/s^2
-    FVector computeAccelerometer(const float delta_time);
+    FVector getLinearAcceleration(const float delta_time);
 
     // Gyroscope: measures angular velocity in rad/sec
     FVector computeGyroscope();
@@ -52,13 +54,30 @@ public:
     }
 
 private:
-    // Compute the random component of the acceleration sensor measurement 
-    FVector computeAccelerometerNoise(const FVector& accelerometer);
+    // Compute the random component of the acceleration sensor measurement
+    inline FVector computeAccelerometerNoise(const FVector& accelerometer)
+    {
+        // Normal (or Gaussian or Gauss) distribution will be used as noise function.
+        // A mean of 0.0 is used as a first parameter, the standard deviation is determined by the client
+        return FVector{
+            accelerometer.X + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.X)(random_gen_),
+            accelerometer.Y + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.Y)(random_gen_),
+            accelerometer.Z + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.Z)(random_gen_)};
+    }
 
     // Compute the random component and bias of the gyroscope sensor measurement
-    FVector computeGyroscopeNoise(const FVector& gyroscope);
+    inline FVector computeGyroscopeNoise(const FVector& gyroscope)
+    {
+        // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
+        // A mean of 0.0 is used as a first parameter.The standard deviation and the bias are determined by the client
+        return FVector{
+            gyroscope.X + gyroscope_bias_.X + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.X)(random_gen_),
+            gyroscope.Y + gyroscope_bias_.Y + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.Y)(random_gen_),
+            gyroscope.Z + gyroscope_bias_.Z + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.Z)(random_gen_)};
+    }
 
-    AActor* imu_actor_ = nullptr;
+    AActor* new_object_parent_actor_ = nullptr;
+
     UMeshComponent* imu_mesh_component_ = nullptr;
 
     // 3D acceleration in [m/s²]
@@ -79,9 +98,6 @@ private:
     // Random number generator
     std::minstd_rand random_gen_;
 
-    // Position and orientation offsets of the sensor relative to the parent actor frame
-    FVector position_offset_ = FVector::ZeroVector; 
-    FRotator orientation_offset_ = FRotator::ZeroRotator;
-
+    // Debug flag to enable debug markers 
     bool debug_ = false;
 };

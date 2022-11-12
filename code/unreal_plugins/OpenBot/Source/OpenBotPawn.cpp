@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <Camera/CameraComponent.h>
+#include <Components/PrimitiveComponent.h>
 #include <Engine/CollisionProfile.h>
 #include <PhysicsPublic.h>
 #include <PhysXIncludes.h>
@@ -32,7 +33,6 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     ConstructorHelpers::FClassFinder<UAnimInstance> openbot_animation_finder(UTF8_TO_TCHAR(animation_name.c_str()));
     ASSERT(openbot_animation_finder.Succeeded());
     skeletal_mesh_component_->SetAnimClass(openbot_animation_finder.Class);
-
     skeletal_mesh_component_->SetCollisionProfileName(UCollisionProfile::Vehicle_ProfileName);
     skeletal_mesh_component_->BodyInstance.bSimulatePhysics = true;
     skeletal_mesh_component_->BodyInstance.bNotifyRigidBodyCollision = true;
@@ -44,7 +44,6 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     RootComponent = skeletal_mesh_component_;
 
     vehicle_movement_component_ = CreateDefaultSubobject<USimpleWheeledVehicleMovementComponent>(TEXT("SimpleWheeledVehicleMovement"));
-
     vehicle_movement_component_->SetIsReplicated(true); // Enable replication by default
     vehicle_movement_component_->UpdatedComponent = skeletal_mesh_component_;
 
@@ -87,6 +86,20 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::getValue<float>({"OPENBOT", "CAMERA_COMPONENT", "FOV"});
+
+    // Create IMU sensor component
+    FVector imu_pose(Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "POSITION_X"}), Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "POSITION_Y"}), Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "POSITION_Z"}));
+    FRotator imu_orientation(Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "PITCH"}), Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "YAW"}), Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "ROLL"}));
+    imu_component_ = CreateDefaultSubobject<UPrimitiveComponent>(TEXT("OpenBotIMU"));
+    imu_component_->SetRelativeLocationAndRotation(imu_pose, imu_orientation);
+    imu_component_->SetupAttachment(skeletal_mesh_component_);
+
+    // Create Sonar sensor component
+    FVector sonar_pose(Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "POSITION_X"}), Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "POSITION_Y"}), Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "POSITION_Z"}));
+    FRotator sonar_orientation(Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "PITCH"}), Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "YAW"}), Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "ROLL"}));
+    sonar_component_ = CreateDefaultSubobject<UPrimitiveComponent>(TEXT("OpenBotSonar"));
+    sonar_component_->SetRelativeLocationAndRotation(sonar_pose, sonar_orientation);
+    sonar_component_->SetupAttachment(skeletal_mesh_component_);
 }
 END_IGNORE_COMPILER_WARNINGS
 

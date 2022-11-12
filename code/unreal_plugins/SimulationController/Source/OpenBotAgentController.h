@@ -53,7 +53,7 @@ private:
 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
     std::unique_ptr<SonarSensor> sonar_sensor_ = nullptr;
-    std::unique_ptr<ImuSensor> inertial_sensor_ = nullptr;
+    std::unique_ptr<ImuSensor> imu_sensor_ = nullptr;
 
     // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;

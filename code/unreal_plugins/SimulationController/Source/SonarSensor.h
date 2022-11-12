@@ -6,7 +6,7 @@
 #include <vector>
 
 class AActor;
-
+class UPrimitiveComponent;
 struct RayData {
         bool hit;
         FVector2D azimuth_and_elevation; // in [rad]
@@ -16,6 +16,7 @@ struct RayData {
 class SonarSensor 
 {
 public:
+    SonarSensor(UPrimitiveComponent* component);
     SonarSensor(AActor* actor, float range_min, float range_max, float horizontal_fov, float vertical_fov, float noise_std, float max_surface_reflection_angle, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
     ~SonarSensor();
 
@@ -40,7 +41,7 @@ public:
 
 private:
 
-    AActor* sonar_actor_;
+    AActor* new_object_parent_actor_ = nullptr;
 
     // Minimum sonar range in [m]
     float range_min_ = 0.02f;
@@ -70,10 +71,7 @@ private:
     std::minstd_rand random_gen_;
     std::vector<RayData> rays_;
 
-    // Position and orientation offsets of the sensor relative to the parent actor frame
-    FVector position_offset_ = FVector::ZeroVector; 
-    FRotator orientation_offset_ = FRotator::ZeroRotator;
-
+    // Debug flag to enable debug markers 
     bool debug_ = false;
 
 };

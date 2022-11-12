@@ -8,6 +8,7 @@
 #include "OpenBotPawn.generated.h"
 
 class UCameraComponent;
+class UPrimitiveComponent;
 class USimpleWheeledVehicleMovementComponent;
 class USkeletalMeshComponent;
 
@@ -63,6 +64,12 @@ public:
 
     // Camera component that will be our viewpoint
     UCameraComponent* camera_component_ = nullptr;
+
+    // Primitive component to which the IMU sensor is attached
+    UPrimitiveComponent* imu_component_ = nullptr;
+
+    // Primitive component to which the Sonar sensor is attached
+    UPrimitiveComponent* sonar_component_ = nullptr;
 
 private:
     // Computes the motor torque corresponding to a given command.

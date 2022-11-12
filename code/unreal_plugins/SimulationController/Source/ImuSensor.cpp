@@ -5,7 +5,8 @@
 #include <utility>
 #include <vector>
 
-#include "DrawDebugHelpers.h"
+#include <Components/PrimitiveComponent.h>
+#include <DrawDebugHelpers.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
@@ -16,82 +17,72 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-ImuSensor::ImuSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset, const FRotator& orientation_offset, bool debug)
+ImuSensor::ImuSensor(UPrimitiveComponent* component)
 {
-    previous_location_ = { FVector::ZeroVector, FVector::ZeroVector };
-    // Initialized to something hight to minimize the artifacts when the initial values are unknown
-    previous_delta_time_ = std::numeric_limits<float>::max();
-    imu_actor_ = actor;
-    ASSERT(imu_actor_);
-    imu_mesh_component_ = Cast<UMeshComponent>(imu_actor_->GetRootComponent());
-    ASSERT(imu_mesh_component_);
-    accelerometer_noise_std_ = accelerometer_noise_std;
-    gyroscope_noise_std_ = gyroscope_noise_std;
-    gyroscope_bias_ = gyroscope_bias;
-    position_offset_ = position_offset;
-    orientation_offset_ = orientation_offset;
-    debug_ = debug;
+    ASSERT(component);
+    imu_mesh_component_ = component;
+    new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
+    ASSERT(new_object_parent_actor_);
+    previous_location_ = {FVector::ZeroVector, FVector::ZeroVector};
+    previous_delta_time_ = std::numeric_limits<float>::max(); // Initialized to something hight to minimize the artifacts when the initial values are unknown
+
+    accelerometer_noise_std_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "X"}),
+                                       Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "Y"}),
+                                       Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "Z"}));
+    gyroscope_noise_std_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_NOISE_STD", "X"}),
+                                   Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_NOISE_STD", "Y"}),
+                                   Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_NOISE_STD", "Z"}));
+    gyroscope_bias_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_BIAS", "X"}),
+                              Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_BIAS", "Y"}),
+                              Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_BIAS", "Z"}));
+    debug_ = Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "DEBUG"});
 }
 
 ImuSensor::~ImuSensor()
 {
+    ASSERT(new_object_parent_actor_);
+    new_object_parent_actor_->Destroy();
+    new_object_parent_actor_ = nullptr;
+
+    ASSERT(imu_mesh_component_);
+    imu_mesh_component_ = nullptr;
 }
 
 void ImuSensor::update(FVector& accelerometer, FVector& gyroscope, const float delta_time)
 {
-    accelerometer = computeAccelerometer(delta_time);
-    gyroscope = computeGyroscope();
+    accelerometer = getLinearAcceleration(delta_time);
+    gyroscope = getAngularVelocity();
     if (debug_) {
-        const FTransform& actor_transform = imu_actor_->GetActorTransform();
-        const FRotator& transform_rotator = FRotator(FQuat(orientation_offset_) * FQuat(actor_transform.Rotator()));
-        const FVector& imu_location = imu_actor_->GetActorLocation() + transform_rotator.RotateVector(position_offset_) * imu_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
+        const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
+        const FRotator& transform_rotator = actor_transform.Rotator();
+        const FVector& imu_location = new_object_parent_actor_->GetActorLocation();
         const FVector transform_x_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::X));
         const FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
         const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
         // Plot sensor frame
-        DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
-        DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
-        DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
 
         // Plot acceleration vector
-        DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(accelerometer), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(accelerometer), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
 
         // Plot angular rate vector
-        DrawDebugDirectionalArrow(imu_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(gyroscope), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(gyroscope), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
     }
 }
 
-FVector ImuSensor::computeAccelerometerNoise(const FVector& accelerometer)
-{
-    // Normal (or Gaussian or Gauss) distribution will be used as noise function.
-    // A mean of 0.0 is used as a first parameter, the standard deviation is determined by the client
-    return FVector{
-        accelerometer.X + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.X)(random_gen_),
-        accelerometer.Y + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.Y)(random_gen_),
-        accelerometer.Z + std::normal_distribution<float>(accelerometer_noise_mean_, accelerometer_noise_std_.Z)(random_gen_)};
-}
-
-FVector ImuSensor::computeGyroscopeNoise(const FVector& gyroscope)
-{
-    // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
-    // A mean of 0.0 is used as a first parameter.The standard deviation and the bias are determined by the client
-    return FVector{
-        gyroscope.X + gyroscope_bias_.X + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.X)(random_gen_),
-        gyroscope.Y + gyroscope_bias_.Y + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.Y)(random_gen_),
-        gyroscope.Z + gyroscope_bias_.Z + std::normal_distribution<float>(gyroscope_noise_mean_, gyroscope_noise_std_.Z)(random_gen_)};
-}
-
 // Accelerometer: measures linear acceleration in m/s^2
-FVector ImuSensor::computeAccelerometer(const float delta_time)
+FVector ImuSensor::getLinearAcceleration(const float delta_time)
 {
     // Earth's gravitational acceleration is approximately 9.81 m/s^2
-    constexpr float GRAVITY = 9.81f;
+    float GRAVITY = 9.81f;
 
     // 2nd derivative of the polynomic (quadratic) interpolation using the point in current time and two previous steps:
     // d2[i] = -2.0*(y1/(h1*h2)-y2/((h2+h1)*h2)-y0/(h1*(h2+h1)))
-    const FTransform& actor_transform = imu_actor_->GetActorTransform();
-    const FRotator& transform_rotator = FRotator(FQuat(orientation_offset_) * FQuat(actor_transform.Rotator()));
-    const FVector& current_location = imu_actor_->GetActorLocation() + transform_rotator.RotateVector(position_offset_) * imu_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
+    const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
+    const FRotator& transform_rotator = actor_transform.Rotator();
+    const FVector& current_location = new_object_parent_actor_->GetActorLocation();
     const FVector Y2 = previous_location_[0];
     const FVector Y1 = previous_location_[1];
     const FVector Y0 = current_location;
@@ -101,7 +92,7 @@ FVector ImuSensor::computeAccelerometer(const float delta_time)
     const FVector A = Y1 / (H1 * H2);
     const FVector B = Y2 / (H2 * (H1AndH2));
     const FVector C = Y0 / (H1 * (H1AndH2));
-    FVector accelerometer_raw = -2.0f * (A - B - C) / imu_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
+    FVector accelerometer_raw = -2.0f * (A - B - C) / new_object_parent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
     // Update the previous locations
     previous_location_[0] = previous_location_[1];
@@ -110,7 +101,7 @@ FVector ImuSensor::computeAccelerometer(const float delta_time)
 
     // Add gravitational acceleration
     accelerometer_raw.Z += GRAVITY;
-    // FQuat imu_rotation = imu_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
+    // FQuat imu_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
     // accelerometer_raw = imu_rotation.UnrotateVector(accelerometer_raw);
     accelerometer_raw = transform_rotator.UnrotateVector(accelerometer_raw);
 
@@ -118,10 +109,10 @@ FVector ImuSensor::computeAccelerometer(const float delta_time)
 }
 
 // Gyroscope: measures angular velocity in [rad/sec]
-FVector ImuSensor::computeGyroscope()
+FVector ImuSensor::getAngularVelocity()
 {
-    const FQuat actor_global_rotation = imu_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
-    const FQuat sensor_local_rotation = imu_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
+    const FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
+    const FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
     FVector angular_velocity = actor_global_rotation.UnrotateVector(imu_mesh_component_->GetPhysicsAngularVelocityInRadians());
 
     return computeGyroscopeNoise(sensor_local_rotation.RotateVector(angular_velocity));
