@@ -75,14 +75,6 @@ SIMULATION_CONTROLLER:
       RENDER_PASSES: ["final_color", "segmentation", "depth_glsl"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
     SONAR_PARAMETERS:
       MAX_REFLECTION_ANGLE: 45.0
-      OFFSET_POSITION: 
-        X: 0.1
-        Y: 0.0
-        Z: -0.015
-      OFFSET_ORIENTATION:
-        ROLL: 0.0
-        PITCH: 0.0
-        YAW: 0.0
       HORIZONTAL_FOV: 30.0
       VERTICAL_FOV: 10.0
       DEBUG: False
@@ -90,6 +82,20 @@ SIMULATION_CONTROLLER:
         MIN: 0.01
         MAX: 2.5
       NOISE_STD: 0.0
+    IMU_PARAMETERS:
+      DEBUG: False
+      ACCELEROMETER_NOISE_STD: 
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+      GYROSCOPE_NOISE_STD: 
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+      GYROSCOPE_BIAS: 
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
     NAVMESH:
       AGENT_RADIUS: 17.0
       AGENT_HEIGHT: 20.0

@@ -51,3 +51,17 @@ OPENBOT:
     YAW: 0.0
     PITCH: 0.0
     FOV: 90.0
+  IMU_COMPONENT:
+    POSITION_X: 5.0
+    POSITION_Y: 0.0
+    POSITION_Z: 5.0
+    ROLL: 0.0
+    YAW: 0.0
+    PITCH: 0.0
+  SONAR_COMPONENT:
+    POSITION_X: 10.0
+    POSITION_Y: 0.0
+    POSITION_Z: -1.5
+    ROLL: 0.0
+    YAW: 0.0
+    PITCH: 0.0
