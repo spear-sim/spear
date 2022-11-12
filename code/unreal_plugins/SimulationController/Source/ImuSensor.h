@@ -6,6 +6,7 @@
 #include <vector>
 
 class AActor;
+class UPrimitiveComponent;
 class USceneComponent;
 class UTickEvent;
 
@@ -52,7 +53,7 @@ private:
 
     AActor* new_object_parent_actor_ = nullptr;
 
-    USceneComponent* imu_component_ = nullptr;
+    UPrimitiveComponent* imu_component_ = nullptr;
 
     // 3D acceleration in [m/s²]
     float accelerometer_noise_mean_ = 0.0f;

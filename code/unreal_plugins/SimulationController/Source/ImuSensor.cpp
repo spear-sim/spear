@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include <Components/PrimitiveComponent.h>
 #include <Components/SceneComponent.h>
 #include <DrawDebugHelpers.h>
 #include <Engine/World.h>
@@ -20,7 +21,7 @@
 ImuSensor::ImuSensor(USceneComponent* component)
 {
     ASSERT(component);
-    imu_component_ = component;
+    imu_component_ = dynamic_cast<UPrimitiveComponent*>(component);
     new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
