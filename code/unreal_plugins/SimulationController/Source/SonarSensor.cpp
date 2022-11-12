@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include <Components/PrimitiveComponent.h>
+#include <Components/SceneComponent.h>
 #include <DrawDebugHelpers.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -19,7 +19,7 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-SonarSensor::SonarSensor(UPrimitiveComponent* component)
+SonarSensor::SonarSensor(USceneComponent* component)
 {
     ASSERT(component);
 
@@ -37,7 +37,7 @@ SonarSensor::SonarSensor(UPrimitiveComponent* component)
 
     range_max_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MAX"});
     range = range_max_;
-    ASSERT(range_min_ <= range_max);
+    ASSERT(range_min_ <= range_max_);
 
     horizontal_fov_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_PARAMETERS", "HORIZONTAL_FOV"});
     ASSERT(horizontal_fov_ >= 0.0f);

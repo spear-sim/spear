@@ -6,7 +6,7 @@
 #include <vector>
 
 class AActor;
-class UPrimitiveComponent;
+class USceneComponent;
 class UTickEvent;
 
 struct RayData {
@@ -18,7 +18,7 @@ struct RayData {
 class SonarSensor 
 {
 public:
-    SonarSensor(UPrimitiveComponent* component);
+    SonarSensor(USceneComponent* component);
     SonarSensor(AActor* actor, float range_min, float range_max, float horizontal_fov, float vertical_fov, float noise_std, float max_surface_reflection_angle, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
     ~SonarSensor();
 

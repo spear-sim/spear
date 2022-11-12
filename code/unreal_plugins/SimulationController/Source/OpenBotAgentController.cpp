@@ -400,17 +400,12 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
 
         if (sensor == "sonar") {
             // Get sonar measurement:
-            float sonar_range = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "SONAR_PARAMETERS", "RANGE", "MAX"});
-            sonar_sensor_->update(sonar_range);
-            observation["sonar_data"] = Serialize::toUint8(std::vector<float>{sonar_range});
+            observation["sonar_data"] = Serialize::toUint8(std::vector<float>{sonar_sensor_->range});
         }
 
         if (sensor == "imu") {
             // Get IMU measurement:
-            FVector acceleration = FVector::ZeroVector;
-            FVector angular_rate = FVector::ZeroVector;
-            imu_sensor_->update(acceleration, angular_rate, Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));
-            observation["imu_data"] = Serialize::toUint8(std::vector<float>{acceleration.X, acceleration.Y, acceleration.Z, angular_rate.X, angular_rate.Y, angular_rate.Z});
+            observation["imu_data"] = Serialize::toUint8(std::vector<float>{imu_sensor_->linear_acceleration_measuement.X, imu_sensor_->linear_acceleration_measuement.Y, imu_sensor_->linear_acceleration_measuement.Z, imu_sensor_->angular_rate_measuement.X, imu_sensor_->angular_rate_measuement.Y, imu_sensor_->angular_rate_measuement.Z});
         }
     }
 

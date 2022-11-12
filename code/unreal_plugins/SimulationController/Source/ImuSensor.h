@@ -6,12 +6,12 @@
 #include <vector>
 
 class AActor;
-class UPrimitiveComponent;
+class USceneComponent;
 class UTickEvent;
 
 class ImuSensor {
 public:
-    ImuSensor(UPrimitiveComponent* component);
+    ImuSensor(USceneComponent* component);
     ImuSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
     ~ImuSensor();
 
@@ -23,10 +23,10 @@ public:
 
 private:
     // Accelerometer: measures linear acceleration in m/s^2
-    const FVector getLinearAcceleration(float delta_time);
+    FVector getLinearAcceleration(float delta_time);
 
     // Gyroscope: measures angular rate in rad/sec
-    const FVector getAngularRate();
+    FVector getAngularRate();
 
     // Compute the random component of the acceleration sensor measurement
     inline FVector computeAccelerometerNoise(const FVector& accelerometer)
@@ -52,7 +52,7 @@ private:
 
     AActor* new_object_parent_actor_ = nullptr;
 
-    UMeshComponent* imu_mesh_component_ = nullptr;
+    USceneComponent* imu_component_ = nullptr;
 
     // 3D acceleration in [m/s²]
     float accelerometer_noise_mean_ = 0.0f;

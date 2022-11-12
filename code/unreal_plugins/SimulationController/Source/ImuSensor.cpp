@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include <Components/PrimitiveComponent.h>
+#include <Components/SceneComponent.h>
 #include <DrawDebugHelpers.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -17,10 +17,10 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-ImuSensor::ImuSensor(UPrimitiveComponent* component)
+ImuSensor::ImuSensor(USceneComponent* component)
 {
     ASSERT(component);
-    imu_mesh_component_ = component;
+    imu_component_ = component;
     new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
@@ -51,11 +51,11 @@ ImuSensor::~ImuSensor()
     new_object_parent_actor_->Destroy();
     new_object_parent_actor_ = nullptr;
 
-    ASSERT(imu_mesh_component_);
-    imu_mesh_component_ = nullptr;
+    ASSERT(imu_component_);
+    imu_component_ = nullptr;
 }
 
-FVector ImuSensor::getLinearAcceleration(float delta_time)
+FVector ImuSensor::getLinearAcceleration(float delta_time) 
 {
     // Earth's gravitational acceleration is approximately 9.81 m/s^2
     float GRAVITY = 9.81f;
@@ -90,11 +90,11 @@ FVector ImuSensor::getLinearAcceleration(float delta_time)
     return computeAccelerometerNoise(linear_acceleration);
 }
 
-FVector ImuSensor::getAngularRate()
+FVector ImuSensor::getAngularRate() 
 {
     const FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
     const FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
-    FVector angular_rate = actor_global_rotation.UnrotateVector(imu_mesh_component_->GetPhysicsAngularVelocityInRadians());
+    FVector angular_rate = actor_global_rotation.UnrotateVector(imu_component_->GetPhysicsAngularVelocityInRadians());
 
     return computeGyroscopeNoise(sensor_local_rotation.RotateVector(angular_rate));
 }
@@ -114,7 +114,7 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELev
         const FVector transform_x_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::X));
         const FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
         const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
-        
+
         // Plot sensor frame
         DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
         DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
