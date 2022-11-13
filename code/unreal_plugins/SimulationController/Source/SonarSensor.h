@@ -6,19 +6,18 @@
 #include <vector>
 
 class AActor;
-class USceneComponent;
+class UPrimitiveComponent;
 class UTickEvent;
 
 struct RayData {
         bool hit;
-        FVector2D azimuth_and_elevation; // in [rad]
         float distance; // in [m]
     };
 
 class SonarSensor 
 {
 public:
-    SonarSensor(USceneComponent* component);
+    SonarSensor(UPrimitiveComponent* primitive_component);
     SonarSensor(AActor* actor, float range_min, float range_max, float horizontal_fov, float vertical_fov, float noise_std, float max_surface_reflection_angle, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
     ~SonarSensor();
 
@@ -26,11 +25,13 @@ public:
     void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
 
     // Measured sonar range.
-    float range = 0.0f;
+    float range_ = 0.0f;
 
 private:
 
     AActor* new_object_parent_actor_ = nullptr;
+
+    UPrimitiveComponent* primitive_component_ = nullptr;
 
     // Minimum sonar range in [m]
     float range_min_ = 0.02f;

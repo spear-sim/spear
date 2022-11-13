@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <Components/PrimitiveComponent.h>
-#include <Components/SceneComponent.h>
 #include <DrawDebugHelpers.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -18,11 +17,11 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-ImuSensor::ImuSensor(USceneComponent* component)
+ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
 {
-    ASSERT(component);
-    imu_component_ = dynamic_cast<UPrimitiveComponent*>(component);
-    new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
+    ASSERT(primitive_component);
+    primitive_component_ = primitive_component;
+    new_object_parent_actor_ = primitive_component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
     post_physics_pre_render_tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
@@ -34,16 +33,16 @@ ImuSensor::ImuSensor(USceneComponent* component)
     previous_location_ = {FVector::ZeroVector, FVector::ZeroVector};
     previous_delta_time_ = std::numeric_limits<float>::max(); // Initialized to something hight to minimize the artifacts when the initial values are unknown
 
-    accelerometer_noise_std_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "X"}),
-                                       Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "Y"}),
-                                       Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "ACCELEROMETER_NOISE_STD", "Z"}));
-    gyroscope_noise_std_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_NOISE_STD", "X"}),
-                                   Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_NOISE_STD", "Y"}),
-                                   Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_NOISE_STD", "Z"}));
-    gyroscope_bias_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_BIAS", "X"}),
-                              Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_BIAS", "Y"}),
-                              Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "GYROSCOPE_BIAS", "Z"}));
-    debug_ = Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMU_PARAMETERS", "DEBUG"});
+    accelerometer_noise_std_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "X"}),
+                                       Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "Y"}),
+                                       Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "Z"}));
+    gyroscope_noise_std_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "X"}),
+                                   Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "Y"}),
+                                   Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "Z"}));
+    gyroscope_bias_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "X"}),
+                              Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Y"}),
+                              Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Z"}));
+    debug_ = Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "DEBUG"});
 }
 
 ImuSensor::~ImuSensor()
@@ -52,8 +51,8 @@ ImuSensor::~ImuSensor()
     new_object_parent_actor_->Destroy();
     new_object_parent_actor_ = nullptr;
 
-    ASSERT(imu_component_);
-    imu_component_ = nullptr;
+    ASSERT(primitive_component_);
+    primitive_component_ = nullptr;
 }
 
 FVector ImuSensor::getLinearAcceleration(float delta_time) 
@@ -75,7 +74,7 @@ FVector ImuSensor::getLinearAcceleration(float delta_time)
     const FVector A = Y1 / (H1 * H2);
     const FVector B = Y2 / (H2 * (H1AndH2));
     const FVector C = Y0 / (H1 * (H1AndH2));
-    FVector linear_acceleration = -2.0f * (A - B - C) / new_object_parent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
+    FVector linear_acceleration = -2.0f * (A - B - C) / primitive_component_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
     // Update the previous locations
     previous_location_[0] = previous_location_[1];
@@ -95,7 +94,7 @@ FVector ImuSensor::getAngularRate()
 {
     const FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
     const FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
-    FVector angular_rate = actor_global_rotation.UnrotateVector(imu_component_->GetPhysicsAngularVelocityInRadians());
+    FVector angular_rate = actor_global_rotation.UnrotateVector(primitive_component_->GetPhysicsAngularVelocityInRadians());
 
     return computeGyroscopeNoise(sensor_local_rotation.RotateVector(angular_rate));
 }
@@ -103,10 +102,10 @@ FVector ImuSensor::getAngularRate()
 void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
 {   
     // Accelerometer: measures linear acceleration in m/s^2
-    linear_acceleration_measuement = getLinearAcceleration(delta_time);
+    linear_acceleration_ = getLinearAcceleration(delta_time);
 
     // Gyroscope: measures angular rate in [rad/sec]
-    angular_rate_measuement = getAngularRate(); 
+    angular_rate_ = getAngularRate(); 
 
     if (debug_) {
         const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
@@ -117,15 +116,15 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELev
         const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
 
         // Plot sensor frame
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
+        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
+        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
+        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
 
         // Plot acceleration vector
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_measuement), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
 
         // Plot angular rate vector
-        DrawDebugDirectionalArrow(new_object_parent_actor_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(angular_rate_measuement), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(angular_rate_), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
     }
 }
 

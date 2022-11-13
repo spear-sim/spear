@@ -7,20 +7,19 @@
 
 class AActor;
 class UPrimitiveComponent;
-class USceneComponent;
 class UTickEvent;
 
 class ImuSensor {
 public:
-    ImuSensor(USceneComponent* component);
+    ImuSensor(UPrimitiveComponent* primitive_component);
     ImuSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
     ~ImuSensor();
 
     // Updates the IMU's linear acceleration and angular rate measurements at once
     void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
 
-    FVector linear_acceleration_measuement = FVector::ZeroVector;
-    FVector angular_rate_measuement = FVector::ZeroVector;
+    FVector linear_acceleration_ = FVector::ZeroVector;
+    FVector angular_rate_ = FVector::ZeroVector;
 
 private:
     // Accelerometer: measures linear acceleration in m/s^2
@@ -53,7 +52,7 @@ private:
 
     AActor* new_object_parent_actor_ = nullptr;
 
-    UPrimitiveComponent* imu_component_ = nullptr;
+    UPrimitiveComponent* primitive_component_ = nullptr;
 
     // 3D acceleration in [m/s²]
     float accelerometer_noise_mean_ = 0.0f;

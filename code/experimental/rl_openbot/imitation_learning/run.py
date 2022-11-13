@@ -370,6 +370,8 @@ if __name__ == "__main__":
 
                     # Send action to the agent and collect observations:
                     obs, reward, done, info = env.step({"apply_voltage": action})
+                    
+                    print(obs["sonar_data"])
 
                     # Fill an array with the different observations:
                     array_obs[i][0] = speedMultiplier*obs["control_data"][0] # ctrl left

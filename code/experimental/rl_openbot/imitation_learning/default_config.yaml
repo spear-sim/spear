@@ -38,6 +38,30 @@ SIMULATION_CONTROLLER:
   SIMULATION_STEP_TIME_SECONDS: 0.01
   TASK_NAME: "ImitationLearningTask"
   AGENT_CONTROLLER_NAME: "OpenBotAgentController"
+  
+  SONAR_PARAMETERS:
+    DEBUG: True
+    MAX_REFLECTION_ANGLE: 45.0
+    HORIZONTAL_FOV: 30.0
+    VERTICAL_FOV: 10.0
+    RANGE:
+      MIN: 0.01
+      MAX: 10.0
+    NOISE_STD: 0.0
+  IMU_PARAMETERS:
+    DEBUG: True
+    ACCELEROMETER_NOISE_STD: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    GYROSCOPE_NOISE_STD: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    GYROSCOPE_BIAS: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
 
   IMITATION_LEARNING_TASK:
     RANDOM_SPAWN_TRAJ: True
@@ -73,29 +97,6 @@ SIMULATION_CONTROLLER:
       MOTION_BLUR_MAX: 10.0
       POST_PROC_BLEND_WEIGHT: 1.0
       RENDER_PASSES: ["final_color", "segmentation", "depth_glsl"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
-    SONAR_PARAMETERS:
-      MAX_REFLECTION_ANGLE: 45.0
-      HORIZONTAL_FOV: 30.0
-      VERTICAL_FOV: 10.0
-      DEBUG: False
-      RANGE:
-        MIN: 0.01
-        MAX: 2.5
-      NOISE_STD: 0.0
-    IMU_PARAMETERS:
-      DEBUG: False
-      ACCELEROMETER_NOISE_STD: 
-        X: 0.0
-        Y: 0.0
-        Z: 0.0
-      GYROSCOPE_NOISE_STD: 
-        X: 0.0
-        Y: 0.0
-        Z: 0.0
-      GYROSCOPE_BIAS: 
-        X: 0.0
-        Y: 0.0
-        Z: 0.0
     NAVMESH:
       AGENT_RADIUS: 17.0
       AGENT_HEIGHT: 20.0
