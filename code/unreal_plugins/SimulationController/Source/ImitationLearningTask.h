@@ -51,10 +51,10 @@ private:
     AActor* goal_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
 
+    std::vector<AActor*> obstacle_ignore_actors_;
+
     UActorHitEvent* actor_hit_event_ = nullptr;
     FDelegateHandle actor_hit_event_delegate_handle_;
-
-    std::vector<AActor*> obstacle_ignore_actors_;
 
     // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;

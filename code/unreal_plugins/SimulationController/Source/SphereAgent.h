@@ -50,8 +50,8 @@ private:
 
     UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
 
-    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
-
     UTickEvent* tick_event_ = nullptr;
     FDelegateHandle tick_event_handle_;
+
+    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
 };

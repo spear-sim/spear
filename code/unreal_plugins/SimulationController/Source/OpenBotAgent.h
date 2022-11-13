@@ -51,12 +51,12 @@ private:
     AOpenBotPawn* open_bot_pawn_ = nullptr;
     AActor* goal_actor_ = nullptr;
 
-    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
-
     // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;
     ANavigationData* nav_data_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
+
+    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
 
     std::vector<float> trajectory_; // An array containing the different waypoints to be followed by the agent, converted into a serialized format X0, Y0, Z0, X1, Y1, Z1, ... Xn, Yn, Zn 
 };
