@@ -48,9 +48,9 @@ private:
     AActor* new_object_parent_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
 
-    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
-
     UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
+
+    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
 
     UTickEvent* tick_event_ = nullptr;
     FDelegateHandle tick_event_handle_;
