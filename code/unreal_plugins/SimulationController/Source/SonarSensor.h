@@ -9,11 +9,6 @@ class AActor;
 class UPrimitiveComponent;
 class UTickEvent;
 
-struct RayData {
-        bool hit;
-        float distance; // in [m]
-    };
-
 class SonarSensor 
 {
 public:
