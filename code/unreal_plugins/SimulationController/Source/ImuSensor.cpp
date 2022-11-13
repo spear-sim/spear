@@ -21,6 +21,7 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
 {
     ASSERT(primitive_component);
     primitive_component_ = primitive_component;
+
     new_object_parent_actor_ = primitive_component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
@@ -30,23 +31,18 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
     post_physics_pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
     post_physics_pre_render_tick_event_handle_ = post_physics_pre_render_tick_event_->delegate_.AddRaw(this, &ImuSensor::postPhysicsPreRenderTickEventHandler);
 
-    previous_location_ = {FVector::ZeroVector, FVector::ZeroVector};
+    previous_locations_ = {FVector::ZeroVector, FVector::ZeroVector};
     previous_delta_time_ = std::numeric_limits<float>::max(); // Initialized to something hight to minimize the artifacts when the initial values are unknown
-
-    accelerometer_noise_std_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "X"}),
-                                       Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "Y"}),
-                                       Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "Z"}));
-    gyroscope_noise_std_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "X"}),
-                                   Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "Y"}),
-                                   Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "Z"}));
-    gyroscope_bias_ = FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "X"}),
-                              Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Y"}),
-                              Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Z"}));
-    debug_ = Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "DEBUG"});
 }
 
 ImuSensor::~ImuSensor()
 {
+    ASSERT(post_physics_pre_render_tick_event_);
+    post_physics_pre_render_tick_event_->delegate_.Remove(post_physics_pre_render_tick_event_handle_);
+    post_physics_pre_render_tick_event_handle_.Reset();
+    post_physics_pre_render_tick_event_->DestroyComponent();
+    post_physics_pre_render_tick_event_ = nullptr;
+
     ASSERT(new_object_parent_actor_);
     new_object_parent_actor_->Destroy();
     new_object_parent_actor_ = nullptr;
@@ -55,7 +51,7 @@ ImuSensor::~ImuSensor()
     primitive_component_ = nullptr;
 }
 
-FVector ImuSensor::getLinearAcceleration(float delta_time) 
+FVector ImuSensor::updateLinearAcceleration(float delta_time)
 {
     // Earth's gravitational acceleration is approximately 9.81 m/s^2
     float GRAVITY = 9.81f;
@@ -65,8 +61,8 @@ FVector ImuSensor::getLinearAcceleration(float delta_time)
     const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
     const FRotator& transform_rotator = actor_transform.Rotator();
     const FVector& current_location = new_object_parent_actor_->GetActorLocation();
-    const FVector Y2 = previous_location_[0];
-    const FVector Y1 = previous_location_[1];
+    const FVector Y2 = previous_locations_[0];
+    const FVector Y1 = previous_locations_[1];
     const FVector Y0 = current_location;
     const float H1 = delta_time;
     const float H2 = previous_delta_time_;
@@ -77,37 +73,47 @@ FVector ImuSensor::getLinearAcceleration(float delta_time)
     FVector linear_acceleration = -2.0f * (A - B - C) / primitive_component_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
     // Update the previous locations
-    previous_location_[0] = previous_location_[1];
-    previous_location_[1] = current_location;
+    previous_locations_[0] = previous_locations_[1];
+    previous_locations_[1] = current_location;
     previous_delta_time_ = delta_time;
 
     // Add gravitational acceleration
     linear_acceleration.Z += GRAVITY;
-    // FQuat imu_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
-    // linear_acceleration = imu_rotation.UnrotateVector(linear_acceleration);
     linear_acceleration = transform_rotator.UnrotateVector(linear_acceleration);
 
-    return computeAccelerometerNoise(linear_acceleration);
+    // Compute the random component of the acceleration sensor measurement.
+    // Normal (or Gaussian or Gauss) distribution will be used as noise function.
+    // A mean of 0.0 is used as a first parameter, the standard deviation is determined by the client
+    return FVector{
+        linear_acceleration.X + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "X"}))(random_gen_),
+        linear_acceleration.Y + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "Y"}))(random_gen_),
+        linear_acceleration.Z + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "Z"}))(random_gen_)};
 }
 
-FVector ImuSensor::getAngularRate() 
+FVector ImuSensor::updateAngularRate()
 {
     const FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
     const FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
     FVector angular_rate = actor_global_rotation.UnrotateVector(primitive_component_->GetPhysicsAngularVelocityInRadians());
 
-    return computeGyroscopeNoise(sensor_local_rotation.RotateVector(angular_rate));
+    // Compute the random component and bias of the gyroscope sensor measurement.
+    // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
+    // A mean of 0.0 is used as a first parameter.The standard deviation and the bias are determined by the client
+    return FVector{
+        angular_rate.X + Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "X"}) + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "X"}))(random_gen_),
+        angular_rate.Y + Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Y"}) + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "Y"}))(random_gen_),
+        angular_rate.Z + Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Z"}) + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "Z"}))(random_gen_)};
 }
 
 void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
-{   
+{
     // Accelerometer: measures linear acceleration in m/s^2
-    linear_acceleration_ = getLinearAcceleration(delta_time);
+    linear_acceleration_ = updateLinearAcceleration(delta_time);
 
     // Gyroscope: measures angular rate in [rad/sec]
-    angular_rate_ = getAngularRate(); 
+    angular_rate_ = updateAngularRate();
 
-    if (debug_) {
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "DEBUG"})) {
         const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
         const FRotator& transform_rotator = actor_transform.Rotator();
         const FVector& imu_location = new_object_parent_actor_->GetActorLocation();
@@ -127,4 +133,3 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELev
         DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(angular_rate_), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
     }
 }
-

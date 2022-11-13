@@ -12,6 +12,7 @@
 #include <Engine/Engine.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
+#include <PhysicsEngine/PhysicsSettings.h>
 #include <GameFramework/GameModeBase.h>
 #include <Kismet/GameplayStatics.h>
 
@@ -44,6 +45,14 @@ enum class FrameState : uint8_t
 
 void SimulationController::StartupModule()
 {
+    // Setting parameters for physics substepping
+    UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
+    physics_settings->bSubstepping = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "SUBSTEPPING" });
+    physics_settings->MaxSubstepDeltaTime = Config::getValue<float>({ "SIMULATION_CONTROLLER", "MAX_SUBSTEP_DELTA_TIME" });
+    physics_settings->MaxSubsteps = Config::getValue<int32>({ "SIMULATION_CONTROLLER", "MAX_SUBSTEPS" });
+    // According to https://carla.readthedocs.io/en/latest/adv_synchrony_timestep/
+    ASSERT(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS" }) <= Config::getValue<float>({ "SIMULATION_CONTROLLER", "MAX_SUBSTEP_DELTA_TIME" }) * Config::getValue<int32>({ "SIMULATION_CONTROLLER", "MAX_SUBSTEPS" }));
+
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);

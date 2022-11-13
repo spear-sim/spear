@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include <Camera/CameraComponent.h>
-#include <Components/SceneComponent.h>
+#include <Components/PrimitiveComponent.h>
 #include <Engine/CollisionProfile.h>
 #include <PhysicsPublic.h>
 #include <PhysXIncludes.h>
@@ -90,14 +90,14 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     // Create IMU sensor component
     FVector imu_pose(Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "POSITION_X"}), Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "POSITION_Y"}), Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "POSITION_Z"}));
     FRotator imu_orientation(Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "PITCH"}), Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "YAW"}), Config::getValue<float>({"OPENBOT", "IMU_COMPONENT", "ROLL"}));
-    imu_component_ = CreateDefaultSubobject<USceneComponent>(TEXT("OpenBotIMU"));
+    imu_component_ = CreateDefaultSubobject<UPrimitiveComponent>(TEXT("OpenBotIMU"));
     imu_component_->SetRelativeLocationAndRotation(imu_pose, imu_orientation);
     imu_component_->SetupAttachment(skeletal_mesh_component_);
 
     // Create Sonar sensor component
     FVector sonar_pose(Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "POSITION_X"}), Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "POSITION_Y"}), Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "POSITION_Z"}));
     FRotator sonar_orientation(Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "PITCH"}), Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "YAW"}), Config::getValue<float>({"OPENBOT", "SONAR_COMPONENT", "ROLL"}));
-    sonar_component_ = CreateDefaultSubobject<USceneComponent>(TEXT("OpenBotSonar"));
+    sonar_component_ = CreateDefaultSubobject<UPrimitiveComponent>(TEXT("OpenBotSonar"));
     sonar_component_->SetRelativeLocationAndRotation(sonar_pose, sonar_orientation);
     sonar_component_->SetupAttachment(skeletal_mesh_component_);
 }
