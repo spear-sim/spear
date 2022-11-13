@@ -35,33 +35,13 @@ INTERIORSIM:
   
 SIMULATION_CONTROLLER:
   PORT: 30001 
-  SIMULATION_STEP_TIME_SECONDS: 0.01
   TASK_NAME: "ImitationLearningTask"
   AGENT_CONTROLLER_NAME: "OpenBotAgentController"
-  
-  SONAR_PARAMETERS:
-    DEBUG: True
-    MAX_REFLECTION_ANGLE: 45.0
-    HORIZONTAL_FOV: 30.0
-    VERTICAL_FOV: 10.0
-    RANGE:
-      MIN: 0.01
-      MAX: 10.0
-    NOISE_STD: 0.0
-  IMU_PARAMETERS:
-    DEBUG: True
-    ACCELEROMETER_NOISE_STD: 
-      X: 0.0
-      Y: 0.0
-      Z: 0.0
-    GYROSCOPE_NOISE_STD: 
-      X: 0.0
-      Y: 0.0
-      Z: 0.0
-    GYROSCOPE_BIAS: 
-      X: 0.0
-      Y: 0.0
-      Z: 0.0
+
+  SIMULATION_STEP_TIME_SECONDS: 0.033
+  SUBSTEPPING: True
+  MAX_SUBSTEP_DELTA_TIME: 0.001
+  MAX_SUBSTEPS: 100
 
   IMITATION_LEARNING_TASK:
     RANDOM_SPAWN_TRAJ: True
@@ -84,9 +64,9 @@ SIMULATION_CONTROLLER:
   OPENBOT_AGENT_CONTROLLER:
     AGENT_ACTOR_NAME: "OpenBotPawn_2147482540"
     GOAL_ACTOR_NAME: "GoalActor"
-    # "low_level_control" or "teleport"
-    ACTION_MODE: "low_level_control"
-    OBSERVATION_MODE: "mixed"
+    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
+    STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
+    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera", "imu", "sonar"] # "state_data", "control_data", "camera", "imu", "sonar"... The type(s) of "camera" sensor is defined by CAMERA_PARAMETERS.RENDER_PASSES
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 1.0
     CAMERA_PARAMETERS:
@@ -102,6 +82,7 @@ SIMULATION_CONTROLLER:
       AGENT_HEIGHT: 20.0
       CELL_SIZE: 1.0
       CELL_HEIGHT: 1.0
+      TILE_SIZE_UU: 300
       AGENT_MAX_SLOPE: 0.1
       AGENT_MAX_STEP_HEIGHT: 2.0
       MERGE_REGION_SIZE: 0.0
@@ -111,6 +92,43 @@ SIMULATION_CONTROLLER:
   VISUALIZER:
     CAMERA_ACTOR_NAME: "Smartphone"
     SET_CAMERA_POSE: False
+
+  SONAR_SENSOR:
+    N_RAYS: 11
+    DEBUG: True
+    MAX_REFLECTION_ANGLE: 45.0
+    HORIZONTAL_FOV: 30.0
+    VERTICAL_FOV: 10.0
+    RANGE:
+      MIN: 0.01
+      MAX: 10.0
+    NOISE_STD: 0.0
+
+  SONAR_SENSOR:
+    N_RAYS: 11
+    DEBUG: True
+    MAX_REFLECTION_ANGLE: 45.0
+    HORIZONTAL_FOV: 30.0
+    VERTICAL_FOV: 10.0
+    RANGE:
+      MIN: 0.01
+      MAX: 10.0
+    NOISE_STD: 0.0
+
+  IMU_SENSOR:
+    DEBUG: True
+    ACCELEROMETER_NOISE_STD: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    GYROSCOPE_NOISE_STD: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    GYROSCOPE_BIAS: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
       
 OPENBOT:
   OPENBOT_PAWN:
