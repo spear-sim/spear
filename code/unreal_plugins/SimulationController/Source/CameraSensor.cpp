@@ -227,7 +227,7 @@ void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureCompon
 
 std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
 {
-    std::map<std::string, TArray<FColor>> data;
+    std::map<std::string, TArray<FColor>> render_data;
 
     // get data from all passes
     for (auto& render_pass : render_passes_) {
@@ -238,22 +238,22 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
         FRHITexture* rhi_texture = target_resource->GetRenderTargetTexture();
         ASSERT(rhi_texture);
         FIntRect rect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y);
-        TArray<FColor> pixels;
+        TArray<FColor> render_data_component_array;
         FReadSurfaceDataFlags read_surface_data_flags(RCM_UNorm, CubeFace_MAX);
         read_surface_data_flags.SetLinearToGamma(false);
 
-        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([rhi_texture, rect, &pixels, read_surface_data_flags](FRHICommandListImmediate& RHICmdList) {
-            RHICmdList.ReadSurfaceData(rhi_texture, rect, pixels, read_surface_data_flags);
+        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([rhi_texture, rect, &render_data_component_array, read_surface_data_flags](FRHICommandListImmediate& RHICmdList) {
+            RHICmdList.ReadSurfaceData(rhi_texture, rect, render_data_component_array, read_surface_data_flags);
         });
 
         FRenderCommandFence ReadPixelFence;
         ReadPixelFence.BeginFence(true);
         ReadPixelFence.Wait(true);
 
-        data[render_pass.first] = std::move(pixels);
+        render_data[render_pass.first] = std::move(render_data_component_array);
     }
 
-    return data;
+    return render_data;
 }
 
 std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor>& color_depth)
