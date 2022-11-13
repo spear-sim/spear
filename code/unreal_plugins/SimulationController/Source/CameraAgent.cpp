@@ -49,7 +49,7 @@ CameraAgent::CameraAgent(UWorld* world)
 
         // update FOV
         for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "RENDER_PASSES"})) {
-            camera_sensor_->render_passes_[pass].scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FOV"});
+            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FOV"});
         }
     }
 }
@@ -130,7 +130,7 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
     if (std::find(action_components.begin(), action_components.end(), "set_pose") != action_components.end()) {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
-        box.shape = { 6 }; // x,y,z in cms and then p,y,r in degs
+        box.shape = {6}; // x,y,z in cms and then p,y,r in degs
         box.dtype = DataType::Float32;
         action_space["set_pose"] = std::move(box);
     }
@@ -141,7 +141,7 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
     if (std::find(action_components.begin(), action_components.end(), "set_num_random_points") != action_components.end()) {
         box.low = std::numeric_limits<uint32_t>::lowest();
         box.high = std::numeric_limits<uint32_t>::max();
-        box.shape = { 1 };
+        box.shape = {1};
         box.dtype = DataType::UInteger32;
         action_space["set_num_random_points"] = std::move(box);
     }
@@ -161,14 +161,10 @@ std::map<std::string, Box> CameraAgent::getObservationSpace() const
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
 
-        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "RENDER_PASSES"})) {
-            box.low = 0;
-            box.high = 255;
-            box.shape = { Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_HEIGHT"}),
-                          Config::getValue<int64_t>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_WIDTH"}),
-                          3 };
-            box.dtype = DataType::UInteger8;
-            observation_space["camera_" + pass] = std::move(box);
+        // get an observation space from the CameraSensor and add it to our Agent's observation space
+        std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace();
+        for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
+            observation_space["camera_" + camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
         }
     }
 
@@ -188,7 +184,7 @@ std::map<std::string, Box> CameraAgent::getStepInfoSpace() const
     if (std::find(step_info_components.begin(), step_info_components.end(), "random_points") != step_info_components.end()) {
         box.low = std::numeric_limits<float>::lowest();
         box.high = std::numeric_limits<float>::max();
-        box.shape = { -1, 3 };
+        box.shape = {-1, 3};
         box.dtype = DataType::Float32;
         step_info_space["random_points"] = std::move(box);
     }
@@ -226,20 +222,10 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
 
-        std::map<std::string, TArray<FColor>> render_data_components = camera_sensor_->getRenderData();
-        for (auto& render_data_component : render_data_components) {
-            std::vector<uint8_t> image(
-                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_HEIGHT"}) *
-                Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_WIDTH"}) *
-                3);
-
-            for (int i = 0; i < render_data_component.second.Num(); i++) {
-                image[3 * i + 0] = render_data_component.second[i].R;
-                image[3 * i + 1] = render_data_component.second[i].G;
-                image[3 * i + 2] = render_data_component.second[i].B;
-            }
-
-            observation["camera_" + render_data_component.first] = std::move(image);
+        // get an observation from the CameraSensor and add it to our Agent's observation
+        std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation();
+        for (auto& camera_sensor_observation_component : camera_sensor_observation) {
+            observation["camera_" + camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
         }
     }
 

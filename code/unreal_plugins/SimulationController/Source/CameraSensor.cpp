@@ -18,8 +18,12 @@
 
 #include "Assert/Assert.h"
 #include "Config.h"
+#include "Serialize.h"
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials";
+
+const std::map<std::string, int>      OBSERVATION_COMPONENT_NUM_CHANNELS = {{"final_color", 3},                   {"segmentation", 3},                   {"depth_glsl", 1},                 {"normals", 1}};
+const std::map<std::string, DataType> OBSERVATION_COMPONENT_DTYPE        = {{"final_color", DataType::UInteger8}, {"segmentation", DataType::UInteger8}, {"depth_glsl", DataType::Float32}, {"normals", DataType::UInteger8}};
 
 CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector<std::string>& render_pass_names, unsigned int width, unsigned int height)
 {
@@ -68,10 +72,16 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
 
         render_passes_[render_pass_name] = std::move(render_pass);
     }
+
+    width_ = width;
+    height_ = height;
 }
 
 CameraSensor::~CameraSensor()
 {
+    height_ = -1;
+    width_ = -1;
+
     for (auto& render_pass : render_passes_) {
         ASSERT(render_pass.second.scene_capture_component_);
         render_pass.second.scene_capture_component_->MarkPendingKill();
@@ -88,7 +98,7 @@ CameraSensor::~CameraSensor()
     new_object_parent_actor_ = nullptr;
 }
 
-std::map<std::string, TArray<FColor>> CameraSensor::getRenderData()
+std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
 {
     std::map<std::string, TArray<FColor>> data;
 
@@ -119,16 +129,64 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData()
     return data;
 }
 
-std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor> data)
+std::map<std::string, Box> CameraSensor::getObservationSpace() const
 {
-    std::vector<float> out;
-    for (int i = 0; i < data.Num(); i++) {
-        float depth = data[i].R  + (data[i].G * 256) + (data[i].B * 256 * 256); 
-        float normalized_depth = depth / ((256 * 256 * 256) - 1);
-        float dist = normalized_depth * 10; 
-        out.push_back(dist);
+    std::map<std::string, Box> observation_space;
+    Box box;
+
+    for (auto& render_pass : render_passes_) {
+        box.low = 0;
+        box.high = 255;
+        box.shape = {height_, width_, OBSERVATION_COMPONENT_NUM_CHANNELS.at(render_pass.first)};
+        box.dtype = OBSERVATION_COMPONENT_DTYPE.at(render_pass.first);
+        observation_space[render_pass.first] = std::move(box);
     }
-    return out;
+
+    return observation_space;
+}
+
+std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
+{
+    std::map<std::string, std::vector<uint8_t>> observation;
+
+    std::map<std::string, TArray<FColor>> render_data = getRenderData();
+    for (auto& render_data_component : render_data) {
+
+        if (render_data_component.first == "final_color" || render_data_component.first == "segmentation" || render_data_component.first == "normals") {
+
+            std::vector<uint8_t> observation_vector(height_ * width_ * 3);
+            TArray<FColor>& render_data_component_array = render_data_component.second;
+
+            for (int i = 0; i < render_data_component_array.Num(); i++) {
+                observation_vector[3 * i + 0] = render_data_component_array[i].R;
+                observation_vector[3 * i + 1] = render_data_component_array[i].G;
+                observation_vector[3 * i + 2] = render_data_component_array[i].B;
+            }
+
+            observation[render_data_component.first] = std::move(observation_vector);
+
+        } else if (render_data_component.first == "depth_glsl") {
+            std::vector<float> observation_vector = getFloatDepthFromColorDepth(render_data_component.second);
+            observation[render_data_component.first] = Serialize::toUint8(observation_vector);
+
+        } else {
+            ASSERT(false);
+        }
+    }
+
+    return observation;
+}
+
+std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor>& color_depth)
+{
+    std::vector<float> float_depth;
+    for (int i = 0; i < color_depth.Num(); i++) {
+        float depth = color_depth[i].R  + (color_depth[i].G * 256) + (color_depth[i].B * 256 * 256); 
+        float normalized_depth = depth / ((256 * 256 * 256) - 1);
+        float dist = normalized_depth * 10;
+        float_depth.push_back(dist);
+    }
+    return float_depth;
 }
 
 void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureComponent2D* scene_capture_component)
