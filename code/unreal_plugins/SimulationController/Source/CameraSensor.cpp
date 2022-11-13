@@ -98,37 +98,6 @@ CameraSensor::~CameraSensor()
     new_object_parent_actor_ = nullptr;
 }
 
-std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
-{
-    std::map<std::string, TArray<FColor>> data;
-
-    // get data from all passes
-    for (auto& render_pass : render_passes_) {
-
-        FTextureRenderTargetResource* target_resource = render_pass.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
-        ASSERT(target_resource);
-
-        FRHITexture* rhi_texture = target_resource->GetRenderTargetTexture();
-        ASSERT(rhi_texture);
-        FIntRect rect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y);
-        TArray<FColor> pixels;
-        FReadSurfaceDataFlags read_surface_data_flags(RCM_UNorm, CubeFace_MAX);
-        read_surface_data_flags.SetLinearToGamma(false);
-
-        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([rhi_texture, rect, &pixels, read_surface_data_flags](FRHICommandListImmediate& RHICmdList) {
-            RHICmdList.ReadSurfaceData(rhi_texture, rect, pixels, read_surface_data_flags);
-        });
-
-        FRenderCommandFence ReadPixelFence;
-        ReadPixelFence.BeginFence(true);
-        ReadPixelFence.Wait(true);
-
-        data[render_pass.first] = std::move(pixels);
-    }
-
-    return data;
-}
-
 std::map<std::string, Box> CameraSensor::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
@@ -175,18 +144,6 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
     }
 
     return observation;
-}
-
-std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor>& color_depth)
-{
-    std::vector<float> float_depth;
-    for (int i = 0; i < color_depth.Num(); i++) {
-        float depth = color_depth[i].R  + (color_depth[i].G * 256) + (color_depth[i].B * 256 * 256); 
-        float normalized_depth = depth / ((256 * 256 * 256) - 1);
-        float dist = normalized_depth * 10;
-        float_depth.push_back(dist);
-    }
-    return float_depth;
 }
 
 void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureComponent2D* scene_capture_component)
@@ -266,4 +223,47 @@ void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureCompon
     scene_capture_component->ShowFlags.SetRayTracedDistanceFieldShadows(Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_RAYTRACED_DISTANCE_FIELD_SHADOWS"}));
     scene_capture_component->ShowFlags.SetDynamicShadows               (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_DYNAMIC_SHADOWS"}));
 
+}
+
+std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
+{
+    std::map<std::string, TArray<FColor>> data;
+
+    // get data from all passes
+    for (auto& render_pass : render_passes_) {
+
+        FTextureRenderTargetResource* target_resource = render_pass.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
+        ASSERT(target_resource);
+
+        FRHITexture* rhi_texture = target_resource->GetRenderTargetTexture();
+        ASSERT(rhi_texture);
+        FIntRect rect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y);
+        TArray<FColor> pixels;
+        FReadSurfaceDataFlags read_surface_data_flags(RCM_UNorm, CubeFace_MAX);
+        read_surface_data_flags.SetLinearToGamma(false);
+
+        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([rhi_texture, rect, &pixels, read_surface_data_flags](FRHICommandListImmediate& RHICmdList) {
+            RHICmdList.ReadSurfaceData(rhi_texture, rect, pixels, read_surface_data_flags);
+        });
+
+        FRenderCommandFence ReadPixelFence;
+        ReadPixelFence.BeginFence(true);
+        ReadPixelFence.Wait(true);
+
+        data[render_pass.first] = std::move(pixels);
+    }
+
+    return data;
+}
+
+std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor>& color_depth)
+{
+    std::vector<float> float_depth;
+    for (int i = 0; i < color_depth.Num(); i++) {
+        float depth = color_depth[i].R  + (color_depth[i].G * 256) + (color_depth[i].B * 256 * 256); 
+        float normalized_depth = depth / ((256 * 256 * 256) - 1);
+        float dist = normalized_depth * 10;
+        float_depth.push_back(dist);
+    }
+    return float_depth;
 }
