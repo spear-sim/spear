@@ -5,11 +5,7 @@
 #include <string>
 #include <vector>
 
-<<<<<<< HEAD:code/unreal_plugins/SimulationController/Source/CameraAgentController.h
-#include "AgentController.h"
-=======
 #include "Agent.h"
->>>>>>> d0f7e077158b87b4e4e98a5ceed23f4c74dc8871:code/unreal_plugins/SimulationController/Source/CameraAgent.h
 #include "CameraSensor.h" // not sure why CameraSensor can't be forward declared but this causes incomplete type errors on macOS
 
 class ACameraActor;
@@ -23,13 +19,8 @@ class CameraAgent : public Agent
 {
 public:
 
-<<<<<<< HEAD:code/unreal_plugins/SimulationController/Source/CameraAgentController.h
-    CameraAgentController(UWorld* world);
-    ~CameraAgentController();
-=======
     CameraAgent(UWorld* world);
     ~CameraAgent();
->>>>>>> d0f7e077158b87b4e4e98a5ceed23f4c74dc8871:code/unreal_plugins/SimulationController/Source/CameraAgent.h
     
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
@@ -50,18 +41,11 @@ private:
     void buildNavMesh();
 
     ACameraActor* camera_actor_ = nullptr;
-<<<<<<< HEAD:code/unreal_plugins/SimulationController/Source/CameraAgentController.h
-=======
 
     UNavigationSystemV1* nav_sys_ = nullptr;
->>>>>>> d0f7e077158b87b4e4e98a5ceed23f4c74dc8871:code/unreal_plugins/SimulationController/Source/CameraAgent.h
     ARecastNavMesh* nav_mesh_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
 
     std::map<std::string, std::vector<float>> action_;
-<<<<<<< HEAD:code/unreal_plugins/SimulationController/Source/CameraAgentController.h
 };
-=======
-};
->>>>>>> d0f7e077158b87b4e4e98a5ceed23f4c74dc8871:code/unreal_plugins/SimulationController/Source/CameraAgent.h
