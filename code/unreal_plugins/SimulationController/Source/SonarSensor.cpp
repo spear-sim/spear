@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include <Components/PrimitiveComponent.h>
+#include <Components/SkeletalMeshComponent.h>
 #include <DrawDebugHelpers.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -19,7 +19,7 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-SonarSensor::SonarSensor(UPrimitiveComponent* primitive_component)
+SonarSensor::SonarSensor(USkeletalMeshComponent* primitive_component)
 {
     ASSERT(primitive_component);
     primitive_component_ = primitive_component;

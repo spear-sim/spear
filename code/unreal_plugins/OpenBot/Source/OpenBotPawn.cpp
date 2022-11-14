@@ -71,7 +71,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     vehicle_movement_component_->ChassisWidth    = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_WIDTH"});    // Chassis width used for drag force computation in [cm]
     vehicle_movement_component_->ChassisHeight   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_HEIGHT"});   // Chassis height used for drag force computation in [cm]
     vehicle_movement_component_->MaxEngineRPM    = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "MOTOR_MAX_RPM"});    // Max RPM for engine
-    
+
     // Setup IMU sensor component
     FVector imu_location(
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_X"}), 
@@ -83,7 +83,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "YAW"}), 
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "ROLL"}));
     
-    imu_component_ = CreateDefaultSubobject<UPrimitiveComponent>(TEXT("PrimitiveComponentIMU")); 
+    imu_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PrimitiveComponentIMU")); 
     ASSERT(imu_component_ ); // FAILS
     imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation); 
     imu_component_->SetupAttachment(skeletal_mesh_component_);
@@ -99,7 +99,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "YAW"}), 
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "ROLL"}));
     
-    sonar_component_ = CreateDefaultSubobject<UPrimitiveComponent>(TEXT("PrimitiveComponentSonar")); 
+    sonar_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PrimitiveComponentSonar")); 
     ASSERT(sonar_component_); // FAILS
     sonar_component_->SetRelativeLocationAndRotation(sonar_location, sonar_orientation); 
     sonar_component_->SetupAttachment(skeletal_mesh_component_);

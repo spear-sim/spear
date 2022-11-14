@@ -6,12 +6,12 @@
 #include <vector>
 
 class AActor;
-class UPrimitiveComponent;
+class USkeletalMeshComponent;
 class UTickEvent;
 
 class ImuSensor {
 public:
-    ImuSensor(UPrimitiveComponent* primitive_component);
+    ImuSensor(USkeletalMeshComponent* primitive_component);
     ImuSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
     ~ImuSensor();
 
@@ -32,7 +32,7 @@ private:
 
     AActor* new_object_parent_actor_ = nullptr;
 
-    UPrimitiveComponent* primitive_component_ = nullptr;
+    USkeletalMeshComponent* primitive_component_ = nullptr;
 
     UTickEvent* post_physics_pre_render_tick_event_ = nullptr;
     FDelegateHandle post_physics_pre_render_tick_event_handle_;

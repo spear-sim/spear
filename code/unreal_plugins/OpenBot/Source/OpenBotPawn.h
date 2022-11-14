@@ -52,8 +52,8 @@ public:
     USkeletalMeshComponent* skeletal_mesh_component_ = nullptr;
     USimpleWheeledVehicleMovementComponent* vehicle_movement_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
-    UPrimitiveComponent* imu_component_ = nullptr;
-    UPrimitiveComponent* sonar_component_ = nullptr;
+    USkeletalMeshComponent* imu_component_ = nullptr;
+    USkeletalMeshComponent* sonar_component_ = nullptr;
 
 private:
 
