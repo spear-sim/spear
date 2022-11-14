@@ -1,8 +1,8 @@
 SIMULATION_CONTROLLER:
   IP: "127.0.0.1"
   PORT: 30000
-  WORLD_PATH_NAME: "" # full path to the map including the repeated name, e.g., "/Game/Maps/NewMap.NewMap"
-  LEVEL_NAME: ""      # full path to the map excluding the repeated name, e.g., "/Game/Maps/NewMap"
+  WORLD_PATH_NAME: "" # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
+  LEVEL_NAME: ""      # full path to the map excluding the repeated name, e.g., "/Game/NewMap"
   SIMULATION_STEP_TIME_SECONDS: 0.1
   TASK: ""
   AGENT: ""
