@@ -4,10 +4,8 @@ import argparse
 import numpy as np
 import os
 import pandas as pd
+import spear
 import sys
-
-from interiorsim import Env
-from interiorsim.config import get_config
 
 
 if sys.platform == "linux":
@@ -27,8 +25,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # load config
-    config_files = [ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ]
-    config = get_config(config_files)
+    config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
 
     # reset seed
     np.random.seed(0)
@@ -39,33 +36,34 @@ if __name__ == "__main__":
     # iterate through all scenes
     for idx, scene in enumerate(scenes):
 
-        print(f"processing scene {scene}")
+        print(f"Processing scene {scene}...")
 
         # change config based on current scene
         config.defrost()
-        config.SIMULATION_CONTROLLER.LEVEL_ID = scene
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene + "." + "Map_" + scene
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene
         config.freeze()
 
         # create Env object
-        env = Env(config)
+        env = spear.Env(config)
 
         # reset the simulation
         _ = env.reset()
 
         # get random positions based on number of poses requested
         _, _, _, step_info = env.step({"set_pose": np.array([0,0,0,0,0,0], dtype=np.float32), "set_num_random_points": np.array([args.num_poses_per_scene], dtype=np.uint32)})
-        random_positions = step_info["agent_controller_step_info"]["random_points"]
+        random_positions = step_info["agent_step_info"]["random_points"]
 
-        # genearte random arrays for orientation
+        # generate random pitch, yaw, roll values
         random_pitch_values = np.random.uniform(low=0.0, high=0.0, size=random_positions.shape[0])
-        random_yaw_values   = np.random.uniform(low=-180.0, high=180.0, size=random_positions.shape[0])
-        random_roll_values  = np.random.uniform(low=0.0, high=0.0, size=random_positions.shape[0])
+        random_yaw_values = np.random.uniform(low=-180.0, high=180.0, size=random_positions.shape[0])
+        random_roll_values = np.random.uniform(low=0.0, high=0.0, size=random_positions.shape[0])
 
         # store poses in a csv file
         df = pd.DataFrame({"map_id"    : f"{scene}",
                            "pos_x_cms" : random_positions[:, 0],
                            "pos_y_cms" : random_positions[:, 1],
-                           "pos_z_cms" : random_positions[:, 2] + config.SIMULATION_CONTROLLER.CAMERA_AGENT_CONTROLLER.NAVMESH.AGENT_HEIGHT,
+                           "pos_z_cms" : random_positions[:, 2] + config.SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.AGENT_HEIGHT,
                            "pitch_degs": random_pitch_values,
                            "yaw_degs"  : random_yaw_values,
                            "roll_degs" : random_roll_values})

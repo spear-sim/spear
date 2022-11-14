@@ -29,9 +29,9 @@ public:
     }
 
     UFUNCTION()
-    void ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
+    void ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
     {
-        delegate_.Broadcast(self_actor, other_actor, normal_impulse, hit);
+        delegate_.Broadcast(self_actor, other_actor, normal_impulse, hit_result);
     }
 
     OnActorHitEvent delegate_;
