@@ -50,7 +50,7 @@ code/experimental/rl_openbot/imitation_learning/user_config.yaml
 
 code/experimental/teleport_mode/user_config.yaml
 
-code/python_module/interiorsim.egg-info
+code/python_package/spear_sim.egg-info
 
 code/tools/scene_manager/download_data
 
@@ -69,10 +69,6 @@ code/unreal_plugins/SceneManager/ThirdParty
 code/unreal_plugins/SimulationController/Binaries
 code/unreal_plugins/SimulationController/Intermediate
 code/unreal_plugins/SimulationController/ThirdParty
-
-code/unreal_plugins/VirtualWorldManager/Binaries
-code/unreal_plugins/VirtualWorldManager/Intermediate
-code/unreal_plugins/VirtualWorldManager/ThirdParty
 
 code/unreal_projects/InteriorEnvironment/Binaries
 code/unreal_projects/InteriorEnvironment/Build

@@ -53,3 +53,4 @@ OPENBOT:
     SUSPENSION_MAX_RAISE: 0.0      # How far the wheel can go above the resting position in [m]
     SUSPENSION_MAX_DROP: 0.0       # How far the wheel can drop below the resting position in [m]
     MASS: 0.033                    # Mass of this wheel in [kg]
+    

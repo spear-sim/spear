@@ -1,21 +1,19 @@
-#include "OpenBotAgentController.h"
+#include "OpenBotAgent.h"
 
 #include <algorithm>
 #include <map>
-#include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
-#include <Components/BoxComponent.h>
+#include <Components/StaticMeshComponent.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
-#include <NavigationSystem.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "Assert/Assert.h"
@@ -27,17 +25,16 @@
 #include "Serialize.h"
 #include "SonarSensor.h"
 
-OpenBotAgentController::OpenBotAgentController(UWorld* world)
+OpenBotAgent::OpenBotAgent(UWorld* world)
 {
-    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     FActorSpawnParameters spawn_params;
-    spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OPENBOT_ACTOR_NAME"}).c_str());
+    spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OPENBOT_ACTOR_NAME"}).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
     ASSERT(open_bot_pawn_);
-    std::cout << __FILE__ << " " << __LINE__ << std::endl;
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
-    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
+    
     //
     // observation["imu_data"]
     //
@@ -45,7 +42,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         imu_sensor_ = std::make_unique<ImuSensor>(open_bot_pawn_->imu_component_);
         ASSERT(imu_sensor_);
     }
-std::cout << __FILE__ << " " << __LINE__ << std::endl;
+    
     //
     // observation["sonar_data"]
     //
@@ -53,30 +50,29 @@ std::cout << __FILE__ << " " << __LINE__ << std::endl;
         sonar_sensor_ = std::make_unique<SonarSensor>(open_bot_pawn_->sonar_component_);
         ASSERT(sonar_sensor_);
     }
-std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
     //
     // observation["camera"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
         camera_sensor_ = std::make_unique<CameraSensor>(
             open_bot_pawn_->camera_component_,
-            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "RENDER_PASSES"}),
-            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "IMAGE_WIDTH"}),
-            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "IMAGE_HEIGHT"}));
+            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "RENDER_PASSES"}),
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
-std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
         // update FOV
-        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "RENDER_PASSES"})) {
-            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "FOV"});
+        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "RENDER_PASSES"})) {
+            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "FOV"});
         }
-        std::cout << __FILE__ << " " << __LINE__ << std::endl;
     }
 }
 
-OpenBotAgentController::~OpenBotAgentController()
+OpenBotAgent::~OpenBotAgent()
 {
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
-
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
+    
     //
     // observation["imu_data"]
     //
@@ -106,38 +102,44 @@ OpenBotAgentController::~OpenBotAgentController()
     open_bot_pawn_ = nullptr;
 }
 
-void OpenBotAgentController::findObjectReferences(UWorld* world)
+void OpenBotAgent::findObjectReferences(UWorld* world)
 {
-    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
-        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "GOAL_ACTOR_NAME"})) {
-            ASSERT(!goal_actor_);
-            goal_actor_ = *actor_itr;
-            break;
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
+
+    //
+    // step_info["trajectory_data"]
+    //
+    if (std::find(step_info_components.begin(), step_info_components.end(), "trajectory_data") != step_info_components.end()) {
+
+        for (TActorIterator<AActor> actor_itr(world); actor_itr; ++actor_itr) {
+            std::string actor_name = TCHAR_TO_UTF8(*((*actor_itr)->GetName()));
+            if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "TRAJECTORY_DATA", "GOAL_ACTOR_NAME"})) {
+                ASSERT(!goal_actor_);
+                goal_actor_ = *actor_itr;
+                break;
+            }
         }
+        ASSERT(goal_actor_);
+
+        nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
+        ASSERT(nav_sys_);
+
+        INavAgentInterface* nav_agent_interface = dynamic_cast<INavAgentInterface*>(open_bot_pawn_);
+        ASSERT(nav_agent_interface);
+
+        ANavigationData* nav_data = nav_sys_->GetNavDataForProps(nav_agent_interface->GetNavAgentPropertiesRef());
+        ASSERT(nav_data);
+
+        nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
+        ASSERT(nav_mesh_);
+
+        buildNavMesh();
     }
-    ASSERT(goal_actor_);
-std::cout << __FILE__ << " " << __LINE__ << std::endl;
-    nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-    ASSERT(nav_sys_);
-std::cout << __FILE__ << " " << __LINE__ << std::endl;
-    INavAgentInterface* nav_agent_interface = dynamic_cast<INavAgentInterface*>(open_bot_pawn_);
-    ASSERT(nav_agent_interface);
-std::cout << __FILE__ << " " << __LINE__ << std::endl;
-    nav_data_ = nav_sys_->GetNavDataForProps(nav_agent_interface->GetNavAgentPropertiesRef(), nav_agent_interface->GetNavAgentLocation());
-    ASSERT(nav_data_);
-std::cout << __FILE__ << " " << __LINE__ << std::endl;
-    // Get a pointer to the navigation mesh
-    nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
-    ASSERT(nav_mesh_);
-std::cout << __FILE__ << " " << __LINE__ << std::endl;
-    // Rebuild navigation mesh with the desired properties before executing trajectory planning
-    buildNavMesh();
 }
 
-void OpenBotAgentController::cleanUpObjectReferences()
+void OpenBotAgent::cleanUpObjectReferences()
 {
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["trajectory_data"]
@@ -145,9 +147,6 @@ void OpenBotAgentController::cleanUpObjectReferences()
     if (std::find(step_info_components.begin(), step_info_components.end(), "trajectory_data") != step_info_components.end()) {
         ASSERT(nav_mesh_);
         nav_mesh_ = nullptr;
-
-        ASSERT(nav_data_);
-        nav_data_ = nullptr;
 
         ASSERT(nav_sys_);
         nav_sys_ = nullptr;
@@ -157,13 +156,13 @@ void OpenBotAgentController::cleanUpObjectReferences()
     }
 }
 
-std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
+std::map<std::string, Box> OpenBotAgent::getActionSpace() const
 {
-
+    
     std::map<std::string, Box> action_space;
     Box box;
 
-    auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_COMPONENTS"});
+    auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "ACTION_COMPONENTS"});
 
     //
     // action["apply_voltage"]
@@ -201,12 +200,12 @@ std::map<std::string, Box> OpenBotAgentController::getActionSpace() const
     return action_space;
 }
 
-std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
+std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
     Box box;
 
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
 
     //
     // observation["state_data"]
@@ -229,7 +228,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
         box.shape = {2};
         observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
     }
-
+    
     //
     // observation["imu_data"]
     //
@@ -263,16 +262,16 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
             observation_space["camera_" + camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
         }
     }
-
+    
     return observation_space;
 }
 
-std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
+std::map<std::string, Box> OpenBotAgent::getStepInfoSpace() const
 {
     std::map<std::string, Box> step_info_space;
     Box box;
 
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["trajectory_data"]
@@ -288,9 +287,9 @@ std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
     return step_info_space;
 }
 
-void OpenBotAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
+void OpenBotAgent::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
-    auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "ACTION_COMPONENTS"});
+    auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "ACTION_COMPONENTS"});
 
     //
     // action["apply_voltage"]
@@ -319,11 +318,11 @@ void OpenBotAgentController::applyAction(const std::map<std::string, std::vector
     }
 }
 
-std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservation() const
+std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
 
     //
     // observation["state_data"]
@@ -339,6 +338,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
             FMath::DegreesToRadians(rotation.Yaw),
             FMath::DegreesToRadians(rotation.Roll)});
     }
+
     //
     // observation["control_data"]
     //
@@ -349,7 +349,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
         control_state(1) = (duty_cycle(1) + duty_cycle(3)) / 2;
         observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
     }
-
+    
     //
     // observation["imu_data"]
     //
@@ -379,11 +379,11 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getObservati
     return observation;
 }
 
-std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getStepInfo() const
+std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getStepInfo() const
 {
     std::map<std::string, std::vector<uint8_t>> step_info;
 
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["trajectory_data"]
@@ -395,15 +395,15 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getStepInfo(
     return step_info;
 }
 
-void OpenBotAgentController::reset()
+void OpenBotAgent::reset()
 {
-    const FVector location = open_bot_pawn_->GetActorLocation();
+    FVector location = open_bot_pawn_->GetActorLocation();
     bool sweep = false;
-    FHitResult* hit_result_info = nullptr;
+    FHitResult* hit_result_info = nullptr;    
     open_bot_pawn_->SetActorLocationAndRotation(location, FQuat(FRotator(0)), sweep, hit_result_info, ETeleportType::TeleportPhysics);
     open_bot_pawn_->resetPhysicsState();
 
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["trajectory_data"]
@@ -413,35 +413,32 @@ void OpenBotAgentController::reset()
     }
 }
 
-bool OpenBotAgentController::isReady() const
+bool OpenBotAgent::isReady() const
 {
-    ASSERT(open_bot_pawn_);
-    return open_bot_pawn_->GetVelocity().Size() < Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "AGENT_READY_VELOCITY_THRESHOLD"});
+    return open_bot_pawn_->GetVelocity().Size() <= Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "IS_READY_VELOCITY_THRESHOLD"});
 }
 
-void OpenBotAgentController::buildNavMesh()
+void OpenBotAgent::buildNavMesh()
 {
-    ASSERT(nav_sys_);
-    ASSERT(nav_mesh_);
-
-    // Set the navigation mesh properties:
-    nav_mesh_->AgentRadius = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
-    nav_mesh_->AgentHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
-    nav_mesh_->CellSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "CELL_SIZE"});
-    nav_mesh_->CellHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "CELL_HEIGHT"});
-    nav_mesh_->AgentMaxStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
-    nav_mesh_->AgentMaxSlope = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_SLOPE"});
-    nav_mesh_->MergeRegionSize = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "MERGE_REGION_SIZE"});
-    nav_mesh_->MinRegionArea = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "MIN_REGION_AREA"});
-    nav_mesh_->TileSizeUU = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "TILE_SIZE_UU"});
-    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "MAX_SIMPLIFINCATION_ERROR"});
+    // Set the navmesh properties
+    nav_mesh_->AgentRadius            = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "AGENT_RADIUS"});
+    nav_mesh_->AgentHeight            = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "AGENT_HEIGHT"});
+    nav_mesh_->CellSize               = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "CELL_SIZE"});
+    nav_mesh_->CellHeight             = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "CELL_HEIGHT"});
+    nav_mesh_->AgentMaxStepHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+    nav_mesh_->AgentMaxSlope          = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "AGENT_MAX_SLOPE"});
+    nav_mesh_->MergeRegionSize        = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "MERGE_REGION_SIZE"});
+    nav_mesh_->MinRegionArea          = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "MIN_REGION_AREA"});
+    nav_mesh_->TileSizeUU             = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "TILE_SIZE_UU"});
+    nav_mesh_->TilePoolSize           = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "TILE_POOL_SIZE"});
+    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "MAX_SIMPLIFICATION_ERROR"});
 
     // Get world bounding box
     FBox world_box(ForceInit);
-    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "WORLD_BOUND_TAG_NAMES"});
-    for (TActorIterator<AActor> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
-        for (auto& name : world_bound_tag_names) {
-            if (actor_itr->ActorHasTag(name.c_str())) {
+    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "WORLD_BOUND_TAG_NAMES"});
+    for (TActorIterator<AActor> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {     
+        for (auto& name : world_bound_tag_names) { 
+            if (actor_itr->ActorHasTag(name.c_str())) { 
                 world_box += actor_itr->GetComponentsBoundingBox(false, true);
             }
         }
@@ -468,58 +465,50 @@ void OpenBotAgentController::buildNavMesh()
     // Rebuild navmesh
     nav_sys_->Build();
 
-    // Debug output
+    // Debug output  
     std::cout << "Coordinates of the world box's center (in cm): X: " << world_box.GetCenter().X << ", Y: " << world_box.GetCenter().Y << ", Z: " << world_box.GetCenter().Z << std::endl;
     std::cout << "Size of the world box (in cm): X: " << world_box.GetSize().X << ", Y: " << world_box.GetSize().Y << ", Z: " << world_box.GetSize().Z << std::endl;
 }
 
-void OpenBotAgentController::generateTrajectoryToGoal()
+void OpenBotAgent::generateTrajectoryToGoal()
 {
-    // Sanity checks
-    ASSERT(nav_data_);
-    ASSERT(nav_sys_);
-    ASSERT(open_bot_pawn_);
-    ASSERT(goal_actor_);
-
     trajectory_.clear();
-
+    
     // Update navigation query with the new agent position and goal position
-    FPathFindingQuery nav_query = FPathFindingQuery(open_bot_pawn_, *nav_data_, open_bot_pawn_->GetActorLocation(), goal_actor_->GetActorLocation());
-
+    FPathFindingQuery nav_query = FPathFindingQuery(open_bot_pawn_, *nav_mesh_, open_bot_pawn_->GetActorLocation(), goal_actor_->GetActorLocation());
+    
     // Generate a collision-free path between the agent position and the goal position
-    FPathFindingResult collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
-
+    FPathFindingResult path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+    
     // If path generation is successful, update trajectory_
-    if (collision_free_path.IsSuccessful() && collision_free_path.Path.IsValid()) {
+    if (path.IsSuccessful() && path.Path.IsValid()) {
 
-        // Debug output
-        if (collision_free_path.IsPartial()) {
-            std::cout << "Only a partial path could be found..." << std::endl;
-        }
-
-        // Update trajectory_
-        TArray<FNavPathPoint> path_points = collision_free_path.Path->GetPathPoints();
-        for (auto& path_point : path_points) {
+        TArray<FNavPathPoint> path_points = path.Path->GetPathPoints();        
+        for(auto& path_point : path_points) {
             trajectory_.push_back(path_point.Location.X);
             trajectory_.push_back(path_point.Location.Y);
             trajectory_.push_back(path_point.Location.Z);
         }
 
         // Debug output
-        int num_waypoints = collision_free_path.Path->GetPathPoints().Num();
+        if (path.IsPartial()) {
+            std::cout << "Only a partial path could be found..." << std::endl;
+        }
+
+        int num_waypoints = path.Path->GetPathPoints().Num();
         float trajectory_length = 0.0;
         for (size_t i = 0; i < num_waypoints - 1; i++) {
             trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
         }
         trajectory_length /= open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
-        FVector2D relative_position_to_target((goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
+        FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
 
+        std::cout << std::endl;
         std::cout << "Number of waypoints: " << num_waypoints << std::endl;
-        std::cout << "Target distance: " << relative_position_to_target.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+        std::cout << "Goal distance: " << relative_position_to_goal.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
         std::cout << "Path length: " << trajectory_length << "m" << std::endl;
-
         std::cout << "Initial position: [" << open_bot_pawn_->GetActorLocation().X << ", " << open_bot_pawn_->GetActorLocation().Y << ", " << open_bot_pawn_->GetActorLocation().Z << "]." << std::endl;
-        std::cout << "Reachable position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
+        std::cout << "Goal position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
         std::cout << "-----------------------------------------------------------" << std::endl;
         std::cout << "Waypoints: " << std::endl;
         for (auto& point : path_points) {

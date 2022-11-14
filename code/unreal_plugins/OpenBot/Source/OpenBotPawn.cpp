@@ -87,6 +87,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     
     imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("PrimitiveComponentIMU")); 
     ASSERT(imu_component_ );
+    
     imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation); 
     imu_component_->SetupAttachment(skeletal_mesh_component_);
 
@@ -103,6 +104,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     
     sonar_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("PrimitiveComponentSonar")); 
     ASSERT(sonar_component_); 
+
     sonar_component_->SetRelativeLocationAndRotation(sonar_location, sonar_orientation); 
     sonar_component_->SetupAttachment(skeletal_mesh_component_);
     
@@ -119,6 +121,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
 
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
     ASSERT(camera_component_); 
+
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
     camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;

@@ -1,8 +1,7 @@
-#include "CameraAgentController.h"
+#include "CameraAgent.h"
 
 #include <algorithm>
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -25,9 +24,9 @@
 #include "Config.h"
 #include "Serialize.h"
 
-CameraAgentController::CameraAgentController(UWorld* world)
+CameraAgent::CameraAgent(UWorld* world)
 {
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "OBSERVATION_COMPONENTS"});
 
     //
     // observation["camera"]
@@ -35,28 +34,28 @@ CameraAgentController::CameraAgentController(UWorld* world)
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
 
         FActorSpawnParameters spawn_params;
-        spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA", "CAMERA_ACTOR_NAME"}).c_str());
+        spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "CAMERA_ACTOR_NAME"}).c_str());
         spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         camera_actor_ = world->SpawnActor<ACameraActor>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
         ASSERT(camera_actor_);
 
         camera_sensor_ = std::make_unique<CameraSensor>(
             camera_actor_->GetCameraComponent(),
-            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA", "RENDER_PASSES"}),
-            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA", "IMAGE_WIDTH"}),
-            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA", "IMAGE_HEIGHT"}));
+            Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "RENDER_PASSES"}),
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
 
         // update FOV
-        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA", "RENDER_PASSES"})) {
-            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "CAMERA", "FOV"});
+        for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "RENDER_PASSES"})) {
+            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "FOV"});
         }
     }
 }
 
-CameraAgentController::~CameraAgentController()
+CameraAgent::~CameraAgent()
 {
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "OBSERVATION_COMPONENTS"});
 
     //
     // observation["camera"]
@@ -71,7 +70,7 @@ CameraAgentController::~CameraAgentController()
     }
 }
 
-void CameraAgentController::findObjectReferences(UWorld* world)
+void CameraAgent::findObjectReferences(UWorld* world)
 {
     // HACK: find references to spotlights and remove them
     TArray<AActor*> spot_light_actors;
@@ -80,34 +79,34 @@ void CameraAgentController::findObjectReferences(UWorld* world)
         spot_light_actor->Destroy();
     }
 
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["random_points"]
     //
     if (std::find(step_info_components.begin(), step_info_components.end(), "random_points") != step_info_components.end()) {
 
-        UNavigationSystemV1* nav_sys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-        ASSERT(nav_sys);
+        nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
+        ASSERT(nav_sys_);
 
         FNavAgentProperties agent_properties;
-        agent_properties.AgentHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
-        agent_properties.AgentRadius     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
-        agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+        agent_properties.AgentHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_HEIGHT"});
+        agent_properties.AgentRadius     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_RADIUS"});
+        agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
 
-        ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
+        ANavigationData* nav_data = nav_sys_->GetNavDataForProps(agent_properties);
         ASSERT(nav_data);
 
         nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
         ASSERT(nav_mesh_);
 
-        buildNavMesh(nav_sys);
+        buildNavMesh();
     }
 }
 
-void CameraAgentController::cleanUpObjectReferences()
+void CameraAgent::cleanUpObjectReferences()
 {
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["random_points"]
@@ -117,12 +116,12 @@ void CameraAgentController::cleanUpObjectReferences()
     }
 }
 
-std::map<std::string, Box> CameraAgentController::getActionSpace() const
+std::map<std::string, Box> CameraAgent::getActionSpace() const
 {
     std::map<std::string, Box> action_space;
     Box box;
 
-    auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "ACTION_COMPONENTS"});
+    auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "ACTION_COMPONENTS"});
 
     //
     // action["set_pose"]
@@ -149,12 +148,12 @@ std::map<std::string, Box> CameraAgentController::getActionSpace() const
     return action_space;
 }
 
-std::map<std::string, Box> CameraAgentController::getObservationSpace() const
+std::map<std::string, Box> CameraAgent::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
     Box box;
 
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "OBSERVATION_COMPONENTS"});
 
     //
     // observation["camera"]
@@ -171,12 +170,12 @@ std::map<std::string, Box> CameraAgentController::getObservationSpace() const
     return observation_space;
 }
 
-std::map<std::string, Box> CameraAgentController::getStepInfoSpace() const
+std::map<std::string, Box> CameraAgent::getStepInfoSpace() const
 {
     std::map<std::string, Box> step_info_space;
     Box box;
 
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["random_points"]
@@ -192,9 +191,9 @@ std::map<std::string, Box> CameraAgentController::getStepInfoSpace() const
     return step_info_space;
 }
 
-void CameraAgentController::applyAction(const std::map<std::string, std::vector<float>>& action)
+void CameraAgent::applyAction(const std::map<std::string, std::vector<float>>& action)
 {
-    auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "ACTION_COMPONENTS"});
+    auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "ACTION_COMPONENTS"});
 
     //
     // action["set_pose"]
@@ -211,11 +210,11 @@ void CameraAgentController::applyAction(const std::map<std::string, std::vector<
     action_ = action;
 }
 
-std::map<std::string, std::vector<uint8_t>> CameraAgentController::getObservation() const
+std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "OBSERVATION_COMPONENTS"});
 
     //
     // observation["camera"]
@@ -232,11 +231,11 @@ std::map<std::string, std::vector<uint8_t>> CameraAgentController::getObservatio
     return observation;
 }
 
-std::map<std::string, std::vector<uint8_t>> CameraAgentController::getStepInfo() const
+std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
 {
     std::map<std::string, std::vector<uint8_t>> step_info;
 
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["random_points"]
@@ -258,34 +257,32 @@ std::map<std::string, std::vector<uint8_t>> CameraAgentController::getStepInfo()
     return step_info;
 }
 
-void CameraAgentController::reset()
+void CameraAgent::reset()
 {}
 
-bool CameraAgentController::isReady() const
+bool CameraAgent::isReady() const
 {
     return true;
 }
 
-void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys)
+void CameraAgent::buildNavMesh()
 {
-    ASSERT(nav_mesh_);
-    ASSERT(nav_sys);
-
     // set the navmesh properties
-    nav_mesh_->AgentRadius            = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_RADIUS"});
-    nav_mesh_->AgentHeight            = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_HEIGHT"});
-    nav_mesh_->CellSize               = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "CELL_SIZE"});
-    nav_mesh_->CellHeight             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "CELL_HEIGHT"});
-    nav_mesh_->AgentMaxStepHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
-    nav_mesh_->AgentMaxSlope          = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "AGENT_MAX_SLOPE"});
-    nav_mesh_->MergeRegionSize        = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "MERGE_REGION_SIZE"});
-    nav_mesh_->MinRegionArea          = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "MIN_REGION_AREA"});
-    nav_mesh_->TileSizeUU             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "TILE_SIZE_UU"});
-    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "MAX_SIMPLIFICATION_ERROR"});
+    nav_mesh_->AgentRadius            = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_RADIUS"});
+    nav_mesh_->AgentHeight            = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_HEIGHT"});
+    nav_mesh_->CellSize               = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "CELL_SIZE"});
+    nav_mesh_->CellHeight             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "CELL_HEIGHT"});
+    nav_mesh_->AgentMaxStepHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+    nav_mesh_->AgentMaxSlope          = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_MAX_SLOPE"});
+    nav_mesh_->MergeRegionSize        = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "MERGE_REGION_SIZE"});
+    nav_mesh_->MinRegionArea          = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "MIN_REGION_AREA"});
+    nav_mesh_->TileSizeUU             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "TILE_SIZE_UU"});
+    nav_mesh_->TilePoolSize           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "TILE_POOL_SIZE"});
+    nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "MAX_SIMPLIFICATION_ERROR"});
 
     // get world bounding box
     FBox world_box(ForceInit);
-    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "WORLD_BOUND_TAG_NAMES"});
+    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "WORLD_BOUND_TAG_NAMES"});
     for (TActorIterator<AActor> actor_itr(camera_actor_->GetWorld()); actor_itr; ++actor_itr) {
         for (auto& name : world_bound_tag_names) {
             if (actor_itr->ActorHasTag(name.c_str())) {
@@ -307,12 +304,12 @@ void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys)
     }
     ASSERT(nav_modifier_volume);
 
-    // Uupdate ANavMeshBoundsVolume
+    // update ANavMeshBoundsVolume
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_mesh_bounds_volume->SetActorLocation(world_box.GetCenter(), false);
     nav_mesh_bounds_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.0f);
     nav_mesh_bounds_volume->GetRootComponent()->UpdateBounds();
-    nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
+    nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
     // update ANavModifierVolume
@@ -320,23 +317,23 @@ void CameraAgentController::buildNavMesh(UNavigationSystemV1* nav_sys)
     nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
     nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
     nav_modifier_volume->AddActorWorldOffset(FVector(
-        Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "NAV_MODIFIER_OFFSET_X"}),
-        Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "NAV_MODIFIER_OFFSET_Y"}),
-        Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "NAV_MODIFIER_OFFSET_Z"})));
+        Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_X"}),
+        Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Y"}),
+        Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Z"})));
     nav_modifier_volume->GetRootComponent()->UpdateBounds();
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
     nav_modifier_volume->RebuildNavigationData();
 
     // rebuild navmesh
-    nav_sys->Build();
+    nav_sys_->Build();
 
     // We need to wrap this call with guards because ExportNavigationData(...) is only implemented in non-shipping builds, see:
     //     Engine/Source/Runtime/Engine/Public/AI/NavDataGenerator.h
     //     Engine/Source/Runtime/NavigationSystem/Public/NavMesh/RecastNavMeshGenerator.h
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "EXPORT_NAV_DATA_OBJ"})) {
-        nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_AGENT_CONTROLLER", "NAVMESH", "EXPORT_NAV_DATA_OBJ_DIR"}).c_str()) + "/" + camera_actor_->GetWorld()->GetName() + "/");
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "EXPORT_NAV_DATA_OBJ"})) {
+        nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "EXPORT_NAV_DATA_OBJ_DIR"}).c_str()) + "/" + camera_actor_->GetWorld()->GetName() + "/");
     }
 #endif
 

@@ -1,30 +1,34 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include <Engine/EngineBaseTypes.h>
+#include <Math/Vector.h>
 
-#include "AgentController.h"
+#include "Agent.h"
 
 class AActor;
-class ACameraActor;
-class UStaticMeshComponent;
-class UTickEvent;
+class ARecastNavMesh;
+class UNavigationSystemV1;
 class UWorld;
 
+class AOpenBotPawn;
 class CameraSensor;
+class ImuSensor;
+class SonarSensor;
+
 
 struct Box;
 
-class SphereAgentController : public AgentController
+class OpenBotAgent : public Agent
 {
 public:
 
-    SphereAgentController(UWorld* world);
-    ~SphereAgentController();
- 
+    OpenBotAgent(UWorld* world);
+    ~OpenBotAgent();
+
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
 
@@ -39,19 +43,21 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void tickEventHandler(float delta_time, enum ELevelTick level_tick);
-
 private:
 
-    AActor* sphere_actor_ = nullptr;
+    void buildNavMesh();
+    void generateTrajectoryToGoal();
+
+    AOpenBotPawn* open_bot_pawn_ = nullptr;
     AActor* goal_actor_ = nullptr;
-    AActor* new_object_parent_actor_ = nullptr;
-    ACameraActor* camera_actor_ = nullptr;
 
-    UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
-
-    UTickEvent* tick_event_ = nullptr;
-    FDelegateHandle tick_event_handle_;
+    UNavigationSystemV1* nav_sys_ = nullptr;
+    ARecastNavMesh* nav_mesh_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
+    std::unique_ptr<ImuSensor> imu_sensor_ = nullptr;
+    std::unique_ptr<SonarSensor> sonar_sensor_ = nullptr;
+
+    std::vector<float> trajectory_;
 };
+
