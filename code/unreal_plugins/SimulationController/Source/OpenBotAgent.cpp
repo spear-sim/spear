@@ -416,18 +416,12 @@ void OpenBotAgent::generateTrajectoryToGoal()
     FPathFindingQuery nav_query = FPathFindingQuery(open_bot_pawn_, *nav_mesh_, open_bot_pawn_->GetActorLocation(), goal_actor_->GetActorLocation());
     
     // Generate a collision-free path between the agent position and the goal position
-    FPathFindingResult collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+    FPathFindingResult path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
     
     // If path generation is successful, update trajectory_
-    if (collision_free_path.IsSuccessful() && collision_free_path.Path.IsValid()) {
+    if (path.IsSuccessful() && path.Path.IsValid()) {
 
-        // Debug output
-        if (collision_free_path.IsPartial()) {
-            std::cout << "Only a partial path could be found..." << std::endl;
-        }
-
-        // Update trajectory_
-        TArray<FNavPathPoint> path_points = collision_free_path.Path->GetPathPoints();        
+        TArray<FNavPathPoint> path_points = path.Path->GetPathPoints();        
         for(auto& path_point : path_points) {
             trajectory_.push_back(path_point.Location.X);
             trajectory_.push_back(path_point.Location.Y);
@@ -435,7 +429,11 @@ void OpenBotAgent::generateTrajectoryToGoal()
         }
 
         // Debug output
-        int num_waypoints = collision_free_path.Path->GetPathPoints().Num();
+        if (path.IsPartial()) {
+            std::cout << "Only a partial path could be found..." << std::endl;
+        }
+
+        int num_waypoints = path.Path->GetPathPoints().Num();
         float trajectory_length = 0.0;
         for (size_t i = 0; i < num_waypoints - 1; i++) {
             trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
