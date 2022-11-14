@@ -147,10 +147,10 @@ SIMULATION_CONTROLLER:
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN: 9999.0                        # ClampMin=0.02, UIMax=20.0
     FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY: True
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # set to 0.0 to use raytracing global illumination
-    FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: True                         # set to True to use UE Raytracing features
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # set to 0.0 to use ray-tracing global illumination
+    FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: True                         # set to True to use ray-tracing features
     FINAL_COLOR_OVERRIDE_RAYTRACING_GI: True
-    FINAL_COLOR_RAYTRACING_GI_TYPE: "BruteForce"                        # set to "BruteForce" when using Raytracing
+    FINAL_COLOR_RAYTRACING_GI_TYPE: "BruteForce"                        # set to "BruteForce" when using ray-tracing
     FINAL_COLOR_OVERRIDE_RAYTRACING_GI_MAX_BOUNCES: True
     FINAL_COLOR_RAYTRACING_GI_MAX_BOUNCES: 4                            # ClampMin=1, ClampMax=64
     FINAL_COLOR_OVERRIDE_RAYTRACING_GI_SAMPLES_PER_PIXEL: True
@@ -164,7 +164,7 @@ SIMULATION_CONTROLLER:
     FINAL_COLOR_OVERRIDE_RAYTRACING_AO_RADIUS: True
     FINAL_COLOR_RAYTRACING_AO_RADIUS: 4000.0                            # ClampMin=0.0, ClampMax=10000.0
     FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE: True
-    FINAL_COLOR_REFLECTIONS_TYPE: "RayTracing"                          # set to "RayTracing" when using Raytracing
+    FINAL_COLOR_REFLECTIONS_TYPE: "RayTracing"                          # set to "RayTracing" when using ray-tracing
     FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES: True
     FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_BOUNCES: 2                   # ClampMin=1, ClampMax=64
     FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS: True 
