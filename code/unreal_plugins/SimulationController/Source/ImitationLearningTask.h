@@ -6,7 +6,6 @@
 #include "Task.h"
 
 class AActor;
-class ANavigationData;
 class ARecastNavMesh;
 class UActorHitEvent;
 class UNavigationSystemV1;
@@ -56,9 +55,7 @@ private:
     UActorHitEvent* actor_hit_event_ = nullptr;
     FDelegateHandle actor_hit_event_delegate_handle_;
 
-    // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;
-    ANavigationData* nav_data_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
 
     // Task state

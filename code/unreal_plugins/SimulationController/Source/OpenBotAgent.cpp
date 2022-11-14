@@ -93,7 +93,7 @@ void OpenBotAgent::findObjectReferences(UWorld* world)
         INavAgentInterface* nav_agent_interface = dynamic_cast<INavAgentInterface*>(open_bot_pawn_);
         ASSERT(nav_agent_interface);
 
-        ANavigationData* nav_data = nav_sys_->GetNavDataForProps(nav_agent_interface->GetNavAgentPropertiesRef(), nav_agent_interface->GetNavAgentLocation());
+        ANavigationData* nav_data = nav_sys_->GetNavDataForProps(nav_agent_interface->GetNavAgentPropertiesRef());
         ASSERT(nav_data);
 
         nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
@@ -431,14 +431,14 @@ void OpenBotAgent::generateTrajectoryToGoal()
             trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
         }
         trajectory_length /= open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
-        FVector2D relative_position_to_target((goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
+        FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
 
+        std::cout << std::endl;
         std::cout << "Number of waypoints: " << num_waypoints << std::endl;
-        std::cout << "Target distance: " << relative_position_to_target.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+        std::cout << "Goal distance: " << relative_position_to_goal.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
         std::cout << "Path length: " << trajectory_length << "m" << std::endl;
-
         std::cout << "Initial position: [" << open_bot_pawn_->GetActorLocation().X << ", " << open_bot_pawn_->GetActorLocation().Y << ", " << open_bot_pawn_->GetActorLocation().Z << "]." << std::endl;
-        std::cout << "Reachable position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
+        std::cout << "Goal position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
         std::cout << "-----------------------------------------------------------" << std::endl;
         std::cout << "Waypoints: " << std::endl;
         for (auto& point : path_points) {

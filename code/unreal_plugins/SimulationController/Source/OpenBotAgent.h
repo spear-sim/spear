@@ -10,7 +10,6 @@
 #include "Agent.h"
 
 class AActor;
-class ANavigationData;
 class ARecastNavMesh;
 class UNavigationSystemV1;
 class UWorld;

@@ -86,17 +86,22 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
     ASSERT(nav_sys_);
 
-    auto nav_agent_interface = dynamic_cast<INavAgentInterface*>(agent_actor_);
-    ASSERT(nav_agent_interface);
+    FNavAgentProperties agent_properties;
+    agent_properties.AgentHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_HEIGHT"});
+    agent_properties.AgentRadius     = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_RADIUS"});
+    agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
 
-    nav_data_ = nav_sys_->GetNavDataForProps(nav_agent_interface->GetNavAgentPropertiesRef(), nav_agent_interface->GetNavAgentLocation());
-    ASSERT(nav_data_);
+    ANavigationData* nav_data = nav_sys_->GetNavDataForProps(agent_properties);
+    ASSERT(nav_data);
+
+    nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
+    ASSERT(nav_mesh_);
 }
 
 void ImitationLearningTask::cleanUpObjectReferences()
 {
-    ASSERT(nav_data_);
-    nav_data_ = nullptr;
+    ASSERT(nav_mesh_);
+    nav_mesh_ = nullptr;
 
     ASSERT(nav_sys_);
     nav_sys_ = nullptr;
@@ -232,75 +237,72 @@ void ImitationLearningTask::getPositionsFromFile()
 
 void ImitationLearningTask::getPositionsFromTrajectorySampling()
 {
-    // Sanity checks
-    ASSERT(nav_data_);
-    ASSERT(nav_sys_);
-
     agent_initial_positions_.clear();
     agent_goal_positions_.clear();
     position_index_ = -1;
 
     float best_path_score = 0.0f;
     FNavLocation best_init_location;
-    FNavLocation best_target_location;
+    FNavLocation best_goal_location;
     TArray<FNavPathPoint> best_path_points;
 
-    // Path generation polling to get "interesting" paths in every experiment
+    // Trajectory sampling to get an interesting path
     for (int i = 0; i < Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_MAX_ITERS"}); i++) {
 
         FNavLocation init_location;
-        FNavLocation target_location;
+        FNavLocation goal_location;
         bool found = false;
 
         // Get a random initial point
-        found = nav_sys_->GetRandomPoint(init_location, nav_data_);
+        found = nav_sys_->GetRandomPoint(init_location, nav_mesh_);
         ASSERT(found);
 
-        // Get a random reachable target point, to be reached by the agent from init_location.Location
-        found = nav_sys_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_SEARCH_RADIUS"}), target_location);
+        // Get a random reachable goal point, to be reached by the agent from init_location.Location
+        found = nav_sys_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_SEARCH_RADIUS"}), goal_location);
         ASSERT(found);
 
-        // Update navigation query with the new target
-        FPathFindingQuery nav_query = FPathFindingQuery(agent_actor_, *nav_data_, init_location.Location, target_location.Location);
+        // Update navigation query with the new goal
+        FPathFindingQuery nav_query = FPathFindingQuery(agent_actor_, *nav_mesh_, init_location.Location, goal_location.Location);
 
-        // Generate a collision-free path between the initial position and the target position
-        FPathFindingResult collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+        // Generate a collision-free path between the initial position and the goal position
+        FPathFindingResult path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
 
-        // If path generation is sucessful, make sure that it is not too simple for better training results
-        if (collision_free_path.IsSuccessful() && collision_free_path.Path.IsValid()) {
+        // If path finding is sucessful, make sure that it is not too simple
+        if (path.IsSuccessful() && path.Path.IsValid()) {
 
             // Debug output
-            if (collision_free_path.IsPartial()) {
-                std::cout << "Only a partial path could be found..." << std::endl; // Partial paths are supported; in this case, the agent is expected to move as close as possible to its target
+            if (path.IsPartial()) {
+                std::cout << "Only a partial path could be found..." << std::endl;
             }
 
             // Compute a path score to evaluate its complexity
-            int num_waypoints = collision_free_path.Path->GetPathPoints().Num();
-            FVector2D relative_position_to_target((target_location.Location - init_location.Location).X, (target_location.Location - init_location.Location).Y);
-            float path_score = relative_position_to_target.Size() * num_waypoints;
+            int num_waypoints = path.Path->GetPathPoints().Num();
+            FVector2D relative_position_to_goal((goal_location.Location - init_location.Location).X, (goal_location.Location - init_location.Location).Y);
+            float path_score = relative_position_to_goal.Size() * num_waypoints;
 
-            // If the path_score is the best we've seen so far, update best_init_location and best_target_location
+            // If the path_score is the best we've seen so far, update best_init_location and best_goal_location
             if (best_path_score <= path_score) {
                 best_path_score = path_score;
                 best_init_location = init_location;
-                best_target_location = target_location;
-                best_path_points = collision_free_path.Path->GetPathPoints();
+                best_goal_location = goal_location;
+                best_path_points = path.Path->GetPathPoints();
 
                 // Debug output
                 float trajectory_length = 0.0;
                 for (int j = 0; j < num_waypoints - 1; j++) {
                     trajectory_length += FVector::Dist(best_path_points[j].Location, best_path_points[j + 1].Location);
                 }
+
                 std::cout << "Iteration: " << i << std::endl;
                 std::cout << "Score: " << best_path_score << std::endl;
                 std::cout << "Number of waypoints: " << num_waypoints << std::endl;
-                std::cout << "Target distance: " << relative_position_to_target.Size() / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+                std::cout << "Goal distance: " << relative_position_to_goal.Size() / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
                 std::cout << "Path length: " << trajectory_length / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
             }
 
             // Debug output
             if (i % 1000 == 0) {
-                std::cout << ".";
+                std::cout << "." << std::endl;
             }
         }
     }
@@ -309,13 +311,13 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
 
     // Update positions
     agent_initial_positions_.push_back(best_init_location.Location);
-    agent_goal_positions_.push_back(best_target_location.Location);
+    agent_goal_positions_.push_back(best_goal_location.Location);
     position_index_ = 0;
 
     // Debug output
     std::cout << std::endl;
     std::cout << "Initial position: [" << agent_initial_positions_.at(0).X << ", " << agent_initial_positions_.at(0).Y << ", " << agent_initial_positions_.at(0).Z << "]." << std::endl;
-    std::cout << "Reachable position: [" << agent_goal_positions_.at(0).X << ", " << agent_goal_positions_.at(0).Y << ", " << agent_goal_positions_.at(0).Z << "]." << std::endl;
+    std::cout << "Goal position: [" << agent_goal_positions_.at(0).X << ", " << agent_goal_positions_.at(0).Y << ", " << agent_goal_positions_.at(0).Z << "]." << std::endl;
     std::cout << "-----------------------------------------------------------" << std::endl;
     std::cout << "Waypoints: " << std::endl;
     for (auto& point : best_path_points) {
