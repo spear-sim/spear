@@ -4,8 +4,8 @@
 
 #include <Animation/AnimInstance.h>
 #include <Camera/CameraComponent.h>
+#include <Components/BoxComponent.h>
 #include <Components/InputComponent.h>
-#include <Components/PrimitiveComponent.h>
 #include <Components/SkeletalMeshComponent.h>
 #include <Engine/CollisionProfile.h>
 #include <PhysicsPublic.h>
@@ -30,6 +30,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     ASSERT(openbot_animation_finder.Succeeded());
 
     skeletal_mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
+    ASSERT(skeletal_mesh_component_); 
     skeletal_mesh_component_->SetSkeletalMesh(openbot_mesh_finder.Object);
     skeletal_mesh_component_->SetAnimClass(openbot_animation_finder.Class);
     skeletal_mesh_component_->SetCollisionProfileName(UCollisionProfile::Vehicle_ProfileName);
@@ -44,6 +45,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
 
     // Setup vehicle movement
     vehicle_movement_component_ = CreateDefaultSubobject<USimpleWheeledVehicleMovementComponent>(TEXT("SimpleWheeledVehicleMovementComponent"));
+    ASSERT(vehicle_movement_component_); 
     vehicle_movement_component_->SetIsReplicated(true); // Enable replication by default
     vehicle_movement_component_->UpdatedComponent = skeletal_mesh_component_;
 
@@ -83,8 +85,8 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "YAW"}), 
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "ROLL"}));
     
-    imu_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PrimitiveComponentIMU")); 
-    ASSERT(imu_component_ ); // FAILS
+    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("PrimitiveComponentIMU")); 
+    ASSERT(imu_component_ );
     imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation); 
     imu_component_->SetupAttachment(skeletal_mesh_component_);
 
@@ -99,8 +101,8 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "YAW"}), 
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "ROLL"}));
     
-    sonar_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PrimitiveComponentSonar")); 
-    ASSERT(sonar_component_); // FAILS
+    sonar_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("PrimitiveComponentSonar")); 
+    ASSERT(sonar_component_); 
     sonar_component_->SetRelativeLocationAndRotation(sonar_location, sonar_orientation); 
     sonar_component_->SetupAttachment(skeletal_mesh_component_);
     
@@ -116,6 +118,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "ROLL"}));
 
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
+    ASSERT(camera_component_); 
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
     camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;

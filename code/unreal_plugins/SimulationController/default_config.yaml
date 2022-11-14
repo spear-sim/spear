@@ -87,14 +87,14 @@ SIMULATION_CONTROLLER:
       CONTROL_SATURATION: 0.9
 
   OPENBOT_AGENT_CONTROLLER:
-    AGENT_ACTOR_NAME: ""
+    OPENBOT_ACTOR_NAME: ""
     GOAL_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
     STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
     OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera", "imu", "sonar"] # "state_data", "control_data", "camera", "imu", "sonar"... The type(s) of "camera" sensor is defined by CAMERA_PARAMETERS.RENDER_PASSES
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 0.0
-    CAMERA_PARAMETERS:
+    CAMERA:
       IMAGE_HEIGHT: 128
       IMAGE_WIDTH: 128
       FOV: 90.0                   # Field of view of the smartphone camera in [deg]

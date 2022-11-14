@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include <Components/SkeletalMeshComponent.h>
+#include <Components/BoxComponent.h>
 #include <DrawDebugHelpers.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -17,7 +17,7 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-ImuSensor::ImuSensor(USkeletalMeshComponent* primitive_component)
+ImuSensor::ImuSensor(UBoxComponent* primitive_component)
 {
     ASSERT(primitive_component);
     primitive_component_ = primitive_component;

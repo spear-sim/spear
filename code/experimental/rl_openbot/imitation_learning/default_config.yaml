@@ -62,14 +62,14 @@ SIMULATION_CONTROLLER:
     #TRAJECTORY_FILE: "/home/qleboute/Documents/Git/spear/code/experimental/openbot/imitation_learning/Trajectories/InitGoalAgentPositions_235388780.csv"
 
   OPENBOT_AGENT_CONTROLLER:
-    AGENT_ACTOR_NAME: "OpenBotPawn_2147482540"
+    OPENBOT_ACTOR_NAME: "OpenBotPawn_2147482540"
     GOAL_ACTOR_NAME: "GoalActor"
     ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
     STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
     OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera", "imu", "sonar"] # "state_data", "control_data", "camera", "imu", "sonar"... The type(s) of "camera" sensor is defined by CAMERA_PARAMETERS.RENDER_PASSES
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 1.0
-    CAMERA_PARAMETERS:
+    CAMERA:
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 70.0

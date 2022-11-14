@@ -8,7 +8,7 @@
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
-#include <Components/StaticMeshComponent.h>
+#include <Components/BoxComponent.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -60,20 +60,20 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         camera_sensor_ = std::make_unique<CameraSensor>(
             open_bot_pawn_->camera_component_,
             Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "RENDER_PASSES"}),
-            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_WIDTH"}),
-            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "IMAGE_HEIGHT"}));
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "IMAGE_WIDTH"}),
+            Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
 
         // update FOV
         for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "RENDER_PASSES"})) {
-            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "FOV"});
+            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "FOV"});
         }
     }
 }
 
 OpenBotAgentController::~OpenBotAgentController()
 {
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
 
     //
     // observation["imu_data"]
@@ -204,7 +204,7 @@ std::map<std::string, Box> OpenBotAgentController::getObservationSpace() const
     std::map<std::string, Box> observation_space;
     Box box;
 
-    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
+    auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
 
     //
     // observation["state_data"]
@@ -270,7 +270,7 @@ std::map<std::string, Box> OpenBotAgentController::getStepInfoSpace() const
     std::map<std::string, Box> step_info_space;
     Box box;
 
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["trajectory_data"]
@@ -381,7 +381,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgentController::getStepInfo(
 {
     std::map<std::string, std::vector<uint8_t>> step_info;
 
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["trajectory_data"]
@@ -401,7 +401,7 @@ void OpenBotAgentController::reset()
     open_bot_pawn_->SetActorLocationAndRotation(location, FQuat(FRotator(0)), sweep, hit_result_info, ETeleportType::TeleportPhysics);
     open_bot_pawn_->resetPhysicsState();
 
-    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
+    auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "STEP_INFO_COMPONENTS"});
 
     //
     // step_info["trajectory_data"]
@@ -436,7 +436,7 @@ void OpenBotAgentController::buildNavMesh()
 
     // Get world bounding box
     FBox world_box(ForceInit);
-    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "WORLD_BOUND_TAG_NAMES"});
+    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "WORLD_BOUND_TAG_NAMES"});
     for (TActorIterator<AActor> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
         for (auto& name : world_bound_tag_names) {
             if (actor_itr->ActorHasTag(name.c_str())) {

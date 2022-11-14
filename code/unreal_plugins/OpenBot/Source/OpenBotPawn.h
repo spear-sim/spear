@@ -8,8 +8,8 @@
 
 #include "OpenBotPawn.generated.h"
 
+class UBoxComponent;
 class UCameraComponent;
-class UPrimitiveComponent;
 class USimpleWheeledVehicleMovementComponent;
 class USkeletalMeshComponent;
 
@@ -52,8 +52,8 @@ public:
     USkeletalMeshComponent* skeletal_mesh_component_ = nullptr;
     USimpleWheeledVehicleMovementComponent* vehicle_movement_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
-    USkeletalMeshComponent* imu_component_ = nullptr;
-    USkeletalMeshComponent* sonar_component_ = nullptr;
+    UBoxComponent* imu_component_ = nullptr;
+    UBoxComponent* sonar_component_ = nullptr;
 
 private:
 
