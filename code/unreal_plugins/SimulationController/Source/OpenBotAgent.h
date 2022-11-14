@@ -54,7 +54,6 @@ private:
 
     // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;
-    ANavigationData* nav_data_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;

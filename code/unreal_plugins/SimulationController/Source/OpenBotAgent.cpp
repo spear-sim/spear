@@ -93,10 +93,10 @@ void OpenBotAgent::findObjectReferences(UWorld* world)
         INavAgentInterface* nav_agent_interface = dynamic_cast<INavAgentInterface*>(open_bot_pawn_);
         ASSERT(nav_agent_interface);
 
-        nav_data_ = nav_sys_->GetNavDataForProps(nav_agent_interface->GetNavAgentPropertiesRef(), nav_agent_interface->GetNavAgentLocation());
-        ASSERT(nav_data_);
+        ANavigationData* nav_data = nav_sys_->GetNavDataForProps(nav_agent_interface->GetNavAgentPropertiesRef(), nav_agent_interface->GetNavAgentLocation());
+        ASSERT(nav_data);
 
-        nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
+        nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
         ASSERT(nav_mesh_);
 
         buildNavMesh();
@@ -113,9 +113,6 @@ void OpenBotAgent::cleanUpObjectReferences()
     if (std::find(step_info_components.begin(), step_info_components.end(), "trajectory_data") != step_info_components.end()) {
         ASSERT(nav_mesh_);
         nav_mesh_ = nullptr;
-
-        ASSERT(nav_data_);
-        nav_data_ = nullptr;
 
         ASSERT(nav_sys_);
         nav_sys_ = nullptr;
@@ -409,7 +406,6 @@ void OpenBotAgent::buildNavMesh()
 void OpenBotAgent::generateTrajectoryToGoal()
 {
     // Sanity checks
-    ASSERT(nav_data_);
     ASSERT(nav_sys_);
     ASSERT(open_bot_pawn_);
     ASSERT(goal_actor_);
@@ -417,7 +413,7 @@ void OpenBotAgent::generateTrajectoryToGoal()
     trajectory_.clear();
     
     // Update navigation query with the new agent position and goal position
-    FPathFindingQuery nav_query = FPathFindingQuery(open_bot_pawn_, *nav_data_, open_bot_pawn_->GetActorLocation(), goal_actor_->GetActorLocation());
+    FPathFindingQuery nav_query = FPathFindingQuery(open_bot_pawn_, *nav_mesh_, open_bot_pawn_->GetActorLocation(), goal_actor_->GetActorLocation());
     
     // Generate a collision-free path between the agent position and the goal position
     FPathFindingResult collision_free_path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
