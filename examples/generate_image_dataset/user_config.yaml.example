@@ -42,4 +42,4 @@ SIMULATION_CONTROLLER:
 
   VISUALIZER:
     ACTOR_NAME: "GenerateImageDatasetCamera"
-    SPAWN_CAMERA: false
+    SPAWN_CAMERA: False
