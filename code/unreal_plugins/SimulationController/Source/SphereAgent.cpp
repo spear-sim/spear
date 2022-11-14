@@ -57,7 +57,7 @@ SphereAgent::SphereAgent(UWorld* world)
         ASSERT(tick_event_);
         tick_event_->RegisterComponent();
         tick_event_->initialize(ETickingGroup::TG_PostPhysics);
-        tick_event_handle_ = tick_event_->delegate_.AddRaw(this, &SphereAgent::tickEventHandler);
+        tick_event_handle_ = tick_event_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
     }
 }
 
@@ -323,7 +323,7 @@ bool SphereAgent::isReady() const
     return true;
 }
 
-void SphereAgent::tickEventHandler(float delta_time, enum ELevelTick level_tick)
+void SphereAgent::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
 {
     camera_actor_->SetActorLocation(
         sphere_actor_->GetActorLocation() +
