@@ -44,17 +44,17 @@ CameraSensor::CameraSensor(UCameraComponent* component, std::vector<std::string>
         scene_capture_component->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
         scene_capture_component->bAlwaysPersistRenderingState = true;
 
-        // Initialize TextureRenderTarget2D format. 
-        // Changing the dimensions of a TextureRenderTarget2D after they have been set initially can lead to unexpected behavior. So we only
-        // set the dimensions once at object creation time, and we require width and height be passed into the CameraSensor constructor.
-        constexpr bool force_linear_gamma = false;
-        texture_render_target->InitCustomFormat(width, height, PF_B8G8R8A8, force_linear_gamma); // PF_B8G8R8A8 disables HDR; 
+        // Initialize TextureRenderTarget2D format. Changing the dimensions of a TextureRenderTarget2D after they have been 
+        // set initially can lead to unexpected behavior. So we only set the dimensions once at object creation time, and 
+        // we require width and height be passed into the CameraSensor constructor.
+        bool force_linear_gamma = false;
+        texture_render_target->InitCustomFormat(width, height, PF_B8G8R8A8, force_linear_gamma);
         texture_render_target->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
-        texture_render_target->bGPUSharedFlag = true; // demand buffer on GPU - might improve performance?
+        texture_render_target->bGPUSharedFlag = true;
         texture_render_target->TargetGamma = GEngine->GetDisplayGamma();
-        texture_render_target->SRGB = true; // false for pixels to be stored in linear space
+        texture_render_target->SRGB = true;
         texture_render_target->bAutoGenerateMips = false;
-        constexpr bool clear_render_target = true;
+        bool clear_render_target = true;
         texture_render_target->UpdateResourceImmediate(clear_render_target);
 
         // Set TextureRenderTarget2D it into SceneCaptureComponent2D   
@@ -69,7 +69,7 @@ CameraSensor::CameraSensor(UCameraComponent* component, std::vector<std::string>
 
             // Set PostProcessMaterial
             scene_capture_component->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(mat, scene_capture_component), 1.0f);
-            scene_capture_component->ShowFlags.SetPostProcessMaterial(true); // enabled by EnableAdvancedFeatures();
+            scene_capture_component->ShowFlags.SetPostProcessMaterial(true);
         }
 
         CameraPass pass;
