@@ -86,21 +86,21 @@ void CameraAgent::findObjectReferences(UWorld* world)
     //
     if (std::find(step_info_components.begin(), step_info_components.end(), "random_points") != step_info_components.end()) {
 
-        UNavigationSystemV1* nav_sys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-        ASSERT(nav_sys);
+        nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
+        ASSERT(nav_sys_);
 
         FNavAgentProperties agent_properties;
         agent_properties.AgentHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_HEIGHT"});
         agent_properties.AgentRadius     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_RADIUS"});
         agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
 
-        ANavigationData* nav_data = nav_sys->GetNavDataForProps(agent_properties);
+        ANavigationData* nav_data = nav_sys_->GetNavDataForProps(agent_properties);
         ASSERT(nav_data);
 
         nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
         ASSERT(nav_mesh_);
 
-        buildNavMesh(nav_sys);
+        buildNavMesh();
     }
 }
 
@@ -265,11 +265,8 @@ bool CameraAgent::isReady() const
     return true;
 }
 
-void CameraAgent::buildNavMesh(UNavigationSystemV1* nav_sys)
+void CameraAgent::buildNavMesh()
 {
-    ASSERT(nav_mesh_);
-    ASSERT(nav_sys);
-
     // set the navmesh properties
     nav_mesh_->AgentRadius            = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_RADIUS"});
     nav_mesh_->AgentHeight            = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "AGENT_HEIGHT"});
@@ -280,6 +277,7 @@ void CameraAgent::buildNavMesh(UNavigationSystemV1* nav_sys)
     nav_mesh_->MergeRegionSize        = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "MERGE_REGION_SIZE"});
     nav_mesh_->MinRegionArea          = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "MIN_REGION_AREA"});
     nav_mesh_->TileSizeUU             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "TILE_SIZE_UU"});
+    nav_mesh_->TilePoolSize           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "TILE_POOL_SIZE"});
     nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "MAX_SIMPLIFICATION_ERROR"});
 
     // get world bounding box
@@ -306,12 +304,12 @@ void CameraAgent::buildNavMesh(UNavigationSystemV1* nav_sys)
     }
     ASSERT(nav_modifier_volume);
 
-    // Uupdate ANavMeshBoundsVolume
+    // update ANavMeshBoundsVolume
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_mesh_bounds_volume->SetActorLocation(world_box.GetCenter(), false);
     nav_mesh_bounds_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.0f);
     nav_mesh_bounds_volume->GetRootComponent()->UpdateBounds();
-    nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
+    nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
     // update ANavModifierVolume
@@ -327,7 +325,7 @@ void CameraAgent::buildNavMesh(UNavigationSystemV1* nav_sys)
     nav_modifier_volume->RebuildNavigationData();
 
     // rebuild navmesh
-    nav_sys->Build();
+    nav_sys_->Build();
 
     // We need to wrap this call with guards because ExportNavigationData(...) is only implemented in non-shipping builds, see:
     //     Engine/Source/Runtime/Engine/Public/AI/NavDataGenerator.h

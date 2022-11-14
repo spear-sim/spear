@@ -345,15 +345,11 @@ void OpenBotAgent::reset()
 
 bool OpenBotAgent::isReady() const
 {
-    ASSERT(open_bot_pawn_);
     return open_bot_pawn_->GetVelocity().Size() <= Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "IS_READY_VELOCITY_THRESHOLD"});
 }
 
 void OpenBotAgent::buildNavMesh()
 {
-    ASSERT(nav_sys_);
-    ASSERT(nav_mesh_);
-
     // Set the navmesh properties
     nav_mesh_->AgentRadius            = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "AGENT_RADIUS"});
     nav_mesh_->AgentHeight            = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "AGENT_HEIGHT"});
@@ -364,6 +360,7 @@ void OpenBotAgent::buildNavMesh()
     nav_mesh_->MergeRegionSize        = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "MERGE_REGION_SIZE"});
     nav_mesh_->MinRegionArea          = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "MIN_REGION_AREA"});
     nav_mesh_->TileSizeUU             = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "TILE_SIZE_UU"});
+    nav_mesh_->TilePoolSize           = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "TILE_POOL_SIZE"});
     nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "MAX_SIMPLIFICATION_ERROR"});
 
     // Get world bounding box
@@ -405,11 +402,6 @@ void OpenBotAgent::buildNavMesh()
 
 void OpenBotAgent::generateTrajectoryToGoal()
 {
-    // Sanity checks
-    ASSERT(nav_sys_);
-    ASSERT(open_bot_pawn_);
-    ASSERT(goal_actor_);
-
     trajectory_.clear();
     
     // Update navigation query with the new agent position and goal position

@@ -38,9 +38,11 @@ public:
     
 private:
 
-    void buildNavMesh(UNavigationSystemV1* nav_sys);
+    void buildNavMesh();
 
     ACameraActor* camera_actor_ = nullptr;
+
+    UNavigationSystemV1* nav_sys_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;

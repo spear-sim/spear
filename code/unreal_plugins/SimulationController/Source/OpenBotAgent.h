@@ -43,20 +43,16 @@ public:
 
 private:
 
-    // Rebuild the navigation mesh of the agent
     void buildNavMesh();
-
-    // Generate a collision-free trajectory between an initial and a target location
     void generateTrajectoryToGoal();
 
     AOpenBotPawn* open_bot_pawn_ = nullptr;
     AActor* goal_actor_ = nullptr;
 
-    // Navigation
     UNavigationSystemV1* nav_sys_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
 
-    std::vector<float> trajectory_; // An array containing the different waypoints to be followed by the agent, converted into a serialized format X0, Y0, Z0, X1, Y1, Z1, ... Xn, Yn, Zn 
+    std::vector<float> trajectory_;
 };
