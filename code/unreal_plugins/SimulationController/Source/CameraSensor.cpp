@@ -61,7 +61,8 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.scene_capture_component_->RegisterComponent();
 
         if (render_pass_name != "final_color") {
-            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), MATERIALS_PATH.c_str(), render_pass_name.c_str(), render_pass_name.c_str()));
+            FString path = (MATERIALS_PATH + "/" + render_pass_name+ "." + render_pass_name).c_str();
+            UMaterial* material = LoadObject<UMaterial>(nullptr, *path);
             ASSERT(material);
             render_pass.scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, render_pass.scene_capture_component_), 1.0f);
             render_pass.scene_capture_component_->ShowFlags.SetPostProcessMaterial(true);

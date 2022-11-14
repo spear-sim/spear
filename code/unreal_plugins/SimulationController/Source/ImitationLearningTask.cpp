@@ -67,37 +67,15 @@ ImitationLearningTask::~ImitationLearningTask()
 
 void ImitationLearningTask::findObjectReferences(UWorld* world)
 {
-<<<<<<< HEAD
-    std::vector<std::string> obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
-
-    for (TActorIterator<AActor> actor_itr(world, AActor::StaticClass()); actor_itr; ++actor_itr) {
-
-        std::string actor_name = TCHAR_TO_UTF8(*(*actor_itr)->GetName());
-         std::cout << "actor_name: " << actor_name << std::endl;
-
-=======
     auto obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
     for (TActorIterator<AActor> actor_itr(world); actor_itr; ++actor_itr) {
         std::string actor_name = TCHAR_TO_UTF8(*((*actor_itr)->GetName()));
->>>>>>> d0f7e077158b87b4e4e98a5ceed23f4c74dc8871
         if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "AGENT_ACTOR_NAME"})) {
             ASSERT(!agent_actor_);
             agent_actor_ = *actor_itr;
         } else if (std::find(obstacle_ignore_actor_names.begin(), obstacle_ignore_actor_names.end(), actor_name) != obstacle_ignore_actor_names.end()) {
             obstacle_ignore_actors_.emplace_back(*actor_itr);
-<<<<<<< HEAD
-            //std::cout << "actor_name: " << actor_name << std::endl;
-        }
-
-        // If GOAL_ACTOR_NAME is not "", then assign goal_actor_ pointer to existing actor if the name matches
-        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}) != "") {
-            if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"})) {
-                ASSERT(!goal_actor_);
-                goal_actor_ = *actor_itr;
-            }
-=======
             std::cout << "Adding actor to obstacle ignore list: " << actor_name << std::endl;
->>>>>>> d0f7e077158b87b4e4e98a5ceed23f4c74dc8871
         }
     }
     ASSERT(agent_actor_);

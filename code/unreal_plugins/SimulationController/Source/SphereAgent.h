@@ -7,11 +7,7 @@
 
 #include <Engine/EngineBaseTypes.h>
 
-<<<<<<< HEAD:code/unreal_plugins/SimulationController/Source/SphereAgentController.h
-#include "AgentController.h"
-=======
 #include "Agent.h"
->>>>>>> d0f7e077158b87b4e4e98a5ceed23f4c74dc8871:code/unreal_plugins/SimulationController/Source/SphereAgent.h
 
 class AActor;
 class ACameraActor;
@@ -59,8 +55,4 @@ private:
     FDelegateHandle tick_event_handle_;
 
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
-<<<<<<< HEAD:code/unreal_plugins/SimulationController/Source/SphereAgentController.h
 };
-=======
-};
->>>>>>> d0f7e077158b87b4e4e98a5ceed23f4c74dc8871:code/unreal_plugins/SimulationController/Source/SphereAgent.h
