@@ -105,7 +105,7 @@ float PointGoalNavTask::getReward() const
     } else if (hit_obstacle_) {
         reward = Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "HIT_OBSTACLE"});
     } else {
-        const FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
+        FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
         reward = -agent_to_goal.Size() * Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "REWARD", "DISTANCE_TO_GOAL_SCALE"});
     }
     return reward;

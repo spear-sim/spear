@@ -327,7 +327,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getStepInfo() const
 
 void OpenBotAgent::reset()
 {
-    const FVector location = open_bot_pawn_->GetActorLocation();
+    FVector location = open_bot_pawn_->GetActorLocation();
     bool sweep = false;
     FHitResult* hit_result_info = nullptr;    
     open_bot_pawn_->SetActorLocationAndRotation(location, FQuat(FRotator(0)), sweep, hit_result_info, ETeleportType::TeleportPhysics);
