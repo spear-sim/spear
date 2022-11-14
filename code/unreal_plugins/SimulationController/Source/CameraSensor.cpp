@@ -27,19 +27,21 @@ const std::map<std::string, DataType> OBSERVATION_COMPONENT_DTYPE        = {{"fi
 
 CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector<std::string>& render_pass_names, unsigned int width, unsigned int height)
 {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     ASSERT(camera_component);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     new_object_parent_actor_ = camera_component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     for (auto& render_pass_name : render_pass_names) {
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
+std::cout << "render_pass_name: " << render_pass_name << std::endl;
         RenderPass render_pass;
 
         // create TextureRenderTarget2D
         render_pass.texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), render_pass_name.c_str()));
         ASSERT(render_pass.texture_render_target_);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
         // TODO: allow returning floating point data instead of hardcoding to PF_B8G8R8A8
         bool force_linear_gamma = false;
         bool clear_render_target = true;
@@ -50,31 +52,41 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.texture_render_target_->bAutoGenerateMips = false;
         render_pass.texture_render_target_->InitCustomFormat(width, height, PF_B8G8R8A8, force_linear_gamma);
         render_pass.texture_render_target_->UpdateResourceImmediate(clear_render_target);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
         // create SceneCaptureComponent2D
         render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), render_pass_name.c_str()));
         ASSERT(render_pass.scene_capture_component_);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
         render_pass.scene_capture_component_->TextureTarget = render_pass.texture_render_target_;
         render_pass.scene_capture_component_->AttachToComponent(camera_component, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         render_pass.scene_capture_component_->SetVisibility(true);
         render_pass.scene_capture_component_->RegisterComponent();
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
         if (render_pass_name != "final_color") {
-            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), MATERIALS_PATH.c_str(), render_pass_name.c_str(), render_pass_name.c_str()));
+            std::cout << __FILE__ << " " << __LINE__ << std::endl;
+            std::cout << MATERIALS_PATH << "/" << render_pass_name << "." << render_pass_name <<  std::endl;
+            FString path = (MATERIALS_PATH + "/" + render_pass_name+ "." + render_pass_name).c_str();
+            UMaterial* material = LoadObject<UMaterial>(nullptr, *path);
+            //auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), MATERIALS_PATH.c_str(), render_pass_name.c_str(), render_pass_name.c_str()));
+            std::cout << __FILE__ << " " << __LINE__ << std::endl;
             ASSERT(material);
+            std::cout << __FILE__ << " " << __LINE__ << std::endl;
             render_pass.scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, render_pass.scene_capture_component_), 1.0f);
+            std::cout << __FILE__ << " " << __LINE__ << std::endl;
         }
 
         if (render_pass_name == "final_color") {
+            std::cout << __FILE__ << " " << __LINE__ << std::endl;
             initializeSceneCaptureComponentFinalColor(render_pass.scene_capture_component_);
+            std::cout << __FILE__ << " " << __LINE__ << std::endl;
         }
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
         render_passes_[render_pass_name] = std::move(render_pass);
     }
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     width_ = width;
     height_ = height;
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
 }
 
 CameraSensor::~CameraSensor()

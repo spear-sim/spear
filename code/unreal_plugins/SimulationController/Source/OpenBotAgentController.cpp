@@ -29,14 +29,15 @@
 
 OpenBotAgentController::OpenBotAgentController(UWorld* world)
 {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     FActorSpawnParameters spawn_params;
     spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OPENBOT_ACTOR_NAME"}).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
     ASSERT(open_bot_pawn_);
-
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "OBSERVATION_COMPONENTS"});
-
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
     //
     // observation["imu_data"]
     //
@@ -44,7 +45,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         imu_sensor_ = std::make_unique<ImuSensor>(open_bot_pawn_->imu_component_);
         ASSERT(imu_sensor_);
     }
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     //
     // observation["sonar_data"]
     //
@@ -52,7 +53,7 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
         sonar_sensor_ = std::make_unique<SonarSensor>(open_bot_pawn_->sonar_component_);
         ASSERT(sonar_sensor_);
     }
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     //
     // observation["camera"]
     //
@@ -63,11 +64,12 @@ OpenBotAgentController::OpenBotAgentController(UWorld* world)
             Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "IMAGE_WIDTH"}),
             Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "IMAGE_HEIGHT"}));
         ASSERT(camera_sensor_);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
         // update FOV
         for (auto& pass : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "RENDER_PASSES"})) {
             camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "CAMERA", "FOV"});
         }
+        std::cout << __FILE__ << " " << __LINE__ << std::endl;
     }
 }
 
@@ -115,20 +117,20 @@ void OpenBotAgentController::findObjectReferences(UWorld* world)
         }
     }
     ASSERT(goal_actor_);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
     ASSERT(nav_sys_);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     INavAgentInterface* nav_agent_interface = dynamic_cast<INavAgentInterface*>(open_bot_pawn_);
     ASSERT(nav_agent_interface);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     nav_data_ = nav_sys_->GetNavDataForProps(nav_agent_interface->GetNavAgentPropertiesRef(), nav_agent_interface->GetNavAgentLocation());
     ASSERT(nav_data_);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     // Get a pointer to the navigation mesh
     nav_mesh_ = Cast<ARecastNavMesh>(nav_data_);
     ASSERT(nav_mesh_);
-
+std::cout << __FILE__ << " " << __LINE__ << std::endl;
     // Rebuild navigation mesh with the desired properties before executing trajectory planning
     buildNavMesh();
 }
@@ -436,7 +438,7 @@ void OpenBotAgentController::buildNavMesh()
 
     // Get world bounding box
     FBox world_box(ForceInit);
-    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "NAVMESH", "WORLD_BOUND_TAG_NAMES"});
+    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT_CONTROLLER", "WORLD_BOUND_TAG_NAMES"});
     for (TActorIterator<AActor> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
         for (auto& name : world_bound_tag_names) {
             if (actor_itr->ActorHasTag(name.c_str())) {
