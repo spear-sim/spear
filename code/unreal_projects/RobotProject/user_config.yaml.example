@@ -42,4 +42,4 @@ SIMULATION_CONTROLLER:
 
   VISUALIZER:
     ACTOR_NAME: "RobotProjectOpenBot"
-    SPAWN_CAMERA: false
+    SPAWN_CAMERA: False

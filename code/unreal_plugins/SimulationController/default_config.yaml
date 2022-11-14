@@ -94,7 +94,7 @@ SIMULATION_CONTROLLER:
     AGENT_ACTOR_NAME: ""
     GOAL_ACTOR_NAME: ""
     OBSTACLE_IGNORE_ACTOR_NAMES: []
-    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: TRUE
+    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
     POSITIONS_FILE: ""
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000
     TRAJECTORY_SAMPLING_MAX_ITERS: 10000
@@ -123,7 +123,7 @@ SIMULATION_CONTROLLER:
 
   VISUALIZER:
     ACTOR_NAME: ""
-    SPAWN_CAMERA: true
+    SPAWN_CAMERA: True
     SPAWN_CAMERA_POSITION_X: 0.0
     SPAWN_CAMERA_POSITION_Y: 0.0
     SPAWN_CAMERA_POSITION_Z: 0.0
@@ -136,51 +136,51 @@ SIMULATION_CONTROLLER:
   # those values in the engine. When Unreal defines UIMin/UIMax vales, it will
   # only clamp those values values in the editor.
   CAMERA_SENSOR:
-    FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP: true
+    FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP: 9999.0                          # ClampMin=0.02, UIMax=20.0
-    FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN: true
+    FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN: 9999.0                        # ClampMin=0.02, UIMax=20.0
-    FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY: true
+    FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY: True
     FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # set to 0.0 to use raytracing global illumination
-    FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: true                         # set to true to use UE Raytracing features
-    FINAL_COLOR_OVERRIDE_RAYTRACING_GI: true
+    FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: True                         # set to True to use UE Raytracing features
+    FINAL_COLOR_OVERRIDE_RAYTRACING_GI: True
     FINAL_COLOR_RAYTRACING_GI_TYPE: "BruteForce"                        # set to "BruteForce" when using Raytracing
-    FINAL_COLOR_OVERRIDE_RAYTRACING_GI_MAX_BOUNCES: true
+    FINAL_COLOR_OVERRIDE_RAYTRACING_GI_MAX_BOUNCES: True
     FINAL_COLOR_RAYTRACING_GI_MAX_BOUNCES: 4                            # ClampMin=1, ClampMax=64
-    FINAL_COLOR_OVERRIDE_RAYTRACING_GI_SAMPLES_PER_PIXEL: true
+    FINAL_COLOR_OVERRIDE_RAYTRACING_GI_SAMPLES_PER_PIXEL: True
     FINAL_COLOR_RAYTRACING_GI_SAMPLES_PER_PIXEL: 16                     # ClampMin=1, ClampMax=64
     FINAL_COLOR_OVERRIDE_RAYTRACING_AO: True
     FINAL_COLOR_RAYTRACING_AO: 1                                        # set to 1 to enable and 0 to disable
-    FINAL_COLOR_OVERRIDE_RAYTRACING_AO_SAMPLES_PER_PIXEL: true
+    FINAL_COLOR_OVERRIDE_RAYTRACING_AO_SAMPLES_PER_PIXEL: True
     FINAL_COLOR_RAYTRACING_AO_SAMPLES_PER_PIXEL: 8                      # ClampMin=1, ClampMax=64
-    FINAL_COLOR_OVERRIDE_RAYTRACING_AO_INTENSITY: true
+    FINAL_COLOR_OVERRIDE_RAYTRACING_AO_INTENSITY: True
     FINAL_COLOR_RAYTRACING_AO_INTENSITY: 0.8                            # ClampMin=0.0, ClampMax=1.0
-    FINAL_COLOR_OVERRIDE_RAYTRACING_AO_RADIUS: true
+    FINAL_COLOR_OVERRIDE_RAYTRACING_AO_RADIUS: True
     FINAL_COLOR_RAYTRACING_AO_RADIUS: 4000.0                            # ClampMin=0.0, ClampMax=10000.0
-    FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE: true
+    FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE: True
     FINAL_COLOR_REFLECTIONS_TYPE: "RayTracing"                          # set to "RayTracing" when using Raytracing
-    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES: true
+    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES: True
     FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_BOUNCES: 2                   # ClampMin=1, ClampMax=64
-    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS: true 
+    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS: True 
     FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS: 0.4               # ClampMin=0.01, ClampMax=1.0
-    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL: true
+    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL: True
     FINAL_COLOR_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL: 8             # ClampMin=1, ClampMax=64
-    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_TRANSLUCENCY: true
+    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_TRANSLUCENCY: True
     FINAL_COLOR_RAYTRACING_REFLECTIONS_TRANSLUCENCY: 1                  # set to 1 to enable and 0 to disable
-    FINAL_COLOR_SET_AMBIENT_OCCLUSION: true                             # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_CAMERA_IMPERFECTIONS: true                          # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_COLOR_GRADING: true                                 # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_DEPTH_OF_FIELD: true                                # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_DISTANCE_FIELD_AO: true                             # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_EYE_ADAPTATION: true                                # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_GRAIN: true                                         # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_INDIRECT_LIGHTING_CACHE: true                       # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_LENS_FLARES: true                                   # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_LIGHT_SHAFTS: true                                  # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_SCREEN_SPACE_REFLECTIONS: true                      # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_SEPARATE_TRANSLUCENCY: true                         # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_TEMPORAL_AA: true                                   # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_VIGNETTE: true                                      # enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    FINAL_COLOR_SET_ANTI_ALIASING: true
-    FINAL_COLOR_SET_RAYTRACED_DISTANCE_FIELD_SHADOWS: true
-    FINAL_COLOR_SET_DYNAMIC_SHADOWS: true
+    FINAL_COLOR_SET_AMBIENT_OCCLUSION: True                             # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_CAMERA_IMPERFECTIONS: True                          # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_COLOR_GRADING: True                                 # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_DEPTH_OF_FIELD: True                                # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_DISTANCE_FIELD_AO: True                             # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_EYE_ADAPTATION: True                                # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_GRAIN: True                                         # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_INDIRECT_LIGHTING_CACHE: True                       # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_LENS_FLARES: True                                   # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_LIGHT_SHAFTS: True                                  # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_SCREEN_SPACE_REFLECTIONS: True                      # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_SEPARATE_TRANSLUCENCY: True                         # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_TEMPORAL_AA: True                                   # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_VIGNETTE: True                                      # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_ANTI_ALIASING: True
+    FINAL_COLOR_SET_RAYTRACED_DISTANCE_FIELD_SHADOWS: True
+    FINAL_COLOR_SET_DYNAMIC_SHADOWS: True
