@@ -5,7 +5,6 @@
 #include <memory>
 
 #include <CoreMinimal.h>
-#include <Engine/Engine.h>
 #include <Engine/World.h>
 #include <Modules/ModuleManager.h>
 

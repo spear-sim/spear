@@ -7,7 +7,6 @@
 
 #include <Components/BoxComponent.h>
 #include <DrawDebugHelpers.h>
-#include <Engine/Engine.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>

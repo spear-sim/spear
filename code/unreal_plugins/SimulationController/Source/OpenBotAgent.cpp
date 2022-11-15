@@ -7,7 +7,6 @@
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
-#include <Engine/Engine.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
