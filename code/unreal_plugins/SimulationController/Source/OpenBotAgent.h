@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include <Math/Vector.h>
+#include <Engine/EngineBaseTypes.h>
 
 #include "Agent.h"
 
