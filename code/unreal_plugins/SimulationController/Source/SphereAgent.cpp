@@ -8,11 +8,13 @@
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
+#include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>
 #include <Engine/CollisionProfile.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <Materials/Material.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "Assert/Assert.h"
@@ -40,13 +42,13 @@ SphereAgent::SphereAgent(UWorld* world)
     sphere_static_mesh_component_ = dynamic_cast<AStaticMeshActor*>(sphere_actor_)->GetStaticMeshComponent();
     ASSERT(sphere_static_mesh_component_);
 
-    // UStaticMesh* agent_mesh = LoadObject<UStaticMesh>(world, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
-    // UMaterial* agent_mat = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Materials/Agent_MAT.Agent_MAT'"));
-    // ASSERT(agent_mesh);
-    // ASSERT(agent_mat);
-
-    // dynamic_cast<UStaticMeshComponent*>(sphere_static_mesh_component_)->SetStaticMesh(agent_mesh);
-    // sphere_static_mesh_component_->SetMaterial(0, agent_mat);
+    UStaticMesh* sphere_mesh = LoadObject<UStaticMesh>(world, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+    UMaterial* sphere_material = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Materials/Agent_MAT.Agent_MAT'"));
+    ASSERT(sphere_mesh);
+    ASSERT(sphere_material);
+    
+    sphere_static_mesh_component_->SetStaticMesh(sphere_mesh);
+    sphere_static_mesh_component_->SetMaterial(0, sphere_material);
 
     // set physics state
     sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);

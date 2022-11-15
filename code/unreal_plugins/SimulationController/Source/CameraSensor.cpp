@@ -17,6 +17,7 @@
 #include <UObject/UObjectGlobals.h>
 
 #include "Assert/Assert.h"
+#include "Box.h"
 #include "Config.h"
 #include "Serialize.h"
 

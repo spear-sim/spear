@@ -6,8 +6,6 @@
 
 #include <Math/Color.h>
 
-#include "Box.h"
-
 class AActor;
 class UCameraComponent;
 class USceneCaptureComponent2D;
@@ -18,6 +16,8 @@ struct RenderPass
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
 };
+
+struct Box;
 
 class CameraSensor
 {
