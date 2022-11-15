@@ -1,9 +1,6 @@
 #include "SphereAgent.h"
 
 #include <algorithm>
-#include <map>
-#include <string>
-#include <vector>
 
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
@@ -16,8 +13,8 @@
 
 #include "Assert/Assert.h"
 #include "Box.h"
-#include "Config.h"
 #include "CameraSensor.h"
+#include "Config.h"
 #include "Serialize.h"
 #include "TickEvent.h"
 
@@ -323,7 +320,7 @@ bool SphereAgent::isReady() const
     return true;
 }
 
-void SphereAgent::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
+void SphereAgent::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
 {
     camera_actor_->SetActorLocation(
         sphere_actor_->GetActorLocation() +

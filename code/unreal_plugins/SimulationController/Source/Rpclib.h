@@ -18,30 +18,19 @@
 #undef check
 #endif
 
-// For the TEXT macro, we do something similar to the check macro. The TEXT macro
-// is defined by Unreal, but is also defined in 'winnt.h', which is included by
-// 'rpc/msgpack.hpp' on Windows.
-#pragma push_macro("TEXT")
-#ifdef TEXT
-#undef TEXT
+// When compiling on Windows, rpclib will include Windows headers, which will define
+// macros that conflict with Unreal Engine code. So we wrap our rpclib includes with
+// PreWindowsApi.h and PostWindowsApi.h.
+#ifdef _MSC_VER
+#include <Windows/PreWindowsApi.h>
 #endif
 
 #include <rpc/config.h>
 #include <rpc/msgpack.hpp>
 #include <rpc/server.h>
 
-#pragma pop_macro("TEXT")
-#pragma pop_macro("check")
-
-// On Windows, 'rpc/msgpack.hpp' includes 'winnt.h', which in turn defines
-// InterlockedCompareExchange as _InterlockedCompareExchange. This macro
-// definition creates a naming conflict with Unreal and causes the following
-// error:
-//
-// error C2039: '_InterlockedCompareExchange': is not a member of 'FWindowsPlatformAtomics'
-//
-// To avoid this issue, we undefine InterlockedCompareExchange before
-// including any Unreal header files.
-#ifdef InterlockedCompareExchange
-#undef InterlockedCompareExchange
+#ifdef _MSC_VER
+#include <Windows/PostWindowsApi.h>
 #endif
+
+#pragma pop_macro("check")

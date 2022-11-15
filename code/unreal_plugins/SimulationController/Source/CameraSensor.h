@@ -6,12 +6,12 @@
 
 #include <Math/Color.h>
 
-#include "Box.h"
-
 class AActor;
 class UCameraComponent;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
+
+struct Box;
 
 struct RenderPass
 {

@@ -7,7 +7,7 @@
 
 #include "OpenBotWheel.generated.h"
 
-// We need to wrap this entire class in BEGIN_IGNORE_COMPILER_WARNINGS/END_IGNORE_COMPILER_WARNINGS
+// We need to wrap this entire class with BEGIN_IGNORE_COMPILER_WARNINGS/END_IGNORE_COMPILER_WARNINGS
 // because it inherits from a deprecated class that interacts with Unreal's code generation functionality.
 BEGIN_IGNORE_COMPILER_WARNINGS
 UCLASS()
