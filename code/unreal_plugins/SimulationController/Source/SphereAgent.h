@@ -40,7 +40,7 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void tickEventHandler(float delta_time, enum ELevelTick level_tick);
+    void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
 
 private:
 
