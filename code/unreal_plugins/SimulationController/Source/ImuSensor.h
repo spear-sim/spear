@@ -1,9 +1,12 @@
 #pragma once
 
+#include <array>
 #include <map>
 #include <random>
 #include <string>
 #include <vector>
+
+#include <Engine/EngineBaseTypes.h>
 
 class AActor;
 class UBoxComponent;
