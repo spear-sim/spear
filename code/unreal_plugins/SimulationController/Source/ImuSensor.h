@@ -1,21 +1,24 @@
 #pragma once
 
 #include <array>
+
 #include <map>
-#include <random>
+#include <memory>
 #include <string>
 #include <vector>
+#include <random>
 
 #include <Engine/EngineBaseTypes.h>
+#include <Math/Vector.h>
 
 class AActor;
 class UBoxComponent;
 class UTickEvent;
 
-class ImuSensor {
+class ImuSensor 
+{
 public:
-    ImuSensor(UBoxComponent* primitive_component);
-    ImuSensor(AActor* actor, const FVector& accelerometer_noise_std, const FVector& gyroscope_noise_std, const FVector& gyroscope_bias, const FVector& position_offset = FVector::ZeroVector, const FRotator& orientation_offset = FRotator::ZeroRotator, bool debug = false);
+    ImuSensor(UBoxComponent* component);
     ~ImuSensor();
 
     // Updates the IMU's linear acceleration and angular rate measurements at once
@@ -28,17 +31,15 @@ public:
     FVector angular_rate_ = FVector::ZeroVector;
 
 private:
-    
     FVector updateLinearAcceleration(float delta_time);
-
     FVector updateAngularRate();
 
     AActor* new_object_parent_actor_ = nullptr;
 
-    UBoxComponent* primitive_component_ = nullptr;
+    UBoxComponent* component_ = nullptr;
 
-    UTickEvent* post_physics_pre_render_tick_event_ = nullptr;
-    FDelegateHandle post_physics_pre_render_tick_event_handle_;
+    UTickEvent* tick_event_ = nullptr;
+    FDelegateHandle tick_event_handle_;
 
     // Used to compute the acceleration
     std::array<FVector, 2> previous_locations_;

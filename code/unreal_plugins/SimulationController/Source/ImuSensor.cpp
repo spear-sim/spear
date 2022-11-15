@@ -1,13 +1,13 @@
 #include "ImuSensor.h"
 
 #include <map>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include <Components/BoxComponent.h>
 #include <DrawDebugHelpers.h>
+#include <Engine/Engine.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
@@ -18,19 +18,19 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-ImuSensor::ImuSensor(UBoxComponent* primitive_component)
+ImuSensor::ImuSensor(UBoxComponent* component)
 {
-    ASSERT(primitive_component);
-    primitive_component_ = primitive_component;
+    ASSERT(component);
+    component_ = component;
 
-    new_object_parent_actor_ = primitive_component->GetWorld()->SpawnActor<AActor>();
+    new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
 
-    post_physics_pre_render_tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
-    ASSERT(post_physics_pre_render_tick_event_);
-    post_physics_pre_render_tick_event_->RegisterComponent();
-    post_physics_pre_render_tick_event_->initialize(ETickingGroup::TG_PostPhysics);
-    post_physics_pre_render_tick_event_handle_ = post_physics_pre_render_tick_event_->delegate_.AddRaw(this, &ImuSensor::postPhysicsPreRenderTickEventHandler);
+    tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
+    ASSERT(tick_event_);
+    tick_event_->RegisterComponent();
+    tick_event_->initialize(ETickingGroup::TG_PostPhysics);
+    tick_event_handle_ = tick_event_->delegate_.AddRaw(this, &ImuSensor::postPhysicsPreRenderTickEventHandler);
 
     previous_locations_ = {FVector::ZeroVector, FVector::ZeroVector};
     previous_delta_time_ = std::numeric_limits<float>::max(); // Initialized to something hight to minimize the artifacts when the initial values are unknown
@@ -38,18 +38,18 @@ ImuSensor::ImuSensor(UBoxComponent* primitive_component)
 
 ImuSensor::~ImuSensor()
 {
-    ASSERT(post_physics_pre_render_tick_event_);
-    post_physics_pre_render_tick_event_->delegate_.Remove(post_physics_pre_render_tick_event_handle_);
-    post_physics_pre_render_tick_event_handle_.Reset();
-    post_physics_pre_render_tick_event_->DestroyComponent();
-    post_physics_pre_render_tick_event_ = nullptr;
+    ASSERT(tick_event_);
+    tick_event_->delegate_.Remove(tick_event_handle_);
+    tick_event_handle_.Reset();
+    tick_event_->DestroyComponent();
+    tick_event_ = nullptr;
 
     ASSERT(new_object_parent_actor_);
     new_object_parent_actor_->Destroy();
     new_object_parent_actor_ = nullptr;
 
-    ASSERT(primitive_component_);
-    primitive_component_ = nullptr;
+    ASSERT(component_);
+    component_ = nullptr;
 }
 
 FVector ImuSensor::updateLinearAcceleration(float delta_time)
@@ -71,7 +71,7 @@ FVector ImuSensor::updateLinearAcceleration(float delta_time)
     const FVector A = Y1 / (H1 * H2);
     const FVector B = Y2 / (H2 * (H1AndH2));
     const FVector C = Y0 / (H1 * (H1AndH2));
-    FVector linear_acceleration = -2.0f * (A - B - C) / primitive_component_->GetWorld()->GetWorldSettings()->WorldToMeters;
+    FVector linear_acceleration = -2.0f * (A - B - C) / component_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
     // Update the previous locations
     previous_locations_[0] = previous_locations_[1];
@@ -95,7 +95,7 @@ FVector ImuSensor::updateAngularRate()
 {
     const FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
     const FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
-    FVector angular_rate = actor_global_rotation.UnrotateVector(primitive_component_->GetPhysicsAngularVelocityInRadians());
+    FVector angular_rate = actor_global_rotation.UnrotateVector(component_->GetPhysicsAngularVelocityInRadians());
 
     // Compute the random component and bias of the gyroscope sensor measurement.
     // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
@@ -123,14 +123,14 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELev
         const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
 
         // Plot sensor frame
-        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
-        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
-        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
 
         // Plot acceleration vector
-        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
 
         // Plot angular rate vector
-        DrawDebugDirectionalArrow(primitive_component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(angular_rate_), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(angular_rate_), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
     }
 }

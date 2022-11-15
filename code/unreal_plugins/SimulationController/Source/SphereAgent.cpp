@@ -8,6 +8,7 @@
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
+#include <Engine/Engine.h>
 #include <Engine/World.h>
 #include <Engine/CollisionProfile.h>
 #include <EngineUtils.h>

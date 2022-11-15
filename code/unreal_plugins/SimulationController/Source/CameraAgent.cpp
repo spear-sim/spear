@@ -8,6 +8,7 @@
 #include <AI/NavDataGenerator.h>
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
+#include <Engine/Engine.h>
 #include <Engine/SpotLight.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>

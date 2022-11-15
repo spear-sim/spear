@@ -1,12 +1,13 @@
 #pragma once
 
-#include <array>
 #include <map>
-#include <random>
+#include <memory>
 #include <string>
 #include <vector>
+#include <random>
 
 #include <Engine/EngineBaseTypes.h>
+#include <Math/Vector.h>
 
 class AActor;
 class UBoxComponent;
@@ -15,7 +16,7 @@ class UTickEvent;
 class SonarSensor 
 {
 public:
-    SonarSensor(UBoxComponent* primitive_component);
+    SonarSensor(UBoxComponent* component);
     ~SonarSensor();
 
     // Updates Sonar measurements by shoting n_rays rays, randomly distributed in a pyramid parametrized by (range_min, range_max, horizontal_fov, vertical_fov), and return the closest measured distance. 
@@ -25,13 +26,12 @@ public:
     float range_ = 0.0f;
 
 private:
-
     AActor* new_object_parent_actor_ = nullptr;
+    UBoxComponent* component_ = nullptr;
 
-    UBoxComponent* primitive_component_ = nullptr;
+    UTickEvent* tick_event_ = nullptr;
+    FDelegateHandle tick_event_handle_;
 
-    UTickEvent* post_physics_pre_render_tick_event_ = nullptr;
-    FDelegateHandle post_physics_pre_render_tick_event_handle_;
-
+    // Random number generator
     std::minstd_rand random_gen_;
 };
