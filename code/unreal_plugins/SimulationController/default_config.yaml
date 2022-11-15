@@ -160,7 +160,7 @@ SIMULATION_CONTROLLER:
   SIMPLE_SIM_AGENT_CONTROLLER:    
     OBSERVATION_MODE: ""
     AGENT_ACTOR_NAME: ""
-    AGENT_ACTOR_MESH: "sphere" # "sphere" or "openBot"
+    AGENT_ACTOR_TYPE: "sphere" # "sphere" or "openBot"
     GOAL_ACTOR_NAME: ""
     WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
     AGENT_READY_VELOCITY_THRESHOLD: 0.0

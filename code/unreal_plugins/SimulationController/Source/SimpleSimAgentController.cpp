@@ -44,7 +44,7 @@ SimpleSimAgentController::SimpleSimAgentController(UWorld* world)
     spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_ACTOR_NAME" }).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_ACTOR_MESH" }) == "sphere") {
+    if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_ACTOR_TYPE" }) == "sphere") {
         // load agent mesh and agent material
         agent_actor_ = world_->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(),
             FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_HEIGHT" })),
@@ -63,8 +63,17 @@ SimpleSimAgentController::SimpleSimAgentController(UWorld* world)
 
         dynamic_cast<UStaticMeshComponent*>(agent_static_mesh_component_)->SetStaticMesh(agent_mesh);
         agent_static_mesh_component_->SetMaterial(0, agent_mat);
+
+        // set physics state
+        agent_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
+        agent_static_mesh_component_->SetSimulatePhysics(true);
+        agent_static_mesh_component_->SetAngularDamping(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "ANGULAR_DAMPING" }));
+        agent_static_mesh_component_->SetLinearDamping(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "LINEAR_DAMPING" }));
+        agent_static_mesh_component_->BodyInstance.MaxAngularVelocity = FMath::RadiansToDegrees(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "MAX_ANGULAR_VELOCITY" }));
+        agent_static_mesh_component_->BodyInstance.MassScale = FMath::RadiansToDegrees(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "MASS_SCALE" }));
+        agent_static_mesh_component_->SetNotifyRigidBodyCollision(true);
     }
-    else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_ACTOR_MESH" }) == "openBot") {
+    else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "AGENT_ACTOR_TYPE" }) == "openBot") {
         agent_actor_ = world_->SpawnActor<AOpenBotPawn>(AOpenBotPawn::StaticClass(),
             FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "MIXED_MODE", "OBSERVATION_CAMERA_ACTOR_HEIGHT" })),
             FRotator(0, 0, 0), spawn_params);
@@ -97,15 +106,6 @@ SimpleSimAgentController::SimpleSimAgentController(UWorld* world)
 
     goal_static_mesh_component_->SetStaticMesh(goal_mesh);
     goal_static_mesh_component_->SetMaterial(0, goal_mat);
-
-    // set physics state
-    agent_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
-    agent_static_mesh_component_->SetSimulatePhysics(true);
-    agent_static_mesh_component_->SetAngularDamping(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "ANGULAR_DAMPING" }));
-    agent_static_mesh_component_->SetLinearDamping(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "LINEAR_DAMPING" }));
-    agent_static_mesh_component_->BodyInstance.MaxAngularVelocity = FMath::RadiansToDegrees(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "MAX_ANGULAR_VELOCITY" }));
-    agent_static_mesh_component_->BodyInstance.MassScale = FMath::RadiansToDegrees(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "SPHERE", "MASS_SCALE" }));
-    agent_static_mesh_component_->SetNotifyRigidBodyCollision(true);
 
     // setup observation camera
     if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "OBSERVATION_MODE" }) == "mixed") {
@@ -259,7 +259,17 @@ void SimpleSimAgentController::applyAction(const std::map<std::string, std::vect
         ASSERT(rotation.Yaw   >= -360.0 && rotation.Yaw   <= 360.0, "%f", rotation.Yaw);
         ASSERT(rotation.Roll  >= -360.0 && rotation.Roll  <= 360.0, "%f", rotation.Roll);
 
-        camera_actor_->SetActorRotation(rotation);
+        if (dynamic_cast<AOpenBotPawn*>(camera_actor_)) {
+            //const FVector agent_location{ action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2) };
+            //const FRotator agent_rotation{ FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2)) };
+            //
+            //constexpr bool sweep = false;
+            //constexpr FHitResult* hit_result_info = nullptr;
+            //open_bot_pawn_->SetActorLocationAndRotation(agent_location, FQuat(agent_rotation), sweep, hit_result_info, ETeleportType::TeleportPhysics);
+        }
+        else {
+            camera_actor_->SetActorRotation(rotation);
+        }
     } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "OBSERVATION_MODE"}) == "physical") {
         FVector force = FVector(action.at("apply_force").at(0), action.at("apply_force").at(1), 0.0f) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMPLE_SIM_AGENT_CONTROLLER", "PHYSICAL_MODE", "ACTION_APPLY_FORCE_SCALE"});
 
