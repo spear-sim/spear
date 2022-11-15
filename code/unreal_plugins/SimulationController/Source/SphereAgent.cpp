@@ -40,13 +40,13 @@ SphereAgent::SphereAgent(UWorld* world)
     sphere_static_mesh_component_ = dynamic_cast<AStaticMeshActor*>(sphere_actor_)->GetStaticMeshComponent();
     ASSERT(sphere_static_mesh_component_);
 
-    UStaticMesh* agent_mesh = LoadObject<UStaticMesh>(world, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
-    UMaterial* agent_mat = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Materials/Agent_MAT.Agent_MAT'"));
-    ASSERT(agent_mesh);
-    ASSERT(agent_mat);
+    // UStaticMesh* agent_mesh = LoadObject<UStaticMesh>(world, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+    // UMaterial* agent_mat = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Materials/Agent_MAT.Agent_MAT'"));
+    // ASSERT(agent_mesh);
+    // ASSERT(agent_mat);
 
-    dynamic_cast<UStaticMeshComponent*>(sphere_static_mesh_component_)->SetStaticMesh(agent_mesh);
-    sphere_static_mesh_component_->SetMaterial(0, agent_mat);
+    // dynamic_cast<UStaticMeshComponent*>(sphere_static_mesh_component_)->SetStaticMesh(agent_mesh);
+    // sphere_static_mesh_component_->SetMaterial(0, agent_mat);
 
     // set physics state
     sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
@@ -64,8 +64,6 @@ SphereAgent::SphereAgent(UWorld* world)
     // observation["camera"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
-
-        spawn_params;
         spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "CAMERA_ACTOR_NAME"}).c_str());
         spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         camera_actor_ = world->SpawnActor<ACameraActor>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);

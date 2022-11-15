@@ -6,13 +6,9 @@ INTERIORSIM:
 SIMULATION_CONTROLLER:
   TASK: "PointGoalNavigationTask"
   AGENT: "SimpleSimAgentController"
-  # LEVEL_ID: 'PointGoalNavMap'
-  # LEVEL_PATH: /Game
-  # LEVEL_PREFIX: ''
-  
-  SIMPLE_SIM_AGENT:
-    ACTOR_NAME: "Sphere" # TODO: spawn this actor instead of finding it within the scene
-    ACTOR_TYPE: "openBot" # "sphere" or "openBot"
+
+  SPHERE_AGENT:
+    SPHERE_ACTOR_NAME: "Sphere"
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
     OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
     STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
