@@ -1,4 +1,0 @@
-numpy
-gym
-psutil
-yacs==0.1.8
