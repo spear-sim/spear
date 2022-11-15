@@ -24,7 +24,6 @@
 #include "PointGoalNavTask.h"
 #include "Rpclib.h"
 #include "RpcServer.h"
-#include "SimpleSimAgentController.h"
 #include "SphereAgent.h"
 #include "Task.h"
 #include "Visualizer.h"
@@ -130,8 +129,6 @@ void SimulationController::worldBeginPlayEventHandler()
         agent_ = std::make_unique<CameraAgent>(world_);
     } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT" }) == "OpenBotAgent") {
         agent_ = std::make_unique<OpenBotAgent>(world_);
-    } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT_CONTROLLER_NAME" }) == "SimpleSimAgentController") {
-        agent_controller_ = std::make_unique<SimpleSimAgentController>(world_);
     } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "AGENT" }) == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
     } else {
