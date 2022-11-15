@@ -82,7 +82,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         auto level_name = Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "LEVEL_NAME" });
 
         // If the current world is not the desired one, open the desired one
-        if (world_path_name != "" && TCHAR_TO_UTF8(*(world->GetPathName())) != world_path_name) {
+        if (world_path_name != "" && world_path_name != TCHAR_TO_UTF8(*(world->GetPathName()))) {
 
             // Assert that we haven't already tried to open the level, because that means we failed
             ASSERT(!has_open_level_executed_);

@@ -37,7 +37,7 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         RenderPass render_pass;
 
         // create TextureRenderTarget2D
-        render_pass.texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), render_pass_name.c_str()));
+        render_pass.texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), UTF8_TO_TCHAR(render_pass_name.c_str())));
         ASSERT(render_pass.texture_render_target_);
 
         // TODO: allow returning floating point data instead of hardcoding to PF_B8G8R8A8
@@ -52,7 +52,7 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.texture_render_target_->UpdateResourceImmediate(clear_render_target);
 
         // create SceneCaptureComponent2D
-        render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), render_pass_name.c_str()));
+        render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), UTF8_TO_TCHAR(render_pass_name.c_str())));
         ASSERT(render_pass.scene_capture_component_);
 
         render_pass.scene_capture_component_->TextureTarget = render_pass.texture_render_target_;
@@ -61,7 +61,7 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.scene_capture_component_->RegisterComponent();
 
         if (render_pass_name != "final_color") {
-            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), MATERIALS_PATH.c_str(), render_pass_name.c_str(), render_pass_name.c_str()));
+            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), UTF8_TO_TCHAR(MATERIALS_PATH.c_str()), UTF8_TO_TCHAR(render_pass_name.c_str()), UTF8_TO_TCHAR(render_pass_name.c_str())));
             ASSERT(material);
             render_pass.scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, render_pass.scene_capture_component_), 1.0f);
             render_pass.scene_capture_component_->ShowFlags.SetPostProcessMaterial(true);
