@@ -1,8 +1,7 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "C:/github/spear/code/unreal_projects/RobotProject/Standalone-Shipping/WindowsNoEditor/RobotProject/Binaries/Win64/RobotProject-Win64-Shipping-Cmd.exe"
-  TEMP_DIR: "C:/github/spear/code/unreal_projects/RobotProject/Temp"
-
+  STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject/Binaries/Win64/RobotProject-Cmd.exe"
+  TEMP_DIR: "C:/Users/ADAS/repos/interiorsim/examples/generate_image_dataset"
   CUSTOM_COMMAND_LINE_ARGUMENTS: ["-dx12"]
   RENDER_OFFSCREEN: True
 
@@ -21,10 +20,6 @@ SIMULATION_CONTROLLER:
       IMAGE_HEIGHT: 480
       IMAGE_WIDTH: 852
       FOV: 90.0
-      FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_UP: True
-      FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP: 9999.0
-      FINAL_COLOR_AUTO_EXPOSURE_OVERRIDE_SPEED_DOWN: True
-      FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN: 9999.0
     NAVMESH:
       AGENT_RADIUS: 5.0
       AGENT_HEIGHT: 180.0
