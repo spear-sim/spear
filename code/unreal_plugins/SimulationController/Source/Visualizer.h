@@ -6,12 +6,12 @@ class UWorld;
 class Visualizer
 {
 public:
-    Visualizer() = default;
-    ~Visualizer() = default;
+    Visualizer(UWorld* world);
+    ~Visualizer();
 
     void findObjectReferences(UWorld* world);
     void cleanUpObjectReferences();
 
 private:
-    AActor* camera_actor_ = nullptr;
+    AActor* actor_ = nullptr;
 };

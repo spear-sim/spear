@@ -1,5 +1,8 @@
 #pragma once
 
+// Borrowed and lightly modified the following code from:
+// https://github.com/gpakosz/PPK_ASSERT
+
 #ifdef PPK_ASSERT_ENABLED
 #undef PPK_ASSERT_ENABLED
 #endif
@@ -15,10 +18,7 @@
 #define PPK_ASSERT_ENABLED 1
 #define PPK_ASSERT_DEFAULT_LEVEL Error
 
-// Borrowed and modified the following code from
-// https://github.com/gpakosz/PPK_ASSERT. Modification: Added '
-// prefix to the classes, structs and functions that are used outside this
-// module.
+
 
 // see README.md for usage instructions.
 // (‑●‑●)> released under the WTFPL v2 license, by Gregory Pakosz (@gpakosz)
@@ -485,12 +485,12 @@
 
     PPK_ASSERT_FUNCSPEC
     AssertAction::AssertAction COREUTILS_API PPK_ASSERT_CALL handleAssert(const char* file,
-                                                            int line,
-                                                            const char* function,
-                                                            const char* expression,
-                                                            int level,
-                                                            bool* ignoreLine,
-                                                            const char* message, ...) PPK_ASSERT_HANDLE_ASSERT_FORMAT;
+                                                                          int line,
+                                                                          const char* function,
+                                                                          const char* expression,
+                                                                          int level,
+                                                                          bool* ignoreLine,
+                                                                          const char* message, ...) PPK_ASSERT_HANDLE_ASSERT_FORMAT;
 
     PPK_ASSERT_FUNCSPEC
     AssertHandler PPK_ASSERT_CALL setAssertHandler(AssertHandler handler);
@@ -630,9 +630,8 @@
   #pragma GCC diagnostic pop
 #endif
 
-// End borrowed code from https://github.com/gpakosz/PPK_ASSERT.
 
-// Expose PPK_ASSERT macros as ASSERT macros
+
 #define ASSERT PPK_ASSERT
 #define ASSERT_WARNING PPK_ASSERT_WARNING
 #define ASSERT_DEBUG PPK_ASSERT_DEBUG

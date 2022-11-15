@@ -5,24 +5,27 @@
 #include <string>
 #include <vector>
 
-#include "AgentController.h"
+#include <Engine/EngineBaseTypes.h>
+
+#include "Agent.h"
 
 class AActor;
-class ARecastNavMesh;
-class CameraSensor;
-class UNavigationSystemV1;
+class ACameraActor;
+class UStaticMeshComponent;
+class UTickEvent;
 class UWorld;
+
+class CameraSensor;
 
 struct Box;
 
-class CameraAgentController : public AgentController
+class SphereAgent : public Agent
 {
 public:
 
-    // This UWorld pointer passed here points to the only running game world.
-    CameraAgentController(UWorld* world);
-    ~CameraAgentController();
-    
+    SphereAgent(UWorld* world);
+    ~SphereAgent();
+ 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
 
@@ -36,14 +39,20 @@ public:
 
     void reset() override;
     bool isReady() const override;
-    
+
+    void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
+
 private:
 
-    void buildNavMesh(UNavigationSystemV1* nav_sys);
+    AActor* sphere_actor_ = nullptr;
+    AActor* goal_actor_ = nullptr;
+    AActor* new_object_parent_actor_ = nullptr;
+    ACameraActor* camera_actor_ = nullptr;
 
-    std::map<std::string, std::vector<float>> action_;
-    AActor* camera_actor_ = nullptr;
+    UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
+
+    UTickEvent* tick_event_ = nullptr;
+    FDelegateHandle tick_event_handle_;
+
     std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
-    ARecastNavMesh* nav_mesh_ = nullptr;
-    UWorld* world_ = nullptr;    
 };

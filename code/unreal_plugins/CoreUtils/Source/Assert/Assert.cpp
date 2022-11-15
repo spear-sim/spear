@@ -1,8 +1,5 @@
-// Borrowed and modified the following code from
-// https://github.com/gpakosz/PPK_ASSERT.
-
-// see README.md for usage instructions.
-// (‑●‑●)> released under the WTFPL v2 license, by Gregory Pakosz (@gpakosz)
+// Borrowed and lightly modified the following code from:
+// https://github.com/gpakosz/PPK_ASSERT
 
 #include "Assert/Assert.h"
 
@@ -12,13 +9,11 @@
 #define WIN32_LEAN_AND_MEAN
 #define _CRT_SECURE_NO_WARNINGS
 
-// Both 'winnt.h' and Unreal have different definitions for TEXT macro.
-// This creates conflict below when we include 'windows.h'. To avoid this
-// conflict, we need to undefine TEXT macro before we include 'windows.h',
-// and then redefine TEXT to have the same definition as Unreal defines
-// it. Hence, before we undefine TEXT, we copy its definition so that it
-// can be used later to redefine TEXT. We use push_macro() to copy and
-// store TEXT's definition in a stack.
+// Both 'winnt.h' and Unreal have different definitions for the TEXT macro.
+// This creates a conflict below when we include 'windows.h'. To avoid this
+// conflict, we need to undefine the TEXT macro before we include 'windows.h',
+// and then redefine TEXT to have the same definition as it had before including
+// 'windows.h'. We use push_macro(...) and pop_macro(...) for this purpose.
 #pragma push_macro("TEXT")
 #ifdef TEXT
 #undef TEXT
@@ -28,6 +23,11 @@
 
 #pragma pop_macro("TEXT")
 #endif
+
+
+
+// see README.md for usage instructions.
+// (‑●‑●)> released under the WTFPL v2 license, by Gregory Pakosz (@gpakosz)
 
 #include <cstdio>  // fprintf() and vsnprintf()
 #include <cstring>
@@ -517,5 +517,3 @@ namespace implementation {
 } // namespace implementation
 } // namespace assert
 } // namespace ppk
-
-// End borrowed code from https://github.com/gpakosz/PPK_ASSERT.
