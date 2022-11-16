@@ -25,13 +25,13 @@
     #endif
 #endif
 
-// Some operating-system–specific header files define nil as nullptr or NULL. rpclib depends
-// on the msgpack-c library, and msgpack-c has a different definition of nil. This creates
-// naming conflicts when we include 'rpc/msgpack.hpp'. However, if MSGPACK_DISABLE_LEGACY_NIL
-// is defined, then msgpack-c does not define nil, and we avoid the conflicts.
+// Some macOS-specifc header files define nil as nullptr or NULL. But rpclib depends on the
+// msgpack-c library, which has a different definition of nil. This creates naming conflicts
+// when we include 'rpc/msgpack.hpp'. However, if MSGPACK_DISABLE_LEGACY_NIL is defined, then
+// msgpack-c does not define nil, and we avoid the conflicts.
 #define MSGPACK_DISABLE_LEGACY_NIL
 
-// Include rpclib headers
+// Include rpclib headers.
 #include <rpc/config.h>
 #include <rpc/msgpack.hpp>
 #include <rpc/server.h>

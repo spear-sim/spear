@@ -21,6 +21,7 @@
     #endif
 #endif
 
+// Include asio headers.
 BEGIN_IGNORE_COMPILER_WARNINGS
 #include <asio.hpp>
 END_IGNORE_COMPILER_WARNINGS

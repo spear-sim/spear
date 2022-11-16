@@ -1,4 +1,4 @@
-// #ifdef _MSC_VER
+#ifdef _MSC_VER
     #if PLATFORM_64BITS
         #undef INT
         #undef UINT
@@ -39,4 +39,4 @@
         #undef InterlockedXor
         #undef InterlockedCompareExchangePointer
     #endif
-// #endif
+#endif
