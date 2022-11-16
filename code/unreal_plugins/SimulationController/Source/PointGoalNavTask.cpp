@@ -32,6 +32,9 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
 
     goal_mesh_component->SetStaticMesh(goal_mesh);
     goal_mesh_component->SetMaterial(0, goal_material);
+    goal_actor_->SetActorScale3D(FVector(Config::getValue<float>({ "SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_SCALE" }),
+                                         Config::getValue<float>({ "SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_SCALE" }),
+                                         Config::getValue<float>({ "SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_SCALE" })));
 
     new_object_parent_actor_ = world->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);

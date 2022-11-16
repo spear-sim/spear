@@ -69,19 +69,11 @@ class Env(gym.Env):
         self._task_step_info_space = self._get_task_step_info_space()
         self._agent_step_info_space = self._get_agent_step_info_space()
 
-    def step(self, action, ticks = 1):
+    def step(self, action):
         
-        for x in range(ticks):
-            self._begin_tick()
-            if x == 0:
-                self._apply_action(action)
-
-            self._tick()
-            if x == (ticks - 1):
-                break
-
-            self._end_tick()
-        
+        self._begin_tick()
+        self._apply_action(action)
+        self._tick()
         obs = self._get_observation()
         reward = self._get_reward()
         is_done = self._is_episode_done()

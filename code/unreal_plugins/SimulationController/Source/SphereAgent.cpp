@@ -49,6 +49,9 @@ SphereAgent::SphereAgent(UWorld* world)
     
     sphere_static_mesh_component_->SetStaticMesh(sphere_mesh);
     sphere_static_mesh_component_->SetMaterial(0, sphere_material);
+    sphere_actor_->SetActorScale3D(FVector(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_SCALE" }),
+                                           Config::getValue<float>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_SCALE" }),
+                                           Config::getValue<float>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_SCALE" })));
 
     // set physics state
     sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
