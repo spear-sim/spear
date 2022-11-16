@@ -59,6 +59,7 @@ class Env(gym.Env):
 
         self._request_launch_unreal_instance()
         self._connect_to_unreal_instance()
+
         self._initialize_unreal_instance()
 
         self.action_space = self._get_action_space()
@@ -66,13 +67,21 @@ class Env(gym.Env):
 
         self._byte_order = self._get_byte_order()
         self._task_step_info_space = self._get_task_step_info_space()
-        self._agent_controller_step_info_space = self._get_agent_controller_step_info_space()
+        self._agent_step_info_space = self._get_agent_step_info_space()
 
-    def step(self, action):
+    def step(self, action, ticks = 1):
         
-        self._begin_tick()
-        self._apply_action(action)
-        self._tick()
+        for x in range(ticks):
+            self._begin_tick()
+            if x == 0:
+                self._apply_action(action)
+
+            self._tick()
+            if x == (ticks - 1):
+                break
+
+            self._end_tick()
+        
         obs = self._get_observation()
         reward = self._get_reward()
         is_done = self._is_episode_done()
@@ -136,17 +145,17 @@ class Env(gym.Env):
 
     def _request_launch_unreal_instance(self):
 
-        if self._config.INTERIORSIM.LAUNCH_MODE == "running_instance":
+        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
             return
 
         launch_params = []
 
         # Get launch executable from config
-        if self._config.INTERIORSIM.LAUNCH_MODE == "uproject":
-            launch_executable = self._config.INTERIORSIM.UNREAL_EDITOR_EXECUTABLE
-            launch_params.append(self._config.INTERIORSIM.UPROJECT) # prepend uproject file to launch params
-        elif self._config.INTERIORSIM.LAUNCH_MODE == "standalone_executable":
-            launch_executable = self._config.INTERIORSIM.STANDALONE_EXECUTABLE
+        if self._config.SPEAR.LAUNCH_MODE == "uproject":
+            launch_executable = self._config.SPEAR.UNREAL_EDITOR_EXECUTABLE
+            launch_params.append(self._config.SPEAR.UPROJECT) # prepend uproject file to launch params
+        elif self._config.SPEAR.LAUNCH_MODE == "standalone_executable":
+            launch_executable = self._config.SPEAR.STANDALONE_EXECUTABLE
         else:
             assert False
 
@@ -155,24 +164,25 @@ class Env(gym.Env):
         launch_params.append("-windowed")
         launch_params.append("-novsync")
         launch_params.append("-NoSound")
-        launch_params.append("-resx={}".format(self._config.INTERIORSIM.WINDOW_RESOLUTION_X))
-        launch_params.append("-resy={}".format(self._config.INTERIORSIM.WINDOW_RESOLUTION_Y))
-        launch_params.append("-graphicsadapter={}".format(self._config.INTERIORSIM.GPU_ID))
+        launch_params.append("-NoTextureStreaming")
+        launch_params.append("-resx={}".format(self._config.SPEAR.WINDOW_RESOLUTION_X))
+        launch_params.append("-resy={}".format(self._config.SPEAR.WINDOW_RESOLUTION_Y))
+        launch_params.append("-graphicsadapter={}".format(self._config.SPEAR.GPU_ID))
 
-        if self._config.INTERIORSIM.RENDER_OFFSCREEN:
+        if self._config.SPEAR.RENDER_OFFSCREEN:
             launch_params.append("-RenderOffscreen")
 
-        if len(self._config.INTERIORSIM.UNREAL_INTERNAL_LOG_FILE) > 0:
-            launch_params.append("-log={}".format(self._config.INTERIORSIM.UNREAL_INTERNAL_LOG_FILE))
+        if len(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE) > 0:
+            launch_params.append("-log={}".format(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
        
         # Dump updated config params into a new yaml file
-        temp_config_file = os.path.join(os.path.abspath(self._config.INTERIORSIM.TEMP_DIR), "config.yaml")
+        temp_config_file = os.path.join(os.path.abspath(self._config.SPEAR.TEMP_DIR), "config.yaml")
 
         # Unreal Engine server needs to read values from this config file
-        launch_params.append("-configfile={}".format(temp_config_file))
+        launch_params.append("-config_file={}".format(temp_config_file))
 
         # Append any additional command-line arguments
-        for a in self._config.INTERIORSIM.CUSTOM_COMMAND_LINE_ARGUMENTS:
+        for a in self._config.SPEAR.CUSTOM_COMMAND_LINE_ARGUMENTS:
             launch_params.append("{}".format(a))
 
         # On Windows, we need to pass in extra command-line parameters so that calls to UE_Log and writes to std::cout are visible on the command-line.
@@ -181,15 +191,15 @@ class Env(gym.Env):
             launch_params.append("-FullStdOutLogOutput")
 
         # Provides additional control over which Vulkan devices are recognized by Unreal
-        if len(self._config.INTERIORSIM.VULKAN_DEVICE_FILES) > 0:
-            print("Setting VK_ICD_FILENAMES environment variable: " + self._config.INTERIORSIM.VULKAN_DEVICE_FILES)
-            os.environ["VK_ICD_FILENAMES"] = self._config.INTERIORSIM.VULKAN_DEVICE_FILES
+        if len(self._config.SPEAR.VULKAN_DEVICE_FILES) > 0:
+            print("Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.VULKAN_DEVICE_FILES)
+            os.environ["VK_ICD_FILENAMES"] = self._config.SPEAR.VULKAN_DEVICE_FILES
 
         print("Writing temp config file: " + temp_config_file)
         print()
 
-        if not os.path.exists(os.path.abspath(self._config.INTERIORSIM.TEMP_DIR)):
-            os.makedirs(os.path.abspath(self._config.INTERIORSIM.TEMP_DIR))
+        if not os.path.exists(os.path.abspath(self._config.SPEAR.TEMP_DIR)):
+            os.makedirs(os.path.abspath(self._config.SPEAR.TEMP_DIR))
         with open(temp_config_file, "w") as output:
             self._config.dump(stream=output, default_flow_style=False)
 
@@ -241,13 +251,13 @@ class Env(gym.Env):
         print()
         
         # If we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
-        if self._config.INTERIORSIM.LAUNCH_MODE == "running_instance":
+        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
             connected = False
             try:
                 self._client = msgpackrpc.Client(
                     msgpackrpc.Address(self._config.SIMULATION_CONTROLLER.IP, self._config.SIMULATION_CONTROLLER.PORT), 
-                    timeout=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
-                    reconnect_limit=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
+                    timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
+                    reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                 self._ping()
                 connected = True
             except:
@@ -260,7 +270,7 @@ class Env(gym.Env):
             connected = False
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
-            while not connected and elapsed_time_seconds < self._config.INTERIORSIM.RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS:
+            while not connected and elapsed_time_seconds < self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS:
                 # See https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
                 status = self._process.status()
                 if status not in ["running", "sleeping", "disk-sleep"]:
@@ -272,23 +282,27 @@ class Env(gym.Env):
                 try:
                     self._client = msgpackrpc.Client(
                         msgpackrpc.Address(self._config.SIMULATION_CONTROLLER.IP, self._config.SIMULATION_CONTROLLER.PORT), 
-                        timeout=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
-                        reconnect_limit=self._config.INTERIORSIM.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
+                        timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
+                        reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                     self._ping()
                     connected = True
                 except:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                     # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
                     self._close_client_server_connection()
-                time.sleep(self._config.INTERIORSIM.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
+                time.sleep(self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
 
         if not connected:
-            if self._config.INTERIORSIM.LAUNCH_MODE != "running_instance":
+            if self._config.SPEAR.LAUNCH_MODE != "running_instance":
                 print("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
                 self._force_kill_unreal_instance()
                 self._close_client_server_connection()
             assert False
+
+        if self._config.SPEAR.LAUNCH_MODE != "running_instance":
+            time.sleep(self._config.SPEAR.RPC_CLIENT_AFTER_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
+
 
     def _initialize_unreal_instance(self):
         # do one tick cyle here to prep Unreal Engine so that we can receive valid observations
@@ -381,8 +395,8 @@ class Env(gym.Env):
         space = self._client.call("getTaskStepInfoSpace")
         return self._get_dict_space(space, Box, Dict)
 
-    def _get_agent_controller_step_info_space(self):
-        space = self._client.call("getAgentControllerStepInfoSpace")
+    def _get_agent_step_info_space(self):
+        space = self._client.call("getAgentStepInfoSpace")
         return self._get_dict_space(space, Box, Dict)
 
     def _apply_action(self, action):
@@ -412,14 +426,14 @@ class Env(gym.Env):
 
     def _get_step_info(self):
         task_step_info = self._client.call("getTaskStepInfo")
-        agent_controller_step_info = self._client.call("getAgentControllerStepInfo")
+        agent_step_info = self._client.call("getAgentStepInfo")
         return { "task_step_info": self._deserialize(task_step_info, self._task_step_info_space),
-                 "agent_controller_step_info": self._deserialize(agent_controller_step_info, self._agent_controller_step_info_space) }
+                 "agent_step_info": self._deserialize(agent_step_info, self._agent_step_info_space) }
 
     def _reset(self):
-        # reset the Task first in case it needs to set the position of Actors, then reset AgentController so it can refine the position of actors
+        # reset the Task first in case it needs to set the position of Actors, then reset Agent so it can refine the position of actors
         self._client.call("resetTask")
-        self._client.call("resetAgentController")
+        self._client.call("resetAgent")
 
     def _is_ready(self):
-        return self._client.call("isTaskReady") and self._client.call("isAgentControllerReady")
+        return self._client.call("isTaskReady") and self._client.call("isAgentReady")

@@ -9,61 +9,62 @@
 
 #include "Assert/Assert.h"
 
-// range for default physical material id
-const static int PHYSICAL_MATERIAL_ID_DEFAULT_START = 1000;
-const static int PHYSICAL_MATERIAL_ID_DEFAULT_END = 1081;
-// starting point for dynamically created physical material id
-const static int PHYSICAL_MATERIAL_ID_DYNAMIC_START = 2000;
+const int PHYSICAL_MATERIAL_ID_DEFAULT_START = 1000;
+const int PHYSICAL_MATERIAL_ID_DEFAULT_END   = 1081;
 
-std::map<int, UPhysicalMaterial*> PhysicsManager::physical_material_map_;
-int PhysicsManager::physical_material_id_counter_;
+const int PHYSICAL_MATERIAL_ID_DYNAMIC_START = 2000;
+
+std::map<int, UPhysicalMaterial*> physical_materials_ = {};
+int current_physical_material_id_ = -1;
 
 void PhysicsManager::initialize()
 {
-    for (int physical_material_id = PHYSICAL_MATERIAL_ID_DEFAULT_START; physical_material_id < PHYSICAL_MATERIAL_ID_DEFAULT_END; physical_material_id++){
-        std::ostringstream oss;
-        oss << "/Game/Scene/PhyMaterials/PM_" << physical_material_id << ".PM_" << physical_material_id;
-        UPhysicalMaterial* physical_material = LoadObject<UPhysicalMaterial>(nullptr, UTF8_TO_TCHAR(oss.str().c_str()));
-
+    for (int physical_material_id = PHYSICAL_MATERIAL_ID_DEFAULT_START; physical_material_id < PHYSICAL_MATERIAL_ID_DEFAULT_END; physical_material_id++) {
+        auto physical_material = LoadObject<UPhysicalMaterial>(nullptr, *FString::Printf(TEXT("/Game/Scene/PhyMaterials/PM_%d.PM_%d"), physical_material_id, physical_material_id));
         ASSERT(physical_material);
-
-        physical_material_map_[physical_material_id] = physical_material;
+        physical_materials_[physical_material_id] = physical_material;
     }
-    physical_material_id_counter_ = PHYSICAL_MATERIAL_ID_DYNAMIC_START;
+    current_physical_material_id_ = PHYSICAL_MATERIAL_ID_DYNAMIC_START;
 }
 
 void PhysicsManager::terminate()
 {
-    // clear pointer
-    physical_material_map_.clear();
+    physical_materials_.clear();
 }
 
 void PhysicsManager::setActorPhysicalMaterials(const std::vector<AActor*>& actors, int physical_material_id)
 {
     // find physical material uasset
-    UPhysicalMaterial* physical_material = physical_material_map_.at(physical_material_id);
-    // check if physical material is valid
+    UPhysicalMaterial* physical_material = physical_materials_.at(physical_material_id);
     ASSERT(physical_material);
 
-    for (auto& actor : actors){
+    // for all actors...
+    for (auto& actor : actors) {
         TArray<UStaticMeshComponent*> components;
         actor->GetComponents<UStaticMeshComponent>(components);
-        for (auto& component : components){
+
+        // for all components...
+        for (auto& component : components) {
             TArray<UMaterialInterface*> materials;
             component->GetUsedMaterials(materials);
-            for (int32 i = 0; i < materials.Num(); i++){
+
+            // for all materials...
+            for (int i = 0; i < materials.Num(); i++) {
                 auto& material = materials[i];
-                if (!material->IsA(UMaterialInstanceDynamic::StaticClass())){
-                    UMaterialInstanceDynamic* dynamic_material = UMaterialInstanceDynamic::Create(material, component, FName(material->GetName() + "_Dynamic"));
-                    dynamic_material->PhysMaterial = physical_material;
-                    // update material
-                    component->SetMaterial(i, dynamic_material);
-                }else{
-                    UMaterialInstanceDynamic* dynamic_material = Cast<UMaterialInstanceDynamic>(material);
-                    dynamic_material->PhysMaterial = physical_material;
-                    // update physical material if material is not changed
+
+                // if material is not a UMaterialInstanceDynamic, then create a new UMaterialInstanceDynamic with the desired properties and assign to the current material slot
+                if (!material->IsA(UMaterialInstanceDynamic::StaticClass())) {
+                    UMaterialInstanceDynamic* material_instance_dynamic = UMaterialInstanceDynamic::Create(material, component, FName(material->GetName() + "_Dynamic"));
+                    material_instance_dynamic->PhysMaterial = physical_material;
+                    component->SetMaterial(i, material_instance_dynamic);
+
+                // otherwise update the material with the desired properties
+                } else {
+                    auto material_instance_dynamic = dynamic_cast<UMaterialInstanceDynamic*>(material);
+                    material_instance_dynamic->PhysMaterial = physical_material;
+
                     FBodyInstance* body_instance = component->GetBodyInstance();
-                    if (body_instance && body_instance->IsValidBodyInstance()){
+                    if (body_instance && body_instance->IsValidBodyInstance()) {
                         body_instance->UpdatePhysicalMaterials();
                     }
                 }
@@ -74,14 +75,14 @@ void PhysicsManager::setActorPhysicalMaterials(const std::vector<AActor*>& actor
 
 int PhysicsManager::createPhysicalMaterial(float friction, float density)
 {
-    int physical_material_id = physical_material_id_counter_;
-    std::ostringstream oss;
-    oss << "PM_" << physical_material_id;
-    UPhysicalMaterial* physical_material = NewObject<UPhysicalMaterial>((UObject*)GetTransientPackage(), FName(UTF8_TO_TCHAR(oss.str().c_str())), EObjectFlags::RF_Standalone);
+    int physical_material_id = current_physical_material_id_;
+
+    auto physical_material = NewObject<UPhysicalMaterial>(static_cast<UObject*>(GetTransientPackage()), *FString::Printf(TEXT("PM_%d"), physical_material_id), EObjectFlags::RF_Standalone);
     physical_material->Friction = friction;
     physical_material->Density = density;
+    physical_materials_[physical_material_id] = physical_material;
 
-    physical_material_map_[physical_material_id] = physical_material;
-    physical_material_id_counter_++;
+    current_physical_material_id_++;
+
     return physical_material_id;
 }

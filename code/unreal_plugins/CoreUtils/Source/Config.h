@@ -14,39 +14,51 @@ END_IGNORE_COMPILER_WARNINGS
 class COREUTILS_API Config
 {
 public:
-    // This function is used to initialize config_node_ when UnrealRL module is loaded.
     static void initialize();
-
-    // This function is used to clear config_node_ when UnrealRL module is  unloaded.
     static void terminate();
 
-    // This function is used to extract a value from a yaml file.
-    // This function takes in a list of strings ('Keys') that lead to the required config value in the yaml file. The keys have to be passed in the descending hierarchical order.
-    // For example, if you have a config.yaml such as below; abc: x: 1 y: 2 , to access 'y', you need to provide {"abc", "y"} as your Keys and not {"y", "abc"}.
+    //
+    // This function is used to extract a value from the Config system. This function takes in a list of
+    // keys that lead to the required config value. The keys need to be passed in the descending order.
+    // For example, if you have a config.yaml such as...
+    //
+    // SIMULATOR:
+    //   TIME_DELTA_SECONDS: 0.1
+    //
+    // ...and you want to access to access the configuration parameter SIMULATOR.TIME_DELTA_SECONDS, you
+    // would need to call this function as follows...
+    //
+    // float time_delta_seconds = Config::getValue<float>({"SIMULATOR", "TIME_DELTA_SECONDS"});
+    //
+
     template <typename T>
     static T getValue(const std::vector<std::string>& keys)
     {
-        // At least one key should be present when this function is called.
-        ASSERT(keys.size() > 0, "getValue<> called without any keys. This is not supported.");
+        // At least one key should be present when this function is called
+        ASSERT(keys.size() > 0);
 
-        // Make sure we have the config_node_ defined before trying to read from it.
-        ASSERT(config_node_.IsDefined());
+        // Make sure we have the config_node_ defined before trying to read from it
+        ASSERT(config_.IsDefined());
 
-        // Create a local copy of Config.
-        YAML::Node node = config_node_;
+        YAML::Node node = config_;
+        for (auto& key : keys) {
 
-        for (const auto& key : keys) {
+            // If key doesn't exist, then print an informative error message and assert
             if (!node[key]) {
                 std::cout << "Invalid key, keys == [";
-                for (size_t j = 0; j < keys.size() - 1; ++j) {
-                    std::cout << "\"" << keys.at(j) << "\", ";
+                for (int i = 0; i < keys.size() - 1; i++) {
+                    std::cout << "\"" << keys.at(i) << "\", ";
                 }
                 std::cout << "\"" << keys.at(keys.size() - 1) << "\"], key " << key << " is invalid." << std::endl;
                 ASSERT(false);
             }
 
-            // We don't use node = node[key], because operator= merges the right-hand side into the left-hand side Node.
-            // Also, repeated assignment to the same Node consumes additional memory as noted in https://github.com/jbeder/yaml-cpp/issues/502.
+            //
+            // We don't use node = node[key], because operator= merges the right-hand side into the left-hand
+            // side Node. Also, repeated assignment to the same Node consumes additional memory as noted in
+            // https://github.com/jbeder/yaml-cpp/issues/502.
+            //
+
             node.reset(node[key]);
         }
 
@@ -56,6 +68,5 @@ private:
     Config() = default;
     ~Config() = default;
 
-    // Load contents of the config file intot YAML::Node.
-    static YAML::Node config_node_;
+    static YAML::Node config_;
 };

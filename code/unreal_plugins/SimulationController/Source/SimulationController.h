@@ -5,9 +5,10 @@
 #include <memory>
 
 #include <CoreMinimal.h>
+#include <Engine/World.h>
 #include <Modules/ModuleManager.h>
 
-class AgentController;
+class Agent;
 class RpcServer;
 class Task;
 class Visualizer;
@@ -36,7 +37,7 @@ private:
     void worldBeginPlayEventHandler();
     void worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources);
 
-    // DelegateHandles corresponding to each event handler defined in this class
+    // FDelegateHandle objects corresponding to each event handler defined in this class
     FDelegateHandle begin_frame_delegate_handle_;
     FDelegateHandle end_frame_delegate_handle_;
     FDelegateHandle post_world_initialization_delegate_handle_;
@@ -47,11 +48,12 @@ private:
     UWorld* world_ = nullptr;
     
     std::unique_ptr<RpcServer> rpc_server_ = nullptr;
-    std::unique_ptr<AgentController> agent_controller_ = nullptr;
+    std::unique_ptr<Agent> agent_ = nullptr;
     std::unique_ptr<Task> task_ = nullptr;
     std::unique_ptr<Visualizer> visualizer_ = nullptr;
 
-    bool is_world_begin_play_executed_ = false;
+    bool has_world_begin_play_executed_ = false;
+    bool has_open_level_executed_ = false;
 
     // thread sychronization elements
     std::atomic<FrameState> frame_state_;

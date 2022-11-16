@@ -1,25 +1,31 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "AgentController.h"
+#include <Math/Vector.h>
+
+#include "Agent.h"
 
 class AActor;
-class UTickEvent;
+class ARecastNavMesh;
+class UNavigationSystemV1;
 class UWorld;
 
+class AOpenBotPawn;
 class CameraSensor;
+
 struct Box;
 
-class SphereAgentController : public AgentController
+class OpenBotAgent : public Agent
 {
 public:
 
-    SphereAgentController(UWorld* world);
-    ~SphereAgentController();
- 
+    OpenBotAgent(UWorld* world);
+    ~OpenBotAgent();
+
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
 
@@ -34,20 +40,18 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
-
 private:
 
-    AActor* agent_actor_ = nullptr;
-    AActor* camera_actor_ = nullptr;
+    void buildNavMesh();
+    void generateTrajectoryToGoal();
+
+    AOpenBotPawn* open_bot_pawn_ = nullptr;
     AActor* goal_actor_ = nullptr;
-    AActor* new_object_parent_actor_ = nullptr;
 
-    std::unique_ptr<CameraSensor> observation_camera_sensor_ = nullptr;
+    UNavigationSystemV1* nav_sys_ = nullptr;
+    ARecastNavMesh* nav_mesh_ = nullptr;
 
-    UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
-    UStaticMeshComponent* goal_static_mesh_component_ = nullptr;
+    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
 
-    UTickEvent* post_physics_pre_render_tick_event_ = nullptr;
-    FDelegateHandle post_physics_pre_render_tick_event_handle_;
+    std::vector<float> trajectory_;
 };
