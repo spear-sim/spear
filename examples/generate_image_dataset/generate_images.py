@@ -63,7 +63,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--poses_file", type=str, required=True)
     parser.add_argument("--output_dir", "-o", type=str, required=True)
-    parser.add_argument("--ticks_per_sample", "-txs", type=int, default=1, required=False)
     args = parser.parse_args()
 
     # load config
@@ -89,10 +88,7 @@ if __name__ == "__main__":
                 os.makedirs(os.path.join(args.output_dir, f"{scene}/{render_pass}"))
 
         # create Env object
-        env = Env(config)
-
-        # Record time
-        # start = time.time()
+        env = CustomEnv(config, num_internal_steps=1)
 
         # reset the simulation
         _ = env.reset()
@@ -117,9 +113,6 @@ if __name__ == "__main__":
                 assert return_status == True
 
         # cv2.destroyAllWindows()
-
-        # end = time.time()
-        # print(end - start)
 
         # close the current scene
         env.close()
