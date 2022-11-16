@@ -6,7 +6,7 @@
 
 // Supported types for sending observation and action data types via msgpackrpc
 // enum values must match the values in code/python_package/spear/env.py
-enum class DataType : uint8
+enum class DataType : uint8_t
 {
     Boolean    = 0,
     UInteger8  = 1,

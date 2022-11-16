@@ -1,28 +1,19 @@
-// Borrowed and lightly modified the following code from:
-// https://github.com/gpakosz/PPK_ASSERT
+// Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
 
 #include "Assert/Assert.h"
 
-#include "IgnoreCompilerWarnings.h"
+// Unreal and Windows have different definitions for the TEXT macro, so save its state
+// and then restore it.
+#ifdef _MSC_VER
+    #pragma push_macro("TEXT")
+    #undef TEXT
 
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#define _CRT_SECURE_NO_WARNINGS
+    #include <Windows/MinWindows.h>
 
-// Both 'winnt.h' and Unreal have different definitions for the TEXT macro.
-// This creates a conflict below when we include 'windows.h'. To avoid this
-// conflict, we need to undefine the TEXT macro before we include 'windows.h',
-// and then redefine TEXT to have the same definition as it had before including
-// 'windows.h'. We use push_macro(...) and pop_macro(...) for this purpose.
-#pragma push_macro("TEXT")
-#ifdef TEXT
-#undef TEXT
+    #pragma pop_macro("TEXT")
 #endif
 
-#include <windows.h>
-
-#pragma pop_macro("TEXT")
-#endif
+#include "CompilerWarningUtils.h"
 
 
 

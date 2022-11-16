@@ -1,9 +1,6 @@
 #include "CameraAgent.h"
 
 #include <algorithm>
-#include <map>
-#include <string>
-#include <vector>
 
 #include <AI/NavDataGenerator.h>
 #include <Camera/CameraActor.h>

@@ -1,7 +1,7 @@
 #include "OpenBotWheel.h"
 
+#include "CompilerWarningUtils.h"
 #include "Config.h"
-#include "IgnoreCompilerWarnings.h"
 
 BEGIN_IGNORE_COMPILER_WARNINGS
 UOpenBotWheel::UOpenBotWheel()

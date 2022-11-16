@@ -1,30 +1,18 @@
 #pragma once
 
-// On Windows, 'asio.hpp' uses the InterlockedCompareExchange macro. If
-// InterlockedCompareExchange is not defined when we include 'asio.hpp',
-// we get the following error:
-//
-// error C2039 : 'InterlockedCompareExchange' : is not a member of 'global namespace
-//
-// To avoid this error when including 'asio.hpp', we define the InterlockedCompareExchange
-// macro as below.
-#ifndef InterlockedCompareExchange
-#define InterlockedCompareExchange _InterlockedCompareExchange
+// Unreal and Windows have different definitions for the TEXT macro, so save its state
+// and then restore it.
+#ifdef _MSC_VER
+    #pragma push_macro("TEXT")
+    #undef TEXT
+
+    #include <Windows/MinWindows.h>
+
+    #pragma pop_macro("TEXT")
 #endif
 
-#include "IgnoreCompilerWarnings.h"
+#include "CompilerWarningUtils.h"
+
 BEGIN_IGNORE_COMPILER_WARNINGS
 #include <asio.hpp>
 END_IGNORE_COMPILER_WARNINGS
-
-// But when the InterlockedCompareExchange macro is defined above, it creates a
-// conflict with the Unreal function FWindowsPlatformAtomics::InterlockedCompareExchange(...).
-// This causes the following error:
-//
-// error C2039: '_InterlockedCompareExchange': is not a member of 'FWindowsPlatformAtomics'
-//
-// To avoid this error, we undefine InterlockedCompareExchange before
-// including any Unreal header files.
-#ifdef InterlockedCompareExchange
-#undef InterlockedCompareExchange
-#endif
