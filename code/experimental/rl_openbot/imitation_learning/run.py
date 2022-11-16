@@ -29,9 +29,11 @@ import shutil
 import time
 import re
 
-from interiorsim import Env
-from interiorsim.config import get_config
-from interiorsim.constants import INTERIORSIM_ROOT_DIR
+#from interiorsim import Env
+#from interiorsim.config import get_config
+#from interiorsim.constants import INTERIORSIM_ROOT_DIR
+
+import spear
 
 
 def GenerateVideo(config, mapName, run):
@@ -239,10 +241,9 @@ if __name__ == "__main__":
 
     # Add default config files first and then user config files
     config_files.append(os.path.join(os.getcwd(), "user_config.yaml"))
-
-    # Load configs
-    config = get_config(config_files)
-    print(config)
+    
+    # Load config (this function will load the parameter values specified in user_config.yaml, as well as sensible defaults for all other parameters)
+    config = spear.get_config(user_config_files=config_files)
 
     # Parse input script arguments
     parser = argparse.ArgumentParser()
@@ -299,8 +300,8 @@ if __name__ == "__main__":
             config.freeze()
 
             # Create Env object:
+            env = spear.Env(config=config)
             
-            env = Env(config)
             run = 0
             while run < runs:
 

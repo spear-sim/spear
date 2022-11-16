@@ -10,7 +10,7 @@ public class RobotProject : ModuleRules
         if (Target.Type == TargetType.Editor) {
             PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         } else {
-            PCHUsage = ModuleRules.PCHUsageMode.NoPCHs;
+            PCHUsage = ModuleRules.PCHUsageMode.Default; // "Engine modules use shared PCHs, game modules do not"
             bUseUnity = false;
         }
 
