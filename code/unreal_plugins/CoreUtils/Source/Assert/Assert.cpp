@@ -3,6 +3,20 @@
 
 #include "Assert/Assert.h"
 
+#ifdef _MSC_VER
+
+    // Unreal and Windows have different definitions for the TEXT macro, so save its state.
+    #pragma push_macro("TEXT")
+    #ifdef TEXT
+    #undef TEXT
+    #endif
+
+    #include <Windows/MinWindows.h>
+
+    // Restore the state of the TEXT macro.
+    #pragma pop_macro("TEXT")
+#endif
+
 #include "CompilerWarningUtils.h"
 
 

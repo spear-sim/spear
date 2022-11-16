@@ -17,7 +17,7 @@
     #ifdef _WINDOWS_
         #include "WindowsHeaderMacrosDefine.h"
     #else
-        #include <Windows/MinWindowsH.h>
+        #include <Windows/MinWindows.h>
     #endif
 #endif
 
