@@ -1,4 +1,4 @@
-INTERIORSIM:
+SPEAR:
 
   # launch unreal engine instance via different modes
   # "standalone_executable", or "uproject", or "running_instance"
@@ -36,7 +36,7 @@ INTERIORSIM:
 SIMULATION_CONTROLLER:
   PORT: 30001 
   TASK: "ImitationLearningTask"
-  AGENT: "OpenBotAgentController"
+  AGENT: "OpenBotAgent"
 
   SIMULATION_STEP_TIME_SECONDS: 0.033
   SUBSTEPPING: True
