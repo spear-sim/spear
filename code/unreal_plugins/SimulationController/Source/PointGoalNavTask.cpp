@@ -25,8 +25,8 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
 
     auto goal_mesh_component = dynamic_cast<AStaticMeshActor*>(goal_actor_)->GetStaticMeshComponent();
 
-    UStaticMesh* goal_mesh = LoadObject<UStaticMesh>(world, TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'"));
-    UMaterial* goal_material = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Materials/Goal_MAT.Goal_MAT'"));
+    UStaticMesh* goal_mesh   = LoadObject<UStaticMesh>(world, UTF8_TO_TCHAR(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MESH_PATH_NAME" }).c_str()));
+    UMaterial* goal_material = LoadObject<UMaterial>(nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MATERIAL_PATH_NAME" }).c_str()));
     ASSERT(goal_mesh);
     ASSERT(goal_material);
 

@@ -42,8 +42,8 @@ SphereAgent::SphereAgent(UWorld* world)
     ASSERT(sphere_static_mesh_component_);
 
     // load agent mesh and material
-    UStaticMesh* sphere_mesh = LoadObject<UStaticMesh>(world, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
-    UMaterial* sphere_material = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Materials/Agent_MAT.Agent_MAT'"));
+    UStaticMesh* sphere_mesh   = LoadObject<UStaticMesh>(world, UTF8_TO_TCHAR(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_MESH_PATH_NAME" }).c_str()));
+    UMaterial* sphere_material = LoadObject<UMaterial>(nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_MATERIAL_PATH_NAME" }).c_str()));
     ASSERT(sphere_mesh);
     ASSERT(sphere_material);
     

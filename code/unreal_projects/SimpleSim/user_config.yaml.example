@@ -32,6 +32,8 @@ SIMULATION_CONTROLLER:
       FORCE_SCALE: 1.0
       ROTATE_SCALE: 1.0
     SPHERE:
+      SPHERE_MESH_PATH_NAME: "/Engine/BasicShapes/Sphere.Sphere"
+      SPHERE_MATERIAL_PATH_NAME: "/Game/Materials/Agent_MAT.Agent_MAT"
       MASS_SCALE: 1.0
       MAX_ANGULAR_VELOCITY: 1.0
       LINEAR_DAMPING: 0.0
@@ -72,6 +74,8 @@ SIMULATION_CONTROLLER:
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: "Sphere"
     GOAL_ACTOR_NAME: "Goal"
+    GOAL_MESH_PATH_NAME: "/Engine/BasicShapes/Cylinder.Cylinder"
+    GOAL_MATERIAL_PATH_NAME: "/Game/Materials/Goal_MAT.Goal_MAT"
     OBSTACLE_IGNORE_ACTOR_NAMES: [ "Floor" ]
     RANDOM_SEED: 0
     REWARD:
