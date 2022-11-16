@@ -3,26 +3,7 @@
 
 #include "Assert/Assert.h"
 
-#include "IgnoreCompilerWarnings.h"
-
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#define _CRT_SECURE_NO_WARNINGS
-
-// Both 'winnt.h' and Unreal have different definitions for the TEXT macro.
-// This creates a conflict below when we include 'windows.h'. To avoid this
-// conflict, we need to undefine the TEXT macro before we include 'windows.h',
-// and then redefine TEXT to have the same definition as it had before including
-// 'windows.h'. We use push_macro(...) and pop_macro(...) for this purpose.
-#pragma push_macro("TEXT")
-#ifdef TEXT
-#undef TEXT
-#endif
-
-#include <windows.h>
-
-#pragma pop_macro("TEXT")
-#endif
+#include "CompilerWarningUtils.h"
 
 
 

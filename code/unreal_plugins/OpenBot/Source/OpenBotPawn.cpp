@@ -14,8 +14,8 @@
 #include <SimpleWheeledVehicleMovementComponent.h>
 #include <UObject/ConstructorHelpers.h>
 
+#include "CompilerWarningUtils.h"
 #include "Config.h"
-#include "IgnoreCompilerWarnings.h"
 #include "OpenBotWheel.h"
 
 BEGIN_IGNORE_COMPILER_WARNINGS
