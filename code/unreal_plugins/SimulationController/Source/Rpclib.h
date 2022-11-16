@@ -1,20 +1,18 @@
 #pragma once
 
-// Unreal and Windows have different definitions for the TEXT macro, so save its state.
-#pragma push_macro("TEXT")
-#ifdef TEXT
-#undef TEXT
-#endif
-
-// Unreal and rpclib have different definitions for the check macro, so we save its state.
+// Unreal and rpclib have different definitions for the check macro, so save its state.
 #pragma push_macro("check")
-#ifdef check
 #undef check
+
+// Unreal and Windows have different definitions for the TEXT macro, so save its state.
+#ifdef _MSC_VER
+    #pragma push_macro("TEXT")
+    #undef TEXT
 #endif
 
-// If we have already included Windows.h in a different header, then we must have already
-// invoked UNDEFINE_WINDOWS_HEADER_MACROS from that header. In this case, we must invoke
-// DEFINE_WINDOWS_HEADER_MACROS, since including Windows.h again from here will have no
+// If we have already included Windows.h in a different header, then we should have already
+// invoked WindowsHeaderMacrosUndefine.h from that header. In this case, we must invoke
+// WindowsHeaderMacrosDefine.h here, since including Windows.h again from here will have no
 // effect. If we have not already included Windows.h, then include it here for the first
 // time.
 #ifdef _MSC_VER
@@ -37,12 +35,16 @@
 #include <rpc/server.h>
 
 // Undefine Windows.h macros to prevent them from polluting the global namespace. Any other
-// header files that are included after this, and depend on Windows.h macros, must invoke
+// header files that are included after this and depend on Windows.h macros, must invoke
 // WindowsHeaderMacrosDefine.h, since including Windows.h again will have no effect.
 #ifdef _MSC_VER
     #include "WindowsHeaderMacrosUndefine.h"
 #endif
 
-// Restore the state of Unreal macros.
+// Restore the state of the TEXT macro.
+#ifdef _MSC_VER
+    #pragma pop_macro("TEXT")
+#endif
+
+// Restore the state of the check macro.
 #pragma pop_macro("check")
-#pragma pop_macro("TEXT")
