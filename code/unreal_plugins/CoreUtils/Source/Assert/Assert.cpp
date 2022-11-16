@@ -3,9 +3,23 @@
 
 #include "Assert/Assert.h"
 
+// Both 'winnt.h' and Unreal have different definitions for the TEXT macro.
+// This creates a conflict below when we include 'windows.h'. To avoid this
+// conflict, we need to undefine the TEXT macro before we include 'windows.h',
+// and then redefine TEXT to have the same definition as it had before including
+// 'windows.h'. We use push_macro(...) and pop_macro(...) for this purpose.
+#pragma push_macro("TEXT")
+#ifdef TEXT
+#undef TEXT
+#endif
+
+#ifdef _MSC_VER
+#include <Windows/MinWindows.h>
+#endif
+
+#pragma pop_macro("TEXT")
+
 #include "CompilerWarningUtils.h"
-
-
 
 // see README.md for usage instructions.
 // (‑●‑●)> released under the WTFPL v2 license, by Gregory Pakosz (@gpakosz)
