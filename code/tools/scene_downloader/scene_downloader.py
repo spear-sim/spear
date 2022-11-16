@@ -589,7 +589,7 @@ class SceneDownloader():
                 return False
 
         if asset_mode.startswith("pak_split_"):
-            self.download_pak(asset_mode.removeprefix("pak_split_"))
+            self.download_pak(asset_mode[len('pak_split_'):])
         else:
             assets_relative_path = self.vw_info[asset_mode]
             result_local_path = []
