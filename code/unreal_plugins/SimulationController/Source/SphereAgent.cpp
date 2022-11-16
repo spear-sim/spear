@@ -8,10 +8,10 @@
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
+#include <Engine/CollisionProfile.h>
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>
-#include <Engine/CollisionProfile.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <Materials/Material.h>
@@ -31,9 +31,7 @@ SphereAgent::SphereAgent(UWorld* world)
     spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE_ACTOR_NAME" }).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    sphere_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(),
-        FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "POSITION_OFFSET_Z" })),
-        FRotator::ZeroRotator, spawn_params);
+    sphere_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, spawn_params);
     ASSERT(dynamic_cast<AStaticMeshActor*>(sphere_actor_));
 
     dynamic_cast<AStaticMeshActor*>(sphere_actor_)->SetMobility(EComponentMobility::Type::Movable);

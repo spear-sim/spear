@@ -59,7 +59,6 @@ class Env(gym.Env):
 
         self._request_launch_unreal_instance()
         self._connect_to_unreal_instance()
-
         self._initialize_unreal_instance()
 
         self.action_space = self._get_action_space()

@@ -21,11 +21,11 @@
         },
         {
             "Name": "SceneManager",
-			"Enabled": true
-		},
-		{
-			"Name": "SimulationController",
-			"Enabled": true
-		}
-	]
+            "Enabled": true
+        },
+        {
+            "Name": "SimulationController",
+            "Enabled": true
+        }
+    ]
 }
