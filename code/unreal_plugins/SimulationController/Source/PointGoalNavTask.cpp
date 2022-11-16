@@ -3,6 +3,9 @@
 #include <algorithm>
 
 #include <EngineUtils.h>
+#include <Engine/StaticMesh.h>
+#include <Engine/StaticMeshActor.h>
+#include <Materials/Material.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "ActorHitEvent.h"
@@ -15,12 +18,20 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     FActorSpawnParameters goal_spawn_params;
     goal_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_ACTOR_NAME"}).c_str());
     goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    goal_actor_ = world->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
-    ASSERT(goal_actor_);
+    goal_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
+    ASSERT(dynamic_cast<AStaticMeshActor*>(goal_actor_));
 
-    auto scene_component = NewObject<USceneComponent>(goal_actor_);
-    scene_component->SetMobility(EComponentMobility::Movable);
-    goal_actor_->SetRootComponent(scene_component);
+    dynamic_cast<AStaticMeshActor*>(goal_actor_)->SetMobility(EComponentMobility::Movable);
+
+    auto goal_mesh_component = dynamic_cast<AStaticMeshActor*>(goal_actor_)->GetStaticMeshComponent();
+
+    UStaticMesh* goal_mesh = LoadObject<UStaticMesh>(world, TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'"));
+    UMaterial* goal_material = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Materials/Goal_MAT.Goal_MAT'"));
+    ASSERT(goal_mesh);
+    ASSERT(goal_material);
+
+    goal_mesh_component->SetStaticMesh(goal_mesh);
+    goal_mesh_component->SetMaterial(0, goal_material);
 
     new_object_parent_actor_ = world->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);

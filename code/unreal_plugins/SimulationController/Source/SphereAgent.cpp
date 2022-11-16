@@ -28,13 +28,12 @@ SphereAgent::SphereAgent(UWorld* world)
 {
     // spawn sphere_actor
     FActorSpawnParameters spawn_params;
-    spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "ACTOR_NAME" }).c_str());
+    spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE_ACTOR_NAME" }).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    // load agent mesh and agent material
     sphere_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(),
         FVector(0, 0, Config::getValue<float>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "POSITION_OFFSET_Z" })),
-        FRotator(0, 0, 0), spawn_params);
+        FRotator::ZeroRotator, spawn_params);
     ASSERT(dynamic_cast<AStaticMeshActor*>(sphere_actor_));
 
     dynamic_cast<AStaticMeshActor*>(sphere_actor_)->SetMobility(EComponentMobility::Type::Movable);
@@ -42,6 +41,7 @@ SphereAgent::SphereAgent(UWorld* world)
     sphere_static_mesh_component_ = dynamic_cast<AStaticMeshActor*>(sphere_actor_)->GetStaticMeshComponent();
     ASSERT(sphere_static_mesh_component_);
 
+    // load agent mesh and material
     UStaticMesh* sphere_mesh = LoadObject<UStaticMesh>(world, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
     UMaterial* sphere_material = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Materials/Agent_MAT.Agent_MAT'"));
     ASSERT(sphere_mesh);
