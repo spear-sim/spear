@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "Delegates/IDelegateInstance.h"
+#include <Delegates/IDelegateInstance.h>
 #include <Engine/EngineBaseTypes.h>
 
 #include "Agent.h"
