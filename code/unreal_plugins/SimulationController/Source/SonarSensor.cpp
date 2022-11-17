@@ -120,6 +120,8 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
     }
     component_->GetWorld()->GetPhysicsScene()->GetPxScene()->unlockRead();
 
+    range_ = min_dist + Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NOISE_STD"}) * std::uniform_real_distribution<float>()(random_gen_);
+
     // Draw the sensing cone and the sonar rays
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "DEBUG_RENDER"})) {
         
@@ -152,7 +154,5 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
             }
 
         }
-    }
-
-    range_ = min_dist + Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NOISE_STD"}) * std::uniform_real_distribution<float>()(random_gen_);
+    }   
 }
