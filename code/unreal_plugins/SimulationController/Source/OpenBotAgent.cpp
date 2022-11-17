@@ -1,9 +1,6 @@
 #include "OpenBotAgent.h"
 
 #include <algorithm>
-#include <map>
-#include <string>
-#include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>

@@ -1,9 +1,6 @@
 #include "CameraSensor.h"
 
-#include <map>
-#include <string>
 #include <utility>
-#include <vector>
 
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
@@ -17,6 +14,7 @@
 #include <UObject/UObjectGlobals.h>
 
 #include "Assert/Assert.h"
+#include "Box.h"
 #include "Config.h"
 #include "Serialize.h"
 

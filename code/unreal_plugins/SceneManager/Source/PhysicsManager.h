@@ -7,7 +7,6 @@
 #include <CoreMinimal.h>
 
 class AActor;
-class UPhysicalMaterial;
 
 class SCENEMANAGER_API PhysicsManager
 {

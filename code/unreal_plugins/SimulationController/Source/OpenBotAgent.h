@@ -5,9 +5,6 @@
 #include <string>
 #include <vector>
 
-#include <Math/Vector.h>
-#include "ImuSensor.h"
-#include "SonarSensor.h"
 #include "Agent.h"
 
 class AActor;
@@ -17,6 +14,8 @@ class UWorld;
 
 class AOpenBotPawn;
 class CameraSensor;
+class ImuSensor;
+class SonarSensor;
 
 
 struct Box;

@@ -1,7 +1,12 @@
 #pragma once
 
+#include <map>
+#include <string>
+#include <vector>
+
+#include <Delegates/IDelegateInstance.h>
 #include <Engine/EngineTypes.h>
-#include <Math/RandomStream.h>
+#include <Math/Vector.h>
 
 #include "Task.h"
 

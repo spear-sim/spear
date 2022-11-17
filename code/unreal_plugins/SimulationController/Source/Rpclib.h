@@ -1,47 +1,30 @@
 #pragma once
 
-// Some operating-system–specific header files define nil as nullptr or NULL.
-// rpclib depends on the msgpack-c library, and msgpack-c has a different
-// definition of nil. This creates naming conflicts when we include
-// 'rpc/msgpack.hpp'. However, if MSGPACK_DISABLE_LEGACY_NIL is defined, then
+// Unreal and Windows have different definitions for the TEXT macro, so save its state
+// and then restore it.
+#ifdef _MSC_VER
+    #pragma push_macro("TEXT")
+    #undef TEXT
+
+    #include <Windows/MinWindows.h>
+
+    #pragma pop_macro("TEXT")
+#endif
+
+// Unreal and rpclib have different definitions for the check macro, so save its state.
+#pragma push_macro("check")
+#undef check
+
+// Some macOS-specifc header files define nil as nullptr or NULL. But rpclib depends on the
+// msgpack-c library, which has a different definition of nil. This creates naming conflicts
+// when we include 'rpc/msgpack.hpp'. However, if MSGPACK_DISABLE_LEGACY_NIL is defined, then
 // msgpack-c does not define nil, and we avoid the conflicts.
 #define MSGPACK_DISABLE_LEGACY_NIL
 
-// rpclib and Unreal have different definitions for the check macro. This
-// creates naming conflicts when we include 'rpc/msgpack.hpp'. To avoid these
-// conflicts, we undefine the check macro before we include 'rpc/msgpack.hpp',
-// and then redefine check to have the same definition as Unreal defines it
-// after we include 'rpc/msgpack.hpp'. We use push_macro(...) and pop_macro
-// for this purpose.
-#pragma push_macro("check")
-#ifdef check
-#undef check
-#endif
-
-// For the TEXT macro, we do something similar to the check macro. The TEXT macro
-// is defined by Unreal, but is also defined in 'winnt.h', which is included by
-// 'rpc/msgpack.hpp' on Windows.
-#pragma push_macro("TEXT")
-#ifdef TEXT
-#undef TEXT
-#endif
-
+// Include rpclib headers.
 #include <rpc/config.h>
 #include <rpc/msgpack.hpp>
 #include <rpc/server.h>
 
-#pragma pop_macro("TEXT")
+// Restore the state of the check macro.
 #pragma pop_macro("check")
-
-// On Windows, 'rpc/msgpack.hpp' includes 'winnt.h', which in turn defines
-// InterlockedCompareExchange as _InterlockedCompareExchange. This macro
-// definition creates a naming conflict with Unreal and causes the following
-// error:
-//
-// error C2039: '_InterlockedCompareExchange': is not a member of 'FWindowsPlatformAtomics'
-//
-// To avoid this issue, we undefine InterlockedCompareExchange before
-// including any Unreal header files.
-#ifdef InterlockedCompareExchange
-#undef InterlockedCompareExchange
-#endif

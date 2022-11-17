@@ -1,17 +1,11 @@
 #pragma once
 
-// Borrowed and lightly modified the following code from:
-// https://github.com/gpakosz/PPK_ASSERT
+// Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
 
-#ifdef PPK_ASSERT_ENABLED
-#undef PPK_ASSERT_ENABLED
-#endif
-
-// Define below macros to 0 as it is required to build successfully on Linux and
-// Windows
+// Define below macros to 0 as it is required to build successfully on Linux and Windows
 #if !defined(__APPLE__)
-#define TARGET_OS_IPHONE 0
-#define TARGET_IPHONE_SIMULATOR 0
+    #define TARGET_OS_IPHONE 0
+    #define TARGET_IPHONE_SIMULATOR 0
 #endif
 
 // Define macros required to enable assert functionality through PPK_ASSERT
@@ -25,32 +19,44 @@
 
 // -- usage --------------------------------------------------------------------
 /*
+
   run-time assertions:
+
     PPK_ASSERT(expression);
     PPK_ASSERT(expression, message, ...);
+
     PPK_ASSERT_WARNING(expression);
     PPK_ASSERT_WARNING(expression, message, ...);
+
     PPK_ASSERT_DEBUG(expression);
     PPK_ASSERT_DEBUG(expression, message, ...);
+
     PPK_ASSERT_ERROR(expression);
     PPK_ASSERT_ERROR(expression, message);
+
     PPK_ASSERT_FATAL(expression);
     PPK_ASSERT_FATAL(expression, message, ...);
+
     PPK_ASSERT_CUSTOM(level, expression);
     PPK_ASSERT_CUSTOM(level, expression, message, ...);
+
     PPK_ASSERT_USED(type)
     PPK_ASSERT_USED_WARNING(type)
     PPK_ASSERT_USED_DEBUG(type)
     PPK_ASSERT_USED_ERROR(type)
     PPK_ASSERT_USED_FATAL(type)
     PPK_ASSERT_USED_CUSTOM(level, type)
+
     PPK_ASSERT_USED(bool) foo()
     {
       return true;
     }
+
   compile-time assertions:
+
     PPK_STATIC_ASSERT(expression)
     PPK_STATIC_ASSERT(expression, message)
+
 */
 
 #if !defined(PPK_ASSERT_ENABLED)

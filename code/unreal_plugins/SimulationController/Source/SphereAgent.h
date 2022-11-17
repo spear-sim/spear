@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include <Delegates/IDelegateInstance.h>
 #include <Engine/EngineBaseTypes.h>
 
 #include "Agent.h"
@@ -40,7 +41,7 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
+    void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
 
 private:
 
@@ -54,5 +55,5 @@ private:
     UTickEvent* tick_event_ = nullptr;
     FDelegateHandle tick_event_handle_;
 
-    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
+    std::unique_ptr<CameraSensor> camera_sensor_;
 };
