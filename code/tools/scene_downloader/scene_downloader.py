@@ -94,8 +94,17 @@ if __name__ == "__main__":
     parser.add_argument("--scene_id", default="")
     parser.add_argument("--num_retries", type=int, default=1)
     parser.add_argument("--skip_download_if_exists", default=True)
+    parser.add_argument("--proxy")
     args = parser.parse_args()
 
+    # if the user provies a proxy, install it
+    if args.proxy_host != "":
+        proxy_handler = urllib.request.ProxyHandler({"https": args.proxy, "http": args.proxy})
+        opener = urllib.request.build_opener(proxy_handler)
+        urllib.request.install_opener(opener=opener)
+        urllib.request.urlretrieve(url, local_path)
+
+    # if user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id == "":
         scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
         print(scenes_csv_file)
@@ -104,5 +113,6 @@ if __name__ == "__main__":
     else:
         scene_ids = [args.scene_id]
 
+    # download scenes
     for scene_id in scene_ids:
         download_scene_pak_files(scene_id, args)
