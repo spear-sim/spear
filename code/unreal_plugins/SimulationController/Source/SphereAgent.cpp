@@ -24,16 +24,17 @@
 SphereAgent::SphereAgent(UWorld* world)
 {
     // spawn sphere_actor
-    FActorSpawnParameters spawn_params;
-    spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE_ACTOR_NAME" }).c_str());
-    spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    FActorSpawnParameters sphere_spawn_params;
+    sphere_spawn_params.Name = FName(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_ACTOR_NAME" }).c_str());
+    sphere_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    sphere_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, spawn_params);
-    ASSERT(dynamic_cast<AStaticMeshActor*>(sphere_actor_));
+    sphere_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, sphere_spawn_params);
+    AStaticMeshActor* sphere_actor = dynamic_cast<AStaticMeshActor*>(sphere_actor_);
+    ASSERT(sphere_actor);
 
-    dynamic_cast<AStaticMeshActor*>(sphere_actor_)->SetMobility(EComponentMobility::Type::Movable);
+    sphere_actor->SetMobility(EComponentMobility::Type::Movable);
 
-    sphere_static_mesh_component_ = dynamic_cast<AStaticMeshActor*>(sphere_actor_)->GetStaticMeshComponent();
+    sphere_static_mesh_component_ = sphere_actor->GetStaticMeshComponent();
     ASSERT(sphere_static_mesh_component_);
 
     // load agent mesh and material
@@ -64,9 +65,10 @@ SphereAgent::SphereAgent(UWorld* world)
     // observation["camera"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
-        spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "CAMERA_ACTOR_NAME"}).c_str());
-        spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        camera_actor_ = world->SpawnActor<ACameraActor>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
+        FActorSpawnParameters camera_spawn_params;
+        camera_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "CAMERA_ACTOR_NAME"}).c_str());
+        camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        camera_actor_ = world->SpawnActor<ACameraActor>(FVector(0, 0, 0), FRotator(0, 0, 0), camera_spawn_params);
         ASSERT(camera_actor_);
 
         camera_sensor_ = std::make_unique<CameraSensor>(

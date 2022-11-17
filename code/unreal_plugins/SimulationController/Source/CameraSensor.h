@@ -19,8 +19,6 @@ struct RenderPass
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
 };
 
-struct Box;
-
 class CameraSensor
 {
 public:

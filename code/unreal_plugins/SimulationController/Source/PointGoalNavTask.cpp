@@ -19,11 +19,12 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     goal_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_ACTOR_NAME"}).c_str());
     goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     goal_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
-    ASSERT(dynamic_cast<AStaticMeshActor*>(goal_actor_));
+    AStaticMeshActor* goal_actor = dynamic_cast<AStaticMeshActor*>(goal_actor_);
+    ASSERT(goal_actor);
 
-    dynamic_cast<AStaticMeshActor*>(goal_actor_)->SetMobility(EComponentMobility::Movable);
+    goal_actor->SetMobility(EComponentMobility::Movable);
 
-    auto goal_mesh_component = dynamic_cast<AStaticMeshActor*>(goal_actor_)->GetStaticMeshComponent();
+    auto goal_mesh_component = goal_actor->GetStaticMeshComponent();
 
     UStaticMesh* goal_mesh   = LoadObject<UStaticMesh>(world, UTF8_TO_TCHAR(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MESH_PATH_NAME" }).c_str()));
     UMaterial* goal_material = LoadObject<UMaterial>(nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MATERIAL_PATH_NAME" }).c_str()));

@@ -4,15 +4,10 @@ public class SpearSim : ModuleRules
 {
     public SpearSim(ReadOnlyTargetRules Target) : base(Target)
     {
-        // We want to disable precompiled headers for faster builds, easier debugging of compile errors,
-        // and stricter enforcement of include-what-you-use. But it seems as though Editor builds must
-        // be built with precompiled headers, and Editor builds are required during the cooking process.
-        if (Target.Type == TargetType.Editor) {
-            PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-        } else {
-            PCHUsage = ModuleRules.PCHUsageMode.NoPCHs;
-            bUseUnity = false;
-        }
+        // Disable precompiled headers (in our code but not Unreal code) for faster builds, easier debugging of compile errors, and strict enforcement of include-what-you-use
+        PCHUsage = ModuleRules.PCHUsageMode.Default;
+        PrivatePCHHeaderFile = "";
+        bUseUnity = false;
 
         // Turn off code optimization except in shipping builds for faster build times
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
@@ -20,7 +15,7 @@ public class SpearSim : ModuleRules
         // Enable exceptions because some of our third-party dependencies use them
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

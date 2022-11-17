@@ -7,12 +7,9 @@ public class SimulationController : ModuleRules
     public SimulationController(ReadOnlyTargetRules Target) : base(Target)
     {
         // Disable precompiled headers (in our code but not Unreal code) for faster builds, easier debugging of compile errors, and strict enforcement of include-what-you-use
-        if (Target.Type == TargetType.Editor) {
-            PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-        } else {
-            PCHUsage = ModuleRules.PCHUsageMode.NoPCHs;
-            bUseUnity = false;
-        }
+        PCHUsage = ModuleRules.PCHUsageMode.Default;
+        PrivatePCHHeaderFile = "";
+        bUseUnity = false;
 
         // Turn off code optimization except in shipping builds for faster build times
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
