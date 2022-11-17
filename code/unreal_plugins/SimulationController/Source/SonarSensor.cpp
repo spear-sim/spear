@@ -1,8 +1,5 @@
 #include "SonarSensor.h"
 
-#include <map>
-#include <string>
-#include <utility>
 #include <vector>
 
 #include <Components/BoxComponent.h>
