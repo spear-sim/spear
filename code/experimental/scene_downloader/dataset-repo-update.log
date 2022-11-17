@@ -65,14 +65,3 @@ Contents:
         1. Replacing assets with IP issue via Domain Randomization.
         2. Assets physical status correction.
         3. Refine transparent material.
-
-Time:20220414
-Version: v4
-Contents:
-    1. v4 provides all 300 virtualworlds in .pak format for Linux, while virtualworld contents remain the same as v3.
-    2. The file storage structure and download API is optimized.
-
-Time:20220819
-Version: v5
-Contents:
-    1. v5 provide scenes in pak file for Windows with manual light fixing for RTX.

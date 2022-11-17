@@ -4,14 +4,13 @@
    ```bash
        python scene_manager.py -i <virtualworld-id> -v <version-info> -p <proxy_host:proxy_port> -o <ouputDir>
        # for example
-       python scene_manager.py -i 235554690 -v v7 true -o ./Saved/ -c pak_split_linux
+       python scene_manager.py -i 235554690 -v v3 true -o ./Saved/ -c pak_split_linux
    ```
 
 * `-i`: optional virtualworld-id. All available id lists can be found in data/virtualworld-ids.json. If not specified,
   all virtualworld-ids will be processed sequentially.
 
-* `-v`: required scene version in format of v{n}. Up-to-date version information can be found in
-  dataset-repo-update.md.
+* `-v`: required scene version in format of v{n}. Use `v3` to download raw uassets . Up-to-date version information can be found in dataset-repo-update.log.
 
 * `-f`: if '-f true', when downloading, the existing assets will be overwritten. if not use -f, comparing local version
   information(MD5 in it) to remote version information and decide whether to download asset.
