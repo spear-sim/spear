@@ -107,7 +107,6 @@ if __name__ == "__main__":
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id == "":
         scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
-        print(scenes_csv_file)
         assert os.path.exists(scenes_csv_file)
         scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
     else:
