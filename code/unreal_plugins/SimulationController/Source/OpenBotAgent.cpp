@@ -3,6 +3,8 @@
 #include <algorithm>
 
 #include <Components/SceneCaptureComponent2D.h>
+#include <Components/BoxComponent.h>
+#include <Components/PrimitiveComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
