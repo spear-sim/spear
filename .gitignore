@@ -35,7 +35,7 @@ code/experimental/teleport_mode/user_config.yaml
 
 code/python_package/spear_sim.egg-info
 
-code/tools/scene_manager/download_data
+code/tools/scene_downloader/tmp
 
 code/unreal_plugins/CoreUtils/Binaries
 code/unreal_plugins/CoreUtils/Intermediate
