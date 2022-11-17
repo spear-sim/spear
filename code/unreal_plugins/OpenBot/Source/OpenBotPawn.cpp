@@ -73,40 +73,6 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     vehicle_movement_component_->ChassisWidth    = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_WIDTH"});    // Chassis width used for drag force computation in [cm]
     vehicle_movement_component_->ChassisHeight   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_HEIGHT"});   // Chassis height used for drag force computation in [cm]
     vehicle_movement_component_->MaxEngineRPM    = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "MOTOR_MAX_RPM"});    // Max RPM for engine
-
-    // Setup IMU sensor component
-    FVector imu_location(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_X"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_Y"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_Z"}));
-    
-    FRotator imu_orientation(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "PITCH"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "YAW"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "ROLL"}));
-    
-    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("PrimitiveComponentIMU")); 
-    ASSERT(imu_component_ );
-    
-    imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation); 
-    imu_component_->SetupAttachment(skeletal_mesh_component_);
-
-    // Setup Sonar sensor component
-    FVector sonar_location(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_X"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_Y"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_Z"}));
-        
-    FRotator sonar_orientation(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "PITCH"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "YAW"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "ROLL"}));
-    
-    sonar_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("PrimitiveComponentSonar")); 
-    ASSERT(sonar_component_); 
-
-    sonar_component_->SetRelativeLocationAndRotation(sonar_location, sonar_orientation); 
-    sonar_component_->SetupAttachment(skeletal_mesh_component_);
     
     // Setup camera
     FVector camera_location(
@@ -126,6 +92,40 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "FOV"});
+
+    // Setup IMU sensor component
+    FVector imu_location(
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_X"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_Y"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_Z"}));
+    
+    FRotator imu_orientation(
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "PITCH"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "YAW"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "ROLL"}));
+    
+    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("ImuComponent")); 
+    ASSERT(imu_component_ );
+    
+    imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation); 
+    imu_component_->SetupAttachment(skeletal_mesh_component_);
+
+    // Setup Sonar sensor component
+    FVector sonar_location(
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_X"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_Y"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_Z"}));
+        
+    FRotator sonar_orientation(
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "PITCH"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "YAW"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "ROLL"}));
+    
+    sonar_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("SonarComponent")); 
+    ASSERT(sonar_component_); 
+
+    sonar_component_->SetRelativeLocationAndRotation(sonar_location, sonar_orientation); 
+    sonar_component_->SetupAttachment(skeletal_mesh_component_);
 
     // Initialize duty cycle
     duty_cycle_.setZero();

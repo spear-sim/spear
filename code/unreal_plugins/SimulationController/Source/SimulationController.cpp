@@ -42,19 +42,11 @@ void SimulationController::StartupModule()
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("SceneManager")));
     
-    // Setting parameters for physics substepping
-    UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
-    physics_settings->bSubstepping = Config::getValue<bool>({ "SIMULATION_CONTROLLER", "SUBSTEPPING" });
-    physics_settings->MaxSubstepDeltaTime = Config::getValue<float>({ "SIMULATION_CONTROLLER", "MAX_SUBSTEP_DELTA_TIME" });
-    physics_settings->MaxSubsteps = Config::getValue<int32>({ "SIMULATION_CONTROLLER", "MAX_SUBSTEPS" });
-    // According to https://carla.readthedocs.io/en/latest/adv_synchrony_timestep/
-    ASSERT(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS" }) <= Config::getValue<float>({ "SIMULATION_CONTROLLER", "MAX_SUBSTEP_DELTA_TIME" }) * Config::getValue<int32>({ "SIMULATION_CONTROLLER", "MAX_SUBSTEPS" })); 
-
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
 
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
-    // Required for adding thread synchronization logic
+    // required for adding thread synchronization logic
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
     end_frame_delegate_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
 }
@@ -87,10 +79,10 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         auto world_path_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "WORLD_PATH_NAME"});
         auto level_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "LEVEL_NAME"});
 
-        // If the current world is not the desired one, open the desired one
+        // if the current world is not the desired one, open the desired one
         if (world_path_name != "" && world_path_name != TCHAR_TO_UTF8(*(world->GetPathName()))) {
 
-            // Assert that we haven't already tried to open the level, because that means we failed
+            // assert that we haven't already tried to open the level, because that means we failed
             ASSERT(!has_open_level_executed_);
 
             UGameplayStatics::OpenLevel(world, level_name.c_str());
@@ -99,13 +91,13 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         } else {
             has_open_level_executed_ = false;
 
-            // We do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
+            // we do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
             ASSERT(!world_);
 
-            // Cache local reference to the UWorld
+            // cache local reference to the UWorld
             world_ = world;
 
-            // Defer the rest of our initialization code until the OnWorldBeginPlay event
+            // defer the rest of our initialization code until the OnWorldBeginPlay event
             world_begin_play_delegate_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
         }
     }
@@ -118,16 +110,23 @@ void SimulationController::worldBeginPlayEventHandler()
     GEngine->Exec(world_, TEXT("r.GTSyncType 1"));
     GEngine->Exec(world_, TEXT("r.OneFrameThreadLag 0"));
 
+    // checking parameters for physics substepping
+    UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
+    if (physics_settings->bSubstepping) {
+        // According to https://carla.readthedocs.io/en/latest/adv_synchrony_timestep/
+        ASSERT(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS" }) <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps); 
+    }
+
     // execute optional console commands from python client
     for (auto& command : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS"})) {
         GEngine->Exec(world_, UTF8_TO_TCHAR(command.c_str()));
     }
 
-    // Set fixed simulation step time in seconds
+    // set fixed simulation step time in seconds
     FApp::SetBenchmarking(true);
     FApp::SetFixedDeltaTime(Config::getValue<double>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));
 
-    // Pause gameplay
+    // pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
     // create Agent
@@ -154,16 +153,16 @@ void SimulationController::worldBeginPlayEventHandler()
     }
     ASSERT(task_);
 
-    // Create Visualizer
+    // create Visualizer
     visualizer_ = std::make_unique<Visualizer>(world_);
     ASSERT(visualizer_);
 
-    // Deferred initialization for Agent, Task, and Visualizer
+    // deferred initialization for Agent, Task, and Visualizer
     agent_->findObjectReferences(world_);
     task_->findObjectReferences(world_);
     visualizer_->findObjectReferences(world_);
 
-    // Initialize frame state used for thread synchronization
+    // initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
 
     // config values required for rpc communication
@@ -211,61 +210,61 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             agent_ = nullptr;
         }
 
-        // Remove event handlers bound to this world before world gets cleaned up
+        // remove event handlers bound to this world before world gets cleaned up
         world_->OnWorldBeginPlay.Remove(world_begin_play_delegate_handle_);
         world_begin_play_delegate_handle_.Reset();
 
-        // Clear cached world_ pointer
+        // clear cached world_ pointer
         world_ = nullptr;
     }
 }
 
 void SimulationController::beginFrameEventHandler()
 {
-    // If beginTick(...) has indicated (via RequestPreTick framestate) that we should execute a frame of work
+    // if beginTick(...) has indicated (via RequestPreTick framestate) that we should execute a frame of work
     if (frame_state_ == FrameState::RequestPreTick) {
 
-        // Update local state
+        // update local state
         frame_state_ = FrameState::ExecutingPreTick;
 
-        // Unpause the game
+        // unpause the game
         UGameplayStatics::SetGamePaused(world_, false);
 
-        // Execute all pre-tick sync work, wait here for tick(...) to reset work guard
+        // execute all pre-tick sync work, wait here for tick(...) to reset work guard
         rpc_server_->runSync();
 
-        // Execute pre-tick work inside the task
+        // execute pre-tick work inside the task
         task_->beginFrame();
 
-        // Update local state
+        // update local state
         frame_state_ = FrameState::ExecutingTick;
     }
 }
 
 void SimulationController::endFrameEventHandler()
 {
-    // If beginFrameEventHandler(...) has indicated that we are currently executing a frame of work
+    // if beginFrameEventHandler(...) has indicated that we are currently executing a frame of work
     if (frame_state_ == FrameState::ExecutingTick) {
 
-        // Update local state
+        // update local state
         frame_state_ = FrameState::ExecutingPostTick;
 
-        // Execute post-tick work inside the task
+        // execute post-tick work inside the task
         task_->endFrame();
 
-        // Allow tick() to finish executing
+        // allow tick() to finish executing
         end_frame_started_executing_promise_.set_value();
 
-        // Execute all post-tick sync work, wait here for endTick() to reset work guard
+        // execute all post-tick sync work, wait here for endTick() to reset work guard
         rpc_server_->runSync();
 
-        // Pause the game
+        // pause the game
         UGameplayStatics::SetGamePaused(world_, true);
 
-        // Update local state
+        // update local state
         frame_state_ = FrameState::Idle;
 
-        // Allow endTick(...) to finish executing
+        // allow endTick(...) to finish executing
         end_frame_finished_executing_promise_.set_value();
     }
 }
@@ -289,25 +288,25 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("beginTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::Idle);
 
-        // Reinitialize end_frame_started_executing promise and future
+        // reinitialize end_frame_started_executing promise and future
         end_frame_started_executing_promise_ = std::promise<void>();
         end_frame_started_executing_future_ = end_frame_started_executing_promise_.get_future();
 
-        // Reinitialize end_frame_finished_executing promise and future
+        // reinitialize end_frame_finished_executing promise and future
         end_frame_finished_executing_promise_ = std::promise<void>();
         end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
 
-        // Indicate that we want the game thread to execute one frame of work
+        // indicate that we want the game thread to execute one frame of work
         frame_state_ = FrameState::RequestPreTick;
     });
 
     rpc_server_->bindAsync("tick", [this]() -> void {
         ASSERT((frame_state_ == FrameState::ExecutingPreTick) || (frame_state_ == FrameState::RequestPreTick));
 
-        // Indicate that we want the game thread to stop blocking in beginFrame()
+        // indicate that we want the game thread to stop blocking in beginFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // Wait here until the game thread has started executing endFrame()
+        // wait here until the game thread has started executing endFrame()
         end_frame_started_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
@@ -316,10 +315,10 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("endTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
-        // Indicate that we want the game thread to stop blocking in endFrame()
+        // indicate that we want the game thread to stop blocking in endFrame()
         rpc_server_->unblockRunSyncWhenFinishedExecuting();
 
-        // Wait here until the game thread has finished executing endFrame()
+        // wait here until the game thread has finished executing endFrame()
         end_frame_finished_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::Idle);

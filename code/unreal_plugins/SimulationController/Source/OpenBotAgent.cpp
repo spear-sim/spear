@@ -31,22 +31,6 @@ OpenBotAgent::OpenBotAgent(UWorld* world)
     ASSERT(open_bot_pawn_);
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
-    
-    //
-    // observation["imu_data"]
-    //
-    if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
-        imu_sensor_ = std::make_unique<ImuSensor>(open_bot_pawn_->imu_component_);
-        ASSERT(imu_sensor_);
-    }
-    
-    //
-    // observation["sonar_data"]
-    //
-    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
-        sonar_sensor_ = std::make_unique<SonarSensor>(open_bot_pawn_->sonar_component_);
-        ASSERT(sonar_sensor_);
-    }
 
     //
     // observation["camera"]
@@ -64,27 +48,27 @@ OpenBotAgent::OpenBotAgent(UWorld* world)
             camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "CAMERA", "FOV"});
         }
     }
+
+    //
+    // observation["imu"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
+        imu_sensor_ = std::make_unique<ImuSensor>(open_bot_pawn_->imu_component_);
+        ASSERT(imu_sensor_);
+    }
+    
+    //
+    // observation["sonar"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
+        sonar_sensor_ = std::make_unique<SonarSensor>(open_bot_pawn_->sonar_component_);
+        ASSERT(sonar_sensor_);
+    }
 }
 
 OpenBotAgent::~OpenBotAgent()
 {
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
-    
-    //
-    // observation["imu_data"]
-    //
-    if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
-        ASSERT(imu_sensor_);
-        imu_sensor_ = nullptr;
-    }
-
-    //
-    // observation["sonar_data"]
-    //
-    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
-        ASSERT(sonar_sensor_);
-        sonar_sensor_ = nullptr;
-    }
 
     //
     // observation["camera"]
@@ -92,6 +76,22 @@ OpenBotAgent::~OpenBotAgent()
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
         ASSERT(camera_sensor_);
         camera_sensor_ = nullptr;
+    }
+
+    //
+    // observation["imu"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
+        ASSERT(imu_sensor_);
+        imu_sensor_ = nullptr;
+    }
+
+    //
+    // observation["sonar"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
+        ASSERT(sonar_sensor_);
+        sonar_sensor_ = nullptr;
     }
 
     ASSERT(open_bot_pawn_);
@@ -225,28 +225,6 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
         box.shape = {2};
         observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
     }
-    
-    //
-    // observation["imu_data"]
-    //
-    if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.dtype = DataType::Float32;
-        box.shape = {6};
-        observation_space["imu_data"] = std::move(box); // a_x, a_y, a_z, g_x, g_y, g_z
-    }
-
-    //
-    // observation["sonar_data"]
-    //
-    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.dtype = DataType::Float32;
-        box.shape = {1};
-        observation_space["sonar_data"] = std::move(box); // Front obstacle distance in [m]
-    }
 
     //
     // observation["camera"]
@@ -258,6 +236,28 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
         for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
             observation_space["camera_" + camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
         }
+    }
+
+    //
+    // observation["imu"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
+        box.low = std::numeric_limits<float>::lowest();
+        box.high = std::numeric_limits<float>::max();
+        box.dtype = DataType::Float32;
+        box.shape = {6};
+        observation_space["imu"] = std::move(box); // a_x, a_y, a_z, g_x, g_y, g_z
+    }
+
+    //
+    // observation["sonar"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
+        box.low = std::numeric_limits<float>::lowest();
+        box.high = std::numeric_limits<float>::max();
+        box.dtype = DataType::Float32;
+        box.shape = {1};
+        observation_space["sonar"] = std::move(box); // Front obstacle distance in [m]
     }
     
     return observation_space;
@@ -346,20 +346,6 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
         control_state(1) = (duty_cycle(1) + duty_cycle(3)) / 2;
         observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
     }
-    
-    //
-    // observation["imu_data"]
-    //
-    if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
-        observation["imu_data"] = Serialize::toUint8(std::vector<float>{imu_sensor_->linear_acceleration_.X, imu_sensor_->linear_acceleration_.Y, imu_sensor_->linear_acceleration_.Z, imu_sensor_->angular_rate_.X, imu_sensor_->angular_rate_.Y, imu_sensor_->angular_rate_.Z});
-    }
-
-    //
-    // observation["sonar_data"]
-    //
-    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
-        observation["sonar_data"] = Serialize::toUint8(std::vector<float>{sonar_sensor_->range_});
-    }
 
     //
     // observation["camera"]
@@ -371,6 +357,20 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
         for (auto& camera_sensor_observation_component : camera_sensor_observation) {
             observation["camera_" + camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
         }
+    }
+
+    //
+    // observation["imu"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
+        observation["imu"] = Serialize::toUint8(std::vector<float>{imu_sensor_->linear_acceleration_.X, imu_sensor_->linear_acceleration_.Y, imu_sensor_->linear_acceleration_.Z, imu_sensor_->angular_rate_.X, imu_sensor_->angular_rate_.Y, imu_sensor_->angular_rate_.Z});
+    }
+
+    //
+    // observation["sonar"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
+        observation["sonar"] = Serialize::toUint8(std::vector<float>{sonar_sensor_->range_});
     }
 
     return observation;

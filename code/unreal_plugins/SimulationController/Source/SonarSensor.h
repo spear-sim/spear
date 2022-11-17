@@ -19,10 +19,11 @@ public:
     SonarSensor(UBoxComponent* component);
     ~SonarSensor();
 
-    // Updates Sonar measurements by shoting n_rays rays, randomly distributed in a pyramid parametrized by (range_min, range_max, horizontal_fov, vertical_fov), and return the closest measured distance. 
-    void postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick);
+    // Updates Sonar measurements by shoting num_rays rays, randomly distributed in a pyramid,
+    // parametrized by (range_min, range_max, horizontal_fov, vertical_fov), and return the closest measured distance. 
+    void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
 
-    // Measured sonar range.
+    // Measured sonar range
     float range_ = 0.0f;
 
 private:

@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include <Components/BoxComponent.h>
+#include <Components/PrimitiveComponent.h>
 #include <DrawDebugHelpers.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -17,7 +17,7 @@
 #include "Serialize.h"
 #include "TickEvent.h"
 
-ImuSensor::ImuSensor(UBoxComponent* component)
+ImuSensor::ImuSensor(UPrimitiveComponent* component)
 {
     ASSERT(component);
     component_ = component;
@@ -58,18 +58,18 @@ FVector ImuSensor::updateLinearAcceleration(float delta_time)
 
     // 2nd derivative of the polynomic (quadratic) interpolation using the point in current time and two previous steps:
     // d2[i] = -2.0*(y1/(h1*h2)-y2/((h2+h1)*h2)-y0/(h1*(h2+h1)))
-    const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
-    const FRotator& transform_rotator = actor_transform.Rotator();
-    const FVector& current_location = new_object_parent_actor_->GetActorLocation();
-    const FVector Y2 = previous_locations_[0];
-    const FVector Y1 = previous_locations_[1];
-    const FVector Y0 = current_location;
-    const float H1 = delta_time;
-    const float H2 = previous_delta_time_;
-    const float H1AndH2 = H2 + H1;
-    const FVector A = Y1 / (H1 * H2);
-    const FVector B = Y2 / (H2 * (H1AndH2));
-    const FVector C = Y0 / (H1 * (H1AndH2));
+    FTransform actor_transform = new_object_parent_actor_->GetActorTransform();
+    FRotator transform_rotator = actor_transform.Rotator();
+    FVector current_location = new_object_parent_actor_->GetActorLocation();
+    FVector Y2 = previous_locations_[0];
+    FVector Y1 = previous_locations_[1];
+    FVector Y0 = current_location;
+    float H1 = delta_time;
+    float H2 = previous_delta_time_;
+    float H1AndH2 = H2 + H1;
+    FVector A = Y1 / (H1 * H2);
+    FVector B = Y2 / (H2 * (H1AndH2));
+    FVector C = Y0 / (H1 * (H1AndH2));
     FVector linear_acceleration = -2.0f * (A - B - C) / component_->GetWorld()->GetWorldSettings()->WorldToMeters;
 
     // Update the previous locations
@@ -84,7 +84,7 @@ FVector ImuSensor::updateLinearAcceleration(float delta_time)
     // Compute the random component of the acceleration sensor measurement.
     // Normal (or Gaussian or Gauss) distribution will be used as noise function.
     // A mean of 0.0 is used as a first parameter, the standard deviation is determined by the client
-    return FVector{
+    linear_acceleration_ = FVector{
         linear_acceleration.X + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "X"}))(random_gen_),
         linear_acceleration.Y + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "Y"}))(random_gen_),
         linear_acceleration.Z + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "Z"}))(random_gen_)};
@@ -92,34 +92,34 @@ FVector ImuSensor::updateLinearAcceleration(float delta_time)
 
 FVector ImuSensor::updateAngularRate()
 {
-    const FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
-    const FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
+    FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
+    FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
     FVector angular_rate = actor_global_rotation.UnrotateVector(component_->GetPhysicsAngularVelocityInRadians());
 
     // Compute the random component and bias of the gyroscope sensor measurement.
     // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
     // A mean of 0.0 is used as a first parameter.The standard deviation and the bias are determined by the client
-    return FVector{
+    angular_rate_ = FVector{
         angular_rate.X + Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "X"}) + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "X"}))(random_gen_),
         angular_rate.Y + Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Y"}) + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "Y"}))(random_gen_),
         angular_rate.Z + Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Z"}) + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD", "Z"}))(random_gen_)};
 }
 
-void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, enum ELevelTick level_tick)
+void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
 {
     // Accelerometer: measures linear acceleration in m/s^2
-    linear_acceleration_ = updateLinearAcceleration(delta_time);
+    updateLinearAcceleration(delta_time);
 
     // Gyroscope: measures angular rate in [rad/sec]
-    angular_rate_ = updateAngularRate();
+    updateAngularRate();
 
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "DEBUG"})) {
-        const FTransform& actor_transform = new_object_parent_actor_->GetActorTransform();
-        const FRotator& transform_rotator = actor_transform.Rotator();
-        const FVector& imu_location = new_object_parent_actor_->GetActorLocation();
-        const FVector transform_x_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::X));
-        const FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
-        const FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "DEBUG_RENDER"})) {
+        FTransform actor_transform = new_object_parent_actor_->GetActorTransform();
+        FRotator transform_rotator = actor_transform.Rotator();
+        FVector imu_location = new_object_parent_actor_->GetActorLocation();
+        FVector transform_x_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::X));
+        FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
+        FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
 
         // Plot sensor frame
         DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
