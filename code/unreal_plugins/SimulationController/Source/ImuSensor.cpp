@@ -51,7 +51,7 @@ ImuSensor::~ImuSensor()
     component_ = nullptr;
 }
 
-FVector ImuSensor::updateLinearAcceleration(float delta_time)
+void ImuSensor::updateLinearAcceleration(float delta_time)
 {
     // Earth's gravitational acceleration is approximately 9.81 m/s^2
     float GRAVITY = 9.81f;
@@ -90,7 +90,7 @@ FVector ImuSensor::updateLinearAcceleration(float delta_time)
         linear_acceleration.Z + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD", "Z"}))(random_gen_)};
 }
 
-FVector ImuSensor::updateAngularRate()
+void ImuSensor::updateAngularRate()
 {
     FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
     FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
