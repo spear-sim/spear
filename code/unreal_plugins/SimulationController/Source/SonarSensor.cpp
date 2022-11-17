@@ -63,15 +63,12 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
     // Maximum sonar radius in horizontal and vertical direction
     float max_rx = std::tanf(FMath::DegreesToRadians(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "HORIZONTAL_FOV"}) * 0.5f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters;
     float max_ry = std::tanf(FMath::DegreesToRadians(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "VERTICAL_FOV"}) * 0.5f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters;
-    float min_dist = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
     FTransform sensor_transform = component_->K2_GetComponentToWorld();
     FRotator transform_rotator = sensor_transform.Rotator();
     FVector start_location = sensor_transform.GetLocation();
     FVector transform_x_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::X));
     FVector transform_y_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Y));
     FVector transform_z_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Z));
-    range_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
-    float distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
 
     std::vector<bool> hits;
     hits.clear();
@@ -80,31 +77,33 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
     std::vector<FHitResult> hit_results;
     hit_results.clear();
     hit_results.resize(Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}));
+
+    float min_distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
     
     component_->GetWorld()->GetPhysicsScene()->GetPxScene()->lockRead();
     {
         for (int i = 0; i < Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}); i++) {
-
             hit_results[i] = FHitResult(ForceInit);
+            float distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
             float radius = std::uniform_real_distribution<float>()(random_gen_);
             float angle = std::uniform_real_distribution<float>(0.0f, 2 * PI)(random_gen_); // Uniform distibution of vales between 0 and 2*PI
             FVector end_location = start_location + transform_rotator.RotateVector({Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters, max_rx * radius * std::cosf(angle), max_ry * radius * std::sinf(angle)});
+            
             bool hit = component_->GetWorld()->LineTraceSingleByChannel(hit_results.at(i), start_location, end_location, ECollisionChannel::ECC_Visibility, trace_params, FCollisionResponseParams::DefaultResponseParam);
             TWeakObjectPtr<AActor> hit_actor = hit_results.at(i).Actor;
-            FVector ray_sonar = (hit_results.at(i).ImpactPoint - start_location) / world_to_meters;
 
             // If we hit anything...
             if (hit && hit_actor.Get()) {
-
+                FVector ray = (hit_results.at(i).ImpactPoint - start_location) / world_to_meters;
                 // If the angle of hit surface normal and sonar ray is greater than MAX_REFLECTION_ANGLE, then no reflection should be observed
-                if (abs(FVector::DotProduct(hit_results.at(i).Normal, ray_sonar / ray_sonar.Size())) < std::cosf(FMath::DegreesToRadians(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "MAX_REFLECTION_ANGLE"})))) {
+                if (abs(FVector::DotProduct(hit_results.at(i).Normal, ray / ray.Size())) < std::cosf(FMath::DegreesToRadians(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "MAX_REFLECTION_ANGLE"})))) {
                     hits[i] = false;
                     distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
                 } else { // A proper distance measurement can be made
                     hits[i] = true;
                     distance = std::max(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MIN"}), hit_results.at(i).Distance / world_to_meters);
-                    if (distance < min_dist) {
-                        min_dist = distance;
+                    if (distance < min_distance) {
+                        min_distance = distance;
                     }
                 }
 
@@ -114,13 +113,11 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
                 distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
 
             }
-
-            
         }
     }
     component_->GetWorld()->GetPhysicsScene()->GetPxScene()->unlockRead();
 
-    range_ = min_dist + Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NOISE_STD"}) * std::uniform_real_distribution<float>()(random_gen_);
+    range_ = min_distance + Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NOISE_STD"}) * std::uniform_real_distribution<float>()(random_gen_);
 
     // Draw the sensing cone and the sonar rays
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "DEBUG_RENDER"})) {

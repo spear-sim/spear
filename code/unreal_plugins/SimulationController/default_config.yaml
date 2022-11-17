@@ -139,7 +139,6 @@ SIMULATION_CONTROLLER:
   
   SONAR_SENSOR:
     NUM_RAYS: 11
-    DEBUG_RENDER: True
     MAX_REFLECTION_ANGLE: 45.0
     HORIZONTAL_FOV: 30.0
     VERTICAL_FOV: 10.0
@@ -147,9 +146,9 @@ SIMULATION_CONTROLLER:
       MIN: 0.01
       MAX: 10.0
     NOISE_STD: 0.0
+    DEBUG_RENDER: True
 
   IMU_SENSOR:
-    DEBUG_RENDER: True
     ACCELEROMETER_NOISE_STD: 
       X: 0.0
       Y: 0.0
@@ -162,6 +161,7 @@ SIMULATION_CONTROLLER:
       X: 0.0
       Y: 0.0
       Z: 0.0
+    DEBUG_RENDER: True
 
   # We have found these values achieve a good trade-off between image quality and
   # rendering speed. When Unreal defines ClampMin/ClampMax values, it will clamp

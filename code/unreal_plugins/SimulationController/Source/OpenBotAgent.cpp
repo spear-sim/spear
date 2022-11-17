@@ -70,12 +70,13 @@ OpenBotAgent::~OpenBotAgent()
 {
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
 
+    
     //
-    // observation["camera"]
+    // observation["sonar"]
     //
-    if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
-        ASSERT(camera_sensor_);
-        camera_sensor_ = nullptr;
+    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
+        ASSERT(sonar_sensor_);
+        sonar_sensor_ = nullptr;
     }
 
     //
@@ -87,11 +88,11 @@ OpenBotAgent::~OpenBotAgent()
     }
 
     //
-    // observation["sonar"]
+    // observation["camera"]
     //
-    if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
-        ASSERT(sonar_sensor_);
-        sonar_sensor_ = nullptr;
+    if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
+        ASSERT(camera_sensor_);
+        camera_sensor_ = nullptr;
     }
 
     ASSERT(open_bot_pawn_);

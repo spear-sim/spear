@@ -7,10 +7,10 @@
 
 #include <Engine/Engine.h>
 #include <EngineUtils.h>
-#include <PhysicsEngine/PhysicsSettings.h>
 #include <GameFramework/GameModeBase.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/CoreDelegates.h>
+#include <PhysicsEngine/PhysicsSettings.h>
 
 #include "Agent.h"
 #include "Assert/Assert.h"
@@ -112,10 +112,10 @@ void SimulationController::worldBeginPlayEventHandler()
 
     // checking parameters for physics substepping
     UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
-    if (physics_settings->bSubstepping) {
-        // According to https://carla.readthedocs.io/en/latest/adv_synchrony_timestep/
-        ASSERT(Config::getValue<float>({ "SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS" }) <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps); 
-    }
+    // substepping is of paramount importance for the physical consistency of the simulation
+    ASSERT(physics_settings->bSubstepping);
+    // according to https://carla.readthedocs.io/en/latest/adv_synchrony_timestep/
+    ASSERT(Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}) <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps); 
 
     // execute optional console commands from python client
     for (auto& command : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS"})) {
