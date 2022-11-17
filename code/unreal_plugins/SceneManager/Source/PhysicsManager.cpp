@@ -20,7 +20,7 @@ int current_physical_material_id_ = -1;
 void PhysicsManager::initialize()
 {
     for (int physical_material_id = PHYSICAL_MATERIAL_ID_DEFAULT_START; physical_material_id < PHYSICAL_MATERIAL_ID_DEFAULT_END; physical_material_id++) {
-        auto physical_material = LoadObject<UPhysicalMaterial>(nullptr, *FString::Printf(TEXT("/Game/Scene/PhyMaterials/PM_%d.PM_%d"), physical_material_id, physical_material_id));
+        auto physical_material = LoadObject<UPhysicalMaterial>(nullptr, *FString::Printf(TEXT("/SceneManager/PhysicalMaterials/PM_%d.PM_%d"), physical_material_id, physical_material_id));
         ASSERT(physical_material);
         physical_materials_[physical_material_id] = physical_material;
     }
