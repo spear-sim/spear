@@ -97,13 +97,14 @@ if __name__ == "__main__":
     parser.add_argument("--proxy")
     args = parser.parse_args()
 
-    # if the user provies a proxy, install it
-    if args.proxy != "":
+    # if the user provides a proxy, install it
+    if args.proxy is not None:
+        assert args.proxy != ""
         proxy_handler = urllib.request.ProxyHandler({"https": args.proxy, "http": args.proxy})
         opener = urllib.request.build_opener(proxy_handler)
         urllib.request.install_opener(opener=opener)
 
-    # if user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
+    # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id == "":
         scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
         print(scenes_csv_file)
