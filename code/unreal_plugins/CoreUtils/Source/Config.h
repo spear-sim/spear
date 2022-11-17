@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "IgnoreCompilerWarnings.h"
+#include "CompilerWarningUtils.h"
 BEGIN_IGNORE_COMPILER_WARNINGS
 #include <yaml-cpp/yaml.h>
 END_IGNORE_COMPILER_WARNINGS

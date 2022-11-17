@@ -47,15 +47,15 @@ private:
     // store a local reference to a game world
     UWorld* world_ = nullptr;
     
-    std::unique_ptr<RpcServer> rpc_server_ = nullptr;
-    std::unique_ptr<Agent> agent_ = nullptr;
-    std::unique_ptr<Task> task_ = nullptr;
-    std::unique_ptr<Visualizer> visualizer_ = nullptr;
+    std::unique_ptr<Agent> agent_;
+    std::unique_ptr<Task> task_;
+    std::unique_ptr<Visualizer> visualizer_;
+    std::unique_ptr<RpcServer> rpc_server_;
 
     bool has_world_begin_play_executed_ = false;
     bool has_open_level_executed_ = false;
 
-    // thread sychronization elements
+    // thread sychronization
     std::atomic<FrameState> frame_state_;
 
     // used so tick() can wait until end_frame() has started executing before returning, reinitialized in begin_tick()

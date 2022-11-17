@@ -53,7 +53,10 @@ THE SOFTWARE.
         _Pragma("clang diagnostic ignored \"-Wunused-variable\"")            \
         _Pragma("clang diagnostic ignored \"-Wunused-parameter\"")
 
-        // Need /**/ style comments here
+        //
+        // Need /**/ style comments below
+        //
+
         /*
         _Pragma("clang diagnostic ignored \"-Werror\"")                      \
         _Pragma("clang diagnostic ignored \"-Werror=\"")                     \
@@ -85,7 +88,10 @@ THE SOFTWARE.
         _Pragma("GCC diagnostic ignored \"-Wunused-variable\"")            \
         _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
 
-        // Need /**/ style comments here
+        //
+        // Need /**/ style comments below
+        //
+
         /*
         _Pragma("GCC diagnostic ignored \"-Wpedantic\"")                   \
         _Pragma("GCC diagnostic ignored \"-Wformat=\"")                    \

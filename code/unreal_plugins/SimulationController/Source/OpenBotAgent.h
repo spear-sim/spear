@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-#include <Math/Vector.h>
-
 #include "Agent.h"
 
 class AActor;
@@ -51,7 +49,7 @@ private:
     UNavigationSystemV1* nav_sys_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
 
-    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
+    std::unique_ptr<CameraSensor> camera_sensor_;
 
     std::vector<float> trajectory_;
 };

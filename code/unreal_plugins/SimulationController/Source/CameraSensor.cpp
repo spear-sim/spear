@@ -1,9 +1,6 @@
 #include "CameraSensor.h"
 
-#include <map>
-#include <string>
 #include <utility>
-#include <vector>
 
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>

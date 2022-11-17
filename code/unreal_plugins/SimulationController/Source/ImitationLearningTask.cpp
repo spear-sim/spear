@@ -5,8 +5,6 @@
 #include <iostream>
 #include <iterator>
 #include <sstream>
-#include <string>
-#include <vector>
 
 #include <EngineUtils.h>
 #include <NavMesh/NavMeshBoundsVolume.h>

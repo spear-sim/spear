@@ -6,12 +6,13 @@
 #include <vector>
 
 #include "Agent.h"
-#include "CameraSensor.h" // not sure why CameraSensor can't be forward declared but this causes incomplete type errors on macOS
 
 class ACameraActor;
 class ARecastNavMesh;
 class UNavigationSystemV1;
 class UWorld;
+
+class CameraSensor;
 
 struct Box;
 
@@ -45,7 +46,7 @@ private:
     UNavigationSystemV1* nav_sys_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
 
-    std::unique_ptr<CameraSensor> camera_sensor_ = nullptr;
+    std::unique_ptr<CameraSensor> camera_sensor_;
 
     std::map<std::string, std::vector<float>> action_;
 };

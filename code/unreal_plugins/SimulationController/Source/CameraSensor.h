@@ -11,6 +11,8 @@ class UCameraComponent;
 class USceneCaptureComponent2D;
 class UTextureRenderTarget2D;
 
+struct Box;
+
 struct RenderPass
 {
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
