@@ -62,7 +62,12 @@ SIMULATION_CONTROLLER:
       TILE_SIZE_UU: 1
       TILE_POOL_SIZE: 1024
       MAX_SIMPLIFICATION_ERROR: 1.3
+      NAV_MODIFIER_OFFSET_X: 0.0
+      NAV_MODIFIER_OFFSET_Y: 0.0
+      NAV_MODIFIER_OFFSET_Z: 0.0
       WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+      EXPORT_NAV_DATA_OBJ: False
+      EXPORT_NAV_DATA_OBJ_DIR: ""
 
   SPHERE_AGENT:
     SPHERE_ACTOR_NAME: "" # TODO: spawn this actor instead of finding it within the scene

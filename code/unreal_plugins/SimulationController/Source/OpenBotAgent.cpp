@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <AI/NavDataGenerator.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/BoxComponent.h>
 #include <Components/PrimitiveComponent.h>
@@ -13,6 +14,7 @@
 #include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
+#include <NavModifierVolume.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "Assert/Assert.h"
@@ -124,10 +126,12 @@ void OpenBotAgent::findObjectReferences(UWorld* world)
         nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
         ASSERT(nav_sys_);
 
-        INavAgentInterface* nav_agent_interface = dynamic_cast<INavAgentInterface*>(open_bot_pawn_);
-        ASSERT(nav_agent_interface);
+        FNavAgentProperties agent_properties;
+        agent_properties.AgentHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "AGENT_HEIGHT"});
+        agent_properties.AgentRadius     = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "AGENT_RADIUS"});
+        agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
 
-        ANavigationData* nav_data = nav_sys_->GetNavDataForProps(nav_agent_interface->GetNavAgentPropertiesRef());
+        ANavigationData* nav_data = nav_sys_->GetNavDataForProps(agent_properties);
         ASSERT(nav_data);
 
         nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
@@ -444,30 +448,52 @@ void OpenBotAgent::buildNavMesh()
         }
     }
 
-    // Remove ceiling
-    world_box = world_box.ExpandBy(world_box.GetSize() * 0.1f).ShiftBy(FVector(0, 0, -0.3f * world_box.GetSize().Z));
-
-    // Get reference to ANavMeshBoundsVolume
+    // get references to ANavMeshBoundsVolume and ANavModifierVolume
     ANavMeshBoundsVolume* nav_mesh_bounds_volume = nullptr;
     for (TActorIterator<ANavMeshBoundsVolume> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
         nav_mesh_bounds_volume = *actor_itr;
     }
     ASSERT(nav_mesh_bounds_volume);
 
-    // Update ANavMeshBoundsVolume
+    ANavModifierVolume* nav_modifier_volume = nullptr;
+    for (TActorIterator<ANavModifierVolume> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
+        nav_modifier_volume = *actor_itr;
+    }
+    ASSERT(nav_modifier_volume);
+
+    // update ANavMeshBoundsVolume
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_mesh_bounds_volume->SetActorLocation(world_box.GetCenter(), false);
-    nav_mesh_bounds_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
+    nav_mesh_bounds_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.0f);
     nav_mesh_bounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
-    // Rebuild navmesh
+    // update ANavModifierVolume
+    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
+    nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
+    nav_modifier_volume->AddActorWorldOffset(FVector(
+        Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_X"}),
+        Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Y"}),
+        Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Z"})));
+    nav_modifier_volume->GetRootComponent()->UpdateBounds();
+    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    nav_modifier_volume->RebuildNavigationData();
+
+    // rebuild navmesh
     nav_sys_->Build();
 
-    // Debug output  
-    std::cout << "Coordinates of the world box's center (in cm): X: " << world_box.GetCenter().X << ", Y: " << world_box.GetCenter().Y << ", Z: " << world_box.GetCenter().Z << std::endl;
-    std::cout << "Size of the world box (in cm): X: " << world_box.GetSize().X << ", Y: " << world_box.GetSize().Y << ", Z: " << world_box.GetSize().Z << std::endl;
+    // We need to wrap this call with guards because ExportNavigationData(...) is only implemented in non-shipping builds, see:
+    //     Engine/Source/Runtime/Engine/Public/AI/NavDataGenerator.h
+    //     Engine/Source/Runtime/NavigationSystem/Public/NavMesh/RecastNavMeshGenerator.h
+    //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
+#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "EXPORT_NAV_DATA_OBJ"})) {
+        nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "EXPORT_NAV_DATA_OBJ_DIR"}).c_str()) + "/" + open_bot_pawn_->GetWorld()->GetName() + "/");
+    }
+#endif
+
 }
 
 void OpenBotAgent::generateTrajectoryToGoal()
