@@ -98,11 +98,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # if the user provies a proxy, install it
-    if args.proxy_host != "":
+    if args.proxy != "":
         proxy_handler = urllib.request.ProxyHandler({"https": args.proxy, "http": args.proxy})
         opener = urllib.request.build_opener(proxy_handler)
         urllib.request.install_opener(opener=opener)
-        urllib.request.urlretrieve(url, local_path)
 
     # if user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id == "":
