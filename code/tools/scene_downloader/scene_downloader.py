@@ -91,10 +91,10 @@ if __name__ == "__main__":
     parser.add_argument("--platform", required=True)
     parser.add_argument("--temp_dir", default="tmp")
     parser.add_argument("--version", default="v7")
-    parser.add_argument("--scene_id", default="")
-    parser.add_argument("--num_retries", type=int, default=1)
     parser.add_argument("--skip_download_if_exists", default=True)
-    parser.add_argument("--proxy")
+    parser.add_argument("--num_retries", default=1)
+    parser.add_argument("--scene_id", type=str)
+    parser.add_argument("--proxy", type=str)
     args = parser.parse_args()
 
     # if the user provides a proxy, install it
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         urllib.request.install_opener(opener=opener)
 
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
-    if args.scene_id == "":
+    if args.scene_id is None:
         scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
         assert os.path.exists(scenes_csv_file)
         scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
