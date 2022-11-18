@@ -74,7 +74,6 @@ OpenBotAgent::~OpenBotAgent()
 {
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
 
-    
     //
     // observation["sonar"]
     //
@@ -106,6 +105,13 @@ OpenBotAgent::~OpenBotAgent()
 
 void OpenBotAgent::findObjectReferences(UWorld* world)
 {
+    // HACK: find references to spotlights and remove them
+    TArray<AActor*> spot_light_actors;
+    UGameplayStatics::GetAllActorsOfClass(world, ASpotLight::StaticClass(), spot_light_actors);
+    for (auto spot_light_actor : spot_light_actors) {
+        spot_light_actor->Destroy();
+    }
+    
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
     //

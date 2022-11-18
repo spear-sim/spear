@@ -151,7 +151,7 @@ SIMULATION_CONTROLLER:
       MIN: 0.01
       MAX: 10.0
     NOISE_STD: 0.0
-    DEBUG_RENDER: True
+    DEBUG_RENDER: False
 
   IMU_SENSOR:
     ACCELEROMETER_NOISE_STD: 
@@ -166,7 +166,7 @@ SIMULATION_CONTROLLER:
       X: 0.0
       Y: 0.0
       Z: 0.0
-    DEBUG_RENDER: True
+    DEBUG_RENDER: False
 
   # We have found these values achieve a good trade-off between image quality and
   # rendering speed. When Unreal defines ClampMin/ClampMax values, it will clamp
