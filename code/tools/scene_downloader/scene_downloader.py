@@ -47,7 +47,7 @@ def download_scene_pak_files(scene_id, args):
     download_file(scene_metadata_json_remote_path, scene_metadata_json_temp_path, args)
     scene_metadata = json.load(open(scene_metadata_json_temp_path, mode="r"))
 
-    # build a list of pak files to download
+    # build a list of pak files to download, taking care not to add duplicates
     file_descs = []
 
     # map file
@@ -81,7 +81,9 @@ def download_scene_pak_files(scene_id, args):
                 if file_desc not in file_descs:
                     file_descs.append(file_desc)
 
-    download_files(file_descs, args)
+    # download the files
+    for file_desc in file_descs:
+        download_file(file_desc["source"], file_desc["destination"], args)
 
 
 if __name__ == "__main__":
