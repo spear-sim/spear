@@ -5,10 +5,13 @@
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
-#include <Engine/World.h>
 #include <Engine/CollisionProfile.h>
+#include <Engine/StaticMesh.h>
+#include <Engine/StaticMeshActor.h>
+#include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <Materials/Material.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "Assert/Assert.h"
@@ -20,7 +23,40 @@
 
 SphereAgent::SphereAgent(UWorld* world)
 {
-    // TODO: spawn sphere_actor_ here instead of finding it in findObjectReferences
+    // spawn sphere_actor
+    FActorSpawnParameters sphere_spawn_params;
+    sphere_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "ACTOR_NAME"}).c_str());
+    sphere_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    sphere_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, sphere_spawn_params);
+    ASSERT(sphere_actor_);
+
+    sphere_actor_->SetMobility(EComponentMobility::Type::Movable);
+
+    sphere_static_mesh_component_ = sphere_actor_->GetStaticMeshComponent();
+    ASSERT(sphere_static_mesh_component_);
+
+    // load agent mesh and material
+    UStaticMesh* sphere_mesh   = LoadObject<UStaticMesh>(nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "STATIC_MESH"}).c_str()));
+    ASSERT(sphere_mesh);
+    UMaterial* sphere_material = LoadObject<UMaterial>  (nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MATERIAL"}).c_str()));
+    ASSERT(sphere_material);
+    
+    sphere_static_mesh_component_->SetStaticMesh(sphere_mesh);
+    sphere_static_mesh_component_->SetMaterial(0, sphere_material);
+    sphere_actor_->SetActorScale3D(FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MESH_SCALE"}),
+                                           Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MESH_SCALE"}),
+                                           Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MESH_SCALE"})));
+
+    // set physics state
+    sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
+    sphere_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
+    sphere_static_mesh_component_->SetSimulatePhysics(true);
+    sphere_static_mesh_component_->SetAngularDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "ANGULAR_DAMPING"}));
+    sphere_static_mesh_component_->SetLinearDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "LINEAR_DAMPING"}));
+    sphere_static_mesh_component_->BodyInstance.MaxAngularVelocity = Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MAX_ANGULAR_VELOCITY"});
+    sphere_static_mesh_component_->BodyInstance.MassScale = Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MASS_SCALE"});
+    sphere_static_mesh_component_->SetNotifyRigidBodyCollision(true);
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "OBSERVATION_COMPONENTS"});
 
@@ -28,11 +64,11 @@ SphereAgent::SphereAgent(UWorld* world)
     // observation["camera"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
+        FActorSpawnParameters camera_spawn_params;
+        camera_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "ACTOR_NAME"}).c_str());
+        camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-        FActorSpawnParameters spawn_params;
-        spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "CAMERA_ACTOR_NAME"}).c_str());
-        spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        camera_actor_ = world->SpawnActor<ACameraActor>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
+        camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, camera_spawn_params);
         ASSERT(camera_actor_);
 
         camera_sensor_ = std::make_unique<CameraSensor>(
@@ -83,35 +119,14 @@ SphereAgent::~SphereAgent()
         camera_actor_->Destroy();
         camera_actor_ = nullptr;
     }
+
+    ASSERT(sphere_actor_);
+    sphere_actor_->Destroy();
+    sphere_actor_ = nullptr;
 }
 
 void SphereAgent::findObjectReferences(UWorld* world)
 {
-    // TODO: spawn sphere_actor_ in the constructor instead of finding it here
-    for (TActorIterator<AActor> actor_itr(world); actor_itr; ++actor_itr) {
-        std::string actor_name = TCHAR_TO_UTF8(*((*actor_itr)->GetName()));
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE_ACTOR_NAME"})) {
-            ASSERT(!sphere_actor_);
-            sphere_actor_ = *actor_itr;
-            break;
-        }
-    }
-    ASSERT(sphere_actor_);
-
-    // get a reference to the UStaticMeshComponent
-    sphere_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(sphere_actor_->GetRootComponent());
-    ASSERT(sphere_static_mesh_component_);
-
-    // set physics state
-    sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
-    sphere_static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
-    sphere_static_mesh_component_->SetSimulatePhysics(true);
-    sphere_static_mesh_component_->SetAngularDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "ANGULAR_DAMPING"}));
-    sphere_static_mesh_component_->SetLinearDamping(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "LINEAR_DAMPING"}));
-    sphere_static_mesh_component_->BodyInstance.MaxAngularVelocity = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MAX_ANGULAR_VELOCITY"}));
-    sphere_static_mesh_component_->BodyInstance.MassScale = FMath::RadiansToDegrees(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MASS_SCALE"}));
-    sphere_static_mesh_component_->SetNotifyRigidBodyCollision(true);
-
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "OBSERVATION_COMPONENTS"});
 
     //
@@ -141,12 +156,6 @@ void SphereAgent::cleanUpObjectReferences()
         ASSERT(goal_actor_);
         goal_actor_ = nullptr;
     }
-    
-    ASSERT(sphere_static_mesh_component_);   
-    sphere_static_mesh_component_ = nullptr;
-
-    ASSERT(sphere_actor_);
-    sphere_actor_ = nullptr;
 }
 
 std::map<std::string, Box> SphereAgent::getActionSpace() const
@@ -309,8 +318,8 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getStepInfo() const
 
 void SphereAgent::reset()
 {
-    sphere_static_mesh_component_->SetPhysicsLinearVelocity(FVector(0), false);
-    sphere_static_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector(0), false);
+    sphere_static_mesh_component_->SetPhysicsLinearVelocity(FVector::ZeroVector, false);
+    sphere_static_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector, false);
     sphere_static_mesh_component_->GetBodyInstance()->ClearTorques();
     sphere_static_mesh_component_->GetBodyInstance()->ClearForces();
 }

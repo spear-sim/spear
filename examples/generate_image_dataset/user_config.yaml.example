@@ -15,7 +15,7 @@ SIMULATION_CONTROLLER:
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
     STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
     CAMERA:
-      CAMERA_ACTOR_NAME: "GenerateImageDatasetCamera"
+      ACTOR_NAME: "GenerateImageDatasetCamera"
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
       IMAGE_HEIGHT: 480
       IMAGE_WIDTH: 852

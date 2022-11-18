@@ -3,6 +3,9 @@
 #include <algorithm>
 
 #include <EngineUtils.h>
+#include <Engine/StaticMesh.h>
+#include <Engine/StaticMeshActor.h>
+#include <Materials/Material.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "ActorHitEvent.h"
@@ -12,15 +15,28 @@
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
+    // spawn goal actor
     FActorSpawnParameters goal_spawn_params;
     goal_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_ACTOR_NAME"}).c_str());
     goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    goal_actor_ = world->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
+
+    goal_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
     ASSERT(goal_actor_);
 
-    auto scene_component = NewObject<USceneComponent>(goal_actor_);
-    scene_component->SetMobility(EComponentMobility::Movable);
-    goal_actor_->SetRootComponent(scene_component);
+    goal_actor_->SetMobility(EComponentMobility::Movable);
+
+    UStaticMeshComponent* goal_mesh_component = goal_actor_->GetStaticMeshComponent();
+
+    UStaticMesh* goal_mesh   = LoadObject<UStaticMesh>(nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MESH"}).c_str()));
+    ASSERT(goal_mesh);
+    UMaterial* goal_material = LoadObject<UMaterial>  (nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MATERIAL"}).c_str()));
+    ASSERT(goal_material);
+
+    goal_mesh_component->SetStaticMesh(goal_mesh);
+    goal_mesh_component->SetMaterial(0, goal_material);
+    goal_actor_->SetActorScale3D(FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_SCALE"}),
+                                         Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_SCALE"}),
+                                         Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_SCALE"})));
 
     new_object_parent_actor_ = world->SpawnActor<AActor>();
     ASSERT(new_object_parent_actor_);
