@@ -53,9 +53,9 @@ void ImuSensor::updateLinearAcceleration(float delta_time)
 
     // 2nd derivative of the polynomic (quadratic) interpolation using the point in current time and two previous steps:
     // d2[i] = -2.0*(y1/(h1*h2)-y2/((h2+h1)*h2)-y0/(h1*(h2+h1)))
-    FTransform actor_transform = new_object_parent_actor_->GetActorTransform();
-    FRotator transform_rotator = actor_transform.Rotator();
-    FVector current_location = new_object_parent_actor_->GetActorLocation();
+    FTransform sensor_transform = component_->GetComponentTransform();
+    FRotator transform_rotator = sensor_transform.Rotator();
+    FVector current_location = sensor_transform.GetLocation();
     FVector Y2 = previous_locations_[0];
     FVector Y1 = previous_locations_[1];
     FVector Y0 = current_location;
@@ -87,9 +87,9 @@ void ImuSensor::updateLinearAcceleration(float delta_time)
 
 void ImuSensor::updateAngularRate()
 {
-    FQuat actor_global_rotation = new_object_parent_actor_->GetRootComponent()->GetComponentTransform().GetRotation();
-    FQuat sensor_local_rotation = new_object_parent_actor_->GetRootComponent()->GetRelativeTransform().GetRotation();
-    FVector angular_rate = actor_global_rotation.UnrotateVector(component_->GetPhysicsAngularVelocityInRadians());
+    FQuat sensor_global_rotation = component_->GetComponentTransform().GetRotation();
+    FQuat sensor_local_rotation = component_->GetRelativeTransform().GetRotation();
+    FVector angular_rate = sensor_global_rotation.UnrotateVector(component_->GetPhysicsAngularVelocityInRadians());
 
     // Compute the random component and bias of the gyroscope sensor measurement.
     // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
@@ -109,17 +109,17 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTic
     updateAngularRate();
 
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "DEBUG_RENDER"})) {
-        FTransform actor_transform = new_object_parent_actor_->GetActorTransform();
-        FRotator transform_rotator = actor_transform.Rotator();
-        FVector imu_location = new_object_parent_actor_->GetActorLocation();
-        FVector transform_x_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::X));
-        FVector transform_y_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Y));
-        FVector transform_z_axis = transform_rotator.RotateVector(actor_transform.GetUnitAxis(EAxis::Z));
+        FTransform sensor_transform = component_->GetComponentTransform();
+        FRotator transform_rotator = sensor_transform.Rotator();
+        FVector imu_location = sensor_transform.GetLocation();
+        FVector transform_x_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::X));
+        FVector transform_y_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Y));
+        FVector transform_z_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Z));
 
         // Plot sensor frame
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * actor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * sensor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * sensor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * sensor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
 
         // Plot acceleration vector
         DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);

@@ -63,7 +63,7 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
     // Maximum sonar radius in horizontal and vertical direction
     float max_rx = std::tanf(FMath::DegreesToRadians(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "HORIZONTAL_FOV"}) * 0.5f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters;
     float max_ry = std::tanf(FMath::DegreesToRadians(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "VERTICAL_FOV"}) * 0.5f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters;
-    FTransform sensor_transform = component_->K2_GetComponentToWorld();
+    FTransform sensor_transform = component_->GetComponentTransform();
     FRotator transform_rotator = sensor_transform.Rotator();
     FVector start_location = sensor_transform.GetLocation();
     FVector transform_x_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::X));

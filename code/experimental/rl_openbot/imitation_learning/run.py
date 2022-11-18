@@ -296,7 +296,10 @@ if __name__ == "__main__":
 
             # Load the correct map:
             config.defrost()
-            config.SIMULATION_CONTROLLER.LEVEL_ID = mapName
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_"+ mapName + ".Map_" + mapName # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_"+ mapName
+           
+
             config.freeze()
 
             # Create Env object:
@@ -550,7 +553,9 @@ if __name__ == "__main__":
 
             # Load the correct map:
             config.defrost()
-            config.SIMULATION_CONTROLLER.LEVEL_PATH = "/Game/Maps/Map_" + mapName
+            print("/Game/Maps/Map_"+ mapName + ".Map_" + mapName)
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_"+ mapName + ".Map_" + mapName # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_"+ mapName
             config.freeze()
 
             # Create Env object:
@@ -709,8 +714,10 @@ if __name__ == "__main__":
 
         # Load the correct map:
         config.defrost()
-        config.SIMULATION_CONTROLLER.LEVEL_ID = mapNames[0]
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_"+ mapName + ".Map_" + mapName # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_"+ mapName
         config.freeze()
+        
         index_waypoint = 1
 
         # Create Env object:

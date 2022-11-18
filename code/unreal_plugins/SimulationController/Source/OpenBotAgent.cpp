@@ -7,10 +7,12 @@
 #include <Components/BoxComponent.h>
 #include <Components/PrimitiveComponent.h>
 #include <Components/StaticMeshComponent.h>
+#include <Engine/SpotLight.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <Kismet/GameplayStatics.h>
 #include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
@@ -461,11 +463,15 @@ void OpenBotAgent::buildNavMesh()
     }
     ASSERT(nav_mesh_bounds_volume);
 
-    ANavModifierVolume* nav_modifier_volume = nullptr;
-    for (TActorIterator<ANavModifierVolume> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
-        nav_modifier_volume = *actor_itr;
-    }
-    ASSERT(nav_modifier_volume);
+    // Debug output  
+    std::cout << "Coordinates of the world box's center (in cm): X: " << world_box.GetCenter().X << ", Y: " << world_box.GetCenter().Y << ", Z: " << world_box.GetCenter().Z << std::endl;
+    std::cout << "Size of the world box (in cm): X: " << world_box.GetSize().X << ", Y: " << world_box.GetSize().Y << ", Z: " << world_box.GetSize().Z << std::endl;
+
+    // ANavModifierVolume* nav_modifier_volume = nullptr;
+    // for (TActorIterator<ANavModifierVolume> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
+    //     nav_modifier_volume = *actor_itr;
+    // }
+    // ASSERT(nav_modifier_volume);
 
     // update ANavMeshBoundsVolume
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
@@ -475,17 +481,17 @@ void OpenBotAgent::buildNavMesh()
     nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
-    // update ANavModifierVolume
-    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
-    nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
-    nav_modifier_volume->AddActorWorldOffset(FVector(
-        Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_X"}),
-        Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Y"}),
-        Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Z"})));
-    nav_modifier_volume->GetRootComponent()->UpdateBounds();
-    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
-    nav_modifier_volume->RebuildNavigationData();
+    // // update ANavModifierVolume
+    // nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    // nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
+    // nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
+    // nav_modifier_volume->AddActorWorldOffset(FVector(
+    //     Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_X"}),
+    //     Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Y"}),
+    //     Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Z"})));
+    // nav_modifier_volume->GetRootComponent()->UpdateBounds();
+    // nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    // nav_modifier_volume->RebuildNavigationData();
 
     // rebuild navmesh
     nav_sys_->Build();
