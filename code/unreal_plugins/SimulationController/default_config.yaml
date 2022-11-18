@@ -65,6 +65,7 @@ SIMULATION_CONTROLLER:
       WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
 
   SPHERE_AGENT:
+    SPHERE_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
     OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
     STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
@@ -86,9 +87,8 @@ SIMULATION_CONTROLLER:
       FORCE_SCALE: 1.0
       ROTATE_SCALE: 1.0
     SPHERE:
-      SPHERE_ACTOR_NAME: "" # TODO: spawn this actor instead of finding it within the scene
-      SPHERE_MESH_PATH_NAME: ""
-      SPHERE_MATERIAL_PATH_NAME: ""
+      SPHERE_MESH: "/Engine/BasicShapes/Sphere.Sphere"
+      SPHERE_MATERIAL: "/Game/Materials/Agent_MAT.Agent_MAT"
       SPHERE_SCALE: 0.5
       MASS_SCALE: 1.0
       MAX_ANGULAR_VELOCITY: 1.0
@@ -111,8 +111,8 @@ SIMULATION_CONTROLLER:
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: ""
     GOAL_ACTOR_NAME: ""
-    GOAL_MESH_PATH_NAME: ""
-    GOAL_MATERIAL_PATH_NAME: ""
+    GOAL_MESH: "/Engine/BasicShapes/Cylinder.Cylinder"
+    GOAL_MATERIAL: "/Game/Materials/Goal_MAT.Goal_MAT"
     GOAL_SCALE: 0.5
     OBSTACLE_IGNORE_ACTOR_NAMES: []
     RANDOM_SEED: 0

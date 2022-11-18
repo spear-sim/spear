@@ -15,7 +15,7 @@ public class SpearSim : ModuleRules
         // Enable exceptions because some of our third-party dependencies use them
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine" });
+        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }
