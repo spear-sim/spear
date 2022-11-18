@@ -31,7 +31,7 @@ CameraAgent::CameraAgent(UWorld* world)
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
 
         FActorSpawnParameters spawn_params;
-        spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "CAMERA_ACTOR_NAME"}).c_str());
+        spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "ACTOR_NAME"}).c_str());
         spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         camera_actor_ = world->SpawnActor<ACameraActor>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
         ASSERT(camera_actor_);

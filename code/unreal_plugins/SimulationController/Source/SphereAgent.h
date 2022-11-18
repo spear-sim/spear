@@ -12,6 +12,7 @@
 
 class AActor;
 class ACameraActor;
+class AStaticMeshActor;
 class UStaticMeshComponent;
 class UTickEvent;
 class UWorld;
@@ -45,7 +46,7 @@ public:
 
 private:
 
-    AActor* sphere_actor_ = nullptr;
+    AStaticMeshActor* sphere_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
     AActor* new_object_parent_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;

@@ -32,11 +32,6 @@ def download_file(source, destination, args):
     assert os.path.exists(destination)
 
 
-def download_files(file_descs, args):
-    for file_desc in file_descs:
-        download_file(file_desc["source"], file_desc["destination"], args)
-
-
 def download_scene_pak_files(scene_id, args):
 
     print("Downloading PAK files for scene " + scene_id + " into " + args.destination_dir)
@@ -49,6 +44,13 @@ def download_scene_pak_files(scene_id, args):
 
     # build a list of pak files to download, taking care not to add duplicates
     file_descs = []
+
+    # shared asset file (could be downloaded once for all scenes, but we download for each scene for simplicity)
+    file_desc = {
+        "source":      os.path.join(CDN_PATH, args.version, "paks", args.platform, "koolab.pak"),
+        "destination": os.path.join(args.destination_dir, args.version, args.platform, scene_id, "koolab.pak")}
+    if file_desc not in file_descs:
+        file_descs.append(file_desc)
 
     # map file
     file_desc = {

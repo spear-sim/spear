@@ -78,8 +78,8 @@ if __name__ == "__main__":
 
         # change config based on current scene
         config.defrost()
-        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene + "." + "Map_" + scene
-        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + str(scene) + "." + "Map_" + str(scene)
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + str(scene)
         config.freeze()
 
         # create dir for storing images
@@ -112,7 +112,7 @@ if __name__ == "__main__":
                 return_status = cv2.imwrite(output_path +f"/{pose['index']}.png", obs[f"camera_{render_pass}"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
                 assert return_status == True
 
-        #cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
 
         # close the current scene
         env.close()
