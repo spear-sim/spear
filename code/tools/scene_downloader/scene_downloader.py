@@ -32,11 +32,6 @@ def download_file(source, destination, args):
     assert os.path.exists(destination)
 
 
-def download_files(file_descs, args):
-    for file_desc in file_descs:
-        download_file(file_desc["source"], file_desc["destination"], args)
-
-
 def download_scene_pak_files(scene_id, args):
 
     print("Downloading PAK files for scene " + scene_id + " into " + args.destination_dir)
