@@ -10,17 +10,23 @@ SIMULATION_CONTROLLER:
   AGENT: "SphereAgent" # "SphereAgent" or "OpenBotAgent"
 
   SPHERE_AGENT:
-    SPHERE_ACTOR_NAME: "Sphere"
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
     OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
     STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
+    SPHERE:
+      ACTOR_NAME: "Sphere"
+      MESH_SCALE: 0.5
+      MASS_SCALE: 1.0
+      MAX_ANGULAR_VELOCITY: 1.0
+      LINEAR_DAMPING: 0.0
+      ANGULAR_DAMPING: 0.0
     COMPASS:
       GOAL_ACTOR_NAME: "Goal"
       OFFSET_TO_GOAL_SCALE: 1.0
       LINEAR_VELOCITY_SCALE: 1.0
       YAW_SCALE: 1.0
     CAMERA:
-      CAMERA_ACTOR_NAME: "CameraActor"
+      ACTOR_NAME: "CameraActor"
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
@@ -31,12 +37,6 @@ SIMULATION_CONTROLLER:
     APPLY_FORCE:
       FORCE_SCALE: 1.0
       ROTATE_SCALE: 1.0
-    SPHERE:
-      SPHERE_SCALE: 0.5
-      MASS_SCALE: 1.0
-      MAX_ANGULAR_VELOCITY: 1.0
-      LINEAR_DAMPING: 0.0
-      ANGULAR_DAMPING: 0.0
 
   OPENBOT_AGENT:
     OPENBOT_ACTOR_NAME: "Open_Bot"
@@ -94,4 +94,3 @@ SIMULATION_CONTROLLER:
 
 ROBOT_SIM:
   PIP_CAMERA_LOAD_SEGMENTATION_MATERIAL: False
-    

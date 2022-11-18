@@ -25,7 +25,7 @@ SphereAgent::SphereAgent(UWorld* world)
 {
     // spawn sphere_actor
     FActorSpawnParameters sphere_spawn_params;
-    sphere_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE_ACTOR_NAME"}).c_str());
+    sphere_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "ACTOR_NAME"}).c_str());
     sphere_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
     sphere_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, sphere_spawn_params);
@@ -37,16 +37,16 @@ SphereAgent::SphereAgent(UWorld* world)
     ASSERT(sphere_static_mesh_component_);
 
     // load agent mesh and material
-    UStaticMesh* sphere_mesh   = LoadObject<UStaticMesh>(nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_MESH"}).c_str()));
+    UStaticMesh* sphere_mesh   = LoadObject<UStaticMesh>(nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "STATIC_MESH"}).c_str()));
     ASSERT(sphere_mesh);
-    UMaterial* sphere_material = LoadObject<UMaterial>  (nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_MATERIAL"}).c_str()));
+    UMaterial* sphere_material = LoadObject<UMaterial>  (nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MATERIAL"}).c_str()));
     ASSERT(sphere_material);
     
     sphere_static_mesh_component_->SetStaticMesh(sphere_mesh);
     sphere_static_mesh_component_->SetMaterial(0, sphere_material);
-    sphere_actor_->SetActorScale3D(FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_SCALE"}),
-                                           Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_SCALE"}),
-                                           Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "SPHERE_SCALE"})));
+    sphere_actor_->SetActorScale3D(FVector(Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MESH_SCALE"}),
+                                           Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MESH_SCALE"}),
+                                           Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "SPHERE", "MESH_SCALE"})));
 
     // set physics state
     sphere_static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
@@ -65,7 +65,7 @@ SphereAgent::SphereAgent(UWorld* world)
     //
     if (std::find(observation_components.begin(), observation_components.end(), "camera") != observation_components.end()) {
         FActorSpawnParameters camera_spawn_params;
-        camera_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "CAMERA_ACTOR_NAME"}).c_str());
+        camera_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "ACTOR_NAME"}).c_str());
         camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
         camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, camera_spawn_params);
