@@ -52,6 +52,14 @@ SIMULATION_CONTROLLER:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
       AGENT_MAX_STEP_HEIGHT: 2.0
+    AUTOPILOT:
+      PROPORTIONAL_GAIN_HEADING: 5.25 # PID proportional gain for the autopilot
+      DERIVATIVE_GAIN_HEADING: 2.1    # PID derivative gain for the autopilot
+      PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
+      DERIVATIVE_GAIN_DIST: -0.1      # PID derivative gain for the autopilot
+      FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
+      CONTROL_SATURATION: 0.9         # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+      ACCEPTANCE_RADIUS: 0.15         # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
 
   OPENBOT_AGENT:
     OPENBOT_ACTOR_NAME: "OpenBotAgent"

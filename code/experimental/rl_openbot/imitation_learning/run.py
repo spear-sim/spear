@@ -277,19 +277,6 @@ if __name__ == "__main__":
 
         # Main loop, executing a set of random actions, getting observations and storing everything in a set of files:
 
-        # The agent makes the following observations:
-
-        # ---> left wheel commands in the range [-1, 1]
-        # ---> right wheel commands in the range [-1, 1]
-        # ---> X position in world frame.
-        # ---> Y position in world frame.
-        # ---> Z position in world frame.
-        # ---> Roll in world frame.
-        # ---> Pitch in world frame.
-        # ---> Yaw in world frame.
-        # ---> X position of the next waypoint in world frame.
-        # ---> Y position of the next waypoint in world frame.
-
         speedMultiplier = 1
 
         for mapName in mapNames: # For each map
@@ -310,7 +297,7 @@ if __name__ == "__main__":
 
                 collisionFlag = False
                 goalReachedFlag = False
-                array_obs = np.empty([numIter, 11])
+                array_obs = np.empty([numIter, 18])
                 executedIterations = 0
                 index_waypoint = 1
 
@@ -328,14 +315,31 @@ if __name__ == "__main__":
                 obs = env.reset()
                 
                 # Send Zero action to the agent and collect initial trajectory observations:
+                # obs["state_data"] = X, Y, Z, Pitch, Yaw, Roll
+                # obs["control_data"] = ctrl left, ctrl right
+                
                 obs, reward, done, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
-                Q = obs["telemetry_data"][3:7]
-                roll, pitch, yaw = quatToRPY(Q)
-                actualPoseYawXY = np.array([yaw, obs["telemetry_data"][0], obs["telemetry_data"][1]]) # [Yaw, X, Y], for velocity initialization
-                dYaw = yaw - actualPoseYawXY[0]
-                desiredPositionXY = np.array([info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint], info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
-
-                numWaypoints = len(info["agent_controller_step_info"]["trajectory_data"])/3 - 1
+                
+                ctrl_left = obs["control_data"][0]
+                ctrl_right = obs["control_data"][1]
+                pos_x = obs["state_data"][0]
+                pos_y = obs["state_data"][1]
+                pos_z = obs["state_data"][2]
+                pitch = obs["state_data"][3]
+                yaw = obs["state_data"][4]
+                roll = obs["state_data"][5]
+                sonar = obs["sonar"]
+                imu_ax = obs["imu"][0]
+                imu_ay = obs["imu"][1]
+                imu_az = obs["imu"][2]
+                imu_gx = obs["imu"][3]
+                imu_gy = obs["imu"][4]
+                imu_gz = obs["imu"][5]
+                
+                numWaypoints = len(info["agent_step_info"]["trajectory_data"])/3 - 1
+                print(info["agent_step_info"]["trajectory_data"])
+                desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
+                actualPoseYawXY = np.array([yaw, pos_x, pos_y]) 
 
                 # Take a few steps:
                 for i in range(numIter):
@@ -351,20 +355,18 @@ if __name__ == "__main__":
                     Kd_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_DIST
                     Kp_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_HEADING
                     Kd_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_HEADING
-                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
+                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.ACCEPTANCE_RADIUS
                     forwardMinAngle = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.FORWARD_MIN_ANGLE
                     controlSaturation = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.CONTROL_SATURATION
                     dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
 
                     # XY position of the next waypoint in world frame:
-                    dXY = np.array([obs["telemetry_data"][0], obs["telemetry_data"][1]]) - desiredPositionXY
-                    desiredPositionXY = np.array([info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint], info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
+                    dXY = np.array([pos_x, pos_y]) - desiredPositionXY
+                    desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
 
                     # Current position and heading of the vehicle in world frame:
-                    Q = obs["telemetry_data"][3:7]
-                    roll, pitch, yaw = quatToRPY(Q)
                     dYaw = yaw - actualPoseYawXY[0]
-                    actualPoseYawXY = np.array([yaw, obs["telemetry_data"][0], obs["telemetry_data"][1]]) # [Yaw, X, Y]
+                    actualPoseYawXY = np.array([yaw, pos_x, pos_y]) # [Yaw, X, Y]
 
                     # Numerical diff:
                     linVelNorm = np.linalg.norm(dXY/dt)
@@ -375,20 +377,47 @@ if __name__ == "__main__":
                     # Send action to the agent and collect observations:
                     obs, reward, done, info = env.step({"apply_voltage": action})
                     
-                    print(obs["sonar_data"])
+                    ctrl_left = obs["control_data"][0]
+                    ctrl_right = obs["control_data"][1]
+                    pos_x = obs["state_data"][0]
+                    pos_y = obs["state_data"][1]
+                    pos_z = obs["state_data"][2]
+                    pitch = obs["state_data"][3]
+                    yaw = obs["state_data"][4]
+                    roll = obs["state_data"][5]
+                    sonar = obs["sonar"]
+                    imu_ax = obs["imu"][0]
+                    imu_ay = obs["imu"][1]
+                    imu_az = obs["imu"][2]
+                    imu_gx = obs["imu"][3]
+                    imu_gy = obs["imu"][4]
+                    imu_gz = obs["imu"][5]
+                    
+                    print(f"Control: {obs['control_data']}")
+                    print(f"State: {obs['state_data']}")
+                    print(f"Sonar: {obs['sonar']}")
+                    print(f"IMU: {obs['imu']}")
+                   
 
                     # Fill an array with the different observations:
-                    array_obs[i][0] = speedMultiplier*obs["control_data"][0] # ctrl left
-                    array_obs[i][1] = speedMultiplier*obs["control_data"][1] # ctrl right
-                    array_obs[i][2] = obs["telemetry_data"][0] # agent pos X wrt. world
-                    array_obs[i][3] = obs["telemetry_data"][1] # agent pos Y wrt. world
-                    array_obs[i][4] = obs["telemetry_data"][2] # agent pos Z wrt. world
+                    array_obs[i][0] = speedMultiplier*ctrl_left
+                    array_obs[i][1] = speedMultiplier*ctrl_right
+                    array_obs[i][2] = pos_x # agent pos X wrt. world
+                    array_obs[i][3] = pos_y # agent pos Y wrt. world
+                    array_obs[i][4] = pos_z # agent pos Z wrt. world
                     array_obs[i][5] = roll # agent Roll wrt. world
                     array_obs[i][6] = pitch # agent Pitch wrt. world
                     array_obs[i][7] = yaw # agent Yaw wrt. world
-                    array_obs[i][8] = info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint] # desired (waypoint) agent pos X wrt. world
-                    array_obs[i][9] = info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint + 1] # desired (waypoint) agent pos Y wrt. world
+                    array_obs[i][8] = info["agent_step_info"]["trajectory_data"][index_waypoint][0] # desired (waypoint) agent pos X wrt. world
+                    array_obs[i][9] = info["agent_step_info"]["trajectory_data"][index_waypoint][1] # desired (waypoint) agent pos Y wrt. world
                     array_obs[i][10] = ts # time stamp
+                    array_obs[i][11] = sonar
+                    array_obs[i][12] = imu_ax
+                    array_obs[i][13] = imu_ay
+                    array_obs[i][14] = imu_az
+                    array_obs[i][15] = imu_gx
+                    array_obs[i][16] = imu_gy
+                    array_obs[i][17] = imu_gz
                     
                     if array_obs[i][4] < 0: # For now we don't consider underground operation ! 
                         collisionFlag = True
@@ -398,7 +427,7 @@ if __name__ == "__main__":
                     #print(f"Pose: {array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]}")
 
                     # Save the images:
-                    im = Image.fromarray(obs["rgb_data"])
+                    im = Image.fromarray(obs["camera_final_color"])
                     im.save(dataFolderName+"images/%d.jpeg" % i)
 
                     if waypointReached:
@@ -599,7 +628,7 @@ if __name__ == "__main__":
                     #executedIterations = i+1
                     ct = datetime.datetime.now()
                     ts = 10000*ct.timestamp()
-                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
+                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.ACCEPTANCE_RADIUS
 
                     # Process (crop) visual observations:
                     
@@ -728,13 +757,13 @@ if __name__ == "__main__":
                 
         # Send Zero action to the agent and collect initial trajectory observations:
         obs, reward, done, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
-        Q = obs["telemetry_data"][3:7]
+        Q = obs["state_data"][3:7]
         roll, pitch, yaw = quatToRPY(Q)
-        actualPoseYawXY = np.array([yaw, obs["telemetry_data"][0], obs["telemetry_data"][1]]) # [Yaw, X, Y], for velocity initialization
+        actualPoseYawXY = np.array([yaw, obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y], for velocity initialization
         dYaw = yaw - actualPoseYawXY[0]
-        desiredPositionXY = np.array([info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint], info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
+        desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
 
-        numWaypoints = len(info["agent_controller_step_info"]["trajectory_data"])/3 - 1
+        numWaypoints = len(info["agent_step_info"]["trajectory_data"])/3 - 1
 
         # cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
         # cv2.waitKey(0)
@@ -753,19 +782,19 @@ if __name__ == "__main__":
             Kd_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_DIST
             Kp_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_HEADING
             Kd_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_HEADING
-            acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
+            acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.ACCEPTANCE_RADIUS
             forwardMinAngle = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.FORWARD_MIN_ANGLE
             controlSaturation = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.CONTROL_SATURATION
             dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
 
             # XY position of the next waypoint in world frame:
-            dXY = np.array([obs["telemetry_data"][0], obs["telemetry_data"][1]]) - desiredPositionXY
-            desiredPositionXY = np.array([info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint], info["agent_controller_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
+            dXY = np.array([obs["state_data"][0], obs["state_data"][1]]) - desiredPositionXY
+            desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
 
             # Current position and heading of the vehicle in world frame:
-            Q = obs["telemetry_data"][3:7]
+            Q = obs["state_data"][3:7]
             roll, pitch, yaw = quatToRPY(Q)
-            actualPoseYawXY = np.array([yaw, obs["telemetry_data"][0], obs["telemetry_data"][1]]) # [Yaw, X, Y]
+            actualPoseYawXY = np.array([yaw, obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y]
             dYaw = yaw - actualPoseYawXY[0]
             
 
