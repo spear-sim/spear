@@ -455,10 +455,6 @@ void OpenBotAgent::buildNavMesh()
     }
     ASSERT(nav_mesh_bounds_volume);
 
-    // Debug output  
-    std::cout << "Coordinates of the world box's center (in cm): X: " << world_box.GetCenter().X << ", Y: " << world_box.GetCenter().Y << ", Z: " << world_box.GetCenter().Z << std::endl;
-    std::cout << "Size of the world box (in cm): X: " << world_box.GetSize().X << ", Y: " << world_box.GetSize().Y << ", Z: " << world_box.GetSize().Z << std::endl;
-
     // ANavModifierVolume* nav_modifier_volume = nullptr;
     // for (TActorIterator<ANavModifierVolume> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
     //     nav_modifier_volume = *actor_itr;
