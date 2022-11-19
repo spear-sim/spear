@@ -7,7 +7,6 @@
 #include <Components/BoxComponent.h>
 #include <Components/PrimitiveComponent.h>
 #include <Components/StaticMeshComponent.h>
-#include <Engine/SpotLight.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
@@ -107,13 +106,6 @@ OpenBotAgent::~OpenBotAgent()
 
 void OpenBotAgent::findObjectReferences(UWorld* world)
 {
-    // HACK: find references to spotlights and remove them
-    TArray<AActor*> spot_light_actors;
-    UGameplayStatics::GetAllActorsOfClass(world, ASpotLight::StaticClass(), spot_light_actors);
-    for (auto spot_light_actor : spot_light_actors) {
-        spot_light_actor->Destroy();
-    }
-    
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
