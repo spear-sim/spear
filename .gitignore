@@ -77,6 +77,7 @@ code/unreal_projects/InteriorEnvironment/Standalone-Development
 code/unreal_projects/InteriorEnvironment/Standalone-Shipping
 code/unreal_projects/InteriorEnvironment/Temp
 code/unreal_projects/InteriorEnvironment/ThirdParty
+code/unreal_projects/InteriorEnvironment/tmp
 code/unreal_projects/InteriorEnvironment/user_config.yaml
 code/unreal_projects/InteriorEnvironment/.vscode
 code/unreal_projects/InteriorEnvironment/.ignore
@@ -104,6 +105,7 @@ code/unreal_projects/PlayEnvironment/Saved
 code/unreal_projects/PlayEnvironment/Standalone-Development
 code/unreal_projects/PlayEnvironment/Standalone-Shipping
 code/unreal_projects/PlayEnvironment/Temp
+code/unreal_projects/PlayEnvironment/tmp
 code/unreal_projects/PlayEnvironment/ThirdParty
 code/unreal_projects/PlayEnvironment/user_config.yaml
 code/unreal_projects/PlayEnvironment/.vscode
@@ -135,6 +137,7 @@ code/unreal_projects/RobotProject/Standalone-Development
 code/unreal_projects/RobotProject/Standalone-Shipping
 code/unreal_projects/RobotProject/Temp
 code/unreal_projects/RobotProject/ThirdParty
+code/unreal_projects/RobotProject/tmp
 code/unreal_projects/RobotProject/user_config.yaml
 code/unreal_projects/RobotProject/.vscode
 code/unreal_projects/RobotProject/.ignore
@@ -165,7 +168,12 @@ code/unreal_projects/SpearSim/Standalone-Development
 code/unreal_projects/SpearSim/Standalone-Shipping
 code/unreal_projects/SpearSim/Temp
 code/unreal_projects/SpearSim/ThirdParty
+code/unreal_projects/SpearSim/tmp
 code/unreal_projects/SpearSim/user_config.yaml
 code/unreal_projects/SpearSim/.vscode
 code/unreal_projects/SpearSim/.ignore
 code/unreal_projects/SpearSim/.kdev4
+
+examples/generate_image_dataset/images
+examples/generate_image_dataset/tmp
+examples/generate_image_dataset/user_config.yaml

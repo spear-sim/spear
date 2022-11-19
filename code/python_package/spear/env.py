@@ -214,6 +214,23 @@ class Env(gym.Env):
 
         assert os.path.exists(launch_executable_internal)
 
+        # create a symlink to SPEAR.SCENES_DIR if one doesn't already exist
+        if self._config.SPEAR.SCENES_DIR != "":
+            assert self._config.SPEAR.CONTENT_DIR != ""
+            paks_dir = os.path.join(self._config.SPEAR.CONTENT_DIR, "Paks")
+            scenes_dir = os.path.join(paks_dir, "Scenes")
+            if os.path.exists(paks_dir) and not os.path.exists(scenes_dir) and not os.path.islink(scenes_dir):
+
+                print(f"Creating symlink: {self._config.SPEAR.SCENES_DIR} -> {scenes_dir}")
+                print()
+
+                try:
+                    os.symlink(self._config.SPEAR.SCENES_DIR, scenes_dir)
+                except OSError as e:
+                    print(e)
+                    print("\n\n\nThe config value SPEAR.SCENES_DIR is set to a specific directory, so spear.Env() is trying to create a symlink. If you are on Windows, you need admin privileges.\n\n")
+                    assert False
+
         args = [launch_executable_internal] + launch_params
 
         print("Launching executable with the following arguments:")

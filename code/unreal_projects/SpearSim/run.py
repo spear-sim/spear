@@ -24,7 +24,7 @@ if __name__ == "__main__":
     for i in range(100):
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
             obs, reward, done, info = env.step({"apply_force": np.array([1, 1], dtype=np.float32)})
-            print("SphereAgent: ", obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
+            print("SphereAgent: ", obs["compass"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
         elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
             obs, reward, done, info = env.step({"apply_voltage": np.array([1, 1], dtype=np.float32)})
             print("OpenBotAgent: ", obs["state_data"], obs["control_data"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)

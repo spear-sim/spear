@@ -1,11 +1,8 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
   STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/interiorsim/code/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
-  TEMP_DIR: "C:/Users/ADAS/repos/interiorsim/code/unreal_projects/SpearSim/Temp"
 
 SIMULATION_CONTROLLER:
-  WORLD_PATH_NAME: "/Game/DefaultMap.DefaultMap"  # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
-  LEVEL_NAME: "/Game/DefaultMap"                       # full path to the map excluding the repeated name, e.g., "/Game/NewMap"
   TASK: "PointGoalNavTask"
   AGENT: "SphereAgent" # "SphereAgent" or "OpenBotAgent"
 
@@ -35,11 +32,11 @@ SIMULATION_CONTROLLER:
       POSITION_OFFSET_Y: 0.0
       POSITION_OFFSET_Z: 1.0
     APPLY_FORCE:
-      FORCE_SCALE: 1.0
-      ROTATE_SCALE: 1.0
+      FORCE_SCALE: 100000.0
+      ROTATE_SCALE: 2.0
 
   OPENBOT_AGENT:
-    OPENBOT_ACTOR_NAME: "Open_Bot"
+    OPENBOT_ACTOR_NAME: "OpenBot"
     ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
     OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
     STEP_INFO_COMPONENTS: ["trajectory_data"]
@@ -89,8 +86,5 @@ SIMULATION_CONTROLLER:
       SPAWN_DISTANCE_THRESHOLD: 50.0
 
   VISUALIZER:
-    ACTOR_NAME: "DebugCameraActor" # "DebugCameraActor" or "ObservationCameraActor"
+    ACTOR_NAME: "DebugCameraActor"
     SPAWN_CAMERA: False
-
-ROBOT_SIM:
-  PIP_CAMERA_LOAD_SEGMENTATION_MATERIAL: False

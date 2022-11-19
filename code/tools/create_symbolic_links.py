@@ -13,7 +13,7 @@ def create_symlink(src, dst):
         os.symlink(src, dst)
     except OSError as e:
         print(e)
-        print("\n\n\nIf you are running this script on Windows OS, you need to run it in a terminal with admin privileges.\n\n")
+        print("\n\n\nIf you are running this script on Windows, you need admin privileges.\n\n")
         assert False
 
 
