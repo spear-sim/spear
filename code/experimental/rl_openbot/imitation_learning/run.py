@@ -28,10 +28,8 @@ import shutil
 #import tflite_runtime.interpreter as tflite
 import time
 import re
+import ffmpeg # Careful: install ffmpeg-python
 
-#from interiorsim import Env
-#from interiorsim.config import get_config
-#from interiorsim.constants import INTERIORSIM_ROOT_DIR
 
 import spear
 
@@ -40,26 +38,39 @@ def GenerateVideo(config, mapName, run):
     print("Generating video from the sequence of observations")
     image_folder = f"dataset/uploaded/run_{mapName}_{run}/data/images"
     video_name = f"videos/run_{mapName}_{run}.avi"
-    
+    video_name_compressed = f"videos/run_{mapName}_{run}_compressed.mp4"
+
     if not (os.path.exists("videos")):
         os.makedirs("videos")
 
     images = [img for img in os.listdir(image_folder)]
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
-    
+
     rate = int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS)
 
-    video = cv2.VideoWriter(video_name, 0, 100, (width,height))
+    video = cv2.VideoWriter(video_name, 0, rate, (width, height))
 
-    images.sort(key=lambda f: int(re.sub('\D', '', f))) #good initial sort but doesnt sort numerically very well
+    # good initial sort but doesnt sort numerically very well
+    images.sort(key=lambda f: int(re.sub('\D', '', f)))
 
     for image in images:
-        #print(image)
         video.write(cv2.imread(os.path.join(image_folder, image)))
 
     cv2.destroyAllWindows()
     video.release()
+
+    try:
+        i = ffmpeg.input(video_name)
+        print("Compressing video...")
+        out = ffmpeg.output(i, video_name_compressed, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run()
+        print("Done !")
+
+    except FileNotFoundError as e:
+        print('You do not have ffmpeg installed!', e)
+        print('You can install ffmpeg by reading https://github.com/kkroening/ffmpeg-python/issues/251')
+        return False
+
 
 def Clamp(n, smallest, largest):
     return max(smallest, min(n, largest))
@@ -173,7 +184,7 @@ def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, K
     targetLocationReached = False
     forwardCtrl = 0.0
     rightCtrl = 0.0
-    action = np.array([0.0,0.0])
+    action = np.array([0.0,0.0], dtype=np.float32)
     deltaYaw = 0.0
     forward = np.array([1,0]) # Front axis is the X axis.
     forwardRotated = np.array([0,0])
@@ -336,7 +347,7 @@ if __name__ == "__main__":
                 imu_gy = obs["imu"][4]
                 imu_gz = obs["imu"][5]
                 
-                numWaypoints = len(info["agent_step_info"]["trajectory_data"])/3 - 1
+                numWaypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
                 print(info["agent_step_info"]["trajectory_data"])
                 desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
                 actualPoseYawXY = np.array([yaw, pos_x, pos_y]) 
@@ -375,6 +386,10 @@ if __name__ == "__main__":
                     action, waypointReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
 
                     # Send action to the agent and collect observations:
+                    #print(f"Action: {action}")
+                    #print(f"waypointReached: {waypointReached}")
+                   
+                    
                     obs, reward, done, info = env.step({"apply_voltage": action})
                     
                     ctrl_left = obs["control_data"][0]
@@ -435,7 +450,7 @@ if __name__ == "__main__":
                             print(f"Waypoint {index_waypoint} over {numWaypoints} reached !")
                             index_waypoint = index_waypoint + 1
                         else: # Goal reached !
-                            print("Goal reached !")
+                            print("Goal reached (distance check) !")
                             goalReachedFlag = True
                             break
 
@@ -446,7 +461,7 @@ if __name__ == "__main__":
                             collisionFlag = True
 
                         if info["task_step_info"]["hit_goal"]:
-                            print("Goal reached !")
+                            print("Goal reached (collision check)  !")
                             goalReachedFlag = True
 
                         break
@@ -666,7 +681,7 @@ if __name__ == "__main__":
 
                     # Command
                     act = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
-                    action = np.array([act[0][0],act[0][1]])
+                    action = np.array([act[0][0],act[0][1]], dtype=np.float32)
                     #print(action)
                     
                     writer_infer.writerow( (i, obs["physical_observation"][2], obs["physical_observation"][3], obs["physical_observation"][4], obs["physical_observation"][5], obs["physical_observation"][6], obs["physical_observation"][7], obs["physical_observation"][8], obs["physical_observation"][9], cmd[0], cmd[1], cmd[2], action[0], action[1], executionTime, reward, obs["physical_observation"][10]) )
@@ -763,7 +778,7 @@ if __name__ == "__main__":
         dYaw = yaw - actualPoseYawXY[0]
         desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
 
-        numWaypoints = len(info["agent_step_info"]["trajectory_data"])/3 - 1
+        numWaypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
 
         # cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
         # cv2.waitKey(0)

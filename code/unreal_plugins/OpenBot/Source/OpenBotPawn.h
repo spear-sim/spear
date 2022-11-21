@@ -39,12 +39,18 @@ public:
     // Function that applies a given command to the vehicle (e.g., as a result
     // of a remote call from a Python client). The input vector will be clamped
     // to be between -1.0 and 1.0.
-    void setDutyCycleAndClamp(Eigen::Vector4f duty_cycle);
+    void setDutyCycleAndClamp(const Eigen::Vector4f& duty_cycle);
 
     // Provides access to the current command sent to the OpenBot (e.g., to return
     // to a Python client). This function is required because the command to be
     // executed by the OpenBot might come from keyboard user input.
     Eigen::Vector4f getDutyCycle() const;
+
+    // Apply high braking torque to make sure the wheels don't move
+    void activateBrakes();
+
+    // Releases brakes
+    void deactivateBrakes();
 
     // Reset the physical state of the wheels
     void resetPhysicsState();

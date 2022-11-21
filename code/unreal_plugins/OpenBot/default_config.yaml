@@ -1,7 +1,7 @@
 OPENBOT:
   OPENBOT_PAWN:
-    SKELETAL_MESH: "/OpenBot/V0/Meshes/OpenBot_V0_Mesh.OpenBot_V0_Mesh"
-    ANIM_INSTANCE: "/OpenBot/V0/Meshes/OpenBot_V0_Animation.OpenBot_V0_Animation_C"
+    SKELETAL_MESH: "/OpenBot/V1/Meshes/OpenBot_V1_Mesh.OpenBot_V1_Mesh"
+    ANIM_INSTANCE: "/OpenBot/V1/Meshes/OpenBot_V1_Animation.OpenBot_V1_Animation_C"
 
     MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
     GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
@@ -15,40 +15,41 @@ OPENBOT:
     ACTION_SCALE: 255              # Action scaling factor
 
     VEHICLE_COMPONENT:
+      MASS: 1.12                   # Mass of the vehicle chassis in [kg]
       DRAG_COEFFICIENT: 1.0        # DragCoefficient of the vehicle chassis
       CHASSIS_WIDTH: 15.0          # Chassis width used for drag force computation in [cm]
       CHASSIS_HEIGHT: 15.0         # Chassis height used for drag force computation in [cm]
       MOTOR_MAX_RPM: 20000.0       # Max RPM for engine
 
     CAMERA_COMPONENT:
-      POSITION_X: 5.0
-      POSITION_Y: 5.0
-      POSITION_Z: 5.0
-      ROLL: 0.0
-      YAW: 0.0
-      PITCH: 0.0
-      FOV: 90.0
+      POSITION_X: 5.0              # Camera relative position in [cm]
+      POSITION_Y: 5.0              # Camera relative position in [cm]
+      POSITION_Z: 5.0              # Camera relative position in [cm]
+      ROLL: 0.0                    # Camera relative orientation in [cm]
+      YAW: 0.0                     # Camera relative orientation in [°]
+      PITCH: 0.0                   # Camera relative orientation in [°]
+      FOV: 70.0                    # Camera field of view in [°]
     
     IMU_COMPONENT:
-      POSITION_X: 5.0
-      POSITION_Y: 0.0
-      POSITION_Z: 5.0
-      ROLL: 0.0
-      YAW: 0.0
-      PITCH: 0.0
+      POSITION_X: 5.0              # IMU relative position in [cm]
+      POSITION_Y: 0.0              # IMU relative position in [cm]
+      POSITION_Z: 5.0              # IMU relative position in [cm]
+      ROLL: 0.0                    # IMU relative orientation in [°]
+      YAW: 0.0                     # IMU relative orientation in [°]
+      PITCH: 0.0                   # IMU relative orientation in [°]
       
     SONAR_COMPONENT:
-      POSITION_X: 10.0
-      POSITION_Y: 0.0
-      POSITION_Z: -1.5
-      ROLL: 0.0
-      YAW: 0.0
-      PITCH: 0.0
+      POSITION_X: 10.0             # Sonar relative position in [cm]
+      POSITION_Y: 0.0              # Sonar relative position in [cm]
+      POSITION_Z: -1.5             # Sonar relative position in [cm]
+      ROLL: 0.0                    # Sonar relative orientation in [°]
+      YAW: 0.0                     # Sonar relative orientation in [°]
+      PITCH: 0.0                   # Sonar relative orientation in [°]
 
   OPENBOT_WHEEL:
     AFFECTED_BY_HANDBRAKE: True
-    SHAPE_RADIUS: 3.3              # Radius of the wheel in [m]
-    SHAPE_WIDTH: 1.5               # Width of the wheel in [m]
+    SHAPE_RADIUS: 3.3              # Radius of the wheel in [cm]
+    SHAPE_WIDTH: 2.5               # Width of the wheel in [cm]
     STEER_ANGLE: 0.0
     SUSPENSION_MAX_RAISE: 0.0      # How far the wheel can go above the resting position in [m]
     SUSPENSION_MAX_DROP: 0.0       # How far the wheel can drop below the resting position in [m]
