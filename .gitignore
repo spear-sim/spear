@@ -192,3 +192,4 @@ examples/generate_image_dataset/tmp
 examples/generate_image_dataset/user_config.yaml
 
 examples/getting_started/tmp
+examples/getting_started/user_config.yaml
