@@ -8,8 +8,7 @@ import spear
 if __name__ == "__main__":
 
     # load config
-    config_files = [ os.path.join(spear.SPEAR_ROOT_DIR, "../../unreal_projects/SpearSim/user_config.yaml") ]
-    config = spear.get_config(config_files)
+    config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
 
     # create Env object
     env = spear.Env(config)

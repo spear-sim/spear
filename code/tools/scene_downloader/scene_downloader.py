@@ -12,22 +12,24 @@ def download_file(source, destination, args):
 
     destination = os.path.abspath(destination)
 
-    if args.skip_download_if_exists and os.path.exists(destination):
+    if args.force_overwrite or not os.path.exists(destination):
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        for i in range(args.num_retries):
+            print("Downloading " + source + "...")
+            try:
+                urllib.request.urlretrieve(url=source, filename=destination)
+                break
+            except:
+                if i < args.num_retries - 1:
+                    print("Error occurred while downloading, retrying...")
+                else:
+                    print("Error occurred while downloading and the maximum number of retries has been reached. Giving up.")
+            if i == args.num_retries -1:
+                assert False
+
+    else:
         print(destination + " exists, skipping...")
         return
-
-    os.makedirs(os.path.dirname(destination), exist_ok=True)
-    for i in range(args.num_retries):
-        print("Downloading " + source + "...")
-        try:
-            urllib.request.urlretrieve(url=source, filename=destination)
-            break
-        except:
-            if i < args.num_retries - 1:
-                print("Error occurred while downloading, retrying...")
-            else:
-                print("Error occurred while downloading and the maximum number of retries has been reached. Giving up.")
-                assert False
 
     assert os.path.exists(destination)
 
@@ -95,10 +97,10 @@ if __name__ == "__main__":
     parser.add_argument("--platform", required=True)
     parser.add_argument("--temp_dir", default="tmp")
     parser.add_argument("--version", default="v7")
-    parser.add_argument("--skip_download_if_exists", default=True)
-    parser.add_argument("--num_retries", default=1)
-    parser.add_argument("--scene_id", type=str)
-    parser.add_argument("--proxy", type=str)
+    parser.add_argument("--num_retries", type=int, default=1)
+    parser.add_argument("--scene_id")
+    parser.add_argument("--proxy")
+    parser.add_argument("--force_overwrite", action="store_true")
     args = parser.parse_args()
 
     # if the user provides a proxy, install it

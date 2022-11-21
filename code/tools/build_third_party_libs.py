@@ -12,9 +12,9 @@ MIN_CMAKE_VERSION = "3.5.1"
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--num_parallel_jobs", "-n", type=int, default=1, required=False)
-    parser.add_argument("--clang_cc_bin", "-ccb", default="clang", required=False)
-    parser.add_argument("--clang_cxx_bin", "-cxxb", default="clang++", required=False)
+    parser.add_argument("--num_parallel_jobs", "-n", type=int, default=1)
+    parser.add_argument("--clang_cc_bin", "-ccb", default="clang")
+    parser.add_argument("--clang_cxx_bin", "-cxxb", default="clang++")
     args = parser.parse_args()
 
     #
