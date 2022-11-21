@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import pandas as pd
+import posixpath
 import urllib.request
 
 
@@ -37,7 +38,7 @@ def download_scene_pak_files(scene_id, args):
     print("Downloading PAK files for scene " + scene_id + " into " + args.destination_dir)
 
     # download scene metadata
-    scene_metadata_json_remote_path = os.path.join(CDN_PATH, args.version, "data", scene_id + "_data.json")
+    scene_metadata_json_remote_path = posixpath.join(CDN_PATH, args.version, "data", scene_id + "_data.json")
     scene_metadata_json_temp_path   = os.path.join(args.temp_dir, "data", scene_id + "_data.json")
     download_file(scene_metadata_json_remote_path, scene_metadata_json_temp_path, args)
     scene_metadata = json.load(open(scene_metadata_json_temp_path, mode="r"))
@@ -47,14 +48,14 @@ def download_scene_pak_files(scene_id, args):
 
     # shared asset file (could be downloaded once for all scenes, but we download for each scene for simplicity)
     file_desc = {
-        "source":      os.path.join(CDN_PATH, args.version, "paks", args.platform, "koolab.pak"),
+        "source":      posixpath.join(CDN_PATH, args.version, "paks", args.platform, "koolab.pak"),
         "destination": os.path.join(args.destination_dir, args.version, args.platform, scene_id, "koolab.pak")}
     if file_desc not in file_descs:
         file_descs.append(file_desc)
 
     # map file
     file_desc = {
-        "source":      os.path.join(CDN_PATH, args.version, "paks", args.platform, "map", scene_id + ".pak"),
+        "source":      posixpath.join(CDN_PATH, args.version, "paks", args.platform, "map", scene_id + ".pak"),
         "destination": os.path.join(args.destination_dir, args.version, args.platform, scene_id, "map", scene_id + ".pak")}
     if file_desc not in file_descs:
         file_descs.append(file_desc)
@@ -64,7 +65,7 @@ def download_scene_pak_files(scene_id, args):
         # mesh files
         mesh_id = model["meshName"]
         file_desc = {
-            "source":      os.path.join(CDN_PATH, args.version, "paks", args.platform, "furniture", mesh_id + ".pak"),
+            "source":      posixpath.join(CDN_PATH, args.version, "paks", args.platform, "furniture", mesh_id + ".pak"),
             "destination": os.path.join(args.destination_dir, args.version, args.platform, scene_id, "furniture", mesh_id + ".pak")}
         if file_desc not in file_descs:
             file_descs.append(file_desc)
@@ -78,7 +79,7 @@ def download_scene_pak_files(scene_id, args):
                 # material files
                 material_id = material["materialName"]
                 file_desc = {
-                    "source":      os.path.join(CDN_PATH, args.version, "paks", args.platform, "material", material_id + ".pak"),
+                    "source":      posixpath.join(CDN_PATH, args.version, "paks", args.platform, "material", material_id + ".pak"),
                     "destination": os.path.join(args.destination_dir, args.version, args.platform, scene_id, "material", material_id + ".pak")}
                 if file_desc not in file_descs:
                     file_descs.append(file_desc)
@@ -96,10 +97,14 @@ if __name__ == "__main__":
     parser.add_argument("--temp_dir", default="tmp")
     parser.add_argument("--version", default="v7")
     parser.add_argument("--skip_download_if_exists", default=True)
-    parser.add_argument("--num_retries", default=1)
+    parser.add_argument("--num_retries", type=int, default=1)
     parser.add_argument("--scene_id", type=str)
     parser.add_argument("--proxy", type=str)
     args = parser.parse_args()
+
+    # proceed with only supported platforms
+    if args.platform not in ["windows", "mac", "linux"]:
+        assert False
 
     # if the user provides a proxy, install it
     if args.proxy is not None:
