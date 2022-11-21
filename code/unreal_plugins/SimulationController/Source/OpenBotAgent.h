@@ -14,6 +14,9 @@ class UWorld;
 
 class AOpenBotPawn;
 class CameraSensor;
+class ImuSensor;
+class SonarSensor;
+
 
 struct Box;
 
@@ -50,6 +53,9 @@ private:
     ARecastNavMesh* nav_mesh_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
+    std::unique_ptr<ImuSensor> imu_sensor_;
+    std::unique_ptr<SonarSensor> sonar_sensor_;
 
     std::vector<float> trajectory_;
 };
+

@@ -28,36 +28,49 @@ import shutil
 #import tflite_runtime.interpreter as tflite
 import time
 import re
+import ffmpeg # Careful: install ffmpeg-python
 
-from interiorsim import Env
-from interiorsim.config import get_config
-from interiorsim.constants import INTERIORSIM_ROOT_DIR
+
+import spear
 
 
 def GenerateVideo(config, mapName, run):
     print("Generating video from the sequence of observations")
     image_folder = f"dataset/uploaded/run_{mapName}_{run}/data/images"
     video_name = f"videos/run_{mapName}_{run}.avi"
-    
+    video_name_compressed = f"videos/run_{mapName}_{run}_compressed.mp4"
+
     if not (os.path.exists("videos")):
         os.makedirs("videos")
 
     images = [img for img in os.listdir(image_folder)]
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
-    
+
     rate = int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS)
 
-    video = cv2.VideoWriter(video_name, 0, 100, (width,height))
+    video = cv2.VideoWriter(video_name, 0, rate, (width, height))
 
-    images.sort(key=lambda f: int(re.sub('\D', '', f))) #good initial sort but doesnt sort numerically very well
+    # good initial sort but doesnt sort numerically very well
+    images.sort(key=lambda f: int(re.sub('\D', '', f)))
 
     for image in images:
-        #print(image)
         video.write(cv2.imread(os.path.join(image_folder, image)))
 
     cv2.destroyAllWindows()
     video.release()
+
+    try:
+        i = ffmpeg.input(video_name)
+        print("Compressing video...")
+        out = ffmpeg.output(i, video_name_compressed, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run()
+        print("Done !")
+
+    except FileNotFoundError as e:
+        print('You do not have ffmpeg installed!', e)
+        print('You can install ffmpeg by reading https://github.com/kkroening/ffmpeg-python/issues/251')
+        return False
+
 
 def Clamp(n, smallest, largest):
     return max(smallest, min(n, largest))
@@ -105,12 +118,73 @@ def computeNeurNetInput(goalPositionXY, actualPoseYawXY, acceptanceRadius):
     return obsNet, targetLocationReached
     
 
+def clampAxis(angle):
+	# returns angle in the range (-360,360)
+	angle = angle % 360.0
+
+	if (angle < 0.0):
+		# shift to [0,360) range
+		angle += 360.0
+
+	return angle
+
+
+def normalizeAxis( angle ):
+	# returns angle in the range [0,360)
+	angle = clampAxis(angle)
+
+	if (angle > 180.0):
+		# shift to (-180,180]
+		angle -= 360.0
+
+	return angle
+
+
+def quatToRPY(quat):
+
+    # Inspired by UnrealMath.cpp... 
+
+    X = quat[0]
+    Y = quat[1]
+    Z = quat[2]
+    W = quat[3]
+
+    singularity_test = Z*X - W*Y
+    yaw_y = 2.0*(W*Z + X*Y)
+    yaw_x = (1.0 - 2.0 * (np.square(Y) + np.square(Z)))
+
+	# reference 
+	# http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+	# http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
+
+	# this value was found from experience, the above websites recommend different values
+	# but that isn't the case for us, so I went through different testing, and finally found the case 
+	# where both of world lives happily. 
+    SINGULARITY_THRESHOLD = 0.4999995
+    
+    if (singularity_test < -SINGULARITY_THRESHOLD):
+        pitch = -90.0
+        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
+        roll = np.rad2deg(normalizeAxis(-yaw - (2.0 * np.arctan2(X, W))))
+
+    elif (singularity_test > SINGULARITY_THRESHOLD):
+        pitch = 90.0
+        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
+        roll = np.rad2deg(normalizeAxis(yaw - (2.0 * np.arctan2(X, W))))
+
+    else:
+        pitch = np.rad2deg(np.arcsin(2.0 * singularity_test))
+        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
+        roll = np.rad2deg(np.arctan2(-2.0 * (W*X + Y*Z), (1.0 - 2.0 * (np.square(X) + np.square(Y)))))
+
+    return roll, pitch, yaw
+
 def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation):
 
     targetLocationReached = False
     forwardCtrl = 0.0
     rightCtrl = 0.0
-    action = np.array([0.0,0.0])
+    action = np.array([0.0,0.0], dtype=np.float32)
     deltaYaw = 0.0
     forward = np.array([1,0]) # Front axis is the X axis.
     forwardRotated = np.array([0,0])
@@ -159,7 +233,7 @@ def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, K
         rightWheelCommand = forwardCtrl - rightCtrl
         rightWheelCommand = Clamp(rightWheelCommand, -controlSaturation, controlSaturation)
         
-        action = np.array([leftWheelCommand,rightWheelCommand])
+        action = np.array([leftWheelCommand,rightWheelCommand], dtype=np.float32)
 
     #print(f"dist: {dist} m")
     #print(f"deltaYaw: {deltaYaw}")
@@ -178,10 +252,9 @@ if __name__ == "__main__":
 
     # Add default config files first and then user config files
     config_files.append(os.path.join(os.getcwd(), "user_config.yaml"))
-
-    # Load configs
-    config = get_config(config_files)
-    print(config)
+    
+    # Load config (this function will load the parameter values specified in user_config.yaml, as well as sensible defaults for all other parameters)
+    config = spear.get_config(user_config_files=config_files)
 
     # Parse input script arguments
     parser = argparse.ArgumentParser()
@@ -190,7 +263,7 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
     parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Debug (for debug purposes only)", required=True)
     parser.add_argument("-p", "--policy", type=str, help="1_env, 5_envs,  25_envs, 50_envs or real_envs", required=False)
-    parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the MAP_ID argument and allows collecting data in multiple environments programatically", required=False)
+    parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the LEVEL_ID argument and allows collecting data in multiple environments programatically", required=False)
     parser.add_argument("-c", "--connect", type=int, help="id of the connection port", required=True)
     args = parser.parse_args()
 
@@ -198,13 +271,12 @@ if __name__ == "__main__":
     config.SIMULATION_CONTROLLER.PORT = 30000 + args.connect
     config.freeze()
 
-    if args.map == [""]: # Use the default MAP_ID argument from parameter file
-        if config.INTERIORSIM.MAP_ID == "":
+    if args.map == [""]: # Use the default LEVEL_ID argument from parameter file
+        if config.SIMULATION_CONTROLLER.LEVEL_ID == "":
             mapNames = ["simpleMap"]
-        elif config.INTERIORSIM.MAP_ID[0:15] == "/Game/Maps/Map_":
-            mapNames = [config.INTERIORSIM.MAP_ID[15:]]
         else:
-            mapNames = ["errorMap"]
+            mapNames = [config.SIMULATION_CONTROLLER.LEVEL_ID]
+
     else: # Overwrite the map value
         mapNames = args.map
 
@@ -216,37 +288,27 @@ if __name__ == "__main__":
 
         # Main loop, executing a set of random actions, getting observations and storing everything in a set of files:
 
-        # The agent makes the following observations:
-
-        # ---> left wheel commands in the range [-1, 1]
-        # ---> right wheel commands in the range [-1, 1]
-        # ---> X position in world frame.
-        # ---> Y position in world frame.
-        # ---> Z position in world frame.
-        # ---> Roll in world frame.
-        # ---> Pitch in world frame.
-        # ---> Yaw in world frame.
-        # ---> X position of the next waypoint in world frame.
-        # ---> Y position of the next waypoint in world frame.
-
         speedMultiplier = 1
 
         for mapName in mapNames: # For each map
 
             # Load the correct map:
             config.defrost()
-            config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_" + mapName
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_"+ mapName + ".Map_" + mapName # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_"+ mapName
+           
+
             config.freeze()
 
             # Create Env object:
-            env = Env(config)
-
+            env = spear.Env(config=config)
+            
             run = 0
             while run < runs:
 
                 collisionFlag = False
                 goalReachedFlag = False
-                array_obs = np.empty([numIter, 11])
+                array_obs = np.empty([numIter, 18])
                 executedIterations = 0
                 index_waypoint = 1
 
@@ -264,11 +326,31 @@ if __name__ == "__main__":
                 obs = env.reset()
                 
                 # Send Zero action to the agent and collect initial trajectory observations:
-                obs, reward, done, info = env.step({"apply_voltage": [0.0, 0.0]})
-                actualPoseYawXY = np.array([obs["state_data"][5], obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y], for velocity initialization
-                desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][3*index_waypoint], info["agent_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
-
-                numWaypoints = len(info["agent_step_info"]["trajectory_data"])/3 - 1
+                # obs["state_data"] = X, Y, Z, Pitch, Yaw, Roll
+                # obs["control_data"] = ctrl left, ctrl right
+                
+                obs, reward, done, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+                
+                ctrl_left = obs["control_data"][0]
+                ctrl_right = obs["control_data"][1]
+                pos_x = obs["state_data"][0]
+                pos_y = obs["state_data"][1]
+                pos_z = obs["state_data"][2]
+                pitch = obs["state_data"][3]
+                yaw = obs["state_data"][4]
+                roll = obs["state_data"][5]
+                sonar = obs["sonar"]
+                imu_ax = obs["imu"][0]
+                imu_ay = obs["imu"][1]
+                imu_az = obs["imu"][2]
+                imu_gx = obs["imu"][3]
+                imu_gy = obs["imu"][4]
+                imu_gz = obs["imu"][5]
+                
+                numWaypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
+                print(info["agent_step_info"]["trajectory_data"])
+                desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
+                actualPoseYawXY = np.array([yaw, pos_x, pos_y]) 
 
                 # Take a few steps:
                 for i in range(numIter):
@@ -280,22 +362,22 @@ if __name__ == "__main__":
                     ts = 10000*ct.timestamp()
 
                     # Run autopilot:
-                    Kp_lin = config.ROBOT_SIM.PROPORTIONAL_GAIN_DIST
-                    Kd_lin = config.ROBOT_SIM.DERIVATIVE_GAIN_DIST
-                    Kp_ang = config.ROBOT_SIM.PROPORTIONAL_GAIN_HEADING
-                    Kd_ang = config.ROBOT_SIM.DERIVATIVE_GAIN_HEADING
-                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
-                    forwardMinAngle = config.ROBOT_SIM.FORWARD_MIN_ANGLE
-                    controlSaturation = config.ROBOT_SIM.CONTROL_SATURATION
-                    dt = 0.1
+                    Kp_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_DIST
+                    Kd_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_DIST
+                    Kp_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_HEADING
+                    Kd_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_HEADING
+                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.ACCEPTANCE_RADIUS
+                    forwardMinAngle = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.FORWARD_MIN_ANGLE
+                    controlSaturation = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.CONTROL_SATURATION
+                    dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
 
                     # XY position of the next waypoint in world frame:
-                    dXY = np.array([obs["state_data"][0], obs["state_data"][1]]) - desiredPositionXY
-                    desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][3*index_waypoint], info["agent_step_info"]["trajectory_data"][3*index_waypoint + 1]]) # [Xdes, Ydes]
+                    dXY = np.array([pos_x, pos_y]) - desiredPositionXY
+                    desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
 
                     # Current position and heading of the vehicle in world frame:
-                    dYaw = obs["state_data"][5] - actualPoseYawXY[0]
-                    actualPoseYawXY = np.array([obs["state_data"][5], obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y]
+                    dYaw = yaw - actualPoseYawXY[0]
+                    actualPoseYawXY = np.array([yaw, pos_x, pos_y]) # [Yaw, X, Y]
 
                     # Numerical diff:
                     linVelNorm = np.linalg.norm(dXY/dt)
@@ -304,20 +386,53 @@ if __name__ == "__main__":
                     action, waypointReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
 
                     # Send action to the agent and collect observations:
-                    obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1]]})
+                    #print(f"Action: {action}")
+                    #print(f"waypointReached: {waypointReached}")
+                   
+                    
+                    obs, reward, done, info = env.step({"apply_voltage": action})
+                    
+                    ctrl_left = obs["control_data"][0]
+                    ctrl_right = obs["control_data"][1]
+                    pos_x = obs["state_data"][0]
+                    pos_y = obs["state_data"][1]
+                    pos_z = obs["state_data"][2]
+                    pitch = obs["state_data"][3]
+                    yaw = obs["state_data"][4]
+                    roll = obs["state_data"][5]
+                    sonar = obs["sonar"]
+                    imu_ax = obs["imu"][0]
+                    imu_ay = obs["imu"][1]
+                    imu_az = obs["imu"][2]
+                    imu_gx = obs["imu"][3]
+                    imu_gy = obs["imu"][4]
+                    imu_gz = obs["imu"][5]
+                    
+                    print(f"Control: {obs['control_data']}")
+                    print(f"State: {obs['state_data']}")
+                    print(f"Sonar: {obs['sonar']}")
+                    print(f"IMU: {obs['imu']}")
+                   
 
                     # Fill an array with the different observations:
-                    array_obs[i][0] = speedMultiplier*obs["control_data"][0] # ctrl left
-                    array_obs[i][1] = speedMultiplier*obs["control_data"][1] # ctrl right
-                    array_obs[i][2] = obs["state_data"][0] # agent pos X wrt. world
-                    array_obs[i][3] = obs["state_data"][1] # agent pos Y wrt. world
-                    array_obs[i][4] = obs["state_data"][2] # agent pos Z wrt. world
-                    array_obs[i][5] = obs["state_data"][3] # agent Roll wrt. world
-                    array_obs[i][6] = obs["state_data"][4] # agent Pitch wrt. world
-                    array_obs[i][7] = obs["state_data"][5] # agent Yaw wrt. world
-                    array_obs[i][8] = info["agent_step_info"]["trajectory_data"][3*index_waypoint] # desired (waypoint) agent pos X wrt. world
-                    array_obs[i][9] = info["agent_step_info"]["trajectory_data"][3*index_waypoint + 1] # desired (waypoint) agent pos Y wrt. world
+                    array_obs[i][0] = speedMultiplier*ctrl_left
+                    array_obs[i][1] = speedMultiplier*ctrl_right
+                    array_obs[i][2] = pos_x # agent pos X wrt. world
+                    array_obs[i][3] = pos_y # agent pos Y wrt. world
+                    array_obs[i][4] = pos_z # agent pos Z wrt. world
+                    array_obs[i][5] = roll # agent Roll wrt. world
+                    array_obs[i][6] = pitch # agent Pitch wrt. world
+                    array_obs[i][7] = yaw # agent Yaw wrt. world
+                    array_obs[i][8] = info["agent_step_info"]["trajectory_data"][index_waypoint][0] # desired (waypoint) agent pos X wrt. world
+                    array_obs[i][9] = info["agent_step_info"]["trajectory_data"][index_waypoint][1] # desired (waypoint) agent pos Y wrt. world
                     array_obs[i][10] = ts # time stamp
+                    array_obs[i][11] = sonar
+                    array_obs[i][12] = imu_ax
+                    array_obs[i][13] = imu_ay
+                    array_obs[i][14] = imu_az
+                    array_obs[i][15] = imu_gx
+                    array_obs[i][16] = imu_gy
+                    array_obs[i][17] = imu_gz
                     
                     if array_obs[i][4] < 0: # For now we don't consider underground operation ! 
                         collisionFlag = True
@@ -327,7 +442,7 @@ if __name__ == "__main__":
                     #print(f"Pose: {array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]}")
 
                     # Save the images:
-                    im = Image.fromarray(obs["visual_observation"])
+                    im = Image.fromarray(obs["camera_final_color"])
                     im.save(dataFolderName+"images/%d.jpeg" % i)
 
                     if waypointReached:
@@ -335,7 +450,7 @@ if __name__ == "__main__":
                             print(f"Waypoint {index_waypoint} over {numWaypoints} reached !")
                             index_waypoint = index_waypoint + 1
                         else: # Goal reached !
-                            print("Goal reached !")
+                            print("Goal reached (distance check) !")
                             goalReachedFlag = True
                             break
 
@@ -346,7 +461,7 @@ if __name__ == "__main__":
                             collisionFlag = True
 
                         if info["task_step_info"]["hit_goal"]:
-                            print("Goal reached !")
+                            print("Goal reached (collision check)  !")
                             goalReachedFlag = True
 
                         break
@@ -482,7 +597,9 @@ if __name__ == "__main__":
 
             # Load the correct map:
             config.defrost()
-            config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_" + mapName
+            print("/Game/Maps/Map_"+ mapName + ".Map_" + mapName)
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_"+ mapName + ".Map_" + mapName # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_"+ mapName
             config.freeze()
 
             # Create Env object:
@@ -526,15 +643,15 @@ if __name__ == "__main__":
                     #executedIterations = i+1
                     ct = datetime.datetime.now()
                     ts = 10000*ct.timestamp()
-                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
+                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.ACCEPTANCE_RADIUS
 
                     # Process (crop) visual observations:
                     
-                    if not obs["visual_observation"].any():
-                        print(obs["visual_observation"])
+                    if not obs["rgb_data"].any():
+                        print(obs["rgb_data"])
                         break; # Something went wrong and the robot was spawed out of the map... 
                         
-                    img_input = np.float32(obs["visual_observation"])/255
+                    img_input = np.float32(obs["rgb_data"])/255
                     img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
 
                     # Physical observations
@@ -564,7 +681,7 @@ if __name__ == "__main__":
 
                     # Command
                     act = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
-                    action = np.array([act[0][0],act[0][1]])
+                    action = np.array([act[0][0],act[0][1]], dtype=np.float32)
                     #print(action)
                     
                     writer_infer.writerow( (i, obs["physical_observation"][2], obs["physical_observation"][3], obs["physical_observation"][4], obs["physical_observation"][5], obs["physical_observation"][6], obs["physical_observation"][7], obs["physical_observation"][8], obs["physical_observation"][9], cmd[0], cmd[1], cmd[2], action[0], action[1], executionTime, reward, obs["physical_observation"][10]) )
@@ -573,7 +690,7 @@ if __name__ == "__main__":
                     obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1]]})
                     
                     # Save the images:
-                    im = Image.fromarray(obs["visual_observation"])
+                    im = Image.fromarray(obs["rgb_data"])
                     im.save(dataFolderName+"images/%d.jpeg" % i)
                     
                     if run >= numIter-1:
@@ -639,24 +756,32 @@ if __name__ == "__main__":
 
     elif learningMode == "Debug": # Just play with the keyboard while checking the observations
 
-        # Load the correct map and observation mode:
+        # Load the correct map:
         config.defrost()
-        config.INTERIORSIM.MAP_ID = "/Game/Maps/Map_" + mapNames[0]
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT_CONTROLLER.PHYSICAL_OBSERVATION_MODE = "full-pose"
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_"+ mapName + ".Map_" + mapName # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_"+ mapName
         config.freeze()
+        
+        index_waypoint = 1
 
         # Create Env object:
         env = Env(config)
 
         # Reset the simulation to get the first observation
         obs = env.reset()
-        actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y], for velocity initialization
-        desiredPositionXY = np.array([obs["physical_observation"][2], obs["physical_observation"][3]]) # [X, Y]
+                
+        # Send Zero action to the agent and collect initial trajectory observations:
+        obs, reward, done, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+        Q = obs["state_data"][3:7]
+        roll, pitch, yaw = quatToRPY(Q)
+        actualPoseYawXY = np.array([yaw, obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y], for velocity initialization
+        dYaw = yaw - actualPoseYawXY[0]
+        desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
 
-        print(obs["visual_observation"].shape, obs["visual_observation"].dtype)
+        numWaypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
 
-        cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-        cv2.waitKey(0)
+        # cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+        # cv2.waitKey(0)
 
         # Take a few steps:
         for i in range(numIter):
@@ -668,22 +793,25 @@ if __name__ == "__main__":
             ts = 10000*ct.timestamp()
 
             # Run autopilot:
-            Kp_lin = config.ROBOT_SIM.PROPORTIONAL_GAIN_DIST
-            Kd_lin = config.ROBOT_SIM.DERIVATIVE_GAIN_DIST
-            Kp_ang = config.ROBOT_SIM.PROPORTIONAL_GAIN_HEADING
-            Kd_ang = config.ROBOT_SIM.DERIVATIVE_GAIN_HEADING
-            acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.ACCEPTANCE_RADIUS
-            forwardMinAngle = config.ROBOT_SIM.FORWARD_MIN_ANGLE
-            controlSaturation = config.ROBOT_SIM.CONTROL_SATURATION
-            dt = 0.1
+            Kp_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_DIST
+            Kd_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_DIST
+            Kp_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_HEADING
+            Kd_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_HEADING
+            acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.ACCEPTANCE_RADIUS
+            forwardMinAngle = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.FORWARD_MIN_ANGLE
+            controlSaturation = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.CONTROL_SATURATION
+            dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
 
             # XY position of the next waypoint in world frame:
-            dXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) - desiredPositionXY
-            desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
+            dXY = np.array([obs["state_data"][0], obs["state_data"][1]]) - desiredPositionXY
+            desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
 
             # Current position and heading of the vehicle in world frame:
-            dYaw = obs["physical_observation"][7] - actualPoseYawXY[0]
-            actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y]
+            Q = obs["state_data"][3:7]
+            roll, pitch, yaw = quatToRPY(Q)
+            actualPoseYawXY = np.array([yaw, obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y]
+            dYaw = yaw - actualPoseYawXY[0]
+            
 
             # Numerical diff:
             linVelNorm = np.linalg.norm(dXY/dt)
@@ -694,10 +822,11 @@ if __name__ == "__main__":
             # Send action to the agent and collect observations:
 
             obs, reward, done, info = env.step({"apply_voltage": action})
-            print(obs["visual_observation"].shape, obs["visual_observation"].dtype, reward, done, info)
-
-            cv2.imshow("visual_observation", obs["visual_observation"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-            cv2.waitKey(0)
+            # cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            # cv2.imshow("depth_data", obs["depth_data"][:,:]) # OpenCV expects BGR instead of RGB
+            # cv2.imshow("segmentation_data", obs["segmentation_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            # cv2.imshow("surface_normals_data", obs["surface_normals_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            # cv2.waitKey(0)
 
             #if done:
             #    print("Reset run...")

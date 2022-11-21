@@ -6,6 +6,7 @@
 #include <iterator>
 #include <sstream>
 
+#include <DrawDebugHelpers.h>
 #include <EngineUtils.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
@@ -286,21 +287,18 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
                 best_path_points = path.Path->GetPathPoints();
 
                 // Debug output
-                float trajectory_length = 0.0;
-                for (int j = 0; j < num_waypoints - 1; j++) {
-                    trajectory_length += FVector::Dist(best_path_points[j].Location, best_path_points[j + 1].Location);
+                if(Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_DEBUG_RENDER"})){
+                    float trajectory_length = 0.0;
+                    for (int j = 0; j < num_waypoints - 1; j++) {
+                        trajectory_length += FVector::Dist(best_path_points[j].Location, best_path_points[j + 1].Location);
+                    }
+
+                    std::cout << "Iteration: " << i << std::endl;
+                    std::cout << "Score: " << best_path_score << std::endl;
+                    std::cout << "Number of waypoints: " << num_waypoints << std::endl;
+                    std::cout << "Goal distance: " << relative_position_to_goal.Size() / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+                    std::cout << "Path length: " << trajectory_length / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
                 }
-
-                std::cout << "Iteration: " << i << std::endl;
-                std::cout << "Score: " << best_path_score << std::endl;
-                std::cout << "Number of waypoints: " << num_waypoints << std::endl;
-                std::cout << "Goal distance: " << relative_position_to_goal.Size() / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
-                std::cout << "Path length: " << trajectory_length / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
-            }
-
-            // Debug output
-            if (i % 1000 == 0) {
-                std::cout << "." << std::endl;
             }
         }
     }
@@ -313,15 +311,19 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     position_index_ = 0;
 
     // Debug output
-    std::cout << std::endl;
-    std::cout << "Initial position: [" << agent_initial_positions_.at(0).X << ", " << agent_initial_positions_.at(0).Y << ", " << agent_initial_positions_.at(0).Z << "]." << std::endl;
-    std::cout << "Goal position: [" << agent_goal_positions_.at(0).X << ", " << agent_goal_positions_.at(0).Y << ", " << agent_goal_positions_.at(0).Z << "]." << std::endl;
-    std::cout << "-----------------------------------------------------------" << std::endl;
-    std::cout << "Waypoints: " << std::endl;
-    for (auto& point : best_path_points) {
-        std::cout << "[" << point.Location.X << ", " << point.Location.Y << ", " << point.Location.Z << "]" << std::endl;
+    if(Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_DEBUG_RENDER"})){
+        std::cout << std::endl;
+        std::cout << "Initial position: [" << agent_initial_positions_.at(0).X << ", " << agent_initial_positions_.at(0).Y << ", " << agent_initial_positions_.at(0).Z << "]." << std::endl;
+        std::cout << "Goal position: [" << agent_goal_positions_.at(0).X << ", " << agent_goal_positions_.at(0).Y << ", " << agent_goal_positions_.at(0).Z << "]." << std::endl;
+        std::cout << "-----------------------------------------------------------" << std::endl;
+        std::cout << "Waypoints: " << std::endl;
+        for (int i = 1; i < best_path_points.Num(); i++) {
+            std::cout << "[" << best_path_points[i].Location.X << ", " << best_path_points[i].Location.Y << ", " << best_path_points[i].Location.Z << "]" << std::endl;
+            DrawDebugPoint(agent_actor_->GetWorld(), best_path_points[i].Location, 20, FColor(25, 116, 210), false, 10.0, 0);
+            DrawDebugLine(agent_actor_->GetWorld(), best_path_points[i-1].Location, best_path_points[i].Location, FColor(25, 116, 210), false, 10.0, 0, 0.15);
+        }
+        std::cout << "-----------------------------------------------------------" << std::endl;
     }
-    std::cout << "-----------------------------------------------------------" << std::endl;
 }
 
 void ImitationLearningTask::clearPositions()
