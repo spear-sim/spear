@@ -88,7 +88,7 @@ void ImuSensor::updateLinearAcceleration(float delta_time)
 void ImuSensor::updateAngularRate()
 {
     FQuat sensor_global_rotation = component_->GetComponentTransform().GetRotation();
-    FVector sensor_global_angular_velocity = component_->GetPhysicsAngularVelocityInRadians();
+    FVector sensor_global_angular_velocity = dynamic_cast<UPrimitiveComponent*>(component_->GetAttachmentRoot())->GetPhysicsAngularVelocityInRadians();
     FVector angular_rate = sensor_global_rotation.UnrotateVector(sensor_global_angular_velocity);
 
     // Compute the random component and bias of the gyroscope sensor measurement.
