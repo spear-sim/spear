@@ -90,7 +90,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         } else {
             has_open_level_executed_ = false;
 
-            // we do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
+            // we expect worldCleanupEventHandler(...) to be called before a new world is created.
             ASSERT(!world_);
 
             // cache local reference to the UWorld
@@ -104,7 +104,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
 void SimulationController::worldBeginPlayEventHandler()
 {
-    // Set console commands for syncing the game thread and RHI thread
+    // Set console commands for syncing the game thread and RHI thread.
     // For more information on GTSyncType, see http://docs.unrealengine.com/en-US/SharingAndReleasing/LowLatencyFrameSyncing/index.html.
     GEngine->Exec(world_, TEXT("r.GTSyncType 1"));
     GEngine->Exec(world_, TEXT("r.OneFrameThreadLag 0"));
