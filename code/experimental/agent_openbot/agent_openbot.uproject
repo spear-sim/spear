@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{0004CB53-08D9-7EC8-E30E-79C0A84B81EC}",
+	"EngineAssociation": "{00046394-08D9-EC0F-60B2-558CF37E7854}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -18,6 +18,6 @@
 		{
 			"Name": "OpenBot",
 			"Enabled": true
-		},
+		}
 	]
 }

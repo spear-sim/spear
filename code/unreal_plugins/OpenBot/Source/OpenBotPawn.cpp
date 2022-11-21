@@ -4,6 +4,7 @@
 
 #include <Animation/AnimInstance.h>
 #include <Camera/CameraComponent.h>
+#include <Components/BoxComponent.h>
 #include <Components/InputComponent.h>
 #include <Components/SkeletalMeshComponent.h>
 #include <Engine/CollisionProfile.h>
@@ -29,6 +30,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     ASSERT(openbot_animation_finder.Succeeded());
 
     skeletal_mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
+    ASSERT(skeletal_mesh_component_); 
     skeletal_mesh_component_->SetSkeletalMesh(openbot_mesh_finder.Object);
     skeletal_mesh_component_->SetAnimClass(openbot_animation_finder.Class);
     skeletal_mesh_component_->SetCollisionProfileName(UCollisionProfile::Vehicle_ProfileName);
@@ -43,6 +45,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
 
     // Setup vehicle movement
     vehicle_movement_component_ = CreateDefaultSubobject<USimpleWheeledVehicleMovementComponent>(TEXT("SimpleWheeledVehicleMovementComponent"));
+    ASSERT(vehicle_movement_component_); 
     vehicle_movement_component_->SetIsReplicated(true); // Enable replication by default
     vehicle_movement_component_->UpdatedComponent = skeletal_mesh_component_;
 
@@ -66,11 +69,13 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     vehicle_movement_component_->WheelSetups[3].BoneName = FName("RR");
     vehicle_movement_component_->WheelSetups[3].AdditionalOffset = FVector(0.f, 0.f, 0.f); // offset the wheel from the bone's location
 
+    vehicle_movement_component_->Mass = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "MASS"}); // Mass of the vehicle chassis
+    vehicle_movement_component_->InertiaTensorScale = FVector{1.f, 1.f, 1.f};
     vehicle_movement_component_->DragCoefficient = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "DRAG_COEFFICIENT"}); // DragCoefficient of the vehicle chassis
     vehicle_movement_component_->ChassisWidth    = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_WIDTH"});    // Chassis width used for drag force computation in [cm]
     vehicle_movement_component_->ChassisHeight   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_HEIGHT"});   // Chassis height used for drag force computation in [cm]
     vehicle_movement_component_->MaxEngineRPM    = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "MOTOR_MAX_RPM"});    // Max RPM for engine
-
+    
     // Setup camera
     FVector camera_location(
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "POSITION_X"}),
@@ -83,10 +88,46 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "ROLL"}));
 
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
+    ASSERT(camera_component_); 
+
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
     camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "FOV"});
+
+    // Setup IMU sensor component
+    FVector imu_location(
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_X"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_Y"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_Z"}));
+    
+    FRotator imu_orientation(
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "PITCH"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "YAW"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "ROLL"}));
+    
+    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("ImuComponent")); 
+    ASSERT(imu_component_ );
+    
+    imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation); 
+    imu_component_->SetupAttachment(skeletal_mesh_component_);
+
+    // Setup Sonar sensor component
+    FVector sonar_location(
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_X"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_Y"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_Z"}));
+        
+    FRotator sonar_orientation(
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "PITCH"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "YAW"}), 
+        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "ROLL"}));
+    
+    sonar_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("SonarComponent")); 
+    ASSERT(sonar_component_); 
+
+    sonar_component_->SetRelativeLocationAndRotation(sonar_location, sonar_orientation); 
+    sonar_component_->SetupAttachment(skeletal_mesh_component_);
 
     // Initialize duty cycle
     duty_cycle_.setZero();
@@ -117,7 +158,7 @@ void AOpenBotPawn::moveForward(float forward)
     duty_cycle_(1) += forward; // in [%]
     duty_cycle_(2) += forward; // in [%]
     duty_cycle_(3) += forward; // in [%]
-    duty_cycle_ = duty_cycle_.cwiseMin(1.0).cwiseMax(-1.0);
+    duty_cycle_ = duty_cycle_.cwiseMin(1.f).cwiseMax(-1.f);
 }
 
 void AOpenBotPawn::moveRight(float right)
@@ -129,17 +170,17 @@ void AOpenBotPawn::moveRight(float right)
     duty_cycle_(1) -= right; // in [%]
     duty_cycle_(2) += right; // in [%]
     duty_cycle_(3) -= right; // in [%]
-    duty_cycle_ = duty_cycle_.cwiseMin(1.0).cwiseMax(-1.0);
+    duty_cycle_ = duty_cycle_.cwiseMin(1.f).cwiseMax(-1.f);
 }
 
-void AOpenBotPawn::setDutyCycleAndClamp(Eigen::Vector4f duty_cycle)
+void AOpenBotPawn::setDutyCycleAndClamp(const Eigen::Vector4f& duty_cycle)
 {
     // duty_cycle describe the percentage of input voltage to be applied to each motors by the H-bridge controller: 1 = 100%, -1 = reverse 100%
 
     // First make sure the duty cycle is not getting above 100%. This is done similarly on the real OpenBot:
     // https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Control.java
 
-    duty_cycle_ = duty_cycle.cwiseMin(1.0).cwiseMax(-1.0);
+    duty_cycle_ = duty_cycle.cwiseMin(1.f).cwiseMax(-1.f);
 }
 
 Eigen::Vector4f AOpenBotPawn::getDutyCycle() const
@@ -183,7 +224,7 @@ void AOpenBotPawn::setDriveTorques(float delta_time)
 
     auto motor_velocity_constant = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_VELOCITY_CONSTANT"}); // Motor torque constant in [N.m/A]
     auto gear_ratio              = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "GEAR_RATIO"});              // Gear ratio of the OpenBot motors
-    auto motor_torque_constant   = 1.0 / motor_velocity_constant;                                                   // Motor torque constant in [rad/s/V]
+    auto motor_torque_constant   = 1.f / motor_velocity_constant;                                                   // Motor torque constant in [rad/s/V]
 
     auto battery_voltage         = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "BATTERY_VOLTAGE"});         // Voltage of the battery powering the OpenBot [V]
     auto control_dead_zone       = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CONTROL_DEAD_ZONE"});       // Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
@@ -251,9 +292,31 @@ void AOpenBotPawn::setDriveTorques(float delta_time)
     vehicle_movement_component_->SetDriveTorque(wheel_torque(1), 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to SetDriveTorque
     vehicle_movement_component_->SetDriveTorque(wheel_torque(2), 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to SetDriveTorque
     vehicle_movement_component_->SetDriveTorque(wheel_torque(3), 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to SetDriveTorque
+}
+END_IGNORE_COMPILER_WARNINGS
 
-    // Reset duty cycle
-    duty_cycle_.setZero();
+BEGIN_IGNORE_COMPILER_WARNINGS
+void AOpenBotPawn::activateBrakes()
+{
+    vehicle_movement_component_->SetDriveTorque(0.f, 0); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetDriveTorque(0.f, 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetDriveTorque(0.f, 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetDriveTorque(0.f, 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+
+    vehicle_movement_component_->SetBrakeTorque(1000.f, 0); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetBrakeTorque(1000.f, 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetBrakeTorque(1000.f, 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetBrakeTorque(1000.f, 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+}
+END_IGNORE_COMPILER_WARNINGS
+
+BEGIN_IGNORE_COMPILER_WARNINGS
+void AOpenBotPawn::deactivateBrakes()
+{
+    vehicle_movement_component_->SetBrakeTorque(0.f, 0); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetBrakeTorque(0.f, 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetBrakeTorque(0.f, 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    vehicle_movement_component_->SetBrakeTorque(0.f, 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
 }
 END_IGNORE_COMPILER_WARNINGS
 

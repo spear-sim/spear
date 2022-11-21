@@ -1,6 +1,8 @@
 __pycache__
 .ipynb_checkpoints
 
+code/experimental/openbot_simple_movement/user_config.yaml
+
 code/experimental/nav_mesh_debug_project/NavMeshDebugProject/Binaries
 code/experimental/nav_mesh_debug_project/NavMeshDebugProject/Build
 code/experimental/nav_mesh_debug_project/NavMeshDebugProject/DerivedDataCache
@@ -13,6 +15,21 @@ code/experimental/nav_mesh_debug_project/NavMeshDebugProject/Temp
 code/experimental/nav_mesh_debug_project/NavMeshDebugProject/user_config.yaml
 code/experimental/nav_mesh_debug_project/NavMeshDebugProject/.vscode
 code/experimental/nav_mesh_debug_project/NavMeshDebugProject/NavMeshDebugProject.xcworkspace
+
+code/experimental/agent_openbot/Binaries
+code/experimental/agent_openbot/Build
+code/experimental/agent_openbot/DerivedDataCache
+code/experimental/agent_openbot/Intermediate
+code/experimental/agent_openbot/Plugins
+code/experimental/agent_openbot/Saved
+code/experimental/agent_openbot/Standalone-Development
+code/experimental/agent_openbot/Standalone-Shipping
+code/experimental/agent_openbot/Temp
+code/experimental/agent_openbot/user_config.yaml
+code/experimental/agent_openbot/.ignore
+code/experimental/agent_openbot/.vscode
+code/experimental/agent_openbot/NavMeshDebugProject.xcworkspace
+code/experimental/agent_openbot/ThirdParty
 
 code/experimental/debug_synchronization_model/DebugProject/Binaries
 code/experimental/debug_synchronization_model/DebugProject/Build

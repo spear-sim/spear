@@ -10,6 +10,7 @@
 #include <GameFramework/GameModeBase.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/CoreDelegates.h>
+#include <PhysicsEngine/PhysicsSettings.h>
 
 #include "Agent.h"
 #include "Assert/Assert.h"
@@ -40,7 +41,7 @@ void SimulationController::StartupModule()
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("SceneManager")));
-
+    
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
 
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
@@ -78,10 +79,10 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         auto world_path_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "WORLD_PATH_NAME"});
         auto level_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "LEVEL_NAME"});
 
-        // If the current world is not the desired one, open the desired one
+        // if the current world is not the desired one, open the desired one
         if (world_path_name != "" && world_path_name != TCHAR_TO_UTF8(*(world->GetPathName()))) {
 
-            // Assert that we haven't already tried to open the level, because that means we failed
+            // assert that we haven't already tried to open the level, because that means we failed
             ASSERT(!has_open_level_executed_);
 
             UGameplayStatics::OpenLevel(world, level_name.c_str());
@@ -90,13 +91,13 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         } else {
             has_open_level_executed_ = false;
 
-            // We do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
+            // we do not support multiple concurrent game worlds. We expect worldCleanupEventHandler(...) to be called before a new world is created.
             ASSERT(!world_);
 
-            // Cache local reference to the UWorld
+            // cache local reference to the UWorld
             world_ = world;
 
-            // Defer the rest of our initialization code until the OnWorldBeginPlay event
+            // defer the rest of our initialization code until the OnWorldBeginPlay event
             world_begin_play_delegate_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
         }
     }
@@ -108,6 +109,13 @@ void SimulationController::worldBeginPlayEventHandler()
     // For more information on GTSyncType, see http://docs.unrealengine.com/en-US/SharingAndReleasing/LowLatencyFrameSyncing/index.html.
     GEngine->Exec(world_, TEXT("r.GTSyncType 1"));
     GEngine->Exec(world_, TEXT("r.OneFrameThreadLag 0"));
+
+    // checking parameters for physics substepping
+    UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
+    // substepping is of paramount importance for the physical consistency of the simulation
+    ASSERT(physics_settings->bSubstepping);
+    // according to https://carla.readthedocs.io/en/latest/adv_synchrony_timestep/
+    ASSERT(Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}) <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps); 
 
     // execute optional console commands from python client
     for (auto& command : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS"})) {

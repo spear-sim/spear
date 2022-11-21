@@ -62,7 +62,12 @@ SIMULATION_CONTROLLER:
       TILE_SIZE_UU: 1
       TILE_POOL_SIZE: 1024
       MAX_SIMPLIFICATION_ERROR: 1.3
+      NAV_MODIFIER_OFFSET_X: 0.0
+      NAV_MODIFIER_OFFSET_Y: 0.0
+      NAV_MODIFIER_OFFSET_Z: 0.0
       WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+      EXPORT_NAV_DATA_OBJ: False
+      EXPORT_NAV_DATA_OBJ_DIR: ""
 
   SPHERE_AGENT:
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
@@ -100,6 +105,7 @@ SIMULATION_CONTROLLER:
     GOAL_ACTOR_NAME: ""
     OBSTACLE_IGNORE_ACTOR_NAMES: []
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
+    TRAJECTORY_DEBUG_RENDER: False
     POSITIONS_FILE: ""
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000
     TRAJECTORY_SAMPLING_MAX_ITERS: 10000
@@ -107,6 +113,14 @@ SIMULATION_CONTROLLER:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
       AGENT_MAX_STEP_HEIGHT: 2.0
+    AUTOPILOT:
+      PROPORTIONAL_GAIN_HEADING: 5.25 # PID proportional gain for the autopilot
+      DERIVATIVE_GAIN_HEADING: 2.1    # PID derivative gain for the autopilot
+      PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
+      DERIVATIVE_GAIN_DIST: -0.1      # PID derivative gain for the autopilot
+      FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
+      CONTROL_SATURATION: 0.9         # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+      ACCEPTANCE_RADIUS: 0.15         # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
 
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: ""
@@ -142,6 +156,32 @@ SIMULATION_CONTROLLER:
     SPAWN_CAMERA_ORIENTATION_PITCH: 0.0
     SPAWN_CAMERA_ORIENTATION_YAW: 0.0
     SPAWN_CAMERA_ORIENTATION_ROLL: 0.0
+  
+  SONAR_SENSOR:
+    NUM_RAYS: 11
+    MAX_REFLECTION_ANGLE: 45.0
+    HORIZONTAL_FOV: 30.0
+    VERTICAL_FOV: 10.0
+    RANGE:
+      MIN: 0.01
+      MAX: 10.0
+    NOISE_STD: 0.0
+    DEBUG_RENDER: False
+
+  IMU_SENSOR:
+    ACCELEROMETER_NOISE_STD: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    GYROSCOPE_NOISE_STD: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    GYROSCOPE_BIAS: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    DEBUG_RENDER: False
 
   # We have found these values achieve a good trade-off between image quality and
   # rendering speed. When Unreal defines ClampMin/ClampMax values, it will clamp

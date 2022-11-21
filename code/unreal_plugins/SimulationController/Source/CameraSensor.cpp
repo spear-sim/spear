@@ -266,3 +266,4 @@ std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor>& col
     }
     return float_depth;
 }
+
