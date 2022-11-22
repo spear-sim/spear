@@ -48,7 +48,7 @@ SIMULATION_CONTROLLER:
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
     TRAJECTORY_DEBUG_RENDER: True
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
-    TRAJECTORY_SAMPLING_MAX_ITERS: 50
+    TRAJECTORY_SAMPLING_MAX_ITERS: 5000
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
