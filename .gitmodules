@@ -1,18 +1,18 @@
-[submodule "asio"]
-	path = third_party/asio
+[submodule "code/third_party/asio"]
+	path = code/third_party/asio
 	url = https://github.com/chriskohlhoff/asio.git
-[submodule "libeigen"]
-	path = third_party/libeigen
+[submodule "code/third_party/libeigen"]
+	path = code/third_party/libeigen
 	url = https://gitlab.com/libeigen/eigen.git
-[submodule "msgpack-rpc-python"]
-	path = third_party/msgpack-rpc-python
+[submodule "code/third_party/msgpack-rpc-python"]
+	path = code/third_party/msgpack-rpc-python
 	url = https://github.com/dvdhfnr/msgpack-rpc-python.git
-[submodule "rbdl"]
-	path = third_party/rbdl
+[submodule "code/third_party/rbdl"]
+	path = code/third_party/rbdl
 	url = https://github.com/rbdl/rbdl.git
-[submodule "rpclib"]
-	path = third_party/rpclib
+[submodule "code/third_party/rpclib"]
+	path = code/third_party/rpclib
 	url = https://github.com/rpclib/rpclib.git
-[submodule "yaml-cpp"]
-	path = third_party/yaml-cpp
+[submodule "code/third_party/yaml-cpp"]
+	path = code/third_party/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
