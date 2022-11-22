@@ -73,7 +73,7 @@ SPEAR:
 
   # Once a connection has been established, the RPC client will wait for this amount of
   # time before throwing when calling a server function.
-  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 2.0
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 3.0
 
   # Once a connection has been established, the Env class will wait for this amount of
   # time before returning from its constructor. This gives the Unreal executable a bit
