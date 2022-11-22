@@ -1,6 +1,6 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/interiorsim/cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+  STANDALONE_EXECUTABLE: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app"
 
 SIMULATION_CONTROLLER:
   TASK: "PointGoalNavTask"
@@ -32,8 +32,8 @@ SIMULATION_CONTROLLER:
       POSITION_OFFSET_Y: 0.0
       POSITION_OFFSET_Z: 1.0
     APPLY_FORCE:
-      FORCE_SCALE: 100000.0
-      ROTATE_SCALE: 2.0
+      FORCE_SCALE: 10000.0
+      ROTATE_SCALE: 2.5
 
   OPENBOT_AGENT:
     OPENBOT_ACTOR_NAME: "OpenBot"

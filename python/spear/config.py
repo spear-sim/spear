@@ -1,14 +1,14 @@
 from yacs.config import CfgNode
 
-import spear
+import os
 
 
 SPEAR_ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 # ordered from low-level to high-level
 DEFAULT_CONFIG_FILES = [
-    os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.openbot.yaml"))
-    os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.simulation_controller.yaml"))
+    os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.openbot.yaml")),
+    os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.simulation_controller.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.spear.yaml")) ]
 
 
