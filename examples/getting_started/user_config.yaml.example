@@ -1,0 +1,90 @@
+SPEAR:
+  LAUNCH_MODE: "standalone_executable"
+  STANDALONE_EXECUTABLE: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app"
+
+SIMULATION_CONTROLLER:
+  TASK: "PointGoalNavTask"
+  AGENT: "SphereAgent" # "SphereAgent" or "OpenBotAgent"
+
+  SPHERE_AGENT:
+    ACTION_COMPONENTS: ["apply_force"] # "apply_force"
+    OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
+    STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
+    SPHERE:
+      ACTOR_NAME: "Sphere"
+      MESH_SCALE: 0.5
+      MASS_SCALE: 1.0
+      MAX_ANGULAR_VELOCITY: 1.0
+      LINEAR_DAMPING: 0.0
+      ANGULAR_DAMPING: 0.0
+    COMPASS:
+      GOAL_ACTOR_NAME: "Goal"
+      OFFSET_TO_GOAL_SCALE: 1.0
+      LINEAR_VELOCITY_SCALE: 1.0
+      YAW_SCALE: 1.0
+    CAMERA:
+      ACTOR_NAME: "CameraActor"
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
+      POSITION_OFFSET_X: 0.0
+      POSITION_OFFSET_Y: 0.0
+      POSITION_OFFSET_Z: 1.0
+    APPLY_FORCE:
+      FORCE_SCALE: 10000.0
+      ROTATE_SCALE: 2.5
+
+  OPENBOT_AGENT:
+    OPENBOT_ACTOR_NAME: "OpenBot"
+    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
+    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
+    STEP_INFO_COMPONENTS: ["trajectory_data"]
+    IS_READY_VELOCITY_THRESHOLD: 0.0
+    CAMERA:
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
+    TRAJECTORY_DATA:
+      GOAL_ACTOR_NAME: "Goal"
+    NAVMESH:
+      AGENT_RADIUS: 20.0
+      AGENT_HEIGHT: 20.0
+      CELL_SIZE: 1.0
+      CELL_HEIGHT: 1.0
+      AGENT_MAX_STEP_HEIGHT: 2.0
+      AGENT_MAX_SLOPE: 0.1
+      MERGE_REGION_SIZE: 0.0
+      MIN_REGION_AREA: 400.0
+      TILE_SIZE_UU: 1
+      TILE_POOL_SIZE: 1024
+      MAX_SIMPLIFICATION_ERROR: 1.3
+      WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+
+  POINT_GOAL_NAV_TASK:
+    AGENT_ACTOR_NAME: "Sphere"
+    GOAL_ACTOR_NAME: "Goal"
+    GOAL_SCALE: 0.5
+    OBSTACLE_IGNORE_ACTOR_NAMES: [ "Floor" ]
+    RANDOM_SEED: 0
+    REWARD:
+      HIT_GOAL: 100.0
+      HIT_OBSTACLE: -100.0
+      DISTANCE_TO_GOAL_SCALE: 0.00001
+    EPISODE_BEGIN:
+      AGENT_POSITION_X_MIN: -100.0
+      AGENT_POSITION_X_MAX: 100.0
+      AGENT_POSITION_Y_MIN: -100.0
+      AGENT_POSITION_Y_MAX: 100.0
+      AGENT_POSITION_Z: 1.0
+      GOAL_POSITION_X_MIN: -250.0
+      GOAL_POSITION_X_MAX: 250.0
+      GOAL_POSITION_Y_MIN: -250.0
+      GOAL_POSITION_Y_MAX: 250.0
+      GOAL_POSITION_Z: 1.0
+      SPAWN_DISTANCE_THRESHOLD: 50.0
+
+  VISUALIZER:
+    ACTOR_NAME: "DebugCameraActor"
+    SPAWN_CAMERA: False

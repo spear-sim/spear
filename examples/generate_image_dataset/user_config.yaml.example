@@ -1,14 +1,19 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/interiorsim/code/unreal_projects/RobotProject/Standalone-Development/WindowsNoEditor/RobotProject/Binaries/Win64/RobotProject-Cmd.exe"
-  TEMP_DIR: "C:/Users/ADAS/repos/interiorsim/examples/generate_image_dataset"
-  CUSTOM_COMMAND_LINE_ARGUMENTS: ["-dx12"]
-  RENDER_OFFSCREEN: True
+  STANDALONE_EXECUTABLE: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app"
+
+  DATA_DIR: "/Users/mroberts/Downloads/spear_data/v7/mac"
+  CONTENT_DIR: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app/Contents/UE4/SpearSim/Content"
+
+  CUSTOM_COMMAND_LINE_ARGUMENTS: []
+  RENDER_OFFSCREEN: False
+  WINDOW_RESOLUTION_X: 1024
+  WINDOW_RESOLUTION_Y: 768
 
 SIMULATION_CONTROLLER:
   TASK: "NullTask"
   AGENT: "CameraAgent"
-  CUSTOM_UNREAL_CONSOLE_COMMANDS: ["r.EyeAdaptation.ExponentialTransitionDistance 0", "r.Streaming.FullyLoadUsedTextures 1"]
+  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   CAMERA_AGENT:
     ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
@@ -17,8 +22,8 @@ SIMULATION_CONTROLLER:
     CAMERA:
       ACTOR_NAME: "GenerateImageDatasetCamera"
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
-      IMAGE_HEIGHT: 480
-      IMAGE_WIDTH: 852
+      IMAGE_HEIGHT: 768
+      IMAGE_WIDTH: 1024
       FOV: 90.0
     NAVMESH:
       AGENT_RADIUS: 5.0

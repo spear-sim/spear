@@ -1,3 +1,0 @@
-- To use `run.py`, you will need to have 235556528 map downloaded.
-- Update `user_config.yaml.example` -> `user_config.yaml` and change the paths in this yaml file to reflect path on your system.
-- Data in `data` dir is recorded by moving OpenBot around the 235556528 map and capturing sensor information.

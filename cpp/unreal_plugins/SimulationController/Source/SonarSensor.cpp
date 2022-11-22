@@ -1,0 +1,140 @@
+#include "SonarSensor.h"
+
+#include <vector>
+
+#include <Components/BoxComponent.h>
+#include <DrawDebugHelpers.h>
+#include <Engine/World.h>
+#include <EngineUtils.h>
+#include <GameFramework/Actor.h>
+#include <Math/UnrealMathUtility.h>
+#include <PxScene.h>
+#include <UObject/UObjectGlobals.h>
+
+#include "Assert/Assert.h"
+#include "Config.h"
+#include "Serialize.h"
+#include "TickEvent.h"
+
+SonarSensor::SonarSensor(UBoxComponent* component)
+{
+    ASSERT(component);
+    component_ = component;
+    new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
+    ASSERT(new_object_parent_actor_);
+
+    tick_event_= NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
+    ASSERT(tick_event_);
+    tick_event_->RegisterComponent();
+    tick_event_->initialize(ETickingGroup::TG_PostPhysics);
+    tick_event_handle_ = tick_event_->delegate_.AddRaw(this, &SonarSensor::postPhysicsPreRenderTickEventHandler);
+
+    range_ = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
+}
+
+SonarSensor::~SonarSensor()
+{
+    ASSERT(tick_event_);
+    tick_event_->delegate_.Remove(tick_event_handle_);
+    tick_event_handle_.Reset();
+    tick_event_->DestroyComponent();
+    tick_event_ = nullptr;
+
+    ASSERT(new_object_parent_actor_);
+    new_object_parent_actor_->Destroy();
+    new_object_parent_actor_ = nullptr;
+}
+
+void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
+{
+    float world_to_meters = component_->GetWorld()->GetWorldSettings()->WorldToMeters;
+    FCollisionQueryParams trace_params = FCollisionQueryParams(FName(TEXT("SonarTrace")), true, new_object_parent_actor_);
+    trace_params.bTraceComplex = true;
+    trace_params.bReturnPhysicalMaterial = false;
+
+    // Maximum sonar radius in horizontal and vertical direction
+    float max_rx = std::tanf(FMath::DegreesToRadians(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "HORIZONTAL_FOV"}) * 0.5f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters;
+    float max_ry = std::tanf(FMath::DegreesToRadians(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "VERTICAL_FOV"}) * 0.5f)) * Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters;
+    FTransform sensor_transform = component_->GetComponentTransform();
+    FRotator transform_rotator = sensor_transform.Rotator();
+    FVector start_location = sensor_transform.GetLocation();
+    FVector transform_x_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::X));
+    FVector transform_y_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Y));
+    FVector transform_z_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Z));
+
+    std::vector<bool> hits;
+    hits.clear();
+    hits.resize(Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}));
+
+    std::vector<FHitResult> hit_results;
+    hit_results.clear();
+    hit_results.resize(Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}));
+
+    float min_distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
+    
+    component_->GetWorld()->GetPhysicsScene()->GetPxScene()->lockRead();
+    {
+        for (int i = 0; i < Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}); i++) {
+            hit_results[i] = FHitResult(ForceInit);
+            float distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
+            float radius = std::uniform_real_distribution<float>()(random_gen_);
+            float angle = std::uniform_real_distribution<float>(0.0f, 2 * PI)(random_gen_); // Uniform distibution of vales between 0 and 2*PI
+            FVector end_location = start_location + transform_rotator.RotateVector({Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters, max_rx * radius * std::cosf(angle), max_ry * radius * std::sinf(angle)});
+            
+            bool hit = component_->GetWorld()->LineTraceSingleByChannel(hit_results.at(i), start_location, end_location, ECollisionChannel::ECC_Visibility, trace_params, FCollisionResponseParams::DefaultResponseParam);
+            TWeakObjectPtr<AActor> hit_actor = hit_results.at(i).Actor;
+
+            // If we hit anything...
+            if (hit && hit_actor.Get()) {
+                FVector ray = (hit_results.at(i).ImpactPoint - start_location) / world_to_meters;
+                // If the angle of hit surface normal and sonar ray is greater than MAX_REFLECTION_ANGLE, then no reflection should be observed
+                if (abs(FVector::DotProduct(hit_results.at(i).Normal, ray / ray.Size())) < std::cosf(FMath::DegreesToRadians(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "MAX_REFLECTION_ANGLE"})))) {
+                    hits[i] = false;
+                    distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
+                } else { // A proper distance measurement can be made
+                    hits[i] = true;
+                    distance = std::max(Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MIN"}), hit_results.at(i).Distance / world_to_meters);
+                    if (distance < min_distance) {
+                        min_distance = distance;
+                    }
+                }
+            } else { // If we didn't hit anything...
+                hits[i] = false;
+                distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
+            }
+        }
+    }
+    component_->GetWorld()->GetPhysicsScene()->GetPxScene()->unlockRead();
+
+    range_ = min_distance + Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NOISE_STD_DEV"}) * std::uniform_real_distribution<float>()(random_gen_);
+
+    // Draw the sensing cone and the sonar rays
+    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "DEBUG_RENDER"})) {
+        
+        FVector sensing_cone_vertex_1 = start_location + transform_rotator.RotateVector({Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters, max_rx, max_ry});
+        FVector sensing_cone_vertex_2 = start_location + transform_rotator.RotateVector({Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters, -max_rx, max_ry});
+        FVector sensing_cone_vertex_3 = start_location + transform_rotator.RotateVector({Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters, -max_rx, -max_ry});
+        FVector sensing_cone_vertex_4 = start_location + transform_rotator.RotateVector({Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"}) * world_to_meters, max_rx, -max_ry});
+        DrawDebugDirectionalArrow(component_->GetWorld(), start_location, sensing_cone_vertex_1, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugDirectionalArrow(component_->GetWorld(), start_location, sensing_cone_vertex_2, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugDirectionalArrow(component_->GetWorld(), start_location, sensing_cone_vertex_3, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugDirectionalArrow(component_->GetWorld(), start_location, sensing_cone_vertex_4, 0.15, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugLine(component_->GetWorld(), sensing_cone_vertex_1, sensing_cone_vertex_2, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugLine(component_->GetWorld(), sensing_cone_vertex_2, sensing_cone_vertex_3, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugLine(component_->GetWorld(), sensing_cone_vertex_3, sensing_cone_vertex_4, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+        DrawDebugLine(component_->GetWorld(), sensing_cone_vertex_4, sensing_cone_vertex_1, FColor(255, 0, 0), false, 0.033, 0, 0.15);
+
+        for (int i = 0; i < Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}); i++) {
+
+            DrawDebugLine(component_->GetWorld(), start_location, hit_results.at(i).ImpactPoint, FColor(200, 0, 200), false, 0.033, 0, 0.15);
+            DrawDebugDirectionalArrow(component_->GetWorld(), hit_results.at(i).ImpactPoint, hit_results.at(i).ImpactPoint + 5 * hit_results.at(i).Normal, 0.15, FColor(0, 188, 227), false, 0.033, 0, 0.15);
+
+            if (hits.at(i)) {
+                DrawDebugPoint(component_->GetWorld(), hit_results.at(i).ImpactPoint, 5, FColor(0, 255, 0), false, 0.033, 0);
+            } else {
+                DrawDebugPoint(component_->GetWorld(), hit_results.at(i).ImpactPoint, 5, FColor(0, 0, 255), false, 0.033, 0);
+            }
+
+        }
+    }   
+}

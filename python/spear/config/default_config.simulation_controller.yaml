@@ -1,0 +1,230 @@
+SIMULATION_CONTROLLER:
+  IP: "127.0.0.1"
+  PORT: 30000
+  WORLD_PATH_NAME: "" # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
+  LEVEL_NAME: ""      # full path to the map excluding the repeated name, e.g., "/Game/NewMap"
+  SIMULATION_STEP_TIME_SECONDS: 0.1
+  TASK: ""
+  AGENT: ""
+  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+
+  CAMERA_AGENT:
+    ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
+    OBSERVATION_COMPONENTS: ["camera"] # "camera"
+    STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
+    CAMERA:
+      ACTOR_NAME: ""
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
+    NAVMESH:
+      AGENT_RADIUS: 1.0
+      AGENT_HEIGHT: 1.0
+      CELL_SIZE: 1.0
+      CELL_HEIGHT: 1.0
+      AGENT_MAX_STEP_HEIGHT: -1.0
+      AGENT_MAX_SLOPE: 1.0
+      MERGE_REGION_SIZE: 0.0
+      MIN_REGION_AREA: 0.0
+      TILE_SIZE_UU: 1
+      TILE_POOL_SIZE: 1024
+      MAX_SIMPLIFICATION_ERROR: 1.3
+      NAV_MODIFIER_OFFSET_X: 0.0
+      NAV_MODIFIER_OFFSET_Y: 0.0
+      NAV_MODIFIER_OFFSET_Z: 0.0
+      WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+      EXPORT_NAV_DATA_OBJ: False
+      EXPORT_NAV_DATA_OBJ_DIR: ""
+
+  OPENBOT_AGENT:
+    OPENBOT_ACTOR_NAME: ""
+    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
+    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
+    STEP_INFO_COMPONENTS: ["trajectory_data"]
+    IS_READY_VELOCITY_THRESHOLD: 0.0
+    CAMERA:
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
+    TRAJECTORY_DATA:
+      GOAL_ACTOR_NAME: ""
+    NAVMESH:
+      AGENT_RADIUS: 20.0
+      AGENT_HEIGHT: 20.0
+      CELL_SIZE: 1.0
+      CELL_HEIGHT: 1.0
+      AGENT_MAX_STEP_HEIGHT: 2.0
+      AGENT_MAX_SLOPE: 0.1
+      MERGE_REGION_SIZE: 0.0
+      MIN_REGION_AREA: 400.0
+      TILE_SIZE_UU: 1
+      TILE_POOL_SIZE: 1024
+      MAX_SIMPLIFICATION_ERROR: 1.3
+      NAV_MODIFIER_OFFSET_X: 0.0
+      NAV_MODIFIER_OFFSET_Y: 0.0
+      NAV_MODIFIER_OFFSET_Z: 0.0
+      WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+      EXPORT_NAV_DATA_OBJ: False
+      EXPORT_NAV_DATA_OBJ_DIR: ""
+
+  SPHERE_AGENT:
+    ACTION_COMPONENTS: ["apply_force"] # "apply_force"
+    OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
+    STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
+    SPHERE:
+      ACTOR_NAME: ""
+      STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
+      MATERIAL: "/SimulationController/Materials/Agent_MAT.Agent_MAT"
+      MESH_SCALE: 0.5
+      MASS_SCALE: 1.0
+      MAX_ANGULAR_VELOCITY: 1.0
+      LINEAR_DAMPING: 0.0
+      ANGULAR_DAMPING: 0.0
+    COMPASS:
+      GOAL_ACTOR_NAME: ""
+      OFFSET_TO_GOAL_SCALE: 1.0
+      LINEAR_VELOCITY_SCALE: 1.0
+      YAW_SCALE: 1.0
+    CAMERA:
+      ACTOR_NAME: ""
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
+      POSITION_OFFSET_X: 0.0
+      POSITION_OFFSET_Y: 0.0
+      POSITION_OFFSET_Z: 5.0
+    APPLY_FORCE:
+      FORCE_SCALE: 1.0
+      ROTATE_SCALE: 1.0
+
+  IMITATION_LEARNING_TASK:
+    AGENT_ACTOR_NAME: ""
+    GOAL_ACTOR_NAME: ""
+    OBSTACLE_IGNORE_ACTOR_NAMES: []
+    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
+    POSITIONS_FILE: ""
+    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000
+    TRAJECTORY_SAMPLING_MAX_ITERS: 10000
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: False
+    NAVMESH:
+      AGENT_RADIUS: 20.0
+      AGENT_HEIGHT: 20.0
+      AGENT_MAX_STEP_HEIGHT: 2.0
+
+  POINT_GOAL_NAV_TASK:
+    AGENT_ACTOR_NAME: ""
+    GOAL_ACTOR_NAME: ""
+    GOAL_MESH: "/Engine/BasicShapes/Cylinder.Cylinder"
+    GOAL_MATERIAL: "/SimulationController/Materials/Goal_MAT.Goal_MAT"
+    GOAL_SCALE: 0.5
+    OBSTACLE_IGNORE_ACTOR_NAMES: []
+    RANDOM_SEED: 0
+    REWARD:
+      HIT_GOAL: 1.0
+      HIT_OBSTACLE: -1.0
+      DISTANCE_TO_GOAL_SCALE: 1.0
+    EPISODE_BEGIN:
+      AGENT_POSITION_X_MIN: .NAN
+      AGENT_POSITION_X_MAX: .NAN
+      AGENT_POSITION_Y_MIN: .NAN
+      AGENT_POSITION_Y_MAX: .NAN
+      AGENT_POSITION_Z: .NAN
+      GOAL_POSITION_X_MIN: .NAN
+      GOAL_POSITION_X_MAX: .NAN
+      GOAL_POSITION_Y_MIN: .NAN
+      GOAL_POSITION_Y_MAX: .NAN
+      GOAL_POSITION_Z: .NAN
+      SPAWN_DISTANCE_THRESHOLD: 1.0
+
+  VISUALIZER:
+    ACTOR_NAME: ""
+    SPAWN_CAMERA: True
+    SPAWN_CAMERA_POSITION_X: 0.0
+    SPAWN_CAMERA_POSITION_Y: 0.0
+    SPAWN_CAMERA_POSITION_Z: 0.0
+    SPAWN_CAMERA_ORIENTATION_PITCH: 0.0
+    SPAWN_CAMERA_ORIENTATION_YAW: 0.0
+    SPAWN_CAMERA_ORIENTATION_ROLL: 0.0
+
+  # We have found these values achieve a good trade-off between image quality and
+  # rendering speed. When Unreal defines ClampMin/ClampMax values, it will clamp
+  # those values in the engine. When Unreal defines UIMin/UIMax vales, it will
+  # only clamp those values values in the editor.
+  CAMERA_SENSOR:
+    FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP: True
+    FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP: 9999.0                          # ClampMin=0.02, UIMax=20.0
+    FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN: True
+    FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN: 9999.0                        # ClampMin=0.02, UIMax=20.0
+    FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY: True
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # set to 0.0 to use ray-tracing global illumination
+    FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: True                         # set to True to use ray-tracing features
+    FINAL_COLOR_OVERRIDE_RAYTRACING_GI: True
+    FINAL_COLOR_RAYTRACING_GI_TYPE: "BruteForce"                        # set to "BruteForce" when using ray-tracing
+    FINAL_COLOR_OVERRIDE_RAYTRACING_GI_MAX_BOUNCES: True
+    FINAL_COLOR_RAYTRACING_GI_MAX_BOUNCES: 4                            # ClampMin=1, ClampMax=64
+    FINAL_COLOR_OVERRIDE_RAYTRACING_GI_SAMPLES_PER_PIXEL: True
+    FINAL_COLOR_RAYTRACING_GI_SAMPLES_PER_PIXEL: 16                     # ClampMin=1, ClampMax=64
+    FINAL_COLOR_OVERRIDE_RAYTRACING_AO: True
+    FINAL_COLOR_RAYTRACING_AO: 1                                        # set to 1 to enable and 0 to disable
+    FINAL_COLOR_OVERRIDE_RAYTRACING_AO_SAMPLES_PER_PIXEL: True
+    FINAL_COLOR_RAYTRACING_AO_SAMPLES_PER_PIXEL: 8                      # ClampMin=1, ClampMax=64
+    FINAL_COLOR_OVERRIDE_RAYTRACING_AO_INTENSITY: True
+    FINAL_COLOR_RAYTRACING_AO_INTENSITY: 0.8                            # ClampMin=0.0, ClampMax=1.0
+    FINAL_COLOR_OVERRIDE_RAYTRACING_AO_RADIUS: True
+    FINAL_COLOR_RAYTRACING_AO_RADIUS: 4000.0                            # ClampMin=0.0, ClampMax=10000.0
+    FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE: True
+    FINAL_COLOR_REFLECTIONS_TYPE: "RayTracing"                          # set to "RayTracing" when using ray-tracing
+    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES: True
+    FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_BOUNCES: 2                   # ClampMin=1, ClampMax=64
+    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS: True 
+    FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS: 0.4               # ClampMin=0.01, ClampMax=1.0
+    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL: True
+    FINAL_COLOR_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL: 8             # ClampMin=1, ClampMax=64
+    FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_TRANSLUCENCY: True
+    FINAL_COLOR_RAYTRACING_REFLECTIONS_TRANSLUCENCY: 1                  # set to 1 to enable and 0 to disable
+    FINAL_COLOR_SET_AMBIENT_OCCLUSION: True                             # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_CAMERA_IMPERFECTIONS: True                          # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_COLOR_GRADING: True                                 # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_DEPTH_OF_FIELD: True                                # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_DISTANCE_FIELD_AO: True                             # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_EYE_ADAPTATION: True                                # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_GRAIN: True                                         # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_INDIRECT_LIGHTING_CACHE: True                       # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_LENS_FLARES: True                                   # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_LIGHT_SHAFTS: True                                  # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_SCREEN_SPACE_REFLECTIONS: True                      # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_SEPARATE_TRANSLUCENCY: True                         # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_TEMPORAL_AA: True                                   # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_VIGNETTE: True                                      # enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    FINAL_COLOR_SET_ANTI_ALIASING: True
+    FINAL_COLOR_SET_RAYTRACED_DISTANCE_FIELD_SHADOWS: True
+    FINAL_COLOR_SET_DYNAMIC_SHADOWS: True
+
+  IMU_SENSOR:
+    ACCELEROMETER_NOISE_STD_DEV: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    GYROSCOPE_NOISE_STD_DEV: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    GYROSCOPE_BIAS: 
+      X: 0.0
+      Y: 0.0
+      Z: 0.0
+    DEBUG_RENDER: False
+
+  SONAR_SENSOR:
+    NUM_RAYS: 11
+    MAX_REFLECTION_ANGLE: 45.0
+    HORIZONTAL_FOV: 30.0
+    VERTICAL_FOV: 10.0
+    RANGE:
+      MIN: 0.01
+      MAX: 10.0
+    NOISE_STD_DEV: 0.0
+    DEBUG_RENDER: False
