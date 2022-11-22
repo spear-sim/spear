@@ -1,6 +1,6 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/interiorsim/code/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+  STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/interiorsim/cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
 
 SIMULATION_CONTROLLER:
   TASK: "PointGoalNavTask"

@@ -1,9 +1,9 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/spear/code/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+  STANDALONE_EXECUTABLE: "C:/Users/ADAS/repos/spear/cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
 
   SCENES_DIR: "C:/Users/ADAS/Downloads/spear_scenes/v7/windows"
-  CONTENT_DIR: "C:/Users/ADAS/repos/spear/code/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Content"
+  CONTENT_DIR: "C:/Users/ADAS/repos/spear/cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Content"
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
