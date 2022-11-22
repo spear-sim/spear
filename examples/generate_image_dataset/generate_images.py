@@ -53,8 +53,8 @@ class CustomEnv(spear.Env):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--poses_file", default="poses.csv")
-    parser.add_argument("--images_dir", default="images")
+    parser.add_argument("--poses_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "poses.csv"))
+    parser.add_argument("--images_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "images"))
     parser.add_argument("--num_internal_steps", type=int, default=1)
     args = parser.parse_args()
 

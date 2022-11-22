@@ -12,7 +12,7 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--poses_file", default="poses.csv")
+    parser.add_argument("--poses_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "poses.csv"))
     parser.add_argument("--num_poses_per_scene", type=int, default=10)
     parser.add_argument("--scene_id")
     args = parser.parse_args()

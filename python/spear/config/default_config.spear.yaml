@@ -16,11 +16,11 @@ SPEAR:
   UPROJECT: ""
 
   # "The location of downloaded scenes obtained from our scene_downloader tool including the
-  # version and platform, e.g., /Users/mroberts/Downloads/spear_scenes/v7/mac"
-  SCENES_DIR: ""
+  # version and platform, e.g., /Users/mroberts/Downloads/spear_data/v7/mac"
+  DATA_DIR: ""
 
   # The location of the Content directory corresponding to your Unreal executable. This is
-  # only needed if SCENES_DIR is specified, in which case it is required. For example:
+  # only needed if DATA_DIR is specified, in which case it is required. For example:
   # - macOS: /Users/mroberts/code/github/spear/code/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app/Contents/UE4/SpearSim/Content
   # - Windows: C:/Users/ADAS/repos/spear/code/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Content
   CONTENT_DIR:
@@ -65,7 +65,7 @@ SPEAR:
   RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 120.0
 
   # Sleep for this amount of time in-between attempts to initialize the RPC client
-  RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 1.0
+  RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 2.0
 
   # The RPC client will try this number of reconnection attempts before returning from its
   # constructor.

@@ -214,21 +214,32 @@ class Env(gym.Env):
 
         assert os.path.exists(launch_executable_internal)
 
-        # create a symlink to SPEAR.SCENES_DIR if one doesn't already exist
-        if self._config.SPEAR.SCENES_DIR != "":
+        # create a symlink to SPEAR.DATA_DIR if one doesn't already exist
+        if self._config.SPEAR.DATA_DIR != "":
             assert self._config.SPEAR.CONTENT_DIR != ""
             paks_dir = os.path.join(self._config.SPEAR.CONTENT_DIR, "Paks")
-            scenes_dir = os.path.join(paks_dir, "Scenes")
-            if os.path.exists(paks_dir) and not os.path.exists(scenes_dir) and not os.path.islink(scenes_dir):
+            assert os.path.exists(paks_dir)
+            data_dir = os.path.join(paks_dir, "Data")
 
-                print(f"Creating symlink: {self._config.SPEAR.SCENES_DIR} -> {scenes_dir}")
+            # if data_dir exists, it must be a symbolic link
+            if os.path.exists(data_dir):
+                assert os.path.islink(data_dir)
+
+            # if data_dir is a symbolic link that doesn't point to DATA_DIR, then unlink it
+            if os.path.islink(data_dir) and os.readlink(data_dir) != self._config.SPEAR.DATA_DIR:
+                print(f"Link target for {data_dir} is {os.readlink(data_dir)}, which doesn't match {self._config.SPEAR.DATA_DIR}, unlinking...")
                 print()
+                os.unlink(data_dir)
 
+            # if data_dir is not a symbolic link at this point, then link it to DATA_DIR
+            if not os.path.islink(data_dir):
+                print(f"Creating symlink: {data_dir} -> {self._config.SPEAR.DATA_DIR}")
+                print()
                 try:
-                    os.symlink(self._config.SPEAR.SCENES_DIR, scenes_dir)
+                    os.symlink(self._config.SPEAR.DATA_DIR, data_dir)
                 except OSError as e:
                     print(e)
-                    print("\n\n\nThe config value SPEAR.SCENES_DIR is set to a specific directory, so spear.Env() is trying to create a symlink. If you are on Windows, you need admin privileges.\n\n")
+                    print("\n\n\nThe config value SPEAR.DATA_DIR is set to a specific directory, so spear.Env() is trying to create a symlink. If you are on Windows, you need admin privileges.\n\n")
                     assert False
 
         args = [launch_executable_internal] + launch_params

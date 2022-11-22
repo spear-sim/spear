@@ -94,7 +94,7 @@ def download_scene_pak_files(scene_id, args):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--destination_dir", required=True)
+    parser.add_argument("--data_dir", required=True)
     parser.add_argument("--platform", required=True)
     parser.add_argument("--temp_dir", default="tmp")
     parser.add_argument("--version", default="v7")
