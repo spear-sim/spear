@@ -29,8 +29,8 @@ conda install -c anaconda pip
 # install the spear Python package
 pip install -e python
 
-# install OpenCV (this is not a core requirement, but it is used by some of our examples) 
-pip install opencv-python
+# install msgpack-rpc-python (do this separately from other Python dependencies so we can use a specific commit from the msgpack-rpc-python GitHub repo)
+pip install -e third_party/msgpack-rpc-python
 ```
 
 ## Build third-party C++ libraries
