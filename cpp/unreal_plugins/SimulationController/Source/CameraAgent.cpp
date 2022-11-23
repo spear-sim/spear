@@ -124,10 +124,10 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
     // action["set_pose"]
     //
     if (std::find(action_components.begin(), action_components.end(), "set_pose") != action_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {6}; // x,y,z in cms and then p,y,r in degs
-        box.dtype = DataType::Float32;
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.shape_ = {6}; // x,y,z in cms and then p,y,r in degs
+        box.dtype_ = DataType::Float32;
         action_space["set_pose"] = std::move(box);
     }
 
@@ -135,10 +135,10 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
     // action["set_num_random_points"]
     //
     if (std::find(action_components.begin(), action_components.end(), "set_num_random_points") != action_components.end()) {
-        box.low = std::numeric_limits<uint32_t>::lowest();
-        box.high = std::numeric_limits<uint32_t>::max();
-        box.shape = {1};
-        box.dtype = DataType::UInteger32;
+        box.low_ = std::numeric_limits<uint32_t>::lowest();
+        box.high_ = std::numeric_limits<uint32_t>::max();
+        box.shape_ = {1};
+        box.dtype_ = DataType::UInteger32;
         action_space["set_num_random_points"] = std::move(box);
     }
 
@@ -178,10 +178,10 @@ std::map<std::string, Box> CameraAgent::getStepInfoSpace() const
     // step_info["random_points"]
     //
     if (std::find(step_info_components.begin(), step_info_components.end(), "random_points") != step_info_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {-1, 3};
-        box.dtype = DataType::Float32;
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.shape_ = {-1, 3};
+        box.dtype_ = DataType::Float32;
         step_info_space["random_points"] = std::move(box);
     }
 

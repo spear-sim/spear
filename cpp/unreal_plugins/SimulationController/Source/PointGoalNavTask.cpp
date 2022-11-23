@@ -137,16 +137,16 @@ std::map<std::string, Box> PointGoalNavTask::getStepInfoSpace() const
     std::map<std::string, Box> step_info_space;
     Box box;
     
-    box.low = 0;
-    box.high = 1;
-    box.shape = {1};
-    box.dtype = DataType::Boolean;
+    box.low_ = 0;
+    box.high_ = 1;
+    box.shape_ = {1};
+    box.dtype_ = DataType::Boolean;
     step_info_space["hit_goal"] = std::move(box);
 
-    box.low = 0;
-    box.high = 1;
-    box.shape = {1};
-    box.dtype = DataType::Boolean;
+    box.low_ = 0;
+    box.high_ = 1;
+    box.shape_ = {1};
+    box.dtype_ = DataType::Boolean;
     step_info_space["hit_obstacle"] = std::move(box);
 
     return step_info_space;
