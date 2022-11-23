@@ -172,10 +172,10 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
     // action["apply_voltage"]
     //
     if (std::find(action_components.begin(), action_components.end(), "apply_voltage") != action_components.end()) {
-        box.low = -1.f;
-        box.high = 1.f;
-        box.shape = {2};
-        box.dtype = DataType::Float32;
+        box.low_ = -1.f;
+        box.high_ = 1.f;
+        box.shape_ = {2};
+        box.dtype_ = DataType::Float32;
         action_space["apply_voltage"] = std::move(box);
     }
 
@@ -183,10 +183,10 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
     // action["set_position_xyz_centimeters"]
     //
     if (std::find(action_components.begin(), action_components.end(), "set_position_xyz_centimeters") != action_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {3};
-        box.dtype = DataType::Float32;
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.shape_ = {3};
+        box.dtype_ = DataType::Float32;
         action_space["set_position_xyz_centimeters"] = std::move(box);
     }
 
@@ -194,10 +194,10 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
     // action["set_orientation_pyr_radians"]
     //
     if (std::find(action_components.begin(), action_components.end(), "set_orientation_pyr_radians") != action_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {3};
-        box.dtype = DataType::Float32;
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.shape_ = {3};
+        box.dtype_ = DataType::Float32;
         action_space["set_orientation_pyr_radians"] = std::move(box);
     }
 
@@ -215,10 +215,10 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     // observation["state_data"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "state_data") != observation_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.dtype = DataType::Float32;
-        box.shape = {6};
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.dtype_ = DataType::Float32;
+        box.shape_ = {6};
         observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
     }
 
@@ -226,10 +226,10 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     // observation["control_data"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "control_data") != observation_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.dtype = DataType::Float32;
-        box.shape = {2};
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.dtype_ = DataType::Float32;
+        box.shape_ = {2};
         observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
     }
 
@@ -249,10 +249,10 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     // observation["imu"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.dtype = DataType::Float32;
-        box.shape = {6};
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.dtype_ = DataType::Float32;
+        box.shape_ = {6};
         observation_space["imu"] = std::move(box); // a_x, a_y, a_z, g_x, g_y, g_z
     }
 
@@ -260,10 +260,10 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     // observation["sonar"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "sonar")!= observation_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.dtype = DataType::Float32;
-        box.shape = {1};
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.dtype_ = DataType::Float32;
+        box.shape_ = {1};
         observation_space["sonar"] = std::move(box); // Front obstacle distance in [m]
     }
     
@@ -281,10 +281,10 @@ std::map<std::string, Box> OpenBotAgent::getStepInfoSpace() const
     // step_info["trajectory_data"]
     //
     if (std::find(step_info_components.begin(), step_info_components.end(), "trajectory_data") != step_info_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.dtype = DataType::Float32;
-        box.shape = {-1, 3};
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.dtype_ = DataType::Float32;
+        box.shape_ = {-1, 3};
         step_info_space["trajectory_data"] = std::move(box); // Vector of the waypoints (X, Y, Z) building the desired trajectory relative to the world frame.
     }
 
