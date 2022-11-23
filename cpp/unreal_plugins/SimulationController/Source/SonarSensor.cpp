@@ -74,7 +74,7 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
     
     component_->GetWorld()->GetPhysicsScene()->GetPxScene()->lockRead();
     {
-        for (unsigned int i = 0; i < Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}); i++) {
+        for (int i = 0; i < Config::getValue<int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}); i++) {
             hit_results[i] = FHitResult(ForceInit);
             float distance = Config::getValue<float>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "RANGE", "MAX"});
             float radius = std::uniform_real_distribution<float>()(random_gen_);
@@ -124,7 +124,7 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
         DrawDebugLine(component_->GetWorld(), sensing_cone_vertex_3, sensing_cone_vertex_4, FColor(255, 0, 0), false, 0.033, 0, 0.15);
         DrawDebugLine(component_->GetWorld(), sensing_cone_vertex_4, sensing_cone_vertex_1, FColor(255, 0, 0), false, 0.033, 0, 0.15);
 
-        for (unsigned int i = 0; i < Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}); i++) {
+        for (int i = 0; i < Config::getValue<int>({"SIMULATION_CONTROLLER", "SONAR_SENSOR", "NUM_RAYS"}); i++) {
 
             DrawDebugLine(component_->GetWorld(), start_location, hit_results.at(i).ImpactPoint, FColor(200, 0, 200), false, 0.033, 0, 0.15);
             DrawDebugDirectionalArrow(component_->GetWorld(), hit_results.at(i).ImpactPoint, hit_results.at(i).ImpactPoint + 5 * hit_results.at(i).Normal, 0.15, FColor(0, 188, 227), false, 0.033, 0, 0.15);
