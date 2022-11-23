@@ -104,7 +104,7 @@ if __name__ == "__main__":
         for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
             image_dir = os.path.join(args.images_dir, scene_id, render_pass)
             assert os.path.exists(image_dir)
-            plt.imsave(os.path.join(image_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass])
+            plt.imsave(os.path.join(image_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
 
     # close the current Env
     env.close()

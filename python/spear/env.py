@@ -355,10 +355,10 @@ class Env(gym.Env):
 
         dict_space_components = {}
         for name, component in space.items():
-            low = component["low"]
-            high = component["high"]
-            shape = tuple(component["shape"])
-            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype"]]
+            low = component["low_"]
+            high = component["high_"]
+            shape = tuple(component["shape_"])
+            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype_"]]
             dict_space_components[name] = box_space_type(low, high, shape, dtype)
 
         return dict_space_type(dict_space_components)
