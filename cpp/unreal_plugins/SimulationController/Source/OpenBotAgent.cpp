@@ -58,7 +58,7 @@ OpenBotAgent::OpenBotAgent(UWorld* world)
     // observation["imu"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
-        imu_sensor_ = std::make_unique<ImuSensor>(open_bot_pawn_->imu_component_);
+        imu_sensor_ = std::make_unique<ImuSensor>(open_bot_pawn_->imu_component_, open_bot_pawn_->skeletal_mesh_component_);
         ASSERT(imu_sensor_);
     }
     
