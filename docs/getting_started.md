@@ -57,14 +57,12 @@ Our Unreal projects assume that all of their required parameters are declared in
 
 ```console
 cd tools
-python generate_config.py --user_config_files path/to/spear/cpp/unreal_projects/SpearSim/user_config.yaml --output_unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim
+python generate_config.py --unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim
 ```
 
 ## Launch your first Unreal project
 
 At this point, you should be able to double-click on `cpp/unreal_projects/SpearSim/SpearSim.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully.
-
-Our other projects require you to download additional content before you can run them. See the `README` file in each project directory for more details.
 
 ## Build your first standalone executable
 
