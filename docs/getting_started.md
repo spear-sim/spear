@@ -27,10 +27,10 @@ conda activate spear-env
 conda install -c anaconda pip
 
 # install the spear Python package
-pip install -e code/python_package
+pip install -e python
 
 # install msgpack-rpc-python (do this separately from other Python dependencies so we can use a specific commit from the msgpack-rpc-python GitHub repo)
-pip install -e code/third_party/msgpack-rpc-python
+pip install -e third_party/msgpack-rpc-python
 
 # install OpenCV (this is not a core requirement, but it is used by some of our examples) 
 pip install opencv-python
@@ -41,16 +41,18 @@ pip install opencv-python
 Our Unreal projects require you to build several third-party C++ libraries. We provide a command-line tool for this purpose.
 
 ```console
-cd code/tools
-python build_third_party_libs.py
+cd tools
+python build_third_party_libs.py --num_parallel_jobs 8
 ```
+
+The number of parallel jobs in this command should be adjusted based on your own machine specifications.
 
 ## Create symbolic links
 
 Our Unreal projects require several symbolic links to function correctly. We provide a command-line tool to create these links.
 
 ```console
-cd code/tools
+cd tools
 python create_symbolic_links.py
 ```
 
@@ -59,19 +61,19 @@ python create_symbolic_links.py
 Our Unreal projects assume that all of their required parameters are declared in a config file. We usually launch our projects via high-level Python code, and this Python code takes care of generating the appropriate config file automatically. However, a valid config file is also required when building our projects, and we must generate this config file explicitly before attempting to build. A valid config file is also required if you want to launch one of our projects directly from the Unreal Editor. To generate a config file, rename the following file and edit the paths in the file for your system.
 
 ```
-code/unreal_projects/PlayEnvironment/user_config.yaml.example -> user_config.yaml
+cpp/unreal_projects/SpearSim/user_config.yaml.example -> user_config.yaml
 ```
 
 Next, run the following command-line tool.
 
 ```console
-cd code/tools
-python generate_config.py --user_config_files path/to/spear/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/spear/code/unreal_projects/PlayEnvironment
+cd tools
+python generate_config.py --user_config_files path/to/spear/cpp/unreal_projects/SpearSim/user_config.yaml --output_unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim
 ```
 
 ## Launch your first Unreal project
 
-At this point, you should be able to double-click on `code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully.
+At this point, you should be able to double-click on `cpp/unreal_projects/SpearSim/SpearSim.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully.
 
 Our other projects require you to download additional content before you can run them. See the `README` file in each project directory for more details.
 
@@ -81,10 +83,10 @@ Even though it is possible to launch our projects directly from the Unreal Edito
 
 ```console
 # build, cook, stage, package, archive
-path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/code/unreal_projects/PlayEnvironment/PlayEnvironment.uproject -build -cook -stage -package -archive -targetPlatform=Mac -target=PlayEnvironment -clientconfig=Development -archivedirectory=path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development
+path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
 ```
 
-This step will build a standalone executable at the path `code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app`. 
+This step will build a standalone executable at the path `cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app`. 
 
 ### Helpful command-line options
 
@@ -100,12 +102,12 @@ This step will build a standalone executable at the path `code/unreal_projects/P
 At this point, you should be able to run your standalone executable directly as follows.
 
 ```console
-# generate config directly inside PlayEnvironment.app
-cd code/tools
-python generate_config.py --user_config_files path/to/spear/code/unreal_projects/PlayEnvironment/user_config.yaml --output_unreal_project_dir path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/UE4/PlayEnvironment
+# generate config directly inside SpearSim.app
+cd cpp/tools
+python generate_config.py --user_config_files path/to/spear/cpp/unreal_projects/SpearSim/user_config.yaml --output_unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app/Contents/UE4/SpearSim
 
-# run the executable from the terminal (or double-click on PlayEnvironment.app)
-path/to/spear/code/unreal_projects/PlayEnvironment/Standalone-Development/MacNoEditor/PlayEnvironment.app/Contents/MacOS/PlayEnvironment
+# run the executable from the terminal (or double-click on SpearSim.app)
+path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app/Contents/MacOS/SpearSim
 ```
 
 ## Control the environment via Python
@@ -118,7 +120,7 @@ import os
 import spear
 
 # load config (this function will load the parameter values specified in user_config.yaml, as well as sensible defaults for all other parameters)
-config = spear.get_config(user_config_files=[ os.path.join(spear.SPEAR_ROOT_DIR, "..", "..", "unreal_projects", "PlayEnvironment", "user_config.yaml") ])
+config = spear.get_config(user_config_files=[ os.path.join(spear.SPEAR_ROOT_DIR, "..", "..", "unreal_projects", "SpearSim", "user_config.yaml") ])
 
 # create Env object
 env = spear.Env(config=config)
