@@ -35,14 +35,12 @@ pip install -e third_party/msgpack-rpc-python
 
 ## Build third-party C++ libraries
 
-Our Unreal projects require you to build several third-party C++ libraries. We provide a command-line tool for this purpose.
+Our Unreal projects require you to build several third-party C++ libraries. We provide a command-line tool for this purpose. The number of parallel jobs in this command should be adjusted based on your own machine specifications.
 
 ```console
 cd tools
 python build_third_party_libs.py --num_parallel_jobs 8
 ```
-
-The number of parallel jobs in this command should be adjusted based on your own machine specifications.
 
 ## Create symbolic links
 
