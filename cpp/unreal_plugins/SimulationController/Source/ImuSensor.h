@@ -13,14 +13,7 @@ class UTickEvent;
 class ImuSensor 
 {
 public:
-
-    // We have found that not all UPrimitiveComponent objects can be used to compute angular rates.
-    // In particular, a UBoxComponent that isn't at the root of an actor's component hierarchy will
-    // always return 0 when calling the angular rate functions that are part of the UPrimitiveComponent
-    // interface. To account for this unexpected behavior, we allow users of this class to pass in
-    // a separate component for computing angular rates. We have found that passing in a
-    // USkeletalMeshComponent at the root of an actor's component hierarchy behaves as expected.
-    ImuSensor(UPrimitiveComponent* linear_acceleration_component, UPrimitiveComponent* angular_rate_component);
+    ImuSensor(UPrimitiveComponent* component);
     ~ImuSensor();
 
     // Updates the IMU's linear acceleration and angular rate measurements at once
@@ -38,8 +31,7 @@ private:
 
     AActor* new_object_parent_actor_ = nullptr;
 
-    UPrimitiveComponent* linear_acceleration_component_ = nullptr;
-    UPrimitiveComponent* angular_rate_component_ = nullptr;
+    UPrimitiveComponent* component_ = nullptr;
 
     UTickEvent* tick_event_ = nullptr;
     FDelegateHandle tick_event_handle_;
