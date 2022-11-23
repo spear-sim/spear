@@ -122,10 +122,7 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTic
         FRotator transform_rotator;
         FVector imu_location;
 
-        //
         // Debug drawing for linear_acceleration_component_
-        //
-
         sensor_transform = linear_acceleration_component_->GetComponentTransform();
         transform_rotator = sensor_transform.Rotator();
         imu_location = sensor_transform.GetLocation();
@@ -142,10 +139,7 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTic
         // Plot linear acceleration vector
         DrawDebugDirectionalArrow(linear_acceleration_component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
 
-        //
         // Debug drawing for angular_rate_component_
-        //
-
         sensor_transform = angular_rate_component_->GetComponentTransform();
         transform_rotator = sensor_transform.Rotator();
         imu_location = sensor_transform.GetLocation();
