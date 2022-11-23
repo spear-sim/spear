@@ -40,3 +40,5 @@ if __name__ == "__main__":
 
     # close the environment
     env.close()
+
+    print("Done.")
