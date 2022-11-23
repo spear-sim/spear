@@ -29,9 +29,6 @@ conda install -c anaconda pip
 # install the spear Python package
 pip install -e python
 
-# install msgpack-rpc-python (do this separately from other Python dependencies so we can use a specific commit from the msgpack-rpc-python GitHub repo)
-pip install -e third_party/msgpack-rpc-python
-
 # install OpenCV (this is not a core requirement, but it is used by some of our examples) 
 pip install opencv-python
 ```
@@ -83,7 +80,7 @@ Even though it is possible to launch our projects directly from the Unreal Edito
 
 ```console
 # build, cook, stage, package, archive
-path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
+path/to/UnrealEngine/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
 ```
 
 This step will build a standalone executable at the path `cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app`. 
@@ -103,7 +100,7 @@ At this point, you should be able to run your standalone executable directly as 
 
 ```console
 # generate config directly inside SpearSim.app
-cd cpp/tools
+cd tools
 python generate_config.py --user_config_files path/to/spear/cpp/unreal_projects/SpearSim/user_config.yaml --output_unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app/Contents/UE4/SpearSim
 
 # run the executable from the terminal (or double-click on SpearSim.app)
