@@ -1,13 +1,18 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
-import numpy as np
+import argparse
 import csv
 import datetime
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import shutil
+import spear
 import time
-from openbot_gym.openbot_env import OpenBotEnv
-from openbot_gym.openbot_agent import OpenBotAgent
 
-
+from ..openbot_gym.openbot_env import OpenBotEnv
+from ..openbot_gym.openbot_agent import OpenBotAgent
+from ..openbot_gym import openbot_utils
   
 if __name__ == "__main__":
 
@@ -51,11 +56,16 @@ if __name__ == "__main__":
             executed_iterations = 0
             index_waypoint = 1
 
-            folder_name = f"dataset/uploaded/run_{mapName}_{run}"
-            data_folder_name = folder_name+"/data/"
-            os.makedirs(data_folder_name, exist_ok=True)
-            os.makedirs(data_folder_name+"sensor_data", exist_ok=True)
-            os.makedirs(data_folder_name+"images", exist_ok=True)
+            # build the run data folder and its subfolders following the guidelines of the OpenBot public repository 
+            # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
+
+            run_dir = f"dataset/uploaded/run_{scene_id}_{run}"
+            data_dir = run_dir+"/data/"
+            image_dir = data_dir+"images"
+            sensor_dir = data_dir+"sensor_data"
+            os.makedirs(data_dir, exist_ok=True)
+            os.makedirs(image_dir, exist_ok=True)
+            os.makedirs(sensor_dir, exist_ok=True)
 
             print("----------------------")
             print(f"run {run} over {args.runs}")
@@ -64,10 +74,8 @@ if __name__ == "__main__":
             # reset the simulation
             _ = env.reset()
         
-            # Send Zero action to the agent and collect initial trajectory observations:
-            # obs["state_data"] = X, Y, Z, Pitch, Yaw, Roll
-            # obs["control_data"] = ctrl left, ctrl right
-        
+            # send zero action to the agent and collect initial trajectory observations:
+
             obs, _, _, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
         
             ctrl_left = obs["control_data"][0]
@@ -111,7 +119,16 @@ if __name__ == "__main__":
 
                 # send control action to the agent and collect observations
                 obs, reward, done, info = env.step({"apply_voltage": action})
-            
+
+                # save the collected rgb observations
+                plt.imsave(os.path.join(image_dir, "%d.jpeg"%i), obs["camera_final_color"].squeeze())
+
+                # During a run, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training purposes. 
+                # In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole trajectory. 
+                # In this case, rather than considering the whole run as a fail, one can consider the last position reached by the agent as the new goal position. 
+                # Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather than directly writing all the 
+                # observations in a file iteration by iteration, we append these observations in a buffer, named "array_obs" to later process them once the run is completed. 
+
                 ctrl_left = obs["control_data"][0]                                          # control duty cycle of the left weels in [%]
                 ctrl_right = obs["control_data"][1]                                         # control duty cycle of the right weels in [%]
                 pos_x = obs["state_data"][0]                                                # x component of agent position wrt. world in [cm]
@@ -134,11 +151,6 @@ if __name__ == "__main__":
                     collision_flag = True
                     break
 
-                # During a run, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training purposes. 
-                # In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole trajectory. 
-                # In this case, rather than considering the whole run as a fail, one can consider the last position reached by the agent as the new goal position. 
-                # Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather than directly writing all the 
-                # observations in a file iteration by iteration, we append these observations in a buffer, named "array_obs" to later process them once the run is completed. 
                 array_obs[i][0] = ctrl_left
                 array_obs[i][1] = ctrl_right
                 array_obs[i][2] = pos_x 
@@ -157,13 +169,8 @@ if __name__ == "__main__":
                 array_obs[i][15] = imu_gx
                 array_obs[i][16] = imu_gy
                 array_obs[i][17] = imu_gz
-            
-                # save the collected rgb observations:
-                im = Image.fromarray(obs["camera_final_color"])
-                im.save(data_folder_name+"images/%d.jpeg" % i)
                 
-                # Check the stop conditions of the run
-                
+                # check the stop conditions of the run
                 if waypoint_reached: # if a waypoint of the trajectory is reached, based on the autopilot's acceptance_radius condition 
                     if index_waypoint < num_waypoints: # if the considered waypoint is not the final goal
                         print(f"Waypoint {index_waypoint} over {num_waypoints} reached !")
@@ -173,11 +180,10 @@ if __name__ == "__main__":
                         goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
                         break
 
-                if done: # if the done flag is raised:
+                if done: # if the done flag is raised
                     if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
                         print("Collision detected ! Killing simulation and restarting run...")
                         collision_flag = True # raise collision_flag to interrupt and restart the current run
-
                     if info["task_step_info"]["hit_goal"]: # if the vehicle collided with the goal
                         print("Goal reached (collision check)  !")
                         goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
@@ -187,33 +193,36 @@ if __name__ == "__main__":
             
             if collision_flag == True: # if the collision flag is raised during the run
                 print("Restarting run...")
-                shutil.rmtree(folder_name) # remove the data collected so far as it is improper for training purposes
+                shutil.rmtree(run_dir) # remove the data collected so far as it is improper for training purposes
                 # do not update the run count as the run must be restarted
 
             else: # as no collision occured during the run, the collected data can be used for training purposes
-                if args.create_video: # if desired, generate a video from the collected rgb observations 
-                    GenerateVideo(config, mapName, run)
-                run = run + 1 # update the run count and move to the next run 
 
-                # Populate the observation data files with the array_obs buffer content
+                # populate the observation data files with the array_obs buffer content
                 print("Filling database...")
-                f_ctrl = open(data_folder_name+"sensor_data/ctrlLog.txt", 'w')  # low-level commands sent to the motors
-                f_goal = open(data_folder_name+"sensor_data/goalLog.txt", 'w')  # high level commands
-                f_rgb = open(data_folder_name+"sensor_data/rgbFrames.txt", 'w') # reference of the images correespoinding to each control input
-                f_pose = open(data_folder_name+"sensor_data/poseData.txt", 'w') # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
 
+                # low-level commands sent to the motors
+                f_ctrl = open(os.path.join(sensor_dir,"ctrlLog.txt"), 'w')  
                 writer_ctrl = csv.writer(f_ctrl, delimiter=",")
                 writer_ctrl.writerow( ('timestamp[ns]','leftCtrl','right_ctrl') )
-                writer_pose = csv.writer(f_pose , delimiter=",")
-                writer_pose.writerow( ('timestamp[ns]','posX','posY','posZ','rollAngle','pitchAngle','yawAngle') )
+
+                # high level commands
+                f_goal = open(os.path.join(sensor_dir,"goalLog.txt"), 'w')  
                 writer_goal = csv.writer(f_goal, delimiter=",")
                 writer_goal.writerow( ('timestamp[ns]','dist','sinYaw','cosYaw') )
+
+                # reference of the images correespoinding to each control input
+                f_rgb = open(os.path.join(sensor_dir,"rgbFrames.txt"), 'w') 
                 writer_rgb = csv.writer(f_rgb, delimiter=",")
                 writer_rgb.writerow( ('timestamp[ns]','frame') )
 
+                # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
+                f_pose = open(os.path.join(sensor_dir,"poseData.txt"), 'w') 
+                writer_pose = csv.writer(f_pose , delimiter=",")
+                writer_pose.writerow( ('timestamp[ns]','posX','posY','posZ','rollAngle','pitchAngle','yawAngle') )
+
+                # set the goal position as the last position reached by the agent
                 goal_position_xy = np.array([array_obs[executed_iterations-1][2],array_obs[executed_iterations-1][3]]) # use the vehicle last location as goal
-                forward = np.array([1,0]) # Front axis is the X axis.
-                forward_rotated = np.array([0,0])
 
                 for i in range(executed_iterations):
 
@@ -237,6 +246,11 @@ if __name__ == "__main__":
                 f_pose.close()
                 f_goal.close()
                 f_rgb.close()
+
+                if args.create_video: # if desired, generate a video from the collected rgb observations 
+                    openbot_utils.generate_video(config, scene_id, run)
+
+                run = run + 1 # update the run count and move to the next run 
 
         # close the current scene and give the system a bit of time before switching to the next scene.
         env.close()

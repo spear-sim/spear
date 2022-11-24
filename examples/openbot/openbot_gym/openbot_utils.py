@@ -1,89 +1,133 @@
 import argparse
 import csv
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import re
 import shutil
+import ffmpeg
 import spear
 import sys
 
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+def generate_video(config, scene_id, run, compress = False):
+    print("Generating video from the sequence of observations")
+    image_folder = f"dataset/uploaded/run_{scene_id}_{run}/data/images/rgb"
+    video_name = f"videos/run_{scene_id}_{run}.avi"
+    video_name_compressed = f"videos/run_{scene_id}_{run}_compressed.mp4"
 
-class OpenBotEnv(spear.Env):
+    if not (os.path.exists("videos")):
+        os.makedirs("videos")
 
-    def __init__(self, config, num_internal_steps):
-        super(OpenBotEnv, self).__init__(config)
-        self.config = config
-        assert num_internal_steps > 0
-        self.num_internal_steps = num_internal_steps
+    images = [img for img in os.listdir(image_folder)]
+    frame = cv2.imread(os.path.join(image_folder, images[0]))
+    height, width, layers = frame.shape
 
-    def show_obs_and_wait_for_key(self):
-        obs = self.get_observation()
-        
-        for obs_component in self.config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS:
-            if obs_component == "state_data":
-                print(f"State data: xyz [{obs['state_data'][0]:.2f}, {obs['state_data'][1]:.2f},{obs['state_data'][2]:.2f}]")
-                print(f"State data: pitch yaw roll [{obs['state_data'][3]:.2f}, {obs['state_data'][4]:.2f},{obs['state_data'][5]:.2f}]")
-            elif obs_component == "control_data":
-                print(f"Control data: left right [{obs['control_data'][0]:.2f}, {obs['control_data'][1]:.2f}]")
-            elif obs_component == "imu":
-                print(f"IMU data: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]"
-                print(f"IMU data: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
-            elif obs_component == "sonar":
-                print(f"Sonar data: {obs['sonar']:.2f}")
-            elif obs_component == "camera":
-                for render_pass in self.config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES:
-                    elif render_pass == "final_color":
-                        cv2.imshow("rgb", obs["camera_final_color"][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
-                    elif render_pass == "segmentation":
-                        cv2.imshow("segmentation", obs["camera_segmentation"][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
-                    elif render_pass == "depth_glsl":
-                        cv2.imshow("depth", obs["camera_depth_glsl"][:, :, :])
-                    else:
-                        print(f"Error: {render_pass} is an unknown camera render pass.")
-            else:
-                print(f"Error: {obs_component} is an unknown observation component.")
-                
-        cv2.waitKey(100)
+    rate = int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS)
 
-    def _transform_observation(self, observation):
-        return observation
+    video = cv2.VideoWriter(video_name, 0, rate, (width, height))
+
+    # good initial sort but doesnt sort numerically very well
+    images.sort(key=lambda f: int(re.sub('\D', '', f)))
+
+    for image in images:
+        video.write(cv2.imread(os.path.join(image_folder, image)))
+
+    cv2.destroyAllWindows()
+    video.release()
+
+    if compress:
+        try:
+            i = ffmpeg.input(video_name)
+            print("Compressing video...")
+            out = ffmpeg.output(i, video_name_compressed, **{'c:v': 'libx264', 'b:v': 800000}).overwrite_output().run()
+            print("Done compressing !")
+
+        except FileNotFoundError as e:
+            print("You do not have ffmpeg installed!", e)
+            print("You can install ffmpeg by entering 'pip install ffmpeg-python' in a terminal.")
+
+def clamp_axis(angle):
+	# returns angle in the range (-360,360)
+	angle = angle % 360.0
+
+	if (angle < 0.0):
+		# shift to [0,360) range
+		angle += 360.0
+
+	return angle
+
+
+def normalize_axis( angle ):
+	# returns angle in the range [0,360)
+	angle = clamp_axis(angle)
+
+	if (angle > 180.0):
+		# shift to (-180,180]
+		angle -= 360.0
+
+	return angle
+
+
+def quaternion_to_pyr(quat):
+
+    # inspired by UnrealMath.cpp... 
+    # quaternions are given in the format [X, Y, Z, W]
+    X = quat[0]
+    Y = quat[1]
+    Z = quat[2]
+    W = quat[3]
+
+    singularity_test = Z*X - W*Y
+    yaw_y = 2.0*(W*Z + X*Y)
+    yaw_x = (1.0 - 2.0 * (np.square(Y) + np.square(Z)))
+
+	# reference 
+	# http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+	# http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
+
+	# this value was found from experience, the above websites recommend different values
+	# but that isn't the case for us, so I went through different testing, and finally found the case 
+	# where both of world lives happily. 
+    singularity_threshold = 0.4999995
     
-    def _transform_reward(self, reward):
-        return reward
-    
-    def _transform_status(self, is_done):
-        return is_done
-        
-    def _transform_step_info(self, step_info):
-        return step_info
-        
-    def step(self, action):
+    if (singularity_test < -singularity_threshold):
+        pitch = -90.0
+        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
+        roll = np.rad2deg(normalize_axis(-yaw - (2.0 * np.arctan2(X, W))))
 
-        if self.num_internal_steps == 1:
-            return self.single_step(action, get_observation=True)
-        else:
-            self.single_step(action)
-            for _ in range(1, self.num_internal_steps - 1):
-                self.single_step(action)
-                # TODO: implement the remaining step logic for RL
-            return self.single_step(get_observation=True)
+    elif (singularity_test > singularity_threshold):
+        pitch = 90.0
+        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
+        roll = np.rad2deg(normalize_axis(yaw - (2.0 * np.arctan2(X, W))))
 
-    def single_step(self, action=None, get_observation=False):
-    
-        self._begin_tick()
-        if action:
-            self._apply_action(action)
-        self._tick()
-        if get_observation:
-            obs = self._transform_observation(self._get_observation())
-            reward = self._transform_reward(self._get_reward())
-            is_done = self._transform_status(self._is_episode_done())
-            step_info = self._transform_step_info(self._get_step_info())
-            self._end_tick()
-            return obs, reward, is_done, step_info
-        else:
-            self._end_tick()
-            return None, None, None, None
+    else:
+        pitch = np.rad2deg(np.arcsin(2.0 * singularity_test))
+        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
+        roll = np.rad2deg(np.arctan2(-2.0 * (W*X + Y*Z), (1.0 - 2.0 * (np.square(X) + np.square(Y)))))
 
+    return pitch, yaw, roll
+
+def pyr_to_quaternion(pitch, yaw, roll):
+
+    # inspired by UnrealMath.cpp... 
+    quat = np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float32)
+
+    pitch_no_winding = np.fmod(pitch, 360.0)
+    yaw_no_winding = np.fmod(yaw, 360.0)
+    roll_no_winding = np.fmod(roll, 360.0)
+
+    sin_pitch = np.sin(0.5*np.deg2rad(pitch_no_winding))
+    sin_yaw = np.sin(0.5*np.deg2rad(yaw_no_winding))
+    sin_roll = np.sin(0.5*np.deg2rad(roll_no_winding))
+    cos_pitch = np.cos(0.5*np.deg2rad(pitch_no_winding))
+    cos_yaw = np.cos(0.5*np.deg2rad(yaw_no_winding))
+    cos_roll = np.cos(0.5*np.deg2rad(roll_no_winding))
+
+    # quaternions are given in the format [X, Y, Z, W]
+    quat[0] =  cos_roll*sin_pitch*sin_yaw - sin_roll*cos_pitch*cos_yaw;
+    quat[1] = -cos_roll*sin_pitch*cos_yaw - sin_roll*cos_pitch*sin_yaw;
+    quat[2] =  cos_roll*cos_pitch*sin_yaw - sin_roll*sin_pitch*cos_yaw;
+    quat[3] =  cos_roll*cos_pitch*cos_yaw + sin_roll*sin_pitch*sin_yaw;
+
+    return quat

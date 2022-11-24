@@ -86,4 +86,3 @@ class OpenBotEnv(spear.Env):
         else:
             self._end_tick()
             return None, None, None, None
-
