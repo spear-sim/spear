@@ -19,7 +19,7 @@ class OpenBotAgent:
 
         for obs_component in self.config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS:
             if obs_component == "state_data":
-                # state_data: [x, y, z, pitch, yaw, roll]
+                # state_data: [x, y, z, pitch, yaw, roll], where
                 # x-y-z component of agent position wrt. world in [cm]
                 # pitch-yaw-roll components of agent orientation wrt. world in [rad]
                 self.state_data = np.array([0.0,0.0,0.0,0.0,0.0,0.0], dtype=np.float32)
@@ -40,10 +40,6 @@ class OpenBotAgent:
             else:
                 print(f"Error: {obs_component} is an unknown observation component.")
 
-    def reset():
-
-    def step():
-        
 
     def show_obs_and_wait_for_key(self, obs):
         obs = self.get_observation()

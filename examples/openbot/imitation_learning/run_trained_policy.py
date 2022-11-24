@@ -1,843 +1,166 @@
-#############################################################################
-
-# Quick and dirty script to issue random commands to an OpenBot agent and get
-# egocentric visual obsevations.
-
-#############################################################################
-
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
-#
-#
-# python run.py -i 10 -r 3 -s "Data" -m "235114801" "235114775"
-# python run.py -i 10 -r 3 -s "Infer" -m "235114801" "235114775"
-# python run.py -i 10 -r 3 -s "Debug" -m "235114801" "235114775"
 
 import argparse
 import csv
-import cv2
-import datetime;
-import math
-from math import cos, sin, atan2, pi, isclose
+import datetime
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
 import os
-import random
-import shutil
-#import tensorflow as tf
-#import tflite_runtime.interpreter as tflite
-import time
-import re
-import ffmpeg # Careful: install ffmpeg-python
-
-
 import spear
+import tensorflow as tf
+import tflite_runtime.interpreter as tflite
+import time
 
-
-def GenerateVideo(config, mapName, run):
-    print("Generating video from the sequence of observations")
-    image_folder = f"dataset/uploaded/run_{mapName}_{run}/data/images"
-    video_name = f"videos/run_{mapName}_{run}.avi"
-    video_name_compressed = f"videos/run_{mapName}_{run}_compressed.mp4"
-
-    if not (os.path.exists("videos")):
-        os.makedirs("videos")
-
-    images = [img for img in os.listdir(image_folder)]
-    frame = cv2.imread(os.path.join(image_folder, images[0]))
-    height, width, layers = frame.shape
-
-    rate = int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS)
-
-    video = cv2.VideoWriter(video_name, 0, rate, (width, height))
-
-    # good initial sort but doesnt sort numerically very well
-    images.sort(key=lambda f: int(re.sub('\D', '', f)))
-
-    for image in images:
-        video.write(cv2.imread(os.path.join(image_folder, image)))
-
-    cv2.destroyAllWindows()
-    video.release()
-
-    try:
-        i = ffmpeg.input(video_name)
-        print("Compressing video...")
-        out = ffmpeg.output(i, video_name_compressed, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run()
-        print("Done !")
-
-    except FileNotFoundError as e:
-        print('You do not have ffmpeg installed!', e)
-        print('You can install ffmpeg by reading https://github.com/kkroening/ffmpeg-python/issues/251')
-        return False
-
-
-def Clamp(n, smallest, largest):
-    return max(smallest, min(n, largest))
-
-def computeNeurNetInput(goalPositionXY, actualPoseYawXY, acceptanceRadius):
-
-    targetLocationReached = False
-    obsNet = np.array([0.0,0.0,1.0])
-    deltaYaw = 0.0
-    forward = np.array([1,0]) # Front axis is the X axis.
-    forwardRotated = np.array([0,0])
-
-    # Target error vector (global coordinate system):
-    relativePositionToTarget = desiredPositionXY - np.array([actualPoseYawXY[1],actualPoseYawXY[2]])
-    
-    # Compute Euclidean distance to target in [m]:
-    dist = np.linalg.norm(relativePositionToTarget)*0.01
-
-    if dist < acceptanceRadius :
-        targetLocationReached = True;
-
-    # Otherwise compute the PID command:
-    else:
-    
-        # Compute robot forward axis (global coordinate system):
-        yawVehicle = actualPoseYawXY[0];
-        rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
-
-        forwardRotated = np.dot(rot, forward)
-
-        # Compute yaw:
-        deltaYaw = atan2(forwardRotated[1], forwardRotated[0]) - atan2(relativePositionToTarget[1], relativePositionToTarget[0])
-
-        # Fit to range [-pi, pi]:
-        if deltaYaw > math.pi:
-            deltaYaw -= 2 * math.pi
-        elif deltaYaw <= -math.pi:
-            deltaYaw += 2 * math.pi
-        
-        sinYaw = sin(deltaYaw)
-        cosYaw = cos(deltaYaw)
-        
-        obsNet = np.array([dist,sinYaw,cosYaw])
-
-    return obsNet, targetLocationReached
-    
-
-def clampAxis(angle):
-	# returns angle in the range (-360,360)
-	angle = angle % 360.0
-
-	if (angle < 0.0):
-		# shift to [0,360) range
-		angle += 360.0
-
-	return angle
-
-
-def normalizeAxis( angle ):
-	# returns angle in the range [0,360)
-	angle = clampAxis(angle)
-
-	if (angle > 180.0):
-		# shift to (-180,180]
-		angle -= 360.0
-
-	return angle
-
-
-def quatToRPY(quat):
-
-    # Inspired by UnrealMath.cpp... 
-
-    X = quat[0]
-    Y = quat[1]
-    Z = quat[2]
-    W = quat[3]
-
-    singularity_test = Z*X - W*Y
-    yaw_y = 2.0*(W*Z + X*Y)
-    yaw_x = (1.0 - 2.0 * (np.square(Y) + np.square(Z)))
-
-	# reference 
-	# http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-	# http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
-
-	# this value was found from experience, the above websites recommend different values
-	# but that isn't the case for us, so I went through different testing, and finally found the case 
-	# where both of world lives happily. 
-    SINGULARITY_THRESHOLD = 0.4999995
-    
-    if (singularity_test < -SINGULARITY_THRESHOLD):
-        pitch = -90.0
-        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
-        roll = np.rad2deg(normalizeAxis(-yaw - (2.0 * np.arctan2(X, W))))
-
-    elif (singularity_test > SINGULARITY_THRESHOLD):
-        pitch = 90.0
-        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
-        roll = np.rad2deg(normalizeAxis(yaw - (2.0 * np.arctan2(X, W))))
-
-    else:
-        pitch = np.rad2deg(np.arcsin(2.0 * singularity_test))
-        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
-        roll = np.rad2deg(np.arctan2(-2.0 * (W*X + Y*Z), (1.0 - 2.0 * (np.square(X) + np.square(Y)))))
-
-    return roll, pitch, yaw
-
-def iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation):
-
-    targetLocationReached = False
-    forwardCtrl = 0.0
-    rightCtrl = 0.0
-    action = np.array([0.0,0.0], dtype=np.float32)
-    deltaYaw = 0.0
-    forward = np.array([1,0]) # Front axis is the X axis.
-    forwardRotated = np.array([0,0])
-
-    # Target error vector (global coordinate system):
-    relativePositionToTarget = desiredPositionXY - np.array([actualPoseYawXY[1],actualPoseYawXY[2]])
-        
-    # Compute Euclidean distance to target in [m]:
-    dist = np.linalg.norm(relativePositionToTarget)*0.01
-
-    if dist < acceptanceRadius :
-        targetLocationReached = True;
-
-    # Otherwise compute the PID command:
-    else:
-    
-        # Compute robot forward axis (global coordinate system):
-        yawVehicle = actualPoseYawXY[0];
-        rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
-
-        forwardRotated = np.dot(rot, forward)
-
-        # Compute yaw:
-        deltaYaw = atan2(forwardRotated[1], forwardRotated[0]) - atan2(relativePositionToTarget[1], relativePositionToTarget[0])
-
-        # Fit to range [-pi, pi]:
-        if deltaYaw > math.pi:
-            deltaYaw -= 2 * math.pi
-        elif deltaYaw <= -math.pi:
-            deltaYaw += 2 * math.pi
-
-        linVel = linVelNorm * 0.036; # In [m/s]
-
-        rightCtrl = -Kp_ang * deltaYaw - Kd_ang * yawVel;
-        Clamp(rightCtrl, -controlSaturation, controlSaturation)
-
-        if abs(deltaYaw) < forwardMinAngle :
-            forwardCtrl = Kp_lin * dist - Kd_lin * linVel
-            forwardCtrl = Clamp(forwardCtrl, -controlSaturation, controlSaturation)
-            forwardCtrl *= abs(cos(deltaYaw)); # Full throttle if the vehicle facing the objective. Otherwise give more priority to the yaw command.
-
-        # Compute action:
-        leftWheelCommand = forwardCtrl + rightCtrl
-        leftWheelCommand = Clamp(leftWheelCommand, -controlSaturation, controlSaturation)
-        
-        rightWheelCommand = forwardCtrl - rightCtrl
-        rightWheelCommand = Clamp(rightWheelCommand, -controlSaturation, controlSaturation)
-        
-        action = np.array([leftWheelCommand,rightWheelCommand], dtype=np.float32)
-
-    #print(f"dist: {dist} m")
-    #print(f"deltaYaw: {deltaYaw}")
-    #print(f"rightCtrl: {rightCtrl}")
-    #print(f"forwardCtrl: {forwardCtrl}")
-    #print(f"action: {action[0]}, {action[1]}")
-
-    return action, targetLocationReached
-    
-    
-
+from ..openbot_gym.openbot_env import OpenBotEnv
+from ..openbot_gym.openbot_agent import OpenBotAgent
+from ..openbot_gym import openbot_utils
+  
 if __name__ == "__main__":
 
-    # List of config files to be used
-    config_files = []
-
-    # Add default config files first and then user config files
-    config_files.append(os.path.join(os.getcwd(), "user_config.yaml"))
-    
-    # Load config (this function will load the parameter values specified in user_config.yaml, as well as sensible defaults for all other parameters)
-    config = spear.get_config(user_config_files=config_files)
-
-    # Parse input script arguments
+    # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
+    parser.add_argument("-p", "--policy", type=int, help="name of the control policy to be executed", required=True)
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
-    parser.add_argument("-s", "--setup", type=str, help="Data (for data collection), Infer (for ANN inference), Debug (for debug purposes only)", required=True)
-    parser.add_argument("-p", "--policy", type=str, help="1_env, 5_envs,  25_envs, 50_envs or real_envs", required=False)
-    parser.add_argument("-m", "--map", nargs="+", default=[""], help="Array of map references. A number of s distinct runs will be executed in each map. This argument overwrites the LEVEL_ID argument and allows collecting data in multiple environments programatically", required=False)
-    parser.add_argument("-c", "--connect", type=int, help="id of the connection port", required=True)
+    parser.add_argument("-s", "--scenes", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
+    parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
     args = parser.parse_args()
+    
+    # load config
+    config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
+    
+    # sanity checks (without these observation modes, the code will not behave properly)
+    assert("state_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
+    assert("control_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
+    assert("camera" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
+    assert("final_color" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
-    config.defrost()
-    config.SIMULATION_CONTROLLER.PORT = 30000 + args.connect
-    config.freeze()
+    # main OpenBot class, encapsulating the agent functionalities
+    agent = OpenBotAgent(config)
 
-    if args.map == [""]: # Use the default LEVEL_ID argument from parameter file
-        if config.SIMULATION_CONTROLLER.LEVEL_ID == "":
-            mapNames = ["simpleMap"]
-        else:
-            mapNames = [config.SIMULATION_CONTROLLER.LEVEL_ID]
+    # load the control policy
+    policy_name = "./models/" + args.policy + ".tflite"
+    assert os.path.exists(policy_name)
+    interpreter = tflite.Interpreter(policy_name)
+    interpreter.allocate_tensors()
 
-    else: # Overwrite the map value
-        mapNames = args.map
+    # get input and output tensor details
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    print(f"Input details of the control policy: {input_details}")
+    print(f"Output details of the control policy: {output_details}")
 
-    numIter = args.iterations
-    learningMode = args.setup
-    runs = args.runs
+    # the control policy takes two inputs: normalized rgb image and a 1D high-level comand (-1=left, 0=forward, +1=right).
+    rgb_input = np.zeros(input_details[0]["shape"], dtype=np.float32)
+    cmd_input = np.zeros(input_details[1]["shape"], dtype=np.float32)
 
-    if learningMode == "Data":
-
-        # Main loop, executing a set of random actions, getting observations and storing everything in a set of files:
-
-        speedMultiplier = 1
-
-        for mapName in mapNames: # For each map
-
-            # Load the correct map:
-            config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_"+ mapName + ".Map_" + mapName # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_"+ mapName
-           
-
-            config.freeze()
-
-            # Create Env object:
-            env = spear.Env(config=config)
-            
-            run = 0
-            while run < runs:
-
-                collisionFlag = False
-                goalReachedFlag = False
-                array_obs = np.empty([numIter, 18])
-                executedIterations = 0
-                index_waypoint = 1
-
-                folderName = f"dataset/uploaded/run_{mapName}_{run}"
-                dataFolderName = folderName+"/data/"
-                os.makedirs(dataFolderName, exist_ok=True)
-                os.makedirs(dataFolderName+"sensor_data", exist_ok=True)
-                os.makedirs(dataFolderName+"images", exist_ok=True)
-
-                print("----------------------")
-                print(f"run {run} over {runs}")
-                print("----------------------")
-
-                # Reset the simulation to get the first observation
-                obs = env.reset()
-                
-                # Send Zero action to the agent and collect initial trajectory observations:
-                # obs["state_data"] = X, Y, Z, Pitch, Yaw, Roll
-                # obs["control_data"] = ctrl left, ctrl right
-                
-                obs, reward, done, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
-                
-                ctrl_left = obs["control_data"][0]
-                ctrl_right = obs["control_data"][1]
-                pos_x = obs["state_data"][0]
-                pos_y = obs["state_data"][1]
-                pos_z = obs["state_data"][2]
-                pitch = obs["state_data"][3]
-                yaw = obs["state_data"][4]
-                roll = obs["state_data"][5]
-                sonar = obs["sonar"]
-                imu_ax = obs["imu"][0]
-                imu_ay = obs["imu"][1]
-                imu_az = obs["imu"][2]
-                imu_gx = obs["imu"][3]
-                imu_gy = obs["imu"][4]
-                imu_gz = obs["imu"][5]
-                
-                numWaypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
-                print(info["agent_step_info"]["trajectory_data"])
-                desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
-                actualPoseYawXY = np.array([yaw, pos_x, pos_y]) 
-
-                # Take a few steps:
-                for i in range(numIter):
-
-                    print(f"iteration {i} over {numIter}")
-
-                    executedIterations = i+1
-                    ct = datetime.datetime.now()
-                    ts = 10000*ct.timestamp()
-
-                    # Run autopilot:
-                    Kp_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_DIST
-                    Kd_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_DIST
-                    Kp_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_HEADING
-                    Kd_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_HEADING
-                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.ACCEPTANCE_RADIUS
-                    forwardMinAngle = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.FORWARD_MIN_ANGLE
-                    controlSaturation = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.CONTROL_SATURATION
-                    dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
-
-                    # XY position of the next waypoint in world frame:
-                    dXY = np.array([pos_x, pos_y]) - desiredPositionXY
-                    desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
-
-                    # Current position and heading of the vehicle in world frame:
-                    dYaw = yaw - actualPoseYawXY[0]
-                    actualPoseYawXY = np.array([yaw, pos_x, pos_y]) # [Yaw, X, Y]
-
-                    # Numerical diff:
-                    linVelNorm = np.linalg.norm(dXY/dt)
-                    yawVel = dYaw/dt
-
-                    action, waypointReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
-
-                    # Send action to the agent and collect observations:
-                    #print(f"Action: {action}")
-                    #print(f"waypointReached: {waypointReached}")
-                   
-                    
-                    obs, reward, done, info = env.step({"apply_voltage": action})
-                    
-                    ctrl_left = obs["control_data"][0]
-                    ctrl_right = obs["control_data"][1]
-                    pos_x = obs["state_data"][0]
-                    pos_y = obs["state_data"][1]
-                    pos_z = obs["state_data"][2]
-                    pitch = obs["state_data"][3]
-                    yaw = obs["state_data"][4]
-                    roll = obs["state_data"][5]
-                    sonar = obs["sonar"]
-                    imu_ax = obs["imu"][0]
-                    imu_ay = obs["imu"][1]
-                    imu_az = obs["imu"][2]
-                    imu_gx = obs["imu"][3]
-                    imu_gy = obs["imu"][4]
-                    imu_gz = obs["imu"][5]
-                    
-                    print(f"Control: {obs['control_data']}")
-                    print(f"State: {obs['state_data']}")
-                    print(f"Sonar: {obs['sonar']}")
-                    print(f"IMU: {obs['imu']}")
-                   
-
-                    # Fill an array with the different observations:
-                    array_obs[i][0] = speedMultiplier*ctrl_left
-                    array_obs[i][1] = speedMultiplier*ctrl_right
-                    array_obs[i][2] = pos_x # agent pos X wrt. world
-                    array_obs[i][3] = pos_y # agent pos Y wrt. world
-                    array_obs[i][4] = pos_z # agent pos Z wrt. world
-                    array_obs[i][5] = roll # agent Roll wrt. world
-                    array_obs[i][6] = pitch # agent Pitch wrt. world
-                    array_obs[i][7] = yaw # agent Yaw wrt. world
-                    array_obs[i][8] = info["agent_step_info"]["trajectory_data"][index_waypoint][0] # desired (waypoint) agent pos X wrt. world
-                    array_obs[i][9] = info["agent_step_info"]["trajectory_data"][index_waypoint][1] # desired (waypoint) agent pos Y wrt. world
-                    array_obs[i][10] = ts # time stamp
-                    array_obs[i][11] = sonar
-                    array_obs[i][12] = imu_ax
-                    array_obs[i][13] = imu_ay
-                    array_obs[i][14] = imu_az
-                    array_obs[i][15] = imu_gx
-                    array_obs[i][16] = imu_gy
-                    array_obs[i][17] = imu_gz
-                    
-                    if array_obs[i][4] < 0: # For now we don't consider underground operation ! 
-                        collisionFlag = True
-                        break
-                    
-                    #print(f"Action: {array_obs[i][0]}, {array_obs[i][1]}")
-                    #print(f"Pose: {array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]}")
-
-                    # Save the images:
-                    im = Image.fromarray(obs["camera_final_color"])
-                    im.save(dataFolderName+"images/%d.jpeg" % i)
-
-                    if waypointReached:
-                        if index_waypoint < numWaypoints: # if the waypoint is not the goal
-                            print(f"Waypoint {index_waypoint} over {numWaypoints} reached !")
-                            index_waypoint = index_waypoint + 1
-                        else: # Goal reached !
-                            print("Goal reached (distance check) !")
-                            goalReachedFlag = True
-                            break
-
-                    # Interrupt the step loop if the done flag is raised:
-                    if done:
-                        if info["task_step_info"]["hit_obstacle"]:
-                            print("Collision detected ! Killing simulation and restarting run...")
-                            collisionFlag = True
-
-                        if info["task_step_info"]["hit_goal"]:
-                            print("Goal reached (collision check)  !")
-                            goalReachedFlag = True
-
-                        break
-
-                if collisionFlag == True:
-                    print("Restarting run...")
-                    shutil.rmtree(folderName)
-
-                else:
-                    if args.create_video:
-                        GenerateVideo(config, mapName, run)
-                    run = run + 1
-
-                    print("Filling database...")
-                    f_ctrl = open(dataFolderName+"sensor_data/ctrlLog.txt", 'w') # Low-level commands sent to the motors
-                    f_goal = open(dataFolderName+"sensor_data/goalLog.txt", 'w') # High level commands
-                    f_rgb = open(dataFolderName+"sensor_data/rgbFrames.txt", 'w') # Reference of the images correespoinding to each control input
-                    f_pose = open(dataFolderName+"sensor_data/poseData.txt", 'w') # Raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
-
-                    writer_ctrl = csv.writer(f_ctrl, delimiter=",")
-                    writer_ctrl.writerow( ('timestamp[ns]','leftCtrl','rightCtrl') )
-                    writer_pose = csv.writer(f_pose , delimiter=",")
-                    writer_pose.writerow( ('timestamp[ns]','posX','posY','posZ','rollAngle','pitchAngle','yawAngle') )
-                    writer_goal = csv.writer(f_goal, delimiter=",")
-                    writer_goal.writerow( ('timestamp[ns]','dist','sinYaw','cosYaw') )
-                    writer_rgb = csv.writer(f_rgb, delimiter=",")
-                    writer_rgb.writerow( ('timestamp[ns]','frame') )
-
-                    goalLocation = np.array([array_obs[executedIterations-1][2],array_obs[executedIterations-1][3]]) # use the vehicle last location as goal
-                    forward = np.array([1,0]) # Front axis is the X axis.
-                    forwardRotated = np.array([0,0])
-
-                    for i in range(executedIterations):
-
-                        # Target error vector (global coordinate system):
-                        relativePositionToTarget = goalLocation - np.array([array_obs[i][2],array_obs[i][3]])
-
-                        # Compute Euclidean distance to target:
-                        dist = np.linalg.norm(relativePositionToTarget)
-
-                        # Compute robot forward axis (global coordinate system):
-                        yawVehicle = array_obs[i][7];
-                        rot = np.array([[cos(yawVehicle), -sin(yawVehicle)], [sin(yawVehicle), cos(yawVehicle)]])
-
-                        forwardRotated = np.dot(rot, forward)
-
-                        # Compute yaw:
-                        deltaYaw = atan2(forwardRotated[1], forwardRotated[0]) - atan2(relativePositionToTarget[1], relativePositionToTarget[0])
-
-                        # Fit to range [-pi, pi]:
-                        if deltaYaw > math.pi:
-                            deltaYaw -= 2 * math.pi
-                        elif deltaYaw <= -math.pi:
-                            deltaYaw += 2 * math.pi
-
-                        # Check the actual OpenBot code:
-                        # https://github.com/isl-org/OpenBot/blob/7868c54742f8ba3df0ba2a886247a753df982772/android/app/src/main/java/org/openbot/pointGoalNavigation/PointGoalNavigationFragment.java#L103
-                        sinYaw = sin(deltaYaw);
-                        cosYaw = cos(deltaYaw);
-
-                        # Write pose data
-                        writer_pose.writerow( (int(array_obs[i][10]), array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]) )
-
-                        # Write the low-level control observation into a file:
-                        writer_ctrl.writerow( (int(array_obs[i][10]), array_obs[i][0], array_obs[i][1]) )
-
-                        # Write the corresponding image index into a file:
-                        writer_rgb.writerow( (int(array_obs[i][10]), i) )
-
-                        # Write the corresponding high level command into a file:
-                        # For imitation learning, use the latest position as a goal
-                        writer_goal.writerow( (int(array_obs[i][10]), dist/100, sinYaw, cosYaw) )
-
-                    f_ctrl.close()
-                    f_pose.close()
-                    f_goal.close()
-                    f_rgb.close()
-
-            # Close the environment:
-            env.close()
-            time.sleep(3)
-
-    elif learningMode == "Infer":
-
-        # Main loop, testing a trained neural policy:
-
-        # The agent makes the following observations:
-
-        # ---> left wheel commands in the range [-1, 1]
-        # ---> right wheel commands in the range [-1, 1]
-        # ---> X position in world frame.
-        # ---> Y position in world frame.
-        # ---> Z position in world frame.
-        # ---> Roll in world frame.
-        # ---> Pitch in world frame.
-        # ---> Yaw in world frame.
-        # ---> X position of the goal in world frame.
-        # ---> Y position of the goal in world frame.
-
-        # Load TFLite model and allocate tensors.
-        policyName = ""
-        if args.policy == "1_env":
-            policyName = "./models/1_env.tflite"
-        elif args.policy == "5_envs":
-            policyName = "./models/5_envs.tflite"
-        elif args.policy == "25_envs":
-            policyName = "./models/25_envs.tflite"
-        elif args.policy == "50_envs":
-            policyName = "./models/50_envs.tflite"
-        elif args.policy == "real":
-            policyName = "./models/real.tflite"
-        elif args.policy == "":
-            print("Warning: no policy name was provided. Trying Navigation.tflite as default...")
-            policyName = "./models/navigation.tflite"
-        else:
-            print("Warning: no policy name was provided. Trying navigation.tflite as default...")
-            policyName = "./models/navigation.tflite"
+    # loop through the desired set of scenes
+    for scene_id in args.scenes: 
         
-        interpreter = tflite.Interpreter(policyName)
-        interpreter.allocate_tensors()
-
-        # Get input and output tensors.
-        input_details = interpreter.get_input_details()
-        output_details = interpreter.get_output_details()
-
-        print(input_details)
-        print(output_details)
-
-        img_input = np.array(np.random.random_sample(input_details[0]["shape"]), dtype=np.float32)
-        cmd_input = np.array(np.random.random_sample(input_details[1]["shape"]), dtype=np.float32)
-
-        for mapName in mapNames: # For each map
-
-            # Load the correct map:
-            config.defrost()
-            print("/Game/Maps/Map_"+ mapName + ".Map_" + mapName)
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_"+ mapName + ".Map_" + mapName # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_"+ mapName
-            config.freeze()
-
-            # Create Env object:
-            env = Env(config)
-
-            run = 0
-            while run < runs:
-
-                collisionFlag = False
-                goalReachedFlag = False
-                result = np.empty((0, 2), dtype=float)
-                executedIterations = 0
-                
-                folderName = f"dataset/uploaded/run_{mapName}_{run}"
-                dataFolderName = folderName+"/data/"
-                os.makedirs(dataFolderName, exist_ok=True)
-                os.makedirs(dataFolderName+"sensor_data", exist_ok=True)
-                os.makedirs(dataFolderName+"images", exist_ok=True)
-
-                print("----------------------")
-                print(f"run {run} over {runs}")
-                print("----------------------")
-
-                # Reset the simulation to get the first observation
-                obs = env.reset()
-                reward = 0.0
-                #actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y], for velocity initialization
-                #desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
-
-                
-                f_infer = open(dataFolderName+"sensor_data/Inference.txt", 'w') # Low-level commands sent to the motors
-                writer_infer = csv.writer(f_infer , delimiter=",")
-                writer_infer.writerow( ('Iteration','posX','posY','posZ','rollAngle','pitchAngle','yawAngle','goalX','goalY','dist','sinYaw','cosYaw', 'ctrl_left', 'ctrl_right', 'inference_time', 'reward', 'distTrajToGoal') )
-
-
-                # Take a few steps:
-                for i in range(numIter):
-
-                    print(f"iteration {i} over {numIter}")
-                    
-                    #executedIterations = i+1
-                    ct = datetime.datetime.now()
-                    ts = 10000*ct.timestamp()
-                    acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.ACCEPTANCE_RADIUS
-
-                    # Process (crop) visual observations:
-                    
-                    if not obs["rgb_data"].any():
-                        print(obs["rgb_data"])
-                        break; # Something went wrong and the robot was spawed out of the map... 
-                        
-                    img_input = np.float32(obs["rgb_data"])/255
-                    img_input = tf.image.crop_to_bounding_box(img_input, tf.shape(img_input)[0] - 90, tf.shape(img_input)[1] - 160, 90, 160)
-
-                    # Physical observations
-                    desiredPositionXY = np.array([obs["physical_observation"][8], obs["physical_observation"][9]]) # [Xdes, Ydes]
-                    actualPoseYawXY = np.array([obs["physical_observation"][7], obs["physical_observation"][2], obs["physical_observation"][3]]) # [Yaw, X, Y]
-                    cmd, targetLocationReached = computeNeurNetInput(desiredPositionXY, actualPoseYawXY, acceptanceRadius) # here desiredPositionXY directly refers to the goal position rather than any waypoint...
-                    #cmd_input[0][0] = np.float32(obs["physical_observation"][2])/100
-                    #cmd_input[0][1] = np.float32(obs["physical_observation"][3])
-                    #cmd_input[0][2] = np.float32(obs["physical_observation"][4])
-                    cmd_input[0][0] = np.float32(cmd[0])
-                    cmd_input[0][1] = np.float32(cmd[1])
-                    cmd_input[0][2] = np.float32(cmd[2])
-                    
-                    print(f"cmd_input: {cmd}")
-
-                    # Inference:
-                    interpreter.set_tensor(input_details[0]["index"], np.expand_dims(img_input, axis=0))
-                    interpreter.set_tensor(input_details[1]["index"], cmd_input)
-                    start_time = time.time()
-                    interpreter.invoke()
-                    stop_time = time.time()
-                    executionTime = (stop_time - start_time) * 1000
-                    #print('Infererence time: {:.3f}ms'.format(executionTime))
-
-                    # Output of the Artificial Neural Network
-                    output = interpreter.get_tensor(output_details[0]["index"])
-
-                    # Command
-                    act = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
-                    action = np.array([act[0][0],act[0][1]], dtype=np.float32)
-                    #print(action)
-                    
-                    writer_infer.writerow( (i, obs["physical_observation"][2], obs["physical_observation"][3], obs["physical_observation"][4], obs["physical_observation"][5], obs["physical_observation"][6], obs["physical_observation"][7], obs["physical_observation"][8], obs["physical_observation"][9], cmd[0], cmd[1], cmd[2], action[0], action[1], executionTime, reward, obs["physical_observation"][10]) )
-
-                    # Send action to the agent:
-                    obs, reward, done, info = env.step({"apply_voltage": [action[0], action[1]]})
-                    
-                    # Save the images:
-                    im = Image.fromarray(obs["rgb_data"])
-                    im.save(dataFolderName+"images/%d.jpeg" % i)
-                    
-                    if run >= numIter-1:
-                        f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') 
-                        writer_status = csv.writer(f_status , delimiter=",")          
-                        writer_status.writerow( ('Status','Iterations') )
-                        writer_status.writerow( ('Iteration Limit',i) )
-                        f_status.close()
-                        break
-                    
-                    if targetLocationReached:
-                        
-                        f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') 
-                        writer_status = csv.writer(f_status , delimiter=",")          
-                        writer_status.writerow( ('Status','Iterations') )
-                        goalReachedFlag = True
-                        writer_status.writerow( ('Goal',i) )
-                        f_status.close()
-                        
-                        if i < 50: # There is some issue related to initial collision
-                            break # re-execute the run
-                        else:
-                            run = run + 1
-                            break
-
-                    # Interrupt the step loop if the done flag is raised:
-                    if done:
-                     
-                        f_status = open(dataFolderName+"sensor_data/Status.txt", 'w') 
-                        writer_status = csv.writer(f_status , delimiter=",")          
-                        writer_status.writerow( ('Status','Iterations') )
-                        
-                        if info["task_step_info"]["hit_obstacle"]:
-                            print("Collision detected !")
-                            collisionFlag = True
-                            writer_status.writerow( ('Collision',i) )
-                            f_status.close()
-
-                        elif info["task_step_info"]["hit_goal"]:
-                            print("Goal reached !")
-                            goalReachedFlag = True
-                            writer_status.writerow( ('Goal',i) )
-                            f_status.close()
-                            
-                        else: 
-                            print("limit numer of iterations reached !")
-                            writer_status.writerow( ('Iteration Limit',i) )
-                            f_status.close()
-
-                        if i < 50: # There is some issue related to initial collision
-                            break # re-execute the run
-                        else:
-                            run = run + 1
-                            break
-                
-                f_infer.close()
-                if args.create_video:
-                    GenerateVideo(config, mapName, run-1)
-                
-
-        # Close the environment:
-        env.close()
-
-    elif learningMode == "Debug": # Just play with the keyboard while checking the observations
-
-        # Load the correct map:
+        # change config based on current scene
         config.defrost()
-        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_"+ mapName + ".Map_" + mapName # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
-        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_"+ mapName
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene_id + "." + "Map_" + scene_id
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene_id
         config.freeze()
+
+        # create Env object
+        env = OpenBotEnv(config=config)
         
-        index_waypoint = 1
+        run = 0
+        # execute the desired number of runs in a given sceen
+        while run < args.runs:
 
-        # Create Env object:
-        env = Env(config)
+            collision_flag = False # flag raised when the vehicle collides with the environment. It restarts the run without iterating the run count
+            goal_reached_flag = False # flag raised when the vehicle get close enouth to the goal (i.e. the last waypoint).
+            index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
 
-        # Reset the simulation to get the first observation
-        obs = env.reset()
-                
-        # Send Zero action to the agent and collect initial trajectory observations:
-        obs, reward, done, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
-        Q = obs["state_data"][3:7]
-        roll, pitch, yaw = quatToRPY(Q)
-        actualPoseYawXY = np.array([yaw, obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y], for velocity initialization
-        dYaw = yaw - actualPoseYawXY[0]
-        desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
+            # build the evauation run data folder and its subfolders
+            run_dir = f"evaluation/{args.policy}/run_{scene_id}_{run}"
+            data_dir = run_dir+"/data/"
+            image_dir = data_dir+"images"
+            result_dir = data_dir+"run_data"
+            os.makedirs(data_dir, exist_ok=True)
+            os.makedirs(image_dir, exist_ok=True)
+            os.makedirs(result_dir, exist_ok=True)
 
-        numWaypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
+            # result file
+            f_result = open(os.path.join(result_dir,"resultLog.txt"), 'w')  
+            writer_result = csv.writer(f_result, delimiter=",")
+            writer_result.writerow( ('timestamp[ns]','left_ctrl','right_ctrl','x[cm]','y[cm]','z[cm]','pitch[rad]','yaw[rad]','roll[rad]','goal_x[cm]','goal_y[cm]','goal_z[cm]', 'goal_reached', 'collision') )
 
-        # cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-        # cv2.waitKey(0)
+            print("----------------------")
+            print(f"run {run} over {args.runs}")
+            print("----------------------")
 
-        # Take a few steps:
-        for i in range(numIter):
+            # reset the simulation
+            _ = env.reset()
+        
+            # send zero action to the agent and collect initial trajectory observations:
+            obs, _, _, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
-            print(f"iteration {i} over {numIter}")
+            executed_iterations = 0
+            # execute the desired number of iterations in a given run
+            for i in range(args.iterations):
 
-            executedIterations = i+1
-            ct = datetime.datetime.now()
-            ts = 10000*ct.timestamp()
+                print(f"iteration {i} over {args.iterations}")
 
-            # Run autopilot:
-            Kp_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_DIST
-            Kd_lin = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_DIST
-            Kp_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.PROPORTIONAL_GAIN_HEADING
-            Kd_ang = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.DERIVATIVE_GAIN_HEADING
-            acceptanceRadius = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.ACCEPTANCE_RADIUS
-            forwardMinAngle = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.FORWARD_MIN_ANGLE
-            controlSaturation = config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AUTOPILOT.CONTROL_SATURATION
-            dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
+                executed_iterations = i+1
+                ct = datetime.datetime.now()
+                time_stamp = 10000*ct.timestamp()
 
-            # XY position of the next waypoint in world frame:
-            dXY = np.array([obs["state_data"][0], obs["state_data"][1]]) - desiredPositionXY
-            desiredPositionXY = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
+                # preprocess (normalize + crop) visual observations:
+                rgb_input = np.float32(obs["visual_observation"])/255.0 # normalization in the [0.0, 1.0] range
+                rgb_input = tf.image.crop_to_bounding_box(rgb_input, tf.shape(rgb_input)[0] - 90, tf.shape(rgb_input)[1] - 160, 90, 160)
 
-            # Current position and heading of the vehicle in world frame:
-            Q = obs["state_data"][3:7]
-            roll, pitch, yaw = quatToRPY(Q)
-            actualPoseYawXY = np.array([yaw, obs["state_data"][0], obs["state_data"][1]]) # [Yaw, X, Y]
-            dYaw = yaw - actualPoseYawXY[0]
+                # xy position of the goal in world frame (not the next waypoint):
+                desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][-1][0], info["agent_step_info"]["trajectory_data"][-1][1]], dtype=np.float32) # [x_des, y_des]
+
+                # current position and heading of the vehicle in world frame:
+                current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
+
+                # control inference
+                action, goal_reached_flag = agent.update_policy(desired_position_xy, current_pose_yaw_xy)
+
+                interpreter.set_tensor(input_details[0]["index"], np.expand_dims(img_input, axis=0))
+                interpreter.set_tensor(input_details[1]["index"], cmd_input)
+                start_time = time.time()
+                interpreter.invoke()
+                stop_time = time.time()
+                executionTime = (stop_time - start_time) * 1000
+                print('Infererence time: {:.3f}ms'.format(executionTime))
+
+                output = interpreter.get_tensor(output_details[0]["index"])
+                act = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
+                action = np.array([act[0][0],act[0][1]])
+
+                # send control action to the agent and collect observations
+                obs, reward, done, info = env.step({"apply_voltage": action})
+
+                # save the collected rgb observations
+                plt.imsave(os.path.join(image_dir, "%d.jpeg"%i), obs["camera_final_color"].squeeze())
+
+                # check the stop conditions of the run
+                if done: # if the done flag is raised
+                    if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
+                        print("Collision detected ! Killing simulation and restarting run...")
+                        collision_flag = True # raise collision_flag to interrupt and restart the current run
+                    if info["task_step_info"]["hit_goal"]: # if the vehicle collided with the goal
+                        print("Goal reached (collision check)  !")
+                        goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
+                        break # only break when the goal is reached 
             
+                # populate result data file
+                writer_result.writerow( (int(time_stamp), action[0], action[1], obs["state_data"][0], obs["state_data"][1], obs["state_data"][2], obs["state_data"][3], obs["state_data"][4], obs["state_data"][5], info["agent_step_info"]["trajectory_data"][-1][0], info["agent_step_info"]["trajectory_data"][-1][1], info["agent_step_info"]["trajectory_data"][-1][2], goal_reached_flag, collision_flag) )  
 
-            # Numerical diff:
-            linVelNorm = np.linalg.norm(dXY/dt)
-            yawVel = dYaw/dt
+            f_result.close()
 
-            action, targetLocationReached = iterationAutopilot(desiredPositionXY, actualPoseYawXY, linVelNorm, yawVel, Kp_lin, Kd_lin, Kp_ang, Kd_ang, acceptanceRadius, forwardMinAngle, controlSaturation)
+            if args.create_video: # if desired, generate a video from the collected rgb observations 
+                openbot_utils.generate_video(config, scene_id, run)
 
-            # Send action to the agent and collect observations:
+            run = run + 1 # update the run count and move to the next run 
 
-            obs, reward, done, info = env.step({"apply_voltage": action})
-            # cv2.imshow("rgb_data", obs["rgb_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-            # cv2.imshow("depth_data", obs["depth_data"][:,:]) # OpenCV expects BGR instead of RGB
-            # cv2.imshow("segmentation_data", obs["segmentation_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-            # cv2.imshow("surface_normals_data", obs["surface_normals_data"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-            # cv2.waitKey(0)
-
-            #if done:
-            #    print("Reset run...")
-            #    env.reset()
-
-        cv2.destroyAllWindows()
-
-        # Close the environment:
+        # close the current scene and give the system a bit of time before switching to the next scene.
         env.close()
+        time.sleep(3)
 
-    else:
-
-        print("No mode selected...")
-
+    print("Done.")

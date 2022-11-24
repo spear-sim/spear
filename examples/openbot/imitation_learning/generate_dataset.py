@@ -16,23 +16,24 @@ from ..openbot_gym import openbot_utils
   
 if __name__ == "__main__":
 
+    # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
     parser.add_argument("-s", "--scenes", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
+    parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
     args = parser.parse_args()
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
     
-    # sanity checks
+    # sanity checks (without these observation modes, the code will not behave properly)
     assert("state_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("control_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("camera" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("final_color" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
-    # main OpenBot class
+    # main OpenBot class, encapsulating the agent functionalities
     agent = OpenBotAgent(config)
 
     # loop through the desired set of scenes
@@ -48,13 +49,16 @@ if __name__ == "__main__":
         env = OpenBotEnv(config=config)
         
         run = 0
+        # execute the desired number of runs in a given sceen
         while run < args.runs:
 
-            collision_flag = False
-            goal_reached_flag = False
-            array_obs = np.empty([args.iterations, 18])
-            executed_iterations = 0
-            index_waypoint = 1
+            collision_flag = False # flag raised when the vehicle collides with the environment. It restarts the run without iterating the run count
+            goal_reached_flag = False # flag raised when the vehicle get close enouth to the goal (i.e. the last waypoint).
+            control_data_buffer = np.empty([args.iterations, 2]) # buffer containing the control_data observations made by the agent during a run
+            state_data_buffer = np.empty([args.iterations, 6]) # buffer containing the state_data observations made by the agent during a run
+            waypoint_data_buffer = np.empty([args.iterations, 3]) # buffer containing the waypoint coordinates being tracked by the agent during a run
+            time_data_buffer = np.empty([args.iterations, 1]) # buffer containing the time stamps of the observations made by the agent during a run
+            index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
 
             # build the run data folder and its subfolders following the guidelines of the OpenBot public repository 
             # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
@@ -75,31 +79,12 @@ if __name__ == "__main__":
             _ = env.reset()
         
             # send zero action to the agent and collect initial trajectory observations:
-
             obs, _, _, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
         
-            ctrl_left = obs["control_data"][0]
-            ctrl_right = obs["control_data"][1]
-            pos_x = obs["state_data"][0]
-            pos_y = obs["state_data"][1]
-            pos_z = obs["state_data"][2]
-            pitch = obs["state_data"][3]
-            yaw = obs["state_data"][4]
-            roll = obs["state_data"][5]
-            sonar = obs["sonar"]
-            imu_ax = obs["imu"][0]
-            imu_ay = obs["imu"][1]
-            imu_az = obs["imu"][2]
-            imu_gx = obs["imu"][3]
-            imu_gy = obs["imu"][4]
-            imu_gz = obs["imu"][5]
-        
             num_waypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
-            print(info["agent_step_info"]["trajectory_data"])
-            desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [Xdes, Ydes]
-            actual_pose_yaw_xy = np.array([yaw, pos_x, pos_y]) 
 
-            # execute the desired number of iterations
+            executed_iterations = 0
+            # execute the desired number of iterations in a given run
             for i in range(args.iterations):
 
                 print(f"iteration {i} over {args.iterations}")
@@ -109,10 +94,10 @@ if __name__ == "__main__":
                 time_stamp = 10000*ct.timestamp()
 
                 # xy position of the next waypoint in world frame:
-                desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]]) # [x_des, y_des]
+                desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
 
                 # current position and heading of the vehicle in world frame:
-                current_pose_yaw_xy = np.array([yaw, pos_x, pos_y]) # [yaw, x, y]
+                current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
 
                 # update control action 
                 action, waypoint_reached = agent.update_autopilot(desired_position_xy, current_pose_yaw_xy)
@@ -127,49 +112,15 @@ if __name__ == "__main__":
                 # In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole trajectory. 
                 # In this case, rather than considering the whole run as a fail, one can consider the last position reached by the agent as the new goal position. 
                 # Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather than directly writing all the 
-                # observations in a file iteration by iteration, we append these observations in a buffer, named "array_obs" to later process them once the run is completed. 
+                # observations in a file iteration by iteration, we append these observations in a buffer, named "observation_buffer" to later process them once the run is completed. 
+                control_data_buffer[i] = obs["control_data"]    # control_data: [ctrl_left, ctrl_right]
+                state_data_buffer[i] = obs["state_data"]        # state_data: [x, y, z, pitch, yaw, roll]
+                waypoint_data_buffer[i] = info["agent_step_info"]["trajectory_data"][index_waypoint] # current waypoint being tracked by the agent
+                time_data_buffer[i] = time_stamp                # current time stamp
 
-                ctrl_left = obs["control_data"][0]                                          # control duty cycle of the left weels in [%]
-                ctrl_right = obs["control_data"][1]                                         # control duty cycle of the right weels in [%]
-                pos_x = obs["state_data"][0]                                                # x component of agent position wrt. world in [cm]
-                pos_y = obs["state_data"][1]                                                # y component of agent position wrt. world in [cm]
-                pos_z = obs["state_data"][2]                                                # z component of agent position wrt. world in [cm]
-                pitch = obs["state_data"][3]                                                # pitch component of agent orientation wrt. world in [rad]
-                yaw = obs["state_data"][4]                                                  # yaw component of agent orientation wrt. world in [rad]
-                roll = obs["state_data"][5]                                                 # roll component of agent orientation wrt. world in [rad]
-                sonar = obs["sonar"]                                                        # sonar measured distance in [m]
-                imu_ax = obs["imu"][0]                                                      # x component of linear acceleration in [m/s²] 
-                imu_ay = obs["imu"][1]                                                      # y component of linear acceleration in [m/s²] 
-                imu_az = obs["imu"][2]                                                      # z component of linear acceleration in [m/s²] 
-                imu_gx = obs["imu"][3]                                                      # x component of angular rate in [rad/s] 
-                imu_gy = obs["imu"][4]                                                      # y component of angular rate in [rad/s] 
-                imu_gz = obs["imu"][5]                                                      # z component of angular rate in [rad/s] 
                 pos_x_des = info["agent_step_info"]["trajectory_data"][index_waypoint][0]   # x component of desired agent position wrt. world in [cm]
                 pos_y_des = info["agent_step_info"]["trajectory_data"][index_waypoint][1]   # y component of desired agent position wrt. world in [cm]
-                
-                if pos_z < 0: # For now we don't consider underground operation ! 
-                    collision_flag = True
-                    break
 
-                array_obs[i][0] = ctrl_left
-                array_obs[i][1] = ctrl_right
-                array_obs[i][2] = pos_x 
-                array_obs[i][3] = pos_y 
-                array_obs[i][4] = pos_z 
-                array_obs[i][5] = roll 
-                array_obs[i][6] = pitch 
-                array_obs[i][7] = yaw 
-                array_obs[i][8] = pos_x_des
-                array_obs[i][9] = pos_y_des
-                array_obs[i][10] = time_stamp 
-                array_obs[i][11] = sonar
-                array_obs[i][12] = imu_ax
-                array_obs[i][13] = imu_ay
-                array_obs[i][14] = imu_az
-                array_obs[i][15] = imu_gx
-                array_obs[i][16] = imu_gy
-                array_obs[i][17] = imu_gz
-                
                 # check the stop conditions of the run
                 if waypoint_reached: # if a waypoint of the trajectory is reached, based on the autopilot's acceptance_radius condition 
                     if index_waypoint < num_waypoints: # if the considered waypoint is not the final goal
@@ -198,13 +149,13 @@ if __name__ == "__main__":
 
             else: # as no collision occured during the run, the collected data can be used for training purposes
 
-                # populate the observation data files with the array_obs buffer content
+                # populate the observation data files with the observation_buffer buffer content
                 print("Filling database...")
 
                 # low-level commands sent to the motors
                 f_ctrl = open(os.path.join(sensor_dir,"ctrlLog.txt"), 'w')  
                 writer_ctrl = csv.writer(f_ctrl, delimiter=",")
-                writer_ctrl.writerow( ('timestamp[ns]','leftCtrl','right_ctrl') )
+                writer_ctrl.writerow( ('timestamp[ns]','left_ctrl','right_ctrl') )
 
                 # high level commands
                 f_goal = open(os.path.join(sensor_dir,"goalLog.txt"), 'w')  
@@ -219,28 +170,36 @@ if __name__ == "__main__":
                 # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
                 f_pose = open(os.path.join(sensor_dir,"poseData.txt"), 'w') 
                 writer_pose = csv.writer(f_pose , delimiter=",")
-                writer_pose.writerow( ('timestamp[ns]','posX','posY','posZ','rollAngle','pitchAngle','yawAngle') )
+                writer_pose.writerow( ('timestamp[ns]','x[cm]','y[cm]','z[cm]','pitch[rad]','yaw[rad]','roll[rad]') )
+
+                # waypoint data (for debug purposes)
+                f_waypoint = open(os.path.join(sensor_dir,"waypointData.txt"), 'w') 
+                writer_waypoint = csv.writer(f_waypoint , delimiter=",")
+                writer_waypoint.writerow( ('timestamp[ns]', 'waypoint_x[cm]','waypoint_y[cm]','waypoint_z[cm]') )
 
                 # set the goal position as the last position reached by the agent
-                goal_position_xy = np.array([array_obs[executed_iterations-1][2],array_obs[executed_iterations-1][3]]) # use the vehicle last location as goal
+                goal_position_xy = np.array([state_data_buffer[executed_iterations-1][0],state_data_buffer[executed_iterations-1][1]], dtype=np.float32) # use the vehicle last x-y location as goal for the run
 
                 for i in range(executed_iterations):
 
                     # get the updated compass observation (with the last recorded position set as goal)
-                    current_pose_yaw_xy = np.array([array_obs[i][2], array_obs[i][2], array_obs[i][3]])
+                    current_pose_yaw_xy = np.array([state_data_buffer[i][4], state_data_buffer[i][0], state_data_buffer[i][1]], dtype=np.float32)
                     dist, sin_yaw, cos_yaw = agent.get_compass_observation(goal_position_xy, current_pose_yaw_xy)
 
-                    # write pose data
-                    writer_pose.writerow( (int(array_obs[i][10]), array_obs[i][2], array_obs[i][3], array_obs[i][4], array_obs[i][5], array_obs[i][6], array_obs[i][7]) )
-
                     # wite the low-level control observation into a file:
-                    writer_ctrl.writerow( (int(array_obs[i][10]), array_obs[i][0], array_obs[i][1]) )
-
-                    # write the corresponding image index into a file:
-                    writer_rgb.writerow( (int(array_obs[i][10]), i) )
+                    writer_ctrl.writerow( (int(time_data_buffer[i]), control_data_buffer[i][0], control_data_buffer[i][1]) )
 
                     # write the corresponding high level command into a file:
-                    writer_goal.writerow( (int(array_obs[i][10]), dist, sin_yaw, cos_yaw) )
+                    writer_goal.writerow( (int(time_data_buffer[i]), dist, sin_yaw, cos_yaw) )
+
+                    # write the corresponding image index into a file:
+                    writer_rgb.writerow( (int(time_data_buffer[i]), i) )
+
+                    # write pose data
+                    writer_pose.writerow( (int(time_data_buffer[i]), state_data_buffer[i][0], state_data_buffer[i][1], state_data_buffer[i][2], state_data_buffer[i][3], state_data_buffer[i][4], state_data_buffer[i][5]) )  
+
+                    # write waypoint data
+                    writer_waypoint.writerow( (int(time_data_buffer[i]), waypoint_data_buffer[i][0], waypoint_data_buffer[i][1], waypoint_data_buffer[i][2]) ) 
 
                 f_ctrl.close()
                 f_pose.close()
