@@ -51,7 +51,7 @@ cd tools
 python create_symbolic_links.py
 ```
 
-## Generate a config file for your first Unreal project
+## Generate a config file
 
 Our Unreal projects assume that all of their required parameters are declared in a config file. We usually launch our projects via high-level Python code, and this Python code takes care of generating the appropriate config file automatically. However, a valid config file is also required when building our projects, and we must generate this config file explicitly before attempting to build. A valid config file is also required if you want to launch one of our projects directly from the Unreal Editor. To generate a config file, run the following command-line tool.
 
@@ -59,10 +59,6 @@ Our Unreal projects assume that all of their required parameters are declared in
 cd tools
 python generate_config.py --unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim
 ```
-
-## Launch your first Unreal project
-
-At this point, you should be able to double-click on `cpp/unreal_projects/SpearSim/SpearSim.uproject`, which will open the project in the Unreal Editor, and you should be able to run it successfully.
 
 ## Build your first standalone executable
 
