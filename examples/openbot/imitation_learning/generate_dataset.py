@@ -10,9 +10,9 @@ import shutil
 import spear
 import time
 
-from ..openbot_gym.openbot_env import OpenBotEnv
-from ..openbot_gym.openbot_agent import OpenBotAgent
-from ..openbot_gym import openbot_utils
+from ..openbot_interface.openbot_env import OpenBotEnv
+from ..openbot_interface.openbot_agent import OpenBotAgent
+from ..openbot_interface import openbot_utils
   
 if __name__ == "__main__":
 
