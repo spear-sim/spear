@@ -169,10 +169,10 @@ std::map<std::string, Box> SphereAgent::getActionSpace() const
     // action["apply_force"]
     //
     if (std::find(action_components.begin(), action_components.end(), "apply_force") != action_components.end()) {
-        box.low = -1.f;
-        box.high = 1.f;
-        box.shape = {2};
-        box.dtype = DataType::Float32;
+        box.low_ = -1.f;
+        box.high_ = 1.f;
+        box.shape_ = {2};
+        box.dtype_ = DataType::Float32;
         action_space["apply_force"] = std::move(box);
     }
 
@@ -190,10 +190,10 @@ std::map<std::string, Box> SphereAgent::getObservationSpace() const
     // observation["compass"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "compass") != observation_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {5};
-        box.dtype = DataType::Float32;
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.shape_ = {5};
+        box.dtype_ = DataType::Float32;
         observation_space["compass"] = std::move(box);
     }
 
@@ -223,10 +223,10 @@ std::map<std::string, Box> SphereAgent::getStepInfoSpace() const
     // step_info["debug_info"]
     //
     if (std::find(step_info_components.begin(), step_info_components.end(), "debug_info") != step_info_components.end()) {
-        box.low = std::numeric_limits<float>::lowest();
-        box.high = std::numeric_limits<float>::max();
-        box.shape = {-1,3};
-        box.dtype = DataType::Float32;
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.shape_ = {-1,3};
+        box.dtype_ = DataType::Float32;
         step_info_space["debug_info"] = std::move(box);
     }
 

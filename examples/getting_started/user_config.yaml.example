@@ -1,10 +1,20 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
   STANDALONE_EXECUTABLE: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app"
+  # STANDALONE_EXECUTABLE: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app"
+
+  CUSTOM_COMMAND_LINE_ARGUMENTS: []
+  RENDER_OFFSCREEN: False
+  WINDOW_RESOLUTION_X: 512
+  WINDOW_RESOLUTION_Y: 512
 
 SIMULATION_CONTROLLER:
   TASK: "PointGoalNavTask"
   AGENT: "SphereAgent" # "SphereAgent" or "OpenBotAgent"
+  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+
+  CAMERA_SENSOR:
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
 
   SPHERE_AGENT:
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
@@ -42,7 +52,7 @@ SIMULATION_CONTROLLER:
     STEP_INFO_COMPONENTS: ["trajectory_data"]
     IS_READY_VELOCITY_THRESHOLD: 0.0
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0

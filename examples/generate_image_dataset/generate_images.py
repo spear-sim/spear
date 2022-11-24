@@ -11,10 +11,10 @@ import sys
 
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
 # However, in this example, we are teleporting the camera in an incoherent way. Hence, we implement a 
-# CustomEnv that can render multiple frames per step, so that Unreal Engine's rendering system is 
-# warmed up by the time we get observations. Doing this improves overall image quality due to Unreal's
-# use of temporal anti-aliasing. These extra frames are not necessary in typical embodied AI scenarios, 
-# but are necessary when teleporting a camera.
+# CustomEnv that can render multiple internal frames per step(), so that Unreal Engine's rendering
+# system is  warmed up by the time we get observations. Doing this improves overall image quality due
+# to Unreal's use of temporal anti-aliasing. These extra frames are not necessary in typical embodied
+# AI scenarios, but are necessary when teleporting a camera.
 class CustomEnv(spear.Env):
 
     def __init__(self, config, num_internal_steps):
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
             image_dir = os.path.join(args.images_dir, scene_id, render_pass)
             assert os.path.exists(image_dir)
-            plt.imsave(os.path.join(image_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass])
+            plt.imsave(os.path.join(image_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
 
     # close the current Env
     env.close()
