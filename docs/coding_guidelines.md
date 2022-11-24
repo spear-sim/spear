@@ -2,8 +2,6 @@
 
 We generally adhere to the [AirSim Coding Guidelines](https://microsoft.github.io/AirSim/coding_guidelines/) except as noted below. In cases where the AirSim guidelines don't make a recommendation, we generally agree with the recommendations in the [ISO C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines) except as noted below. The AirSim guidelines are mostly a style guide (e.g., how to name variables), whereas the ISO C++ guidelines give more substantial recommendations on how and when to use language features (e.g., how to make effective use of move semantics).
 
-We have implemented these guidelines recently, and there is a significant amount of non-compliant code in this repository. We are therefore adopting a per-file incremental strategy to bring our code into compliance. If you make any changes to a file, then edit the entire file so it conforms to these guidelines.
-
 ## Our design philosophy
 
 - Prefer code that is as small and simple as possible
@@ -118,9 +116,13 @@ class Photo(ndarray):
 // bad
 if (x < 0)
   break;
-
+else
+  break;
+  
 // good
 if (x < 0) {
+  break;
+} else {
   break;
 }
 ```
