@@ -60,9 +60,9 @@ cd tools
 python generate_config.py --unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim
 ```
 
-## Build your first standalone executable
+## Build a standalone executable
 
-Even though it is possible to launch our projects directly from the Unreal Editor, it is often preferable to build a standalone executable.
+In order to use the `spear` Python module, you need to build a standalone executable.
 
 ```console
 # build, cook, stage, package, archive
@@ -80,17 +80,19 @@ This step will build a standalone executable at the path `cpp/unreal_projects/Sp
 - You can specify `-clean` to do a clean build.
 - You can specify `-verbose`, `-UbtArgs="-verbose"`, and `-UbtArgs="-VeryVerbose"` to see additional build details (e.g., the exact command-line arguments that Unreal uses when invoking the underlying compiler).
 
-## Run your first standalone executable
+## Launch the standalone executable
 
-At this point, you should be able to run your standalone executable directly as follows.
+At this point, you should be able to launch the standalone executable by renaming the following file and editing the paths in the file appropriately for your system:
+
+```
+examples/getting_started/user_config.yaml.example -> user_config.yaml	
+```
+
+Next, run our `getting_started` example.
 
 ```console
-# generate config directly inside SpearSim.app
-cd tools
-python generate_config.py --user_config_files path/to/spear/cpp/unreal_projects/SpearSim/user_config.yaml --output_unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app/Contents/UE4/SpearSim
-
-# run the executable from the terminal (or double-click on SpearSim.app)
-path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app/Contents/MacOS/SpearSim
+cd examples/getting_started
+python run.py
 ```
 
 ## Control the environment via Python
