@@ -7,12 +7,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import spear
-import tensorflow as tf
-import tflite_runtime.interpreter as tflite
 import time
 
 from ..openbot_interface.openbot_env import OpenBotEnv
-from ..openbot_interface.openbot_agent import OpenBotAgent
+from ..openbot_interface.openbot_driving_policies import OpenBotPilotNet
 from ..openbot_interface import openbot_utils
   
 if __name__ == "__main__":
@@ -28,32 +26,21 @@ if __name__ == "__main__":
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
-    
+
+    # load driving policy
+    driving_policy = OpenBotPilotNet(config)
+
     # sanity checks (without these observation modes, the code will not behave properly)
     assert("state_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("control_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("camera" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("final_color" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
-    # main OpenBot class, encapsulating the agent functionalities
-    agent = OpenBotAgent(config)
-
     # load the control policy
-    policy_name = "./models/" + args.policy + ".tflite"
-    assert os.path.exists(policy_name)
-    interpreter = tflite.Interpreter(policy_name)
-    interpreter.allocate_tensors()
-
-    # get input and output tensor details
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-    print(f"Input details of the control policy: {input_details}")
-    print(f"Output details of the control policy: {output_details}")
-
-    # the control policy takes two inputs: normalized rgb image and a 1D high-level comand (-1=left, 0=forward, +1=right).
-    rgb_input = np.zeros(input_details[0]["shape"], dtype=np.float32)
-    cmd_input = np.zeros(input_details[1]["shape"], dtype=np.float32)
-
+    config.defrost()
+    config.DRIVING_POLICY.PILOT_NET.PATH = "./models/" + args.policy + ".tflite"
+    config.freeze()
+    
     # loop through the desired set of scenes
     for scene_id in args.scenes: 
         
@@ -73,6 +60,7 @@ if __name__ == "__main__":
             collision_flag = False # flag raised when the vehicle collides with the environment. It restarts the run without iterating the run count
             goal_reached_flag = False # flag raised when the vehicle get close enouth to the goal (i.e. the last waypoint).
             index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
+            result = np.empty((0, 2), dtype=float)
 
             # build the evauation run data folder and its subfolders
             run_dir = f"evaluation/{args.policy}/run_{scene_id}_{run}"
@@ -108,30 +96,11 @@ if __name__ == "__main__":
                 ct = datetime.datetime.now()
                 time_stamp = 10000*ct.timestamp()
 
-                # preprocess (normalize + crop) visual observations:
-                rgb_input = np.float32(obs["visual_observation"])/255.0 # normalization in the [0.0, 1.0] range
-                rgb_input = tf.image.crop_to_bounding_box(rgb_input, tf.shape(rgb_input)[0] - 90, tf.shape(rgb_input)[1] - 160, 90, 160)
-
                 # xy position of the goal in world frame (not the next waypoint):
                 desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][-1][0], info["agent_step_info"]["trajectory_data"][-1][1]], dtype=np.float32) # [x_des, y_des]
 
-                # current position and heading of the vehicle in world frame:
-                current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
-
-                # control inference
-                action, goal_reached_flag = agent.update_policy(desired_position_xy, current_pose_yaw_xy)
-
-                interpreter.set_tensor(input_details[0]["index"], np.expand_dims(img_input, axis=0))
-                interpreter.set_tensor(input_details[1]["index"], cmd_input)
-                start_time = time.time()
-                interpreter.invoke()
-                stop_time = time.time()
-                executionTime = (stop_time - start_time) * 1000
-                print('Infererence time: {:.3f}ms'.format(executionTime))
-
-                output = interpreter.get_tensor(output_details[0]["index"])
-                act = np.clip(np.concatenate((result, output.astype(float))), -1.0, 1.0)
-                action = np.array([act[0][0],act[0][1]])
+                # update control action 
+                action, goal_reached_flag = driving_policy.update(desired_position_xy, obs)
 
                 # send control action to the agent and collect observations
                 obs, reward, done, info = env.step({"apply_voltage": action})
@@ -142,15 +111,18 @@ if __name__ == "__main__":
                 # check the stop conditions of the run
                 if done: # if the done flag is raised
                     if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
-                        print("Collision detected ! Killing simulation and restarting run...")
+                        print("Collision detected !")
                         collision_flag = True # raise collision_flag to interrupt and restart the current run
                     if info["task_step_info"]["hit_goal"]: # if the vehicle collided with the goal
-                        print("Goal reached (collision check)  !")
                         goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
-                        break # only break when the goal is reached 
-            
+
                 # populate result data file
                 writer_result.writerow( (int(time_stamp), action[0], action[1], obs["state_data"][0], obs["state_data"][1], obs["state_data"][2], obs["state_data"][3], obs["state_data"][4], obs["state_data"][5], info["agent_step_info"]["trajectory_data"][-1][0], info["agent_step_info"]["trajectory_data"][-1][1], info["agent_step_info"]["trajectory_data"][-1][2], goal_reached_flag, collision_flag) )  
+
+                # termination condition
+                if goal_reached_flag:
+                    print("Goal reached !")
+                    break # only break when the goal is reached 
 
             f_result.close()
 

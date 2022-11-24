@@ -8,8 +8,6 @@ import shutil
 import spear
 import sys
 
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-
 class OpenBotEnv(spear.Env):
 
     def __init__(self, config, num_internal_steps):

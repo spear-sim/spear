@@ -11,7 +11,7 @@ import spear
 import time
 
 from ..openbot_interface.openbot_env import OpenBotEnv
-from ..openbot_interface.openbot_agent import OpenBotAgent
+from ..openbot_interface.openbot_driving_policies import OpenBotPID
 from ..openbot_interface import openbot_utils
   
 if __name__ == "__main__":
@@ -26,15 +26,15 @@ if __name__ == "__main__":
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
+
+    # load driving policy
+    driving_policy = OpenBotPID(config)
     
     # sanity checks (without these observation modes, the code will not behave properly)
     assert("state_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("control_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("camera" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("final_color" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
-
-    # main OpenBot class, encapsulating the agent functionalities
-    agent = OpenBotAgent(config)
 
     # loop through the desired set of scenes
     for scene_id in args.scenes: 
@@ -96,11 +96,8 @@ if __name__ == "__main__":
                 # xy position of the next waypoint in world frame:
                 desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
 
-                # current position and heading of the vehicle in world frame:
-                current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
-
                 # update control action 
-                action, waypoint_reached = agent.update_autopilot(desired_position_xy, current_pose_yaw_xy)
+                action, waypoint_reached = agent.driving_policy.update(desired_position_xy, obs)
 
                 # send control action to the agent and collect observations
                 obs, reward, done, info = env.step({"apply_voltage": action})
@@ -184,13 +181,13 @@ if __name__ == "__main__":
 
                     # get the updated compass observation (with the last recorded position set as goal)
                     current_pose_yaw_xy = np.array([state_data_buffer[i][4], state_data_buffer[i][0], state_data_buffer[i][1]], dtype=np.float32)
-                    dist, sin_yaw, cos_yaw = agent.get_compass_observation(goal_position_xy, current_pose_yaw_xy)
+                    compass_observation = openbot_utils.get_compass_observation(goal_position_xy, current_pose_yaw_xy)
 
                     # wite the low-level control observation into a file:
                     writer_ctrl.writerow( (int(time_data_buffer[i]), control_data_buffer[i][0], control_data_buffer[i][1]) )
 
                     # write the corresponding high level command into a file:
-                    writer_goal.writerow( (int(time_data_buffer[i]), dist, sin_yaw, cos_yaw) )
+                    writer_goal.writerow( (int(time_data_buffer[i]), compass_observation[0], compass_observation[1], compass_observation[2]) )
 
                     # write the corresponding image index into a file:
                     writer_rgb.writerow( (int(time_data_buffer[i]), i) )

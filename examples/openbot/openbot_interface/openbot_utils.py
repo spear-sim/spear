@@ -10,6 +10,45 @@ import ffmpeg
 import spear
 import sys
 
+# computes the 2D target position relative to the agent in world frame 
+# as well as the relative yaw angle between the agent forward axis and the agent-target vector
+def get_relative_target_pose(desired_position_xy, current_pose_yaw_xy):
+
+    # target error vector (global coordinate system)
+    relative_agent_target_xy = desired_position_xy - np.array([current_pose_yaw_xy[1], current_pose_yaw_xy[2], dtype=np.float32)
+
+    # compute agent forward axis (global coordinate system)
+    yaw = current_pose_yaw_xy[0];
+    rot = np.array([[cos(yaw), -sin(yaw)], [sin(yaw), cos(yaw)]], dtype=np.float32)
+    forward_rotated = np.dot(rot, self.forward)
+
+    # compute relative yaw angle between the agent forward axis and the agent-target vector
+    relative_agent_target_yaw = np.arctan2(forward_rotated[1], forward_rotated[0]) - np.arctan2(relative_agent_target_xy[1], relative_agent_target_xy[0])
+
+    # fit to range [-pi, pi]
+    if relative_agent_target_yaw > np.pi:
+        relative_agent_target_yaw -= 2 * np.pi
+    elif relative_agent_target_yaw <= -np.pi:
+        relative_agent_target_yaw += 2 * np.pi
+
+    return relative_agent_target_xy, relative_agent_target_yaw
+
+# compute the compass observation following conventions of the actual OpenBot code:
+# https://github.com/isl-org/OpenBot/blob/7868c54742f8ba3df0ba2a886247a753df982772/android/app/src/main/java/org/openbot/pointGoalNavigation/PointGoalNavigationFragment.java#L103
+def get_compass_observation(desired_position_xy, current_pose_yaw_xy):
+
+    # get the 2D reative pose between the agent and its target
+    relative_agent_target_xy, relative_agent_target_yaw = get_relative_target_pose(desired_position_xy, current_pose_yaw_xy)
+
+    # compute Euclidean distance to target
+    dist = np.linalg.norm(relative_agent_target_xy)
+
+    # projection 
+    sin_yaw = np.sin(relative_agent_target_yaw);
+    cos_yaw = np.cos(relative_agent_target_yaw);
+
+    return np.array([dist, sin_yaw, cos_yaw], dtype=np.float32)
+
 def generate_video(config, scene_id, run, compress = False):
     print("Generating video from the sequence of observations")
     image_folder = f"dataset/uploaded/run_{scene_id}_{run}/data/images/rgb"

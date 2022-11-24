@@ -101,15 +101,18 @@ SIMULATION_CONTROLLER:
       Z: 0.0
     DEBUG_RENDER: False
 
-AUTOPILOT:
-      PROPORTIONAL_GAIN_HEADING: 5.25 # PID proportional gain for the autopilot
-      DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
-      PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
-      DERIVATIVE_GAIN_DIST: -0.1      # PID derivative gain for the autopilot
-      FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
-      CONTROL_SATURATION: 0.9         # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
-      ACCEPTANCE_RADIUS: 0.15         # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
-   
+DRIVING_POLICY:
+  ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+  CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+  PID:
+    PROPORTIONAL_GAIN_HEADING: 5.25 # PID proportional gain for the autopilot
+    DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
+    PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
+    DERIVATIVE_GAIN_DIST: -0.1      # PID derivative gain for the autopilot
+    FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
+  PILOT_NET:
+    PATH: ""
+    
 OPENBOT:
   OPENBOT_PAWN:
     SKELETAL_MESH: "/OpenBot/V1/Meshes/OpenBot_V1_Mesh.OpenBot_V1_Mesh"
