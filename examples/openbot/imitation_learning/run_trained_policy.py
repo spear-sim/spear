@@ -9,9 +9,9 @@ import os
 import spear
 import time
 
-from ..openbot_interface.openbot_env import OpenBotEnv
-from ..openbot_interface.openbot_driving_policies import OpenBotPilotNet
-from ..openbot_interface import openbot_utils
+from openbot_spear.env import OpenBotEnv
+from openbot_spear.policies import OpenBotPilotNet
+from openbot_spear.utils import *
   
 if __name__ == "__main__":
 
@@ -63,10 +63,14 @@ if __name__ == "__main__":
             result = np.empty((0, 2), dtype=float)
 
             # build the evauation run data folder and its subfolders
-            run_dir = f"evaluation/{args.policy}/run_{scene_id}_{run}"
-            data_dir = run_dir+"/data/"
-            image_dir = data_dir+"images"
-            result_dir = data_dir+"run_data"
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            eval_dir = os.path.join(base_dir, "evaluation")
+            policy_dir = os.path.join(base_dir, args.policy)
+            exp_dir = f"run_{scene_id}_{run}"
+            run_dir = os.path.join(policy_dir, exp_dir)
+            data_dir = os.path.join(run_dir,"data")
+            image_dir = os.path.join(data_dir, "images")
+            result_dir = os.path.join(data_dir, "results")
             os.makedirs(data_dir, exist_ok=True)
             os.makedirs(image_dir, exist_ok=True)
             os.makedirs(result_dir, exist_ok=True)
@@ -127,7 +131,8 @@ if __name__ == "__main__":
             f_result.close()
 
             if args.create_video: # if desired, generate a video from the collected rgb observations 
-                openbot_utils.generate_video(config, scene_id, run)
+                video_name = scene_id + run
+                generate_video(config, video_name, image_dir, video_dir)
 
             run = run + 1 # update the run count and move to the next run 
 

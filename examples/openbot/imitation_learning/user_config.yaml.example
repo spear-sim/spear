@@ -1,6 +1,6 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/RobotProject.sh"
+  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim.sh"
 
   DATA_DIR: "/home/quentin/Downloads/spear_data/v7/linux"
   CONTENT_DIR: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Contents/UE4/SpearSim/Content"
@@ -22,7 +22,7 @@ SIMULATION_CONTROLLER:
     GOAL_ACTOR_NAME: "GoalActor"
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
-    TRAJECTORY_DEBUG_RENDER: True
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: True
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
     TRAJECTORY_SAMPLING_MAX_ITERS: 5000
     NAVMESH:
@@ -83,15 +83,15 @@ SIMULATION_CONTROLLER:
     RANGE:
       MIN: 0.01
       MAX: 10.0
-    NOISE_STD: 0.0
+    NOISE_STD_DEV: 0.0
     DEBUG_RENDER: True
 
   IMU_SENSOR:
-    ACCELEROMETER_NOISE_STD: 
+    ACCELEROMETER_NOISE_STD_DEV: 
       X: 0.0
       Y: 0.0
       Z: 0.0
-    GYROSCOPE_NOISE_STD: 
+    GYROSCOPE_NOISE_STD_DEV: 
       X: 0.0
       Y: 0.0
       Z: 0.0
@@ -101,14 +101,17 @@ SIMULATION_CONTROLLER:
       Z: 0.0
     DEBUG_RENDER: False
 
-AUTOPILOT:
-      PROPORTIONAL_GAIN_HEADING: 5.25 # PID proportional gain for the autopilot
-      DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
-      PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
-      DERIVATIVE_GAIN_DIST: -0.1      # PID derivative gain for the autopilot
-      FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
-      CONTROL_SATURATION: 0.9         # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
-      ACCEPTANCE_RADIUS: 0.15         # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+DRIVING_POLICY:
+  ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+  CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+  PID:
+    PROPORTIONAL_GAIN_HEADING: 5.25 # PID proportional gain for the autopilot
+    DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
+    PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
+    DERIVATIVE_GAIN_DIST: -0.1      # PID derivative gain for the autopilot
+    FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
+  PILOT_NET:
+    PATH: ""
    
 OPENBOT:
   OPENBOT_PAWN:

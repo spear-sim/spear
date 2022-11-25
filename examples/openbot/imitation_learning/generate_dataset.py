@@ -10,9 +10,9 @@ import shutil
 import spear
 import time
 
-from ..openbot_interface.openbot_env import OpenBotEnv
-from ..openbot_interface.openbot_driving_policies import OpenBotPID
-from ..openbot_interface import openbot_utils
+from openbot_spear.env import OpenBotEnv
+from openbot_spear.policies import OpenBotPID
+from openbot_spear.utils import *
   
 if __name__ == "__main__":
 
@@ -63,10 +63,22 @@ if __name__ == "__main__":
             # build the run data folder and its subfolders following the guidelines of the OpenBot public repository 
             # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
 
-            run_dir = f"dataset/uploaded/run_{scene_id}_{run}"
-            data_dir = run_dir+"/data/"
-            image_dir = data_dir+"images"
-            sensor_dir = data_dir+"sensor_data"
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            dataset_dir = os.path.join(base_dir, "dataset")
+            upload_dir = os.path.join(dataset_dir, "uploaded")
+            train_data_dir = os.path.join(dataset_dir, "train_data")
+            test_data_dir = os.path.join(dataset_dir, "test_data")
+            exp_dir = f"run_{scene_id}_{run}"
+            
+            # split data between training and evaluation sets in a 80%-20% ratio as suggested in the OpenBot public repo
+            if 100 * run < 80 * args.runs:
+                run_dir = os.path.join(train_data_dir, exp_dir) 
+            else:
+                run_dir = os.path.join(test_data_dir, exp_dir) 
+                
+            data_dir = os.path.join(run_dir,"data")
+            image_dir = os.path.join(data_dir, "images")
+            sensor_dir = os.path.join(data_dir, "sensor_data")
             os.makedirs(data_dir, exist_ok=True)
             os.makedirs(image_dir, exist_ok=True)
             os.makedirs(sensor_dir, exist_ok=True)
@@ -181,7 +193,7 @@ if __name__ == "__main__":
 
                     # get the updated compass observation (with the last recorded position set as goal)
                     current_pose_yaw_xy = np.array([state_data_buffer[i][4], state_data_buffer[i][0], state_data_buffer[i][1]], dtype=np.float32)
-                    compass_observation = openbot_utils.get_compass_observation(goal_position_xy, current_pose_yaw_xy)
+                    compass_observation = get_compass_observation(goal_position_xy, current_pose_yaw_xy)
 
                     # wite the low-level control observation into a file:
                     writer_ctrl.writerow( (int(time_data_buffer[i]), control_data_buffer[i][0], control_data_buffer[i][1]) )
@@ -204,7 +216,8 @@ if __name__ == "__main__":
                 f_rgb.close()
 
                 if args.create_video: # if desired, generate a video from the collected rgb observations 
-                    openbot_utils.generate_video(config, scene_id, run)
+                    video_name = scene_id + run
+                    generate_video(config, video_name, image_dir, video_dir)
 
                 run = run + 1 # update the run count and move to the next run 
 

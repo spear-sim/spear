@@ -15,7 +15,7 @@ import sys
 def get_relative_target_pose(desired_position_xy, current_pose_yaw_xy):
 
     # target error vector (global coordinate system)
-    relative_agent_target_xy = desired_position_xy - np.array([current_pose_yaw_xy[1], current_pose_yaw_xy[2], dtype=np.float32)
+    relative_agent_target_xy = desired_position_xy - np.array([current_pose_yaw_xy[1], current_pose_yaw_xy[2]], dtype=np.float32)
 
     # compute agent forward axis (global coordinate system)
     yaw = current_pose_yaw_xy[0];
@@ -49,37 +49,37 @@ def get_compass_observation(desired_position_xy, current_pose_yaw_xy):
 
     return np.array([dist, sin_yaw, cos_yaw], dtype=np.float32)
 
-def generate_video(config, scene_id, run, compress = False):
+def generate_video(config, video_name, image_dir, video_dir, compress = False):
     print("Generating video from the sequence of observations")
-    image_folder = f"dataset/uploaded/run_{scene_id}_{run}/data/images/rgb"
-    video_name = f"videos/run_{scene_id}_{run}.avi"
-    video_name_compressed = f"videos/run_{scene_id}_{run}_compressed.mp4"
+
+    name = f"{video_dir}/{video_name}.avi"
+    name_compressed = f"{video_dir}/{video_name}_compressed.mp4"
 
     if not (os.path.exists("videos")):
         os.makedirs("videos")
 
-    images = [img for img in os.listdir(image_folder)]
-    frame = cv2.imread(os.path.join(image_folder, images[0]))
+    images = [img for img in os.listdir(image_dir)]
+    frame = cv2.imread(os.path.join(image_dir, images[0]))
     height, width, layers = frame.shape
 
     rate = int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS)
 
-    video = cv2.VideoWriter(video_name, 0, rate, (width, height))
+    video = cv2.VideoWriter(name, 0, rate, (width, height))
 
     # good initial sort but doesnt sort numerically very well
     images.sort(key=lambda f: int(re.sub('\D', '', f)))
 
     for image in images:
-        video.write(cv2.imread(os.path.join(image_folder, image)))
+        video.write(cv2.imread(os.path.join(image_dir, image)))
 
     cv2.destroyAllWindows()
     video.release()
 
     if compress:
         try:
-            i = ffmpeg.input(video_name)
+            i = ffmpeg.input(name)
             print("Compressing video...")
-            out = ffmpeg.output(i, video_name_compressed, **{'c:v': 'libx264', 'b:v': 800000}).overwrite_output().run()
+            out = ffmpeg.output(i, name_compressed, **{'c:v': 'libx264', 'b:v': 800000}).overwrite_output().run()
             print("Done compressing !")
 
         except FileNotFoundError as e:

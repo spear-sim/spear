@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import tflite_runtime.interpreter as tflite
+from openbot_spear.utils import get_compass_observation
 
 # Autopilot class containing the vehicle's low level controller 
 class OpenBotDrivingPolicy:
@@ -19,12 +20,12 @@ class OpenBotDrivingPolicy:
 class OpenBotPID(OpenBotDrivingPolicy):
 
     def __init__(self, config): 
-        super(OpenBotDrivingPolicy, self).__init__(config)
+        super().__init__(config)
         self.kp_lin = config.DRIVING_POLICY.PID.PROPORTIONAL_GAIN_DIST
         self.kd_lin = config.DRIVING_POLICY.PID.DERIVATIVE_GAIN_DIST
         self.kp_ang = config.DRIVING_POLICY.PID.PROPORTIONAL_GAIN_HEADING
         self.kd_ang = config.DRIVING_POLICY.PID.DERIVATIVE_GAIN_HEADING
-        self.forward_min_angle = config.PID.DRIVING_POLICY.FORWARD_MIN_ANGLE
+        self.forward_min_angle = config.DRIVING_POLICY.PID.FORWARD_MIN_ANGLE
         self.dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
         self.xy_position_old = np.zeros(2, dtype=np.float32)
         self.yaw_old = 0.0
@@ -87,7 +88,7 @@ class OpenBotPID(OpenBotDrivingPolicy):
 class OpenBotPilotNet(OpenBotDrivingPolicy):
 
     def __init__(self, config):
-        super(OpenBotDrivingPolicy, self).__init__(config)
+        super().__init__(config)
         self.kp_lin = config.DRIVING_POLICY.PILOT_NET.PATH
         
         # load the control policy
@@ -108,7 +109,7 @@ class OpenBotPilotNet(OpenBotDrivingPolicy):
         current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
         
         # get the updated compass observation
-        compass_observation = openbot_utils.get_compass_observation(desired_position_xy, current_pose_yaw_xy)
+        compass_observation = get_compass_observation(desired_position_xy, current_pose_yaw_xy)
         
         # fill command tensor
         cmd_input[0][0] = compass_observation[0]
