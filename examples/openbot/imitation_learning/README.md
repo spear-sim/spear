@@ -29,19 +29,51 @@ NOTE: In these steps, ensure that the required pak files are in the executable_c
 For this scenario, you will need to run
 
 ```bash
-python generate_dataset.py --iterations 1000 --runs 100 --scenes "<scene_id_1>" "<scene_id_2>" "<scene_id_n>" -create_video
+python generate_dataset.py --iterations 1000 --runs 100 --scene_id "235554..." "235576..." "235114..." 
 ```
 
+The generated dataset will have the folowing structrure, to comply with the [OpenBot training pipeline](https://github.com/isl-org/OpenBot/tree/master/policy):
+
+```
+dataset/uploaded
+|-- train_data
+| |-- run_235114..._0/data
+| | |-- images
+| | | |-- 0.jpeg
+| | | |-- ...
+| | | |-- 999.jpeg
+| | |-- sensor_data
+| | | |-- ctrlLog.txt
+| | | |-- goalLog.txt
+| | | |-- rgbFrames.txt
+| | | |-- poseData.txt
+| | | |-- waypointData.txt
+| |-- ...
+|-- test_data
+| |-- run_235114..._80/data
+| | |-- images
+| | | |-- 0.jpeg
+| | | |-- ...
+| | | |-- 999.jpeg
+| | |-- sensor_data
+| | | |-- ctrlLog.txt
+| | | |-- goalLog.txt
+| | | |-- rgbFrames.txt
+| | | |-- poseData.txt
+| | | |-- waypointData.txt
+|-- ...
+```
 
 ## Train a control policy
 
+As the structure of the data collected with SPEAR natively complies with the OpenBot training pipeline, you may simply follow the guidelines of the [poicy training tutorial](https://github.com/isl-org/OpenBot/tree/master/policy#policy-training) in the OpenBot public repository to be able to generate your own `.tflite` policy out of the data you collected.
 
 ## Evaluate the control policy
 
 For this scenario, you will need to run
 
 ```bash
-python run_trained_policy.py --policy <path/to/the/policy> --iterations 1000 --runs 100 --scenes "<scene_id_1>" "<scene_id_2>" "<scene_id_n>" -create_video
+python run_trained_policy.py --policy <policy_name> --iterations 1000 --runs 100 --scene_id "235554..." "235576..." "235114..." 
 ```
 
 

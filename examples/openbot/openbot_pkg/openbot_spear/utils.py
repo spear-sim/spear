@@ -41,8 +41,8 @@ def get_compass_observation(desired_position_xy, current_pose_yaw_xy):
     # get the 2D reative pose between the agent and its target
     relative_agent_target_xy, relative_agent_target_yaw = get_relative_target_pose(desired_position_xy, current_pose_yaw_xy)
 
-    # compute Euclidean distance to target
-    dist = np.linalg.norm(relative_agent_target_xy)
+    # compute Euclidean distance to target in [m]
+    dist = np.linalg.norm(relative_agent_target_xy) / 0.01 
 
     # projection 
     sin_yaw = np.sin(relative_agent_target_yaw);
