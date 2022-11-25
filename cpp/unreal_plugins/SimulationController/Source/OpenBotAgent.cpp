@@ -510,40 +510,43 @@ void OpenBotAgent::generateTrajectoryToGoal()
     // Generate a collision-free path between the agent position and the goal position
     FPathFindingResult path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
     
-    // If path generation is successful, update trajectory_
-    if (path.IsSuccessful() && path.Path.IsValid()) {
+    // Ensure that path generation process was successful and that the generated path is valid
+    ASSERT(path.IsSuccessful());
+    ASSERT(path.Path.IsValid());
 
-        TArray<FNavPathPoint> path_points = path.Path->GetPathPoints();        
-        for(auto& path_point : path_points) {
-            trajectory_.push_back(path_point.Location.X);
-            trajectory_.push_back(path_point.Location.Y);
-            trajectory_.push_back(path_point.Location.Z);
-        }
+    // Update trajectory_
+    TArray<FNavPathPoint> path_points = path.Path->GetPathPoints(); 
+    ASSERT(path_points.Num()>1); // There should be at east a starting point and a goal point
 
-        // Debug output
-        if (path.IsPartial()) {
-            std::cout << "Only a partial path could be found..." << std::endl;
-        }
-
-        int num_waypoints = path.Path->GetPathPoints().Num();
-        float trajectory_length = 0.0;
-        for (size_t i = 0; i < num_waypoints - 1; i++) {
-            trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
-        }
-        trajectory_length /= open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
-        FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
-
-        std::cout << std::endl;
-        std::cout << "Number of waypoints: " << num_waypoints << std::endl;
-        std::cout << "Goal distance: " << relative_position_to_goal.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
-        std::cout << "Path length: " << trajectory_length << "m" << std::endl;
-        std::cout << "Initial position: [" << open_bot_pawn_->GetActorLocation().X << ", " << open_bot_pawn_->GetActorLocation().Y << ", " << open_bot_pawn_->GetActorLocation().Z << "]." << std::endl;
-        std::cout << "Goal position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
-        std::cout << "-----------------------------------------------------------" << std::endl;
-        std::cout << "Waypoints: " << std::endl;
-        for (auto& point : path_points) {
-            std::cout << "[" << point.Location.X << ", " << point.Location.Y << ", " << point.Location.Z << "]" << std::endl;
-        }
-        std::cout << "-----------------------------------------------------------" << std::endl;
+    for(auto& path_point : path_points) {
+        trajectory_.push_back(path_point.Location.X);
+        trajectory_.push_back(path_point.Location.Y);
+        trajectory_.push_back(path_point.Location.Z);
     }
+
+    // Debug output
+    if (path.IsPartial()) {
+        std::cout << "Only a partial path could be found..." << std::endl;
+    }
+
+    int num_waypoints = path.Path->GetPathPoints().Num();
+    float trajectory_length = 0.0;
+    for (size_t i = 0; i < num_waypoints - 1; i++) {
+        trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
+    }
+    trajectory_length /= open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
+    FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
+
+    std::cout << std::endl;
+    std::cout << "Number of waypoints: " << num_waypoints << std::endl;
+    std::cout << "Goal distance: " << relative_position_to_goal.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+    std::cout << "Path length: " << trajectory_length << "m" << std::endl;
+    std::cout << "Initial position: [" << open_bot_pawn_->GetActorLocation().X << ", " << open_bot_pawn_->GetActorLocation().Y << ", " << open_bot_pawn_->GetActorLocation().Z << "]." << std::endl;
+    std::cout << "Goal position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
+    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "Waypoints: " << std::endl;
+    for (auto& point : path_points) {
+        std::cout << "[" << point.Location.X << ", " << point.Location.Y << ", " << point.Location.Z << "]" << std::endl;
+    }
+    std::cout << "-----------------------------------------------------------" << std::endl;
 }

@@ -56,6 +56,9 @@ examples/getting_started/user_config.yaml
 
 examples/openbot/imitation_learning/dataset
 examples/openbot/imitation_learning/user_config.yaml
+examples/openbot/imitation_learning/tmp
+examples/openbot/imitation_learning/models
+examples/openbot/imitation_learning/videos
 
 python/spear_sim.egg-info
 

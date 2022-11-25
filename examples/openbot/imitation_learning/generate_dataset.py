@@ -92,6 +92,8 @@ if __name__ == "__main__":
         
             # send zero action to the agent and collect initial trajectory observations:
             obs, _, _, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+            
+            print(info)
         
             num_waypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
 
