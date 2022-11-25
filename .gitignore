@@ -1,5 +1,7 @@
 __pycache__
 .ipynb_checkpoints
+.tflite
+.vscode
 
 cpp/unreal_plugins/CoreUtils/Binaries
 cpp/unreal_plugins/CoreUtils/Intermediate
@@ -54,7 +56,6 @@ examples/generate_image_dataset/user_config.yaml
 examples/getting_started/tmp
 examples/getting_started/user_config.yaml
 
-.tflite
 examples/openbot/imitation_learning/dataset
 examples/openbot/imitation_learning/evaluation
 examples/openbot/imitation_learning/tmp
