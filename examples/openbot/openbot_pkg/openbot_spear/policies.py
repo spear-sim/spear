@@ -1,7 +1,9 @@
 import numpy as np
 import tensorflow as tf
 import tflite_runtime.interpreter as tflite
-from openbot_spear.utils import get_compass_observation
+import time
+
+from openbot_spear.utils import get_compass_observation, get_relative_target_pose
 
 # Autopilot class containing the vehicle's low level controller 
 class OpenBotDrivingPolicy:
@@ -39,7 +41,7 @@ class OpenBotPID(OpenBotDrivingPolicy):
         assert self.forward_min_angle >= 0.0
         assert self.dt > 0.0 
 
-    def update(desired_position_xy, obs):
+    def update(self, desired_position_xy, obs):
     
         # current position and heading of the vehicle in world frame
         current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
@@ -54,7 +56,7 @@ class OpenBotPID(OpenBotDrivingPolicy):
             self.first_update = False
 
         # compute Euclidean distance to target in [m]:
-        xy_position_error_norm = np.linalg.norm(position_error) * 0.01
+        xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01
         
         # velocity computation
         lin_vel_norm = np.linalg.norm((np.array([current_pose_yaw_xy[1],current_pose_yaw_xy[2]], dtype=np.float32)-self.xy_position_old)/self.dt) * 0.01 
@@ -92,18 +94,21 @@ class OpenBotPilotNet(OpenBotDrivingPolicy):
         self.kp_lin = config.DRIVING_POLICY.PILOT_NET.PATH
         
         # load the control policy
-        self.interpreter = tflite.Interpreter(policy_name)
+        self.interpreter = tflite.Interpreter(config.DRIVING_POLICY.PILOT_NET.PATH)
         self.interpreter.allocate_tensors()
         
         # get input and output tensor details
-        self.input_details = interpreter.get_input_details()
-        self.output_details = interpreter.get_output_details()
+        self.input_details = self.interpreter.get_input_details()
+        self.output_details = self.interpreter.get_output_details()
         # the policy takes two inputs: normalized rgb image and a 3D compass observation.
         print(f"Input details of the control policy: {self.input_details}")
         # the policy gives a 2D output consisting of the duty cycles to be sent to the left (resp. right) motors on a [0, 1] scale
         print(f"Output details of the control policy: {self.output_details}")
+        
+        self.img_input = np.zeros(self.input_details[0]["shape"], dtype=np.float32)
+        self.cmd_input = np.zeros(self.input_details[1]["shape"], dtype=np.float32)
     
-    def update(desired_position_xy, obs):
+    def update(self, desired_position_xy, obs):
     
         # current position and heading of the vehicle in world frame
         current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
@@ -112,19 +117,19 @@ class OpenBotPilotNet(OpenBotDrivingPolicy):
         compass_observation = get_compass_observation(desired_position_xy, current_pose_yaw_xy)
         
         # fill command tensor
-        cmd_input[0][0] = compass_observation[0]
-        cmd_input[0][1] = compass_observation[1]
-        cmd_input[0][2] = compass_observation[2]
-        self.interpreter.set_tensor(self.input_details[1]["index"], cmd_input)
+        self.cmd_input[0][0] = compass_observation[0]
+        self.cmd_input[0][1] = compass_observation[1]
+        self.cmd_input[0][2] = compass_observation[2]
+        self.interpreter.set_tensor(self.input_details[1]["index"], self.cmd_input)
     
         # preprocess (normalize + crop) visual observations:
-        target_height = self.input_details[0]["shape"][0] # 90
-        target_width = self.input_details[0]["shape"][1] # 160
-        preprocessed_rgb_input = np.float32(obs["camera_final_color"])/255.0 # normalization in the [0.0, 1.0] range
-        preprocessed_rgb_input = tf.image.crop_to_bounding_box(preprocessed_rgb_input, tf.shape(preprocessed_rgb_input)[0] - target_height, tf.shape(preprocessed_rgb_input)[1] - target_width, target_height, target_width)
+        target_height = self.input_details[0]["shape"][1] # 90
+        target_width = self.input_details[0]["shape"][2] # 160
+        self.img_input = np.float32(obs["camera_final_color"])/255.0 # normalization in the [0.0, 1.0] range
+        self.img_input = tf.image.crop_to_bounding_box(self.img_input, tf.shape(self.img_input)[0] - target_height, tf.shape(self.img_input)[1] - target_width, target_height, target_width)
         
         # fill image tensor
-        self.interpreter.set_tensor(self.input_details[0]["index"], np.expand_dims(preprocessed_rgb_input, axis=0))
+        self.interpreter.set_tensor(self.input_details[0]["index"], np.expand_dims(self.img_input, axis=0))
             
         # run inference
         start_time = time.time()
@@ -135,9 +140,15 @@ class OpenBotPilotNet(OpenBotDrivingPolicy):
 
         # generate an action from inference result
         result = np.empty((0, 2), dtype=float)
-        tflite_output = interpreter.get_tensor(output_details[0]["index"])
+        tflite_output = self.interpreter.get_tensor(self.output_details[0]["index"])
         act = np.clip(np.concatenate((result, tflite_output.astype(float))), -1.0, 1.0)
         action = np.array([act[0][0],act[0][1]], dtype=np.float32)
+        
+        # compute the relative agent-target pose from the raw observation dictionary
+        xy_position_error, _ = get_relative_target_pose(desired_position_xy, current_pose_yaw_xy)
+        
+        # compute Euclidean distance to target in [m]:
+        xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01
         
         # is goal reached ?
         target_location_reached = (xy_position_error_norm <= self.acceptance_radius)

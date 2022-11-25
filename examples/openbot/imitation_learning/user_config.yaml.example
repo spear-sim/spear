@@ -7,8 +7,8 @@ SPEAR:
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
-  WINDOW_RESOLUTION_X: 1024
-  WINDOW_RESOLUTION_Y: 768
+  WINDOW_RESOLUTION_X: 640
+  WINDOW_RESOLUTION_Y: 480
 
 SIMULATION_CONTROLLER:
   TASK: "ImitationLearningTask"
@@ -22,7 +22,7 @@ SIMULATION_CONTROLLER:
     GOAL_ACTOR_NAME: "GoalActor"
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
-    TRAJECTORY_SAMPLING_DEBUG_RENDER: True
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
     TRAJECTORY_SAMPLING_MAX_ITERS: 5000
     NAVMESH:
@@ -41,8 +41,8 @@ SIMULATION_CONTROLLER:
     IS_READY_VELOCITY_THRESHOLD: 0.0
    
     CAMERA:
-      IMAGE_HEIGHT: 512
-      IMAGE_WIDTH: 512
+      IMAGE_HEIGHT: 120
+      IMAGE_WIDTH: 160
       FOV: 70.0
       RENDER_PASSES: ["final_color", "segmentation", "depth_glsl"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
       
@@ -84,7 +84,7 @@ SIMULATION_CONTROLLER:
       MIN: 0.01
       MAX: 10.0
     NOISE_STD_DEV: 0.0
-    DEBUG_RENDER: True
+    DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
 
   IMU_SENSOR:
     ACCELEROMETER_NOISE_STD_DEV: 
@@ -99,9 +99,10 @@ SIMULATION_CONTROLLER:
       X: 0.0
       Y: 0.0
       Z: 0.0
-    DEBUG_RENDER: False
+    DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
 
 DRIVING_POLICY:
+  PERCENTAGE_OF_TRAINING_DATA: 80   # The ratio between training and validation data should be around 80%-20% as suggested in the OpenBot public repo.
   ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
   CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
   PID:

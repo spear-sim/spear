@@ -208,24 +208,32 @@ void ImitationLearningTask::getPositionsFromFile()
 
     std::string line;
     std::string token;
+    int scene_id;
     FVector init, goal;
 
     // Create an input filestream 
     std::ifstream fs(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "POSITIONS_FILE"})); 
     ASSERT(fs.is_open());
 
-    // Read file data, line by line in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z"
+    // Read file data, line by line in the format 
+    // "scene_id,init_pos_x_cms,init_pos_y_cms,init_pos_z_cms,goal_pos_x_cms,goal_pos_y_cms,goal_pos_z_cms"
     std::getline(fs, line); // get header
     while (std::getline(fs, line)) {
         std::istringstream ss(line);
+        std::getline(ss, token, ','); ASSERT(ss); scene_id = std::stoi(token);
         std::getline(ss, token, ','); ASSERT(ss); init.X = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); init.Y = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); init.Z = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); goal.X = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); goal.Y = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); goal.Z = std::stof(token);
-        agent_initial_positions_.push_back(init);
-        agent_goal_positions_.push_back(goal);
+        
+        // If the scene id matches the currently opened map, then account for the positions
+        std::string level_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "LEVEL_NAME"});
+        if(scene_id == std::stoi(level_name.substr(level_name.size() - 9))) {
+            agent_initial_positions_.push_back(init);
+            agent_goal_positions_.push_back(goal);
+        }
     }
 
     // Close file

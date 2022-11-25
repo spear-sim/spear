@@ -1,14 +1,15 @@
 DRIVING_POLICY:
   ACCEPTANCE_RADIUS: 0.15
   CONTROL_SATURATION: 0.9
+  PERCENTAGE_OF_TRAINING_DATA: 80
   PID:
-    DERIVATIVE_GAIN_DIST: 0.0
+    DERIVATIVE_GAIN_DIST: 0.1
     DERIVATIVE_GAIN_HEADING: 1.0
     FORWARD_MIN_ANGLE: 0.5
     PROPORTIONAL_GAIN_DIST: 4.0
     PROPORTIONAL_GAIN_HEADING: 5.25
   PILOT_NET:
-    PATH: ''
+    PATH: ./models/test.tflite
 OPENBOT:
   OPENBOT_PAWN:
     ACTION_SCALE: 255
@@ -146,7 +147,7 @@ SIMULATION_CONTROLLER:
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
   IMITATION_LEARNING_TASK:
     AGENT_ACTOR_NAME: OpenBotAgent
-    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: false
+    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: true
     GOAL_ACTOR_NAME: GoalActor
     NAVMESH:
       AGENT_HEIGHT: 20.0
@@ -156,9 +157,9 @@ SIMULATION_CONTROLLER:
     - Floor
     - obj0
     - VehicleMesh
-    POSITIONS_FILE: /home/quentin/Desktop/ISL/spear/examples/openbot/imitation_learning/start_goal_coordinates_235388780.csv
-    TRAJECTORY_SAMPLING_DEBUG_RENDER: true
-    TRAJECTORY_SAMPLING_MAX_ITERS: 10000
+    POSITIONS_FILE: /home/quentin/Desktop/ISL/spear/examples/openbot/imitation_learning/start_goal_coordinates.csv
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: false
+    TRAJECTORY_SAMPLING_MAX_ITERS: 100
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000
   IMU_SENSOR:
     ACCELEROMETER_NOISE_STD_DEV:
@@ -181,8 +182,8 @@ SIMULATION_CONTROLLER:
     - apply_voltage
     CAMERA:
       FOV: 70.0
-      IMAGE_HEIGHT: 512
-      IMAGE_WIDTH: 512
+      IMAGE_HEIGHT: 120
+      IMAGE_WIDTH: 160
       RENDER_PASSES:
       - final_color
       - segmentation
@@ -246,7 +247,7 @@ SIMULATION_CONTROLLER:
   PORT: 30000
   SIMULATION_STEP_TIME_SECONDS: 0.033
   SONAR_SENSOR:
-    DEBUG_RENDER: true
+    DEBUG_RENDER: false
     HORIZONTAL_FOV: 30.0
     MAX_REFLECTION_ANGLE: 45.0
     NOISE_STD_DEV: 0.0
@@ -302,22 +303,22 @@ SIMULATION_CONTROLLER:
     SPAWN_CAMERA_POSITION_Z: 40.0
   WORLD_PATH_NAME: /Game/Maps/Map_235554690.Map_235554690
 SPEAR:
-  CONTENT_DIR: /home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim/Content
+  CONTENT_DIR: /home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Content
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   DATA_DIR: /home/quentin/Desktop/ISL/spear_data/v7
   GPU_ID: 0
   LAUNCH_MODE: standalone_executable
-  RENDER_OFFSCREEN: false
+  RENDER_OFFSCREEN: true
   RPC_CLIENT_AFTER_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 1.0
   RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 120.0
   RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 1.0
   RPC_CLIENT_INTERNAL_RECONNECT_LIMIT: 1
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 5.0
-  STANDALONE_EXECUTABLE: /home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim.sh
+  STANDALONE_EXECUTABLE: /home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim.sh
   TEMP_DIR: tmp
   UNREAL_EDITOR_EXECUTABLE: ''
   UNREAL_INTERNAL_LOG_FILE: ''
   UPROJECT: ''
   VULKAN_DEVICE_FILES: /usr/share/vulkan/icd.d/nvidia_icd.json
-  WINDOW_RESOLUTION_X: 1024
-  WINDOW_RESOLUTION_Y: 768
+  WINDOW_RESOLUTION_X: 640
+  WINDOW_RESOLUTION_Y: 480

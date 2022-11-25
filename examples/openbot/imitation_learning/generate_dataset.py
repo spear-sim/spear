@@ -6,6 +6,7 @@ import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pandas as pd
 import shutil
 import spear
 import time
@@ -20,9 +21,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
-    parser.add_argument("-s", "--scenes", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
+    parser.add_argument("-s", "--scene_id", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
     parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
     args = parser.parse_args()
+    
+    # build the run data folder and its subfolders following the guidelines of the OpenBot public repository 
+    # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
+
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    video_dir = os.path.join(base_dir, "videos")
+    dataset_dir = os.path.join(base_dir, "dataset")
+    upload_dir = os.path.join(dataset_dir, "uploaded")
+    train_data_dir = os.path.join(dataset_dir, "train_data")
+    test_data_dir = os.path.join(dataset_dir, "test_data")
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
@@ -35,9 +46,17 @@ if __name__ == "__main__":
     assert("control_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("camera" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("final_color" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
+    
+    # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
+    if args.scene_id is None:
+        scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
+        assert os.path.exists(scenes_csv_file)
+        scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
+    else:
+        scene_ids = args.scene_id
 
     # loop through the desired set of scenes
-    for scene_id in args.scenes: 
+    for scene_id in scene_ids: 
         
         # change config based on current scene
         config.defrost()
@@ -59,19 +78,10 @@ if __name__ == "__main__":
             waypoint_data_buffer = np.empty([args.iterations, 3]) # buffer containing the waypoint coordinates being tracked by the agent during a run
             time_data_buffer = np.empty([args.iterations, 1]) # buffer containing the time stamps of the observations made by the agent during a run
             index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
-
-            # build the run data folder and its subfolders following the guidelines of the OpenBot public repository 
-            # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
-
-            base_dir = os.path.dirname(os.path.dirname(__file__))
-            dataset_dir = os.path.join(base_dir, "dataset")
-            upload_dir = os.path.join(dataset_dir, "uploaded")
-            train_data_dir = os.path.join(dataset_dir, "train_data")
-            test_data_dir = os.path.join(dataset_dir, "test_data")
             exp_dir = f"run_{scene_id}_{run}"
             
-            # split data between training and evaluation sets in a 80%-20% ratio as suggested in the OpenBot public repo
-            if 100 * run < 80 * args.runs:
+            # split data between training and evaluation sets
+            if 100 * run < config.DRIVING_POLICY.PERCENTAGE_OF_TRAINING_DATA * args.runs:
                 run_dir = os.path.join(train_data_dir, exp_dir) 
             else:
                 run_dir = os.path.join(test_data_dir, exp_dir) 
@@ -92,8 +102,6 @@ if __name__ == "__main__":
         
             # send zero action to the agent and collect initial trajectory observations:
             obs, _, _, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
-            
-            print(info)
         
             num_waypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
 
@@ -111,7 +119,7 @@ if __name__ == "__main__":
                 desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
 
                 # update control action 
-                action, waypoint_reached = agent.driving_policy.update(desired_position_xy, obs)
+                action, waypoint_reached = driving_policy.update(desired_position_xy, obs)
 
                 # send control action to the agent and collect observations
                 obs, reward, done, info = env.step({"apply_voltage": action})
@@ -218,8 +226,8 @@ if __name__ == "__main__":
                 f_rgb.close()
 
                 if args.create_video: # if desired, generate a video from the collected rgb observations 
-                    video_name = scene_id + run
-                    generate_video(config, video_name, image_dir, video_dir)
+                    video_name = scene_id + str(run)
+                    generate_video(config, video_name, image_dir, video_dir, True)
 
                 run = run + 1 # update the run count and move to the next run 
 

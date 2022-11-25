@@ -19,8 +19,9 @@ def get_relative_target_pose(desired_position_xy, current_pose_yaw_xy):
 
     # compute agent forward axis (global coordinate system)
     yaw = current_pose_yaw_xy[0];
-    rot = np.array([[cos(yaw), -sin(yaw)], [sin(yaw), cos(yaw)]], dtype=np.float32)
-    forward_rotated = np.dot(rot, self.forward)
+    rot = np.array([[np.cos(yaw), -np.sin(yaw)], [np.sin(yaw), np.cos(yaw)]], dtype=np.float32)
+    forward = np.array([1,0]) # front axis is the x axis.
+    forward_rotated = np.dot(rot, forward)
 
     # compute relative yaw angle between the agent forward axis and the agent-target vector
     relative_agent_target_yaw = np.arctan2(forward_rotated[1], forward_rotated[0]) - np.arctan2(relative_agent_target_xy[1], relative_agent_target_xy[0])

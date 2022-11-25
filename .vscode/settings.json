@@ -54,6 +54,10 @@
         "optional": "cpp",
         "ratio": "cpp",
         "system_error": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "bitset": "cpp",
+        "hash_map": "cpp",
+        "regex": "cpp",
+        "valarray": "cpp"
     }
 }
