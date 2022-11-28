@@ -1,7 +1,4 @@
 __pycache__
-.ipynb_checkpoints
-.tflite
-.vscode
 
 cpp/unreal_plugins/CoreUtils/Binaries
 cpp/unreal_plugins/CoreUtils/Intermediate
