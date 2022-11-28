@@ -474,17 +474,17 @@ void OpenBotAgent::buildNavMesh()
     nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
-    // // update ANavModifierVolume
-    // nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    // nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
-    // nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
-    // nav_modifier_volume->AddActorWorldOffset(FVector(
-    //     Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_X"}),
-    //     Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Y"}),
-    //     Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Z"})));
-    // nav_modifier_volume->GetRootComponent()->UpdateBounds();
-    // nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
-    // nav_modifier_volume->RebuildNavigationData();
+    // update ANavModifierVolume
+    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+    nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
+    nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
+    nav_modifier_volume->AddActorWorldOffset(FVector(
+        Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_X"}),
+        Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Y"}),
+        Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Z"})));
+    nav_modifier_volume->GetRootComponent()->UpdateBounds();
+    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
+    nav_modifier_volume->RebuildNavigationData();
 
     // rebuild navmesh
     nav_sys_->Build();

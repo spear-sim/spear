@@ -208,7 +208,7 @@ void ImitationLearningTask::getPositionsFromFile()
 
     std::string line;
     std::string token;
-    int scene_id;
+    std::string scene_id;
     FVector init, goal;
 
     // Create an input filestream 
@@ -220,7 +220,7 @@ void ImitationLearningTask::getPositionsFromFile()
     std::getline(fs, line); // get header
     while (std::getline(fs, line)) {
         std::istringstream ss(line);
-        std::getline(ss, token, ','); ASSERT(ss); scene_id = std::stoi(token);
+        std::getline(ss, token, ','); ASSERT(ss); scene_id = token;
         std::getline(ss, token, ','); ASSERT(ss); init.X = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); init.Y = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); init.Z = std::stof(token);
@@ -230,7 +230,7 @@ void ImitationLearningTask::getPositionsFromFile()
         
         // If the scene id matches the currently opened map, then account for the positions
         std::string level_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "LEVEL_NAME"});
-        if(scene_id == std::stoi(level_name.substr(level_name.size() - 9))) {
+        if(scene_id == level_name.substr(level_name.size() - 9)) {
             agent_initial_positions_.push_back(init);
             agent_goal_positions_.push_back(goal);
         }
