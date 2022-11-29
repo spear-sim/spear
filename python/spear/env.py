@@ -85,6 +85,7 @@ class Env(gym.Env):
 
         ready = False
         once = False
+        counter = 0
 
         while not ready:
             self._begin_tick()
@@ -100,6 +101,14 @@ class Env(gym.Env):
             ready = self._is_ready()
             if ready:
                 obs = self._get_observation()
+            else: 
+                counter += 1
+            
+            # Too many iterations are taken by the simulation to settle down,
+            # indicating that something is wrong... Call reset again.
+            if counter >= self._config.SIMULATION_CONTROLLER.MAX_NUMBER_READY_CHECKS:
+                print("Too many iterations are taken by the simulation to settle down. Calling reset again !") 
+                once = False
 
             self._end_tick()
 

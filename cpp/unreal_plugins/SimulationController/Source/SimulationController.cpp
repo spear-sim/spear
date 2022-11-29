@@ -389,13 +389,13 @@ void SimulationController::bindFunctionsToRpcServer()
         task_->reset();
     });
 
-    rpc_server_->bindSync("isAgentReady", [this]() -> bool{
+    rpc_server_->bindSync("isAgentReady", [this]() -> bool {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         ASSERT(agent_);
         return agent_->isReady();
     });
 
-    rpc_server_->bindSync("isTaskReady", [this]() -> bool{
+    rpc_server_->bindSync("isTaskReady", [this]() -> bool {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         ASSERT(task_);
         return task_->isReady();

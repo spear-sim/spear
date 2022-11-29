@@ -80,7 +80,7 @@ def generate_video(config, video_name, image_dir, video_dir, compress = False):
         try:
             i = ffmpeg.input(name)
             print("Compressing video...")
-            out = ffmpeg.output(i, name_compressed, **{'c:v': 'libx264', 'b:v': 800000}).overwrite_output().run()
+            out = ffmpeg.output(i, name_compressed, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run()
             print("Done compressing !")
 
         except FileNotFoundError as e:
