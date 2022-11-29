@@ -48,7 +48,7 @@ if __name__ == "__main__":
     assert("final_color" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
     
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
-    if args.scene_id is None:
+    if args.scene_id == [""]:
         scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
         assert os.path.exists(scenes_csv_file)
         scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
@@ -231,8 +231,7 @@ if __name__ == "__main__":
 
                 run = run + 1 # update the run count and move to the next run 
 
-        # close the current scene and give the system a bit of time before switching to the next scene.
+        # close the current scene
         env.close()
-        time.sleep(3)
 
     print("Done.")

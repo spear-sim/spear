@@ -58,12 +58,8 @@ SIMULATION_CONTROLLER:
       TILE_SIZE_UU: 300
       TILE_POOL_SIZE: 1024
       MAX_SIMPLIFICATION_ERROR: 1.3
-      NAV_MODIFIER_OFFSET_X: 0.0
-      NAV_MODIFIER_OFFSET_Y: 0.0
-      NAV_MODIFIER_OFFSET_Z: 0.0
+      NAV_MODIFIER_OFFSET_Z: 10.0
       WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
-      EXPORT_NAV_DATA_OBJ: False
-      EXPORT_NAV_DATA_OBJ_DIR: ""
   
   VISUALIZER:
     ACTOR_NAME: "OpenBotAgent"
@@ -75,17 +71,9 @@ SIMULATION_CONTROLLER:
     SPAWN_CAMERA_ORIENTATION_YAW: 0.0
     SPAWN_CAMERA_ORIENTATION_ROLL: 0.0
   
-  SONAR_SENSOR:
-    NUM_RAYS: 21
-    MAX_REFLECTION_ANGLE: 45.0
-    HORIZONTAL_FOV: 30.0
-    VERTICAL_FOV: 10.0
-    RANGE:
-      MIN: 0.01
-      MAX: 10.0
-    NOISE_STD_DEV: 0.0
-    DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
-
+  CAMERA_SENSOR:
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0 # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
+  
   IMU_SENSOR:
     ACCELEROMETER_NOISE_STD_DEV: 
       X: 0.0
@@ -99,6 +87,17 @@ SIMULATION_CONTROLLER:
       X: 0.0
       Y: 0.0
       Z: 0.0
+    DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
+
+  SONAR_SENSOR:
+    NUM_RAYS: 21
+    MAX_REFLECTION_ANGLE: 45.0
+    HORIZONTAL_FOV: 30.0
+    VERTICAL_FOV: 10.0
+    RANGE:
+      MIN: 0.01
+      MAX: 10.0
+    NOISE_STD_DEV: 0.0
     DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
 
 DRIVING_POLICY:
