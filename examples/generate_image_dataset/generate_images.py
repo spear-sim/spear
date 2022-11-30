@@ -98,20 +98,11 @@ if __name__ == "__main__":
             if args.benchmark and prev_scene_id == "":
                 start_time = time.time()
 
-        # # set the pose and obtain corresponding images
-        # obs, _, _, _ = env.step(
-        #     action={
-        #         "set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32),
-        #         "set_num_random_points": np.array([0], np.uint32)})
-
-        if prev_scene_id == "":
-            obs, _, _, _ = env.single_step(
-                action={
-                    "set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32),
-                    "set_num_random_points": np.array([0], np.uint32)},
-                get_observation=False)
-        else:
-            obs, _, _, _ = env.single_step(action=None, get_observation=False)
+        # set the pose and obtain corresponding images
+        obs, _, _, _ = env.step(
+            action={
+                "set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32),
+                "set_num_random_points": np.array([0], np.uint32)})
 
         # save images for each render pass
         if not args.benchmark:
