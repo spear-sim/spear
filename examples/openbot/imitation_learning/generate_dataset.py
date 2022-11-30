@@ -32,8 +32,8 @@ if __name__ == "__main__":
     video_dir = os.path.join(base_dir, "videos")
     dataset_dir = os.path.join(base_dir, "dataset")
     upload_dir = os.path.join(dataset_dir, "uploaded")
-    train_data_dir = os.path.join(dataset_dir, "train_data")
-    test_data_dir = os.path.join(dataset_dir, "test_data")
+    train_data_dir = os.path.join(upload_dir, "train_data")
+    test_data_dir = os.path.join(upload_dir, "test_data")
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])

@@ -2,7 +2,7 @@ SPEAR:
   LAUNCH_MODE: "standalone_executable"
   STANDALONE_EXECUTABLE: "/home/qleboute/Documents/Git/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim.sh"
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"  
-  DATA_DIR: "/home/qleboute/Documents/Git/spear_data/v7/linux"
+  DATA_DIR: "/home/qleboute/Documents/Git/spear_data/v8.1"
   CONTENT_DIR: "/home/qleboute/Documents/Git/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Content"
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
@@ -15,6 +15,7 @@ SIMULATION_CONTROLLER:
   TASK: "ImitationLearningTask"
   AGENT: "OpenBotAgent"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+  MAX_NUMBER_READY_CHECKS: 1000
 
   SIMULATION_STEP_TIME_SECONDS: 0.033
 
