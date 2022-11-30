@@ -80,8 +80,8 @@ if __name__ == "__main__":
             # create dir for storing images
             if not args.benchmark:
                 for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-                    image_dir = os.path.join(args.images_dir, pose["scene_id"], render_pass)
-                    os.makedirs(image_dir, exist_ok=True)
+                    render_pass_dir = os.path.join(args.images_dir, render_pass)
+                    os.makedirs(render_pass_dir, exist_ok=True)
 
             # change config based on current scene
             config.defrost()
@@ -107,9 +107,9 @@ if __name__ == "__main__":
         # save images for each render pass
         if not args.benchmark:
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-                image_dir = os.path.join(args.images_dir, pose["scene_id"], render_pass)
-                assert os.path.exists(image_dir)
-                plt.imsave(os.path.join(image_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
+                render_pass_dir = os.path.join(args.images_dir, render_pass)
+                assert os.path.exists(render_pass_dir)
+                plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
 
         prev_scene_id = pose["scene_id"]
 
