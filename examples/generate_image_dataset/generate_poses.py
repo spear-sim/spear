@@ -74,6 +74,7 @@ if __name__ == "__main__":
 
         plt.scatter(positions[:,0], positions[:,1], s=1.0)
         plt.gca().set_aspect("equal")
+        plt.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
         plt.show()
 
         # close the current scene
