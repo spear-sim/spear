@@ -9,8 +9,8 @@ import pandas as pd
 import spear
 import time
 
-from openbot_spear.policies import OpenBotPilotNetPolicy
-from openbot_spear.utils import *
+from policies import OpenBotPilotNetPolicy
+from utils import *
   
 if __name__ == "__main__":
 

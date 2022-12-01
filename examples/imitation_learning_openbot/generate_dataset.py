@@ -10,8 +10,8 @@ import shutil
 import spear
 import time
 
-from openbot_spear.policies import OpenBotPIDPolicy
-from openbot_spear.utils import *
+from policies import OpenBotPIDPolicy
+from utils import *
   
 if __name__ == "__main__":
 

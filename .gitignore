@@ -58,7 +58,6 @@ examples/imitation_learning_openbot/evaluation
 examples/imitation_learning_openbot/tmp
 examples/imitation_learning_openbot/user_config.yaml
 examples/imitation_learning_openbot/videos
-examples/imitation_learning_openbot/openbot/openbot_spear.egg-info
 
 python/spear_sim.egg-info
 

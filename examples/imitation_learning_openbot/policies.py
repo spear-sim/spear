@@ -3,7 +3,7 @@ import tflite_runtime.interpreter as tflite
 import time
 import cv2
 
-from openbot_spear.utils import get_compass_observation, get_relative_target_pose
+from utils import get_compass_observation, get_relative_target_pose
 
 # Autopilot class containing the vehicle's low level controller 
 class OpenBotDrivingPolicy:
