@@ -104,11 +104,6 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
 void SimulationController::worldBeginPlayEventHandler()
 {
-    // Set console commands for syncing the game thread and RHI thread.
-    // For more information on GTSyncType, see http://docs.unrealengine.com/en-US/SharingAndReleasing/LowLatencyFrameSyncing/index.html.
-    GEngine->Exec(world_, TEXT("r.GTSyncType 1"));
-    GEngine->Exec(world_, TEXT("r.OneFrameThreadLag 0"));
-
     // execute optional console commands from python client
     for (auto& command : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS"})) {
         GEngine->Exec(world_, UTF8_TO_TCHAR(command.c_str()));

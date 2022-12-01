@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import spear
 import sys
+import time
 
 
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
@@ -20,15 +21,15 @@ class CustomEnv(spear.Env):
     def __init__(self, config, num_internal_steps):
         super(CustomEnv, self).__init__(config)
         assert num_internal_steps > 0
-        self.num_internal_steps = num_internal_steps
+        self._num_internal_steps = num_internal_steps
 
     def step(self, action):
 
-        if self.num_internal_steps == 1:
+        if self._num_internal_steps == 1:
             return self.single_step(action, get_observation=True)
         else:
             self.single_step(action)
-            for _ in range(1, self.num_internal_steps - 1):
+            for _ in range(1, self._num_internal_steps - 1):
                 self.single_step()
             return self.single_step(get_observation=True)
 
@@ -56,6 +57,7 @@ if __name__ == "__main__":
     parser.add_argument("--poses_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "poses.csv"))
     parser.add_argument("--images_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "images"))
     parser.add_argument("--num_internal_steps", type=int, default=1)
+    parser.add_argument("--benchmark", action="store_true")
     args = parser.parse_args()
 
     # load config
@@ -65,27 +67,26 @@ if __name__ == "__main__":
     df = pd.read_csv(args.poses_file, dtype={"scene_id":str})
 
     # iterate over all poses
-    scene_id = ""
+    prev_scene_id = ""
     for pose in df.to_records():
 
         # if the scene_id of our current pose has changed, then create a new Env
-        if pose["scene_id"] != scene_id:
+        if pose["scene_id"] != prev_scene_id:
 
-            # close the current Env
-            if scene_id != "":
+            # close the previous Env
+            if prev_scene_id != "":
                 env.close()
 
-            scene_id = pose["scene_id"]
-
             # create dir for storing images
-            for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-                image_dir = os.path.join(args.images_dir, scene_id, render_pass)
-                os.makedirs(image_dir, exist_ok=True)
+            if not args.benchmark:
+                for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+                    render_pass_dir = os.path.join(args.images_dir, render_pass)
+                    os.makedirs(render_pass_dir, exist_ok=True)
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene_id + "." + "Map_" + scene_id
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene_id
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + pose["scene_id"] + "." + "Map_" + pose["scene_id"]
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + pose["scene_id"]
             config.freeze()
 
             # create Env object
@@ -94,6 +95,9 @@ if __name__ == "__main__":
             # reset the simulation
             _ = env.reset()
 
+            if args.benchmark and prev_scene_id == "":
+                start_time = time.time()
+
         # set the pose and obtain corresponding images
         obs, _, _, _ = env.step(
             action={
@@ -101,10 +105,18 @@ if __name__ == "__main__":
                 "set_num_random_points": np.array([0], np.uint32)})
 
         # save images for each render pass
-        for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-            image_dir = os.path.join(args.images_dir, scene_id, render_pass)
-            assert os.path.exists(image_dir)
-            plt.imsave(os.path.join(image_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
+        if not args.benchmark:
+            for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+                render_pass_dir = os.path.join(args.images_dir, render_pass)
+                assert os.path.exists(render_pass_dir)
+                plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
+
+        prev_scene_id = pose["scene_id"]
+
+    if args.benchmark:
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time / (df.shape[0]*args.num_internal_steps))*1000, (df.shape[0]*args.num_internal_steps) / elapsed_time))
 
     # close the current Env
     env.close()
