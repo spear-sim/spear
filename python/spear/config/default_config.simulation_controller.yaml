@@ -3,6 +3,7 @@ SIMULATION_CONTROLLER:
   PORT: 30000
   WORLD_PATH_NAME: "" # full path to the map including the repeated name, e.g., "/Game/NewMap.NewMap"
   LEVEL_NAME: ""      # full path to the map excluding the repeated name, e.g., "/Game/NewMap"
+  SCENE_ID: ""        # raw map id, e.g. "NewMap"
   SIMULATION_STEP_TIME_SECONDS: 0.1
   TASK: ""
   AGENT: ""

@@ -229,8 +229,7 @@ void ImitationLearningTask::getPositionsFromFile()
         std::getline(ss, token, ','); ASSERT(ss); goal.Z = std::stof(token);
         
         // If the scene id matches the currently opened map, then account for the positions
-        std::string level_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "LEVEL_NAME"});
-        if(scene_id == level_name.substr(level_name.size() - 9)) {
+        if(scene_id == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SCENE_ID"})) {
             agent_initial_positions_.push_back(init);
             agent_goal_positions_.push_back(goal);
         }
