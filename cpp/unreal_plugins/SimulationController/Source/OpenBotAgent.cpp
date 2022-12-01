@@ -106,7 +106,6 @@ OpenBotAgent::~OpenBotAgent()
 
 void OpenBotAgent::findObjectReferences(UWorld* world)
 {
-    
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
