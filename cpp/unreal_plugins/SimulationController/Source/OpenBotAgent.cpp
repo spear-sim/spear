@@ -516,7 +516,7 @@ void OpenBotAgent::generateTrajectoryToGoal()
 
     // Update trajectory_
     TArray<FNavPathPoint> path_points = path.Path->GetPathPoints(); 
-    ASSERT(path_points.Num() > 1); // There should be at east a starting point and a goal point
+    ASSERT(path_points.Num() > 1); // There should be at least a starting point and a goal point
 
     for(auto& path_point : path_points) {
         trajectory_.push_back(path_point.Location.X);
