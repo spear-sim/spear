@@ -17,6 +17,7 @@ if __name__ == "__main__":
 
     # parse arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--debug", action="store_true", help="debug flag to display the raw observations.")
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
     parser.add_argument("-s", "--scene_id", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
@@ -93,6 +94,10 @@ if __name__ == "__main__":
         
             # send zero action to the agent and collect initial trajectory observations:
             obs, _, _, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+
+            # debug
+            if args.debug:
+                show_obs_and_wait_for_key(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
             # initialize the driving policy with the desired trajectory 
             driving_policy.set_trajectory(info["agent_step_info"]["trajectory_data"])

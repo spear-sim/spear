@@ -53,11 +53,12 @@ examples/generate_image_dataset/user_config.yaml
 examples/getting_started/tmp
 examples/getting_started/user_config.yaml
 
-examples/openbot/imitation_learning/dataset
-examples/openbot/imitation_learning/evaluation
-examples/openbot/imitation_learning/tmp
-examples/openbot/imitation_learning/user_config.yaml
-examples/openbot/imitation_learning/videos
+examples/imitation_learning_openbot/dataset
+examples/imitation_learning_openbot/evaluation
+examples/imitation_learning_openbot/tmp
+examples/imitation_learning_openbot/user_config.yaml
+examples/imitation_learning_openbot/videos
+examples/imitation_learning_openbot/openbot/openbot_spear.egg-info
 
 python/spear_sim.egg-info
 

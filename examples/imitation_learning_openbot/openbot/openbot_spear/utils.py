@@ -22,7 +22,7 @@ def show_obs_and_wait_for_key(obs, obs_components, render_passes):
             print(f"IMU data: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]")
             print(f"IMU data: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
         elif obs_component == "sonar":
-            print(f"Sonar data: {obs['sonar']:.2f}")
+            print(f"Sonar data: {obs['sonar'][0]:.2f}")
         elif obs_component == "camera":
             for render_pass in render_passes:
                 if render_pass == "final_color":

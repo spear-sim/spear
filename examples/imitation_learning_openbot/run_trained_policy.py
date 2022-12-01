@@ -16,6 +16,7 @@ if __name__ == "__main__":
 
     # parse arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--debug", action="store_true", help="debug flag to display the raw observations.")
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
     parser.add_argument("-p", "--policy", type=str, help="name of the control policy to be executed", required=True)
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
@@ -106,6 +107,10 @@ if __name__ == "__main__":
 
                 # send control action to the agent and collect observations
                 obs, reward, done, info = env.step({"apply_voltage": action})
+
+                # debug
+                if args.debug:
+                    show_obs_and_wait_for_key(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
                 # check the stop conditions of the run
                 if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
