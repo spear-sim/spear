@@ -12,8 +12,9 @@ class OpenBotDrivingPolicy:
         self.acceptance_radius = config.DRIVING_POLICY.ACCEPTANCE_RADIUS
         self.control_saturation = config.DRIVING_POLICY.CONTROL_SATURATION
         self.trajectory = np.empty((0, 3), dtype=float)
-        self.desired_position_xy = np.empty((0, 2), dtype=float)
-        self.current_pose_yaw_xy = np.empty((0, 3), dtype=float)
+        self.position_xy_desired = np.empty((0, 2), dtype=float)
+        self.position_xy_current = np.empty((0, 2), dtype=float)
+        self.yaw_current = 0.0
         self.xy_position_error  = np.empty((0, 2), dtype=float)
         self.yaw_error = 0.0
         self.index_waypoint = 0
@@ -34,14 +35,15 @@ class OpenBotDrivingPolicy:
 
     def update(self, obs):
         # xy position of the next waypoint in world frame:
-        self.desired_position_xy = np.array([self.trajectory[self.index_waypoint][0], self.trajectory[self.index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
+        self.position_xy_desired = np.array([self.trajectory[self.index_waypoint][0], self.trajectory[self.index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
         self.policy_step_info["current_waypoint"] = self.trajectory[self.index_waypoint]
 
         # current position and heading of the vehicle in world frame
-        self.current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
+        self.position_xy_current = np.array([obs["state_data"][0], obs["state_data"][1]], dtype=np.float32)
+        self.yaw_current = obs["state_data"][4]
         
         # compute the relative agent-target pose from the raw observation dictionary
-        self.xy_position_error, self.yaw_error = get_relative_target_pose(self.desired_position_xy, self.current_pose_yaw_xy)
+        self.xy_position_error, self.yaw_error = get_relative_target_pose(self.position_xy_desired, self.position_xy_current, self.yaw_current)
 
         # compute Euclidean distance to target in [m]:
         self.xy_position_error_norm = np.linalg.norm(self.xy_position_error) * 0.01
@@ -70,7 +72,7 @@ class OpenBotPIDPolicy(OpenBotDrivingPolicy):
         self.kd_ang = config.DRIVING_POLICY.PID.DERIVATIVE_GAIN_HEADING
         self.forward_min_angle = config.DRIVING_POLICY.PID.FORWARD_MIN_ANGLE
         self.dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
-        self.xy_position_old = np.zeros(2, dtype=np.float32)
+        self.position_xy_old = np.zeros(2, dtype=np.float32)
         self.yaw_old = 0.0
         self.first_update = True
 
@@ -91,19 +93,19 @@ class OpenBotPIDPolicy(OpenBotDrivingPolicy):
     def update(self, obs):
 
         # update waypoint and check location reached
-        super().update(obs) 
+        super().update(obs)
 
         # avoid discontinuities on the derivative
         if self.first_update: 
-            self.xy_position_old = np.array([self.current_pose_yaw_xy[1],self.current_pose_yaw_xy[2]], dtype=np.float32)
-            self.yaw_old = obs["state_data"][4]
+            self.position_xy_old = self.position_xy_current
+            self.yaw_old = self.yaw_current
             self.first_update = False
 
         # velocity computation
-        lin_vel_norm = np.linalg.norm((np.array([self.current_pose_yaw_xy[1],self.current_pose_yaw_xy[2]], dtype=np.float32)-self.xy_position_old)/self.dt) * 0.01 
-        self.xy_position_old = np.array([self.current_pose_yaw_xy[1],self.current_pose_yaw_xy[2]], dtype=np.float32)
-        ang_vel_norm = (obs["state_data"][4] - self.yaw_old)/self.dt 
-        self.yaw_old = obs["state_data"][4]
+        lin_vel_norm = np.linalg.norm((self.position_xy_current - self.position_xy_old) / self.dt) * 0.01 
+        self.position_xy_old = self.position_xy_current
+        ang_vel_norm = (self.yaw_current - self.yaw_old)/self.dt 
+        self.yaw_old = self.yaw_current
 
         # compute angular component of motion 
         right_ctrl = -self.kp_ang * self.yaw_error - self.kd_ang * ang_vel_norm;
@@ -157,7 +159,7 @@ class OpenBotPilotNetPolicy(OpenBotDrivingPolicy):
         super().update(obs)
     
         # get the updated compass observation
-        compass_observation = get_compass_observation(self.desired_position_xy, self.current_pose_yaw_xy)
+        compass_observation = get_compass_observation(self.position_xy_desired, self.position_xy_current, self.yaw_current)
         
         # fill command tensor
         self.cmd_input[0][0] = compass_observation[0]

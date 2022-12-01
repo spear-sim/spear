@@ -200,8 +200,9 @@ if __name__ == "__main__":
 
                 
                     # get the updated compass observation (with the last recorded position set as goal)
-                    current_pose_yaw_xy = np.array([state_data_buffer[it][4], state_data_buffer[it][0], state_data_buffer[it][1]], dtype=np.float32)
-                    compass_observation = get_compass_observation(goal_position_xy, current_pose_yaw_xy)
+                    position_xy_current = np.array([state_data_buffer[it][0], state_data_buffer[it][1]], dtype=np.float32)
+                    yaw_current = state_data_buffer[it][4]
+                    compass_observation = get_compass_observation(goal_position_xy, position_xy_current, yaw_current)
 
                     # high level commands
                     df_goal = pd.DataFrame({"timestamp[ns]"  : time_data_buffer[it],

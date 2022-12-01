@@ -41,14 +41,13 @@ def show_obs_and_wait_for_key(obs, obs_components, render_passes):
 
 # computes the 2D target position relative to the agent in world frame 
 # as well as the relative yaw angle between the agent forward axis and the agent-target vector
-def get_relative_target_pose(desired_position_xy, current_pose_yaw_xy):
+def get_relative_target_pose(position_xy_desired, position_xy_current, yaw_xy_current):
 
     # target error vector (global coordinate system)
-    relative_agent_target_xy = desired_position_xy - np.array([current_pose_yaw_xy[1], current_pose_yaw_xy[2]], dtype=np.float32)
+    relative_agent_target_xy = position_xy_desired - position_xy_current
 
     # compute agent forward axis (global coordinate system)
-    yaw = current_pose_yaw_xy[0];
-    rot = np.array([[np.cos(yaw), -np.sin(yaw)], [np.sin(yaw), np.cos(yaw)]], dtype=np.float32)
+    rot = np.array([[np.cos(yaw_xy_current), -np.sin(yaw_xy_current)], [np.sin(yaw_xy_current), np.cos(yaw_xy_current)]], dtype=np.float32)
     forward = np.array([1,0]) # front axis is the x axis.
     forward_rotated = np.dot(rot, forward)
 
@@ -66,10 +65,10 @@ def get_relative_target_pose(desired_position_xy, current_pose_yaw_xy):
 
 # compute the compass observation following conventions of the actual OpenBot code:
 # https://github.com/isl-org/OpenBot/blob/7868c54742f8ba3df0ba2a886247a753df982772/android/app/src/main/java/org/openbot/pointGoalNavigation/PointGoalNavigationFragment.java#L103
-def get_compass_observation(desired_position_xy, current_pose_yaw_xy):
+def get_compass_observation(position_xy_desired, position_xy_current, yaw_current):
 
     # get the 2D reative pose between the agent and its target
-    relative_agent_target_xy, relative_agent_target_yaw = get_relative_target_pose(desired_position_xy, current_pose_yaw_xy)
+    relative_agent_target_xy, relative_agent_target_yaw = get_relative_target_pose(position_xy_desired, position_xy_current, yaw_current)
 
     # compute Euclidean distance to target in [m]
     dist = np.linalg.norm(relative_agent_target_xy) * 0.01 
