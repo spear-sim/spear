@@ -94,6 +94,7 @@ class Env(gym.Env):
             if should_reset:
                 self._reset()
                 should_reset = False
+                num_ticks_since_reset = 0
 
             self._tick()
 
@@ -108,7 +109,6 @@ class Env(gym.Env):
             num_ticks_since_reset = num_ticks_since_reset + 1
             if not ready and num_ticks_since_reset >= self._config.SIMULATION_CONTROLLER.MAX_NUM_TICKS_AFTER_RESET:
                 should_reset = True
-                num_ticks_since_reset = 0
                 print("Too many ticks are taken by the simulation to settle down. Calling reset again !") 
 
         return obs
