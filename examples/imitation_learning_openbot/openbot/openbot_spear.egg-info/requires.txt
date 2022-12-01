@@ -1,8 +1,7 @@
 ffmpeg-python==0.2.0
-numpy==1.22.3
-gym==0.21.0
 matplotlib==3.6.2
+numpy==1.22.3
 opencv-python==4.5.5.64
-tensorflow==2.8.0
+pandas==1.5.1
 tflite-runtime==2.7.0
 yacs==0.1.8

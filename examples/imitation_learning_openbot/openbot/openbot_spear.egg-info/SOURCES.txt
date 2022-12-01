@@ -1,7 +1,5 @@
-README.md
 setup.py
 openbot_spear/__init__.py
-openbot_spear/env.py
 openbot_spear/policies.py
 openbot_spear/utils.py
 openbot_spear.egg-info/PKG-INFO

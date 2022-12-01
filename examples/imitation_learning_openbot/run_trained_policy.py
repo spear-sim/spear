@@ -22,32 +22,32 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--scene_id", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
     parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
     args = parser.parse_args()
+
+    # build the required folders
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    video_dir = os.path.join(base_dir, "videos")
+    eval_dir = os.path.join(base_dir, "evaluation")
+    model_dir = os.path.join(base_dir, "models")
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
+
+    # load driving policy
+    policy_tflite_file = os.path.join(model_dir, args.policy + ".tflite")
+    assert os.path.exists(policy_tflite_file)
+    config.defrost()
+    config.DRIVING_POLICY.PILOT_NET.PATH = "./models/" + args.policy + ".tflite"
+    config.freeze()
+    driving_policy = OpenBotPilotNetPolicy(config)
 
     # sanity checks (without these observation modes, the code will not behave properly)
     assert("state_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("control_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("camera" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
     assert("final_color" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
-
-    # load the control policy
-    base_dir = os.path.dirname(os.path.dirname(__file__))
-    video_dir = os.path.join(base_dir, "videos")
-    eval_dir = os.path.join(base_dir, "evaluation")
-    model_dir = os.path.join(base_dir, "models")
-    policy_tflite_file = os.path.join(model_dir, args.policy + ".tflite")
-    assert os.path.exists(policy_tflite_file)
-    config.defrost()
-    config.DRIVING_POLICY.PILOT_NET.PATH = "./models/" + args.policy + ".tflite"
-    config.freeze()
-    
-    # load driving policy
-    driving_policy = OpenBotPilotNetPolicy(config)
     
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
-    if args.scene_id is [""]:
+    if args.scene_id == [""]:
         scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
         assert os.path.exists(scenes_csv_file)
         scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
@@ -70,9 +70,6 @@ if __name__ == "__main__":
         run = 0
         # execute the desired number of runs in a given sceen
         for run in range(args.runs):
-
-            collision_flag = False # flag raised when the vehicle collides with the environment. It restarts the run without iterating the run count
-            goal_reached_flag = False # flag raised when the vehicle get close enouth to the goal (i.e. the last waypoint).
 
             # build the evauation run data folder and its subfolders
             exp_dir = f"run_{scene_id}_{run}"
@@ -105,7 +102,7 @@ if __name__ == "__main__":
                 time_stamp = int(10000*datetime.datetime.now().timestamp())
 
                 # update control action 
-                action, goal_reached_flag = driving_policy.update(obs)
+                action, policy_step_info = driving_policy.update(obs)
 
                 # send control action to the agent and collect observations
                 obs, reward, done, info = env.step({"apply_voltage": action})
@@ -113,10 +110,10 @@ if __name__ == "__main__":
                 # check the stop conditions of the run
                 if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
                     print("Collision detected !")
-                    collision_flag = True # raise collision_flag to interrupt and restart the current run
-                if info["task_step_info"]["hit_goal"]: # if the vehicle collided with the goal
+                    break
+                if info["task_step_info"]["hit_goal"] or policy_step_info["goal_reached"]: # if the vehicle reached the goal
                     print("Goal reached !")
-                    goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
+                    break 
 
                 # save the collected rgb observations
                 plt.imsave(os.path.join(image_dir, "%d.jpeg"%i), obs["camera_final_color"].squeeze())
@@ -134,14 +131,9 @@ if __name__ == "__main__":
                            "goal_x[cm]" : info["agent_step_info"]["trajectory_data"][-1][0],
                            "goal_y[cm]" : info["agent_step_info"]["trajectory_data"][-1][1],
                            "goal_z[cm]" : info["agent_step_info"]["trajectory_data"][-1][2],
-                           "goal_reached": goal_reached_flag,
-                           "collision" : collision_flag})
+                           "goal_reached": policy_step_info["goal_reached"],
+                           "collision" : info["task_step_info"]["hit_obstacle"]})
                 df_result.to_csv(os.path.join(result_dir,"resultLog.txt"), mode="a", index=False, header=i==0)
-
-                # termination condition
-                if goal_reached_flag:
-                    print("Goal reached !")
-                    break # only break when the goal is reached 
 
             if args.create_video: # if desired, generate a video from the collected rgb observations 
                 video_name = scene_id + str(run)

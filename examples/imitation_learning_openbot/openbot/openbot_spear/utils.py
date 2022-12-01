@@ -10,6 +10,34 @@ import ffmpeg
 import spear
 import sys
 
+def show_obs_and_wait_for_key(obs, obs_components, render_passes):
+        
+    for obs_component in obs_components:
+        if obs_component == "state_data":
+            print(f"State data: xyz [{obs['state_data'][0]:.2f}, {obs['state_data'][1]:.2f},{obs['state_data'][2]:.2f}]")
+            print(f"State data: pitch yaw roll [{obs['state_data'][3]:.2f}, {obs['state_data'][4]:.2f},{obs['state_data'][5]:.2f}]")
+        elif obs_component == "control_data":
+            print(f"Control data: left right [{obs['control_data'][0]:.2f}, {obs['control_data'][1]:.2f}]")
+        elif obs_component == "imu":
+            print(f"IMU data: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]")
+            print(f"IMU data: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
+        elif obs_component == "sonar":
+            print(f"Sonar data: {obs['sonar']:.2f}")
+        elif obs_component == "camera":
+            for render_pass in render_passes:
+                if render_pass == "final_color":
+                    cv2.imshow("rgb", obs["camera_final_color"][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
+                elif render_pass == "segmentation":
+                    cv2.imshow("segmentation", obs["camera_segmentation"][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
+                elif render_pass == "depth_glsl":
+                    cv2.imshow("depth", obs["camera_depth_glsl"][:, :, :])
+                else:
+                    print(f"Error: {render_pass} is an unknown camera render pass.")
+        else:
+            print(f"Error: {obs_component} is an unknown observation component.")
+                
+    cv2.waitKey(100)
+
 # computes the 2D target position relative to the agent in world frame 
 # as well as the relative yaw angle between the agent forward axis and the agent-target vector
 def get_relative_target_pose(desired_position_xy, current_pose_yaw_xy):
@@ -42,7 +70,7 @@ def get_compass_observation(desired_position_xy, current_pose_yaw_xy):
     relative_agent_target_xy, relative_agent_target_yaw = get_relative_target_pose(desired_position_xy, current_pose_yaw_xy)
 
     # compute Euclidean distance to target in [m]
-    dist = np.linalg.norm(relative_agent_target_xy) / 0.01 
+    dist = np.linalg.norm(relative_agent_target_xy) * 0.01 
 
     # projection 
     sin_yaw = np.sin(relative_agent_target_yaw);
@@ -87,87 +115,3 @@ def generate_video(config, video_name, image_dir, video_dir, compress = False):
             print("You do not have ffmpeg installed!", e)
             print("You can install ffmpeg by entering 'pip install ffmpeg-python' in a terminal.")
 
-def clamp_axis(angle):
-	# returns angle in the range (-360,360)
-	angle = angle % 360.0
-
-	if (angle < 0.0):
-		# shift to [0,360) range
-		angle += 360.0
-
-	return angle
-
-
-def normalize_axis( angle ):
-	# returns angle in the range [0,360)
-	angle = clamp_axis(angle)
-
-	if (angle > 180.0):
-		# shift to (-180,180]
-		angle -= 360.0
-
-	return angle
-
-
-def quaternion_to_pyr(quat):
-
-    # inspired by UnrealMath.cpp... 
-    # quaternions are given in the format [X, Y, Z, W]
-    X = quat[0]
-    Y = quat[1]
-    Z = quat[2]
-    W = quat[3]
-
-    singularity_test = Z*X - W*Y
-    yaw_y = 2.0*(W*Z + X*Y)
-    yaw_x = (1.0 - 2.0 * (np.square(Y) + np.square(Z)))
-
-	# reference 
-	# http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-	# http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
-
-	# this value was found from experience, the above websites recommend different values
-	# but that isn't the case for us, so I went through different testing, and finally found the case 
-	# where both of world lives happily. 
-    singularity_threshold = 0.4999995
-    
-    if (singularity_test < -singularity_threshold):
-        pitch = -90.0
-        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
-        roll = np.rad2deg(normalize_axis(-yaw - (2.0 * np.arctan2(X, W))))
-
-    elif (singularity_test > singularity_threshold):
-        pitch = 90.0
-        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
-        roll = np.rad2deg(normalize_axis(yaw - (2.0 * np.arctan2(X, W))))
-
-    else:
-        pitch = np.rad2deg(np.arcsin(2.0 * singularity_test))
-        yaw = np.rad2deg(np.arctan2(yaw_y, yaw_x))
-        roll = np.rad2deg(np.arctan2(-2.0 * (W*X + Y*Z), (1.0 - 2.0 * (np.square(X) + np.square(Y)))))
-
-    return pitch, yaw, roll
-
-def pyr_to_quaternion(pitch, yaw, roll):
-
-    # inspired by UnrealMath.cpp... 
-    quat = np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float32)
-
-    pitch_no_winding = np.fmod(pitch, 360.0)
-    yaw_no_winding = np.fmod(yaw, 360.0)
-    roll_no_winding = np.fmod(roll, 360.0)
-
-    sin_pitch = np.sin(0.5*np.deg2rad(pitch_no_winding))
-    sin_yaw = np.sin(0.5*np.deg2rad(yaw_no_winding))
-    sin_roll = np.sin(0.5*np.deg2rad(roll_no_winding))
-    cos_pitch = np.cos(0.5*np.deg2rad(pitch_no_winding))
-    cos_yaw = np.cos(0.5*np.deg2rad(yaw_no_winding))
-    cos_roll = np.cos(0.5*np.deg2rad(roll_no_winding))
-
-    # quaternions are given in the format [X, Y, Z, W]
-    quat[0] =  cos_roll*sin_pitch*sin_yaw - sin_roll*cos_pitch*cos_yaw;
-    quat[1] = -cos_roll*sin_pitch*cos_yaw - sin_roll*cos_pitch*sin_yaw;
-    quat[2] =  cos_roll*cos_pitch*sin_yaw - sin_roll*sin_pitch*cos_yaw;
-    quat[3] =  cos_roll*cos_pitch*cos_yaw + sin_roll*sin_pitch*sin_yaw;
-
-    return quat

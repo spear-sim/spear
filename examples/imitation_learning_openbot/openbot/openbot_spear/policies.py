@@ -1,7 +1,7 @@
 import numpy as np
-import tensorflow as tf
 import tflite_runtime.interpreter as tflite
 import time
+import cv2
 
 from openbot_spear.utils import get_compass_observation, get_relative_target_pose
 
@@ -33,7 +33,7 @@ class OpenBotDrivingPolicy:
     def update(self, obs):
         # xy position of the next waypoint in world frame:
         self.desired_position_xy = np.array([self.trajectory[self.index_waypoint][0], self.trajectory[self.index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
-        self.policy_step_info["current_waypoint"] = self.desired_position_xy
+        self.policy_step_info["current_waypoint"] = self.trajectory[self.index_waypoint]
 
         # current position and heading of the vehicle in world frame
         self.current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
@@ -162,8 +162,9 @@ class OpenBotPilotNetPolicy(OpenBotDrivingPolicy):
         # preprocess (normalize + crop) visual observations:
         target_height = self.input_details[0]["shape"][1] # 90
         target_width = self.input_details[0]["shape"][2] # 160
-        self.img_input = np.float32(obs["camera_final_color"])/255.0 # normalization in the [0.0, 1.0] range
-        self.img_input = tf.image.crop_to_bounding_box(self.img_input, tf.shape(self.img_input)[0] - target_height, tf.shape(self.img_input)[1] - target_width, target_height, target_width)
+        image_height = obs["camera_final_color"].shape[0]
+        image_width = obs["camera_final_color"].shape[1]
+        self.img_input = np.float32(obs["camera_final_color"][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
         
         # fill image tensor
         self.interpreter.set_tensor(self.input_details[0]["index"], np.expand_dims(self.img_input, axis=0))

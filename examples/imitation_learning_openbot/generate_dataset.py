@@ -25,7 +25,6 @@ if __name__ == "__main__":
     
     # build the run data folder and its subfolders following the guidelines of the OpenBot public repository 
     # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
-
     base_dir = os.path.dirname(os.path.dirname(__file__))
     video_dir = os.path.join(base_dir, "videos")
     dataset_dir = os.path.join(base_dir, "dataset")

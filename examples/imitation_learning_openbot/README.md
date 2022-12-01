@@ -37,8 +37,7 @@ It is here assumed that you already followed the [getting started tutorial](http
 conda activate spear-env
 
 # install the openbot_spear Python package
-cd examples/openbot
-pip install -e openbot_pkg
+pip install -e openbot
 ```
 You should now be able to follow the [imitation learning tutorial](https://github.com/isl-org/spear/tree/main/examples/openbot/imitation_learning)
 
