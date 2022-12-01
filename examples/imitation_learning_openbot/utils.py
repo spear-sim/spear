@@ -38,6 +38,7 @@ def show_obs_and_wait_for_key(obs, obs_components, render_passes):
                 
     cv2.waitKey(100)
 
+
 # computes the 2D target position relative to the agent in world frame 
 # as well as the relative yaw angle between the agent forward axis and the agent-target vector
 def get_relative_target_pose(desired_position_xy, current_pose_yaw_xy):
@@ -62,6 +63,7 @@ def get_relative_target_pose(desired_position_xy, current_pose_yaw_xy):
 
     return relative_agent_target_xy, relative_agent_target_yaw
 
+
 # compute the compass observation following conventions of the actual OpenBot code:
 # https://github.com/isl-org/OpenBot/blob/7868c54742f8ba3df0ba2a886247a753df982772/android/app/src/main/java/org/openbot/pointGoalNavigation/PointGoalNavigationFragment.java#L103
 def get_compass_observation(desired_position_xy, current_pose_yaw_xy):
@@ -77,6 +79,7 @@ def get_compass_observation(desired_position_xy, current_pose_yaw_xy):
     cos_yaw = np.cos(relative_agent_target_yaw);
 
     return np.array([dist, sin_yaw, cos_yaw], dtype=np.float32)
+
 
 def generate_video(config, video_name, image_dir, video_dir, compress = False):
     print("Generating video from the sequence of observations")

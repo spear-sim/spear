@@ -1,10 +1,10 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim.sh"
+  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim.sh"
   
   #DATA_DIR: "/media/quentin/1FE7A89E2EF3BC76/SceneManager/v4/"
   DATA_DIR: "/home/quentin/Desktop/ISL/spear_data/v7"
-  CONTENT_DIR: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Content"
+  CONTENT_DIR: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim/Content"
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
@@ -44,8 +44,8 @@ SIMULATION_CONTROLLER:
     IS_READY_VELOCITY_THRESHOLD: 1.0
    
     CAMERA:
-      IMAGE_HEIGHT: 120
-      IMAGE_WIDTH: 160
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
       FOV: 70.0
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
       
@@ -148,7 +148,7 @@ SIMULATION_CONTROLLER:
       MIN: 0.01
       MAX: 10.0
     NOISE_STD_DEV: 0.0
-    DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
+    DEBUG_RENDER: True # When True, note that markers will only be dispayed in Standalone-Development mode
 
 DRIVING_POLICY:
   PERCENTAGE_OF_TRAINING_DATA: 80   # The ratio between training and validation data should be around 80%-20% as suggested in the OpenBot public repo.
@@ -204,7 +204,7 @@ OPENBOT:
       PITCH: 0.0                   # IMU relative orientation in [°]
       
     SONAR_COMPONENT:
-      POSITION_X: 10.0             # Sonar relative position in [cm]
+      POSITION_X: 20.0             # Sonar relative position in [cm]
       POSITION_Y: 0.0              # Sonar relative position in [cm]
       POSITION_Z: -1.5             # Sonar relative position in [cm]
       ROLL: 0.0                    # Sonar relative orientation in [°]

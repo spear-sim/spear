@@ -24,11 +24,13 @@ class OpenBotDrivingPolicy:
         assert self.acceptance_radius >= 0.0
         assert self.control_saturation >= 0.0
 
+
     def set_trajectory(self, trajectory):
         self.trajectory = trajectory
         self.num_waypoints = len(trajectory) - 1 # discarding the initial position
         self.policy_step_info["goal_reached"] = False 
         assert self.num_waypoints >= 0
+
 
     def update(self, obs):
         # xy position of the next waypoint in world frame:
@@ -80,9 +82,11 @@ class OpenBotPIDPolicy(OpenBotDrivingPolicy):
         assert self.forward_min_angle >= 0.0
         assert self.dt > 0.0 
     
+
     def set_trajectory(self, trajectory):
         super().set_trajectory(trajectory) 
         self.index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
+
 
     def update(self, obs):
 
@@ -140,10 +144,12 @@ class OpenBotPilotNetPolicy(OpenBotDrivingPolicy):
         
         self.img_input = np.zeros(self.input_details[0]["shape"], dtype=np.float32)
         self.cmd_input = np.zeros(self.input_details[1]["shape"], dtype=np.float32)
+
     
     def set_trajectory(self, trajectory):
         super().set_trajectory(trajectory) 
         self.index_waypoint = self.num_waypoints # initialized to final goal position
+
 
     def update(self, obs):
 
@@ -160,10 +166,12 @@ class OpenBotPilotNetPolicy(OpenBotDrivingPolicy):
         self.interpreter.set_tensor(self.input_details[1]["index"], self.cmd_input)
     
         # preprocess (normalize + crop) visual observations:
-        target_height = self.input_details[0]["shape"][1] # 90
-        target_width = self.input_details[0]["shape"][2] # 160
+        target_height = self.input_details[0]["shape"][1] 
+        target_width = self.input_details[0]["shape"][2] 
         image_height = obs["camera_final_color"].shape[0]
         image_width = obs["camera_final_color"].shape[1]
+        assert image_height-target_height >= 0.0
+        assert image_width-target_width >= 0.0
         self.img_input = np.float32(obs["camera_final_color"][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
         
         # fill image tensor
