@@ -1,28 +1,24 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  # STANDALONE_EXECUTABLE: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
-  # STANDALONE_EXECUTABLE: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe"
-  STANDALONE_EXECUTABLE: "/home/rachithp/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim.sh"
+  STANDALONE_EXECUTABLE: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app"
+  # STANDALONE_EXECUTABLE: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app"
 
-  # DATA_DIR: "D:/interiorsim_all_scene_paks/Windows/v8/windows/235554690"
-  # DATA_DIR: "D:/interiorsim_all_scene_paks/Windows/v8.1/windows"
-  # CONTENT_DIR: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/WindowsNoEditor/SpearSim/Content"
-  
-  DATA_DIR: "/media/rachithp/LaCie/interiorsim_all_scene_paks/Linux/v8.1/linux"
-  CONTENT_DIR: "/home/rachithp/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Content"
-  
-  TEMP_DIR: "/home/rachithp/code/github/spear/cpp/unreal_projects/SpearSim/Temp"
-  # CUSTOM_COMMAND_LINE_ARGUMENTS: [ "-dx12"]
-  RENDER_OFFSCREEN: True
+  DATA_DIR: "/Users/mroberts/Downloads/spear_data/v7/mac"
+  CONTENT_DIR: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app/Contents/UE4/SpearSim/Content"
+  # CONTENT_DIR: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app/Contents/UE4/SpearSim/Content"
 
-  VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
-
-  RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 240.0
-  RPC_CLIENT_AFTER_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 10.0
+  CUSTOM_COMMAND_LINE_ARGUMENTS: []
+  RENDER_OFFSCREEN: False
+  WINDOW_RESOLUTION_X: 1024
+  WINDOW_RESOLUTION_Y: 768
 
 SIMULATION_CONTROLLER:
   TASK: "NullTask"
   AGENT: "CameraAgent"
+  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+
+  CAMERA_SENSOR:
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0 # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
 
   CAMERA_AGENT:
     ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
@@ -30,8 +26,8 @@ SIMULATION_CONTROLLER:
     STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
     CAMERA:
       ACTOR_NAME: "GenerateImageDatasetCamera"
-      RENDER_PASSES: ["final_color", "segmentation", "depth_glsl", "normals", "lens_distortion"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion"
-      IMAGE_HEIGHT: 720
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      IMAGE_HEIGHT: 768
       IMAGE_WIDTH: 1024
       FOV: 90.0
     NAVMESH:
@@ -46,7 +42,7 @@ SIMULATION_CONTROLLER:
       TILE_SIZE_UU: 300
       TILE_POOL_SIZE: 1024
       MAX_SIMPLIFICATION_ERROR: 1.3
-      NAV_MODIFIER_OFFSET_Z: 40.0
+      NAV_MODIFIER_OFFSET_Z: 50.0
       WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
 
   VISUALIZER:
