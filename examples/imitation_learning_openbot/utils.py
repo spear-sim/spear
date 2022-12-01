@@ -87,9 +87,6 @@ def generate_video(config, video_name, image_dir, video_dir, compress = False):
     name = f"{video_dir}/{video_name}.avi"
     name_compressed = f"{video_dir}/{video_name}_compressed.mp4"
 
-    if not (os.path.exists("videos")):
-        os.makedirs("videos")
-
     images = [img for img in os.listdir(image_dir)]
     frame = cv2.imread(os.path.join(image_dir, images[0]))
     height, width, layers = frame.shape
@@ -112,6 +109,8 @@ def generate_video(config, video_name, image_dir, video_dir, compress = False):
             i = ffmpeg.input(name)
             print("Compressing video...")
             out = ffmpeg.output(i, name_compressed, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run()
+            # remove the uncompressed file
+            os.remove(name) 
             print("Done compressing !")
 
         except FileNotFoundError as e:

@@ -26,12 +26,40 @@ if __name__ == "__main__":
 
     # build the required folders
     base_dir = os.path.dirname(os.path.dirname(__file__))
-    video_dir = os.path.join(base_dir, "videos")
-    eval_dir = os.path.join(base_dir, "evaluation")
     model_dir = os.path.join(base_dir, "models")
+    eval_dir = os.path.join(base_dir, "eval")
+    video_dir = os.path.join(eval_dir, "videos")
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
+
+    # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
+    if args.debug:
+        config.defrost()
+        config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER = True
+        config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True
+        config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = True
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 1080
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 1920
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color", "segmentation", "depth_glsl"]
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera", "imu", "sonar"]
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 40.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.PITCH = -35.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.YAW = 45.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.ROLL = 0.0
+        config.freeze()
+    else:
+        config.defrost()
+        config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER = False
+        config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
+        config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = False
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 120
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH= 160
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera"]
+        config.freeze()
 
     # load driving policy
     policy_tflite_file = os.path.join(model_dir, args.policy + ".tflite")
@@ -141,8 +169,9 @@ if __name__ == "__main__":
                 df_result.to_csv(os.path.join(result_dir,"resultLog.txt"), mode="a", index=False, header=i==0)
 
             if args.create_video: # if desired, generate a video from the collected rgb observations 
+                os.makedirs(video_dir, exist_ok=True)
                 video_name = scene_id + str(run)
-                generate_video(config, video_name, image_dir, video_dir)
+                generate_video(config, video_name, image_dir, video_dir, True)
 
         # close the current scene and give the system a bit of time before switching to the next scene.
         env.close()

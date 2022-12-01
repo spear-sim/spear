@@ -2,7 +2,6 @@ SPEAR:
   LAUNCH_MODE: "standalone_executable"
   STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim.sh"
   
-  #DATA_DIR: "/media/quentin/1FE7A89E2EF3BC76/SceneManager/v4/"
   DATA_DIR: "/home/quentin/Desktop/ISL/spear_data/v7"
   CONTENT_DIR: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim/Content"
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
@@ -44,8 +43,8 @@ SIMULATION_CONTROLLER:
     IS_READY_VELOCITY_THRESHOLD: 1.0
    
     CAMERA:
-      IMAGE_HEIGHT: 512
-      IMAGE_WIDTH: 512
+      IMAGE_HEIGHT: 120
+      IMAGE_WIDTH: 160
       FOV: 70.0
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
       
@@ -67,12 +66,6 @@ SIMULATION_CONTROLLER:
   VISUALIZER:
     ACTOR_NAME: "OpenBotAgent"
     SPAWN_CAMERA: False
-    SPAWN_CAMERA_POSITION_X: -50.0
-    SPAWN_CAMERA_POSITION_Y: 0.0
-    SPAWN_CAMERA_POSITION_Z: 40.0
-    SPAWN_CAMERA_ORIENTATION_PITCH: -35.0
-    SPAWN_CAMERA_ORIENTATION_YAW: 0.0
-    SPAWN_CAMERA_ORIENTATION_ROLL: 0.0
 
   CAMERA_SENSOR:
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP: True
@@ -165,8 +158,8 @@ DRIVING_POLICY:
    
 OPENBOT:
   OPENBOT_PAWN:
-    SKELETAL_MESH: "/OpenBot/V0/Meshes/OpenBot_V0_Mesh.OpenBot_V0_Mesh"
-    ANIM_INSTANCE: "/OpenBot/V0/Meshes/OpenBot_V0_Animation.OpenBot_V0_Animation_C"
+    SKELETAL_MESH: "/OpenBot/V1/Meshes/OpenBot_V1_Mesh.OpenBot_V1_Mesh"
+    ANIM_INSTANCE: "/OpenBot/V1/Meshes/OpenBot_V1_Animation.OpenBot_V1_Animation_C"
 
     MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
     GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
@@ -187,24 +180,24 @@ OPENBOT:
       MOTOR_MAX_RPM: 20000.0       # Max RPM for engine
 
     CAMERA_COMPONENT:
-      POSITION_X: 5.0              # Camera relative position in [cm]
+      POSITION_X: 9.0              # Camera relative position in [cm]
       POSITION_Y: 5.0              # Camera relative position in [cm]
-      POSITION_Z: 5.0              # Camera relative position in [cm]
+      POSITION_Z: 10.0              # Camera relative position in [cm]
       ROLL: 0.0                    # Camera relative orientation in [cm]
       YAW: 0.0                     # Camera relative orientation in [°]
       PITCH: 0.0                   # Camera relative orientation in [°]
       FOV: 70.0                    # Camera field of view in [°]
     
     IMU_COMPONENT:
-      POSITION_X: 5.0              # IMU relative position in [cm]
-      POSITION_Y: 0.0              # IMU relative position in [cm]
-      POSITION_Z: 5.0              # IMU relative position in [cm]
+      POSITION_X: 8.0              # IMU relative position in [cm]
+      POSITION_Y: 6.0              # IMU relative position in [cm]
+      POSITION_Z: 10.0              # IMU relative position in [cm]
       ROLL: 0.0                    # IMU relative orientation in [°]
       YAW: 0.0                     # IMU relative orientation in [°]
       PITCH: 0.0                   # IMU relative orientation in [°]
       
     SONAR_COMPONENT:
-      POSITION_X: 20.0             # Sonar relative position in [cm]
+      POSITION_X: 15.0             # Sonar relative position in [cm]
       POSITION_Y: 0.0              # Sonar relative position in [cm]
       POSITION_Z: -1.5             # Sonar relative position in [cm]
       ROLL: 0.0                    # Sonar relative orientation in [°]

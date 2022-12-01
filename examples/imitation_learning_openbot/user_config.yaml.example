@@ -1,9 +1,9 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim.sh"
+  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim.sh"
   
   DATA_DIR: "/home/quentin/Desktop/ISL/spear_data/v7"
-  CONTENT_DIR: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Content"
+  CONTENT_DIR: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim/Content"
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
@@ -66,12 +66,6 @@ SIMULATION_CONTROLLER:
   VISUALIZER:
     ACTOR_NAME: "OpenBotAgent"
     SPAWN_CAMERA: False
-    SPAWN_CAMERA_POSITION_X: -50.0
-    SPAWN_CAMERA_POSITION_Y: 0.0
-    SPAWN_CAMERA_POSITION_Z: 40.0
-    SPAWN_CAMERA_ORIENTATION_PITCH: -35.0
-    SPAWN_CAMERA_ORIENTATION_YAW: 0.0
-    SPAWN_CAMERA_ORIENTATION_ROLL: 0.0
 
   CAMERA_SENSOR:
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP: True
@@ -147,7 +141,7 @@ SIMULATION_CONTROLLER:
       MIN: 0.01
       MAX: 10.0
     NOISE_STD_DEV: 0.0
-    DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
+    DEBUG_RENDER: True # When True, note that markers will only be dispayed in Standalone-Development mode
 
 DRIVING_POLICY:
   PERCENTAGE_OF_TRAINING_DATA: 80   # The ratio between training and validation data should be around 80%-20% as suggested in the OpenBot public repo.
@@ -164,8 +158,8 @@ DRIVING_POLICY:
    
 OPENBOT:
   OPENBOT_PAWN:
-    SKELETAL_MESH: "/OpenBot/V0/Meshes/OpenBot_V0_Mesh.OpenBot_V0_Mesh"
-    ANIM_INSTANCE: "/OpenBot/V0/Meshes/OpenBot_V0_Animation.OpenBot_V0_Animation_C"
+    SKELETAL_MESH: "/OpenBot/V1/Meshes/OpenBot_V1_Mesh.OpenBot_V1_Mesh"
+    ANIM_INSTANCE: "/OpenBot/V1/Meshes/OpenBot_V1_Animation.OpenBot_V1_Animation_C"
 
     MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
     GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
@@ -203,7 +197,7 @@ OPENBOT:
       PITCH: 0.0                   # IMU relative orientation in [°]
       
     SONAR_COMPONENT:
-      POSITION_X: 10.0             # Sonar relative position in [cm]
+      POSITION_X: 15.0             # Sonar relative position in [cm]
       POSITION_Y: 0.0              # Sonar relative position in [cm]
       POSITION_Z: -1.5             # Sonar relative position in [cm]
       ROLL: 0.0                    # Sonar relative orientation in [°]
