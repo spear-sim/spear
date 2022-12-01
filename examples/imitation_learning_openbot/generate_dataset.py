@@ -1,7 +1,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import csv
 import datetime
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +10,6 @@ import shutil
 import spear
 import time
 
-from openbot_spear.env import OpenBotEnv
 from openbot_spear.policies import OpenBotPID
 from openbot_spear.utils import *
   
@@ -66,7 +64,7 @@ if __name__ == "__main__":
         config.freeze()
 
         # create Env object
-        env = OpenBotEnv(config=config)
+        env = spear.Env(config=config)
         
         run = 0
         # execute the desired number of runs in a given sceen
@@ -78,6 +76,7 @@ if __name__ == "__main__":
             state_data_buffer = np.empty([args.iterations, 6]) # buffer containing the state_data observations made by the agent during a run
             waypoint_data_buffer = np.empty([args.iterations, 3]) # buffer containing the waypoint coordinates being tracked by the agent during a run
             time_data_buffer = np.empty([args.iterations, 1]) # buffer containing the time stamps of the observations made by the agent during a run
+            frame_data_buffer = np.empty([args.iterations, 1]) # buffer containing the frame ids
             index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
             exp_dir = f"run_{scene_id}_{run}"
             
@@ -114,7 +113,7 @@ if __name__ == "__main__":
 
                 executed_iterations = i+1
                 ct = datetime.datetime.now()
-                time_stamp = 10000*ct.timestamp()
+                time_stamp = int(10000*ct.timestamp())
 
                 # xy position of the next waypoint in world frame:
                 desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
@@ -137,6 +136,7 @@ if __name__ == "__main__":
                 state_data_buffer[i] = obs["state_data"]        # state_data: [x, y, z, pitch, yaw, roll]
                 waypoint_data_buffer[i] = info["agent_step_info"]["trajectory_data"][index_waypoint] # current waypoint being tracked by the agent
                 time_data_buffer[i] = time_stamp                # current time stamp
+                frame_data_buffer[i] = i                        # current frame
 
                 pos_x_des = info["agent_step_info"]["trajectory_data"][index_waypoint][0]   # x component of desired agent position wrt. world in [cm]
                 pos_y_des = info["agent_step_info"]["trajectory_data"][index_waypoint][1]   # y component of desired agent position wrt. world in [cm]
@@ -173,58 +173,49 @@ if __name__ == "__main__":
                 print("Filling database...")
 
                 # low-level commands sent to the motors
-                f_ctrl = open(os.path.join(sensor_dir,"ctrlLog.txt"), 'w')  
-                writer_ctrl = csv.writer(f_ctrl, delimiter=",")
-                writer_ctrl.writerow( ('timestamp[ns]','left_ctrl','right_ctrl') )
+                df_ctrl = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,
+                           "left_ctrl" : control_data_buffer[:][0],
+                           "right_ctrl" : control_data_buffer[:][1]})
+                df_ctrl.to_csv(os.path.join(sensor_dir,"ctrlLog.txt"), mode="w", index=False, header=i==0)
+
+                
+                # get the updated compass observation (with the last recorded position set as goal)
+                compass_observation = np.empty([executed_iterations, 3])
+                for i in range(executed_iterations):
+                    current_pose_yaw_xy = np.array([state_data_buffer[i][4], state_data_buffer[i][0], state_data_buffer[i][1]], dtype=np.float32)
+                    compass_observation[i][:] = get_compass_observation(goal_position_xy, current_pose_yaw_xy)
 
                 # high level commands
-                f_goal = open(os.path.join(sensor_dir,"goalLog.txt"), 'w')  
-                writer_goal = csv.writer(f_goal, delimiter=",")
-                writer_goal.writerow( ('timestamp[ns]','dist','sinYaw','cosYaw') )
+                df_goal = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,
+                           "dist[m]" : compass_observation[:][0],
+                           "sinYaw" : compass_observation[:][1],
+                           "cosYaw" : compass_observation[:][2]})
+                df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="w", index=False, header=i==0)
 
                 # reference of the images correespoinding to each control input
-                f_rgb = open(os.path.join(sensor_dir,"rgbFrames.txt"), 'w') 
-                writer_rgb = csv.writer(f_rgb, delimiter=",")
-                writer_rgb.writerow( ('timestamp[ns]','frame') )
+                df_rgb = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,
+                           "frame" : frame_data_buffer})
+                df_rgb.to_csv(os.path.join(sensor_dir,"rgbFrames.txt"), mode="w", index=False, header=i==0)
 
                 # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
-                f_pose = open(os.path.join(sensor_dir,"poseData.txt"), 'w') 
-                writer_pose = csv.writer(f_pose , delimiter=",")
-                writer_pose.writerow( ('timestamp[ns]','x[cm]','y[cm]','z[cm]','pitch[rad]','yaw[rad]','roll[rad]') )
+                df_pose = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,
+                           "x[cm]" : state_data_buffer[:][0],
+                           "y[cm]" : state_data_buffer[:][1],
+                           "z[cm]" : state_data_buffer[:][2],
+                           "pitch[rad]" : state_data_buffer[:][3],
+                           "yaw[rad]" : state_data_buffer[:][4],
+                           "roll[rad]" : state_data_buffer[:][5]})
+                df_pose.to_csv(os.path.join(sensor_dir,"poseData.txt"), mode="w", index=False, header=i==0)
 
                 # waypoint data (for debug purposes)
-                f_waypoint = open(os.path.join(sensor_dir,"waypointData.txt"), 'w') 
-                writer_waypoint = csv.writer(f_waypoint , delimiter=",")
-                writer_waypoint.writerow( ('timestamp[ns]', 'waypoint_x[cm]','waypoint_y[cm]','waypoint_z[cm]') )
+                df_waypoint = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,
+                           "waypoint_x[cm]" : waypoint_data_buffer[:][0],
+                           "waypoint_y[cm]" : waypoint_data_buffer[:][1],
+                           "waypoint_z[cm]" : waypoint_data_buffer[:][2]})
+                df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="w", index=False, header=i==0)
 
                 # set the goal position as the last position reached by the agent
                 goal_position_xy = np.array([state_data_buffer[executed_iterations-1][0],state_data_buffer[executed_iterations-1][1]], dtype=np.float32) # use the vehicle last x-y location as goal for the run
-
-                for i in range(executed_iterations):
-
-                    # get the updated compass observation (with the last recorded position set as goal)
-                    current_pose_yaw_xy = np.array([state_data_buffer[i][4], state_data_buffer[i][0], state_data_buffer[i][1]], dtype=np.float32)
-                    compass_observation = get_compass_observation(goal_position_xy, current_pose_yaw_xy)
-
-                    # wite the low-level control observation into a file:
-                    writer_ctrl.writerow( (int(time_data_buffer[i]), control_data_buffer[i][0], control_data_buffer[i][1]) )
-
-                    # write the corresponding high level command into a file:
-                    writer_goal.writerow( (int(time_data_buffer[i]), compass_observation[0], compass_observation[1], compass_observation[2]) )
-
-                    # write the corresponding image index into a file:
-                    writer_rgb.writerow( (int(time_data_buffer[i]), i) )
-
-                    # write pose data
-                    writer_pose.writerow( (int(time_data_buffer[i]), state_data_buffer[i][0], state_data_buffer[i][1], state_data_buffer[i][2], state_data_buffer[i][3], state_data_buffer[i][4], state_data_buffer[i][5]) )  
-
-                    # write waypoint data
-                    writer_waypoint.writerow( (int(time_data_buffer[i]), waypoint_data_buffer[i][0], waypoint_data_buffer[i][1], waypoint_data_buffer[i][2]) ) 
-
-                f_ctrl.close()
-                f_pose.close()
-                f_goal.close()
-                f_rgb.close()
 
                 if args.create_video: # if desired, generate a video from the collected rgb observations 
                     video_name = scene_id + str(run)

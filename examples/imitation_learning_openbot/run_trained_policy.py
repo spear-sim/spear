@@ -1,7 +1,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import csv
 import datetime
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,7 +9,6 @@ import pandas as pd
 import spear
 import time
 
-from openbot_spear.env import OpenBotEnv
 from openbot_spear.policies import OpenBotPilotNet
 from openbot_spear.utils import *
   
@@ -67,7 +65,7 @@ if __name__ == "__main__":
         config.freeze()
 
         # create Env object
-        env = OpenBotEnv(config=config)
+        env = spear.Env(config=config)
         
         run = 0
         # execute the desired number of runs in a given sceen
@@ -111,7 +109,7 @@ if __name__ == "__main__":
 
                 executed_iterations = i+1
                 ct = datetime.datetime.now()
-                time_stamp = 10000*ct.timestamp()
+                time_stamp = int(10000*ct.timestamp())
 
                 # xy position of the goal in world frame (not the next waypoint):
                 desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][-1][0], info["agent_step_info"]["trajectory_data"][-1][1]], dtype=np.float32) # [x_des, y_des]
@@ -134,7 +132,7 @@ if __name__ == "__main__":
                         goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
 
                 # populate result data file
-                writer_result.writerow( (int(time_stamp), action[0], action[1], obs["state_data"][0], obs["state_data"][1], obs["state_data"][2], obs["state_data"][3], obs["state_data"][4], obs["state_data"][5], info["agent_step_info"]["trajectory_data"][-1][0], info["agent_step_info"]["trajectory_data"][-1][1], info["agent_step_info"]["trajectory_data"][-1][2], goal_reached_flag, collision_flag) )  
+                writer_result.writerow( (time_stamp, action[0], action[1], obs["state_data"][0], obs["state_data"][1], obs["state_data"][2], obs["state_data"][3], obs["state_data"][4], obs["state_data"][5], info["agent_step_info"]["trajectory_data"][-1][0], info["agent_step_info"]["trajectory_data"][-1][1], info["agent_step_info"]["trajectory_data"][-1][2], goal_reached_flag, collision_flag) )  
 
                 # termination condition
                 if goal_reached_flag:
