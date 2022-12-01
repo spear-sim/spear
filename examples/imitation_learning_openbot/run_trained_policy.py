@@ -170,7 +170,7 @@ if __name__ == "__main__":
 
             if args.create_video: # if desired, generate a video from the collected rgb observations 
                 os.makedirs(video_dir, exist_ok=True)
-                video_name = scene_id + str(run)
+                video_name = scene_id + "_" + str(run)
                 generate_video(config, video_name, image_dir, video_dir, True)
 
         # close the current scene and give the system a bit of time before switching to the next scene.
