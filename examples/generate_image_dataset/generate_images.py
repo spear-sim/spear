@@ -22,15 +22,15 @@ class CustomEnv(spear.Env):
     def __init__(self, config, num_internal_steps):
         super(CustomEnv, self).__init__(config)
         assert num_internal_steps > 0
-        self.num_internal_steps = num_internal_steps
+        self._num_internal_steps = num_internal_steps
 
     def step(self, action):
 
-        if self.num_internal_steps == 1:
+        if self._num_internal_steps == 1:
             return self.single_step(action, get_observation=True)
         else:
             self.single_step(action)
-            for _ in range(1, self.num_internal_steps - 1):
+            for _ in range(1, self._num_internal_steps - 1):
                 self.single_step()
             return self.single_step(get_observation=True)
 
