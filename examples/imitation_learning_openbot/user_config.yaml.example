@@ -24,7 +24,7 @@ SIMULATION_CONTROLLER:
     GOAL_ACTOR_NAME: "GoalActor"
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
-    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Region around a sampled initial position to look for a reachable goal position.
     TRAJECTORY_SAMPLING_MAX_ITERS: 100
     TRAJECTORY_SAMPLING_DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
     NAVMESH:
