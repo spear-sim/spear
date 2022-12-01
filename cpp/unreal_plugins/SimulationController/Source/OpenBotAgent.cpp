@@ -517,7 +517,7 @@ void OpenBotAgent::generateTrajectoryToGoal()
 
     // Update trajectory_
     TArray<FNavPathPoint> path_points = path.Path->GetPathPoints(); 
-    ASSERT(path_points.Num()>1); // There should be at east a starting point and a goal point
+    ASSERT(path_points.Num() > 1); // There should be at east a starting point and a goal point
 
     for(auto& path_point : path_points) {
         trajectory_.push_back(path_point.Location.X);
@@ -532,7 +532,7 @@ void OpenBotAgent::generateTrajectoryToGoal()
 
     int num_waypoints = path.Path->GetPathPoints().Num();
     float trajectory_length = 0.0;
-    for (size_t i = 0; i < num_waypoints - 1; i++) {
+    for (int i = 0; i < num_waypoints - 1; i++) {
         trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
     }
     trajectory_length /= open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
