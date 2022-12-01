@@ -36,7 +36,7 @@ def show_obs_and_wait_for_key(obs, obs_components, render_passes):
         else:
             print(f"Error: {obs_component} is an unknown observation component.")
                 
-    cv2.waitKey(100)
+    cv2.waitKey(0)
 
 
 # computes the 2D target position relative to the agent in world frame 

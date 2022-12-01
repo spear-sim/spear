@@ -2,7 +2,7 @@ SPEAR:
   LAUNCH_MODE: "standalone_executable"
   STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim.sh"
   
-  DATA_DIR: "/home/quentin/Desktop/ISL/spear_data/v7"
+  DATA_DIR: "/home/quentin/Desktop/ISL/spear_data/v8.1"
   CONTENT_DIR: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Content"
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   
