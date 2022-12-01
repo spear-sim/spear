@@ -182,7 +182,7 @@ OPENBOT:
     CAMERA_COMPONENT:
       POSITION_X: 9.0              # Camera relative position in [cm]
       POSITION_Y: 5.0              # Camera relative position in [cm]
-      POSITION_Z: 10.0              # Camera relative position in [cm]
+      POSITION_Z: 10.0             # Camera relative position in [cm]
       ROLL: 0.0                    # Camera relative orientation in [cm]
       YAW: 0.0                     # Camera relative orientation in [°]
       PITCH: 0.0                   # Camera relative orientation in [°]
@@ -190,8 +190,8 @@ OPENBOT:
     
     IMU_COMPONENT:
       POSITION_X: 8.0              # IMU relative position in [cm]
-      POSITION_Y: 6.0              # IMU relative position in [cm]
-      POSITION_Z: 10.0              # IMU relative position in [cm]
+      POSITION_Y: 0.0              # IMU relative position in [cm]
+      POSITION_Z: 10.0             # IMU relative position in [cm]
       ROLL: 0.0                    # IMU relative orientation in [°]
       YAW: 0.0                     # IMU relative orientation in [°]
       PITCH: 0.0                   # IMU relative orientation in [°]
