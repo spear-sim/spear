@@ -11,15 +11,54 @@ class OpenBotDrivingPolicy:
     def __init__(self, config):
         self.acceptance_radius = config.DRIVING_POLICY.ACCEPTANCE_RADIUS
         self.control_saturation = config.DRIVING_POLICY.CONTROL_SATURATION
+        self.trajectory = np.empty((0, 3), dtype=float)
+        self.desired_position_xy = np.empty((0, 2), dtype=float)
+        self.current_pose_yaw_xy = np.empty((0, 3), dtype=float)
+        self.xy_position_error  = np.empty((0, 2), dtype=float)
+        self.yaw_error = 0.0
+        self.index_waypoint = 0
+        self.num_waypoints = 0
+        self.policy_step_info = {"current_waypoint" : np.empty((0, 2), dtype=float), "goal_reached" : False}
         
         # perform sanity checks
         assert self.acceptance_radius >= 0.0
         assert self.control_saturation >= 0.0
-            
-    def update(desired_position_xy, obs):
-        return np.zeros(2, dtype=np.float32)
 
-class OpenBotPID(OpenBotDrivingPolicy):
+    def set_trajectory(self, trajectory):
+        self.trajectory = trajectory
+        self.num_waypoints = len(trajectory) - 1 # discarding the initial position
+        self.policy_step_info["goal_reached"] = False 
+        assert self.num_waypoints >= 0
+
+    def update(self, obs):
+        # xy position of the next waypoint in world frame:
+        self.desired_position_xy = np.array([self.trajectory[self.index_waypoint][0], self.trajectory[self.index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
+        self.policy_step_info["current_waypoint"] = self.desired_position_xy
+
+        # current position and heading of the vehicle in world frame
+        self.current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
+        
+        # compute the relative agent-target pose from the raw observation dictionary
+        self.xy_position_error, self.yaw_error = get_relative_target_pose(self.desired_position_xy, self.current_pose_yaw_xy)
+
+        # compute Euclidean distance to target in [m]:
+        self.xy_position_error_norm = np.linalg.norm(self.xy_position_error) * 0.01
+        
+        # is the current waypoint close enough to be considered as "reached" ?
+        waypoint_reached = (self.xy_position_error_norm <= self.acceptance_radius)
+
+        # if a waypoint of the trajectory is "reached", based on the autopilot's acceptance_radius condition 
+        if waypoint_reached: 
+            if self.index_waypoint < self.num_waypoints: # if this waypoint is not the final "goal"
+                print(f"Waypoint {self.index_waypoint} over {self.num_waypoints} reached !")
+                self.index_waypoint += 1 # set the next way point as the current target to be tracked by the agent
+                self.policy_step_info["goal_reached"] = False 
+            else: # if this waypoint is the final "goal"
+                self.policy_step_info["goal_reached"] = True 
+        else:
+            self.policy_step_info["goal_reached"] = False 
+
+class OpenBotPIDPolicy(OpenBotDrivingPolicy):
 
     def __init__(self, config): 
         super().__init__(config)
@@ -40,40 +79,38 @@ class OpenBotPID(OpenBotDrivingPolicy):
         assert self.kd_ang >= 0.0
         assert self.forward_min_angle >= 0.0
         assert self.dt > 0.0 
-
-    def update(self, desired_position_xy, obs):
     
-        # current position and heading of the vehicle in world frame
-        current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
-        
-        # compute the relative agent-target pose from the raw observation dictionary
-        xy_position_error, yaw_error = get_relative_target_pose(desired_position_xy, current_pose_yaw_xy)
+    def set_trajectory(self, trajectory):
+        super().set_trajectory(trajectory) 
+        self.index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
+
+    def update(self, obs):
+
+        # update waypoint and check location reached
+        super().update(obs) 
 
         # avoid discontinuities on the derivative
         if self.first_update: 
-            self.xy_position_old = np.array([current_pose_yaw_xy[1],current_pose_yaw_xy[2]], dtype=np.float32)
+            self.xy_position_old = np.array([self.current_pose_yaw_xy[1],self.current_pose_yaw_xy[2]], dtype=np.float32)
             self.yaw_old = obs["state_data"][4]
             self.first_update = False
 
-        # compute Euclidean distance to target in [m]:
-        xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01
-        
         # velocity computation
-        lin_vel_norm = np.linalg.norm((np.array([current_pose_yaw_xy[1],current_pose_yaw_xy[2]], dtype=np.float32)-self.xy_position_old)/self.dt) * 0.01 
-        self.xy_position_old = np.array([current_pose_yaw_xy[1],current_pose_yaw_xy[2]], dtype=np.float32)
+        lin_vel_norm = np.linalg.norm((np.array([self.current_pose_yaw_xy[1],self.current_pose_yaw_xy[2]], dtype=np.float32)-self.xy_position_old)/self.dt) * 0.01 
+        self.xy_position_old = np.array([self.current_pose_yaw_xy[1],self.current_pose_yaw_xy[2]], dtype=np.float32)
         ang_vel_norm = (obs["state_data"][4] - self.yaw_old)/self.dt 
         self.yaw_old = obs["state_data"][4]
 
         # compute angular component of motion 
-        right_ctrl = -self.kp_ang * yaw_error - self.kd_ang * ang_vel_norm;
+        right_ctrl = -self.kp_ang * self.yaw_error - self.kd_ang * ang_vel_norm;
         right_ctrl = np.clip(right_ctrl, -self.control_saturation, self.control_saturation)
 
         # only compute the linear component of motion if the vehicle is facing its target (modulo forward_min_angle)
         forward_ctrl = 0.0
-        if abs(yaw_error) <= self.forward_min_angle:
-            forward_ctrl += self.kp_lin * xy_position_error_norm - self.kd_lin * lin_vel_norm
+        if abs(self.yaw_error) <= self.forward_min_angle:
+            forward_ctrl += self.kp_lin * self.xy_position_error_norm - self.kd_lin * lin_vel_norm
             forward_ctrl = np.clip(forward_ctrl, -self.control_saturation, self.control_saturation)
-            forward_ctrl *= abs(np.cos(yaw_error)); # full throttle if the vehicle facing the objective. Otherwise give more priority to the yaw command.
+            forward_ctrl *= abs(np.cos(self.yaw_error)); # full throttle if the vehicle facing the objective. Otherwise give more priority to the yaw command.
 
         # compute action for each wheel as the sum of the linear and angular control inputs
         left_wheel_command = forward_ctrl + right_ctrl
@@ -82,17 +119,13 @@ class OpenBotPID(OpenBotDrivingPolicy):
         right_wheel_command = np.clip(right_wheel_command, -self.control_saturation, self.control_saturation)
         action = np.array([left_wheel_command,right_wheel_command], dtype=np.float32)
             
-        # is goal reached ?
-        target_location_reached = (xy_position_error_norm <= self.acceptance_radius)
-
-        return action, target_location_reached
+        return action, self.policy_step_info
         
-class OpenBotPilotNet(OpenBotDrivingPolicy):
+class OpenBotPilotNetPolicy(OpenBotDrivingPolicy):
 
     def __init__(self, config):
         super().__init__(config)
-        self.kp_lin = config.DRIVING_POLICY.PILOT_NET.PATH
-        
+
         # load the control policy
         self.interpreter = tflite.Interpreter(config.DRIVING_POLICY.PILOT_NET.PATH)
         self.interpreter.allocate_tensors()
@@ -108,13 +141,17 @@ class OpenBotPilotNet(OpenBotDrivingPolicy):
         self.img_input = np.zeros(self.input_details[0]["shape"], dtype=np.float32)
         self.cmd_input = np.zeros(self.input_details[1]["shape"], dtype=np.float32)
     
-    def update(self, desired_position_xy, obs):
+    def set_trajectory(self, trajectory):
+        super().set_trajectory(trajectory) 
+        self.index_waypoint = self.num_waypoints # initialized to final goal position
+
+    def update(self, obs):
+
+        # update waypoint and check location reached
+        super().update(obs)
     
-        # current position and heading of the vehicle in world frame
-        current_pose_yaw_xy = np.array([obs["state_data"][4], obs["state_data"][0], obs["state_data"][1]], dtype=np.float32) # [yaw, x, y]
-        
         # get the updated compass observation
-        compass_observation = get_compass_observation(desired_position_xy, current_pose_yaw_xy)
+        compass_observation = get_compass_observation(self.desired_position_xy, self.current_pose_yaw_xy)
         
         # fill command tensor
         self.cmd_input[0][0] = compass_observation[0]
@@ -139,21 +176,10 @@ class OpenBotPilotNet(OpenBotDrivingPolicy):
         print('Infererence time: {:.3f}ms'.format(execution_time))
 
         # generate an action from inference result
-        result = np.empty((0, 2), dtype=float)
-        tflite_output = self.interpreter.get_tensor(self.output_details[0]["index"])
-        act = np.clip(np.concatenate((result, tflite_output.astype(float))), -1.0, 1.0)
-        action = np.array([act[0][0],act[0][1]], dtype=np.float32)
-        
-        # compute the relative agent-target pose from the raw observation dictionary
-        xy_position_error, _ = get_relative_target_pose(desired_position_xy, current_pose_yaw_xy)
-        
-        # compute Euclidean distance to target in [m]:
-        xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01
-        
-        # is goal reached ?
-        target_location_reached = (xy_position_error_norm <= self.acceptance_radius)
+        tflite_output = np.clip(self.interpreter.get_tensor(self.output_details[0]["index"]).astype(np.float32), -1.0, 1.0)
+        action = np.array([tflite_output[0][0],tflite_output[0][1]], dtype=np.float32)
     
-        return action, target_location_reached
+        return action, self.policy_step_info
     
     
     

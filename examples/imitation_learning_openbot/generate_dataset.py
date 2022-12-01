@@ -10,7 +10,7 @@ import shutil
 import spear
 import time
 
-from openbot_spear.policies import OpenBotPID
+from openbot_spear.policies import OpenBotPIDPolicy
 from openbot_spear.utils import *
   
 if __name__ == "__main__":
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
 
     # load driving policy
-    driving_policy = OpenBotPID(config)
+    driving_policy = OpenBotPIDPolicy(config)
     
     # sanity checks (without these observation modes, the code will not behave properly)
     assert("state_data" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS)
@@ -70,14 +70,6 @@ if __name__ == "__main__":
         # execute the desired number of runs in a given sceen
         while run < args.runs:
 
-            collision_flag = False # flag raised when the vehicle collides with the environment. It restarts the run without iterating the run count
-            goal_reached_flag = False # flag raised when the vehicle get close enouth to the goal (i.e. the last waypoint).
-            control_data_buffer = np.empty([args.iterations, 2]) # buffer containing the control_data observations made by the agent during a run
-            state_data_buffer = np.empty([args.iterations, 6]) # buffer containing the state_data observations made by the agent during a run
-            waypoint_data_buffer = np.empty([args.iterations, 3]) # buffer containing the waypoint coordinates being tracked by the agent during a run
-            time_data_buffer = np.empty([args.iterations, 1]) # buffer containing the time stamps of the observations made by the agent during a run
-            frame_data_buffer = np.empty([args.iterations, 1]) # buffer containing the frame ids
-            index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
             exp_dir = f"run_{scene_id}_{run}"
             
             # split data between training and evaluation sets
@@ -102,24 +94,27 @@ if __name__ == "__main__":
         
             # send zero action to the agent and collect initial trajectory observations:
             obs, _, _, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
-        
-            num_waypoints = len(info["agent_step_info"]["trajectory_data"]) - 1
 
+            # initialize the driving policy with the desired trajectory 
+            driving_policy.set_trajectory(info["agent_step_info"]["trajectory_data"])
+
+            collision_flag = False # flag raised when the vehicle collides with the environment. It restarts the run without iterating the run count
+            control_data_buffer = np.empty([args.iterations, 2]) # buffer containing the control_data observations made by the agent during a run
+            state_data_buffer = np.empty([args.iterations, 6]) # buffer containing the state_data observations made by the agent during a run
+            waypoint_data_buffer = np.empty([args.iterations, 3]) # buffer containing the waypoint coordinates being tracked by the agent during a run
+            time_data_buffer = np.empty([args.iterations, 1]) # buffer containing the time stamps of the observations made by the agent during a run
+            frame_data_buffer = np.empty([args.iterations, 1]) # buffer containing the frame ids
             executed_iterations = 0
+            
             # execute the desired number of iterations in a given run
             for i in range(args.iterations):
 
-                print(f"iteration {i} over {args.iterations}")
+                print(f"iteration {i} of {args.iterations}")
 
-                executed_iterations = i+1
-                ct = datetime.datetime.now()
-                time_stamp = int(10000*ct.timestamp())
-
-                # xy position of the next waypoint in world frame:
-                desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][index_waypoint][0], info["agent_step_info"]["trajectory_data"][index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
+                time_stamp = int(10000*datetime.datetime.now().timestamp())
 
                 # update control action 
-                action, waypoint_reached = driving_policy.update(desired_position_xy, obs)
+                action, policy_step_info = driving_policy.update(obs)
 
                 # send control action to the agent and collect observations
                 obs, reward, done, info = env.step({"apply_voltage": action})
@@ -131,38 +126,26 @@ if __name__ == "__main__":
                 # In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole trajectory. 
                 # In this case, rather than considering the whole run as a fail, one can consider the last position reached by the agent as the new goal position. 
                 # Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather than directly writing all the 
-                # observations in a file iteration by iteration, we append these observations in a buffer, named "observation_buffer" to later process them once the run is completed. 
+                # observations in a file iteration by iteration, we append these observations in a buffer, named "observation_buffer" to later process them once the 
+                # run is completed. 
                 control_data_buffer[i] = obs["control_data"]    # control_data: [ctrl_left, ctrl_right]
                 state_data_buffer[i] = obs["state_data"]        # state_data: [x, y, z, pitch, yaw, roll]
-                waypoint_data_buffer[i] = info["agent_step_info"]["trajectory_data"][index_waypoint] # current waypoint being tracked by the agent
+                waypoint_data_buffer[i] = policy_step_info["current_waypoint"]# current waypoint being tracked by the agent
                 time_data_buffer[i] = time_stamp                # current time stamp
                 frame_data_buffer[i] = i                        # current frame
+                executed_iterations = executed_iterations + 1
 
-                pos_x_des = info["agent_step_info"]["trajectory_data"][index_waypoint][0]   # x component of desired agent position wrt. world in [cm]
-                pos_y_des = info["agent_step_info"]["trajectory_data"][index_waypoint][1]   # y component of desired agent position wrt. world in [cm]
-
-                # check the stop conditions of the run
-                if waypoint_reached: # if a waypoint of the trajectory is reached, based on the autopilot's acceptance_radius condition 
-                    if index_waypoint < num_waypoints: # if the considered waypoint is not the final goal
-                        print(f"Waypoint {index_waypoint} over {num_waypoints} reached !")
-                        index_waypoint = index_waypoint + 1 # set the next way point as the current target to be tracked by the agent
-                    else: # if the considered waypoint is the final goal
-                        print("Goal reached (distance check) !")
-                        goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
-                        break
-
-                if done: # if the done flag is raised
-                    if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
-                        print("Collision detected ! Killing simulation and restarting run...")
-                        collision_flag = True # raise collision_flag to interrupt and restart the current run
-                    if info["task_step_info"]["hit_goal"]: # if the vehicle collided with the goal
-                        print("Goal reached (collision check)  !")
-                        goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
+                if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
+                    print("Collision detected ! Killing simulation and restarting run...")
+                    collision_flag = True # raise collision_flag to interrupt and restart the current run
                     break
+                elif info["task_step_info"]["hit_goal"] or policy_step_info["goal_reached"]: # if the vehicle reached the goal
+                    print("Goal reached !")
+                    break # interrupt the current run and move to the next run
             
             # run loop executed: check the termination flags
             
-            if collision_flag == True: # if the collision flag is raised during the run
+            if collision_flag: # if the collision flag is raised during the run
                 print("Restarting run...")
                 shutil.rmtree(run_dir) # remove the data collected so far as it is improper for training purposes
                 # do not update the run count as the run must be restarted
@@ -181,9 +164,9 @@ if __name__ == "__main__":
                 
                 # get the updated compass observation (with the last recorded position set as goal)
                 compass_observation = np.empty([executed_iterations, 3])
-                for i in range(executed_iterations):
-                    current_pose_yaw_xy = np.array([state_data_buffer[i][4], state_data_buffer[i][0], state_data_buffer[i][1]], dtype=np.float32)
-                    compass_observation[i][:] = get_compass_observation(goal_position_xy, current_pose_yaw_xy)
+                for it in range(executed_iterations):
+                    current_pose_yaw_xy = np.array([state_data_buffer[it][4], state_data_buffer[it][0], state_data_buffer[it][1]], dtype=np.float32)
+                    compass_observation[it][:] = get_compass_observation(goal_position_xy, current_pose_yaw_xy)
 
                 # high level commands
                 df_goal = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,

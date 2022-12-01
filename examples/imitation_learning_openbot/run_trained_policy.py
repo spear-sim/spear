@@ -9,7 +9,7 @@ import pandas as pd
 import spear
 import time
 
-from openbot_spear.policies import OpenBotPilotNet
+from openbot_spear.policies import OpenBotPilotNetPolicy
 from openbot_spear.utils import *
   
 if __name__ == "__main__":
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     config.freeze()
     
     # load driving policy
-    driving_policy = OpenBotPilotNet(config)
+    driving_policy = OpenBotPilotNetPolicy(config)
     
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is [""]:
@@ -69,12 +69,10 @@ if __name__ == "__main__":
         
         run = 0
         # execute the desired number of runs in a given sceen
-        while run < args.runs:
+        for run in range(args.runs):
 
             collision_flag = False # flag raised when the vehicle collides with the environment. It restarts the run without iterating the run count
             goal_reached_flag = False # flag raised when the vehicle get close enouth to the goal (i.e. the last waypoint).
-            index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
-            result = np.empty((0, 2), dtype=float)
 
             # build the evauation run data folder and its subfolders
             exp_dir = f"run_{scene_id}_{run}"
@@ -96,35 +94,32 @@ if __name__ == "__main__":
             # send zero action to the agent and collect initial trajectory observations:
             obs, _, _, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
-            executed_iterations = 0
+            # initialize the driving policy with the desired trajectory 
+            driving_policy.set_trajectory(info["agent_step_info"]["trajectory_data"])
+
             # execute the desired number of iterations in a given run
             for i in range(args.iterations):
 
-                print(f"iteration {i} over {args.iterations}")
+                print(f"iteration {i} of {args.iterations}")
 
-                executed_iterations = i+1
-                ct = datetime.datetime.now()
-                time_stamp = int(10000*ct.timestamp())
-
-                # xy position of the goal in world frame (not the next waypoint):
-                desired_position_xy = np.array([info["agent_step_info"]["trajectory_data"][-1][0], info["agent_step_info"]["trajectory_data"][-1][1]], dtype=np.float32) # [x_des, y_des]
+                time_stamp = int(10000*datetime.datetime.now().timestamp())
 
                 # update control action 
-                action, goal_reached_flag = driving_policy.update(desired_position_xy, obs)
+                action, goal_reached_flag = driving_policy.update(obs)
 
                 # send control action to the agent and collect observations
                 obs, reward, done, info = env.step({"apply_voltage": action})
 
+                # check the stop conditions of the run
+                if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
+                    print("Collision detected !")
+                    collision_flag = True # raise collision_flag to interrupt and restart the current run
+                if info["task_step_info"]["hit_goal"]: # if the vehicle collided with the goal
+                    print("Goal reached !")
+                    goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
+
                 # save the collected rgb observations
                 plt.imsave(os.path.join(image_dir, "%d.jpeg"%i), obs["camera_final_color"].squeeze())
-
-                # check the stop conditions of the run
-                if done: # if the done flag is raised
-                    if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
-                        print("Collision detected !")
-                        collision_flag = True # raise collision_flag to interrupt and restart the current run
-                    if info["task_step_info"]["hit_goal"]: # if the vehicle collided with the goal
-                        goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
 
                 # populate result data file
                 df_result = pd.DataFrame({"timestamp[ns]"  : time_stamp,
@@ -148,16 +143,11 @@ if __name__ == "__main__":
                     print("Goal reached !")
                     break # only break when the goal is reached 
 
-            f_result.close()
-
             if args.create_video: # if desired, generate a video from the collected rgb observations 
                 video_name = scene_id + str(run)
                 generate_video(config, video_name, image_dir, video_dir)
 
-            run = run + 1 # update the run count and move to the next run 
-
         # close the current scene and give the system a bit of time before switching to the next scene.
         env.close()
-        time.sleep(3)
 
     print("Done.")
