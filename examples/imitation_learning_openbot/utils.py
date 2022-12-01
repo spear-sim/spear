@@ -33,8 +33,10 @@ def show_obs_and_wait_for_key(obs, obs_components, render_passes):
                     cv2.imshow("depth", obs["camera_depth_glsl"][:, :, :])
                 else:
                     print(f"Error: {render_pass} is an unknown camera render pass.")
+                    assert False
         else:
             print(f"Error: {obs_component} is an unknown observation component.")
+            assert False
                 
     cv2.waitKey(0)
 
@@ -100,7 +102,6 @@ def generate_video(config, video_name, image_dir, video_dir, compress = False):
     for image in images:
         video.write(cv2.imread(os.path.join(image_dir, image)))
 
-    cv2.destroyAllWindows()
     video.release()
 
     if compress:
@@ -115,4 +116,5 @@ def generate_video(config, video_name, image_dir, video_dir, compress = False):
         except FileNotFoundError as e:
             print("You do not have ffmpeg installed!", e)
             print("You can install ffmpeg by entering 'pip install ffmpeg-python' in a terminal.")
+            assert False
 
