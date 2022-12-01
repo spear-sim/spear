@@ -84,16 +84,16 @@ class Env(gym.Env):
     def reset(self):
 
         ready = False
-        once = False
-        counter = 0
+        should_reset = True
+        num_ticks_since_reset = 0
 
         while not ready:
             self._begin_tick()
 
             # only reset the simulation once
-            if not once:
+            if should_reset:
                 self._reset()
-                once = True
+                should_reset = False
 
             self._tick()
 
@@ -101,16 +101,15 @@ class Env(gym.Env):
             ready = self._is_ready()
             if ready:
                 obs = self._get_observation()
-            else: 
-                counter += 1
-            
-            # Too many iterations are taken by the simulation to settle down,
-            # indicating that something is wrong... Call reset again.
-            if counter >= self._config.SIMULATION_CONTROLLER.MAX_NUMBER_READY_CHECKS:
-                print("Too many iterations are taken by the simulation to settle down. Calling reset again !") 
-                once = False
 
             self._end_tick()
+
+            # if the simulation is not ready after too many ticks, then reset again
+            num_ticks_since_reset = num_ticks_since_reset + 1
+            if not ready and num_ticks_since_reset >= self._config.SIMULATION_CONTROLLER.MAX_NUM_TICKS_AFTER_RESET:
+                should_reset = True
+                num_ticks_since_reset = 0
+                print("Too many ticks are taken by the simulation to settle down. Calling reset again !") 
 
         return obs
 
