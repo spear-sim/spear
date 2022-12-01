@@ -123,10 +123,6 @@ if __name__ == "__main__":
             # send zero action to the agent and collect initial trajectory observations:
             obs, _, _, info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
-            # debug
-            if args.debug:
-                show_obs_and_wait_for_key(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
-
             # initialize the driving policy with the desired trajectory 
             driving_policy.set_trajectory(info["agent_step_info"]["trajectory_data"])
 
@@ -150,6 +146,10 @@ if __name__ == "__main__":
 
                 # send control action to the agent and collect observations
                 obs, reward, done, info = env.step({"apply_voltage": action})
+
+                # debug
+                if args.debug:
+                    show_obs_and_wait_for_key(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
                 # save the collected rgb observations
                 plt.imsave(os.path.join(image_dir, "%d.jpeg"%i), obs["camera_final_color"].squeeze())
