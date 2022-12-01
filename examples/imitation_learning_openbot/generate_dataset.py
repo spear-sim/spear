@@ -176,7 +176,7 @@ if __name__ == "__main__":
                 df_ctrl = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,
                            "left_ctrl" : control_data_buffer[:][0],
                            "right_ctrl" : control_data_buffer[:][1]})
-                df_ctrl.to_csv(os.path.join(sensor_dir,"ctrlLog.txt"), mode="w", index=False, header=i==0)
+                df_ctrl.to_csv(os.path.join(sensor_dir,"ctrlLog.txt"), mode="w", index=False, header=True)
 
                 
                 # get the updated compass observation (with the last recorded position set as goal)
@@ -190,12 +190,12 @@ if __name__ == "__main__":
                            "dist[m]" : compass_observation[:][0],
                            "sinYaw" : compass_observation[:][1],
                            "cosYaw" : compass_observation[:][2]})
-                df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="w", index=False, header=i==0)
+                df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="w", index=False, header=True)
 
                 # reference of the images correespoinding to each control input
                 df_rgb = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,
                            "frame" : frame_data_buffer})
-                df_rgb.to_csv(os.path.join(sensor_dir,"rgbFrames.txt"), mode="w", index=False, header=i==0)
+                df_rgb.to_csv(os.path.join(sensor_dir,"rgbFrames.txt"), mode="w", index=False, header=True)
 
                 # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
                 df_pose = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,
@@ -205,14 +205,14 @@ if __name__ == "__main__":
                            "pitch[rad]" : state_data_buffer[:][3],
                            "yaw[rad]" : state_data_buffer[:][4],
                            "roll[rad]" : state_data_buffer[:][5]})
-                df_pose.to_csv(os.path.join(sensor_dir,"poseData.txt"), mode="w", index=False, header=i==0)
+                df_pose.to_csv(os.path.join(sensor_dir,"poseData.txt"), mode="w", index=False, header=True)
 
                 # waypoint data (for debug purposes)
                 df_waypoint = pd.DataFrame({"timestamp[ns]"  : time_data_buffer,
                            "waypoint_x[cm]" : waypoint_data_buffer[:][0],
                            "waypoint_y[cm]" : waypoint_data_buffer[:][1],
                            "waypoint_z[cm]" : waypoint_data_buffer[:][2]})
-                df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="w", index=False, header=i==0)
+                df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="w", index=False, header=True)
 
                 # set the goal position as the last position reached by the agent
                 goal_position_xy = np.array([state_data_buffer[executed_iterations-1][0],state_data_buffer[executed_iterations-1][1]], dtype=np.float32) # use the vehicle last x-y location as goal for the run

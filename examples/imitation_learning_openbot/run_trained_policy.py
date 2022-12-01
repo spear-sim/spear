@@ -86,11 +86,6 @@ if __name__ == "__main__":
             os.makedirs(image_dir, exist_ok=True)
             os.makedirs(result_dir, exist_ok=True)
 
-            # result file
-            f_result = open(os.path.join(result_dir,"resultLog.txt"), 'w')  
-            writer_result = csv.writer(f_result, delimiter=",")
-            writer_result.writerow( ('timestamp[ns]','left_ctrl','right_ctrl','x[cm]','y[cm]','z[cm]','pitch[rad]','yaw[rad]','roll[rad]','goal_x[cm]','goal_y[cm]','goal_z[cm]', 'goal_reached', 'collision') )
-
             print("----------------------")
             print(f"run {run} over {args.runs}")
             print("----------------------")
@@ -132,7 +127,21 @@ if __name__ == "__main__":
                         goal_reached_flag = True # raise goal_reached_flag to interrupt the current run and move to the next run
 
                 # populate result data file
-                writer_result.writerow( (time_stamp, action[0], action[1], obs["state_data"][0], obs["state_data"][1], obs["state_data"][2], obs["state_data"][3], obs["state_data"][4], obs["state_data"][5], info["agent_step_info"]["trajectory_data"][-1][0], info["agent_step_info"]["trajectory_data"][-1][1], info["agent_step_info"]["trajectory_data"][-1][2], goal_reached_flag, collision_flag) )  
+                df_result = pd.DataFrame({"timestamp[ns]"  : time_stamp,
+                           "left_ctrl" : action[0],
+                           "right_ctrl" : action[1],
+                           "x[cm]" : obs["state_data"][0],
+                           "y[cm]" : obs["state_data"][1],
+                           "z[cm]" : obs["state_data"][2],
+                           "pitch[rad]" : obs["state_data"][3],
+                           "yaw[rad]" : obs["state_data"][4],
+                           "roll[rad]" : obs["state_data"][5],
+                           "goal_x[cm]" : info["agent_step_info"]["trajectory_data"][-1][0],
+                           "goal_y[cm]" : info["agent_step_info"]["trajectory_data"][-1][1],
+                           "goal_z[cm]" : info["agent_step_info"]["trajectory_data"][-1][2],
+                           "goal_reached": goal_reached_flag,
+                           "collision" : collision_flag})
+                df_result.to_csv(os.path.join(result_dir,"resultLog.txt"), mode="a", index=False, header=i==0)
 
                 # termination condition
                 if goal_reached_flag:
