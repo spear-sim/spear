@@ -6,7 +6,6 @@ import numpy as np
 import os
 import pandas as pd
 import spear
-import sys
 
 
 if __name__ == "__main__":
@@ -72,10 +71,10 @@ if __name__ == "__main__":
                            "roll_degs" : roll_values})
         df.to_csv(args.poses_file, mode="a", index=False, header=i==0)
 
-        # plt.scatter(positions[:,0], positions[:,1], s=1.0)
-        # plt.gca().set_aspect("equal")
-        # plt.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
-        # plt.show()
+        plt.scatter(positions[:,0], positions[:,1], s=1.0)
+        plt.gca().set_aspect("equal")
+        plt.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
+        plt.show()
 
         # close the current scene
         env.close()

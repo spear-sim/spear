@@ -111,7 +111,6 @@ if __name__ == "__main__":
                 render_pass_dir = os.path.join(args.images_dir, render_pass)
                 assert os.path.exists(render_pass_dir)
                 if render_pass == "depth_glsl" or render_pass == "depth":
-                    plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
                     with h5py.File(os.path.join(render_pass_dir, "%04d.hdf5"%pose["index"]), 'w') as f:
                         f.create_dataset("data", data=obs["camera_" + render_pass], shape=obs["camera_" + render_pass].shape[:2])
                 else:
