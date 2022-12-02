@@ -101,7 +101,7 @@ if __name__ == "__main__":
         for run in range(args.runs):
 
             # build the evauation run data folder and its subfolders
-            exp_dir = f"run_{scene_id}_{run}"
+            exp_dir = f"run_{run}_{scene_id}"
             run_dir = os.path.join(eval_dir, exp_dir)
             data_dir = os.path.join(run_dir,"data")
             image_dir = os.path.join(data_dir, "images")
@@ -170,7 +170,7 @@ if __name__ == "__main__":
 
             if args.create_video: # if desired, generate a video from the collected rgb observations 
                 os.makedirs(video_dir, exist_ok=True)
-                video_name = scene_id + "_" + str(run)
+                video_name = str(run) + "_" + scene_id
                 generate_video(config, video_name, image_dir, video_dir, True)
 
         # close the current scene and give the system a bit of time before switching to the next scene.

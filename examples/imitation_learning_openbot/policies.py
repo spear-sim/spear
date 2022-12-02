@@ -1,7 +1,7 @@
+import cv2
 import numpy as np
 import tflite_runtime.interpreter as tflite
 import time
-import cv2
 
 from utils import get_compass_observation, get_relative_target_pose
 

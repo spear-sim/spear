@@ -1,12 +1,12 @@
 import argparse
 import csv
 import cv2
+import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import re
 import shutil
-import ffmpeg
 import spear
 import sys
 
@@ -30,7 +30,7 @@ def show_obs_and_wait_for_key(obs, obs_components, render_passes):
                 elif render_pass == "segmentation":
                     cv2.imshow("segmentation", obs["camera_segmentation"][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
                 elif render_pass == "depth_glsl":
-                    cv2.imshow("depth", obs["camera_depth_glsl"][:, :, :])
+                    cv2.imshow("depth", obs["camera_depth_glsl"])
                 else:
                     print(f"Error: {render_pass} is an unknown camera render pass.")
                     assert False
@@ -38,7 +38,7 @@ def show_obs_and_wait_for_key(obs, obs_components, render_passes):
             print(f"Error: {obs_component} is an unknown observation component.")
             assert False
                 
-    cv2.waitKey(0)
+    cv2.waitKey(1)
 
 
 # computes the 2D target position relative to the agent in world frame 

@@ -98,7 +98,7 @@ if __name__ == "__main__":
         # execute the desired number of runs in a given sceen
         while run < args.runs:
 
-            exp_dir = f"run_{scene_id}_{run}"
+            exp_dir = f"run_{run}_{scene_id}"
             
             # split data between training and evaluation sets
             if 100 * run < config.DRIVING_POLICY.PERCENTAGE_OF_TRAINING_DATA * args.runs:
@@ -235,7 +235,7 @@ if __name__ == "__main__":
 
                 if args.create_video: # if desired, generate a video from the collected rgb observations 
                     os.makedirs(video_dir, exist_ok=True)
-                    video_name = scene_id + "_" + str(run)
+                    video_name = str(run) + "_" + scene_id
                     generate_video(config, video_name, image_dir, video_dir, True)
 
                 run = run + 1 # update the run count and move to the next run 
