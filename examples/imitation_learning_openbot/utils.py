@@ -118,3 +118,54 @@ def generate_video(config, video_name, image_dir, video_dir, compress = False):
             print("You can install ffmpeg by entering 'pip install ffmpeg-python' in a terminal.")
             assert False
 
+def plot_tracking_performance(buffer_pose_current, buffer_pose_desired, plot_dir):
+
+    fig0, ax0 = plt.subplots(1, 1)
+    
+    current, = ax0.plot(buffer_pose_current[:,0], buffer_pose_current[:,1], marker='x', markersize=5.0, label='Actual Trajectory')
+    desired, = ax0.plot(buffer_pose_desired[:,0], buffer_pose_desired[:,1], marker='o', markersize=8.0, label='Desired Trajectory')
+    goal, = ax0.plot(buffer_pose_desired[-1,0], buffer_pose_desired[-1,1], marker='^', markersize=12.0, label='Goal')
+    start, = ax0.plot(buffer_pose_current[0,0], buffer_pose_current[0,1], marker='^', markersize=12.0, label='Start')
+    ax0.set_xlabel('x[cm]')
+    ax0.set_ylabel('y[cm]')
+    ax0.set_title('XY Position tracking')
+    ax0.grid()
+    fig0.legend((current, desired, goal, start), ('Actual Trajectory', 'Desired Trajectory', 'Goal', 'Start'), loc='upper left')
+    fig0.tight_layout()
+    fig0.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
+
+    plt.savefig(plot_dir+'xy_position_tracking.png', dpi=fig0.dpi)
+
+    fig1, (ax1,ax2,ax3) = plt.subplots(3, 1)
+
+    x, = ax1.plot(buffer_pose_current[:,0], label='Actual X')
+    x_d, = ax1.plot(buffer_pose_desired[:,0], label='Desired X')
+    ax1.set_xlabel('iterations')
+    ax1.set_ylabel('x[cm]')
+    ax1.set_title('X tracking')
+    ax1.grid()
+    fig1.legend((x, x_d), ('Actual X', 'Desired X'), loc='upper left')
+
+    y, = ax2.plot(buffer_pose_current[:,1], label='Actual Y')
+    y_d, = ax2.plot(buffer_pose_desired[:,1], label='Desired Y')
+    ax2.set_xlabel('iterations')
+    ax2.set_ylabel('y[cm]')
+    ax2.set_title('Y tracking')
+    ax2.grid()
+    fig1.legend((y, y_d), ('Actual Y', 'Desired Y'), loc='center left')
+    yaw, = ax3.plot(buffer_pose_current[:,4], label='Actual Yaw')
+    yaw_d, = ax3.plot(np.arctan2(buffer_pose_desired[:,1] - buffer_pose_current[:,1], buffer_pose_desired[:,0] - buffer_pose_current[:,0]), label='Desired Yaw')
+    
+    ax3.set_xlabel('iterations')
+    ax3.set_ylabel('yaw[rad]')
+    ax3.set_title('Yaw tracking')
+    ax3.grid()
+    fig1.legend((yaw, yaw_d), ('Actual Yaw', 'Desired Yaw'), loc='lower left')
+    fig1.tight_layout()
+    fig1.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
+
+    plt.savefig(plot_dir+'control_performance.png', dpi=fig1.dpi)
+
+    #plt.show()
+
+    

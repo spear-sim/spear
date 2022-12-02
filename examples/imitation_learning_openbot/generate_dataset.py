@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", action="store_true", help="debug flag to display the raw observations.")
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
+    parser.add_argument("-p", "--create_plot", action="store_true", help="generate a set of plots to assess the performance of the control policy.")
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
     parser.add_argument("-s", "--scene_id", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
     parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
@@ -29,9 +30,8 @@ if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.dirname(__file__))
     video_dir = os.path.join(base_dir, "videos")
     dataset_dir = os.path.join(base_dir, "dataset")
-    upload_dir = os.path.join(dataset_dir, "uploaded")
-    train_data_dir = os.path.join(upload_dir, "train_data")
-    test_data_dir = os.path.join(upload_dir, "test_data")
+    train_data_dir = os.path.join(dataset_dir, "train_data")
+    test_data_dir = os.path.join(dataset_dir, "test_data")
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
@@ -127,11 +127,11 @@ if __name__ == "__main__":
             driving_policy.set_trajectory(info["agent_step_info"]["trajectory_data"])
 
             collision_flag = False # flag raised when the vehicle collides with the environment. It restarts the run without iterating the run count
-            control_data_buffer = np.empty([args.iterations, 2]) # buffer containing the control_data observations made by the agent during a run
-            state_data_buffer = np.empty([args.iterations, 6]) # buffer containing the state_data observations made by the agent during a run
-            waypoint_data_buffer = np.empty([args.iterations, 3]) # buffer containing the waypoint coordinates being tracked by the agent during a run
-            time_data_buffer = np.empty([args.iterations, 1]) # buffer containing the time stamps of the observations made by the agent during a run
-            frame_data_buffer = np.empty([args.iterations, 1]) # buffer containing the frame ids
+            control_data_buffer = np.empty([args.iterations, 2], dtype=np.float32) # buffer containing the control_data observations made by the agent during a run
+            state_data_buffer = np.empty([args.iterations, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during a run
+            waypoint_data_buffer = np.empty([args.iterations, 3], dtype=np.float32) # buffer containing the waypoint coordinates being tracked by the agent during a run
+            time_data_buffer = np.empty([args.iterations, 1], dtype=np.int32) # buffer containing the time stamps of the observations made by the agent during a run
+            frame_data_buffer = np.empty([args.iterations, 1], dtype=np.int32) # buffer containing the frame ids
             executed_iterations = 0
             
             # execute the desired number of iterations in a given run
@@ -140,6 +140,7 @@ if __name__ == "__main__":
                 print(f"iteration {i} of {args.iterations}")
 
                 time_stamp = int(10000*datetime.datetime.now().timestamp())
+                print(time_stamp)
 
                 # update control action 
                 action, policy_step_info = driving_policy.update(obs)
@@ -196,7 +197,7 @@ if __name__ == "__main__":
                     df_ctrl = pd.DataFrame({"timestamp[ns]"  : time_data_buffer[it],
                             "left_ctrl" : control_data_buffer[it][0],
                             "right_ctrl" : control_data_buffer[it][1]})
-                    df_ctrl.to_csv(os.path.join(sensor_dir,"ctrlLog.txt"), mode="w", index=False, header=it==0)
+                    df_ctrl.to_csv(os.path.join(sensor_dir,"ctrlLog.txt"), mode="a", index=False, header=it==0)
 
                 
                     # get the updated compass observation (with the last recorded position set as goal)
@@ -209,12 +210,12 @@ if __name__ == "__main__":
                             "dist[m]" : compass_observation[0],
                             "sinYaw" : compass_observation[1],
                             "cosYaw" : compass_observation[2]})
-                    df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="w", index=False, header=it==0)
+                    df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="a", index=False, header=it==0)
 
                     # reference of the images correespoinding to each control input
                     df_rgb = pd.DataFrame({"timestamp[ns]"  : time_data_buffer[it],
-                            "frame" : frame_data_buffer[it]})
-                    df_rgb.to_csv(os.path.join(sensor_dir,"rgbFrames.txt"), mode="w", index=False, header=it==0)
+                            "frame" : int(frame_data_buffer[it])})
+                    df_rgb.to_csv(os.path.join(sensor_dir,"rgbFrames.txt"), mode="a", index=False, header=it==0)
 
                     # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
                     df_pose = pd.DataFrame({"timestamp[ns]"  : time_data_buffer[it],
@@ -224,14 +225,17 @@ if __name__ == "__main__":
                             "pitch[rad]" : state_data_buffer[it][3],
                             "yaw[rad]" : state_data_buffer[it][4],
                             "roll[rad]" : state_data_buffer[it][5]})
-                    df_pose.to_csv(os.path.join(sensor_dir,"poseData.txt"), mode="w", index=False, header=it==0)
+                    df_pose.to_csv(os.path.join(sensor_dir,"poseData.txt"), mode="a", index=False, header=it==0)
 
                     # waypoint data (for debug purposes)
                     df_waypoint = pd.DataFrame({"timestamp[ns]"  : time_data_buffer[it],
                             "waypoint_x[cm]" : waypoint_data_buffer[it][0],
                             "waypoint_y[cm]" : waypoint_data_buffer[it][1],
                             "waypoint_z[cm]" : waypoint_data_buffer[it][2]})
-                    df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="w", index=False, header=it==0)
+                    df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="a", index=False, header=it==0)
+
+                if args.create_plot: # if desired, generate a plot of the control performance
+                    plot_tracking_performance(state_data_buffer, waypoint_data_buffer, run_dir)
 
                 if args.create_video: # if desired, generate a video from the collected rgb observations 
                     os.makedirs(video_dir, exist_ok=True)

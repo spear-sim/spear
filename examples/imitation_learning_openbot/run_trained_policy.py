@@ -16,9 +16,10 @@ if __name__ == "__main__":
 
     # parse arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--control_policy", type=str, help="name of the control policy to be executed", required=True)
     parser.add_argument("-d", "--debug", action="store_true", help="debug flag to display the raw observations.")
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
-    parser.add_argument("-p", "--policy", type=str, help="name of the control policy to be executed", required=True)
+    parser.add_argument("-p", "--create_plot", action="store_true", help="generate a set of plots to assess the performance of the control policy.")
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
     parser.add_argument("-s", "--scene_id", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
     parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
@@ -62,10 +63,10 @@ if __name__ == "__main__":
         config.freeze()
 
     # load driving policy
-    policy_tflite_file = os.path.join(model_dir, args.policy + ".tflite")
+    policy_tflite_file = os.path.join(model_dir, args.control_policy + ".tflite")
     assert os.path.exists(policy_tflite_file)
     config.defrost()
-    config.DRIVING_POLICY.PILOT_NET.PATH = "./models/" + args.policy + ".tflite"
+    config.DRIVING_POLICY.PILOT_NET.PATH = "./models/" + args.control_policy + ".tflite"
     config.freeze()
     driving_policy = OpenBotPilotNetPolicy(config)
 
@@ -172,6 +173,9 @@ if __name__ == "__main__":
                 os.makedirs(video_dir, exist_ok=True)
                 video_name = str(run) + "_" + scene_id
                 generate_video(config, video_name, image_dir, video_dir, True)
+            
+            if args.create_plot: # if desired, generate a plot of the control performance
+                plot_tracking_performance(state_data_buffer, waypoint_data_buffer, run_dir)
 
         # close the current scene and give the system a bit of time before switching to the next scene.
         env.close()
