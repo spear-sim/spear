@@ -55,8 +55,9 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), UTF8_TO_TCHAR(render_pass_name.c_str())));
         ASSERT(render_pass.scene_capture_component_);
 
-        render_pass.scene_capture_component_->CaptureSource = SCS_FinalColorHDR;
+        render_pass.scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
         render_pass.scene_capture_component_->TextureTarget = render_pass.texture_render_target_;
+        render_pass.scene_capture_component_->bAlwaysPersistRenderingState = true;
         render_pass.scene_capture_component_->AttachToComponent(camera_component, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         render_pass.scene_capture_component_->SetVisibility(true);
         render_pass.scene_capture_component_->RegisterComponent();
@@ -155,6 +156,15 @@ void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureCompon
     scene_capture_component->PostProcessSettings.AutoExposureSpeedUp             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP"});
     scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN"});
     scene_capture_component->PostProcessSettings.AutoExposureSpeedDown           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN"});
+    
+    //scene_capture_component->PostProcessSettings.bOverride_AutoExposureMinBrightness = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MIN_BRIGHTNESS"});
+    //scene_capture_component->PostProcessSettings.AutoExposureMinBrightness           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_MIN_BRIGHTNESS"});
+    //scene_capture_component->PostProcessSettings.bOverride_AutoExposureMaxBrightness = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MAX_BRIGHTNESS"});
+    //scene_capture_component->PostProcessSettings.AutoExposureMaxBrightness           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_MAX_BRIGHTNESS"});
+    //scene_capture_component->PostProcessSettings.bOverride_HistogramLogMin           = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_HISTOGRAM_LOG_MIN"});
+    //scene_capture_component->PostProcessSettings.HistogramLogMin                     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_HISTOGRAM_LOG_MIN"});
+    //scene_capture_component->PostProcessSettings.bOverride_HistogramLogMax           = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_HISTOGRAM_LOG_MAX"});
+    //scene_capture_component->PostProcessSettings.HistogramLogMax                     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_HISTOGRAM_LOG_MAX"});
 
     // enable raytracing features
     scene_capture_component->bUseRayTracingIfEnabled = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_USE_RAYTRACING_IF_ENABLED"});
