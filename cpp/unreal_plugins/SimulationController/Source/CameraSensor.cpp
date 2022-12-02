@@ -43,6 +43,7 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         // TODO: allow returning floating point data instead of hardcoding to PF_B8G8R8A8
         bool force_linear_gamma = false;
         bool clear_render_target = true;
+
         render_pass.texture_render_target_->RenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8;
         render_pass.texture_render_target_->TargetGamma = GEngine->GetDisplayGamma();
         render_pass.texture_render_target_->SRGB = true;
@@ -55,7 +56,9 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), UTF8_TO_TCHAR(render_pass_name.c_str())));
         ASSERT(render_pass.scene_capture_component_);
 
+        render_pass.scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
         render_pass.scene_capture_component_->TextureTarget = render_pass.texture_render_target_;
+        render_pass.scene_capture_component_->bAlwaysPersistRenderingState = true;
         render_pass.scene_capture_component_->AttachToComponent(camera_component, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         render_pass.scene_capture_component_->SetVisibility(true);
         render_pass.scene_capture_component_->RegisterComponent();
@@ -150,12 +153,20 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
 void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureComponent2D* scene_capture_component)
 {
     // update auto-exposure settings
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedUp   = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP"});
-    scene_capture_component->PostProcessSettings.AutoExposureSpeedUp             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP"});
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN"});
-    scene_capture_component->PostProcessSettings.AutoExposureSpeedDown           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN"});
+    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedUp       = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP"});
+    scene_capture_component->PostProcessSettings.AutoExposureSpeedUp                 = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP"});
+    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedDown     = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN"});
+    scene_capture_component->PostProcessSettings.AutoExposureSpeedDown               = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN"});
+    scene_capture_component->PostProcessSettings.bOverride_AutoExposureMinBrightness = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MIN_BRIGHTNESS"});
+    scene_capture_component->PostProcessSettings.AutoExposureMinBrightness           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_MIN_BRIGHTNESS"});
+    scene_capture_component->PostProcessSettings.bOverride_AutoExposureMaxBrightness = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MAX_BRIGHTNESS"});
+    scene_capture_component->PostProcessSettings.AutoExposureMaxBrightness           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_MAX_BRIGHTNESS"});
+    scene_capture_component->PostProcessSettings.bOverride_HistogramLogMin           = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_HISTOGRAM_LOG_MIN"});
+    scene_capture_component->PostProcessSettings.HistogramLogMin                     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_HISTOGRAM_LOG_MIN"});
+    scene_capture_component->PostProcessSettings.bOverride_HistogramLogMax           = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_HISTOGRAM_LOG_MAX"});
+    scene_capture_component->PostProcessSettings.HistogramLogMax                     = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_HISTOGRAM_LOG_MAX"});
 
-    // enable raytracing features
+    // enable raytracing features 
     scene_capture_component->bUseRayTracingIfEnabled = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_USE_RAYTRACING_IF_ENABLED"});
 
     // update indirect lighting 
@@ -223,7 +234,6 @@ void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureCompon
     scene_capture_component->ShowFlags.SetAntiAliasing                 (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_ANTI_ALIASING"}));
     scene_capture_component->ShowFlags.SetRayTracedDistanceFieldShadows(Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_RAYTRACED_DISTANCE_FIELD_SHADOWS"}));
     scene_capture_component->ShowFlags.SetDynamicShadows               (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_DYNAMIC_SHADOWS"}));
-
 }
 
 std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
@@ -232,6 +242,7 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
 
     // get data from all passes
     for (auto& render_pass : render_passes_) {
+        //render_pass.second.texture_render_target_->TargetGamma = GEngine->GetDisplayGamma();
 
         FTextureRenderTargetResource* target_resource = render_pass.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
         ASSERT(target_resource);

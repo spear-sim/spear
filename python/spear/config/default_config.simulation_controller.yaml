@@ -43,6 +43,12 @@ SIMULATION_CONTROLLER:
     OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
     STEP_INFO_COMPONENTS: ["trajectory_data"]
     IS_READY_VELOCITY_THRESHOLD: 0.0
+    POSITION_X: 0.0
+    POSITION_Y: 0.0
+    POSITION_Z: 0.0
+    ROTATION_ROLL: 0.0
+    ROTATION_YAW: 0.0
+    ROTATION_PITCH: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
       IMAGE_HEIGHT: 512
@@ -158,9 +164,17 @@ SIMULATION_CONTROLLER:
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP: 9999.0                          # ClampMin=0.02, UIMax=20.0
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN: 9999.0                        # ClampMin=0.02, UIMax=20.0
+    FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MIN_BRIGHTNESS: True
+    FINAL_COLOR_AUTO_EXPOSURE_MIN_BRIGHTNESS: -10.0                     # ClampMin=-10.0, UIMax=20.0
+    FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_MAX_BRIGHTNESS: True
+    FINAL_COLOR_AUTO_EXPOSURE_MAX_BRIGHTNESS: 5.0                       # ClampMin=-10.0, UIMax=20.0
+    FINAL_COLOR_OVERRIDE_HISTOGRAM_LOG_MIN: False
+    FINAL_COLOR_HISTOGRAM_LOG_MIN: -9.0                                # ClampMin=-10.0, UIMax=20.0
+    FINAL_COLOR_OVERRIDE_HISTOGRAM_LOG_MAX: False
+    FINAL_COLOR_HISTOGRAM_LOG_MAX: 16.0                                   # ClampMin=-10.0, UIMax=20.0
     FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY: True
     FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
-    FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: True                         # set to True to use ray-tracing features
+    FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: False                         # set to True to use ray-tracing features
     FINAL_COLOR_OVERRIDE_RAYTRACING_GI: True
     FINAL_COLOR_RAYTRACING_GI_TYPE: "BruteForce"                        # set to "BruteForce" when using ray-tracing
     FINAL_COLOR_OVERRIDE_RAYTRACING_GI_MAX_BOUNCES: True
@@ -233,4 +247,4 @@ SIMULATION_CONTROLLER:
     FINAL_COLOR_AFFECT_GLOBAL_ILLUMINATION: True
     FINAL_COLOR_CAST_RAYTRACED_SHADOWS: True
     FINAL_COLOR_AFFECT_REFLECTION: True
-    FINAL_COLOR_SAMPLES_PER_PIXEL: 16                                   # ClampMin=1, ClampMax=64
+    FINAL_COLOR_SAMPLES_PER_PIXEL: 32                                   # ClampMin=1, ClampMax=64

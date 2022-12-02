@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import os
 import spear
+import time
 
 if __name__ == "__main__":
 
@@ -16,6 +17,11 @@ if __name__ == "__main__":
     # reset the simulation to get the first observation    
     obs = env.reset()
 
+    #for x in range(1,100):
+    #    env._begin_tick()
+    #    env._tick()
+    #    env._end_tick()
+
     cv2.imshow("camera_final_color", obs["camera_final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
     cv2.waitKey(0)
 
@@ -25,7 +31,7 @@ if __name__ == "__main__":
             obs, reward, done, info = env.step({"apply_force": np.array([1, 1], dtype=np.float32)})
             print("SphereAgent: ", obs["compass"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
         elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
-            obs, reward, done, info = env.step({"apply_voltage": np.array([1, 1], dtype=np.float32)})
+            obs, reward, done, info = env.step({"apply_voltage": np.array([0.2, 0.2], dtype=np.float32)})
             print("OpenBotAgent: ", obs["state_data"], obs["control_data"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
         else:
             assert False
@@ -35,7 +41,7 @@ if __name__ == "__main__":
 
         if done:
             env.reset()
-
+    #time.sleep(200)
     cv2.destroyAllWindows()
 
     # close the environment

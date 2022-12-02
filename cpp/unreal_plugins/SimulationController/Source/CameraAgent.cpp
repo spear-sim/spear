@@ -85,9 +85,9 @@ void CameraAgent::findObjectReferences(UWorld* world)
             light->GetLightComponent()->SetAffectReflection        (Config::getValue<bool>        ({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_AFFECT_REFLECTION"}));
             light->GetLightComponent()->SetSamplesPerPixel         (Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_SAMPLES_PER_PIXEL"}));
         }
-        if (spot_light != nullptr) {
-            spot_light->Destroy();
-        }
+        //if (spot_light != nullptr) {
+        //    spot_light->Destroy();
+        //}
     }
 
     light_actors.Empty();

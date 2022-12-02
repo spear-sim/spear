@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import spear
 import sys
+import time
 
 
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
@@ -84,8 +85,8 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene_id + "." + "Map_" + scene_id
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene_id
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene_id + "." + "Map_" + scene_id + "_defaultLight"
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene_id + "_defaultLight"
             config.freeze()
 
             # create Env object
@@ -93,6 +94,10 @@ if __name__ == "__main__":
 
             # reset the simulation
             _ = env.reset()
+
+            #for x in range(1,500):
+            #    env.single_step()
+            start_time = time.time()
 
         # set the pose and obtain corresponding images
         obs, _, _, _ = env.step(
@@ -106,7 +111,11 @@ if __name__ == "__main__":
             assert os.path.exists(image_dir)
             plt.imsave(os.path.join(image_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
 
+        #input()
+
     # close the current Env
+    end_time = time.time()
+    print(end_time - start_time)
     env.close()
 
     print("Done.")

@@ -32,7 +32,15 @@ OpenBotAgent::OpenBotAgent(UWorld* world)
     FActorSpawnParameters spawn_params;
     spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OPENBOT_ACTOR_NAME"}).c_str());
     spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
+    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(
+        FVector( Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "POSITION_X"}),
+                 Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "POSITION_Y"}),
+                 Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "POSITION_Z"})),
+        FRotator(Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "ROTATION_PITCH"}),
+                 Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "ROTATION_YAW"}),
+                 Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "ROTATION_ROLL"})),
+        spawn_params);
+
     ASSERT(open_bot_pawn_);
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
