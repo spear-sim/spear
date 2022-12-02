@@ -37,8 +37,6 @@ def show_obs_and_wait_for_key(obs, obs_components, render_passes):
         else:
             print(f"Error: {obs_component} is an unknown observation component.")
             assert False
-                
-    cv2.waitKey(1)
 
 
 # computes the 2D target position relative to the agent in world frame 
@@ -134,7 +132,7 @@ def plot_tracking_performance(buffer_pose_current, buffer_pose_desired, plot_dir
     fig0.tight_layout()
     fig0.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
 
-    plt.savefig(plot_dir+'xy_position_tracking.png', dpi=fig0.dpi)
+    plt.savefig(os.path.join(plot_dir, 'xy_position_tracking.png'), dpi=fig0.dpi)
 
     fig1, (ax1,ax2,ax3) = plt.subplots(3, 1)
 
@@ -164,7 +162,7 @@ def plot_tracking_performance(buffer_pose_current, buffer_pose_desired, plot_dir
     fig1.tight_layout()
     fig1.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
 
-    plt.savefig(plot_dir+'control_performance.png', dpi=fig1.dpi)
+    plt.savefig(os.path.join(plot_dir, 'control_performance.png'), dpi=fig1.dpi)
 
     #plt.show()
 
