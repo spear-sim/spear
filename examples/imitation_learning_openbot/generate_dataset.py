@@ -140,7 +140,6 @@ if __name__ == "__main__":
                 print(f"iteration {i} of {args.iterations}")
 
                 time_stamp = int(10000*datetime.datetime.now().timestamp())
-                print(time_stamp)
 
                 # update control action 
                 action, policy_step_info = driving_policy.update(obs)
