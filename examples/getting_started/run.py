@@ -27,7 +27,7 @@ if __name__ == "__main__":
     obs = env.reset()
 
     if args.benchmark:
-        start_time = time.time()
+        start_time_seconds = time.time()
     else:
         cv2.imshow("camera_final_color", obs["camera_final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
         cv2.waitKey(0)
@@ -53,9 +53,9 @@ if __name__ == "__main__":
             env.reset()
 
     if args.benchmark:
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time / NUM_STEPS)*1000, NUM_STEPS / elapsed_time))
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000, NUM_STEPS / elapsed_time_seconds))
     else:
         cv2.destroyAllWindows()
 

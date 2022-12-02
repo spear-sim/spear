@@ -14,7 +14,7 @@ SIMULATION_CONTROLLER:
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   CAMERA_SENSOR:
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 to for baked
 
   SPHERE_AGENT:
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
@@ -34,7 +34,7 @@ SIMULATION_CONTROLLER:
       YAW_SCALE: 1.0
     CAMERA:
       ACTOR_NAME: "CameraActor"
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      RENDER_PASSES: ["final_color"] # "final_color", "depth", "normals"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
