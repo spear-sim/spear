@@ -30,6 +30,14 @@ NOTE: In these steps, ensure that the required pak files are in the executable_c
 
 It is here assumed that you already followed the [getting started tutorial](https://github.com/isl-org/spear/blob/main/docs/getting_started.md) and hence have working SPEAR pipeine. 
 
+## Generate random poses
+
+For this scenario, you will need to run 
+
+```bash
+python generate_poses.py --num_poses_per_scene <required_number> --poses_file <path_to_output_poses_file> --scene_id "235554..." "235576..." "235114..."
+```
+
 ## Generate dataset
 
 For this scenario, you will need to run
