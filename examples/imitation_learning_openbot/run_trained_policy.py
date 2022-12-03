@@ -124,22 +124,31 @@ if __name__ == "__main__":
             # initialize the driving policy with the desired trajectory 
             driving_policy.set_trajectory(info["agent_step_info"]["trajectory_data"])
 
+            state_data_buffer = np.empty([args.iterations, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during a run
+            waypoint_data_buffer = np.empty([len(info["agent_step_info"]["trajectory_data"]), 3], dtype=np.float32) # buffer containing the waypoint coordinates of the optimal goal trajectory
+
+            # save the optimal goal trajectory 
+            for j in range(len(info["agent_step_info"]["trajectory_data"])):
+                waypoint_data_buffer[j] = info["agent_step_info"]["trajectory_data"][j]
+                df_trajectory = pd.DataFrame({"x_d[cm]" : [info["agent_step_info"]["trajectory_data"][j][0]],
+                            "y_d[cm]" : [info["agent_step_info"]["trajectory_data"][j][1]],
+                            "z_d[cm]" : [info["agent_step_info"]["trajectory_data"][j][2]]})
+                df_trajectory.to_csv(os.path.join(result_dir,"trajectoryLog.txt"), mode="a", index=False, header=j==0)
+
             # execute the desired number of iterations in a given run
             for i in range(args.iterations):
 
                 print(f"iteration {i} of {args.iterations}")
 
-                time_stamp = int(10000*datetime.datetime.now().timestamp())
-
                 # update control action 
-                action, policy_step_info = driving_policy.update(obs)
+                action, policy_step_info = driving_policy.step(obs)
 
                 # send control action to the agent and collect observations
-                obs, reward, done, info = env.step({"apply_voltage": action})
+                obs, _, _, info = env.step({"apply_voltage": action})
 
                 # debug
                 if args.debug:
-                    show_obs_and_wait_for_key(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
+                    show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
                 # check the stop conditions of the run
                 if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
@@ -152,9 +161,9 @@ if __name__ == "__main__":
                 # save the collected rgb observations
                 plt.imsave(os.path.join(image_dir, "%d.jpeg"%i), obs["camera_final_color"].squeeze())
 
-                # populate result data file
-                df_result = pd.DataFrame({"timestamp[ns]"  : time_stamp,
-                           "left_ctrl" : action[0],
+                # populate buffer and result data file
+                state_data_buffer[i] = obs["state_data"]
+                df_result = pd.DataFrame({"left_ctrl" : action[0],
                            "right_ctrl" : action[1],
                            "x[cm]" : obs["state_data"][0],
                            "y[cm]" : obs["state_data"][1],

@@ -30,31 +30,26 @@ NOTE: In these steps, ensure that the required pak files are in the executable_c
 
 It is here assumed that you already followed the [getting started tutorial](https://github.com/isl-org/spear/blob/main/docs/getting_started.md) and hence have working SPEAR pipeine. 
 
-### Install the openbot_spear Python package
-
-```console
-# activate the spear environment
-conda activate spear-env
-
-# install the openbot_spear Python package
-pip install -e openbot
-```
-You should now be able to follow the [imitation learning tutorial](https://github.com/isl-org/spear/tree/main/examples/openbot/imitation_learning)
-
 ## Generate dataset
 
 For this scenario, you will need to run
 
 ```bash
-python generate_dataset.py --iterations 1000 --runs 100 --scene_id "235554..." "235576..." "235114..." 
+# activate the spear environment
+conda activate spear-env
+
+python generate_dataset.py --iterations 1000 --runs 100 --scene_id "235554..." "235576..." "235114..." --create_video --create_plot
 ```
 
 The generated dataset will have the folowing structrure, to comply with the [OpenBot training pipeline](https://github.com/isl-org/OpenBot/tree/master/policy):
 
 ```
-dataset/uploaded
+dataset
+|-- videos
+| |-- 0_235114..._compressed.mp4
+| |-- ...
 |-- train_data
-| |-- run_235114..._0/data
+| |-- run_0_235114.../data
 | | |-- images
 | | | |-- 0.jpeg
 | | | |-- ...
@@ -67,7 +62,7 @@ dataset/uploaded
 | | | |-- waypointData.txt
 | |-- ...
 |-- test_data
-| |-- run_235114..._80/data
+| |-- run_80_235114.../data
 | | |-- images
 | | | |-- 0.jpeg
 | | | |-- ...
@@ -90,7 +85,26 @@ As the structure of the data collected with SPEAR natively complies with the Ope
 For this scenario, you will need to run
 
 ```bash
-python run_trained_policy.py --policy <policy_name> --iterations 1000 --runs 100 --scene_id "235554..." "235576..." "235114..." 
+# activate the spear environment
+conda activate spear-env
+
+python run_trained_policy.py --control_policy <policy_name> --iterations 1000 --runs 100 --scene_id "235554..." "235576..." "235114..." --create_video --create_plot
 ```
 
+The result will be stored in the `eval` folder
 
+```
+eval
+|-- videos
+| |-- 0_235114..._compressed.mp4
+| |-- ...
+|-- run_0_235114.../data
+| |-- images
+| | |-- 0.jpeg
+| | |-- ...
+| | |-- 999.jpeg
+| |-- results
+| | |-- resultLog.txt
+| | |-- trajectoryLog.txt
+|-- ...
+```

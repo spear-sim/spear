@@ -105,7 +105,7 @@ class Env(gym.Env):
 
             self._end_tick()
 
-            # if the simulation is not ready after too many ticks, then reset again
+            # if the simulation is not ready after a specified number of ticks, then reset again
             num_ticks_since_reset = num_ticks_since_reset + 1
             if not ready and num_ticks_since_reset >= self._config.SIMULATION_CONTROLLER.MAX_NUM_TICKS_AFTER_RESET:
                 should_reset = True

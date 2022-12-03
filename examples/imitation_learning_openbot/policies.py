@@ -1,4 +1,3 @@
-import cv2
 import numpy as np
 import tflite_runtime.interpreter as tflite
 import time
@@ -9,8 +8,7 @@ from utils import get_compass_observation, get_relative_target_pose
 class OpenBotDrivingPolicy:
 
     def __init__(self, config):
-        self.acceptance_radius = config.DRIVING_POLICY.ACCEPTANCE_RADIUS
-        self.control_saturation = config.DRIVING_POLICY.CONTROL_SATURATION
+        self.config = config
         self.trajectory = np.empty((0, 3), dtype=float)
         self.position_xy_desired = np.empty((0, 2), dtype=float)
         self.position_xy_current = np.empty((0, 2), dtype=float)
@@ -22,8 +20,8 @@ class OpenBotDrivingPolicy:
         self.policy_step_info = {"current_waypoint" : np.empty((0, 2), dtype=float), "goal_reached" : False}
         
         # perform sanity checks
-        assert self.acceptance_radius >= 0.0
-        assert self.control_saturation >= 0.0
+        assert self.config.DRIVING_POLICY.ACCEPTANCE_RADIUS >= 0.0
+        assert self.config.DRIVING_POLICY.CONTROL_SATURATION >= 0.0
 
 
     def set_trajectory(self, trajectory):
@@ -33,7 +31,7 @@ class OpenBotDrivingPolicy:
         assert self.num_waypoints >= 0
 
 
-    def update(self, obs):
+    def step(self, obs):
         # xy position of the next waypoint in world frame:
         self.position_xy_desired = np.array([self.trajectory[self.index_waypoint][0], self.trajectory[self.index_waypoint][1]], dtype=np.float32) # [x_des, y_des]
         self.policy_step_info["current_waypoint"] = self.trajectory[self.index_waypoint]
@@ -49,9 +47,9 @@ class OpenBotDrivingPolicy:
         self.xy_position_error_norm = np.linalg.norm(self.xy_position_error) * 0.01
         
         # is the current waypoint close enough to be considered as "reached" ?
-        waypoint_reached = (self.xy_position_error_norm <= self.acceptance_radius)
+        waypoint_reached = (self.xy_position_error_norm <= self.config.DRIVING_POLICY.ACCEPTANCE_RADIUS)
 
-        # if a waypoint of the trajectory is "reached", based on the autopilot's acceptance_radius condition 
+        # if a waypoint of the trajectory is "reached", based on the autopilot's config.DRIVING_POLICY.ACCEPTANCE_RADIUS condition 
         if waypoint_reached: 
             if self.index_waypoint < self.num_waypoints: # if this waypoint is not the final "goal"
                 print(f"Waypoint {self.index_waypoint} over {self.num_waypoints} reached !")
@@ -62,27 +60,22 @@ class OpenBotDrivingPolicy:
         else:
             self.policy_step_info["goal_reached"] = False 
 
+
 class OpenBotPIDPolicy(OpenBotDrivingPolicy):
 
     def __init__(self, config): 
         super().__init__(config)
-        self.kp_lin = config.DRIVING_POLICY.PID.PROPORTIONAL_GAIN_DIST
-        self.kd_lin = config.DRIVING_POLICY.PID.DERIVATIVE_GAIN_DIST
-        self.kp_ang = config.DRIVING_POLICY.PID.PROPORTIONAL_GAIN_HEADING
-        self.kd_ang = config.DRIVING_POLICY.PID.DERIVATIVE_GAIN_HEADING
-        self.forward_min_angle = config.DRIVING_POLICY.PID.FORWARD_MIN_ANGLE
-        self.dt = config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
         self.position_xy_old = np.zeros(2, dtype=np.float32)
         self.yaw_old = 0.0
-        self.first_update = True
+        self.first_step = True
 
         # perform sanity checks
-        assert self.kp_lin >= 0.0
-        assert self.kd_lin >= 0.0
-        assert self.kp_ang >= 0.0
-        assert self.kd_ang >= 0.0
-        assert self.forward_min_angle >= 0.0
-        assert self.dt > 0.0 
+        assert self.config.DRIVING_POLICY.PID.PROPORTIONAL_GAIN_DIST >= 0.0
+        assert self.config.DRIVING_POLICY.PID.DERIVATIVE_GAIN_DIST >= 0.0
+        assert self.config.DRIVING_POLICY.PID.PROPORTIONAL_GAIN_HEADING >= 0.0
+        assert self.config.DRIVING_POLICY.PID.DERIVATIVE_GAIN_HEADING >= 0.0
+        assert self.config.DRIVING_POLICY.PID.FORWARD_MIN_ANGLE >= 0.0
+        assert self.config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS > 0.0 
     
 
     def set_trajectory(self, trajectory):
@@ -90,43 +83,44 @@ class OpenBotPIDPolicy(OpenBotDrivingPolicy):
         self.index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
 
 
-    def update(self, obs):
+    def step(self, obs):
 
         # update waypoint and check location reached
-        super().update(obs)
+        super().step(obs)
 
         # avoid discontinuities on the derivative
-        if self.first_update: 
+        if self.first_step: 
             self.position_xy_old = self.position_xy_current
             self.yaw_old = self.yaw_current
-            self.first_update = False
+            self.first_step = False
 
         # velocity computation
-        lin_vel_norm = np.linalg.norm((self.position_xy_current - self.position_xy_old) / self.dt) * 0.01 
+        lin_vel_norm = np.linalg.norm((self.position_xy_current - self.position_xy_old) / self.config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS) * 0.01 
         self.position_xy_old = self.position_xy_current
-        ang_vel_norm = (self.yaw_current - self.yaw_old)/self.dt 
+        ang_vel_norm = (self.yaw_current - self.yaw_old)/self.config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
         self.yaw_old = self.yaw_current
 
         # compute angular component of motion 
-        right_ctrl = -self.kp_ang * self.yaw_error - self.kd_ang * ang_vel_norm;
-        right_ctrl = np.clip(right_ctrl, -self.control_saturation, self.control_saturation)
+        right_ctrl = -self.config.DRIVING_POLICY.PID.PROPORTIONAL_GAIN_HEADING * self.yaw_error - self.config.DRIVING_POLICY.PID.DERIVATIVE_GAIN_HEADING * ang_vel_norm;
+        right_ctrl = np.clip(right_ctrl, -self.config.DRIVING_POLICY.CONTROL_SATURATION, self.config.DRIVING_POLICY.CONTROL_SATURATION)
 
-        # only compute the linear component of motion if the vehicle is facing its target (modulo forward_min_angle)
+        # only compute the linear component of motion if the vehicle is facing its target (modulo config.DRIVING_POLICY.PID.FORWARD_MIN_ANGLE)
         forward_ctrl = 0.0
-        if abs(self.yaw_error) <= self.forward_min_angle:
-            forward_ctrl += self.kp_lin * self.xy_position_error_norm - self.kd_lin * lin_vel_norm
-            forward_ctrl = np.clip(forward_ctrl, -self.control_saturation, self.control_saturation)
+        if abs(self.yaw_error) <= self.config.DRIVING_POLICY.PID.FORWARD_MIN_ANGLE:
+            forward_ctrl += self.config.DRIVING_POLICY.PID.PROPORTIONAL_GAIN_DIST * self.xy_position_error_norm - self.config.DRIVING_POLICY.PID.DERIVATIVE_GAIN_DIST * lin_vel_norm
+            forward_ctrl = np.clip(forward_ctrl, -self.config.DRIVING_POLICY.CONTROL_SATURATION, self.config.DRIVING_POLICY.CONTROL_SATURATION)
             forward_ctrl *= abs(np.cos(self.yaw_error)); # full throttle if the vehicle facing the objective. Otherwise give more priority to the yaw command.
 
         # compute action for each wheel as the sum of the linear and angular control inputs
         left_wheel_command = forward_ctrl + right_ctrl
-        left_wheel_command = np.clip(left_wheel_command, -self.control_saturation, self.control_saturation)
+        left_wheel_command = np.clip(left_wheel_command, -self.config.DRIVING_POLICY.CONTROL_SATURATION, self.config.DRIVING_POLICY.CONTROL_SATURATION)
         right_wheel_command = forward_ctrl - right_ctrl
-        right_wheel_command = np.clip(right_wheel_command, -self.control_saturation, self.control_saturation)
+        right_wheel_command = np.clip(right_wheel_command, -self.config.DRIVING_POLICY.CONTROL_SATURATION, self.config.DRIVING_POLICY.CONTROL_SATURATION)
         action = np.array([left_wheel_command,right_wheel_command], dtype=np.float32)
             
         return action, self.policy_step_info
         
+
 class OpenBotPilotNetPolicy(OpenBotDrivingPolicy):
 
     def __init__(self, config):
@@ -153,10 +147,10 @@ class OpenBotPilotNetPolicy(OpenBotDrivingPolicy):
         self.index_waypoint = self.num_waypoints # initialized to final goal position
 
 
-    def update(self, obs):
+    def step(self, obs):
 
         # update waypoint and check location reached
-        super().update(obs)
+        super().step(obs)
     
         # get the updated compass observation
         compass_observation = get_compass_observation(self.position_xy_desired, self.position_xy_current, self.yaw_current)
