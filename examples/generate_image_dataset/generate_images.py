@@ -59,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("--rendering_mode", default="baked")
     parser.add_argument("--num_internal_steps", type=int, default=1)
     parser.add_argument("--benchmark", action="store_true")
-    parser.add_argument("--wait", action="store_true")
+    parser.add_argument("--wait_for_key_press", action="store_true")
     args = parser.parse_args()
 
     # load config
@@ -122,7 +122,7 @@ if __name__ == "__main__":
                 plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
 
         # useful for comparing the game window to the image that has been saved to disk
-        if args.wait:
+        if args.wait_for_key_press:
             input()
 
         prev_scene_id = pose["scene_id"]
