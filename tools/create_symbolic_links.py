@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
             print(f"Found plugin: {plugin}")
 
-            # create a symlink to code/third_party
+            # create a symlink to third_party
             symlink_third_party_dir = os.path.join(UNREAL_PLUGINS_DIR, plugin, "ThirdParty")
             if not os.path.exists(symlink_third_party_dir):
                 print(f"    Creating symlink: {symlink_third_party_dir} -> {THIRD_PARTY_DIR}")
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
             print(f"Found project: {project}")
 
-            # create a symlink to code/third_party
+            # create a symlink to third_party
             symlink_third_party_dir = os.path.join(UNREAL_PROJECTS_DIR, project, "ThirdParty")
             if not os.path.exists(symlink_third_party_dir):
                 print(f"    Creating symlink: {symlink_third_party_dir} -> {THIRD_PARTY_DIR}")

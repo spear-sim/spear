@@ -1,13 +1,12 @@
 from enum import Enum
 import gym.spaces
+import msgpackrpc 
 import numpy as np
 import os
 import psutil
 from subprocess import Popen
 import sys
 import time
-
-import msgpackrpc # pip install -e code/third_party/msgpack-rpc-python
 
 
 # Enum values should match Box.h in SimulationController plugin
@@ -323,7 +322,6 @@ class Env(gym.Env):
         if self._config.SPEAR.LAUNCH_MODE != "running_instance":
             time.sleep(self._config.SPEAR.RPC_CLIENT_AFTER_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
 
-
     def _initialize_unreal_instance(self):
         # do one tick cyle here to prep Unreal Engine so that we can receive valid observations
         self._begin_tick()
@@ -451,7 +449,7 @@ class Env(gym.Env):
                  "agent_step_info": self._deserialize(agent_step_info, self._agent_step_info_space) }
 
     def _reset(self):
-        # reset the Task first in case it needs to set the position of Actors, then reset Agent so it can refine the position of actors
+        # reset the Task first in case it needs to set the position of actors, then reset Agent so it can refine the position of actors
         self._client.call("resetTask")
         self._client.call("resetAgent")
 
