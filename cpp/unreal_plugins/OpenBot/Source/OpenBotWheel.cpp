@@ -7,16 +7,16 @@ BEGIN_IGNORE_COMPILER_WARNINGS
 UOpenBotWheel::UOpenBotWheel()
 {
     static ConstructorHelpers::FObjectFinder<UStaticMesh> CollisionMeshObj(TEXT("/Engine/EngineMeshes/Cylinder"));
-	CollisionMesh = CollisionMeshObj.Object;
+    CollisionMesh = CollisionMeshObj.Object;
 
     bAffectedByHandbrake        = Config::getValue<bool>({"OPENBOT", "OPENBOT_WHEEL", "AFFECTED_BY_HANDBRAKE"});
-	DampingRate                 = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "DAMPING_RATE"});
+    DampingRate                 = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "DAMPING_RATE"});
     LatStiffMaxLoad             = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "LAT_STIFF_MAX_LOAD"});
-	LatStiffValue               = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "LAT_STIFF_VALUE"});
-	LongStiffValue              = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "LONG_STIFF_VALUE"});
+    LatStiffValue               = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "LAT_STIFF_VALUE"});
+    LongStiffValue              = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "LONG_STIFF_VALUE"});
     Mass                        = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "MASS"});
     MaxBrakeTorque              = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "MAX_BRAKE_TORQUE"});
-	MaxHandBrakeTorque          = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "MAX_HAND_BRAKE_TORQUE"});
+    MaxHandBrakeTorque          = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "MAX_HAND_BRAKE_TORQUE"});
     ShapeRadius                 = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "SHAPE_RADIUS"});
     ShapeWidth                  = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "SHAPE_WIDTH"});
     SteerAngle                  = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "STEER_ANGLE"});
