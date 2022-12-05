@@ -257,13 +257,13 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
 
         FNavLocation init_location;
         FNavLocation goal_location;
-        bool found = false;
+        
 
         // Get a random initial point
         init_location = nav_mesh_->GetRandomPoint();
 
         // Get a random reachable goal point, to be reached by the agent from init_location.Location
-        found = nav_sys_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_SEARCH_RADIUS"}), goal_location);
+        bool found = nav_mesh_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_SEARCH_RADIUS"}), goal_location);
         ASSERT(found);
 
         // Update navigation query with the new goal

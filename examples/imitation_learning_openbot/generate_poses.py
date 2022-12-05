@@ -20,6 +20,11 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
 
+    # make sure that we are in trajectory sampling mode
+    config.defrost()
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING = True
+    config.freeze()
+
     # remove existing poses file
     if os.path.exists(args.poses_file):
         os.remove(args.poses_file)
