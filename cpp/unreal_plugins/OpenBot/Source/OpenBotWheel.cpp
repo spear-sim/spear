@@ -26,6 +26,6 @@ UOpenBotWheel::UOpenBotWheel()
     SuspensionNaturalFrequency  = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "SUSPENSION_NATURAL_FREQUENCY"});
     SuspensionDampingRatio      = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "SUSPENSION_DAMPING_RATIO"});
     SweepType                   = EWheelSweepType::SimpleAndComplex;
-    bAutoAdjustCollisionSize    = true; // Use if you want to scale wheels manually.
+    bAutoAdjustCollisionSize    = true; // Set to true if you want to scale the wheels manually 
 }
 END_IGNORE_COMPILER_WARNINGS
