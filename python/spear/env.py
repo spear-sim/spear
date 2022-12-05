@@ -176,8 +176,9 @@ class Env(gym.Env):
         for a in self._config.SPEAR.CUSTOM_COMMAND_LINE_ARGUMENTS:
             launch_params.append("{}".format(a))
 
-        # On Windows, we need to pass in extra command-line parameters so that calls to UE_Log and writes to std::cout are visible on the command-line.
+        # On Windows, we need to pass in extra command-line parameters to enable DirectX 12 and so that calls to UE_Log and writes to std::cout are visible on the command-line.
         if sys.platform == "win32":
+            launch_params.append("-dx12")            
             launch_params.append("-stdout")
             launch_params.append("-FullStdOutLogOutput")
 

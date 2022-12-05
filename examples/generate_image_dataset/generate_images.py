@@ -13,9 +13,9 @@ import time
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
 # However, in this example, we are teleporting the camera in an incoherent way. Hence, we implement a 
 # CustomEnv that can render multiple internal frames per step(), so that Unreal Engine's rendering
-# system is  warmed up by the time we get observations. Doing this improves overall image quality due
-# to Unreal's use of temporal anti-aliasing. These extra frames are not necessary in typical embodied
-# AI scenarios, but are necessary when teleporting a camera.
+# system is  warmed up by the time we get observations. Doing this can improve overall image quality
+# due to Unreal's strategy of accumulating rendering information across multiple frames. These extra
+# frames are not necessary in typical embodied AI scenarios, but are useful when teleporting a camera.
 class CustomEnv(spear.Env):
 
     def __init__(self, config, num_internal_steps):
@@ -56,8 +56,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--poses_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "poses.csv"))
     parser.add_argument("--images_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "images"))
+    parser.add_argument("--rendering_mode", default="baked")
     parser.add_argument("--num_internal_steps", type=int, default=1)
     parser.add_argument("--benchmark", action="store_true")
+    parser.add_argument("--wait_for_key_press", action="store_true")
     args = parser.parse_args()
 
     # load config
@@ -65,6 +67,14 @@ if __name__ == "__main__":
 
     # read data from csv
     df = pd.read_csv(args.poses_file, dtype={"scene_id":str})
+
+    # string to load a different map depending on the rendering mode
+    if args.rendering_mode == "baked":
+        rendering_mode_map_str = "_bake"
+    elif args.rendering_mode == "raytracing":
+        rendering_mode_map_str = "_rtx"
+    else:
+        assert False
 
     # iterate over all poses
     prev_scene_id = ""
@@ -85,8 +95,8 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + pose["scene_id"] + "." + "Map_" + pose["scene_id"]
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + pose["scene_id"]
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + pose["scene_id"] + rendering_mode_map_str + "." + "Map_" + pose["scene_id"] + rendering_mode_map_str
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + pose["scene_id"] + rendering_mode_map_str
             config.freeze()
 
             # create Env object
@@ -96,7 +106,7 @@ if __name__ == "__main__":
             _ = env.reset()
 
             if args.benchmark and prev_scene_id == "":
-                start_time = time.time()
+                start_time_seconds = time.time()
 
         # set the pose and obtain corresponding images
         obs, _, _, _ = env.step(
@@ -111,12 +121,16 @@ if __name__ == "__main__":
                 assert os.path.exists(render_pass_dir)
                 plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
 
+        # useful for comparing the game window to the image that has been saved to disk
+        if args.wait_for_key_press:
+            input()
+
         prev_scene_id = pose["scene_id"]
 
     if args.benchmark:
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time / (df.shape[0]*args.num_internal_steps))*1000, (df.shape[0]*args.num_internal_steps) / elapsed_time))
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / (df.shape[0]*args.num_internal_steps))*1000, (df.shape[0]*args.num_internal_steps) / elapsed_time_seconds))
 
     # close the current Env
     env.close()
