@@ -14,7 +14,7 @@ SIMULATION_CONTROLLER:
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   CAMERA_SENSOR:
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 to for baked
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
 
   SPHERE_AGENT:
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
