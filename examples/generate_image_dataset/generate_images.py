@@ -95,14 +95,9 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-<<<<<<< HEAD
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + pose["scene_id"] + "." + "Map_" + pose["scene_id"]
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + pose["scene_id"]
-            config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
-=======
             config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + pose["scene_id"] + rendering_mode_map_str + "." + "Map_" + pose["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + pose["scene_id"] + rendering_mode_map_str
->>>>>>> 0227b02c1880e287c76dce35758809fd5c2e8c8b
+            config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
             config.freeze()
 
             # create Env object

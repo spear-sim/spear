@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--debug", action="store_true", help="debug flag to display the raw observations.")
     parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
     parser.add_argument("-p", "--create_plot", action="store_true", help="generate a set of plots to assess the performance of the control policy.")
+    parser.add_argument("-r", "--rendering_mode", default="baked")
     parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
     parser.add_argument("-s", "--scene_id", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
     parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
@@ -34,6 +35,14 @@ if __name__ == "__main__":
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
+
+    # string to load a different map depending on the rendering mode
+    if args.rendering_mode == "baked":
+        rendering_mode_map_str = "_bake"
+    elif args.rendering_mode == "raytracing":
+        rendering_mode_map_str = "_rtx"
+    else:
+        assert False
 
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
     if args.debug:
@@ -90,8 +99,8 @@ if __name__ == "__main__":
         
         # change config based on current scene
         config.defrost()
-        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene_id + "." + "Map_" + scene_id
-        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene_id
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene_id + rendering_mode_map_str + "." + "Map_" + scene_id + rendering_mode_map_str
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene_id + rendering_mode_map_str
         config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
         config.freeze()
 
