@@ -1,13 +1,12 @@
 from enum import Enum
 import gym.spaces
+import msgpackrpc 
 import numpy as np
 import os
 import psutil
 from subprocess import Popen
 import sys
 import time
-
-import msgpackrpc # pip install -e code/third_party/msgpack-rpc-python
 
 
 # Enum values should match Box.h in SimulationController plugin
