@@ -1,12 +1,21 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
+import argparse
 import cv2
 import numpy as np
 import os
 import spear
 import time
 
+
+NUM_STEPS = 100
+
+
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--benchmark", action="store_true")
+    args = parser.parse_args()
 
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
@@ -17,32 +26,38 @@ if __name__ == "__main__":
     # reset the simulation to get the first observation    
     obs = env.reset()
 
-    #for x in range(1,100):
-    #    env._begin_tick()
-    #    env._tick()
-    #    env._end_tick()
-
-    cv2.imshow("camera_final_color", obs["camera_final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
-    cv2.waitKey(0)
-
-    # take a few steps
-    for i in range(100):
-        if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
-            obs, reward, done, info = env.step({"apply_force": np.array([1, 1], dtype=np.float32)})
-            print("SphereAgent: ", obs["compass"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
-        elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
-            obs, reward, done, info = env.step({"apply_voltage": np.array([0.2, 0.2], dtype=np.float32)})
-            print("OpenBotAgent: ", obs["state_data"], obs["control_data"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
-        else:
-            assert False
-
+    if args.benchmark:
+        start_time_seconds = time.time()
+    else:
         cv2.imshow("camera_final_color", obs["camera_final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
         cv2.waitKey(0)
 
+    # take a few steps
+    for i in range(NUM_STEPS):
+        if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
+            obs, reward, done, info = env.step({"apply_force": np.array([1, 1], dtype=np.float32)})
+            if not args.benchmark:
+                print("SphereAgent: ", obs["compass"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
+        elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
+            obs, reward, done, info = env.step({"apply_voltage": np.array([1, 1], dtype=np.float32)})
+            if not args.benchmark:
+                print("OpenBotAgent: ", obs["state_data"], obs["control_data"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
+        else:
+            assert False
+
+        if not args.benchmark:
+            cv2.imshow("camera_final_color", obs["camera_final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            cv2.waitKey(0)
+
         if done:
             env.reset()
-    #time.sleep(200)
-    cv2.destroyAllWindows()
+
+    if args.benchmark:
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000, NUM_STEPS / elapsed_time_seconds))
+    else:
+        cv2.destroyAllWindows()
 
     # close the environment
     env.close()

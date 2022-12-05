@@ -20,10 +20,6 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
 
-    # remove existing poses file
-    if os.path.exists(args.poses_file):
-        os.remove(args.poses_file)
-
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is None:
         scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
@@ -32,6 +28,10 @@ if __name__ == "__main__":
     else:
         scene_ids = [args.scene_id]
 
+    # remove existing poses file
+    if os.path.exists(args.poses_file):
+        os.remove(args.poses_file)
+
     # iterate over all scenes
     for i, scene_id in enumerate(scene_ids):
 
@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
         # change config based on current scene
         config.defrost()
-        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene_id + "." + "Map_" + scene_id
-        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene_id
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + scene_id + "_bake" + "." + "Map_" + scene_id + "_bake"
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene_id + "_bake"
         config.freeze()
 
         # create Env object
@@ -74,6 +74,7 @@ if __name__ == "__main__":
 
         plt.scatter(positions[:,0], positions[:,1], s=1.0)
         plt.gca().set_aspect("equal")
+        plt.gca().invert_yaxis() # invert the y-axis so the plot matches a top-down view of the scene in Unreal
         plt.show()
 
         # close the current scene

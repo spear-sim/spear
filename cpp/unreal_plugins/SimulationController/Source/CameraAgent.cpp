@@ -72,37 +72,6 @@ CameraAgent::~CameraAgent()
 
 void CameraAgent::findObjectReferences(UWorld* world)
 {
-    TArray<AActor*> light_actors;
-    UGameplayStatics::GetAllActorsOfClass(world, ALight::StaticClass(), light_actors);
-
-    for (AActor* actor : light_actors) {
-        ALight* light = Cast<ALight>(actor);
-        ASpotLight* spot_light = Cast<ASpotLight>(actor);
-        if (light != nullptr) {
-            light->SetMobility(EComponentMobility::Movable);
-            light->GetLightComponent()->SetAffectGlobalIllumination(Config::getValue<bool>        ({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_AFFECT_GLOBAL_ILLUMINATION"}));
-            light->GetLightComponent()->SetCastRaytracedShadow     (Config::getValue<bool>        ({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_CAST_RAYTRACED_SHADOWS"}));
-            light->GetLightComponent()->SetAffectReflection        (Config::getValue<bool>        ({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_AFFECT_REFLECTION"}));
-            light->GetLightComponent()->SetSamplesPerPixel         (Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_SAMPLES_PER_PIXEL"}));
-        }
-        //if (spot_light != nullptr) {
-        //    spot_light->Destroy();
-        //}
-    }
-
-    light_actors.Empty();
-
-    UGameplayStatics::GetAllActorsOfClass(world, ASkyLight::StaticClass(), light_actors);
-    for (AActor* actor : light_actors) {
-        ASkyLight* sky_light = Cast<ASkyLight>(actor);
-        if (sky_light != nullptr) {
-            sky_light->GetLightComponent()->SetAffectGlobalIllumination(Config::getValue<bool>        ({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_AFFECT_GLOBAL_ILLUMINATION"}));
-            sky_light->GetLightComponent()->SetCastRaytracedShadow     (Config::getValue<bool>        ({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_CAST_RAYTRACED_SHADOWS"}));
-            sky_light->GetLightComponent()->SetAffectReflection        (Config::getValue<bool>        ({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_AFFECT_REFLECTION"}));
-            sky_light->GetLightComponent()->SetSamplesPerPixel         (Config::getValue<unsigned int>({"SIMULATION_CONTROLLER", "LIGHTS", "FINAL_COLOR_SAMPLES_PER_PIXEL"}));
-        }
-    }
-
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
