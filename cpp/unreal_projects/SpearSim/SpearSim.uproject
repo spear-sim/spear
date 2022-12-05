@@ -26,13 +26,6 @@
 		{
 			"Name": "SimulationController",
 			"Enabled": true
-		},
-		{
-			"Name": "XeSS",
-			"Enabled": true,
-			"SupportedTargetPlatforms": [
-				"Win64"
-			]
 		}
-	]
+    ]
 }
