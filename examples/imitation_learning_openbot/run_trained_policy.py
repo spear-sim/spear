@@ -185,7 +185,7 @@ if __name__ == "__main__":
                 generate_video(config, video_name, image_dir, video_dir, True)
             
             if args.create_plot: # if desired, generate a plot of the control performance
-                plot_tracking_performance(state_data_buffer, waypoint_data_buffer, run_dir)
+                plot_tracking_performance(state_data_buffer, waypoint_data_buffer, result_dir)
 
         # close the current scene and give the system a bit of time before switching to the next scene.
         env.close()

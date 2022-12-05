@@ -235,7 +235,7 @@ if __name__ == "__main__":
                     df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="a", index=False, header=it==0)
 
                 if args.create_plot: # if desired, generate a plot of the control performance
-                    plot_tracking_performance(state_data_buffer[:executed_iterations][:], waypoint_data_buffer[:executed_iterations][:], run_dir)
+                    plot_tracking_performance(state_data_buffer[:executed_iterations][:], waypoint_data_buffer[:executed_iterations][:], sensor_dir)
 
                 if args.create_video: # if desired, generate a video from the collected rgb observations 
                     os.makedirs(video_dir, exist_ok=True)

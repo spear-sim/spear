@@ -31,7 +31,7 @@ SIMULATION_CONTROLLER:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
       AGENT_MAX_STEP_HEIGHT: 1.0
-    POSITIONS_FILE: "/home/quentin/Desktop/ISL/spear/examples/openbot/imitation_learning/start_goal_coordinates.csv"
+    POSITIONS_FILE: "/home/quentin/Desktop/ISL/spear/examples/imitation_learning_openbot/start_goal_coordinates.csv"
 
   OPENBOT_AGENT:
     OPENBOT_ACTOR_NAME: "OpenBotAgent"
