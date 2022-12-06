@@ -120,13 +120,7 @@ if __name__ == "__main__":
         while episode < number_of_episodes:
 
             exp_dir = f"episode_{episode}_{scene_id}"
-            
-            # split data between training and evaluation sets
-            #if 100 * episode < config.DRIVING_POLICY.PERCENTAGE_OF_TRAINING_DATA * args.runs:
-            #    episode_dir = os.path.join(train_data_dir, exp_dir) 
-            #else:
-            #    episode_dir = os.path.join(test_data_dir, exp_dir) 
-                
+            episode_dir = os.path.join(train_data_dir, exp_dir)
             data_dir = os.path.join(episode_dir,"data")
             image_dir = os.path.join(data_dir, "images")
             sensor_dir = os.path.join(data_dir, "sensor_data")

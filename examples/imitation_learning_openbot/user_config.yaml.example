@@ -97,7 +97,6 @@ SIMULATION_CONTROLLER:
     DEBUG_RENDER: True # When True, note that markers will only be dispayed in Standalone-Development mode
 
 DRIVING_POLICY:
-  PERCENTAGE_OF_TRAINING_DATA: 80   # The ratio between training and validation data should be around 80%-20% as suggested in the OpenBot public repo.
   ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
   CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
   PID:

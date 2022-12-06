@@ -48,7 +48,7 @@ Once a suitable set of start-goal tuples are available and properly divided in a
 # activate the spear environment
 conda activate spear-env
 
-python generate_dataset.py --iterations 1000 --runs 100 --scene_id "235554..." --create_video --create_plot
+python generate_dataset.py --iterations 1000 --scene_id "235554..." --create_video --create_plot --rendering_mode baked
 ```
 
 This will have an openbot agent follow collision-fre trajectories between the differnt start-goal coordinates. 
@@ -60,30 +60,34 @@ dataset
 | |-- 0_235114..._compressed.mp4
 | |-- ...
 |-- train_data
-| |-- run_0_235114.../data
-| | |-- images
-| | | |-- 0.jpeg
-| | | |-- ...
-| | | |-- 999.jpeg
-| | |-- sensor_data
-| | | |-- ctrlLog.txt
-| | | |-- goalLog.txt
-| | | |-- rgbFrames.txt
-| | | |-- poseData.txt
-| | | |-- waypointData.txt
+| |-- 235114...
+| | |-- episode_0
+| | | |-- images
+| | | | |-- 0.jpeg
+| | | | |-- ...
+| | | | |-- 999.jpeg
+| | | |-- sensor_data
+| | | | |-- ctrlLog.txt
+| | | | |-- goalLog.txt
+| | | | |-- rgbFrames.txt
+| | | | |-- poseData.txt
+| | | | |-- waypointData.txt
+| | |-- episode_1
 | |-- ...
 |-- test_data
-| |-- run_80_235114.../data
-| | |-- images
-| | | |-- 0.jpeg
-| | | |-- ...
-| | | |-- 999.jpeg
-| | |-- sensor_data
-| | | |-- ctrlLog.txt
-| | | |-- goalLog.txt
-| | | |-- rgbFrames.txt
-| | | |-- poseData.txt
-| | | |-- waypointData.txt
+| |-- 235114...
+| | |-- episode_0
+| | | |-- images
+| | | | |-- 0.jpeg
+| | | | |-- ...
+| | | | |-- 999.jpeg
+| | | |-- sensor_data
+| | | | |-- ctrlLog.txt
+| | | | |-- goalLog.txt
+| | | | |-- rgbFrames.txt
+| | | | |-- poseData.txt
+| | | | |-- waypointData.txt
+| | |-- episode_1
 |-- ...
 ```
 
@@ -99,7 +103,7 @@ Once the training step is completed, place your `.tflite` file in the `models` f
 # activate the spear environment
 conda activate spear-env
 
-python run_trained_policy.py --control_policy <policy_name> --iterations 1000 --runs 100 --scene_id "235554..." --create_video --create_plot
+python run_trained_policy.py --control_policy <policy_name> --iterations 1000 --scene_id "235554..." --create_video --create_plot --rendering_mode baked
 ```
 
 The result will be stored in the `eval` folder
