@@ -17,14 +17,14 @@ if __name__ == "__main__":
 
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--control_policy", type=str, help="name of the control policy to be executed", required=True)
-    parser.add_argument("-d", "--debug", action="store_true", help="debug flag to display the raw observations.")
-    parser.add_argument("-i", "--iterations", type=int, help="number of iterations through the environment", required=True)
-    parser.add_argument("-p", "--create_plot", action="store_true", help="generate a set of plots to assess the performance of the control policy.")
-    parser.add_argument("-r", "--rendering_mode", default="baked")
-    parser.add_argument("-r", "--runs", type=int, help="number of distinct runs in the considered environment", required=True)
-    parser.add_argument("-s", "--scene_id", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
-    parser.add_argument("-v", "--create_video", action="store_true", help="create a video out of the observations.")
+    parser.add_argument("--control_policy", required=True)
+    parser.add_argument("--iterations", default=500)
+    parser.add_argument("--episodes_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "train_episodes.csv"))
+    parser.add_argument("--rendering_mode", default="baked")
+    parser.add_argument("--create_plot", action="store_true")
+    parser.add_argument("--create_video", action="store_true")
+    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--scene_id")
     args = parser.parse_args()
 
     # build the required folders
@@ -35,6 +35,12 @@ if __name__ == "__main__":
     
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
+
+    # make sure that we are not in trajectory sampling mode
+    config.defrost()
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING = False
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.POSITIONS_FILE = args.episodes_file
+    config.freeze()
 
     # string to load a different map depending on the rendering mode
     if args.rendering_mode == "baked":
@@ -87,15 +93,15 @@ if __name__ == "__main__":
     assert("final_color" in config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
     
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
-    if args.scene_id == [""]:
+    if args.scene_id is None:
         scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
         assert os.path.exists(scenes_csv_file)
         scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
     else:
-        scene_ids = args.scene_id
+        scene_ids = [args.scene_id]
     
     # loop through the desired set of scenes
-    for scene_id in scene_ids: 
+    for i, scene_id in enumerate(scene_ids): 
         
         # change config based on current scene
         config.defrost()
@@ -104,17 +110,21 @@ if __name__ == "__main__":
         config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
         config.freeze()
 
+        # load the episodes to be executed
+        assert os.path.exists(episodes_csv_file)
+        episodes_csv_file = pd.read_csv(args.episodes_file, dtype={"scene_id":str})
+        number_of_episodes = len(episodes_csv_file)
+
         # create Env object
         env = spear.Env(config=config)
         
-        run = 0
-        # execute the desired number of runs in a given sceen
-        for run in range(args.runs):
+        # execute the desired number of episodes in a given scene
+        for episode in range(number_of_episodes):
 
-            # build the evauation run data folder and its subfolders
-            exp_dir = f"run_{run}_{scene_id}"
-            run_dir = os.path.join(eval_dir, exp_dir)
-            data_dir = os.path.join(run_dir,"data")
+            # build the evauation episode data folder and its subfolders
+            exp_dir = f"episode_{episode}_{scene_id}"
+            episode_dir = os.path.join(eval_dir, exp_dir)
+            data_dir = os.path.join(episode_dir,"data")
             image_dir = os.path.join(data_dir, "images")
             result_dir = os.path.join(data_dir, "results")
             os.makedirs(data_dir, exist_ok=True)
@@ -122,7 +132,7 @@ if __name__ == "__main__":
             os.makedirs(result_dir, exist_ok=True)
 
             print("----------------------")
-            print(f"run {run} over {args.runs}")
+            print(f"episode {episode} over {args.runs}")
             print("----------------------")
 
             # reset the simulation
@@ -134,10 +144,10 @@ if __name__ == "__main__":
             # initialize the driving policy with the desired trajectory 
             driving_policy.set_trajectory(info["agent_step_info"]["trajectory_data"])
 
-            state_data_buffer = np.empty([args.iterations, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during a run
+            state_data_buffer = np.empty([args.iterations, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during an episode
             waypoint_data_buffer = np.empty([len(info["agent_step_info"]["trajectory_data"]), 3], dtype=np.float32) # buffer containing the waypoint coordinates of the optimal goal trajectory
 
-            # save the optimal goal trajectory 
+            # save the optimal goal trajectory in a dedicated file
             for j in range(len(info["agent_step_info"]["trajectory_data"])):
                 waypoint_data_buffer[j] = info["agent_step_info"]["trajectory_data"][j]
                 df_trajectory = pd.DataFrame({"x_d[cm]" : [info["agent_step_info"]["trajectory_data"][j][0]],
@@ -145,7 +155,7 @@ if __name__ == "__main__":
                             "z_d[cm]" : [info["agent_step_info"]["trajectory_data"][j][2]]})
                 df_trajectory.to_csv(os.path.join(result_dir,"trajectoryLog.txt"), mode="a", index=False, header=j==0)
 
-            # execute the desired number of iterations in a given run
+            # execute the desired number of iterations in a given episode
             for i in range(args.iterations):
 
                 print(f"iteration {i} of {args.iterations}")
@@ -160,7 +170,7 @@ if __name__ == "__main__":
                 if args.debug:
                     show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
-                # check the stop conditions of the run
+                # check the stop conditions of the episode
                 if info["task_step_info"]["hit_obstacle"]: # if the vehicle collided with an obstacle
                     print("Collision detected !")
                     break
@@ -190,7 +200,7 @@ if __name__ == "__main__":
 
             if args.create_video: # if desired, generate a video from the collected rgb observations 
                 os.makedirs(video_dir, exist_ok=True)
-                video_name = str(run) + "_" + scene_id
+                video_name = str(episode) + "_" + scene_id
                 generate_video(config, video_name, image_dir, video_dir, True)
             
             if args.create_plot: # if desired, generate a plot of the control performance

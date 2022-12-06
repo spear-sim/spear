@@ -12,9 +12,9 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--num_poses_per_scene", type=int, default=10)
-    parser.add_argument("-p", "--poses_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "start_goal_coordinates.csv"))
-    parser.add_argument("-s", "--scene_id", nargs="+", default=[""], help="Array of scene ID references, to support data collection in multiple environments.", required=False)
+    parser.add_argument("--num_episodes_per_scene", type=int, default=10)
+    parser.add_argument("--episodes_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "train_episodes.csv"))
+    parser.add_argument("--scene_id")
     args = parser.parse_args()
 
     # load config
@@ -30,12 +30,12 @@ if __name__ == "__main__":
         os.remove(args.poses_file)
 
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
-    if args.scene_id == [""]:
+    if args.scene_id is None:
         scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
         assert os.path.exists(scenes_csv_file)
         scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
     else:
-        scene_ids = args.scene_id
+        scene_ids = [args.scene_id]
 
     # iterate over all scenes
     for i, scene_id in enumerate(scene_ids):
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         # create Env object
         env = spear.Env(config)
 
-        for j in range(args.num_poses_per_scene):
+        for j in range(args.num_episodes_per_scene):
         
             # reset the simulation
             _ = env.reset()
@@ -63,18 +63,19 @@ if __name__ == "__main__":
             positions = step_info["agent_step_info"]["trajectory_data"] 
 
             # store poses in a csv file
-            df = pd.DataFrame({"scene_id"  : [scene_id],
-                            "init_pos_x_cms" : positions[0,0],
-                            "init_pos_y_cms" : positions[0,1],
-                            "init_pos_z_cms" : positions[0,2],
-                            "goal_pos_x_cms" : positions[-1,0],
-                            "goal_pos_y_cms" : positions[-1,1],
-                            "goal_pos_z_cms" : positions[-1,2]})
+            df = pd.DataFrame({"scene_id"       : scene_id,
+                               "init_pos_x_cms" : positions[0,0],
+                               "init_pos_y_cms" : positions[0,1],
+                               "init_pos_z_cms" : positions[0,2],
+                               "goal_pos_x_cms" : positions[-1,0],
+                               "goal_pos_y_cms" : positions[-1,1],
+                               "goal_pos_z_cms" : positions[-1,2]})
             df.to_csv(args.poses_file, mode="a", index=False, header=(i==0 and j==0))
         
-            plt.plot(positions[0,0], positions[0,1], 'r^', markersize=12.0, label='Start')
-            plt.plot(positions[-1,0], positions[-1,1], 'g^', markersize=12.0, label='Goal')
-            plt.plot(positions[:,0], positions[:,1], '-o', markersize=5.0, label='Desired Trajectory')
+            # TODO: add transparency
+            plt.plot(positions[0,0], positions[0,1], '^', markersize=12.0, label='Start', color='tab:purple', alpha=0.3)
+            plt.plot(positions[-1,0], positions[-1,1], '^', markersize=12.0, label='Goal', color='tab:green', alpha=0.3)
+            plt.plot(positions[:,0], positions[:,1], '-o', markersize=5.0, label='Desired Trajectory', color='tab:blue', alpha=0.3)
             
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = dict(zip(labels, handles))
