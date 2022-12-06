@@ -5,7 +5,6 @@ import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import re
 import shutil
 import spear
 import sys
@@ -59,6 +58,8 @@ def get_relative_target_pose(position_xy_desired, position_xy_current, yaw_xy_cu
         relative_agent_target_yaw -= 2 * np.pi
     elif relative_agent_target_yaw <= -np.pi:
         relative_agent_target_yaw += 2 * np.pi
+    else:
+        assert False
 
     return relative_agent_target_xy, relative_agent_target_yaw
 
@@ -80,22 +81,14 @@ def get_compass_observation(position_xy_desired, position_xy_current, yaw_curren
     return np.array([dist, sin_yaw, cos_yaw], dtype=np.float32)
 
 
-def generate_video(config, video_name, image_dir, video_dir, compress = False):
+def generate_video(image_dir, video_path, rate, compress=False):
     print("Generating video from the sequence of observations")
-
-    name = f"{video_dir}/{video_name}.avi"
-    name_compressed = f"{video_dir}/{video_name}_compressed.mp4"
 
     images = [img for img in os.listdir(image_dir)]
     frame = cv2.imread(os.path.join(image_dir, images[0]))
     height, width, layers = frame.shape
 
-    rate = int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS)
-
-    video = cv2.VideoWriter(name, 0, rate, (width, height))
-
-    # good initial sort but doesnt sort numerically very well
-    images.sort(key=lambda f: int(re.sub('\D', '', f)))
+    video = cv2.VideoWriter(video_path, 0, rate, (width, height))
 
     for image in images:
         video.write(cv2.imread(os.path.join(image_dir, image)))
@@ -104,11 +97,10 @@ def generate_video(config, video_name, image_dir, video_dir, compress = False):
 
     if compress:
         try:
-            i = ffmpeg.input(name)
+            i = ffmpeg.input(video_path)
             print("Compressing video...")
-            out = ffmpeg.output(i, name_compressed, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run()
+            out = ffmpeg.output(i, video_path, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run()
             # remove the uncompressed file
-            os.remove(name) 
             print("Done compressing !")
 
         except FileNotFoundError as e:
@@ -116,13 +108,15 @@ def generate_video(config, video_name, image_dir, video_dir, compress = False):
             print("You can install ffmpeg by entering 'pip install ffmpeg-python' in a terminal.")
             assert False
 
-def plot_tracking_performance(buffer_pose_current, buffer_pose_desired, plot_dir):
+
+def plot_tracking_performance(poses_current, poses_desired, plot_dir):
+
     # first figure
     fig0, ax0 = plt.subplots(1, 1)
-    current, = ax0.plot(buffer_pose_current[:,0], buffer_pose_current[:,1], marker='x', markersize=5.0, label='Actual Trajectory', color='tab:blue')
-    desired, = ax0.plot(buffer_pose_desired[:,0], buffer_pose_desired[:,1], marker='o', markersize=8.0, label='Desired Trajectory', color='tab:orange')
-    goal, = ax0.plot(buffer_pose_desired[-1,0], buffer_pose_desired[-1,1], marker='^', markersize=12.0, label='Goal', color='tab:green')
-    start, = ax0.plot(buffer_pose_current[0,0], buffer_pose_current[0,1], marker='^', markersize=12.0, label='Start', color='tab:purple')
+    current, = ax0.plot(poses_current[:,0], poses_current[:,1], marker='x', markersize=5.0, label='Actual Trajectory', color='tab:blue')
+    desired, = ax0.plot(poses_desired[:,0], poses_desired[:,1], marker='o', markersize=8.0, label='Desired Trajectory', color='tab:orange')
+    goal, = ax0.plot(poses_desired[-1,0], poses_desired[-1,1], marker='^', markersize=12.0, label='Goal', color='tab:green')
+    start, = ax0.plot(poses_current[0,0], poses_current[0,1], marker='^', markersize=12.0, label='Start', color='tab:purple')
     ax0.set_xlabel('x[cm]')
     ax0.set_ylabel('y[cm]')
     ax0.set_title('XY Position tracking')
@@ -133,24 +127,24 @@ def plot_tracking_performance(buffer_pose_current, buffer_pose_desired, plot_dir
     plt.savefig(os.path.join(plot_dir, 'xy_position_tracking.png'), dpi=fig0.dpi)
 
     # second figure
-    if len(buffer_pose_current) == len(buffer_pose_desired):
+    if len(poses_current) == len(poses_desired):
         fig1, (ax1,ax2,ax3) = plt.subplots(3, 1)
-        x, = ax1.plot(buffer_pose_current[:,0], label='Actual X', color='tab:blue')
-        x_d, = ax1.plot(buffer_pose_desired[:,0], label='Desired X', color='tab:orange')
+        x, = ax1.plot(poses_current[:,0], label='Actual X', color='tab:blue')
+        x_d, = ax1.plot(poses_desired[:,0], label='Desired X', color='tab:orange')
         ax1.set_xlabel('iterations')
         ax1.set_ylabel('x[cm]')
         ax1.set_title('X tracking')
         ax1.grid()
         ax1.legend((x, x_d), ('Actual X', 'Desired X'), loc='upper left')
-        y, = ax2.plot(buffer_pose_current[:,1], label='Actual Y', color='tab:blue')
-        y_d, = ax2.plot(buffer_pose_desired[:,1], label='Desired Y', color='tab:orange')
+        y, = ax2.plot(poses_current[:,1], label='Actual Y', color='tab:blue')
+        y_d, = ax2.plot(poses_desired[:,1], label='Desired Y', color='tab:orange')
         ax2.set_xlabel('iterations')
         ax2.set_ylabel('y[cm]')
         ax2.set_title('Y tracking')
         ax2.grid()
         ax2.legend((y, y_d), ('Actual Y', 'Desired Y'), loc='upper left')
-        yaw, = ax3.plot(buffer_pose_current[:,4], label='Actual Yaw', color='tab:blue')
-        yaw_d, = ax3.plot(np.arctan2(buffer_pose_desired[:,1] - buffer_pose_current[:,1], buffer_pose_desired[:,0] - buffer_pose_current[:,0]), label='Desired Yaw', color='tab:orange')
+        yaw, = ax3.plot(poses_current[:,4], label='Actual Yaw', color='tab:blue')
+        yaw_d, = ax3.plot(np.arctan2(poses_desired[:,1] - poses_current[:,1], poses_desired[:,0] - poses_current[:,0]), label='Desired Yaw', color='tab:orange')
         ax3.set_xlabel('iterations')
         ax3.set_ylabel('yaw[rad]')
         ax3.set_title('Yaw tracking')
@@ -160,4 +154,3 @@ def plot_tracking_performance(buffer_pose_current, buffer_pose_desired, plot_dir
         fig1.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
         plt.savefig(os.path.join(plot_dir, 'control_performance.png'), dpi=fig1.dpi)
 
-    

@@ -96,7 +96,7 @@ SIMULATION_CONTROLLER:
     NOISE_STD_DEV: 0.0
     DEBUG_RENDER: True # When True, note that markers will only be dispayed in Standalone-Development mode
 
-DRIVING_POLICY:
+IMITATION_LEARNING_OPENBOT:
   ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
   CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
   PID:
