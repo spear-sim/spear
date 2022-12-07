@@ -13,7 +13,7 @@ If you find SPEAR useful in your research, please cite this repository as follow
 ```
 @misc{roberts:2022,
     author       = {Mike Roberts AND Quentin Leboutet AND Rachith Prakash AND Renhan Wang AND
-                    Hailin Zhang AND Rui Tang AND Marti Ferragut AND Stefan Leutenegger AND
+                    Marti Ferragut AND Hailin Zhang Rui Tang AND Stefan Leutenegger AND
                     Stephan R. Richter AND Vladlen Koltun AND Matthias M{\"u}ller AND German Ros},
     title        = {{SPEAR}: {A} Simulator for Photorealistic Embodied AI Research},
     howpublished = {\url{http://github.com/isl-org/spear}},
@@ -49,10 +49,12 @@ pip install -e python
 
 ### Configure the behavior of SPEAR
 
-Our final step is is to configure the behavior of SPEAR using a configuration file. We include a configuration file named `user_config.yaml.example` with each of our example applications to use as a starting point. To run each example application, you must rename this file to `user_config.yaml` and modify the contents appropriately for your system. In particular, you must set the following parameters.
+Our final step is to configure the behavior of SPEAR using a configuration file. We include a configuration file named `user_config.yaml.example` with each of our example applications to use as a starting point. To run each example application, you must rename this file to `user_config.yaml` and modify the contents appropriately for your system. In particular, you must set the following parameters.
   - `SPEAR.STANDALONE_EXECUTABLE` is the location of your precompiled `SpearSim` binary.
   - `SPEAR.DATA_DIR` is the directory containing the test scene.
   - `SPEAR.CONTENT_DIR` is the `Content` directory corresponding to your precompiled `SpearSim` binary.
+
+Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory.
 
 ### Run an example application
 
@@ -62,7 +64,7 @@ We are now ready to run an example application.
 python examples/getting_started/run.py
 ```
 
-We recommend browsing through our example applications to get a sense of what is possible with SPEAR.
+We recommend browsing through our example applications to get a sense of what is currently possible with SPEAR.
   - [`examples/getting_started`](examples/getting_started) demonstrates how to control a sphere agent or an OpenBot agent and obtain egocentric observations.
   - [`examples/generate_image_dataset`](examples/generate_image_dataset) demonstrates how to generate a static image dataset using our camera agent.
   - [`examples/imitation_learning_openbot`](examples/imitation_learning_openbot) demonstrates how to collect training data that can be plugged into the OpenBot framework.
