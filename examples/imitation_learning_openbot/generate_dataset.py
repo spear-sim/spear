@@ -176,7 +176,7 @@ if __name__ == "__main__":
                 show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
             if env_info["task_step_info"]["hit_obstacle"]: 
-                print("Collision detected ! Resetting simulation...")
+                print("Collision detected !")
                 hit_obstacle = True 
                 break
             elif env_info["task_step_info"]["hit_goal"] or policy_info["goal_reached"]: 
