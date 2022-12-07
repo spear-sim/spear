@@ -131,7 +131,7 @@ if __name__ == "__main__":
             df_trajectory.to_csv(os.path.join(result_dir,"trajectoryLog.txt"), mode="w", index=False, header=True)
         
         # goal position
-        goal = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"], dtype=np.float32])
+        goal = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32)
 
         # execute the desired number of iterations in a given episode
         for i in range(args.iterations):
@@ -139,7 +139,7 @@ if __name__ == "__main__":
             print(f"iteration {i} of {args.iterations}")
 
             # update control action 
-            action, policy_info = policy.step(obs, goal)
+            action, policy_info = policy.step(obs, goal[0:2])
 
             # send control action to the agent and collect observations
             obs, _, _, env_info = env.step({"apply_voltage": action})
@@ -177,7 +177,7 @@ if __name__ == "__main__":
             continue
 
         if args.create_video: # if desired, generate a video from the collected rgb observations 
-            video_dir = os.path.join(eval_dir, "videos")
+            video_dir = os.path.join(args.eval_dir, "videos")
             os.makedirs(video_dir, exist_ok=True)
             generate_video(image_dir, os.path.join(video_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
         

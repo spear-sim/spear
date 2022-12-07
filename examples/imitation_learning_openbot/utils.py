@@ -58,8 +58,6 @@ def get_relative_target_pose(position_xy_desired, position_xy_current, yaw_xy_cu
         relative_agent_target_yaw -= 2 * np.pi
     elif relative_agent_target_yaw <= -np.pi:
         relative_agent_target_yaw += 2 * np.pi
-    else:
-        assert False
 
     return relative_agent_target_xy, relative_agent_target_yaw
 

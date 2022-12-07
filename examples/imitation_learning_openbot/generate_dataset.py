@@ -240,6 +240,8 @@ if __name__ == "__main__":
                                         "waypoint_y[cm]" : waypoint_data[i][1],
                                         "waypoint_z[cm]" : waypoint_data[i][2]})
             df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="a", index=False, header=i==0)
+            
+            prev_scene_id = episode["scene_id"]
 
         if args.create_plot: # if desired, generate a plot of the control performance
             plot_tracking_performance(state_data[:executed_iterations][:], waypoint_data[:executed_iterations][:], sensor_dir)
