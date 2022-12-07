@@ -49,12 +49,7 @@ pip install -e python
 
 ### Configure the behavior of SPEAR
 
-Our final step is to configure the behavior of SPEAR using a configuration file. We include a configuration file named `user_config.yaml.example` with each of our example applications to use as a starting point. To run each example application, you must rename this file to `user_config.yaml` and modify the contents appropriately for your system. In particular, you must set the following parameters.
-  - `SPEAR.STANDALONE_EXECUTABLE` is the location of your precompiled `SpearSim` binary.
-  - `SPEAR.DATA_DIR` is the directory containing the test scene.
-  - `SPEAR.CONTENT_DIR` is the `Content` directory corresponding to your precompiled `SpearSim` binary.
-
-Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
+Our final step is to configure the behavior of SPEAR using a configuration file. We include a configuration file named `user_config.yaml.example` with each of our example applications to use as a starting point. To run each example application, you must rename this file to `user_config.yaml` and modify the contents appropriately for your system. In all cases, you will need to set the `SPEAR.STANDALONE_EXECUTABLE` parameter to the location of your precompiled `SpearSim` binary. Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
 
 ### Run an example application
 
