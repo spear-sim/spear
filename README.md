@@ -13,7 +13,7 @@ If you find SPEAR useful in your research, please cite this repository as follow
 ```
 @misc{roberts:2022,
     author       = {Mike Roberts AND Quentin Leboutet AND Rachith Prakash AND Renhan Wang AND
-                    Marti Ferragut AND Hailin Zhang Rui Tang AND Stefan Leutenegger AND
+                    Hailin Zhang AND Rui Tang AND Marti Ferragut AND Stefan Leutenegger AND
                     Stephan R. Richter AND Vladlen Koltun AND Matthias M{\"u}ller AND German Ros},
     title        = {{SPEAR}: {A} Simulator for Photorealistic Embodied AI Research},
     howpublished = {\url{http://github.com/isl-org/spear}},
