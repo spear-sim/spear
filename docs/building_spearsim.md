@@ -27,7 +27,9 @@ python build_third_party_libs.py --num_parallel_jobs 8
 
 ## Create symbolic links
 
-Our `SpearSim` project requires you to create several symbolic links. We provide a command-line tool for this purpose. If you're building on Windows, you will need to run this tool with administrator privileges.
+Our `SpearSim` project requires you to create several symbolic links. We provide a command-line tool for this purpose.
+
+If you're building on Windows, you will need to run this tool with administrator privileges.
 
 ```console
 cd tools
