@@ -65,6 +65,6 @@ python examples/getting_started/run.py
 ```
 
 We recommend browsing through our example applications to get a sense of what is currently possible with SPEAR.
-  - [`examples/getting_started`](examples/getting_started) demonstrates how to control a sphere agent or an OpenBot agent and obtain egocentric observations.
-  - [`examples/generate_image_dataset`](examples/generate_image_dataset) demonstrates how to generate a static image dataset using our camera agent.
-  - [`examples/imitation_learning_openbot`](examples/imitation_learning_openbot) demonstrates how to collect training data that can be plugged into the OpenBot framework.
+  - [`examples/getting_started`](examples/getting_started) demonstrates how to control a simple sphere agent or an OpenBot agent and obtain egocentric visual observations.
+  - [`examples/generate_image_dataset`](examples/generate_image_dataset) demonstrates how to generate a static image dataset using our freeform camera agent.
+  - [`examples/imitation_learning_openbot`](examples/imitation_learning_openbot) demonstrates how to collect training data that can be plugged into the OpenBot framework and used to train a navigation policy.
