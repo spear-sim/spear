@@ -122,7 +122,7 @@ if __name__ == "__main__":
         if args.benchmark:
             start_time_seconds = time.time()
         else:
-            state_data = np.empty([args.iterations, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during an episode
+            state_data = np.empty([int(args.iterations), 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during an episode
 
             # save the optimal goal trajectory in a dedicated file
             df_trajectory = pd.DataFrame({"x_d[cm]" : [env_info["agent_step_info"]["trajectory_data"][:,0]],
@@ -134,9 +134,9 @@ if __name__ == "__main__":
         goal = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32)
 
         # execute the desired number of iterations in a given episode
-        for i in range(args.iterations):
+        for i in range(int(args.iterations)):
 
-            print(f"iteration {i} of {args.iterations}")
+            print(f"iteration {i} of {int(args.iterations)}")
 
             # update control action 
             action, policy_info = policy.step(obs, goal[0:2])
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
-            print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / args.iterations)*1000, args.iterations / elapsed_time_seconds))
+            print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / int(args.iterations))*1000, int(args.iterations) / elapsed_time_seconds))
             continue
 
         if args.create_video: # if desired, generate a video from the collected rgb observations 

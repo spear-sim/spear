@@ -1,13 +1,9 @@
-import argparse
-import csv
 import cv2
 import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import shutil
-import spear
-import sys
+import re
 
 def show_obs(obs, obs_components, render_passes):
         
@@ -80,31 +76,23 @@ def get_compass_observation(position_xy_desired, position_xy_current, yaw_curren
 
 
 def generate_video(image_dir, video_path, rate, compress=False):
+    
     print("Generating video from the sequence of observations")
 
-    images = [img for img in os.listdir(image_dir)]
-    frame = cv2.imread(os.path.join(image_dir, images[0]))
-    height, width, layers = frame.shape
-
-    video = cv2.VideoWriter(video_path, 0, rate, (width, height))
-
-    for image in images:
-        video.write(cv2.imread(os.path.join(image_dir, image)))
-
-    video.release()
-
     if compress:
-        try:
-            i = ffmpeg.input(video_path)
-            print("Compressing video...")
-            out = ffmpeg.output(i, video_path, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run()
-            # remove the uncompressed file
-            print("Done compressing !")
-
-        except FileNotFoundError as e:
-            print("You do not have ffmpeg installed!", e)
-            print("You can install ffmpeg by entering 'pip install ffmpeg-python' in a terminal.")
-            assert False
+        process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run_async(pipe_stdin=True)
+    else:
+        process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, vcodec='libx264'.overwrite_output().run_async(pipe_stdin=True)
+    
+    images = [os.path.join(image_dir,img) for img in os.listdir(image_dir)]
+    images.sort(key=lambda f: int(re.sub('\D', '', f)))
+    for image in images:
+        with open(image, 'rb') as f:
+            jpeg_data = f.read()
+            process.stdin.write(jpeg_data)
+    
+    process.stdin.close()
+    process.wait()
 
 
 def plot_tracking_performance(poses_current, poses_desired, plot_dir):

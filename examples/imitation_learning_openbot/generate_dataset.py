@@ -99,8 +99,10 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str + "." + "Map_" + episode["scene_id"] + rendering_mode_map_str
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + episode["scene_id"] + "." + "Map_" + episode["scene_id"]
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + episode["scene_id"]
+            #config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str + "." + "Map_" + episode["scene_id"] + rendering_mode_map_str
+            #config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
             config.freeze()
 
@@ -131,16 +133,16 @@ if __name__ == "__main__":
         if args.benchmark:
             start_time_seconds = time.time()
         else:                            
-            control_data  = np.empty([args.iterations, 2], dtype=np.float32) # control_data observations made by the agent during a episode
-            state_data    = np.empty([args.iterations, 6], dtype=np.float32) # state_data observations made by the agent during an episode
-            waypoint_data = np.empty([args.iterations, 3], dtype=np.float32) # waypoint coordinates being tracked by the agent during an episode
-            time_data     = np.empty([args.iterations, 1], dtype=np.int32)   # time stamps of the observations made by the agent during an episode
-            frame_data    = np.empty([args.iterations, 1], dtype=np.int32)   # frame ids
+            control_data  = np.empty([int(args.iterations), 2], dtype=np.float32) # control_data observations made by the agent during a episode
+            state_data    = np.empty([int(args.iterations), 6], dtype=np.float32) # state_data observations made by the agent during an episode
+            waypoint_data = np.empty([int(args.iterations), 3], dtype=np.float32) # waypoint coordinates being tracked by the agent during an episode
+            time_data     = np.empty([int(args.iterations), 1], dtype=np.int32)   # time stamps of the observations made by the agent during an episode
+            frame_data    = np.empty([int(args.iterations), 1], dtype=np.int32)   # frame ids
             
         # execute the desired number of iterations in a given episode
-        for i in range(args.iterations):
+        for i in range(int(args.iterations)):
 
-            print(f"iteration {i} of {args.iterations}")
+            print(f"iteration {i} of {int(args.iterations)}")
 
             time_stamp = int(10000*datetime.datetime.now().timestamp())
 
@@ -248,8 +250,9 @@ if __name__ == "__main__":
 
         if args.create_video: # if desired, generate a video from the collected rgb observations 
             video_dir = os.path.join(args.dataset_dir, "videos")
-            os.makedirs(video_dir, exist_ok=True)
-            generate_video(image_dir, os.path.join(video_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
+            video_split_dir = os.path.join(video_dir, args.split + "_data")
+            os.makedirs(video_split_dir, exist_ok=True)
+            generate_video(image_dir, os.path.join(video_split_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
 
     # close the current scene
     env.close()
