@@ -54,7 +54,7 @@ Our final step is to configure the behavior of SPEAR using a configuration file.
   - `SPEAR.DATA_DIR` is the directory containing the test scene.
   - `SPEAR.CONTENT_DIR` is the `Content` directory corresponding to your precompiled `SpearSim` binary.
 
-Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory.
+Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
 
 ### Run an example application
 
