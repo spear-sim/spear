@@ -28,10 +28,6 @@ if __name__ == "__main__":
     else:
         scene_ids = [args.scene_id]
 
-    # remove existing poses file
-    if os.path.exists(args.poses_file):
-        os.remove(args.poses_file)
-
     # iterate over all scenes
     for i, scene_id in enumerate(scene_ids):
 
