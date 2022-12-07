@@ -52,7 +52,7 @@ We build the `SpearSim` executable as follows.
 path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
 ```
 
-This step will build a standalone executable at the following path. This executable is ready to use in conjunction with any of our example applications.
+This step will build a standalone executable at the following path. This executable is ready to use with any of our example applications.
 
 ```
 cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app
