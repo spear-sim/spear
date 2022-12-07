@@ -82,9 +82,9 @@ def generate_video(image_dir, video_path, rate, compress=False):
     if compress:
         process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run_async(pipe_stdin=True)
     else:
-        process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, vcodec='libx264'.overwrite_output().run_async(pipe_stdin=True)
+        process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, vcodec='libx264').overwrite_output().run_async(pipe_stdin=True)
     
-    images = [os.path.join(image_dir,img) for img in os.listdir(image_dir)]
+    images = [os.path.join(image_dir, img) for img in os.listdir(image_dir)]
     images.sort(key=lambda f: int(re.sub('\D', '', f)))
     for image in images:
         with open(image, 'rb') as f:
