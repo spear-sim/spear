@@ -20,4 +20,4 @@ You can run the example as follows.
 python run.py
 ```
 
-You should see a game window appear, as well as an OpenCV window that shows egocentric observations from the agent. To advance the simulation, press any key while the OpenCV window is in focus. You can run this example with an optional `--benchmark` flag to measure the overall speed of the simulation on your system.
+You should see a game window appear, as well as an OpenCV window that shows egocentric visual observations from the agent. To advance the simulation, press any key while the OpenCV window is in focus. You can run this example with an optional `--benchmark` flag to measure the overall speed of the simulation on your system.
