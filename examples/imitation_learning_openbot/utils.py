@@ -3,6 +3,7 @@ import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import re
 
 def show_obs(obs, obs_components, render_passes):
         
@@ -90,7 +91,7 @@ def generate_video(image_dir, video_path, rate, compress=False):
         process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, vcodec='libx264').overwrite_output().run_async(pipe_stdin=True)
     
     images = [os.path.join(image_dir, img) for img in os.listdir(image_dir)]
-    images.sort()
+    images.sort(key=lambda f: int(re.sub('\D', '', f)))
     for image in images:
         with open(image, 'rb') as f:
             jpeg_data = f.read()
