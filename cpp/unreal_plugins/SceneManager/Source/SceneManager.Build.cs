@@ -14,8 +14,42 @@ public class SceneManager : ModuleRules
 
         // Enable exceptions because some of our third-party dependencies use them
         bEnableExceptions = true;
-        
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "PhysicsCore" });
-        PrivateDependencyModuleNames.AddRange(new string[] {});
+
+        PrivateIncludePathModuleNames.AddRange(new string[] {
+            "AssetRegistry",
+            "ContentBrowser",
+            "Documentation",
+            "LevelEditor",
+            "MeshUtilities",
+            "PropertyEditor",
+            "RawMesh",
+            "WorkspaceMenuStructure",
+            "MeshReductionInterface",
+            "MeshMergeUtilities",
+        });
+
+        PublicDependencyModuleNames.AddRange(new string[] { 
+            "Core", 
+            "CoreUObject", 
+            "CoreUtils",    
+            "Engine", 
+            "PhysicsCore", 
+            "Slate", 
+            "SlateCore", 
+            "UnrealEd", 
+            "Blutility", 
+            "UMG", 
+            "EditorScriptingUtilities"
+        });
+
+        DynamicallyLoadedModuleNames.AddRange(new string[] {
+            "AssetRegistry",
+            "ContentBrowser",
+            "Documentation",
+            "LevelEditor",
+            "MeshUtilities",
+            "MeshMergeUtilities",
+            "MeshReductionInterface",
+        });
     }
 }
