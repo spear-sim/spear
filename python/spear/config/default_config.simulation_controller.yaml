@@ -8,7 +8,6 @@ SIMULATION_CONTROLLER:
   TASK: ""
   AGENT: ""
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
-  MAX_NUM_TICKS_AFTER_RESET: 100
 
   CAMERA_AGENT:
     ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
