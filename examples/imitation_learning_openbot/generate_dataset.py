@@ -73,17 +73,23 @@ if __name__ == "__main__":
     assert os.path.exists(args.episodes_file)
     df = pd.read_csv(args.episodes_file, dtype={"scene_id":str})
     
-    # string to load a different map depending on the rendering mode
+    # do some config modifications based on the rendering mode
     if args.rendering_mode == "baked":
         rendering_mode_map_str = "_bake"
+        config.defrost()
+        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 1.0
+        config.freeze()
     elif args.rendering_mode == "raytracing":
         rendering_mode_map_str = "_rtx"
+        config.defrost()
+        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 0.0
+        config.freeze()
     else:
         assert False
         
-    # build the episode data folder and its subfolders following the guidelines of the OpenBot public repository 
-    # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
+    # clean the episode data folder 
     if not args.benchmark:
+        shutil.rmtree(args.dataset_dir, ignore_errors=True) # remove the previous dataset to prevent data corruption
         split_dir = os.path.join(args.dataset_dir, args.split + "_data")
 
     # iterate over all episodes
@@ -123,7 +129,8 @@ if __name__ == "__main__":
         if args.benchmark:
             start_time_seconds = time.time()
         else:     
-            # create dirs for storing data
+            # build the episode data folder and its subfolders following the guidelines of the OpenBot public repository 
+            # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
             scene_dir = os.path.join(split_dir, episode["scene_id"])
             episode_dir = os.path.join(scene_dir, "%04d" % episode["index"])
             image_dir = os.path.join(episode_dir, "images")
@@ -197,7 +204,8 @@ if __name__ == "__main__":
         
         # check the termination flags
         if hit_obstacle and not args.benchmark: # if the collision flag is raised during the episode
-            shutil.rmtree(episode_dir) # remove the collected data as it is improper for training purposes
+            shutil.rmtree(episode_dir, ignore_errors=True) # remove the collected data as it is improper for training purposes
+            continue
         
         print("Filling database...")
 

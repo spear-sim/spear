@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
+import shutil
 import spear
 import time
 
@@ -75,13 +76,23 @@ if __name__ == "__main__":
     assert os.path.exists(args.episodes_file)
     df = pd.read_csv(args.episodes_file, dtype={"scene_id":str})
 
-    # string to load a different map depending on the rendering mode
+    # do some config modifications based on the rendering mode
     if args.rendering_mode == "baked":
         rendering_mode_map_str = "_bake"
+        config.defrost()
+        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 1.0
+        config.freeze()
     elif args.rendering_mode == "raytracing":
         rendering_mode_map_str = "_rtx"
+        config.defrost()
+        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 0.0
+        config.freeze()
     else:
         assert False
+
+    # clean the episode data folder 
+    if not args.benchmark:
+        shutil.rmtree(args.eval_dir, ignore_errors=True) # remove the previous dataset to prevent data corruption
     
     # iterate over all episodes
     prev_scene_id = ""

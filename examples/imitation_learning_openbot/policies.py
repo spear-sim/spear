@@ -125,11 +125,11 @@ class OpenBotPilotNetPolicy():
                 assert image_height-target_height >= 0.0
                 assert image_width-target_width >= 0.0
                 img_input = np.float32(obs["camera_final_color"][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
-                
+
                 # fill image tensor
                 self.interpreter.set_tensor(input_detail["index"], img_input[np.newaxis])
 
-            elif "cmd_input" in input_detail["name"]:
+            elif "cmd_input" in input_detail["name"] or "goal_input" in input_detail["name"] :
                 
                 # get the updated compass observation
                 compass_observation = get_compass_observation(position_xy_desired, obs["state_data"][0:2], obs["state_data"][4])
@@ -138,7 +138,7 @@ class OpenBotPilotNetPolicy():
                 self.interpreter.set_tensor(input_detail["index"], compass_observation[np.newaxis])   
 
             else:
-                
+
                 assert False
         
         # run inference
