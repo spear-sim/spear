@@ -384,8 +384,8 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
     // observation["encoder"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "encoder") != observation_components.end()) {
-        Eigen::Vector4f wheels_rotation_speed = open_bot_pawn_->getWheelsRotationSpeed();
-        observation["encoder"] = Serialize::toUint8(std::vector<float>{wheels_rotation_speed(0), wheels_rotation_speed(1), wheels_rotation_speed(2), wheels_rotation_speed(3)});
+        Eigen::Vector4f wheel_rotation_speeds = open_bot_pawn_->getWheelRotationSpeeds();
+        observation["encoder"] = Serialize::toUint8(std::vector<float>{wheel_rotation_speeds(0), wheel_rotation_speeds(1), wheel_rotation_speeds(2), wheel_rotation_speeds(3)});
     }
 
     //
