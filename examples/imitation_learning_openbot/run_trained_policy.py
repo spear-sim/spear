@@ -108,9 +108,6 @@ if __name__ == "__main__":
             # create Env object
             env = spear.Env(config=config)
 
-            # update scene reference
-            prev_scene_id = episode["scene_id"]
-
         # create dir for storing data
         if not args.benchmark:
             scene_dir = os.path.join(args.eval_dir, episode["scene_id"])
@@ -187,6 +184,9 @@ if __name__ == "__main__":
             elif env_info["task_step_info"]["hit_goal"] or policy_info["goal_reached"]: 
                 print("Goal reached !")
                 break
+
+        # update scene reference
+        prev_scene_id = episode["scene_id"]
 
         if args.benchmark:
             end_time_seconds = time.time()
