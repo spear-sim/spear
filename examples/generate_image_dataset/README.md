@@ -27,7 +27,7 @@ python generate_images.py
 
 Running `generate_poses.py` will generate a `poses.csv` file consisting of camera poses that will be used in the following step. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details).
 
-Running `generate_images.py` will generate images in an `images` directory by default. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
+Running `generate_images.py` will generate images in an `images` directory. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
   - `--poses_file` can be used to generate images based on the camera poses in a specific CSV file.
   - `--rendering_mode` can be set to `baked` to use baked lighting, or `raytracing` for ray-traced lighting if you are running on Windows and you have a GPU that supports DirectX 12.
   - `--num_internal_steps` can be used to control the image quality when running in ray-traced mode.
