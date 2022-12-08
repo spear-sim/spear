@@ -37,12 +37,9 @@ The generated dataset will have the folowing structrure, to comply with the [Ope
 
 ```
 dataset
-|-- videos
-| |-- 0_235114..._compressed.mp4
-| |-- ...
 |-- train_data
 | |-- 235114...
-| | |-- episode_0
+| | |-- 0000
 | | | |-- images
 | | | | |-- 0.jpeg
 | | | | |-- ...
@@ -53,11 +50,11 @@ dataset
 | | | | |-- rgbFrames.txt
 | | | | |-- poseData.txt
 | | | | |-- waypointData.txt
-| | |-- episode_1
+| | |-- 0001
 | |-- ...
 |-- test_data
 | |-- 235114...
-| | |-- episode_0
+| | |-- 0000
 | | | |-- images
 | | | | |-- 0.jpeg
 | | | | |-- ...
@@ -68,7 +65,7 @@ dataset
 | | | | |-- rgbFrames.txt
 | | | | |-- poseData.txt
 | | | | |-- waypointData.txt
-| | |-- episode_1
+| | |-- 0001
 |-- ...
 ```
 
@@ -84,16 +81,13 @@ Once the training step is completed, place your `.tflite` file in the `models` f
 # activate the spear environment
 conda activate spear-env
 
-python run_trained_policy.py --control_policy <policy_name> --iterations 1000 --create_video --create_plot --rendering_mode baked
+python run_trained_policy.py --num_iterations_per_episode 1000 --policy_file <path_to_model_folder/test.tflite> --episodes_file <path_to_output_episodes_folder/test_episodes.csv> --create_video --create_plot --rendering_mode baked
 ```
 
 The result will be stored in the `eval` folder
 
 ```
 eval
-|-- videos
-| |-- 0_235114..._compressed.mp4
-| |-- ...
 |-- run_0_235114.../data
 | |-- images
 | | |-- 0.jpeg
