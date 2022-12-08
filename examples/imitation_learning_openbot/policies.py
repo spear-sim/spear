@@ -113,24 +113,34 @@ class OpenBotPilotNetPolicy():
 
     def step(self, obs, position_xy_desired):
     
-        # get the updated compass observation
-        compass_observation = get_compass_observation(position_xy_desired, obs["state_data"][0:2], obs["state_data"][4])
-    
-        # preprocess (normalize + crop) visual observations:
-        target_height = self.input_details[0]["shape"][1] 
-        target_width = self.input_details[0]["shape"][2] 
-        image_height = obs["camera_final_color"].shape[0]
-        image_width = obs["camera_final_color"].shape[1]
-        assert image_height-target_height >= 0.0
-        assert image_width-target_width >= 0.0
-        img_input = np.float32(obs["camera_final_color"][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
-        
-        # fill image tensor
-        self.interpreter.set_tensor(self.input_details[0]["index"], img_input[np.newaxis])
+        for input_detail in self.input_details:
 
-        # fill command tensor
-        self.interpreter.set_tensor(self.input_details[1]["index"], compass_observation[np.newaxis])   
-            
+            if "img_input" in input_detail["name"]:
+
+                # preprocess (normalize + crop) visual observations:
+                target_height = input_detail["shape"][1] 
+                target_width = input_detail["shape"][2] 
+                image_height = obs["camera_final_color"].shape[0]
+                image_width = obs["camera_final_color"].shape[1]
+                assert image_height-target_height >= 0.0
+                assert image_width-target_width >= 0.0
+                img_input = np.float32(obs["camera_final_color"][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
+                
+                # fill image tensor
+                self.interpreter.set_tensor(input_detail["index"], img_input[np.newaxis])
+
+            elif "cmd_input" in input_detail["name"]:
+                
+                # get the updated compass observation
+                compass_observation = get_compass_observation(position_xy_desired, obs["state_data"][0:2], obs["state_data"][4])
+
+                # fill command tensor
+                self.interpreter.set_tensor(input_detail["index"], compass_observation[np.newaxis])   
+
+            else:
+                
+                assert False
+        
         # run inference
         self.interpreter.invoke()
 
