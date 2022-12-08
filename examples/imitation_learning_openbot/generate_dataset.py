@@ -116,15 +116,23 @@ if __name__ == "__main__":
 
             # create Env object
             env = spear.Env(config=config)
-
+                
         # reset the simulation
-        _ = env.reset()
-        
+        env_reset_info = {}
+        _ = env.reset(reset_info=env_reset_info)
+        assert "success" in env_reset_info
+
+        # if it took too long to reset the simulation, then continue
+        if not env_reset_info["success"]:
+            print("Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Skipping...")
+            prev_scene_id = episode["scene_id"]
+            continue
+
         # send zero action to the agent and collect initial trajectory observations:
-        obs, _, _, env_info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+        obs, _, _, env_step_info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
         # initialize the driving policy with the desired trajectory 
-        policy.reset(obs, env_info)
+        policy.reset(obs, env_step_info)
 
         if args.benchmark:
             start_time_seconds = time.time()
@@ -155,10 +163,10 @@ if __name__ == "__main__":
             time_stamp = int(10000*datetime.datetime.now().timestamp())
 
             # update control action 
-            action, policy_info = policy.step(obs)
+            action, policy_step_info = policy.step(obs)
 
             # send control action to the agent and collect observations
-            obs, _, _, env_info = env.step({"apply_voltage": action})
+            obs, _, _, env_step_info = env.step({"apply_voltage": action})
 
             num_iterations = num_iterations + 1
 
@@ -173,22 +181,22 @@ if __name__ == "__main__":
                 # Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather than directly writing all the 
                 # observations in a file iteration by iteration, we append these observations in a buffer, named "observation" to later process them once the 
                 # episode is completed. 
-                control_data[i]     = obs["control_data"]               # control_data: [ctrl_left, ctrl_right]
-                state_data[i]       = obs["state_data"]                 # state_data: [x, y, z, pitch, yaw, roll]
-                waypoint_data[i]    = policy_info["current_waypoint"]   # current waypoint being tracked by the agent
-                time_data[i]        = time_stamp                        # current time stamp
-                frame_data[i]       = i                                 # current frame
+                control_data[i]     = obs["control_data"]                  # control_data: [ctrl_left, ctrl_right]
+                state_data[i]       = obs["state_data"]                    # state_data: [x, y, z, pitch, yaw, roll]
+                waypoint_data[i]    = policy_step_info["current_waypoint"] # current waypoint being tracked by the agent
+                time_data[i]        = time_stamp                           # current time stamp
+                frame_data[i]       = i                                    # current frame
 
             # debug
             if args.debug:
                 show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
             # termination conditions
-            if env_info["task_step_info"]["hit_obstacle"]: 
+            if env_step_info["task_step_info"]["hit_obstacle"]: 
                 print("Collision detected !")
                 hit_obstacle = True 
                 break
-            elif env_info["task_step_info"]["hit_goal"] or policy_info["goal_reached"]: 
+            elif env_step_info["task_step_info"]["hit_goal"] or policy_step_info["goal_reached"]: 
                 print("Goal reached !")
                 break
 
