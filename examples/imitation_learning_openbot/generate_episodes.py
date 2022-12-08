@@ -53,11 +53,17 @@ if __name__ == "__main__":
         # create Env object
         env = spear.Env(config)
 
-        for j in range(args.num_episodes_per_scene):
-        
-            # reset the simulation
-            _ = env.reset()
+        j = 0
+        while j < args.num_episodes_per_scene:
 
+            # reset the simulation
+            env_reset_info = {}
+            _ = env.reset(reset_info=env_reset_info)
+
+            # if it took too long to reset the simulation, then continue
+            if not env_reset_info["success"]:
+                continue
+                
             # get random start-goal pairs
             _, _, _, step_info = env.step(action={"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
@@ -77,7 +83,8 @@ if __name__ == "__main__":
             plt.plot(positions[-1,0], positions[-1,1], '^', markersize=12.0, label='Goal', color='tab:green', alpha=0.3)
             plt.plot(positions[:,0], positions[:,1], '-o', markersize=5.0, label='Desired Trajectory', color='tab:blue', alpha=0.3)
 
-        
+            j = j+1
+
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = dict(zip(labels, handles))
         plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor = (0.75, 1.15), ncol = 3)
