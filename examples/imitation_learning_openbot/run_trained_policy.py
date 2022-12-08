@@ -8,7 +8,7 @@ import pandas as pd
 import spear
 import time
 
-from policies import OpenBotPilotNetPolicy
+from policies import *
 from utils import *
   
   
@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--iterations", default=500)
+    parser.add_argument("--num_iterations_per_episode", type=int, default=500)
     parser.add_argument("--episodes_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_episodes.csv"))
     parser.add_argument("--policy_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "models", "test.tflite"))
     parser.add_argument("--eval_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "eval"))
@@ -45,7 +45,7 @@ if __name__ == "__main__":
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 1080
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 1920
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color", "segmentation", "depth_glsl"]
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera", "imu", "sonar"]
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
         config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
         config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
         config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 120
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH= 160
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 160
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera"]
         config.freeze()
@@ -87,6 +87,10 @@ if __name__ == "__main__":
     prev_scene_id = ""
     for episode in df.to_records():
 
+        print("----------------------")
+        print(f"episode {episode['index']} over {df.shape[0]}")
+        print("----------------------")
+
         # if the scene_id of our current episode has changed, then create a new Env
         if episode["scene_id"] != prev_scene_id:
 
@@ -104,6 +108,9 @@ if __name__ == "__main__":
             # create Env object
             env = spear.Env(config=config)
 
+            # update scene reference
+            prev_scene_id = episode["scene_id"]
+
         # create dir for storing data
         if not args.benchmark:
             scene_dir = os.path.join(args.eval_dir, episode["scene_id"])
@@ -119,10 +126,12 @@ if __name__ == "__main__":
         # send zero action to the agent and collect initial trajectory observations:
         obs, _, _, env_info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
+        num_iterations = 0
+
         if args.benchmark:
             start_time_seconds = time.time()
         else:
-            state_data = np.empty([int(args.iterations), 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during an episode
+            state_data = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during an episode
 
             # save the optimal goal trajectory in a dedicated file
             df_trajectory = pd.DataFrame({"x_d[cm]" : [env_info["agent_step_info"]["trajectory_data"][:,0]],
@@ -134,15 +143,17 @@ if __name__ == "__main__":
         goal = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32)
 
         # execute the desired number of iterations in a given episode
-        for i in range(int(args.iterations)):
+        for i in range(args.num_iterations_per_episode):
 
-            print(f"iteration {i} of {int(args.iterations)}")
+            print(f"iteration {i} of {args.num_iterations_per_episode}")
 
             # update control action 
             action, policy_info = policy.step(obs, goal[0:2])
 
             # send control action to the agent and collect observations
             obs, _, _, env_info = env.step({"apply_voltage": action})
+
+            num_iterations = num_iterations + 1
             
             if not args.benchmark:
 
@@ -169,11 +180,18 @@ if __name__ == "__main__":
             # debug
             if args.debug:
                 show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
+            
+            # termination conditions
+            if env_info["task_step_info"]["hit_obstacle"]: 
+                print("Collision detected !") # let the agent collide with the environment for evaluation purposes 
+            elif env_info["task_step_info"]["hit_goal"] or policy_info["goal_reached"]: 
+                print("Goal reached !")
+                break
 
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
-            print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / int(args.iterations))*1000, int(args.iterations) / elapsed_time_seconds))
+            print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
             continue
 
         if args.create_video: # if desired, generate a video from the collected rgb observations 
@@ -182,7 +200,7 @@ if __name__ == "__main__":
             generate_video(image_dir, os.path.join(video_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
         
         if args.create_plot: # if desired, generate a plot of the control performance
-            plot_tracking_performance(state_data, env_info["agent_step_info"]["trajectory_data"], result_dir)
+            plot_tracking_performance(state_data[:num_iterations][:], env_info["agent_step_info"]["trajectory_data"], os.path.join(result_dir, 'tracking_performance.png'))
 
     # close the current scene and give the system a bit of time before switching to the next scene.
     env.close()

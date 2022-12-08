@@ -28,7 +28,8 @@ Once a suitable set of start-goal tuples are available and properly divided in a
 # activate the spear environment
 conda activate spear-env
 
-python generate_dataset.py --iterations 1000 --scene_id "235554..." --create_video --create_plot --rendering_mode baked
+python generate_dataset.py --num_iterations_per_episode 1000 --split train --episodes_file <path_to_output_episodes_folder/train_episodes.csv> --create_video --create_plot --rendering_mode baked
+python generate_dataset.py --num_iterations_per_episode 1000 --split test --episodes_file <path_to_output_episodes_folder/test_episodes.csv> --create_video --create_plot --rendering_mode baked
 ```
 
 This will have an openbot agent follow collision-fre trajectories between the differnt start-goal coordinates. 
@@ -83,7 +84,7 @@ Once the training step is completed, place your `.tflite` file in the `models` f
 # activate the spear environment
 conda activate spear-env
 
-python run_trained_policy.py --control_policy <policy_name> --iterations 1000 --scene_id "235554..." --create_video --create_plot --rendering_mode baked
+python run_trained_policy.py --control_policy <policy_name> --iterations 1000 --create_video --create_plot --rendering_mode baked
 ```
 
 The result will be stored in the `eval` folder

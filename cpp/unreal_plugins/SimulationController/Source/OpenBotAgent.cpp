@@ -246,6 +246,17 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     }
 
     //
+    // observation["encoder"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "encoder") != observation_components.end()) {
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.dtype_ = DataType::Float32;
+        box.shape_ = {4};
+        observation_space["encoder"] = std::move(box); // FL, FR, RL, RR
+    }
+
+    //
     // observation["imu"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
@@ -367,6 +378,14 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
         for (auto& camera_sensor_observation_component : camera_sensor_observation) {
             observation["camera_" + camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
         }
+    }
+
+    //
+    // observation["encoder"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "encoder") != observation_components.end()) {
+        Eigen::Vector4f wheels_rotation_speed = open_bot_pawn_->getWheelsRotationSpeed();
+        observation["encoder"] = Serialize::toUint8(std::vector<float>{wheels_rotation_speed(0), wheels_rotation_speed(1), wheels_rotation_speed(2), wheels_rotation_speed(3)});
     }
 
     //

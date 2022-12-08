@@ -28,10 +28,6 @@ if __name__ == "__main__":
     else:
         scene_ids = [args.scene_id]
 
-    # remove existing poses file
-    if os.path.exists(args.poses_file):
-        os.remove(args.poses_file)
-
     # iterate over all scenes
     for i, scene_id in enumerate(scene_ids):
 
@@ -71,7 +67,7 @@ if __name__ == "__main__":
                            "pitch_degs": pitch_values,
                            "yaw_degs"  : yaw_values,
                            "roll_degs" : roll_values})
-        df.to_csv(args.poses_file, mode="a", index=False, header=i==0)
+        df.to_csv(args.poses_file, mode="w" if i==0 else "a", index=False, header=i==0)
 
         plt.scatter(positions[:,0], positions[:,1], s=1.0)
         plt.gca().set_aspect("equal")

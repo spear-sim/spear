@@ -10,7 +10,7 @@ import shutil
 import spear
 import time
 
-from policies import OpenBotPIDPolicy
+from policies import *
 from utils import *
   
   
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--iterations", default=500)
+    parser.add_argument("--num_iterations_per_episode", type=int, default=500)
     parser.add_argument("--episodes_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "train_episodes.csv"))
     parser.add_argument("--dataset_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset"))
     parser.add_argument("--split", default="train")
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 1080
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 1920
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color", "segmentation", "depth_glsl"]
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera", "imu", "sonar"]
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
         config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
         config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
         config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 120
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH= 160
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 160
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera"]
         config.freeze()
@@ -89,6 +89,10 @@ if __name__ == "__main__":
     # iterate over all episodes
     prev_scene_id = ""
     for episode in df.to_records():
+
+        print("----------------------")
+        print(f"episode {episode['index']} over {df.shape[0]}")
+        print("----------------------")
         
         # if the scene_id of our current episode has changed, then create a new Env
         if episode["scene_id"] != prev_scene_id:
@@ -99,15 +103,16 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + episode["scene_id"] + "." + "Map_" + episode["scene_id"]
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + episode["scene_id"]
-            #config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str + "." + "Map_" + episode["scene_id"] + rendering_mode_map_str
-            #config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str + "." + "Map_" + episode["scene_id"] + rendering_mode_map_str
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
             config.freeze()
 
             # create Env object
             env = spear.Env(config=config)
+
+            # update scene reference
+            prev_scene_id = episode["scene_id"]
 
         # create dir for storing data
         if not args.benchmark:
@@ -128,21 +133,21 @@ if __name__ == "__main__":
         policy.reset(obs, env_info)
 
         hit_obstacle        = False # flag raised when the vehicle collides with the environment. 
-        executed_iterations = 0
+        num_iterations = 0
 
         if args.benchmark:
             start_time_seconds = time.time()
         else:                            
-            control_data  = np.empty([int(args.iterations), 2], dtype=np.float32) # control_data observations made by the agent during a episode
-            state_data    = np.empty([int(args.iterations), 6], dtype=np.float32) # state_data observations made by the agent during an episode
-            waypoint_data = np.empty([int(args.iterations), 3], dtype=np.float32) # waypoint coordinates being tracked by the agent during an episode
-            time_data     = np.empty([int(args.iterations), 1], dtype=np.int32)   # time stamps of the observations made by the agent during an episode
-            frame_data    = np.empty([int(args.iterations), 1], dtype=np.int32)   # frame ids
+            control_data  = np.empty([args.num_iterations_per_episode, 2], dtype=np.float32) # control_data observations made by the agent during a episode
+            state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # state_data observations made by the agent during an episode
+            waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # waypoint coordinates being tracked by the agent during an episode
+            time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # time stamps of the observations made by the agent during an episode
+            frame_data    = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # frame ids
             
         # execute the desired number of iterations in a given episode
-        for i in range(int(args.iterations)):
+        for i in range(args.num_iterations_per_episode):
 
-            print(f"iteration {i} of {int(args.iterations)}")
+            print(f"iteration {i} of {args.num_iterations_per_episode}")
 
             time_stamp = int(10000*datetime.datetime.now().timestamp())
 
@@ -152,7 +157,7 @@ if __name__ == "__main__":
             # send control action to the agent and collect observations
             obs, _, _, env_info = env.step({"apply_voltage": action})
 
-            executed_iterations = executed_iterations + 1
+            num_iterations = num_iterations + 1
 
             if not args.benchmark:
 
@@ -175,6 +180,7 @@ if __name__ == "__main__":
             if args.debug:
                 show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
+            # termination conditions
             if env_info["task_step_info"]["hit_obstacle"]: 
                 print("Collision detected !")
                 hit_obstacle = True 
@@ -186,67 +192,66 @@ if __name__ == "__main__":
         # episode loop executed: check the termination flags
         
         if hit_obstacle: # if the collision flag is raised during the episode
-            shutil.rmtree(episode_dir) # remove the collected data as it is improper for training purposes
+            if not args.benchmark:
+                shutil.rmtree(episode_dir) # remove the collected data as it is improper for training purposes
             continue
 
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
-            print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / executed_iterations)*1000, executed_iterations / elapsed_time_seconds))
+            print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
             continue
         
         print("Filling database...")
 
+        # low-level commands sent to the motors
+        df_ctrl = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
+                                "left_ctrl"     : control_data[:num_iterations, 0],
+                                "right_ctrl"    : control_data[:num_iterations, 1]})
+        df_ctrl.to_csv(os.path.join(sensor_dir,"ctrlLog.txt"), mode="w", index=False, header=True)
+
+        # reference of the images correespoinding to each control input
+        df_rgb = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
+                            "frame"            : frame_data[:num_iterations]})
+        df_rgb.to_csv(os.path.join(sensor_dir,"rgbFrames.txt"), mode="w", index=False, header=True)
+
+        # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
+        df_pose = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
+                                "x[cm]"         : state_data[:num_iterations, 0],
+                                "y[cm]"         : state_data[:num_iterations, 1],
+                                "z[cm]"         : state_data[:num_iterations, 2],
+                                "pitch[rad]"    : state_data[:num_iterations, 3],
+                                "yaw[rad]"      : state_data[:num_iterations, 4],
+                                "roll[rad]"     : state_data[:num_iterations, 5]})
+        df_pose.to_csv(os.path.join(sensor_dir,"poseData.txt"), mode="w", index=False, header=True)
+
+        # waypoint data (for debug purposes)
+        df_waypoint = pd.DataFrame({"timestamp[ns]"  : time_data[:num_iterations],
+                                    "waypoint_x[cm]" : waypoint_data[:num_iterations, 0],
+                                    "waypoint_y[cm]" : waypoint_data[:num_iterations, 1],
+                                    "waypoint_z[cm]" : waypoint_data[:num_iterations, 2]})
+        df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="w", index=False, header=True)
+
         # set the goal position as the last position reached by the agent
-        goal_position_xy = state_data[executed_iterations-1][0:2] # use the vehicle last x-y location as goal for the episode
+        goal_position_xy = state_data[num_iterations-1][0:2] # use the vehicle last x-y location as goal for the episode
 
-        for i in range(executed_iterations):
-    
-            # low-level commands sent to the motors
-            df_ctrl = pd.DataFrame({"timestamp[ns]" : time_data[i],
-                                    "left_ctrl"     : control_data[i][0],
-                                    "right_ctrl"    : control_data[i][1]})
-            df_ctrl.to_csv(os.path.join(sensor_dir,"ctrlLog.txt"), mode="a", index=False, header=i==0)
+        for i in range(num_iterations):
 
-        
             # get the updated compass observation (with the last recorded position set as goal)
             position_xy_current = np.array([state_data[i][0], state_data[i][1]], dtype=np.float32)
             yaw_current = state_data[i][4]
             compass_observation = get_compass_observation(goal_position_xy, position_xy_current, yaw_current)
 
             # high level commands
-            df_goal = pd.DataFrame({"timestamp[ns]" : time_data[i],
+            df_goal = pd.DataFrame({"timestamp[ns]" : [time_data[i]],
                                     "dist[m]"       : compass_observation[0],
                                     "sinYaw"        : compass_observation[1],
                                     "cosYaw"        : compass_observation[2]})
             df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="a", index=False, header=i==0)
 
-            # reference of the images correespoinding to each control input
-            df_rgb = pd.DataFrame({"timestamp[ns]" : time_data[i],
-                                   "frame"         : int(frame_data[i])})
-            df_rgb.to_csv(os.path.join(sensor_dir,"rgbFrames.txt"), mode="a", index=False, header=i==0)
-
-            # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
-            df_pose = pd.DataFrame({"timestamp[ns]" : time_data[i],
-                                    "x[cm]"         : state_data[i][0],
-                                    "y[cm]"         : state_data[i][1],
-                                    "z[cm]"         : state_data[i][2],
-                                    "pitch[rad]"    : state_data[i][3],
-                                    "yaw[rad]"      : state_data[i][4],
-                                    "roll[rad]"     : state_data[i][5]})
-            df_pose.to_csv(os.path.join(sensor_dir,"poseData.txt"), mode="a", index=False, header=i==0)
-
-            # waypoint data (for debug purposes)
-            df_waypoint = pd.DataFrame({"timestamp[ns]"  : time_data[i],
-                                        "waypoint_x[cm]" : waypoint_data[i][0],
-                                        "waypoint_y[cm]" : waypoint_data[i][1],
-                                        "waypoint_z[cm]" : waypoint_data[i][2]})
-            df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="a", index=False, header=i==0)
-            
-            prev_scene_id = episode["scene_id"]
-
         if args.create_plot: # if desired, generate a plot of the control performance
-            plot_tracking_performance(state_data[:executed_iterations][:], waypoint_data[:executed_iterations][:], sensor_dir)
+            plot_tracking_performance(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(sensor_dir, 'tracking_performance.png'))
+            plot_control_performance(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(sensor_dir, 'control_performance.png'))
 
         if args.create_video: # if desired, generate a video from the collected rgb observations 
             video_dir = os.path.join(args.dataset_dir, "videos")

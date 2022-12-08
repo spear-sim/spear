@@ -6,7 +6,6 @@ import numpy as np
 import os
 import pandas as pd
 import spear
-import sys
 
 
 if __name__ == "__main__":
@@ -17,6 +16,12 @@ if __name__ == "__main__":
     parser.add_argument("--scene_id")
     args = parser.parse_args()
 
+    # directory for trajectory image storage
+    split_name = os.path.splitext(os.path.basename(args.episodes_file))[0] # isolate filename and remove extension
+    image_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "trajectories")
+    split_dir = os.path.join(image_dir, split_name)
+    os.makedirs(split_dir, exist_ok=True)
+
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
 
@@ -24,15 +29,6 @@ if __name__ == "__main__":
     config.defrost()
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING = True
     config.freeze()
-
-    # remove existing episode file
-    if os.path.exists(args.episodes_file):
-        os.remove(args.episodes_file)
-    
-    # remove existing episode summary plot
-    episodes_summary_plot = args.episodes_file[:-4] 
-    if os.path.exists(episodes_summary_plot + ".png"):
-        os.remove(episodes_summary_plot + ".png")
 
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is None:
@@ -53,9 +49,6 @@ if __name__ == "__main__":
         config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + scene_id + "_bake"
         config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
         config.freeze()
-
-        print("/Game/Maps/Map_" + scene_id + "." + "Map_" + scene_id)
-        print("/Game/Maps/Map_" + scene_id)
 
         # create Env object
         env = spear.Env(config)
@@ -78,12 +71,13 @@ if __name__ == "__main__":
                                "goal_pos_x_cms" : positions[-1,0],
                                "goal_pos_y_cms" : positions[-1,1],
                                "goal_pos_z_cms" : positions[-1,2]})
-            df.to_csv(args.episodes_file, mode="a", index=False, header=(i==0 and j==0))
+            df.to_csv(args.episodes_file, mode="w" if i==0 and j==0 else "a", index=False, header=i==0 and j==0)
         
             plt.plot(positions[0,0], positions[0,1], '^', markersize=12.0, label='Start', color='tab:purple', alpha=0.3)
             plt.plot(positions[-1,0], positions[-1,1], '^', markersize=12.0, label='Goal', color='tab:green', alpha=0.3)
             plt.plot(positions[:,0], positions[:,1], '-o', markersize=5.0, label='Desired Trajectory', color='tab:blue', alpha=0.3)
-            
+
+        
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = dict(zip(labels, handles))
         plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor = (0.75, 1.15), ncol = 3)
@@ -93,7 +87,7 @@ if __name__ == "__main__":
         plt.ylabel('y[cm]')
         plt.grid()
         plt.title(f"OpenBot trajectories (scene {scene_id})")
-        plt.savefig(episodes_summary_plot)
+        plt.savefig(os.path.join(split_dir, "episode_trajectories_" + scene_id))
 
         # close the current scene
         env.close()

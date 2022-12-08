@@ -3,7 +3,6 @@ import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import re
 
 def show_obs(obs, obs_components, render_passes):
         
@@ -13,6 +12,11 @@ def show_obs(obs, obs_components, render_passes):
             print(f"State data: pitch yaw roll [{obs['state_data'][3]:.2f}, {obs['state_data'][4]:.2f},{obs['state_data'][5]:.2f}]")
         elif obs_component == "control_data":
             print(f"Control data: left right [{obs['control_data'][0]:.2f}, {obs['control_data'][1]:.2f}]")
+        elif obs_component == "encoder":
+            print(f"FL wheel velocity: [{obs['encoder'][0]:.2f}]")
+            print(f"FR wheel velocity: [{obs['encoder'][1]:.2f}]")
+            print(f"RL wheel velocity: [{obs['encoder'][2]:.2f}]")
+            print(f"RR wheel velocity: [{obs['encoder'][3]:.2f}]")
         elif obs_component == "imu":
             print(f"IMU data: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]")
             print(f"IMU data: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
@@ -33,6 +37,7 @@ def show_obs(obs, obs_components, render_passes):
             print(f"Error: {obs_component} is an unknown observation component.")
             assert False
 
+    cv2.waitKey(0)
 
 # computes the 2D target position relative to the agent in world frame 
 # as well as the relative yaw angle between the agent forward axis and the agent-target vector
@@ -85,7 +90,7 @@ def generate_video(image_dir, video_path, rate, compress=False):
         process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, vcodec='libx264').overwrite_output().run_async(pipe_stdin=True)
     
     images = [os.path.join(image_dir, img) for img in os.listdir(image_dir)]
-    images.sort(key=lambda f: int(re.sub('\D', '', f)))
+    images.sort()
     for image in images:
         with open(image, 'rb') as f:
             jpeg_data = f.read()
@@ -95,10 +100,10 @@ def generate_video(image_dir, video_path, rate, compress=False):
     process.wait()
 
 
-def plot_tracking_performance(poses_current, poses_desired, plot_dir):
+def plot_tracking_performance(poses_current, poses_desired, plot_path):
 
-    # first figure
     fig0, ax0 = plt.subplots(1, 1)
+
     current, = ax0.plot(poses_current[:,0], poses_current[:,1], marker='x', markersize=5.0, label='Actual Trajectory', color='tab:blue')
     desired, = ax0.plot(poses_desired[:,0], poses_desired[:,1], marker='o', markersize=8.0, label='Desired Trajectory', color='tab:orange')
     goal, = ax0.plot(poses_desired[-1,0], poses_desired[-1,1], marker='^', markersize=12.0, label='Goal', color='tab:green')
@@ -108,35 +113,43 @@ def plot_tracking_performance(poses_current, poses_desired, plot_dir):
     ax0.set_title('XY Position tracking')
     ax0.grid()
     ax0.legend((current, desired, goal, start), ('Actual Trajectory', 'Desired Trajectory', 'Goal', 'Start'), loc='upper left')
+    
     fig0.tight_layout()
     fig0.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
-    plt.savefig(os.path.join(plot_dir, 'xy_position_tracking.png'), dpi=fig0.dpi)
+    
+    plt.savefig(plot_path, dpi=fig0.dpi)
 
-    # second figure
-    if len(poses_current) == len(poses_desired):
-        fig1, (ax1,ax2,ax3) = plt.subplots(3, 1)
-        x, = ax1.plot(poses_current[:,0], label='Actual X', color='tab:blue')
-        x_d, = ax1.plot(poses_desired[:,0], label='Desired X', color='tab:orange')
-        ax1.set_xlabel('iterations')
-        ax1.set_ylabel('x[cm]')
-        ax1.set_title('X tracking')
-        ax1.grid()
-        ax1.legend((x, x_d), ('Actual X', 'Desired X'), loc='upper left')
-        y, = ax2.plot(poses_current[:,1], label='Actual Y', color='tab:blue')
-        y_d, = ax2.plot(poses_desired[:,1], label='Desired Y', color='tab:orange')
-        ax2.set_xlabel('iterations')
-        ax2.set_ylabel('y[cm]')
-        ax2.set_title('Y tracking')
-        ax2.grid()
-        ax2.legend((y, y_d), ('Actual Y', 'Desired Y'), loc='upper left')
-        yaw, = ax3.plot(poses_current[:,4], label='Actual Yaw', color='tab:blue')
-        yaw_d, = ax3.plot(np.arctan2(poses_desired[:,1] - poses_current[:,1], poses_desired[:,0] - poses_current[:,0]), label='Desired Yaw', color='tab:orange')
-        ax3.set_xlabel('iterations')
-        ax3.set_ylabel('yaw[rad]')
-        ax3.set_title('Yaw tracking')
-        ax3.grid()
-        ax3.legend((yaw, yaw_d), ('Actual Yaw', 'Desired Yaw'), loc='upper left')
-        fig1.tight_layout()
-        fig1.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
-        plt.savefig(os.path.join(plot_dir, 'control_performance.png'), dpi=fig1.dpi)
+
+def plot_control_performance(poses_current, poses_desired, plot_path):
+
+    fig0, (ax0,ax1,ax2) = plt.subplots(3, 1)
+
+    x, = ax0.plot(poses_current[:,0], label='Actual X', color='tab:blue')
+    x_d, = ax0.plot(poses_desired[:,0], label='Desired X', color='tab:orange')
+    ax0.set_xlabel('iterations')
+    ax0.set_ylabel('x[cm]')
+    ax0.set_title('X tracking')
+    ax0.grid()
+    ax0.legend((x, x_d), ('Actual X', 'Desired X'), loc='upper left')
+    
+    y, = ax1.plot(poses_current[:,1], label='Actual Y', color='tab:blue')
+    y_d, = ax1.plot(poses_desired[:,1], label='Desired Y', color='tab:orange')
+    ax1.set_xlabel('iterations')
+    ax1.set_ylabel('y[cm]')
+    ax1.set_title('Y tracking')
+    ax1.grid()
+    ax1.legend((y, y_d), ('Actual Y', 'Desired Y'), loc='upper left')
+    
+    yaw, = ax2.plot(poses_current[:,4], label='Actual Yaw', color='tab:blue')
+    yaw_d, = ax2.plot(np.arctan2(poses_desired[:,1] - poses_current[:,1], poses_desired[:,0] - poses_current[:,0]), label='Desired Yaw', color='tab:orange')
+    ax2.set_xlabel('iterations')
+    ax2.set_ylabel('yaw[rad]')
+    ax2.set_title('Yaw tracking')
+    ax2.grid()
+    ax2.legend((yaw, yaw_d), ('Actual Yaw', 'Desired Yaw'), loc='upper left')
+    
+    fig0.tight_layout()
+    fig0.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
+    
+    plt.savefig(plot_path, dpi=fig0.dpi)
 
