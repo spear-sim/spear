@@ -12,8 +12,8 @@ import time
 
 from policies import *
 from utils import *
-  
-  
+
+
 if __name__ == "__main__":
 
     # parse arguments
@@ -208,6 +208,13 @@ if __name__ == "__main__":
             continue
         
         print("Filling database...")
+        
+        # get the updated compass observation (with the last recorded position set as goal)
+        goal_position_xy = state_data[num_iterations-1][0:2]
+        for i in range(num_iterations):
+            position_xy_current = np.array([state_data[i][0], state_data[i][1]], dtype=np.float32)
+            yaw_current = state_data[i][4]
+            compass_data[i] = get_compass_observation(goal_position_xy, position_xy_current, yaw_current)
 
         # low-level commands sent to the motors
         df_ctrl = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
@@ -236,16 +243,6 @@ if __name__ == "__main__":
                                     "waypoint_y[cm]" : waypoint_data[:num_iterations, 1],
                                     "waypoint_z[cm]" : waypoint_data[:num_iterations, 2]})
         df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="w", index=False, header=True)
-
-        # set the goal position as the last position reached by the agent
-        goal_position_xy = state_data[num_iterations-1][0:2] # use the vehicle last x-y location as goal for the episode
-
-        for i in range(num_iterations):
-
-            # get the updated compass observation (with the last recorded position set as goal)
-            position_xy_current = np.array([state_data[i][0], state_data[i][1]], dtype=np.float32)
-            yaw_current = state_data[i][4]
-            compass_data[i] = get_compass_observation(goal_position_xy, position_xy_current, yaw_current)
 
         # high level commands
         df_goal = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
