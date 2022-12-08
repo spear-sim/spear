@@ -5,6 +5,7 @@ import numpy as np
 import os
 import re
 
+
 def show_obs(obs, obs_components, render_passes):
         
     for obs_component in obs_components:
@@ -39,6 +40,7 @@ def show_obs(obs, obs_components, render_passes):
             assert False
 
     cv2.waitKey(0)
+
 
 # computes the 2D target position relative to the agent in world frame 
 # as well as the relative yaw angle between the agent forward axis and the agent-target vector
@@ -153,4 +155,3 @@ def plot_control_performance(poses_current, poses_desired, plot_path):
     fig0.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
     
     plt.savefig(plot_path, dpi=fig0.dpi)
-
