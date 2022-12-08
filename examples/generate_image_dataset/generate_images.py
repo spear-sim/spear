@@ -57,7 +57,7 @@ if __name__ == "__main__":
     parser.add_argument("--poses_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "poses.csv"))
     parser.add_argument("--images_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "images"))
     parser.add_argument("--rendering_mode", default="baked")
-    parser.add_argument("--num_internal_steps", type=int, default=1)
+    parser.add_argument("--num_internal_steps", type=int)
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--wait_for_key_press", action="store_true")
     args = parser.parse_args()
@@ -68,13 +68,27 @@ if __name__ == "__main__":
     # read data from csv
     df = pd.read_csv(args.poses_file, dtype={"scene_id":str})
 
-    # string to load a different map depending on the rendering mode
+    # do some config modifications based on the rendering mode
     if args.rendering_mode == "baked":
         rendering_mode_map_str = "_bake"
+        if args.num_internal_steps is None:
+            num_internal_steps = 1
+        config.defrost()
+        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 1.0
+        config.freeze()
     elif args.rendering_mode == "raytracing":
         rendering_mode_map_str = "_rtx"
+        if args.num_internal_steps is None:
+            num_internal_steps = 5
+        config.defrost()
+        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 0.0
+        config.freeze()
     else:
         assert False
+
+    # if the user specified num_internal_steps, then use it
+    if args.num_internal_steps is not None:
+        num_internal_steps = args.num_internal_steps
 
     # iterate over all poses
     prev_scene_id = ""
@@ -100,7 +114,7 @@ if __name__ == "__main__":
             config.freeze()
 
             # create Env object
-            env = CustomEnv(config, num_internal_steps=args.num_internal_steps)
+            env = CustomEnv(config, num_internal_steps=num_internal_steps)
 
             # reset the simulation
             _ = env.reset()
