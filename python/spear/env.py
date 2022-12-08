@@ -66,6 +66,8 @@ class Env(gym.Env):
         self._byte_order = self._get_byte_order()
         self._task_step_info_space = self._get_task_step_info_space()
         self._agent_step_info_space = self._get_agent_step_info_space()
+        
+        self._ready = False
 
     def step(self, action):
         
@@ -74,42 +76,32 @@ class Env(gym.Env):
         self._tick()
         obs = self._get_observation()
         reward = self._get_reward()
-        is_done = self._is_episode_done()
+        is_done = not self._ready or self._is_episode_done() # if the last call to reset() failed or the episode is done
         step_info = self._get_step_info()
         self._end_tick()
 
         return obs, reward, is_done, step_info
 
-    def reset(self):
-
-        ready = False
-        should_reset = True
-        num_ticks_since_reset = 0
-
-        while not ready:
+    def reset(self, reset_info=None):
+        
+        for i in range(self.SPEAR.MAX_NUM_TICKS_AFTER_RESET):
             self._begin_tick()
-
-            # only reset the simulation once
-            if should_reset:
-                self._reset()
-                should_reset = False
-                num_ticks_since_reset = 0
-
+            if i == 0:
+                self._reset() # only reset the simulation once
             self._tick()
-
-            # only get the observation if ready
             ready = self._is_ready()
-            if ready:
-                obs = self._get_observation()
-
+            if ready or i == self.SPEAR.MAX_NUM_TICKS_AFTER_RESET - 1:
+                obs = self._get_observation() # only get the observation if ready, or if we're about to give up
             self._end_tick()
+            if ready:
+                break
+        
+        self._ready = ready # store if our reset attempt was successful or not
 
-            # if the simulation is not ready after a specified number of ticks, then reset again
-            num_ticks_since_reset = num_ticks_since_reset + 1
-            if not ready and num_ticks_since_reset >= self._config.SIMULATION_CONTROLLER.MAX_NUM_TICKS_AFTER_RESET:
-                should_reset = True
-                print("Too many ticks are taken by the simulation to settle down. Calling reset again !") 
-
+        if reset_info is not None:
+            assert isinstance(reset_info, dict)
+            reset_info["success"] = ready
+            
         return obs
 
     # need to override gym.Env member function
