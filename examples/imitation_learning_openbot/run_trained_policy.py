@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
         # execute the desired number of iterations in a given episode
         num_iterations = 0
-        goal = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32) # goal position
+        goal           = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32) # goal position
         for i in range(args.num_iterations_per_episode):
 
             print(f"iteration {i} of {args.num_iterations_per_episode}")
