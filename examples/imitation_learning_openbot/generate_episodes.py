@@ -63,7 +63,7 @@ if __name__ == "__main__":
             
             # if it took too long to reset the simulation, then continue
             if not env_reset_info["success"]:
-                print("Call to env.reset() was not successful. Simulation took too long to return to a ready state. Retrying...")
+                print("Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Retrying...")
                 continue
                 
             # get random start-goal pairs
