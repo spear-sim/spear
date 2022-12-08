@@ -46,7 +46,7 @@ public:
     Eigen::Vector4f getDutyCycle() const;
 
     // Provides access to the wheels rotation speed in rad/s
-    Eigen::Vector4f getWheelsRotationSpeed() const;
+    Eigen::Vector4f getWheelRotationSpeeds() const;
 
     // Apply high braking torque to make sure the wheels don't move
     void activateBrakes();
