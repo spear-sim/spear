@@ -120,9 +120,6 @@ if __name__ == "__main__":
         # initialize the driving policy with the desired trajectory 
         policy.reset(obs, env_info)
 
-        hit_obstacle        = False # flag raised when the vehicle collides with the environment. 
-        num_iterations = 0
-
         if args.benchmark:
             start_time_seconds = time.time()
         else:     
@@ -142,6 +139,8 @@ if __name__ == "__main__":
             frame_data    = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # frame ids
             
         # execute the desired number of iterations in a given episode
+        num_iterations = 0
+        hit_obstacle   = False # flag raised when the vehicle collides with the environment
         for i in range(args.num_iterations_per_episode):
 
             print(f"iteration {i} of {args.num_iterations_per_episode}")

@@ -114,8 +114,6 @@ if __name__ == "__main__":
         # send zero action to the agent and collect initial trajectory observations:
         obs, _, _, env_info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
-        num_iterations = 0
-
         if args.benchmark:
             start_time_seconds = time.time()
         else:
@@ -134,11 +132,10 @@ if __name__ == "__main__":
                                           "y_d[cm]" : [env_info["agent_step_info"]["trajectory_data"][:,1]],
                                           "z_d[cm]" : [env_info["agent_step_info"]["trajectory_data"][:,2]]})
             df_trajectory.to_csv(os.path.join(result_dir,"trajectoryLog.txt"), mode="w", index=False, header=True)
-        
-        # goal position
-        goal = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32)
 
         # execute the desired number of iterations in a given episode
+        num_iterations = 0
+        goal = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32) # goal position
         for i in range(args.num_iterations_per_episode):
 
             print(f"iteration {i} of {args.num_iterations_per_episode}")
