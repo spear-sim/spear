@@ -108,15 +108,6 @@ if __name__ == "__main__":
             # create Env object
             env = spear.Env(config=config)
 
-        # create dir for storing data
-        if not args.benchmark:
-            scene_dir = os.path.join(args.eval_dir, episode["scene_id"])
-            episode_dir = os.path.join(scene_dir, "%04d" % episode["index"])
-            image_dir = os.path.join(episode_dir, "images")
-            result_dir = os.path.join(episode_dir, "results")
-            os.makedirs(image_dir, exist_ok=True)
-            os.makedirs(result_dir, exist_ok=True)
-
         # reset the simulation
         _ = env.reset()
         
@@ -128,6 +119,14 @@ if __name__ == "__main__":
         if args.benchmark:
             start_time_seconds = time.time()
         else:
+            # create dirs for storing data
+            scene_dir = os.path.join(args.eval_dir, episode["scene_id"])
+            episode_dir = os.path.join(scene_dir, "%04d" % episode["index"])
+            image_dir = os.path.join(episode_dir, "images")
+            result_dir = os.path.join(episode_dir, "results")
+            os.makedirs(image_dir, exist_ok=True)
+            os.makedirs(result_dir, exist_ok=True)
+
             state_data = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during an episode
 
             # save the optimal goal trajectory in a dedicated file

@@ -111,15 +111,6 @@ if __name__ == "__main__":
             # create Env object
             env = spear.Env(config=config)
 
-        # create dir for storing data
-        if not args.benchmark:
-            scene_dir = os.path.join(split_dir, episode["scene_id"])
-            episode_dir = os.path.join(scene_dir, "%04d" % episode["index"])
-            image_dir = os.path.join(episode_dir, "images")
-            sensor_dir = os.path.join(episode_dir, "sensor_data")
-            os.makedirs(image_dir, exist_ok=True)
-            os.makedirs(sensor_dir, exist_ok=True)
-
         # reset the simulation
         _ = env.reset()
         
@@ -134,7 +125,15 @@ if __name__ == "__main__":
 
         if args.benchmark:
             start_time_seconds = time.time()
-        else:                            
+        else:     
+            # create dirs for storing data
+            scene_dir = os.path.join(split_dir, episode["scene_id"])
+            episode_dir = os.path.join(scene_dir, "%04d" % episode["index"])
+            image_dir = os.path.join(episode_dir, "images")
+            sensor_dir = os.path.join(episode_dir, "sensor_data")
+            os.makedirs(image_dir, exist_ok=True)
+            os.makedirs(sensor_dir, exist_ok=True)
+
             control_data  = np.empty([args.num_iterations_per_episode, 2], dtype=np.float32) # control_data observations made by the agent during a episode
             state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # state_data observations made by the agent during an episode
             waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # waypoint coordinates being tracked by the agent during an episode
