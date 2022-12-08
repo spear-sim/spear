@@ -59,7 +59,8 @@ if __name__ == "__main__":
             # reset the simulation
             env_reset_info = {}
             _ = env.reset(reset_info=env_reset_info)
-
+            assert "success" in env_reset_info
+            
             # if it took too long to reset the simulation, then continue
             if not env_reset_info["success"]:
                 print("Call to env.reset() was not successful. Simulation took too long to return to a ready state. Retrying...")
