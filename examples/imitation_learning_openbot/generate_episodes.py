@@ -67,9 +67,9 @@ if __name__ == "__main__":
                 continue
                 
             # get random start-goal pairs
-            _, _, _, step_info = env.step(action={"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+            _, _, _, env_step_info = env.step(action={"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
-            positions = step_info["agent_step_info"]["trajectory_data"] 
+            positions = env_step_info["agent_step_info"]["trajectory_data"] 
 
             # store poses in a csv file
             df = pd.DataFrame({"scene_id"       : [scene_id],
