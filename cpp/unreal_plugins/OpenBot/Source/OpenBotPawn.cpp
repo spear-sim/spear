@@ -189,14 +189,14 @@ Eigen::Vector4f AOpenBotPawn::getDutyCycle() const
     return duty_cycle_;
 }
 
-Eigen::Vector4f AOpenBotPawn::getWheelsRotationSpeed() const
+Eigen::Vector4f AOpenBotPawn::getWheelRotationSpeeds() const
 {
-    Eigen::Vector4f wheels_rotation_speed;
-    wheels_rotation_speed(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
-    wheels_rotation_speed(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
-    wheels_rotation_speed(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
-    wheels_rotation_speed(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
-    return rpmToRadSec(wheels_rotation_speed); // Expressed in [rad/s]
+    Eigen::Vector4f wheel_rotation_speeds;
+    wheel_rotation_speeds(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
+    wheel_rotation_speeds(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
+    wheel_rotation_speeds(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
+    wheel_rotation_speeds(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
+    return rpmToRadSec(wheel_rotation_speeds); // Expressed in [rad/s]
 }
 
 BEGIN_IGNORE_COMPILER_WARNINGS
@@ -254,14 +254,14 @@ void AOpenBotPawn::setDriveTorques(float delta_time)
     // (or alternatively friction computation purposes)
 
     // The ground truth velocity of the robot wheels in [RPM]
-    Eigen::Vector4f wheels_rotation_speed;
-    wheels_rotation_speed(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
-    wheels_rotation_speed(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
-    wheels_rotation_speed(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
-    wheels_rotation_speed(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
+    Eigen::Vector4f wheel_rotation_speeds;
+    wheel_rotation_speeds(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
+    wheel_rotation_speeds(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
+    wheel_rotation_speeds(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
+    wheel_rotation_speeds(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
 
     // The ground truth rotation speed of the motors in [rad/s]
-    Eigen::Vector4f motor_velocity = gear_ratio * rpmToRadSec(wheels_rotation_speed); // Expressed in [rad/s]
+    Eigen::Vector4f motor_velocity = gear_ratio * rpmToRadSec(wheel_rotation_speeds); // Expressed in [rad/s]
 
     // Compute the counter electromotive force using the motor torque constant
     Eigen::Vector4f counter_electromotive_force = motor_torque_constant * motor_velocity; // Expressed in [V]
