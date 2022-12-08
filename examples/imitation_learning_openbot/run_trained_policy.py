@@ -188,6 +188,7 @@ if __name__ == "__main__":
         # update scene reference
         prev_scene_id = episode["scene_id"]
 
+        # print statistics
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds

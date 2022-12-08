@@ -187,21 +187,19 @@ if __name__ == "__main__":
                 print("Goal reached !")
                 break
 
-        # update scene reference
+        # episode loop executed: update scene reference
         prev_scene_id = episode["scene_id"]
         
-        # episode loop executed: check the termination flags
-        
-        if hit_obstacle: # if the collision flag is raised during the episode
-            if not args.benchmark:
-                shutil.rmtree(episode_dir) # remove the collected data as it is improper for training purposes
-            continue
-
+        # print statistics
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
             print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
             continue
+        
+        # check the termination flags
+        if hit_obstacle and not args.benchmark: # if the collision flag is raised during the episode
+            shutil.rmtree(episode_dir) # remove the collected data as it is improper for training purposes
         
         print("Filling database...")
 
