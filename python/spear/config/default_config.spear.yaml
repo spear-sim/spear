@@ -80,3 +80,8 @@ SPEAR:
   # of extra time after launching the RPC server, before the Env class starts to call
   # RPC functions.
   RPC_CLIENT_AFTER_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 1.0
+
+  # The maximum number of ticks to execute during env.reset() before giving up. This is
+  # useful in situations where the physics simulation does not successfully settle down
+  # after calling env.reset().
+  MAX_NUM_TICKS_AFTER_RESET: 100
