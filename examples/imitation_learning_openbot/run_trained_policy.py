@@ -99,7 +99,7 @@ if __name__ == "__main__":
     for episode in df.to_records():
 
         print("----------------------")
-        print(f"episode {episode['index']} over {df.shape[0]}")
+        print(f"episode {episode['index']} of {df.shape[0]}")
         print("----------------------")
 
         # if the scene_id of our current episode has changed, then create a new Env
@@ -120,10 +120,18 @@ if __name__ == "__main__":
             env = spear.Env(config=config)
 
         # reset the simulation
-        _ = env.reset()
+        env_reset_info = {}
+        _ = env.reset(reset_info=env_reset_info)
+        assert "success" in env_reset_info
+
+        # if it took too long to reset the simulation, then continue
+        if not env_reset_info["success"]:
+            print("Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Skipping...")
+            prev_scene_id = episode["scene_id"]
+            continue
         
         # send zero action to the agent and collect initial trajectory observations:
-        obs, _, _, env_info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+        obs, _, _, env_step_info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
         if args.benchmark:
             start_time_seconds = time.time()
@@ -139,9 +147,9 @@ if __name__ == "__main__":
             state_data = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during an episode
 
             # save the optimal goal trajectory in a dedicated file
-            df_trajectory = pd.DataFrame({"x_d[cm]" : [env_info["agent_step_info"]["trajectory_data"][:,0]],
-                                          "y_d[cm]" : [env_info["agent_step_info"]["trajectory_data"][:,1]],
-                                          "z_d[cm]" : [env_info["agent_step_info"]["trajectory_data"][:,2]]})
+            df_trajectory = pd.DataFrame({"x_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,0]],
+                                          "y_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,1]],
+                                          "z_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,2]]})
             df_trajectory.to_csv(os.path.join(result_dir,"trajectoryLog.txt"), mode="w", index=False, header=True)
 
         # execute the desired number of iterations in a given episode
@@ -152,10 +160,10 @@ if __name__ == "__main__":
             print(f"iteration {i} of {args.num_iterations_per_episode}")
 
             # update control action 
-            action, policy_info = policy.step(obs, goal[0:2])
+            action, policy_step_info = policy.step(obs, goal[0:2])
 
             # send control action to the agent and collect observations
-            obs, _, _, env_info = env.step({"apply_voltage": action})
+            obs, _, _, env_step_info = env.step({"apply_voltage": action})
 
             num_iterations = num_iterations + 1
             
@@ -177,8 +185,8 @@ if __name__ == "__main__":
                                           "goal_x[cm]"   : goal[0],
                                           "goal_y[cm]"   : goal[1],
                                           "goal_z[cm]"   : goal[2],
-                                          "goal_reached" : policy_info["goal_reached"],
-                                          "hit_obstacle" : env_info["task_step_info"]["hit_obstacle"]})
+                                          "goal_reached" : policy_step_info["goal_reached"],
+                                          "hit_obstacle" : env_step_info["task_step_info"]["hit_obstacle"]})
                 df_result.to_csv(os.path.join(result_dir,"resultLog.txt"), mode="a", index=False, header=i==0)
             
             # debug
@@ -186,9 +194,9 @@ if __name__ == "__main__":
                 show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
             
             # termination conditions
-            if env_info["task_step_info"]["hit_obstacle"]: 
+            if env_step_info["task_step_info"]["hit_obstacle"]: 
                 print("Collision detected !") # let the agent collide with the environment for evaluation purposes 
-            elif env_info["task_step_info"]["hit_goal"] or policy_info["goal_reached"]: 
+            elif env_step_info["task_step_info"]["hit_goal"] or policy_step_info["goal_reached"]: 
                 print("Goal reached !")
                 break
 
@@ -208,7 +216,7 @@ if __name__ == "__main__":
             generate_video(image_dir, os.path.join(video_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
         
         if args.create_plot: # if desired, generate a plot of the control performance
-            plot_tracking_performance(state_data[:num_iterations][:], env_info["agent_step_info"]["trajectory_data"], os.path.join(result_dir, 'tracking_performance.png'))
+            plot_tracking_performance(state_data[:num_iterations][:], env_step_info["agent_step_info"]["trajectory_data"], os.path.join(result_dir, 'tracking_performance.png'))
 
     # close the current scene and give the system a bit of time before switching to the next scene.
     env.close()
