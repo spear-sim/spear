@@ -248,7 +248,7 @@ if __name__ == "__main__":
                                 "dist[m]"       : compass_data[:num_iterations, 0],
                                 "sinYaw"        : compass_data[:num_iterations, 1],
                                 "cosYaw"        : compass_data[:num_iterations, 2]})
-        df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="a", index=False, header=i==0)
+        df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="w", index=False, header=True)
 
         if args.create_plot: # if desired, generate a plot of the control performance
             plot_tracking_performance(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(sensor_dir, 'tracking_performance.png'))
