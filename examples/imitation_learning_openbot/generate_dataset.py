@@ -141,6 +141,7 @@ if __name__ == "__main__":
             control_data  = np.empty([args.num_iterations_per_episode, 2], dtype=np.float32) # control_data observations made by the agent during a episode
             state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # state_data observations made by the agent during an episode
             waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # waypoint coordinates being tracked by the agent during an episode
+            compass_data  = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # compass observations made by the agent during a episode
             time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # time stamps of the observations made by the agent during an episode
             frame_data    = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # frame ids
             
@@ -240,14 +241,14 @@ if __name__ == "__main__":
             # get the updated compass observation (with the last recorded position set as goal)
             position_xy_current = np.array([state_data[i][0], state_data[i][1]], dtype=np.float32)
             yaw_current = state_data[i][4]
-            compass_observation = get_compass_observation(goal_position_xy, position_xy_current, yaw_current)
+            compass_data[i] = get_compass_observation(goal_position_xy, position_xy_current, yaw_current)
 
-            # high level commands
-            df_goal = pd.DataFrame({"timestamp[ns]" : [time_data[i]],
-                                    "dist[m]"       : compass_observation[0],
-                                    "sinYaw"        : compass_observation[1],
-                                    "cosYaw"        : compass_observation[2]})
-            df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="a", index=False, header=i==0)
+        # high level commands
+        df_goal = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
+                                "dist[m]"       : compass_data[:num_iterations, 0],
+                                "sinYaw"        : compass_data[:num_iterations, 1],
+                                "cosYaw"        : compass_data[:num_iterations, 2]})
+        df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="a", index=False, header=i==0)
 
         if args.create_plot: # if desired, generate a plot of the control performance
             plot_tracking_performance(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(sensor_dir, 'tracking_performance.png'))

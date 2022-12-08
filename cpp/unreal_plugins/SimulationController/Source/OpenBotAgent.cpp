@@ -562,10 +562,10 @@ void OpenBotAgent::generateTrajectoryToGoal()
     std::cout << "Path length: " << trajectory_length << "m" << std::endl;
     std::cout << "Initial position: [" << open_bot_pawn_->GetActorLocation().X << ", " << open_bot_pawn_->GetActorLocation().Y << ", " << open_bot_pawn_->GetActorLocation().Z << "]." << std::endl;
     std::cout << "Goal position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
-    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "----------------------" << std::endl;
     std::cout << "Waypoints: " << std::endl;
     for (auto& point : path_points) {
         std::cout << "[" << point.Location.X << ", " << point.Location.Y << ", " << point.Location.Z << "]" << std::endl;
     }
-    std::cout << "-----------------------------------------------------------" << std::endl;
+    std::cout << "----------------------" << std::endl;
 }
