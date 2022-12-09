@@ -218,7 +218,7 @@ if __name__ == "__main__":
         if args.create_video: # if desired, generate a video from the collected rgb observations 
             video_dir = os.path.join(args.eval_dir, "videos")
             os.makedirs(video_dir, exist_ok=True)
-            generate_video(image_dir, os.path.join(video_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
+            generate_video(image_dir, os.path.join(video_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS))
         
     # close the current scene and give the system a bit of time before switching to the next scene.
     env.close()

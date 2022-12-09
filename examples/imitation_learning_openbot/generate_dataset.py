@@ -151,7 +151,7 @@ if __name__ == "__main__":
             state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # state_data observations made by the agent during an episode
             waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # waypoint coordinates being tracked by the agent during an episode
             compass_data  = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # compass observations made by the agent during a episode
-            time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # time stamps of the observations made by the agent during an episode
+            time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int64)      # time stamps of the observations made by the agent during an episode
             frame_data    = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # frame ids
             
         # execute the desired number of iterations in a given episode
@@ -265,10 +265,9 @@ if __name__ == "__main__":
         plot_tracking_performance_temporal(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
 
         if args.create_video: # if desired, generate a video from the collected rgb observations 
-            video_dir = os.path.join(args.dataset_dir, "videos")
-            video_split_dir = os.path.join(video_dir, args.split + "_data")
-            os.makedirs(video_split_dir, exist_ok=True)
-            generate_video(image_dir, os.path.join(video_split_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
+            video_dir = os.path.join(args.dataset_dir, "videos", args.split + "_data")
+            os.makedirs(video_dir, exist_ok=True)
+            generate_video(image_dir, os.path.join(video_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS))
 
     # close the current scene
     env.close()

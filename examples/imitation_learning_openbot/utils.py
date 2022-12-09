@@ -1,5 +1,4 @@
 import cv2
-import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -82,23 +81,20 @@ def get_compass_observation(position_xy_desired, position_xy_current, yaw_curren
     return np.array([dist, sin_yaw, cos_yaw], dtype=np.float32)
 
 
-def generate_video(image_dir, video_path, rate, compress=False):
+def generate_video(image_dir, video_path, rate):
     
     print("Generating video from the sequence of observations")
 
-    if compress:
-        process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, **{'c:v': 'libx264', 'b:v': 8000000}).overwrite_output().run_async(pipe_stdin=True)
-    else:
-        process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, vcodec='libx264').overwrite_output().run_async(pipe_stdin=True)
-    
     images = [os.path.join(image_dir, img) for img in sorted(os.listdir(image_dir))]
+    frame = cv2.imread(images[0], -1)
+    height, width, layers = frame.shape
+    video = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc('m','p','4','v'), rate, (width, height))
+
     for image in images:
-        with open(image, 'rb') as f:
-            jpeg_data = f.read()
-            process.stdin.write(jpeg_data)
+        video.write(cv2.imread(image, -1))
     
-    process.stdin.close()
-    process.wait()
+    cv2.destroyAllWindows()
+    video.release()
 
 
 def plot_tracking_performance_spatial(poses_current, poses_desired, plot_path):
