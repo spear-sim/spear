@@ -22,7 +22,6 @@ if __name__ == "__main__":
     parser.add_argument("--policy_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "models", "test.tflite"))
     parser.add_argument("--eval_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "eval"))
     parser.add_argument("--rendering_mode", default="baked")
-    parser.add_argument("--create_plots", action="store_true")
     parser.add_argument("--create_videos", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--debug", action="store_true")
