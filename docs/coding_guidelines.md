@@ -49,7 +49,7 @@ ASSERT(world);
 
 **Use your own human judgement rather than `clang-format` and `black` to format your code.** `clang-format` is not idempotent, can get stuck in cycles, and requires a lot of configuration to behave sensibly. Likewise, `black` requires a lot of configuration to behave sensibly.
 
-**Delete merged branches, and prefer "squash and merge" over "merge" when merging pull requests.** We need to delete branches as they're merged to prevent them from accumulating and making the Branches view in GitHub difficult to browse. We prefer "squash and merge" so we don't clutter our `main` branch with bad commit messages.
+**Delete merged branches, and prefer "squash and merge" over "merge" when merging pull requests.** If we don't delete branches as they're merged, they accumulate and make the Branches view in GitHub difficult to browse. When merging pull requests, we prefer "squash and merge", so we don't clutter our `main` branch with uninformative commit messages.
 
 ### Python
 
@@ -203,4 +203,4 @@ int index = names_to_indices["name"];
 int index = names_to_indices.at("name");
 ```
 
-**Headers should not contain implementations.** The only exceptions to this rule are templated classes and functions, and headers that contain only functions with trivial single-line implementations (i.e., where putting the implementations in the header avoids the need for a source file entirely). In the case of templated classes and functions, the header must contain declarations at the top of the file, and then definitions after.
+**Headers should not contain implementations.** This makes our code easier to read and browse, and reduces compile times. The only exceptions to this rule are templated classes and functions, and headers that contain only functions with trivial single-line implementations (i.e., where putting the implementations in the header avoids the need for a source file entirely). In the case of templated classes and functions, the header must contain declarations at the top of the file, and then definitions after.
