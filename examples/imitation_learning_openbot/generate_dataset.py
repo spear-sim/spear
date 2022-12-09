@@ -96,7 +96,7 @@ if __name__ == "__main__":
     for episode in df.to_records():
 
         print("----------------------")
-        print(f"episode {episode['index']} of {df.shape[0]}")
+        print(f"Episode {episode["index"]} of {df.shape[0]}")
         print("----------------------")
         
         # if the scene_id of our current episode has changed, then create a new Env
@@ -159,7 +159,7 @@ if __name__ == "__main__":
         hit_obstacle   = False # flag raised when the vehicle collides with the environment
         for i in range(args.num_iterations_per_episode):
 
-            print(f"iteration {i} of {args.num_iterations_per_episode}")
+            print(f"Iteration {i} of {args.num_iterations_per_episode}")
 
             time_stamp = int(10000*datetime.datetime.now().timestamp())
 
@@ -194,11 +194,11 @@ if __name__ == "__main__":
 
             # termination conditions
             if env_step_info["task_step_info"]["hit_obstacle"]: 
-                print("Collision detected !")
+                print("Collision detected.")
                 hit_obstacle = True 
                 break
             elif env_step_info["task_step_info"]["hit_goal"] or policy_step_info["goal_reached"]: 
-                print("Goal reached !")
+                print("Goal reached.")
                 break
 
         # episode loop executed: update scene reference
@@ -216,7 +216,7 @@ if __name__ == "__main__":
             shutil.rmtree(episode_dir, ignore_errors=True) # remove the collected data as it is improper for training purposes
             continue
         
-        print("Filling database...")
+        print("Filling CSV files...")
         
         # get the updated compass observation (with the last recorded position set as goal)
         goal_position_xy = state_data[num_iterations-1][0:2]
@@ -229,12 +229,12 @@ if __name__ == "__main__":
         df_ctrl = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
                                 "left_ctrl"     : control_data[:num_iterations, 0],
                                 "right_ctrl"    : control_data[:num_iterations, 1]})
-        df_ctrl.to_csv(os.path.join(sensor_dir,"ctrlLog.txt"), mode="w", index=False, header=True)
+        df_ctrl.to_csv(os.path.join(sensor_dir, "ctrlLog.txt"), mode="w", index=False, header=True)
 
         # reference of the images correespoinding to each control input
         df_rgb = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
-                            "frame"            : frame_data[:num_iterations]})
-        df_rgb.to_csv(os.path.join(sensor_dir,"rgbFrames.txt"), mode="w", index=False, header=True)
+                               "frame"         : frame_data[:num_iterations]})
+        df_rgb.to_csv(os.path.join(sensor_dir, "rgbFrames.txt"), mode="w", index=False, header=True)
 
         # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
         df_pose = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
@@ -244,21 +244,21 @@ if __name__ == "__main__":
                                 "pitch[rad]"    : state_data[:num_iterations, 3],
                                 "yaw[rad]"      : state_data[:num_iterations, 4],
                                 "roll[rad]"     : state_data[:num_iterations, 5]})
-        df_pose.to_csv(os.path.join(sensor_dir,"poseData.txt"), mode="w", index=False, header=True)
+        df_pose.to_csv(os.path.join(sensor_dir, "poseData.txt"), mode="w", index=False, header=True)
 
         # waypoint data (for debug purposes)
         df_waypoint = pd.DataFrame({"timestamp[ns]"  : time_data[:num_iterations],
                                     "waypoint_x[cm]" : waypoint_data[:num_iterations, 0],
                                     "waypoint_y[cm]" : waypoint_data[:num_iterations, 1],
                                     "waypoint_z[cm]" : waypoint_data[:num_iterations, 2]})
-        df_waypoint.to_csv(os.path.join(sensor_dir,"waypointData.txt"), mode="w", index=False, header=True)
+        df_waypoint.to_csv(os.path.join(sensor_dir, "waypointData.txt"), mode="w", index=False, header=True)
 
         # high level commands
         df_goal = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
                                 "dist[m]"       : compass_data[:num_iterations, 0],
                                 "sinYaw"        : compass_data[:num_iterations, 1],
                                 "cosYaw"        : compass_data[:num_iterations, 2]})
-        df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="w", index=False, header=True)
+        df_goal.to_csv(os.path.join(sensor_dir, "goalLog.txt"), mode="w", index=False, header=True)
 
         # create plots
         plot_tracking_performance_spatial(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))

@@ -99,7 +99,7 @@ if __name__ == "__main__":
     for episode in df.to_records():
 
         print("----------------------")
-        print(f"episode {episode['index']} of {df.shape[0]}")
+        print(f"Episode {episode['index']} of {df.shape[0]}")
         print("----------------------")
 
         # if the scene_id of our current episode has changed, then create a new Env
@@ -159,7 +159,7 @@ if __name__ == "__main__":
         goal           = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32) # goal position
         for i in range(args.num_iterations_per_episode):
 
-            print(f"iteration {i} of {args.num_iterations_per_episode}")
+            print(f"Iteration {i} of {args.num_iterations_per_episode}")
 
             # update control action 
             action, policy_step_info = policy.step(obs, goal[0:2])
@@ -197,9 +197,9 @@ if __name__ == "__main__":
             
             # termination conditions
             if env_step_info["task_step_info"]["hit_obstacle"]: 
-                print("Collision detected !") # let the agent collide with the environment for evaluation purposes 
+                print("Collision detected.") # let the agent collide with the environment for evaluation purposes 
             elif env_step_info["task_step_info"]["hit_goal"] or policy_step_info["goal_reached"]: 
-                print("Goal reached !")
+                print("Goal reached.")
                 break
 
         # update scene reference
