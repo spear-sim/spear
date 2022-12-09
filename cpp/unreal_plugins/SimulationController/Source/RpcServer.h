@@ -1,6 +1,9 @@
-#pragma once
+//
+// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright(c) 2017 Computer Vision Center (CVC) at the Universitat Autonoma de Barcelona (UAB). Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+//
 
-// Modified from CARLA (https://carla.org)
+#pragma once
 
 #include <future>
 #include <mutex>
