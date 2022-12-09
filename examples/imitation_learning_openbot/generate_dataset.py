@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset"))
     parser.add_argument("--split", default="train")
     parser.add_argument("--rendering_mode", default="baked")
-    parser.add_argument("--create_video", action="store_true")
+    parser.add_argument("--create_videos", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
@@ -264,7 +264,7 @@ if __name__ == "__main__":
         plot_tracking_performance_spatial(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))
         plot_tracking_performance_temporal(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
 
-        if args.create_video: # if desired, generate a video from the collected rgb observations 
+        if args.create_videos: # if desired, generate a video from the collected rgb observations 
             video_dir = os.path.join(args.dataset_dir, "videos")
             video_split_dir = os.path.join(video_dir, args.split + "_data")
             os.makedirs(video_split_dir, exist_ok=True)
