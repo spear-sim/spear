@@ -198,16 +198,16 @@ class Env(gym.Env):
 
         launch_executable_name, launch_executable_ext = os.path.splitext(launch_executable)
 
-        if sys.platform == "darwin":
+        if sys.platform == "win32":
+            assert launch_executable_ext == ".exe"
+            assert launch_executable_name[-4:] == "-Cmd"
+            launch_executable_internal = launch_executable
+        elif sys.platform == "darwin":
             assert launch_executable_ext == ".app"
             launch_executable_internal_dir = os.path.join(launch_executable, "Contents", "MacOS")
             launch_executable_internal = os.path.join(launch_executable_internal_dir, os.listdir(launch_executable_internal_dir)[0])
         elif sys.platform == "linux":
             assert launch_executable_ext == "" or launch_executable_ext == ".sh"
-            launch_executable_internal = launch_executable
-        elif sys.platform == "win32":
-            assert launch_executable_ext == ".exe"
-            assert launch_executable_name[-4:] == "-Cmd"
             launch_executable_internal = launch_executable
         else:
             assert False
