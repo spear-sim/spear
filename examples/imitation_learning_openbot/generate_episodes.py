@@ -18,8 +18,8 @@ if __name__ == "__main__":
 
     # directory for trajectory image storage
     split_name = os.path.splitext(os.path.basename(args.episodes_file))[0] # isolate filename and remove extension
-    image_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "trajectories")
-    split_dir = os.path.join(image_dir, split_name)
+    episodes_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "episodes")
+    split_dir = os.path.join(episodes_dir, split_name)
     os.makedirs(split_dir, exist_ok=True)
 
     # load config
@@ -81,22 +81,22 @@ if __name__ == "__main__":
                                "goal_pos_z_cms" : positions[-1,2]})
             df.to_csv(args.episodes_file, mode="w" if i==0 and j==0 else "a", index=False, header=i==0 and j==0)
         
-            plt.plot(positions[0,0], positions[0,1], '^', markersize=12.0, label='Start', color='tab:purple', alpha=0.3)
-            plt.plot(positions[-1,0], positions[-1,1], '^', markersize=12.0, label='Goal', color='tab:green', alpha=0.3)
-            plt.plot(positions[:,0], positions[:,1], '-o', markersize=5.0, label='Desired Trajectory', color='tab:blue', alpha=0.3)
+            plt.plot(positions[0,0], positions[0,1], "^", markersize=12.0, label="Start", color="tab:blue", alpha=0.3)
+            plt.plot(positions[-1,0], positions[-1,1], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
+            plt.plot(positions[:,0], positions[:,1], "-o", markersize=8.0, label="Desired trajectory", color="tab:green", alpha=0.3)
 
             j = j+1
 
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = dict(zip(labels, handles))
-        plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor = (0.75, 1.15), ncol = 3)
+        legend = plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, -0.2), loc="center", ncol=3)
         plt.gca().set_aspect("equal")
         plt.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
-        plt.xlabel('x[cm]')
-        plt.ylabel('y[cm]')
+        plt.xlabel("x[cm]")
+        plt.ylabel("y[cm]")
         plt.grid()
-        plt.title(f"OpenBot trajectories (scene {scene_id})")
-        plt.savefig(os.path.join(split_dir, "episode_trajectories_" + scene_id))
+        plt.title(f"scene_id {scene_id}")
+        plt.savefig(os.path.join(split_dir, scene_id), bbox_extra_artists=[legend], bbox_inches="tight")
 
         # close the current scene
         env.close()

@@ -3,7 +3,6 @@ import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import re
 
 
 def show_obs(obs, obs_components, render_passes):
@@ -92,8 +91,7 @@ def generate_video(image_dir, video_path, rate, compress=False):
     else:
         process = ffmpeg.input('pipe:', r=rate, f='jpeg_pipe').output(video_path, vcodec='libx264').overwrite_output().run_async(pipe_stdin=True)
     
-    images = [os.path.join(image_dir, img) for img in os.listdir(image_dir)]
-    images.sort(key=lambda f: int(re.sub('\D', '', f)))
+    images = [os.path.join(image_dir, img) for img in sorted(os.listdir(image_dir))]
     for image in images:
         with open(image, 'rb') as f:
             jpeg_data = f.read()
@@ -103,55 +101,64 @@ def generate_video(image_dir, video_path, rate, compress=False):
     process.wait()
 
 
-def plot_tracking_performance(poses_current, poses_desired, plot_path):
+def plot_tracking_performance_spatial(poses_current, poses_desired, plot_path):
 
-    fig0, ax0 = plt.subplots(1, 1)
+    fig, (ax) = plt.subplots(1, 1)
 
-    current, = ax0.plot(poses_current[:,0], poses_current[:,1], marker='x', markersize=5.0, label='Actual Trajectory', color='tab:blue')
-    desired, = ax0.plot(poses_desired[:,0], poses_desired[:,1], marker='o', markersize=8.0, label='Desired Trajectory', color='tab:orange')
-    goal, = ax0.plot(poses_desired[-1,0], poses_desired[-1,1], marker='^', markersize=12.0, label='Goal', color='tab:green')
-    start, = ax0.plot(poses_current[0,0], poses_current[0,1], marker='^', markersize=12.0, label='Start', color='tab:purple')
-    ax0.set_xlabel('x[cm]')
-    ax0.set_ylabel('y[cm]')
-    ax0.set_title('XY Position tracking')
+    ax.plot(poses_current[0,0], poses_current[0,1], marker='^', markersize=12.0, label="Start", color="tab:blue")
+    ax.plot(poses_desired[-1,0], poses_desired[-1,1], marker='^', markersize=12.0, label="Goal", color="tab:orange")
+    ax.plot(poses_desired[:,0], poses_desired[:,1], marker='o', markersize=8.0, label="Desired trajectory", color="tab:green")
+    ax.plot(poses_current[:,0], poses_current[:,1], marker='x', markersize=5.0, label="Actual trajectory", color="tab:purple")
+
+    x_0,x_1 = ax.get_xlim()
+    y_0,y_1 = ax.get_ylim()
+    x_half_diff = (x_1 - x_0)/2
+    y_half_diff = (y_1 - y_0)/2
+    x_center = (x_0 + x_1)/2
+    y_center = (y_0 + y_1)/2
+
+    if x_half_diff > y_half_diff:
+        ax.set_ylim(y_center-x_half_diff, y_center+x_half_diff)
+    else:
+        ax.set_xlim(x_center-y_half_diff, x_center+y_half_diff)
+
+    legend = ax.legend(bbox_to_anchor=(0.5, -0.2), loc="center", ncol=4)
+    ax.set_aspect("equal")
+    ax.invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
+    ax.set_xlabel("x[cm]")
+    ax.set_ylabel("y[cm]")
+    ax.grid()
+
+    fig.tight_layout()
+
+    plt.savefig(plot_path, bbox_extra_artists=[legend], bbox_inches="tight")
+
+
+def plot_tracking_performance_temporal(poses_current, poses_desired, plot_path):
+
+    fig, (ax0,ax1,ax2) = plt.subplots(3, 1)
+
+    ax0.plot(poses_desired[:,0], label="Desired x", color="tab:blue")
+    ax0.plot(poses_current[:,0], label="Actual x", color="tab:orange")
+    ax0.legend(loc="upper left")
+    ax0.set_xlabel("iterations")
+    ax0.set_ylabel("x[cm]")
     ax0.grid()
-    ax0.legend((current, desired, goal, start), ('Actual Trajectory', 'Desired Trajectory', 'Goal', 'Start'), loc='upper left')
     
-    fig0.tight_layout()
-    fig0.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
-    
-    plt.savefig(plot_path, dpi=fig0.dpi)
-
-
-def plot_control_performance(poses_current, poses_desired, plot_path):
-
-    fig0, (ax0,ax1,ax2) = plt.subplots(3, 1)
-
-    x, = ax0.plot(poses_current[:,0], label='Actual X', color='tab:blue')
-    x_d, = ax0.plot(poses_desired[:,0], label='Desired X', color='tab:orange')
-    ax0.set_xlabel('iterations')
-    ax0.set_ylabel('x[cm]')
-    ax0.set_title('X tracking')
-    ax0.grid()
-    ax0.legend((x, x_d), ('Actual X', 'Desired X'), loc='upper left')
-    
-    y, = ax1.plot(poses_current[:,1], label='Actual Y', color='tab:blue')
-    y_d, = ax1.plot(poses_desired[:,1], label='Desired Y', color='tab:orange')
-    ax1.set_xlabel('iterations')
-    ax1.set_ylabel('y[cm]')
-    ax1.set_title('Y tracking')
+    ax1.plot(poses_desired[:,1], label="Desired y", color="tab:blue")
+    ax1.plot(poses_current[:,1], label="Actual y", color="tab:orange")
+    ax1.legend(loc="upper left")
+    ax1.set_xlabel("iterations")
+    ax1.set_ylabel("y[cm]")
     ax1.grid()
-    ax1.legend((y, y_d), ('Actual Y', 'Desired Y'), loc='upper left')
     
-    yaw, = ax2.plot(poses_current[:,4], label='Actual Yaw', color='tab:blue')
-    yaw_d, = ax2.plot(np.arctan2(poses_desired[:,1] - poses_current[:,1], poses_desired[:,0] - poses_current[:,0]), label='Desired Yaw', color='tab:orange')
-    ax2.set_xlabel('iterations')
+    ax2.plot(np.arctan2(poses_desired[:,1] - poses_current[:,1], poses_desired[:,0] - poses_current[:,0]), label="Desired yaw", color="tab:blue")
+    ax2.plot(poses_current[:,4], label='Actual yaw', color="tab:orange")
+    ax2.legend(loc="upper left")
+    ax2.set_xlabel("iterations")
     ax2.set_ylabel('yaw[rad]')
-    ax2.set_title('Yaw tracking')
     ax2.grid()
-    ax2.legend((yaw, yaw_d), ('Actual Yaw', 'Desired Yaw'), loc='upper left')
     
-    fig0.tight_layout()
-    fig0.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
-    
-    plt.savefig(plot_path, dpi=fig0.dpi)
+    fig.tight_layout()
+
+    plt.savefig(plot_path, bbox_inches="tight")

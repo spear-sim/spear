@@ -7,31 +7,28 @@ SPEAR:
   VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
   
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
-  RENDER_OFFSCREEN: True
+  RENDER_OFFSCREEN: False
   WINDOW_RESOLUTION_X: 160
   WINDOW_RESOLUTION_Y: 120
+
+IMITATION_LEARNING_OPENBOT:
+  ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+  CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+  PID:
+    PROPORTIONAL_GAIN_HEADING: 4.25 # PID proportional gain for the autopilot
+    DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
+    PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
+    DERIVATIVE_GAIN_DIST: 0.1      # PID derivative gain for the autopilot
+    FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
+  PILOT_NET:
+    PATH: ""
 
 SIMULATION_CONTROLLER:
   TASK: "ImitationLearningTask"
   AGENT: "OpenBotAgent"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
-  MAX_NUM_TICKS_AFTER_RESET: 10
 
   SIMULATION_STEP_TIME_SECONDS: 0.033
-
-  IMITATION_LEARNING_TASK:
-    AGENT_ACTOR_NAME: "OpenBotAgent"
-    GOAL_ACTOR_NAME: "GoalActor"
-    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
-    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
-    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Region around a sampled initial position to look for a reachable goal position.
-    TRAJECTORY_SAMPLING_MAX_ITERS: 100
-    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
-    NAVMESH:
-      AGENT_RADIUS: 20.0
-      AGENT_HEIGHT: 20.0
-      AGENT_MAX_STEP_HEIGHT: 1.0
-    POSITIONS_FILE: "/home/quentin/Desktop/ISL/spear/examples/imitation_learning_openbot/start_goal_coordinates.csv"
 
   OPENBOT_AGENT:
     OPENBOT_ACTOR_NAME: "OpenBotAgent"
@@ -63,113 +60,29 @@ SIMULATION_CONTROLLER:
       NAV_MODIFIER_OFFSET_Z: 20.0
       WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
   
+  IMITATION_LEARNING_TASK:
+    AGENT_ACTOR_NAME: "OpenBotAgent"
+    GOAL_ACTOR_NAME: "GoalActor"
+    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
+    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
+    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Region around a sampled initial position to look for a reachable goal position.
+    TRAJECTORY_SAMPLING_MAX_ITERS: 100
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
+    NAVMESH:
+      AGENT_RADIUS: 20.0
+      AGENT_HEIGHT: 20.0
+      AGENT_MAX_STEP_HEIGHT: 1.0
+    POSITIONS_FILE: ""
+
   VISUALIZER:
     ACTOR_NAME: "OpenBotAgent"
     SPAWN_CAMERA: False
 
   CAMERA_SENSOR:
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0                        # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
   
   IMU_SENSOR:
-    ACCELEROMETER_NOISE_STD_DEV: 
-      X: 0.0
-      Y: 0.0
-      Z: 0.0
-    GYROSCOPE_NOISE_STD_DEV: 
-      X: 0.0
-      Y: 0.0
-      Z: 0.0
-    GYROSCOPE_BIAS: 
-      X: 0.0
-      Y: 0.0
-      Z: 0.0
-    DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
-
-  SONAR_SENSOR:
-    NUM_RAYS: 21
-    MAX_REFLECTION_ANGLE: 45.0
-    HORIZONTAL_FOV: 30.0
-    VERTICAL_FOV: 10.0
-    RANGE:
-      MIN: 0.01
-      MAX: 10.0
-    NOISE_STD_DEV: 0.0
     DEBUG_RENDER: True # When True, note that markers will only be dispayed in Standalone-Development mode
 
-IMITATION_LEARNING_OPENBOT:
-  ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
-  CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
-  PID:
-    PROPORTIONAL_GAIN_HEADING: 4.25 # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
-    PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_DIST: 0.1      # PID derivative gain for the autopilot
-    FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
-  PILOT_NET:
-    PATH: ""
-   
-OPENBOT:
-  OPENBOT_PAWN:
-    SKELETAL_MESH: "/OpenBot/V1/Meshes/OpenBot_V1_Mesh.OpenBot_V1_Mesh"
-    ANIM_INSTANCE: "/OpenBot/V1/Meshes/OpenBot_V1_Animation.OpenBot_V1_Animation_C"
-
-    MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
-    GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
-
-    BATTERY_VOLTAGE: 12.0          # Voltage of the battery powering the OpenBot [V]
-    CONTROL_DEAD_ZONE: 2.5         # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
-    MOTOR_TORQUE_MAX: 0.19         # Motor maximal torque [N.m]
-    ELECTRICAL_RESISTANCE: 0.5     # Motor winding electrical resistance [Ohms]
-    ELECTRICAL_INDUCTANCE: 0.5     # Motor winding electrical inductance [Henry]
-    
-    ACTION_SCALE: 255              # Action scaling factor
-
-    VEHICLE_COMPONENT:
-      MASS: 1.12                   # Mass of the vehicle chassis in [kg]
-      DRAG_COEFFICIENT: 1.0        # DragCoefficient of the vehicle chassis
-      CHASSIS_WIDTH: 15.0          # Chassis width used for drag force computation in [cm]
-      CHASSIS_HEIGHT: 15.0         # Chassis height used for drag force computation in [cm]
-      MOTOR_MAX_RPM: 20000.0       # Max RPM for engine
-
-    CAMERA_COMPONENT:
-      POSITION_X: 9.0              # Camera relative position in [cm]
-      POSITION_Y: 5.0              # Camera relative position in [cm]
-      POSITION_Z: 10.0             # Camera relative position in [cm]
-      ROLL: 0.0                    # Camera relative orientation in [cm]
-      YAW: 0.0                     # Camera relative orientation in [°]
-      PITCH: 0.0                   # Camera relative orientation in [°]
-      FOV: 70.0                    # Camera field of view in [°]
-    
-    IMU_COMPONENT:
-      POSITION_X: 8.0              # IMU relative position in [cm]
-      POSITION_Y: 0.0              # IMU relative position in [cm]
-      POSITION_Z: 10.0             # IMU relative position in [cm]
-      ROLL: 0.0                    # IMU relative orientation in [°]
-      YAW: 0.0                     # IMU relative orientation in [°]
-      PITCH: 0.0                   # IMU relative orientation in [°]
-      
-    SONAR_COMPONENT:
-      POSITION_X: 15.0             # Sonar relative position in [cm]
-      POSITION_Y: 0.0              # Sonar relative position in [cm]
-      POSITION_Z: -1.5             # Sonar relative position in [cm]
-      ROLL: 0.0                    # Sonar relative orientation in [°]
-      YAW: 0.0                     # Sonar relative orientation in [°]
-      PITCH: 0.0                   # Sonar relative orientation in [°]
-
-  OPENBOT_WHEEL:
-    AFFECTED_BY_HANDBRAKE: True         # Whether handbrake should affect this wheel
-    DAMPING_RATE: 0.25                  # Damping rate for this wheel (Kgm^2/s) 
-    MAX_BRAKE_TORQUE: 1500.0            # Max brake torque for this wheel (Nm)
-    MAX_HAND_BRAKE_TORQUE: 3000.0       # Max handbrake brake torque for this wheel (Nm). A handbrake should have a stronger brake torque than the brake.
-    LAT_STIFF_MAX_LOAD: 2.0             # Max normalized tire load at which the tire can deliver no more lateral stiffness no matter how much extra load is applied to the tire.
-    LAT_STIFF_VALUE: 17.0               # How much lateral stiffness to have given lateral slip
-    LONG_STIFF_VALUE: 1000.0            # How much longitudinal stiffness to have given longitudinal slip
-    SHAPE_RADIUS: 3.3                   # Radius of the wheel in [cm]
-    SHAPE_WIDTH: 2.5                    # Width of the wheel in [cm]
-    STEER_ANGLE: 0.0                    # Steer angle in degrees for this wheel
-    SUSPENSION_MAX_RAISE: 0.0           # How far the wheel can go above the resting position in [m]
-    SUSPENSION_MAX_DROP: 0.0            # How far the wheel can drop below the resting position in [m]
-    SUSPENSION_FORCE_OFFSET: 0.0        # Vertical offset from where suspension forces are applied (along Z-axis) 
-    SUSPENSION_NATURAL_FREQUENCY: 7.0   # Oscillation frequency of suspension. Standard cars have values between 5 and 10
-    SUSPENSION_DAMPING_RATIO: 1.0       # The rate at which energy is dissipated from the spring. Standard cars have values between 0.8 and 1.2. values < 1 are more sluggish, values > 1 or more twitchy
-    MASS: 0.033                         # Mass of this wheel in [kg]
+  SONAR_SENSOR:
+    DEBUG_RENDER: True # When True, note that markers will only be dispayed in Standalone-Development mode

@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument("--policy_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "models", "test.tflite"))
     parser.add_argument("--eval_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "eval"))
     parser.add_argument("--rendering_mode", default="baked")
-    parser.add_argument("--create_plot", action="store_true")
+    parser.add_argument("--create_plots", action="store_true")
     parser.add_argument("--create_video", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--debug", action="store_true")
@@ -141,8 +141,10 @@ if __name__ == "__main__":
             episode_dir = os.path.join(scene_dir, "%04d" % episode["index"])
             image_dir = os.path.join(episode_dir, "images")
             result_dir = os.path.join(episode_dir, "results")
+            plots_dir = os.path.join(episode_dir, "plots")
             os.makedirs(image_dir, exist_ok=True)
             os.makedirs(result_dir, exist_ok=True)
+            os.makedirs(plots_dir, exist_ok=True)
 
             state_data = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during an episode
 
@@ -170,7 +172,7 @@ if __name__ == "__main__":
             if not args.benchmark:
 
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%d.jpeg"%i), obs["camera_final_color"].squeeze())
+                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera_final_color"].squeeze())
 
                 # populate buffer and result data file
                 state_data[i] = obs["state_data"]
@@ -210,14 +212,14 @@ if __name__ == "__main__":
             print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
             continue
 
+        # create plots
+        plot_tracking_performance_spatial(state_data[:num_iterations][:], env_step_info["agent_step_info"]["trajectory_data"], os.path.join(plots_dir, "tracking_performance_spatial.png"))
+
         if args.create_video: # if desired, generate a video from the collected rgb observations 
             video_dir = os.path.join(args.eval_dir, "videos")
             os.makedirs(video_dir, exist_ok=True)
             generate_video(image_dir, os.path.join(video_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
         
-        if args.create_plot: # if desired, generate a plot of the control performance
-            plot_tracking_performance(state_data[:num_iterations][:], env_step_info["agent_step_info"]["trajectory_data"], os.path.join(result_dir, 'tracking_performance.png'))
-
     # close the current scene and give the system a bit of time before switching to the next scene.
     env.close()
 

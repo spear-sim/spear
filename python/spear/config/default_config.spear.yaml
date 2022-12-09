@@ -84,4 +84,4 @@ SPEAR:
   # The maximum number of ticks to execute during env.reset() before giving up. This is
   # useful in situations where the physics simulation does not successfully settle down
   # after calling env.reset().
-  MAX_NUM_TICKS_AFTER_RESET: 100
+  MAX_NUM_TICKS_AFTER_RESET: 10

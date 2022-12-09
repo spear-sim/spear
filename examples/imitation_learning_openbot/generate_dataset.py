@@ -23,7 +23,6 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset"))
     parser.add_argument("--split", default="train")
     parser.add_argument("--rendering_mode", default="baked")
-    parser.add_argument("--create_plot", action="store_true")
     parser.add_argument("--create_video", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--debug", action="store_true")
@@ -143,8 +142,10 @@ if __name__ == "__main__":
             episode_dir = os.path.join(scene_dir, "%04d" % episode["index"])
             image_dir = os.path.join(episode_dir, "images")
             sensor_dir = os.path.join(episode_dir, "sensor_data")
+            plots_dir = os.path.join(episode_dir, "plots")
             os.makedirs(image_dir, exist_ok=True)
             os.makedirs(sensor_dir, exist_ok=True)
+            os.makedirs(plots_dir, exist_ok=True)
 
             control_data  = np.empty([args.num_iterations_per_episode, 2], dtype=np.float32) # control_data observations made by the agent during a episode
             state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # state_data observations made by the agent during an episode
@@ -173,7 +174,7 @@ if __name__ == "__main__":
             if not args.benchmark:
 
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%d.jpeg"%i), obs["camera_final_color"].squeeze())
+                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera_final_color"].squeeze())
 
                 # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training purposes. 
                 # In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole trajectory. 
@@ -259,9 +260,9 @@ if __name__ == "__main__":
                                 "cosYaw"        : compass_data[:num_iterations, 2]})
         df_goal.to_csv(os.path.join(sensor_dir,"goalLog.txt"), mode="w", index=False, header=True)
 
-        if args.create_plot: # if desired, generate a plot of the control performance
-            plot_tracking_performance(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(sensor_dir, 'tracking_performance.png'))
-            plot_control_performance(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(sensor_dir, 'control_performance.png'))
+        # create plots
+        plot_tracking_performance_spatial(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))
+        plot_tracking_performance_temporal(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
 
         if args.create_video: # if desired, generate a video from the collected rgb observations 
             video_dir = os.path.join(args.dataset_dir, "videos")
