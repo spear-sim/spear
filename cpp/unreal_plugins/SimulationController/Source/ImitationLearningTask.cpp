@@ -208,24 +208,31 @@ void ImitationLearningTask::getPositionsFromFile()
 
     std::string line;
     std::string token;
+    std::string scene_id;
     FVector init, goal;
 
     // Create an input filestream 
     std::ifstream fs(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "POSITIONS_FILE"})); 
     ASSERT(fs.is_open());
 
-    // Read file data, line by line in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z"
+    // Read file data, line by line in the format 
+    // "scene_id,init_pos_x_cms,init_pos_y_cms,init_pos_z_cms,goal_pos_x_cms,goal_pos_y_cms,goal_pos_z_cms"
     std::getline(fs, line); // get header
     while (std::getline(fs, line)) {
         std::istringstream ss(line);
+        std::getline(ss, token, ','); ASSERT(ss); scene_id = token;
         std::getline(ss, token, ','); ASSERT(ss); init.X = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); init.Y = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); init.Z = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); goal.X = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); goal.Y = std::stof(token);
         std::getline(ss, token, ','); ASSERT(ss); goal.Z = std::stof(token);
-        agent_initial_positions_.push_back(init);
-        agent_goal_positions_.push_back(goal);
+        
+        // If the scene id matches the currently opened map, then account for the positions
+        if(scene_id == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SCENE_ID"})) {
+            agent_initial_positions_.push_back(init);
+            agent_goal_positions_.push_back(goal);
+        }
     }
 
     // Close file
@@ -250,14 +257,13 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
 
         FNavLocation init_location;
         FNavLocation goal_location;
-        bool found = false;
+        
 
         // Get a random initial point
-        found = nav_sys_->GetRandomPoint(init_location, nav_mesh_);
-        ASSERT(found);
+        init_location = nav_mesh_->GetRandomPoint();
 
         // Get a random reachable goal point, to be reached by the agent from init_location.Location
-        found = nav_sys_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_SEARCH_RADIUS"}), goal_location);
+        bool found = nav_mesh_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_SEARCH_RADIUS"}), goal_location);
         ASSERT(found);
 
         // Update navigation query with the new goal
@@ -315,14 +321,14 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
         std::cout << std::endl;
         std::cout << "Initial position: [" << agent_initial_positions_.at(0).X << ", " << agent_initial_positions_.at(0).Y << ", " << agent_initial_positions_.at(0).Z << "]." << std::endl;
         std::cout << "Goal position: [" << agent_goal_positions_.at(0).X << ", " << agent_goal_positions_.at(0).Y << ", " << agent_goal_positions_.at(0).Z << "]." << std::endl;
-        std::cout << "-----------------------------------------------------------" << std::endl;
+        std::cout << "----------------------" << std::endl;
         std::cout << "Waypoints: " << std::endl;
         for (int i = 1; i < best_path_points.Num(); i++) {
             std::cout << "[" << best_path_points[i].Location.X << ", " << best_path_points[i].Location.Y << ", " << best_path_points[i].Location.Z << "]" << std::endl;
             DrawDebugPoint(agent_actor_->GetWorld(), best_path_points[i].Location, 20, FColor(25, 116, 210), false, 10.0, 0);
             DrawDebugLine(agent_actor_->GetWorld(), best_path_points[i-1].Location, best_path_points[i].Location, FColor(25, 116, 210), false, 10.0, 0, 0.15);
         }
-        std::cout << "-----------------------------------------------------------" << std::endl;
+        std::cout << "----------------------" << std::endl;
     }
 }
 

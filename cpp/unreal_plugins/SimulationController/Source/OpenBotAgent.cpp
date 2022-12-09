@@ -246,6 +246,17 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     }
 
     //
+    // observation["encoder"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "encoder") != observation_components.end()) {
+        box.low_ = std::numeric_limits<float>::lowest();
+        box.high_ = std::numeric_limits<float>::max();
+        box.dtype_ = DataType::Float32;
+        box.shape_ = {4};
+        observation_space["encoder"] = std::move(box); // FL, FR, RL, RR
+    }
+
+    //
     // observation["imu"]
     //
     if (std::find(observation_components.begin(), observation_components.end(), "imu") != observation_components.end()) {
@@ -367,6 +378,14 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
         for (auto& camera_sensor_observation_component : camera_sensor_observation) {
             observation["camera_" + camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
         }
+    }
+
+    //
+    // observation["encoder"]
+    //
+    if (std::find(observation_components.begin(), observation_components.end(), "encoder") != observation_components.end()) {
+        Eigen::Vector4f wheel_rotation_speeds = open_bot_pawn_->getWheelRotationSpeeds();
+        observation["encoder"] = Serialize::toUint8(std::vector<float>{wheel_rotation_speeds(0), wheel_rotation_speeds(1), wheel_rotation_speeds(2), wheel_rotation_speeds(3)});
     }
 
     //
@@ -506,44 +525,47 @@ void OpenBotAgent::generateTrajectoryToGoal()
     
     // Update navigation query with the new agent position and goal position
     FPathFindingQuery nav_query = FPathFindingQuery(open_bot_pawn_, *nav_mesh_, open_bot_pawn_->GetActorLocation(), goal_actor_->GetActorLocation());
-    
+
     // Generate a collision-free path between the agent position and the goal position
     FPathFindingResult path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
     
-    // If path generation is successful, update trajectory_
-    if (path.IsSuccessful() && path.Path.IsValid()) {
+    // Ensure that path generation process was successful and that the generated path is valid
+    ASSERT(path.IsSuccessful());
+    ASSERT(path.Path.IsValid());
 
-        TArray<FNavPathPoint> path_points = path.Path->GetPathPoints();        
-        for(auto& path_point : path_points) {
-            trajectory_.push_back(path_point.Location.X);
-            trajectory_.push_back(path_point.Location.Y);
-            trajectory_.push_back(path_point.Location.Z);
-        }
+    // Update trajectory_
+    TArray<FNavPathPoint> path_points = path.Path->GetPathPoints(); 
+    ASSERT(path_points.Num() > 1); // There should be at least a starting point and a goal point
 
-        // Debug output
-        if (path.IsPartial()) {
-            std::cout << "Only a partial path could be found..." << std::endl;
-        }
-
-        int num_waypoints = path.Path->GetPathPoints().Num();
-        float trajectory_length = 0.0;
-        for (size_t i = 0; i < num_waypoints - 1; i++) {
-            trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
-        }
-        trajectory_length /= open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
-        FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
-
-        std::cout << std::endl;
-        std::cout << "Number of waypoints: " << num_waypoints << std::endl;
-        std::cout << "Goal distance: " << relative_position_to_goal.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
-        std::cout << "Path length: " << trajectory_length << "m" << std::endl;
-        std::cout << "Initial position: [" << open_bot_pawn_->GetActorLocation().X << ", " << open_bot_pawn_->GetActorLocation().Y << ", " << open_bot_pawn_->GetActorLocation().Z << "]." << std::endl;
-        std::cout << "Goal position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
-        std::cout << "-----------------------------------------------------------" << std::endl;
-        std::cout << "Waypoints: " << std::endl;
-        for (auto& point : path_points) {
-            std::cout << "[" << point.Location.X << ", " << point.Location.Y << ", " << point.Location.Z << "]" << std::endl;
-        }
-        std::cout << "-----------------------------------------------------------" << std::endl;
+    for(auto& path_point : path_points) {
+        trajectory_.push_back(path_point.Location.X);
+        trajectory_.push_back(path_point.Location.Y);
+        trajectory_.push_back(path_point.Location.Z);
     }
+
+    // Debug output
+    if (path.IsPartial()) {
+        std::cout << "Only a partial path could be found..." << std::endl;
+    }
+
+    int num_waypoints = path.Path->GetPathPoints().Num();
+    float trajectory_length = 0.0;
+    for (int i = 0; i < num_waypoints - 1; i++) {
+        trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
+    }
+    trajectory_length /= open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
+    FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
+
+    std::cout << std::endl;
+    std::cout << "Number of waypoints: " << num_waypoints << std::endl;
+    std::cout << "Goal distance: " << relative_position_to_goal.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+    std::cout << "Path length: " << trajectory_length << "m" << std::endl;
+    std::cout << "Initial position: [" << open_bot_pawn_->GetActorLocation().X << ", " << open_bot_pawn_->GetActorLocation().Y << ", " << open_bot_pawn_->GetActorLocation().Z << "]." << std::endl;
+    std::cout << "Goal position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
+    std::cout << "----------------------" << std::endl;
+    std::cout << "Waypoints: " << std::endl;
+    for (auto& point : path_points) {
+        std::cout << "[" << point.Location.X << ", " << point.Location.Y << ", " << point.Location.Z << "]" << std::endl;
+    }
+    std::cout << "----------------------" << std::endl;
 }
