@@ -28,7 +28,7 @@ python generate_dataset.py --episodes_file train_episodes.csv --split train
 # optional: train a navigation policy using the OpenBot framework, see the OpenBot GitHub repository
 
 # execute navigation episodes using a trained policy
-run_trained_policy.py --episodes_file test_episodes.csv
+python run_trained_policy.py --episodes_file test_episodes.csv
 ```
 
 Running `generate_episodes.py` will generate navigation episodes and store them in a CSV file. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
