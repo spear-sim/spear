@@ -1,4 +1,4 @@
-# Building SpearSim
+# Building `SpearSim`
 
 ## Assumptions
 
@@ -43,7 +43,7 @@ cd tools
 python generate_config.py --unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim
 ```
 
-## Build the SpearSim executable
+## Build the `SpearSim` executable
 
 We build the `SpearSim` executable as follows.
 
