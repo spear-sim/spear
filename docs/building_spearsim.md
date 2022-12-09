@@ -1,7 +1,5 @@
 # Building SpearSim
 
-This tutorial is intended for SPEAR developers that want to build the `SpearSim` executable from source.
-
 ## Assumptions
 
 We will assume for simplicity that you are developing on macOS, although most of these steps map straightforwardly across platforms. We will also assume that you're using Anaconda Python to manage your Python environment, and you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package installed, as described in our top-level [README](http://github.com/isl-org/spear). All `cd` commands in this tutorial are specified relative to the top-level repository directory.
