@@ -1,3 +1,3 @@
-## SPEAR 0.1.0
+## SPEAR v0.1.0
 
 - Initial release.
