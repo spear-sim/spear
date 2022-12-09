@@ -1,7 +1,7 @@
 OPENBOT:
   OPENBOT_PAWN:
-    SKELETAL_MESH: "/OpenBot/V1/Meshes/OpenBot_V1_Mesh.OpenBot_V1_Mesh"
-    ANIM_INSTANCE: "/OpenBot/V1/Meshes/OpenBot_V1_Animation.OpenBot_V1_Animation_C"
+    SKELETAL_MESH: "/OpenBot/V0/Meshes/OpenBot_V0_Mesh.OpenBot_V0_Mesh"
+    ANIM_INSTANCE: "/OpenBot/V0/Meshes/OpenBot_V0_Animation.OpenBot_V0_Animation_C"
 
     MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
     GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
