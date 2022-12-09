@@ -74,7 +74,7 @@ We provide guidelines for contributing to SPEAR [here](docs/building_spearsim.md
 
 ## Licenses
 
-- The SPEAR code is released under an [MIT License](LICENSE.txt).
+- The SPEAR code in this repository is released under an [MIT License](LICENSE.txt).
 - The licenses for all of our third-party software dependencies are listed [here](ACKNOWLEDGMENTS.txt).
 - The OpenBot assets included in this repository are released under a [CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0).
 - All SPEAR scene assets that are not included in this repository are released under a [license](LICENSE_ASSETS.txt) that permits academic use.
