@@ -54,9 +54,9 @@ examples/getting_started/tmp
 examples/getting_started/user_config.yaml
 
 examples/imitation_learning_openbot/dataset
+examples/imitation_learning_openbot/episodes
 examples/imitation_learning_openbot/eval
 examples/imitation_learning_openbot/tmp
-examples/imitation_learning_openbot/episodes
 examples/imitation_learning_openbot/user_config.yaml
 examples/imitation_learning_openbot/videos
 
