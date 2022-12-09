@@ -203,4 +203,4 @@ int index = names_to_indices["name"];
 int index = names_to_indices.at("name");
 ```
 
-**Headers should not contain implementations.** The only exceptions to this rule are templated classes and functions, and header files that contain only trivial single-line functions (i.e., where putting the implementations in the header avoids the need for a source file entirely). In the case of templated classes and functions, the header must contain declarations at the top of the file, and then definitions after.
+**Headers should not contain implementations.** The only exceptions to this rule are templated classes and functions, and headers that contain only functions with trivial single-line implementations (i.e., where putting the implementations in the header avoids the need for a source file entirely). In the case of templated classes and functions, the header must contain declarations at the top of the file, and then definitions after.
