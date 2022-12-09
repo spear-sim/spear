@@ -38,4 +38,4 @@ git push --set-upstream origin <branch-name>
 
 8. Address all feedback you receive and push it to your fork. The pull request will get updated automatically.
 
-9. We will merge your pull request when it is ready.
+9. We will merge your pull request into our `main` branch when it is ready.
