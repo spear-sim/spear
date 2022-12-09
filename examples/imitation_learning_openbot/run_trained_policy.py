@@ -33,7 +33,7 @@ if __name__ == "__main__":
     # make sure that we are not in trajectory sampling mode
     config.defrost()
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING = False
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.POSITIONS_FILE = args.episodes_file
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.POSITIONS_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
 
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
