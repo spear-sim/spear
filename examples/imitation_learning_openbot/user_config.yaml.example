@@ -43,7 +43,7 @@ SIMULATION_CONTROLLER:
       IMAGE_HEIGHT: 120
       IMAGE_WIDTH: 160
       FOV: 70.0
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals" 
       
     NAVMESH:
       AGENT_RADIUS: 20.0

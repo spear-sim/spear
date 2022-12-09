@@ -22,12 +22,14 @@ def show_obs(obs, obs_components, render_passes):
             print(f"sonar: {obs['sonar'][0]:.2f}")
         elif obs_component == "camera":
             for render_pass in render_passes:
-                if render_pass == "final_color":
-                    cv2.imshow("rgb", obs["camera_final_color"][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
-                elif render_pass == "segmentation":
-                    cv2.imshow("segmentation", obs["camera_segmentation"][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
-                elif render_pass == "depth_glsl":
-                    cv2.imshow("depth", obs["camera_depth_glsl"])
+                if render_pass == "final_color" or render_pass == "segmentation" or render_pass == "normals":
+                    cv2.imshow(render_pass, obs["camera_" + render_pass][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
+                elif render_pass == "depth":
+                    depth = obs["camera_depth"]
+                    depth_min = np.min(depth)
+                    depth_max = np.max(depth)
+                    depth_normalized = (depth-depth_min) / (depth_max-depth_min)
+                    cv2.imshow(render_pass, depth_normalized)
                 else:
                     print(f"Error: {render_pass} is an unknown camera render pass.")
                     assert False
