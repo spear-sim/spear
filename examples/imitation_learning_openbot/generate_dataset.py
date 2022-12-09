@@ -96,7 +96,7 @@ if __name__ == "__main__":
     for episode in df.to_records():
 
         print("----------------------")
-        print(f"Episode {episode["index"]} of {df.shape[0]}")
+        print(f"Episode {episode['index']} of {df.shape[0]}")
         print("----------------------")
         
         # if the scene_id of our current episode has changed, then create a new Env
