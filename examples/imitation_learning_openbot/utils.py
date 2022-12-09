@@ -8,20 +8,17 @@ def show_obs(obs, obs_components, render_passes):
         
     for obs_component in obs_components:
         if obs_component == "state_data":
-            print(f"State data: xyz [{obs['state_data'][0]:.2f}, {obs['state_data'][1]:.2f},{obs['state_data'][2]:.2f}]")
-            print(f"State data: pitch yaw roll [{obs['state_data'][3]:.2f}, {obs['state_data'][4]:.2f},{obs['state_data'][5]:.2f}]")
+            print(f"state_data: xyz [{obs["state_data"][0]:.2f}, {obs["state_data"][1]:.2f},{obs["state_data"][2]:.2f}]")
+            print(f"state_data: pitch yaw roll [{obs["state_data"][3]:.2f}, {obs["state_data"][4]:.2f},{obs["state_data"][5]:.2f}]")
         elif obs_component == "control_data":
-            print(f"Control data: left right [{obs['control_data'][0]:.2f}, {obs['control_data'][1]:.2f}]")
+            print(f"control_data: left right [{obs["control_data"][0]:.2f}, {obs["control_data"][1]:.2f}]")
         elif obs_component == "encoder":
-            print(f"FL wheel velocity: [{obs['encoder'][0]:.2f}]")
-            print(f"FR wheel velocity: [{obs['encoder'][1]:.2f}]")
-            print(f"RL wheel velocity: [{obs['encoder'][2]:.2f}]")
-            print(f"RR wheel velocity: [{obs['encoder'][3]:.2f}]")
+            print(f"encoder: fl fr rl rr [{obs["encoder"][0]:.2f}, {obs["encoder"][1]:.2f}, {obs["encoder"][2]:.2f}, {obs["encoder"][3]:.2f}]")
         elif obs_component == "imu":
-            print(f"IMU data: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]")
-            print(f"IMU data: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
+            print(f"imu: linear_acceleration [{obs["imu"][0]:.2f}, {obs["imu"][1]:.2f},{obs["imu"][2]:.2f}]")
+            print(f"imu: angular_rate [{obs["imu"][3]:.2f}, {obs["imu"][4]:.2f}, {obs["imu"][5]:.2f}]")
         elif obs_component == "sonar":
-            print(f"Sonar data: {obs['sonar'][0]:.2f}")
+            print(f"sonar: {obs["sonar"][0]:.2f}")
         elif obs_component == "camera":
             for render_pass in render_passes:
                 if render_pass == "final_color":
@@ -101,10 +98,10 @@ def plot_tracking_performance_spatial(poses_current, poses_desired, plot_path):
 
     fig, (ax) = plt.subplots(1, 1)
 
-    ax.plot(poses_current[0,0], poses_current[0,1], marker='^', markersize=12.0, label="Start", color="tab:blue")
-    ax.plot(poses_desired[-1,0], poses_desired[-1,1], marker='^', markersize=12.0, label="Goal", color="tab:orange")
-    ax.plot(poses_desired[:,0], poses_desired[:,1], marker='o', markersize=8.0, label="Desired trajectory", color="tab:green")
-    ax.plot(poses_current[:,0], poses_current[:,1], marker='x', markersize=5.0, label="Actual trajectory", color="tab:purple")
+    ax.plot(poses_current[0,0], poses_current[0,1], marker="^", markersize=12.0, label="Start", color="tab:blue")
+    ax.plot(poses_desired[-1,0], poses_desired[-1,1], marker="^", markersize=12.0, label="Goal", color="tab:orange")
+    ax.plot(poses_desired[:,0], poses_desired[:,1], marker="o", markersize=8.0, label="Desired trajectory", color="tab:green")
+    ax.plot(poses_current[:,0], poses_current[:,1], marker="x", markersize=3.0, label="Actual trajectory", color="tab:purple")
 
     x_0,x_1 = ax.get_xlim()
     y_0,y_1 = ax.get_ylim()
