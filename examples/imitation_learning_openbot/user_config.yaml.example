@@ -18,7 +18,7 @@ IMITATION_LEARNING_OPENBOT:
     PROPORTIONAL_GAIN_HEADING: 4.25 # PID proportional gain for the autopilot
     DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
     PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_DIST: 0.1      # PID derivative gain for the autopilot
+    DERIVATIVE_GAIN_DIST: 0.1       # PID derivative gain for the autopilot
     FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
   PILOT_NET:
     PATH: ""
