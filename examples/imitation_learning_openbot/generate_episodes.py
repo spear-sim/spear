@@ -100,6 +100,7 @@ if __name__ == "__main__":
         plt.ylabel("y[cm]")
         plt.grid()
         plt.title(f"scene_id {scene_id}")
+        
         plt.savefig(os.path.join(split_dir, scene_id), bbox_extra_artists=[legend], bbox_inches="tight")
 
         # close the current scene
