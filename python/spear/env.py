@@ -1,6 +1,6 @@
-//
-// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>
-//
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>
+#
 
 from enum import Enum
 import gym.spaces
