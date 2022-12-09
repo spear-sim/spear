@@ -63,7 +63,7 @@ DEALINGS IN THE SOFTWARE.
 _____________________
 
 Computer Vision Center (CVC) at the Universitat Autonoma de Barcelona (UAB)
-(carla)
+(CARLA)
 
 MIT License
 
