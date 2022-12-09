@@ -1,5 +1,5 @@
 //
-// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>
+// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
 #include "PointGoalNavTask.h"
