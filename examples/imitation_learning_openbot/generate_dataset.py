@@ -151,9 +151,9 @@ if __name__ == "__main__":
             state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # state_data observations made by the agent during an episode
             waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # waypoint coordinates being tracked by the agent during an episode
             compass_data  = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # compass observations made by the agent during a episode
-            time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # time stamps of the observations made by the agent during an episode
+            time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int64)      # time stamps of the observations made by the agent during an episode
             frame_data    = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # frame ids
-            
+
         # execute the desired number of iterations in a given episode
         num_iterations = 0
         hit_obstacle   = False # flag raised when the vehicle collides with the environment
