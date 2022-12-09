@@ -15,7 +15,7 @@ SIMULATION_CONTROLLER:
     STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
     CAMERA:
       ACTOR_NAME: ""
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -45,7 +45,7 @@ SIMULATION_CONTROLLER:
     STEP_INFO_COMPONENTS: ["trajectory_data"]
     IS_READY_VELOCITY_THRESHOLD: 0.0
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -90,7 +90,7 @@ SIMULATION_CONTROLLER:
       YAW_SCALE: 1.0
     CAMERA:
       ACTOR_NAME: ""
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth_glsl", "normals", "lens_distortion" 
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
