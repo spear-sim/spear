@@ -59,9 +59,9 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), UTF8_TO_TCHAR(render_pass_name.c_str())));
         ASSERT(render_pass.scene_capture_component_);
 
-        if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_SENSOR", "SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE" }) == "SCS_FinalColorHDR") {
+        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE"}) == "SCS_FinalColorHDR") {
             render_pass.scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
-        } else if (Config::getValue<std::string>({ "SIMULATION_CONTROLLER", "CAMERA_SENSOR", "SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE"}) == "SCS_FinalToneCurveHDR") {
+        } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE"}) == "SCS_FinalToneCurveHDR") {
             render_pass.scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalToneCurveHDR;
         } else {
             ASSERT(false);
