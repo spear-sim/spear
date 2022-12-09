@@ -18,7 +18,7 @@ IMITATION_LEARNING_OPENBOT:
     PROPORTIONAL_GAIN_HEADING: 4.25 # PID proportional gain for the autopilot
     DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
     PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_DIST: 0.1      # PID derivative gain for the autopilot
+    DERIVATIVE_GAIN_DIST: 0.1       # PID derivative gain for the autopilot
     FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
   PILOT_NET:
     PATH: ""
@@ -36,7 +36,7 @@ SIMULATION_CONTROLLER:
       GOAL_ACTOR_NAME: "GoalActor"
     ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
     STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
-    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera", "encoder", "imu", "sonar"] # "state_data", "control_data", "camera", "encoder", "imu", "sonar"... The type(s) of "camera" sensor is defined by CAMERA_PARAMETERS.RENDER_PASSES
+    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
     IS_READY_VELOCITY_THRESHOLD: 1.0
    
     CAMERA:

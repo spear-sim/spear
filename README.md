@@ -4,7 +4,7 @@
 
 Interactive simulators are becoming powerful tools for training embodied agents, but existing simulators suffer from limited content diversity, physical interactivity, and visual fidelity. We address these limitations by introducing SPEAR, a Simulator for Photorealistic Embodied AI Research. To create our simulator, we worked closely with a team of professional artists for over a year to construct 300 unique virtual indoor environments with 2,566 unique rooms and 17,234 unique objects that can be manipulated individually. Each of our environments features detailed geometry, photorealistic materials, and a unique floor plan and object layout designed by a professional artist, i.e., we do not rely on remixing existing layouts to create additional content. Our environments are implemented as Unreal Engine assets, and we provide an OpenAI Gym interface for interacting with the environments via Python.
 
-The SPEAR code is released under an [MIT license](LICENSE.txt), and the SPEAR assets are released under a [license](LICENSE_ASSETS.txt) that permits academic use.
+The SPEAR code is released under an [MIT License](LICENSE.txt), and the SPEAR assets are released under a [license](LICENSE_ASSETS.txt) that permits academic use.
 
 ## Citation
 
@@ -63,3 +63,18 @@ We recommend browsing through each of our example applications to get a sense of
   - [`examples/getting_started`](examples/getting_started) demonstrates how to control a simple sphere agent or an OpenBot agent and obtain egocentric visual observations.
   - [`examples/generate_image_dataset`](examples/generate_image_dataset) demonstrates how to generate a static image dataset using our freeform camera agent.
   - [`examples/imitation_learning_openbot`](examples/imitation_learning_openbot) demonstrates how to collect training data that can be plugged into the OpenBot framework and used to train a navigation policy.
+
+## Building from source
+
+We provide instructions for building the `SpearSim` executable from source [here](docs/building_spearsim.md). This step is optional because we provide links to precompiled binaries in our release notes.
+
+## Contributing
+
+We provide guidelines for contributing to SPEAR [here](docs/building_spearsim.md).
+
+## Licenses
+
+- The SPEAR code in this repository is released under an [MIT License](LICENSE.txt).
+- The licenses for all of our third-party software dependencies are listed [here](ACKNOWLEDGMENTS.txt).
+- The OpenBot assets included in this repository are released under a [CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0).
+- All SPEAR scene assets that are not included in this repository are released under a [license](LICENSE_ASSETS.txt) that permits academic use.

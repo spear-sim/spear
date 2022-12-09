@@ -1,100 +1,48 @@
-# Imitation Learning
+# Imitation learning with OpenBot
 
-This example demonstrates how to generate data to train a control policy using imitation learning and finally evaluate the trained policy in SPEAR;
+In this example application, we demonstrate how to collect training data that can be plugged into the [OpenBot](http://www.openbot.org) framework and used to train a navigation policy.
 
-There are three steps;
-1. Generate random pairs of initial and goal positions
-2. Generate dataset
-3. Train a policy 
-4. Evaluate the policy
+Before running this example, rename `user_config.yaml.example` to `user_config.yaml` and modify the contents appropriately for your system, as described in our top-level [README](http://github.com/isl-org/spear).
 
-It is here assumed that you already followed the [getting started tutorial](https://github.com/isl-org/spear/blob/main/docs/getting_started.md) and hence have working SPEAR pipeine. 
+### Important configuration options
 
-## Generate random pairs of initial and goal positions
+You can control the behavior of this example by setting the following parameters in your `user_config.yaml` file, e.g.,
+  - `SPEAR.DATA_DIR` is the directory containing our test scene.
+  - `SPEAR.CONTENT_DIR` is the `Content` directory corresponding to your precompiled `SpearSim` binary.
+  - `SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA_PASSES` can be set to a list of image modalities that you want the agent to return (e.g., setting the value `["final_color", "depth", "segmentation"]` will return photorealistic RGB images, depth images, and segmentation images).
 
-As a starting point, you will need to run the `generate_episodes.py` script to generate a set of training (resp. testing) episodes:
+Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
 
-```bash
-python generate_episodes.py --num_episodes_per_scene <num_train_poses> --episodes_file <path_to_output_episodes_folder/train_episodes.csv> 
-python generate_episodes.py --num_episodes_per_scene <num_test_poses> --episodes_file <path_to_output_episodes_folder/test_episodes.csv> 
-```
-As mentioned in the [https://github.com/isl-org/OpenBot/tree/master/policy#data-collection](OpenBot public reporitory), the common split between training and test data is 80% - 20%. You should adjust the `<num_train_poses>` and `<num_test_poses>` accordingly.
+### Running the example
 
-## Generate dataset
+You can run the example as follows.
 
-Once a suitable set of start-goal tuples are available and properly divided in a training set and a test set, execute the data generation script by calling
+```console
+# generate navigation episodes
+python generate_episodes.py --episodes_file train_episodes.csv
+python generate_episodes.py --episodes_file test_episodes.csv
 
-```bash
-# activate the spear environment
-conda activate spear-env
+# execute navigation episodes using a global path planner, and save goals, observations, and actions
+python generate_dataset.py --episodes_file train_episodes.csv --split train
 
-python generate_dataset.py --num_iterations_per_episode 1000 --split train --episodes_file <path_to_output_episodes_folder/train_episodes.csv> --create_video --create_plot --rendering_mode baked
-python generate_dataset.py --num_iterations_per_episode 1000 --split test --episodes_file <path_to_output_episodes_folder/test_episodes.csv> --create_video --create_plot --rendering_mode baked
-```
+# optional: train a navigation policy using the OpenBot framework, see the OpenBot GitHub repository
 
-This will have an openbot agent follow collision-fre trajectories between the differnt start-goal coordinates. 
-The generated dataset will have the folowing structrure, to comply with the [OpenBot training pipeline](https://github.com/isl-org/OpenBot/tree/master/policy):
-
-```
-dataset
-|-- train_data
-| |-- 235114...
-| | |-- 0000
-| | | |-- images
-| | | | |-- 0.jpeg
-| | | | |-- ...
-| | | | |-- 999.jpeg
-| | | |-- sensor_data
-| | | | |-- ctrlLog.txt
-| | | | |-- goalLog.txt
-| | | | |-- rgbFrames.txt
-| | | | |-- poseData.txt
-| | | | |-- waypointData.txt
-| | |-- 0001
-| |-- ...
-|-- test_data
-| |-- 235114...
-| | |-- 0000
-| | | |-- images
-| | | | |-- 0.jpeg
-| | | | |-- ...
-| | | | |-- 999.jpeg
-| | | |-- sensor_data
-| | | | |-- ctrlLog.txt
-| | | | |-- goalLog.txt
-| | | | |-- rgbFrames.txt
-| | | | |-- poseData.txt
-| | | | |-- waypointData.txt
-| | |-- 0001
-|-- ...
+# execute navigation episodes using a trained policy
+run_trained_policy.py --episodes_file test_episodes.csv
 ```
 
-## Train a control policy
+Running `generate_episodes.py` will generate navigation episodes and store them in a CSV file. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
+  - `--num_episodes_per_scene` can be used to set the number of episodes generated per scene. Our default is in this example is 10, but you should increase this to 1000 if you intend to train your own navigation policy.
+  - `--episodes_file` can be used to output to a specific CSV file.
 
-As the structure of the data collected with SPEAR natively complies with the OpenBot training pipeline, you may simply follow the guidelines of the [poicy training tutorial](https://github.com/isl-org/OpenBot/tree/master/policy#policy-training) in the OpenBot public repository to be able to generate your own `.tflite` policy out of the data you collected.
+Running `generate_dataset.py` will generate a dataset of goals, observations, and actions for each episode. The structure of the generated dataset precisely mimics the structure expected by the OpenBot framework, and can therefore be plugged into the OpenBot training code directly. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
+  - `--episodes_file` can be used to read episodes from a specific CSV file.
+  - `--rendering_mode` can be set to `baked` to use baked lighting, or `raytracing` for ray-traced lighting if you are running on Windows and you have a GPU that supports DirectX ray-tracing.
+  - `--create_videos` can be used to generate videos from OpenBot observations.
+  - `--benchmark` can be used to test the overall speed of the simulation.
 
-## Evaluate the control policy
+Running `run_trained_policy.py` will execute a trained navigation policy on a set of navigation episodes. This tool accepts all the same command-line arguments listed above for `generate_dataset.py`, as well as an optional `--policy_file` argument that can be used to load a specific navigation policy. We include a pre-trained policy with this example application.
+  
+### Optional: training a navigation policy
 
-Once the training step is completed, place your `.tflite` file in the `models` folder and execute the following command:
-
-```bash
-# activate the spear environment
-conda activate spear-env
-
-python run_trained_policy.py --num_iterations_per_episode 1000 --policy_file <path_to_model_folder/test.tflite> --episodes_file <path_to_output_episodes_folder/test_episodes.csv> --create_video --create_plot --rendering_mode baked
-```
-
-The result will be stored in the `eval` folder
-
-```
-eval
-|-- run_0_235114.../data
-| |-- images
-| | |-- 0.jpeg
-| | |-- ...
-| | |-- 999.jpeg
-| |-- results
-| | |-- resultLog.txt
-| | |-- trajectoryLog.txt
-|-- ...
-```
+To train a navigation policy with the data you collected, follow the steps provided [here](https://github.com/isl-org/OpenBot/tree/master/policy#policy-training). The datasets generated in this example precisely mimic the structure expected by the OpenBot framework, and can therefore be plugged into the OpenBot training code directly. This step is optional because we include a pre-trained model.

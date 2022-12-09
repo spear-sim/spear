@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset"))
     parser.add_argument("--split", default="train")
     parser.add_argument("--rendering_mode", default="baked")
-    parser.add_argument("--create_video", action="store_true")
+    parser.add_argument("--create_videos", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
