@@ -1,6 +1,6 @@
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>
-// Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>. Licensed under the WTFPLv2 License <http://www.wtfpl.net>
+// Copyright(c) 2004 Sam Hocevar <sam@hocevar.net>. Licensed under the WTFPLv2 License <http://www.wtfpl.net>
 //
 
 // Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
