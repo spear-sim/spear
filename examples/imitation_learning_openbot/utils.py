@@ -75,8 +75,8 @@ def get_compass_observation(position_xy_desired, position_xy_current, yaw_curren
     dist = np.linalg.norm(relative_agent_target_xy) * 0.01 
 
     # projection 
-    sin_yaw = np.sin(relative_agent_target_yaw);
-    cos_yaw = np.cos(relative_agent_target_yaw);
+    sin_yaw = np.sin(relative_agent_target_yaw)
+    cos_yaw = np.cos(relative_agent_target_yaw)
 
     return np.array([dist, sin_yaw, cos_yaw], dtype=np.float32)
 
