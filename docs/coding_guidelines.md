@@ -49,7 +49,7 @@ ASSERT(world);
 
 **Use your own human judgement rather than `clang-format` and `black` to format your code.** `clang-format` is not idempotent, can get stuck in cycles, and requires a lot of configuration to behave sensibly. Likewise, `black` requires a lot of configuration to behave sensibly.
 
-**Delete merged branches, and prefer "squash and merge" over "merge" when merging pull requests.** We need to delete branches as they're merged to prevent them from accumulating. We prefer "squash and merge" so we don't clutter our `main` branch with bad commit messages.
+**Delete merged branches, and prefer "squash and merge" over "merge" when merging pull requests.** We need to delete branches as they're merged to prevent them from accumulating and making the Branches view in GitHub difficult to browse. We prefer "squash and merge" so we don't clutter our `main` branch with bad commit messages.
 
 ### Python
 
