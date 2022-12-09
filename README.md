@@ -70,7 +70,7 @@ We provide instructions for building the `SpearSim` executable from source [here
 
 ## Contributing
 
-We provide guidelines for contributing to SPEAR [here](docs/building_spearsim.md).
+We provide guidelines for contributing to SPEAR [here](CONTRIBUTING.md).
 
 ## Licenses
 
