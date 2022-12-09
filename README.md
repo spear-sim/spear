@@ -64,7 +64,7 @@ We recommend browsing through each of our example applications to get a sense of
   - [`examples/generate_image_dataset`](examples/generate_image_dataset) demonstrates how to generate a static image dataset using our freeform camera agent.
   - [`examples/imitation_learning_openbot`](examples/imitation_learning_openbot) demonstrates how to collect training data that can be plugged into the OpenBot framework and used to train a navigation policy.
 
-## Building `SpearSim` from source
+## Building from source
 
 We provide instructions for building the `SpearSim` executable from source [here](docs/building_spearsim.md). This step is optional because we provide links to precompiled binaries in our release notes.
 
