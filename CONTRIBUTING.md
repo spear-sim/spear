@@ -3,10 +3,11 @@
 ## Submitting issues and requesting new features
 
 Issues with existing functionality, as well as feature requests, can be submitted [here](http://github.com/isl-org/spear/issues). Before submitting a new issue, search to see if your issue has already been reported. When submitting an issue, include the following information.
-- What platform are you on?
+- What platform are you on? What are your system specs? Do you meet the minimum [specs](http://docs.unrealengine.com/4.26/en-US/Basics/RecommendedSpecifications) for the Unreal Engine?
 - What commit of the `spear` respository are you on? Is your code synced to a specific tag, or are you synced to the latest `main` branch?
-- What `SpearSim` executable are you using? Did you build it yourself or download it?
+- What `SpearSim` executable are you using? Did you build it yourself or download it? If you downloaded it, does your issue go away when you sync your code to the tag corresponding to your `SpearSim` executable? For example, if you're using the precompiled executable in `SpearSim-v0.1.0-Win64-Shipping.zip`, does your issue go away when you sync your code to the `v0.1.0` tag?
 - What are you attempting to do, what you expect to happen, and what actually happened?
+- Post the full console output when running your Python program.
 
 ## Fixing bugs and adding features
 
