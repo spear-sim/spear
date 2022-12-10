@@ -1,6 +1,6 @@
 ---
-name: Default issue template for SPEAR issues
-about: Use this issue template as a starting point for submitting SPEAR issues.
+name: Default template for SPEAR issues
+about: Use this template as a starting point for submitting SPEAR issues.
 title: ''
 labels: ''
 assignees: ''
