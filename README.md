@@ -32,7 +32,7 @@ The easiest way to start working with SPEAR is to download a precompiled binary 
 Our first step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules. We therefore recommend using the following command-line invocation.
 
 ```console
-git clone --recurse-submodules -- https://github.com/isl-org/spear path/to/spear
+git clone --recurse-submodules https://github.com/isl-org/spear path/to/spear
 ```
 
 ### Install the `spear` Python package
