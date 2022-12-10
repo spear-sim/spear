@@ -23,21 +23,27 @@ If you find SPEAR useful in your research, please cite this repository as follow
 
 ## Getting Started
 
+### System specifications
+
+The minimum hardware and software specifications for the Unreal Engine are given [here](http://docs.unrealengine.com/4.26/en-US/Basics/RecommendedSpecifications).
+
 ### Download precompiled binaries and scene data
 
 The easiest way to start working with SPEAR is to download a precompiled binary for your platform. You will also need to download our test scene. See our latest release notes for download links.
 
 ### Clone this repository including submodules
 
-Our first step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following command-line invocations.
+Our next step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following commands.
 
 ```console
 git clone --recurse-submodules https://github.com/isl-org/spear path/to/spear
 
-# optional: checkout the code corresponding to a specific release
+# checkout the code corresponding to a specific release
 cd path/to/spear
 git checkout v0.1.0
 ```
+
+If you want to get our latest features, we recommend building the `SpearSim` executable from source, and working from the head of our `main` branch (i.e., skip the `git checkout` command above). If you don't need our latest features, then we recommend using a precompiled binary, and checking out the code corresponding to that binary (i.e., use the `git checkout` command above).
 
 ### Install the `spear` Python package
 
