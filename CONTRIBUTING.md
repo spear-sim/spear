@@ -2,7 +2,11 @@
 
 ## Submitting issues and requesting new features
 
-Issues with existing functionality, as well as feature requests, can be submitted [here](http://github.com/isl-org/spear/issues). Before submitting a new issue, search to see if your issue has already been reported. When submitting an issue, include a detailed description of what you're attempting to do, what you expect to happen, and what actually happened.
+Issues with existing functionality, as well as feature requests, can be submitted [here](http://github.com/isl-org/spear/issues). Before submitting a new issue, search to see if your issue has already been reported. When submitting an issue, include the following information.
+- What platform are you on?
+- What commit of the `spear` respository are you on? Is your code synced to a specific tag, or are you synced to the latest `main` branch?
+- What `SpearSim` executable are you using? Did you build it yourself or download it?
+- What are you attempting to do, what you expect to happen, and what actually happened?
 
 ## Fixing bugs and adding features
 
