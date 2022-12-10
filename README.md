@@ -29,7 +29,7 @@ The easiest way to start working with SPEAR is to download a precompiled binary 
 
 ### Install the `spear` Python package
 
-Our next step is to install the `spear` Python package as follows.
+Our next step is to install the `spear` Python package as follows. Note that you need to clone this repository including submodules.
 
 ```console
 # create environment
