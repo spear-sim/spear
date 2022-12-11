@@ -1,6 +1,6 @@
 ---
-name: Default template for SPEAR issues
-about: Use this template as a starting point for submitting SPEAR issues.
+name: Unexpected behavior
+about: Use this template as a starting point for submitting SPEAR issues that describe some kind of unexpected behavior.
 title: ''
 labels: ''
 assignees: ''
