@@ -1,6 +1,6 @@
 ---
-name: I am experiencing unexpected behavior.
-about: Use this template as a starting point for submitting SPEAR issues that describe some kind of unexpected behavior.
+name: Are you experiencing unexpected behavior?
+about: Use this template as a starting point for submitting issues that describe some kind of unexpected behavior.
 title: ''
 labels: ''
 assignees: ''
