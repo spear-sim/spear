@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-### What platform am I on? What are my system specs? Do I meet the minimum for the Unreal Engine?
+### What platform am I on? What are my system specifications? Do I meet the minimum specifications for the Unreal Engine?
 
 ### What commit of the `spear` repository am I on? Am I synced to a specific tag, or am I synced to the head of the `main` branch?
 
