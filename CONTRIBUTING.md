@@ -15,7 +15,7 @@ Before making modifications to our code, familiarize yourself with our [coding g
 3. Fork our repository and clone it locally.
 
 ```console
-git clone https://github.com/<user-id>/spear.git
+git clone --recurse-submodules https://github.com/<your-github-username>/spear <local-path-to-spear>
 ```
 
 4. Create a branch with a concise and meaningful name that describes the scope of the work.
@@ -27,7 +27,7 @@ git checkout -b <branch-name>
 5. Make your changes, write good commit messages, push your branch to the forked repository:
 
 ```console
-git add <modified file>
+git add <modified-file>
 git commit -m <meaningful description>
 git push --set-upstream origin <branch-name>
 ```
