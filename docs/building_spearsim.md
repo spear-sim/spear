@@ -57,17 +57,6 @@ This step will build a standalone executable at the following path. This executa
 ```
 cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app
 ```
- 
-### Helpful command-line options
-
-- You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`. After doing a complete `-build -cook -stage -package -archive`, you only need to `-cook` if you have edited the `.uproject` in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`
-- If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a special executable that is only required when cooking.
-- If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`.
-- You can replace `Development` with `Shipping` to build a more optimized executable.
-- You can specify `-clean` to do a clean build.
-- You can specify `-verbose`, `-UbtArgs="-verbose"`, and `-UbtArgs="-VeryVerbose"` to see additional build details (e.g., the exact command-line arguments that Unreal uses when invoking the underlying compiler).
-
-### Notes when building on Windows
 
 If you're running on Windows, you need to use the executable that is built at the following path.
 
@@ -76,3 +65,12 @@ cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Bin
 ```
 
 This executable ensures that `stdout` output is routed correctly to the Windows terminal.
+
+### Helpful command-line options
+
+- You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`. After doing a complete `-build -cook -stage -package -archive`, you only need to `-cook` if you have edited the `.uproject` in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`
+- If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a special executable that is only required when cooking.
+- If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`.
+- You can replace `Development` with `Shipping` to build a more optimized executable.
+- You can specify `-clean` to do a clean build.
+- You can specify `-verbose`, `-UbtArgs="-verbose"`, and `-UbtArgs="-VeryVerbose"` to see additional build details (e.g., the exact command-line arguments that Unreal uses when invoking the underlying compiler).
