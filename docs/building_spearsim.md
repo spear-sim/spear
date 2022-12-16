@@ -69,7 +69,7 @@ cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app
 
 ### Notes when building on Windows
 
-If you're running on Windows, you need to use the exectuable that is built at the following path.
+If you're running on Windows, you need to use the executable that is built at the following path.
 
 ```
 cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
