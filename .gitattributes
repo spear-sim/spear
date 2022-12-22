@@ -1,0 +1,29 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings
+
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted
+# to native line endings on checkout.
+.gitignore text eol=lf
+.gitmodules text eol=lf
+
+# Declare files that will always have LF line endings on checkout.
+*.cpp text eol=lf
+*.cs text eol=lf
+*.csv text eol=lf
+*.h text eol=lf
+*.ini text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.txt text eol=lf
+*.uplugin text eol=lf
+*.uproject text eol=lf
+*.yaml text eol=lf
+*.yaml.example text eol=lf
+
+# Denote all files that are truly binary and should not be modified.
+*.jpg binary
+*.tflite binary
+*.uasset binary
+*.umap binary
