@@ -32,7 +32,7 @@ if __name__ == "__main__":
     with open(output_config_file, "w") as output:
         config_node.dump(stream=output, default_flow_style=False)
 
-    print("Config file generated successfully: " + output_config_file)
+    print("[SPEAR | generate_config.py] Config file generated successfully: " + output_config_file)
     print()
 
-    print("Done.")
+    print("[SPEAR | generate_config.py] Done.")

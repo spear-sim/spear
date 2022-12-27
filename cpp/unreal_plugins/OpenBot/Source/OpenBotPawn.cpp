@@ -193,6 +193,7 @@ Eigen::Vector4f AOpenBotPawn::getDutyCycle() const
     return duty_cycle_;
 }
 
+BEGIN_IGNORE_COMPILER_WARNINGS
 Eigen::Vector4f AOpenBotPawn::getWheelRotationSpeeds() const
 {
     Eigen::Vector4f wheel_rotation_speeds;
@@ -202,6 +203,7 @@ Eigen::Vector4f AOpenBotPawn::getWheelRotationSpeeds() const
     wheel_rotation_speeds(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
     return rpmToRadSec(wheel_rotation_speeds); // Expressed in [rad/s]
 }
+END_IGNORE_COMPILER_WARNINGS
 
 BEGIN_IGNORE_COMPILER_WARNINGS
 void AOpenBotPawn::resetPhysicsState()

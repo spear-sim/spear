@@ -38,11 +38,11 @@ public class SimulationController : ModuleRules
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "include"));
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "build", "Release", "rpc.lib"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "BUILD", "Win64", "Release", "rpc.lib"));
         } else if (Target.Platform == UnrealTargetPlatform.Mac) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "build", "librpc.a"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "BUILD", "Mac", "librpc.a"));
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "build", "librpc.a"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rpclib", "BUILD", "Linux", "librpc.a"));
         } else {
             throw new Exception("Target.Platform == " + Target.Platform);
         }
