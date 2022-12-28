@@ -123,7 +123,7 @@ if __name__ == "__main__":
             "-DCMAKE_BUILD_TYPE=Release" ,
             "-DRBDL_BUILD_STATIC=ON",
             "-DRBDL_BUILD_ADDON_URDFREADER=ON",
-            "-DCMAKE_CXX_FLAGS='/bigobj /DNOMINMAX'",
+            "-DCMAKE_CXX_FLAGS='/bigobj /DNOMINMAX /EHs'",
             "-DEIGEN3_INCLUDE_DIR=" + eigen3_include_dir,
             os.path.join("..", "..")]
 
@@ -373,7 +373,7 @@ if __name__ == "__main__":
 
     else:
         assert False
-    
+
     print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd)
     assert cmd_result.returncode == 0
