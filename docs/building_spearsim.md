@@ -40,7 +40,7 @@ Our `SpearSim` project assumes that all of its required parameters are declared 
 
 ```console
 cd tools
-python generate_config.py
+python generate_config.py --unreal_project_dir path/to/spear/cpp/unreal_projects/SpearSim
 ```
 
 ## Build the `SpearSim` executable
