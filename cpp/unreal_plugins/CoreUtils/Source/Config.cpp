@@ -24,10 +24,9 @@ void Config::initialize()
         // Read config file contents into a YAML::Node
         config_file = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir().Append("Temp/config.yaml"));
         config_ = YAML::LoadFile(TCHAR_TO_UTF8(*config_file));
-    }
 
     // Otherwise assert
-    else {
+    } else {
         ASSERT(false);
     }
 }
