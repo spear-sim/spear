@@ -314,9 +314,8 @@ void OpenBotAgent::applyAction(const std::map<std::string, std::vector<float>>& 
     // action["apply_voltage"]
     //
     if (std::find(action_components.begin(), action_components.end(), "apply_voltage") != action_components.end()) {
-        Eigen::Vector4f duty_cycle(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1), action.at("apply_voltage").at(0), action.at("apply_voltage").at(1));
-        open_bot_pawn_->deactivateBrakes();
-        open_bot_pawn_->setDutyCycleAndClamp(duty_cycle);
+        open_bot_pawn_->setDutyCycle(Eigen::Vector4f(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1), action.at("apply_voltage").at(0), action.at("apply_voltage").at(1)));
+        open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
     }
 
     //
@@ -327,7 +326,7 @@ void OpenBotAgent::applyAction(const std::map<std::string, std::vector<float>>& 
         bool sweep = false;
         FHitResult* hit_result_info = nullptr;
         open_bot_pawn_->SetActorLocation(location, sweep, hit_result_info, ETeleportType::TeleportPhysics);
-        open_bot_pawn_->activateBrakes();
+        open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get high brake torque value from the config system rather than this hard-coded value
     }
 
     //
@@ -336,7 +335,7 @@ void OpenBotAgent::applyAction(const std::map<std::string, std::vector<float>>& 
     if (std::find(action_components.begin(), action_components.end(), "set_orientation_pyr_radians") != action_components.end()) {
         FRotator rotation{FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
         open_bot_pawn_->SetActorRotation(rotation, ETeleportType::TeleportPhysics);
-        open_bot_pawn_->activateBrakes();
+        open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get high brake torque value from the config system rather than this hard-coded value
     }
 }
 
@@ -431,8 +430,8 @@ void OpenBotAgent::reset()
     bool sweep = false;
     FHitResult* hit_result_info = nullptr;    
     open_bot_pawn_->SetActorLocationAndRotation(location, FQuat(FRotator(0)), sweep, hit_result_info, ETeleportType::TeleportPhysics);
-    open_bot_pawn_->resetPhysicsState();
-    open_bot_pawn_->activateBrakes();
+    open_bot_pawn_->resetWheels();
+    open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get high brake torque value from the config system rather than this hard-coded value
 
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
@@ -549,7 +548,7 @@ void OpenBotAgent::generateTrajectoryToGoal()
 
     // Debug output
     if (path.IsPartial()) {
-        std::cout << "Only a partial path could be found..." << std::endl;
+        std::cout << "[SPEAR | OpenBotAgent.cpp] Only a partial path could be found..." << std::endl;
     }
 
     int num_waypoints = path.Path->GetPathPoints().Num();
@@ -561,15 +560,15 @@ void OpenBotAgent::generateTrajectoryToGoal()
     FVector2D relative_position_to_goal((goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
 
     std::cout << std::endl;
-    std::cout << "Number of waypoints: " << num_waypoints << std::endl;
-    std::cout << "Goal distance: " << relative_position_to_goal.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
-    std::cout << "Path length: " << trajectory_length << "m" << std::endl;
-    std::cout << "Initial position: [" << open_bot_pawn_->GetActorLocation().X << ", " << open_bot_pawn_->GetActorLocation().Y << ", " << open_bot_pawn_->GetActorLocation().Z << "]." << std::endl;
-    std::cout << "Goal position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
-    std::cout << "----------------------" << std::endl;
-    std::cout << "Waypoints: " << std::endl;
+    std::cout << "[SPEAR | OpenBotAgent.cpp] Number of waypoints: " << num_waypoints << std::endl;
+    std::cout << "[SPEAR | OpenBotAgent.cpp] Goal distance: " << relative_position_to_goal.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+    std::cout << "[SPEAR | OpenBotAgent.cpp] Path length: " << trajectory_length << "m" << std::endl;
+    std::cout << "[SPEAR | OpenBotAgent.cpp] Initial position: [" << open_bot_pawn_->GetActorLocation().X << ", " << open_bot_pawn_->GetActorLocation().Y << ", " << open_bot_pawn_->GetActorLocation().Z << "]." << std::endl;
+    std::cout << "[SPEAR | OpenBotAgent.cpp] Goal position: [" << goal_actor_->GetActorLocation().X << ", " << goal_actor_->GetActorLocation().Y << ", " << goal_actor_->GetActorLocation().Z << "]." << std::endl;
+    std::cout << "[SPEAR | OpenBotAgent.cpp] ----------------------" << std::endl;
+    std::cout << "[SPEAR | OpenBotAgent.cpp] Waypoints: " << std::endl;
     for (auto& point : path_points) {
-        std::cout << "[" << point.Location.X << ", " << point.Location.Y << ", " << point.Location.Z << "]" << std::endl;
+        std::cout << "[SPEAR | OpenBotAgent.cpp] [" << point.Location.X << ", " << point.Location.Y << ", " << point.Location.Z << "]" << std::endl;
     }
-    std::cout << "----------------------" << std::endl;
+    std::cout << "[SPEAR | OpenBotAgent.cpp] ----------------------" << std::endl;
 }

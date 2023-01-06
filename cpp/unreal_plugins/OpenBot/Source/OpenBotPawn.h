@@ -17,7 +17,7 @@ class USimpleWheeledVehicleMovementComponent;
 class USkeletalMeshComponent;
 
 // This class is inspired by the WheeledVehicle class, defined in:
-// UnrealEngine-4.26.2-release/Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/WheeledVehicle.h
+//     Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/WheeledVehicle.h
 UCLASS()
 class OPENBOT_API AOpenBotPawn : public APawn
 {
@@ -26,8 +26,35 @@ public:
     AOpenBotPawn(const FObjectInitializer& object_initializer);
 
     // APawn interface
-    virtual void SetupPlayerInputComponent(UInputComponent* input_component) override;
-    virtual void Tick(float delta_time) override;
+    void SetupPlayerInputComponent(UInputComponent* input_component) override;
+    void Tick(float delta_time) override;
+
+    // Reset the physics state of the wheels.
+    void resetWheels();
+
+    // Set brake torques, which can be used to make sure the wheels don't move.
+    void setBrakeTorques(const Eigen::Vector4f& brake_torques);
+
+    // Provides access to the current command sent to the OpenBot (e.g., to return
+    // to a Python client). This function is required because the command to be
+    // executed by the OpenBot might come from keyboard user input.
+    Eigen::Vector4f getDutyCycle() const;
+
+    // Function that applies a given command to the vehicle (e.g., as a result
+    // of a remote call from a Python client). The input vector will be clamped
+    // to be between -1.0 and 1.0.
+    void setDutyCycle(const Eigen::Vector4f& duty_cycle);
+
+    // Provides access to the wheels rotation speed in rad/s
+    Eigen::Vector4f getWheelRotationSpeeds() const;
+
+    USkeletalMeshComponent* skeletal_mesh_component_ = nullptr;
+    USimpleWheeledVehicleMovementComponent* vehicle_movement_component_ = nullptr;
+    UCameraComponent* camera_component_ = nullptr;
+    UBoxComponent* imu_component_ = nullptr;
+    UBoxComponent* sonar_component_ = nullptr;
+
+private:
 
     // Function that applies wheel torque on a vehicle to generate linear
     // forward/backward motions. This function is intended to handle keyboard
@@ -39,39 +66,9 @@ public:
     // keyboard input.
     void moveRight(float right);
 
-    // Function that applies a given command to the vehicle (e.g., as a result
-    // of a remote call from a Python client). The input vector will be clamped
-    // to be between -1.0 and 1.0.
-    void setDutyCycleAndClamp(const Eigen::Vector4f& duty_cycle);
-
-    // Provides access to the current command sent to the OpenBot (e.g., to return
-    // to a Python client). This function is required because the command to be
-    // executed by the OpenBot might come from keyboard user input.
-    Eigen::Vector4f getDutyCycle() const;
-
-    // Provides access to the wheels rotation speed in rad/s
-    Eigen::Vector4f getWheelRotationSpeeds() const;
-
-    // Apply high braking torque to make sure the wheels don't move
-    void activateBrakes();
-
-    // Releases brakes
-    void deactivateBrakes();
-
-    // Reset the physical state of the wheels
-    void resetPhysicsState();
-
-    USkeletalMeshComponent* skeletal_mesh_component_ = nullptr;
-    USimpleWheeledVehicleMovementComponent* vehicle_movement_component_ = nullptr;
-    UCameraComponent* camera_component_ = nullptr;
-    UBoxComponent* imu_component_ = nullptr;
-    UBoxComponent* sonar_component_ = nullptr;
-
-private:
-
     //
-    // Computes the motor torque corresponding to a given command.
-    // Clarification about the DC motor model used in this simulation.
+    // Compute motor torques corresponding to the duty cycle specified by
+    // setDutyCycle(...) according to the following DC motor model.
     //
     // Electrical equation: Ri + L di/dt + e = V_pwm  (1)
     //
@@ -83,13 +80,13 @@ private:
     //           w is the rotor's angular velocity [rad/s]
     //           Kv > 0 is the motor velocity constant [rad/s/V]
     //           Kt ~ 1/Kv is the motor torque constant [N.m/A]
-
+    //
     // Mechanical equation: J dw/dt + Bw = Torque_mot - Torque_load (2)
-
+    //
     // where:    J is the rotor's moment of inertia (here neglected)
     //           B is a viscous friction coefficient describing internal motor
     //           friction Torque_mot = Kt * i
-
+    //
     // On the OpenBot, the normalized control input corresponds to the PWM
     // signal duty cycle. In other words, this is the fraction of input battery
     // voltage applied to the motor through V_pwm in equation (1). Since the
@@ -107,8 +104,8 @@ private:
     // friction, this quantity is what makes the rotation speed of a DC motor
     // saturate.
     //
-
-    void setDriveTorques(float delta_time);
+    
+    void setDriveTorquesFromDutyCycle();
 
     // Rev per minute to rad/s
     static Eigen::VectorXf rpmToRadSec(Eigen::VectorXf rpm);

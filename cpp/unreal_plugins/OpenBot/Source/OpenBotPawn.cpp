@@ -80,7 +80,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     vehicle_movement_component_->ChassisWidth    = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_WIDTH"});    // Chassis width used for drag force computation in [cm]
     vehicle_movement_component_->ChassisHeight   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_HEIGHT"});   // Chassis height used for drag force computation in [cm]
     vehicle_movement_component_->MaxEngineRPM    = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "MOTOR_MAX_RPM"});    // Max RPM for engine
-    
+
     // Setup camera
     FVector camera_location(
         Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "POSITION_X"}),
@@ -151,62 +151,11 @@ void AOpenBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
 void AOpenBotPawn::Tick(float delta_time)
 {
     Super::Tick(delta_time);
-    setDriveTorques(delta_time);
-}
-
-void AOpenBotPawn::moveForward(float forward)
-{
-    // forward describes the percentage of input voltage to be applied to the
-    // motor by the H-bridge controller: 1.0 = 100%, -1.0 = reverse 100%
-
-    duty_cycle_(0) += forward; // in [%]
-    duty_cycle_(1) += forward; // in [%]
-    duty_cycle_(2) += forward; // in [%]
-    duty_cycle_(3) += forward; // in [%]
-    duty_cycle_ = duty_cycle_.cwiseMin(1.f).cwiseMax(-1.f);
-}
-
-void AOpenBotPawn::moveRight(float right)
-{
-    // right describes the percentage of input voltage to be applied to the
-    // motor by the H-bridge controller: 1.0 = 100%, -1.0 = reverse 100%
-
-    duty_cycle_(0) += right; // in [%]
-    duty_cycle_(1) -= right; // in [%]
-    duty_cycle_(2) += right; // in [%]
-    duty_cycle_(3) -= right; // in [%]
-    duty_cycle_ = duty_cycle_.cwiseMin(1.f).cwiseMax(-1.f);
-}
-
-void AOpenBotPawn::setDutyCycleAndClamp(const Eigen::Vector4f& duty_cycle)
-{
-    // duty_cycle describe the percentage of input voltage to be applied to each motors by the H-bridge controller: 1 = 100%, -1 = reverse 100%
-
-    // First make sure the duty cycle is not getting above 100%. This is done similarly on the real OpenBot:
-    // https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Control.java
-
-    duty_cycle_ = duty_cycle.cwiseMin(1.f).cwiseMax(-1.f);
-}
-
-Eigen::Vector4f AOpenBotPawn::getDutyCycle() const
-{
-    return duty_cycle_;
+    setDriveTorquesFromDutyCycle();
 }
 
 BEGIN_IGNORE_COMPILER_WARNINGS
-Eigen::Vector4f AOpenBotPawn::getWheelRotationSpeeds() const
-{
-    Eigen::Vector4f wheel_rotation_speeds;
-    wheel_rotation_speeds(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
-    wheel_rotation_speeds(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
-    wheel_rotation_speeds(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
-    wheel_rotation_speeds(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
-    return rpmToRadSec(wheel_rotation_speeds); // Expressed in [rad/s]
-}
-END_IGNORE_COMPILER_WARNINGS
-
-BEGIN_IGNORE_COMPILER_WARNINGS
-void AOpenBotPawn::resetPhysicsState()
+void AOpenBotPawn::resetWheels()
 {
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component_->PVehicle->getRigidDynamicActor();
     ASSERT(rigid_body_dynamic_actor);
@@ -233,10 +182,72 @@ void AOpenBotPawn::resetPhysicsState()
 END_IGNORE_COMPILER_WARNINGS
 
 BEGIN_IGNORE_COMPILER_WARNINGS
-void AOpenBotPawn::setDriveTorques(float delta_time)
+void AOpenBotPawn::setBrakeTorques(const Eigen::Vector4f& brake_torques)
+{
+    // Torque applied to the wheel, expressed in [N.m]. The applied torque persists until the next call to SetDriveTorque.
+    vehicle_movement_component_->SetBrakeTorque(brake_torques(0), 0);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques(1), 1);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques(2), 2);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques(3), 3);
+}
+END_IGNORE_COMPILER_WARNINGS
+
+Eigen::Vector4f AOpenBotPawn::getDutyCycle() const
+{
+    return duty_cycle_;
+}
+
+void AOpenBotPawn::setDutyCycle(const Eigen::Vector4f& duty_cycle)
+{
+    // duty_cycle describe the percentage of input voltage to be applied to each motors by the H-bridge controller: 1 = 100%, -1 = reverse 100%
+
+    // First make sure the duty cycle is not getting above 100%. This is done similarly on the real OpenBot:
+    // https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Control.java
+
+    duty_cycle_ = duty_cycle.cwiseMin(1.f).cwiseMax(-1.f);
+}
+
+BEGIN_IGNORE_COMPILER_WARNINGS
+Eigen::Vector4f AOpenBotPawn::getWheelRotationSpeeds() const
+{
+    Eigen::Vector4f wheel_rotation_speeds;
+    wheel_rotation_speeds(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
+    wheel_rotation_speeds(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
+    wheel_rotation_speeds(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
+    wheel_rotation_speeds(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
+    return rpmToRadSec(wheel_rotation_speeds); // Expressed in [rad/s]
+}
+END_IGNORE_COMPILER_WARNINGS
+
+void AOpenBotPawn::moveForward(float forward)
+{
+    // forward describes the percentage of input voltage to be applied to the
+    // motor by the H-bridge controller: 1.0 = 100%, -1.0 = reverse 100%
+
+    duty_cycle_(0) += forward; // in [%]
+    duty_cycle_(1) += forward; // in [%]
+    duty_cycle_(2) += forward; // in [%]
+    duty_cycle_(3) += forward; // in [%]
+    duty_cycle_ = duty_cycle_.cwiseMin(1.f).cwiseMax(-1.f);
+}
+
+void AOpenBotPawn::moveRight(float right)
+{
+    // right describes the percentage of input voltage to be applied to the
+    // motor by the H-bridge controller: 1.0 = 100%, -1.0 = reverse 100%
+
+    duty_cycle_(0) += right; // in [%]
+    duty_cycle_(1) -= right; // in [%]
+    duty_cycle_(2) += right; // in [%]
+    duty_cycle_(3) -= right; // in [%]
+    duty_cycle_ = duty_cycle_.cwiseMin(1.f).cwiseMax(-1.f);
+}
+
+BEGIN_IGNORE_COMPILER_WARNINGS
+void AOpenBotPawn::setDriveTorquesFromDutyCycle()
 {
     // Openbot motor torque: 1200 gf.cm (gram force centimeter) = 0.1177 N.m
-    // https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html)
+    // https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html
     // Gear ratio: 50 => max. wheel torque = 5.88399 N.m
 
     auto motor_velocity_constant = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_VELOCITY_CONSTANT"}); // Motor torque constant in [N.m/A]
@@ -288,47 +299,24 @@ void AOpenBotPawn::setDriveTorques(float delta_time)
     // Control dead zone at near-zero velocity. Note: this is a simplified but reliable way to deal with
     // the friction behavior observed on the real vehicle in the low-velocities/low-duty-cycle dommain.
     for (int i = 0; i < duty_cycle_.size(); i++) {
-        // set torque zeror if the motor is "nearly" stopped
+        // set torque to zero if the motor is nearly stopped
         if (std::abs(motor_velocity(i)) < 1e-5 and std::abs(duty_cycle_(i)) <= control_dead_zone / action_scale) {
             wheel_torque(i) = 0.f;
         }
     }
 
-    // Apply the drive torque in [N.m] to the vehicle wheels. Note that the "SetDriveTorque" command
-    // can be found in the code of the Unreal Engine at the following location:
+    // Apply the drive torque in [N.m] to the vehicle wheels. The applied driveTorque persists until the
+    // next call to "SetDriveTorque". Note that the "SetDriveTorque" command can be found in the code of
+    // the Unreal Engine at the following location:
     // Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/SimpleWheeledVehicleMovementComponent.h
     //
     // This file also contains a bunch of useful functions such as "SetBrakeTorque" or "SetSteerAngle".
     // Please take a look if you want to modify the way the simulated vehicle is being controlled.
-    vehicle_movement_component_->SetDriveTorque(wheel_torque(0), 0); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to SetDriveTorque
-    vehicle_movement_component_->SetDriveTorque(wheel_torque(1), 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to SetDriveTorque
-    vehicle_movement_component_->SetDriveTorque(wheel_torque(2), 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to SetDriveTorque
-    vehicle_movement_component_->SetDriveTorque(wheel_torque(3), 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to SetDriveTorque
-}
-END_IGNORE_COMPILER_WARNINGS
-
-BEGIN_IGNORE_COMPILER_WARNINGS
-void AOpenBotPawn::activateBrakes()
-{
-    vehicle_movement_component_->SetDriveTorque(0.f, 0); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetDriveTorque(0.f, 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetDriveTorque(0.f, 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetDriveTorque(0.f, 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-
-    vehicle_movement_component_->SetBrakeTorque(1000.f, 0); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetBrakeTorque(1000.f, 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetBrakeTorque(1000.f, 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetBrakeTorque(1000.f, 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-}
-END_IGNORE_COMPILER_WARNINGS
-
-BEGIN_IGNORE_COMPILER_WARNINGS
-void AOpenBotPawn::deactivateBrakes()
-{
-    vehicle_movement_component_->SetBrakeTorque(0.f, 0); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetBrakeTorque(0.f, 1); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetBrakeTorque(0.f, 2); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
-    vehicle_movement_component_->SetBrakeTorque(0.f, 3); // Torque applied to the wheel, expressed in [N.m]. The applied driveTorque persists until the next call to setDriveTorque.
+    
+    vehicle_movement_component_->SetDriveTorque(wheel_torque(0), 0);
+    vehicle_movement_component_->SetDriveTorque(wheel_torque(1), 1);
+    vehicle_movement_component_->SetDriveTorque(wheel_torque(2), 2);
+    vehicle_movement_component_->SetDriveTorque(wheel_torque(3), 3);
 }
 END_IGNORE_COMPILER_WARNINGS
 
