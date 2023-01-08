@@ -15,9 +15,9 @@ public:
         // copy src to dest
         std::vector<uint8_t> dest;
         if (src.size() > 0) {
-            const uint8_t* begin_itr = reinterpret_cast<const uint8_t*>(&src.at(0));
+            auto data = reinterpret_cast<const uint8_t*>(&src.at(0));
             size_t size = src.size() * sizeof(T);
-            dest.assign(begin_itr, begin_itr + size);
+            dest.assign(data, data + size);
         }
         return dest;
     }

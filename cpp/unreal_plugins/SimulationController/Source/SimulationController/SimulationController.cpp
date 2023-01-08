@@ -271,7 +271,7 @@ void SimulationController::bindFunctionsToRpcServer()
     });
 
     rpc_server_->bindAsync("close", []() -> void {
-        constexpr auto immediate_shutdown = false;
+        bool immediate_shutdown = false;
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
