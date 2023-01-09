@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include <Eigen/Dense>
 #include <map>
 #include <vector>
+
+#include <Eigen/Dense>
 
 #include <CoreMinimal.h>
 
@@ -16,102 +17,131 @@ struct UrdfJointDesc;
 struct UrdfLinkDesc;
 struct UrdfMaterialDesc;
 
-enum UrdfGeometryType
+enum class UrdfGeometryType
 {
-    INVALID_GEOMETRY = 0,
-    BOX,
-    SPHERE,
-    CYLINDER,
-    MESH
+    Invalid = 0,
+    Box = 1,
+    Sphere = 2,
+    Cylinder = 3,
+    Mesh = 4,
 };
 
-enum UrdfJointType
+enum class UrdfJointType
 {
-    // Some of these (such as FIXED) are already macros
-    INVALID_TYPE = 0,
-    REVOLUTE_TYPE,
-    CONTINUOUS_TYPE,
-    PRISMATIC_TYPE,
-    FIXED_TYPE,
-    FLOATING_TYPE,
-    PLANAR_TYPE
+    Invalid = 0,
+    Revolute = 1,
+    Continuous = 2,
+    Prismatic = 3,
+    Fixed = 4,
+    Floating = 5,
+    Planar = 6
 };
 
-struct UrdfGeometry
+enum class CalibrationType
+{
+    Invalid = 0,
+    Rising = 1,
+    Falling = 2
+};
+
+struct UrdfGeometryDesc
 {
     UrdfGeometryType type_;
-    FVector size_; // requried by BOX
-    float radius_; // requried by SPHERE, CYLINDER
-    float length_; // requried by CYLINDER
-    std::string file_name_; // requried by MESH
+    FVector size_ = FVector(0.07); // required by Box, in [m]
+    float radius_ = 0.0352; // required by Sphere, Cylinder, in [m]
+    float length_ = 0.0206; // required by Cylinder, in [m]
+    std::string filename_; // required by Mesh
+    float scale_; // optional for Mesh
+};
+
+struct UrdfMaterialDesc
+{
+    std::string name_;
+
+    FVector4 color_;
+    std::string texture_;
+};
+
+struct UrdfInertialDesc
+{
+    FTransform origin_ = FTransform::Identity;
+    float mass_ = 0.0f;
+    Eigen::Matrix3f inertia_;
+};
+
+struct UrdfVisualDesc
+{
+    std::string name_;
+
+    FTransform origin_ = FTransform::Identity;
+    UrdfGeometryDesc geometry_;
+    UrdfMaterialDesc material_desc_;
+};
+
+struct UrdfCollisionDesc
+{
+    std::string name_;
+
+    FTransform origin_ = FTransform::Identity;
+    UrdfGeometryDesc geometry_;
 };
 
 struct UrdfLinkDesc
 {
     std::string name_;
 
-    // non-derived data (inertial, visual, etc)...
-    FTransform origin_ = FTransform::Identity;
-    float mass_;
-    Eigen::Matrix3f inertia_;
-    FTransform visual_origin_ = FTransform::Identity;
-    UrdfGeometry visual_geometry_;
-    FTransform collision_origin_ = FTransform::Identity;
-    UrdfGeometry collision_geometry_;
-    std::string material_name_;
+    UrdfInertialDesc inertial_desc_;
+    std::vector<UrdfVisualDesc> visual_descs_;
+    std::vector<UrdfCollisionDesc> collision_descs_;
 
-    // derived data
-    UrdfLinkDesc* parent_link_desc_ = nullptr;
-    UrdfJointDesc* parent_joint_desc_ = nullptr;
-
+    bool is_root_ = true;
     std::vector<UrdfLinkDesc*> child_link_descs_ = {};
     std::vector<UrdfJointDesc*> child_joint_descs_ = {};
-
-    UrdfMaterialDesc* material_desc_ = nullptr;
 };
 
 struct UrdfJointDesc
 {
     std::string name_;
-
-    // non-derived data (origin, axis, etc)...
     UrdfJointType type_;
+
+    // transform from the parent link to the child link
     FTransform origin_ = FTransform::Identity;
-    std::string parent_link_name_;
-    std::string child_link_name_;
+    // parent link name
+    std::string parent_;
+    // child link name
+    std::string child_;
+    // joint axis specified in the joint frame
     FVector axis_ = FVector(1, 0, 0);
     // dynamics
-    float damping_ = 0;
-    float friction_ = 0;
-    //limits
-    float lower_ = 0;
-    float upper_ = 0;
-    float effort_ = 0;
-    float velocity_ = 0;
-
-    // derived data
-    UrdfLinkDesc* parent_link_desc_ = nullptr;
-    UrdfLinkDesc* child_link_desc_ = nullptr;
-};
-
-// material node to describe unreal material that might shared by multiple links
-struct UrdfMaterialDesc
-{
-    std::string name_;
-
-    // non-derived data
-    FVector4 color_;
-    std::string file_name_;
+    float damping_ = 0.0f;
+    float friction_ = 0.0f;
+    // calibration
+    CalibrationType calibration_type_ = CalibrationType::Invalid;
+    float rising_ = 0.0f;
+    float falling_ = 0.0f;
+    // limits
+    float lower_ = 0.0f;
+    float upper_ = 0.0f;
+    float effort_ = 0.0f;
+    float velocity_ = 0.0f;
+    // mimic
+    std::string joint_;
+    float multiplier_ = 1.0f;
+    float offset_ = 0.0f;
+    // safety_controller
+    float soft_lower_limit_ = 0.0f;
+    float soft_upper_limit_ = 0.0f;
+    float k_position_ = 0.0f;
+    float k_velocity_ = 0.0f;
 };
 
 struct UrdfRobotDesc
 {
-    // non-derived data
+    std::string name_;
+
     std::map<std::string, UrdfLinkDesc> link_descs_ = {};
     std::map<std::string, UrdfJointDesc> joint_descs_ = {};
-    std::map<std::string, UrdfMaterialDesc> material_descs_ = {};
 
-    // derived data
     UrdfLinkDesc* root_link_desc_ = nullptr;
 };
 
@@ -122,16 +152,14 @@ public:
 
 private:
     // parse urdf nodes
-    static UrdfRobotDesc parseRobotNode(FXmlNode* robot_node);
+    static UrdfGeometryDesc parseGeometryNode(FXmlNode* geometry_node);
+    static UrdfMaterialDesc parseMaterialNode(FXmlNode* material_node);
+    static UrdfInertialDesc parseInertialNode(FXmlNode* inertial_node);
+    static UrdfVisualDesc parseVisualNode(FXmlNode* visual_node);
+    static UrdfCollisionDesc parseCollisionNode(FXmlNode* collision_node);
     static UrdfLinkDesc parseLinkNode(FXmlNode* link_node);
     static UrdfJointDesc parseJointNode(FXmlNode* joint_node);
-    static UrdfMaterialDesc parseMaterialNode(FXmlNode* material_node);
-    static UrdfGeometry parseGeometryNode(FXmlNode* geometry_node);
-
-    // parse link node component
-    static void parseLinkInertialNode(FXmlNode* inertial_node, UrdfLinkDesc& link_desc);
-    static void parseLinkVisualNode(FXmlNode* visual_node, UrdfLinkDesc& link_desc);
-    static void parseLinkCollisionNode(FXmlNode* collision_node, UrdfLinkDesc& link_desc);
+    static UrdfRobotDesc parseRobotNode(FXmlNode* robot_node);
 
     // parse basic parameters
     static FVector parseVector(const FString& string);

@@ -1,8 +1,5 @@
 <?xml version="1.0" ?>
 <robot name="locobot">
-    <material name="caster_link_material">
-        <texture filename="/UrdfBot/Common/M_Slippery.M_Slippery"/>
-    </material>
 
     <link name="base_link">
         <visual>
@@ -101,7 +98,9 @@
                 <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
-            <material name="caster_link_material"/>
+            <material name="caster_link_material">
+                <texture filename="/UrdfBot/Common/M_Slippery.M_Slippery"/>
+            </material>
         </visual>
         <collision>
             <geometry>
@@ -126,7 +125,9 @@
                 <sphere length="0.0206" radius="0.0350"/>
             </geometry>
             <origin rpy="0 0 0" xyz="0 0 0"/>
-            <material name="caster_link_material"/>
+            <material name="caster_link_material">
+                <texture filename="/UrdfBot/Common/M_Slippery.M_Slippery"/>
+            </material>
         </visual>
         <collision>
             <geometry>
