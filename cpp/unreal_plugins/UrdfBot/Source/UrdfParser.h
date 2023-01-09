@@ -14,44 +14,42 @@
 class FXmlNode;
 
 struct UrdfJointDesc;
-struct UrdfLinkDesc;
-struct UrdfMaterialDesc;
 
 enum class UrdfGeometryType
 {
-    Invalid = 0,
-    Box = 1,
-    Sphere = 2,
+    Invalid  = 0,
+    Box      = 1,
+    Sphere   = 2,
     Cylinder = 3,
-    Mesh = 4,
+    Mesh     = 4,
 };
 
 enum class UrdfJointType
 {
-    Invalid = 0,
-    Revolute = 1,
+    Invalid    = 0,
+    Revolute   = 1,
     Continuous = 2,
-    Prismatic = 3,
-    Fixed = 4,
-    Floating = 5,
-    Planar = 6
+    Prismatic  = 3,
+    Fixed      = 4,
+    Floating   = 5,
+    Planar     = 6
 };
 
 enum class CalibrationType
 {
     Invalid = 0,
-    Rising = 1,
+    Rising  = 1,
     Falling = 2
 };
 
 struct UrdfGeometryDesc
 {
     UrdfGeometryType type_;
-    FVector size_ = FVector(0.07); // required by Box, in [m]
-    float radius_ = 0.0352; // required by Sphere, Cylinder, in [m]
-    float length_ = 0.0206; // required by Cylinder, in [m]
+    FVector size_ = FVector::ZeroVector; // required by Box, in [m]
+    float radius_ = 0.0f; // required by Sphere, Cylinder, in [m]
+    float length_ = 0.0f; // required by Cylinder, in [m]
     std::string filename_; // required by Mesh
-    float scale_; // optional for Mesh
+    float scale_ ; // optional for Mesh
 };
 
 struct UrdfMaterialDesc
@@ -94,7 +92,7 @@ struct UrdfLinkDesc
     std::vector<UrdfVisualDesc> visual_descs_;
     std::vector<UrdfCollisionDesc> collision_descs_;
 
-    bool is_root_ = true;
+    bool has_parent_ = false;
     std::vector<UrdfLinkDesc*> child_link_descs_ = {};
     std::vector<UrdfJointDesc*> child_joint_descs_ = {};
 };
@@ -104,37 +102,37 @@ struct UrdfJointDesc
     std::string name_;
     UrdfJointType type_;
 
-    // transform from the parent link to the child link
     FTransform origin_ = FTransform::Identity;
-    // parent link name
     std::string parent_;
-    // child link name
     std::string child_;
-    // joint axis specified in the joint frame
     FVector axis_ = FVector(1, 0, 0);
+
     // dynamics
     float damping_ = 0.0f;
     float friction_ = 0.0f;
+
     // calibration
     CalibrationType calibration_type_ = CalibrationType::Invalid;
     float rising_ = 0.0f;
     float falling_ = 0.0f;
+
     // limits
     float lower_ = 0.0f;
     float upper_ = 0.0f;
     float effort_ = 0.0f;
     float velocity_ = 0.0f;
+
     // mimic
     std::string joint_;
     float multiplier_ = 1.0f;
     float offset_ = 0.0f;
+
     // safety_controller
     float soft_lower_limit_ = 0.0f;
     float soft_upper_limit_ = 0.0f;
     float k_position_ = 0.0f;
     float k_velocity_ = 0.0f;
 };
-
 struct UrdfRobotDesc
 {
     std::string name_;
@@ -142,6 +140,7 @@ struct UrdfRobotDesc
     std::map<std::string, UrdfLinkDesc> link_descs_ = {};
     std::map<std::string, UrdfJointDesc> joint_descs_ = {};
 
+    // derived data
     UrdfLinkDesc* root_link_desc_ = nullptr;
 };
 
@@ -166,5 +165,7 @@ private:
     static FVector4 parseVector4(const FString& string);
     static FQuat parseRotation(const FString& string);
     static Eigen::Matrix3f parseInertiaMatrixNode(FXmlNode* inertia_node);
+
+    // parse enum types (seems like there need to be more of these enum functions)
     static UrdfJointType parseJointType(const FString& type);
 };

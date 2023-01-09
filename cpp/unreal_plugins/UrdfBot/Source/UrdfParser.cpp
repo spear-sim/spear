@@ -25,10 +25,10 @@ UrdfGeometryDesc UrdfParser::parseGeometryNode(FXmlNode* geometry_node)
 {
     UrdfGeometryDesc geometry;
 
-    auto& child_nodes = geometry_node->GetChildrenNodes();
+    const TArray<FXmlNode*>& child_nodes = geometry_node->GetChildrenNodes();
     ASSERT(child_nodes.Num() == 1);
-    auto& node = child_nodes[0];
-    FString tag = node->GetTag();
+    FXmlNode* node = child_nodes[0];
+    const FString& tag = node->GetTag();
 
     if (tag.Equals(TEXT("box"))) {
         geometry.type_ = UrdfGeometryType::Box;
@@ -43,11 +43,14 @@ UrdfGeometryDesc UrdfParser::parseGeometryNode(FXmlNode* geometry_node)
     } else if (tag.Equals(TEXT("mesh"))) {
         geometry.type_ = UrdfGeometryType::Mesh;
         geometry.filename_ = TCHAR_TO_UTF8(*node->GetAttribute("filename"));
-        geometry.scale_ = FCString::Atof(*node->GetAttribute("scale"));
+        FString scale = node->GetAttribute("scale");
+        if (!scale.IsEmpty()) {
+            geometry.scale_ = FCString::Atof(*scale);
+        }
     } else {
-        // invalid geometry type
         ASSERT(false);
     }
+
     return geometry;
 }
 
@@ -58,7 +61,8 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
     material_desc.name_ = TCHAR_TO_UTF8(*material_node->GetAttribute(TEXT("name")));
 
     for (auto& node : material_node->GetChildrenNodes()) {
-        FString tag = node->GetTag();
+        const FString& tag = node->GetTag();
+
         if (tag.Equals(TEXT("color"))) {
             material_desc.color_ = parseVector4(node->GetAttribute(TEXT("rgba")));
         } else if (tag.Equals(TEXT("texture"))) {
@@ -73,7 +77,6 @@ UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
 {
     UrdfInertialDesc inertial_desc_;
 
-    bool has_origin_node = false;
     bool has_mass_node = false;
     bool has_inertia_node = false;
 
@@ -81,8 +84,6 @@ UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
         FString tag = node->GetTag();
 
         if (tag.Equals(TEXT("origin"))) {
-            ASSERT(!has_origin_node);
-            has_origin_node = true;
             inertial_desc_.origin_.SetLocation(parseVector(node->GetAttribute("xyz")));
             inertial_desc_.origin_.SetRotation(parseRotation(node->GetAttribute("rpy")));
         } else if (tag.Equals(TEXT("mass"))) {
@@ -98,6 +99,7 @@ UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
 
     ASSERT(has_mass_node);
     ASSERT(has_inertia_node);
+
     return inertial_desc_;
 }
 
@@ -130,6 +132,7 @@ UrdfVisualDesc UrdfParser::parseVisualNode(FXmlNode* visual_node)
     }
 
     ASSERT(has_geometry_node);
+
     return visual_desc_;
 }
 
@@ -143,7 +146,7 @@ UrdfCollisionDesc UrdfParser::parseCollisionNode(FXmlNode* collision_node)
     bool has_geometry_node = false;
 
     for (auto& node : collision_node->GetChildrenNodes()) {
-        FString tag = node->GetTag();
+        const FString& tag = node->GetTag();
         if (tag.Equals(TEXT("origin"))) {
             ASSERT(!has_origin_node);
             has_origin_node = true;
@@ -157,6 +160,7 @@ UrdfCollisionDesc UrdfParser::parseCollisionNode(FXmlNode* collision_node)
     }
 
     ASSERT(has_geometry_node);
+
     return collision_desc;
 }
 
@@ -307,16 +311,15 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
         parent_link_desc->child_joint_descs_.push_back(joint_desc);
 
         // each link should only be visited as a child link at most once
-        ASSERT(child_link_desc->is_root_);
-        child_link_desc->is_root_ = false;
+        ASSERT(!child_link_desc->has_parent_);
+        child_link_desc->has_parent_ = true;
     }
 
     // find the root link
     for (auto& link_desc_pair : robot_desc.link_descs_) {
         UrdfLinkDesc& link_desc = link_desc_pair.second;
 
-        //find the root link
-        if (link_desc.is_root_) {
+        if (!link_desc.has_parent_) {
             ASSERT(!robot_desc.root_link_desc_);
             robot_desc.root_link_desc_ = &(link_desc);
         }
@@ -377,6 +380,7 @@ Eigen::Matrix3f UrdfParser::parseInertiaMatrixNode(FXmlNode* inertia_node)
     inertia_matrix(2, 2) = izz;
 
     ASSERT(!inertia_matrix.hasNaN());
+
     return inertia_matrix;
 }
 
