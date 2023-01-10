@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "UrdfBot",
-    "Description": "Description": "WARNING: The loading phases for {CoreUtils, UrdfBot} must be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(UrdfBot)",
+    "Description": "WARNING: The loading phases for {CoreUtils, UrdfBot} must be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(UrdfBot)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
