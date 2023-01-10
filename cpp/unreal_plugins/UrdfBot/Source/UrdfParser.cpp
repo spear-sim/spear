@@ -299,7 +299,7 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
             robot_desc.joint_descs_[joint_desc.name_] = std::move(joint_desc);
         } else if (tag.Equals(TEXT("material"))) {
             UrdfMaterialDesc material_desc = parseMaterialNode(child_node);
-            ASSERT(material_desc.name_ != "");
+            ASSERT(material_desc.name_ != "" && !material_desc.is_reference_);
             ASSERT(!robot_desc.material_descs_.count(material_desc.name_));
             robot_desc.material_descs_[material_desc.name_] = std::move(material_desc);
         }
