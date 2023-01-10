@@ -59,16 +59,22 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
     UrdfMaterialDesc material_desc;
 
     material_desc.name_ = TCHAR_TO_UTF8(*material_node->GetAttribute(TEXT("name")));
+    material_desc.is_reference_ = true; // override default value
 
     for (auto& node : material_node->GetChildrenNodes()) {
         const FString& tag = node->GetTag();
 
         if (tag.Equals(TEXT("color"))) {
             material_desc.color_ = parseVector4(node->GetAttribute(TEXT("rgba")));
+            material_desc.is_reference_ = false;
         } else if (tag.Equals(TEXT("texture"))) {
             material_desc.texture_ = TCHAR_TO_UTF8(*node->GetAttribute(TEXT("filename")));
+            material_desc.is_reference_ = false;
         }
     }
+    
+    // material node must be either have non-empty name_ or valid color or texture value
+    ASSERT(material_desc.name_ != "" ||  !material_desc.is_reference_);
 
     return material_desc;
 }
@@ -291,6 +297,11 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
             UrdfJointDesc joint_desc = parseJointNode(child_node);
             ASSERT(!robot_desc.joint_descs_.count(joint_desc.name_));
             robot_desc.joint_descs_[joint_desc.name_] = std::move(joint_desc);
+        } else if (tag.Equals(TEXT("material"))) {
+            UrdfMaterialDesc material_desc = parseMaterialNode(child_node);
+            ASSERT(material_desc.name_ != "");
+            ASSERT(!robot_desc.material_descs_.count(material_desc.name_));
+            robot_desc.material_descs_[material_desc.name_] = std::move(material_desc);
         }
     }
 
@@ -315,10 +326,22 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
         child_link_desc->has_parent_ = true;
     }
 
-    // find the root link
+    // update pointers for root node and material node
     for (auto& link_desc_pair : robot_desc.link_descs_) {
         UrdfLinkDesc& link_desc = link_desc_pair.second;
 
+        // for each material, update its pointer
+        for (auto& visual_desc_ : link_desc.visual_descs_) {
+            UrdfMaterialDesc& material_desc = visual_desc_.material_desc_;
+
+            if (material_desc.is_reference_) {
+                UrdfMaterialDesc* shared_material_desc = &(robot_desc.material_descs_.at(material_desc.name_));
+                ASSERT(shared_material_desc);
+                material_desc.material_desc_ = shared_material_desc;
+            }
+        }
+        
+        // find the root link
         if (!link_desc.has_parent_) {
             ASSERT(!robot_desc.root_link_desc_);
             robot_desc.root_link_desc_ = &(link_desc);

@@ -58,6 +58,9 @@ struct UrdfMaterialDesc
 
     FVector4 color_;
     std::string texture_;
+
+    bool is_reference_ = false;
+    UrdfMaterialDesc* material_desc_ = nullptr;
 };
 
 struct UrdfInertialDesc
@@ -139,6 +142,7 @@ struct UrdfRobotDesc
 
     std::map<std::string, UrdfLinkDesc> link_descs_ = {};
     std::map<std::string, UrdfJointDesc> joint_descs_ = {};
+    std::map<std::string, UrdfMaterialDesc> material_descs_ = {};
 
     // derived data
     UrdfLinkDesc* root_link_desc_ = nullptr;
