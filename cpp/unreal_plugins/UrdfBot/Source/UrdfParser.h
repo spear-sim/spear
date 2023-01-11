@@ -5,9 +5,8 @@
 #pragma once
 
 #include <map>
+#include <string>
 #include <vector>
-
-#include <Eigen/Dense>
 
 #include <CoreMinimal.h>
 
@@ -60,7 +59,7 @@ struct UrdfMaterialDesc
     std::string texture_;
 
     // derived data
-    bool is_reference_               = true;
+    bool is_reference_               = false;
     UrdfMaterialDesc* material_desc_ = nullptr;
 };
 
@@ -78,6 +77,9 @@ struct UrdfVisualDesc
     FTransform origin_ = FTransform::Identity;
     UrdfGeometryDesc geometry_desc_;
     UrdfMaterialDesc material_desc_;
+    
+    // derived data
+    bool has_material_ = false;
 };
 
 struct UrdfCollisionDesc
@@ -143,9 +145,9 @@ struct UrdfRobotDesc
 {
     std::string name_;
 
-    std::map<std::string, UrdfLinkDesc> link_descs_ = {};
-    std::map<std::string, UrdfJointDesc> joint_descs_ = {};
-    std::map<std::string, UrdfMaterialDesc> material_descs_ = {};
+    std::map<std::string, UrdfLinkDesc> link_descs_;
+    std::map<std::string, UrdfJointDesc> joint_descs_;
+    std::map<std::string, UrdfMaterialDesc> material_descs_;
 
     // derived data
     UrdfLinkDesc* root_link_desc_ = nullptr;

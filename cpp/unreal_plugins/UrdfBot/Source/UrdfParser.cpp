@@ -63,6 +63,7 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
     bool has_color_node = false;
     bool has_texture_node = false;
 
+    material_desc.is_reference_ = true;
     for (auto& node : material_node->GetChildrenNodes()) {
         const FString& tag = node->GetTag();
         if (tag.Equals(TEXT("color"))) {
@@ -148,6 +149,7 @@ UrdfVisualDesc UrdfParser::parseVisualNode(FXmlNode* visual_node)
         } else if (tag.Equals(TEXT("material"))) {
             ASSERT(!has_material_node);
             has_material_node = true;
+            visual_desc_.has_material_ = true;
             visual_desc_.material_desc_ = parseMaterialNode(node);
         }
     }
@@ -365,7 +367,7 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
         for (auto& visual_desc_ : link_desc.visual_descs_) {
             UrdfMaterialDesc& material_desc = visual_desc_.material_desc_;
 
-            if (material_desc.is_reference_ && material_desc.name_ != "") {
+            if (visual_desc_.has_material_ && material_desc.is_reference_) {
                 UrdfMaterialDesc* target_material_desc = &(robot_desc.material_descs_.at(material_desc.name_));
                 ASSERT(target_material_desc);
                 material_desc.material_desc_ = target_material_desc;
