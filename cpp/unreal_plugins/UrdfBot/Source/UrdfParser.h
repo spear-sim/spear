@@ -44,12 +44,12 @@ enum class CalibrationType
 
 struct UrdfGeometryDesc
 {
-    UrdfGeometryType type_;
-    FVector size_ = FVector::ZeroVector; // required by Box, in [m]
-    float radius_ = 0.0f; // required by Sphere, Cylinder, in [m]
-    float length_ = 0.0f; // required by Cylinder, in [m]
-    std::string filename_; // required by Mesh
-    float scale_ ; // optional for Mesh
+    UrdfGeometryType type_ = UrdfGeometryType::Invalid;
+    FVector size_          = FVector::ZeroVector;
+    float radius_          = 0.0f;
+    float length_          = 0.0f;
+    std::string filename_;
+    float scale_           = 1.0f;
 };
 
 struct UrdfMaterialDesc
@@ -59,15 +59,16 @@ struct UrdfMaterialDesc
     FVector4 color_;
     std::string texture_;
 
-    bool is_reference_ = false;
+    // derived data
+    bool is_reference_               = true;
     UrdfMaterialDesc* material_desc_ = nullptr;
 };
 
 struct UrdfInertialDesc
 {
     FTransform origin_ = FTransform::Identity;
-    float mass_ = 0.0f;
-    Eigen::Matrix3f inertia_;
+    float mass_        = 0.0f;
+    FMatrix inertia_   = FMatrix::Identity;
 };
 
 struct UrdfVisualDesc
@@ -75,7 +76,7 @@ struct UrdfVisualDesc
     std::string name_;
 
     FTransform origin_ = FTransform::Identity;
-    UrdfGeometryDesc geometry_;
+    UrdfGeometryDesc geometry_desc_;
     UrdfMaterialDesc material_desc_;
 };
 
@@ -84,7 +85,7 @@ struct UrdfCollisionDesc
     std::string name_;
 
     FTransform origin_ = FTransform::Identity;
-    UrdfGeometryDesc geometry_;
+    UrdfGeometryDesc geometry_desc_;
 };
 
 struct UrdfLinkDesc
@@ -95,9 +96,10 @@ struct UrdfLinkDesc
     std::vector<UrdfVisualDesc> visual_descs_;
     std::vector<UrdfCollisionDesc> collision_descs_;
 
+    // derived data
     bool has_parent_ = false;
-    std::vector<UrdfLinkDesc*> child_link_descs_ = {};
-    std::vector<UrdfJointDesc*> child_joint_descs_ = {};
+    std::vector<UrdfLinkDesc*> child_link_descs_;
+    std::vector<UrdfJointDesc*> child_joint_descs_;
 };
 
 struct UrdfJointDesc
@@ -136,6 +138,7 @@ struct UrdfJointDesc
     float k_position_ = 0.0f;
     float k_velocity_ = 0.0f;
 };
+
 struct UrdfRobotDesc
 {
     std::string name_;
@@ -168,8 +171,4 @@ private:
     static FVector parseVector(const FString& string);
     static FVector4 parseVector4(const FString& string);
     static FQuat parseRotation(const FString& string);
-    static Eigen::Matrix3f parseInertiaMatrixNode(FXmlNode* inertia_node);
-
-    // parse enum types (seems like there need to be more of these enum functions)
-    static UrdfJointType parseJointType(const FString& type);
 };

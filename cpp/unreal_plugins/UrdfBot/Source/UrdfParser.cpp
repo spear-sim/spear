@@ -34,14 +34,14 @@ UrdfGeometryDesc UrdfParser::parseGeometryNode(FXmlNode* geometry_node)
         geometry.type_ = UrdfGeometryType::Box;
         geometry.size_ = parseVector(node->GetAttribute("size"));
     } else if (tag.Equals(TEXT("cylinder"))) {
-        geometry.type_ = UrdfGeometryType::Cylinder;
+        geometry.type_   = UrdfGeometryType::Cylinder;
         geometry.length_ = FCString::Atof(*node->GetAttribute("length"));
         geometry.radius_ = FCString::Atof(*node->GetAttribute("radius"));
     } else if (tag.Equals(TEXT("sphere"))) {
-        geometry.type_ = UrdfGeometryType::Sphere;
+        geometry.type_   = UrdfGeometryType::Sphere;
         geometry.radius_ = FCString::Atof(*node->GetAttribute("radius"));
     } else if (tag.Equals(TEXT("mesh"))) {
-        geometry.type_ = UrdfGeometryType::Mesh;
+        geometry.type_     = UrdfGeometryType::Mesh;
         geometry.filename_ = TCHAR_TO_UTF8(*node->GetAttribute("filename"));
         FString scale = node->GetAttribute("scale");
         if (!scale.IsEmpty()) {
@@ -59,22 +59,27 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
     UrdfMaterialDesc material_desc;
 
     material_desc.name_ = TCHAR_TO_UTF8(*material_node->GetAttribute(TEXT("name")));
-    material_desc.is_reference_ = true; // override default value
+
+    bool has_color_node = false;
+    bool has_texture_node = false;
 
     for (auto& node : material_node->GetChildrenNodes()) {
         const FString& tag = node->GetTag();
-
         if (tag.Equals(TEXT("color"))) {
+            ASSERT(!has_color_node);
+            has_color_node = true;
             material_desc.color_ = parseVector4(node->GetAttribute(TEXT("rgba")));
             material_desc.is_reference_ = false;
         } else if (tag.Equals(TEXT("texture"))) {
+            ASSERT(!has_texture_node);
+            has_texture_node = true;
             material_desc.texture_ = TCHAR_TO_UTF8(*node->GetAttribute(TEXT("filename")));
             material_desc.is_reference_ = false;
         }
     }
     
     // material node must be either have non-empty name_ or valid color or texture value
-    ASSERT(material_desc.name_ != "" ||  !material_desc.is_reference_);
+    ASSERT(material_desc.name_ != "" || !material_desc.is_reference_);
 
     return material_desc;
 }
@@ -82,14 +87,16 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
 UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
 {
     UrdfInertialDesc inertial_desc_;
-
+    
+    bool has_origin_node = false;
     bool has_mass_node = false;
     bool has_inertia_node = false;
 
     for (auto& node : inertial_node->GetChildrenNodes()) {
-        FString tag = node->GetTag();
-
+        const FString& tag = node->GetTag();
         if (tag.Equals(TEXT("origin"))) {
+            ASSERT(!has_origin_node);
+            has_origin_node = true;
             inertial_desc_.origin_.SetLocation(parseVector(node->GetAttribute("xyz")));
             inertial_desc_.origin_.SetRotation(parseRotation(node->GetAttribute("rpy")));
         } else if (tag.Equals(TEXT("mass"))) {
@@ -99,7 +106,15 @@ UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
         } else if (tag.Equals(TEXT("inertia"))) {
             ASSERT(!has_inertia_node);
             has_inertia_node = true;
-            inertial_desc_.inertia_ = parseInertiaMatrixNode(node);
+            inertial_desc_.inertia_.M[0][0] = FCString::Atof(*node->GetAttribute(TEXT("ixx")));
+            inertial_desc_.inertia_.M[0][1] = FCString::Atof(*node->GetAttribute(TEXT("ixy")));
+            inertial_desc_.inertia_.M[0][2] = FCString::Atof(*node->GetAttribute(TEXT("ixz")));
+            inertial_desc_.inertia_.M[1][0] = FCString::Atof(*node->GetAttribute(TEXT("ixy")));
+            inertial_desc_.inertia_.M[1][1] = FCString::Atof(*node->GetAttribute(TEXT("iyy")));
+            inertial_desc_.inertia_.M[1][2] = FCString::Atof(*node->GetAttribute(TEXT("iyz")));
+            inertial_desc_.inertia_.M[2][0] = FCString::Atof(*node->GetAttribute(TEXT("ixz")));
+            inertial_desc_.inertia_.M[2][1] = FCString::Atof(*node->GetAttribute(TEXT("iyz")));
+            inertial_desc_.inertia_.M[2][2] = FCString::Atof(*node->GetAttribute(TEXT("izz")));
         }
     }
 
@@ -120,7 +135,7 @@ UrdfVisualDesc UrdfParser::parseVisualNode(FXmlNode* visual_node)
     bool has_material_node = false;
 
     for (auto& node : visual_node->GetChildrenNodes()) {
-        FString tag = node->GetTag();
+        const FString& tag = node->GetTag();
         if (tag.Equals(TEXT("origin"))) {
             ASSERT(!has_origin_node);
             has_origin_node = true;
@@ -129,7 +144,7 @@ UrdfVisualDesc UrdfParser::parseVisualNode(FXmlNode* visual_node)
         } else if (tag.Equals(TEXT("geometry"))) {
             ASSERT(!has_geometry_node);
             has_geometry_node = true;
-            visual_desc_.geometry_ = parseGeometryNode(node);
+            visual_desc_.geometry_desc_ = parseGeometryNode(node);
         } else if (tag.Equals(TEXT("material"))) {
             ASSERT(!has_material_node);
             has_material_node = true;
@@ -161,7 +176,7 @@ UrdfCollisionDesc UrdfParser::parseCollisionNode(FXmlNode* collision_node)
         } else if (tag.Equals(TEXT("geometry"))) {
             ASSERT(!has_geometry_node);
             has_geometry_node = true;
-            collision_desc.geometry_ = parseGeometryNode(node);
+            collision_desc.geometry_desc_ = parseGeometryNode(node);
         }
     }
 
@@ -178,17 +193,17 @@ UrdfLinkDesc UrdfParser::parseLinkNode(FXmlNode* link_node)
     bool has_inertia_node = false;
 
     for (auto& node : link_node->GetChildrenNodes()) {
-        FString tag = node->GetTag();
+        const FString& tag = node->GetTag();
         if (tag.Equals(TEXT("inertial"))) {
             ASSERT(!has_inertia_node);
             has_inertia_node = true;
             link_desc.inertial_desc_ = parseInertialNode(node);
         } else if (tag.Equals(TEXT("visual"))) {
             UrdfVisualDesc visual_desc = parseVisualNode(node);
-            link_desc.visual_descs_.emplace_back(visual_desc);
+            link_desc.visual_descs_.push_back(visual_desc);
         } else if (tag.Equals(TEXT("collision"))) {
             UrdfCollisionDesc collision_desc = parseCollisionNode(node);
-            link_desc.collision_descs_.emplace_back(collision_desc);
+            link_desc.collision_descs_.push_back(collision_desc);
         }
     }
 
@@ -200,7 +215,23 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
     UrdfJointDesc joint_desc;
 
     joint_desc.name_ = TCHAR_TO_UTF8(*joint_node->GetAttribute(TEXT("name")));
-    joint_desc.type_ = parseJointType(joint_node->GetAttribute(TEXT("type")));
+
+    const FString& type = joint_node->GetAttribute(TEXT("type"));
+    if (type.Equals(TEXT("revolute"))) {
+        joint_desc.type_ = UrdfJointType::Revolute;
+    } else if (type.Equals(TEXT("continuous"))) {
+        joint_desc.type_ = UrdfJointType::Continuous;
+    } else if (type.Equals(TEXT("prismatic"))) {
+        joint_desc.type_ = UrdfJointType::Prismatic;
+    } else if (type.Equals(TEXT("fixed"))) {
+        joint_desc.type_ = UrdfJointType::Fixed;
+    } else if (type.Equals(TEXT("floating"))) {
+        joint_desc.type_ = UrdfJointType::Floating;
+    } else if (type.Equals(TEXT("planar"))) {
+        joint_desc.type_ = UrdfJointType::Planar;
+    } else {
+        ASSERT(false);
+    }
 
     bool has_origin_node = false;
     bool has_parent_node = false;
@@ -213,7 +244,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
     bool has_safety_controller_node = false;
 
     for (auto& node : joint_node->GetChildrenNodes()) {
-        FString tag = node->GetTag();
+        const FString& tag = node->GetTag();
         if (tag.Equals(TEXT("origin"))) {
             ASSERT(!has_origin_node);
             has_origin_node = true;
@@ -334,10 +365,10 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
         for (auto& visual_desc_ : link_desc.visual_descs_) {
             UrdfMaterialDesc& material_desc = visual_desc_.material_desc_;
 
-            if (material_desc.is_reference_) {
-                UrdfMaterialDesc* shared_material_desc = &(robot_desc.material_descs_.at(material_desc.name_));
-                ASSERT(shared_material_desc);
-                material_desc.material_desc_ = shared_material_desc;
+            if (material_desc.is_reference_ && material_desc.name_ != "") {
+                UrdfMaterialDesc* target_material_desc = &(robot_desc.material_descs_.at(material_desc.name_));
+                ASSERT(target_material_desc);
+                material_desc.material_desc_ = target_material_desc;
             }
         }
         
@@ -379,50 +410,4 @@ FQuat UrdfParser::parseRotation(const FString& input_string)
     input_string.ParseIntoArray(split_string_array, TEXT(" "), true);
     ASSERT(split_string_array.Num() == 3);
     return FMath::RadiansToDegrees(FRotator(FCString::Atof(*split_string_array[1]), FCString::Atof(*split_string_array[2]), FCString::Atof(*split_string_array[0]))).Quaternion();
-}
-
-Eigen::Matrix3f UrdfParser::parseInertiaMatrixNode(FXmlNode* inertia_node)
-{
-    Eigen::Matrix3f inertia_matrix;
-
-    float ixx = FCString::Atof(*inertia_node->GetAttribute(TEXT("ixx")));
-    float ixy = FCString::Atof(*inertia_node->GetAttribute(TEXT("ixy")));
-    float ixz = FCString::Atof(*inertia_node->GetAttribute(TEXT("ixz")));
-    float iyy = FCString::Atof(*inertia_node->GetAttribute(TEXT("iyy")));
-    float iyz = FCString::Atof(*inertia_node->GetAttribute(TEXT("iyz")));
-    float izz = FCString::Atof(*inertia_node->GetAttribute(TEXT("izz")));
-
-    inertia_matrix(0, 0) = ixx;
-    inertia_matrix(0, 1) = ixy;
-    inertia_matrix(0, 2) = ixz;
-    inertia_matrix(1, 0) = ixy;
-    inertia_matrix(1, 1) = iyy;
-    inertia_matrix(1, 2) = iyz;
-    inertia_matrix(2, 0) = ixz;
-    inertia_matrix(2, 1) = iyz;
-    inertia_matrix(2, 2) = izz;
-
-    ASSERT(!inertia_matrix.hasNaN());
-
-    return inertia_matrix;
-}
-
-UrdfJointType UrdfParser::parseJointType(const FString& type)
-{
-    if (type.Equals(TEXT("revolute"))) {
-        return UrdfJointType::Revolute;
-    } else if (type.Equals(TEXT("continuous"))) {
-        return UrdfJointType::Continuous;
-    } else if (type.Equals(TEXT("prismatic"))) {
-        return UrdfJointType::Prismatic;
-    } else if (type.Equals(TEXT("fixed"))) {
-        return UrdfJointType::Fixed;
-    } else if (type.Equals(TEXT("floating"))) {
-        return UrdfJointType::Floating;
-    } else if (type.Equals(TEXT("planar"))) {
-        return UrdfJointType::Planar;
-    } else {
-        ASSERT(false);
-        return UrdfJointType::Invalid;
-    }
 }
