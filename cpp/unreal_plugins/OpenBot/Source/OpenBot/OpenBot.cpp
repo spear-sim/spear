@@ -2,15 +2,15 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfBot.h"
+#include "OpenBot/OpenBot.h"
 
 #include "CoreUtils/Assert.h"
 
-void UrdfBot::StartupModule()
+void OpenBot::StartupModule()
 {
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 }
 
-void UrdfBot::ShutdownModule() {}
+void OpenBot::ShutdownModule() {}
 
-IMPLEMENT_MODULE(UrdfBot, UrdfBot)
+IMPLEMENT_MODULE(OpenBot, OpenBot)
