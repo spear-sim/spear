@@ -42,8 +42,7 @@ if __name__ == "__main__":
                 spear.remove_path(symlink_third_party_dir)
             print(f"[SPEAR | create_sybmolic_links.py]     Creating symlink: {symlink_third_party_dir} -> {third_party_dir}")
             os.symlink(third_party_dir, symlink_third_party_dir)
-
-        print()
+            print()
 
     # for each project...
     for unreal_project_dir in unreal_project_dirs:
@@ -87,7 +86,7 @@ if __name__ == "__main__":
                 else:
                     print(f"[SPEAR | create_sybmolic_links.py]         {project} depends on {project_plugin}, but this plugin is not in {unreal_plugins_dir}, so we do not create a symlink...")
 
-        print()
+            print()
 
     print("[SPEAR | create_sybmolic_links.py] Done.")
  
