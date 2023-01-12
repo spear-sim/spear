@@ -8,10 +8,6 @@ cpp/unreal_plugins/OpenBot/Binaries
 cpp/unreal_plugins/OpenBot/Intermediate
 cpp/unreal_plugins/OpenBot/ThirdParty
 
-cpp/unreal_plugins/SceneManager/Binaries
-cpp/unreal_plugins/SceneManager/Intermediate
-cpp/unreal_plugins/SceneManager/ThirdParty
-
 cpp/unreal_plugins/SimulationController/Binaries
 cpp/unreal_plugins/SimulationController/Intermediate
 cpp/unreal_plugins/SimulationController/ThirdParty

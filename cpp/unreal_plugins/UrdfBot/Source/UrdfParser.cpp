@@ -8,7 +8,8 @@
 #include <XmlNode.h>
 #include <XmlParser.h>
 
-#include "Assert/Assert.h"
+#include "CoreUtils/Assert.h"
+#include "CoreUtils/StdUtils.h"
 
 UrdfRobotDesc UrdfParser::parse(const std::string& file_name)
 {
@@ -170,14 +171,10 @@ UrdfLinkDesc UrdfParser::parseLinkNode(FXmlNode* link_node)
 
     for (auto& child_node : link_node->GetChildrenNodes()) {
         const FString& tag = child_node->GetTag();
-
         if (tag.Equals(TEXT("visual"))) {
-            UrdfVisualDesc visual_desc = parseVisualNode(child_node);
-            link_desc.visual_descs_.push_back(visual_desc);
-
+            link_desc.visual_descs_.push_back(parseVisualNode(child_node));
         } else if (tag.Equals(TEXT("collision"))) {
-            UrdfCollisionDesc collision_desc = parseCollisionNode(child_node);
-            link_desc.collision_descs_.push_back(collision_desc);
+            link_desc.collision_descs_.push_back(parseCollisionNode(child_node));
         }
     }
 
@@ -295,18 +292,19 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
 
         if (tag.Equals(TEXT("link"))) {
             UrdfLinkDesc link_desc = parseLinkNode(child_node);
-            ASSERT(!robot_desc.link_descs_.count(link_desc.name_));
+            ASSERT(!StdUtils::containsKey(robot_desc.link_descs_, link_desc.name_));
             robot_desc.link_descs_[link_desc.name_] = std::move(link_desc);
 
         } else if (tag.Equals(TEXT("joint"))) {
             UrdfJointDesc joint_desc = parseJointNode(child_node);
-            ASSERT(!robot_desc.joint_descs_.count(joint_desc.name_));
+            ASSERT(!StdUtils::containsKey(robot_desc.joint_descs_, joint_desc.name_));
             robot_desc.joint_descs_[joint_desc.name_] = std::move(joint_desc);
 
         } else if (tag.Equals(TEXT("material"))) {
             UrdfMaterialDesc material_desc = parseMaterialNode(child_node);
-            ASSERT(material_desc.name_ != "" && !material_desc.is_reference_);
-            ASSERT(!robot_desc.material_descs_.count(material_desc.name_));
+            ASSERT(material_desc.name_ != "");
+            ASSERT(!material_desc.is_reference_);
+            ASSERT(!StdUtils::containsKey(robot_desc.material_descs_, material_desc.name_));
             robot_desc.material_descs_[material_desc.name_] = std::move(material_desc);
 
         } else {

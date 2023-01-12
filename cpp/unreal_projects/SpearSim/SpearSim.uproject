@@ -20,10 +20,6 @@
             "Enabled": true
         },
         {
-            "Name": "SceneManager",
-            "Enabled": true
-        },
-        {
             "Name": "SimulationController",
             "Enabled": true
         },
