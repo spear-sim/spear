@@ -16,6 +16,10 @@ cpp/unreal_plugins/SimulationController/Binaries
 cpp/unreal_plugins/SimulationController/Intermediate
 cpp/unreal_plugins/SimulationController/ThirdParty
 
+cpp/unreal_plugins/UrdfBot/Binaries
+cpp/unreal_plugins/UrdfBot/Intermediate
+cpp/unreal_plugins/UrdfBot/ThirdParty
+
 cpp/unreal_projects/SpearSim/Binaries
 cpp/unreal_projects/SpearSim/Build
 cpp/unreal_projects/SpearSim/CMakeLists.txt
