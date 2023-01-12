@@ -277,18 +277,17 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
         } else if (tag.Equals(TEXT("calibration"))) {
             ASSERT(!has_calibration_node);
             has_calibration_node = true;
-            for (auto& attr_node : node->GetAttributes()) {
-                if (attr_node.GetTag() == "rising") {
-                    ASSERT(joint_desc.calibration_type_ == CalibrationType::Invalid);
-                    joint_desc.calibration_type_ = CalibrationType::Rising;
-                    joint_desc.rising_           = FCString::Atof(*attr_node.GetValue());
-                } else if (attr_node.GetTag() == "falling") {
-                    ASSERT(joint_desc.calibration_type_ == CalibrationType::Invalid);
-                    joint_desc.calibration_type_ = CalibrationType::Falling;
-                    joint_desc.falling_          = FCString::Atof(*attr_node.GetValue());
-                } else {
-                    ASSERT(false);
-                }
+            FString rising = node->GetAttribute(TEXT("rising"));
+            if (!rising.IsEmpty()) {
+                ASSERT(joint_desc.calibration_type_ == CalibrationType::Invalid);
+                joint_desc.calibration_type_ = CalibrationType::Rising;
+                joint_desc.rising_           = FCString::Atof(*rising);
+            }
+            FString falling = node->GetAttribute(TEXT("falling"));
+            if (!falling.IsEmpty()) {
+                ASSERT(joint_desc.calibration_type_ == CalibrationType::Invalid);
+                joint_desc.calibration_type_ = CalibrationType::Falling;
+                joint_desc.falling_          = FCString::Atof(*falling);
             }
         } else if (tag.Equals(TEXT("dynamics"))) {
             ASSERT(!has_dynamics_node);
