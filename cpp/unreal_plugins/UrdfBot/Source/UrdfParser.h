@@ -67,7 +67,7 @@ struct UrdfInertialDesc
 {
     FTransform origin_ = FTransform::Identity;
     float mass_        = 0.0f;
-    FMatrix inertia_   = FMatrix::Identity;
+    FMatrix inertia_   = FMatrix(EForceInit::ForceInitToZero);
 };
 
 struct UrdfVisualDesc
@@ -112,33 +112,33 @@ struct UrdfJointDesc
     FTransform origin_ = FTransform::Identity;
     std::string parent_;
     std::string child_;
-    FVector axis_ = FVector(1, 0, 0);
+    FVector axis_      = FVector(1, 0, 0);
 
     // dynamics
-    float damping_ = 0.0f;
+    float damping_  = 0.0f;
     float friction_ = 0.0f;
 
     // calibration
     CalibrationType calibration_type_ = CalibrationType::Invalid;
-    float rising_ = 0.0f;
-    float falling_ = 0.0f;
+    float rising_                     = 0.0f;
+    float falling_                    = 0.0f;
 
     // limits
-    float lower_ = 0.0f;
-    float upper_ = 0.0f;
-    float effort_ = 0.0f;
+    float lower_    = 0.0f;
+    float upper_    = 0.0f;
+    float effort_   = 0.0f;
     float velocity_ = 0.0f;
 
     // mimic
     std::string joint_;
     float multiplier_ = 1.0f;
-    float offset_ = 0.0f;
+    float offset_     = 0.0f;
 
     // safety_controller
     float soft_lower_limit_ = 0.0f;
     float soft_upper_limit_ = 0.0f;
-    float k_position_ = 0.0f;
-    float k_velocity_ = 0.0f;
+    float k_position_       = 0.0f;
+    float k_velocity_       = 0.0f;
 };
 
 struct UrdfRobotDesc
