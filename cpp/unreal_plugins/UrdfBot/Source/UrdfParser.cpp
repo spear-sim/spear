@@ -24,32 +24,31 @@ UrdfRobotDesc UrdfParser::parse(const std::string& file_name)
 UrdfGeometryDesc UrdfParser::parseGeometryNode(FXmlNode* geometry_node)
 {
     UrdfGeometryDesc geometry;
-    FXmlNode* child_node = nullptr;
 
-    child_node = geometry_node->FindChildNode("box");
-    if (child_node) {
+    FXmlNode* box_node = geometry_node->FindChildNode("box");
+    if (box_node) {
         geometry.type_ = UrdfGeometryType::Box;
-        geometry.size_ = parseVector(child_node->GetAttribute("size"));
+        geometry.size_ = parseVector(box_node->GetAttribute("size"));
     }
 
-    child_node = geometry_node->FindChildNode("cylinder");
-    if (child_node) {
+    FXmlNode* cylinder_node = geometry_node->FindChildNode("cylinder");
+    if (cylinder_node) {
         geometry.type_   = UrdfGeometryType::Cylinder;
-        geometry.length_ = FCString::Atof(*child_node->GetAttribute("length"));
-        geometry.radius_ = FCString::Atof(*child_node->GetAttribute("radius"));
+        geometry.length_ = FCString::Atof(*cylinder_node->GetAttribute("length"));
+        geometry.radius_ = FCString::Atof(*cylinder_node->GetAttribute("radius"));
     }
 
-    child_node = geometry_node->FindChildNode("sphere");
-    if (child_node) {
+    FXmlNode* sphere_node = geometry_node->FindChildNode("sphere");
+    if (sphere_node) {
         geometry.type_   = UrdfGeometryType::Sphere;
-        geometry.radius_ = FCString::Atof(*child_node->GetAttribute("radius"));
+        geometry.radius_ = FCString::Atof(*sphere_node->GetAttribute("radius"));
     }
 
-    child_node = geometry_node->FindChildNode("mesh");
-    if (child_node) {
+    FXmlNode* mesh_node = geometry_node->FindChildNode("mesh");
+    if (mesh_node) {
         geometry.type_     = UrdfGeometryType::Mesh;
-        geometry.filename_ = TCHAR_TO_UTF8(*child_node->GetAttribute("filename"));
-        FString scale      = child_node->GetAttribute("scale");
+        geometry.filename_ = TCHAR_TO_UTF8(*mesh_node->GetAttribute("filename"));
+        FString scale      = mesh_node->GetAttribute("scale");
         if (!scale.IsEmpty()) {
             geometry.scale_ = FCString::Atof(*scale);
         }
@@ -63,20 +62,19 @@ UrdfGeometryDesc UrdfParser::parseGeometryNode(FXmlNode* geometry_node)
 UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
 {
     UrdfMaterialDesc material_desc;
-    FXmlNode* child_node = nullptr;
 
     material_desc.name_         = TCHAR_TO_UTF8(*material_node->GetAttribute(TEXT("name")));
     material_desc.is_reference_ = true;
 
-    child_node = material_node->FindChildNode("color");
-    if (child_node) {
-        material_desc.color_        = parseVector4(child_node->GetAttribute(TEXT("rgba")));
+    FXmlNode* color_node = material_node->FindChildNode("color");
+    if (color_node) {
+        material_desc.color_        = parseVector4(color_node->GetAttribute(TEXT("rgba")));
         material_desc.is_reference_ = false;
     }
 
-    child_node = material_node->FindChildNode("texture");
-    if (child_node) {
-        material_desc.texture_      = TCHAR_TO_UTF8(*child_node->GetAttribute(TEXT("filename")));
+    FXmlNode* texture_node = material_node->FindChildNode("texture");
+    if (texture_node) {
+        material_desc.texture_      = TCHAR_TO_UTF8(*texture_node->GetAttribute(TEXT("filename")));
         material_desc.is_reference_ = false;
     }
     
@@ -89,29 +87,28 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
 UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
 {
     UrdfInertialDesc inertial_desc_;
-    FXmlNode* child_node = nullptr;
     
-    child_node = inertial_node->FindChildNode("origin");
-    if (child_node) {
-        inertial_desc_.origin_.SetLocation(parseVector(child_node->GetAttribute("xyz")));
-        inertial_desc_.origin_.SetRotation(parseRotation(child_node->GetAttribute("rpy")));
+    FXmlNode* origin_node = inertial_node->FindChildNode("origin");
+    if (origin_node) {
+        inertial_desc_.origin_.SetLocation(parseVector(origin_node->GetAttribute("xyz")));
+        inertial_desc_.origin_.SetRotation(parseRotation(origin_node->GetAttribute("rpy")));
     }
 
-    child_node = inertial_node->FindChildNode("mass");
-    ASSERT(child_node);
-    inertial_desc_.mass_ = FCString::Atof(*child_node->GetAttribute(TEXT("value")));
+    FXmlNode* mass_node = inertial_node->FindChildNode("mass");
+    ASSERT(mass_node);
+    inertial_desc_.mass_ = FCString::Atof(*mass_node->GetAttribute(TEXT("value")));
 
-    child_node = inertial_node->FindChildNode("inertia");
-    ASSERT(child_node);
-    inertial_desc_.inertia_.M[0][0] = FCString::Atof(*child_node->GetAttribute(TEXT("ixx")));
-    inertial_desc_.inertia_.M[0][1] = FCString::Atof(*child_node->GetAttribute(TEXT("ixy")));
-    inertial_desc_.inertia_.M[0][2] = FCString::Atof(*child_node->GetAttribute(TEXT("ixz")));
-    inertial_desc_.inertia_.M[1][0] = FCString::Atof(*child_node->GetAttribute(TEXT("ixy")));
-    inertial_desc_.inertia_.M[1][1] = FCString::Atof(*child_node->GetAttribute(TEXT("iyy")));
-    inertial_desc_.inertia_.M[1][2] = FCString::Atof(*child_node->GetAttribute(TEXT("iyz")));
-    inertial_desc_.inertia_.M[2][0] = FCString::Atof(*child_node->GetAttribute(TEXT("ixz")));
-    inertial_desc_.inertia_.M[2][1] = FCString::Atof(*child_node->GetAttribute(TEXT("iyz")));
-    inertial_desc_.inertia_.M[2][2] = FCString::Atof(*child_node->GetAttribute(TEXT("izz")));
+    FXmlNode* inertia_node = inertial_node->FindChildNode("inertia");
+    ASSERT(inertia_node);
+    inertial_desc_.inertia_.M[0][0] = FCString::Atof(*inertia_node->GetAttribute(TEXT("ixx")));
+    inertial_desc_.inertia_.M[0][1] = FCString::Atof(*inertia_node->GetAttribute(TEXT("ixy")));
+    inertial_desc_.inertia_.M[0][2] = FCString::Atof(*inertia_node->GetAttribute(TEXT("ixz")));
+    inertial_desc_.inertia_.M[1][0] = FCString::Atof(*inertia_node->GetAttribute(TEXT("ixy")));
+    inertial_desc_.inertia_.M[1][1] = FCString::Atof(*inertia_node->GetAttribute(TEXT("iyy")));
+    inertial_desc_.inertia_.M[1][2] = FCString::Atof(*inertia_node->GetAttribute(TEXT("iyz")));
+    inertial_desc_.inertia_.M[2][0] = FCString::Atof(*inertia_node->GetAttribute(TEXT("ixz")));
+    inertial_desc_.inertia_.M[2][1] = FCString::Atof(*inertia_node->GetAttribute(TEXT("iyz")));
+    inertial_desc_.inertia_.M[2][2] = FCString::Atof(*inertia_node->GetAttribute(TEXT("izz")));
 
     return inertial_desc_;
 }
@@ -119,24 +116,23 @@ UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
 UrdfVisualDesc UrdfParser::parseVisualNode(FXmlNode* visual_node)
 {
     UrdfVisualDesc visual_desc_;
-    FXmlNode* child_node = nullptr;
 
     visual_desc_.name_ = TCHAR_TO_UTF8(*visual_node->GetAttribute(TEXT("name")));
 
-    child_node = visual_node->FindChildNode("origin");
-    if (child_node) {
-        visual_desc_.origin_.SetLocation(parseVector(child_node->GetAttribute("xyz")));
-        visual_desc_.origin_.SetRotation(parseRotation(child_node->GetAttribute("rpy")));
+    FXmlNode* origin_node = visual_node->FindChildNode("origin");
+    if (origin_node) {
+        visual_desc_.origin_.SetLocation(parseVector(origin_node->GetAttribute("xyz")));
+        visual_desc_.origin_.SetRotation(parseRotation(origin_node->GetAttribute("rpy")));
     }
 
-    child_node = visual_node->FindChildNode("geometry");
-    ASSERT(child_node);
-    visual_desc_.geometry_desc_ = parseGeometryNode(child_node);
+    FXmlNode* geometry_node = visual_node->FindChildNode("geometry");
+    ASSERT(geometry_node);
+    visual_desc_.geometry_desc_ = parseGeometryNode(geometry_node);
 
-    child_node = visual_node->FindChildNode("material");
-    if (child_node) {
+    FXmlNode* material_node = visual_node->FindChildNode("material");
+    if (material_node) {
         visual_desc_.has_material_  = true;
-        visual_desc_.material_desc_ = parseMaterialNode(child_node);
+        visual_desc_.material_desc_ = parseMaterialNode(material_node);
     }
 
     return visual_desc_;
@@ -145,19 +141,18 @@ UrdfVisualDesc UrdfParser::parseVisualNode(FXmlNode* visual_node)
 UrdfCollisionDesc UrdfParser::parseCollisionNode(FXmlNode* collision_node)
 {
     UrdfCollisionDesc collision_desc;
-    FXmlNode* child_node = nullptr;
 
     collision_desc.name_ = TCHAR_TO_UTF8(*collision_node->GetAttribute(TEXT("name")));
 
-    child_node = collision_node->FindChildNode("origin");
-    if (child_node) {
-        collision_desc.origin_.SetLocation(parseVector(child_node->GetAttribute("xyz")));
-        collision_desc.origin_.SetRotation(parseRotation(child_node->GetAttribute("rpy")));
+    FXmlNode* origin_node = collision_node->FindChildNode("origin");
+    if (origin_node) {
+        collision_desc.origin_.SetLocation(parseVector(origin_node->GetAttribute("xyz")));
+        collision_desc.origin_.SetRotation(parseRotation(origin_node->GetAttribute("rpy")));
     }
 
-    child_node = collision_node->FindChildNode("geometry");
-    ASSERT(child_node);
-    collision_desc.geometry_desc_ = parseGeometryNode(child_node);
+    FXmlNode* geometry_node = collision_node->FindChildNode("geometry");
+    ASSERT(geometry_node);
+    collision_desc.geometry_desc_ = parseGeometryNode(geometry_node);
 
     return collision_desc;
 }
@@ -165,24 +160,23 @@ UrdfCollisionDesc UrdfParser::parseCollisionNode(FXmlNode* collision_node)
 UrdfLinkDesc UrdfParser::parseLinkNode(FXmlNode* link_node)
 {
     UrdfLinkDesc link_desc;
-    FXmlNode* child_node = nullptr;
 
     link_desc.name_ = TCHAR_TO_UTF8(*link_node->GetAttribute(TEXT("name")));
 
-    child_node = link_node->FindChildNode("inertial");
-    if (child_node) {
-        link_desc.inertial_desc_ = parseInertialNode(child_node);
+    FXmlNode* inertial_node = link_node->FindChildNode("inertial");
+    if (inertial_node) {
+        link_desc.inertial_desc_ = parseInertialNode(inertial_node);
     }
 
-    for (auto& node : link_node->GetChildrenNodes()) {
-        const FString& tag = node->GetTag();
+    for (auto& child_node : link_node->GetChildrenNodes()) {
+        const FString& tag = child_node->GetTag();
 
         if (tag.Equals(TEXT("visual"))) {
-            UrdfVisualDesc visual_desc = parseVisualNode(node);
+            UrdfVisualDesc visual_desc = parseVisualNode(child_node);
             link_desc.visual_descs_.push_back(visual_desc);
 
         } else if (tag.Equals(TEXT("collision"))) {
-            UrdfCollisionDesc collision_desc = parseCollisionNode(node);
+            UrdfCollisionDesc collision_desc = parseCollisionNode(child_node);
             link_desc.collision_descs_.push_back(collision_desc);
         }
     }
@@ -193,7 +187,6 @@ UrdfLinkDesc UrdfParser::parseLinkNode(FXmlNode* link_node)
 UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 {
     UrdfJointDesc joint_desc;
-    FXmlNode* child_node = nullptr;
 
     joint_desc.name_ = TCHAR_TO_UTF8(*joint_node->GetAttribute(TEXT("name")));
 
@@ -214,35 +207,35 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
         ASSERT(false);
     }
 
-    child_node = joint_node->FindChildNode("origin");
-    if (child_node) {
-        joint_desc.origin_.SetLocation(parseVector(child_node->GetAttribute("xyz")));
-        joint_desc.origin_.SetRotation(parseRotation(child_node->GetAttribute("rpy")));
+    FXmlNode* origin_node = joint_node->FindChildNode("origin");
+    if (origin_node) {
+        joint_desc.origin_.SetLocation(parseVector(origin_node->GetAttribute("xyz")));
+        joint_desc.origin_.SetRotation(parseRotation(origin_node->GetAttribute("rpy")));
     }
 
-    child_node = joint_node->FindChildNode("parent");
-    ASSERT(child_node);
-    joint_desc.parent_ = TCHAR_TO_UTF8(*child_node->GetAttribute(TEXT("link")));
+    FXmlNode* parent_node = joint_node->FindChildNode("parent");
+    ASSERT(parent_node);
+    joint_desc.parent_ = TCHAR_TO_UTF8(*parent_node->GetAttribute(TEXT("link")));
 
-    child_node = joint_node->FindChildNode("child");
+    FXmlNode* child_node = joint_node->FindChildNode("child");
     ASSERT(child_node);
     joint_desc.child_ = TCHAR_TO_UTF8(*child_node->GetAttribute(TEXT("link")));
 
-    child_node = joint_node->FindChildNode("axis");
-    if (child_node) {
-        joint_desc.axis_ = parseVector(child_node->GetAttribute(TEXT("xyz")));
+    FXmlNode* axis_node = joint_node->FindChildNode("axis");
+    if (axis_node) {
+        joint_desc.axis_ = parseVector(axis_node->GetAttribute(TEXT("xyz")));
     }
 
-    child_node = joint_node->FindChildNode("calibration");
-    if (child_node) {
-        FString rising = child_node->GetAttribute(TEXT("rising"));
+    FXmlNode* calibration_node = joint_node->FindChildNode("calibration");
+    if (calibration_node) {
+        FString rising = calibration_node->GetAttribute(TEXT("rising"));
         if (!rising.IsEmpty()) {
             ASSERT(joint_desc.calibration_type_ == CalibrationType::Invalid);
             joint_desc.calibration_type_ = CalibrationType::Rising;
             joint_desc.rising_           = FCString::Atof(*rising);
         }
 
-        FString falling = child_node->GetAttribute(TEXT("falling"));
+        FString falling = calibration_node->GetAttribute(TEXT("falling"));
         if (!falling.IsEmpty()) {
             ASSERT(joint_desc.calibration_type_ == CalibrationType::Invalid);
             joint_desc.calibration_type_ = CalibrationType::Falling;
@@ -250,41 +243,41 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
         }
     }
 
-    child_node = joint_node->FindChildNode("dynamics");
-    if (child_node) {
-        joint_desc.damping_  = FCString::Atof(*child_node->GetAttribute(TEXT("damping")));
-        joint_desc.friction_ = FCString::Atof(*child_node->GetAttribute(TEXT("friction")));
+    FXmlNode* dynamics_node = joint_node->FindChildNode("dynamics");
+    if (dynamics_node) {
+        joint_desc.damping_  = FCString::Atof(*dynamics_node->GetAttribute(TEXT("damping")));
+        joint_desc.friction_ = FCString::Atof(*dynamics_node->GetAttribute(TEXT("friction")));
     }
 
-    child_node = joint_node->FindChildNode("limit");
+    FXmlNode* limit_node = joint_node->FindChildNode("limit");
     if (joint_desc.type_ == UrdfJointType::Revolute || joint_desc.type_ == UrdfJointType::Prismatic) {
-        ASSERT(child_node);
+        ASSERT(limit_node);
     }
-    if (child_node) {
-        joint_desc.lower_    = FCString::Atof(*child_node->GetAttribute(TEXT("lower")));
-        joint_desc.upper_    = FCString::Atof(*child_node->GetAttribute(TEXT("upper")));
-        joint_desc.effort_   = FCString::Atof(*child_node->GetAttribute(TEXT("effort")));
-        joint_desc.velocity_ = FCString::Atof(*child_node->GetAttribute(TEXT("velocity")));
+    if (limit_node) {
+        joint_desc.lower_    = FCString::Atof(*limit_node->GetAttribute(TEXT("lower")));
+        joint_desc.upper_    = FCString::Atof(*limit_node->GetAttribute(TEXT("upper")));
+        joint_desc.effort_   = FCString::Atof(*limit_node->GetAttribute(TEXT("effort")));
+        joint_desc.velocity_ = FCString::Atof(*limit_node->GetAttribute(TEXT("velocity")));
     }
 
-    child_node = joint_node->FindChildNode("mimic");
-    if (child_node) {
-        joint_desc.joint_  = TCHAR_TO_UTF8(*child_node->GetAttribute(TEXT("joint")));
+    FXmlNode* mimic_node = joint_node->FindChildNode("mimic");
+    if (mimic_node) {
+        joint_desc.joint_  = TCHAR_TO_UTF8(*mimic_node->GetAttribute(TEXT("joint")));
 
-        FString multiplier = child_node->GetAttribute(TEXT("multiplier"));
+        FString multiplier = mimic_node->GetAttribute(TEXT("multiplier"));
         if (!multiplier.IsEmpty()) {
             joint_desc.multiplier_ = FCString::Atof(*multiplier);
         }
 
-        joint_desc.offset_ = FCString::Atof(*child_node->GetAttribute(TEXT("offset")));
+        joint_desc.offset_ = FCString::Atof(*mimic_node->GetAttribute(TEXT("offset")));
     }
 
-    child_node = joint_node->FindChildNode("safety_controller");
-    if (child_node) {
-        joint_desc.soft_lower_limit_ = FCString::Atof(*child_node->GetAttribute(TEXT("soft_lower_limit")));
-        joint_desc.soft_upper_limit_ = FCString::Atof(*child_node->GetAttribute(TEXT("soft_upper_limit")));
-        joint_desc.k_position_       = FCString::Atof(*child_node->GetAttribute(TEXT("k_position")));
-        joint_desc.k_velocity_       = FCString::Atof(*child_node->GetAttribute(TEXT("k_velocity")));
+    FXmlNode* safety_controller_node = joint_node->FindChildNode("safety_controller");
+    if (safety_controller_node) {
+        joint_desc.soft_lower_limit_ = FCString::Atof(*safety_controller_node->GetAttribute(TEXT("soft_lower_limit")));
+        joint_desc.soft_upper_limit_ = FCString::Atof(*safety_controller_node->GetAttribute(TEXT("soft_upper_limit")));
+        joint_desc.k_position_       = FCString::Atof(*safety_controller_node->GetAttribute(TEXT("k_position")));
+        joint_desc.k_velocity_       = FCString::Atof(*safety_controller_node->GetAttribute(TEXT("k_velocity")));
     }
 
     return joint_desc;
@@ -297,21 +290,21 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
     robot_desc.name_ = TCHAR_TO_UTF8(*robot_node->GetAttribute(TEXT("name")));
 
     // parse all top-level URDF nodes into their own dictionaries
-    for (auto& node : robot_node->GetChildrenNodes()) {
-        const FString& tag = node->GetTag();
+    for (auto& child_node : robot_node->GetChildrenNodes()) {
+        const FString& tag = child_node->GetTag();
 
         if (tag.Equals(TEXT("link"))) {
-            UrdfLinkDesc link_desc = parseLinkNode(node);
+            UrdfLinkDesc link_desc = parseLinkNode(child_node);
             ASSERT(!robot_desc.link_descs_.count(link_desc.name_));
             robot_desc.link_descs_[link_desc.name_] = std::move(link_desc);
 
         } else if (tag.Equals(TEXT("joint"))) {
-            UrdfJointDesc joint_desc = parseJointNode(node);
+            UrdfJointDesc joint_desc = parseJointNode(child_node);
             ASSERT(!robot_desc.joint_descs_.count(joint_desc.name_));
             robot_desc.joint_descs_[joint_desc.name_] = std::move(joint_desc);
 
         } else if (tag.Equals(TEXT("material"))) {
-            UrdfMaterialDesc material_desc = parseMaterialNode(node);
+            UrdfMaterialDesc material_desc = parseMaterialNode(child_node);
             ASSERT(material_desc.name_ != "" && !material_desc.is_reference_);
             ASSERT(!robot_desc.material_descs_.count(material_desc.name_));
             robot_desc.material_descs_[material_desc.name_] = std::move(material_desc);
