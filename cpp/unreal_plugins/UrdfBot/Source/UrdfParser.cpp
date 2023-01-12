@@ -68,13 +68,13 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
         const FString& tag = node->GetTag();
         if (tag.Equals(TEXT("color"))) {
             ASSERT(!has_color_node);
-            has_color_node = true;
-            material_desc.color_ = parseVector4(node->GetAttribute(TEXT("rgba")));
+            has_color_node              = true;
+            material_desc.color_        = parseVector4(node->GetAttribute(TEXT("rgba")));
             material_desc.is_reference_ = false;
         } else if (tag.Equals(TEXT("texture"))) {
             ASSERT(!has_texture_node);
-            has_texture_node = true;
-            material_desc.texture_ = TCHAR_TO_UTF8(*node->GetAttribute(TEXT("filename")));
+            has_texture_node            = true;
+            material_desc.texture_      = TCHAR_TO_UTF8(*node->GetAttribute(TEXT("filename")));
             material_desc.is_reference_ = false;
         } else {
             ASSERT(false);
@@ -104,7 +104,7 @@ UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
             inertial_desc_.origin_.SetRotation(parseRotation(node->GetAttribute("rpy")));
         } else if (tag.Equals(TEXT("mass"))) {
             ASSERT(!has_mass_node);
-            has_mass_node = true;
+            has_mass_node        = true;
             inertial_desc_.mass_ = FCString::Atof(*node->GetAttribute(TEXT("value")));
         } else if (tag.Equals(TEXT("inertia"))) {
             ASSERT(!has_inertia_node);
@@ -148,12 +148,12 @@ UrdfVisualDesc UrdfParser::parseVisualNode(FXmlNode* visual_node)
             visual_desc_.origin_.SetRotation(parseRotation(node->GetAttribute("rpy")));
         } else if (tag.Equals(TEXT("geometry"))) {
             ASSERT(!has_geometry_node);
-            has_geometry_node = true;
+            has_geometry_node           = true;
             visual_desc_.geometry_desc_ = parseGeometryNode(node);
         } else if (tag.Equals(TEXT("material"))) {
             ASSERT(!has_material_node);
-            has_material_node = true;
-            visual_desc_.has_material_ = true;
+            has_material_node           = true;
+            visual_desc_.has_material_  = true;
             visual_desc_.material_desc_ = parseMaterialNode(node);
         } else {
             ASSERT(false);
@@ -183,7 +183,7 @@ UrdfCollisionDesc UrdfParser::parseCollisionNode(FXmlNode* collision_node)
             collision_desc.origin_.SetRotation(parseRotation(node->GetAttribute("rpy")));
         } else if (tag.Equals(TEXT("geometry"))) {
             ASSERT(!has_geometry_node);
-            has_geometry_node = true;
+            has_geometry_node             = true;
             collision_desc.geometry_desc_ = parseGeometryNode(node);
         } else {
             ASSERT(false);
@@ -206,7 +206,7 @@ UrdfLinkDesc UrdfParser::parseLinkNode(FXmlNode* link_node)
         const FString& tag = node->GetTag();
         if (tag.Equals(TEXT("inertial"))) {
             ASSERT(!has_inertia_node);
-            has_inertia_node = true;
+            has_inertia_node         = true;
             link_desc.inertial_desc_ = parseInertialNode(node);
         } else if (tag.Equals(TEXT("visual"))) {
             UrdfVisualDesc visual_desc = parseVisualNode(node);
@@ -304,7 +304,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
             joint_desc.velocity_ = FCString::Atof(*node->GetAttribute(TEXT("velocity")));
         } else if (tag.Equals(TEXT("mimic"))) {
             ASSERT(!has_mimic_node);
-            has_mimic_node = true;
+            has_mimic_node     = true;
             joint_desc.joint_  = TCHAR_TO_UTF8(*node->GetAttribute(TEXT("joint")));
             FString multiplier = node->GetAttribute(TEXT("multiplier"));
             if (!multiplier.IsEmpty()) {
@@ -313,7 +313,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
             joint_desc.offset_ = FCString::Atof(*node->GetAttribute(TEXT("offset")));
         } else if (tag.Equals(TEXT("safety_controller"))) {
             ASSERT(!has_safety_controller_node);
-            has_safety_controller_node = true;
+            has_safety_controller_node   = true;
             joint_desc.soft_lower_limit_ = FCString::Atof(*node->GetAttribute(TEXT("soft_lower_limit")));
             joint_desc.soft_upper_limit_ = FCString::Atof(*node->GetAttribute(TEXT("soft_upper_limit")));
             joint_desc.k_position_       = FCString::Atof(*node->GetAttribute(TEXT("k_position")));
