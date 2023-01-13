@@ -29,11 +29,11 @@ public class UrdfBot : ModuleRules
         //
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "libeigen", "BUILD", "Win64", "include", "eigen3"));
+            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "libeigen", "BUILD", "Win64", "include", "eigen3"));
         } else if (Target.Platform == UnrealTargetPlatform.Mac) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "libeigen", "BUILD", "Mac", "include", "eigen3"));
+            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "libeigen", "BUILD", "Mac", "include", "eigen3"));
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "libeigen", "BUILD", "Linux", "include", "eigen3"));
+            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "libeigen", "BUILD", "Linux", "include", "eigen3"));
         } else {
             throw new Exception("Unexpected: Target.Platform == " + Target.Platform);
         }
@@ -42,17 +42,17 @@ public class UrdfBot : ModuleRules
         // rbdl
         //
 
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "include"));
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "BUILD", "Win64", "include"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "BUILD", "Win64", "Release", "rbdl.lib"));
+            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Win64", "include"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Win64", "Release", "rbdl.lib"));
         } else if (Target.Platform == UnrealTargetPlatform.Mac) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "BUILD", "Mac", "include"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "BUILD", "Mac", "librbdl.a"));
+            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Mac", "include"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Mac", "librbdl.a"));
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "BUILD", "Linux", "include"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "ThirdParty", "rbdl", "BUILD", "Linux", "librbdl.a"));
+            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Linux", "include"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Linux", "librbdl.a"));
         } else {
             throw new Exception("Unexpected: Target.Platform == " + Target.Platform);
         }

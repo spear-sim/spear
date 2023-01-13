@@ -22,6 +22,10 @@
         {
             "Name": "SimulationController",
             "Enabled": true
+        },
+        {
+            "Name": "UrdfBot",
+            "Enabled": true
         }
     ]
 }
