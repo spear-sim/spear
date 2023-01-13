@@ -6,7 +6,6 @@
 
 #include <XmlFile.h>
 #include <XmlNode.h>
-#include <XmlParser.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/StdUtils.h"
