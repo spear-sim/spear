@@ -1,20 +1,8 @@
 __pycache__
 
-cpp/unreal_plugins/CoreUtils/Binaries
-cpp/unreal_plugins/CoreUtils/Intermediate
-cpp/unreal_plugins/CoreUtils/ThirdParty
-
-cpp/unreal_plugins/OpenBot/Binaries
-cpp/unreal_plugins/OpenBot/Intermediate
-cpp/unreal_plugins/OpenBot/ThirdParty
-
-cpp/unreal_plugins/SimulationController/Binaries
-cpp/unreal_plugins/SimulationController/Intermediate
-cpp/unreal_plugins/SimulationController/ThirdParty
-
-cpp/unreal_plugins/UrdfBot/Binaries
-cpp/unreal_plugins/UrdfBot/Intermediate
-cpp/unreal_plugins/UrdfBot/ThirdParty
+cpp/unreal_plugins/*/Binaries
+cpp/unreal_plugins/*/Intermediate
+cpp/unreal_plugins/*/ThirdParty
 
 cpp/unreal_projects/SpearSim/Binaries
 cpp/unreal_projects/SpearSim/Build

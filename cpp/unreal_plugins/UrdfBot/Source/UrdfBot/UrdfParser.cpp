@@ -258,7 +258,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 
     FXmlNode* mimic_node = joint_node->FindChildNode("mimic");
     if (mimic_node) {
-        joint_desc.joint_  = TCHAR_TO_UTF8(*mimic_node->GetAttribute(TEXT("joint")));
+        joint_desc.joint_ = TCHAR_TO_UTF8(*mimic_node->GetAttribute(TEXT("joint")));
 
         FString multiplier = mimic_node->GetAttribute(TEXT("multiplier"));
         if (!multiplier.IsEmpty()) {
