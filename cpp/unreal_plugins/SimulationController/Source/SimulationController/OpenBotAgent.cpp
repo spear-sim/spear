@@ -23,6 +23,7 @@
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/StdUtils.h"
+#include "CoreUtils/UnrealUtils.h"
 #include "OpenBot/OpenBotPawn.h"
 #include "SimulationController/Box.h"
 #include "SimulationController/CameraSensor.h"
@@ -32,10 +33,10 @@
 
 OpenBotAgent::OpenBotAgent(UWorld* world)
 {
-    FActorSpawnParameters spawn_params;
-    spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OPENBOT_ACTOR_NAME"}).c_str());
-    spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
+    FActorSpawnParameters actor_spawn_params;
+    actor_spawn_params.Name = UnrealUtils::toFName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OPENBOT_ACTOR_NAME"}));
+    actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
     ASSERT(open_bot_pawn_);
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
@@ -116,14 +117,7 @@ void OpenBotAgent::findObjectReferences(UWorld* world)
     //
     if (StdUtils::contains(step_info_components, "trajectory_data")) {
 
-        for (TActorIterator<AActor> actor_itr(world); actor_itr; ++actor_itr) {
-            std::string actor_name = TCHAR_TO_UTF8(*((*actor_itr)->GetName()));
-            if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "TRAJECTORY_DATA", "GOAL_ACTOR_NAME"})) {
-                ASSERT(!goal_actor_);
-                goal_actor_ = *actor_itr;
-                break;
-            }
-        }
+        goal_actor_ = UnrealUtils::findActorByName(world, Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "TRAJECTORY_DATA", "GOAL_ACTOR_NAME"}));
         ASSERT(goal_actor_);
 
         nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
@@ -323,9 +317,9 @@ void OpenBotAgent::applyAction(const std::map<std::string, std::vector<float>>& 
     if (StdUtils::contains(action_components, "set_position_xyz_centimeters")) {
         FVector location(action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2));
         bool sweep = false;
-        FHitResult* hit_result_info = nullptr;
-        open_bot_pawn_->SetActorLocation(location, sweep, hit_result_info, ETeleportType::TeleportPhysics);
-        open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get high brake torque value from the config system rather than this hard-coded value
+        FHitResult* hit_result = nullptr;
+        open_bot_pawn_->SetActorLocation(location, sweep, hit_result, ETeleportType::TeleportPhysics);
+        open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get value from the config system
     }
 
     //
@@ -334,7 +328,7 @@ void OpenBotAgent::applyAction(const std::map<std::string, std::vector<float>>& 
     if (StdUtils::contains(action_components, "set_orientation_pyr_radians")) {
         FRotator rotation{FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
         open_bot_pawn_->SetActorRotation(rotation, ETeleportType::TeleportPhysics);
-        open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get high brake torque value from the config system rather than this hard-coded value
+        open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get value from the config system
     }
 }
 
@@ -425,13 +419,21 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getStepInfo() const
 
 void OpenBotAgent::reset()
 {
-    FVector location = open_bot_pawn_->GetActorLocation();
-    bool sweep = false;
-    FHitResult* hit_result_info = nullptr;    
-    open_bot_pawn_->SetActorLocationAndRotation(location, FQuat(FRotator(0)), sweep, hit_result_info, ETeleportType::TeleportPhysics);
-    open_bot_pawn_->resetWheels();
-    open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get high brake torque value from the config system rather than this hard-coded value
+    // For some reason, the pose of AOpenBotPawn needs to be set using ETeleportType::TeleportPhysics, which maintains
+    // velocity information across calls to SetActorPositionAndRotation(...). Since tasks are supposed to be implemented
+    // in a general way, they must therefore use ETeleportType::TeleportPhysics to set the pose of actors, because the
+    // actor they're attempting to reset might be an AOpenBotPawn. But this means that our velocity will be maintained
+    // unless we explicitly reset it, so we reset our velocity here.
+    open_bot_pawn_->skeletal_mesh_component_->SetPhysicsLinearVelocity(FVector::ZeroVector, false);
+    open_bot_pawn_->skeletal_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector, false);
+    open_bot_pawn_->skeletal_mesh_component_->GetBodyInstance()->ClearTorques();
+    open_bot_pawn_->skeletal_mesh_component_->GetBodyInstance()->ClearForces();
 
+    // Reset wheels
+    open_bot_pawn_->resetWheels();
+    open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get value from the config system
+
+    // Compute a new trajectory for step_info["trajectory_data"]
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
     //
@@ -462,42 +464,31 @@ void OpenBotAgent::buildNavMesh()
     nav_mesh_->TilePoolSize           = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "TILE_POOL_SIZE"});
     nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "MAX_SIMPLIFICATION_ERROR"});
 
-    // Get world bounding box
-    FBox world_box(ForceInit);
-    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "WORLD_BOUND_TAG_NAMES"});
-    for (TActorIterator<AActor> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {     
-        for (auto& name : world_bound_tag_names) { 
-            if (actor_itr->ActorHasTag(name.c_str())) { 
-                world_box += actor_itr->GetComponentsBoundingBox(false, true);
-            }
-        }
+    // get bounding volume
+    FBox bounds_volume(EForceInit::ForceInit);
+    for (auto& actor : UnrealUtils::findActorsByTagAny(open_bot_pawn_->GetWorld(), Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "BOUNDS_VOLUME_ACTOR_TAGS"}))) {
+        bounds_volume += actor->GetComponentsBoundingBox(false, true);
     }
 
     // get references to ANavMeshBoundsVolume and ANavModifierVolume
-    ANavMeshBoundsVolume* nav_mesh_bounds_volume = nullptr;
-    for (TActorIterator<ANavMeshBoundsVolume> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
-        nav_mesh_bounds_volume = *actor_itr;
-    }
+    ANavMeshBoundsVolume* nav_mesh_bounds_volume = UnrealUtils::findActorByType<ANavMeshBoundsVolume>(open_bot_pawn_->GetWorld());
     ASSERT(nav_mesh_bounds_volume);
 
-    ANavModifierVolume* nav_modifier_volume = nullptr;
-    for (TActorIterator<ANavModifierVolume> actor_itr(open_bot_pawn_->GetWorld()); actor_itr; ++actor_itr) {
-        nav_modifier_volume = *actor_itr;
-    }
+    ANavModifierVolume* nav_modifier_volume = UnrealUtils::findActorByType<ANavModifierVolume>(open_bot_pawn_->GetWorld());
     ASSERT(nav_modifier_volume);
 
     // update ANavMeshBoundsVolume
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    nav_mesh_bounds_volume->SetActorLocation(world_box.GetCenter(), false);
-    nav_mesh_bounds_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.0f);
+    nav_mesh_bounds_volume->SetActorLocation(bounds_volume.GetCenter(), false);
+    nav_mesh_bounds_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.0f);
     nav_mesh_bounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
     // update ANavModifierVolume
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
-    nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
+    nav_modifier_volume->SetActorLocation(bounds_volume.GetCenter(), false);
+    nav_modifier_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.f);
     nav_modifier_volume->AddActorWorldOffset(FVector(
         Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_X"}),
         Config::getValue<float>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Y"}),
@@ -551,7 +542,7 @@ void OpenBotAgent::generateTrajectoryToGoal()
     }
 
     int num_waypoints = path.Path->GetPathPoints().Num();
-    float trajectory_length = 0.0;
+    float trajectory_length = 0.0f;
     for (int i = 0; i < num_waypoints - 1; i++) {
         trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
     }

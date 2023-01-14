@@ -22,7 +22,7 @@ public:
 
     float getReward() const override
     {
-        return 0.0;
+        return 0.0f;
     }
 
     bool isEpisodeDone() const override

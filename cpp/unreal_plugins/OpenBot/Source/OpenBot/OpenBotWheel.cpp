@@ -10,9 +10,10 @@
 BEGIN_IGNORE_COMPILER_WARNINGS
 UOpenBotWheel::UOpenBotWheel()
 {
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CollisionMeshObj(TEXT("/Engine/EngineMeshes/Cylinder"));
-    CollisionMesh = CollisionMeshObj.Object;
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> s_collision_mesh(TEXT("/Engine/EngineMeshes/Cylinder"));
+    ASSERT(s_collision_mesh.Succeeded());
 
+    CollisionMesh              = s_collision_mesh.Object;
     bAffectedByHandbrake       = Config::getValue<bool>({"OPENBOT", "OPENBOT_WHEEL", "AFFECTED_BY_HANDBRAKE"});
     DampingRate                = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "DAMPING_RATE"});
     LatStiffMaxLoad            = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "LAT_STIFF_MAX_LOAD"});

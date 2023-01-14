@@ -19,26 +19,27 @@
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/StdUtils.h"
+#include "CoreUtils/UnrealUtils.h"
 #include "SimulationController/ActorHitEvent.h"
 #include "SimulationController/Box.h"
 
 ImitationLearningTask::ImitationLearningTask(UWorld* world)
 {
-    FActorSpawnParameters goal_spawn_params;
-    goal_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}).c_str());
-    goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    goal_actor_ = world->SpawnActor<AActor>(AActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
+    FActorSpawnParameters actor_spawn_params;
+    actor_spawn_params.Name = UnrealUtils::toFName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}));
+    actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    goal_actor_ = world->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
     ASSERT(goal_actor_);
 
     auto scene_component = NewObject<USceneComponent>(goal_actor_);
     scene_component->SetMobility(EComponentMobility::Movable);
     goal_actor_->SetRootComponent(scene_component);
 
-    new_object_parent_actor_ = world->SpawnActor<AActor>();
-    ASSERT(new_object_parent_actor_);
+    parent_actor_ = world->SpawnActor<AActor>();
+    ASSERT(parent_actor_);
 
     // Create UActorHitEvent but don't subscribe to any actors yet
-    actor_hit_event_ = NewObject<UActorHitEvent>(new_object_parent_actor_, TEXT("ActorHitEvent"));
+    actor_hit_event_ = NewObject<UActorHitEvent>(parent_actor_);
     ASSERT(actor_hit_event_);
     actor_hit_event_->RegisterComponent();
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
@@ -59,9 +60,9 @@ ImitationLearningTask::~ImitationLearningTask()
     actor_hit_event_->DestroyComponent();
     actor_hit_event_ = nullptr;
 
-    ASSERT(new_object_parent_actor_);
-    new_object_parent_actor_->Destroy();
-    new_object_parent_actor_ = nullptr;
+    ASSERT(parent_actor_);
+    parent_actor_->Destroy();
+    parent_actor_ = nullptr;
 
     ASSERT(goal_actor_);
     goal_actor_->Destroy();
@@ -70,18 +71,10 @@ ImitationLearningTask::~ImitationLearningTask()
 
 void ImitationLearningTask::findObjectReferences(UWorld* world)
 {
-    auto obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
-    for (TActorIterator<AActor> actor_itr(world); actor_itr; ++actor_itr) {
-        std::string actor_name = TCHAR_TO_UTF8(*((*actor_itr)->GetName()));
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "AGENT_ACTOR_NAME"})) {
-            ASSERT(!agent_actor_);
-            agent_actor_ = *actor_itr;
-        } else if (StdUtils::contains(obstacle_ignore_actor_names, actor_name)) {
-            obstacle_ignore_actors_.emplace_back(*actor_itr);
-            std::cout << "[SPEAR | ImitationLearningTask.cpp] Adding actor to obstacle ignore list: " << actor_name << std::endl;
-        }
-    }
+    agent_actor_ = UnrealUtils::findActorByName(world, Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "AGENT_ACTOR_NAME"}));
     ASSERT(agent_actor_);
+
+    obstacle_ignore_actors_ = UnrealUtils::findActorsByNameAsVector(world, Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"}), false);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_->subscribeToActor(agent_actor_);
@@ -143,14 +136,14 @@ std::map<std::string, Box> ImitationLearningTask::getStepInfoSpace() const
     std::map<std::string, Box> step_info_space;
     Box box;
 
-    box.low_ = 0;
-    box.high_ = 1;
+    box.low_ = 0.0f;
+    box.high_ = 1.0f;
     box.shape_ = {1};
     box.dtype_ = DataType::Boolean;
     step_info_space["hit_goal"] = std::move(box);
 
-    box.low_ = 0;
-    box.high_ = 1;
+    box.low_ = 0.0f;
+    box.high_ = 1.0f;
     box.shape_ = {1};
     box.dtype_ = DataType::Boolean;
     step_info_space["hit_obstacle"] = std::move(box);
@@ -170,16 +163,19 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
+    // If we are generating positions via trajectory sampling, then update agent_initial_positions_
+    // and agent_goal_positions_ to store the results from one round of trajectory sampling, and
+    // reset position_index_ to 0.
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GET_POSITIONS_FROM_TRAJECTORY_SAMPLING"})) {
         getPositionsFromTrajectorySampling();
     }
 
     // Set agent and goal positions
     bool sweep = false;
-    FHitResult* hit_result_info = nullptr;
-    agent_actor_->SetActorLocation(agent_initial_positions_.at(position_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
-    goal_actor_->SetActorLocation(agent_goal_positions_.at(position_index_), sweep, hit_result_info, ETeleportType::ResetPhysics);
-    
+    FHitResult* hit_result = nullptr;
+    agent_actor_->SetActorLocationAndRotation(agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+    goal_actor_->SetActorLocationAndRotation(agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+
     // Increment position_index_
     if (position_index_ < agent_goal_positions_.size() - 1) { 
         position_index_++;
@@ -193,7 +189,7 @@ bool ImitationLearningTask::isReady() const
     return true;
 }
 
-void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit)
+void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
 {
     ASSERT(self_actor == agent_actor_);
 
@@ -298,7 +294,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
 
                 // Debug output
                 if(Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_DEBUG_RENDER"})){
-                    float trajectory_length = 0.0;
+                    float trajectory_length = 0.0f;
                     for (int j = 0; j < num_waypoints - 1; j++) {
                         trajectory_length += FVector::Dist(best_path_points[j].Location, best_path_points[j + 1].Location);
                     }
@@ -329,8 +325,8 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
         std::cout << "[SPEAR | ImitationLearningTask.cpp] Waypoints: " << std::endl;
         for (int i = 1; i < best_path_points.Num(); i++) {
             std::cout << "[SPEAR | ImitationLearningTask.cpp] [" << best_path_points[i].Location.X << ", " << best_path_points[i].Location.Y << ", " << best_path_points[i].Location.Z << "]" << std::endl;
-            DrawDebugPoint(agent_actor_->GetWorld(), best_path_points[i].Location, 20, FColor(25, 116, 210), false, 10.0, 0);
-            DrawDebugLine(agent_actor_->GetWorld(), best_path_points[i-1].Location, best_path_points[i].Location, FColor(25, 116, 210), false, 10.0, 0, 0.15);
+            DrawDebugPoint(agent_actor_->GetWorld(), best_path_points[i].Location, 20.0f, FColor(25, 116, 210), false, 10.0f, 0);
+            DrawDebugLine(agent_actor_->GetWorld(), best_path_points[i-1].Location, best_path_points[i].Location, FColor(25, 116, 210), false, 10.0f, 0, 0.15f);
         }
         std::cout << "[SPEAR | ImitationLearningTask.cpp] ----------------------" << std::endl;
     }

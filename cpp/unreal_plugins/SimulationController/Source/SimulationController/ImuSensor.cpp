@@ -21,10 +21,10 @@ ImuSensor::ImuSensor(UPrimitiveComponent* component)
     ASSERT(component);
     component_ = component;
 
-    new_object_parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
-    ASSERT(new_object_parent_actor_);
+    parent_actor_ = component->GetWorld()->SpawnActor<AActor>();
+    ASSERT(parent_actor_);
 
-    tick_event_ = NewObject<UTickEvent>(new_object_parent_actor_, TEXT("PostPhysicsPreRenderTickEvent"));
+    tick_event_ = NewObject<UTickEvent>(parent_actor_);
     ASSERT(tick_event_);
     tick_event_->RegisterComponent();
     tick_event_->initialize(ETickingGroup::TG_PostPhysics);
@@ -42,9 +42,9 @@ ImuSensor::~ImuSensor()
     tick_event_->DestroyComponent();
     tick_event_ = nullptr;
 
-    ASSERT(new_object_parent_actor_);
-    new_object_parent_actor_->Destroy();
-    new_object_parent_actor_ = nullptr;
+    ASSERT(parent_actor_);
+    parent_actor_->Destroy();
+    parent_actor_ = nullptr;
 
     ASSERT(component_);
     component_ = nullptr;
@@ -53,7 +53,7 @@ ImuSensor::~ImuSensor()
 void ImuSensor::updateLinearAcceleration(float delta_time)
 {
     // Earth's gravitational acceleration is approximately 9.81 m/s^2
-    float GRAVITY = 9.81f;
+    float gravity = 9.81f;
 
     // 2nd derivative of the polynomic (quadratic) interpolation using the point in current time and two previous steps:
     // d2[i] = -2.0*(y1/(h1*h2)-y2/((h2+h1)*h2)-y0/(h1*(h2+h1)))
@@ -77,7 +77,7 @@ void ImuSensor::updateLinearAcceleration(float delta_time)
     previous_delta_time_ = delta_time;
 
     // Add gravitational acceleration
-    linear_acceleration.Z += GRAVITY;
+    linear_acceleration.Z += gravity;
     linear_acceleration = transform_rotator.UnrotateVector(linear_acceleration);
 
     // Compute the random component of the acceleration sensor measurement.
@@ -121,14 +121,14 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTic
         FVector transform_z_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Z));
 
         // Plot sensor frame
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * sensor_transform.GetUnitAxis(EAxis::X), 0.5, FColor(255, 0, 0), false, 0.033, 0, 0.5); // X
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * sensor_transform.GetUnitAxis(EAxis::Y), 0.5, FColor(0, 255, 0), false, 0.033, 0, 0.5); // Y
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5 * sensor_transform.GetUnitAxis(EAxis::Z), 0.5, FColor(0, 0, 255), false, 0.033, 0, 0.5); // Z
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5.0f * sensor_transform.GetUnitAxis(EAxis::X), 0.5f, FColor(255, 0, 0), false, 0.033f, 0, 0.5f); // X
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5.0f * sensor_transform.GetUnitAxis(EAxis::Y), 0.5f, FColor(0, 255, 0), false, 0.033f, 0, 0.5f); // Y
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5.0f * sensor_transform.GetUnitAxis(EAxis::Z), 0.5f, FColor(0, 0, 255), false, 0.033f, 0, 0.5f); // Z
 
         // Plot acceleration vector
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_), 0.5, FColor(200, 0, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_), 0.5f, FColor(200, 0, 200), false, 0.033f, 0, 0.5f);
 
         // Plot angular rate vector
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(angular_rate_), 0.5, FColor(0, 200, 200), false, 0.033, 0, 0.5);
+        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(angular_rate_), 0.5f, FColor(0, 200, 200), false, 0.033f, 0, 0.5f);
     }
 }

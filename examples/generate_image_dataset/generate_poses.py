@@ -53,7 +53,7 @@ if __name__ == "__main__":
         # get random points based on number of poses requested
         _, _, _, step_info = env.step(
             action={
-                "set_pose": np.array([0,0,0,0,0,0], dtype=np.float32),
+                "set_pose": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32),
                 "set_num_random_points": np.array([args.num_poses_per_scene], dtype=np.uint32)})
 
         positions = step_info["agent_step_info"]["random_points"]

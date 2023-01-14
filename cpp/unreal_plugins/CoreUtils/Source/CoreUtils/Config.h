@@ -31,16 +31,16 @@ public:
     // float time_delta_seconds = Config::getValue<float>({"SIMULATOR", "TIME_DELTA_SECONDS"});
     //
 
-    template <typename T>
-    static T getValue(const std::vector<std::string>& keys)
+    template <typename TValue>
+    static TValue getValue(const std::vector<std::string>& keys)
     {
         // At least one key should be present when this function is called
         ASSERT(keys.size() > 0);
 
-        // Make sure we have the config_node_ defined before trying to read from it
-        ASSERT(config_.IsDefined());
+        // Make sure we have s_config_ defined before trying to read from it
+        ASSERT(s_config_.IsDefined());
 
-        YAML::Node node = config_;
+        YAML::Node node = s_config_;
         for (auto& key : keys) {
 
             // If key doesn't exist, then print an informative error message and assert
@@ -62,11 +62,12 @@ public:
             node.reset(node[key]);
         }
 
-        return node.as<T>();
+        return node.as<TValue>();
     }
+    
 private:
     Config() = default;
     ~Config() = default;
 
-    static YAML::Node config_;
+    static YAML::Node s_config_;
 };

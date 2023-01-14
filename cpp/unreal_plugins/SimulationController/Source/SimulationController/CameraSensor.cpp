@@ -19,29 +19,30 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/UnrealUtils.h"
 #include "SimulationController/Box.h"
 #include "SimulationController/Serialize.h"
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials";
 
-const std::map<std::string, float>    OBSERVATION_COMPONENT_LOW          = {{"final_color", 0},                   {"segmentation", 0},                   {"normals", 0},                   {"lens_distortion", 0},                   {"depth", 0},                                 {"depth_glsl", 0}};
-const std::map<std::string, float>    OBSERVATION_COMPONENT_HIGH         = {{"final_color", 255},                 {"segmentation", 255},                 {"normals", 255},                 {"lens_distortion", 255},                 {"depth", std::numeric_limits<float>::max()}, {"depth_glsl", std::numeric_limits<float>::max()}};
-const std::map<std::string, int>      OBSERVATION_COMPONENT_NUM_CHANNELS = {{"final_color", 3},                   {"segmentation", 3},                   {"normals", 3},                   {"lens_distortion", 3},                   {"depth", 1},                                 {"depth_glsl", 1}};
+const std::map<std::string, float>    OBSERVATION_COMPONENT_LOW          = {{"final_color", 0.0f},                {"segmentation", 0.0f},                {"normals", 0.0f},                {"lens_distortion", 0.0f},                {"depth", 0.0f},                              {"depth_glsl", 0.0f}};
+const std::map<std::string, float>    OBSERVATION_COMPONENT_HIGH         = {{"final_color", 255.0f},              {"segmentation", 255.0f},              {"normals", 255.0f},              {"lens_distortion", 255.0f},              {"depth", std::numeric_limits<float>::max()}, {"depth_glsl", std::numeric_limits<float>::max()}};
+const std::map<std::string, int>      OBSERVATION_COMPONENT_NUM_CHANNELS = {{"final_color", 3},                   {"segmentation", 3},                   {"normals", 3},                   {"lens_distortion", 3.0f},                {"depth", 1},                                 {"depth_glsl", 1}};
 const std::map<std::string, DataType> OBSERVATION_COMPONENT_DTYPE        = {{"final_color", DataType::UInteger8}, {"segmentation", DataType::UInteger8}, {"normals", DataType::UInteger8}, {"lens_distortion", DataType::UInteger8}, {"depth", DataType::Float32},                 {"depth_glsl", DataType::Float32}};
 
 CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector<std::string>& render_pass_names, unsigned int width, unsigned int height)
 {
     ASSERT(camera_component);
 
-    new_object_parent_actor_ = camera_component->GetWorld()->SpawnActor<AActor>();
-    ASSERT(new_object_parent_actor_);
+    parent_actor_ = camera_component->GetWorld()->SpawnActor<AActor>();
+    ASSERT(parent_actor_);
 
     for (auto& render_pass_name : render_pass_names) {
 
         RenderPass render_pass;
 
         // create TextureRenderTarget2D
-        render_pass.texture_render_target_ = NewObject<UTextureRenderTarget2D>(new_object_parent_actor_, *FString::Printf(TEXT("TextureRenderTarget2D_%s"), UTF8_TO_TCHAR(render_pass_name.c_str())));
+        render_pass.texture_render_target_ = NewObject<UTextureRenderTarget2D>(parent_actor_);
         ASSERT(render_pass.texture_render_target_);
 
         // TODO: allow returning floating point data instead of hardcoding to PF_B8G8R8A8
@@ -56,7 +57,7 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.texture_render_target_->UpdateResourceImmediate(clear_render_target);
 
         // create SceneCaptureComponent2D
-        render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(new_object_parent_actor_, *FString::Printf(TEXT("SceneCaptureComponent2D_%s"), UTF8_TO_TCHAR(render_pass_name.c_str())));
+        render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(parent_actor_);
         ASSERT(render_pass.scene_capture_component_);
 
         if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE"}) == "SCS_FinalColorHDR") {
@@ -73,7 +74,7 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.scene_capture_component_->RegisterComponent();
 
         if (render_pass_name != "final_color") {
-            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), UTF8_TO_TCHAR(MATERIALS_PATH.c_str()), UTF8_TO_TCHAR(render_pass_name.c_str()), UTF8_TO_TCHAR(render_pass_name.c_str())));
+            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), *UnrealUtils::toFString(MATERIALS_PATH), *UnrealUtils::toFString(render_pass_name), *UnrealUtils::toFString(render_pass_name)));
             ASSERT(material);
             render_pass.scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, render_pass.scene_capture_component_), 1.0f);
             render_pass.scene_capture_component_->ShowFlags.SetPostProcessMaterial(true);
@@ -106,9 +107,9 @@ CameraSensor::~CameraSensor()
     }
     render_passes_.clear();
 
-    ASSERT(new_object_parent_actor_);
-    new_object_parent_actor_->Destroy();
-    new_object_parent_actor_ = nullptr;
+    ASSERT(parent_actor_);
+    parent_actor_->Destroy();
+    parent_actor_ = nullptr;
 }
 
 std::map<std::string, Box> CameraSensor::getObservationSpace() const
@@ -273,9 +274,9 @@ std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor>& col
 {
     std::vector<float> float_depth;
     for (int i = 0; i < color_depth.Num(); i++) {
-        float depth = color_depth[i].R  + (color_depth[i].G * 256) + (color_depth[i].B * 256 * 256); 
-        float normalized_depth = depth / ((256 * 256 * 256) - 1);
-        float dist = normalized_depth * 10;
+        float depth = color_depth[i].R  + (color_depth[i].G * 256.0f) + (color_depth[i].B * 256.0f * 256.0f); 
+        float normalized_depth = depth / ((256.0f * 256.0f * 256.0f) - 1.0f);
+        float dist = normalized_depth * 10.0f;
         float_depth.push_back(dist);
     }
     return float_depth;

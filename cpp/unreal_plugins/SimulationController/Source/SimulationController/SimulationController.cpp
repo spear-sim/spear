@@ -18,6 +18,7 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/UnrealUtils.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/Box.h"
 #include "SimulationController/CameraAgent.h"
@@ -82,7 +83,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         auto level_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "LEVEL_NAME"});
 
         // if the current world is not the desired one, open the desired one
-        if (world_path_name != "" && world_path_name != TCHAR_TO_UTF8(*(world->GetPathName()))) {
+        if (world_path_name != "" && world_path_name != UnrealUtils::toString(world->GetPathName())) {
 
             // assert that we haven't already tried to open the level, because that means we failed
             ASSERT(!has_open_level_executed_);
@@ -109,7 +110,7 @@ void SimulationController::worldBeginPlayEventHandler()
 {
     // execute optional console commands from python client
     for (auto& command : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS"})) {
-        GEngine->Exec(world_, UTF8_TO_TCHAR(command.c_str()));
+        GEngine->Exec(world_, *UnrealUtils::toFString(command));
     }
 
     // Set fixed simulation step time in seconds. Check that the physics substepping parameters match our deired simulation step time.

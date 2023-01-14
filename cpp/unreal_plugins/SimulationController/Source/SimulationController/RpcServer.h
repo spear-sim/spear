@@ -48,7 +48,6 @@ auto moveHandler(FunctorT&& func)
     return detail::MoveWrapper<F>{std::move(func)};
 }
 
-
 class RpcServer
 {
 public:
@@ -85,7 +84,6 @@ public:
         mutex_.unlock();
     }
 
-    // warning does not stop the game thread.
     void stop()
     {
         server_.close_sessions();

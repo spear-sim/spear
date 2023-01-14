@@ -13,26 +13,26 @@
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/StdUtils.h"
+#include "CoreUtils/UnrealUtils.h"
 #include "SimulationController/ActorHitEvent.h"
 #include "SimulationController/Box.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
     // spawn goal actor
-    FActorSpawnParameters goal_spawn_params;
-    goal_spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_ACTOR_NAME"}).c_str());
-    goal_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-    goal_actor_ = world->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, goal_spawn_params);
+    FActorSpawnParameters actor_spawn_params;
+    actor_spawn_params.Name = UnrealUtils::toFName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_ACTOR_NAME"}));
+    actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    goal_actor_ = world->SpawnActor<AStaticMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
     ASSERT(goal_actor_);
 
     goal_actor_->SetMobility(EComponentMobility::Movable);
 
     UStaticMeshComponent* goal_mesh_component = goal_actor_->GetStaticMeshComponent();
 
-    UStaticMesh* goal_mesh   = LoadObject<UStaticMesh>(nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MESH"}).c_str()));
+    UStaticMesh* goal_mesh = LoadObject<UStaticMesh>(nullptr, *UnrealUtils::toFString(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MESH"})));
     ASSERT(goal_mesh);
-    UMaterial* goal_material = LoadObject<UMaterial>  (nullptr, UTF8_TO_TCHAR(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MATERIAL"}).c_str()));
+    UMaterial* goal_material = LoadObject<UMaterial>(nullptr, *UnrealUtils::toFString(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_MATERIAL"})));
     ASSERT(goal_material);
 
     goal_mesh_component->SetStaticMesh(goal_mesh);
@@ -41,11 +41,11 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
                                          Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_SCALE"}),
                                          Config::getValue<float>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "GOAL_SCALE"})));
 
-    new_object_parent_actor_ = world->SpawnActor<AActor>();
-    ASSERT(new_object_parent_actor_);
+    parent_actor_ = world->SpawnActor<AActor>();
+    ASSERT(parent_actor_);
 
     // create UActorHitEvent but don't subscribe to any actors yet
-    actor_hit_event_ = NewObject<UActorHitEvent>(new_object_parent_actor_, TEXT("ActorHitEvent"));
+    actor_hit_event_ = NewObject<UActorHitEvent>(parent_actor_);
     ASSERT(actor_hit_event_);
     actor_hit_event_->RegisterComponent();
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
@@ -67,9 +67,9 @@ PointGoalNavTask::~PointGoalNavTask()
     actor_hit_event_->DestroyComponent();
     actor_hit_event_ = nullptr;
 
-    ASSERT(new_object_parent_actor_);
-    new_object_parent_actor_->Destroy();
-    new_object_parent_actor_ = nullptr;
+    ASSERT(parent_actor_);
+    parent_actor_->Destroy();
+    parent_actor_ = nullptr;
 
     ASSERT(goal_actor_);
     goal_actor_->Destroy();
@@ -78,17 +78,10 @@ PointGoalNavTask::~PointGoalNavTask()
 
 void PointGoalNavTask::findObjectReferences(UWorld* world)
 {
-    auto obstacle_ignore_actor_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"});
-    for (TActorIterator<AActor> actor_itr(world); actor_itr; ++actor_itr) {
-        std::string actor_name = TCHAR_TO_UTF8(*((*actor_itr)->GetName()));
-        if (actor_name == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AGENT_ACTOR_NAME"})) {
-            ASSERT(!agent_actor_);
-            agent_actor_ = *actor_itr;
-        } else if (StdUtils::contains(obstacle_ignore_actor_names, actor_name)) {
-            obstacle_ignore_actors_.emplace_back(*actor_itr);
-        }
-    }
+    agent_actor_ = UnrealUtils::findActorByName(world, Config::getValue<std::string>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "AGENT_ACTOR_NAME"}));
     ASSERT(agent_actor_);
+
+    obstacle_ignore_actors_ = UnrealUtils::findActorsByNameAsVector(world, Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "POINT_GOAL_NAV_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"}), false);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_->subscribeToActor(agent_actor_);
@@ -140,14 +133,14 @@ std::map<std::string, Box> PointGoalNavTask::getStepInfoSpace() const
     std::map<std::string, Box> step_info_space;
     Box box;
     
-    box.low_ = 0;
-    box.high_ = 1;
+    box.low_ = 0.0f;
+    box.high_ = 1.0f;
     box.shape_ = {1};
     box.dtype_ = DataType::Boolean;
     step_info_space["hit_goal"] = std::move(box);
 
-    box.low_ = 0;
-    box.high_ = 1;
+    box.low_ = 0.0f;
+    box.high_ = 1.0f;
     box.shape_ = {1};
     box.dtype_ = DataType::Boolean;
     step_info_space["hit_obstacle"] = std::move(box);
@@ -192,8 +185,10 @@ void PointGoalNavTask::reset()
         goal_position = FVector(position_x, position_y, position_z);
     }
 
-    agent_actor_->SetActorLocation(agent_position);
-    goal_actor_->SetActorLocation(goal_position);
+    bool sweep = false;
+    FHitResult* hit_result = nullptr;
+    agent_actor_->SetActorLocationAndRotation(agent_position, FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+    goal_actor_->SetActorLocationAndRotation(goal_position, FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
 }
 
 bool PointGoalNavTask::isReady() const

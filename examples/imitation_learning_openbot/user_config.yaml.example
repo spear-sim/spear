@@ -4,12 +4,13 @@
 
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
-  STANDALONE_EXECUTABLE: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim.sh"
+
+  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
   
   DATA_DIR: "/home/quentin/Desktop/ISL/spear_data"
+
   CONTENT_DIR: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Content"
-  VULKAN_DEVICE_FILES: "/usr/share/vulkan/icd.d/nvidia_icd.json"
-  
+
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
   WINDOW_RESOLUTION_X: 160
@@ -35,13 +36,12 @@ SIMULATION_CONTROLLER:
   SIMULATION_STEP_TIME_SECONDS: 0.033
 
   OPENBOT_AGENT:
-    OPENBOT_ACTOR_NAME: "OpenBotAgent"
+    OPENBOT_ACTOR_NAME: "OpenBotActor"
     TRAJECTORY_DATA:
       GOAL_ACTOR_NAME: "GoalActor"
     ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
     STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
     OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
-    IS_READY_VELOCITY_THRESHOLD: 1.0
    
     CAMERA:
       IMAGE_HEIGHT: 120
@@ -62,16 +62,16 @@ SIMULATION_CONTROLLER:
       TILE_POOL_SIZE: 1024
       MAX_SIMPLIFICATION_ERROR: 1.3
       NAV_MODIFIER_OFFSET_Z: 20.0
-      WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+      BOUNDS_VOLUME_ACTOR_TAGS: ["architecture", "furniture"]
   
   IMITATION_LEARNING_TASK:
-    AGENT_ACTOR_NAME: "OpenBotAgent"
+    AGENT_ACTOR_NAME: "OpenBotActor"
     GOAL_ACTOR_NAME: "GoalActor"
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Region around a sampled initial position to look for a reachable goal position.
     TRAJECTORY_SAMPLING_MAX_ITERS: 100
-    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # When True, note that markers will only be dispayed in Standalone-Development mode
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # When True, note that markers will only be dispayed in development builds
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
@@ -79,14 +79,14 @@ SIMULATION_CONTROLLER:
     POSITIONS_FILE: ""
 
   VISUALIZER:
-    ACTOR_NAME: "OpenBotAgent"
+    ACTOR_NAME: "OpenBotActor"
     SPAWN_CAMERA: False
 
   CAMERA_SENSOR:
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
   
   IMU_SENSOR:
-    DEBUG_RENDER: True # When True, note that markers will only be dispayed in Standalone-Development mode
+    DEBUG_RENDER: True # When True, note that markers will only be dispayed in development builds
 
   SONAR_SENSOR:
-    DEBUG_RENDER: True # When True, note that markers will only be dispayed in Standalone-Development mode
+    DEBUG_RENDER: True # When True, note that markers will only be dispayed in development builds

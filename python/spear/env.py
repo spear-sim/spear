@@ -106,7 +106,7 @@ class Env(gym.Env):
         if reset_info is not None:
             assert isinstance(reset_info, dict)
             reset_info["success"] = ready
-            
+
         return obs
 
     # need to override gym.Env member function
@@ -436,8 +436,8 @@ class Env(gym.Env):
                  "agent_step_info": self._deserialize(agent_step_info, self._agent_step_info_space) }
 
     def _reset(self):
-        # reset the task first in case it needs to set the position of actors,
-        # then reset agent so it can refine the position of actors
+        # reset the task first in case it needs to set the pose of actors,
+        # then reset agent so it can refine the pose of actors
         self._client.call("resetTask")
         self._client.call("resetAgent")
 

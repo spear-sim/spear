@@ -9,7 +9,9 @@
 #include <Misc/Parse.h>
 #include <Misc/Paths.h>
 
-YAML::Node Config::config_;
+#include "CoreUtils/UnrealUtils.h"
+
+YAML::Node Config::s_config_;
 
 void Config::initialize()
 {
@@ -17,13 +19,12 @@ void Config::initialize()
 
     // If a config file is provided via the command-line, then load it
     if (FParse::Value(FCommandLine::Get(), TEXT("config_file="), config_file)) {
-        config_ = YAML::LoadFile(TCHAR_TO_UTF8(*config_file));
+        s_config_ = YAML::LoadFile(UnrealUtils::toString(config_file));
 
     // Otherwise, if MyProject/Temp/config.yaml exists, then load it
     } else if (FPaths::FileExists(FPaths::ConvertRelativePathToFull(FPaths::ProjectDir().Append("Temp/config.yaml")))) {
-        // Read config file contents into a YAML::Node
         config_file = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir().Append("Temp/config.yaml"));
-        config_ = YAML::LoadFile(TCHAR_TO_UTF8(*config_file));
+        s_config_ = YAML::LoadFile(UnrealUtils::toString(config_file));
 
     // Otherwise assert
     } else {
@@ -33,5 +34,5 @@ void Config::initialize()
 
 void Config::terminate()
 {
-    config_.reset();
+    s_config_.reset();
 }
