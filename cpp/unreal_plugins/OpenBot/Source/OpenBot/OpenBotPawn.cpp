@@ -308,11 +308,11 @@ void AOpenBotPawn::setDriveTorquesFromDutyCycle()
     }
 
     // Apply the drive torque in [N.m] to the vehicle wheels. The applied driveTorque persists until the
-    // next call to "SetDriveTorque". Note that the "SetDriveTorque" command can be found in the code of
-    // the Unreal Engine at the following location:
+    // next call to SetDriveTorque. Note that the SetDriveTorque command can be found in the code of the
+    // Unreal Engine at the following location:
     //     Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/SimpleWheeledVehicleMovementComponent.h
     //
-    // This file also contains a bunch of useful functions such as "SetBrakeTorque" or "SetSteerAngle".
+    // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
     // Please take a look if you want to modify the way the simulated vehicle is being controlled.
     
     vehicle_movement_component_->SetDriveTorque(wheel_torque(0), 0);
