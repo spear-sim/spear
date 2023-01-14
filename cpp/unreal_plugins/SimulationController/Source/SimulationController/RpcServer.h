@@ -84,7 +84,6 @@ public:
         mutex_.unlock();
     }
 
-    // warning does not stop the game thread.
     void stop()
     {
         server_.close_sessions();
