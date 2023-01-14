@@ -34,7 +34,7 @@ private:
     void updateLinearAcceleration(float delta_time);
     void updateAngularRate();
 
-    AActor* new_object_parent_actor_ = nullptr;
+    AActor* parent_actor_ = nullptr;
 
     UPrimitiveComponent* component_ = nullptr;
 

@@ -38,7 +38,7 @@ SIMULATION_CONTROLLER:
       NAV_MODIFIER_OFFSET_X: 0.0
       NAV_MODIFIER_OFFSET_Y: 0.0
       NAV_MODIFIER_OFFSET_Z: 0.0
-      WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+      BOUNDS_VOLUME_ACTOR_TAGS: ["architecture", "furniture"]
       EXPORT_NAV_DATA_OBJ: False
       EXPORT_NAV_DATA_OBJ_DIR: ""
 
@@ -46,8 +46,8 @@ SIMULATION_CONTROLLER:
     OPENBOT_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
     OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera", "encoder", "imu", "sonar"
-    STEP_INFO_COMPONENTS: ["trajectory_data"]
-    IS_READY_VELOCITY_THRESHOLD: 0.0
+    STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
+    IS_READY_VELOCITY_THRESHOLD: 0.001
     CAMERA:
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals" 
       IMAGE_HEIGHT: 512
@@ -70,7 +70,7 @@ SIMULATION_CONTROLLER:
       NAV_MODIFIER_OFFSET_X: 0.0
       NAV_MODIFIER_OFFSET_Y: 0.0
       NAV_MODIFIER_OFFSET_Z: 0.0
-      WORLD_BOUND_TAG_NAMES: ["architecture", "furniture"]
+      BOUNDS_VOLUME_ACTOR_TAGS: ["architecture", "furniture"]
       EXPORT_NAV_DATA_OBJ: False
       EXPORT_NAV_DATA_OBJ_DIR: ""
 

@@ -28,7 +28,8 @@ public:
     float range_ = 0.0f;
 
 private:
-    AActor* new_object_parent_actor_ = nullptr;
+    AActor* parent_actor_ = nullptr;
+
     UBoxComponent* component_ = nullptr;
 
     UTickEvent* tick_event_ = nullptr;

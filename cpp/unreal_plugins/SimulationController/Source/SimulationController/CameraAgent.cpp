@@ -20,6 +20,7 @@
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/StdUtils.h"
+#include "CoreUtils/UnrealUtils.h"
 #include "SimulationController/Box.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/Serialize.h"
@@ -33,10 +34,10 @@ CameraAgent::CameraAgent(UWorld* world)
     //
     if (StdUtils::contains(observation_components, "camera")) {
 
-        FActorSpawnParameters spawn_params;
-        spawn_params.Name = FName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "ACTOR_NAME"}).c_str());
-        spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        camera_actor_ = world->SpawnActor<ACameraActor>(FVector(0, 0, 0), FRotator(0, 0, 0), spawn_params);
+        FActorSpawnParameters actor_spawn_params;
+        actor_spawn_params.Name = UnrealUtils::toFName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "ACTOR_NAME"}));
+        actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
         ASSERT(camera_actor_);
 
         camera_sensor_ = std::make_unique<CameraSensor>(
@@ -196,7 +197,7 @@ void CameraAgent::applyAction(const std::map<std::string, std::vector<float>>& a
         FRotator agent_rotation(action.at("set_pose").at(3), action.at("set_pose").at(4), action.at("set_pose").at(5));
         bool sweep = false;
         FHitResult* hit_result = nullptr;
-        camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result, ETeleportType::TeleportPhysics);
+        camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result, ETeleportType::ResetPhysics);
     }
 
     // store action because we might use it in getStepInfo(...)
@@ -239,9 +240,9 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
         int num_random_points = static_cast<int>(action_.at("set_num_random_points").at(0));
         for (int i = 0; i < num_random_points; i++) {
             FVector random_position = nav_mesh_->GetRandomPoint().Location;
-            random_points.emplace_back(random_position.X);
-            random_points.emplace_back(random_position.Y);
-            random_points.emplace_back(random_position.Z);
+            random_points.push_back(random_position.X);
+            random_points.push_back(random_position.Y);
+            random_points.push_back(random_position.Z);
         }
 
         step_info["random_points"] = Serialize::toUint8(random_points);
@@ -273,42 +274,31 @@ void CameraAgent::buildNavMesh()
     nav_mesh_->TilePoolSize           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "TILE_POOL_SIZE"});
     nav_mesh_->MaxSimplificationError = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "MAX_SIMPLIFICATION_ERROR"});
 
-    // get world bounding box
-    FBox world_box(ForceInit);
-    auto world_bound_tag_names = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "WORLD_BOUND_TAG_NAMES"});
-    for (TActorIterator<AActor> actor_itr(camera_actor_->GetWorld()); actor_itr; ++actor_itr) {
-        for (auto& name : world_bound_tag_names) {
-            if (actor_itr->ActorHasTag(name.c_str())) {
-                world_box += actor_itr->GetComponentsBoundingBox(false, true);
-            }
-        }
+    // get bounding volume
+    FBox bounds_volume(EForceInit::ForceInit);
+    for (auto& actor : UnrealUtils::findActorsByTagAny(camera_actor_->GetWorld(), Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "BOUNDS_VOLUME_ACTOR_TAGS"}))) {
+        bounds_volume += actor->GetComponentsBoundingBox(false, true);
     }
 
     // get references to ANavMeshBoundsVolume and ANavModifierVolume
-    ANavMeshBoundsVolume* nav_mesh_bounds_volume = nullptr;
-    for (TActorIterator<ANavMeshBoundsVolume> actor_itr(camera_actor_->GetWorld()); actor_itr; ++actor_itr) {
-        nav_mesh_bounds_volume = *actor_itr;
-    }
+    ANavMeshBoundsVolume* nav_mesh_bounds_volume = UnrealUtils::findActorByType<ANavMeshBoundsVolume>(camera_actor_->GetWorld());
     ASSERT(nav_mesh_bounds_volume);
 
-    ANavModifierVolume* nav_modifier_volume = nullptr;
-    for (TActorIterator<ANavModifierVolume> actor_itr(camera_actor_->GetWorld()); actor_itr; ++actor_itr) {
-        nav_modifier_volume = *actor_itr;
-    }
+    ANavModifierVolume* nav_modifier_volume = UnrealUtils::findActorByType<ANavModifierVolume>(camera_actor_->GetWorld());
     ASSERT(nav_modifier_volume);
 
     // update ANavMeshBoundsVolume
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    nav_mesh_bounds_volume->SetActorLocation(world_box.GetCenter(), false);
-    nav_mesh_bounds_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.0f);
+    nav_mesh_bounds_volume->SetActorLocation(bounds_volume.GetCenter(), false);
+    nav_mesh_bounds_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.0f);
     nav_mesh_bounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
     // update ANavModifierVolume
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    nav_modifier_volume->SetActorLocation(world_box.GetCenter(), false);
-    nav_modifier_volume->SetActorRelativeScale3D(world_box.GetSize() / 200.f);
+    nav_modifier_volume->SetActorLocation(bounds_volume.GetCenter(), false);
+    nav_modifier_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.f);
     nav_modifier_volume->AddActorWorldOffset(FVector(
         Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_X"}),
         Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "NAVMESH", "NAV_MODIFIER_OFFSET_Y"}),

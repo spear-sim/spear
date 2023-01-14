@@ -47,7 +47,7 @@ private:
     // Static function for decoding depth data encoded as a color image
     static std::vector<float> getFloatDepthFromColorDepth(TArray<FColor>& data);
 
-    AActor* new_object_parent_actor_ = nullptr;
+    AActor* parent_actor_ = nullptr;
 
     int width_ = -1;
     int height_ = -1;

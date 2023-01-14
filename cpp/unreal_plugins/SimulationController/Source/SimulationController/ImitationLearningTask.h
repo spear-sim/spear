@@ -41,7 +41,7 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit);
+    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
 
 private:
     // Get a list of the different initial and goal positions the agent is expected to navigate to.
@@ -58,7 +58,7 @@ private:
     
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
-    AActor* new_object_parent_actor_ = nullptr;
+    AActor* parent_actor_ = nullptr;
 
     std::vector<AActor*> obstacle_ignore_actors_;
 

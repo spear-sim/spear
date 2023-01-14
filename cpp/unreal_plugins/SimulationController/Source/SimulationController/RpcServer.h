@@ -48,7 +48,6 @@ auto moveHandler(FunctorT&& func)
     return detail::MoveWrapper<F>{std::move(func)};
 }
 
-
 class RpcServer
 {
 public:

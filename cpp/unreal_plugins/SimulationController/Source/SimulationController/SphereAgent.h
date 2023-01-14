@@ -51,11 +51,11 @@ public:
 private:
 
     AStaticMeshActor* sphere_actor_ = nullptr;
-    AActor* goal_actor_ = nullptr;
-    AActor* new_object_parent_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
+    AActor* goal_actor_ = nullptr;
+    AActor* parent_actor_ = nullptr;
 
-    UStaticMeshComponent* sphere_static_mesh_component_ = nullptr;
+    UStaticMeshComponent* static_mesh_component_ = nullptr;
 
     UTickEvent* tick_event_ = nullptr;
     FDelegateHandle tick_event_handle_;

@@ -112,7 +112,7 @@ struct UrdfJointDesc
     FTransform origin_ = FTransform::Identity;
     std::string parent_;
     std::string child_;
-    FVector axis_      = FVector(1, 0, 0);
+    FVector axis_      = FVector(1.0f, 0.0f, 0.0f);
 
     // dynamics
     float damping_  = 0.0f;
