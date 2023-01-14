@@ -41,9 +41,6 @@ OpenBotAgent::OpenBotAgent(UWorld* world)
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
         camera_sensor_ = std::make_unique<CameraSensor>(
             open_bot_pawn_->camera_component_,
@@ -58,17 +55,11 @@ OpenBotAgent::OpenBotAgent(UWorld* world)
         }
     }
 
-    //
-    // observation["imu"]
-    //
     if (StdUtils::contains(observation_components, "imu")) {
         imu_sensor_ = std::make_unique<ImuSensor>(open_bot_pawn_->imu_component_);
         ASSERT(imu_sensor_);
     }
     
-    //
-    // observation["sonar"]
-    //
     if (StdUtils::contains(observation_components, "sonar")) {
         sonar_sensor_ = std::make_unique<SonarSensor>(open_bot_pawn_->sonar_component_);
         ASSERT(sonar_sensor_);
@@ -79,25 +70,16 @@ OpenBotAgent::~OpenBotAgent()
 {
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["sonar"]
-    //
     if (StdUtils::contains(observation_components, "sonar")) {
         ASSERT(sonar_sensor_);
         sonar_sensor_ = nullptr;
     }
 
-    //
-    // observation["imu"]
-    //
     if (StdUtils::contains(observation_components, "imu")) {
         ASSERT(imu_sensor_);
         imu_sensor_ = nullptr;
     }
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
         ASSERT(camera_sensor_);
         camera_sensor_ = nullptr;
@@ -112,9 +94,6 @@ void OpenBotAgent::findObjectReferences(UWorld* world)
 {
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
-    //
-    // step_info["trajectory_data"]
-    //
     if (StdUtils::contains(step_info_components, "trajectory_data")) {
 
         goal_actor_ = UnrealUtils::findActorByName(world, Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "TRAJECTORY_DATA", "GOAL_ACTOR_NAME"}));
@@ -142,9 +121,6 @@ void OpenBotAgent::cleanUpObjectReferences()
 {
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
-    //
-    // step_info["trajectory_data"]
-    //
     if (StdUtils::contains(step_info_components, "trajectory_data")) {
         ASSERT(nav_mesh_);
         nav_mesh_ = nullptr;
@@ -165,9 +141,6 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
 
     auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "ACTION_COMPONENTS"});
 
-    //
-    // action["apply_voltage"]
-    //
     if (StdUtils::contains(action_components, "apply_voltage")) {
         box.low_ = -1.f;
         box.high_ = 1.f;
@@ -176,9 +149,6 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
         action_space["apply_voltage"] = std::move(box);
     }
 
-    //
-    // action["set_position_xyz_centimeters"]
-    //
     if (StdUtils::contains(action_components, "set_position_xyz_centimeters")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -187,9 +157,6 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
         action_space["set_position_xyz_centimeters"] = std::move(box);
     }
 
-    //
-    // action["set_orientation_pyr_radians"]
-    //
     if (StdUtils::contains(action_components, "set_orientation_pyr_radians")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -208,9 +175,6 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["state_data"]
-    //
     if (StdUtils::contains(observation_components, "state_data")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -219,9 +183,6 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
         observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
     }
 
-    //
-    // observation["control_data"]
-    //
     if (StdUtils::contains(observation_components, "control_data")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -230,11 +191,7 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
         observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
     }
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
-
         // get an observation space from the CameraSensor and add it to our Agent's observation space
         std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace();
         for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
@@ -242,9 +199,6 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
         }
     }
 
-    //
-    // observation["encoder"]
-    //
     if (StdUtils::contains(observation_components, "encoder")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -253,9 +207,6 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
         observation_space["encoder"] = std::move(box); // FL, FR, RL, RR
     }
 
-    //
-    // observation["imu"]
-    //
     if (StdUtils::contains(observation_components, "imu")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -264,9 +215,6 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
         observation_space["imu"] = std::move(box); // a_x, a_y, a_z, g_x, g_y, g_z
     }
 
-    //
-    // observation["sonar"]
-    //
     if (StdUtils::contains(observation_components, "sonar")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -285,9 +233,6 @@ std::map<std::string, Box> OpenBotAgent::getStepInfoSpace() const
 
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
-    //
-    // step_info["trajectory_data"]
-    //
     if (StdUtils::contains(step_info_components, "trajectory_data")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -303,17 +248,11 @@ void OpenBotAgent::applyAction(const std::map<std::string, std::vector<float>>& 
 {
     auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "ACTION_COMPONENTS"});
 
-    //
-    // action["apply_voltage"]
-    //
     if (StdUtils::contains(action_components, "apply_voltage")) {
         open_bot_pawn_->setDutyCycle(Eigen::Vector4f(action.at("apply_voltage").at(0), action.at("apply_voltage").at(1), action.at("apply_voltage").at(0), action.at("apply_voltage").at(1)));
         open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
     }
 
-    //
-    // action["set_position_xyz_centimeters"]
-    //
     if (StdUtils::contains(action_components, "set_position_xyz_centimeters")) {
         FVector location(action.at("set_position_xyz_centimeters").at(0), action.at("set_position_xyz_centimeters").at(1), action.at("set_position_xyz_centimeters").at(2));
         bool sweep = false;
@@ -322,9 +261,6 @@ void OpenBotAgent::applyAction(const std::map<std::string, std::vector<float>>& 
         open_bot_pawn_->setBrakeTorques(Eigen::Vector4f(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get value from the config system
     }
 
-    //
-    // action["set_orientation_pyr_radians"]
-    //
     if (StdUtils::contains(action_components, "set_orientation_pyr_radians")) {
         FRotator rotation{FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(0)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(1)), FMath::RadiansToDegrees(action.at("set_orientation_pyr_radians").at(2))};
         open_bot_pawn_->SetActorRotation(rotation, ETeleportType::TeleportPhysics);
@@ -338,9 +274,6 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["state_data"]
-    //
     if (StdUtils::contains(observation_components, "state_data")) {
         FVector location = open_bot_pawn_->GetActorLocation();
         FRotator rotation = open_bot_pawn_->GetActorRotation();
@@ -353,9 +286,6 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
             FMath::DegreesToRadians(rotation.Roll)});
     }
 
-    //
-    // observation["control_data"]
-    //
     if (StdUtils::contains(observation_components, "control_data")) {
         Eigen::Vector4f duty_cycle = open_bot_pawn_->getDutyCycle();
         Eigen::Vector2f control_state;
@@ -364,11 +294,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
         observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
     }
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
-
         // get an observation from the CameraSensor and add it to our Agent's observation
         std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation();
         for (auto& camera_sensor_observation_component : camera_sensor_observation) {
@@ -376,24 +302,15 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
         }
     }
 
-    //
-    // observation["encoder"]
-    //
     if (StdUtils::contains(observation_components, "encoder")) {
         Eigen::Vector4f wheel_rotation_speeds = open_bot_pawn_->getWheelRotationSpeeds();
         observation["encoder"] = Serialize::toUint8(std::vector<float>{wheel_rotation_speeds(0), wheel_rotation_speeds(1), wheel_rotation_speeds(2), wheel_rotation_speeds(3)});
     }
 
-    //
-    // observation["imu"]
-    //
     if (StdUtils::contains(observation_components, "imu")) {
         observation["imu"] = Serialize::toUint8(std::vector<float>{imu_sensor_->linear_acceleration_.X, imu_sensor_->linear_acceleration_.Y, imu_sensor_->linear_acceleration_.Z, imu_sensor_->angular_rate_.X, imu_sensor_->angular_rate_.Y, imu_sensor_->angular_rate_.Z});
     }
 
-    //
-    // observation["sonar"]
-    //
     if (StdUtils::contains(observation_components, "sonar")) {
         observation["sonar"] = Serialize::toUint8(std::vector<float>{sonar_sensor_->range_});
     }
@@ -407,9 +324,6 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getStepInfo() const
 
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "STEP_INFO_COMPONENTS"});
 
-    //
-    // step_info["trajectory_data"]
-    //
     if (StdUtils::contains(step_info_components, "trajectory_data")) {
         step_info["trajectory_data"] = Serialize::toUint8(trajectory_);
     }

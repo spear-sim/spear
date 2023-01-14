@@ -63,9 +63,6 @@ SphereAgent::SphereAgent(UWorld* world)
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
         FActorSpawnParameters camera_spawn_params;
         camera_spawn_params.Name = UnrealUtils::toFName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "CAMERA", "ACTOR_NAME"}));
@@ -100,9 +97,6 @@ SphereAgent::~SphereAgent()
 {
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {        
         ASSERT(tick_event_);
         tick_event_->delegate_.Remove(tick_event_handle_);
@@ -131,9 +125,6 @@ void SphereAgent::findObjectReferences(UWorld* world)
 {
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["compass"]
-    //
     if (StdUtils::contains(observation_components, "compass")) {
         goal_actor_ = UnrealUtils::findActorByName(world, Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "COMPASS", "GOAL_ACTOR_NAME"}));
         ASSERT(goal_actor_);
@@ -144,9 +135,6 @@ void SphereAgent::cleanUpObjectReferences()
 {
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["compass"]
-    //
     if (StdUtils::contains(observation_components, "compass")) {
         ASSERT(goal_actor_);
         goal_actor_ = nullptr;
@@ -160,9 +148,6 @@ std::map<std::string, Box> SphereAgent::getActionSpace() const
 
     auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "ACTION_COMPONENTS"});
 
-    //
-    // action["apply_force"]
-    //
     if (StdUtils::contains(action_components, "apply_force")) {
         box.low_ = -1.f;
         box.high_ = 1.f;
@@ -181,9 +166,6 @@ std::map<std::string, Box> SphereAgent::getObservationSpace() const
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["compass"]
-    //
     if (StdUtils::contains(observation_components, "compass")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -192,9 +174,6 @@ std::map<std::string, Box> SphereAgent::getObservationSpace() const
         observation_space["compass"] = std::move(box);
     }
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
 
         // get an observation space from the CameraSensor and add it to our Agent's observation space
@@ -214,9 +193,6 @@ std::map<std::string, Box> SphereAgent::getStepInfoSpace() const
 
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "STEP_INFO_COMPONENTS"});
 
-    //
-    // step_info["debug_info"]
-    //
     if (StdUtils::contains(step_info_components, "debug_info")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -232,9 +208,6 @@ void SphereAgent::applyAction(const std::map<std::string, std::vector<float>>& a
 {
     auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "ACTION_COMPONENTS"});
 
-    //
-    // action["apply_force"]
-    //
     if (StdUtils::contains(action_components, "apply_force")) {
 
         // Get yaw from the camera, apply force to the sphere in that direction
@@ -266,9 +239,6 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["compass"]
-    //
     if (StdUtils::contains(observation_components, "compass")) {
 
         FVector sphere_to_goal = goal_actor_->GetActorLocation() - sphere_actor_->GetActorLocation();
@@ -283,9 +253,6 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
             Config::getValue<float>({"SIMULATION_CONTROLLER", "SPHERE_AGENT", "COMPASS", "YAW_SCALE"}) * observation_camera_yaw});
     }
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
 
         // get an observation from the CameraSensor and add it to our Agent's observation

@@ -29,11 +29,7 @@ CameraAgent::CameraAgent(UWorld* world)
 {
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
-
         FActorSpawnParameters actor_spawn_params;
         actor_spawn_params.Name = UnrealUtils::toFName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "CAMERA", "ACTOR_NAME"}));
         actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -58,9 +54,6 @@ CameraAgent::~CameraAgent()
 {
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
         ASSERT(camera_sensor_);
         camera_sensor_ = nullptr;
@@ -75,9 +68,6 @@ void CameraAgent::findObjectReferences(UWorld* world)
 {
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "STEP_INFO_COMPONENTS"});
 
-    //
-    // step_info["random_points"]
-    //
     if (StdUtils::contains(step_info_components, "random_points")) {
 
         nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
@@ -102,9 +92,6 @@ void CameraAgent::cleanUpObjectReferences()
 {
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "STEP_INFO_COMPONENTS"});
 
-    //
-    // step_info["random_points"]
-    //
     if (StdUtils::contains(step_info_components, "random_points")) {
         nav_mesh_ = nullptr;
     }
@@ -117,9 +104,6 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
 
     auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "ACTION_COMPONENTS"});
 
-    //
-    // action["set_pose"]
-    //
     if (StdUtils::contains(action_components, "set_pose")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -128,9 +112,6 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
         action_space["set_pose"] = std::move(box);
     }
 
-    //
-    // action["set_num_random_points"]
-    //
     if (StdUtils::contains(action_components, "set_num_random_points")) {
         box.low_ = std::numeric_limits<uint32_t>::lowest();
         box.high_ = std::numeric_limits<uint32_t>::max();
@@ -149,9 +130,6 @@ std::map<std::string, Box> CameraAgent::getObservationSpace() const
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
 
         // get an observation space from the CameraSensor and add it to our Agent's observation space
@@ -171,9 +149,6 @@ std::map<std::string, Box> CameraAgent::getStepInfoSpace() const
 
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "STEP_INFO_COMPONENTS"});
 
-    //
-    // step_info["random_points"]
-    //
     if (StdUtils::contains(step_info_components, "random_points")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -189,9 +164,6 @@ void CameraAgent::applyAction(const std::map<std::string, std::vector<float>>& a
 {
     auto action_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "ACTION_COMPONENTS"});
 
-    //
-    // action["set_pose"]
-    //
     if (StdUtils::contains(action_components, "set_pose")) {
         FVector agent_location(action.at("set_pose").at(0), action.at("set_pose").at(1), action.at("set_pose").at(2));
         FRotator agent_rotation(action.at("set_pose").at(3), action.at("set_pose").at(4), action.at("set_pose").at(5));
@@ -210,9 +182,6 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
 
     auto observation_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "OBSERVATION_COMPONENTS"});
 
-    //
-    // observation["camera"]
-    //
     if (StdUtils::contains(observation_components, "camera")) {
 
         // get an observation from the CameraSensor and add it to our Agent's observation
@@ -231,9 +200,6 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
 
     auto step_info_components = Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CAMERA_AGENT", "STEP_INFO_COMPONENTS"});
 
-    //
-    // step_info["random_points"]
-    //
     if (StdUtils::contains(step_info_components, "random_points")) {
 
         std::vector<float> random_points;
