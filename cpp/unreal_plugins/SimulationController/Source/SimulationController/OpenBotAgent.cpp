@@ -420,7 +420,10 @@ void OpenBotAgent::buildNavMesh()
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
     if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "EXPORT_NAV_DATA_OBJ"})) {
-        nav_mesh_->GetGenerator()->ExportNavigationData(FString(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "EXPORT_NAV_DATA_OBJ_DIR"}).c_str()) + "/" + open_bot_pawn_->GetWorld()->GetName() + "/");
+        nav_mesh_->GetGenerator()->ExportNavigationData(
+            UnrealUtils::toFString(
+                Config::getValue<std::string>({"SIMULATION_CONTROLLER", "OPENBOT_AGENT", "NAVMESH", "EXPORT_NAV_DATA_OBJ_DIR"}) + "/" +
+                UnrealUtils::toString(open_bot_pawn_->GetWorld()->GetName()) + "/"));
     }
 #endif
 

@@ -88,7 +88,7 @@ SphereAgent::SphereAgent(UWorld* world)
         tick_event_ = NewObject<UTickEvent>(parent_actor_);
         ASSERT(tick_event_);
         tick_event_->RegisterComponent();
-        tick_event_->initialize(ETickingGroup::TG_PostPhysics);
+        tick_event_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
         tick_event_handle_ = tick_event_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
     }
 }

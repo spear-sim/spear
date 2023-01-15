@@ -4,16 +4,20 @@
 
 #include "OpenBot/OpenBotWheel.h"
 
+#include <iostream>
+
 #include "CoreUtils/CompilerWarningUtils.h"
 #include "CoreUtils/Config.h"
 
 BEGIN_IGNORE_COMPILER_WARNINGS
 UOpenBotWheel::UOpenBotWheel()
 {
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> s_collision_mesh(TEXT("/Engine/EngineMeshes/Cylinder"));
-    ASSERT(s_collision_mesh.Succeeded());
+    std::cout << "[SPEAR | OpenBotWheel.cpp] UOpenBotWheel::UOpenBotWheel" << std::endl;
 
-    CollisionMesh              = s_collision_mesh.Object;
+    ConstructorHelpers::FObjectFinder<UStaticMesh> collision_mesh(TEXT("/Engine/EngineMeshes/Cylinder"));
+    ASSERT(collision_mesh.Succeeded());
+
+    CollisionMesh              = collision_mesh.Object;
     bAffectedByHandbrake       = Config::getValue<bool>({"OPENBOT", "OPENBOT_WHEEL", "AFFECTED_BY_HANDBRAKE"});
     DampingRate                = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "DAMPING_RATE"});
     LatStiffMaxLoad            = Config::getValue<float>({"OPENBOT", "OPENBOT_WHEEL", "LAT_STIFF_MAX_LOAD"});

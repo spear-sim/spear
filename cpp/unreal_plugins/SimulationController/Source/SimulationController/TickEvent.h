@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include <CoreMinimal.h>
 #include <Components/ActorComponent.h>
 
@@ -18,15 +20,13 @@ class UTickEvent : public UActorComponent
 public:
     UTickEvent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
     {
+        std::cout << "[SPEAR | TickEvent.h] UTickEvent::UTickEvent" << std::endl;
+
         PrimaryComponentTick.bCanEverTick = true;
         PrimaryComponentTick.bTickEvenWhenPaused = false;
     }
     
-    void initialize(const ETickingGroup& tick_group)
-    {
-        PrimaryComponentTick.TickGroup = tick_group;
-    }
-
+    // UActorComponent interface
     void TickComponent(float delta_time, enum ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
         delegate_.Broadcast(delta_time, level_tick);

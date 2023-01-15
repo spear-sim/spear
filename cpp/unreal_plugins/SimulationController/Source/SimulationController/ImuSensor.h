@@ -21,9 +21,6 @@ public:
     ImuSensor(UPrimitiveComponent* component);
     ~ImuSensor();
 
-    // Updates the IMU's linear acceleration and angular rate measurements at once
-    void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
-
     // Accelerometer: measures linear acceleration in m/s^2
     FVector linear_acceleration_ = FVector::ZeroVector;
 
@@ -31,6 +28,9 @@ public:
     FVector angular_rate_ = FVector::ZeroVector;
 
 private:
+    // Updates the IMU's linear acceleration and angular rate measurements
+    void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
+
     void updateLinearAcceleration(float delta_time);
     void updateAngularRate();
 

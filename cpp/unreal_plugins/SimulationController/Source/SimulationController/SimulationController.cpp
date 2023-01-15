@@ -4,6 +4,7 @@
 
 #include "SimulationController/SimulationController.h"
 
+#include <iostream>
 #include <map>
 #include <string>
 #include <thread>
@@ -43,6 +44,8 @@ enum class FrameState : uint8_t
 
 void SimulationController::StartupModule()
 {
+    std::cout << "[SPEAR | SimulationController.cpp] SimulationController::StartupModule" << std::endl;
+
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
     
@@ -56,6 +59,8 @@ void SimulationController::StartupModule()
 
 void SimulationController::ShutdownModule()
 {
+    std::cout << "[SPEAR | SimulationController.cpp] SimulationController::ShutdownModule" << std::endl;
+
     // If this module is unloaded in the middle of simulation for some reason, raise an error because we do not support this and we want to know when this happens.
     // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
     ASSERT(!world_begin_play_delegate_handle_.IsValid());
@@ -75,6 +80,8 @@ void SimulationController::ShutdownModule()
 
 void SimulationController::postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
 {
+    std::cout << "[SPEAR | SimulationController.cpp] SimulationController::postWorldInitializationEventHandler" << std::endl;
+
     ASSERT(world);
 
     if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
@@ -82,16 +89,24 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         auto world_path_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "WORLD_PATH_NAME"});
         auto level_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "LEVEL_NAME"});
 
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():                      " << UnrealUtils::toString(world->GetName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():                  " << UnrealUtils::toString(world->GetPathName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.WORLD_PATH_NAME: " << world_path_name << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.LEVEL_NAME:      " << level_name << std::endl;
+
         // if the current world is not the desired one, open the desired one
         if (world_path_name != "" && world_path_name != UnrealUtils::toString(world->GetPathName())) {
+
+            std::cout << "[SPEAR | SimulationController.cpp] Opening SIMULATION_CONTROLLER.LEVEL_NAME..." << std::endl;
 
             // assert that we haven't already tried to open the level, because that means we failed
             ASSERT(!has_open_level_executed_);
 
-            UGameplayStatics::OpenLevel(world, level_name.c_str());
+            UGameplayStatics::OpenLevel(world, UnrealUtils::toFName(level_name));
             has_open_level_executed_ = true;
 
         } else {
+
             has_open_level_executed_ = false;
 
             // we expect worldCleanupEventHandler(...) to be called before a new world is created.
@@ -108,6 +123,8 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
 void SimulationController::worldBeginPlayEventHandler()
 {
+    std::cout << "[SPEAR | SimulationController.cpp] SimulationController::worldBeginPlayEventHandler" << std::endl;
+
     // execute optional console commands from python client
     for (auto& command : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS"})) {
         GEngine->Exec(world_, *UnrealUtils::toFString(command));
@@ -177,6 +194,8 @@ void SimulationController::worldBeginPlayEventHandler()
 
 void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources)
 {
+    std::cout << "[SPEAR | SimulationController.cpp] SimulationController::worldCleanupEventHandler" << std::endl;
+
     ASSERT(world);
 
     // We only need to perform any additional steps if the world being cleaned up is the world we cached in our world_ member variable.

@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # iterate over all scenes
     for i, scene_id in enumerate(scene_ids):
 
-        print("Processing scene: " + scene_id)
+        print("[SPEAR | generate_poses.py] Processing scene: " + scene_id)
 
         # change config based on current scene
         config.defrost()
@@ -81,4 +81,4 @@ if __name__ == "__main__":
         # close the current scene
         env.close()
 
-    print("Done.")
+    print("[SPEAR | generate_poses.py] Done.")

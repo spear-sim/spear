@@ -21,6 +21,8 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", action="store_true")
     args = parser.parse_args()
 
+    np.set_printoptions(linewidth=200)
+
     # load config
     config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
 
@@ -41,11 +43,18 @@ if __name__ == "__main__":
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
             obs, reward, done, info = env.step({"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
             if not args.benchmark:
-                print("SphereAgent: ", obs["compass"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
+                print("[SPEAR | run.py] SphereAgent: ")
+                print(obs["compass"])
+                print(obs["camera_final_color"].shape, obs["camera_final_color"].dtype)
+                print(reward, done, info)
         elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
-            obs, reward, done, info = env.step({"apply_voltage": np.array([1.0, 0.71], dtype=np.float32)})
+            obs, reward, done, info = env.step({"apply_voltage": np.array([1.0, 0.715], dtype=np.float32)})
             if not args.benchmark:
-                print("OpenBotAgent: ", obs["state_data"], obs["control_data"], obs["camera_final_color"].shape, obs["camera_final_color"].dtype, reward, done, info)
+                print("[SPEAR | run.py] OpenBotAgent: ")
+                print(obs["state_data"])
+                print(obs["control_data"])
+                print(obs["camera_final_color"].shape, obs["camera_final_color"].dtype)
+                print(reward, done, info)
         else:
             assert False
 
@@ -59,11 +68,11 @@ if __name__ == "__main__":
     if args.benchmark:
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000.0, NUM_STEPS / elapsed_time_seconds))
+        print("[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000.0, NUM_STEPS / elapsed_time_seconds))
     else:
         cv2.destroyAllWindows()
 
     # close the environment
     env.close()
 
-    print("Done.")
+    print("[SPEAR | run.py] Done.")

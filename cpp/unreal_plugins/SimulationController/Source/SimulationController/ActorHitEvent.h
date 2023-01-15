@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include <CoreMinimal.h>
 #include <Components/ActorComponent.h>
 #include <GameFramework/Actor.h>
@@ -19,24 +21,25 @@ class UActorHitEvent : public UActorComponent
 public:
     UActorHitEvent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
     {
-        PrimaryComponentTick.bCanEverTick = false;
+        std::cout << "[SPEAR | ActorHitEvent.h] UActorHitEvent::UActorHitEvent" << std::endl;
     }
 
     void subscribeToActor(AActor* actor)
     {
-        actor->OnActorHit.AddDynamic(this, &UActorHitEvent::ActorHitEventHandler);
+        actor->OnActorHit.AddDynamic(this, &UActorHitEvent::actorHitEventHandler);
     }
 
     void unsubscribeFromActor(AActor* actor)
     {
-        actor->OnActorHit.RemoveDynamic(this, &UActorHitEvent::ActorHitEventHandler);
-    }
-
-    UFUNCTION()
-    void ActorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
-    {
-        delegate_.Broadcast(self_actor, other_actor, normal_impulse, hit_result);
+        actor->OnActorHit.RemoveDynamic(this, &UActorHitEvent::actorHitEventHandler);
     }
 
     OnActorHitEvent delegate_;
+
+private:
+    UFUNCTION()
+    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
+    {
+        delegate_.Broadcast(self_actor, other_actor, normal_impulse, hit_result);
+    }
 };

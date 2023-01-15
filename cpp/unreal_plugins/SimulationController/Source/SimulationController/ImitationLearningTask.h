@@ -41,9 +41,9 @@ public:
     void reset() override;
     bool isReady() const override;
 
+private:
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
 
-private:
     // Get a list of the different initial and goal positions the agent is expected to navigate to.
     // Positions are in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z".
     void getPositionsFromFile();

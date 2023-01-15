@@ -4,15 +4,21 @@
 
 #include "CoreUtils/CoreUtils.h"
 
+#include <iostream>
+
 #include "CoreUtils/Config.h"
 
 void CoreUtils::StartupModule()
 {
+    std::cout << "[SPEAR | CoreUtils.cpp] CoreUtils::StartupModule" << std::endl;
+
     Config::initialize();
 }
 
 void CoreUtils::ShutdownModule()
 {
+    std::cout << "[SPEAR | CoreUtils.cpp] CoreUtils::ShutdownModule" << std::endl;
+
     Config::terminate();
 }
 

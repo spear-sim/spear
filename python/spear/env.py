@@ -116,7 +116,6 @@ class Env(gym.Env):
     def close(self):
 
         print("[SPEAR | env.py] Closing Unreal instance...")
-        print()
 
         self._close_unreal_instance()
         self._close_client_server_connection()
@@ -134,7 +133,6 @@ class Env(gym.Env):
                     break
 
         print("[SPEAR | env.py] Finished closing Unreal instance.")
-        print()
 
     def _request_launch_unreal_instance(self):
 
@@ -145,7 +143,6 @@ class Env(gym.Env):
         temp_config_file = os.path.join(os.path.abspath(self._config.SPEAR.TEMP_DIR), "config.yaml")
 
         print("[SPEAR | env.py] Writing temp config file: " + temp_config_file)
-        print()
 
         if not os.path.exists(os.path.abspath(self._config.SPEAR.TEMP_DIR)):
             os.makedirs(os.path.abspath(self._config.SPEAR.TEMP_DIR))
@@ -164,7 +161,6 @@ class Env(gym.Env):
                 spear.remove_path(spear_data_dir)
 
             print(f"[SPEAR | env.py] Creating symlink: {spear_data_dir} -> {self._config.SPEAR.DATA_DIR}")
-            print()
             os.symlink(self._config.SPEAR.DATA_DIR, spear_data_dir)
 
         # provide additional control over which Vulkan devices are recognized by Unreal
@@ -255,7 +251,6 @@ class Env(gym.Env):
     def _connect_to_unreal_instance(self):
 
         print(f"[SPEAR | env.py] Connecting to Unreal application...")
-        print()
         
         # if we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
         if self._config.SPEAR.LAUNCH_MODE == "running_instance":

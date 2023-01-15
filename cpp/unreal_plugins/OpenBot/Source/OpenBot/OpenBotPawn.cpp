@@ -29,16 +29,18 @@
 BEGIN_IGNORE_COMPILER_WARNINGS
 AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(object_initializer)
 {
-    static ConstructorHelpers::FObjectFinder<USkeletalMesh> s_skeletal_mesh(*UnrealUtils::toFString(Config::getValue<std::string>({"OPENBOT", "OPENBOT_PAWN", "SKELETAL_MESH"})));
-    ASSERT(s_skeletal_mesh.Succeeded());
+    std::cout << "[SPEAR | OpenBotPawn.cpp] AOpenBotPawn::AOpenBotPawn" << std::endl;
 
-    static ConstructorHelpers::FClassFinder<UAnimInstance> s_anim_instance(*UnrealUtils::toFString(Config::getValue<std::string>({"OPENBOT", "OPENBOT_PAWN", "ANIM_INSTANCE"})));
-    ASSERT(s_anim_instance.Succeeded());
+    ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*UnrealUtils::toFString(Config::getValue<std::string>({"OPENBOT", "OPENBOT_PAWN", "SKELETAL_MESH"})));
+    ASSERT(skeletal_mesh.Succeeded());
+
+    ConstructorHelpers::FClassFinder<UAnimInstance> anim_instance(*UnrealUtils::toFString(Config::getValue<std::string>({"OPENBOT", "OPENBOT_PAWN", "ANIM_INSTANCE"})));
+    ASSERT(anim_instance.Succeeded());
 
     skeletal_mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("AOpenBotPawn::skeletal_mesh_component_"));
     ASSERT(skeletal_mesh_component_); 
-    skeletal_mesh_component_->SetSkeletalMesh(s_skeletal_mesh.Object);
-    skeletal_mesh_component_->SetAnimClass(s_anim_instance.Class);
+    skeletal_mesh_component_->SetSkeletalMesh(skeletal_mesh.Object);
+    skeletal_mesh_component_->SetAnimClass(anim_instance.Class);
     skeletal_mesh_component_->SetCollisionProfileName(UCollisionProfile::Vehicle_ProfileName);
     skeletal_mesh_component_->BodyInstance.bSimulatePhysics = true;
     skeletal_mesh_component_->BodyInstance.bNotifyRigidBodyCollision = true;

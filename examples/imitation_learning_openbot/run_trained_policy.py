@@ -101,9 +101,9 @@ if __name__ == "__main__":
     prev_scene_id = ""
     for episode in df.to_records():
 
-        print("----------------------")
-        print(f"Episode {episode['index']} of {df.shape[0]}")
-        print("----------------------")
+        print("[SPEAR | run_trained_policy.py] ----------------------")
+        print(f"[SPEAR | run_trained_policy.py] Episode {episode['index']} of {df.shape[0]}")
+        print("[SPEAR | run_trained_policy.py] ----------------------")
 
         # if the scene_id of our current episode has changed, then create a new Env
         if episode["scene_id"] != prev_scene_id:
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
         # if it took too long to reset the simulation, then continue
         if not env_reset_info["success"]:
-            print("Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Skipping...")
+            print("[SPEAR | run_trained_policy.py] Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Skipping...")
             prev_scene_id = episode["scene_id"]
             continue
         
@@ -162,7 +162,7 @@ if __name__ == "__main__":
         goal           = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32) # goal position
         for i in range(args.num_iterations_per_episode):
 
-            print(f"Iteration {i} of {args.num_iterations_per_episode}")
+            print(f"[SPEAR | run_trained_policy.py] Iteration {i} of {args.num_iterations_per_episode}")
 
             # update control action 
             action, policy_step_info = policy.step(obs, goal[0:2])
@@ -200,9 +200,9 @@ if __name__ == "__main__":
             
             # termination conditions
             if env_step_info["task_step_info"]["hit_obstacle"]: 
-                print("Collision detected.") # let the agent collide with the environment for evaluation purposes 
+                print("[SPEAR | run_trained_policy.py] Collision detected.") # let the agent collide with the environment for evaluation purposes 
             elif env_step_info["task_step_info"]["hit_goal"] or policy_step_info["goal_reached"]: 
-                print("Goal reached.")
+                print("[SPEAR | run_trained_policy.py] Goal reached.")
                 break
 
         # update scene reference
@@ -212,7 +212,7 @@ if __name__ == "__main__":
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
-            print("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
+            print("[SPEAR | run_trained_policy.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
             continue
 
         # create plots
@@ -226,4 +226,4 @@ if __name__ == "__main__":
     # close the current scene and give the system a bit of time before switching to the next scene.
     env.close()
 
-    print("Done.")
+    print("[SPEAR | run_trained_policy.py] Done.")
