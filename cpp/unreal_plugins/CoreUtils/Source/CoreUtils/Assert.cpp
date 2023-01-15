@@ -7,7 +7,7 @@
 
 #include "CoreUtils/Assert.h"
 
-#include "CoreUtils/CompilerWarningUtils.h"
+#include "CoreUtils/IgnoreCompilerWarnings.h"
 #include "CoreUtils/Windows.h"
 
 

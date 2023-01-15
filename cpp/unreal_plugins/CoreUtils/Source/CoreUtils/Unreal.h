@@ -13,11 +13,16 @@
 #include <GameFramework/Actor.h>
 #include "UObject/NameTypes.h"
 
-#include "CoreUtils/StdUtils.h"
+#include "CoreUtils/Std.h"
 
-class COREUTILS_API UnrealUtils
+class COREUTILS_API Unreal
 {
 public:
+
+    //
+    // String manipulation
+    //
+
     static std::string toString(const FString& str)
     {
         // Note that the * operator for FString returns a pointer to the underlying string
@@ -34,6 +39,46 @@ public:
         return FName(str.c_str());
     }
 
+
+    //
+    // Find actors by name or tag (non-templated)
+    //
+
+    static AActor* findActorByName(UWorld* world, const std::string& name)
+    {
+        return findActorByName<AActor>(world, name);
+    }
+
+    static std::map<std::string, AActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
+    {
+        return findActorsByNameAsMap<AActor>(world, names);
+    }
+
+    static std::vector<AActor*> findActorsByNameAsVector(UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
+    {
+        return findActorsByNameAsVector<AActor>(world, names, return_null_if_not_found);
+    }
+
+    static std::vector<AActor*> findActorsByTagAny(UWorld* world, const std::vector<std::string>& tags)
+    {
+        return findActorsByTagAny<AActor>(world, tags);
+    }
+
+    static std::vector<AActor*> findActorsByTagAll(UWorld* world, const std::vector<std::string>& tags)
+    {
+        return findActorsByTagAll<AActor>(world, tags);
+    }
+
+    static std::vector<AActor*> findActorsByTag(UWorld* world, const std::string& tag)
+    {
+        return findActorsByTagAny<AActor>(world, {tag});
+    }
+
+
+    //
+    // Find actors by name, tag, or type (templated by type)
+    //
+
     template <typename TActor>
     static std::map<std::string, TActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
     {
@@ -46,18 +91,13 @@ public:
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
             TActor* a = (*itr);
             std::string name = toString(a->GetName());
-            if (StdUtils::containsKey(actor_map, name)) {
+            if (Std::containsKey(actor_map, name)) {
                 ASSERT(!actor_map.at(name)); // There shouldn't be two actors with the same name
                 actor_map[name] = a;
             }
         }
 
         return actor_map;
-    }
-
-    static std::map<std::string, AActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
-    {
-        return findActorsByNameAsMap<AActor>(world, names);
     }
 
     template <typename TActor>
@@ -77,20 +117,10 @@ public:
         return actors;
     }
 
-    static std::vector<AActor*> findActorsByNameAsVector(UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
-    {
-        return findActorsByNameAsVector<AActor>(world, names, return_null_if_not_found);
-    }
-
     template <typename TActor>
     static TActor* findActorByName(UWorld* world, const std::string& name)
     {
         return findActorsByNameAsVector<TActor>(world, {name}).at(0);
-    }
-
-    static AActor* findActorByName(UWorld* world, const std::string& name)
-    {
-        return findActorByName<AActor>(world, name);
     }
 
     template <typename TActor>
@@ -109,11 +139,6 @@ public:
         }
 
         return actors;
-    }
-
-    static std::vector<AActor*> findActorsByTagAny(UWorld* world, const std::vector<std::string>& tags)
-    {
-        return findActorsByTagAny<AActor>(world, tags);
     }
 
     template <typename TActor>
@@ -138,20 +163,10 @@ public:
         return actors;
     }
 
-    static std::vector<AActor*> findActorsByTagAll(UWorld* world, const std::vector<std::string>& tags)
-    {
-        return findActorsByTagAll<AActor>(world, tags);
-    }
-
     template <typename TActor>
     static std::vector<TActor*> findActorsByTag(UWorld* world, const std::string& tag)
     {
         return findActorsByTagAny<TActor>(world, {tag});
-    }
-
-    static std::vector<AActor*> findActorsByTag(UWorld* world, const std::string& tag)
-    {
-        return findActorsByTagAny<AActor>(world, {tag});
     }
 
     template <typename TActor>

@@ -84,9 +84,9 @@ void ImuSensor::updateLinearAcceleration(float delta_time)
     // Normal (or Gaussian or Gauss) distribution will be used as noise function.
     // A mean of 0.0 is used as a first parameter, the standard deviation is determined by the client
     linear_acceleration_ = FVector{
-        linear_acceleration.X + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD_DEV", "X"}))(random_gen_),
-        linear_acceleration.Y + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD_DEV", "Y"}))(random_gen_),
-        linear_acceleration.Z + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "ACCELEROMETER_NOISE_STD_DEV", "Z"}))(random_gen_)};
+        linear_acceleration.X + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.ACCELEROMETER_NOISE_STD_DEV.X"))(random_gen_),
+        linear_acceleration.Y + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.ACCELEROMETER_NOISE_STD_DEV.Y"))(random_gen_),
+        linear_acceleration.Z + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.ACCELEROMETER_NOISE_STD_DEV.Z"))(random_gen_)};
 }
 
 void ImuSensor::updateAngularRate()
@@ -99,9 +99,9 @@ void ImuSensor::updateAngularRate()
     // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
     // A mean of 0.0 is used as a first parameter.The standard deviation and the bias are determined by the client
     angular_rate_ = FVector{
-        angular_rate.X + Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "X"}) + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD_DEV", "X"}))(random_gen_),
-        angular_rate.Y + Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Y"}) + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD_DEV", "Y"}))(random_gen_),
-        angular_rate.Z + Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_BIAS", "Z"}) + std::normal_distribution<float>(0.0f, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "GYROSCOPE_NOISE_STD_DEV", "Z"}))(random_gen_)};
+        angular_rate.X + Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_BIAS.X") + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_NOISE_STD_DEV.X"))(random_gen_),
+        angular_rate.Y + Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_BIAS.Y") + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_NOISE_STD_DEV.Y"))(random_gen_),
+        angular_rate.Z + Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_BIAS.Z") + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_NOISE_STD_DEV.Z"))(random_gen_)};
 }
 
 void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
@@ -112,7 +112,7 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTic
     // Gyroscope: measures angular rate in [rad/sec]
     updateAngularRate();
 
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMU_SENSOR", "DEBUG_RENDER"})) {
+    if (Config::get<bool>("SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER")) {
         FTransform sensor_transform = component_->GetComponentTransform();
         FRotator transform_rotator = sensor_transform.Rotator();
         FVector imu_location = sensor_transform.GetLocation();

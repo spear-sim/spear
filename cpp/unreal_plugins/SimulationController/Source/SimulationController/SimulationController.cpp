@@ -19,7 +19,7 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
-#include "CoreUtils/UnrealUtils.h"
+#include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/Box.h"
 #include "SimulationController/CameraAgent.h"
@@ -86,23 +86,23 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
     if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
         
-        auto world_path_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "WORLD_PATH_NAME"});
-        auto level_name = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "LEVEL_NAME"});
+        auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");
+        auto level_name = Config::get<std::string>("SIMULATION_CONTROLLER.LEVEL_NAME");
 
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():                      " << UnrealUtils::toString(world->GetName()) << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():                  " << UnrealUtils::toString(world->GetPathName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():                      " << Unreal::toString(world->GetName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():                  " << Unreal::toString(world->GetPathName()) << std::endl;
         std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.WORLD_PATH_NAME: " << world_path_name << std::endl;
         std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.LEVEL_NAME:      " << level_name << std::endl;
 
         // if the current world is not the desired one, open the desired one
-        if (world_path_name != "" && world_path_name != UnrealUtils::toString(world->GetPathName())) {
+        if (world_path_name != "" && world_path_name != Unreal::toString(world->GetPathName())) {
 
             std::cout << "[SPEAR | SimulationController.cpp] Opening SIMULATION_CONTROLLER.LEVEL_NAME..." << std::endl;
 
             // assert that we haven't already tried to open the level, because that means we failed
             ASSERT(!has_open_level_executed_);
 
-            UGameplayStatics::OpenLevel(world, UnrealUtils::toFName(level_name));
+            UGameplayStatics::OpenLevel(world, Unreal::toFName(level_name));
             has_open_level_executed_ = true;
 
         } else {
@@ -126,28 +126,28 @@ void SimulationController::worldBeginPlayEventHandler()
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::worldBeginPlayEventHandler" << std::endl;
 
     // execute optional console commands from python client
-    for (auto& command : Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "CUSTOM_UNREAL_CONSOLE_COMMANDS"})) {
-        GEngine->Exec(world_, *UnrealUtils::toFString(command));
+    for (auto& command : Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CUSTOM_UNREAL_CONSOLE_COMMANDS")) {
+        GEngine->Exec(world_, *Unreal::toFString(command));
     }
 
     // Set fixed simulation step time in seconds. Check that the physics substepping parameters match our deired simulation step time.
     // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep
     UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
     ASSERT(physics_settings->bSubstepping);
-    ASSERT(Config::getValue<float>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}) <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps); 
+    ASSERT(Config::get<float>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps); 
 
     FApp::SetBenchmarking(true);
-    FApp::SetFixedDeltaTime(Config::getValue<double>({"SIMULATION_CONTROLLER", "SIMULATION_STEP_TIME_SECONDS"}));
+    FApp::SetFixedDeltaTime(Config::get<double>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS"));
 
     // pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
     // create Agent
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT"}) == "CameraAgent") {
+    if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "CameraAgent") {
         agent_ = std::make_unique<CameraAgent>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT"}) == "OpenBotAgent") {
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "OpenBotAgent") {
         agent_ = std::make_unique<OpenBotAgent>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "AGENT"}) == "SphereAgent") {
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
     } else {
         ASSERT(false);
@@ -155,11 +155,11 @@ void SimulationController::worldBeginPlayEventHandler()
     ASSERT(agent_);
 
     // create Task
-    if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK"}) == "ImitationLearningTask") {
+    if (Config::get<std::string>("SIMULATION_CONTROLLER.TASK") == "ImitationLearningTask") {
         task_ = std::make_unique<ImitationLearningTask>(world_);
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK"}) == "NullTask") {
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.TASK") == "NullTask") {
         task_ = std::make_unique<NullTask>();
-    } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "TASK"}) == "PointGoalNavTask") {
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.TASK") == "PointGoalNavTask") {
         task_ = std::make_unique<PointGoalNavTask>(world_);
     } else {
         ASSERT(false);
@@ -178,11 +178,10 @@ void SimulationController::worldBeginPlayEventHandler()
     // initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
 
-    // config values required for rpc communication
-    auto hostname = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IP"});
-    auto port = Config::getValue<int>({"SIMULATION_CONTROLLER", "PORT"});
-
-    rpc_server_ = std::make_unique<RpcServer>(hostname, port);
+    // initialize RPC server
+    rpc_server_ = std::make_unique<RpcServer>(
+        Config::get<std::string>("SIMULATION_CONTROLLER.IP"),
+        Config::get<int>("SIMULATION_CONTROLLER.PORT"));
     ASSERT(rpc_server_);
 
     bindFunctionsToRpcServer();

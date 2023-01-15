@@ -20,10 +20,10 @@
 #include <SimpleWheeledVehicleMovementComponent.h>
 #include <UObject/ConstructorHelpers.h>
 
-#include "CoreUtils/CompilerWarningUtils.h"
+#include "CoreUtils/IgnoreCompilerWarnings.h"
 #include "CoreUtils/Config.h"
-#include "CoreUtils/StdUtils.h"
-#include "CoreUtils/UnrealUtils.h"
+#include "CoreUtils/Std.h"
+#include "CoreUtils/Unreal.h"
 #include "OpenBot/OpenBotWheel.h"
 
 BEGIN_IGNORE_COMPILER_WARNINGS
@@ -31,10 +31,10 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
 {
     std::cout << "[SPEAR | OpenBotPawn.cpp] AOpenBotPawn::AOpenBotPawn" << std::endl;
 
-    ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*UnrealUtils::toFString(Config::getValue<std::string>({"OPENBOT", "OPENBOT_PAWN", "SKELETAL_MESH"})));
+    ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*Unreal::toFString(Config::get<std::string>("OPENBOT.OPENBOT_PAWN.SKELETAL_MESH")));
     ASSERT(skeletal_mesh.Succeeded());
 
-    ConstructorHelpers::FClassFinder<UAnimInstance> anim_instance(*UnrealUtils::toFString(Config::getValue<std::string>({"OPENBOT", "OPENBOT_PAWN", "ANIM_INSTANCE"})));
+    ConstructorHelpers::FClassFinder<UAnimInstance> anim_instance(*Unreal::toFString(Config::get<std::string>("OPENBOT.OPENBOT_PAWN.ANIM_INSTANCE")));
     ASSERT(anim_instance.Succeeded());
 
     skeletal_mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("AOpenBotPawn::skeletal_mesh_component_"));
@@ -77,23 +77,23 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     vehicle_movement_component_->WheelSetups[3].BoneName = FName("RR");
     vehicle_movement_component_->WheelSetups[3].AdditionalOffset = FVector::ZeroVector; // Offset the wheel from the bone's location
 
-    vehicle_movement_component_->Mass               = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "MASS"}); // Mass of the vehicle chassis
+    vehicle_movement_component_->Mass               = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MASS"); // Mass of the vehicle chassis
     vehicle_movement_component_->InertiaTensorScale = FVector::OneVector;
-    vehicle_movement_component_->DragCoefficient    = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "DRAG_COEFFICIENT"}); // DragCoefficient of the vehicle chassis
-    vehicle_movement_component_->ChassisWidth       = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_WIDTH"});    // Chassis width used for drag force computation in [cm]
-    vehicle_movement_component_->ChassisHeight      = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "CHASSIS_HEIGHT"});   // Chassis height used for drag force computation in [cm]
-    vehicle_movement_component_->MaxEngineRPM       = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "VEHICLE_COMPONENT", "MOTOR_MAX_RPM"});    // Max RPM for engine
+    vehicle_movement_component_->DragCoefficient    = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.DRAG_COEFFICIENT"); // DragCoefficient of the vehicle chassis
+    vehicle_movement_component_->ChassisWidth       = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_WIDTH");    // Chassis width used for drag force computation in [cm]
+    vehicle_movement_component_->ChassisHeight      = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_HEIGHT");   // Chassis height used for drag force computation in [cm]
+    vehicle_movement_component_->MaxEngineRPM       = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MOTOR_MAX_RPM");    // Max RPM for engine
 
     // Setup camera
     FVector camera_location(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "POSITION_X"}),
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "POSITION_Y"}),
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "POSITION_Z"}));
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X"),
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y"),
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z"));
 
     FRotator camera_orientation(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "PITCH"}),
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "YAW"}),
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "ROLL"}));
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.PITCH"),
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.YAW"),
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.ROLL"));
 
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("AOpenBotPawn::camera_component_"));
     ASSERT(camera_component_); 
@@ -101,18 +101,18 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
     camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;
-    camera_component_->FieldOfView = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CAMERA_COMPONENT", "FOV"});
+    camera_component_->FieldOfView = Config::get<float>("OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.FOV");
 
     // Setup IMU sensor
     FVector imu_location(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_X"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_Y"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "POSITION_Z"}));
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.IMU_COMPONENT.POSITION_X"), 
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.IMU_COMPONENT.POSITION_Y"), 
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.IMU_COMPONENT.POSITION_Z"));
     
     FRotator imu_orientation(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "PITCH"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "YAW"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "IMU_COMPONENT", "ROLL"}));
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.IMU_COMPONENT.PITCH"), 
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.IMU_COMPONENT.YAW"), 
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.IMU_COMPONENT.ROLL"));
     
     imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("AOpenBotPawn::imu_component_")); 
     ASSERT(imu_component_ );
@@ -122,14 +122,14 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
 
     // Setup Sonar sensor
     FVector sonar_location(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_X"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_Y"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "POSITION_Z"}));
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.SONAR_COMPONENT.POSITION_X"), 
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.SONAR_COMPONENT.POSITION_Y"), 
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.SONAR_COMPONENT.POSITION_Z"));
         
     FRotator sonar_orientation(
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "PITCH"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "YAW"}), 
-        Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "SONAR_COMPONENT", "ROLL"}));
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.SONAR_COMPONENT.PITCH"), 
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.SONAR_COMPONENT.YAW"), 
+        Config::get<float>("OPENBOT.OPENBOT_PAWN.SONAR_COMPONENT.ROLL"));
     
     sonar_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("AOpenBotPawn::sonar_component_")); 
     ASSERT(sonar_component_); 
@@ -254,22 +254,22 @@ void AOpenBotPawn::setDriveTorquesFromDutyCycle()
     // Max wheel torque: 5.88399 N.m
     // https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html
 
-    auto motor_velocity_constant = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_VELOCITY_CONSTANT"}); // Motor torque constant in [N.m/A]
-    auto gear_ratio              = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "GEAR_RATIO"});              // Gear ratio of the OpenBot motors
-    auto motor_torque_constant   = 1.f / motor_velocity_constant;                                                   // Motor torque constant in [rad/s/V]
+    auto motor_velocity_constant = Config::get<float>("OPENBOT.OPENBOT_PAWN.MOTOR_VELOCITY_CONSTANT"); // Motor torque constant in [N.m/A]
+    auto gear_ratio              = Config::get<float>("OPENBOT.OPENBOT_PAWN.GEAR_RATIO");              // Gear ratio of the OpenBot motors
+    auto motor_torque_constant   = 1.f / motor_velocity_constant;                                      // Motor torque constant in [rad/s/V]
 
-    auto battery_voltage         = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "BATTERY_VOLTAGE"});         // Voltage of the battery powering the OpenBot [V]
-    auto control_dead_zone       = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "CONTROL_DEAD_ZONE"});       // Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
-    auto motor_torque_max        = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "MOTOR_TORQUE_MAX"});        // Motor maximal torque [N.m]
-    auto electrical_resistance   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ELECTRICAL_RESISTANCE"});   // Motor winding electrical resistance [Ohms]
-    auto electrical_inductance   = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ELECTRICAL_INDUCTANCE"});   // Motor winding electrical inductance [Henry]
+    auto battery_voltage         = Config::get<float>("OPENBOT.OPENBOT_PAWN.BATTERY_VOLTAGE");         // Voltage of the battery powering the OpenBot [V]
+    auto control_dead_zone       = Config::get<float>("OPENBOT.OPENBOT_PAWN.CONTROL_DEAD_ZONE");       // Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
+    auto motor_torque_max        = Config::get<float>("OPENBOT.OPENBOT_PAWN.MOTOR_TORQUE_MAX");        // Motor maximal torque [N.m]
+    auto electrical_resistance   = Config::get<float>("OPENBOT.OPENBOT_PAWN.ELECTRICAL_RESISTANCE");   // Motor winding electrical resistance [Ohms]
+    auto electrical_inductance   = Config::get<float>("OPENBOT.OPENBOT_PAWN.ELECTRICAL_INDUCTANCE");   // Motor winding electrical inductance [Henry]
 
     // Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to
     // be processed by the low-level microcontroller. For more details, feel free to check the
     // "speedMultiplier" command in the OpenBot code.
     // https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
     
-    auto action_scale = Config::getValue<float>({"OPENBOT", "OPENBOT_PAWN", "ACTION_SCALE"});
+    auto action_scale = Config::get<float>("OPENBOT.OPENBOT_PAWN.ACTION_SCALE");
 
     // Acquire the ground truth motor and wheel velocity for motor counter-electromotive force
     // computation purposes (or alternatively friction computation purposes).

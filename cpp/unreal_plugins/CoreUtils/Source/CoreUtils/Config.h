@@ -5,6 +5,7 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -28,11 +29,27 @@ public:
     // ...and you want to access to access the configuration parameter SIMULATOR.TIME_DELTA_SECONDS, you
     // would need to call this function as follows...
     //
-    // float time_delta_seconds = Config::getValue<float>({"SIMULATOR", "TIME_DELTA_SECONDS"});
+    // float time_delta_seconds = Config::get<float>("SIMULATOR.TIME_DELTA_SECONDS");
     //
 
     template <typename TValue>
-    static TValue getValue(const std::vector<std::string>& keys)
+    static TValue get(const std::string& key)
+    {
+        ASSERT(key != "");
+
+        std::stringstream ss(key);
+        std::string s;
+        std::vector<std::string> keys;
+
+        while (std::getline(ss, s, '.')) {
+            keys.push_back(s);
+        }
+
+        return getFromKeys<TValue>(keys);
+    }
+
+    template <typename TValue>
+    static TValue getFromKeys(const std::vector<std::string>& keys)
     {
         // At least one key should be present when this function is called
         ASSERT(keys.size() > 0);

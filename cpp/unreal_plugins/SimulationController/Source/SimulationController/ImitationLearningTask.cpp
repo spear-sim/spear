@@ -18,15 +18,15 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
-#include "CoreUtils/StdUtils.h"
-#include "CoreUtils/UnrealUtils.h"
+#include "CoreUtils/Std.h"
+#include "CoreUtils/Unreal.h"
 #include "SimulationController/ActorHitEvent.h"
 #include "SimulationController/Box.h"
 
 ImitationLearningTask::ImitationLearningTask(UWorld* world)
 {
     FActorSpawnParameters actor_spawn_params;
-    actor_spawn_params.Name = UnrealUtils::toFName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GOAL_ACTOR_NAME"}));
+    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GOAL_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     goal_actor_ = world->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
     ASSERT(goal_actor_);
@@ -45,7 +45,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_delegate_handle_ = actor_hit_event_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
     // If the start/goal positions are not randomly generated, get them from a file
-    if (!Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GET_POSITIONS_FROM_TRAJECTORY_SAMPLING"})) {
+    if (!Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING")) {
         getPositionsFromFile();
     }
 }
@@ -71,10 +71,10 @@ ImitationLearningTask::~ImitationLearningTask()
 
 void ImitationLearningTask::findObjectReferences(UWorld* world)
 {
-    agent_actor_ = UnrealUtils::findActorByName(world, Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "AGENT_ACTOR_NAME"}));
+    agent_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_ACTOR_NAME"));
     ASSERT(agent_actor_);
 
-    obstacle_ignore_actors_ = UnrealUtils::findActorsByNameAsVector(world, Config::getValue<std::vector<std::string>>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "OBSTACLE_IGNORE_ACTOR_NAMES"}), false);
+    obstacle_ignore_actors_ = Unreal::findActorsByNameAsVector(world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), false);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_->subscribeToActor(agent_actor_);
@@ -83,9 +83,9 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     ASSERT(nav_sys_);
 
     FNavAgentProperties agent_properties;
-    agent_properties.AgentHeight     = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_HEIGHT"});
-    agent_properties.AgentRadius     = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_RADIUS"});
-    agent_properties.AgentStepHeight = Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "NAVMESH", "AGENT_MAX_STEP_HEIGHT"});
+    agent_properties.AgentHeight     = Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.NAVMESH.AGENT_HEIGHT");
+    agent_properties.AgentRadius     = Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.NAVMESH.AGENT_RADIUS");
+    agent_properties.AgentStepHeight = Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.NAVMESH.AGENT_MAX_STEP_HEIGHT");
 
     ANavigationData* nav_data = nav_sys_->GetNavDataForProps(agent_properties);
     ASSERT(nav_data);
@@ -166,7 +166,7 @@ void ImitationLearningTask::reset()
     // If we are generating positions via trajectory sampling, then update agent_initial_positions_
     // and agent_goal_positions_ to store the results from one round of trajectory sampling, and
     // reset position_index_ to 0.
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "GET_POSITIONS_FROM_TRAJECTORY_SAMPLING"})) {
+    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING")) {
         getPositionsFromTrajectorySampling();
     }
 
@@ -195,7 +195,7 @@ void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* oth
 
     if (other_actor == goal_actor_) {
         hit_goal_ = true;
-    } else if (!StdUtils::contains(obstacle_ignore_actors_, other_actor)) {
+    } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
         hit_obstacle_ = true;
     }
 }
@@ -212,7 +212,7 @@ void ImitationLearningTask::getPositionsFromFile()
     FVector init, goal;
 
     // Create an input filestream 
-    std::ifstream fs(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "POSITIONS_FILE"})); 
+    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.POSITIONS_FILE")); 
     ASSERT(fs.is_open());
 
     // Read file data, line by line in the format 
@@ -229,7 +229,7 @@ void ImitationLearningTask::getPositionsFromFile()
         std::getline(ss, token, ','); ASSERT(ss); goal.Z = std::stof(token);
         
         // If the scene id matches the currently opened map, then account for the positions
-        if(scene_id == Config::getValue<std::string>({"SIMULATION_CONTROLLER", "SCENE_ID"})) {
+        if(scene_id == Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID")) {
             agent_initial_positions_.push_back(init);
             agent_goal_positions_.push_back(goal);
         }
@@ -253,7 +253,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     TArray<FNavPathPoint> best_path_points;
 
     // Trajectory sampling to get an interesting path
-    for (int i = 0; i < Config::getValue<int>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_MAX_ITERS"}); i++) {
+    for (int i = 0; i < Config::get<int>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_MAX_ITERS"); i++) {
 
         FNavLocation init_location;
         FNavLocation goal_location;
@@ -263,7 +263,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
         init_location = nav_mesh_->GetRandomPoint();
 
         // Get a random reachable goal point, to be reached by the agent from init_location.Location
-        bool found = nav_mesh_->GetRandomReachablePointInRadius(init_location.Location, Config::getValue<float>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_SEARCH_RADIUS"}), goal_location);
+        bool found = nav_mesh_->GetRandomReachablePointInRadius(init_location.Location, Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_SEARCH_RADIUS"), goal_location);
         ASSERT(found);
 
         // Update navigation query with the new goal
@@ -293,7 +293,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
                 best_path_points = path.Path->GetPathPoints();
 
                 // Debug output
-                if(Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_DEBUG_RENDER"})){
+                if(Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")){
                     float trajectory_length = 0.0f;
                     for (int j = 0; j < num_waypoints - 1; j++) {
                         trajectory_length += FVector::Dist(best_path_points[j].Location, best_path_points[j + 1].Location);
@@ -317,7 +317,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     position_index_ = 0;
 
     // Debug output
-    if(Config::getValue<bool>({"SIMULATION_CONTROLLER", "IMITATION_LEARNING_TASK", "TRAJECTORY_SAMPLING_DEBUG_RENDER"})){
+    if(Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")){
         std::cout << std::endl;
         std::cout << "[SPEAR | ImitationLearningTask.cpp] Initial position: [" << agent_initial_positions_.at(0).X << ", " << agent_initial_positions_.at(0).Y << ", " << agent_initial_positions_.at(0).Z << "]." << std::endl;
         std::cout << "[SPEAR | ImitationLearningTask.cpp] Goal position: [" << agent_goal_positions_.at(0).X << ", " << agent_goal_positions_.at(0).Y << ", " << agent_goal_positions_.at(0).Z << "]." << std::endl;

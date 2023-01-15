@@ -7,7 +7,7 @@
 #include <CoreMinimal.h>
 #include <VehicleWheel.h>
 
-#include "CoreUtils/CompilerWarningUtils.h"
+#include "CoreUtils/IgnoreCompilerWarnings.h"
 
 #include "OpenBotWheel.generated.h"
 

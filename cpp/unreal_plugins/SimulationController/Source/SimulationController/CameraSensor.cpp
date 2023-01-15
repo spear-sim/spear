@@ -19,7 +19,7 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
-#include "CoreUtils/UnrealUtils.h"
+#include "CoreUtils/Unreal.h"
 #include "SimulationController/Box.h"
 #include "SimulationController/Serialize.h"
 
@@ -60,9 +60,9 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(parent_actor_);
         ASSERT(render_pass.scene_capture_component_);
 
-        if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE"}) == "SCS_FinalColorHDR") {
+        if (Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_SENSOR.SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE") == "SCS_FinalColorHDR") {
             render_pass.scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
-        } else if (Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE"}) == "SCS_FinalToneCurveHDR") {
+        } else if (Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_SENSOR.SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE") == "SCS_FinalToneCurveHDR") {
             render_pass.scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalToneCurveHDR;
         } else {
             ASSERT(false);
@@ -74,7 +74,7 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.scene_capture_component_->RegisterComponent();
 
         if (render_pass_name != "final_color") {
-            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), *UnrealUtils::toFString(MATERIALS_PATH), *UnrealUtils::toFString(render_pass_name), *UnrealUtils::toFString(render_pass_name)));
+            auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(TEXT("%s/%s.%s"), *Unreal::toFString(MATERIALS_PATH), *Unreal::toFString(render_pass_name), *Unreal::toFString(render_pass_name)));
             ASSERT(material);
             render_pass.scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, render_pass.scene_capture_component_), 1.0f);
             render_pass.scene_capture_component_->ShowFlags.SetPostProcessMaterial(true);
@@ -163,79 +163,79 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
 void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureComponent2D* scene_capture_component)
 {
     // update auto-exposure settings
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedUp   = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP"});
-    scene_capture_component->PostProcessSettings.AutoExposureSpeedUp             = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP"});
-    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN"});
-    scene_capture_component->PostProcessSettings.AutoExposureSpeedDown           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN"});
+    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedUp   = Config::get<bool> ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP");
+    scene_capture_component->PostProcessSettings.AutoExposureSpeedUp             = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP");
+    scene_capture_component->PostProcessSettings.bOverride_AutoExposureSpeedDown = Config::get<bool> ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN");
+    scene_capture_component->PostProcessSettings.AutoExposureSpeedDown           = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN");
 
     // enable raytracing features
-    scene_capture_component->bUseRayTracingIfEnabled = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_USE_RAYTRACING_IF_ENABLED"});
+    scene_capture_component->bUseRayTracingIfEnabled = Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_USE_RAYTRACING_IF_ENABLED");
 
     // update indirect lighting 
-    scene_capture_component->PostProcessSettings.bOverride_IndirectLightingIntensity = Config::getValue<bool> ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY"});
-    scene_capture_component->PostProcessSettings.IndirectLightingIntensity           = Config::getValue<float>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY"});
+    scene_capture_component->PostProcessSettings.bOverride_IndirectLightingIntensity = Config::get<bool> ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY");
+    scene_capture_component->PostProcessSettings.IndirectLightingIntensity           = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY");
 
     // update raytracing global illumination
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingGI = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI"});
-    auto raytracing_gi_type = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_GI_TYPE"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingGI = Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_GI");
+    auto raytracing_gi_type = Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_GI_TYPE");
     if (raytracing_gi_type == "BruteForce") {
         scene_capture_component->PostProcessSettings.RayTracingGIType = ERayTracingGlobalIlluminationType::BruteForce;
     } else if (raytracing_gi_type != "") {
         ASSERT(false);
     }
 
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingGIMaxBounces      = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI_MAX_BOUNCES"});
-    scene_capture_component->PostProcessSettings.RayTracingGIMaxBounces                = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_GI_MAX_BOUNCES"});
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_GI_SAMPLES_PER_PIXEL"});
-    scene_capture_component->PostProcessSettings.RayTracingGISamplesPerPixel           = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_GI_SAMPLES_PER_PIXEL"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingGIMaxBounces      = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_GI_MAX_BOUNCES");
+    scene_capture_component->PostProcessSettings.RayTracingGIMaxBounces                = Config::get<unsigned long>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_GI_MAX_BOUNCES");
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingGISamplesPerPixel = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_GI_SAMPLES_PER_PIXEL");
+    scene_capture_component->PostProcessSettings.RayTracingGISamplesPerPixel           = Config::get<unsigned long>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_GI_SAMPLES_PER_PIXEL");
 
     // update raytracing ambient occlusion
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingAO                = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO"});
-    scene_capture_component->PostProcessSettings.RayTracingAO                          = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_AO"});
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOSamplesPerPixel = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO_SAMPLES_PER_PIXEL"});
-    scene_capture_component->PostProcessSettings.RayTracingAOSamplesPerPixel           = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_AO_SAMPLES_PER_PIXEL"});
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOIntensity       = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO_INTENSITY"});
-    scene_capture_component->PostProcessSettings.RayTracingAOIntensity                 = Config::getValue<float>        ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_AO_INTENSITY"});
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingAORadius          = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_AO_RADIUS"});
-    scene_capture_component->PostProcessSettings.RayTracingAORadius                    = Config::getValue<float>        ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_AO_RADIUS"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAO                = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_AO");
+    scene_capture_component->PostProcessSettings.RayTracingAO                          = Config::get<unsigned long>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_AO");
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOSamplesPerPixel = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_AO_SAMPLES_PER_PIXEL");
+    scene_capture_component->PostProcessSettings.RayTracingAOSamplesPerPixel           = Config::get<unsigned long>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_AO_SAMPLES_PER_PIXEL");
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAOIntensity       = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_AO_INTENSITY");
+    scene_capture_component->PostProcessSettings.RayTracingAOIntensity                 = Config::get<float>        ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_AO_INTENSITY");
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingAORadius          = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_AO_RADIUS");
+    scene_capture_component->PostProcessSettings.RayTracingAORadius                    = Config::get<float>        ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_AO_RADIUS");
 
     // update raytracing reflections
-    scene_capture_component->PostProcessSettings.bOverride_ReflectionsType = Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE"});
-    auto reflections_type = Config::getValue<std::string>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_REFLECTIONS_TYPE"});
+    scene_capture_component->PostProcessSettings.bOverride_ReflectionsType = Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE");
+    auto reflections_type = Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_REFLECTIONS_TYPE");
     if (reflections_type == "RayTracing") {
         scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing; 
     } else if (reflections_type != "") {
         ASSERT(false); 
     }
 
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces      = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES"});
-    scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxBounces                = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_BOUNCES"});
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxRoughness    = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS"});
-    scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxRoughness              = Config::getValue<float>        ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS"});
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL"});
-    scene_capture_component->PostProcessSettings.RayTracingReflectionsSamplesPerPixel           = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL"});
-    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency    = Config::getValue<bool>         ({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_TRANSLUCENCY"});
-    scene_capture_component->PostProcessSettings.RayTracingReflectionsTranslucency              = Config::getValue<unsigned long>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_RAYTRACING_REFLECTIONS_TRANSLUCENCY"});
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces      = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES");
+    scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxBounces                = Config::get<unsigned long>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_BOUNCES");
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxRoughness    = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS");
+    scene_capture_component->PostProcessSettings.RayTracingReflectionsMaxRoughness              = Config::get<float>        ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_REFLECTIONS_MAX_ROUGHNESS");
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsSamplesPerPixel = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL");
+    scene_capture_component->PostProcessSettings.RayTracingReflectionsSamplesPerPixel           = Config::get<unsigned long>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_REFLECTIONS_SAMPLES_PER_PIXEL");
+    scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsTranslucency    = Config::get<bool>         ("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_TRANSLUCENCY");
+    scene_capture_component->PostProcessSettings.RayTracingReflectionsTranslucency              = Config::get<unsigned long>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_REFLECTIONS_TRANSLUCENCY");
 
     // update show flags
-    scene_capture_component->ShowFlags.SetAmbientOcclusion      (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_AMBIENT_OCCLUSION"}));        // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetCameraImperfections   (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_CAMERA_IMPERFECTIONS"}));     // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetColorGrading          (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_COLOR_GRADING"}));            // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetDepthOfField          (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_DEPTH_OF_FIELD"}));           // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetDistanceFieldAO       (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_DISTANCE_FIELD_AO"}));        // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetEyeAdaptation         (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_EYE_ADAPTATION"}));           // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetGrain                 (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_GRAIN"}));                    // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetIndirectLightingCache (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_INDIRECT_LIGHTING_CACHE"}));  // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetLensFlares            (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_LENS_FLARES"}));              // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetLightShafts           (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_LIGHT_SHAFTS"}));             // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetScreenSpaceReflections(Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_SCREEN_SPACE_REFLECTIONS"})); // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetSeparateTranslucency  (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_SEPARATE_TRANSLUCENCY"}));    // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetTemporalAA            (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_TEMPORAL_AA"}));              // enabled by FEngineShowFlags::EnableAdvancedFeatures()
-    scene_capture_component->ShowFlags.SetVignette              (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_VIGNETTE"}));                 // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetAmbientOcclusion      (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_AMBIENT_OCCLUSION"));        // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetCameraImperfections   (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_CAMERA_IMPERFECTIONS"));     // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetColorGrading          (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_COLOR_GRADING"));            // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetDepthOfField          (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_DEPTH_OF_FIELD"));           // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetDistanceFieldAO       (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_DISTANCE_FIELD_AO"));        // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetEyeAdaptation         (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_EYE_ADAPTATION"));           // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetGrain                 (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_GRAIN"));                    // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetIndirectLightingCache (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_INDIRECT_LIGHTING_CACHE"));  // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetLensFlares            (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_LENS_FLARES"));              // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetLightShafts           (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_LIGHT_SHAFTS"));             // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetScreenSpaceReflections(Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_SCREEN_SPACE_REFLECTIONS")); // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetSeparateTranslucency  (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_SEPARATE_TRANSLUCENCY"));    // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetTemporalAA            (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_TEMPORAL_AA"));              // enabled by FEngineShowFlags::EnableAdvancedFeatures()
+    scene_capture_component->ShowFlags.SetVignette              (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_VIGNETTE"));                 // enabled by FEngineShowFlags::EnableAdvancedFeatures()
 
-    scene_capture_component->ShowFlags.SetAntiAliasing                 (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_ANTI_ALIASING"}));
-    scene_capture_component->ShowFlags.SetRayTracedDistanceFieldShadows(Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_RAYTRACED_DISTANCE_FIELD_SHADOWS"}));
-    scene_capture_component->ShowFlags.SetDynamicShadows               (Config::getValue<bool>({"SIMULATION_CONTROLLER", "CAMERA_SENSOR", "FINAL_COLOR_SET_DYNAMIC_SHADOWS"}));
+    scene_capture_component->ShowFlags.SetAntiAliasing                 (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_ANTI_ALIASING"));
+    scene_capture_component->ShowFlags.SetRayTracedDistanceFieldShadows(Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_RAYTRACED_DISTANCE_FIELD_SHADOWS"));
+    scene_capture_component->ShowFlags.SetDynamicShadows               (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_DYNAMIC_SHADOWS"));
 
 }
 
@@ -281,4 +281,3 @@ std::vector<float> CameraSensor::getFloatDepthFromColorDepth(TArray<FColor>& col
     }
     return float_depth;
 }
-

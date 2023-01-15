@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <map>
 
-class COREUTILS_API StdUtils
+class COREUTILS_API Std
 {
 public:
     template <typename TContainer, typename TKey>

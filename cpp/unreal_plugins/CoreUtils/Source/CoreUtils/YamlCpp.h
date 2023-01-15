@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "CoreUtils/CompilerWarningUtils.h"
+#include "CoreUtils/IgnoreCompilerWarnings.h"
 
 BEGIN_IGNORE_COMPILER_WARNINGS
 #include <yaml-cpp/yaml.h>

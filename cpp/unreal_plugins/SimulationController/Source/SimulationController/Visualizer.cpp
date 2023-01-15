@@ -13,23 +13,23 @@
 #include <GameFramework/PlayerController.h>
 
 #include "CoreUtils/Config.h"
-#include "CoreUtils/UnrealUtils.h"
+#include "CoreUtils/Unreal.h"
 
 Visualizer::Visualizer(UWorld* world)
 {
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA"})) {
+    if (Config::get<bool>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA")) {
 
         FVector location(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_POSITION_X"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_POSITION_Y"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_POSITION_Z"}));
+            Config::get<float>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_POSITION_X"),
+            Config::get<float>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_POSITION_Y"),
+            Config::get<float>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_POSITION_Z"));
         FRotator orientation(
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_ORIENTATION_PITCH"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_ORIENTATION_YAW"}),
-            Config::getValue<float>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA_ORIENTATION_ROLL"}));
+            Config::get<float>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_ORIENTATION_PITCH"),
+            Config::get<float>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_ORIENTATION_YAW"),
+            Config::get<float>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_ORIENTATION_ROLL"));
 
         FActorSpawnParameters actor_spawn_params;
-        actor_spawn_params.Name = UnrealUtils::toFName(Config::getValue<std::string>({"SIMULATION_CONTROLLER", "VISUALIZER", "ACTOR_NAME"}));
+        actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VISUALIZER.ACTOR_NAME"));
         actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         actor_ = world->SpawnActor<ACameraActor>(location, orientation, actor_spawn_params);
         ASSERT(actor_);
@@ -42,7 +42,7 @@ Visualizer::Visualizer(UWorld* world)
 
 Visualizer::~Visualizer()
 {
-    if (Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA"})) {
+    if (Config::get<bool>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA")) {
         ASSERT(actor_);
         actor_->Destroy();
         actor_ = nullptr;
@@ -51,8 +51,8 @@ Visualizer::~Visualizer()
 
 void Visualizer::findObjectReferences(UWorld* world)
 {
-    if (!Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA"})) {
-        actor_ = UnrealUtils::findActorByName(world, Config::getValue<std::string>({"SIMULATION_CONTROLLER", "VISUALIZER", "ACTOR_NAME"}));
+    if (!Config::get<bool>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA")) {
+        actor_ = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.VISUALIZER.ACTOR_NAME"));
         ASSERT(actor_);
 
         APlayerController* player_controller = world->GetFirstPlayerController();
@@ -63,7 +63,7 @@ void Visualizer::findObjectReferences(UWorld* world)
 
 void Visualizer::cleanUpObjectReferences()
 {
-    if (!Config::getValue<bool>({"SIMULATION_CONTROLLER", "VISUALIZER", "SPAWN_CAMERA"})) {
+    if (!Config::get<bool>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA")) {
         ASSERT(actor_);
         actor_ = nullptr;
     }
