@@ -59,6 +59,11 @@ public:
         return findActorsByNameAsVector<AActor>(world, names, return_null_if_not_found);
     }
 
+    static std::vector<AActor*> findActorsByTag(UWorld* world, const std::string& tag)
+    {
+        return findActorsByTag<AActor>(world, tag);
+    }
+
     static std::vector<AActor*> findActorsByTagAny(UWorld* world, const std::vector<std::string>& tags)
     {
         return findActorsByTagAny<AActor>(world, tags);
@@ -69,15 +74,16 @@ public:
         return findActorsByTagAll<AActor>(world, tags);
     }
 
-    static std::vector<AActor*> findActorsByTag(UWorld* world, const std::string& tag)
-    {
-        return findActorsByTagAny<AActor>(world, {tag});
-    }
-
 
     //
     // Find actors by name, tag, or type (templated by type)
     //
+
+    template <typename TActor>
+    static TActor* findActorByName(UWorld* world, const std::string& name)
+    {
+        return findActorsByNameAsVector<TActor>(world, {name}).at(0);
+    }
 
     template <typename TActor>
     static std::map<std::string, TActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
@@ -118,9 +124,9 @@ public:
     }
 
     template <typename TActor>
-    static TActor* findActorByName(UWorld* world, const std::string& name)
+    static std::vector<TActor*> findActorsByTag(UWorld* world, const std::string& tag)
     {
-        return findActorsByNameAsVector<TActor>(world, {name}).at(0);
+        return findActorsByTagAny<TActor>(world, {tag});
     }
 
     template <typename TActor>
@@ -164,22 +170,6 @@ public:
     }
 
     template <typename TActor>
-    static std::vector<TActor*> findActorsByTag(UWorld* world, const std::string& tag)
-    {
-        return findActorsByTagAny<TActor>(world, {tag});
-    }
-
-    template <typename TActor>
-    static std::vector<TActor*> findActorsByType(UWorld* world)
-    {
-        std::vector<TActor*> actors;
-        for (TActorIterator<TActor> itr(world); itr; ++itr) {
-            actors.push_back(*itr);
-        }
-        return actors;
-    }
-
-    template <typename TActor>
     static TActor* findActorByType(UWorld* world)
     {
         std::vector<TActor*> actors = findActorsByType<TActor>(world);
@@ -191,5 +181,15 @@ public:
             ASSERT(false);
             return nullptr;
         }
+    }
+
+    template <typename TActor>
+    static std::vector<TActor*> findActorsByType(UWorld* world)
+    {
+        std::vector<TActor*> actors;
+        for (TActorIterator<TActor> itr(world); itr; ++itr) {
+            actors.push_back(*itr);
+        }
+        return actors;
     }
 };
