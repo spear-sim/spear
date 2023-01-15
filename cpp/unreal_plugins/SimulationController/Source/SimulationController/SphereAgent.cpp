@@ -210,7 +210,6 @@ void SphereAgent::applyAction(const std::map<std::string, std::vector<float>>& a
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "apply_force")) {
-
         // Get yaw from the camera, apply force to the sphere in that direction
         FVector force = camera_actor_->GetActorRotation().RotateVector(FVector(action.at("apply_force").at(0), 0.0f, 0.0f)) * Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.APPLY_FORCE.FORCE_SCALE");
 
@@ -241,7 +240,6 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "compass")) {
-
         FVector sphere_to_goal = goal_actor_->GetActorLocation() - sphere_actor_->GetActorLocation();
         FVector linear_velocity = static_mesh_component_->GetPhysicsLinearVelocity();
         float observation_camera_yaw = camera_actor_->GetActorRotation().Yaw;
@@ -255,7 +253,6 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
     }
 
     if (Std::contains(observation_components, "camera")) {
-
         // get an observation from the CameraSensor and add it to our Agent's observation
         std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation();
         for (auto& camera_sensor_observation_component : camera_sensor_observation) {

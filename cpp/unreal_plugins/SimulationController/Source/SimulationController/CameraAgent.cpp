@@ -69,7 +69,6 @@ void CameraAgent::findObjectReferences(UWorld* world)
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "random_points")) {
-
         nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
         ASSERT(nav_sys_);
 
@@ -131,7 +130,6 @@ std::map<std::string, Box> CameraAgent::getObservationSpace() const
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
-
         // get an observation space from the CameraSensor and add it to our Agent's observation space
         std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace();
         for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
@@ -183,7 +181,6 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
-
         // get an observation from the CameraSensor and add it to our Agent's observation
         std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation();
         for (auto& camera_sensor_observation_component : camera_sensor_observation) {
@@ -201,7 +198,6 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "random_points")) {
-
         std::vector<float> random_points;
         int num_random_points = static_cast<int>(action_.at("set_num_random_points").at(0));
         for (int i = 0; i < num_random_points; i++) {

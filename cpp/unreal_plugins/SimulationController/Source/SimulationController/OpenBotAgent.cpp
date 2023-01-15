@@ -95,7 +95,6 @@ void OpenBotAgent::findObjectReferences(UWorld* world)
     auto step_info_components = Config::get<std::vector<std::string>>({"SIMULATION_CONTROLLER.OPENBOT_AGENT.STEP_INFO_COMPONENTS"});
 
     if (Std::contains(step_info_components, "trajectory_data")) {
-
         goal_actor_ = Unreal::findActorByName(world, Config::get<std::string>({"SIMULATION_CONTROLLER.OPENBOT_AGENT.TRAJECTORY_DATA.GOAL_ACTOR_NAME"}));
         ASSERT(goal_actor_);
 
