@@ -315,7 +315,7 @@ public:
     }
 
     template <typename T>
-    static T getItem(const std::vector<T>& vec, const T& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
+    static const T& getItem(const std::vector<T>& vec, const T& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
     {
         if (vec.size() == 0) {
             if (assert_if_size_is_zero) {
