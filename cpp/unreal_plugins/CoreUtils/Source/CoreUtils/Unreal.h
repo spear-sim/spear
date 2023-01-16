@@ -264,7 +264,7 @@ public:
             actor_map[name] = nullptr;
         }
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
-            TActor* a = (*itr);
+            TActor* a = *itr;
             std::string name = toStdString(a->GetName());
             if (Std::containsKey(actor_map, name)) {
                 ASSERT(!actor_map.at(name)); // There shouldn't be two actors with the same name
