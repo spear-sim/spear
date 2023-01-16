@@ -40,22 +40,36 @@ public:
     }
 
     //
-    // Find actors by name or tag (non-templated)
+    // Find actor by name or tag, non-templated, return pointer
     //
 
-    static AActor* findActorByName(UWorld* world, const std::string& name)
+    static AActor* findActorByName(UWorld* world, const std::string& name, bool assert_if_not_found = true)
     {
-        return findActorByName<AActor>(world, name);
+        return findActorByName<AActor>(world, name, assert_if_not_found);
     }
 
-    static std::map<std::string, AActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
+    static AActor* findActorByTag(UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return findActorsByNameAsMap<AActor>(world, names);
+        return findActorByTag<AActor>(world, tag, assert_if_not_found, assert_if_multiple_found);
     }
 
-    static std::vector<AActor*> findActorsByNameAsVector(UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
+    static AActor* findActorByTagAny(UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return findActorsByNameAsVector<AActor>(world, names, return_null_if_not_found);
+        return findActorByTagAny<AActor>(world, tags, assert_if_not_found, assert_if_multiple_found);
+    }
+
+    static AActor* findActorByTagAll(UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = false, bool assert_if_multiple_found = true)
+    {
+        return findActorByTagAll<AActor>(world, tags, assert_if_not_found, assert_if_multiple_found);
+    }
+
+    //
+    // Find actors by name or tag, non-templated, return std::vector
+    //
+
+    static std::vector<AActor*> findActorsByName(UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
+    {
+        return findActorsByName<AActor>(world, names, return_null_if_not_found);
     }
 
     static std::vector<AActor*> findActorsByTag(UWorld* world, const std::string& tag)
@@ -68,56 +82,91 @@ public:
         return findActorsByTagAny<AActor>(world, tags);
     }
 
-    static std::vector<AActor*> findActorsByTagAll(UWorld* world, const std::vector<std::string>& tags)
+    static std::vector<AActor*> findActorsByTagAllAsVector(UWorld* world, const std::vector<std::string>& tags)
     {
         return findActorsByTagAll<AActor>(world, tags);
     }
 
     //
-    // Find actors by name, tag, or type (templated by type)
+    // Find actors by name or tag, non-templated, return std::map
+    //
+
+    static std::map<std::string, AActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
+    {
+        return findActorsByNameAsMap<AActor>(world, names);
+    }
+
+    static std::map<std::string, AActor*> findActorsByTagAsMap(UWorld* world, const std::string& tag)
+    {
+        return findActorsByTagAsMap<AActor>(world, tag);
+    }
+
+    static std::map<std::string, AActor*> findActorsByTagAnyAsMap(UWorld* world, const std::vector<std::string>& tags)
+    {
+        return findActorsByTagAnyAsMap<AActor>(world, tags);
+    }
+
+    static std::map<std::string, AActor*> findActorsByTagAllAsMap(UWorld* world, const std::vector<std::string>& tags)
+    {
+        return findActorsByTagAllAsMap<AActor>(world, tags);
+    }
+
+    //
+    // Find actor by name or tag or type, templated, return pointer
     //
 
     template <typename TActor>
-    static TActor* findActorByName(UWorld* world, const std::string& name)
+    static TActor* findActorByName(UWorld* world, const std::string& name, bool assert_if_not_found = true)
     {
-        return findActorsByNameAsVector<TActor>(world, {name}).at(0);
+        TActor* default_val = nullptr;
+        bool return_null_if_not_found = true;
+        bool assert_if_multiple_found = true;
+        return getItem(findActorsByName<TActor>(world, {name}, return_null_if_not_found), default_val, assert_if_not_found, assert_if_multiple_found);
     }
 
     template <typename TActor>
-    static std::map<std::string, TActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
+    static TActor* findActorByTag(UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        std::map<std::string, TActor*> actor_map;
-
-        for (auto& name : names) {
-            actor_map[name] = nullptr;
-        }
-
-        for (TActorIterator<TActor> itr(world); itr; ++itr) {
-            TActor* a = (*itr);
-            std::string name = toStdString(a->GetName());
-            if (Std::containsKey(actor_map, name)) {
-                ASSERT(!actor_map.at(name)); // There shouldn't be two actors with the same name
-                actor_map[name] = a;
-            }
-        }
-
-        return actor_map;
+        TActor* default_val = nullptr;
+        return getItem(findActorsByTag<TActor>(world, tag), default_val, assert_if_not_found, assert_if_multiple_found);
     }
 
     template <typename TActor>
-    static std::vector<TActor*> findActorsByNameAsVector(UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
+    static TActor* findActorByTagAny(UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    {
+        TActor* default_val = nullptr;
+        return getItem(findActorsByTagAny<TActor>(world, tags), default_val, assert_if_not_found, assert_if_multiple_found);
+    }
+
+    template <typename TActor>
+    static TActor* findActorByTagAll(UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    {
+        TActor* default_val = nullptr;
+        return getItem(findActorsByTagAll<TActor>(world, tags), default_val, assert_if_not_found, assert_if_multiple_found);
+    }
+
+    template <typename TActor>
+    static TActor* findActorByType(UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    {
+        TActor* default_val = nullptr;
+        return getItem(findActorsByType<TActor>(world), default_val, assert_if_not_found, assert_if_multiple_found);
+    }
+
+    //
+    // Find actors by name or tag or type, templated, return std::vector
+    //
+
+    template <typename TActor>
+    static std::vector<TActor*> findActorsByName(UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
         std::vector<TActor*> actors;
-
         std::map<std::string, TActor*> actor_map = findActorsByNameAsMap<TActor>(world, names);
-
         for (auto& name : names) {
             TActor* a = actor_map.at(name);
-            if (return_null_if_not_found || a) {
+            if (a || return_null_if_not_found) {
                 actors.push_back(a);
             }
         }
-
         return actors;
     }
 
@@ -131,17 +180,15 @@ public:
     static std::vector<TActor*> findActorsByTagAny(UWorld* world, const std::vector<std::string>& tags)
     {
         std::vector<TActor*> actors;
-
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
-            TActor* actor = (*itr);
+            TActor* actor = *itr;
             for (auto& tag : tags) {
-                if (actor->ActorHasTag(tag.c_str())) {
+                if (actor->ActorHasTag(toFName(tag))) {
                     actors.push_back(actor);
                     break;
                 }
             }
         }
-
         return actors;
     }
 
@@ -149,12 +196,11 @@ public:
     static std::vector<TActor*> findActorsByTagAll(UWorld* world, const std::vector<std::string>& tags)
     {
         std::vector<TActor*> actors;
-
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
-            TActor* actor = (*itr);
+            TActor* actor = *itr;
             bool all = true;
             for (auto& tag : tags) {
-                if (!actor->ActorHasTag(tag.c_str())) {
+                if (!actor->ActorHasTag(toFName(tag))) {
                     all = false;
                     break;
                 }
@@ -163,22 +209,7 @@ public:
                 actors.push_back(actor);
             }
         }
-
         return actors;
-    }
-
-    template <typename TActor>
-    static TActor* findActorByType(UWorld* world)
-    {
-        std::vector<TActor*> actors = findActorsByType<TActor>(world);
-        if (actors.size() == 0) {
-            return nullptr;
-        } else if (actors.size() == 1) {
-            return actors.at(0);
-        } else {
-            ASSERT(false);
-            return nullptr;
-        }
     }
 
     template <typename TActor>
@@ -189,5 +220,80 @@ public:
             actors.push_back(*itr);
         }
         return actors;
+    }
+
+    //
+    // Find actors by name or tag or type, templated, return std::map
+    //
+
+    template <typename TActor>
+    static std::map<std::string, TActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
+    {
+        std::map<std::string, TActor*> actor_map;
+        for (auto& name : names) {
+            actor_map[name] = nullptr;
+        }
+        for (TActorIterator<TActor> itr(world); itr; ++itr) {
+            TActor* a = (*itr);
+            std::string name = toStdString(a->GetName());
+            if (Std::containsKey(actor_map, name)) {
+                ASSERT(!actor_map.at(name)); // There shouldn't be two actors with the same name
+                actor_map[name] = a;
+            }
+        }
+        return actor_map;
+    }
+
+    template <typename TActor>
+    static std::map<std::string, TActor*> findActorsByTagAsMap(UWorld* world, const std::string& tag)
+    {
+        return getMap(findActorsByTag<TActor>(world, tag));
+    }
+    
+    template <typename TActor>
+    static std::map<std::string, TActor*> findActorsByTagAnyAsMap(UWorld* world, const std::vector<std::string>& tags)
+    {
+        return getMap(findActorsByTagAny<TActor>(world, tags));
+    }
+    template <typename TActor>
+    static std::map<std::string, TActor*> findActorsByTagAllAsMap(UWorld* world, const std::vector<std::string>& tags)
+    {
+        return getMap(findActorsByTagAll<TActor>(world, tags));
+    }
+    
+    template <typename TActor>
+    static std::map<std::string, TActor*> findActorsByTypeAsMap(UWorld* world)
+    {
+        return getMap(findActorsByType<TActor>(world));
+    }
+
+    //
+    // Helper functions
+    //
+
+    template <typename T>
+    static T getItem(const std::vector<T>& vec, const T& default_val, bool assert_if_not_found, bool assert_if_multiple_found)
+    {
+        if (vec.size() == 1) {
+            return vec.at(0);
+        } else if ((vec.size() == 0) && assert_if_not_found) {
+            ASSERT(false);
+        } else if ((vec.size() > 1) && assert_if_multiple_found) {
+            ASSERT(false);
+        }
+        return default_val;
+    }
+
+    template <typename TActor>
+    static std::map<std::string, TActor*> getMap(const std::vector<TActor*>& actors)
+    {
+        std::map<std::string, TActor*> actor_map;
+        for (auto& a : actors) {
+            ASSERT(a);
+            std::string name = toStdString(a->GetName());
+            ASSERT(!Std::containsKey(actor_map, name)); // There shouldn't be two actors with the same name
+            actor_map[name] = a;
+        }
+        return actor_map;
     }
 };

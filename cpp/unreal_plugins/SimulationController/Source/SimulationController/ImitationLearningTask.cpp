@@ -74,8 +74,9 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     agent_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_ACTOR_NAME"));
     ASSERT(agent_actor_);
 
-    obstacle_ignore_actors_ = Unreal::findActorsByNameAsVector(
-        world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), false);
+    bool return_null_if_not_found = false;
+    obstacle_ignore_actors_ = Unreal::findActorsByName(
+        world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_->subscribeToActor(agent_actor_);
