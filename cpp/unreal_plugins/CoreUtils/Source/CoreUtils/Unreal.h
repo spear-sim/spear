@@ -277,29 +277,42 @@ public:
     template <typename TActor>
     static std::map<std::string, TActor*> findActorsByTagAsMap(UWorld* world, const std::string& tag)
     {
-        return getMap(findActorsByTag<TActor>(world, tag));
+        return getActorsAsMap(findActorsByTag<TActor>(world, tag));
     }
     
     template <typename TActor>
     static std::map<std::string, TActor*> findActorsByTagAnyAsMap(UWorld* world, const std::vector<std::string>& tags)
     {
-        return getMap(findActorsByTagAny<TActor>(world, tags));
+        return getActorsAsMap(findActorsByTagAny<TActor>(world, tags));
     }
     template <typename TActor>
     static std::map<std::string, TActor*> findActorsByTagAllAsMap(UWorld* world, const std::vector<std::string>& tags)
     {
-        return getMap(findActorsByTagAll<TActor>(world, tags));
+        return getActorsAsMap(findActorsByTagAll<TActor>(world, tags));
     }
     
     template <typename TActor>
     static std::map<std::string, TActor*> findActorsByTypeAsMap(UWorld* world)
     {
-        return getMap(findActorsByType<TActor>(world));
+        return getActorsAsMap(findActorsByType<TActor>(world));
     }
 
     //
     // Helper functions
     //
+
+    template <typename TActor>
+    static std::map<std::string, TActor*> getActorsAsMap(const std::vector<TActor*>& actors)
+    {
+        std::map<std::string, TActor*> actor_map;
+        for (auto& a : actors) {
+            ASSERT(a);
+            std::string name = toStdString(a->GetName());
+            ASSERT(!Std::containsKey(actor_map, name)); // There shouldn't be two actors with the same name
+            actor_map[name] = a;
+        }
+        return actor_map;
+    }
 
     template <typename T>
     static T getItem(const std::vector<T>& vec, const T& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
@@ -312,18 +325,5 @@ public:
             ASSERT(false);
         }
         return default_val;
-    }
-
-    template <typename TActor>
-    static std::map<std::string, TActor*> getMap(const std::vector<TActor*>& actors)
-    {
-        std::map<std::string, TActor*> actor_map;
-        for (auto& a : actors) {
-            ASSERT(a);
-            std::string name = toStdString(a->GetName());
-            ASSERT(!Std::containsKey(actor_map, name)); // There shouldn't be two actors with the same name
-            actor_map[name] = a;
-        }
-        return actor_map;
     }
 };
