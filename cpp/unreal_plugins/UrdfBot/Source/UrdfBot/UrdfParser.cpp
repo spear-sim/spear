@@ -14,7 +14,8 @@
 UrdfRobotDesc UrdfParser::parse(const std::string& file_name)
 {
     FXmlFile file;
-    file.LoadFile(Unreal::toFString(file_name));
+    bool is_file_loaded = file.LoadFile(Unreal::toFString(file_name));
+    ASSERT(is_file_loaded);
 
     FXmlNode* robot_node = file.GetRootNode();
     ASSERT(robot_node->GetTag().Equals(TEXT("robot")));

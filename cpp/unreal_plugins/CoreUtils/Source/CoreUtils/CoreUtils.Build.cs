@@ -21,7 +21,7 @@ public class CoreUtils : ModuleRules
         // Enable exceptions because some of our third-party dependencies use them
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "Engine" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //

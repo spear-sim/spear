@@ -14,6 +14,8 @@ class FXmlNode;
 
 struct UrdfJointDesc;
 
+static const float unit_conversion_m_to_cm = 100.0f; // unit conversion from m to cm
+
 enum class UrdfGeometryType
 {
     Invalid  = 0,
