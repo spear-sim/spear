@@ -95,7 +95,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
         // if the current world is not the desired one, open the desired one
         if (world_path_name != "" && world_path_name != Unreal::toString(world->GetPathName())) {
-            std::cout << "[SPEAR | SimulationController.cpp] Opening SIMULATION_CONTROLLER.LEVEL_NAME..." << std::endl;
+            std::cout << "[SPEAR | SimulationController.cpp] Opening: " << level_name << std::endl;
 
             // assert that we haven't already tried to open the level, because that means we failed
             ASSERT(!has_open_level_executed_);
