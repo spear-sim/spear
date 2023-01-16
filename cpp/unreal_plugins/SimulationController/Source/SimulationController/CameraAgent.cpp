@@ -280,7 +280,7 @@ void CameraAgent::buildNavMesh()
         nav_mesh_->GetGenerator()->ExportNavigationData(
             Unreal::toFString(
                 Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR") + "/" +
-                Unreal::toString(camera_actor_->GetWorld()->GetName()) + "/"));
+                Unreal::toStdString(camera_actor_->GetWorld()->GetName()) + "/"));
     }
 #endif
 }

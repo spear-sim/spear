@@ -88,13 +88,13 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");
         auto level_name = Config::get<std::string>("SIMULATION_CONTROLLER.LEVEL_NAME");
 
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():                      " << Unreal::toString(world->GetName()) << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():                  " << Unreal::toString(world->GetPathName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():                      " << Unreal::toStdString(world->GetName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():                  " << Unreal::toStdString(world->GetPathName()) << std::endl;
         std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.WORLD_PATH_NAME: " << world_path_name << std::endl;
         std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.LEVEL_NAME:      " << level_name << std::endl;
 
         // if the current world is not the desired one, open the desired one
-        if (world_path_name != "" && world_path_name != Unreal::toString(world->GetPathName())) {
+        if (world_path_name != "" && world_path_name != Unreal::toStdString(world->GetPathName())) {
             std::cout << "[SPEAR | SimulationController.cpp] Opening: " << level_name << std::endl;
 
             // assert that we haven't already tried to open the level, because that means we failed

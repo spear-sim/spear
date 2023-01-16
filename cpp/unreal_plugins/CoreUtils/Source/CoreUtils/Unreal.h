@@ -23,7 +23,7 @@ public:
     // String manipulation
     //
 
-    static std::string toString(const FString& str)
+    static std::string toStdString(const FString& str)
     {
         // Note that the * operator for FString returns a pointer to the underlying string
         return std::string(TCHAR_TO_UTF8(*str));

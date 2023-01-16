@@ -435,7 +435,7 @@ void OpenBotAgent::buildNavMesh()
         nav_mesh_->GetGenerator()->ExportNavigationData(
             Unreal::toFString(
                 Config::get<std::string>("SIMULATION_CONTROLLER.OPENBOT_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR") + "/" +
-                Unreal::toString(open_bot_pawn_->GetWorld()->GetName()) + "/"));
+                Unreal::toStdString(open_bot_pawn_->GetWorld()->GetName()) + "/"));
     }
 #endif
 }

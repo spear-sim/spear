@@ -48,7 +48,7 @@ UrdfGeometryDesc UrdfParser::parseGeometryNode(FXmlNode* geometry_node)
     FXmlNode* mesh_node = geometry_node->FindChildNode(TEXT("mesh"));
     if (mesh_node) {
         geometry.type_     = UrdfGeometryType::Mesh;
-        geometry.filename_ = Unreal::toString(mesh_node->GetAttribute(TEXT("filename")));
+        geometry.filename_ = Unreal::toStdString(mesh_node->GetAttribute(TEXT("filename")));
         FString scale      = mesh_node->GetAttribute(TEXT("scale"));
         if (!scale.IsEmpty()) {
             geometry.scale_ = FCString::Atof(*scale);
@@ -64,7 +64,7 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
 {
     UrdfMaterialDesc material_desc;
 
-    material_desc.name_         = Unreal::toString(material_node->GetAttribute(TEXT("name")));
+    material_desc.name_         = Unreal::toStdString(material_node->GetAttribute(TEXT("name")));
     material_desc.is_reference_ = true;
 
     FXmlNode* color_node = material_node->FindChildNode(TEXT("color"));
@@ -75,7 +75,7 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
 
     FXmlNode* texture_node = material_node->FindChildNode(TEXT("texture"));
     if (texture_node) {
-        material_desc.texture_      = Unreal::toString(texture_node->GetAttribute(TEXT("filename")));
+        material_desc.texture_      = Unreal::toStdString(texture_node->GetAttribute(TEXT("filename")));
         material_desc.is_reference_ = false;
     }
     
@@ -118,7 +118,7 @@ UrdfVisualDesc UrdfParser::parseVisualNode(FXmlNode* visual_node)
 {
     UrdfVisualDesc visual_desc_;
 
-    visual_desc_.name_ = Unreal::toString(visual_node->GetAttribute(TEXT("name")));
+    visual_desc_.name_ = Unreal::toStdString(visual_node->GetAttribute(TEXT("name")));
 
     FXmlNode* origin_node = visual_node->FindChildNode(TEXT("origin"));
     if (origin_node) {
@@ -143,7 +143,7 @@ UrdfCollisionDesc UrdfParser::parseCollisionNode(FXmlNode* collision_node)
 {
     UrdfCollisionDesc collision_desc;
 
-    collision_desc.name_ = Unreal::toString(collision_node->GetAttribute(TEXT("name")));
+    collision_desc.name_ = Unreal::toStdString(collision_node->GetAttribute(TEXT("name")));
 
     FXmlNode* origin_node = collision_node->FindChildNode(TEXT("origin"));
     if (origin_node) {
@@ -162,7 +162,7 @@ UrdfLinkDesc UrdfParser::parseLinkNode(FXmlNode* link_node)
 {
     UrdfLinkDesc link_desc;
 
-    link_desc.name_ = Unreal::toString(link_node->GetAttribute(TEXT("name")));
+    link_desc.name_ = Unreal::toStdString(link_node->GetAttribute(TEXT("name")));
 
     FXmlNode* inertial_node = link_node->FindChildNode(TEXT("inertial"));
     if (inertial_node) {
@@ -185,7 +185,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 {
     UrdfJointDesc joint_desc;
 
-    joint_desc.name_ = Unreal::toString(joint_node->GetAttribute(TEXT("name")));
+    joint_desc.name_ = Unreal::toStdString(joint_node->GetAttribute(TEXT("name")));
 
     FString type = joint_node->GetAttribute(TEXT("type"));
     if (type.Equals(TEXT("revolute"))) {
@@ -212,11 +212,11 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 
     FXmlNode* parent_node = joint_node->FindChildNode(TEXT("parent"));
     ASSERT(parent_node);
-    joint_desc.parent_ = Unreal::toString(parent_node->GetAttribute(TEXT("link")));
+    joint_desc.parent_ = Unreal::toStdString(parent_node->GetAttribute(TEXT("link")));
 
     FXmlNode* child_node = joint_node->FindChildNode(TEXT("child"));
     ASSERT(child_node);
-    joint_desc.child_ = Unreal::toString(child_node->GetAttribute(TEXT("link")));
+    joint_desc.child_ = Unreal::toStdString(child_node->GetAttribute(TEXT("link")));
 
     FXmlNode* axis_node = joint_node->FindChildNode(TEXT("axis"));
     if (axis_node) {
@@ -259,7 +259,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 
     FXmlNode* mimic_node = joint_node->FindChildNode(TEXT("mimic"));
     if (mimic_node) {
-        joint_desc.joint_ = Unreal::toString(mimic_node->GetAttribute(TEXT("joint")));
+        joint_desc.joint_ = Unreal::toStdString(mimic_node->GetAttribute(TEXT("joint")));
 
         FString multiplier = mimic_node->GetAttribute(TEXT("multiplier"));
         if (!multiplier.IsEmpty()) {
@@ -284,7 +284,7 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
 {
     UrdfRobotDesc robot_desc;
     
-    robot_desc.name_ = Unreal::toString(robot_node->GetAttribute(TEXT("name")));
+    robot_desc.name_ = Unreal::toStdString(robot_node->GetAttribute(TEXT("name")));
 
     // parse all top-level URDF nodes into their own dictionaries
     for (auto& child_node : robot_node->GetChildrenNodes()) {
