@@ -26,7 +26,6 @@ struct Box;
 class OpenBotAgent : public Agent
 {
 public:
-
     OpenBotAgent(UWorld* world);
     ~OpenBotAgent();
 
@@ -45,7 +44,6 @@ public:
     bool isReady() const override;
 
 private:
-
     void buildNavMesh();
     void generateTrajectoryToGoal();
 

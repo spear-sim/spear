@@ -1,6 +1,7 @@
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright(c) 2017 Computer Vision Center (CVC) at the Universitat Autonoma de Barcelona (UAB). Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright(c) 2017 Computer Vision Center (CVC) at the Universitat Autonoma de Barcelona (UAB).
+// Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
 #pragma once
@@ -40,7 +41,8 @@ struct MoveWrapper : FunctorT
 
 } // namespace detail
 
-// hack to trick asio into accepting move-only handlers, if the handler were actually copied it would result in a link error. @see https://stackoverflow.com/a/22891509.
+// hack to trick asio into accepting move-only handlers, if the handler were actually copied it would result in a link error.
+// @see https://stackoverflow.com/a/22891509.
 template <typename FunctorT>
 auto moveHandler(FunctorT&& func)
 {
@@ -152,7 +154,8 @@ struct FunctionWrapper<R (*)(Args...)>
 template <typename... Args>
 inline RpcServer::RpcServer(Args&&... args) : server_(std::forward<Args>(args)...), io_context_(), executor_work_guard_(io_context_.get_executor())
 {
-    // Throwing an exception will cause the server to write an error response. This call will make it also suppress the exception (note that this is not default because this behavior might hide errors in the code)
+    // Throwing an exception will cause the server to write an error response. This call will make it also suppress the exception (note that this is
+    // not default because this behavior might hide errors in the code).
     // @Todo: Don't think this should be suppressed!!
     // server_.suppress_exceptions(true);
 }

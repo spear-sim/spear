@@ -37,7 +37,6 @@ public:
     std::map<std::string, RenderPass> render_passes_;
 
 private:
-
     // Initialize scene capture component for the "final_color" render pass
     void initializeSceneCaptureComponentFinalColor(USceneCaptureComponent2D* scene_capture_component);
 

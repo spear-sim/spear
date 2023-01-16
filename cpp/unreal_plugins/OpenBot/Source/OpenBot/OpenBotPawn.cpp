@@ -77,12 +77,12 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
     vehicle_movement_component_->WheelSetups[3].BoneName = FName("RR");
     vehicle_movement_component_->WheelSetups[3].AdditionalOffset = FVector::ZeroVector; // Offset the wheel from the bone's location
 
-    vehicle_movement_component_->Mass               = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MASS"); // Mass of the vehicle chassis
+    vehicle_movement_component_->Mass               = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MASS");
     vehicle_movement_component_->InertiaTensorScale = FVector::OneVector;
-    vehicle_movement_component_->DragCoefficient    = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.DRAG_COEFFICIENT"); // DragCoefficient of the vehicle chassis
-    vehicle_movement_component_->ChassisWidth       = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_WIDTH");    // Chassis width used for drag force computation in [cm]
-    vehicle_movement_component_->ChassisHeight      = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_HEIGHT");   // Chassis height used for drag force computation in [cm]
-    vehicle_movement_component_->MaxEngineRPM       = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MOTOR_MAX_RPM");    // Max RPM for engine
+    vehicle_movement_component_->DragCoefficient    = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.DRAG_COEFFICIENT");
+    vehicle_movement_component_->ChassisWidth       = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_WIDTH");
+    vehicle_movement_component_->ChassisHeight      = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_HEIGHT");
+    vehicle_movement_component_->MaxEngineRPM       = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MOTOR_MAX_RPM");
 
     // Setup camera
     FVector camera_location(
@@ -259,7 +259,9 @@ void AOpenBotPawn::setDriveTorquesFromDutyCycle()
     auto motor_torque_constant   = 1.f / motor_velocity_constant;                                      // Motor torque constant in [rad/s/V]
 
     auto battery_voltage         = Config::get<float>("OPENBOT.OPENBOT_PAWN.BATTERY_VOLTAGE");         // Voltage of the battery powering the OpenBot [V]
-    auto control_dead_zone       = Config::get<float>("OPENBOT.OPENBOT_PAWN.CONTROL_DEAD_ZONE");       // Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
+    auto control_dead_zone       = Config::get<float>("OPENBOT.OPENBOT_PAWN.CONTROL_DEAD_ZONE");       // Absolute duty cycle (in the ACTION_SCALE range)
+                                                                                                       // below which a command does not produces any torque
+                                                                                                       // on the vehicle
     auto motor_torque_max        = Config::get<float>("OPENBOT.OPENBOT_PAWN.MOTOR_TORQUE_MAX");        // Motor maximal torque [N.m]
     auto electrical_resistance   = Config::get<float>("OPENBOT.OPENBOT_PAWN.ELECTRICAL_RESISTANCE");   // Motor winding electrical resistance [Ohms]
     auto electrical_inductance   = Config::get<float>("OPENBOT.OPENBOT_PAWN.ELECTRICAL_INDUCTANCE");   // Motor winding electrical inductance [Henry]

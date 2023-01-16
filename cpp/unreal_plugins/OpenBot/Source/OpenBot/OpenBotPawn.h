@@ -55,7 +55,6 @@ public:
     UBoxComponent* sonar_component_ = nullptr;
 
 private:
-
     // Function that applies wheel torque on a vehicle to generate linear
     // forward/backward motions. This function is intended to handle keyboard
     // input.

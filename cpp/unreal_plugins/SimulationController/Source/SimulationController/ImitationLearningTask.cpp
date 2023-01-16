@@ -74,7 +74,8 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     agent_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_ACTOR_NAME"));
     ASSERT(agent_actor_);
 
-    obstacle_ignore_actors_ = Unreal::findActorsByNameAsVector(world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), false);
+    obstacle_ignore_actors_ = Unreal::findActorsByNameAsVector(
+        world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), false);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_->subscribeToActor(agent_actor_);
@@ -173,8 +174,10 @@ void ImitationLearningTask::reset()
     // Set agent and goal positions
     bool sweep = false;
     FHitResult* hit_result = nullptr;
-    agent_actor_->SetActorLocationAndRotation(agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
-    goal_actor_->SetActorLocationAndRotation(agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+    agent_actor_->SetActorLocationAndRotation(
+        agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+    goal_actor_->SetActorLocationAndRotation(
+        agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
 
     // Increment position_index_
     if (position_index_ < agent_goal_positions_.size() - 1) { 
@@ -263,7 +266,8 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
         init_location = nav_mesh_->GetRandomPoint();
 
         // Get a random reachable goal point, to be reached by the agent from init_location.Location
-        bool found = nav_mesh_->GetRandomReachablePointInRadius(init_location.Location, Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_SEARCH_RADIUS"), goal_location);
+        bool found = nav_mesh_->GetRandomReachablePointInRadius(
+            init_location.Location, Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_SEARCH_RADIUS"), goal_location);
         ASSERT(found);
 
         // Update navigation query with the new goal
@@ -302,8 +306,12 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
                     std::cout << "[SPEAR | ImitationLearningTask.cpp] Iteration: " << i << std::endl;
                     std::cout << "[SPEAR | ImitationLearningTask.cpp] Score: " << best_path_score << std::endl;
                     std::cout << "[SPEAR | ImitationLearningTask.cpp] Number of waypoints: " << num_waypoints << std::endl;
-                    std::cout << "[SPEAR | ImitationLearningTask.cpp] Goal distance: " << relative_position_to_goal.Size() / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
-                    std::cout << "[SPEAR | ImitationLearningTask.cpp] Path length: " << trajectory_length / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" << std::endl;
+                    std::cout << "[SPEAR | ImitationLearningTask.cpp] Goal distance: " <<
+                        relative_position_to_goal.Size() / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" <<
+                        std::endl;
+                    std::cout << "[SPEAR | ImitationLearningTask.cpp] Path length: " <<
+                        trajectory_length / agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" <<
+                        std::endl;
                 }
             }
         }
@@ -319,14 +327,21 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     // Debug output
     if(Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")){
         std::cout << std::endl;
-        std::cout << "[SPEAR | ImitationLearningTask.cpp] Initial position: [" << agent_initial_positions_.at(0).X << ", " << agent_initial_positions_.at(0).Y << ", " << agent_initial_positions_.at(0).Z << "]." << std::endl;
-        std::cout << "[SPEAR | ImitationLearningTask.cpp] Goal position: [" << agent_goal_positions_.at(0).X << ", " << agent_goal_positions_.at(0).Y << ", " << agent_goal_positions_.at(0).Z << "]." << std::endl;
+        std::cout << "[SPEAR | ImitationLearningTask.cpp] Initial position: [" <<
+            agent_initial_positions_.at(0).X << ", " << agent_initial_positions_.at(0).Y << ", " << agent_initial_positions_.at(0).Z << "]." <<
+            std::endl;
+        std::cout << "[SPEAR | ImitationLearningTask.cpp] Goal position: [" <<
+            agent_goal_positions_.at(0).X << ", " << agent_goal_positions_.at(0).Y << ", " << agent_goal_positions_.at(0).Z << "]." <<
+            std::endl;
         std::cout << "[SPEAR | ImitationLearningTask.cpp] ----------------------" << std::endl;
         std::cout << "[SPEAR | ImitationLearningTask.cpp] Waypoints: " << std::endl;
         for (int i = 1; i < best_path_points.Num(); i++) {
-            std::cout << "[SPEAR | ImitationLearningTask.cpp] [" << best_path_points[i].Location.X << ", " << best_path_points[i].Location.Y << ", " << best_path_points[i].Location.Z << "]" << std::endl;
+            std::cout << "[SPEAR | ImitationLearningTask.cpp] [" <<
+                best_path_points[i].Location.X << ", " << best_path_points[i].Location.Y << ", " << best_path_points[i].Location.Z << "]" <<
+                std::endl;
             DrawDebugPoint(agent_actor_->GetWorld(), best_path_points[i].Location, 20.0f, FColor(25, 116, 210), false, 10.0f, 0);
-            DrawDebugLine(agent_actor_->GetWorld(), best_path_points[i-1].Location, best_path_points[i].Location, FColor(25, 116, 210), false, 10.0f, 0, 0.15f);
+            DrawDebugLine(
+                agent_actor_->GetWorld(), best_path_points[i-1].Location, best_path_points[i].Location, FColor(25, 116, 210), false, 10.0f, 0, 0.15f);
         }
         std::cout << "[SPEAR | ImitationLearningTask.cpp] ----------------------" << std::endl;
     }

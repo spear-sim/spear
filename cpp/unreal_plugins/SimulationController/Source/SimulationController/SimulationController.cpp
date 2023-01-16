@@ -49,10 +49,10 @@ void SimulationController::StartupModule()
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
     
-    post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
+    post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(
+        this, &SimulationController::postWorldInitializationEventHandler);
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
-    // required for adding thread synchronization logic
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
     end_frame_delegate_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
 }
@@ -61,7 +61,7 @@ void SimulationController::ShutdownModule()
 {
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::ShutdownModule" << std::endl;
 
-    // If this module is unloaded in the middle of simulation for some reason, raise an error because we do not support this and we want to know when this happens.
+    // If this module is unloaded in the middle of simulation for some reason, raise an error.
     // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
     ASSERT(!world_begin_play_delegate_handle_.IsValid());
 
@@ -134,7 +134,7 @@ void SimulationController::worldBeginPlayEventHandler()
     // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep
     UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
     ASSERT(physics_settings->bSubstepping);
-    ASSERT(Config::get<float>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps); 
+    ASSERT(Config::get<float>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps);
 
     FApp::SetBenchmarking(true);
     FApp::SetFixedDeltaTime(Config::get<double>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS"));

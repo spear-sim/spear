@@ -22,7 +22,6 @@ struct Box;
 class PointGoalNavTask: public Task
 {
 public:
-
     PointGoalNavTask(UWorld* world);
     ~PointGoalNavTask();
 

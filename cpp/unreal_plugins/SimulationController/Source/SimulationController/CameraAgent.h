@@ -23,7 +23,6 @@ struct Box;
 class CameraAgent : public Agent
 {
 public:
-
     CameraAgent(UWorld* world);
     ~CameraAgent();
     
@@ -42,7 +41,6 @@ public:
     bool isReady() const override;
     
 private:
-
     void buildNavMesh();
 
     ACameraActor* camera_actor_ = nullptr;

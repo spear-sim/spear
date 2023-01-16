@@ -10,7 +10,6 @@
 class NullTask: public Task
 {
 public:
-
     NullTask() = default;
     ~NullTask() = default;
 

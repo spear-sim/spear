@@ -236,9 +236,10 @@ void CameraAgent::buildNavMesh()
     nav_mesh_->TilePoolSize           = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.TILE_POOL_SIZE");
     nav_mesh_->MaxSimplificationError = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.MAX_SIMPLIFICATION_ERROR");
 
-    // get bounding volume
+    // get bounds volume
     FBox bounds_volume(EForceInit::ForceInit);
-    for (auto& actor : Unreal::findActorsByTagAny(camera_actor_->GetWorld(), Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.BOUNDS_VOLUME_ACTOR_TAGS"))) {
+    auto tags = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.BOUNDS_VOLUME_ACTOR_TAGS");
+    for (auto& actor : Unreal::findActorsByTagAny(camera_actor_->GetWorld(), tags)) {
         bounds_volume += actor->GetComponentsBoundingBox(false, true);
     }
 
@@ -284,5 +285,4 @@ void CameraAgent::buildNavMesh()
                 Unreal::toString(camera_actor_->GetWorld()->GetName()) + "/"));
     }
 #endif
-
 }

@@ -11,6 +11,7 @@
 
 #include <Delegates/IDelegateInstance.h>
 #include <Engine/EngineBaseTypes.h>
+#include <Math/Rotator.h>
 
 #include "SimulationController/Agent.h"
 
@@ -28,7 +29,6 @@ struct Box;
 class SphereAgent : public Agent
 {
 public:
-
     SphereAgent(UWorld* world);
     ~SphereAgent();
  
@@ -49,13 +49,14 @@ public:
     void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
 
 private:
-
     AStaticMeshActor* sphere_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
     AActor* parent_actor_ = nullptr;
 
     UStaticMeshComponent* static_mesh_component_ = nullptr;
+
+    FRotator rotation_ = FRotator::ZeroRotator;
 
     UTickEvent* tick_event_ = nullptr;
     FDelegateHandle tick_event_handle_;

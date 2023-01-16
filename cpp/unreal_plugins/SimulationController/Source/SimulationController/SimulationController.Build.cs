@@ -10,7 +10,8 @@ public class SimulationController : ModuleRules
 {
     public SimulationController(ReadOnlyTargetRules Target) : base(Target)
     {
-        // Disable precompiled headers (in our code but not Unreal code) for faster builds, easier debugging of compile errors, and strict enforcement of include-what-you-use
+        // Disable precompiled headers (in our code but not Unreal code) for faster builds,
+        // easier debugging of compile errors, and strict enforcement of include-what-you-use
         PCHUsage = ModuleRules.PCHUsageMode.Default;
         PrivatePCHHeaderFile = "";
         bUseUnity = false;
@@ -21,7 +22,8 @@ public class SimulationController : ModuleRules
         // Enable exceptions because some of our third-party dependencies use them
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI" });
+        PublicDependencyModuleNames.AddRange(new string[] {
+            "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //

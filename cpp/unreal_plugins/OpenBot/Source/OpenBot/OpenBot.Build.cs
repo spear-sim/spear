@@ -10,7 +10,8 @@ public class OpenBot : ModuleRules
 {
     public OpenBot(ReadOnlyTargetRules Target) : base(Target)
     {
-        // Disable precompiled headers (in our code but not Unreal code) for faster builds, easier debugging of compile errors, and strict enforcement of include-what-you-use
+        // Disable precompiled headers (in our code but not Unreal code) for faster builds,
+        // easier debugging of compile errors, and strict enforcement of include-what-you-use
         PCHUsage = ModuleRules.PCHUsageMode.Default;
         PrivatePCHHeaderFile = "";
         bUseUnity = false;

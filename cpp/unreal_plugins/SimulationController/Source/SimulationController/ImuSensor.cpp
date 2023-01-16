@@ -84,9 +84,12 @@ void ImuSensor::updateLinearAcceleration(float delta_time)
     // Normal (or Gaussian or Gauss) distribution will be used as noise function.
     // A mean of 0.0 is used as a first parameter, the standard deviation is determined by the client
     linear_acceleration_ = FVector{
-        linear_acceleration.X + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.ACCELEROMETER_NOISE_STD_DEV.X"))(random_gen_),
-        linear_acceleration.Y + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.ACCELEROMETER_NOISE_STD_DEV.Y"))(random_gen_),
-        linear_acceleration.Z + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.ACCELEROMETER_NOISE_STD_DEV.Z"))(random_gen_)};
+        linear_acceleration.X +
+        std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.ACCELEROMETER_NOISE_STD_DEV.X"))(random_gen_),
+        linear_acceleration.Y +
+        std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.ACCELEROMETER_NOISE_STD_DEV.Y"))(random_gen_),
+        linear_acceleration.Z +
+        std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.ACCELEROMETER_NOISE_STD_DEV.Z"))(random_gen_)};
 }
 
 void ImuSensor::updateAngularRate()
@@ -99,9 +102,12 @@ void ImuSensor::updateAngularRate()
     // Normal (or Gaussian or Gauss) distribution and a bias will be used as noise function.
     // A mean of 0.0 is used as a first parameter.The standard deviation and the bias are determined by the client
     angular_rate_ = FVector{
-        angular_rate.X + Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_BIAS.X") + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_NOISE_STD_DEV.X"))(random_gen_),
-        angular_rate.Y + Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_BIAS.Y") + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_NOISE_STD_DEV.Y"))(random_gen_),
-        angular_rate.Z + Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_BIAS.Z") + std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_NOISE_STD_DEV.Z"))(random_gen_)};
+        angular_rate.X + Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_BIAS.X") +
+        std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_NOISE_STD_DEV.X"))(random_gen_),
+        angular_rate.Y + Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_BIAS.Y") +
+        std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_NOISE_STD_DEV.Y"))(random_gen_),
+        angular_rate.Z + Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_BIAS.Z") +
+        std::normal_distribution<float>(0.0f, Config::get<float>("SIMULATION_CONTROLLER.IMU_SENSOR.GYROSCOPE_NOISE_STD_DEV.Z"))(random_gen_)};
 }
 
 void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
@@ -121,14 +127,34 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTic
         FVector transform_z_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Z));
 
         // Plot sensor frame
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5.0f * sensor_transform.GetUnitAxis(EAxis::X), 0.5f, FColor(255, 0, 0), false, 0.033f, 0, 0.5f); // X
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5.0f * sensor_transform.GetUnitAxis(EAxis::Y), 0.5f, FColor(0, 255, 0), false, 0.033f, 0, 0.5f); // Y
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + 5.0f * sensor_transform.GetUnitAxis(EAxis::Z), 0.5f, FColor(0, 0, 255), false, 0.033f, 0, 0.5f); // Z
+        DrawDebugDirectionalArrow(
+            component_->GetWorld(),
+            imu_location,
+            imu_location + 5.0f * sensor_transform.GetUnitAxis(EAxis::X),
+            0.5f, FColor(255, 0, 0), false, 0.033f, 0, 0.5f); // X
+        DrawDebugDirectionalArrow(
+            component_->GetWorld(),
+            imu_location,
+            imu_location + 5.0f * sensor_transform.GetUnitAxis(EAxis::Y),
+            0.5f, FColor(0, 255, 0), false, 0.033f, 0, 0.5f); // Y
+        DrawDebugDirectionalArrow(
+            component_->GetWorld(),
+            imu_location,
+            imu_location + 5.0f * sensor_transform.GetUnitAxis(EAxis::Z),
+            0.5f, FColor(0, 0, 255), false, 0.033f, 0, 0.5f); // Z
 
         // Plot acceleration vector
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(linear_acceleration_), 0.5f, FColor(200, 0, 200), false, 0.033f, 0, 0.5f);
+        DrawDebugDirectionalArrow(
+            component_->GetWorld(),
+            imu_location,
+            imu_location + transform_rotator.RotateVector(linear_acceleration_),
+            0.5f, FColor(200, 0, 200), false, 0.033f, 0, 0.5f);
 
         // Plot angular rate vector
-        DrawDebugDirectionalArrow(component_->GetWorld(), imu_location, imu_location + transform_rotator.RotateVector(angular_rate_), 0.5f, FColor(0, 200, 200), false, 0.033f, 0, 0.5f);
+        DrawDebugDirectionalArrow(
+            component_->GetWorld(),
+            imu_location,
+            imu_location + transform_rotator.RotateVector(angular_rate_),
+            0.5f, FColor(0, 200, 200), false, 0.033f, 0, 0.5f);
     }
 }

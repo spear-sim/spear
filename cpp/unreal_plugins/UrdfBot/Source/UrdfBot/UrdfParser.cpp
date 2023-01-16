@@ -374,7 +374,11 @@ FVector4 UrdfParser::parseVector4(const FString& input_string)
     TArray<FString> split_string_array;
     input_string.ParseIntoArray(split_string_array, TEXT(" "), true);
     ASSERT(split_string_array.Num() == 4);
-    return FVector4(FCString::Atof(*split_string_array[0]), FCString::Atof(*split_string_array[1]), FCString::Atof(*split_string_array[2]), FCString::Atof(*split_string_array[3]));
+    return FVector4(
+        FCString::Atof(*split_string_array[0]),
+        FCString::Atof(*split_string_array[1]),
+        FCString::Atof(*split_string_array[2]),
+        FCString::Atof(*split_string_array[3]));
 }
 
 FQuat UrdfParser::parseRotation(const FString& input_string)
@@ -386,5 +390,8 @@ FQuat UrdfParser::parseRotation(const FString& input_string)
     TArray<FString> split_string_array;
     input_string.ParseIntoArray(split_string_array, TEXT(" "), true);
     ASSERT(split_string_array.Num() == 3);
-    return FMath::RadiansToDegrees(FRotator(FCString::Atof(*split_string_array[1]), FCString::Atof(*split_string_array[2]), FCString::Atof(*split_string_array[0]))).Quaternion();
+    return FMath::RadiansToDegrees(FRotator(
+        FCString::Atof(*split_string_array[1]),
+        FCString::Atof(*split_string_array[2]),
+        FCString::Atof(*split_string_array[0]))).Quaternion();
 }
