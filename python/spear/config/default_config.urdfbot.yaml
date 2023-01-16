@@ -1,0 +1,18 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+URDFBOT:
+  URDFBOT_PAWN:
+    # the file path for agent .urdf description file
+    URDF_FILE_PATH: "E:/Spear/python/spear/urdf/locobot.xml"
+    CAMERA_COMPONENT:
+      POSITION_X: 200.0
+      POSITION_Y: 0
+      POSITION_Z: 60
+      ROLL: 0.0
+      YAW: 180.0
+      PITCH: 0.0
+      FOV: 90.0
+    POSITION_IITERATION_COUNT: 100
+    VELOCITY_IITERATION_COUNT: 100
