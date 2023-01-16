@@ -19,9 +19,9 @@ public:
     static void terminate();
 
     //
-    // This function is used to extract a value from the Config system. This function takes in a list of
-    // keys that lead to the required config value. The keys need to be passed in the descending order.
-    // For example, if you have a config.yaml such as...
+    // This function is used to extract a value from the Config system. This function takes as input
+    // the fully qualified key that leads to the required config value. For example, if you have a
+    // config.yaml such as...
     //
     // SIMULATOR:
     //   TIME_DELTA_SECONDS: 0.1
@@ -70,12 +70,9 @@ public:
                 ASSERT(false);
             }
 
-            //
             // We don't use node = node[key], because operator= merges the right-hand side into the left-hand
             // side Node. Also, repeated assignment to the same Node consumes additional memory as noted in
             // https://github.com/jbeder/yaml-cpp/issues/502.
-            //
-
             node.reset(node[key]);
         }
 

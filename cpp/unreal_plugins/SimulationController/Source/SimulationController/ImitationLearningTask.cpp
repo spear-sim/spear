@@ -261,7 +261,6 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
         FNavLocation init_location;
         FNavLocation goal_location;
         
-
         // Get a random initial point
         init_location = nav_mesh_->GetRandomPoint();
 

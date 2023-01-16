@@ -39,7 +39,6 @@ public:
         return FName(str.c_str());
     }
 
-
     //
     // Find actors by name or tag (non-templated)
     //
@@ -73,7 +72,6 @@ public:
     {
         return findActorsByTagAll<AActor>(world, tags);
     }
-
 
     //
     // Find actors by name, tag, or type (templated by type)

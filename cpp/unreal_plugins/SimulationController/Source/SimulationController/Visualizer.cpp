@@ -18,7 +18,6 @@
 Visualizer::Visualizer(UWorld* world)
 {
     if (Config::get<bool>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA")) {
-
         FVector location(
             Config::get<float>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_POSITION_X"),
             Config::get<float>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_POSITION_Y"),

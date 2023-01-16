@@ -85,7 +85,6 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     ASSERT(world);
 
     if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
-        
         auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");
         auto level_name = Config::get<std::string>("SIMULATION_CONTROLLER.LEVEL_NAME");
 
@@ -96,7 +95,6 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
         // if the current world is not the desired one, open the desired one
         if (world_path_name != "" && world_path_name != Unreal::toString(world->GetPathName())) {
-
             std::cout << "[SPEAR | SimulationController.cpp] Opening SIMULATION_CONTROLLER.LEVEL_NAME..." << std::endl;
 
             // assert that we haven't already tried to open the level, because that means we failed
@@ -106,7 +104,6 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
             has_open_level_executed_ = true;
 
         } else {
-
             has_open_level_executed_ = false;
 
             // we expect worldCleanupEventHandler(...) to be called before a new world is created.
@@ -199,12 +196,11 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
     // We only need to perform any additional steps if the world being cleaned up is the world we cached in our world_ member variable.
     if (world == world_) {
-
+        
         // The worldCleanupEventHandler(...) function is called for all worlds, but some local state (such as rpc_server_ and agent_)
         // is initialized only when worldBeginPlayEventHandler(...) is called for a particular world. So we check if worldBeginPlayEventHandler(...)
         // has been executed.
         if(has_world_begin_play_executed_) {
-
             has_world_begin_play_executed_ = false;
 
             ASSERT(rpc_server_);

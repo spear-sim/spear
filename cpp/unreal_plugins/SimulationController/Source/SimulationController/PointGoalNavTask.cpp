@@ -108,9 +108,7 @@ void PointGoalNavTask::beginFrame()
     hit_obstacle_ = false;
 }
 
-void PointGoalNavTask::endFrame()
-{
-}
+void PointGoalNavTask::endFrame() {}
 
 float PointGoalNavTask::getReward() const
 {

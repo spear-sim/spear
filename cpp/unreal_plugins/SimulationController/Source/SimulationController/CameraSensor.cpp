@@ -65,7 +65,6 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
     ASSERT(parent_actor_);
 
     for (auto& render_pass_name : render_pass_names) {
-
         RenderPass render_pass;
 
         // create TextureRenderTarget2D
@@ -165,7 +164,6 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
 
     std::map<std::string, TArray<FColor>> render_data = getRenderData();
     for (auto& render_data_component : render_data) {
-
         if (render_data_component.first == "final_color"     ||
             render_data_component.first == "lens_distortion" ||
             render_data_component.first == "normals"         ||
@@ -182,7 +180,8 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
 
             observation[render_data_component.first] = std::move(observation_vector);
 
-        } else if (render_data_component.first == "depth" || render_data_component.first == "depth_glsl") {
+        } else if (render_data_component.first == "depth" ||
+                   render_data_component.first == "depth_glsl") {
             std::vector<float> observation_vector = getFloatDepthFromColorDepth(render_data_component.second);
             observation[render_data_component.first] = Serialize::toUint8(observation_vector);
 

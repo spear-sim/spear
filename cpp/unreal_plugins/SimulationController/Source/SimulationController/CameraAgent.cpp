@@ -206,15 +206,13 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
             random_points.push_back(random_position.Y);
             random_points.push_back(random_position.Z);
         }
-
         step_info["random_points"] = Serialize::toUint8(random_points);
     }
 
     return step_info;
 }
 
-void CameraAgent::reset()
-{}
+void CameraAgent::reset() {}
 
 bool CameraAgent::isReady() const
 {
