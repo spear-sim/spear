@@ -65,7 +65,7 @@ public:
     static AActor* findActorByTagAll(
         UWorld* world,
         const std::vector<std::string>& tags,
-        bool assert_if_not_found = false,
+        bool assert_if_not_found = true,
         bool assert_if_multiple_found = true)
     {
         return findActorByTagAll<AActor>(world, tags, assert_if_not_found, assert_if_multiple_found);
@@ -90,7 +90,7 @@ public:
         return findActorsByTagAny<AActor>(world, tags);
     }
 
-    static std::vector<AActor*> findActorsByTagAllAsVector(UWorld* world, const std::vector<std::string>& tags)
+    static std::vector<AActor*> findActorsByTagAll(UWorld* world, const std::vector<std::string>& tags)
     {
         return findActorsByTagAll<AActor>(world, tags);
     }
@@ -124,45 +124,58 @@ public:
     //
 
     template <typename TActor>
-    static TActor* findActorByName(
-        UWorld* world, const std::string& name, bool assert_if_not_found = true)
+    static TActor* findActorByName(UWorld* world, const std::string& name, bool assert_if_not_found = true)
     {
-        TActor* default_val = nullptr;
-        bool return_null_if_not_found = true;
-        bool assert_if_multiple_found = true;
-        return getItem(findActorsByName<TActor>(world, {name}, return_null_if_not_found), default_val, assert_if_not_found, assert_if_multiple_found);
+        TActor* default_val                     = nullptr;
+        bool return_null_if_not_found           = true;
+        bool assert_if_size_is_zero             = assert_if_not_found;
+        bool assert_if_size_is_greater_than_one = true;
+        return getItem(
+            findActorsByName<TActor>(world, {name}, return_null_if_not_found), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
     }
 
     template <typename TActor>
-    static TActor* findActorByTag(
-        UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TActor* findActorByTag(UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActor* default_val = nullptr;
-        return getItem(findActorsByTag<TActor>(world, tag), default_val, assert_if_not_found, assert_if_multiple_found);
+        TActor* default_val                     = nullptr;
+        bool assert_if_size_is_zero             = assert_if_not_found;
+        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
+        return getItem(findActorsByTag<TActor>(world, tag), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
     }
 
     template <typename TActor>
     static TActor* findActorByTagAny(
-        UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+        UWorld* world,
+        const std::vector<std::string>& tags,
+        bool assert_if_not_found      = true,
+        bool assert_if_multiple_found = true)
     {
-        TActor* default_val = nullptr;
-        return getItem(findActorsByTagAny<TActor>(world, tags), default_val, assert_if_not_found, assert_if_multiple_found);
+        TActor* default_val                     = nullptr;
+        bool assert_if_size_is_zero             = assert_if_not_found;
+        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
+        return getItem(findActorsByTagAny<TActor>(world, tags), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
     }
 
     template <typename TActor>
     static TActor* findActorByTagAll(
-        UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+        UWorld* world,
+        const std::vector<std::string>& tags,
+        bool assert_if_not_found      = true,
+        bool assert_if_multiple_found = true)
     {
-        TActor* default_val = nullptr;
-        return getItem(findActorsByTagAll<TActor>(world, tags), default_val, assert_if_not_found, assert_if_multiple_found);
+        TActor* default_val                     = nullptr;
+        bool assert_if_size_is_zero             = assert_if_not_found;
+        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
+        return getItem(findActorsByTagAll<TActor>(world, tags), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
     }
 
     template <typename TActor>
-    static TActor* findActorByType(
-        UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TActor* findActorByType(UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActor* default_val = nullptr;
-        return getItem(findActorsByType<TActor>(world), default_val, assert_if_not_found, assert_if_multiple_found);
+        TActor* default_val                     = nullptr;
+        bool assert_if_size_is_zero             = assert_if_not_found;
+        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
+        return getItem(findActorsByType<TActor>(world), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
     }
 
     //
@@ -192,6 +205,7 @@ public:
     template <typename TActor>
     static std::vector<TActor*> findActorsByTagAny(UWorld* world, const std::vector<std::string>& tags)
     {
+        ASSERT(world);
         std::vector<TActor*> actors;
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
             TActor* actor = *itr;
@@ -208,6 +222,7 @@ public:
     template <typename TActor>
     static std::vector<TActor*> findActorsByTagAll(UWorld* world, const std::vector<std::string>& tags)
     {
+        ASSERT(world);
         std::vector<TActor*> actors;
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
             TActor* actor = *itr;
@@ -228,6 +243,7 @@ public:
     template <typename TActor>
     static std::vector<TActor*> findActorsByType(UWorld* world)
     {
+        ASSERT(world);
         std::vector<TActor*> actors;
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
             actors.push_back(*itr);
@@ -242,6 +258,7 @@ public:
     template <typename TActor>
     static std::map<std::string, TActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
     {
+        ASSERT(world);
         std::map<std::string, TActor*> actor_map;
         for (auto& name : names) {
             actor_map[name] = nullptr;
@@ -285,13 +302,13 @@ public:
     //
 
     template <typename T>
-    static T getItem(const std::vector<T>& vec, const T& default_val, bool assert_if_not_found, bool assert_if_multiple_found)
+    static T getItem(const std::vector<T>& vec, const T& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
     {
         if (vec.size() == 1) {
             return vec.at(0);
-        } else if ((vec.size() == 0) && assert_if_not_found) {
+        } else if ((vec.size() == 0) && assert_if_size_is_zero) {
             ASSERT(false);
-        } else if ((vec.size() > 1) && assert_if_multiple_found) {
+        } else if ((vec.size() > 1) && assert_if_size_is_greater_than_one) {
             ASSERT(false);
         }
         return default_val;
