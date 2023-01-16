@@ -317,13 +317,18 @@ public:
     template <typename T>
     static T getItem(const std::vector<T>& vec, const T& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
     {
-        if (vec.size() == 1) {
+        if (vec.size() == 0) {
+            if (assert_if_size_is_zero) {
+                ASSERT(false);
+            }
+            return default_val;
+        } else if (vec.size() == 1) {
             return vec.at(0);
-        } else if ((vec.size() == 0) && assert_if_size_is_zero) {
-            ASSERT(false);
-        } else if ((vec.size() > 1) && assert_if_size_is_greater_than_one) {
-            ASSERT(false);
+        } else {
+            if (assert_if_size_is_greater_than_one) {
+                ASSERT(false);
+            }
+            return vec.at(0);
         }
-        return default_val;
     }
 };
