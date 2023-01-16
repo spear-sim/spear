@@ -16,29 +16,29 @@ struct UrdfJointDesc;
 
 enum class UrdfGeometryType
 {
-    Invalid  = 0,
-    Box      = 1,
-    Sphere   = 2,
-    Cylinder = 3,
-    Mesh     = 4,
+    Invalid,
+    Box,
+    Sphere,
+    Cylinder,
+    Mesh,
 };
 
 enum class UrdfJointType
 {
-    Invalid    = 0,
-    Revolute   = 1,
-    Continuous = 2,
-    Prismatic  = 3,
-    Fixed      = 4,
-    Floating   = 5,
-    Planar     = 6
+    Invalid,
+    Revolute,
+    Continuous,
+    Prismatic,
+    Fixed,
+    Floating,
+    Planar,
 };
 
 enum class CalibrationType
 {
-    Invalid = 0,
-    Rising  = 1,
-    Falling = 2
+    Invalid,
+    Rising,
+    Falling,
 };
 
 struct UrdfGeometryDesc

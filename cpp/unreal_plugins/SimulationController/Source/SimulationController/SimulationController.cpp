@@ -33,7 +33,7 @@
 #include "SimulationController/Visualizer.h"
 
 // Different possible frame states for thread synchronization
-enum class FrameState : uint8_t
+enum class FrameState
 {
     Idle,
     RequestPreTick,

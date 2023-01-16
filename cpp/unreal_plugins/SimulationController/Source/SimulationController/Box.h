@@ -8,8 +8,8 @@
 
 #include "SimulationController/Rpclib.h"
 
-// enum values must match python/spear/env.py
-enum class DataType : uint8_t
+// enum values must match python/spear/env.py, which is why we write them out explicitly
+enum class DataType
 {
     Boolean    = 0,
     UInteger8  = 1,

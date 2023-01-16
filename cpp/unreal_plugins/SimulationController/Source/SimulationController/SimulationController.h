@@ -17,7 +17,7 @@ class RpcServer;
 class Task;
 class Visualizer;
 
-enum class FrameState : uint8_t;
+enum class FrameState;
 
 class SimulationController : public IModuleInterface
 {
