@@ -59,7 +59,6 @@ public:
 
         YAML::Node node = s_config_;
         for (auto& key : keys) {
-
             // If key doesn't exist, then print an informative error message and assert
             if (!node[key]) {
                 std::cout << "[SPEAR | Config.h] Invalid key, keys == [";
