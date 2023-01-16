@@ -328,7 +328,6 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
 
     // get data from all passes
     for (auto& render_pass : render_passes_) {
-
         FTextureRenderTargetResource* target_resource = render_pass.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
         ASSERT(target_resource);
 
