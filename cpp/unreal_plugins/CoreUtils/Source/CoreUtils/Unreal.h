@@ -11,7 +11,7 @@
 #include <Containers/UnrealString.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
-#include "UObject/NameTypes.h"
+#include <UObject/NameTypes.h>
 
 #include "CoreUtils/Std.h"
 
