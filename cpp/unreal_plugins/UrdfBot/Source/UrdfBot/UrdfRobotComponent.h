@@ -15,6 +15,7 @@
 #include "UrdfRobotComponent.generated.h"
 
 class UUrdfJointComponent;
+struct UrdfLinkDesc;
 struct UrdfJointDesc;
 struct UrdfRobotDesc;
 
@@ -26,11 +27,16 @@ class UUrdfRobotComponent : public USceneComponent
 public:
     UUrdfRobotComponent(const FObjectInitializer& object_initializer);
 
+    // test only
+    void test(AActor* actor);
+    void action(int signal);
+    void actionJoint(std::string joint_name, float action);
+
     UUrdfLinkComponent* root_link_component_;
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
 private:
     // recursively attach child link to parent link
-    void attachChildLinks(UrdfJointDesc* joint_desc, const UrdfRobotDesc& robot_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
+    void constructChildLinks(UrdfLinkDesc* lnk_desc,UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link);
 };

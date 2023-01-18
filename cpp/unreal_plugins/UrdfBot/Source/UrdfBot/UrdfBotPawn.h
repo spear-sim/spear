@@ -24,6 +24,12 @@ public:
     void Tick(float delta_time) override;
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
 
+    // debug only
+    void test();
+    int signal = 0;
+    void test1();
+    void test2();
+
 private:
     UUrdfRobotComponent* robot_component_ = nullptr;
     // Camera component that will be our viewpoint

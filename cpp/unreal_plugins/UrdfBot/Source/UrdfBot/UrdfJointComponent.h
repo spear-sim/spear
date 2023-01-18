@@ -10,23 +10,17 @@
 #include "UrdfJointComponent.generated.h"
 
 class UUrdfLinkComponent;
-struct UrdfJointDesc;
 enum class UrdfJointType;
+struct UrdfJointDesc;
 
-// unreal representation for urdf joint 
+// unreal representation for urdf joint
 UCLASS()
 class UUrdfJointComponent : public UPhysicsConstraintComponent
 {
     GENERATED_BODY()
-
 public:
     // Create constraint after move to proper transformation
-    void init(const UrdfJointDesc& joint_desc_);
-    // Move the joint to proper location for non-symmetric joint
-    //FVector moveChildLinkForLimitedXAxisMotion(const UrdfJointSpecification& jointSpecification);
-
-    UUrdfLinkComponent* parent_link_ = nullptr;
-    UUrdfLinkComponent* child_link_ = nullptr;
+    void initialize(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
 
 private:
     UrdfJointType joint_type_;

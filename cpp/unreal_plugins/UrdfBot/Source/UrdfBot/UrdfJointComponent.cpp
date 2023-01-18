@@ -12,9 +12,9 @@
 #include "UrdfLinkComponent.h"
 #include "UrdfParser.h"
 
-void UUrdfJointComponent::init(const UrdfJointDesc& joint_desc_)
+void UUrdfJointComponent::initialize(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link)
 {
-    this->joint_type_ = joint_desc_.type_;
+    this->joint_type_ = joint_desc->type_;
 
     ConstraintInstance.SetDisableCollision(true);
 
@@ -27,27 +27,29 @@ void UUrdfJointComponent::init(const UrdfJointDesc& joint_desc_)
     ConstraintInstance.ProfileInstance.ConeLimit.bSoftConstraint = true;
     ConstraintInstance.ProfileInstance.TwistLimit.bSoftConstraint = false;
 
-    float range = 0.0f;
-    switch (joint_desc_.type_) {
+    float range = (joint_desc->upper_ - joint_desc->lower_) * 0.5f;
+    float spring = FMath::DegreesToRadians(1e6);
+    float damping = FMath::DegreesToRadians(1e5);
+    float force_limit = FMath::DegreesToRadians(1e6);
+
+    switch (joint_desc->type_) {
     case UrdfJointType::Revolute:
         // use twist degree for single angular freedom with best PhysX optimization
-        range = FMath::RadiansToDegrees(joint_desc_.upper_ - joint_desc_.lower_) * 0.5f;
-        ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, range);
+        ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, FMath::RadiansToDegrees(range));
         ConstraintInstance.SetOrientationDriveTwistAndSwing(true, false);
         ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(true, false);
-        ConstraintInstance.SetAngularDriveParams(1e6, 1e4, 1e6); // TODO determine drive strength with urdf value
+        ConstraintInstance.SetAngularDriveParams(FMath::RadiansToDegrees(spring), FMath::RadiansToDegrees(damping), FMath::RadiansToDegrees(force_limit));
         break;
     case UrdfJointType::Continuous:
         // use twist degree for single angular freedom with best PhysX optimization
         ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Free, 0.0f);
         ConstraintInstance.SetOrientationDriveTwistAndSwing(true, false);
         ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(true, false);
-        ConstraintInstance.SetAngularDriveParams(1e6, 1e4, 1e6); // TODO determine drive strength with urdf value
+        ConstraintInstance.SetAngularDriveParams(FMath::RadiansToDegrees(spring), FMath::RadiansToDegrees(damping), FMath::RadiansToDegrees(force_limit));
         break;
     case UrdfJointType::Prismatic:
-        range = (joint_desc_.upper_ - joint_desc_.lower_) * unit_conversion_m_to_cm * 0.5f;
-        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range);
-        ConstraintInstance.SetLinearDriveParams(1e6, 1e4, 1e6); // TODO determine drive strength with urdf value
+        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range * unit_conversion_m_to_cm);
+        ConstraintInstance.SetLinearDriveParams(spring, damping, force_limit);
         ConstraintInstance.SetLinearPositionDrive(true, false, false);
         break;
     case UrdfJointType::Fixed:
@@ -61,9 +63,8 @@ void UUrdfJointComponent::init(const UrdfJointDesc& joint_desc_)
         ConstraintInstance.SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Free, 0.0f);
         break;
     case UrdfJointType::Planar:
-        range = (joint_desc_.upper_ - joint_desc_.lower_) * unit_conversion_m_to_cm * 0.5f;
-        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range);
-        ConstraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, range);
+        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range * unit_conversion_m_to_cm);
+        ConstraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, range * unit_conversion_m_to_cm);
         break;
     default:
         ASSERT(false);
@@ -71,5 +72,5 @@ void UUrdfJointComponent::init(const UrdfJointDesc& joint_desc_)
     }
 
     this->SetDisableCollision(true);
-    this->SetConstrainedComponents(parent_link_, NAME_None, child_link_, NAME_None);
+    this->SetConstrainedComponents(parent_link, NAME_None, child_link, NAME_None);
 }

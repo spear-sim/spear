@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <CoreMinimal.h>
 #include <Components/StaticMeshComponent.h>
 
@@ -11,13 +13,17 @@
 
 struct UrdfLinkDesc;
 
+class UUrdfJointComponent;
+
 // unreal representation for urdf link
 UCLASS()
 class UUrdfLinkComponent : public UStaticMeshComponent
 {
     GENERATED_BODY()
-
 public:
     // set up link based on link description.
-    void init(UrdfLinkDesc& link_desc);
+    void initialize(UrdfLinkDesc* link_desc);
+
+    std::vector<UUrdfLinkComponent*> child_link_components_; // defined in header
+    std::vector<UUrdfLinkComponent*> child_joint_components_; // defined in header
 };

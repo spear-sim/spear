@@ -4,8 +4,9 @@
 
 URDFBOT:
   URDFBOT_PAWN:
-    # the file path for agent .urdf description file
-    URDF_FILE_PATH: "E:/Spear/python/spear/urdf/locobot.xml"
+    #file dir and file name for custom agent .urdf description file
+    URDF_DIR: ""
+    URDF_FILE: ""
     CAMERA_COMPONENT:
       POSITION_X: 200.0
       POSITION_Y: 0

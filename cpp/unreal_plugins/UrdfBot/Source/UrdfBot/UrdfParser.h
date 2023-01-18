@@ -155,7 +155,7 @@ struct UrdfRobotDesc
     UrdfLinkDesc* root_link_desc_ = nullptr;
 };
 
-class UrdfParser
+class URDFBOT_API UrdfParser
 {
 public:
     static UrdfRobotDesc parse(const std::string& file_name);

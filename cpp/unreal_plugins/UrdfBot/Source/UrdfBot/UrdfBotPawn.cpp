@@ -4,8 +4,6 @@
 
 #include "UrdfBotPawn.h"
 
-#include <iostream>
-
 #include <Camera/CameraComponent.h>
 #include <Components/InputComponent.h>
 
@@ -36,14 +34,39 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer): APawn(
     camera_component_->SetupAttachment(RootComponent);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.FOV");
+
+    // debug only
+    robot_component_->test(this);
+    this->AddInstanceComponent(camera_component_);
 }
 
 void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
 {
     Super::SetupPlayerInputComponent(input_component);
+
+    // debug only
+    input_component->BindKey(EKeys::SpaceBar, IE_Pressed, this, &AUrdfBotPawn::test);
+    input_component->BindKey(EKeys::One, IE_Pressed, this, &AUrdfBotPawn::test1);
+    input_component->BindKey(EKeys::Two, IE_Pressed, this, &AUrdfBotPawn::test2);
 }
 
 void AUrdfBotPawn::Tick(float delta_time)
 {
     Super::Tick(delta_time);
+}
+
+void AUrdfBotPawn::test()
+{
+    robot_component_->action(signal);
+    signal++;
+}
+
+void AUrdfBotPawn::test1()
+{
+    robot_component_->actionJoint("shoulder_lift_joint", 10);
+}
+
+void AUrdfBotPawn::test2()
+{
+    robot_component_->actionJoint("shoulder_lift_joint", -10);
 }
