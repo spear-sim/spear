@@ -25,5 +25,5 @@ public:
     void initialize(UrdfLinkDesc* link_desc);
 
     std::vector<UUrdfLinkComponent*> child_link_components_; // defined in header
-    std::vector<UUrdfLinkComponent*> child_joint_components_; // defined in header
+    std::vector<UUrdfJointComponent*> child_joint_components_; // defined in header
 };

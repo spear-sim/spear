@@ -45,6 +45,9 @@ void UUrdfRobotComponent::constructChildLinks(UrdfLinkDesc* link_desc, UrdfJoint
     UUrdfJointComponent* joint = NewObject<UUrdfJointComponent>(this, Unreal::toFName("UUrdfRobotComponent::joint_component_" + joint_desc->name_));
     ASSERT(joint);
     joint_components_[joint_desc->name_] = joint;
+    
+    parent_link->child_link_components_.push_back(child_link);
+    parent_link ->child_joint_components_.push_back(joint);
 
     // set joint transform
     FVector joint_location = joint_desc->origin_.GetLocation() * unit_conversion_m_to_cm;
