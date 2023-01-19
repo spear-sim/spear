@@ -26,13 +26,13 @@ void UUrdfJointComponent::initialize(UrdfJointDesc* joint_desc, UUrdfLinkCompone
     ConstraintInstance.ProfileInstance.AngularDrive.AngularDriveMode = EAngularDriveMode::TwistAndSwing;
     ConstraintInstance.ProfileInstance.ConeLimit.bSoftConstraint = true;
     ConstraintInstance.ProfileInstance.TwistLimit.bSoftConstraint = false;
-    
+
     const float M_TO_CM = 100.0f;
 
     float range = (joint_desc->upper_ - joint_desc->lower_) * 0.5f;
-    float spring = FMath::DegreesToRadians(1e6);
-    float damping = FMath::DegreesToRadians(1e5);
-    float force_limit = FMath::DegreesToRadians(1e6);
+    float spring = joint_desc->damping_ * M_TO_CM * 10.0f;
+    float damping = joint_desc->damping_ * M_TO_CM;
+    float force_limit = joint_desc->effort_ * M_TO_CM;
 
     switch (joint_desc->type_) {
     case UrdfJointType::Revolute:
@@ -51,7 +51,7 @@ void UUrdfJointComponent::initialize(UrdfJointDesc* joint_desc, UUrdfLinkCompone
         break;
     case UrdfJointType::Prismatic:
         ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range * M_TO_CM);
-        ConstraintInstance.SetLinearDriveParams(spring, damping, force_limit);
+        ConstraintInstance.SetLinearDriveParams(spring * M_TO_CM, damping * M_TO_CM, force_limit * M_TO_CM);
         ConstraintInstance.SetLinearPositionDrive(true, false, false);
         break;
     case UrdfJointType::Fixed:
