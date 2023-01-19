@@ -25,7 +25,7 @@ class UUrdfRobotComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
-    UUrdfRobotComponent(const FObjectInitializer& object_initializer);
+    void initialize(UrdfRobotDesc* robot_desc);
 
     // test only
     void test(AActor* actor);

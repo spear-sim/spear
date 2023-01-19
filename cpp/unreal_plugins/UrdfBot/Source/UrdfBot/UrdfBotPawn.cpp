@@ -8,13 +8,22 @@
 #include <Components/InputComponent.h>
 
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Unreal.h"
 #include "UrdfRobotComponent.h"
+#include "UrdfParser.h"
 
 AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer): APawn(object_initializer)
 {
+
     // setup robot
+    std::string urdf_file = Unreal::toString(FPaths::Combine(
+        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
+        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE"))));
+    UrdfRobotDesc robot_desc = UrdfParser::parse(urdf_file);
+
     robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(TEXT("RobotComponent"));
-    RootComponent = Cast<USceneComponent>(robot_component_->root_link_component_);
+    robot_component_->initialize(&(robot_desc));
+    RootComponent = robot_component_->root_link_component_;
 
     // setup camera
     FVector camera_location(

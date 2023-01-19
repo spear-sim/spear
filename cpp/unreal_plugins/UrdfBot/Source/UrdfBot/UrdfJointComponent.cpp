@@ -26,6 +26,8 @@ void UUrdfJointComponent::initialize(UrdfJointDesc* joint_desc, UUrdfLinkCompone
     ConstraintInstance.ProfileInstance.AngularDrive.AngularDriveMode = EAngularDriveMode::TwistAndSwing;
     ConstraintInstance.ProfileInstance.ConeLimit.bSoftConstraint = true;
     ConstraintInstance.ProfileInstance.TwistLimit.bSoftConstraint = false;
+    
+    const float M_TO_CM = 100.0f;
 
     float range = (joint_desc->upper_ - joint_desc->lower_) * 0.5f;
     float spring = FMath::DegreesToRadians(1e6);
@@ -48,7 +50,7 @@ void UUrdfJointComponent::initialize(UrdfJointDesc* joint_desc, UUrdfLinkCompone
         ConstraintInstance.SetAngularDriveParams(FMath::RadiansToDegrees(spring), FMath::RadiansToDegrees(damping), FMath::RadiansToDegrees(force_limit));
         break;
     case UrdfJointType::Prismatic:
-        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range * unit_conversion_m_to_cm);
+        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range * M_TO_CM);
         ConstraintInstance.SetLinearDriveParams(spring, damping, force_limit);
         ConstraintInstance.SetLinearPositionDrive(true, false, false);
         break;
@@ -63,8 +65,8 @@ void UUrdfJointComponent::initialize(UrdfJointDesc* joint_desc, UUrdfLinkCompone
         ConstraintInstance.SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Free, 0.0f);
         break;
     case UrdfJointType::Planar:
-        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range * unit_conversion_m_to_cm);
-        ConstraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, range * unit_conversion_m_to_cm);
+        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, range * M_TO_CM);
+        ConstraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, range * M_TO_CM);
         break;
     default:
         ASSERT(false);

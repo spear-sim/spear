@@ -21,8 +21,9 @@ class URDFBOT_API AUrdfBotPawn : public APawn
 public:
     AUrdfBotPawn(const FObjectInitializer& object_initializer);
 
-    void Tick(float delta_time) override;
+    // APawn interface
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
+    void Tick(float delta_time) override;
 
     // debug only
     void test();
@@ -30,7 +31,6 @@ public:
     void test1();
     void test2();
 
-private:
     UUrdfRobotComponent* robot_component_ = nullptr;
     // Camera component that will be our viewpoint
     UCameraComponent* camera_component_ = nullptr;

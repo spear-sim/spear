@@ -9,13 +9,10 @@
 #include "UrdfJointComponent.h"
 #include "UrdfParser.h"
 
-UUrdfRobotComponent::UUrdfRobotComponent(const FObjectInitializer& object_initializer): USceneComponent(object_initializer)
+void UUrdfRobotComponent::initialize(UrdfRobotDesc* robot_desc)
 {
-    FString urdf_file_path = FPaths::Combine(Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")), Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")));
-    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toString(urdf_file_path));
-
     // initialize root link
-    UrdfLinkDesc* root_link_desc = robot_desc.root_link_desc_;
+    UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
     root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName("UUrdfRobotComponent::link_component_" + root_link_desc->name_));
     root_link_component_->initialize(root_link_desc);
     link_components_[root_link_desc->name_] = root_link_component_;
@@ -35,9 +32,11 @@ void UUrdfRobotComponent::constructChildLinks(UrdfLinkDesc* link_desc, UrdfJoint
     ASSERT(child_link);
     child_link->initialize(link_desc);
     link_components_[link_desc->name_] = child_link;
+    
+    const float M_TO_CM = 100.0f;
 
     // set child link transform
-    FVector child_link_location = (joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation()) * unit_conversion_m_to_cm;
+    FVector child_link_location = (joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation()) * M_TO_CM;
     FRotator child_link_rotation = joint_desc->origin_.GetRotation().Rotator() + link_desc->visual_descs_[0].origin_.GetRotation().Rotator();
     child_link->SetRelativeLocationAndRotation(child_link_location, child_link_rotation);
     child_link->SetupAttachment(parent_link);
@@ -45,12 +44,12 @@ void UUrdfRobotComponent::constructChildLinks(UrdfLinkDesc* link_desc, UrdfJoint
     UUrdfJointComponent* joint = NewObject<UUrdfJointComponent>(this, Unreal::toFName("UUrdfRobotComponent::joint_component_" + joint_desc->name_));
     ASSERT(joint);
     joint_components_[joint_desc->name_] = joint;
-    
+
     parent_link->child_link_components_.push_back(child_link);
-    parent_link ->child_joint_components_.push_back(joint);
+    parent_link->child_joint_components_.push_back(joint);
 
     // set joint transform
-    FVector joint_location = joint_desc->origin_.GetLocation() * unit_conversion_m_to_cm;
+    FVector joint_location = joint_desc->origin_.GetLocation() * M_TO_CM;
     FRotator joint_rotation = joint_desc->origin_.GetRotation().Rotator();
     FVector joint_axis_in_parent_frame = joint_rotation.RotateVector(joint_desc->axis_);
     // alight joint x-axis with motion axis.

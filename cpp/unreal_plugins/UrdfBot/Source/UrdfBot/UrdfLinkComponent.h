@@ -24,6 +24,6 @@ public:
     // set up link based on link description.
     void initialize(UrdfLinkDesc* link_desc);
 
-    std::vector<UUrdfLinkComponent*> child_link_components_; // defined in header
-    std::vector<UUrdfJointComponent*> child_joint_components_; // defined in header
+    std::vector<UUrdfLinkComponent*> child_link_components_;
+    std::vector<UUrdfJointComponent*> child_joint_components_;
 };
