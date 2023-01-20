@@ -38,3 +38,8 @@ UOpenBotWheel::UOpenBotWheel()
     bAutoAdjustCollisionSize   = true; // Set to true if you want to scale the wheels manually 
 }
 END_IGNORE_COMPILER_WARNINGS
+
+UOpenBotWheel::~UOpenBotWheel()
+{
+    std::cout << "[SPEAR | OpenBotWheel.cpp] UOpenBotWheel::~UOpenBotWheel" << std::endl;
+}

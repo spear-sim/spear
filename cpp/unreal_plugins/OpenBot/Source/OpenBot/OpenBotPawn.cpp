@@ -27,7 +27,7 @@
 #include "OpenBot/OpenBotWheel.h"
 
 BEGIN_IGNORE_COMPILER_WARNINGS
-AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(object_initializer)
+AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
     std::cout << "[SPEAR | OpenBotPawn.cpp] AOpenBotPawn::AOpenBotPawn" << std::endl;
 
@@ -142,10 +142,15 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer): APawn(
 }
 END_IGNORE_COMPILER_WARNINGS
 
+AOpenBotPawn::~AOpenBotPawn()
+{
+    std::cout << "[SPEAR | OpenBotPawn.cpp] AOpenBotPawn::~AOpenBotPawn" << std::endl;
+}
+
 void AOpenBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
 {
     ASSERT(input_component);
-    Super::SetupPlayerInputComponent(input_component);
+    APawn::SetupPlayerInputComponent(input_component);
 
     input_component->BindAxis("MoveForward", this, &AOpenBotPawn::moveForward);
     input_component->BindAxis("MoveRight", this, &AOpenBotPawn::moveRight);
@@ -153,7 +158,7 @@ void AOpenBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
 
 void AOpenBotPawn::Tick(float delta_time)
 {
-    Super::Tick(delta_time);
+    APawn::Tick(delta_time);
     setDriveTorquesFromDutyCycle();
 }
 

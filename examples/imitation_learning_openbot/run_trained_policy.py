@@ -177,7 +177,7 @@ if __name__ == "__main__":
             if not args.benchmark:
 
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera_final_color"].squeeze())
+                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera.final_color"].squeeze())
 
                 # populate buffer and result data file
                 state_data[i] = obs["state_data"]

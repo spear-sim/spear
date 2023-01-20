@@ -129,12 +129,9 @@ std::map<std::string, Box> CameraAgent::getObservationSpace() const
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "camera")) {
-        // get an observation space from the CameraSensor and add it to our Agent's observation space
-        std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace();
-        for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
-            observation_space["camera_" + camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
-        }
+    std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
+    for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
+        observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
     }
 
     return observation_space;
@@ -180,12 +177,9 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "camera")) {
-        // get an observation from the CameraSensor and add it to our Agent's observation
-        std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation();
-        for (auto& camera_sensor_observation_component : camera_sensor_observation) {
-            observation["camera_" + camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
-        }
+    std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
+    for (auto& camera_sensor_observation_component : camera_sensor_observation) {
+        observation[camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
     }
 
     return observation;
@@ -277,10 +271,9 @@ void CameraAgent::buildNavMesh()
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
     if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ")) {
-        nav_mesh_->GetGenerator()->ExportNavigationData(
-            Unreal::toFString(
-                Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR") + "/" +
-                Unreal::toStdString(camera_actor_->GetWorld()->GetName()) + "/"));
+        nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::Combine(
+            Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR")),
+            camera_actor_->GetWorld()->GetName()));
     }
 #endif
 }

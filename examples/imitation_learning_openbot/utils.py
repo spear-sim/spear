@@ -27,9 +27,9 @@ def show_obs(obs, obs_components, render_passes):
         elif obs_component == "camera":
             for render_pass in render_passes:
                 if render_pass == "final_color" or render_pass == "segmentation" or render_pass == "normals":
-                    cv2.imshow(render_pass, obs["camera_" + render_pass][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
+                    cv2.imshow(render_pass, obs["camera." + render_pass][:, :, [2, 1, 0]]) # OpenCV expects BGR instead of RGB
                 elif render_pass == "depth":
-                    depth = obs["camera_depth"]
+                    depth = obs["camera.depth"]
                     depth_min = np.min(depth)
                     depth_max = np.max(depth)
                     depth_normalized = (depth-depth_min) / (depth_max-depth_min)

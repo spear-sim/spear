@@ -183,12 +183,9 @@ std::map<std::string, Box> SphereAgent::getObservationSpace() const
         observation_space["compass"] = std::move(box);
     }
 
-    if (Std::contains(observation_components, "camera")) {
-        // get an observation space from the CameraSensor and add it to our Agent's observation space
-        std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace();
-        for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
-            observation_space["camera_" + camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
-        }
+    std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
+    for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
+        observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
     }
 
     return observation_space;
@@ -258,12 +255,9 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
             Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.YAW_SCALE") * yaw});
     }
 
-    if (Std::contains(observation_components, "camera")) {
-        // get an observation from the CameraSensor and add it to our Agent's observation
-        std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation();
-        for (auto& camera_sensor_observation_component : camera_sensor_observation) {
-            observation["camera_" + camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
-        }
+    std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
+    for (auto& camera_sensor_observation_component : camera_sensor_observation) {
+        observation[camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
     }
 
     return observation;

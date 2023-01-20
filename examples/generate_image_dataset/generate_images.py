@@ -141,7 +141,7 @@ if __name__ == "__main__":
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.join(args.images_dir, render_pass)
                 assert os.path.exists(render_pass_dir)
-                plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
+                plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera." + render_pass].squeeze())
 
         # useful for comparing the game window to the image that has been saved to disk
         if args.wait_for_key_press:

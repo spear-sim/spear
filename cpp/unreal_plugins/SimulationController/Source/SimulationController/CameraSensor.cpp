@@ -99,19 +99,10 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
         render_pass.scene_capture_component_->SetVisibility(true);
         render_pass.scene_capture_component_->RegisterComponent();
 
-        if (render_pass_name != "final_color") {
-            auto material = LoadObject<UMaterial>(
-                nullptr,
-                *FString::Printf(TEXT("%s/%s.%s"),
-                    *Unreal::toFString(MATERIALS_PATH), *Unreal::toFString(render_pass_name), *Unreal::toFString(render_pass_name)));
-            ASSERT(material);
-            render_pass.scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(
-                material, render_pass.scene_capture_component_), 1.0f);
-            render_pass.scene_capture_component_->ShowFlags.SetPostProcessMaterial(true);
-        }
-
         if (render_pass_name == "final_color") {
             initializeSceneCaptureComponentFinalColor(render_pass.scene_capture_component_);
+        } else {
+            initializeSceneCaptureComponentNonFinalColor(render_pass.scene_capture_component_, render_pass_name);
         }
 
         render_passes_[render_pass_name] = std::move(render_pass);
@@ -142,51 +133,55 @@ CameraSensor::~CameraSensor()
     parent_actor_ = nullptr;
 }
 
-std::map<std::string, Box> CameraSensor::getObservationSpace() const
+std::map<std::string, Box> CameraSensor::getObservationSpace(const std::vector<std::string>& observation_components) const
 {
     std::map<std::string, Box> observation_space;
     Box box;
 
-    for (auto& render_pass : render_passes_) {
-        box.low_ = OBSERVATION_COMPONENT_LOW.at(render_pass.first);
-        box.high_ = OBSERVATION_COMPONENT_HIGH.at(render_pass.first);
-        box.shape_ = {height_, width_, OBSERVATION_COMPONENT_NUM_CHANNELS.at(render_pass.first)};
-        box.dtype_ = OBSERVATION_COMPONENT_DTYPE.at(render_pass.first);
-        observation_space[render_pass.first] = std::move(box);
+    if (Std::contains(observation_components, "camera")) {
+        for (auto& render_pass : render_passes_) {
+            box.low_ = OBSERVATION_COMPONENT_LOW.at(render_pass.first);
+            box.high_ = OBSERVATION_COMPONENT_HIGH.at(render_pass.first);
+            box.shape_ = {height_, width_, OBSERVATION_COMPONENT_NUM_CHANNELS.at(render_pass.first)};
+            box.dtype_ = OBSERVATION_COMPONENT_DTYPE.at(render_pass.first);
+            observation_space["camera." + render_pass.first] = std::move(box);
+        }
     }
 
     return observation_space;
 }
 
-std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
+std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation(const std::vector<std::string>& observation_components) const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    std::map<std::string, TArray<FColor>> render_data = getRenderData();
-    for (auto& render_data_component : render_data) {
-        if (render_data_component.first == "final_color"     ||
-            render_data_component.first == "lens_distortion" ||
-            render_data_component.first == "normals"         ||
-            render_data_component.first == "segmentation") {
+    if (Std::contains(observation_components, "camera")) {
+        std::map<std::string, TArray<FColor>> render_data = getRenderData();
+        for (auto& render_data_component : render_data) {
+            if (render_data_component.first == "final_color"     ||
+                render_data_component.first == "lens_distortion" ||
+                render_data_component.first == "normals"         ||
+                render_data_component.first == "segmentation") {
 
-            std::vector<uint8_t> observation_vector(height_ * width_ * 3);
-            TArray<FColor>& render_data_component_array = render_data_component.second;
+                std::vector<uint8_t> observation_vector(height_ * width_ * 3);
+                TArray<FColor>& render_data_component_array = render_data_component.second;
 
-            for (int i = 0; i < render_data_component_array.Num(); i++) {
-                observation_vector[3 * i + 0] = render_data_component_array[i].R;
-                observation_vector[3 * i + 1] = render_data_component_array[i].G;
-                observation_vector[3 * i + 2] = render_data_component_array[i].B;
+                for (int i = 0; i < render_data_component_array.Num(); i++) {
+                    observation_vector[3 * i + 0] = render_data_component_array[i].R;
+                    observation_vector[3 * i + 1] = render_data_component_array[i].G;
+                    observation_vector[3 * i + 2] = render_data_component_array[i].B;
+                }
+
+                observation["camera." + render_data_component.first] = std::move(observation_vector);
+
+            } else if (render_data_component.first == "depth" ||
+                       render_data_component.first == "depth_glsl") {
+                std::vector<float> observation_vector = getFloatDepthFromColorDepth(render_data_component.second);
+                observation["camera." + render_data_component.first] = Serialize::toUint8(observation_vector);
+
+            } else {
+                ASSERT(false);
             }
-
-            observation[render_data_component.first] = std::move(observation_vector);
-
-        } else if (render_data_component.first == "depth" ||
-                   render_data_component.first == "depth_glsl") {
-            std::vector<float> observation_vector = getFloatDepthFromColorDepth(render_data_component.second);
-            observation[render_data_component.first] = Serialize::toUint8(observation_vector);
-
-        } else {
-            ASSERT(false);
         }
     }
 
@@ -322,6 +317,15 @@ void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureCompon
         Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_SET_DYNAMIC_SHADOWS"));
 }
 
+void CameraSensor::initializeSceneCaptureComponentNonFinalColor(USceneCaptureComponent2D* scene_capture_component, const std::string& render_pass_name)
+{
+    auto material = LoadObject<UMaterial>(nullptr, *FString::Printf(
+        TEXT("%s/%s.%s"), *Unreal::toFString(MATERIALS_PATH), *Unreal::toFString(render_pass_name), *Unreal::toFString(render_pass_name)));
+    ASSERT(material);
+    scene_capture_component->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, scene_capture_component), 1.0f);
+    scene_capture_component->ShowFlags.SetPostProcessMaterial(true);
+}
+
 std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
 {
     std::map<std::string, TArray<FColor>> render_data;
@@ -338,10 +342,11 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
         FReadSurfaceDataFlags read_surface_data_flags(RCM_UNorm, CubeFace_MAX);
         read_surface_data_flags.SetLinearToGamma(false);
 
-        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)([
-            rhi_texture, rect, &render_data_component_array, read_surface_data_flags](FRHICommandListImmediate& rhi_command_list_immediate) {
+        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand) (
+            [rhi_texture, rect, &render_data_component_array, read_surface_data_flags](FRHICommandListImmediate& rhi_command_list_immediate) -> void {
                 rhi_command_list_immediate.ReadSurfaceData(rhi_texture, rect, render_data_component_array, read_surface_data_flags);
-        });
+            }
+        );
 
         FRenderCommandFence render_command_fence;
         render_command_fence.BeginFence(true);

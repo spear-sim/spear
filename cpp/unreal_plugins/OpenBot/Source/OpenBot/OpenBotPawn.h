@@ -24,6 +24,7 @@ class OPENBOT_API AOpenBotPawn : public APawn
     GENERATED_BODY()
 public:
     AOpenBotPawn(const FObjectInitializer& object_initializer);
+    ~AOpenBotPawn();
 
     // APawn interface
     void SetupPlayerInputComponent(UInputComponent* input_component) override;

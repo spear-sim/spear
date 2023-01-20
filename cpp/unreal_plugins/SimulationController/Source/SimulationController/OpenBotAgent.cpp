@@ -191,14 +191,6 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
         observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
     }
 
-    if (Std::contains(observation_components, "camera")) {
-        // get an observation space from the CameraSensor and add it to our Agent's observation space
-        std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace();
-        for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
-            observation_space["camera_" + camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
-        }
-    }
-
     if (Std::contains(observation_components, "encoder")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
@@ -223,6 +215,11 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
         observation_space["sonar"] = std::move(box); // Front obstacle distance in [m]
     }
     
+    std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
+    for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
+        observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
+    }
+
     return observation_space;
 }
 
@@ -301,14 +298,6 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
         observation["control_data"] = Serialize::toUint8(std::vector<float>{control_state(0), control_state(1)});
     }
 
-    if (Std::contains(observation_components, "camera")) {
-        // get an observation from the CameraSensor and add it to our Agent's observation
-        std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation();
-        for (auto& camera_sensor_observation_component : camera_sensor_observation) {
-            observation["camera_" + camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
-        }
-    }
-
     if (Std::contains(observation_components, "encoder")) {
         Eigen::Vector4f wheel_rotation_speeds = open_bot_pawn_->getWheelRotationSpeeds();
         observation["encoder"] = Serialize::toUint8(std::vector<float>{
@@ -327,6 +316,11 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
 
     if (Std::contains(observation_components, "sonar")) {
         observation["sonar"] = Serialize::toUint8(std::vector<float>{sonar_sensor_->range_});
+    }
+
+    std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
+    for (auto& camera_sensor_observation_component : camera_sensor_observation) {
+        observation[camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
     }
 
     return observation;
@@ -432,10 +426,9 @@ void OpenBotAgent::buildNavMesh()
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
     if (Config::get<bool>("SIMULATION_CONTROLLER.OPENBOT_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ")) {
-        nav_mesh_->GetGenerator()->ExportNavigationData(
-            Unreal::toFString(
-                Config::get<std::string>("SIMULATION_CONTROLLER.OPENBOT_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR") + "/" +
-                Unreal::toStdString(open_bot_pawn_->GetWorld()->GetName()) + "/"));
+        nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::Combine(
+            Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR")),
+            open_bot_pawn_->GetWorld()->GetName()));
     }
 #endif
 }

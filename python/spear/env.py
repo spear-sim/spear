@@ -101,7 +101,7 @@ class Env(gym.Env):
             if ready:
                 break
         
-        self._ready = ready # store if our reset() attempt was successful or not, so step() can return done=True if we were unsuccessful
+        self._ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were unsuccessful
 
         if reset_info is not None:
             assert isinstance(reset_info, dict)
@@ -257,8 +257,8 @@ class Env(gym.Env):
             connected = False
             try:
                 self._client = msgpackrpc.Client(
-                    msgpackrpc.Address(self._config.SIMULATION_CONTROLLER.IP, self._config.SIMULATION_CONTROLLER.PORT), 
-                    timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
+                    msgpackrpc.Address(self._config.SIMULATION_CONTROLLER.IP, self._config.SIMULATION_CONTROLLER.PORT),
+                    timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                 self._ping()
                 connected = True

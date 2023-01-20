@@ -179,7 +179,7 @@ if __name__ == "__main__":
             if not args.benchmark:
 
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera_final_color"].squeeze())
+                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera.final_color"].squeeze())
 
                 # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training
                 # purposes. In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole
