@@ -123,6 +123,7 @@ float PointGoalNavTask::getReward() const
         FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
         reward = -agent_to_goal.Size() * Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.REWARD.DISTANCE_TO_GOAL_SCALE");
     }
+
     return reward;
 }
 

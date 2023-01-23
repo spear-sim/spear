@@ -19,9 +19,9 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Box.h"
-#include "SimulationController/Serialize.h"
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials";
 
@@ -177,7 +177,7 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation(const s
             } else if (render_data_component.first == "depth" ||
                        render_data_component.first == "depth_glsl") {
                 std::vector<float> observation_vector = getFloatDepthFromColorDepth(render_data_component.second);
-                observation["camera." + render_data_component.first] = Serialize::toUint8(observation_vector);
+                observation["camera." + render_data_component.first] = Std::reinterpret_as<uint8_t>(observation_vector);
 
             } else {
                 ASSERT(false);

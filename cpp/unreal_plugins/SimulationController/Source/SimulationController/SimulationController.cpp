@@ -19,6 +19,7 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/Box.h"
@@ -354,7 +355,7 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->getStepInfoSpace();
     });
 
-    rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
+    rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<uint8_t>> action) -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         ASSERT(agent_);
         agent_->applyAction(action);

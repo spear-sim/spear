@@ -23,7 +23,6 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Box.h"
 #include "SimulationController/CameraSensor.h"
-#include "SimulationController/Serialize.h"
 
 CameraAgent::CameraAgent(UWorld* world)
 {
@@ -155,13 +154,14 @@ std::map<std::string, Box> CameraAgent::getStepInfoSpace() const
     return step_info_space;
 }
 
-void CameraAgent::applyAction(const std::map<std::string, std::vector<float>>& action)
+void CameraAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_pose")) {
-        FVector agent_location(action.at("set_pose").at(0), action.at("set_pose").at(1), action.at("set_pose").at(2));
-        FRotator agent_rotation(action.at("set_pose").at(3), action.at("set_pose").at(4), action.at("set_pose").at(5));
+        std::vector<float> component_data = Std::reinterpret_as<float>(action.at("set_pose"));
+        FVector agent_location(component_data.at(0), component_data.at(1), component_data.at(2));
+        FRotator agent_rotation(component_data.at(3), component_data.at(4), component_data.at(5));
         bool sweep = false;
         FHitResult* hit_result = nullptr;
         camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result, ETeleportType::ResetPhysics);
@@ -192,15 +192,16 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "random_points")) {
+        std::vector<float> component_data = Std::reinterpret_as<float>(action_.at("set_num_random_points"));
         std::vector<float> random_points;
-        int num_random_points = static_cast<int>(action_.at("set_num_random_points").at(0));
+        int num_random_points = static_cast<int>(component_data.at(0));
         for (int i = 0; i < num_random_points; i++) {
             FVector random_position = nav_mesh_->GetRandomPoint().Location;
             random_points.push_back(random_position.X);
             random_points.push_back(random_position.Y);
             random_points.push_back(random_position.Z);
         }
-        step_info["random_points"] = Serialize::toUint8(random_points);
+        step_info["random_points"] = Std::reinterpret_as<uint8_t>(random_points);
     }
 
     return step_info;

@@ -22,7 +22,6 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Box.h"
 #include "SimulationController/CameraSensor.h"
-#include "SimulationController/Serialize.h"
 #include "SimulationController/TickEvent.h"
 
 SphereAgent::SphereAgent(UWorld* world)
@@ -209,14 +208,18 @@ std::map<std::string, Box> SphereAgent::getStepInfoSpace() const
     return step_info_space;
 }
 
-void SphereAgent::applyAction(const std::map<std::string, std::vector<float>>& action)
+void SphereAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "apply_force")) {
+
+        // get component data
+        std::vector<float> component_data = Std::reinterpret_as<float>(action.at("apply_force"));
+
         // apply force to the sphere in the current yaw direction
         FVector force = rotation_.RotateVector(
-            FVector(action.at("apply_force").at(0), 0.0f, 0.0f)) * Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.APPLY_FORCE.FORCE_SCALE");
+            FVector(component_data.at(0), 0.0f, 0.0f)) * Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.APPLY_FORCE.FORCE_SCALE");
 
         ASSERT(isfinite(force.X));
         ASSERT(isfinite(force.Y));
@@ -225,7 +228,7 @@ void SphereAgent::applyAction(const std::map<std::string, std::vector<float>>& a
         static_mesh_component_->AddForce(force);
 
         // increment the current yaw direction
-        rotation_.Add(0.0f, action.at("apply_force").at(1) * Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.APPLY_FORCE.ROTATE_SCALE"), 0.0f);
+        rotation_.Add(0.0f, component_data.at(1) * Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.APPLY_FORCE.ROTATE_SCALE"), 0.0f);
 
         ASSERT(isfinite(rotation_.Pitch));
         ASSERT(isfinite(rotation_.Yaw));
@@ -247,7 +250,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
         FVector linear_velocity = static_mesh_component_->GetPhysicsLinearVelocity();
         float yaw = rotation_.Yaw;
 
-        observation["compass"] = Serialize::toUint8(std::vector<float>{
+        observation["compass"] = Std::reinterpret_as<uint8_t>(std::vector<float>{
             Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.OFFSET_TO_GOAL_SCALE") * sphere_to_goal.X,
             Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.OFFSET_TO_GOAL_SCALE") * sphere_to_goal.Y,
             Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.LINEAR_VELOCITY_SCALE") * linear_velocity.X,

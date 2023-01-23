@@ -17,7 +17,6 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
-#include "SimulationController/Serialize.h"
 #include "SimulationController/TickEvent.h"
 
 SonarSensor::SonarSensor(UBoxComponent* component)

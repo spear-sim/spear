@@ -13,7 +13,6 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
-#include "SimulationController/Serialize.h"
 #include "SimulationController/TickEvent.h"
 
 ImuSensor::ImuSensor(UPrimitiveComponent* component)

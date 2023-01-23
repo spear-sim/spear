@@ -119,9 +119,7 @@ void ImitationLearningTask::beginFrame()
     hit_obstacle_ = false;
 }
 
-void ImitationLearningTask::endFrame()
-{
-}
+void ImitationLearningTask::endFrame() {}
 
 float ImitationLearningTask::getReward() const
 {
