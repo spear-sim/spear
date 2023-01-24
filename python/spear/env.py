@@ -382,6 +382,17 @@ class DataType(Enum):
     Float32    = 7
     Double     = 8
 
+DATATYPE_TO_DTYPE = {
+    DataType.Boolean.value:    np.dtype("?").type,
+    DataType.UInteger8.value:  np.dtype("u1").type,
+    DataType.Integer8.value:   np.dtype("i1").type,
+    DataType.UInteger16.value: np.dtype("u2").type,
+    DataType.Integer16.value:  np.dtype("i2").type,
+    DataType.UInteger32.value: np.dtype("u4").type,
+    DataType.Integer32.value:  np.dtype("i4").type,
+    DataType.Float32.value:    np.dtype("f4").type,
+    DataType.Double.value:     np.dtype("f8").type
+}
 
 # serialize and deserialize functions for converting between Python and C++ data
 def _deserialize_dict_space(data, box_space_type, dict_space_type):
@@ -396,21 +407,10 @@ def _serialize_arrays(arrays, space, byte_order):
     return {name:_serialize_array(component, space=space.spaces[name], byte_order=byte_order) for (name, component) in arrays.items()}
 
 def _deserialize_box_space(data, box_space_type):
-    datatype_to_numpy_dtype = {
-        DataType.Boolean.value:    np.dtype("?").type,
-        DataType.UInteger8.value:  np.dtype("u1").type,
-        DataType.Integer8.value:   np.dtype("i1").type,
-        DataType.UInteger16.value: np.dtype("u2").type,
-        DataType.Integer16.value:  np.dtype("i2").type,
-        DataType.UInteger32.value: np.dtype("u4").type,
-        DataType.Integer32.value:  np.dtype("i4").type,
-        DataType.Float32.value:    np.dtype("f4").type,
-        DataType.Double.value:     np.dtype("f8").type
-    }
     low = data["low_"]
     high = data["high_"]
     shape = tuple(data["shape_"])
-    dtype = datatype_to_numpy_dtype[data["dtype_"]]
+    dtype = DATATYPE_TO_DTYPE[data["dtype_"]]
     return box_space_type(low, high, shape, dtype)
 
 def _deserialize_array(data, space, byte_order):
@@ -426,5 +426,5 @@ def _serialize_array(array, space, byte_order):
     assert array.dtype == space.dtype
     assert (array >= space.low).all()
     assert (array <= space.high).all()
-    data = array.tobytes() if byte_order is None else array.newbyteorder(byte_order).tobytes()
+    data = array.data if byte_order is None else array.newbyteorder(byte_order).data
     return data
