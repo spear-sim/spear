@@ -19,8 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("--output_dir", required=True)
     args = parser.parse_args()
 
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
     
     assert os.path.exists(args.unreal_binaries_dir)
     unreal_editor_exe = os.path.realpath(os.path.join(args.unreal_binaries_dir, "Win64", "UE4Editor.exe"))
