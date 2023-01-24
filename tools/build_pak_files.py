@@ -46,7 +46,7 @@ if __name__ == '__main__':
             "-UTF8Output"
         ]
         print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd, stdout=sys.stdout.buffer ,stderr=sys.stdout.buffer)
+        cmd_result = subprocess.run(cmd, stdout=sys.stdout.buffer, stderr=sys.stdout.buffer)
         assert cmd_result.returncode == 0
 
         content_dirs = [
@@ -87,7 +87,7 @@ if __name__ == '__main__':
         ]
 
         print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd)
+        cmd_result = subprocess.run(cmd, stdout=sys.stdout.buffer, stderr=sys.stdout.buffer)
         assert cmd_result.returncode == 0
 
         if os.path.exists(output_pak):
