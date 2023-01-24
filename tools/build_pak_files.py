@@ -30,6 +30,7 @@ if __name__ == '__main__':
     uproject   = os.path.realpath(os.path.join(args.unreal_project_dir, project + ".uproject"))
     
     for platform in args.platforms:
+
         cmd = [ 
             unreal_editor_exe,
             uproject,
@@ -63,7 +64,7 @@ if __name__ == '__main__':
         # construct output pak file path
         output_pak = os.path.join(args.output_dir, f"Map_{args.scene_id}_{platform}.pak")
 
-        # temporary text file used by unreal_pak command to generate final pak file
+        # temporary text file used to generate the final pak file
         pak_txt_path = os.path.join(args.output_dir, f"pak_data_{platform}.txt")
 
         if os.path.exists(pak_txt_path):
@@ -76,7 +77,7 @@ if __name__ == '__main__':
                     mount_path = fpath.split(f"{platform}NoEditor")[1]
                     fout.write(f'"{fpath}" "../../..{mount_path}" "" \n')
 
-        # unreal pak command to generate the final pak file
+        # command to generate the final pak file
         cmd = [
             unreal_pak_exe,
             output_pak,
