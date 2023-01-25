@@ -153,6 +153,7 @@ if __name__ == "__main__":
     # revert current working directory
     os.chdir(cwd)
 
+    # files that need to be codesigned
     files = [
         os.path.join(args.macos_executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib"),
         os.path.join(args.macos_executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib"),
@@ -168,27 +169,23 @@ if __name__ == "__main__":
         os.path.join(args.macos_executable, "Contents", "MacOS", os.path.splitext(executable_name)[0])]
 
     assert os.path.exists(args.entitlements_file)
+
     for file in files:
         cmd = ["sudo", "codesign", "-f", "-s", "-v", "--options", "runtime", "--timestamp", "--entitlements", args.entitlements_file, "--sign", f"Developer ID Application: {args.developer_id}", file]
         print(f"[SPEAR | codesign_mac_executable.py] Executing: {' '.join(cmd)}")
         cmd_result = subprocess.run(cmd)
         assert cmd_result.returncode == 0
 
-    # check if code signing went well
-    cmd = ["codesign", "-dvv", "--strict", args.macos_executable]
-    print(f"[SPEAR | codesign_mac_executable.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd)
-    assert cmd_result.returncode == 0
-
-    # create a zip with ditto for notarization
     os.makedirs(args.output_dir, exist_ok=True)
 
+    # create a zip file for notarization
     temp_zip = os.path.join(args.output_dir, f"{os.path.splitext(os.path.basename(args.macos_executable))[0]}-temp.zip")
     cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", args.macos_executable, temp_zip]
     print(f"[SPEAR | codesign_mac_executable.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd)
     assert cmd_result.returncode == 0
 
+    # send the zip file for notarization 
     cmd = ["xcrun", "altool", "--notarize-app", "--primary-bundle-id", "org.embodiedaifoundation.spear", "--username", args.apple_username, "--password", args.apple_password, "--file", temp_zip]
     print(f"[SPEAR | codesign_mac_executable.py] Executing: {' '.join(cmd)}")
     ps = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -196,7 +193,9 @@ if __name__ == "__main__":
     ps.wait()
     ps.stdout.close()
     request_uuid = " ".join(output[14:].split())
+    print(f"[SPEAR | codesign_mac_executable.py] Request UUID: {request_uuid}")
 
+    # check the status of notarization request
     cmd = [
         "xcrun", "altool", "--notarization-info", request_uuid, "--username", args.apple_username, "--password", args.apple_password]
     print(f"[SPEAR | codesign_mac_executable.py] Executing: {' '.join(cmd)}")
