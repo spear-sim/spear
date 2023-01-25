@@ -32,7 +32,7 @@ public:
             ASSERT(src_bytes % sizeof(TDest) == 0);
             size_t dest_elements = src_bytes / sizeof(TDest);
             dest.resize(dest_elements);
-            std::memcpy(&dest.at(0), &src.at(0), src_bytes);
+            std::memcpy(dest.data(), src.data(), src_bytes);
         }
         return dest;
     }

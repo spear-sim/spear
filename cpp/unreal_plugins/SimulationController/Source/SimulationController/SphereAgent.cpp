@@ -160,7 +160,7 @@ std::map<std::string, Box> SphereAgent::getActionSpace() const
         box.low_ = -1.f;
         box.high_ = 1.f;
         box.shape_ = {2};
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         action_space["apply_force"] = std::move(box);
     }
 
@@ -178,7 +178,7 @@ std::map<std::string, Box> SphereAgent::getObservationSpace() const
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {5};
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         observation_space["compass"] = std::move(box);
     }
 
@@ -201,7 +201,7 @@ std::map<std::string, Box> SphereAgent::getStepInfoSpace() const
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {-1,3};
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         step_info_space["debug_info"] = std::move(box);
     }
 

@@ -178,8 +178,12 @@ if __name__ == "__main__":
 
             if not args.benchmark:
 
+                obs_final_color = obs["camera.final_color"]
+                assert obs_final_color.shape[2] == 4
+                obs_final_color = obs_final_color[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
+
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera.final_color"].squeeze())
+                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs_final_color)
 
                 # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training
                 # purposes. In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole

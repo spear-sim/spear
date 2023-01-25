@@ -5,6 +5,7 @@
 from enum import Enum
 import gym.spaces
 import msgpackrpc 
+import multiprocessing.shared_memory
 import numpy as np
 import os
 import psutil
@@ -15,7 +16,6 @@ import time
 
 
 class Env(gym.Env):
-
     def __init__(self, config):
 
         super(Env, self).__init__()
@@ -23,15 +23,18 @@ class Env(gym.Env):
         self._config = config
 
         self._request_launch_unreal_instance()
-        self._connect_to_unreal_instance()
+        self._initialize_client()
         self._initialize_unreal_instance()
 
-        self.action_space = self._get_action_space()
-        self.observation_space = self._get_observation_space()
-
         self._byte_order = self._get_byte_order()
-        self._task_step_info_space = self._get_task_step_info_space()
-        self._agent_step_info_space = self._get_agent_step_info_space()
+
+        self._action_space_data = SpaceData(self._get_action_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
+        self._observation_space_data = SpaceData(self._get_observation_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
+        self._task_step_info_space_data = SpaceData(self._get_task_step_info_space(), dict_space_type=Dict, box_space_type=Box)
+        self._agent_step_info_space_data = SpaceData(self._get_agent_step_info_space(), dict_space_type=Dict, box_space_type=Box)
+
+        self.action_space = self._action_space_data.space
+        self.observation_space = self._observation_space_data.space
 
         self._ready = False
 
@@ -78,20 +81,14 @@ class Env(gym.Env):
 
         print("[SPEAR | env.py] Closing Unreal instance...")
 
-        self._close_unreal_instance()
-        self._close_client_server_connection()
+        self._action_space_data.terminate()
+        self._observation_space_data.terminate()
+        self._task_step_info_space_data.terminate()
+        self._agent_step_info_space_data.terminate()
 
-        try:
-            status = self._process.status()
-        except psutil.NoSuchProcess:
-            pass
-        else:
-            while status in ["running", "sleeping", "disk-sleep"]:
-                time.sleep(1.0)
-                try:
-                    status = self._process.status()
-                except psutil.NoSuchProcess:
-                    break
+        self._close()
+        self._wait_until_unreal_instance_is_closed()
+        self._close_client()
 
         print("[SPEAR | env.py] Finished closing Unreal instance.")
 
@@ -209,7 +206,7 @@ class Env(gym.Env):
             self._close_client_server_connection()
             assert False
 
-    def _connect_to_unreal_instance(self):
+    def _initialize_client(self):
 
         print(f"[SPEAR | env.py] Connecting to Unreal application...")
         
@@ -240,7 +237,7 @@ class Env(gym.Env):
                     print("[SPEAR | env.py] ERROR: Unrecognized process status: " + status)
                     print("[SPEAR | env.py] ERROR: Killing process " + str(self._process.pid) + "...")
                     self._force_kill_unreal_instance()
-                    self._close_client_server_connection()
+                    self._close_client()
                     assert False
                 try:
                     self._client = msgpackrpc.Client(
@@ -252,7 +249,7 @@ class Env(gym.Env):
                 except:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                     # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
-                    self._close_client_server_connection()
+                    self._close_client()
                 time.sleep(self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
 
@@ -260,7 +257,7 @@ class Env(gym.Env):
             if self._config.SPEAR.LAUNCH_MODE != "running_instance":
                 print("[SPEAR | env.py] ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
                 self._force_kill_unreal_instance()
-                self._close_client_server_connection()
+                self._close_client()
             assert False
 
         if self._config.SPEAR.LAUNCH_MODE != "running_instance":
@@ -273,22 +270,35 @@ class Env(gym.Env):
         self._tick()
         self._end_tick()
 
+    def _wait_until_unreal_instance_is_closed(self):
+        try:
+            status = self._process.status()
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            while status in ["running", "sleeping", "disk-sleep"]:
+                time.sleep(1.0)
+                try:
+                    status = self._process.status()
+                except psutil.NoSuchProcess:
+                    break
+
     def _force_kill_unreal_instance(self):
         self._process.terminate()
         self._process.kill()
 
-    def _close_client_server_connection(self):
+    def _close_client(self):
         self._client.close()
         self._client._loop._ioloop.close()
     
     def _get_byte_order(self):
-        unreal_instance_endianness = self._client.call("getEndianness")
-        client_endianess = sys.byteorder
-        if unreal_instance_endianness == client_endianess:
+        unreal_instance_byte_order = self._client.call("getByteOrder")
+        client_byte_order = sys.byteorder
+        if unreal_instance_byte_order == client_byte_order:
             return None
-        elif unreal_instance_endianness == "little":
+        elif unreal_instance_byte_order == "little":
             return "<"
-        elif unreal_instance_endianness == "big":
+        elif unreal_instance_byte_order == "big":
             return ">"
         else:
             assert False
@@ -296,7 +306,7 @@ class Env(gym.Env):
     def _ping(self):
         return self._client.call("ping")
 
-    def _close_unreal_instance(self):
+    def _close(self):
         self._client.call("close")
 
     def _begin_tick(self):
@@ -309,30 +319,44 @@ class Env(gym.Env):
         self._client.call("endTick")
 
     def _get_action_space(self):
-        space = self._client.call("getActionSpace")
-        assert len(space) > 0
-        return _deserialize_dict_space(space, box_space_type=gym.spaces.Box, dict_space_type=gym.spaces.Dict)
+        raw_space = self._client.call("getActionSpace")
+        assert len(raw_space) > 0
+        return raw_space
 
     def _get_observation_space(self):
-        space = self._client.call("getObservationSpace")
-        assert len(space) > 0
-        return _deserialize_dict_space(space, box_space_type=gym.spaces.Box, dict_space_type=gym.spaces.Dict)
+        raw_space = self._client.call("getObservationSpace")
+        assert len(raw_space) > 0
+        return raw_space
 
     def _get_task_step_info_space(self):
-        space = self._client.call("getTaskStepInfoSpace")
-        return _deserialize_dict_space(space, box_space_type=Box, dict_space_type=Dict)
+        return self._client.call("getTaskStepInfoSpace")
 
     def _get_agent_step_info_space(self):
-        space = self._client.call("getAgentStepInfoSpace")
-        return _deserialize_dict_space(space, box_space_type=Box, dict_space_type=Dict)
+        return self._client.call("getAgentStepInfoSpace")
 
     def _apply_action(self, action):
-        action = _serialize_arrays(action, space=self.action_space, byte_order=self._byte_order)
-        self._client.call("applyAction", action)
+
+        assert action.keys() == self._action_space_data.space.spaces.keys()
+
+        action_shared = { name:component for name, component in action.items() if name in self._action_space_data.space_shared.spaces.keys() }
+        self._action_space_data.set_shared_memory_data(action_shared)
+
+        action_non_shared = { name:component for name, component in action.items() if name in self._action_space_data.space_non_shared.spaces.keys() }
+        action_non_shared_serialized = _serialize_arrays(
+            action_non_shared, space=self._action_space_data.space_non_shared, byte_order=self._byte_order)
+        self._client.call("applyAction", action_non_shared_serialized)
 
     def _get_observation(self):
-        observation = self._client.call("getObservation")
-        return _deserialize_arrays(observation, space=self.observation_space, byte_order=self._byte_order)
+
+        observation_shared = self._observation_space_data.shared_memory_arrays
+
+        observation_non_shared_serialized = self._client.call("getObservation")
+        observation_non_shared = _deserialize_arrays(
+            observation_non_shared_serialized, space=self._observation_space_data.space_non_shared, byte_order=self._byte_order)
+
+        assert len(set(observation_shared.keys()) & set(observation_non_shared.keys())) == 0
+
+        return {**observation_shared, **observation_non_shared}
 
     def _get_reward(self):
         return self._client.call("getReward")
@@ -341,10 +365,24 @@ class Env(gym.Env):
         return self._client.call("isEpisodeDone")
 
     def _get_step_info(self):
-        task_step_info = self._client.call("getTaskStepInfo")
-        agent_step_info = self._client.call("getAgentStepInfo")
-        return { "task_step_info": _deserialize_arrays(task_step_info, space=self._task_step_info_space, byte_order=self._byte_order),
-                 "agent_step_info": _deserialize_arrays(agent_step_info, space=self._agent_step_info_space, byte_order=self._byte_order) }
+
+        task_step_info_shared = self._task_step_info_space_data.shared_memory_arrays
+        agent_step_info_shared = self._agent_step_info_space_data.shared_memory_arrays
+
+        task_step_info_non_shared_serialized = self._client.call("getTaskStepInfo")
+        agent_step_info_non_shared_serialized = self._client.call("getAgentStepInfo")
+
+        task_step_info_non_shared = _deserialize_arrays(
+            task_step_info_non_shared_serialized, space=self._task_step_info_space_data.space_non_shared, byte_order=self._byte_order)
+        agent_step_info_non_shared = _deserialize_arrays(
+            agent_step_info_non_shared_serialized, space=self._agent_step_info_space_data.space_non_shared, byte_order=self._byte_order)
+
+        assert len(set(task_step_info_shared.keys()) & set(task_step_info_non_shared.keys())) == 0
+        assert len(set(agent_step_info_shared.keys()) & set(agent_step_info_non_shared.keys())) == 0
+
+        return {
+            "task_step_info":{**task_step_info_shared, **task_step_info_non_shared},
+            "agent_step_info":{**agent_step_info_shared, **agent_step_info_non_shared}}
 
     def _reset(self):
         # reset the task first in case it needs to set the pose of actors,
@@ -356,6 +394,45 @@ class Env(gym.Env):
         return self._client.call("isTaskReady") and self._client.call("isAgentReady")
 
 
+# metadata describing a space including shared memory objects
+class SpaceData():
+    def __init__(self, raw_space, dict_space_type, box_space_type):
+
+        # raw spaces
+        self.raw_space = raw_space
+        self.raw_space_shared = { name:component for name, component in self.raw_space.items() if component["use_shared_memory_"] }
+        self.raw_space_non_shared = { name:component for name, component in self.raw_space.items() if not component["use_shared_memory_"] }
+
+        # deserialized spaces
+        self.space = _deserialize_dict_space(self.raw_space, dict_space_type=dict_space_type, box_space_type=box_space_type)
+        self.space_shared = _deserialize_dict_space(self.raw_space_shared, dict_space_type=dict_space_type, box_space_type=box_space_type)
+        self.space_non_shared = _deserialize_dict_space(self.raw_space_non_shared, dict_space_type=dict_space_type, box_space_type=box_space_type)
+
+        # shared memory
+        self.shared_memory_objects = {}
+        self.shared_memory_arrays = {}
+        for name, component in self.raw_space_shared.items():
+            self.shared_memory_objects[name] = multiprocessing.shared_memory.SharedMemory(name=component["shared_memory_name_"])
+            self.shared_memory_arrays[name] = np.ndarray(
+                shape=tuple(component["shape_"]), dtype=DATATYPE_TO_DTYPE[component["datatype_"]], buffer=self.shared_memory_objects[name].buf)
+
+    def terminate(self):
+        self.shared_memory_arrays = {}
+        for name, shared_memory_object in self.shared_memory_objects.items():
+            shared_memory_object.close()
+            shared_memory_object.unlink()
+
+    def set_shared_memory_data(self, data):
+        assert data.keys() == self.space_shared.spaces.keys()
+        for name, component in data.items():
+            assert isinstance(component, np.ndarray)
+            assert component.shape == self.space_shared.spaces[name].shape
+            assert component.dtype == self.space_shared.spaces[name].dtype
+            assert (component >= self.space_shared.spaces[name].low).all()
+            assert (component <= self.space_shared.spaces[name].high).all()
+            self.shared_memory_arrays[name][:] = data[name][:]
+
+
 # mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
 class Box():
     def __init__(self, low, high, shape, dtype):
@@ -363,6 +440,7 @@ class Box():
         self.high = high
         self.shape = shape
         self.dtype = dtype
+
 
 # mimics the behavior of gym.spaces.Dict
 class Dict():
@@ -372,6 +450,7 @@ class Dict():
 
 # enum values must match cpp/unreal_plugins/SimulationController/Box.h
 class DataType(Enum):
+    Invalid    = -1,
     Boolean    = 0
     UInteger8  = 1
     Integer8   = 2
@@ -391,27 +470,28 @@ DATATYPE_TO_DTYPE = {
     DataType.UInteger32.value: np.dtype("u4").type,
     DataType.Integer32.value:  np.dtype("i4").type,
     DataType.Float32.value:    np.dtype("f4").type,
-    DataType.Double.value:     np.dtype("f8").type
+    DataType.Double.value:     np.dtype("f8").type,
 }
 
+
 # serialize and deserialize functions for converting between Python and C++ data
-def _deserialize_dict_space(data, box_space_type, dict_space_type):
-    return dict_space_type({name:_deserialize_box_space(component, box_space_type=box_space_type) for (name, component) in data.items()})
-
-def _deserialize_arrays(data, space, byte_order):
-    assert data.keys() == space.spaces.keys()
-    return {name:_deserialize_array(component, space=space.spaces[name], byte_order=byte_order) for (name, component) in data.items()}
-
-def _serialize_arrays(arrays, space, byte_order):
-    assert arrays.keys() == space.spaces.keys()
-    return {name:_serialize_array(component, space=space.spaces[name], byte_order=byte_order) for (name, component) in arrays.items()}
+def _deserialize_dict_space(raw_space, dict_space_type, box_space_type):
+    return dict_space_type({ name:_deserialize_box_space(component, box_space_type=box_space_type) for name, component in raw_space.items() })
 
 def _deserialize_box_space(data, box_space_type):
     low = data["low_"]
     high = data["high_"]
     shape = tuple(data["shape_"])
-    dtype = DATATYPE_TO_DTYPE[data["dtype_"]]
+    dtype = DATATYPE_TO_DTYPE[data["datatype_"]]
     return box_space_type(low, high, shape, dtype)
+
+def _deserialize_arrays(data, space, byte_order):
+    assert data.keys() == space.spaces.keys()
+    return { name:_deserialize_array(component, space=space.spaces[name], byte_order=byte_order) for (name, component) in data.items() }
+
+def _serialize_arrays(arrays, space, byte_order):
+    assert arrays.keys() == space.spaces.keys()
+    return { name:_serialize_array(component, space=space.spaces[name], byte_order=byte_order) for (name, component) in arrays.items() }
 
 def _deserialize_array(data, space, byte_order):
     dtype = space.dtype if byte_order is None else space.dtype.newbyteorder(byte_order)

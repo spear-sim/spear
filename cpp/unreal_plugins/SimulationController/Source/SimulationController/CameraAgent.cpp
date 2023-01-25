@@ -106,7 +106,7 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {6}; // x,y,z in cms and then p,y,r in degs
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         action_space["set_pose"] = std::move(box);
     }
 
@@ -114,7 +114,7 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
         box.low_ = std::numeric_limits<uint32_t>::lowest();
         box.high_ = std::numeric_limits<uint32_t>::max();
         box.shape_ = {1};
-        box.dtype_ = DataType::UInteger32;
+        box.datatype_ = DataType::UInteger32;
         action_space["set_num_random_points"] = std::move(box);
     }
 
@@ -147,7 +147,7 @@ std::map<std::string, Box> CameraAgent::getStepInfoSpace() const
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {-1, 3};
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         step_info_space["random_points"] = std::move(box);
     }
 

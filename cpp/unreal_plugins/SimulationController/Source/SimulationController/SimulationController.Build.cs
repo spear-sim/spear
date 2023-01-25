@@ -22,6 +22,8 @@ public class SimulationController : ModuleRules
         // Enable exceptions because some of our third-party dependencies use them
         bEnableExceptions = true;
 
+        bEnableUndefinedIdentifierWarnings = false;
+
         PublicDependencyModuleNames.AddRange(new string[] {
             "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
@@ -32,6 +34,18 @@ public class SimulationController : ModuleRules
 
         PublicDefinitions.Add("ASIO_NO_TYPEID");
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "asio", "asio", "include"));
+
+        //
+        // boost
+        //
+
+        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/assert/include");
+        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/config/include");
+        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/core/include");
+        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/interprocess/include");
+        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/intrusive/include");
+        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/move/include");
+        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/static_assert/include");
 
         //
         // rpclib

@@ -144,7 +144,7 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
         box.low_ = -1.f;
         box.high_ = 1.f;
         box.shape_ = {2};
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         action_space["apply_voltage"] = std::move(box);
     }
 
@@ -152,7 +152,7 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {3};
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         action_space["set_position_xyz_centimeters"] = std::move(box);
     }
 
@@ -160,7 +160,7 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {3};
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         action_space["set_orientation_pyr_radians"] = std::move(box);
     }
 
@@ -177,7 +177,7 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     if (Std::contains(observation_components, "state_data")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         box.shape_ = {6};
         observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
     }
@@ -185,7 +185,7 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     if (Std::contains(observation_components, "control_data")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         box.shape_ = {2};
         observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
     }
@@ -193,7 +193,7 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     if (Std::contains(observation_components, "encoder")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         box.shape_ = {4};
         observation_space["encoder"] = std::move(box); // FL, FR, RL, RR
     }
@@ -201,7 +201,7 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     if (Std::contains(observation_components, "imu")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         box.shape_ = {6};
         observation_space["imu"] = std::move(box); // a_x, a_y, a_z, g_x, g_y, g_z
     }
@@ -209,7 +209,7 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     if (Std::contains(observation_components, "sonar")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         box.shape_ = {1};
         observation_space["sonar"] = std::move(box); // Front obstacle distance in [m]
     }
@@ -232,7 +232,7 @@ std::map<std::string, Box> OpenBotAgent::getStepInfoSpace() const
     if (Std::contains(step_info_components, "trajectory_data")) {
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         box.shape_ = {-1, 3};
         step_info_space["trajectory_data"] = std::move(box); // Vector of the waypoints x,y,z in the world frame.
     }
@@ -476,7 +476,6 @@ void OpenBotAgent::generateTrajectoryToGoal()
     FVector2D relative_position_to_goal(
         (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - open_bot_pawn_->GetActorLocation()).Y);
 
-    std::cout << std::endl;
     std::cout << "[SPEAR | OpenBotAgent.cpp] Number of waypoints: " << num_waypoints << std::endl;
     std::cout << "[SPEAR | OpenBotAgent.cpp] Goal distance: " <<
         relative_position_to_goal.Size() / open_bot_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters << "m" <<

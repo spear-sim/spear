@@ -139,13 +139,13 @@ std::map<std::string, Box> ImitationLearningTask::getStepInfoSpace() const
     box.low_ = 0.0f;
     box.high_ = 1.0f;
     box.shape_ = {1};
-    box.dtype_ = DataType::Boolean;
+    box.datatype_ = DataType::Boolean;
     step_info_space["hit_goal"] = std::move(box);
 
     box.low_ = 0.0f;
     box.high_ = 1.0f;
     box.shape_ = {1};
-    box.dtype_ = DataType::Boolean;
+    box.datatype_ = DataType::Boolean;
     step_info_space["hit_obstacle"] = std::move(box);
 
     return step_info_space;
@@ -295,7 +295,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
                 best_path_points = path.Path->GetPathPoints();
 
                 // Debug output
-                if(Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")){
+                if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")) {
                     float trajectory_length = 0.0f;
                     for (int j = 0; j < num_waypoints - 1; j++) {
                         trajectory_length += FVector::Dist(best_path_points[j].Location, best_path_points[j + 1].Location);
@@ -323,8 +323,7 @@ void ImitationLearningTask::getPositionsFromTrajectorySampling()
     position_index_ = 0;
 
     // Debug output
-    if(Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")){
-        std::cout << std::endl;
+    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")) {
         std::cout << "[SPEAR | ImitationLearningTask.cpp] Initial position: [" <<
             agent_initial_positions_.at(0).X << ", " << agent_initial_positions_.at(0).Y << ", " << agent_initial_positions_.at(0).Z << "]." <<
             std::endl;

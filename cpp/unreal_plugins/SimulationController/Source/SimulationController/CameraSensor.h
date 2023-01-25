@@ -8,6 +8,10 @@
 #include <string>
 #include <vector>
 
+#define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
+#include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
+
 #include <Math/Color.h>
 
 class AActor;
@@ -21,6 +25,9 @@ struct RenderPass
 {
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
+    int num_bytes_ = -1;
+    boost::interprocess::shared_memory_object shared_memory_object_;
+    boost::interprocess::mapped_region mapped_region_;
 };
 
 class CameraSensor

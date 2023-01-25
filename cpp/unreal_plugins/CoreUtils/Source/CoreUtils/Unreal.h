@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include <Containers/Array.h>
 #include <Containers/UnrealString.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
@@ -37,6 +38,24 @@ public:
     static FName toFName(const std::string& str)
     {
         return FName(str.c_str());
+    }
+
+    //
+    // TArray conversion
+    //
+
+    template <typename TDest, typename TSrc>
+    static std::vector<TDest> reinterpret_as(const TArray<TSrc>& src)
+    {
+        std::vector<TDest> dest;
+        if (src.Num() > 0) {
+            size_t src_bytes = src.Num() * sizeof(TSrc);
+            ASSERT(src_bytes % sizeof(TDest) == 0);
+            size_t dest_elements = src_bytes / sizeof(TDest);
+            dest.resize(dest_elements);
+            std::memcpy(dest.data(), src.GetData(), src_bytes);
+        }
+        return dest;
     }
 
     //

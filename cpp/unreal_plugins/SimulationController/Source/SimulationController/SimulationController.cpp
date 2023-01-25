@@ -282,18 +282,18 @@ void SimulationController::endFrameEventHandler()
 
 void SimulationController::bindFunctionsToRpcServer()
 {
-    rpc_server_->bindAsync("ping", []() -> std::string {
-        return "SimulationController received a call to ping()...";
-    });
-
     rpc_server_->bindAsync("close", []() -> void {
         bool immediate_shutdown = false;
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
-    rpc_server_->bindAsync("getEndianness", []() -> std::string {
+    rpc_server_->bindAsync("ping", []() -> std::string {
+        return "SimulationController received a call to ping()...";
+    });
+
+    rpc_server_->bindAsync("getByteOrder", []() -> std::string {
         uint32_t dummy = 0x01020304;
-        return (reinterpret_cast<const char*>(&dummy)[3] == 1) ? "little" : "big";
+        return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
     });
 
     rpc_server_->bindAsync("beginTick", [this]() -> void {
