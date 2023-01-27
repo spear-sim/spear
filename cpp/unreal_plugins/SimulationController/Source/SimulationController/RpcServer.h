@@ -74,7 +74,7 @@ public:
         // reinitialze the io_context and work guard after runSync to prepare for next run
         mutex_.lock();
         io_context_.restart();
-        new(&executor_work_guard_) asio::executor_work_guard<asio::io_context::executor_type>(io_context_.get_executor());
+        new(&executor_work_guard_) boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(io_context_.get_executor());
         mutex_.unlock();
     }
 
@@ -95,8 +95,8 @@ public:
 private:
     ::rpc::server server_;
     std::mutex mutex_;
-    asio::io_context io_context_;
-    asio::executor_work_guard<asio::io_context::executor_type> executor_work_guard_;
+    boost::asio::io_context io_context_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> executor_work_guard_;
 };
 
 namespace detail
@@ -124,7 +124,7 @@ struct FunctionWrapper<R (*)(Args...)>
     // This way, no matter from which thread the wrap function is called, the @a functor provided is always called from the context of the io_context.
     // I.e., we can use the io_context to run tasks on a specific thread (e.g. game thread).
     template <typename FuncT>
-    static auto wrapSyncCall(asio::io_context& io_context, FuncT&& functor)
+    static auto wrapSyncCall(boost::asio::io_context& io_context, FuncT&& functor)
     {
         return
             [&io_context, functor = std::forward<FuncT>(functor)](Args... args) -> R {
@@ -134,7 +134,7 @@ struct FunctionWrapper<R (*)(Args...)>
                     });
                 // Post task and wait for result.
                 auto result = task.get_future();
-                asio::post(io_context, moveHandler(task));
+                boost::asio::post(io_context, moveHandler(task));
                 return result.get();
             };
     }

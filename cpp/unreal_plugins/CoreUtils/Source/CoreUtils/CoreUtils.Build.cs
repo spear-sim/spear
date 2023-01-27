@@ -19,11 +19,15 @@ public class CoreUtils : ModuleRules
         // Turn off code optimization except in shipping builds for faster build times
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
-        // Enable exceptions because some of our third-party dependencies use them
-        bEnableExceptions = true;
-
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
+
+        //
+        // Boost (predef)
+        //
+
+        // predef
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "predef", "include"));
 
         //
         // yaml-cpp

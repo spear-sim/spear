@@ -233,7 +233,7 @@ class Env(gym.Env):
             while not connected and elapsed_time_seconds < self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS:
                 # See https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
                 status = self._process.status()
-                if status not in ["running", "sleeping", "disk-sleep"]:
+                if status not in ["disk-sleep", "running", "sleeping", "stopped"]:
                     print("[SPEAR | env.py] ERROR: Unrecognized process status: " + status)
                     print("[SPEAR | env.py] ERROR: Killing process " + str(self._process.pid) + "...")
                     self._force_kill_unreal_instance()

@@ -19,9 +19,6 @@ public class UrdfBot : ModuleRules
         // Turn off code optimization except in shipping builds for faster build times
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
-        // Enable exceptions because some of our third-party dependencies use them
-        bEnableExceptions = true;
-
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "Slate", "XmlParser", });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
@@ -40,7 +37,7 @@ public class UrdfBot : ModuleRules
         }
 
         //
-        // rbdl
+        // RBDL
         //
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "include"));

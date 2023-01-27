@@ -1,6 +1,6 @@
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright(c) 2004 Sam Hocevar <sam@hocevar.net>. Licensed under the WTFPLv2 License <http://www.wtfpl.net>.
+// Copyright(c) 2004 Gregory Pakosz <sam@hocevar.net>. Licensed under the WTFPLv2 License <http://www.wtfpl.net>.
 //
 
 // Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
@@ -10,10 +10,22 @@
 #include "CoreUtils/IgnoreCompilerWarnings.h"
 #include "CoreUtils/Windows.h"
 
+BEGIN_IGNORE_COMPILER_WARNINGS
 
+// ------------------------------------------------------------------------------
 
 // see README.md for usage instructions.
 // (‑●‑●)> released under the WTFPL v2 license, by Gregory Pakosz (@gpakosz)
+
+// ---- BEGIN SPEAR COMMENT ----
+// #if defined(_WIN32)
+// #define WIN32_LEAN_AND_MEAN
+// #define _CRT_SECURE_NO_WARNINGS
+// #include <windows.h>
+// #endif
+//
+// #include <ppk_assert.h>
+// ---- END SPEAR COMMENT ----
 
 #include <cstdio>  // fprintf() and vsnprintf()
 #include <cstring>
@@ -162,7 +174,6 @@ namespace {
       return print(out, level, "Assertion '%s' failed (level = %d)\n", expression, level);
   }
 
-  BEGIN_IGNORE_COMPILER_WARNINGS
   AssertAction::AssertAction PPK_ASSERT_CALL _defaultHandler( const char* file,
                                                               int line,
                                                               const char* function,
@@ -259,7 +270,6 @@ namespace {
 
     return AssertAction::Abort;
   }
-  END_IGNORE_COMPILER_WARNINGS
 
   void _throw(const char* file,
               int line,
@@ -503,3 +513,7 @@ namespace implementation {
 } // namespace implementation
 } // namespace assert
 } // namespace ppk
+
+// ------------------------------------------------------------------------------
+
+END_IGNORE_COMPILER_WARNINGS

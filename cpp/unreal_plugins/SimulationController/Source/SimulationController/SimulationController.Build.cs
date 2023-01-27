@@ -19,33 +19,40 @@ public class SimulationController : ModuleRules
         // Turn off code optimization except in shipping builds for faster build times
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
-        // Enable exceptions because some of our third-party dependencies use them
-        bEnableExceptions = true;
-
-        bEnableUndefinedIdentifierWarnings = false;
-
         PublicDependencyModuleNames.AddRange(new string[] {
             "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
+        // Boost (asio, interprocess) 
+        //
+
         // asio
-        //
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "align", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "asio", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "bind", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "date_time", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "exception", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "mpl", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "numeric", "conversion", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "preprocessor", "include"));        
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "regex", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "smart_ptr", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "system", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "throw_exception", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "type_traits", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "utility", "include"));
 
-        PublicDefinitions.Add("ASIO_NO_TYPEID");
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "asio", "asio", "include"));
-
-        //
-        // boost
-        //
-
-        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/assert/include");
-        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/config/include");
-        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/core/include");
-        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/interprocess/include");
-        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/intrusive/include");
-        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/move/include");
-        PublicIncludePaths.Add("/Users/mroberts/code/github/boost/libs/static_assert/include");
+        // interprocess
+        bEnableUndefinedIdentifierWarnings = false;
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "assert", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "config", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "core", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "interprocess", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "intrusive", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "move", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "predef", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "static_assert", "include"));
 
         //
         // rpclib

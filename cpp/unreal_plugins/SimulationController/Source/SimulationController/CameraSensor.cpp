@@ -70,11 +70,9 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
 {
     ASSERT(camera_component);
 
-    BOOST_ASSERT(false);
-    
     parent_actor_ = camera_component->GetWorld()->SpawnActor<AActor>();
     ASSERT(parent_actor_);
-
+    
     for (auto& render_pass_name : render_pass_names) {
         RenderPass render_pass;
 

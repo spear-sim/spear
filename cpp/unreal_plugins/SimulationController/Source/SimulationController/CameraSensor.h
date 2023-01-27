@@ -8,11 +8,9 @@
 #include <string>
 #include <vector>
 
-#define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
-#include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/shared_memory_object.hpp>
-
 #include <Math/Color.h>
+
+#include "SimulationController/BoostInterprocess.h"
 
 class AActor;
 class UCameraComponent;

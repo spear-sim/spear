@@ -8,5 +8,5 @@
 #include "CoreUtils/Windows.h"
 
 BEGIN_IGNORE_COMPILER_WARNINGS
-#include <asio.hpp>
+#include <boost/asio.hpp>
 END_IGNORE_COMPILER_WARNINGS
