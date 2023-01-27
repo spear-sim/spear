@@ -11,17 +11,24 @@ public class SimulationController : ModuleRules
     public SimulationController(ReadOnlyTargetRules Target) : base(Target)
     {
         // Disable precompiled headers (in our code but not Unreal code) for faster builds,
-        // easier debugging of compile errors, and strict enforcement of include-what-you-use
+        // easier debugging of compile errors, and strict enforcement of include-what-you-use.
         PCHUsage = ModuleRules.PCHUsageMode.Default;
         PrivatePCHHeaderFile = "";
         bUseUnity = false;
 
-        // Turn off code optimization except in shipping builds for faster build times
+        // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
+
+        // Our ASSERT macro throws exceptions, and so does our templated function Config::get(...),
+        // because it depends yaml-cpp, which throws exceptions. So we need to enable exceptions
+        // everywhere. Note that boost::interprocess::mapped_region also throws exceptions, so we
+        // would need to enable exceptions here even if we did not need them for our ASSERT macro
+        // or Config::get(...).
+        bEnableExceptions = true;
 
         //
         // Boost (asio, interprocess) 
