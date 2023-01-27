@@ -1,5 +1,7 @@
 __pycache__
 
+cpp/.vs
+
 cpp/unreal_plugins/*/Binaries
 cpp/unreal_plugins/*/Intermediate
 cpp/unreal_plugins/*/ThirdParty
