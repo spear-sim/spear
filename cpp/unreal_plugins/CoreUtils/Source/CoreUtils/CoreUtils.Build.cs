@@ -19,6 +19,9 @@ public class CoreUtils : ModuleRules
         // Turn off code optimization except in shipping builds for faster build times
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
+        // Our assert macro uses exceptions
+        bEnableExceptions = true;
+
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
@@ -33,6 +36,7 @@ public class CoreUtils : ModuleRules
         // yaml-cpp
         //
 
+        bEnableExceptions = true;
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "yaml-cpp", "include"));
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
