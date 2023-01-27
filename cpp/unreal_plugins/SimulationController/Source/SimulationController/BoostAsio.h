@@ -5,7 +5,6 @@
 #pragma once
 
 #include "CoreUtils/IgnoreCompilerWarnings.h"
-#include "CoreUtils/Windows.h"
 
 BEGIN_IGNORE_COMPILER_WARNINGS
 #include <boost/asio.hpp>

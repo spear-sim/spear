@@ -6,6 +6,14 @@
 
 #include <boost/predef.h>
 
+#include "CoreUtils/IgnoreCompilerWarnings.h"
+
+// The Unreal check and verify macros conflict with Boost.
+#pragma push_macro("check")
+#pragma push_macro("verify")
+#undef check
+#undef verify
+
 // macOS supports native posix shared memory objects, but doesn't export the _POSIX_SHARED_MEMORY_OBJECTS
 // macro, but Boost uses this macro to decide whether or not to use native posix shared memory objects,
 // rather than emulating them through memory-mapped files. To address this issue, we explicitly define
@@ -15,5 +23,11 @@
     #define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
 #endif
 
+BEGIN_IGNORE_COMPILER_WARNINGS
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
+END_IGNORE_COMPILER_WARNINGS
+
+// Restore the state of Unreal macros.
+#pragma pop_macro("verify")
+#pragma pop_macro("check")

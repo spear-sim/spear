@@ -12,8 +12,8 @@
 #include <type_traits>
 #include <utility>
 
-#include "Asio.h"
-#include "Rpclib.h"
+#include "SimulationController/BoostAsio.h"
+#include "SimulationController/Rpclib.h"
 
 // This file defines an RPC server in which functions can be bound to run synchronously or
 // asynchronously. Use launchWorkerThreads() to start the worker threads, and use stop() to

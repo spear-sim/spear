@@ -39,7 +39,9 @@ UOpenBotWheel::UOpenBotWheel()
 }
 END_IGNORE_COMPILER_WARNINGS
 
+BEGIN_IGNORE_COMPILER_WARNINGS
 UOpenBotWheel::~UOpenBotWheel()
 {
     std::cout << "[SPEAR | OpenBotWheel.cpp] UOpenBotWheel::~UOpenBotWheel" << std::endl;
 }
+END_IGNORE_COMPILER_WARNINGS
