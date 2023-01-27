@@ -41,7 +41,7 @@ public:
     }
 
     //
-    // TArray conversion
+    // Container manipulation
     //
 
     template <typename TDest, typename TSrc>
@@ -317,7 +317,7 @@ public:
     }
 
     //
-    // Helper functions
+    // Helper functions for finding actors
     //
 
     template <typename TActor>

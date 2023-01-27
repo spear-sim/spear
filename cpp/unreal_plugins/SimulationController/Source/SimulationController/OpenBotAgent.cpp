@@ -136,11 +136,10 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
 {
     
     std::map<std::string, Box> action_space;
-    Box box;
-
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.OPENBOT_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "apply_voltage")) {
+        Box box;
         box.low_ = -1.f;
         box.high_ = 1.f;
         box.shape_ = {2};
@@ -149,6 +148,7 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
     }
 
     if (Std::contains(action_components, "set_position_xyz_centimeters")) {
+        Box box;
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {3};
@@ -157,6 +157,7 @@ std::map<std::string, Box> OpenBotAgent::getActionSpace() const
     }
 
     if (Std::contains(action_components, "set_orientation_pyr_radians")) {
+        Box box;
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {3};

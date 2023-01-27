@@ -98,11 +98,10 @@ void CameraAgent::cleanUpObjectReferences()
 std::map<std::string, Box> CameraAgent::getActionSpace() const
 {
     std::map<std::string, Box> action_space;
-    Box box;
-
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_pose")) {
+        Box box;
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {6}; // x,y,z in cms and then p,y,r in degs
@@ -111,6 +110,7 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
     }
 
     if (Std::contains(action_components, "set_num_random_points")) {
+        Box box;
         box.low_ = std::numeric_limits<uint32_t>::lowest();
         box.high_ = std::numeric_limits<uint32_t>::max();
         box.shape_ = {1};
@@ -124,8 +124,6 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
 std::map<std::string, Box> CameraAgent::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
-    Box box;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
     std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
@@ -139,11 +137,10 @@ std::map<std::string, Box> CameraAgent::getObservationSpace() const
 std::map<std::string, Box> CameraAgent::getStepInfoSpace() const
 {
     std::map<std::string, Box> step_info_space;
-    Box box;
-
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "random_points")) {
+        Box box;
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {-1, 3};

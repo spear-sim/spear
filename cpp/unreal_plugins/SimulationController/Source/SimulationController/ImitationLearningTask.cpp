@@ -6,8 +6,6 @@
 
 #include <fstream>
 #include <iostream>
-#include <iterator>
-#include <sstream>
 
 #include <DrawDebugHelpers.h>
 #include <EngineUtils.h>
@@ -208,29 +206,22 @@ void ImitationLearningTask::getPositionsFromFile()
     agent_goal_positions_.clear();
     position_index_ = -1;
 
-    std::string line;
-    std::string token;
-    std::string scene_id;
-    FVector init, goal;
-
     // Create an input filestream 
     std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.POSITIONS_FILE")); 
     ASSERT(fs.is_open());
 
-    // Read file data, line by line in the format 
-    // "scene_id,init_pos_x_cms,init_pos_y_cms,init_pos_z_cms,goal_pos_x_cms,goal_pos_y_cms,goal_pos_z_cms"
-    std::getline(fs, line); // get header
-    while (std::getline(fs, line)) {
-        std::istringstream ss(line);
-        std::getline(ss, token, ','); ASSERT(ss); scene_id = token;
-        std::getline(ss, token, ','); ASSERT(ss); init.X = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); init.Y = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); init.Z = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); goal.X = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); goal.Y = std::stof(token);
-        std::getline(ss, token, ','); ASSERT(ss); goal.Z = std::stof(token);
-        
-        // If the scene id matches the currently opened map, then account for the positions
+    // Read file data, line-by-line in the format:
+    // scene_id, init_pos_x_cms, init_pos_y_cms, init_pos_z_cms, goal_pos_x_cms, goal_pos_y_cms, goal_pos_z_cms
+    std::string line;
+    std::getline(fs, line); // header
+    while (std::getline(fs, line)) {        
+        std::vector<std::string> tokens = Std::tokenize(line, ",");
+        ASSERT(tokens.size() == 7);
+        std::string scene_id = tokens.at(0);
+        FVector init(std::stof(tokens.at(1)), std::stof(tokens.at(2)), std::stof(tokens.at(3)));
+        FVector goal(std::stof(tokens.at(4)), std::stof(tokens.at(5)), std::stof(tokens.at(6)));
+
+        // If the scene id matches the currently opened map, then add to our list of positions
         if(scene_id == Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID")) {
             agent_initial_positions_.push_back(init);
             agent_goal_positions_.push_back(goal);

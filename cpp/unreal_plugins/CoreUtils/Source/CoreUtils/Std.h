@@ -7,10 +7,32 @@
 #include <algorithm>
 #include <cstring>
 #include <map>
+#include <string>
+
+#include<boost/tokenizer.hpp>
 
 class COREUTILS_API Std
 {
 public:
+
+    //
+    // String manipulation
+    //
+
+    static std::vector<std::string> tokenize(std::string string, std::string separator)
+    {
+        boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separator.c_str()));
+        std::vector<std::string> tokens;
+        for (auto& token : tokenizer) {
+            tokens.push_back(token);
+        }
+        return tokens;
+    }
+
+    //
+    // Container manipulation
+    //
+
     template <typename TContainer, typename TKey>
     static bool contains(const TContainer& container, const TKey& key)
     {

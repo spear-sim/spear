@@ -152,11 +152,10 @@ void SphereAgent::cleanUpObjectReferences()
 std::map<std::string, Box> SphereAgent::getActionSpace() const
 {
     std::map<std::string, Box> action_space;
-    Box box;
-
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "apply_force")) {
+        Box box;
         box.low_ = -1.f;
         box.high_ = 1.f;
         box.shape_ = {2};
@@ -170,11 +169,10 @@ std::map<std::string, Box> SphereAgent::getActionSpace() const
 std::map<std::string, Box> SphereAgent::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
-    Box box;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "compass")) {
+        Box box;
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {5};
@@ -193,11 +191,10 @@ std::map<std::string, Box> SphereAgent::getObservationSpace() const
 std::map<std::string, Box> SphereAgent::getStepInfoSpace() const
 {
     std::map<std::string, Box> step_info_space;
-    Box box;
-
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "debug_info")) {
+        Box box;
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {-1,3};

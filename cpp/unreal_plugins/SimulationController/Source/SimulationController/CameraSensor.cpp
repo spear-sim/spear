@@ -114,15 +114,18 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
             initializeSceneCaptureComponentNonFinalColor(render_pass.scene_capture_component_, render_pass_name);
         }
 
-        // calculate per-pass metadata
-        render_pass.num_bytes_ = height * width * RENDER_PASS_NUM_CHANNELS.at(render_pass_name) * RENDER_PASS_NUM_BYTES_PER_CHANNEL.at(render_pass_name);
-
         // create shared_memory_object
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
-            render_pass.shared_memory_object_ = boost::interprocess::shared_memory_object(
-                boost::interprocess::create_only, std::string("/camera." + render_pass_name).c_str(), boost::interprocess::read_write); // use leading slash
-            render_pass.shared_memory_object_.truncate(render_pass.num_bytes_);
-            render_pass.mapped_region_ = boost::interprocess::mapped_region(render_pass.shared_memory_object_, boost::interprocess::read_write);
+            render_pass.shared_memory_num_bytes_ =
+                height * width * RENDER_PASS_NUM_CHANNELS.at(render_pass_name) * RENDER_PASS_NUM_BYTES_PER_CHANNEL.at(render_pass_name);
+            render_pass.shared_memory_name_ = "camera." + render_pass_name;
+            render_pass.shared_memory_id_ = "/" + render_pass.shared_memory_name_;
+
+            boost::interprocess::shared_memory_object shared_memory_object(
+                boost::interprocess::create_only, render_pass.shared_memory_id_.c_str(), boost::interprocess::read_write);
+            shared_memory_object.truncate(render_pass.shared_memory_num_bytes_);
+
+            render_pass.shared_memory_mapped_region_ = boost::interprocess::mapped_region(shared_memory_object, boost::interprocess::read_write);
         }
 
         // update render_passes_
@@ -140,7 +143,7 @@ CameraSensor::~CameraSensor()
 
     for (auto& render_pass : render_passes_) {
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
-            boost::interprocess::shared_memory_object::remove(std::string("/camera." + render_pass.first).c_str()); // use leading slash
+            boost::interprocess::shared_memory_object::remove(render_pass.second.shared_memory_id_.c_str());
         }
 
         ASSERT(render_pass.second.scene_capture_component_);
@@ -161,16 +164,16 @@ CameraSensor::~CameraSensor()
 std::map<std::string, Box> CameraSensor::getObservationSpace(const std::vector<std::string>& observation_components) const
 {
     std::map<std::string, Box> observation_space;
-    Box box;
 
     if (Std::contains(observation_components, "camera")) {
         for (auto& render_pass : render_passes_) {
+            Box box;
             box.low_ = RENDER_PASS_LOW.at(render_pass.first);
             box.high_ = RENDER_PASS_HIGH.at(render_pass.first);
             box.shape_ = {height_, width_, RENDER_PASS_NUM_CHANNELS.at(render_pass.first)};
             box.datatype_ = RENDER_PASS_DATATYPE.at(render_pass.first);
             box.use_shared_memory_ = Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY");
-            box.shared_memory_name_ = box.use_shared_memory_ ? "camera." + render_pass.first : ""; // don't use leading slash
+            box.shared_memory_name_ = render_pass.second.shared_memory_name_;
             observation_space["camera." + render_pass.first] = std::move(box);
         }
     }
@@ -194,9 +197,9 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation(const s
 
                 if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
                     std::memcpy(
-                        render_passes_.at(render_data_component.first).mapped_region_.get_address(),
+                        render_passes_.at(render_data_component.first).shared_memory_mapped_region_.get_address(),
                         render_data_component.second.GetData(),
-                        render_passes_.at(render_data_component.first).num_bytes_);
+                        render_passes_.at(render_data_component.first).shared_memory_num_bytes_);
                 } else {
                     observation["camera." + render_data_component.first] = Unreal::reinterpret_as<uint8_t>(render_data_component.second);
                 }
@@ -208,9 +211,9 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation(const s
 
                 if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
                     std::memcpy(
-                        render_passes_.at(render_data_component.first).mapped_region_.get_address(),
+                        render_passes_.at(render_data_component.first).shared_memory_mapped_region_.get_address(),
                         float_depth.data(),
-                        render_passes_.at(render_data_component.first).num_bytes_);
+                        render_passes_.at(render_data_component.first).shared_memory_num_bytes_);
                 } else {
                     observation["camera." + render_data_component.first] = Std::reinterpret_as<uint8_t>(float_depth);
                 }
