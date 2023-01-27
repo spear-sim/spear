@@ -6,9 +6,15 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 
+#include <Delegates/IDelegateInstance.h>
 #include <DrawDebugHelpers.h>
+#include <Engine/EngineTypes.h>
 #include <EngineUtils.h>
+#include <Math/Vector.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
 #include <NavigationSystem.h>

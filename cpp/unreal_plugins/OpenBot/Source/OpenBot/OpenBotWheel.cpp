@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+#include <VehicleWheel.h>
+
 #include "CoreUtils/IgnoreCompilerWarnings.h"
 #include "CoreUtils/Config.h"
 

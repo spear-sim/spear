@@ -4,6 +4,10 @@
 
 #include "UrdfParser.h"
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include <XmlFile.h>
 #include <XmlNode.h>
 

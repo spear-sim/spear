@@ -4,16 +4,24 @@
 
 #include "SimulationController/SphereAgent.h"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
+#include <Delegates/IDelegateInstance.h>
 #include <Engine/CollisionProfile.h>
+#include <Engine/EngineBaseTypes.h>
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <Materials/Material.h>
+#include <Math/Rotator.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"

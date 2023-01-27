@@ -4,6 +4,11 @@
 
 #include "SimulationController/CameraAgent.h"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <AI/NavDataGenerator.h>
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>

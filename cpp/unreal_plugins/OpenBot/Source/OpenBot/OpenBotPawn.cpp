@@ -6,12 +6,15 @@
 
 #include <iostream>
 
+#include <Eigen/Dense>
+
 #include <Animation/AnimInstance.h>
 #include <Camera/CameraComponent.h>
 #include <Components/BoxComponent.h>
 #include <Components/InputComponent.h>
 #include <Components/SkeletalMeshComponent.h>
 #include <Engine/CollisionProfile.h>
+#include <GameFramework/Pawn.h>
 #include <Math/Vector.h>
 #include <PhysicsPublic.h>
 #include <PhysXIncludes.h>

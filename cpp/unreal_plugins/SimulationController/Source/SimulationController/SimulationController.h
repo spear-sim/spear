@@ -16,7 +16,6 @@ class Agent;
 class RpcServer;
 class Task;
 class Visualizer;
-
 enum class FrameState;
 
 class SimulationController : public IModuleInterface

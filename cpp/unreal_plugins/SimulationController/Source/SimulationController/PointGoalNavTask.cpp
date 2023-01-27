@@ -4,10 +4,13 @@
 
 #include "SimulationController/PointGoalNavTask.h"
 
+#include <Delegates/IDelegateInstance.h>
 #include <EngineUtils.h>
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Materials/Material.h>
+#include <Math/RandomStream.h>
+#include <Math/Vector.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"

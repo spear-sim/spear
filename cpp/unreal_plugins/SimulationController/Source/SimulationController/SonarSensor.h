@@ -7,7 +7,6 @@
 #include <random>
 
 #include <Engine/EngineBaseTypes.h>
-#include <Math/Vector.h>
 
 class AActor;
 class UBoxComponent;

@@ -4,6 +4,11 @@
 
 #include "SimulationController/OpenBotAgent.h"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <AI/NavDataGenerator.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Components/BoxComponent.h>

@@ -4,17 +4,22 @@
 
 #include "SimulationController/SimulationController.h"
 
+#include <atomic>
+#include <future>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>
 
 #include <Engine/Engine.h>
+#include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/GameModeBase.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/CoreDelegates.h>
+#include <Modules/ModuleManager.h>
 #include <PhysicsEngine/PhysicsSettings.h>
 
 #include "CoreUtils/Assert.h"

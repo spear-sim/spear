@@ -5,10 +5,14 @@
 #include "SimulationController/CameraSensor.h"
 
 #include <cstring>
+#include <map>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
+#include <Containers/Array.h>
 #include <Engine/Engine.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
@@ -22,6 +26,7 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
+#include "SimulationController/BoostInterprocess.h"
 #include "SimulationController/Box.h"
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials";

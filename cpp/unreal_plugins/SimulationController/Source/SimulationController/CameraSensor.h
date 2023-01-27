@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include <Containers/Array.h>
 #include <Math/Color.h>
 
 #include "SimulationController/BoostInterprocess.h"

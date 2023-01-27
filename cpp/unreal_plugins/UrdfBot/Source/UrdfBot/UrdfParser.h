@@ -8,8 +8,6 @@
 #include <string>
 #include <vector>
 
-#include <CoreMinimal.h>
-
 class FXmlNode;
 
 struct UrdfJointDesc;
