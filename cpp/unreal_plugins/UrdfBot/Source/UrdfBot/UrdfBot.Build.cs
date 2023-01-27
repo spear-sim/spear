@@ -38,7 +38,7 @@ public class UrdfBot : ModuleRules
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "libeigen", "BUILD", "Linux", "include", "eigen3"));
         } else {
-            throw new Exception("Unexpected: Target.Platform == " + Target.Platform);
+            throw new Exception("[SPEAR | UrdfBot.Build.cs] Unexpected: Target.Platform == " + Target.Platform);
         }
 
         //
@@ -57,7 +57,7 @@ public class UrdfBot : ModuleRules
             PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Linux", "include"));
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Linux", "librbdl.a"));
         } else {
-            throw new Exception("Unexpected: Target.Platform == " + Target.Platform);
+            throw new Exception("[SPEAR | UrdfBot.Build.cs] Unexpected: Target.Platform == " + Target.Platform);
         }
     }
 }

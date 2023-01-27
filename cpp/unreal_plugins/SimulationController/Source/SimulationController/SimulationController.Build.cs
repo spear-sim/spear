@@ -74,7 +74,7 @@ public class SimulationController : ModuleRules
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Linux", "librpc.a"));
         } else {
-            throw new Exception("Target.Platform == " + Target.Platform);
+            throw new Exception("[SPEAR | SimulationController.Build.cs] Target.Platform == " + Target.Platform);
         }
     }
 }

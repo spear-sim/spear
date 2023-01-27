@@ -49,7 +49,7 @@ public class CoreUtils : ModuleRules
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "yaml-cpp", "BUILD", "Linux", "libyaml-cpp.a"));
         } else {
-            throw new Exception("Unexpected: Target.Platform == " + Target.Platform);
+            throw new Exception("[SPEAR | CoreUtils.Build.cs] Unexpected: Target.Platform == " + Target.Platform);
         }
     }
 }
