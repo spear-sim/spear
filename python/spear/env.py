@@ -412,7 +412,7 @@ class SpaceInfo():
         # shared memory
         self.shared_memory_objects = {}
         self.shared_memory_arrays = {}
-        for name, component in self.raw_space_shared.items():
+        for name, component in self.raw_space_shared.items()
             if sys.platform == "win32":
                 self.shared_memory_objects[name] = mmap.mmap(
                     -1, np.prod(component["shape_"]) * DATATYPE_TO_DTYPE[component["datatype_"]].itemsize, component["shared_memory_name_"])
