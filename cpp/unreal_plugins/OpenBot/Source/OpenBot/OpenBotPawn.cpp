@@ -23,13 +23,13 @@
 #include <SimpleWheeledVehicleMovementComponent.h>
 #include <UObject/ConstructorHelpers.h>
 
-#include "CoreUtils/IgnoreCompilerWarnings.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
+#include "CoreUtils/SuppressCompilerWarnings.h"
 #include "CoreUtils/Unreal.h"
 #include "OpenBot/OpenBotWheel.h"
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
     std::cout << "[SPEAR | OpenBotPawn.cpp] AOpenBotPawn::AOpenBotPawn" << std::endl;
@@ -143,7 +143,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn
     // Initialize duty cycle
     duty_cycle_.setZero();
 }
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS
 
 AOpenBotPawn::~AOpenBotPawn()
 {
@@ -165,7 +165,7 @@ void AOpenBotPawn::Tick(float delta_time)
     setDriveTorquesFromDutyCycle();
 }
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 void AOpenBotPawn::resetWheels()
 {
     PxRigidDynamic* rigid_body_dynamic_actor = vehicle_movement_component_->PVehicle->getRigidDynamicActor();
@@ -190,9 +190,9 @@ void AOpenBotPawn::resetWheels()
     // vehicle_movement_component->PVehicleDrive->mDriveDynData.setToRestState();
     ASSERT(!vehicle_movement_component_->PVehicleDrive);
 }
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 void AOpenBotPawn::setBrakeTorques(const Eigen::Vector4f& brake_torques)
 {
     // Torque applied to the brakes, expressed in [N.m]. The applied torque persists until the next call to SetBrakeTorque.
@@ -201,7 +201,7 @@ void AOpenBotPawn::setBrakeTorques(const Eigen::Vector4f& brake_torques)
     vehicle_movement_component_->SetBrakeTorque(brake_torques(2), 2);
     vehicle_movement_component_->SetBrakeTorque(brake_torques(3), 3);
 }
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS
 
 Eigen::Vector4f AOpenBotPawn::getDutyCycle() const
 {
@@ -218,7 +218,7 @@ void AOpenBotPawn::setDutyCycle(const Eigen::Vector4f& duty_cycle)
     duty_cycle_ = duty_cycle.cwiseMin(1.f).cwiseMax(-1.f);
 }
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 Eigen::Vector4f AOpenBotPawn::getWheelRotationSpeeds() const
 {
     Eigen::Vector4f wheel_rotation_speeds;
@@ -228,7 +228,7 @@ Eigen::Vector4f AOpenBotPawn::getWheelRotationSpeeds() const
     wheel_rotation_speeds(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
     return rpmToRadSec(wheel_rotation_speeds); // Expressed in [rad/s]
 }
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS
 
 void AOpenBotPawn::moveForward(float forward)
 {
@@ -254,7 +254,7 @@ void AOpenBotPawn::moveRight(float right)
     duty_cycle_ = duty_cycle_.cwiseMin(1.f).cwiseMax(-1.f);
 }
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 void AOpenBotPawn::setDriveTorquesFromDutyCycle()
 {
     // Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
@@ -332,7 +332,7 @@ void AOpenBotPawn::setDriveTorquesFromDutyCycle()
     vehicle_movement_component_->SetDriveTorque(wheel_torque(2), 2);
     vehicle_movement_component_->SetDriveTorque(wheel_torque(3), 3);
 }
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS
 
 // Rev per minute to rad/s
 Eigen::VectorXf AOpenBotPawn::rpmToRadSec(Eigen::VectorXf rpm)

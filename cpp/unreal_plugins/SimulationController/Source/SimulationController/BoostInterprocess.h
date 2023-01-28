@@ -6,7 +6,7 @@
 
 #include <boost/predef.h>
 
-#include "CoreUtils/IgnoreCompilerWarnings.h"
+#include "CoreUtils/SuppressCompilerWarnings.h"
 
 // The Unreal check and verify macros conflict with Boost.
 #pragma push_macro("check")
@@ -23,7 +23,7 @@
     #define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
 #endif
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 #if BOOST_OS_WINDOWS
     #include <boost/interprocess/windows_shared_memory.hpp>
 #elif BOOST_OS_MACOS || BOOST_OS_UNIX
@@ -33,7 +33,7 @@ BEGIN_IGNORE_COMPILER_WARNINGS
 #endif
 
 #include <boost/interprocess/mapped_region.hpp>
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS
 
 // Restore the state of Unreal macros.
 #pragma pop_macro("verify")

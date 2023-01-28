@@ -8,10 +8,10 @@
 
 #include <VehicleWheel.h>
 
-#include "CoreUtils/IgnoreCompilerWarnings.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/SuppressCompilerWarnings.h"
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 UOpenBotWheel::UOpenBotWheel()
 {
     std::cout << "[SPEAR | OpenBotWheel.cpp] UOpenBotWheel::UOpenBotWheel" << std::endl;
@@ -39,11 +39,11 @@ UOpenBotWheel::UOpenBotWheel()
     SweepType                  = EWheelSweepType::SimpleAndComplex;
     bAutoAdjustCollisionSize   = true; // Set to true if you want to scale the wheels manually 
 }
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 UOpenBotWheel::~UOpenBotWheel()
 {
     std::cout << "[SPEAR | OpenBotWheel.cpp] UOpenBotWheel::~UOpenBotWheel" << std::endl;
 }
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS
