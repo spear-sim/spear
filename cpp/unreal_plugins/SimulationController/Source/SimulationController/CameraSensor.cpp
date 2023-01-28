@@ -135,7 +135,6 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
                     boost::interprocess::read_write,
                     render_pass.shared_memory_num_bytes_);
                 render_pass.shared_memory_mapped_region_ = boost::interprocess::mapped_region(windows_shared_memory, boost::interprocess::read_write);
-
             #elif BOOST_OS_MACOS || BOOST_OS_UNIX
                 render_pass.shared_memory_id_ = "/" + render_pass.shared_memory_name_; // use leading slash on macOS and Linux
                 boost::interprocess::shared_memory_object shared_memory_object(
@@ -144,12 +143,9 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
                     boost::interprocess::read_write);
                 shared_memory_object.truncate(render_pass.shared_memory_num_bytes_);
                 render_pass.shared_memory_mapped_region_ = boost::interprocess::mapped_region(shared_memory_object, boost::interprocess::read_write);
-
             #else
                 #error
-                
             #endif
-
         }
 
         // update render_passes_
