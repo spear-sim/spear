@@ -35,7 +35,7 @@ if __name__ == "__main__":
     if args.benchmark:
         start_time_seconds = time.time()
     else:
-        cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that OpenCV expects BGRA instead of RGBA
+        cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
         cv2.waitKey(0)
 
     # take a few steps
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             assert False
 
         if not args.benchmark:
-            cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that OpenCV expects BGRA instead of RGBA
+            cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
             cv2.waitKey(0)
 
         if done:

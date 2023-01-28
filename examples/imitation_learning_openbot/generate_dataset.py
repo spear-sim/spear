@@ -276,7 +276,7 @@ if __name__ == "__main__":
         plot_tracking_performance_temporal(
             state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
 
-        if args.create_videos: # if desired, generate a video from the collected rgb observations 
+        if args.create_videos: # if desired, generate a video from the collected RGB observations 
             video_dir = os.path.join(args.dataset_dir, "videos")
             video_split_dir = os.path.join(video_dir, args.split + "_data")
             os.makedirs(video_split_dir, exist_ok=True)

@@ -237,7 +237,7 @@ if __name__ == "__main__":
                 os.path.join(video_dir, "%04d.mp4" % episode["index"]),
                 rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
         
-    # close the current scene and give the system a bit of time before switching to the next scene.
+    # close the current scene
     env.close()
 
     print("[SPEAR | run_trained_policy.py] Done.")
