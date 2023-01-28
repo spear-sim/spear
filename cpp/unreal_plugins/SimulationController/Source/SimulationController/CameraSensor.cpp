@@ -403,15 +403,19 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
         FReadSurfaceDataFlags read_surface_data_flags(RCM_UNorm, CubeFace_MAX);
         read_surface_data_flags.SetLinearToGamma(false);
 
-        ENQUEUE_RENDER_COMMAND(ReadSurfaceDataCommand) (
-            [rhi_texture, rect, &render_data_component, read_surface_data_flags](FRHICommandListImmediate& rhi_command_list_immediate) -> void {
-                rhi_command_list_immediate.ReadSurfaceData(rhi_texture, rect, render_data_component, read_surface_data_flags);
-            }
-        );
+        if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.SKIP_READ_SURFACE_DATA")) {
+            render_data_component.SetNum(target_resource->GetSizeXY().X*target_resource->GetSizeXY().Y);
+        } else {
+            ENQUEUE_RENDER_COMMAND(ReadSurfaceDataCommand) (
+                [rhi_texture, rect, &render_data_component, read_surface_data_flags](FRHICommandListImmediate& rhi_command_list_immediate) -> void {
+                    rhi_command_list_immediate.ReadSurfaceData(rhi_texture, rect, render_data_component, read_surface_data_flags);
+                }
+            );
 
-        FRenderCommandFence render_command_fence;
-        render_command_fence.BeginFence(true);
-        render_command_fence.Wait(true);
+            FRenderCommandFence render_command_fence;
+            render_command_fence.BeginFence(true);
+            render_command_fence.Wait(true);
+        }
 
         render_data[render_pass.first] = std::move(render_data_component);
     }

@@ -154,12 +154,15 @@ SIMULATION_CONTROLLER:
     SPAWN_CAMERA_ORIENTATION_YAW: 0.0
     SPAWN_CAMERA_ORIENTATION_ROLL: 0.0
 
-  # We have found these values achieve a good trade-off between image quality and
-  # rendering speed. When Unreal defines ClampMin/ClampMax values, it will clamp
-  # those values in the engine. When Unreal defines UIMin/UIMax vales, it will
-  # only clamp those values values in the editor.
   CAMERA_SENSOR:
-    USE_SHARED_MEMORY: True
+
+    USE_SHARED_MEMORY: True       # write image data to shared memory for fast interprocess communication
+    SKIP_READ_SURFACE_DATA: False # skip reading image data from the GPU, useful for debugging and benchmarking
+
+    # We have found these values achieve a good trade-off between image quality and
+    # rendering speed. When Unreal defines ClampMin/ClampMax values, it will clamp
+    # those values in the engine. When Unreal defines UIMin/UIMax vales, it will
+    # only clamp those values values in the editor.
     SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE: "SCS_FinalToneCurveHDR"     # "SCS_FinalColorHDR", "SCS_FinalToneCurveHDR"
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP: 9999.0                          # ClampMin=0.02, UIMax=20.0
