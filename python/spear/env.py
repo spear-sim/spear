@@ -189,11 +189,9 @@ class Env(gym.Env):
 
         print("[SPEAR | env.py] Launching executable with the following command-line arguments:")
         print(" ".join(cmd))
-        print()
 
         print("[SPEAR | env.py] Launching executable with the following config values:")
         print(self._config)
-        print()
         
         popen = Popen(cmd)
         self._process = psutil.Process(popen.pid)

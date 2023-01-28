@@ -112,11 +112,9 @@ class OpenBotPilotNetPolicy():
         
         # the policy takes two inputs: normalized rgb image and a 3D compass observation.
         print(f"[SPEAR | policies.py] Input details of the control policy: {self._input_details}")
-        print()
 
         # the policy gives a 2D output consisting of the duty cycles to be sent to the left (resp. right) motors on a [0, 1] scale
         print(f"[SPEAR | policies.py] Output details of the control policy: {self._output_details}")
-        print()
 
     def step(self, obs, position_xy_desired):
     

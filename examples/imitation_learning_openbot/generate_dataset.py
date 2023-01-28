@@ -199,7 +199,8 @@ if __name__ == "__main__":
 
             # debug
             if args.debug:
-                show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
+                show_obs(
+                    obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
             # termination conditions
             if env_step_info["task_step_info"]["hit_obstacle"]: 
