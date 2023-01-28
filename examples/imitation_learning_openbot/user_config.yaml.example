@@ -3,7 +3,7 @@
 #
 
 IMITATION_LEARNING_OPENBOT:
-  ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+  ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent
   CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
   PID:
     PROPORTIONAL_GAIN_HEADING: 4.25 # PID proportional gain for the autopilot
@@ -18,10 +18,10 @@ SPEAR:
   LAUNCH_MODE: "standalone_executable"
 
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
-  
-  DATA_DIR: "/home/quentin/Desktop/ISL/spear_data"
 
-  CONTENT_DIR: "/home/quentin/Desktop/ISL/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Content"
+  DATA_DIR: "/Users/mroberts/Downloads/spear_data"
+
+  CONTENT_DIR: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app/Contents/UE4/SpearSim/Content"
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
@@ -69,14 +69,14 @@ SIMULATION_CONTROLLER:
     GOAL_ACTOR_NAME: "GoalActor"
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0"]
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
-    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Region around a sampled initial position to look for a reachable goal position.
+    POSITIONS_FILE: ""
+    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
     TRAJECTORY_SAMPLING_MAX_ITERS: 100
-    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # When True, note that markers will only be dispayed in development builds
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
       AGENT_MAX_STEP_HEIGHT: 1.0
-    POSITIONS_FILE: ""
 
   VISUALIZER:
     ACTOR_NAME: "OpenBotActor"
@@ -86,7 +86,7 @@ SIMULATION_CONTROLLER:
     FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
   
   IMU_SENSOR:
-    DEBUG_RENDER: True # When True, note that markers will only be dispayed in development builds
+    DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
 
   SONAR_SENSOR:
-    DEBUG_RENDER: True # When True, note that markers will only be dispayed in development builds
+    DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)

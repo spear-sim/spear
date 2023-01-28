@@ -21,9 +21,6 @@ SIMULATION_CONTROLLER:
   AGENT: "CameraAgent"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  CAMERA_SENSOR:
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
-
   CAMERA_AGENT:
     ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
@@ -48,6 +45,9 @@ SIMULATION_CONTROLLER:
       MAX_SIMPLIFICATION_ERROR: 1.3
       NAV_MODIFIER_OFFSET_Z: 50.0
       BOUNDS_VOLUME_ACTOR_TAGS: ["architecture", "furniture"]
+
+  CAMERA_SENSOR:
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
 
   VISUALIZER:
     ACTOR_NAME: "CameraActor"

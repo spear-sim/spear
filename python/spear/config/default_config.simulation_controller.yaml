@@ -111,9 +111,9 @@ SIMULATION_CONTROLLER:
     OBSTACLE_IGNORE_ACTOR_NAMES: []
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
     POSITIONS_FILE: ""
-    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000
-    TRAJECTORY_SAMPLING_MAX_ITERS: 10000
-    TRAJECTORY_SAMPLING_DEBUG_RENDER: False
+    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
+    TRAJECTORY_SAMPLING_MAX_ITERS: 100
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
@@ -166,7 +166,7 @@ SIMULATION_CONTROLLER:
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN: 9999.0                        # ClampMin=0.02, UIMax=20.0
     FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY: True
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # # set to 0.0 for raytracing, set to 1.0 for baked
     FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: True                         # set to True to use ray-tracing features
     FINAL_COLOR_OVERRIDE_RAYTRACING_GI: True
     FINAL_COLOR_RAYTRACING_GI_TYPE: "BruteForce"                        # set to "BruteForce" when using ray-tracing
