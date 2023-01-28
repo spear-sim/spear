@@ -159,7 +159,7 @@ SIMULATION_CONTROLLER:
   # those values in the engine. When Unreal defines UIMin/UIMax vales, it will
   # only clamp those values values in the editor.
   CAMERA_SENSOR:
-    USE_SHARED_MEMORY: False
+    USE_SHARED_MEMORY: True
     SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE: "SCS_FinalToneCurveHDR"     # "SCS_FinalColorHDR", "SCS_FinalToneCurveHDR"
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP: 9999.0                          # ClampMin=0.02, UIMax=20.0
