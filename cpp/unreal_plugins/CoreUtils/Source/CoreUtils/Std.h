@@ -21,8 +21,8 @@ public:
 
     static std::vector<std::string> tokenize(std::string string, std::string separator)
     {
-        boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separator.c_str()));
         std::vector<std::string> tokens;
+        boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separator.c_str()));
         for (auto& token : tokenizer) {
             tokens.push_back(token);
         }
