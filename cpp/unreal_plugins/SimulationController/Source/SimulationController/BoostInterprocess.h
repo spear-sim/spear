@@ -29,7 +29,7 @@ BEGIN_IGNORE_COMPILER_WARNINGS
 #elif BOOST_OS_MACOS || BOOST_OS_UNIX
     #include <boost/interprocess/shared_memory_object.hpp>
 #else
-#error
+    #error
 #endif
 
 #include <boost/interprocess/mapped_region.hpp>
