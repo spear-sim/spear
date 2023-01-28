@@ -38,7 +38,7 @@ SIMULATION_CONTROLLER:
       NAV_MODIFIER_OFFSET_X: 0.0
       NAV_MODIFIER_OFFSET_Y: 0.0
       NAV_MODIFIER_OFFSET_Z: 0.0
-      BOUNDS_VOLUME_ACTOR_TAGS: ["architecture", "furniture"]
+      BOUNDS_VOLUME_ACTOR_TAGS: []
       EXPORT_NAV_DATA_OBJ: False
       EXPORT_NAV_DATA_OBJ_DIR: ""
 
@@ -49,7 +49,7 @@ SIMULATION_CONTROLLER:
     STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
     IS_READY_VELOCITY_THRESHOLD: 0.001
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals" 
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -70,7 +70,7 @@ SIMULATION_CONTROLLER:
       NAV_MODIFIER_OFFSET_X: 0.0
       NAV_MODIFIER_OFFSET_Y: 0.0
       NAV_MODIFIER_OFFSET_Z: 0.0
-      BOUNDS_VOLUME_ACTOR_TAGS: ["architecture", "furniture"]
+      BOUNDS_VOLUME_ACTOR_TAGS: []
       EXPORT_NAV_DATA_OBJ: False
       EXPORT_NAV_DATA_OBJ_DIR: ""
 

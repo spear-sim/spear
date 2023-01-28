@@ -32,9 +32,7 @@ def remove_path(path):
         # subprocess.run() because it returns an error when attempting to remove broken symlinks
         if sys.platform == "win32":
             rm_cmd = "del"
-        elif sys.platform == "darwin":
-            rm_cmd = "rm"
-        elif sys.platform == "linux":
+        elif sys.platform in ["darwin", "linux"]:
             rm_cmd = "rm"
         else:
             assert False

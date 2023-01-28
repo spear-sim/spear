@@ -4,6 +4,7 @@
 
 from enum import Enum
 import gym.spaces
+import mmap
 import msgpackrpc 
 import multiprocessing.shared_memory
 import numpy as np
@@ -28,13 +29,13 @@ class Env(gym.Env):
 
         self._byte_order = self._get_byte_order()
 
-        self._action_space_data = SpaceData(self._get_action_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
-        self._observation_space_data = SpaceData(self._get_observation_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
-        self._task_step_info_space_data = SpaceData(self._get_task_step_info_space(), dict_space_type=Dict, box_space_type=Box)
-        self._agent_step_info_space_data = SpaceData(self._get_agent_step_info_space(), dict_space_type=Dict, box_space_type=Box)
+        self._action_space_info = SpaceInfo(self._get_action_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
+        self._observation_space_info = SpaceInfo(self._get_observation_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
+        self._task_step_info_space_info = SpaceInfo(self._get_task_step_info_space(), dict_space_type=Dict, box_space_type=Box)
+        self._agent_step_info_space_info = SpaceInfo(self._get_agent_step_info_space(), dict_space_type=Dict, box_space_type=Box)
 
-        self.action_space = self._action_space_data.space
-        self.observation_space = self._observation_space_data.space
+        self.action_space = self._action_space_info.space
+        self.observation_space = self._observation_space_info.space
 
         self._ready = False
 
@@ -81,10 +82,10 @@ class Env(gym.Env):
 
         print("[SPEAR | env.py] Closing Unreal instance...")
 
-        self._action_space_data.terminate()
-        self._observation_space_data.terminate()
-        self._task_step_info_space_data.terminate()
-        self._agent_step_info_space_data.terminate()
+        self._action_space_info.terminate()
+        self._observation_space_info.terminate()
+        self._task_step_info_space_info.terminate()
+        self._agent_step_info_space_info.terminate()
 
         self._close()
         self._wait_until_unreal_instance_is_closed()
@@ -336,23 +337,23 @@ class Env(gym.Env):
 
     def _apply_action(self, action):
 
-        assert action.keys() == self._action_space_data.space.spaces.keys()
+        assert action.keys() == self._action_space_info.space.spaces.keys()
 
-        action_shared = { name:component for name, component in action.items() if name in self._action_space_data.space_shared.spaces.keys() }
-        self._action_space_data.set_shared_memory_data(action_shared)
+        action_shared = { name:component for name, component in action.items() if name in self._action_space_info.space_shared.spaces.keys() }
+        self._action_space_info.set_shared_memory_data(action_shared)
 
-        action_non_shared = { name:component for name, component in action.items() if name in self._action_space_data.space_non_shared.spaces.keys() }
+        action_non_shared = { name:component for name, component in action.items() if name in self._action_space_info.space_non_shared.spaces.keys() }
         action_non_shared_serialized = _serialize_arrays(
-            action_non_shared, space=self._action_space_data.space_non_shared, byte_order=self._byte_order)
+            action_non_shared, space=self._action_space_info.space_non_shared, byte_order=self._byte_order)
         self._client.call("applyAction", action_non_shared_serialized)
 
     def _get_observation(self):
 
-        observation_shared = self._observation_space_data.shared_memory_arrays
+        observation_shared = self._observation_space_info.shared_memory_arrays
 
         observation_non_shared_serialized = self._client.call("getObservation")
         observation_non_shared = _deserialize_arrays(
-            observation_non_shared_serialized, space=self._observation_space_data.space_non_shared, byte_order=self._byte_order)
+            observation_non_shared_serialized, space=self._observation_space_info.space_non_shared, byte_order=self._byte_order)
 
         assert len(set(observation_shared.keys()) & set(observation_non_shared.keys())) == 0
 
@@ -366,16 +367,16 @@ class Env(gym.Env):
 
     def _get_step_info(self):
 
-        task_step_info_shared = self._task_step_info_space_data.shared_memory_arrays
-        agent_step_info_shared = self._agent_step_info_space_data.shared_memory_arrays
+        task_step_info_shared = self._task_step_info_space_info.shared_memory_arrays
+        agent_step_info_shared = self._agent_step_info_space_info.shared_memory_arrays
 
         task_step_info_non_shared_serialized = self._client.call("getTaskStepInfo")
         agent_step_info_non_shared_serialized = self._client.call("getAgentStepInfo")
 
         task_step_info_non_shared = _deserialize_arrays(
-            task_step_info_non_shared_serialized, space=self._task_step_info_space_data.space_non_shared, byte_order=self._byte_order)
+            task_step_info_non_shared_serialized, space=self._task_step_info_space_info.space_non_shared, byte_order=self._byte_order)
         agent_step_info_non_shared = _deserialize_arrays(
-            agent_step_info_non_shared_serialized, space=self._agent_step_info_space_data.space_non_shared, byte_order=self._byte_order)
+            agent_step_info_non_shared_serialized, space=self._agent_step_info_space_info.space_non_shared, byte_order=self._byte_order)
 
         assert len(set(task_step_info_shared.keys()) & set(task_step_info_non_shared.keys())) == 0
         assert len(set(agent_step_info_shared.keys()) & set(agent_step_info_non_shared.keys())) == 0
@@ -395,7 +396,7 @@ class Env(gym.Env):
 
 
 # metadata describing a space including shared memory objects
-class SpaceData():
+class SpaceInfo():
     def __init__(self, raw_space, dict_space_type, box_space_type):
 
         # raw spaces
@@ -412,15 +413,25 @@ class SpaceData():
         self.shared_memory_objects = {}
         self.shared_memory_arrays = {}
         for name, component in self.raw_space_shared.items():
-            self.shared_memory_objects[name] = multiprocessing.shared_memory.SharedMemory(name=component["shared_memory_name_"])
-            self.shared_memory_arrays[name] = np.ndarray(
-                shape=tuple(component["shape_"]), dtype=DATATYPE_TO_DTYPE[component["datatype_"]], buffer=self.shared_memory_objects[name].buf)
+
+            if sys.platform == "win32":
+                self.shared_memory_objects[name] = mmap.mmap(
+                    -1, np.prod(component["shape_"]) * DATATYPE_TO_DTYPE[component["datatype_"]].itemsize, component["shared_memory_name_"])
+                self.shared_memory_arrays[name] = np.ndarray(
+                    shape=tuple(component["shape_"]), dtype=DATATYPE_TO_DTYPE[component["datatype_"]], buffer=self.shared_memory_objects[name])
+            elif sys.platform in ["darwin", "linux"]:
+                self.shared_memory_objects[name] = multiprocessing.shared_memory.SharedMemory(name=component["shared_memory_name_"])
+                self.shared_memory_arrays[name] = np.ndarray(
+                    shape=tuple(component["shape_"]), dtype=DATATYPE_TO_DTYPE[component["datatype_"]], buffer=self.shared_memory_objects[name].buf)
+            else:
+                assert False
 
     def terminate(self):
         self.shared_memory_arrays = {}
         for name, shared_memory_object in self.shared_memory_objects.items():
-            shared_memory_object.close()
-            shared_memory_object.unlink()
+            if sys.platform in ["darwin", "linux"]:
+                shared_memory_object.close()
+                shared_memory_object.unlink()
 
     def set_shared_memory_data(self, data):
         assert data.keys() == self.space_shared.spaces.keys()
@@ -462,15 +473,15 @@ class DataType(Enum):
     Double     = 8
 
 DATATYPE_TO_DTYPE = {
-    DataType.Boolean.value:    np.dtype("?").type,
-    DataType.UInteger8.value:  np.dtype("u1").type,
-    DataType.Integer8.value:   np.dtype("i1").type,
-    DataType.UInteger16.value: np.dtype("u2").type,
-    DataType.Integer16.value:  np.dtype("i2").type,
-    DataType.UInteger32.value: np.dtype("u4").type,
-    DataType.Integer32.value:  np.dtype("i4").type,
-    DataType.Float32.value:    np.dtype("f4").type,
-    DataType.Double.value:     np.dtype("f8").type,
+    DataType.Boolean.value:    np.dtype("?"),
+    DataType.UInteger8.value:  np.dtype("u1"),
+    DataType.Integer8.value:   np.dtype("i1"),
+    DataType.UInteger16.value: np.dtype("u2"),
+    DataType.Integer16.value:  np.dtype("i2"),
+    DataType.UInteger32.value: np.dtype("u4"),
+    DataType.Integer32.value:  np.dtype("i4"),
+    DataType.Float32.value:    np.dtype("f4"),
+    DataType.Double.value:     np.dtype("f8"),
 }
 
 

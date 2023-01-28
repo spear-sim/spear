@@ -2,6 +2,18 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+IMITATION_LEARNING_OPENBOT:
+  ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
+  CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+  PID:
+    PROPORTIONAL_GAIN_HEADING: 4.25 # PID proportional gain for the autopilot
+    DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
+    PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
+    DERIVATIVE_GAIN_DIST: 0.1       # PID derivative gain for the autopilot
+    FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
+  PILOT_NET:
+    PATH: ""
+
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
 
@@ -15,18 +27,6 @@ SPEAR:
   RENDER_OFFSCREEN: False
   WINDOW_RESOLUTION_X: 160
   WINDOW_RESOLUTION_Y: 120
-
-IMITATION_LEARNING_OPENBOT:
-  ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent. 
-  CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
-  PID:
-    PROPORTIONAL_GAIN_HEADING: 4.25 # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
-    PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_DIST: 0.1       # PID derivative gain for the autopilot
-    FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
-  PILOT_NET:
-    PATH: ""
 
 SIMULATION_CONTROLLER:
   TASK: "ImitationLearningTask"
@@ -47,7 +47,7 @@ SIMULATION_CONTROLLER:
       IMAGE_HEIGHT: 120
       IMAGE_WIDTH: 160
       FOV: 70.0
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals" 
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation"
       
     NAVMESH:
       AGENT_RADIUS: 20.0
@@ -67,7 +67,7 @@ SIMULATION_CONTROLLER:
   IMITATION_LEARNING_TASK:
     AGENT_ACTOR_NAME: "OpenBotActor"
     GOAL_ACTOR_NAME: "GoalActor"
-    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0", "VehicleMesh"]
+    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0"]
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000 # Region around a sampled initial position to look for a reachable goal position.
     TRAJECTORY_SAMPLING_MAX_ITERS: 100

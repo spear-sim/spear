@@ -24,8 +24,15 @@
 #endif
 
 BEGIN_IGNORE_COMPILER_WARNINGS
+#if BOOST_OS_WINDOWS
+    #include <boost/interprocess/windows_shared_memory.hpp>
+#elif BOOST_OS_MACOS || BOOST_OS_UNIX
+    #include <boost/interprocess/shared_memory_object.hpp>
+#else
+#error
+#endif
+
 #include <boost/interprocess/mapped_region.hpp>
-#include <boost/interprocess/shared_memory_object.hpp>
 END_IGNORE_COMPILER_WARNINGS
 
 // Restore the state of Unreal macros.

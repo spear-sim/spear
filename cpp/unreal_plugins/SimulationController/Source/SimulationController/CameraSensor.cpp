@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include <boost/predef.h>
+
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
@@ -126,11 +128,21 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
             render_pass.shared_memory_name_ = "camera." + render_pass_name;
             render_pass.shared_memory_id_ = "/" + render_pass.shared_memory_name_;
 
+#if BOOST_OS_WINDOWS
+            boost::interprocess::windows_shared_memory windows_shared_memory(
+                boost::interprocess::create_only,
+                render_pass.shared_memory_id_.c_str(),
+                boost::interprocess::read_write,
+                render_pass.shared_memory_num_bytes_);
+            render_pass.shared_memory_mapped_region_ = boost::interprocess::mapped_region(windows_shared_memory, boost::interprocess::read_write);
+#elif BOOST_OS_MACOS || BOOST_OS_UNIX
             boost::interprocess::shared_memory_object shared_memory_object(
                 boost::interprocess::create_only, render_pass.shared_memory_id_.c_str(), boost::interprocess::read_write);
             shared_memory_object.truncate(render_pass.shared_memory_num_bytes_);
-
             render_pass.shared_memory_mapped_region_ = boost::interprocess::mapped_region(shared_memory_object, boost::interprocess::read_write);
+#else
+#error
+#endif
         }
 
         // update render_passes_
@@ -148,7 +160,9 @@ CameraSensor::~CameraSensor()
 
     for (auto& render_pass : render_passes_) {
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
+#if BOOST_OS_MACOS || BOOST_OS_LINUX
             boost::interprocess::shared_memory_object::remove(render_pass.second.shared_memory_id_.c_str());
+#endif
         }
 
         ASSERT(render_pass.second.scene_capture_component_);
@@ -178,7 +192,15 @@ std::map<std::string, Box> CameraSensor::getObservationSpace(const std::vector<s
             box.shape_ = {height_, width_, RENDER_PASS_NUM_CHANNELS.at(render_pass.first)};
             box.datatype_ = RENDER_PASS_DATATYPE.at(render_pass.first);
             box.use_shared_memory_ = Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY");
+
+#if BOOST_OS_WINDOWS
+            box.shared_memory_name_ = render_pass.second.shared_memory_id_;
+#elif BOOST_OS_MACOS || BOOST_OS_UNIX]
             box.shared_memory_name_ = render_pass.second.shared_memory_name_;
+#else
+#error
+#endif
+
             observation_space["camera." + render_pass.first] = std::move(box);
         }
     }
