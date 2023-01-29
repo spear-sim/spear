@@ -10,7 +10,6 @@
 #include "UrdfBotPawn.generated.h"
 
 class UCameraComponent;
-
 class UUrdfRobotComponent;
 
 // UrdfBot agent
@@ -27,11 +26,10 @@ public:
 
     // debug only
     void test();
-    int signal = 0;
     void test1();
     void test2();
+    int signal = 0;
 
     UUrdfRobotComponent* robot_component_ = nullptr;
-    // Camera component that will be our viewpoint
     UCameraComponent* camera_component_ = nullptr;
 };

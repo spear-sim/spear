@@ -10,7 +10,9 @@
 #include "UrdfJointComponent.generated.h"
 
 class UUrdfLinkComponent;
+
 enum class UrdfJointType;
+
 struct UrdfJointDesc;
 
 // unreal representation for urdf joint
@@ -19,8 +21,7 @@ class UUrdfJointComponent : public UPhysicsConstraintComponent
 {
     GENERATED_BODY()
 public:
-    // Create constraint after move to proper transformation
-    void initialize(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
+    void initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
 
 private:
     UrdfJointType joint_type_;

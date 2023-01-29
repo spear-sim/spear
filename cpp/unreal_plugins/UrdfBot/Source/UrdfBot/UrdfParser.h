@@ -100,6 +100,7 @@ struct UrdfLinkDesc
 
     // derived data
     bool has_parent_ = false;
+    UrdfJointDesc* parent_joint_desc_ = nullptr;
     std::vector<UrdfLinkDesc*> child_link_descs_;
     std::vector<UrdfJointDesc*> child_joint_descs_;
 };

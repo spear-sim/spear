@@ -11,9 +11,9 @@
 
 #include "UrdfLinkComponent.generated.h"
 
-struct UrdfLinkDesc;
-
 class UUrdfJointComponent;
+
+struct UrdfLinkDesc;
 
 // unreal representation for urdf link
 UCLASS()
@@ -22,8 +22,5 @@ class UUrdfLinkComponent : public UStaticMeshComponent
     GENERATED_BODY()
 public:
     // set up link based on link description.
-    void initialize(UrdfLinkDesc* link_desc);
-
-    std::vector<UUrdfLinkComponent*> child_link_components_;
-    std::vector<UUrdfJointComponent*> child_joint_components_;
+    void initializeComponent(UrdfLinkDesc* link_desc);
 };

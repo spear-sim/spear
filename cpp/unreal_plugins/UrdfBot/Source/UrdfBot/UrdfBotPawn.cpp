@@ -9,20 +9,19 @@
 
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
-#include "UrdfRobotComponent.h"
 #include "UrdfParser.h"
+#include "UrdfRobotComponent.h"
 
-AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer): APawn(object_initializer)
+AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
-
-    // setup robot
-    std::string urdf_file = Unreal::toString(FPaths::Combine(
+    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toString(FPaths::Combine(
         Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
-        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE"))));
-    UrdfRobotDesc robot_desc = UrdfParser::parse(urdf_file);
+        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
 
-    robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(TEXT("RobotComponent"));
-    robot_component_->initialize(&(robot_desc));
+    robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::robot_component_::" + robot_desc.name_));
+    robot_component_->initializeComponent(&robot_desc);
+    robot_component_->createChildComponents(&robot_desc);
+
     RootComponent = robot_component_->root_link_component_;
 
     // setup camera
@@ -46,7 +45,7 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer): APawn(
 
     // debug only
     robot_component_->test(this);
-    this->AddInstanceComponent(camera_component_);
+    AddInstanceComponent(camera_component_);
 }
 
 void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)

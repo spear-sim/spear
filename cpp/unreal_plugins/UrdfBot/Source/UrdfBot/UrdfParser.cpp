@@ -332,6 +332,7 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
         // each link should only be visited as a child link at most once
         ASSERT(!child_link_desc->has_parent_);
         child_link_desc->has_parent_ = true;
+        child_link_desc->parent_joint_desc_ = joint_desc;
     }
 
     // update pointers for root node and material node

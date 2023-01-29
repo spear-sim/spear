@@ -9,68 +9,50 @@
 #include "UrdfJointComponent.h"
 #include "UrdfParser.h"
 
-void UUrdfRobotComponent::initialize(UrdfRobotDesc* robot_desc)
+void UUrdfRobotComponent::initializeComponent(UrdfRobotDesc* robot_desc)
 {
-    // initialize root link
-    UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
-    root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName("UUrdfRobotComponent::link_component_" + root_link_desc->name_));
-    root_link_component_->initialize(root_link_desc);
-    link_components_[root_link_desc->name_] = root_link_component_;
-
-    // recursively build joint
-    ASSERT(root_link_desc->child_link_descs_.size() == root_link_desc->child_joint_descs_.size());
-    unsigned int num_child_links = root_link_desc->child_link_descs_.size();
-
-    for (unsigned int i = 0; i < num_child_links; i++) {
-        constructChildLinks(root_link_desc->child_link_descs_.at(i), root_link_desc->child_joint_descs_.at(i), root_link_component_);
-    }
+    ASSERT(robot_desc);
 }
 
-void UUrdfRobotComponent::constructChildLinks(UrdfLinkDesc* link_desc, UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link)
+void UUrdfRobotComponent::createChildComponents(UrdfRobotDesc* robot_desc)
 {
-    UUrdfLinkComponent* child_link = NewObject<UUrdfLinkComponent>(this, Unreal::toFName("UUrdfRobotComponent::link_component_" + link_desc->name_));
-    ASSERT(child_link);
-    child_link->initialize(link_desc);
-    link_components_[link_desc->name_] = child_link;
-    
-    const float M_TO_CM = 100.0f;
+    ASSERT(robot_desc);
 
-    // set child link transform
-    FVector child_link_location = (joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation()) * M_TO_CM;
-    FRotator child_link_rotation = joint_desc->origin_.GetRotation().Rotator() + link_desc->visual_descs_[0].origin_.GetRotation().Rotator();
-    child_link->SetRelativeLocationAndRotation(child_link_location, child_link_rotation);
-    child_link->SetupAttachment(parent_link);
+    UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
+    ASSERT(root_link_desc);
 
-    UUrdfJointComponent* joint = NewObject<UUrdfJointComponent>(this, Unreal::toFName("UUrdfRobotComponent::joint_component_" + joint_desc->name_));
-    ASSERT(joint);
-    joint_components_[joint_desc->name_] = joint;
+    root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName("UUrdfRobotComponent::link_component_" + root_link_desc->name_));
+    root_link_component_->initializeComponent(root_link_desc);
+    root_link_component_->SetupAttachment(this);
+    link_components_[root_link_desc->name_] = root_link_component_;
 
-    parent_link->child_link_components_.push_back(child_link);
-    parent_link->child_joint_components_.push_back(joint);
+    createChildComponents(root_link_desc, root_link_component_);
+}
 
-    // set joint transform
-    FVector joint_location = joint_desc->origin_.GetLocation() * M_TO_CM;
-    FRotator joint_rotation = joint_desc->origin_.GetRotation().Rotator();
-    FVector joint_axis_in_parent_frame = joint_rotation.RotateVector(joint_desc->axis_);
-    // alight joint x-axis with motion axis.
-    FRotator aligned_joint_frame_rotation = FRotationMatrix::MakeFromX(joint_axis_in_parent_frame).Rotator();
-    joint->SetRelativeLocationAndRotation(joint_location, aligned_joint_frame_rotation);
-    joint->SetupAttachment(parent_link);
+void UUrdfRobotComponent::createChildComponents(UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link_component)
+{
+    ASSERT(parent_link_desc);
+    ASSERT(parent_link_component);
 
-    joint->initialize(joint_desc, parent_link, child_link);
-
-    // construct child links recursively
-    ASSERT(link_desc->child_link_descs_.size() == link_desc->child_joint_descs_.size());
-
-    unsigned int num_child_links = link_desc->child_link_descs_.size();
-
-    for (unsigned int i = 0; i < num_child_links; i++) {
-        UrdfLinkDesc* child_link_desc = link_desc->child_link_descs_.at(i);
+    for (auto& child_link_desc : parent_link_desc->child_link_descs_) {
         ASSERT(child_link_desc);
-        UrdfJointDesc* child_joint_desc = link_desc->child_joint_descs_.at(i);
+
+        UUrdfLinkComponent* child_link_component = NewObject<UUrdfLinkComponent>(this);
+        ASSERT(child_link_component);
+        child_link_component->initializeComponent(child_link_desc);
+        child_link_component->SetupAttachment(parent_link_component);
+        link_components_[child_link_desc->name_] = child_link_component;
+
+        UrdfJointDesc* child_joint_desc = child_link_desc->parent_joint_desc_;
         ASSERT(child_joint_desc);
 
-        constructChildLinks(child_link_desc, child_joint_desc, child_link);
+        UUrdfJointComponent* child_joint_component = NewObject<UUrdfJointComponent>(this);
+        ASSERT(child_joint_component);
+        child_joint_component->initializeComponent(child_joint_desc, parent_link_component, child_link_component);
+        child_joint_component->SetupAttachment(parent_link_component);
+        joint_components_[child_joint_desc->name_] = child_joint_component;
+
+        createChildComponents(child_link_desc, child_link_component);
     }
 }
 
