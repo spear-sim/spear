@@ -47,5 +47,5 @@
         _Pragma("clang diagnostic pop")
 
 #else
-#error
+    #error
 #endif
