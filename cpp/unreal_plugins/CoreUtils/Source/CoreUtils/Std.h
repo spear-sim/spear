@@ -19,7 +19,7 @@ public:
     // String manipulation
     //
 
-    static std::vector<std::string> tokenize(std::string string, std::string separator)
+    static std::vector<std::string> tokenize(const std::string& string, const std::string& separator)
     {
         std::vector<std::string> tokens;
         boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separator.c_str()));
