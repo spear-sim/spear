@@ -122,13 +122,13 @@ if __name__ == "__main__":
 
     # zip the exectuable for distribution
     if sys.platform == "win32":
-        file = shutil.make_archive(os.path.join(args.output_dir, f"SpearSim-{args.tag}-{args.target_platform}-{args.config_mode}"), 'zip', root_dir=os.path.join(args.output_dir, "WindowsNoEditor"))
+        file = shutil.make_archive(base_name=os.path.join(args.output_dir, f"SpearSim-{args.tag}-{args.target_platform}-{args.config_mode}"), format='zip', root_dir=os.path.join(args.output_dir, "WindowsNoEditor"))
         shutil.rmtree(os.path.join(args.output_dir, "WindowsNoEditor"))
     elif sys.platform == "linux":
-        file = shutil.make_archive(os.path.join(args.output_dir, f"SpearSim-{args.tag}-{args.target_platform}-{args.config_mode}"), 'zip', root_dir=os.path.join(args.output_dir, "LinuxNoEditor"))
+        file = shutil.make_archive(base_name=os.path.join(args.output_dir, f"SpearSim-{args.tag}-{args.target_platform}-{args.config_mode}"), format='zip', root_dir=os.path.join(args.output_dir, "LinuxNoEditor"))
         shutil.rmtree(os.path.join(args.output_dir, "LinuxNoEditor"))
     elif sys.platform == "darwin":
-        file = shutil.make_archive(os.path.join(args.output_dir, f"SpearSim-{args.tag}-{args.target_platform}-{args.config_mode}"), 'zip', root_dir=os.path.join(args.output_dir, "MacNoEditor"))
+        file = shutil.make_archive(base_name=os.path.join(args.output_dir, f"SpearSim-{args.tag}-{args.target_platform}-{args.config_mode}"), format='zip', root_dir=os.path.join(args.output_dir, "MacNoEditor"))
         shutil.rmtree(os.path.join(args.output_dir, "MacNoEditor"))
     
     print(f"[SPEAR | build_spear.py] Successfully created a zip file at {file}, ready for distribution.")
