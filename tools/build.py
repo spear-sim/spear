@@ -11,12 +11,12 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--repo_dir", required=True)
+    parser.add_argument("--clone_dir", required=True)
     parser.add_argument("--conda_path")
+    parser.add_argument("--config_mode", default="Shipping")
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--target_platform", required=True, help="Values accepted are Win64, Linux, Mac")
-    parser.add_argument("--config_mode", required=True)
     parser.add_argument("--output_dir", required=True)
     parser.add_argument("--tag", required=True)
     args = parser.parse_args()
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     assert args.target_platform in ["Linux", "Mac"] and args.conda_path
 
     # clone repo along with submodules
-    cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", args.repo_dir]
+    cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", args.clone_dir]
     print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd)
     assert cmd_result.returncode == 0
@@ -33,8 +33,8 @@ if __name__ == "__main__":
 
     # change working directory to the cloned directory above
     cwd = os.getcwd()
-    print(f"[SPEAR | build.py] Changing current working dir from {cwd} to {args.repo_dir}")
-    os.chdir(args.repo_dir)
+    print(f"[SPEAR | build.py] Changing current working dir from {cwd} to {args.clone_dir}")
+    os.chdir(args.clone_dir)
 
     # create a new virtual python env called spear-env
     if sys.platform == "win32":
@@ -70,8 +70,8 @@ if __name__ == "__main__":
     assert cmd_result.returncode == 0
 
     # change current working directory
-    print(f"[SPEAR | build.py] Changing current working dir from {os.getcwd()} to {os.path.join(args.repo_dir, 'tools')}")
-    os.chdir(os.path.join(args.repo_dir, "tools"))
+    print(f"[SPEAR | build.py] Changing current working dir from {os.getcwd()} to {os.path.join(args.clone_dir, 'tools')}")
+    os.chdir(os.path.join(args.clone_dir, "tools"))
 
     if sys.platform == "win32":
         cmd = ["python", "build_third_party_libs.py", "--num_parallel_jobs", f"{args.num_parallel_jobs}"]
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     cmd = [
         build_exe,
         "BuildCookRun",
-        "-project=" + os.path.join(args.repo_dir, "cpp", "unreal_projects", "SpearSim", "SpearSim.uproject"), 
+        "-project=" + os.path.join(args.clone_dir, "cpp", "unreal_projects", "SpearSim", "SpearSim.uproject"), 
         "-build",
         "-cook",
         "-stage",
