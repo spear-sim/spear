@@ -12,6 +12,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo_dir", required=True)
+    parser.add_argument("--conda_path")
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--target_platform", required=True, help="Values accepted are Win64, Linux, Mac")
@@ -20,9 +21,11 @@ if __name__ == "__main__":
     parser.add_argument("--tag", required=True)
     args = parser.parse_args()
 
+    assert args.target_platform in ["Linux", "Mac"] and args.conda_path
+
     # clone repo along with submodules
     cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", args.repo_dir]
-    print(f"[SPEAR | build_spear.py] Executing: {' '.join(cmd)}")
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd)
     assert cmd_result.returncode == 0
 
@@ -30,69 +33,83 @@ if __name__ == "__main__":
 
     # change working directory to the cloned directory above
     cwd = os.getcwd()
-    print(f"[SPEAR | build_spear.py] Changing current working dir from {cwd} to {args.repo_dir}")
+    print(f"[SPEAR | build.py] Changing current working dir from {cwd} to {args.repo_dir}")
     os.chdir(args.repo_dir)
 
     # create a new virtual python env called spear-env
     if sys.platform == "win32":
         cmd = ["conda", "create", "-n", "spear-env", "python=3.8", "-y"]
-    else:
+    elif sys.platform in ["linux", "darwin"]:
         cmd = ["conda create -n spear-env python=3.8 -y"]
-    print(f"[SPEAR | build_spear.py] Executing: {' '.join(cmd)}")
+    else:
+        assert False
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd, shell=True)
     assert cmd_result.returncode == 0
 
     # install msgpack-rpc-python package in the newly created python env
     if sys.platform == "win32":
         cmd = ["conda", "activate", "spear-env&", "pip", "install", "-e", "third_party/msgpack-rpc-python"]
-    else:    
-        cmd = ["conda activate spear-env; pip install -e third_party/msgpack-rpc-python"]
-    print(f"[SPEAR | build_spear.py] Executing: {' '.join(cmd)}")
+    elif sys.platform in ["linux", "darwin"]:    
+        cmd = [f". {args.conda_path}; conda activate spear-env; pip install -e third_party/msgpack-rpc-python"]
+    else:
+        assert False
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd, shell=True)
     assert cmd_result.returncode == 0
-
+    
     # install spear-sim and dependent packages in the newly created python env
     if sys.platform == "win32":
         cmd = ["conda", "activate", "spear-env&", "pip", "install", "-e", "python"]
+    elif sys.platform in ["linux", "darwin"]:
+        cmd = [f". {args.conda_path}; conda activate spear-env; pip install -e python"]
     else:
-        cmd = ["conda activate spear-env; pip install -e python"]
-    print(f"[SPEAR | build_spear.py] Executing: {' '.join(cmd)}")
+        assert False
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd, shell=True)
     assert cmd_result.returncode == 0
 
     # change current working directory
-    print(f"[SPEAR | build_spear.py] Changing current working dir from {os.getcwd()} to {os.path.join(args.repo_dir, 'tools')}")
+    print(f"[SPEAR | build.py] Changing current working dir from {os.getcwd()} to {os.path.join(args.repo_dir, 'tools')}")
     os.chdir(os.path.join(args.repo_dir, "tools"))
 
     if sys.platform == "win32":
         cmd = ["python", "build_third_party_libs.py", "--num_parallel_jobs", f"{args.num_parallel_jobs}"]
-    else:    
+    elif sys.platform in ["linux", "darwin"]:    
         cmd = [f"python build_third_party_libs.py --num_parallel_jobs {args.num_parallel_jobs}"]
-    print(f"[SPEAR | build_spear.py] Executing: {' '.join(cmd)}")
+    else:
+        assert False
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd, shell=True)
     assert cmd_result.returncode == 0
 
     if sys.platform == "win32":
         cmd = ["conda", "activate", "spear-env&", "python", "create_symbolic_links.py"]
+    elif sys.platform in ["linux", "darwin"]:
+        cmd = [f". {args.conda_path}; conda activate spear-env; python create_symbolic_links.py"]
     else:
-        cmd = ["conda activate spear-env; python create_symbolic_links.py"]
-    print(f"[SPEAR | build_spear.py] Executing: {' '.join(cmd)}")
+        assert False
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd, shell=True)
     assert cmd_result.returncode == 0
 
     if sys.platform == "win32":
        cmd = ["conda", "activate", "spear-env&", "python", "generate_config.py"]
-    else: 
-        cmd = ["conda activate spear-env; python generate_config.py"]
-    print(f"[SPEAR | build_spear.py] Executing: {' '.join(cmd)}")
+    elif sys.platform in ["linux", "darwin"]: 
+        cmd = [f". {args.conda_path}; conda activate spear-env; python generate_config.py"]
+    else:
+        assert False
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd, shell=True)
     assert cmd_result.returncode == 0
 
     # build the executable
     if sys.platform == "win32":
         build_exe = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat")
-    else:
+    elif sys.platform in ["linux", "darwin"]:
         build_exe = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh")
+    else:
+        assert False
     
     cmd = [
         build_exe,
@@ -108,17 +125,16 @@ if __name__ == "__main__":
         "-target=SpearSim",
         "-archivedirectory=" + args.output_dir,
         "-clientconfig=" + args.config_mode,
-        "-clean"
     ]
-    print(f"[SPEAR | build_spear.py] Executing: {' '.join(cmd)}")
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd)
     assert cmd_result.returncode == 0
 
     # change working directory
-    print(f"[SPEAR | build_spear.py] Changing current working dir from {os.getcwd()} to {cwd}")
+    print(f"[SPEAR | build.py] Changing current working dir from {os.getcwd()} to {cwd}")
     os.chdir(cwd)
 
-    print(f"[SPEAR | build_spear.py] Successfully built SpearSim for {args.target_platform} platform with {args.config_mode} mode.")
+    print(f"[SPEAR | build.py] Successfully built SpearSim for {args.target_platform} platform with {args.config_mode} mode.")
 
     # zip the exectuable for distribution
     if sys.platform == "win32":
@@ -131,4 +147,4 @@ if __name__ == "__main__":
         file = shutil.make_archive(base_name=os.path.join(args.output_dir, f"SpearSim-{args.tag}-{args.target_platform}-{args.config_mode}"), format='zip', root_dir=os.path.join(args.output_dir, "MacNoEditor"))
         shutil.rmtree(os.path.join(args.output_dir, "MacNoEditor"))
     
-    print(f"[SPEAR | build_spear.py] Successfully created a zip file at {file}, ready for distribution.")
+    print(f"[SPEAR | build.py] Successfully created a zip file at {file}, ready for distribution.")
