@@ -133,7 +133,7 @@ if __name__ == "__main__":
             continue
 
         # send zero action to the agent and collect initial trajectory observations:
-        obs, _, _, env_step_info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+        obs, _, _, env_step_info = env.step(action={"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
         # initialize the driving policy with the desired trajectory 
         policy.reset(obs, env_step_info)
@@ -172,7 +172,7 @@ if __name__ == "__main__":
             action, policy_step_info = policy.step(obs)
 
             # send control action to the agent and collect observations
-            obs, _, _, env_step_info = env.step({"apply_voltage": action})
+            obs, _, _, env_step_info = env.step(action={"apply_voltage": action})
 
             num_iterations = num_iterations + 1
 

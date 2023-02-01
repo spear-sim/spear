@@ -41,14 +41,14 @@ if __name__ == "__main__":
     # take a few steps
     for i in range(NUM_STEPS):
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
-            obs, reward, done, info = env.step({"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
+            obs, reward, done, info = env.step(action={"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
             if not args.benchmark:
                 print("[SPEAR | run.py] SphereAgent: ")
                 print(obs["compass"])
                 print(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 print(reward, done, info)
         elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
-            obs, reward, done, info = env.step({"apply_voltage": np.array([1.0, 0.715], dtype=np.float32)})
+            obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 0.715], dtype=np.float32)})
             if not args.benchmark:
                 print("[SPEAR | run.py] OpenBotAgent: ")
                 print(obs["state_data"])
