@@ -44,39 +44,29 @@ if __name__ == "__main__":
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
     if args.debug:
         config.defrost()
-        config.SPEAR.RENDER_OFFSCREEN = True
         config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = True
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 512
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 512
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 1080
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 1920
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color", "segmentation", "depth"]
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
-
-        # aim camera in a third-person vieww facing backwards at an angle
-        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
-        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
-        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
-        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.PITCH = -35.0
-        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.YAW = 45.0
-        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.ROLL = 0.0
-
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.PITCH = -35.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.YAW = 45.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.ROLL = 0.0
         config.freeze()
     else:
         config.defrost()
         config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = False
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 128
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 128
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 120
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 160
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera"]
-
-        # aim camera in a third-person view facing forward
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = 0.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 5.0
-
         config.freeze()
 
     # load driving policy
@@ -171,7 +161,7 @@ if __name__ == "__main__":
 
         # execute the desired number of iterations in a given episode
         num_iterations = 0
-        hit_obstacle = False
+        hit_obstacle   = False # flag raised when the vehicle collides with the environment
         for i in range(args.num_iterations_per_episode):
 
             print(f"[SPEAR | generate_dataset.py] Iteration {i} of {args.num_iterations_per_episode}")
@@ -281,13 +271,11 @@ if __name__ == "__main__":
                                 "cosYaw"        : compass_data[:num_iterations, 2]})
         df_goal.to_csv(os.path.join(sensor_dir, "goalLog.txt"), mode="w", index=False, header=True)
 
-        # Create plots. Note that creating these plots will resize our cv2 windows in an
-        # unpleasant way, so we only generate these plots if we're not in debug mode.
-        if not args.debug:
-            plot_tracking_performance_spatial(
-                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))
-            plot_tracking_performance_temporal(
-                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
+        # create plots
+        plot_tracking_performance_spatial(
+            state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))
+        plot_tracking_performance_temporal(
+            state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
 
         if args.create_videos: # if desired, generate a video from the collected RGB observations 
             video_dir = os.path.join(args.dataset_dir, "videos")

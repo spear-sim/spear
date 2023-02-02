@@ -12,7 +12,7 @@
 
 #include "ActorHitEvent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_FourParams(FActorHitDelegate, AActor*, AActor*, FVector, const FHitResult&);
+DECLARE_MULTICAST_DELEGATE_FourParams(OnActorHitEvent, AActor*, AActor*, FVector, const FHitResult&);
 
 UCLASS()
 class UActorHitEvent : public UActorComponent
@@ -39,7 +39,7 @@ public:
         actor->OnActorHit.RemoveDynamic(this, &UActorHitEvent::actorHitEventHandler);
     }
 
-    FActorHitDelegate delegate_;
+    OnActorHitEvent delegate_;
 
 private:
     UFUNCTION()
