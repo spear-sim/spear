@@ -21,7 +21,7 @@ class COREUTILS_API Unreal
 public:
 
     //
-    // String manipulation
+    // String functions
     //
 
     static std::string toStdString(const FString& str)
@@ -41,7 +41,7 @@ public:
     }
 
     //
-    // Container manipulation
+    // Container functions
     //
 
     template <typename TDest, typename TSrc>

@@ -7,10 +7,10 @@
 
 #include "CoreUtils/Assert.h"
 
-#include "CoreUtils/IgnoreCompilerWarnings.h"
+#include "CoreUtils/SuppressCompilerWarnings.h"
 #include "CoreUtils/Windows.h"
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 
 // ------------------------------------------------------------------------------
 
@@ -516,4 +516,4 @@ namespace implementation {
 
 // ------------------------------------------------------------------------------
 
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS

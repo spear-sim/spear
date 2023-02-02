@@ -16,10 +16,10 @@ class COREUTILS_API Std
 public:
 
     //
-    // String manipulation
+    // String functions
     //
 
-    static std::vector<std::string> tokenize(std::string string, std::string separator)
+    static std::vector<std::string> tokenize(const std::string& string, const std::string& separator)
     {
         std::vector<std::string> tokens;
         boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separator.c_str()));
@@ -30,7 +30,7 @@ public:
     }
 
     //
-    // Container manipulation
+    // Container functions
     //
 
     template <typename TContainer, typename TKey>

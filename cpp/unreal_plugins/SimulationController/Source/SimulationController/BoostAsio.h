@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "CoreUtils/IgnoreCompilerWarnings.h"
+#include "CoreUtils/SuppressCompilerWarnings.h"
 
-BEGIN_IGNORE_COMPILER_WARNINGS
+BEGIN_SUPPRESS_COMPILER_WARNINGS
 #include <boost/asio.hpp>
-END_IGNORE_COMPILER_WARNINGS
+END_SUPPRESS_COMPILER_WARNINGS

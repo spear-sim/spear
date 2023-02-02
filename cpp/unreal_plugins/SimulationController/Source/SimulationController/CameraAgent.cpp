@@ -272,11 +272,11 @@ void CameraAgent::buildNavMesh()
     //     Engine/Source/Runtime/Engine/Public/AI/NavDataGenerator.h
     //     Engine/Source/Runtime/NavigationSystem/Public/NavMesh/RecastNavMeshGenerator.h
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
-#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
-    if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ")) {
-        nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::Combine(
-            Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR")),
-            camera_actor_->GetWorld()->GetName()));
-    }
-#endif
+    #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
+        if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ")) {
+            nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::Combine(
+                Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR")),
+                camera_actor_->GetWorld()->GetName()));
+        }
+    #endif
 }
