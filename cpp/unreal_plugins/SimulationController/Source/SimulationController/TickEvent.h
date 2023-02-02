@@ -11,7 +11,7 @@
 
 #include "TickEvent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(OnTickEvent, float, enum ELevelTick);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FTickDelegate, float, enum ELevelTick);
 
 UCLASS()
 class UTickEvent : public UActorComponent
@@ -37,5 +37,5 @@ public:
         delegate_.Broadcast(delta_time, level_tick);
     }
 
-    OnTickEvent delegate_;
+    FTickDelegate delegate_;
 };
