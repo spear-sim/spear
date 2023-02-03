@@ -44,10 +44,10 @@ public:
 
     void runSync()
     {
-        // run all scheduled work and wait for requestStopRunSync() to be called from a worker thread
+        // run all scheduled work and wait for executor_work_guard_.reset() to be called from a worker thread
         io_context_.run();
 
-        // reinitialze the io_context and executor_work_guard_ to prepare for the next call to runSync()
+        // reinitialze io_context_ and executor_work_guard_ to prepare for the next call to runSync()
         mutex_.lock();
         io_context_.restart();
         new(&executor_work_guard_) boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(io_context_.get_executor());
@@ -56,7 +56,7 @@ public:
 
     void requestStopRunSync()
     {
-        // request runSync() to stop executing once all of its scheduled work is finished
+        // request io_context_.run() to stop executing once all of its scheduled work is finished
         mutex_.lock();
         executor_work_guard_.reset();
         mutex_.unlock();
