@@ -23,7 +23,7 @@
 // design, runSync() will block indefinitely, even if there is no more synchronous work that has been scheduled. In
 // order to stop runSync() from blocking, a user-specified function must call requestStopRunSync(), which will make
 // runSync() return as soon as it is finished executing all of its scheduled work. This design gives us precise
-// control over where and when user-specified function calls are executed within the Unreal Engine game loop.
+// control over where and when user-specified functions are executed within the Unreal Engine game loop.
 
 class RpcServer
 {
@@ -126,18 +126,18 @@ struct FunctionWrapper<TReturn (*)(TArgs...)>
     }
 
     //
-    // This function wraps an "inner" functor into an "outer" function with an equivalent signature. The outer
+    // This function wraps an "inner" functor in an "outer" function with an equivalent signature. The outer
     // function posts the inner functor into a work queue represented by boost::asio::io_context, waits for the
-    // inner functor to finish executing, and returns the result. This design enables more control over where
-    // and when user-specified functions are executed. Even if the outer function is called from a worker
-    // thread, the inner function will be executed on whatever thread flushes the work queue by calling
-    // boost::asio::io_context::run().
+    // inner functor to finish executing, and returns the result. This design enables precise control over
+    // where and when user-specified functions are executed. For example, even if the outer function is called
+    // from a worker thread, the inner function will be executed on whatever thread flushes the work queue by
+    // calling boost::asio::io_context::run().
     //
     // In the RpcServer class above, we use this flexibility to ensure that user-specified functions run at
-    // specific times in the Unreal Engine game thread. Whenever we want a user-specified function to execute
-    // at a specific time on the game thread, we simply call boost::asio::io_context::run() from the game
-    // thread. This will execute all previously queued user-specified functions that have been bound to the
-    // RPC server using the wrapSync(...) function.
+    // specific times in the Unreal Engine game thread. Whenever we want a user-specified function to run at a
+    // specific time on the game thread, we simply call boost::asio::io_context::run() from the game thread.
+    // Doing so will run all previously queued user-specified functions that have been bound to the RPC server
+    // using the wrapSync(...) function.
     //
 
     template <typename TFunctor>
@@ -149,10 +149,11 @@ struct FunctionWrapper<TReturn (*)(TArgs...)>
                 return functor(args...);
             });
 
-            auto task_future = task.get_future();
+            auto future = task.get_future();
             boost::asio::post(io_context, moveHandler(task));
+            auto result = future.get();
 
-            return task_future.get();
+            return result;
         };
     }
 };
