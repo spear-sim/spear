@@ -151,9 +151,8 @@ struct FunctionWrapper<TReturn (*)(TArgs...)>
 
             auto future = task.get_future();
             boost::asio::post(io_context, moveHandler(task));
-            auto result = future.get();
-
-            return result;
+            
+            return future.get();
         };
     }
 };
