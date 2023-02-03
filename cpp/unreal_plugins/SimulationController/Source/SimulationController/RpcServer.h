@@ -15,22 +15,73 @@
 #include "SimulationController/BoostAsio.h"
 #include "SimulationController/Rpclib.h"
 
-// This file defines an RPC server in which functions can be bound to run synchronously or
-// asynchronously. Use launchWorkerThreads() to start the worker threads, and use stop() to
-// terminate the server. Functions that are bound using bindAsync() will run asynchronously
-// in the worker threads, and functions that are bound using bindSync() will run synchronously
-// in the game thread when the game thread calls runSync(). By design, runSync() will block
-// indefinitely, even if there is no more synchronous work that has been scheduled. Call
-// unblockRunSyncWhenFinishedExecuting() from another thread to make runSync() return as soon
-// as it is finished executing all scheduled work. This design gives us precise control over
-// where and when function calls are executed within the Unreal Engine game loop.
+// This class defines an RPC server in which user-specified functions can be bound to run synchronously in a specific
+// thread, or asynchronously in a worker thread. Use runAsync() to start the server, and use stopRunAsync() to
+// terminate the server. Functions that are bound using bindAsync() will run asynchronously in a worker thread, and
+// functions that are bound using bindSync() will be queued, and will run synchronously when the user calls runSync().
+// The functions that are bound using bindSync() will run in the same thread as the one that calls runSync(). By
+// design, runSync() will block indefinitely, even if there is no more synchronous work that has been scheduled. In
+// order to stop runSync() from blocking, a user-specified function must call requestStopRunSync(), which will make
+// runSync() return as soon as it is finished executing all of its scheduled work. This design gives us precise
+// control over where and when user-specified function calls are executed within the Unreal Engine game loop.
+
+class RpcServer
+{
+public:
+    template <typename... TArgs>
+    explicit RpcServer(TArgs&&... args) : server_(std::forward<TArgs>(args)...), io_context_(), executor_work_guard_(io_context_.get_executor()) {}
+
+    void runAsync(int num_worker_threads)
+    {
+        server_.async_run(num_worker_threads);
+    }
+
+    void stopRunAsync()
+    {
+        server_.close_sessions();
+        server_.stop();
+    }
+
+    void runSync()
+    {
+        // run all scheduled work and wait for requestStopRunSync() to be called from a worker thread
+        io_context_.run();
+
+        // reinitialze the io_context and executor_work_guard_ to prepare for next call to runSync()
+        mutex_.lock();
+        io_context_.restart();
+        new(&executor_work_guard_) boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(io_context_.get_executor());
+        mutex_.unlock();
+    }
+
+    void requestStopRunSync()
+    {
+        // request runSync() to stop executing once all of its scheduled work is finished
+        mutex_.lock();
+        executor_work_guard_.reset();
+        mutex_.unlock();
+    }
+
+    template <typename TFunctor>
+    void bindSync(const std::string& name, TFunctor&& functor);
+
+    template <typename TFunctor>
+    void bindAsync(const std::string& name, TFunctor&& functor);
+
+private:
+    rpc::server server_;
+    std::mutex mutex_;
+    boost::asio::io_context io_context_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> executor_work_guard_;
+};
 
 namespace detail
 {
-template <typename FunctorT>
-struct MoveWrapper : FunctorT
+
+template <typename TFunctor>
+struct MoveWrapper : TFunctor
 {
-    MoveWrapper(FunctorT&& f): FunctorT(std::move(f)) {}
+    MoveWrapper(TFunctor&& functor): TFunctor(std::move(functor)) {}
 
     MoveWrapper(MoveWrapper&&) = default;
     MoveWrapper& operator=(MoveWrapper&&) = default;
@@ -39,76 +90,23 @@ struct MoveWrapper : FunctorT
     MoveWrapper& operator=(const MoveWrapper&);
 };
 
-} // namespace detail
-
-// hack to trick asio into accepting move-only handlers, if the handler were actually copied it would result in a link error.
-// @see https://stackoverflow.com/a/22891509.
-template <typename FunctorT>
-auto moveHandler(FunctorT&& func)
+// Hack to trick asio into accepting move-only handlers. If the handler was actually copied, it would result in a link error.
+// See https://stackoverflow.com/a/22891509
+template <typename TFunctor>
+auto moveHandler(TFunctor&& functor)
 {
-    using F = typename std::decay<FunctorT>::type;
-    return detail::MoveWrapper<F>{std::move(func)};
+    using F = typename std::decay<TFunctor>::type;
+    return detail::MoveWrapper<F>(std::move(functor));
 }
 
-class RpcServer
-{
-public:
-    template <typename... Args>
-    explicit RpcServer(Args&&... args);
+template <typename TClass>
+struct FunctionWrapper : FunctionWrapper<decltype(&TClass::operator())> {};
 
-    template <typename FunctorT>
-    void bindSync(const std::string& name, FunctorT&& functor);
+template <typename TClass, typename TReturn, typename... TArgs>
+struct FunctionWrapper<TReturn (TClass::*)(TArgs...)> : FunctionWrapper<TReturn (*)(TArgs...)> {};
 
-    template <typename FunctorT>
-    void bindAsync(const std::string& name, FunctorT&& functor);
-
-    void launchWorkerThreads(size_t worker_threads)
-    {
-        server_.async_run(worker_threads);
-    }
-
-    void runSync()
-    {
-        io_context_.run();
-
-        // reinitialze the io_context and work guard after runSync to prepare for next run
-        mutex_.lock();
-        io_context_.restart();
-        new(&executor_work_guard_) boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(io_context_.get_executor());
-        mutex_.unlock();
-    }
-
-    void unblockRunSyncWhenFinishedExecuting()
-    {
-        // allow io_context to return from run()
-        mutex_.lock();
-        executor_work_guard_.reset();
-        mutex_.unlock();
-    }
-
-    void stop()
-    {
-        server_.close_sessions();
-        server_.stop();
-    }
-
-private:
-    ::rpc::server server_;
-    std::mutex mutex_;
-    boost::asio::io_context io_context_;
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> executor_work_guard_;
-};
-
-namespace detail
-{
-template <typename T>
-struct FunctionWrapper : FunctionWrapper<decltype(&T::operator())> {};
-
-template <typename C, typename R, typename... Args>
-struct FunctionWrapper<R (C::*)(Args...)> : FunctionWrapper<R (*)(Args...)> {};
-
-template <typename C, typename R, typename... Args>
-struct FunctionWrapper<R (C::*)(Args...) const> : FunctionWrapper<R (*)(Args...)> {};
+template <typename TClass, typename TReturn, typename... TArgs>
+struct FunctionWrapper<TReturn (TClass::*)(TArgs...) const> : FunctionWrapper<TReturn (*)(TArgs...)> {};
 
 template <class T>
 struct FunctionWrapper<T&> : public FunctionWrapper<T> {};
@@ -116,60 +114,59 @@ struct FunctionWrapper<T&> : public FunctionWrapper<T> {};
 template <class T>
 struct FunctionWrapper<T&&> : public FunctionWrapper<T> {};
 
-template <typename R, typename... Args>
-struct FunctionWrapper<R (*)(Args...)>
+template <typename TReturn, typename... TArgs>
+struct FunctionWrapper<TReturn (*)(TArgs...)>
 {
-    // Wraps @a functor into a function type with equivalent signature. The wrap function returned. When called, posts @a functor into the io_context;
-    // if the client called this method synchronously, waits for the posted task to finish, otherwise returns immediately.
-    // This way, no matter from which thread the wrap function is called, the @a functor provided is always called from the context of the io_context.
-    // I.e., we can use the io_context to run tasks on a specific thread (e.g. game thread).
-    template <typename FuncT>
-    static auto wrapSyncCall(boost::asio::io_context& io_context, FuncT&& functor)
+    template <typename TFunctor>
+    static auto wrapAsync(TFunctor&& functor)
     {
-        return
-            [&io_context, functor = std::forward<FuncT>(functor)](Args... args) -> R {
-                auto task = std::packaged_task<R()>(
-                    [functor = std::move(functor), args...]() {
-                        return functor(args...);
-                    });
-                // Post task and wait for result.
-                auto result = task.get_future();
-                boost::asio::post(io_context, moveHandler(task));
-                return result.get();
-            };
+        return [functor = std::forward<TFunctor>(functor)](TArgs... args) -> TReturn {
+            return functor(args...);
+        };
     }
 
-    template <typename FuncT>
-    static auto wrapAsyncCall(FuncT&& functor)
+    //
+    // This function wraps an "inner" functor into an "outer" function with an equivalent signature. The outer
+    // function posts the inner functor into a work queue represented by boost::asio::io_context, waits for the
+    // inner functor to finish executing, and returns the result. This design enables more control over where
+    // and when user-specified functions are executed. Even if the outer function is called from a worker
+    // thread, the inner function will be executed on whatever thread flushes the work queue by calling
+    // boost::asio::io_context::run().
+    //
+    // In the RpcServer class above, we use this flexibility to ensure that user-specified functions run at
+    // specific times in the Unreal Engine game thread. Whenever we want a user-specified function to execute
+    // at a specific time on the game thread, we simply call boost::asio::io_context::run() from the game
+    // thread. This will execute all previously queued user-specified functions that have been bound to the
+    // RPC server using the wrapSync(...) function.
+    //
+
+    template <typename TFunctor>
+    static auto wrapSync(boost::asio::io_context& io_context, TFunctor&& functor)
     {
-        return [functor = std::forward<FuncT>(functor)](Args... args) -> R {
-            {
+        return [&io_context, functor = std::forward<TFunctor>(functor)](TArgs... args) -> TReturn {
+
+            auto task = std::packaged_task<TReturn()>([functor = std::move(functor), args...]() {
                 return functor(args...);
-            }
+            });
+
+            auto task_future = task.get_future();
+            boost::asio::post(io_context, moveHandler(task));
+
+            return task_future.get();
         };
     }
 };
+
 } // namespace detail
 
-template <typename... Args>
-inline RpcServer::RpcServer(Args&&... args) : server_(std::forward<Args>(args)...), io_context_(), executor_work_guard_(io_context_.get_executor())
+template <typename TFunctor>
+inline void RpcServer::bindAsync(const std::string& name, TFunctor&& functor)
 {
-    // Throwing an exception will cause the server to write an error response. This call will make it also suppress the exception (note that this is
-    // not default because this behavior might hide errors in the code).
-    // @Todo: Don't think this should be suppressed!!
-    // server_.suppress_exceptions(true);
+    server_.bind(name, detail::FunctionWrapper<TFunctor>::wrapAsync(std::forward<TFunctor>(functor)));
 }
 
-template <typename FunctorT>
-inline void RpcServer::bindSync(const std::string& name, FunctorT&& functor)
+template <typename TFunctor>
+inline void RpcServer::bindSync(const std::string& name, TFunctor&& functor)
 {
-    using Wrapper = detail::FunctionWrapper<FunctorT>;
-    server_.bind(name, Wrapper::wrapSyncCall(io_context_, std::forward<FunctorT>(functor)));
-}
-
-template <typename FunctorT>
-inline void RpcServer::bindAsync(const std::string& name, FunctorT&& functor)
-{
-    using Wrapper = detail::FunctionWrapper<FunctorT>;
-    server_.bind(name, Wrapper::wrapAsyncCall(std::forward<FunctorT>(functor)));
+    server_.bind(name, detail::FunctionWrapper<TFunctor>::wrapSync(io_context_, std::forward<TFunctor>(functor)));
 }

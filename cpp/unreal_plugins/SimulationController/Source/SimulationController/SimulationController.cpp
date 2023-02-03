@@ -189,7 +189,8 @@ void SimulationController::worldBeginPlayEventHandler()
 
     bindFunctionsToRpcServer();
 
-    rpc_server_->launchWorkerThreads(1u);
+    int num_worker_threads = 1;
+    rpc_server_->runAsync(num_worker_threads);
 
     has_world_begin_play_executed_ = true;
 }
@@ -210,7 +211,7 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             has_world_begin_play_executed_ = false;
 
             ASSERT(rpc_server_);
-            rpc_server_->stop(); // stop the RPC server as we will no longer service client requests
+            rpc_server_->stopRunAsync();
             rpc_server_ = nullptr;
 
             ASSERT(visualizer_);
@@ -320,7 +321,7 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT((frame_state_ == FrameState::ExecutingPreTick) || (frame_state_ == FrameState::RequestPreTick));
 
         // indicate that we want the game thread to stop blocking in beginFrame()
-        rpc_server_->unblockRunSyncWhenFinishedExecuting();
+        rpc_server_->requestStopRunSync();
 
         // wait here until the game thread has started executing endFrame()
         end_frame_started_executing_future_.wait();
@@ -332,7 +333,7 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
         // indicate that we want the game thread to stop blocking in endFrame()
-        rpc_server_->unblockRunSyncWhenFinishedExecuting();
+        rpc_server_->requestStopRunSync();
 
         // wait here until the game thread has finished executing endFrame()
         end_frame_finished_executing_future_.wait();
