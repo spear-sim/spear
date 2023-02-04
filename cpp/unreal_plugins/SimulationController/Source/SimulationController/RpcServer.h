@@ -78,6 +78,9 @@ private:
 namespace detail
 {
 
+// The purpose of this MoveWrapper class and moveHandler(...) function are to trick boost::asio into accepting
+// move-only handlers. If the handler was actually copied, it would result in a link error.
+// See https://stackoverflow.com/a/22891509
 template <typename TFunctor>
 struct MoveWrapper : TFunctor
 {
@@ -90,13 +93,10 @@ struct MoveWrapper : TFunctor
     MoveWrapper& operator=(const MoveWrapper&);
 };
 
-// Hack to trick asio into accepting move-only handlers. If the handler was actually copied, it would result in a link error.
-// See https://stackoverflow.com/a/22891509
 template <typename TFunctor>
 auto moveHandler(TFunctor&& functor)
 {
-    using F = typename std::decay<TFunctor>::type;
-    return detail::MoveWrapper<F>(std::move(functor));
+    return detail::MoveWrapper<std::decay<TFunctor>::type>(std::move(functor));
 }
 
 template <typename TClass>
@@ -145,13 +145,13 @@ struct FunctionWrapper<TReturn (*)(TArgs...)>
     {
         return [&io_context, functor = std::forward<TFunctor>(functor)](TArgs... args) -> TReturn {
 
-            auto task = std::packaged_task<TReturn()>([functor = std::move(functor), args...]() {
+            auto task = std::packaged_task<TReturn()>([functor = std::move(functor), args...]() -> TReturn {
                 return functor(args...);
             });
 
             auto future = task.get_future();
             boost::asio::post(io_context, moveHandler(task));
-            
+
             return future.get();
         };
     }
