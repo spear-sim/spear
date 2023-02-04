@@ -16,14 +16,14 @@
 #include "SimulationController/Rpclib.h"
 
 // This class defines an RPC server in which user-specified functions can be bound to run synchronously in a specific
-// thread, or asynchronously in a worker thread. Use runAsync() to start the server, and use stopRunAsync() to
-// terminate the server. Functions that are bound using bindAsync() will run asynchronously in a worker thread, and
-// functions that are bound using bindSync() will be queued, and will run synchronously when the user calls runSync().
-// The functions that are bound using bindSync() will run in the same thread as the one that calls runSync(). By
-// design, runSync() will block indefinitely, even if there is no more synchronous work that has been scheduled. In
-// order to stop runSync() from blocking, a user-specified function must call requestStopRunSync(), which will make
-// runSync() return as soon as it is finished executing all of its scheduled work. This design gives us precise
-// control over where and when user-specified functions are executed within the Unreal Engine game loop.
+// thread, or asynchronously in a worker thread. Use runAsync() to start the server, and use stopRunAsync() to terminate
+// the server. Functions that are bound using bindAsync(...) will run asynchronously in a worker thread, and functions
+// that are bound using bindSync(...) will be queued, and will run synchronously when the user calls runSync(). The
+// functions that are bound using bindSync() will run in the same thread as the one that calls runSync(). By design,
+// runSync() will block indefinitely, even if there is no more synchronous work that has been scheduled. In order to
+// stop runSync() from blocking, a user-specified function must call requestStopRunSync(), which will make runSync()
+// return as soon as it is finished executing all of its scheduled work. This design gives us precise control over where
+// and when user-specified functions are executed within the Unreal Engine game loop.
 
 class RpcServer
 {
@@ -63,10 +63,10 @@ public:
     }
 
     template <typename TFunctor>
-    void bindSync(const std::string& name, TFunctor&& functor);
+    void bindAsync(const std::string& name, TFunctor&& functor);
 
     template <typename TFunctor>
-    void bindAsync(const std::string& name, TFunctor&& functor);
+    void bindSync(const std::string& name, TFunctor&& functor);
 
 private:
     rpc::server server_;
@@ -78,8 +78,8 @@ private:
 namespace detail
 {
 
-// The purpose of this MoveWrapper class and moveHandler(...) function are to trick boost::asio into accepting
-// move-only handlers. If the handler was actually copied, it would result in a link error.
+// The purpose of this MoveWrapper class and moveHandler(...) function are to trick boost::asio into
+// accepting move-only handlers. If the handler was actually copied, it would result in a link error.
 // See https://stackoverflow.com/a/22891509
 template <typename TFunctor>
 struct MoveWrapper : TFunctor
@@ -134,10 +134,10 @@ struct FunctionWrapper<TReturn (*)(TArgs...)>
     // calling boost::asio::io_context::run().
     //
     // In the RpcServer class above, we use this flexibility to ensure that user-specified functions run at
-    // specific times in the Unreal Engine game thread. Whenever we want a user-specified function to run at a
-    // specific time on the game thread, we simply call boost::asio::io_context::run() from the game thread.
-    // Doing so will run all previously queued user-specified functions that have been bound to the RPC server
-    // using the wrapSync(...) function.
+    // specific times in the Unreal Engine game thread. Whenever we want a previously queued user-specified
+    // function to run at a specific time on the game thread, we simply call boost::asio::io_context::run()
+    // from the game thread. Doing so will run all previously queued user-specified functions that have been
+    // bound to the rpc::server using wrapSync(...).
     //
 
     template <typename TFunctor>
