@@ -21,9 +21,9 @@
 // that are bound using bindSync(...) will be queued, and will run synchronously when the user calls runSync(). The
 // functions that are bound using bindSync() will run in the same thread as the one that calls runSync(). By design,
 // runSync() will block indefinitely, even if there is no more synchronous work that has been scheduled. In order to
-// stop runSync() from blocking, a user-specified function must call requestStopRunSync(), which will make runSync()
-// return as soon as it is finished executing all of its scheduled work. This design gives us precise control over where
-// and when user-specified functions are executed within the Unreal Engine game loop.
+// stop runSync() from blocking, a user-specified function must call requestStopRunSync() from a worker thread, which
+// will make runSync() return as soon as it is finished executing all of its scheduled work. This design gives us precise
+// control over where and when user-specified functions are executed within the Unreal Engine game loop.
 
 class RpcServer
 {
@@ -135,9 +135,9 @@ struct FunctionWrapper<TReturn (*)(TArgs...)>
     //
     // In the RpcServer class above, we use this flexibility to ensure that user-specified functions run at
     // specific times in the Unreal Engine game thread. Whenever we want a previously queued user-specified
-    // function to run at a specific time on the game thread, we simply call boost::asio::io_context::run()
-    // from the game thread. Doing so will run all previously queued user-specified functions that have been
-    // bound to the rpc::server using wrapSync(...).
+    // function to run at a specific time on the game thread, we simply call runSync() from the game thread,
+    // which calls boost::asio::io_context::run(). Doing so will run all previously queued user-specified
+    // functions that have been bound to the rpc::server using wrapSync(...).
     //
 
     template <typename TFunctor>

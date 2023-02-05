@@ -238,7 +238,7 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
 void SimulationController::beginFrameEventHandler()
 {
-    // if beginTick(...) has indicated (via RequestPreTick framestate) that we should execute a frame of work
+    // if beginTick() has indicated that we should advance the simulation...
     if (frame_state_ == FrameState::RequestPreTick) {
 
         // update local state
@@ -247,10 +247,10 @@ void SimulationController::beginFrameEventHandler()
         // unpause the game
         UGameplayStatics::SetGamePaused(world_, false);
 
-        // execute all pre-tick sync work, wait here for tick(...) to reset work guard
+        // execute all pre-tick synchronous work, wait here for tick() to unblock
         rpc_server_->runSync();
 
-        // execute pre-tick work inside the task
+        // execute task-specific beginFrame() work
         task_->beginFrame();
 
         // update local state
@@ -260,19 +260,19 @@ void SimulationController::beginFrameEventHandler()
 
 void SimulationController::endFrameEventHandler()
 {
-    // if beginFrameEventHandler(...) has indicated that we are currently executing a frame of work
+    // if we are currently advancing the simulation...
     if (frame_state_ == FrameState::ExecutingTick) {
 
         // update local state
         frame_state_ = FrameState::ExecutingPostTick;
 
-        // execute post-tick work inside the task
+        // execute task-specific endFrame() work
         task_->endFrame();
 
         // allow tick() to finish executing
         end_frame_started_executing_promise_.set_value();
 
-        // execute all post-tick sync work, wait here for endTick() to reset work guard
+        // execute all post-tick synchronous work, wait here for endTick() to unblock
         rpc_server_->runSync();
 
         // pause the game
@@ -281,7 +281,7 @@ void SimulationController::endFrameEventHandler()
         // update local state
         frame_state_ = FrameState::Idle;
 
-        // allow endTick(...) to finish executing
+        // allow endTick() to finish executing
         end_frame_finished_executing_promise_.set_value();
     }
 }
@@ -313,17 +313,17 @@ void SimulationController::bindFunctionsToRpcServer()
         end_frame_finished_executing_promise_ = std::promise<void>();
         end_frame_finished_executing_future_ = end_frame_finished_executing_promise_.get_future();
 
-        // indicate that we want the game thread to execute one frame of work
+        // indicate that we want the game thread to advance the simulation
         frame_state_ = FrameState::RequestPreTick;
     });
 
     rpc_server_->bindAsync("tick", [this]() -> void {
-        ASSERT((frame_state_ == FrameState::ExecutingPreTick) || (frame_state_ == FrameState::RequestPreTick));
+        ASSERT((frame_state_ == FrameState::RequestPreTick) || (frame_state_ == FrameState::ExecutingPreTick));
 
-        // indicate that we want the game thread to stop blocking in beginFrame()
+        // allow beginFrameEventHandler() to finish executing
         rpc_server_->requestStopRunSync();
 
-        // wait here until the game thread has started executing endFrame()
+        // wait here until the game thread has started executing endFrameEventHandler()
         end_frame_started_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
@@ -332,10 +332,10 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("endTick", [this]() -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
-        // indicate that we want the game thread to stop blocking in endFrame()
+        // allow endFrameEventHandler() to finish executing
         rpc_server_->requestStopRunSync();
 
-        // wait here until the game thread has finished executing endFrame()
+        // wait here until the game thread has finished executing endFrameEventHandler()
         end_frame_finished_executing_future_.wait();
 
         ASSERT(frame_state_ == FrameState::Idle);
