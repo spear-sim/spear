@@ -10,7 +10,7 @@
 #include <CoreMinimal.h>
 #include <Components/SceneComponent.h>
 
-#include "UrdfLinkComponent.h"
+#include "UrdfBot/UrdfLinkComponent.h"
 
 #include "UrdfRobotComponent.generated.h"
 

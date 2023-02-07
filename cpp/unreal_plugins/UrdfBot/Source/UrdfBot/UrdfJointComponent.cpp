@@ -2,15 +2,15 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfJointComponent.h"
+#include "UrdfBot/UrdfJointComponent.h"
 
 #include <iostream>
 
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 
 #include "CoreUtils/Assert.h"
-#include "UrdfLinkComponent.h"
-#include "UrdfParser.h"
+#include "UrdfBot/UrdfLinkComponent.h"
+#include "UrdfBot/UrdfParser.h"
 
 void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
 {
@@ -20,16 +20,13 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
 
     joint_type_ = joint_desc->type_;
 
-    ConstraintInstance.SetDisableCollision(true);
-
     ConstraintInstance.ProfileInstance.ConeLimit.Swing1Motion = EAngularConstraintMotion::ACM_Locked;
     ConstraintInstance.ProfileInstance.ConeLimit.Swing2Motion = EAngularConstraintMotion::ACM_Locked;
     ConstraintInstance.ProfileInstance.TwistLimit.TwistMotion = EAngularConstraintMotion::ACM_Locked;
-    ConstraintInstance.UpdateAngularLimit();
-
     ConstraintInstance.ProfileInstance.AngularDrive.AngularDriveMode = EAngularDriveMode::TwistAndSwing;
     ConstraintInstance.ProfileInstance.ConeLimit.bSoftConstraint = true;
     ConstraintInstance.ProfileInstance.TwistLimit.bSoftConstraint = false;
+    ConstraintInstance.UpdateAngularLimit();
 
     float m_to_cm = 100.0f;
 
@@ -66,7 +63,7 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
         }
     case UrdfJointType::Prismatic:
         {
-            float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm * m_to_cm * 0.5f;
+            float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm;
             float spring = joint_desc->damping_ * m_to_cm * m_to_cm * 10.0f;
             float damping = joint_desc->damping_ * m_to_cm * m_to_cm;
             float force_limit = joint_desc->effort_ * m_to_cm * m_to_cm;
@@ -90,7 +87,7 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
         }
     case UrdfJointType::Planar:
         {
-            float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm * m_to_cm * 0.5f;
+            float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm;
 
             ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
             ConstraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);

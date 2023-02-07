@@ -15,7 +15,6 @@ enum class UrdfJointType;
 
 struct UrdfJointDesc;
 
-// unreal representation for urdf joint
 UCLASS()
 class UUrdfJointComponent : public UPhysicsConstraintComponent
 {

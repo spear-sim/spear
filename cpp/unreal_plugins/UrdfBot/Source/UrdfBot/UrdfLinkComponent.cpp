@@ -2,12 +2,12 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfLinkComponent.h"
+#include "UrdfBot/UrdfLinkComponent.h"
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
-#include "UrdfParser.h"
+#include "UrdfBot/UrdfParser.h"
 
 void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 {
@@ -16,7 +16,7 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 
     UrdfVisualDesc& visual_desc = link_desc->visual_descs_[0];
     UrdfGeometryDesc& geometry_desc = visual_desc.geometry_desc_;
-    
+
     // set location relative to parent link for non root links
     UrdfJointDesc* joint_desc = link_desc->parent_joint_desc_;
     if (joint_desc) {
@@ -27,23 +27,27 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 
     UStaticMesh* static_mesh = nullptr;
     FVector relative_scale;
-    if (geometry_desc.type_ == UrdfGeometryType::Box) {
+    switch (geometry_desc.type_) {
+    case UrdfGeometryType::Box:
         static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
         relative_scale = geometry_desc.size_;
-    } else if (geometry_desc.type_ == UrdfGeometryType::Cylinder) {
+        break;
+    case UrdfGeometryType::Cylinder:
         static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
         relative_scale = FVector(geometry_desc.radius_ * 2.0f, geometry_desc.radius_ * 2.0f, geometry_desc.length_);
-    } else if (geometry_desc.type_ == UrdfGeometryType::Sphere) {
+        break;
+    case UrdfGeometryType::Sphere:
         static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
         relative_scale = FVector(geometry_desc.radius_) * 2.0f;
-    } else if (geometry_desc.type_ == UrdfGeometryType::Mesh) {
+        break;
+    case UrdfGeometryType::Mesh:
         static_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(geometry_desc.filename_));
         relative_scale = FVector(geometry_desc.scale_);
-    } else {
+        break;
+    default:
         ASSERT(false);
     }
     ASSERT(static_mesh);
-
     SetStaticMesh(static_mesh);
     SetRelativeScale3D(relative_scale);
 
@@ -61,8 +65,8 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
     GetBodyInstance()->CustomSleepThresholdMultiplier = 0.f;
 
     // set physics body's solver iteration count to be better stabalized with more CPU intensive
-    GetBodyInstance()->PositionSolverIterationCount = Config::get<float>("URDFBOT.URDFBOT_PAWN.POSITION_IITERATION_COUNT");
-    GetBodyInstance()->VelocitySolverIterationCount = Config::get<float>("URDFBOT.URDFBOT_PAWN.VELOCITY_IITERATION_COUNT");
+    GetBodyInstance()->PositionSolverIterationCount = Config::get<float>("URDFBOT.URDF_LINK_COMPONENT.POSITION_IITERATION_COUNT");
+    GetBodyInstance()->VelocitySolverIterationCount = Config::get<float>("URDFBOT.URDF_LINK_COMPONENT.VELOCITY_IITERATION_COUNT");
 
     // set mass
     ASSERT(link_desc->inertial_desc_.mass_ > 0);

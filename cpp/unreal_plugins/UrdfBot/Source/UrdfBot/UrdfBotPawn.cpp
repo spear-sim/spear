@@ -2,19 +2,19 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfBotPawn.h"
+#include "UrdfBot/UrdfBotPawn.h"
 
 #include <Camera/CameraComponent.h>
 #include <Components/InputComponent.h>
 
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
-#include "UrdfParser.h"
-#include "UrdfRobotComponent.h"
+#include "UrdfBot/UrdfParser.h"
+#include "UrdfBot/UrdfRobotComponent.h"
 
 AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
-    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toString(FPaths::Combine(
+    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(FPaths::Combine(
         Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
         Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
 
@@ -22,7 +22,7 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     robot_component_->initializeComponent(&robot_desc);
     robot_component_->createChildComponents(&robot_desc);
 
-    RootComponent = robot_component_->root_link_component_;
+    RootComponent = robot_component_;
 
     // setup camera
     FVector camera_location(
@@ -39,13 +39,9 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     ASSERT(camera_component_);
 
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
-    camera_component_->SetupAttachment(RootComponent);
+    camera_component_->SetupAttachment(robot_component_->root_link_component_);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.FOV");
-
-    // debug only
-    robot_component_->test(this);
-    AddInstanceComponent(camera_component_);
 }
 
 void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)

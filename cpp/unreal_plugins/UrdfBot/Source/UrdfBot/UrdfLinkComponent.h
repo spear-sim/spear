@@ -15,12 +15,10 @@ class UUrdfJointComponent;
 
 struct UrdfLinkDesc;
 
-// unreal representation for urdf link
 UCLASS()
 class UUrdfLinkComponent : public UStaticMeshComponent
 {
     GENERATED_BODY()
 public:
-    // set up link based on link description.
     void initializeComponent(UrdfLinkDesc* link_desc);
 };

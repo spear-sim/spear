@@ -12,7 +12,6 @@
 class UCameraComponent;
 class UUrdfRobotComponent;
 
-// UrdfBot agent
 UCLASS()
 class URDFBOT_API AUrdfBotPawn : public APawn
 {

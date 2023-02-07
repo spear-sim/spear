@@ -2,12 +2,12 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfRobotComponent.h"
+#include "UrdfBot/UrdfRobotComponent.h"
 
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
-#include "UrdfJointComponent.h"
-#include "UrdfParser.h"
+#include "UrdfBot/UrdfJointComponent.h"
+#include "UrdfBot/UrdfParser.h"
 
 void UUrdfRobotComponent::initializeComponent(UrdfRobotDesc* robot_desc)
 {
@@ -21,7 +21,7 @@ void UUrdfRobotComponent::createChildComponents(UrdfRobotDesc* robot_desc)
     UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
     ASSERT(root_link_desc);
 
-    root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName("UUrdfRobotComponent::link_component_" + root_link_desc->name_));
+    root_link_component_ = NewObject<UUrdfLinkComponent>(this);
     root_link_component_->initializeComponent(root_link_desc);
     root_link_component_->SetupAttachment(this);
     link_components_[root_link_desc->name_] = root_link_component_;
