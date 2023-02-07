@@ -18,12 +18,17 @@ class UTickEvent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    UTickEvent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+    UTickEvent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
     {
         std::cout << "[SPEAR | TickEvent.h] UTickEvent::UTickEvent" << std::endl;
 
         PrimaryComponentTick.bCanEverTick = true;
         PrimaryComponentTick.bTickEvenWhenPaused = false;
+    }
+
+    ~UTickEvent()
+    {
+        std::cout << "[SPEAR | TickEvent.h] UTickEvent::~UTickEvent" << std::endl;
     }
     
     // UActorComponent interface

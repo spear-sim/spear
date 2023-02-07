@@ -127,11 +127,11 @@ class OpenBotPilotNetPolicy():
                 # preprocess (normalize + crop) visual observations:
                 target_height = input_detail["shape"][1] 
                 target_width = input_detail["shape"][2] 
-                image_height = obs["camera_final_color"].shape[0]
-                image_width = obs["camera_final_color"].shape[1]
+                image_height = obs["camera.final_color"].shape[0]
+                image_width = obs["camera.final_color"].shape[1]
                 assert image_height-target_height >= 0.0
                 assert image_width-target_width >= 0.0
-                img_input = np.float32(obs["camera_final_color"][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
+                img_input = np.float32(obs["camera.final_color"][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
                 self._interpreter.set_tensor(input_detail["index"], img_input[np.newaxis])
 
             elif "cmd_input" in input_detail["name"] or "goal_input" in input_detail["name"] :

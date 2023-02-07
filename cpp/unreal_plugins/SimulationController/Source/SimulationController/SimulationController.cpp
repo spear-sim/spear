@@ -19,6 +19,7 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/Box.h"
@@ -33,7 +34,7 @@
 #include "SimulationController/Visualizer.h"
 
 // Different possible frame states for thread synchronization
-enum class FrameState : uint8_t
+enum class FrameState
 {
     Idle,
     RequestPreTick,
@@ -49,10 +50,10 @@ void SimulationController::StartupModule()
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
     
-    post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
+    post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(
+        this, &SimulationController::postWorldInitializationEventHandler);
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
-    // required for adding thread synchronization logic
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
     end_frame_delegate_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
 }
@@ -61,7 +62,7 @@ void SimulationController::ShutdownModule()
 {
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::ShutdownModule" << std::endl;
 
-    // If this module is unloaded in the middle of simulation for some reason, raise an error because we do not support this and we want to know when this happens.
+    // If this module is unloaded in the middle of simulation for some reason, raise an error.
     // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
     ASSERT(!world_begin_play_delegate_handle_.IsValid());
 
@@ -85,19 +86,17 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     ASSERT(world);
 
     if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
-        
         auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");
         auto level_name = Config::get<std::string>("SIMULATION_CONTROLLER.LEVEL_NAME");
 
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():                      " << Unreal::toString(world->GetName()) << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():                  " << Unreal::toString(world->GetPathName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():                      " << Unreal::toStdString(world->GetName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():                  " << Unreal::toStdString(world->GetPathName()) << std::endl;
         std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.WORLD_PATH_NAME: " << world_path_name << std::endl;
         std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.LEVEL_NAME:      " << level_name << std::endl;
 
         // if the current world is not the desired one, open the desired one
-        if (world_path_name != "" && world_path_name != Unreal::toString(world->GetPathName())) {
-
-            std::cout << "[SPEAR | SimulationController.cpp] Opening SIMULATION_CONTROLLER.LEVEL_NAME..." << std::endl;
+        if (world_path_name != "" && world_path_name != Unreal::toStdString(world->GetPathName())) {
+            std::cout << "[SPEAR | SimulationController.cpp] Opening: " << level_name << std::endl;
 
             // assert that we haven't already tried to open the level, because that means we failed
             ASSERT(!has_open_level_executed_);
@@ -106,7 +105,6 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
             has_open_level_executed_ = true;
 
         } else {
-
             has_open_level_executed_ = false;
 
             // we expect worldCleanupEventHandler(...) to be called before a new world is created.
@@ -134,7 +132,7 @@ void SimulationController::worldBeginPlayEventHandler()
     // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep
     UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
     ASSERT(physics_settings->bSubstepping);
-    ASSERT(Config::get<float>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps); 
+    ASSERT(Config::get<float>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps);
 
     FApp::SetBenchmarking(true);
     FApp::SetFixedDeltaTime(Config::get<double>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS"));
@@ -199,12 +197,11 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
     // We only need to perform any additional steps if the world being cleaned up is the world we cached in our world_ member variable.
     if (world == world_) {
-
+        
         // The worldCleanupEventHandler(...) function is called for all worlds, but some local state (such as rpc_server_ and agent_)
         // is initialized only when worldBeginPlayEventHandler(...) is called for a particular world. So we check if worldBeginPlayEventHandler(...)
         // has been executed.
         if(has_world_begin_play_executed_) {
-
             has_world_begin_play_executed_ = false;
 
             ASSERT(rpc_server_);
@@ -358,7 +355,7 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->getStepInfoSpace();
     });
 
-    rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<float>> action) -> void {
+    rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<uint8_t>> action) -> void {
         ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         ASSERT(agent_);
         agent_->applyAction(action);

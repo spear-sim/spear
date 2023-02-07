@@ -23,7 +23,6 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Box.h"
 #include "SimulationController/CameraSensor.h"
-#include "SimulationController/Serialize.h"
 
 CameraAgent::CameraAgent(UWorld* world)
 {
@@ -129,12 +128,9 @@ std::map<std::string, Box> CameraAgent::getObservationSpace() const
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "camera")) {
-        // get an observation space from the CameraSensor and add it to our Agent's observation space
-        std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace();
-        for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
-            observation_space["camera_" + camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
-        }
+    std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
+    for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
+        observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
     }
 
     return observation_space;
@@ -158,13 +154,14 @@ std::map<std::string, Box> CameraAgent::getStepInfoSpace() const
     return step_info_space;
 }
 
-void CameraAgent::applyAction(const std::map<std::string, std::vector<float>>& action)
+void CameraAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_pose")) {
-        FVector agent_location(action.at("set_pose").at(0), action.at("set_pose").at(1), action.at("set_pose").at(2));
-        FRotator agent_rotation(action.at("set_pose").at(3), action.at("set_pose").at(4), action.at("set_pose").at(5));
+        std::vector<float> component_data = Std::reinterpret_as<float>(action.at("set_pose"));
+        FVector agent_location(component_data.at(0), component_data.at(1), component_data.at(2));
+        FRotator agent_rotation(component_data.at(3), component_data.at(4), component_data.at(5));
         bool sweep = false;
         FHitResult* hit_result = nullptr;
         camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result, ETeleportType::ResetPhysics);
@@ -180,12 +177,9 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "camera")) {
-        // get an observation from the CameraSensor and add it to our Agent's observation
-        std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation();
-        for (auto& camera_sensor_observation_component : camera_sensor_observation) {
-            observation["camera_" + camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
-        }
+    std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
+    for (auto& camera_sensor_observation_component : camera_sensor_observation) {
+        observation[camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
     }
 
     return observation;
@@ -198,23 +192,22 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "random_points")) {
+        std::vector<float> component_data = Std::reinterpret_as<float>(action_.at("set_num_random_points"));
         std::vector<float> random_points;
-        int num_random_points = static_cast<int>(action_.at("set_num_random_points").at(0));
+        int num_random_points = static_cast<int>(component_data.at(0));
         for (int i = 0; i < num_random_points; i++) {
             FVector random_position = nav_mesh_->GetRandomPoint().Location;
             random_points.push_back(random_position.X);
             random_points.push_back(random_position.Y);
             random_points.push_back(random_position.Z);
         }
-
-        step_info["random_points"] = Serialize::toUint8(random_points);
+        step_info["random_points"] = Std::reinterpret_as<uint8_t>(random_points);
     }
 
     return step_info;
 }
 
-void CameraAgent::reset()
-{}
+void CameraAgent::reset() {}
 
 bool CameraAgent::isReady() const
 {
@@ -236,9 +229,10 @@ void CameraAgent::buildNavMesh()
     nav_mesh_->TilePoolSize           = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.TILE_POOL_SIZE");
     nav_mesh_->MaxSimplificationError = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.MAX_SIMPLIFICATION_ERROR");
 
-    // get bounding volume
+    // get bounds volume
     FBox bounds_volume(EForceInit::ForceInit);
-    for (auto& actor : Unreal::findActorsByTagAny(camera_actor_->GetWorld(), Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.BOUNDS_VOLUME_ACTOR_TAGS"))) {
+    auto tags = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.BOUNDS_VOLUME_ACTOR_TAGS");
+    for (auto& actor : Unreal::findActorsByTagAny(camera_actor_->GetWorld(), tags)) {
         bounds_volume += actor->GetComponentsBoundingBox(false, true);
     }
 
@@ -278,11 +272,9 @@ void CameraAgent::buildNavMesh()
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
     if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ")) {
-        nav_mesh_->GetGenerator()->ExportNavigationData(
-            Unreal::toFString(
-                Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR") + "/" +
-                Unreal::toString(camera_actor_->GetWorld()->GetName()) + "/"));
+        nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::Combine(
+            Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR")),
+            camera_actor_->GetWorld()->GetName()));
     }
 #endif
-
 }

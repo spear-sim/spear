@@ -15,7 +15,6 @@ struct Box;
 class Agent
 {
 public:
-
     // An Agent class must spawn new objects in the constructor if they are intended to be
     // findable by other classes. An Agent class must not attempt to find object references
     // in the constructor, because these objects might not be spawned yet. Use findObjectReferences(...)
@@ -30,7 +29,7 @@ public:
     virtual std::map<std::string, Box> getObservationSpace() const = 0;
     virtual std::map<std::string, Box> getStepInfoSpace() const = 0;   
  
-    virtual void applyAction(const std::map<std::string, std::vector<float>>& action) = 0;
+    virtual void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) = 0;
     virtual std::map<std::string, std::vector<uint8_t>> getObservation() const = 0;
     virtual std::map<std::string, std::vector<uint8_t>> getStepInfo() const = 0;
     

@@ -19,9 +19,14 @@ class UActorHitEvent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    UActorHitEvent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+    UActorHitEvent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
     {
         std::cout << "[SPEAR | ActorHitEvent.h] UActorHitEvent::UActorHitEvent" << std::endl;
+    }
+
+    ~UActorHitEvent()
+    {
+        std::cout << "[SPEAR | ActorHitEvent.h] UActorHitEvent::~UActorHitEvent" << std::endl;
     }
 
     void subscribeToActor(AActor* actor)

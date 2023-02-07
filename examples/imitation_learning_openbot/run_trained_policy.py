@@ -114,7 +114,8 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str + "." + "Map_" + episode["scene_id"] + rendering_mode_map_str
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+                "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str + "." + "Map_" + episode["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
             config.freeze()
@@ -149,7 +150,8 @@ if __name__ == "__main__":
             os.makedirs(result_dir, exist_ok=True)
             os.makedirs(plots_dir, exist_ok=True)
 
-            state_data = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # buffer containing the state_data observations made by the agent during an episode
+            # buffer containing the state_data observations made by the agent during an episode
+            state_data = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32)
 
             # save the optimal goal trajectory in a dedicated file
             df_trajectory = pd.DataFrame({"x_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,0]],
@@ -175,7 +177,7 @@ if __name__ == "__main__":
             if not args.benchmark:
 
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera_final_color"].squeeze())
+                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera.final_color"].squeeze())
 
                 # populate buffer and result data file
                 state_data[i] = obs["state_data"]
@@ -196,7 +198,10 @@ if __name__ == "__main__":
             
             # debug
             if args.debug:
-                show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
+                show_obs(
+                    obs,
+                    config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS,
+                    config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
             
             # termination conditions
             if env_step_info["task_step_info"]["hit_obstacle"]: 
@@ -212,16 +217,21 @@ if __name__ == "__main__":
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
-            print("[SPEAR | run_trained_policy.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
+            print("[SPEAR | run_trained_policy.py] Average frame time: %0.4f ms (%0.4f fps)" %
+                ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
             continue
 
         # create plots
-        plot_tracking_performance_spatial(state_data[:num_iterations][:], env_step_info["agent_step_info"]["trajectory_data"], os.path.join(plots_dir, "tracking_performance_spatial.png"))
+        plot_tracking_performance_spatial(
+            state_data[:num_iterations][:], env_step_info["agent_step_info"]["trajectory_data"], os.path.join(plots_dir, "tracking_performance_spatial.png"))
 
         if args.create_videos: # if desired, generate a video from the collected rgb observations 
             video_dir = os.path.join(args.eval_dir, "videos")
             os.makedirs(video_dir, exist_ok=True)
-            generate_video(image_dir, os.path.join(video_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
+            generate_video(
+                image_dir,
+                os.path.join(video_dir, "%04d.mp4" % episode["index"]),
+                rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
         
     # close the current scene and give the system a bit of time before switching to the next scene.
     env.close()

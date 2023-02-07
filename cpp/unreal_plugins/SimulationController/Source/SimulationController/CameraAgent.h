@@ -23,7 +23,6 @@ struct Box;
 class CameraAgent : public Agent
 {
 public:
-
     CameraAgent(UWorld* world);
     ~CameraAgent();
     
@@ -34,7 +33,7 @@ public:
     std::map<std::string, Box> getObservationSpace() const override;
     std::map<std::string, Box> getStepInfoSpace() const override;
 
-    void applyAction(const std::map<std::string, std::vector<float>>& action) override;
+    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
 
@@ -42,7 +41,6 @@ public:
     bool isReady() const override;
     
 private:
-
     void buildNavMesh();
 
     ACameraActor* camera_actor_ = nullptr;
@@ -52,5 +50,5 @@ private:
 
     std::unique_ptr<CameraSensor> camera_sensor_;
 
-    std::map<std::string, std::vector<float>> action_;
+    std::map<std::string, std::vector<uint8_t>> action_;
 };

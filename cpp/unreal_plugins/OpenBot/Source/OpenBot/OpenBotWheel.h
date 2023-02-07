@@ -20,5 +20,6 @@ class UOpenBotWheel : public UVehicleWheel
     GENERATED_BODY()
 public:
     UOpenBotWheel();
+    ~UOpenBotWheel();
 };
 END_IGNORE_COMPILER_WARNINGS

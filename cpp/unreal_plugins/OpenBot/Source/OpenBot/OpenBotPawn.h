@@ -24,6 +24,7 @@ class OPENBOT_API AOpenBotPawn : public APawn
     GENERATED_BODY()
 public:
     AOpenBotPawn(const FObjectInitializer& object_initializer);
+    ~AOpenBotPawn();
 
     // APawn interface
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
@@ -55,7 +56,6 @@ public:
     UBoxComponent* sonar_component_ = nullptr;
 
 private:
-
     // Function that applies wheel torque on a vehicle to generate linear
     // forward/backward motions. This function is intended to handle keyboard
     // input.

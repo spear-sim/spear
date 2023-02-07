@@ -13,7 +13,6 @@ struct Box;
 class Task
 {
 public:
-
     // A Task class must spawn new objects in the constructor if they are
     // intended to be findable by other classes. A Task class must not attempt
     // to find object references in the constructor, because these objects might

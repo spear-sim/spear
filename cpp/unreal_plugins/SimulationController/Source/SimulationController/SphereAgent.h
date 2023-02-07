@@ -11,6 +11,7 @@
 
 #include <Delegates/IDelegateInstance.h>
 #include <Engine/EngineBaseTypes.h>
+#include <Math/Rotator.h>
 
 #include "SimulationController/Agent.h"
 
@@ -28,7 +29,6 @@ struct Box;
 class SphereAgent : public Agent
 {
 public:
-
     SphereAgent(UWorld* world);
     ~SphereAgent();
  
@@ -39,7 +39,7 @@ public:
     std::map<std::string, Box> getObservationSpace() const override;
     std::map<std::string, Box> getStepInfoSpace() const override;
 
-    void applyAction(const std::map<std::string, std::vector<float>>& action) override;
+    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
 
@@ -49,13 +49,14 @@ public:
     void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
 
 private:
-
     AStaticMeshActor* sphere_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
     AActor* parent_actor_ = nullptr;
 
     UStaticMeshComponent* static_mesh_component_ = nullptr;
+
+    FRotator rotation_ = FRotator::ZeroRotator;
 
     UTickEvent* tick_event_ = nullptr;
     FDelegateHandle tick_event_handle_;

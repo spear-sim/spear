@@ -30,16 +30,15 @@ public:
     ~CameraSensor();
 
     // High-level interface for getting render data as an observation that conforms to our Agent interface
-    std::map<std::string, Box> getObservationSpace() const;
-    std::map<std::string, std::vector<uint8_t>> getObservation() const;
+    std::map<std::string, Box> getObservationSpace(const std::vector<std::string>& observation_components) const;
+    std::map<std::string, std::vector<uint8_t>> getObservation(const std::vector<std::string>& observation_components) const;
 
     // Unreal resources for each render pass are public in case they need to be modified by user code
     std::map<std::string, RenderPass> render_passes_;
 
 private:
-
-    // Initialize scene capture component for the "final_color" render pass
     void initializeSceneCaptureComponentFinalColor(USceneCaptureComponent2D* scene_capture_component);
+    void initializeSceneCaptureComponentNonFinalColor(USceneCaptureComponent2D* scene_capture_component, const std::string& render_pass_name);
 
     // Low-level interface for getting render data as directly as possible from Unreal
     std::map<std::string, TArray<FColor>> getRenderData() const;

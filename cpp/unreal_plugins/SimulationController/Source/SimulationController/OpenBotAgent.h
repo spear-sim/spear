@@ -26,7 +26,6 @@ struct Box;
 class OpenBotAgent : public Agent
 {
 public:
-
     OpenBotAgent(UWorld* world);
     ~OpenBotAgent();
 
@@ -37,7 +36,7 @@ public:
     std::map<std::string, Box> getObservationSpace() const override;
     std::map<std::string, Box> getStepInfoSpace() const override;
 
-    void applyAction(const std::map<std::string, std::vector<float>>& action) override;
+    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
 
@@ -45,7 +44,6 @@ public:
     bool isReady() const override;
 
 private:
-
     void buildNavMesh();
     void generateTrajectoryToGoal();
 

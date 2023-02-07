@@ -112,7 +112,8 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str + "." + "Map_" + episode["scene_id"] + rendering_mode_map_str
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+                "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str + "." + "Map_" + episode["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
             config.freeze()
@@ -153,9 +154,9 @@ if __name__ == "__main__":
 
             control_data  = np.empty([args.num_iterations_per_episode, 2], dtype=np.float32) # control_data observations made by the agent during a episode
             state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # state_data observations made by the agent during an episode
-            waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # waypoint coordinates being tracked by the agent during an episode
+            waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # waypoints being tracked by the agent during an episode
             compass_data  = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # compass observations made by the agent during a episode
-            time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int64)      # time stamps of the observations made by the agent during an episode
+            time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int64)      # time stamps of observations made by the agent during an episode
             frame_data    = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # frame ids
 
         # execute the desired number of iterations in a given episode
@@ -178,14 +179,14 @@ if __name__ == "__main__":
             if not args.benchmark:
 
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera_final_color"].squeeze())
+                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera.final_color"].squeeze())
 
-                # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training purposes. 
-                # In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole trajectory. 
-                # In this case, rather than considering the whole episode as a fail, one can consider the last position reached by the agent as the new goal position. 
-                # Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather than directly writing all the 
-                # observations in a file iteration by iteration, we append these observations in a buffer, named "observation" to later process them once the 
-                # episode is completed. 
+                # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training
+                # purposes. In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole
+                # trajectory. In this case, rather than considering the whole episode as a fail, one can consider the last position reached by the agent as
+                # the new goal position. Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather
+                # than directly writing all the observations in a file iteration by iteration, we append these observations in a buffer, named "observation"
+                # to later process them once the episode is completed. 
                 control_data[i]     = obs["control_data"]                  # control_data: [ctrl_left, ctrl_right]
                 state_data[i]       = obs["state_data"]                    # state_data: [x, y, z, pitch, yaw, roll]
                 waypoint_data[i]    = policy_step_info["current_waypoint"] # current waypoint being tracked by the agent
@@ -212,7 +213,8 @@ if __name__ == "__main__":
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
-            print("[SPEAR | generate_dataset.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
+            print("[SPEAR | generate_dataset.py] Average frame time: %0.4f ms (%0.4f fps)" %
+                ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
             continue
         
         # check the termination flags
@@ -265,14 +267,19 @@ if __name__ == "__main__":
         df_goal.to_csv(os.path.join(sensor_dir, "goalLog.txt"), mode="w", index=False, header=True)
 
         # create plots
-        plot_tracking_performance_spatial(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))
-        plot_tracking_performance_temporal(state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
+        plot_tracking_performance_spatial(
+            state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))
+        plot_tracking_performance_temporal(
+            state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
 
         if args.create_videos: # if desired, generate a video from the collected rgb observations 
             video_dir = os.path.join(args.dataset_dir, "videos")
             video_split_dir = os.path.join(video_dir, args.split + "_data")
             os.makedirs(video_split_dir, exist_ok=True)
-            generate_video(image_dir, os.path.join(video_split_dir, "%04d.mp4" % episode["index"]), rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
+            generate_video(
+                image_dir,
+                os.path.join(video_split_dir, "%04d.mp4" % episode["index"]),
+                rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
 
     # close the current scene
     env.close()

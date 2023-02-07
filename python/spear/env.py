@@ -14,45 +14,6 @@ import sys
 import time
 
 
-# enum values must match cpp/unreal_plugins/SimulationController/Box.h
-class DataType(Enum):
-    Boolean    = 0
-    UInteger8  = 1
-    Integer8   = 2
-    UInteger16 = 3
-    Integer16  = 4
-    UInteger32 = 5
-    Integer32  = 6
-    Float32    = 7
-    Double     = 8
-
-DATA_TYPE_TO_NUMPY_DTYPE = {
-    DataType.Boolean.value:    np.dtype("?").type,
-    DataType.UInteger8.value:  np.dtype("u1").type,
-    DataType.Integer8.value:   np.dtype("i1").type,
-    DataType.UInteger16.value: np.dtype("u2").type,
-    DataType.Integer16.value:  np.dtype("i2").type,
-    DataType.UInteger32.value: np.dtype("u4").type,
-    DataType.Integer32.value:  np.dtype("i4").type,
-    DataType.Float32.value:    np.dtype("f4").type,
-    DataType.Double.value:     np.dtype("f8").type
-}
-
-
-# mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
-class Box():
-    def __init__(self, low, high, shape, dtype):
-        self.low = low
-        self.high = high
-        self.shape = shape
-        self.dtype = dtype
-
-# mimics the behavior of gym.spaces.Dict
-class Dict():
-    def __init__(self, spaces):
-        self.spaces = spaces
-
-
 class Env(gym.Env):
 
     def __init__(self, config):
@@ -71,7 +32,7 @@ class Env(gym.Env):
         self._byte_order = self._get_byte_order()
         self._task_step_info_space = self._get_task_step_info_space()
         self._agent_step_info_space = self._get_agent_step_info_space()
-        
+
         self._ready = False
 
     def step(self, action):
@@ -101,7 +62,7 @@ class Env(gym.Env):
             if ready:
                 break
         
-        self._ready = ready # store if our reset() attempt was successful or not, so step() can return done=True if we were unsuccessful
+        self._ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were unsuccessful
 
         if reset_info is not None:
             assert isinstance(reset_info, dict)
@@ -257,8 +218,8 @@ class Env(gym.Env):
             connected = False
             try:
                 self._client = msgpackrpc.Client(
-                    msgpackrpc.Address(self._config.SIMULATION_CONTROLLER.IP, self._config.SIMULATION_CONTROLLER.PORT), 
-                    timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
+                    msgpackrpc.Address(self._config.SIMULATION_CONTROLLER.IP, self._config.SIMULATION_CONTROLLER.PORT),
+                    timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                 self._ping()
                 connected = True
@@ -321,10 +282,8 @@ class Env(gym.Env):
         self._client._loop._ioloop.close()
     
     def _get_byte_order(self):
-
         unreal_instance_endianness = self._client.call("getEndianness")
         client_endianess = sys.byteorder
-
         if unreal_instance_endianness == client_endianess:
             return None
         elif unreal_instance_endianness == "little":
@@ -333,38 +292,6 @@ class Env(gym.Env):
             return ">"
         else:
             assert False
-
-    def _get_dict_space(self, space, box_space_type, dict_space_type):
-
-        dict_space_components = {}
-        for name, component in space.items():
-            low = component["low_"]
-            high = component["high_"]
-            shape = tuple(component["shape_"])
-            dtype = DATA_TYPE_TO_NUMPY_DTYPE[component["dtype_"]]
-            dict_space_components[name] = box_space_type(low, high, shape, dtype)
-
-        return dict_space_type(dict_space_components)
-
-    def _deserialize(self, data, space):
-
-        assert data.keys() == space.spaces.keys()
-
-        return_dict = {}
-        for name, component in data.items():
-            
-            shape = space.spaces[name].shape
-            dtype = space.spaces[name].dtype
-
-            if self._byte_order is not None:
-                dtype = dtype.newbyteorder(self._byte_order)
-
-            return_dict[name] = np.frombuffer(component, dtype=dtype, count=-1).reshape(shape)
-            
-            assert (return_dict[name] >= space.spaces[name].low).all()
-            assert (return_dict[name] <= space.spaces[name].high).all()
-
-        return return_dict
 
     def _ping(self):
         return self._client.call("ping")
@@ -384,39 +311,28 @@ class Env(gym.Env):
     def _get_action_space(self):
         space = self._client.call("getActionSpace")
         assert len(space) > 0
-        return self._get_dict_space(space, gym.spaces.Box, gym.spaces.Dict)
+        return _deserialize_dict_space(space, box_space_type=gym.spaces.Box, dict_space_type=gym.spaces.Dict)
 
     def _get_observation_space(self):
         space = self._client.call("getObservationSpace")
         assert len(space) > 0
-        return self._get_dict_space(space, gym.spaces.Box, gym.spaces.Dict)
+        return _deserialize_dict_space(space, box_space_type=gym.spaces.Box, dict_space_type=gym.spaces.Dict)
 
     def _get_task_step_info_space(self):
         space = self._client.call("getTaskStepInfoSpace")
-        return self._get_dict_space(space, Box, Dict)
+        return _deserialize_dict_space(space, box_space_type=Box, dict_space_type=Dict)
 
     def _get_agent_step_info_space(self):
         space = self._client.call("getAgentStepInfoSpace")
-        return self._get_dict_space(space, Box, Dict)
+        return _deserialize_dict_space(space, box_space_type=Box, dict_space_type=Dict)
 
     def _apply_action(self, action):
-
-        assert action.keys() == self.action_space.spaces.keys()
-        
-        action_dict = {}
-        for name, component in action.items():
-            assert isinstance(component, np.ndarray)
-            assert component.shape == self.action_space.spaces[name].shape
-            assert component.dtype == self.action_space.spaces[name].dtype
-            assert (component >= self.action_space.spaces[name].low).all()
-            assert (component <= self.action_space.spaces[name].high).all()
-            action_dict[name] = component.tolist()
-        
-        self._client.call("applyAction", action_dict)
+        action = _serialize_arrays(action, space=self.action_space, byte_order=self._byte_order)
+        self._client.call("applyAction", action)
 
     def _get_observation(self):
         observation = self._client.call("getObservation")
-        return self._deserialize(observation, self.observation_space)
+        return _deserialize_arrays(observation, space=self.observation_space, byte_order=self._byte_order)
 
     def _get_reward(self):
         return self._client.call("getReward")
@@ -427,8 +343,8 @@ class Env(gym.Env):
     def _get_step_info(self):
         task_step_info = self._client.call("getTaskStepInfo")
         agent_step_info = self._client.call("getAgentStepInfo")
-        return { "task_step_info": self._deserialize(task_step_info, self._task_step_info_space),
-                 "agent_step_info": self._deserialize(agent_step_info, self._agent_step_info_space) }
+        return { "task_step_info": _deserialize_arrays(task_step_info, space=self._task_step_info_space, byte_order=self._byte_order),
+                 "agent_step_info": _deserialize_arrays(agent_step_info, space=self._agent_step_info_space, byte_order=self._byte_order) }
 
     def _reset(self):
         # reset the task first in case it needs to set the pose of actors,
@@ -438,3 +354,77 @@ class Env(gym.Env):
 
     def _is_ready(self):
         return self._client.call("isTaskReady") and self._client.call("isAgentReady")
+
+
+# mimics the behavior of gym.spaces.Box but allows shape to have the entry -1
+class Box():
+    def __init__(self, low, high, shape, dtype):
+        self.low = low
+        self.high = high
+        self.shape = shape
+        self.dtype = dtype
+
+# mimics the behavior of gym.spaces.Dict
+class Dict():
+    def __init__(self, spaces):
+        self.spaces = spaces
+
+
+# enum values must match cpp/unreal_plugins/SimulationController/Box.h
+class DataType(Enum):
+    Boolean    = 0
+    UInteger8  = 1
+    Integer8   = 2
+    UInteger16 = 3
+    Integer16  = 4
+    UInteger32 = 5
+    Integer32  = 6
+    Float32    = 7
+    Double     = 8
+
+DATATYPE_TO_DTYPE = {
+    DataType.Boolean.value:    np.dtype("?").type,
+    DataType.UInteger8.value:  np.dtype("u1").type,
+    DataType.Integer8.value:   np.dtype("i1").type,
+    DataType.UInteger16.value: np.dtype("u2").type,
+    DataType.Integer16.value:  np.dtype("i2").type,
+    DataType.UInteger32.value: np.dtype("u4").type,
+    DataType.Integer32.value:  np.dtype("i4").type,
+    DataType.Float32.value:    np.dtype("f4").type,
+    DataType.Double.value:     np.dtype("f8").type
+}
+
+# serialize and deserialize functions for converting between Python and C++ data
+def _deserialize_dict_space(data, box_space_type, dict_space_type):
+    return dict_space_type({name:_deserialize_box_space(component, box_space_type=box_space_type) for (name, component) in data.items()})
+
+def _deserialize_arrays(data, space, byte_order):
+    assert data.keys() == space.spaces.keys()
+    return {name:_deserialize_array(component, space=space.spaces[name], byte_order=byte_order) for (name, component) in data.items()}
+
+def _serialize_arrays(arrays, space, byte_order):
+    assert arrays.keys() == space.spaces.keys()
+    return {name:_serialize_array(component, space=space.spaces[name], byte_order=byte_order) for (name, component) in arrays.items()}
+
+def _deserialize_box_space(data, box_space_type):
+    low = data["low_"]
+    high = data["high_"]
+    shape = tuple(data["shape_"])
+    dtype = DATATYPE_TO_DTYPE[data["dtype_"]]
+    return box_space_type(low, high, shape, dtype)
+
+def _deserialize_array(data, space, byte_order):
+    dtype = space.dtype if byte_order is None else space.dtype.newbyteorder(byte_order)
+    array = np.frombuffer(data, dtype=dtype, count=-1).reshape(space.shape)
+    assert (array >= space.low).all()
+    assert (array <= space.high).all()
+    return array
+
+def _serialize_array(array, space, byte_order):
+    assert isinstance(array, np.ndarray)
+    assert array.shape == space.shape
+    assert array.dtype == space.dtype
+    assert (array >= space.low).all()
+    assert (array <= space.high).all()
+    data = array.data if byte_order is None else array.newbyteorder(byte_order).data
+    return data

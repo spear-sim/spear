@@ -113,7 +113,8 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Maps/Map_" + pose["scene_id"] + rendering_mode_map_str + "." + "Map_" + pose["scene_id"] + rendering_mode_map_str
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+                "/Game/Maps/Map_" + pose["scene_id"] + rendering_mode_map_str + "." + "Map_" + pose["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + pose["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
             config.freeze()
@@ -130,7 +131,9 @@ if __name__ == "__main__":
         # set the pose and obtain corresponding images
         obs, _, _, _ = env.step(
             action={
-                "set_pose": np.array([pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"], pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32),
+                "set_pose": np.array(
+                    [pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"],
+                    pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32),
                 "set_num_random_points": np.array([0], np.uint32)})
 
         # save images for each render pass
@@ -138,7 +141,7 @@ if __name__ == "__main__":
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.join(args.images_dir, render_pass)
                 assert os.path.exists(render_pass_dir)
-                plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera_" + render_pass].squeeze())
+                plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera." + render_pass].squeeze())
 
         # useful for comparing the game window to the image that has been saved to disk
         if args.wait_for_key_press:
@@ -149,7 +152,8 @@ if __name__ == "__main__":
     if args.benchmark:
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        print("[SPEAR | generate_images.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / (df.shape[0]*num_internal_steps))*1000, (df.shape[0]*num_internal_steps) / elapsed_time_seconds))
+        print("[SPEAR | generate_images.py] Average frame time: %0.4f ms (%0.4f fps)" %
+            ((elapsed_time_seconds / (df.shape[0]*num_internal_steps))*1000, (df.shape[0]*num_internal_steps) / elapsed_time_seconds))
 
     # close the current Env
     env.close()

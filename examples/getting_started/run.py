@@ -35,7 +35,7 @@ if __name__ == "__main__":
     if args.benchmark:
         start_time_seconds = time.time()
     else:
-        cv2.imshow("camera_final_color", obs["camera_final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+        cv2.imshow("camera.final_color", obs["camera.final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
         cv2.waitKey(0)
 
     # take a few steps
@@ -45,7 +45,7 @@ if __name__ == "__main__":
             if not args.benchmark:
                 print("[SPEAR | run.py] SphereAgent: ")
                 print(obs["compass"])
-                print(obs["camera_final_color"].shape, obs["camera_final_color"].dtype)
+                print(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 print(reward, done, info)
         elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
             obs, reward, done, info = env.step({"apply_voltage": np.array([1.0, 0.715], dtype=np.float32)})
@@ -53,13 +53,13 @@ if __name__ == "__main__":
                 print("[SPEAR | run.py] OpenBotAgent: ")
                 print(obs["state_data"])
                 print(obs["control_data"])
-                print(obs["camera_final_color"].shape, obs["camera_final_color"].dtype)
+                print(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 print(reward, done, info)
         else:
             assert False
 
         if not args.benchmark:
-            cv2.imshow("camera_final_color", obs["camera_final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            cv2.imshow("camera.final_color", obs["camera.final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
             cv2.waitKey(0)
 
         if done:

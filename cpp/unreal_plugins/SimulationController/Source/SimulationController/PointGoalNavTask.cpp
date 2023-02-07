@@ -30,9 +30,11 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
 
     UStaticMeshComponent* goal_mesh_component = goal_actor_->GetStaticMeshComponent();
 
-    UStaticMesh* goal_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MESH")));
+    UStaticMesh* goal_mesh = LoadObject<UStaticMesh>(
+        nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MESH")));
     ASSERT(goal_mesh);
-    UMaterial* goal_material = LoadObject<UMaterial>(nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MATERIAL")));
+    UMaterial* goal_material = LoadObject<UMaterial>(
+        nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MATERIAL")));
     ASSERT(goal_material);
 
     goal_mesh_component->SetStaticMesh(goal_mesh);
@@ -82,7 +84,9 @@ void PointGoalNavTask::findObjectReferences(UWorld* world)
     agent_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.AGENT_ACTOR_NAME"));
     ASSERT(agent_actor_);
 
-    obstacle_ignore_actors_ = Unreal::findActorsByNameAsVector(world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), false);
+    bool return_null_if_not_found = false;
+    obstacle_ignore_actors_ = Unreal::findActorsByName(
+        world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_->subscribeToActor(agent_actor_);
@@ -105,9 +109,7 @@ void PointGoalNavTask::beginFrame()
     hit_obstacle_ = false;
 }
 
-void PointGoalNavTask::endFrame()
-{
-}
+void PointGoalNavTask::endFrame() {}
 
 float PointGoalNavTask::getReward() const
 {
@@ -121,6 +123,7 @@ float PointGoalNavTask::getReward() const
         FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
         reward = -agent_to_goal.Size() * Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.REWARD.DISTANCE_TO_GOAL_SCALE");
     }
+
     return reward;
 }
 

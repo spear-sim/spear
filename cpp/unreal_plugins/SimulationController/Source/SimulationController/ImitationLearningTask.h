@@ -25,7 +25,6 @@ struct Box;
 
 class ImitationLearningTask : public Task {
 public:
-
     ImitationLearningTask(UWorld* world);
     ~ImitationLearningTask();
 
