@@ -243,8 +243,27 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 
     FXmlNode* dynamics_node = joint_node->FindChildNode(TEXT("dynamics"));
     if (dynamics_node) {
-        joint_desc.damping_  = FCString::Atof(*dynamics_node->GetAttribute(TEXT("damping")));
+        joint_desc.spring_ = FCString::Atof(*dynamics_node->GetAttribute(TEXT("spring")));
+        joint_desc.damping_ = FCString::Atof(*dynamics_node->GetAttribute(TEXT("damping")));
         joint_desc.friction_ = FCString::Atof(*dynamics_node->GetAttribute(TEXT("friction")));
+
+        FString control_type = dynamics_node->GetAttribute(TEXT("type"));
+        if (!control_type.IsEmpty()) {
+            if (control_type.Equals(TEXT("position"))) {
+                joint_desc.control_type_ = UrdfJointControlType::Position;
+            } else if (control_type.Equals(TEXT("velocity"))) {
+                joint_desc.control_type_ = UrdfJointControlType::Velocity;
+
+                ASSERT(joint_desc.spring_ == 0.0f);
+            } else if (control_type.Equals(TEXT("torque"))) {
+                joint_desc.control_type_ = UrdfJointControlType::Torque;
+
+                ASSERT(joint_desc.spring_ == 0.0f);
+                ASSERT(joint_desc.damping_ == 0.0f);
+            } else {
+                ASSERT(false);
+            }
+        }
     }
 
     FXmlNode* limit_node = joint_node->FindChildNode(TEXT("limit"));

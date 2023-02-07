@@ -34,6 +34,14 @@ enum class UrdfJointType
     Planar,
 };
 
+enum class UrdfJointControlType
+{
+    Invalid,
+    Position,
+    Velocity,
+    Torque,
+};
+
 enum class CalibrationType
 {
     Invalid,
@@ -116,8 +124,10 @@ struct UrdfJointDesc
     FVector axis_      = FVector(1.0f, 0.0f, 0.0f);
 
     // dynamics
-    float damping_  = 0.0f;
-    float friction_ = 0.0f;
+    UrdfJointControlType control_type_ = UrdfJointControlType::Invalid;
+    float spring_                      = 0.0f;
+    float damping_                     = 0.0f;
+    float friction_                    = 0.0f;
 
     // calibration
     CalibrationType calibration_type_ = CalibrationType::Invalid;

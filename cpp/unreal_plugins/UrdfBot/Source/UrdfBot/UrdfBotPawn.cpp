@@ -6,6 +6,7 @@
 
 #include <Camera/CameraComponent.h>
 #include <Components/InputComponent.h>
+#include <GameFramework/PlayerInput.h>
 
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
@@ -19,7 +20,6 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
         Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
 
     robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::robot_component_::" + robot_desc.name_));
-    robot_component_->initializeComponent(&robot_desc);
     robot_component_->createChildComponents(&robot_desc);
 
     RootComponent = robot_component_;
@@ -47,9 +47,38 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
 {
     Super::SetupPlayerInputComponent(input_component);
+
+    int axis_binding_index = 0;
+    UPlayerInput* player_input = GetWorld()->GetFirstPlayerController()->PlayerInput;
+    std::vector<std::map<std::string, YAML::Node>> keyboard_controls_ = Config::get<std::vector<std::map<std::string, YAML::Node>>>("URDFBOT.URDFBOT_PAWN.ROBOT_COMPONENT.KEYBOARD_CONTROL");
+    for (auto& control : keyboard_controls_) {
+        InputAxisBinding input_axis_binding;
+        input_axis_binding.axis_name_ = FName(GetName() + "_" + FString::FromInt(axis_binding_index));
+
+        input_axis_binding.key_ = control["KEY"].as<std::string>();
+        std::string type = control["TYPE"].as<std::string>();
+        if (type == "set") {
+            input_axis_binding.type_ = AxisBindingType::Set;
+        } else if (type == "add") {
+            input_axis_binding.type_ = AxisBindingType::Add;
+        } else {
+            ASSERT(false);
+        }
+        input_axis_binding.component_names_ = control["COMPONENT"].as<std::vector<std::string>>();
+        input_axis_binding.values_ = control["VALUE"].as<std::vector<float>>();
+
+        player_input->AddAxisMapping(FInputAxisKeyMapping(input_axis_binding.axis_name_, FKey(FName(input_axis_binding.key_.c_str())), 1));
+        input_component->BindAxis(input_axis_binding.axis_name_);
+
+        robot_component_->input_axis_bindings_.push_back(input_axis_binding);
+
+        axis_binding_index++;
+    }
 }
 
 void AUrdfBotPawn::Tick(float delta_time)
 {
     Super::Tick(delta_time);
+
+    robot_component_->applyKeyInputs();
 }

@@ -11,6 +11,7 @@
 
 class UUrdfLinkComponent;
 
+enum class UrdfJointControlType;
 enum class UrdfJointType;
 
 struct UrdfJointDesc;
@@ -22,6 +23,13 @@ class UUrdfJointComponent : public UPhysicsConstraintComponent
 public:
     void initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
 
+    float getAction();
+    void applyAction(float action);
+
+    UUrdfLinkComponent* parent_link_;
+    UUrdfLinkComponent* child_link_;
+
 private:
     UrdfJointType joint_type_;
+    UrdfJointControlType control_type_;
 };
