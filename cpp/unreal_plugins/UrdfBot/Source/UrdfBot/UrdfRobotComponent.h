@@ -29,11 +29,6 @@ public:
     void initializeComponent(UrdfRobotDesc* robot_desc);
     void createChildComponents(UrdfRobotDesc* robot_desc);
 
-    // debug only
-    void test(AActor* actor);
-    void action(int signal);
-    void actionJoint(std::string joint_name, float action);
-
     UUrdfLinkComponent* root_link_component_;
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;

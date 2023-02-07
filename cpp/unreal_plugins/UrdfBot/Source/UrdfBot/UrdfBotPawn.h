@@ -23,12 +23,6 @@ public:
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
     void Tick(float delta_time) override;
 
-    // debug only
-    void test();
-    void test1();
-    void test2();
-    int signal = 0;
-
     UUrdfRobotComponent* robot_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
 };
