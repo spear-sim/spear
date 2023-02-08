@@ -56,11 +56,11 @@ private:
     // thread sychronization
     std::atomic<FrameState> frame_state_;
 
-    // used so tick() can wait until end_frame() has started executing before returning, reinitialized in begin_tick()
-    std::promise<void> end_frame_started_executing_promise_;
-    std::future<void> end_frame_started_executing_future_;
+    std::promise<void> frame_state_idle_promise_;
+    std::promise<void> frame_state_executing_pre_tick_promise_;
+    std::promise<void> frame_state_executing_post_tick_promise_;
 
-    // used so end_tick() can wait until end_frame() has finished executing before returning, reinitialized in begin_tick()
-    std::promise<void> end_frame_finished_executing_promise_;
-    std::future<void> end_frame_finished_executing_future_;
+    std::future<void> frame_state_idle_future_;
+    std::future<void> frame_state_executing_pre_tick_future_;
+    std::future<void> frame_state_executing_post_tick_future_;
 };

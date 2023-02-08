@@ -96,7 +96,7 @@ struct MoveWrapper : TFunctor
 template <typename TFunctor>
 auto moveHandler(TFunctor&& functor)
 {
-    return detail::MoveWrapper<std::decay<TFunctor>::type>(std::move(functor));
+    return detail::MoveWrapper<typename std::decay<TFunctor>::type>(std::move(functor));
 }
 
 template <typename TClass>
