@@ -60,21 +60,23 @@ void UUrdfRobotComponent::applyKeyInputs()
     for (auto& input_axis_binding : input_axis_bindings_) {
         float axis_value = InputComponent->GetAxisValue(input_axis_binding.axis_name_);
 
-        for (uint32 i = 0; i < input_axis_binding.component_names_.size(); i++) {
-            UUrdfJointComponent* joint_component = joint_components_.at(input_axis_binding.component_names_[i]);
-
-            switch (input_axis_binding.type_) {
-            case AxisBindingType::Set:
-                if (axis_value > 0) {
+        switch (input_axis_binding.type_) {
+        case AxisBindingType::Set:
+            if (axis_value > 0) {
+                for (uint32 i = 0; i < input_axis_binding.component_names_.size(); i++) {
+                    UUrdfJointComponent* joint_component = joint_components_.at(input_axis_binding.component_names_[i]);
                     joint_component->applyAction(input_axis_binding.values_[i]);
                 }
-                break;
-            case AxisBindingType::Add:
-                joint_component->applyAction(joint_component->getAction() + axis_value * input_axis_binding.values_[i]);
-                break;
-            default:
-                break;
             }
+            break;
+        case AxisBindingType::Add:
+            for (uint32 i = 0; i < input_axis_binding.component_names_.size(); i++) {
+                UUrdfJointComponent* joint_component = joint_components_.at(input_axis_binding.component_names_[i]);
+                joint_component->applyAction(joint_component->getAction() + axis_value * input_axis_binding.values_[i]);
+            }
+            break;
+        default:
+            break;
         }
     }
 }

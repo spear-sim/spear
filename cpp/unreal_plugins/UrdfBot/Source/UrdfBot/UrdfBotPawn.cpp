@@ -13,7 +13,8 @@
 #include "UrdfBot/UrdfParser.h"
 #include "UrdfBot/UrdfRobotComponent.h"
 
-AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
+AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer)
+    : APawn(object_initializer)
 {
     UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(FPaths::Combine(
         Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
@@ -50,7 +51,7 @@ void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
 
     int axis_binding_index = 0;
     UPlayerInput* player_input = GetWorld()->GetFirstPlayerController()->PlayerInput;
-    std::vector<std::map<std::string, YAML::Node>> keyboard_controls_ = Config::get<std::vector<std::map<std::string, YAML::Node>>>("URDFBOT.URDFBOT_PAWN.ROBOT_COMPONENT.KEYBOARD_CONTROL");
+    std::vector<YAML::Node> keyboard_controls_ = Config::get<std::vector<YAML::Node>>("URDFBOT.URDFBOT_PAWN.ROBOT_COMPONENT.KEYBOARD_CONTROL");
     for (auto& control : keyboard_controls_) {
         InputAxisBinding input_axis_binding;
         input_axis_binding.axis_name_ = FName(GetName() + "_" + FString::FromInt(axis_binding_index));
@@ -66,6 +67,7 @@ void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
         }
         input_axis_binding.component_names_ = control["COMPONENT"].as<std::vector<std::string>>();
         input_axis_binding.values_ = control["VALUE"].as<std::vector<float>>();
+        ASSERT(input_axis_binding.component_names_.size() == input_axis_binding.values_.size());
 
         player_input->AddAxisMapping(FInputAxisKeyMapping(input_axis_binding.axis_name_, FKey(FName(input_axis_binding.key_.c_str())), 1));
         input_component->BindAxis(input_axis_binding.axis_name_);
