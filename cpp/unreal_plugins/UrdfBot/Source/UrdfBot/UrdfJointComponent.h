@@ -23,8 +23,8 @@ class UUrdfJointComponent : public UPhysicsConstraintComponent
 public:
     void initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
 
-    float getAction();
     void applyAction(float action);
+    void addAction(float action);
 
     UUrdfLinkComponent* parent_link_;
     UUrdfLinkComponent* child_link_;
