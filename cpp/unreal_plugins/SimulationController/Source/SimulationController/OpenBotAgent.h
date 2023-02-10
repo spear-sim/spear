@@ -20,7 +20,6 @@ class AOpenBotPawn;
 class CameraSensor;
 class ImuSensor;
 class SonarSensor;
-
 struct Box;
 
 class OpenBotAgent : public Agent
@@ -59,4 +58,3 @@ private:
 
     std::vector<float> trajectory_;
 };
-

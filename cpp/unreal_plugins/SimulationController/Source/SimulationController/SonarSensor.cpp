@@ -4,10 +4,12 @@
 
 #include "SimulationController/SonarSensor.h"
 
+#include <random>
 #include <vector>
 
 #include <Components/BoxComponent.h>
 #include <DrawDebugHelpers.h>
+#include <Engine/EngineBaseTypes.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>

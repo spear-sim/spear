@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineTypes.h>
 #include <Math/RandomStream.h>
 #include <Math/Vector.h>
 
@@ -14,9 +17,9 @@
 class AActor;
 class AStaticMeshActor;
 class UWorld;
+struct FHitResult;
 
 class UActorHitEvent;
-
 struct Box;
 
 class PointGoalNavTask: public Task

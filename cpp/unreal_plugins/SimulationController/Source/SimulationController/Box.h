@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <vector>
 
 #include "SimulationController/Rpclib.h"
@@ -11,6 +12,7 @@
 // enum values must match python/spear/env.py, which is why we write them out explicitly
 enum class DataType
 {
+    Invalid    = -1,
     Boolean    = 0,
     UInteger8  = 1,
     Integer8   = 2,
@@ -25,10 +27,12 @@ MSGPACK_ADD_ENUM(DataType);
 
 struct Box
 {
-    double low_;
-    double high_;
+    double low_ = std::nan("");
+    double high_ = std::nan("");
     std::vector<int64_t> shape_;
-    DataType dtype_;
+    DataType datatype_ = DataType::Invalid;
+    bool use_shared_memory_ = false;
+    std::string shared_memory_name_;
 
-    MSGPACK_DEFINE_MAP(low_, high_, shape_, dtype_);
+    MSGPACK_DEFINE_MAP(low_, high_, shape_, datatype_, use_shared_memory_, shared_memory_name_);
 };

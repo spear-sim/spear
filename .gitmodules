@@ -1,6 +1,6 @@
-[submodule "asio"]
-	path = third_party/asio
-	url = https://github.com/chriskohlhoff/asio.git
+[submodule "boost"]
+	path = third_party/boost
+	url = https://github.com/boostorg/boost
 [submodule "libeigen"]
 	path = third_party/libeigen
 	url = https://gitlab.com/libeigen/eigen.git

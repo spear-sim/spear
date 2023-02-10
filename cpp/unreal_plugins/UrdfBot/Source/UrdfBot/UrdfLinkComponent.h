@@ -12,7 +12,6 @@
 #include "UrdfLinkComponent.generated.h"
 
 class UUrdfJointComponent;
-
 struct UrdfLinkDesc;
 
 UCLASS()

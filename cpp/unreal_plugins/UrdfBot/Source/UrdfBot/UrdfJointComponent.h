@@ -10,9 +10,7 @@
 #include "UrdfJointComponent.generated.h"
 
 class UUrdfLinkComponent;
-
 enum class UrdfJointType;
-
 struct UrdfJointDesc;
 
 UCLASS()

@@ -4,6 +4,11 @@
 
 #include "SimulationController/CameraAgent.h"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <AI/NavDataGenerator.h>
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
@@ -98,23 +103,23 @@ void CameraAgent::cleanUpObjectReferences()
 std::map<std::string, Box> CameraAgent::getActionSpace() const
 {
     std::map<std::string, Box> action_space;
-    Box box;
-
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_pose")) {
+        Box box;
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {6}; // x,y,z in cms and then p,y,r in degs
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         action_space["set_pose"] = std::move(box);
     }
 
     if (Std::contains(action_components, "set_num_random_points")) {
+        Box box;
         box.low_ = std::numeric_limits<uint32_t>::lowest();
         box.high_ = std::numeric_limits<uint32_t>::max();
         box.shape_ = {1};
-        box.dtype_ = DataType::UInteger32;
+        box.datatype_ = DataType::UInteger32;
         action_space["set_num_random_points"] = std::move(box);
     }
 
@@ -124,8 +129,6 @@ std::map<std::string, Box> CameraAgent::getActionSpace() const
 std::map<std::string, Box> CameraAgent::getObservationSpace() const
 {
     std::map<std::string, Box> observation_space;
-    Box box;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
     std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
@@ -139,15 +142,14 @@ std::map<std::string, Box> CameraAgent::getObservationSpace() const
 std::map<std::string, Box> CameraAgent::getStepInfoSpace() const
 {
     std::map<std::string, Box> step_info_space;
-    Box box;
-
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "random_points")) {
+        Box box;
         box.low_ = std::numeric_limits<float>::lowest();
         box.high_ = std::numeric_limits<float>::max();
         box.shape_ = {-1, 3};
-        box.dtype_ = DataType::Float32;
+        box.datatype_ = DataType::Float32;
         step_info_space["random_points"] = std::move(box);
     }
 
@@ -270,11 +272,11 @@ void CameraAgent::buildNavMesh()
     //     Engine/Source/Runtime/Engine/Public/AI/NavDataGenerator.h
     //     Engine/Source/Runtime/NavigationSystem/Public/NavMesh/RecastNavMeshGenerator.h
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
-#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
-    if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ")) {
-        nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::Combine(
-            Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR")),
-            camera_actor_->GetWorld()->GetName()));
-    }
-#endif
+    #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
+        if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ")) {
+            nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::Combine(
+                Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR")),
+                camera_actor_->GetWorld()->GetName()));
+        }
+    #endif
 }

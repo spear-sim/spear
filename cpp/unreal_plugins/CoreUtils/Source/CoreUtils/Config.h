@@ -5,11 +5,11 @@
 #pragma once
 
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Std.h"
 #include "CoreUtils/YamlCpp.h"
 
 class COREUTILS_API Config
@@ -36,16 +36,7 @@ public:
     static TValue get(const std::string& key)
     {
         ASSERT(key != "");
-
-        std::stringstream ss(key);
-        std::string s;
-        std::vector<std::string> keys;
-
-        while (std::getline(ss, s, '.')) {
-            keys.push_back(s);
-        }
-
-        return getFromKeys<TValue>(keys);
+        return getFromKeys<TValue>(Std::tokenize(key, "."));
     }
 
     template <typename TValue>

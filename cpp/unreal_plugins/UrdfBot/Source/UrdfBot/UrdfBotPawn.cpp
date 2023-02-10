@@ -10,6 +10,7 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfBot/UrdfParser.h"
+#include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfRobotComponent.h"
 
 AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)

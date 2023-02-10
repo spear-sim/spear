@@ -10,17 +10,13 @@
 #include <CoreMinimal.h>
 #include <Components/SceneComponent.h>
 
-#include "UrdfBot/UrdfLinkComponent.h"
-
 #include "UrdfRobotComponent.generated.h"
 
 class UUrdfJointComponent;
-
-struct UrdfJointDesc;
+class UUrdfLinkComponent;
 struct UrdfLinkDesc;
 struct UrdfRobotDesc;
 
-// unreal representation for urdf robot
 UCLASS()
 class UUrdfRobotComponent : public USceneComponent
 {

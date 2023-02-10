@@ -4,8 +4,7 @@
 
 URDFBOT:
   URDFBOT_PAWN:
-    #file dir and file name for custom agent .urdf description file
-    URDF_DIR: ""
+    URDF_DIR: ""  # Directory to look for URDF file. Will be set automatically to a default location by spear.get_config().
     URDF_FILE: ""
     CAMERA_COMPONENT:
       POSITION_X: 0.0
