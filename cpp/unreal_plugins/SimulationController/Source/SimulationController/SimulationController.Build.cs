@@ -24,7 +24,7 @@ public class SimulationController : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Our ASSERT macro throws exceptions, and so does our templated function Config::get(...),
-        // because it depends yaml-cpp, which throws exceptions. So we need to enable exceptions
+        // because it depends on yaml-cpp, which throws exceptions. So we need to enable exceptions
         // everywhere. Note that boost::interprocess::mapped_region also throws exceptions, so we
         // would need to enable exceptions here even if we did not need them for our ASSERT macro
         // or Config::get(...).

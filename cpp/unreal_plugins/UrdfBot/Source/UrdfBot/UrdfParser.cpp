@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfParser.h"
+#include "UrdfBot/UrdfParser.h"
 
 #include <map>
 #include <string>
@@ -18,7 +18,8 @@
 UrdfRobotDesc UrdfParser::parse(const std::string& file_name)
 {
     FXmlFile file;
-    file.LoadFile(Unreal::toFString(file_name));
+    bool file_loaded = file.LoadFile(Unreal::toFString(file_name));
+    ASSERT(file_loaded);
 
     FXmlNode* robot_node = file.GetRootNode();
     ASSERT(robot_node->GetTag().Equals(TEXT("robot")));
@@ -82,7 +83,7 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
         material_desc.texture_      = Unreal::toStdString(texture_node->GetAttribute(TEXT("filename")));
         material_desc.is_reference_ = false;
     }
-    
+
     // material node must be either have non-empty name_ or valid color or texture value
     ASSERT(material_desc.name_ != "" || !material_desc.is_reference_);
 
@@ -92,7 +93,7 @@ UrdfMaterialDesc UrdfParser::parseMaterialNode(FXmlNode* material_node)
 UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
 {
     UrdfInertialDesc inertial_desc_;
-    
+
     FXmlNode* origin_node = inertial_node->FindChildNode(TEXT("origin"));
     if (origin_node) {
         inertial_desc_.origin_.SetLocation(parseVector(origin_node->GetAttribute(TEXT("xyz"))));
@@ -287,7 +288,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
 {
     UrdfRobotDesc robot_desc;
-    
+
     robot_desc.name_ = Unreal::toStdString(robot_node->GetAttribute(TEXT("name")));
 
     // parse all top-level URDF nodes into their own dictionaries
@@ -335,6 +336,7 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
         // each link should only be visited as a child link at most once
         ASSERT(!child_link_desc->has_parent_);
         child_link_desc->has_parent_ = true;
+        child_link_desc->parent_joint_desc_ = joint_desc;
     }
 
     // update pointers for root node and material node
@@ -351,7 +353,7 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
                 material_desc.material_desc_ = target_material_desc;
             }
         }
-        
+
         // find the root link
         if (!link_desc.has_parent_) {
             ASSERT(!robot_desc.root_link_desc_);

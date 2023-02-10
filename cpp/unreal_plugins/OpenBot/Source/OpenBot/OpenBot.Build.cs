@@ -20,7 +20,7 @@ public class OpenBot : ModuleRules
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
         // Our ASSERT macro throws exceptions, and so does our templated function Config::get(...),
-        // because it depends yaml-cpp, which throws exceptions. So we need to enable exceptions
+        // because it depends on yaml-cpp, which throws exceptions. So we need to enable exceptions
         // everywhere.
         bEnableExceptions = true;
 
