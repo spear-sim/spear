@@ -9,6 +9,7 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfBot/UrdfJointComponent.h"
+#include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfParser.h"
 
 void UUrdfRobotComponent::createChildComponents(UrdfRobotDesc* robot_desc)

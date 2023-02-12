@@ -4,6 +4,10 @@
 
 #include "UrdfBot/UrdfParser.h"
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include <XmlFile.h>
 #include <XmlNode.h>
 
@@ -14,8 +18,8 @@
 UrdfRobotDesc UrdfParser::parse(const std::string& file_name)
 {
     FXmlFile file;
-    bool is_file_loaded = file.LoadFile(Unreal::toFString(file_name));
-    ASSERT(is_file_loaded);
+    bool file_loaded = file.LoadFile(Unreal::toFString(file_name));
+    ASSERT(file_loaded);
 
     FXmlNode* robot_node = file.GetRootNode();
     ASSERT(robot_node->GetTag().Equals(TEXT("robot")));

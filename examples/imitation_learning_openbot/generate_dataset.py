@@ -44,29 +44,39 @@ if __name__ == "__main__":
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
     if args.debug:
         config.defrost()
+        config.SPEAR.RENDER_OFFSCREEN = True
         config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = True
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 1080
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 1920
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color", "segmentation", "depth"]
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 512
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 512
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.PITCH = -35.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.YAW = 45.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.ROLL = 0.0
+
+        # aim camera in a third-person vieww facing backwards at an angle
+        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
+        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
+        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
+        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.PITCH = -35.0
+        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.YAW = 45.0
+        # config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.ROLL = 0.0
+
         config.freeze()
     else:
         config.defrost()
         config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = False
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 120
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 160
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 128
+        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 128
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
         config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera"]
+
+        # aim camera in a third-person view facing forward
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = 0.0
+        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 5.0
+
         config.freeze()
 
     # load driving policy
@@ -133,7 +143,7 @@ if __name__ == "__main__":
             continue
 
         # send zero action to the agent and collect initial trajectory observations:
-        obs, _, _, env_step_info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+        obs, _, _, env_step_info = env.step(action={"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
         # initialize the driving policy with the desired trajectory 
         policy.reset(obs, env_step_info)
@@ -161,7 +171,7 @@ if __name__ == "__main__":
 
         # execute the desired number of iterations in a given episode
         num_iterations = 0
-        hit_obstacle   = False # flag raised when the vehicle collides with the environment
+        hit_obstacle = False
         for i in range(args.num_iterations_per_episode):
 
             print(f"[SPEAR | generate_dataset.py] Iteration {i} of {args.num_iterations_per_episode}")
@@ -172,14 +182,18 @@ if __name__ == "__main__":
             action, policy_step_info = policy.step(obs)
 
             # send control action to the agent and collect observations
-            obs, _, _, env_step_info = env.step({"apply_voltage": action})
+            obs, _, _, env_step_info = env.step(action={"apply_voltage": action})
 
             num_iterations = num_iterations + 1
 
             if not args.benchmark:
 
+                obs_final_color = obs["camera.final_color"]
+                assert obs_final_color.shape[2] == 4
+                obs_final_color = obs_final_color[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
+
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera.final_color"].squeeze())
+                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs_final_color)
 
                 # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training
                 # purposes. In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole
@@ -195,7 +209,8 @@ if __name__ == "__main__":
 
             # debug
             if args.debug:
-                show_obs(obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
+                show_obs(
+                    obs, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
 
             # termination conditions
             if env_step_info["task_step_info"]["hit_obstacle"]: 
@@ -266,13 +281,15 @@ if __name__ == "__main__":
                                 "cosYaw"        : compass_data[:num_iterations, 2]})
         df_goal.to_csv(os.path.join(sensor_dir, "goalLog.txt"), mode="w", index=False, header=True)
 
-        # create plots
-        plot_tracking_performance_spatial(
-            state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))
-        plot_tracking_performance_temporal(
-            state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
+        # Create plots. Note that creating these plots will resize our cv2 windows in an
+        # unpleasant way, so we only generate these plots if we're not in debug mode.
+        if not args.debug:
+            plot_tracking_performance_spatial(
+                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))
+            plot_tracking_performance_temporal(
+                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
 
-        if args.create_videos: # if desired, generate a video from the collected rgb observations 
+        if args.create_videos: # if desired, generate a video from the collected RGB observations 
             video_dir = os.path.join(args.dataset_dir, "videos")
             video_split_dir = os.path.join(video_dir, args.split + "_data")
             os.makedirs(video_split_dir, exist_ok=True)

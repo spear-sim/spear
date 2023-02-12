@@ -25,8 +25,9 @@ SPEAR:
 
   # The location of the Content directory corresponding to your Unreal executable. This is
   # only needed if DATA_DIR is specified, in which case it is required. For example:
-  # - macOS: /Users/mroberts/code/github/spear/code/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app/Contents/UE4/SpearSim/Content
   # - Windows: C:/Users/ADAS/repos/spear/code/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Content
+  # - macOS: /Users/mroberts/code/github/spear/code/unreal_projects/SpearSim/Standalone-Shipping/MacNoEditor/SpearSim-Mac-Shipping.app/Contents/UE4/SpearSim/Content
+  # - Linux: /home/mroberts/code/github/spear/unreal_projects/SpearSim/Standalone-Shipping/LinuxNoEditor/SpearSim/Content"
   CONTENT_DIR:
 
   # Set this parameter to true True to launch the executable in headless mode. Has no effect

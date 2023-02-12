@@ -7,10 +7,32 @@
 #include <algorithm>
 #include <cstring>
 #include <map>
+#include <string>
+
+#include <boost/tokenizer.hpp>
 
 class COREUTILS_API Std
 {
 public:
+
+    //
+    // String functions
+    //
+
+    static std::vector<std::string> tokenize(const std::string& string, const std::string& separator)
+    {
+        std::vector<std::string> tokens;
+        boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separator.c_str()));
+        for (auto& token : tokenizer) {
+            tokens.push_back(token);
+        }
+        return tokens;
+    }
+
+    //
+    // Container functions
+    //
+
     template <typename TContainer, typename TKey>
     static bool contains(const TContainer& container, const TKey& key)
     {
@@ -32,7 +54,7 @@ public:
             ASSERT(src_bytes % sizeof(TDest) == 0);
             size_t dest_elements = src_bytes / sizeof(TDest);
             dest.resize(dest_elements);
-            std::memcpy(&dest.at(0), &src.at(0), src_bytes);
+            std::memcpy(dest.data(), src.data(), src_bytes);
         }
         return dest;
     }

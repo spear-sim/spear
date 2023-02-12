@@ -17,7 +17,6 @@ class UNavigationSystemV1;
 class UWorld;
 
 class CameraSensor;
-
 struct Box;
 
 class CameraAgent : public Agent

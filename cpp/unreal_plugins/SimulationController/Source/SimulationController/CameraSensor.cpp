@@ -4,10 +4,17 @@
 
 #include "SimulationController/CameraSensor.h"
 
+#include <cstring>
+#include <map>
+#include <string>
 #include <utility>
+#include <vector>
+
+#include <boost/predef.h>
 
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
+#include <Containers/Array.h>
 #include <Engine/Engine.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
@@ -21,11 +28,12 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
+#include "SimulationController/BoostInterprocess.h"
 #include "SimulationController/Box.h"
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials";
 
-const std::map<std::string, float> OBSERVATION_COMPONENT_LOW = {
+const std::map<std::string, float> RENDER_PASS_LOW = {
     {"depth",           0.0f},
     {"depth_glsl",      0.0f},
     {"final_color",     0.0f},
@@ -33,7 +41,7 @@ const std::map<std::string, float> OBSERVATION_COMPONENT_LOW = {
     {"normals",         0.0f},
     {"segmentation",    0.0f}};
 
-const std::map<std::string, float> OBSERVATION_COMPONENT_HIGH = {
+const std::map<std::string, float> RENDER_PASS_HIGH = {
     {"depth",           std::numeric_limits<float>::max()},
     {"depth_glsl",      std::numeric_limits<float>::max()},
     {"final_color",     255.0f},
@@ -41,15 +49,15 @@ const std::map<std::string, float> OBSERVATION_COMPONENT_HIGH = {
     {"normals",         255.0f},
     {"segmentation",    255.0f}};
 
-const std::map<std::string, int> OBSERVATION_COMPONENT_NUM_CHANNELS = {
+const std::map<std::string, int> RENDER_PASS_NUM_CHANNELS = {
     {"depth",           1},
     {"depth_glsl",      1},
-    {"final_color",     3},
-    {"lens_distortion", 3},
-    {"normals",         3},
-    {"segmentation",    3}};
+    {"final_color",     4},
+    {"lens_distortion", 4},
+    {"normals",         4},
+    {"segmentation",    4}};
 
-const std::map<std::string, DataType> OBSERVATION_COMPONENT_DTYPE = {
+const std::map<std::string, DataType> RENDER_PASS_DATATYPE = {
     {"depth",           DataType::Float32},
     {"depth_glsl",      DataType::Float32},
     {"final_color",     DataType::UInteger8},
@@ -57,13 +65,21 @@ const std::map<std::string, DataType> OBSERVATION_COMPONENT_DTYPE = {
     {"normals",         DataType::UInteger8},
     {"segmentation",    DataType::UInteger8}};
 
+const std::map<std::string, int> RENDER_PASS_NUM_BYTES_PER_CHANNEL = {
+    {"depth",           4},
+    {"depth_glsl",      4},
+    {"final_color",     1},
+    {"lens_distortion", 1},
+    {"normals",         1},
+    {"segmentation",    1}};
+
 CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector<std::string>& render_pass_names, unsigned int width, unsigned int height)
 {
     ASSERT(camera_component);
 
     parent_actor_ = camera_component->GetWorld()->SpawnActor<AActor>();
     ASSERT(parent_actor_);
-
+    
     for (auto& render_pass_name : render_pass_names) {
         RenderPass render_pass;
 
@@ -105,6 +121,35 @@ CameraSensor::CameraSensor(UCameraComponent* camera_component, const std::vector
             initializeSceneCaptureComponentNonFinalColor(render_pass.scene_capture_component_, render_pass_name);
         }
 
+        // create shared_memory_object
+        if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
+            render_pass.shared_memory_num_bytes_ =
+                height * width * RENDER_PASS_NUM_CHANNELS.at(render_pass_name) * RENDER_PASS_NUM_BYTES_PER_CHANNEL.at(render_pass_name);
+            render_pass.shared_memory_name_ = "camera." + render_pass_name;
+
+            #if BOOST_OS_WINDOWS
+                render_pass.shared_memory_id_ = render_pass.shared_memory_name_; // don't use leading slash on Windows
+                boost::interprocess::windows_shared_memory windows_shared_memory(
+                    boost::interprocess::create_only,
+                    render_pass.shared_memory_id_.c_str(),
+                    boost::interprocess::read_write,
+                    render_pass.shared_memory_num_bytes_);
+                render_pass.shared_memory_mapped_region_ = boost::interprocess::mapped_region(windows_shared_memory, boost::interprocess::read_write);
+            #elif BOOST_OS_MACOS || BOOST_OS_UNIX
+                render_pass.shared_memory_id_ = "/" + render_pass.shared_memory_name_; // use leading slash on macOS and Linux
+                boost::interprocess::shared_memory_object::remove(render_pass.shared_memory_id_.c_str());
+                boost::interprocess::shared_memory_object shared_memory_object(
+                    boost::interprocess::create_only,
+                    render_pass.shared_memory_id_.c_str(),
+                    boost::interprocess::read_write);
+                shared_memory_object.truncate(render_pass.shared_memory_num_bytes_);
+                render_pass.shared_memory_mapped_region_ = boost::interprocess::mapped_region(shared_memory_object, boost::interprocess::read_write);
+            #else
+                #error
+            #endif
+        }
+
+        // update render_passes_
         render_passes_[render_pass_name] = std::move(render_pass);
     }
 
@@ -118,6 +163,12 @@ CameraSensor::~CameraSensor()
     width_ = -1;
 
     for (auto& render_pass : render_passes_) {
+        if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
+            #if BOOST_OS_MACOS || BOOST_OS_LINUX
+                boost::interprocess::shared_memory_object::remove(render_pass.second.shared_memory_id_.c_str());
+            #endif
+        }
+
         ASSERT(render_pass.second.scene_capture_component_);
         render_pass.second.scene_capture_component_->MarkPendingKill();
         render_pass.second.scene_capture_component_ = nullptr;
@@ -136,14 +187,16 @@ CameraSensor::~CameraSensor()
 std::map<std::string, Box> CameraSensor::getObservationSpace(const std::vector<std::string>& observation_components) const
 {
     std::map<std::string, Box> observation_space;
-    Box box;
 
     if (Std::contains(observation_components, "camera")) {
         for (auto& render_pass : render_passes_) {
-            box.low_ = OBSERVATION_COMPONENT_LOW.at(render_pass.first);
-            box.high_ = OBSERVATION_COMPONENT_HIGH.at(render_pass.first);
-            box.shape_ = {height_, width_, OBSERVATION_COMPONENT_NUM_CHANNELS.at(render_pass.first)};
-            box.dtype_ = OBSERVATION_COMPONENT_DTYPE.at(render_pass.first);
+            Box box;
+            box.low_ = RENDER_PASS_LOW.at(render_pass.first);
+            box.high_ = RENDER_PASS_HIGH.at(render_pass.first);
+            box.shape_ = {height_, width_, RENDER_PASS_NUM_CHANNELS.at(render_pass.first)};
+            box.datatype_ = RENDER_PASS_DATATYPE.at(render_pass.first);
+            box.use_shared_memory_ = Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY");
+            box.shared_memory_name_ = render_pass.second.shared_memory_name_;
             observation_space["camera." + render_pass.first] = std::move(box);
         }
     }
@@ -156,28 +209,37 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation(const s
     std::map<std::string, std::vector<uint8_t>> observation;
 
     if (Std::contains(observation_components, "camera")) {
+
         std::map<std::string, TArray<FColor>> render_data = getRenderData();
         for (auto& render_data_component : render_data) {
+
             if (render_data_component.first == "final_color"     ||
                 render_data_component.first == "lens_distortion" ||
                 render_data_component.first == "normals"         ||
                 render_data_component.first == "segmentation") {
 
-                std::vector<uint8_t> observation_vector(height_ * width_ * 3);
-                TArray<FColor>& render_data_component_array = render_data_component.second;
-
-                for (int i = 0; i < render_data_component_array.Num(); i++) {
-                    observation_vector[3 * i + 0] = render_data_component_array[i].R;
-                    observation_vector[3 * i + 1] = render_data_component_array[i].G;
-                    observation_vector[3 * i + 2] = render_data_component_array[i].B;
+                if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
+                    std::memcpy(
+                        render_passes_.at(render_data_component.first).shared_memory_mapped_region_.get_address(),
+                        render_data_component.second.GetData(),
+                        render_passes_.at(render_data_component.first).shared_memory_num_bytes_);
+                } else {
+                    observation["camera." + render_data_component.first] = Unreal::reinterpret_as<uint8_t>(render_data_component.second);
                 }
-
-                observation["camera." + render_data_component.first] = std::move(observation_vector);
 
             } else if (render_data_component.first == "depth" ||
                        render_data_component.first == "depth_glsl") {
-                std::vector<float> observation_vector = getFloatDepthFromColorDepth(render_data_component.second);
-                observation["camera." + render_data_component.first] = Std::reinterpret_as<uint8_t>(observation_vector);
+
+                std::vector<float> float_depth = getFloatDepthFromColorDepth(render_data_component.second);
+
+                if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
+                    std::memcpy(
+                        render_passes_.at(render_data_component.first).shared_memory_mapped_region_.get_address(),
+                        float_depth.data(),
+                        render_passes_.at(render_data_component.first).shared_memory_num_bytes_);
+                } else {
+                    observation["camera." + render_data_component.first] = Std::reinterpret_as<uint8_t>(float_depth);
+                }
 
             } else {
                 ASSERT(false);
@@ -338,21 +400,25 @@ std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const
         FRHITexture* rhi_texture = target_resource->GetRenderTargetTexture();
         ASSERT(rhi_texture);
         FIntRect rect(0, 0, target_resource->GetSizeXY().X, target_resource->GetSizeXY().Y);
-        TArray<FColor> render_data_component_array;
+        TArray<FColor> render_data_component;
         FReadSurfaceDataFlags read_surface_data_flags(RCM_UNorm, CubeFace_MAX);
         read_surface_data_flags.SetLinearToGamma(false);
 
-        ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand) (
-            [rhi_texture, rect, &render_data_component_array, read_surface_data_flags](FRHICommandListImmediate& rhi_command_list_immediate) -> void {
-                rhi_command_list_immediate.ReadSurfaceData(rhi_texture, rect, render_data_component_array, read_surface_data_flags);
-            }
-        );
+        if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.SKIP_READ_SURFACE_DATA")) {
+            render_data_component.SetNum(target_resource->GetSizeXY().X*target_resource->GetSizeXY().Y);
+        } else {
+            ENQUEUE_RENDER_COMMAND(ReadSurfaceDataCommand) (
+                [rhi_texture, rect, &render_data_component, read_surface_data_flags](FRHICommandListImmediate& rhi_command_list_immediate) -> void {
+                    rhi_command_list_immediate.ReadSurfaceData(rhi_texture, rect, render_data_component, read_surface_data_flags);
+                }
+            );
 
-        FRenderCommandFence render_command_fence;
-        render_command_fence.BeginFence(true);
-        render_command_fence.Wait(true);
+            FRenderCommandFence render_command_fence;
+            render_command_fence.BeginFence(true);
+            render_command_fence.Wait(true);
+        }
 
-        render_data[render_pass.first] = std::move(render_data_component_array);
+        render_data[render_pass.first] = std::move(render_data_component);
     }
 
     return render_data;

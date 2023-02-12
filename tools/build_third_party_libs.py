@@ -27,9 +27,7 @@ if __name__ == "__main__":
     if args.c_compiler is None:
         if sys.platform == "win32":
             c_compiler = "cl"
-        elif sys.platform == "darwin":
-            c_compiler = "clang"
-        elif sys.platform == "linux":
+        elif sys.platform in ["darwin", "linux"]:
             c_compiler = "clang"
         else:
             assert False
@@ -39,9 +37,7 @@ if __name__ == "__main__":
     if args.cxx_compiler is None:
         if sys.platform == "win32":
             cxx_compiler = "cl"
-        elif sys.platform == "darwin":
-            cxx_compiler = "clang++"
-        elif sys.platform == "linux":
+        elif sys.platform in ["darwin", "linux"]:
             cxx_compiler = "clang++"
         else:
             assert False
