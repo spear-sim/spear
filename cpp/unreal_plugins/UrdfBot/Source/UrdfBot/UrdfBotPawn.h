@@ -16,9 +16,9 @@
 class UCameraComponent;
 class UUrdfRobotComponent;
 
-struct InputAxisBinding
+struct KeyboardAction
 {
-    FName axis_;
+    std::string axis_;
     std::map<std::string, float> apply_action_;
     std::map<std::string, float> add_action_;
 };
@@ -38,5 +38,5 @@ public:
     UCameraComponent* camera_component_ = nullptr;
 
 private: 
-    std::vector<InputAxisBinding> input_axis_bindings_;
+    std::vector<KeyboardAction> keyboard_actions_;
 };

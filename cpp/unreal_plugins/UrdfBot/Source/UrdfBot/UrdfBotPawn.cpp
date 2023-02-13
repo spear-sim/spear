@@ -51,16 +51,16 @@ void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
 
     UPlayerInput* player_input = GetWorld()->GetFirstPlayerController()->PlayerInput;
     auto keyboard_actions = Config::get<std::map<std::string, std::map<std::string, std::map<std::string, float>>>>("URDFBOT.URDFBOT_PAWN.KEYBOARD_ACTIONS");
-    for (auto& keyboard_acton : keyboard_actions) {
-        InputAxisBinding input_axis_binding;
-        input_axis_binding.axis_ = FName(GetName() + "::" + keyboard_acton.first.c_str());
-        input_axis_binding.apply_action_ = keyboard_acton.second["APPLY_ACTION"];
-        input_axis_binding.add_action_ = keyboard_acton.second["ADD_ACTION"];
+    for (auto& keyboard_action_config : keyboard_actions) {
+        KeyboardAction keyboard_action;
+        keyboard_action.axis_ = Unreal::toStdString(GetName()) + "::" + keyboard_action_config.first;
+        keyboard_action.apply_action_ = keyboard_action_config.second.at("APPLY_ACTION");
+        keyboard_action.add_action_ = keyboard_action_config.second.at("ADD_ACTION");
 
-        player_input->AddAxisMapping(FInputAxisKeyMapping(input_axis_binding.axis_, FKey(FName(keyboard_acton.first.c_str())), 1));
-        input_component->BindAxis(input_axis_binding.axis_);
+        player_input->AddAxisMapping(FInputAxisKeyMapping(Unreal::toFName(keyboard_action.axis_), FKey(Unreal::toFName(keyboard_action_config.first)), 1));
+        input_component->BindAxis(Unreal::toFName(keyboard_action.axis_));
 
-        input_axis_bindings_.push_back(input_axis_binding);
+        keyboard_actions_.push_back(keyboard_action);
     }
 }
 
@@ -68,11 +68,11 @@ void AUrdfBotPawn::Tick(float delta_time)
 {
     Super::Tick(delta_time);
 
-    for (auto& input_axis_binding : input_axis_bindings_) {
-        float axis_value = InputComponent->GetAxisValue(input_axis_binding.axis_);
+    for (auto& keyboard_action : keyboard_actions_) {
+        float axis_value = InputComponent->GetAxisValue(Unreal::toFName(keyboard_action.axis_));
         if (axis_value > 0.0f) {
-            robot_component_->applyAction(input_axis_binding.apply_action_);
-            robot_component_->addAction(input_axis_binding.add_action_);
+            robot_component_->applyAction(keyboard_action.apply_action_);
+            robot_component_->addAction(keyboard_action.add_action_);
         }
     }
 }

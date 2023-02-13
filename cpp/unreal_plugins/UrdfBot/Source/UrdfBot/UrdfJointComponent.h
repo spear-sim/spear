@@ -27,7 +27,6 @@ public:
     UUrdfLinkComponent* parent_link_;
     UUrdfLinkComponent* child_link_;
 
-private:
     UrdfJointType joint_type_;
     UrdfJointControlType control_type_;
 };
