@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include <CoreMinimal.h>
 #include <GameFramework/Pawn.h>
 
@@ -11,6 +15,13 @@
 
 class UCameraComponent;
 class UUrdfRobotComponent;
+
+struct KeyboardAction
+{
+    std::string axis_;
+    std::map<std::string, float> apply_action_;
+    std::map<std::string, float> add_action_;
+};
 
 UCLASS()
 class URDFBOT_API AUrdfBotPawn : public APawn
@@ -25,4 +36,7 @@ public:
 
     UUrdfRobotComponent* robot_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
+
+private: 
+    std::vector<KeyboardAction> keyboard_actions_;
 };

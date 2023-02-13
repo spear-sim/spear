@@ -10,6 +10,7 @@
 #include "UrdfJointComponent.generated.h"
 
 class UUrdfLinkComponent;
+enum class UrdfJointControlType;
 enum class UrdfJointType;
 struct UrdfJointDesc;
 
@@ -20,6 +21,12 @@ class UUrdfJointComponent : public UPhysicsConstraintComponent
 public:
     void initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
 
-private:
+    void applyAction(float action);
+    void addAction(float action);
+
+    UUrdfLinkComponent* parent_link_;
+    UUrdfLinkComponent* child_link_;
+
     UrdfJointType joint_type_;
+    UrdfJointControlType control_type_;
 };

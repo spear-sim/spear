@@ -19,6 +19,10 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     ASSERT(child_link_component);
 
     joint_type_ = joint_desc->type_;
+    control_type_ = joint_desc->control_type_;
+
+    parent_link_ = parent_link_component;
+    child_link_ = child_link_component;
 
     ConstraintInstance.ProfileInstance.ConeLimit.Swing1Motion = EAngularConstraintMotion::ACM_Locked;
     ConstraintInstance.ProfileInstance.ConeLimit.Swing2Motion = EAngularConstraintMotion::ACM_Locked;
@@ -34,12 +38,11 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     SetRelativeRotation(FRotationMatrix::MakeFromX(joint_desc->origin_.GetRotation().Rotator().RotateVector(joint_desc->axis_)).Rotator());
 
     switch (joint_desc->type_) {
-    case UrdfJointType::Revolute:
-        {
+        case UrdfJointType::Revolute: {
             float twist_limit_angle = FMath::RadiansToDegrees(joint_desc->upper_ - joint_desc->lower_) * 0.5f;
-            float spring = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm * 10.0f;
+            float spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
             float damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
-            float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm * 10.0f;
+            float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm;
 
             // use twist degree for single angular freedom with best PhysX optimization
             ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, twist_limit_angle);
@@ -48,11 +51,10 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
             ConstraintInstance.SetAngularDriveParams(spring, damping, force_limit);
             break;
         }
-    case UrdfJointType::Continuous:
-        {
-            float spring = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm * 10.0f;
+        case UrdfJointType::Continuous: {
+            float spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
             float damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
-            float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm * 10.0f;
+            float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm;
 
             // use twist degree for single angular freedom with best PhysX optimization
             ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Free, 0.0f);
@@ -61,10 +63,9 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
             ConstraintInstance.SetAngularDriveParams(spring, damping, force_limit);
             break;
         }
-    case UrdfJointType::Prismatic:
-        {
+        case UrdfJointType::Prismatic: {
             float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm;
-            float spring = joint_desc->damping_ * m_to_cm * m_to_cm * 10.0f;
+            float spring = joint_desc->spring_ * m_to_cm * m_to_cm;
             float damping = joint_desc->damping_ * m_to_cm * m_to_cm;
             float force_limit = joint_desc->effort_ * m_to_cm * m_to_cm;
 
@@ -73,10 +74,10 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
             ConstraintInstance.SetLinearPositionDrive(true, false, false);
             break;
         }
-    case UrdfJointType::Fixed:
-        break;
-    case UrdfJointType::Floating:
-        {
+        case UrdfJointType::Fixed: {
+            break;
+        }
+        case UrdfJointType::Floating: {
             ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
             ConstraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
             ConstraintInstance.SetLinearZLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
@@ -85,19 +86,93 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
             ConstraintInstance.SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Free, 0.0f);
             break;
         }
-    case UrdfJointType::Planar:
-        {
+        case UrdfJointType::Planar: {
             float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm;
 
             ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
             ConstraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
             break;
         }
-    default:
-        ASSERT(false);
-        break;
+        default: {
+            ASSERT(false);
+            break;
+        }
     }
 
     SetDisableCollision(true);
     SetConstrainedComponents(parent_link_component, NAME_None, child_link_component, NAME_None);
+}
+
+void UUrdfJointComponent::addAction(float action)
+{
+    switch (control_type_) {
+        case UrdfJointControlType::Position:
+            switch (joint_type_) {
+                case UrdfJointType::Continuous:
+                case UrdfJointType::Revolute:
+                    SetAngularOrientationTarget(FRotator(0, 0, ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Roll + action));
+                    break;
+                case UrdfJointType::Prismatic:
+                    SetLinearPositionTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X + action, 0, 0));
+                    break;
+                default:
+                    ASSERT(false);
+            }
+            break;
+        case UrdfJointControlType::Velocity:
+            switch (joint_type_) {
+                case UrdfJointType::Continuous:
+                case UrdfJointType::Revolute:
+                    SetAngularVelocityTarget(FVector(ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X + action, 0, 0));
+                    break;
+                case UrdfJointType::Prismatic:
+                    SetLinearVelocityTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X + action, 0, 0));
+                    break;
+                default:
+                    ASSERT(false);
+            }
+            break;
+        case UrdfJointControlType::Torque:
+            // TODO
+            break;
+        default:
+            ASSERT(false);
+    }
+}
+
+void UUrdfJointComponent::applyAction(float action)
+{
+    switch (control_type_) {
+        case UrdfJointControlType::Position:
+            switch (joint_type_) {
+                case UrdfJointType::Continuous:
+                case UrdfJointType::Revolute:
+                    SetAngularOrientationTarget(FRotator(0, 0, action));
+                    break;
+                case UrdfJointType::Prismatic:
+                    SetLinearPositionTarget(FVector(action, 0, 0));
+                    break;
+                default:
+                    ASSERT(false);
+            }
+            break;
+        case UrdfJointControlType::Velocity:
+            switch (joint_type_) {
+                case UrdfJointType::Continuous:
+                case UrdfJointType::Revolute:
+                    SetAngularVelocityTarget(FVector(action, 0, 0));
+                    break;
+                case UrdfJointType::Prismatic:
+                    SetLinearVelocityTarget(FVector(action, 0, 0));
+                    break;
+                default:
+                    ASSERT(false);
+            }
+            break;
+        case UrdfJointControlType::Torque:
+            // TODO
+            break;
+        default:
+            ASSERT(false);
+    }
 }

@@ -6,6 +6,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include <CoreMinimal.h>
 #include <Components/SceneComponent.h>
@@ -22,8 +23,10 @@ class UUrdfRobotComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
-    void initializeComponent(UrdfRobotDesc* robot_desc);
     void createChildComponents(UrdfRobotDesc* robot_desc);
+
+    void applyAction(std::map<std::string, float> action);
+    void addAction(std::map<std::string, float> action);
 
     UUrdfLinkComponent* root_link_component_;
     std::map<std::string, UUrdfLinkComponent*> link_components_;

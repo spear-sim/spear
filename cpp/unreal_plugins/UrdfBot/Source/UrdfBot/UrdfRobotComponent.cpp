@@ -4,16 +4,13 @@
 
 #include "UrdfBot/UrdfRobotComponent.h"
 
+#include <DrawDebugHelpers.h>
+
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfBot/UrdfJointComponent.h"
 #include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfParser.h"
-
-void UUrdfRobotComponent::initializeComponent(UrdfRobotDesc* robot_desc)
-{
-    ASSERT(robot_desc);
-}
 
 void UUrdfRobotComponent::createChildComponents(UrdfRobotDesc* robot_desc)
 {
@@ -54,5 +51,23 @@ void UUrdfRobotComponent::createChildComponents(UrdfLinkDesc* parent_link_desc, 
         joint_components_[child_joint_desc->name_] = child_joint_component;
 
         createChildComponents(child_link_desc, child_link_component);
+    }
+}
+
+void UUrdfRobotComponent::applyAction(std::map<std::string, float> actions)
+{
+    for (auto& action : actions) {
+        UUrdfJointComponent* joint_component = joint_components_.at(action.first);
+        ASSERT(joint_component);
+        joint_component->applyAction(action.second);
+    }
+}
+
+void UUrdfRobotComponent::addAction(std::map<std::string, float> actions)
+{
+    for (auto& action : actions) {
+        UUrdfJointComponent* joint_component = joint_components_.at(action.first);
+        ASSERT(joint_component);
+        joint_component->addAction(action.second);
     }
 }
