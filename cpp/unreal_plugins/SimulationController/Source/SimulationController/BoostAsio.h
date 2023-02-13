@@ -7,5 +7,5 @@
 #include "CoreUtils/SuppressCompilerWarnings.h"
 
 BEGIN_SUPPRESS_COMPILER_WARNINGS
-#include <yaml-cpp/yaml.h>
+#include <boost/asio.hpp>
 END_SUPPRESS_COMPILER_WARNINGS

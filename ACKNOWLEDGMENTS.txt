@@ -34,7 +34,7 @@ THE SOFTWARE.
 
 _____________________
 
-ASIO Development Team (asio)
+Boost Development Team (Boost)
 
 Boost Software License - Version 1.0 - August 17th, 2003
 
@@ -883,12 +883,12 @@ OpenCV Development Team (OpenCV)
 
 _____________________
 
-PPK_ASSERT Development Team (PPK_ASSERT)
+Gregory Pakosz (PPK_ASSERT)
 
         DO WHAT THE F*** YOU WANT TO PUBLIC LICENSE 
                     Version 2, December 2004 
 
- Copyright (C) 2004 Sam Hocevar <sam@hocevar.net> 
+ Copyright (C) 2004 Gregory Pakosz
 
  Everyone is permitted to copy and distribute verbatim or modified 
  copies of this license document, and changing it is allowed as long 

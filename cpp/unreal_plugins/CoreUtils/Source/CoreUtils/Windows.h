@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include <boost/predef.h>
+
 // Unreal and Windows have different definitions for the TEXT macro, so save its state and then restore it.
-#ifdef _MSC_VER
+#if BOOST_OS_WINDOWS
     #pragma push_macro("TEXT")
     #undef TEXT
 
