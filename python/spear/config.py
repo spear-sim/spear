@@ -13,6 +13,7 @@ SPEAR_ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_CONFIG_FILES = [
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.core_utils.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.openbot.yaml")),
+    os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.urdfbot.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.simulation_controller.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.spear.yaml")) ]
 
@@ -35,6 +36,8 @@ def get_config(user_config_files):
     for c in user_config_files:
         config.merge_from_file(c)
 
+    config.URDFBOT.URDFBOT_PAWN.URDF_DIR = os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "urdf"))
+    config.URDFBOT.URDFBOT_PAWN.URDF_FILE = "locobot.xml"
     config.freeze()
 
     return config
