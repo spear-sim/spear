@@ -24,46 +24,47 @@ if __name__ == "__main__":
 
     repo_dir = os.path.join(os.path.realpath(args.temp_dir), "spear")
 
-    # # remove any contents already present for a clean build
-    # if os.path.exists(repo_dir):
-    #     shutil.rmtree(repo_dir)
-    #     os.makedirs(repo_dir)
+    # need conda_path on unix systems
+    if sys.platform in [ "darwin", "linux"]:
+        assert args.conda_path
 
-    # # clone repo along with submodules  
-    # cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", repo_dir]
-    # print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
-    # cmd_result = subprocess.run(cmd)
-    # assert cmd_result.returncode == 0
+    # remove any contents already present for a clean build
+    if os.path.exists(repo_dir):
+        shutil.rmtree(repo_dir)
+        os.makedirs(repo_dir)
 
-    # # change working directory
-    # cwd = os.getcwd()
-    # print(f"[SPEAR | build.py] Changing working directory to {os.path.join(repo_dir, 'tools')}")
-    # os.chdir(os.path.join(repo_dir, "tools"))
+    # clone repo along with submodules  
+    cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", repo_dir]
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
+    cmd_result = subprocess.run(cmd)
+    assert cmd_result.returncode == 0
 
-    # # build thirdparty libs
-    # if sys.platform == "win32":
-    #     cmd = ["python", "build_third_party_libs.py", "--num_parallel_jobs", f"{args.num_parallel_jobs}"]
-    # elif sys.platform in ["linux", "darwin"]:    
-    #     cmd = [f"python build_third_party_libs.py --num_parallel_jobs {args.num_parallel_jobs}"]
-    # else:
-    #     assert False
-    # print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
-    # cmd_result = subprocess.run(cmd, shell=True)
-    # assert cmd_result.returncode == 0
+    # change working directory
+    cwd = os.getcwd()
+    print(f"[SPEAR | build.py] Changing working directory to {os.path.join(repo_dir, 'tools')}")
+    os.chdir(os.path.join(repo_dir, "tools"))
 
-    # create symbolic links
+    # build thirdparty libs
     if sys.platform == "win32":
-        cmd = ["conda", "activate", f"{args.conda_env}&", "python", "create_symbolic_links.py"]
-    elif sys.platform in ["linux", "darwin"]:
-        # cmd = [f". {args.conda_path}; conda activate {args.conda_env}; python create_symbolic_links.py"]
-        cmd = ["conda activate {args.conda_env}; python create_symbolic_links.py"]
+        cmd = ["python", "build_third_party_libs.py", "--num_parallel_jobs", f"{args.num_parallel_jobs}"]
+    elif sys.platform in ["linux", "darwin"]:    
+        cmd = [f"python build_third_party_libs.py --num_parallel_jobs {args.num_parallel_jobs}"]
     else:
         assert False
     print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd, shell=True)
     assert cmd_result.returncode == 0
 
-    quit()
+    # create symbolic links
+    if sys.platform == "win32":
+        cmd = ["conda", "activate", f"{args.conda_env}&", "python", "create_symbolic_links.py"]
+    elif sys.platform in ["linux", "darwin"]:
+        cmd = [f". {args.conda_path}; conda activate {args.conda_env}; python create_symbolic_links.py"]
+    else:
+        assert False
+    print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
+    cmd_result = subprocess.run(cmd, shell=True)
+    assert cmd_result.returncode == 0
 
     # generate config file
     if sys.platform == "win32":
@@ -107,7 +108,7 @@ if __name__ == "__main__":
     print(f"[SPEAR | build.py] Changing working directory to {cwd}")
     os.chdir(cwd)
 
-    print(f"[SPEAR | build.py] Successfully built SpearSim for {args.target_platform} platform for {args.config_mode} mode.")
+    print(f"[SPEAR | build.py] Successfully built SpearSim for {args.target_platform} platform with {args.config_mode} mode.")
 
     # zip the exectuable for distribution
     if sys.platform == "win32":
@@ -122,7 +123,7 @@ if __name__ == "__main__":
     os.makedirs(args.output_dir, exist_ok=True)
 
     # TODO: need to codesign on macOS
-    file = shutil.make_archive(base_name=os.path.join(args.output_dir, f"SpearSim-{args.output_tag}-{args.target_platform}-{args.config_mode}"), format='zip', root_dir=os.path.join(args.output_dir, platform_dir_name))
+    file = shutil.make_archive(base_name=os.path.join(args.output_dir, f"SpearSim-{args.output_tag}-{args.target_platform}-{args.config_mode}"), format='zip', root_dir=os.path.join(args.temp_dir, f"SpearSim-{args.config_mode}", platform_dir_name))
     shutil.rmtree(os.path.join(args.output_dir, platform_dir_name))
 
     print(f"[SPEAR | build.py] Successfully created a zip file at {file}, ready for distribution.")
