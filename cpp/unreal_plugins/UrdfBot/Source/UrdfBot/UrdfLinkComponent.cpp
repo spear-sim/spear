@@ -65,8 +65,8 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
     GetBodyInstance()->CustomSleepThresholdMultiplier = 0.f;
 
     // set physics body's solver iteration count to be better stabalized with more CPU intensive
-    GetBodyInstance()->PositionSolverIterationCount = Config::get<float>("URDFBOT.URDF_LINK_COMPONENT.POSITION_IITERATION_COUNT");
-    GetBodyInstance()->VelocitySolverIterationCount = Config::get<float>("URDFBOT.URDF_LINK_COMPONENT.VELOCITY_IITERATION_COUNT");
+    GetBodyInstance()->PositionSolverIterationCount = Config::get<float>("URDFBOT.URDF_LINK_COMPONENT.POSITION_SOLVER_ITERATION_COUNT");
+    GetBodyInstance()->VelocitySolverIterationCount = Config::get<float>("URDFBOT.URDF_LINK_COMPONENT.VELOCITY_SOLVER_ITERATION_COUNT");
 
     // set mass
     ASSERT(link_desc->inertial_desc_.mass_ > 0);

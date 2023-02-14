@@ -30,11 +30,19 @@ class URDFBOT_API AUrdfBotPawn : public APawn
 public:
     AUrdfBotPawn(const FObjectInitializer& object_initializer);
 
+    // This initialize() method must be called before an AUrdfBotPawn instance is used. This style of deferred initialization
+    // is required because if we attempt to call urdf_robot_component_->createChildComponents(...) from inside this constructor
+    // during cooking, we get the following error:
+    //     Error: FBodyInstance::GetSimplePhysicalMaterial : GEngine not initialized! Cannot call this during
+    //     native CDO construction, wrap with if(!HasAnyFlags(RF_ClassDefaultObject)) or move out of constructor,
+    //     material parameters will not be correct.
+    void initialize();
+
     // APawn interface
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
     void Tick(float delta_time) override;
 
-    UUrdfRobotComponent* robot_component_ = nullptr;
+    UUrdfRobotComponent* urdf_robot_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
 
 private: 

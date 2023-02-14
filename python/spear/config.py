@@ -33,6 +33,10 @@ def get_config(user_config_files):
     for c in DEFAULT_CONFIG_FILES:
         config.merge_from_file(c)
 
+    # In some cases, we need to update specific config values with information that is available
+    # at runtime, but isn't available when we are authoring our default_config.*.yaml files.
+    config.URDFBOT.URDFBOT_PAWN.URDF_DIR = os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "urdf"))
+
     for c in user_config_files:
         config.merge_from_file(c)
 

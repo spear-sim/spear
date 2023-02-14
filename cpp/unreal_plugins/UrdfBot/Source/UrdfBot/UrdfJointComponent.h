@@ -24,8 +24,8 @@ public:
     void applyAction(float action);
     void addAction(float action);
 
-    UUrdfLinkComponent* parent_link_;
-    UUrdfLinkComponent* child_link_;
+    UUrdfLinkComponent* parent_link_component_;
+    UUrdfLinkComponent* child_link_component_;
 
     UrdfJointType joint_type_;
     UrdfJointControlType control_type_;
