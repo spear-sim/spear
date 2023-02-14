@@ -43,4 +43,3 @@ def get_config(user_config_files):
     config.freeze()
 
     return config
-    
