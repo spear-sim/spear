@@ -23,7 +23,7 @@ SIMULATION_CONTROLLER:
     OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
     STEP_INFO_COMPONENTS: []
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -38,7 +38,7 @@ SIMULATION_CONTROLLER:
       GOAL_ACTOR_NAME: "GoalActor"
     CAMERA:
       ACTOR_NAME: "CameraActor"
-      RENDER_PASSES: ["final_color"] # "final_color", "depth", "normals"
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0

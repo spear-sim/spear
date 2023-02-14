@@ -23,7 +23,6 @@ class UWorld;
 
 class CameraSensor;
 class UTickEvent;
-
 struct Box;
 
 class SphereAgent : public Agent

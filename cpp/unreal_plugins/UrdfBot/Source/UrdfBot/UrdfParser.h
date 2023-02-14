@@ -8,8 +8,6 @@
 #include <string>
 #include <vector>
 
-#include <CoreMinimal.h>
-
 class FXmlNode;
 
 struct UrdfJointDesc;
@@ -32,6 +30,14 @@ enum class UrdfJointType
     Fixed,
     Floating,
     Planar,
+};
+
+enum class UrdfJointControlType
+{
+    Invalid,
+    Position,
+    Velocity,
+    Torque,
 };
 
 enum class CalibrationType
@@ -99,7 +105,8 @@ struct UrdfLinkDesc
     std::vector<UrdfCollisionDesc> collision_descs_;
 
     // derived data
-    bool has_parent_ = false;
+    bool has_parent_                  = false;
+    UrdfJointDesc* parent_joint_desc_ = nullptr;
     std::vector<UrdfLinkDesc*> child_link_descs_;
     std::vector<UrdfJointDesc*> child_joint_descs_;
 };
@@ -115,8 +122,10 @@ struct UrdfJointDesc
     FVector axis_      = FVector(1.0f, 0.0f, 0.0f);
 
     // dynamics
-    float damping_  = 0.0f;
-    float friction_ = 0.0f;
+    UrdfJointControlType control_type_ = UrdfJointControlType::Invalid;
+    float spring_                      = 0.0f;
+    float damping_                     = 0.0f;
+    float friction_                    = 0.0f;
 
     // calibration
     CalibrationType calibration_type_ = CalibrationType::Invalid;

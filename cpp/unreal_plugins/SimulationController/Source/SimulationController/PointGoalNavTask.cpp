@@ -4,10 +4,13 @@
 
 #include "SimulationController/PointGoalNavTask.h"
 
+#include <Delegates/IDelegateInstance.h>
 #include <EngineUtils.h>
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Materials/Material.h>
+#include <Math/RandomStream.h>
+#include <Math/Vector.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
@@ -140,13 +143,13 @@ std::map<std::string, Box> PointGoalNavTask::getStepInfoSpace() const
     box.low_ = 0.0f;
     box.high_ = 1.0f;
     box.shape_ = {1};
-    box.dtype_ = DataType::Boolean;
+    box.datatype_ = DataType::Boolean;
     step_info_space["hit_goal"] = std::move(box);
 
     box.low_ = 0.0f;
     box.high_ = 1.0f;
     box.shape_ = {1};
-    box.dtype_ = DataType::Boolean;
+    box.datatype_ = DataType::Boolean;
     step_info_space["hit_obstacle"] = std::move(box);
 
     return step_info_space;

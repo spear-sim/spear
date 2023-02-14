@@ -4,11 +4,16 @@
 
 #include "SimulationController/ImuSensor.h"
 
+#include <array>
+#include <random>
+
 #include <Components/PrimitiveComponent.h>
 #include <DrawDebugHelpers.h>
+#include <Engine/EngineBaseTypes.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <Math/Vector.h>
 #include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"

@@ -135,7 +135,7 @@ if __name__ == "__main__":
             continue
         
         # send zero action to the agent and collect initial trajectory observations:
-        obs, _, _, env_step_info = env.step({"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+        obs, _, _, env_step_info = env.step(action={"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
 
         if args.benchmark:
             start_time_seconds = time.time()
@@ -170,14 +170,18 @@ if __name__ == "__main__":
             action, policy_step_info = policy.step(obs, goal[0:2])
 
             # send control action to the agent and collect observations
-            obs, _, _, env_step_info = env.step({"apply_voltage": action})
+            obs, _, _, env_step_info = env.step(action={"apply_voltage": action})
 
             num_iterations = num_iterations + 1
             
             if not args.benchmark:
 
+                obs_final_color = obs["camera.final_color"]
+                assert obs_final_color.shape[2] == 4
+                obs_final_color = obs_final_color[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
+
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs["camera.final_color"].squeeze())
+                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs_final_color)
 
                 # populate buffer and result data file
                 state_data[i] = obs["state_data"]
@@ -233,7 +237,7 @@ if __name__ == "__main__":
                 os.path.join(video_dir, "%04d.mp4" % episode["index"]),
                 rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
         
-    # close the current scene and give the system a bit of time before switching to the next scene.
+    # close the current scene
     env.close()
 
     print("[SPEAR | run_trained_policy.py] Done.")
