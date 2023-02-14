@@ -4,19 +4,23 @@
 
 #include "UrdfBot/UrdfBotPawn.h"
 
+#include <iostream>
+
 #include <Camera/CameraComponent.h>
 #include <Components/InputComponent.h>
 #include <GameFramework/PlayerInput.h>
 
 #include "CoreUtils/Config.h"
-#include "CoreUtils/Unreal.h"
 #include "CoreUtils/Std.h"
+#include "CoreUtils/Unreal.h"
 #include "UrdfBot/UrdfParser.h"
 #include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfRobotComponent.h"
 
 AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
+    std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::AOpenBotPawn" << std::endl;
+
     // Create a URDF robot component, but don't actually load the URDF file and initialize the component until we call
     // AUrdfBotPawn::initialize(). This style of deferred initialization is required because if we attempt to call
     // urdf_robot_component_->createChildComponents(...) from inside this constructor during cooking, we get the following
