@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # build thirdparty libs
     if sys.platform == "win32":
         cmd = ["python", "build_third_party_libs.py", "--num_parallel_jobs", f"{args.num_parallel_jobs}"]
-    elif sys.platform in ["linux", "darwin"]:    
+    elif sys.platform in ["darwin", "linux"]:
         cmd = [f"python build_third_party_libs.py --num_parallel_jobs {args.num_parallel_jobs}"]
     else:
         assert False
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     # create symbolic links
     if sys.platform == "win32":
         cmd = ["conda", "activate", f"{args.conda_env}&", "python", "create_symbolic_links.py"]
-    elif sys.platform in ["linux", "darwin"]:
+    elif sys.platform in ["darwin", "linux"]:
         cmd = [f". {args.conda_path}; conda activate {args.conda_env}; python create_symbolic_links.py"]
     else:
         assert False
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     # generate config file
     if sys.platform == "win32":
        cmd = ["conda", "activate", f"{args.conda_env}&", "python", "generate_config.py"]
-    elif sys.platform in ["linux", "darwin"]: 
+    elif sys.platform in ["darwin", "linux"]:
         cmd = [f". {args.conda_path}; conda activate {args.conda_env}; python generate_config.py"]
     else:
         assert False
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # build the executable
     if sys.platform == "win32":
         build_exe = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat")
-    elif sys.platform in ["linux", "darwin"]:
+    elif sys.platform in ["darwin", "linux"]:
         build_exe = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh")
     else:
         assert False
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         "-targetplatform=" + args.target_platform,
         "-target=SpearSim",
         "-archivedirectory=" + os.path.join(args.temp_dir, f"SpearSim-{args.config_mode}"),
-        "-clientconfig=" + args.config_mode,
+        "-clientconfig=" + args.config_mode
     ]
     print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd)
@@ -124,6 +124,6 @@ if __name__ == "__main__":
 
     # TODO: need to codesign on macOS
     file = shutil.make_archive(base_name=os.path.join(args.output_dir, f"SpearSim-{args.output_tag}-{args.target_platform}-{args.config_mode}"), format='zip', root_dir=os.path.join(args.temp_dir, f"SpearSim-{args.config_mode}", platform_dir_name))
-    shutil.rmtree(os.path.join(args.output_dir, platform_dir_name))
+    shutil.rmtree(os.path.join(args.temp_dir, f"SpearSim-{args.config_mode}", platform_dir_name))
 
     print(f"[SPEAR | build.py] Successfully created a zip file at {file}, ready for distribution.")
