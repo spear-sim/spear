@@ -40,8 +40,6 @@ def get_config(user_config_files):
     for c in user_config_files:
         config.merge_from_file(c)
 
-    config.URDFBOT.URDFBOT_PAWN.URDF_DIR = os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "urdf"))
-    config.URDFBOT.URDFBOT_PAWN.URDF_FILE = "locobot.xml"
     config.freeze()
 
     return config
