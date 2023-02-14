@@ -28,7 +28,7 @@ public:
     void applyAction(std::map<std::string, float> action);
     void addAction(std::map<std::string, float> action);
 
-    UUrdfLinkComponent* root_link_component_;
+    UUrdfLinkComponent* root_link_component_ = nullptr;
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 

@@ -4,7 +4,7 @@
 
 URDFBOT:
   URDFBOT_PAWN:
-    URDF_DIR: ""  # Directory to look for URDF file. Will be set automatically to a default location by spear.get_config().
+    URDF_DIR: "" # Directory to look for URDF_FILE. This will be set automatically to a default location by spear.get_config().
     URDF_FILE: ""
     CAMERA_COMPONENT:
       POSITION_X: 0.0
@@ -15,5 +15,5 @@ URDFBOT:
       PITCH: 0.0
       FOV: 90.0
   URDF_LINK_COMPONENT:
-    POSITION_IITERATION_COUNT: 100
-    VELOCITY_IITERATION_COUNT: 100
+    POSITION_SOLVER_ITERATION_COUNT: 100
+    VELOCITY_SOLVER_ITERATION_COUNT: 100

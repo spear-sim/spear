@@ -21,8 +21,8 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     joint_type_ = joint_desc->type_;
     control_type_ = joint_desc->control_type_;
 
-    parent_link_ = parent_link_component;
-    child_link_ = child_link_component;
+    parent_link_component_ = parent_link_component;
+    child_link_component_ = child_link_component;
 
     ConstraintInstance.ProfileInstance.ConeLimit.Swing1Motion = EAngularConstraintMotion::ACM_Locked;
     ConstraintInstance.ProfileInstance.ConeLimit.Swing2Motion = EAngularConstraintMotion::ACM_Locked;
