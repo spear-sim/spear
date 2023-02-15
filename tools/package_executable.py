@@ -12,26 +12,34 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--temp_dir", required=True)
-    parser.add_argument("--conda_env", required=True)
-    parser.add_argument("--conda_path")
-    parser.add_argument("--config_mode", default="Shipping")
-    parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--num_parallel_jobs", type=int, default=1)
-    parser.add_argument("--target_platform", required=True, help="Values accepted are Win64, Linux, Mac")
-    parser.add_argument("--output_dir", default=os.path.dirname(os.path.realpath(__file__)))
     parser.add_argument("--output_tag", required=True)
+    parser.add_argument("--unreal_engine_dir", required=True)
+    parser.add_argument("--target_platform", required=True)
+    parser.add_argument("--shell_bin")
+    parser.add_argument("--conda_env", default="spear-env")
+    parser.add_argument("--config_mode", default="Shipping")
+    parser.add_argument("--num_parallel_jobs", type=int, default=1)
+    parser.add_argument("--output_dir", default=os.path.dirname(os.path.realpath(__file__)))
     args = parser.parse_args()
 
     repo_dir = os.path.join(os.path.realpath(args.temp_dir), "spear")
-
-    # need conda_path on unix systems
-    if sys.platform in [ "darwin", "linux"]:
-        assert args.conda_path
 
     # remove any contents already present for a clean build
     if os.path.exists(repo_dir):
         shutil.rmtree(repo_dir)
         os.makedirs(repo_dir)
+
+    if sys.platform == "win32":
+        cmd_separator = "&"
+        build_exe = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat")
+    elif sys.platform == "darwin":
+        cmd_separator = ";"
+        build_exe = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh")
+    elif sys.platform == "linux":
+        cmd_separator = ";"
+        build_exe = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh")
+    else:
+        assert False
 
     # clone repo along with submodules  
     cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", repo_dir]
@@ -45,45 +53,22 @@ if __name__ == "__main__":
     os.chdir(os.path.join(repo_dir, "tools"))
 
     # build thirdparty libs
-    if sys.platform == "win32":
-        cmd = ["python", "build_third_party_libs.py", "--num_parallel_jobs", f"{args.num_parallel_jobs}"]
-    elif sys.platform in ["darwin", "linux"]:
-        cmd = [f"python build_third_party_libs.py --num_parallel_jobs {args.num_parallel_jobs}"]
-    else:
-        assert False
+    cmd = ["python", "build_third_party_libs.py", "--num_parallel_jobs", f"{args.num_parallel_jobs}"]
     print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd, shell=True)
     assert cmd_result.returncode == 0
 
     # create symbolic links
-    if sys.platform == "win32":
-        cmd = ["conda", "activate", f"{args.conda_env}&", "python", "create_symbolic_links.py"]
-    elif sys.platform in ["darwin", "linux"]:
-        cmd = [f". {args.conda_path}; conda activate {args.conda_env}; python create_symbolic_links.py"]
-    else:
-        assert False
+    cmd = ["conda", "activate", args.conda_env + cmd_separator, "python", "create_symbolic_links.py"]
     print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd, shell=True)
+    cmd_result = subprocess.run(cmd, shell=True, executable=args.shell_bin)
     assert cmd_result.returncode == 0
 
     # generate config file
-    if sys.platform == "win32":
-       cmd = ["conda", "activate", f"{args.conda_env}&", "python", "generate_config.py"]
-    elif sys.platform in ["darwin", "linux"]:
-        cmd = [f". {args.conda_path}; conda activate {args.conda_env}; python generate_config.py"]
-    else:
-        assert False
+    cmd = ["conda", "activate", args.conda_env + cmd_separator, "python", "generate_config.py"]
     print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd, shell=True)
+    cmd_result = subprocess.run(cmd, shell=True, executable=args.shell_bin)
     assert cmd_result.returncode == 0
-
-    # build the executable
-    if sys.platform == "win32":
-        build_exe = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat")
-    elif sys.platform in ["darwin", "linux"]:
-        build_exe = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh")
-    else:
-        assert False
     
     cmd = [
         build_exe,
@@ -97,7 +82,7 @@ if __name__ == "__main__":
         "-pak",
         "-targetplatform=" + args.target_platform,
         "-target=SpearSim",
-        "-archivedirectory=" + os.path.join(args.temp_dir, f"SpearSim-{args.config_mode}"),
+        "-archivedirectory=" + os.path.join(args.output_dir, f"SpearSim-{args.output_tag}-{args.config_mode}"),
         "-clientconfig=" + args.config_mode
     ]
     print(f"[SPEAR | build.py] Executing: {' '.join(cmd)}")
@@ -109,21 +94,3 @@ if __name__ == "__main__":
     os.chdir(cwd)
 
     print(f"[SPEAR | build.py] Successfully built SpearSim for {args.target_platform} platform with {args.config_mode} mode.")
-
-    # zip the exectuable for distribution
-    if sys.platform == "win32":
-        platform_dir_name = "WindowsNoEditor"
-    elif sys.platform == "darwin":
-        platform_dir_name = "MacNoEditor"
-    elif sys.platform == "linux":
-        platform_dir_name = "LinuxNoEditor"
-    else:
-        assert False
-    
-    os.makedirs(args.output_dir, exist_ok=True)
-
-    # TODO: need to codesign on macOS
-    file = shutil.make_archive(base_name=os.path.join(args.output_dir, f"SpearSim-{args.output_tag}-{args.target_platform}-{args.config_mode}"), format='zip', root_dir=os.path.join(args.temp_dir, f"SpearSim-{args.config_mode}", platform_dir_name))
-    shutil.rmtree(os.path.join(args.temp_dir, f"SpearSim-{args.config_mode}", platform_dir_name))
-
-    print(f"[SPEAR | build.py] Successfully created a zip file at {file}, ready for distribution.")
