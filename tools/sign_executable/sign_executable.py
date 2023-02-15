@@ -104,7 +104,7 @@ if __name__ == "__main__":
         print(f"[SPEAR | sign_executable.py] Changing working directory to {cwd}.")
         os.chdir(cwd)
 
-        # files that need to be codesigned
+        # files that need to be code-signed
         sign_files = [
             os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib"),
             os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib"),
@@ -181,4 +181,6 @@ if __name__ == "__main__":
     cmd_result = subprocess.run(cmd)
     assert cmd_result.returncode == 0
 
-    print(f"[SPEAR | sign_executable.py] Done: {executable} is successfully codesigned!")
+    print(f"[SPEAR | sign_executable.py] {executable} has been successfully signed.")
+    print(f"[SPEAR | sign_executable.py] Done.")
+
