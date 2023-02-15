@@ -4,10 +4,24 @@
 
 #include "UrdfBot/UrdfLinkComponent.h"
 
+#include <iostream>
+
+#include <CoreGlobals.h>
+
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfBot/UrdfParser.h"
+
+UUrdfLinkComponent::UUrdfLinkComponent()
+{
+    std::cout << "[SPEAR | UrdfLinkComponent.cpp] UUrdfLinkComponent::UUrdfLinkComponent" << std::endl;
+}
+
+UUrdfLinkComponent::~UUrdfLinkComponent()
+{
+    std::cout << "[SPEAR | UrdfLinkComponent.cpp] UUrdfLinkComponent::~UUrdfLinkComponent" << std::endl;
+}
 
 void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 {
@@ -70,7 +84,14 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 
     // set mass
     ASSERT(link_desc->inertial_desc_.mass_ > 0);
-    SetMassOverrideInKg(NAME_None, link_desc->inertial_desc_.mass_, true);
+
+    // We only call SetMassOverrideInKg(...) if we're not cooking, otherwise we get the following error:
+    //     Error: FBodyInstance::GetSimplePhysicalMaterial : GEngine not initialized! Cannot call this during
+    //     native CDO construction, wrap with if(!HasAnyFlags(RF_ClassDefaultObject)) or move out of constructor,
+    //     material parameters will not be correct.    
+    if (!IsRunningCommandlet()) {
+        SetMassOverrideInKg(NAME_None, link_desc->inertial_desc_.mass_, true);
+    }
 
     // set rendering material
     if (visual_desc.has_material_) {

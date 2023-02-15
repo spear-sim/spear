@@ -19,21 +19,20 @@
 
 AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
-    std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::AOpenBotPawn" << std::endl;
+    std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::AUrdfBotPawn" << std::endl;
 
-    // Create a URDF robot component, but don't actually load the URDF file and initialize the component until we call
-    // AUrdfBotPawn::initialize(). This style of deferred initialization is required because if we attempt to call
-    // urdf_robot_component_->createChildComponents(...) from inside this constructor during cooking, we get the following
-    // error:
-    //     Error: FBodyInstance::GetSimplePhysicalMaterial : GEngine not initialized! Cannot call this during
-    //     native CDO construction, wrap with if(!HasAnyFlags(RF_ClassDefaultObject)) or move out of constructor,
-    //     material parameters will not be correct.
-    urdf_robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::urdf_robot_component_"));
+    // setup UUrdfRobotComponent
+    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(FPaths::Combine(
+        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
+        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
+
+    urdf_robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::urdf_robot_component_::" + robot_desc.name_));
+    urdf_robot_component_->createChildComponents(&robot_desc);
 
     RootComponent = urdf_robot_component_;
 
-    // setup camera
-    camera_component_ = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("AOpenBotPawn::camera_component_"));
+    // setup UCameraComponent
+    camera_component_ = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("AUrdfBotPawn::camera_component_"));
     ASSERT(camera_component_);
 
     FVector camera_location(
@@ -49,20 +48,12 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.FOV");
+    camera_component_->SetupAttachment(urdf_robot_component_->root_link_component_);
 }
 
-void AUrdfBotPawn::initialize()
+AUrdfBotPawn::~AUrdfBotPawn()
 {
-    // load URDF file
-    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(FPaths::Combine(
-        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
-        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
-
-    // initialize urdf_robot_component_
-    urdf_robot_component_->createChildComponents(&robot_desc);
-
-    // update camera
-    camera_component_->SetupAttachment(urdf_robot_component_->root_link_component_);
+    std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::~AUrdfBotPawn" << std::endl;
 }
 
 void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)

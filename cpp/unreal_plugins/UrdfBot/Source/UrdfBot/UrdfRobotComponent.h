@@ -23,6 +23,9 @@ class UUrdfRobotComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
+    UUrdfRobotComponent();
+    ~UUrdfRobotComponent();
+
     void createChildComponents(UrdfRobotDesc* robot_desc);
 
     void applyAction(std::map<std::string, float> action);

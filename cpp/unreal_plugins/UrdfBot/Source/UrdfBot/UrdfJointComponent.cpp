@@ -6,11 +6,22 @@
 
 #include <iostream>
 
+#include <CoreGlobals.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 
 #include "CoreUtils/Assert.h"
 #include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfParser.h"
+
+UUrdfJointComponent::UUrdfJointComponent()
+{
+    std::cout << "[SPEAR | UrdfJointComponent.cpp] UUrdfJointComponent::UUrdfJointComponent" << std::endl;
+}
+
+UUrdfJointComponent::~UUrdfJointComponent()
+{
+    std::cout << "[SPEAR | UrdfJointComponent.cpp] UUrdfJointComponent::~UUrdfJointComponent" << std::endl;
+}
 
 void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
 {
@@ -100,7 +111,13 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     }
 
     SetDisableCollision(true);
-    SetConstrainedComponents(parent_link_component, NAME_None, child_link_component, NAME_None);
+
+    // We only call SetConstrainedComponents(...) if we're not cooking, otherwise we get the following warning:
+    //     Warning: Constraint in '/Script/UrdfBot.Default__UrdfBotPawn:AUrdfBotPawn::urdf_robot_component_.UrdfJointComponent_0'
+    //     attempting to create a joint between objects that are both static.  No joint created.
+    if (!IsRunningCommandlet()) {
+        SetConstrainedComponents(parent_link_component, NAME_None, child_link_component, NAME_None);
+    }
 }
 
 void UUrdfJointComponent::addAction(float action)
