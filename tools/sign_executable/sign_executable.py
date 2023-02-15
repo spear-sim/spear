@@ -6,6 +6,7 @@
 # for pre-requisites and setup your system before trying to run this file.
 
 import argparse
+import glob
 import os
 import shutil
 import subprocess
@@ -31,14 +32,15 @@ if __name__ == "__main__":
 
     # make sure output_dir is empty
     if os.path.exists(args.output_dir):
-        shutil.rmtree(args.output_dir)
+        shutil.rmtree(args.output_dir, ignore_errors=True)
         
     # create a copy of the executable in output_dir and use it throughout this file
-    shutil.copytree(args.input_dir, args.output_dir)
+    input_dir_name = os.path.basename(os.path.realpath(args.input_dir))
+    shutil.copytree(args.input_dir, os.path.join(args.output_dir, input_dir_name))
 
-    executable = os.listdir(args.output_dir)[1]
+    executable = glob.glob(os.path.join(args.output_dir, input_dir_name, '*.*'))[0]
     assert os.path.exists(executable)
-    
+
     if not args.request_uuid:
         radio_effect_unit_component = os.path.join(executable, "Contents", "Resources", "RadioEffectUnit.component")
         print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit_component}.")
