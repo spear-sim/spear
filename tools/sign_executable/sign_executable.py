@@ -144,10 +144,14 @@ if __name__ == "__main__":
             "--username", args.apple_username, "--password", args.apple_password, "--file", notarization_zip]
         print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        output = subprocess.check_output(["grep", "RequestUUID = "], stdin=ps.stdout, text=True)
+        request_uuid = ""
+        for line in ps.stdout:
+            print(f"[SPEAR | sign_executable.py] {line.decode()}")
+            if "RequestUUID = " in line.decode():
+                request_uuid = line.decode().split("RequestUUID = ")[1].strip()
         ps.wait()
         ps.stdout.close()
-        request_uuid = output.split("RequestUUID = ")[1].strip()
+        assert request_uuid != ""
         print(f"[SPEAR | sign_executable.py] Zip file sent for notarization. Request UUID: {request_uuid}")
 
     # check notarization status
@@ -158,8 +162,10 @@ if __name__ == "__main__":
     elapsed_time = time.time() - start_time
     while output == "in progress" and elapsed_time < args.wait_time_seconds:
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        output = subprocess.check_output(["grep", "     Status:"], stdin=ps.stdout, text=True)
-        output = output.split("     Status:")[1].strip()
+        for line in ps.stdout:
+            print(f"[SPEAR | sign_executable.py] {line.decode()}")
+            if "Status:" in line.decode():
+                output = line.decode().split("     Status:")[1].strip()
         ps.wait()
         ps.stdout.close()
         elapsed_time = time.time() - start_time
