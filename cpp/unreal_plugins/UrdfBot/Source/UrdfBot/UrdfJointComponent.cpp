@@ -6,6 +6,7 @@
 
 #include <iostream>
 
+#include <CoreGlobals.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 
 #include "CoreUtils/Assert.h"
@@ -21,8 +22,8 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     joint_type_ = joint_desc->type_;
     control_type_ = joint_desc->control_type_;
 
-    parent_link_ = parent_link_component;
-    child_link_ = child_link_component;
+    parent_link_component_ = parent_link_component;
+    child_link_component_ = child_link_component;
 
     ConstraintInstance.ProfileInstance.ConeLimit.Swing1Motion = EAngularConstraintMotion::ACM_Locked;
     ConstraintInstance.ProfileInstance.ConeLimit.Swing2Motion = EAngularConstraintMotion::ACM_Locked;
@@ -100,7 +101,13 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     }
 
     SetDisableCollision(true);
-    SetConstrainedComponents(parent_link_component, NAME_None, child_link_component, NAME_None);
+
+    // We only call SetConstrainedComponents(...) if we're not cooking, otherwise we get the following warning:
+    //     Warning: Constraint in '/Script/UrdfBot.Default__UrdfBotPawn:AUrdfBotPawn::urdf_robot_component_.UrdfJointComponent_0'
+    //     attempting to create a joint between objects that are both static.  No joint created.
+    if (!IsRunningCommandlet()) {
+        SetConstrainedComponents(parent_link_component, NAME_None, child_link_component, NAME_None);
+    }
 }
 
 void UUrdfJointComponent::addAction(float action)

@@ -34,7 +34,7 @@ public:
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
     void Tick(float delta_time) override;
 
-    UUrdfRobotComponent* robot_component_ = nullptr;
+    UUrdfRobotComponent* urdf_robot_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
 
 private: 
