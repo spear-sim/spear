@@ -4,12 +4,17 @@
 
 #include "UrdfBot/UrdfLinkComponent.h"
 
-#include <CoreGlobals.h>
-
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfBot/UrdfParser.h"
+
+void UUrdfLinkComponent::BeginPlay()
+{
+    Super::BeginPlay();
+
+    SetMassOverrideInKg(NAME_None, mass_, true);
+}
 
 void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 {
@@ -30,24 +35,24 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
     UStaticMesh* static_mesh = nullptr;
     FVector relative_scale;
     switch (geometry_desc.type_) {
-    case UrdfGeometryType::Box:
-        static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
-        relative_scale = geometry_desc.size_;
-        break;
-    case UrdfGeometryType::Cylinder:
-        static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-        relative_scale = FVector(geometry_desc.radius_ * 2.0f, geometry_desc.radius_ * 2.0f, geometry_desc.length_);
-        break;
-    case UrdfGeometryType::Sphere:
-        static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-        relative_scale = FVector(geometry_desc.radius_) * 2.0f;
-        break;
-    case UrdfGeometryType::Mesh:
-        static_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(geometry_desc.filename_));
-        relative_scale = FVector(geometry_desc.scale_);
-        break;
-    default:
-        ASSERT(false);
+        case UrdfGeometryType::Box:
+            static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+            relative_scale = geometry_desc.size_;
+            break;
+        case UrdfGeometryType::Cylinder:
+            static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+            relative_scale = FVector(geometry_desc.radius_ * 2.0f, geometry_desc.radius_ * 2.0f, geometry_desc.length_);
+            break;
+        case UrdfGeometryType::Sphere:
+            static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+            relative_scale = FVector(geometry_desc.radius_) * 2.0f;
+            break;
+        case UrdfGeometryType::Mesh:
+            static_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(geometry_desc.filename_));
+            relative_scale = FVector(geometry_desc.scale_);
+            break;
+        default:
+            ASSERT(false);
     }
     ASSERT(static_mesh);
     SetStaticMesh(static_mesh);
@@ -72,14 +77,7 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 
     // set mass
     ASSERT(link_desc->inertial_desc_.mass_ > 0);
-
-    // We only set the mass if we're not cooking, otherwise we get the following error:
-    //     Error: FBodyInstance::GetSimplePhysicalMaterial : GEngine not initialized! Cannot call this during
-    //     native CDO construction, wrap with if(!HasAnyFlags(RF_ClassDefaultObject)) or move out of constructor,
-    //     material parameters will not be correct.    
-    if (!IsRunningCommandlet()) {
-        SetMassOverrideInKg(NAME_None, link_desc->inertial_desc_.mass_, true);
-    }
+    mass_ = link_desc->inertial_desc_.mass_;
 
     // set rendering material
     if (visual_desc.has_material_) {

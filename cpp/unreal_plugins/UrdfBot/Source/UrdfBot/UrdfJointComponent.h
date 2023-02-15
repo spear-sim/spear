@@ -19,6 +19,8 @@ class UUrdfJointComponent : public UPhysicsConstraintComponent
 {
     GENERATED_BODY()
 public:
+    void BeginPlay() override;
+
     void initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
 
     void applyAction(float action);
