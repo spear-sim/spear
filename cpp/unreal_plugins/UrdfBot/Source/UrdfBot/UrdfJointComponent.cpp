@@ -13,6 +13,16 @@
 #include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfParser.h"
 
+UUrdfJointComponent::UUrdfJointComponent()
+{
+    std::cout << "[SPEAR | UrdfJointComponent.cpp] UUrdfJointComponent::UUrdfJointComponent" << std::endl;
+}
+
+UUrdfJointComponent::~UUrdfJointComponent()
+{
+    std::cout << "[SPEAR | UrdfJointComponent.cpp] UUrdfJointComponent::~UUrdfJointComponent" << std::endl;
+}
+
 void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
 {
     ASSERT(joint_desc);
