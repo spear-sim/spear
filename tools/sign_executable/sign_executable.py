@@ -18,10 +18,10 @@ if __name__ == "__main__":
     assert sys.platform == "darwin"
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--executable", required=True)
-    parser.add_argument("--developer_id", required=True)
+    parser.add_argument("--input_dir", required=True)
     parser.add_argument("--output_dir", required=True)
-    parser.add_argument("--tmp_dir", required=True)
+    parser.add_argument("--temp_dir", required=True)
+    parser.add_argument("--developer_id", required=True)
     parser.add_argument("--apple_username", required=True)
     parser.add_argument("--apple_password", required=True)
     parser.add_argument("--entitlements_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "entitlements.plist"))
@@ -29,9 +29,16 @@ if __name__ == "__main__":
     parser.add_argument("--request_uuid")
     args = parser.parse_args()
 
-    executable = os.path.realpath(args.executable)
-    assert os.path.exists(executable)
+    # make sure output_dir is empty
+    if os.path.exists(args.output_dir):
+        shutil.rmtree(args.output_dir)
+        
+    # create a copy of the executable in output_dir and use it throughout this file
+    shutil.copytree(args.input_dir, args.output_dir)
 
+    executable = os.listdir(args.output_dir)[1]
+    assert os.path.exists(executable)
+    
     if not args.request_uuid:
         radio_effect_unit_component = os.path.join(executable, "Contents", "Resources", "RadioEffectUnit.component")
         print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit_component}.")
@@ -120,12 +127,11 @@ if __name__ == "__main__":
             cmd_result = subprocess.run(cmd)
             assert cmd_result.returncode == 0
 
-        os.makedirs(args.output_dir, exist_ok=True)
-        os.makedirs(args.tmp_dir, exist_ok=True)
+        os.makedirs(args.temp_dir, exist_ok=True)
 
         # create a zip file for notarization
-        notrn_zip = os.path.join(args.tmp_dir, f"{os.path.splitext(os.path.basename(executable))[0]}.zip")
-        cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", executable, notrn_zip]
+        notarization_zip = os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip")
+        cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", executable, notarization_zip]
         print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
         cmd_result = subprocess.run(cmd)
         assert cmd_result.returncode == 0
@@ -133,7 +139,7 @@ if __name__ == "__main__":
         # send the zip file for notarization
         cmd = [
             "xcrun", "altool", "--notarize-app", "--primary-bundle-id", "org.embodiedaifoundation.spear", 
-            "--username", args.apple_username, "--password", args.apple_password, "--file", notrn_zip]
+            "--username", args.apple_username, "--password", args.apple_password, "--file", notarization_zip]
         print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         output = subprocess.check_output(["grep", "RequestUUID = "], stdin=ps.stdout, text=True)
@@ -155,10 +161,10 @@ if __name__ == "__main__":
         ps.wait()
         ps.stdout.close()
         elapsed_time = time.time() - start_time
-        print(f"[SPEAR | sign_executable.py] Waiting to get more information on the notarization request uuid: {request_uuid}, current status is {output} ...")
+        print(f"[SPEAR | sign_executable.py] Waiting to get more information on the notarization request UUID {request_uuid}, current status is {output} ...")
     
     if elapsed_time > args.wait_time_seconds:
-        print(f"[SPEAR | sign_executable.py] Exceeded provided wait time ({args.wait_time_seconds}s) for Request UUID: {request_uuid}. Please complete the rest of the procedure after notarization is complete.")
+        print(f"[SPEAR | sign_executable.py] Exceeded maximum wait time ({args.wait_time_seconds}s) for request UUID {request_uuid}. Please complete the rest of the procedure after notarization is complete.")
         assert False
             
     # staple the executable
@@ -167,11 +173,4 @@ if __name__ == "__main__":
     cmd_result = subprocess.run(cmd)
     assert cmd_result.returncode == 0
 
-    # zip the stapled executable for distribution
-    notarized_zip = os.path.join(args.output_dir, f"{os.path.splitext(os.path.basename(executable))[0]}-notarized.zip")
-    cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", os.path.dirname(executable), notarized_zip]
-    print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd)
-    assert cmd_result.returncode == 0
-
-    print(f"[SPEAR | sign_executable.py] Done: {notarized_zip} is ready for distribution!")
+    print(f"[SPEAR | sign_executable.py] Done: {executable} is successfully codesigned!")
