@@ -25,6 +25,10 @@ void UUrdfLinkComponent::BeginPlay()
 {
     Super::BeginPlay();
 
+    // SetMassOverrideInKg(...) in constructor leads to following warning message during cooking:
+    //     Error: FBodyInstance::GetSimplePhysicalMaterial : GEngine not initialized! Cannot call this during
+    //     native CDO construction, wrap with if(!HasAnyFlags(RF_ClassDefaultObject)) or move out of constructor,
+    //     material parameters will not be correct.
     SetMassOverrideInKg(NAME_None, mass_, true);
 }
 
