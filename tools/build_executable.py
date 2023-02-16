@@ -43,7 +43,7 @@ if __name__ == "__main__":
         if not conda_script:
             conda_script = "~/anaconda3/etc/profile.d/conda.sh"
         cmd_prefix = f". {conda_script}; conda activate {args.conda_env};"
-    elif sys.plaform == "linux":
+    elif sys.platform == "linux":
         run_uat_script = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh")
         target_platform = "Linux"
         archive_dir = os.path.join(args.output_dir, f"SpearSim-{target_platform}-{args.config_mode}")
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     if args.commit_id:
         cmd = ["git", "reset", "--hard", args.commit_id]
         print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd)
+        cmd_result = subprocess.run(cmd, check=True)
         assert cmd_result.returncode == 0
 
     # build third-party libs
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     if sys.platform in ["darwin", "linux"]:
         cmd = cmd_prefix + f"python create_symbolic_links.py --unreal_project_dir {unreal_project_dir} --unreal_plugins_dir {unreal_plugins_dir}"
         print(f"[SPEAR | build_executable.py] Executing: {cmd}")
-    cmd_result = subprocess.run(cmd, shell=True)
+    cmd_result = subprocess.run(cmd, shell=True, check=True)
     assert cmd_result.returncode == 0
 
     # generate config file
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     if sys.platform in ["darwin", "linux"]:
         cmd = cmd_prefix + f"python generate_config.py --unreal_project_dir {unreal_project_dir}"
         print(f"[SPEAR | build_executable.py] Executing: {cmd}")
-    cmd_result = subprocess.run(cmd, shell=True)
+    cmd_result = subprocess.run(cmd, shell=True, check=True)
     assert cmd_result.returncode == 0
     
     # build SpearSim project
