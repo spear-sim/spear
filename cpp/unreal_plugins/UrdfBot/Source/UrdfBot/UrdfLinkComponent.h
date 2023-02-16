@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <vector>
-
 #include <CoreMinimal.h>
 #include <Components/StaticMeshComponent.h>
 
@@ -22,6 +20,7 @@ public:
     UUrdfLinkComponent();
     ~UUrdfLinkComponent();
 
+    // UStaticMeshComponent interface
     void BeginPlay() override;
 
     void initializeComponent(UrdfLinkDesc* link_desc);

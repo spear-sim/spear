@@ -25,7 +25,9 @@ UUrdfJointComponent::~UUrdfJointComponent()
 void UUrdfJointComponent::BeginPlay()
 {
     Super::BeginPlay();
-
+    
+    // set constraint in constructor functions properly yet leads to warning message [attempting to create a joint between objects that are both static.
+    // No joint created.]
     SetConstrainedComponents(parent_link_component_, NAME_None, child_link_component_, NAME_None);
 }
 
