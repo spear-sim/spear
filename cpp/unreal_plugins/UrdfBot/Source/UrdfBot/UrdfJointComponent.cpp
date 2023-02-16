@@ -25,7 +25,7 @@ UUrdfJointComponent::~UUrdfJointComponent()
 void UUrdfJointComponent::BeginPlay()
 {
     Super::BeginPlay();
-    
+
     // SetConstrainedComponents(...) in constructor functions properly yet leads to warning message:
     //     Warning: Constraint in '/Script/UrdfBot.Default__UrdfBotPawn:AUrdfBotPawn::urdf_robot_component_.UrdfJointComponent_0'
     //     attempting to create a joint between objects that are both static.  No joint created.
@@ -124,6 +124,8 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
 
 void UUrdfJointComponent::addAction(float action)
 {
+    float m_to_cm = 100.0f;
+
     switch (control_type_) {
         case UrdfJointControlType::Position:
             switch (joint_type_) {
@@ -136,6 +138,7 @@ void UUrdfJointComponent::addAction(float action)
                     break;
                 default:
                     ASSERT(false);
+                    break;
             }
             break;
         case UrdfJointControlType::Velocity:
@@ -149,13 +152,35 @@ void UUrdfJointComponent::addAction(float action)
                     break;
                 default:
                     ASSERT(false);
+                    break;
             }
             break;
         case UrdfJointControlType::Torque:
-            // TODO
+            switch (joint_type_) {
+                case UrdfJointType::Continuous:
+                case UrdfJointType::Revolute: {
+                    // action in unit [N * m], force in unit [N*cm]
+                    FVector torque = action * m_to_cm * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
+                    child_link_component_->AddTorque(torque);
+                    parent_link_component_->AddTorque(-torque);
+                    break;
+                }
+                case UrdfJointType::Prismatic: {
+                    // action in unit [N], force in unit [N*cm/m]
+                    FVector force = action * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
+                    child_link_component_->AddForce(force);
+                    parent_link_component_->AddForce(-force);
+                    break;
+                }
+                default: {
+                    ASSERT(false);
+                    break;
+                }
+            }
             break;
         default:
             ASSERT(false);
+            break;
     }
 }
 
@@ -173,6 +198,7 @@ void UUrdfJointComponent::applyAction(float action)
                     break;
                 default:
                     ASSERT(false);
+                    break;
             }
             break;
         case UrdfJointControlType::Velocity:
@@ -186,6 +212,7 @@ void UUrdfJointComponent::applyAction(float action)
                     break;
                 default:
                     ASSERT(false);
+                    break;
             }
             break;
         case UrdfJointControlType::Torque:
@@ -193,5 +220,6 @@ void UUrdfJointComponent::applyAction(float action)
             break;
         default:
             ASSERT(false);
+            break;
     }
 }
