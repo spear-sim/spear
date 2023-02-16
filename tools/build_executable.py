@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     # create symbolic links
     if sys.platform == "win32":
-        cmd = cmd_prefix + ["python", create_symbolic_links.py, "--unreal_project_dir", unreal_project_dir, "--unreal_plugins_dir", unreal_plugins_dir]
+        cmd = cmd_prefix + ["python", "create_symbolic_links.py", "--unreal_project_dir", unreal_project_dir, "--unreal_plugins_dir", unreal_plugins_dir]
         print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
     if sys.platform in ["darwin", "linux"]:
         cmd = cmd_prefix + f"python create_symbolic_links.py --unreal_project_dir {unreal_project_dir} --unreal_plugins_dir {unreal_plugins_dir}"
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     # generate config file
     if sys.platform == "win32":
-        cmd = cmd_prefix + ["python", generate_config.py, "--unreal_project_dir", unreal_project_dir]
+        cmd = cmd_prefix + ["python", "generate_config.py", "--unreal_project_dir", unreal_project_dir]
         print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
     if sys.platform in ["darwin", "linux"]:
         cmd = cmd_prefix + f"python generate_config.py --unreal_project_dir {unreal_project_dir}"
