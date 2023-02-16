@@ -6,7 +6,6 @@
 
 #include <iostream>
 
-#include <CoreGlobals.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 
 #include "CoreUtils/Assert.h"
@@ -21,6 +20,16 @@ UUrdfJointComponent::UUrdfJointComponent()
 UUrdfJointComponent::~UUrdfJointComponent()
 {
     std::cout << "[SPEAR | UrdfJointComponent.cpp] UUrdfJointComponent::~UUrdfJointComponent" << std::endl;
+}
+
+void UUrdfJointComponent::BeginPlay()
+{
+    Super::BeginPlay();
+    
+    // SetConstrainedComponents(...) in constructor functions properly yet leads to warning message:
+    //     Warning: Constraint in '/Script/UrdfBot.Default__UrdfBotPawn:AUrdfBotPawn::urdf_robot_component_.UrdfJointComponent_0'
+    //     attempting to create a joint between objects that are both static.  No joint created.
+    SetConstrainedComponents(parent_link_component_, NAME_None, child_link_component_, NAME_None);
 }
 
 void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
@@ -111,13 +120,6 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     }
 
     SetDisableCollision(true);
-
-    // We only call SetConstrainedComponents(...) if we're not cooking, otherwise we get the following warning:
-    //     Warning: Constraint in '/Script/UrdfBot.Default__UrdfBotPawn:AUrdfBotPawn::urdf_robot_component_.UrdfJointComponent_0'
-    //     attempting to create a joint between objects that are both static.  No joint created.
-    if (!IsRunningCommandlet()) {
-        SetConstrainedComponents(parent_link_component, NAME_None, child_link_component, NAME_None);
-    }
 }
 
 void UUrdfJointComponent::addAction(float action)
