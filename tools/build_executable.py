@@ -67,7 +67,6 @@ if __name__ == "__main__":
         assert cmd_result.returncode == 0
 
     # build third-party libs
-    # build_third_party_script = os.path.join(repo_dir, "tools", "build_third_party_libs.py")
     cmd = ["python", "build_third_party_libs.py", "--num_parallel_jobs", f"{args.num_parallel_jobs}"]
     print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
     cmd_result = subprocess.run(cmd, check=True)
