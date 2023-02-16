@@ -4,13 +4,23 @@
 
 #include "UrdfBot/UrdfRobotComponent.h"
 
-#include <DrawDebugHelpers.h>
+#include <iostream>
 
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfBot/UrdfJointComponent.h"
 #include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfParser.h"
+
+UUrdfRobotComponent::UUrdfRobotComponent()
+{
+    std::cout << "[SPEAR | UrdfRobotComponent.cpp] UUrdfRobotComponent::UUrdfRobotComponent" << std::endl;
+}
+
+UUrdfRobotComponent::~UUrdfRobotComponent()
+{
+    std::cout << "[SPEAR | UrdfRobotComponent.cpp] UUrdfRobotComponent::~UUrdfRobotComponent" << std::endl;
+}
 
 void UUrdfRobotComponent::createChildComponents(UrdfRobotDesc* robot_desc)
 {

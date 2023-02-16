@@ -4,11 +4,23 @@
 
 #include "UrdfBot/UrdfJointComponent.h"
 
+#include <iostream>
+
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 
 #include "CoreUtils/Assert.h"
 #include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfParser.h"
+
+UUrdfJointComponent::UUrdfJointComponent()
+{
+    std::cout << "[SPEAR | UrdfJointComponent.cpp] UUrdfJointComponent::UUrdfJointComponent" << std::endl;
+}
+
+UUrdfJointComponent::~UUrdfJointComponent()
+{
+    std::cout << "[SPEAR | UrdfJointComponent.cpp] UUrdfJointComponent::~UUrdfJointComponent" << std::endl;
+}
 
 void UUrdfJointComponent::BeginPlay()
 {

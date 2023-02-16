@@ -19,6 +19,9 @@ class UUrdfLinkComponent : public UStaticMeshComponent
 {
     GENERATED_BODY()
 public:
+    UUrdfLinkComponent();
+    ~UUrdfLinkComponent();
+
     void BeginPlay() override;
 
     void initializeComponent(UrdfLinkDesc* link_desc);

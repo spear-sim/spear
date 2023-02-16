@@ -29,6 +29,7 @@ class URDFBOT_API AUrdfBotPawn : public APawn
     GENERATED_BODY()
 public:
     AUrdfBotPawn(const FObjectInitializer& object_initializer);
+    ~AUrdfBotPawn();
 
     // APawn interface
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
