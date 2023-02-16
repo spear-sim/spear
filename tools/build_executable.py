@@ -34,7 +34,7 @@ if __name__ == "__main__":
         run_uat_script = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat")
         target_platform = "Win64"
         archive_dir = os.path.join(args.output_dir, f"SpearSim-{target_platform}-{args.config_mode}")
-        cmd_prefix = ["conda", "activate", args.conda_env + "&"]
+        cmd_prefix = f"conda activate {args.conda_env}&"
     elif sys.platform == "darwin":
         run_uat_script = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh")
         target_platform = "Mac"
@@ -73,22 +73,14 @@ if __name__ == "__main__":
     assert cmd_result.returncode == 0
 
     # create symbolic links
-    if sys.platform == "win32":
-        cmd = cmd_prefix + ["python", "create_symbolic_links.py", "--unreal_project_dir", unreal_project_dir, "--unreal_plugins_dir", unreal_plugins_dir]
-        print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
-    if sys.platform in ["darwin", "linux"]:
-        cmd = cmd_prefix + f"python create_symbolic_links.py --unreal_project_dir {unreal_project_dir} --unreal_plugins_dir {unreal_plugins_dir}"
-        print(f"[SPEAR | build_executable.py] Executing: {cmd}")
+    cmd = cmd_prefix + f"python create_symbolic_links.py --unreal_project_dir {unreal_project_dir} --unreal_plugins_dir {unreal_plugins_dir}"
+    print(f"[SPEAR | build_executable.py] Executing: {cmd}")
     cmd_result = subprocess.run(cmd, shell=True, check=True)
     assert cmd_result.returncode == 0
 
     # generate config file
-    if sys.platform == "win32":
-        cmd = cmd_prefix + ["python", "generate_config.py", "--unreal_project_dir", unreal_project_dir]
-        print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
-    if sys.platform in ["darwin", "linux"]:
-        cmd = cmd_prefix + f"python generate_config.py --unreal_project_dir {unreal_project_dir}"
-        print(f"[SPEAR | build_executable.py] Executing: {cmd}")
+    cmd = cmd_prefix + f"python generate_config.py --unreal_project_dir {unreal_project_dir}"
+    print(f"[SPEAR | build_executable.py] Executing: {cmd}")
     cmd_result = subprocess.run(cmd, shell=True, check=True)
     assert cmd_result.returncode == 0
     
