@@ -349,6 +349,8 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
         ASSERT(parent_link_desc);
         ASSERT(child_link_desc);
 
+        joint_desc->parent_link_desc_ = parent_link_desc;
+
         parent_link_desc->child_link_descs_.push_back(child_link_desc);
         parent_link_desc->child_joint_descs_.push_back(joint_desc);
 

@@ -1,0 +1,49 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+SPEAR:
+  LAUNCH_MODE: "standalone_executable"
+
+  STANDALONE_EXECUTABLE: "E:/intel/interiorsim/dist/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+
+  CUSTOM_COMMAND_LINE_ARGUMENTS: []
+  RENDER_OFFSCREEN: False
+  WINDOW_RESOLUTION_X: 512
+  WINDOW_RESOLUTION_Y: 512
+
+SIMULATION_CONTROLLER:
+  WORLD_PATH_NAME: "/Game/UrdfExample.UrdfExample"
+  LEVEL_NAME: "/Game/UrdfExample"
+  TASK: "NullTask"
+  AGENT: "UrdfBotAgent"
+  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+
+  URDFBOT_AGENT:
+    URDFBOT_ACTOR_NAME: "UrdfBotActor"
+    ACTION_COMPONENTS: ["joint"]
+    OBSERVATION_COMPONENTS: ["link_state", "camera"]
+    STEP_INFO_COMPONENTS: []
+    CAMERA:
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
+
+  VISUALIZER:
+    ACTOR_NAME: "UrdfBotActor"
+    SPAWN_CAMERA: False
+
+  CAMERA_SENSOR:
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
+
+URDFBOT:
+  URDFBOT_PAWN:
+    URDF_FILE: "fetch.xml"
+    CAMERA_COMPONENT:
+      PITCH: 0.0
+      POSITION_X: 100.0
+      POSITION_Y: -200.0
+      POSITION_Z: 80.0
+      ROLL: 0.0
+      YAW: 90.0

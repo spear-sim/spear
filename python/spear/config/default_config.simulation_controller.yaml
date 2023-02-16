@@ -105,6 +105,22 @@ SIMULATION_CONTROLLER:
       FORCE_SCALE: 1.0
       ROTATE_SCALE: 1.0
 
+  URDFBOT_AGENT:
+    URDFBOT_ACTOR_NAME: ""
+    ACTION_COMPONENTS: ["joint"]
+    OBSERVATION_COMPONENTS: ["link_state", "camera"]
+    STEP_INFO_COMPONENTS: []
+    CAMERA:
+      ACTOR_NAME: ""
+      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
+      POSITION_OFFSET_X: 0.0
+      POSITION_OFFSET_Y: 0.0
+      POSITION_OFFSET_Z: 0.0
+    IS_READY_VELOCITY_THRESHOLD: 0.001
+
   IMITATION_LEARNING_TASK:
     AGENT_ACTOR_NAME: ""
     GOAL_ACTOR_NAME: ""

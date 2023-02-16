@@ -86,10 +86,10 @@ class Env(gym.Env):
         self._observation_space_info.terminate()
         self._task_step_info_space_info.terminate()
         self._agent_step_info_space_info.terminate()
-
-        self._close()
-        self._wait_until_unreal_instance_is_closed()
-        self._close_client()
+        if self._config.SPEAR.LAUNCH_MODE != "running_instance":
+            self._close()
+            self._wait_until_unreal_instance_is_closed()
+            self._close_client()
 
         print("[SPEAR | env.py] Finished closing Unreal instance.")
 

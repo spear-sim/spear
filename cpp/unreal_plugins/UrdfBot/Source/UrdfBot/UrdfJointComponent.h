@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <CoreMinimal.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 
@@ -15,7 +17,7 @@ enum class UrdfJointType;
 struct UrdfJointDesc;
 
 UCLASS()
-class UUrdfJointComponent : public UPhysicsConstraintComponent
+class URDFBOT_API UUrdfJointComponent : public UPhysicsConstraintComponent
 {
     GENERATED_BODY()
 public:

@@ -29,6 +29,10 @@
         {
             "Name": "OpenBot",
             "Enabled": true
+        },
+        {
+            "Name": "UrdfBot",
+            "Enabled": true
         }
     ]
 }

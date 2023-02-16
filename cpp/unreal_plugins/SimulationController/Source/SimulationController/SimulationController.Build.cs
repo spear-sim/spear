@@ -20,7 +20,7 @@ public class SimulationController : ModuleRules
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI" });
+            "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI", "UrdfBot" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Our ASSERT macro throws exceptions, and so does our templated function Config::get(...),
