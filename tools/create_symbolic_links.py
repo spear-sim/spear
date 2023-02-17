@@ -16,21 +16,23 @@ if __name__ == "__main__":
     parser.add_argument("--third_party_dir")
     args = parser.parse_args()
 
-    tools_dir           = os.path.dirname(os.path.realpath(__file__))
-    unreal_projects_dir = os.path.realpath(os.path.join(tools_dir, "..", "cpp", "unreal_projects"))
-    unreal_plugins_dir  = os.path.realpath(os.path.join(tools_dir, "..", "cpp", "unreal_plugins"))
-    third_party_dir     = os.path.realpath(os.path.join(tools_dir, "..", "third_party"))
+    tools_dir = os.path.dirname(os.path.realpath(__file__))
 
     if args.unreal_project_dir:
-        unreal_project_dirs = [ os.path.realpath(args.unreal_project_dir) ]
+        unreal_project_dirs = [os.path.realpath(args.unreal_project_dir)]
     else:
+        unreal_projects_dir = os.path.realpath(os.path.join(tools_dir, "..", "cpp", "unreal_projects"))
         unreal_project_dirs = [ os.path.join(unreal_projects_dir, project) for project in os.listdir(unreal_projects_dir) ]
 
     if args.unreal_plugins_dir:
         unreal_plugins_dir = os.path.realpath(args.unreal_plugins_dir)
+    else:
+        unreal_plugins_dir = os.path.realpath(os.path.join(tools_dir, "..", "cpp", "unreal_plugins"))
 
     if args.third_party_dir:
         third_party_dir = os.path.realpath(args.third_party_dir)
+    else:
+        third_party_dir = os.path.realpath(os.path.join(tools_dir, "..", "third_party"))
 
     unreal_plugins = os.listdir(unreal_plugins_dir)
 

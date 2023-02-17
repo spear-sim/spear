@@ -27,7 +27,7 @@ if __name__ == "__main__":
     os.makedirs(split_dir, exist_ok=True)
 
     # load config
-    config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
+    config = spear.get_config(user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
 
     # make sure that we are in trajectory sampling mode
     config.defrost()
