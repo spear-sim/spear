@@ -30,27 +30,35 @@ if __name__ == "__main__":
         shutil.rmtree(repo_dir)
         os.makedirs(repo_dir)
 
+    # set various platform-specific variables that we use throughout our build procedure
     if sys.platform == "win32":
         run_uat_script = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat")
         target_platform = "Win64"
         archive_dir = os.path.join(args.output_dir, f"SpearSim-{target_platform}-{args.config_mode}")
         cmd_prefix = f"conda activate {args.conda_env}& "
+
     elif sys.platform == "darwin":
         run_uat_script = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh")
         target_platform = "Mac"
         archive_dir = os.path.join(args.output_dir, f"SpearSim-{target_platform}-{args.config_mode}-Unsigned")
-        conda_script = args.conda_script
-        if not conda_script:
-            conda_script = os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")
+        if args.conda_script:
+            conda_script = args.conda_script
+        else:
+            # default for graphical install, see https://docs.anaconda.com/anaconda/user-guide/faq/
+            conda_script = os.path.join("~", "opt", "anaconda3", "etc", "profile.d", "conda.sh")
         cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
+
     elif sys.platform == "linux":
         run_uat_script = os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh")
         target_platform = "Linux"
         archive_dir = os.path.join(args.output_dir, f"SpearSim-{target_platform}-{args.config_mode}")
-        conda_script = args.conda_script
-        if not conda_script:
+        if args.conda_script:
+            conda_script = args.conda_script
+        else:
+            # see https://docs.anaconda.com/anaconda/user-guide/faq/
             conda_script = os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")
         cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
+
     else:
         assert False
 
