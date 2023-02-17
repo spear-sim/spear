@@ -143,12 +143,12 @@ if __name__ == "__main__":
             "xcrun", "altool", "--notarize-app", "--primary-bundle-id", "org.embodiedaifoundation.spear", 
             "--username", args.apple_username, "--password", args.apple_password, "--file", notarization_zip]
         print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
-        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
         request_uuid = ""
         for line in ps.stdout:
-            print(f"[SPEAR | sign_executable.py] {line.decode()}")
-            if "RequestUUID = " in line.decode():
-                request_uuid = line.decode().split("RequestUUID = ")[1].strip()
+            print(f"[SPEAR | sign_executable.py] {line}")
+            if "RequestUUID = " in line:
+                request_uuid = line.split("RequestUUID = ")[1].strip()
         ps.wait()
         ps.stdout.close()
         assert request_uuid != ""
@@ -161,11 +161,11 @@ if __name__ == "__main__":
     start_time = time.time()
     elapsed_time = time.time() - start_time
     while output == "in progress" and elapsed_time < args.wait_time_seconds:
-        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
         for line in ps.stdout:
-            print(f"[SPEAR | sign_executable.py] {line.decode()}")
-            if "Status:" in line.decode():
-                output = line.decode().split("     Status:")[1].strip()
+            print(f"[SPEAR | sign_executable.py] {line}")
+            if "Status:" in line:
+                output = line.split("     Status:")[1].strip()
         ps.wait()
         ps.stdout.close()
         elapsed_time = time.time() - start_time
