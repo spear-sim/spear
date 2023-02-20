@@ -24,7 +24,7 @@ public class UrdfBot : ModuleRules
         // everywhere.
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "Slate", "XmlParser", });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "Slate", "XmlParser", "Projects" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
@@ -59,5 +59,16 @@ public class UrdfBot : ModuleRules
         } else {
             throw new Exception("[SPEAR | UrdfBot.Build.cs] Unexpected: Target.Platform == " + Target.Platform);
         }
+
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "mujoco", "include"));
+        PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "mujoco", "lib","mujoco.lib"));
+
+        //TODO https://forums.unrealengine.com/t/adding-third-party-dll-path-for-plugin/359061/2
+        PublicDelayLoadDLLs.Add("mujoco.dll");
+        RuntimeDependencies.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "mujoco", "bin", "mujoco.dll"));
+
+        //PublicAdditionalLibraries.Add("E:/intel/mujoco/install/mujoco/lib/mujoco.lib");
+        //PublicDelayLoadDLLs.Add("E:/intel/mujoco/install/mujoco/bin/mujoco.dll");
+
     }
 }

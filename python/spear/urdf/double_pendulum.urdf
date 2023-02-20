@@ -1,0 +1,83 @@
+<robot name="benchmark_torque_revolute">
+    <!--
+        URDF_FILE: "simple_continuous.xml"
+        KEYBOARD_ACTIONS:
+          One:
+            ADD_ACTION: { "joint_0": 9.8 }
+          Two:
+            ADD_ACTION: { "joint_0": -10 }
+          Three:
+            ADD_ACTION: { "joint_0": 0.1 }
+          Four:
+            ADD_ACTION: { "joint_0": -0.1 }
+    -->
+    <material name="M_Red">
+        <texture filename="/UrdfBot/Common/M_Red.M_Red"/>
+    </material>
+    <material name="M_Green">
+        <texture filename="/UrdfBot/Common/M_Green.M_Green"/>
+    </material>
+    <material name="M_Blue">
+        <texture filename="/UrdfBot/Common/M_Blue.M_Blue"/>
+    </material>
+
+    <link name="base_link">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0.0 0"/>
+            <mass value="100"/>
+            <inertia ixx="1.0" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="1.0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size="1 1 1"/>
+            </geometry>
+        </visual>
+    </link>
+
+    <link name="link_0">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="1"/>
+            <inertia ixx="1.0" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="1.0"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 -0.5"/>
+            <geometry>
+                <box size="0.2 0.2 1"/>
+            </geometry>
+        </visual>
+    </link>
+    <joint name="joint_0" type="continuous">
+        <origin rpy="0 0 0" xyz="0.6 0 0"/>
+        <parent link="base_link"/>
+        <child link="link_0"/>
+        <axis xyz="1 0 0"/>
+        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>
+<!--        <dynamics type="position" damping="1" spring="100"/>-->
+    </joint>
+
+<!--    <link name="link_1">-->
+<!--        <inertial>-->
+<!--            <origin rpy="0 0 0" xyz="0 0 0"/>-->
+<!--            <mass value="1"/>-->
+<!--            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>-->
+<!--        </inertial>-->
+<!--        <visual>-->
+<!--            <origin rpy="0 0 0" xyz="0 0 -0.5"/>-->
+<!--            <geometry>-->
+<!--                <box size="1 1 1"/>-->
+<!--            </geometry>-->
+<!--            <material name="M_Blue"/>-->
+<!--        </visual>-->
+<!--    </link>-->
+<!--    <joint name="joint_1" type="continuous">-->
+<!--        <origin rpy="0 0 0" xyz="0 0 -0.5"/>-->
+<!--        <parent link="link_0"/>-->
+<!--        <child link="link_1"/>-->
+<!--        <axis xyz="1 0 0"/>-->
+<!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
+<!--        <dynamics type="torque"/>-->
+<!--        <dynamics type="position" damping="1" spring="100"/>-->
+<!--    </joint>-->
+</robot>

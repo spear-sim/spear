@@ -11,6 +11,9 @@
 #include <CoreMinimal.h>
 #include <GameFramework/Pawn.h>
 
+#include <UrdfBot/UrdfSimpleControl.h>
+#include <UrdfBot/UrdfMujocoControl.h>
+
 #include "UrdfBotPawn.generated.h"
 
 class UCameraComponent;
@@ -32,12 +35,23 @@ public:
     ~AUrdfBotPawn();
 
     // APawn interface
+    void BeginPlay() override;
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
     void Tick(float delta_time) override;
 
     UUrdfRobotComponent* urdf_robot_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
 
+    //debug 
+    void addGravityCompensationAction();
+    void testKey();
+    UFUNCTION(BlueprintCallable)
+    static void resetConfig();
+
 private: 
     std::vector<KeyboardAction> keyboard_actions_;
+
+    UrdfMujocoControl* mujoco_control_;
+    UrdfSimpleControl* control;
+    std::vector<std::string> joint_names;
 };

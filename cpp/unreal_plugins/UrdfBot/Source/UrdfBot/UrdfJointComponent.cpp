@@ -159,7 +159,7 @@ void UUrdfJointComponent::addAction(float action)
             switch (joint_type_) {
                 case UrdfJointType::Continuous:
                 case UrdfJointType::Revolute: {
-                    // action in unit [N * m], force in unit [N*cm]
+                    // action in unit [N * m], force in unit [N*cm] 
                     FVector torque = action * m_to_cm * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
                     child_link_component_->AddTorque(torque);
                     parent_link_component_->AddTorque(-torque);
