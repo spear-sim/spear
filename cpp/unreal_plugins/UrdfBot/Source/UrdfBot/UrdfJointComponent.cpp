@@ -26,9 +26,6 @@ void UUrdfJointComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    AttachToComponent(parent_link_component_, FAttachmentTransformRules::KeepWorldTransform);
-    child_link_component_->AttachToComponent(parent_link_component_, FAttachmentTransformRules::KeepWorldTransform);
-
     // SetConstrainedComponents(...) in constructor functions properly yet leads to warning message:
     //     Warning: Constraint in '/Script/UrdfBot.Default__UrdfBotPawn:AUrdfBotPawn::urdf_robot_component_.UrdfJointComponent_0'
     //     attempting to create a joint between objects that are both static.  No joint created.
