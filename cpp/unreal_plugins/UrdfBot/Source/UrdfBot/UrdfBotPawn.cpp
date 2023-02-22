@@ -46,8 +46,9 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     camera_component_->SetupAttachment(urdf_robot_component_->root_link_component_);
     camera_component_->SetupAttachment(urdf_robot_component_);
 
-    // debug
+    // setup InverseDynamics
     joint_names_ = robot_desc.joint_names_;
+    // debug
     for (auto& pair : urdf_robot_component_->link_components_) {
         AddInstanceComponent(pair.second);
     }
@@ -70,8 +71,6 @@ void AUrdfBotPawn::BeginPlay()
 
     std::string urdf_filename = Unreal::toStdString(
         FPaths::Combine(Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")), Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE"))));
-
-    UE_LOG(LogTemp, Log, TEXT("AUrdfBotPawn::BeginPlay"));
     mujoco_control_ = new UrdfMujocoControl(urdf_filename);
 }
 
@@ -99,6 +98,7 @@ void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
         keyboard_actions_.push_back(keyboard_action);
     }
 
+    // debug
     input_component->BindKey(EKeys::SpaceBar, EInputEvent::IE_Pressed, this, &AUrdfBotPawn::testKey);
     input_component->BindKey(EKeys::C, EInputEvent::IE_Pressed, this, &AUrdfBotPawn::testKey2);
 }
@@ -114,6 +114,8 @@ void AUrdfBotPawn::Tick(float delta_time)
             urdf_robot_component_->addAction(keyboard_action.add_action_);
         }
     }
+
+    // InverseDynamics
     if (flag % 2 == 0) {
         addGravityCompensationAction();
     }
@@ -121,24 +123,21 @@ void AUrdfBotPawn::Tick(float delta_time)
 
 void AUrdfBotPawn::addGravityCompensationAction()
 {
-    int size = joint_names_.size();
+    int dof = joint_names_.size();
 
-    std::vector<float> qpos;
-    qpos.resize(size);
-    for (int i = 0; i < size; i++) {
+    Eigen::VectorXf qpos;
+    qpos.resize(dof);
+    for (int i = 0; i < dof; i++) {
         UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names_[i]);
-        float angle = joint->ConstraintInstance.GetCurrentTwist();
-
-        angle = -angle;
-        qpos[i] = angle;
+        // TODO why negative sign???
+        qpos[i] = -joint->ConstraintInstance.GetCurrentTwist();
     }
-    std::vector<float> result = mujoco_control_->get_qfrc_inverse(qpos);
+    Eigen::VectorXf qfrc_applied = mujoco_control_->inverseDynamics(qpos);
     std::map<std::string, float> actions;
-    for (int i = 0; i < size; i++) {
-        actions[joint_names_[i]] = result[i];
+    for (int i = 0; i < dof; i++) {
+        actions[joint_names_[i]] = qfrc_applied[i];
     }
     urdf_robot_component_->addAction(actions);
-    UE_LOG(LogTemp, Log, TEXT("[AUrdfBotPawn::Tick] mujoco     angle0=%f force0=%f "), qpos[0], actions[joint_names_[0]]);
 }
 
 void AUrdfBotPawn::resetConfig()
@@ -156,7 +155,6 @@ void AUrdfBotPawn::testKey()
         joint->child_link_component_->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
     }
     GEngine->AddOnScreenDebugMessage(1, 200, FColor::Blue, FString::Printf(TEXT("[AUrdfBotPawn::testKey] zero velocity")));
-    UE_LOG(LogTemp, Log, TEXT("[AUrdfBotPawn::testKey] zero velocity"));
 }
 
 void AUrdfBotPawn::testKey2()

@@ -4,8 +4,6 @@
 
 #include "UrdfBot/UrdfMujocoControl.h"
 
-#include <iostream>
-
 UrdfMujocoControl::UrdfMujocoControl(std::string filename)
 {
     char error[1000] = "Could not load binary model";
@@ -19,29 +17,20 @@ UrdfMujocoControl::~UrdfMujocoControl()
     mj_deleteModel(m);
 }
 
-void UrdfMujocoControl::test()
+Eigen::VectorXf UrdfMujocoControl::inverseDynamics(Eigen::VectorXf qpos)
 {
-}
-
-std::vector<float> UrdfMujocoControl::get_qfrc_inverse(std::vector<float> qpos)
-{
+    Eigen::VectorXd qpos_d = qpos.cast<double>();
+    mju_copy(d->qpos, qpos_d.data(), m->nv);
     mju_zero(d->qvel, m->nv);
     mju_zero(d->qacc, m->nv);
     mju_zero(d->qfrc_applied, m->nv);
     mju_zero(d->ctrl, m->nv);
 
-    std::vector<double> qpos_d;
-    for (int i = 0; i < m->nv; i++) {
-        qpos_d.push_back(qpos[i]);
-    }
-
-    mju_copy(d->qpos, qpos_d.data(), m->nv);
-
     mj_inverse(m, d);
 
-    std::vector<float> result;
-    for (int i = 0; i < m->nv;i++) {
-        result.push_back(d->qfrc_inverse[i]);
-    }
-    return result;
+    Eigen::VectorXd qfrc_applied;
+    qfrc_applied.resize(m->nv);
+    mju_copy(qfrc_applied.data(), d->qfrc_inverse, m->nv);
+
+    return qfrc_applied.cast<float>();
 }

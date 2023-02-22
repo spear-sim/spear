@@ -14,20 +14,20 @@ void UrdfBot::StartupModule()
 {
     std::cout << "[SPEAR | UrdfBot.cpp] UrdfBot::StartupModule" << std::endl;
 
-    const FString PluginDir = IPluginManager::Get().FindPlugin("UrdfBot")->GetBaseDir();
+    const FString plugin_dir = IPluginManager::Get().FindPlugin("UrdfBot")->GetBaseDir();
 
-	FString LibraryPath = FPaths::Combine(*PluginDir, TEXT("ThirdParty/mujoco/bin/"));
-	DLLHandle = FPlatformProcess::GetDllHandle(*(LibraryPath + TEXT("mujoco.dll")));
+    mujoco_dll_handle_ = FPlatformProcess::GetDllHandle(*FPaths::Combine(*plugin_dir, TEXT("ThirdParty/mujoco/bin/mujoco.dll")));
 
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 }
 
 void UrdfBot::ShutdownModule()
 {
-    if (DLLHandle) {
-        FPlatformProcess::FreeDllHandle(DLLHandle);
-        DLLHandle = nullptr;
+    if (mujoco_dll_handle_) {
+        FPlatformProcess::FreeDllHandle(mujoco_dll_handle_);
+        mujoco_dll_handle_ = nullptr;
     }
+
     std::cout << "[SPEAR | UrdfBot.cpp] UrdfBot::ShutdownModule" << std::endl;
 }
 

@@ -6,8 +6,8 @@
 
 #include <CoreMinimal.h>
 
+#include <Eigen/Core>
 #include <memory>
-
 #include <mujoco/mujoco.h>
 
 #include "UrdfParser.h"
@@ -18,8 +18,7 @@ public:
     UrdfMujocoControl(std::string filename);
     ~UrdfMujocoControl();
 
-    void test();
-    std::vector<float> get_qfrc_inverse(std::vector<float> qpos);
+    Eigen::VectorXf inverseDynamics(Eigen::VectorXf qpos);
 
     mjModel* m = nullptr; // MuJoCo model
     mjData* d = nullptr;  // MuJoCo data

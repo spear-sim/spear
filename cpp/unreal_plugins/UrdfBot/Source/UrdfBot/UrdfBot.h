@@ -14,5 +14,5 @@ public:
     void StartupModule() override;
     void ShutdownModule() override;
 
-    void* DLLHandle;
+    void* mujoco_dll_handle_;
 };
