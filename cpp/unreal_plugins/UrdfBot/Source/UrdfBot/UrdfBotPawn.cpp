@@ -23,9 +23,8 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::AUrdfBotPawn" << std::endl;
 
     // setup UUrdfRobotComponent
-    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(FPaths::Combine(
-        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
-        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
+    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(
+        FPaths::Combine(Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")), Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
 
     urdf_robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::urdf_robot_component_::" + robot_desc.name_));
     urdf_robot_component_->createChildComponents(&robot_desc);
@@ -36,15 +35,11 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("AUrdfBotPawn::camera_component_"));
     ASSERT(camera_component_);
 
-    FVector camera_location(
-        Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.POSITION_X"),
-        Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.POSITION_Y"),
-        Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.POSITION_Z"));
+    FVector camera_location(Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.POSITION_X"), Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.POSITION_Y"),
+                            Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.POSITION_Z"));
 
-    FRotator camera_orientation(
-        Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.PITCH"),
-        Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.YAW"),
-        Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.ROLL"));
+    FRotator camera_orientation(Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.PITCH"), Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.YAW"),
+                                Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.ROLL"));
 
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
     camera_component_->bUsePawnControlRotation = false;
@@ -83,7 +78,6 @@ void AUrdfBotPawn::BeginPlay()
     UE_LOG(LogTemp, Log, TEXT("AUrdfBotPawn::BeginPlay"));
 
     mujoco_control_ = new UrdfMujocoControl();
-    UUrdfJointComponent* joint_component = this->urdf_robot_component_->joint_components_[""];
 }
 
 void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
@@ -161,14 +155,18 @@ void AUrdfBotPawn::addGravityCompensationAction()
     for (int i = 0; i < size; i++) {
         UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names[i]);
         float angle = joint->ConstraintInstance.GetCurrentTwist();
-         
+
         angle = -angle;
         qpos[i] = angle;
     }
-    std::map<std::string, float> result = mujoco_control_->get_qfrc_inverse(qpos);
-
-    urdf_robot_component_->addAction(result);
-    UE_LOG(LogTemp, Log, TEXT("[AUrdfBotPawn::Tick] mujoco     angle0=%f force0=%f "), qpos[0], result[joint_names[0]]);
+    std::vector<float> result = mujoco_control_->get_qfrc_inverse(qpos);
+    std::map<std::string, float> actions;
+    actions["joint_0"] = result[0];
+    if (joint_names.size() == 2) {
+        actions["joint_1"] = result[1];
+    }
+    urdf_robot_component_->addAction(actions);
+    UE_LOG(LogTemp, Log, TEXT("[AUrdfBotPawn::Tick] mujoco     angle0=%f force0=%f "), qpos[0], actions[joint_names[0]]);
 }
 
 void AUrdfBotPawn::resetConfig()
@@ -185,6 +183,6 @@ void AUrdfBotPawn::testKey()
         joint->child_link_component_->SetPhysicsLinearVelocity(FVector::ZeroVector);
         joint->child_link_component_->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
     }
-    GEngine->AddOnScreenDebugMessage(1, 200, FColor::Blue, FString::Printf(TEXT("[AUrdfBotPawn::testKey] zero velocity") ));
+    GEngine->AddOnScreenDebugMessage(1, 200, FColor::Blue, FString::Printf(TEXT("[AUrdfBotPawn::testKey] zero velocity")));
     UE_LOG(LogTemp, Log, TEXT("[AUrdfBotPawn::testKey] zero velocity"));
 }

@@ -11,6 +11,11 @@
           Four:
             ADD_ACTION: { "joint_0": -0.1 }
     -->
+    <mujoco>
+        <worldbody>
+            <geom name="floor" size="0 0 0.05" type="plane" material="grid" condim="3"/>
+        </worldbody>
+    </mujoco>
     <material name="M_Red">
         <texture filename="/UrdfBot/Common/M_Red.M_Red"/>
     </material>
@@ -25,22 +30,31 @@
         <inertial>
             <origin rpy="0 0 0" xyz="0 0.0 0"/>
             <mass value="100"/>
-            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
         </inertial>
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
                 <box size="1 1 1"/>
             </geometry>
-            <material name="M_Red"/>
+            <material name="M_Red">
+                <color rgba="1 0 0 1"/>
+                <texture filename="/UrdfBot/Common/M_Red.M_Red"/>
+            </material>
         </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size="1 1 1"/>
+            </geometry>
+        </collision>
     </link>
 
     <link name="link_0">
         <inertial>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <mass value="1"/>
-            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
         </inertial>
         <visual>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
@@ -49,6 +63,16 @@
             </geometry>
             <material name="M_Green"/>
         </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 -1"/>
+            <geometry>
+                <box size="0.4 0.4 2"/>
+            </geometry>
+            <material name="M_Green">
+                <color rgba="0 1.0 0 1.0"/>
+                <texture filename="/UrdfBot/Common/M_Green.M_Green"/>
+            </material>
+        </collision>
     </link>
     <joint name="joint_0" type="continuous">
         <origin rpy="0 0 0" xyz="1.2 0 0"/>
@@ -63,7 +87,7 @@
         <inertial>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <mass value="1"/>
-            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
         </inertial>
         <visual>
             <origin rpy="0 0 0" xyz="0 0 -0.5"/>
@@ -72,6 +96,16 @@
             </geometry>
             <material name="M_Blue"/>
         </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 -1"/>
+            <geometry>
+                <box size="0.4 0.4 2"/>
+            </geometry>
+            <material name="M_Blue">
+                <color rgba="0 0 1 1"/>
+                <texture filename="/UrdfBot/Common/M_Blue.M_Blue"/>
+            </material>
+        </collision>
     </link>
     <joint name="joint_1" type="continuous">
         <origin rpy="0 0 0" xyz="0 0 -0.5"/>

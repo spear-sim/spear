@@ -332,7 +332,7 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
             robot_desc.material_descs_[material_desc.name_] = std::move(material_desc);
 
         } else {
-            ASSERT(false);
+            // ASSERT(false);
         }
     }
 
