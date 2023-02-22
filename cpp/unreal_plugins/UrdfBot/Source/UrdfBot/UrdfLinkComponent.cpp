@@ -24,6 +24,9 @@ UUrdfLinkComponent::~UUrdfLinkComponent()
 void UUrdfLinkComponent::BeginPlay()
 {
     Super::BeginPlay();
+    
+    // set relative scale at `BeginPlay` to avoid propagating scale to child links
+    SetRelativeScale3D(relative_scale_);
 
     // SetMassOverrideInKg(...) in constructor leads to following warning message during cooking:
     //     Error: FBodyInstance::GetSimplePhysicalMaterial : GEngine not initialized! Cannot call this during
@@ -49,30 +52,28 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
     }
 
     UStaticMesh* static_mesh = nullptr;
-    FVector relative_scale;
     switch (geometry_desc.type_) {
         case UrdfGeometryType::Box:
             static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
-            relative_scale = geometry_desc.size_;
+            relative_scale_ = geometry_desc.size_ ;
             break;
         case UrdfGeometryType::Cylinder:
             static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-            relative_scale = FVector(geometry_desc.radius_ * 2.0f, geometry_desc.radius_ * 2.0f, geometry_desc.length_);
+            relative_scale_ = FVector(geometry_desc.radius_ * 2.0f, geometry_desc.radius_ * 2.0f, geometry_desc.length_);
             break;
         case UrdfGeometryType::Sphere:
             static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-            relative_scale = FVector(geometry_desc.radius_) * 2.0f;
+            relative_scale_ = FVector(geometry_desc.radius_) * 2.0f;
             break;
         case UrdfGeometryType::Mesh:
             static_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(geometry_desc.filename_));
-            relative_scale = FVector(geometry_desc.scale_);
+            relative_scale_ = FVector(geometry_desc.scale_);
             break;
         default:
             ASSERT(false);
     }
     ASSERT(static_mesh);
     SetStaticMesh(static_mesh);
-    SetRelativeScale3D(relative_scale);
 
     // set physical property
     SetSimulatePhysics(true);

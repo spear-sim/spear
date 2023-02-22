@@ -26,4 +26,5 @@ public:
     void initializeComponent(UrdfLinkDesc* link_desc);
 
     float mass_;
+    FVector relative_scale_;
 };

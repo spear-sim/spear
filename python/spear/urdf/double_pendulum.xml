@@ -75,7 +75,7 @@
         </collision>
     </link>
     <joint name="joint_0" type="continuous">
-        <origin rpy="0 0 0" xyz="1.2 0 0"/>
+        <origin rpy="0 0 0" xyz="0.6 0 0"/>
         <parent link="base_link"/>
         <child link="link_0"/>
         <axis xyz="1 0 0"/>
@@ -90,9 +90,9 @@
             <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
         </inertial>
         <visual>
-            <origin rpy="0 0 0" xyz="0 0 -0.5"/>
+            <origin rpy="0 0 0" xyz="0 0 -1"/>
             <geometry>
-                <box size="1 1 1"/>
+                <box size="0.4 0.4 2"/>
             </geometry>
             <material name="M_Blue"/>
         </visual>
@@ -108,7 +108,7 @@
         </collision>
     </link>
     <joint name="joint_1" type="continuous">
-        <origin rpy="0 0 0" xyz="0 0 -0.5"/>
+        <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_0"/>
         <child link="link_1"/>
         <axis xyz="1 0 0"/>

@@ -59,7 +59,7 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     if (urdf_robot_component_->joint_components_.size() == 2) {
         joint_names.push_back("joint_1");
     }
-    control->initialize(&robot_desc, joint_names);
+    // control->initialize(&robot_desc, joint_names);
 }
 
 AUrdfBotPawn::~AUrdfBotPawn()
@@ -72,6 +72,7 @@ AUrdfBotPawn::~AUrdfBotPawn()
         delete mujoco_control_;
     }
 }
+
 void AUrdfBotPawn::BeginPlay()
 {
     Super::BeginPlay();
@@ -118,7 +119,7 @@ void AUrdfBotPawn::Tick(float delta_time)
             urdf_robot_component_->addAction(keyboard_action.add_action_);
         }
     }
-    addGravityCompensationAction();
+    // addGravityCompensationAction();
 }
 
 void AUrdfBotPawn::addGravityCompensationAction()

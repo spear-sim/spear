@@ -26,6 +26,8 @@ void UUrdfJointComponent::BeginPlay()
 {
     Super::BeginPlay();
 
+    AttachToComponent(parent_link_component_, FAttachmentTransformRules::KeepWorldTransform);
+    child_link_component_->AttachToComponent(parent_link_component_, FAttachmentTransformRules::KeepWorldTransform);
     // SetConstrainedComponents(...) in constructor functions properly yet leads to warning message:
     //     Warning: Constraint in '/Script/UrdfBot.Default__UrdfBotPawn:AUrdfBotPawn::urdf_robot_component_.UrdfJointComponent_0'
     //     attempting to create a joint between objects that are both static.  No joint created.
@@ -159,7 +161,7 @@ void UUrdfJointComponent::addAction(float action)
             switch (joint_type_) {
                 case UrdfJointType::Continuous:
                 case UrdfJointType::Revolute: {
-                    // action in unit [N * m], force in unit [N*cm] 
+                    // action in unit [N * m], force in unit [N*cm]
                     FVector torque = action * m_to_cm * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
                     child_link_component_->AddTorque(torque);
                     parent_link_component_->AddTorque(-torque);

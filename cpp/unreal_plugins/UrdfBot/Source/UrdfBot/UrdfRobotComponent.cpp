@@ -31,7 +31,7 @@ void UUrdfRobotComponent::createChildComponents(UrdfRobotDesc* robot_desc)
 
     root_link_component_ = NewObject<UUrdfLinkComponent>(this);
     root_link_component_->initializeComponent(root_link_desc);
-    root_link_component_->SetupAttachment(this);
+    // root_link_component_->AttachToComponent(this,FAttachmentTransformRules::SnapToTargetNotIncludingScale);
     link_components_[root_link_desc->name_] = root_link_component_;
 
     createChildComponents(root_link_desc, root_link_component_);
