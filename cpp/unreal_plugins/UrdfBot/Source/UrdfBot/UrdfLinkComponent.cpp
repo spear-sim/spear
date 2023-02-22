@@ -86,7 +86,7 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc, UUrdfLinkC
     SetCollisionObjectType(ECollisionChannel::ECC_Vehicle);
     SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
     SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-    SetCollisionResponseToChannel(ECC_Vehicle, ECR_Overlap); // ignore collision between robot links
+    // SetCollisionResponseToChannel(ECC_Vehicle, ECR_Overlap); // ignore collision between robot links
     SetNotifyRigidBodyCollision(true);
 
     // set never sleep
@@ -116,8 +116,8 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc, UUrdfLinkC
             SetMaterial(0, material);
         } else {
             UMaterialInterface* base_material = LoadObject<UMaterialInterface>(nullptr, *FString("Material'/UrdfBot/Common/M_PureColor.M_PureColor'"));
-            UMaterialInstanceDynamic* material = UMaterialInstanceDynamic::Create(base_material,this);
-            material->SetVectorParameterValue("BaseColor_Color",FLinearColor(material_desc->color_));
+            UMaterialInstanceDynamic* material = UMaterialInstanceDynamic::Create(base_material, this);
+            material->SetVectorParameterValue("BaseColor_Color", FLinearColor(material_desc->color_));
 
             SetMaterial(0, material);
         }

@@ -41,14 +41,14 @@ public:
     UUrdfRobotComponent* urdf_robot_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
 
-    //debug 
+    // debug
     void addGravityCompensationAction();
     void testKey();
     void testKey2();
     UFUNCTION(BlueprintCallable)
     static void resetConfig();
 
-private: 
+private:
     std::vector<KeyboardAction> keyboard_actions_;
 
     UrdfMujocoControl* mujoco_control_;
