@@ -12,17 +12,17 @@
     </asset>
 
     <worldbody>
-        <geom name="floor" size="0 0 0.05" type="plane" material="grid" condim="3"/>
         <camera name="fixed" pos="0 -30 30" quat="0.707107 0.707107 0 0"/>
         <light name="top" pos="0 0 1" dir="0 0 -1"/>
-        <body name="double_pendulum" pos="0 0 5" gravcomp="0">
-            <inertial pos="0 0 0" mass="1" diaginertia="1 1 1"/>
-            <joint name="joint_0" pos="0 0 1" axis="1 0 0"/>
-            <geom name="link_0" size="0.2 0.2 1" type="box" rgba="1 0 0 1"/>
+
+        <body name="double_pendulum" pos="0 0 0" gravcomp="0">
+            <inertial pos="0 0 -1" mass="1" diaginertia="1 1 1"/>
+            <joint name="joint_0" pos="0 0 0" axis="1 0 0"/>
+            <geom name="link_0" size="1 1 1" pos="0 0 -1" type="box" rgba="1 0 0 1"/>
             <body name="link_1" pos="0 0 -2" gravcomp="0">
-                <inertial pos="0 0 0" mass="1" diaginertia="1 1 1"/>
-                <joint name="joint_1" pos="0 0 1" axis="1 0 0"/>
-                <geom name="link_1_geom" size="0.2 0.2 1" type="box" rgba="0 1 0 1"/>
+                <inertial pos="0 0 -1" mass="1" diaginertia="1 1 1"/>
+                <joint name="joint_1" pos="0 0 0" axis="1 0 0"/>
+                <geom name="link_1_geom" size="1 1 1" pos="0 0 -1" type="box" rgba="0 1 0 1"/>
             </body>
         </body>
     </worldbody>

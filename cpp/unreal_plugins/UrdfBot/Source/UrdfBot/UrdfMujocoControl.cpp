@@ -6,11 +6,10 @@
 
 #include <iostream>
 
-UrdfMujocoControl::UrdfMujocoControl()
+UrdfMujocoControl::UrdfMujocoControl(std::string filename)
 {
     char error[1000] = "Could not load binary model";
-    std::string model_filename = "E:/intel/interiorsim/python/spear/urdf/double_pendulum_mujoco.xml";
-    m = mj_loadXML(model_filename.c_str(), 0, error, 1000);
+    m = mj_loadXML(filename.c_str(), 0, error, 1000);
     d = mj_makeData(m);
 }
 
@@ -26,8 +25,8 @@ void UrdfMujocoControl::test()
 
 std::vector<float> UrdfMujocoControl::get_qfrc_inverse(std::vector<float> qpos)
 {
-    mju_zero(d->qacc, m->nv);
     mju_zero(d->qvel, m->nv);
+    mju_zero(d->qacc, m->nv);
     mju_zero(d->qfrc_applied, m->nv);
     mju_zero(d->ctrl, m->nv);
 

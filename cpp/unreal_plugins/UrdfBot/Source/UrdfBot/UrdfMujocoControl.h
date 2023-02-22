@@ -15,7 +15,7 @@
 class UrdfMujocoControl
 {
 public:
-    UrdfMujocoControl();
+    UrdfMujocoControl(std::string filename);
     ~UrdfMujocoControl();
 
     void test();

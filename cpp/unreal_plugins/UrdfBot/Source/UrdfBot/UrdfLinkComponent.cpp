@@ -109,10 +109,17 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc, UUrdfLinkC
             material_desc = material_desc->material_desc_;
         }
         ASSERT(material_desc);
+        if (material_desc->texture_.size() > 0) {
+            UMaterialInterface* material = LoadObject<UMaterialInterface>(nullptr, *Unreal::toFString(material_desc->texture_));
+            ASSERT(material);
 
-        UMaterialInterface* material = LoadObject<UMaterialInterface>(nullptr, *Unreal::toFString(material_desc->texture_));
-        ASSERT(material);
+            SetMaterial(0, material);
+        } else {
+            UMaterialInterface* base_material = LoadObject<UMaterialInterface>(nullptr, *FString("Material'/UrdfBot/Common/M_PureColor.M_PureColor'"));
+            UMaterialInstanceDynamic* material = UMaterialInstanceDynamic::Create(base_material,this);
+            material->SetVectorParameterValue("BaseColor_Color",FLinearColor(material_desc->color_));
 
-        SetMaterial(0, material);
+            SetMaterial(0, material);
+        }
     }
 }

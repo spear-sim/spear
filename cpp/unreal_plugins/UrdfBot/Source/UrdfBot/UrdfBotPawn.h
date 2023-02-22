@@ -11,7 +11,6 @@
 #include <CoreMinimal.h>
 #include <GameFramework/Pawn.h>
 
-#include <UrdfBot/UrdfSimpleControl.h>
 #include <UrdfBot/UrdfMujocoControl.h>
 
 #include "UrdfBotPawn.generated.h"
@@ -45,6 +44,7 @@ public:
     //debug 
     void addGravityCompensationAction();
     void testKey();
+    void testKey2();
     UFUNCTION(BlueprintCallable)
     static void resetConfig();
 
@@ -52,6 +52,6 @@ private:
     std::vector<KeyboardAction> keyboard_actions_;
 
     UrdfMujocoControl* mujoco_control_;
-    UrdfSimpleControl* control;
-    std::vector<std::string> joint_names;
+    std::vector<std::string> joint_names_;
+    int flag = 0;
 };

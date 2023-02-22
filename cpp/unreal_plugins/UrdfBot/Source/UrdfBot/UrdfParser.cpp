@@ -322,6 +322,7 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
         } else if (tag.Equals(TEXT("joint"))) {
             UrdfJointDesc joint_desc = parseJointNode(child_node);
             ASSERT(!Std::containsKey(robot_desc.joint_descs_, joint_desc.name_));
+            robot_desc.joint_names_.push_back(joint_desc.name_);
             robot_desc.joint_descs_[joint_desc.name_] = std::move(joint_desc);
 
         } else if (tag.Equals(TEXT("material"))) {

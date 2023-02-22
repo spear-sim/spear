@@ -22,19 +22,12 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 {
     std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::AUrdfBotPawn" << std::endl;
 
-    
     // setup UUrdfRobotComponent
     UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(
         FPaths::Combine(Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")), Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
-    
-    urdf_robot_component_ = NewObject<UUrdfRobotComponent>(this,Unreal::toFName("AUrdfBotPawn::urdf_robot_component_"));
+
+    urdf_robot_component_ = NewObject<UUrdfRobotComponent>(this, Unreal::toFName("AUrdfBotPawn::urdf_robot_component_"));
     urdf_robot_component_->createChildComponents(&robot_desc);
-        for (auto& pair : urdf_robot_component_->link_components_) {
-        AddInstanceComponent(pair.second);
-    }
-    for (auto& pair : urdf_robot_component_->joint_components_) {
-        AddInstanceComponent(pair.second);
-    }
     RootComponent = urdf_robot_component_;
 
     // setup UCameraComponent
@@ -50,25 +43,22 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.FOV");
-    // camera_component_->SetupAttachment(urdf_robot_component_->root_link_component_);
+    camera_component_->SetupAttachment(urdf_robot_component_->root_link_component_);
     camera_component_->SetupAttachment(urdf_robot_component_);
 
-
-    //control = new UrdfSimpleControl();
-
-    //joint_names.push_back("joint_0");
-    //if (urdf_robot_component_->joint_components_.size() == 2) {
-    //    joint_names.push_back("joint_1");
-    //}
-    // control->initialize(&robot_desc, joint_names);
+    // debug
+    joint_names_ = robot_desc.joint_names_;
+    for (auto& pair : urdf_robot_component_->link_components_) {
+        AddInstanceComponent(pair.second);
+    }
+    for (auto& pair : urdf_robot_component_->joint_components_) {
+        AddInstanceComponent(pair.second);
+    }
 }
 
 AUrdfBotPawn::~AUrdfBotPawn()
 {
     std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::~AUrdfBotPawn" << std::endl;
-    if (control) {
-        delete control;
-    }
     if (mujoco_control_) {
         delete mujoco_control_;
     }
@@ -76,12 +66,13 @@ AUrdfBotPawn::~AUrdfBotPawn()
 
 void AUrdfBotPawn::BeginPlay()
 {
-    UE_LOG(LogTemp, Log, TEXT("AUrdfBotPawn::BeginPlay"));
-    
-    
     Super::BeginPlay();
 
-    mujoco_control_ = new UrdfMujocoControl();
+    std::string urdf_filename = Unreal::toStdString(
+        FPaths::Combine(Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")), Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE"))));
+
+    UE_LOG(LogTemp, Log, TEXT("AUrdfBotPawn::BeginPlay"));
+    mujoco_control_ = new UrdfMujocoControl(urdf_filename);
 }
 
 void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
@@ -109,6 +100,7 @@ void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
     }
 
     input_component->BindKey(EKeys::SpaceBar, EInputEvent::IE_Pressed, this, &AUrdfBotPawn::testKey);
+    input_component->BindKey(EKeys::C, EInputEvent::IE_Pressed, this, &AUrdfBotPawn::testKey2);
 }
 
 void AUrdfBotPawn::Tick(float delta_time)
@@ -122,42 +114,19 @@ void AUrdfBotPawn::Tick(float delta_time)
             urdf_robot_component_->addAction(keyboard_action.add_action_);
         }
     }
-    // addGravityCompensationAction();
+    if (flag % 2 == 0) {
+        addGravityCompensationAction();
+    }
 }
 
 void AUrdfBotPawn::addGravityCompensationAction()
 {
-    float g = 9.81f;
-    float mass = 1.0f;
-    float length = 1.0f;
-#if 0
-    if (urdf_robot_component_->joint_components_.size() == 1) {
-        std::string joint_name = "joint_0";
-        UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_name);
-        float angle = joint->ConstraintInstance.GetCurrentTwist();
-
-        if (angle > PI / 2) {
-            angle = PI - angle;
-        }
-
-        if (angle < -PI / 2) {
-            angle = -PI - angle;
-        }
-
-        float force0 = -g * mass * length * FMath::Sin(angle);
-
-        std::map<std::string, float> compensation_actions;
-        compensation_actions[joint_name] = force0;
-        // urdf_robot_component_->addAction(compensation_actions);
-        UE_LOG(LogTemp, Log, TEXT("[AUrdfBotPawn::Tick] analytical angle=%f force0=%f"), angle, force0);
-    }
-#endif
-    int size = joint_names.size();
+    int size = joint_names_.size();
 
     std::vector<float> qpos;
     qpos.resize(size);
     for (int i = 0; i < size; i++) {
-        UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names[i]);
+        UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names_[i]);
         float angle = joint->ConstraintInstance.GetCurrentTwist();
 
         angle = -angle;
@@ -165,12 +134,11 @@ void AUrdfBotPawn::addGravityCompensationAction()
     }
     std::vector<float> result = mujoco_control_->get_qfrc_inverse(qpos);
     std::map<std::string, float> actions;
-    actions["joint_0"] = result[0];
-    if (joint_names.size() == 2) {
-        actions["joint_1"] = result[1];
+    for (int i = 0; i < size; i++) {
+        actions[joint_names_[i]] = result[i];
     }
     urdf_robot_component_->addAction(actions);
-    UE_LOG(LogTemp, Log, TEXT("[AUrdfBotPawn::Tick] mujoco     angle0=%f force0=%f "), qpos[0], actions[joint_names[0]]);
+    UE_LOG(LogTemp, Log, TEXT("[AUrdfBotPawn::Tick] mujoco     angle0=%f force0=%f "), qpos[0], actions[joint_names_[0]]);
 }
 
 void AUrdfBotPawn::resetConfig()
@@ -181,12 +149,17 @@ void AUrdfBotPawn::resetConfig()
 
 void AUrdfBotPawn::testKey()
 {
-    int size = joint_names.size();
+    int size = joint_names_.size();
     for (int i = 0; i < size; i++) {
-        UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names[i]);
+        UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names_[i]);
         joint->child_link_component_->SetPhysicsLinearVelocity(FVector::ZeroVector);
         joint->child_link_component_->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
     }
     GEngine->AddOnScreenDebugMessage(1, 200, FColor::Blue, FString::Printf(TEXT("[AUrdfBotPawn::testKey] zero velocity")));
     UE_LOG(LogTemp, Log, TEXT("[AUrdfBotPawn::testKey] zero velocity"));
+}
+
+void AUrdfBotPawn::testKey2()
+{
+    flag++;
 }

@@ -158,6 +158,8 @@ struct UrdfRobotDesc
     std::map<std::string, UrdfJointDesc> joint_descs_;
     std::map<std::string, UrdfMaterialDesc> material_descs_;
 
+    std::vector<std::string> joint_names_;
+
     // derived data
     UrdfLinkDesc* root_link_desc_ = nullptr;
 };
