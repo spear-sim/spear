@@ -24,9 +24,9 @@ UUrdfLinkComponent::~UUrdfLinkComponent()
 void UUrdfLinkComponent::BeginPlay()
 {
     Super::BeginPlay();
-    
+
     // set relative scale at `BeginPlay` to avoid propagating scale to child links
-    SetRelativeScale3D(relative_scale_);
+    // SetRelativeScale3D(relative_scale_);
 
     // SetMassOverrideInKg(...) in constructor leads to following warning message during cooking:
     //     Error: FBodyInstance::GetSimplePhysicalMaterial : GEngine not initialized! Cannot call this during
@@ -35,7 +35,7 @@ void UUrdfLinkComponent::BeginPlay()
     SetMassOverrideInKg(NAME_None, mass_, true);
 }
 
-void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
+void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc, UUrdfLinkComponent* parent_link)
 {
     // for now link with no visual node or multiple visual node is not supported
     ASSERT(link_desc->visual_descs_.size() == 1);
@@ -47,7 +47,8 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
     UrdfJointDesc* joint_desc = link_desc->parent_joint_desc_;
     if (joint_desc) {
         float m_to_cm = 100.0f;
-        SetRelativeLocation((joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation()) * m_to_cm);
+        link_origin_ = link_desc->visual_descs_[0].origin_;
+        SetRelativeLocation((joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation() - parent_link->link_origin_.GetLocation()) * m_to_cm);
         SetRelativeRotation(joint_desc->origin_.GetRotation().Rotator() + link_desc->visual_descs_[0].origin_.GetRotation().Rotator());
     }
 
@@ -55,7 +56,7 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
     switch (geometry_desc.type_) {
         case UrdfGeometryType::Box:
             static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
-            relative_scale_ = geometry_desc.size_ ;
+            relative_scale_ = geometry_desc.size_;
             break;
         case UrdfGeometryType::Cylinder:
             static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
@@ -76,8 +77,12 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
     SetStaticMesh(static_mesh);
 
     // set physical property
+    if (link_desc->has_parent_) {
+        SetMobility(EComponentMobility::Movable);
+    } else {
+        SetMobility(EComponentMobility::Static);
+    }
     SetSimulatePhysics(true);
-    SetMobility(EComponentMobility::Movable);
     SetCollisionObjectType(ECollisionChannel::ECC_Vehicle);
     SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
     SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);

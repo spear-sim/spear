@@ -59,14 +59,14 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
             <geometry>
-                <box size="0.4 0.4 2"/>
+                <box size="1 1 1"/>
             </geometry>
             <material name="M_Green"/>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
             <geometry>
-                <box size="0.4 0.4 2"/>
+                <box size="1 1 1"/>
             </geometry>
             <material name="M_Green">
                 <color rgba="0 1.0 0 1.0"/>
@@ -79,7 +79,7 @@
         <parent link="base_link"/>
         <child link="link_0"/>
         <axis xyz="1 0 0"/>
-        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>
+<!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
 
@@ -92,14 +92,14 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
             <geometry>
-                <box size="0.4 0.4 2"/>
+                <box size="1 1 1"/>
             </geometry>
             <material name="M_Blue"/>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
             <geometry>
-                <box size="0.4 0.4 2"/>
+                <box size="1 1 1"/>
             </geometry>
             <material name="M_Blue">
                 <color rgba="0 0 1 1"/>
@@ -112,7 +112,40 @@
         <parent link="link_0"/>
         <child link="link_1"/>
         <axis xyz="1 0 0"/>
-        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>
+<!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
+        <dynamics type="torque"/>
+    </joint>
+
+    <link name="link_2">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 -1"/>
+            <geometry>
+                <box size="1 1 1"/>
+            </geometry>
+            <material name="M_Red"/>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 -1"/>
+            <geometry>
+                <box size="1 1 1"/>
+            </geometry>
+            <material name="M_Red">
+                <color rgba="1 0 0 1"/>
+                <texture filename="/UrdfBot/Common/M_Red.M_Red"/>
+            </material>
+        </collision>
+    </link>
+    <joint name="joint_2" type="continuous">
+        <origin rpy="0 0 0" xyz="0 0 -2"/>
+        <parent link="link_1"/>
+        <child link="link_2"/>
+        <axis xyz="1 0 0"/>
+<!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
 </robot>

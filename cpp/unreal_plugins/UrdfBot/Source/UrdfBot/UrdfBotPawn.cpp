@@ -22,13 +22,19 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 {
     std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::AUrdfBotPawn" << std::endl;
 
+    
     // setup UUrdfRobotComponent
     UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(
         FPaths::Combine(Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")), Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
-
-    urdf_robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::urdf_robot_component_::" + robot_desc.name_));
+    
+    urdf_robot_component_ = NewObject<UUrdfRobotComponent>(this,Unreal::toFName("AUrdfBotPawn::urdf_robot_component_"));
     urdf_robot_component_->createChildComponents(&robot_desc);
-
+        for (auto& pair : urdf_robot_component_->link_components_) {
+        AddInstanceComponent(pair.second);
+    }
+    for (auto& pair : urdf_robot_component_->joint_components_) {
+        AddInstanceComponent(pair.second);
+    }
     RootComponent = urdf_robot_component_;
 
     // setup UCameraComponent
@@ -47,18 +53,13 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     // camera_component_->SetupAttachment(urdf_robot_component_->root_link_component_);
     camera_component_->SetupAttachment(urdf_robot_component_);
 
-    for (auto& pair : urdf_robot_component_->link_components_) {
-        AddInstanceComponent(pair.second);
-    }
-    for (auto& pair : urdf_robot_component_->joint_components_) {
-        AddInstanceComponent(pair.second);
-    }
-    control = new UrdfSimpleControl();
 
-    joint_names.push_back("joint_0");
-    if (urdf_robot_component_->joint_components_.size() == 2) {
-        joint_names.push_back("joint_1");
-    }
+    //control = new UrdfSimpleControl();
+
+    //joint_names.push_back("joint_0");
+    //if (urdf_robot_component_->joint_components_.size() == 2) {
+    //    joint_names.push_back("joint_1");
+    //}
     // control->initialize(&robot_desc, joint_names);
 }
 
@@ -75,8 +76,10 @@ AUrdfBotPawn::~AUrdfBotPawn()
 
 void AUrdfBotPawn::BeginPlay()
 {
-    Super::BeginPlay();
     UE_LOG(LogTemp, Log, TEXT("AUrdfBotPawn::BeginPlay"));
+    
+    
+    Super::BeginPlay();
 
     mujoco_control_ = new UrdfMujocoControl();
 }
