@@ -26,7 +26,7 @@ void UUrdfLinkComponent::BeginPlay()
     Super::BeginPlay();
 
     // set relative scale at `BeginPlay` to avoid propagating scale to child links
-    // SetRelativeScale3D(relative_scale_);
+    SetRelativeScale3D(relative_scale_);
 
     // SetMassOverrideInKg(...) in constructor leads to following warning message during cooking:
     //     Error: FBodyInstance::GetSimplePhysicalMaterial : GEngine not initialized! Cannot call this during
