@@ -43,8 +43,6 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.FOV");
-    camera_component_->SetupAttachment(urdf_robot_component_->root_link_component_);
-    camera_component_->SetupAttachment(urdf_robot_component_);
 
     // setup InverseDynamics
     joint_names_ = robot_desc.joint_names_;
@@ -64,9 +62,9 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 
     // FRotator track_ball_orientation(Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "PITCH"}), Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "YAW"}),
     //                                Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "ROLL"}));
-    eef_target_->SetRelativeLocation(FVector::ZeroVector);
+
     eef_target_->SetRelativeRotation(FRotator::ZeroRotator);
-    eef_target_->SetRelativeScale3D(FVector(0.2, 0.2, 0.2));
+    eef_target_->SetRelativeScale3D(FVector::OneVector * 2);
     UStaticMesh* ballMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     eef_target_->SetStaticMesh(ballMesh);
     eef_target_->SetMobility(EComponentMobility::Movable);
@@ -76,6 +74,8 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 
     eef_target_->SetupAttachment(RootComponent);
     this->AddInstanceComponent(eef_target_);
+    
+    camera_component_->SetupAttachment(eef_target_);
 }
 
 AUrdfBotPawn::~AUrdfBotPawn()
@@ -138,7 +138,8 @@ void AUrdfBotPawn::Tick(float delta_time)
 
     // InverseDynamics
     if (flag % 2 == 0) {
-        addGravityCompensationAction();
+        //addGravityCompensationAction();
+        taskSpaceControl();
     }
 }
 

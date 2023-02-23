@@ -207,7 +207,7 @@
     <parent link="shoulder_pan_link" />
     <child link="shoulder_lift_link" />
     <axis xyz="0 1 0" />
-    <dynamics type="position" spring="10.0" damping damping="1.0" />
+    <dynamics type="position" spring="10.0"  damping="1.0" />
     <limit effort="131.76" lower="-1.221" upper="1.518" velocity="1.454" />
   </joint>
 
