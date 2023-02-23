@@ -55,6 +55,27 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     for (auto& pair : urdf_robot_component_->joint_components_) {
         AddInstanceComponent(pair.second);
     }
+
+    // create track_ball_ if required
+    eef_target_ = CreateDefaultSubobject<UStaticMeshComponent>(FName("TrackBall"));
+
+    // FVector track_ball_position(Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "POSITION_X"}), Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "POSITION_Y"}),
+    //                            Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "POSITION_Z"}));
+
+    // FRotator track_ball_orientation(Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "PITCH"}), Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "YAW"}),
+    //                                Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "ROLL"}));
+    eef_target_->SetRelativeLocation(FVector::ZeroVector);
+    eef_target_->SetRelativeRotation(FRotator::ZeroRotator);
+    eef_target_->SetRelativeScale3D(FVector(0.2, 0.2, 0.2));
+    UStaticMesh* ballMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+    eef_target_->SetStaticMesh(ballMesh);
+    eef_target_->SetMobility(EComponentMobility::Movable);
+    eef_target_->SetSimulatePhysics(false);
+    eef_target_->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+    eef_target_->SetCollisionObjectType(ECollisionChannel::ECC_Visibility);
+
+    eef_target_->SetupAttachment(RootComponent);
+    this->AddInstanceComponent(eef_target_);
 }
 
 AUrdfBotPawn::~AUrdfBotPawn()
@@ -160,4 +181,31 @@ void AUrdfBotPawn::testKey()
 void AUrdfBotPawn::testKey2()
 {
     flag++;
+}
+
+void AUrdfBotPawn::taskSpaceControl()
+{
+    int dof = joint_names_.size();
+
+    UUrdfLinkComponent* eef_link_component = urdf_robot_component_->joint_components_.at(joint_names_[dof - 1])->child_link_component_;
+
+    Eigen::VectorXf qpos;
+    Eigen::VectorXf qvel;
+    qpos.resize(dof);
+    qvel.resize(dof);
+    for (int i = 0; i < dof; i++) {
+        UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names_[i]);
+        // TODO why negative sign???
+        qpos[i] = -joint->ConstraintInstance.GetCurrentTwist();
+        // TODO how to find current joint velocity ?
+        qvel[i] = 0.0f;
+    }
+    Eigen::VectorXf qfrc_applied = mujoco_control_->task_space_control(eef_target_->GetRelativeTransform(), eef_link_component->GetRelativeTransform(), eef_link_component->GetComponentVelocity(),
+                                                                       eef_link_component->GetPhysicsAngularVelocity(), qpos, qvel);
+
+    std::map<std::string, float> actions;
+    for (int i = 0; i < dof; i++) {
+        actions[joint_names_[i]] = qfrc_applied[i];
+    }
+    urdf_robot_component_->addAction(actions);
 }

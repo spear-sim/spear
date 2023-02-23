@@ -11,6 +11,12 @@
           Four:
             ADD_ACTION: { "joint_0": -0.1 }
     -->
+    <mujoco>
+        <option gravity="0 0 0">
+            <flag contact="disable"/>
+        </option>
+    </mujoco>
+
     <link name="base_link">
         <inertial>
             <origin rpy="0 0 0" xyz="0 0.0 0"/>
@@ -18,7 +24,7 @@
             <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
         </inertial>
         <visual>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <origin rpy="0 0 0" xyz="-2 -2 -10"/>
             <geometry>
                 <box size="1 1 1"/>
             </geometry>
@@ -27,7 +33,7 @@
             </material>
         </visual>
         <collision>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <origin rpy="0 0 0" xyz="-2 -2 -10"/>
             <geometry>
                 <box size="1 1 1"/>
             </geometry>
@@ -43,7 +49,7 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
             <geometry>
-                <box size="0.2 0.2 1"/>
+                <box size="1 1 1"/>
             </geometry>
             <material>
                 <color rgba="0 1.0 0 1.0"/>
@@ -52,7 +58,7 @@
         <collision>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
             <geometry>
-                <box size="0.2 0.2 1"/>
+                <box size="1 1 1"/>
             </geometry>
         </collision>
     </link>
@@ -60,7 +66,7 @@
         <origin rpy="0 0 0" xyz="1 0 0"/>
         <parent link="base_link"/>
         <child link="link_0"/>
-        <axis xyz="1 0 0"/>
+    <axis xyz="0 0 1" />
         <limit effort="0" velocity="1000"/>
         <dynamics type="torque"/>
     </joint>
@@ -74,16 +80,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
             <geometry>
-                <box size="0.2 0.2 1"/>
+                <box size="1 1 1"/>
             </geometry>
             <material>
-                <color rgba="0 0 1 1"/>
+                <color rgba="1 1 0 1"/>
             </material>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
             <geometry>
-                <box size="0.2 0.2 1"/>
+                <box size="1 1 1"/>
             </geometry>
         </collision>
     </link>
@@ -91,7 +97,7 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_0"/>
         <child link="link_1"/>
-        <axis xyz="1 0 0"/>
+    <axis xyz="0 1 0" />
         <limit effort="0" velocity="1000"/>
         <dynamics type="torque"/>
     </joint>
@@ -122,7 +128,7 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_1"/>
         <child link="link_2"/>
-        <axis xyz="1 0 0"/>
+    <axis xyz="1 0 0" />
         <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
@@ -153,7 +159,7 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_2"/>
         <child link="link_3"/>
-        <axis xyz="1 0 0"/>
+    <axis xyz="0 1 0" />
         <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
@@ -184,7 +190,7 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_3"/>
         <child link="link_4"/>
-        <axis xyz="1 0 0"/>
+    <axis xyz="1 0 0" />
         <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
@@ -215,7 +221,7 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_4"/>
         <child link="link_5"/>
-        <axis xyz="1 0 0"/>
+    <axis xyz="0 1 0" />
         <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
@@ -232,7 +238,7 @@
                 <box size="1 1 1"/>
             </geometry>
             <material>
-                <color rgba="1 1 0 1"/>
+                <color rgba="0 0 1 1"/>
             </material>
         </visual>
         <collision>
@@ -246,7 +252,7 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_5"/>
         <child link="link_6"/>
-        <axis xyz="1 0 0"/>
+    <axis xyz="1 0 0" />
         <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>

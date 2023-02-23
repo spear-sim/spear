@@ -1,0 +1,47 @@
+<mujoco>
+    <asset>
+        <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3"
+                 rgb2=".2 .3 .4" width="300" height="300" mark="none"/>
+        <material name="grid" texture="grid" texrepeat="6 6"
+                  texuniform="true" reflectance=".2"/>
+        <material name="wall" rgba='.5 .5 .5 1'/>
+    </asset>
+
+    <option gravity="0 0 0">
+        <flag contact="disable"/>
+    </option>
+
+    <default>
+        <geom type="capsule" size=".02 .02 .02"/>
+        <joint type="hinge" damping=".02"/>
+    </default>
+
+    <worldbody>
+        <light name="light" pos="0 0 1"/>
+        <geom name="ground" type="plane" size=".5 .5 10" material="grid"/>
+        <camera name="y" pos="0 -.8 .6" xyaxes="1 0 0 0 1 2"/>
+        <camera name="x" pos="-.8 0 .6" xyaxes="0 -1 0 1 0 2"/>
+
+        <geom fromto="0 0 0 0 0 .2"/>
+        <body pos="0 0 .2">
+            <joint axis="0 0 1"/>
+            <joint axis="0 1 0"/>
+            <geom fromto="0 0 0 .2 0 0"/>
+            <body pos=".2 0 0">
+                <joint axis="1 0 0"/>
+                <joint axis="0 1 0"/>
+                <geom fromto="0 0 0 0 0 .15"/>
+                <body pos="0 0 .15">
+                    <joint axis="0 0 1"/>
+                    <joint axis="0 1 0"/>
+                    <geom fromto="0 0 0 .1 0 0"/>
+                    <geom name="fingertip" type="box" pos=".1 0 0" rgba="1 0 0 1"/>
+                </body>
+            </body>
+        </body>
+
+        <geom name="target" type="box" pos=".2 .2 .2" rgba="0 1 0 1"/>
+
+    </worldbody>
+
+</mujoco>

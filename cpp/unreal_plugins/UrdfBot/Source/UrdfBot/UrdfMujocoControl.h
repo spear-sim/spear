@@ -19,6 +19,7 @@ public:
     ~UrdfMujocoControl();
 
     Eigen::VectorXf inverseDynamics(Eigen::VectorXf qpos);
+    Eigen::VectorXf task_space_control(FTransform goal_pose, FTransform eef_pose,FVector velocity,FVector angular_velocity, Eigen::VectorXf qpos, Eigen::VectorXf qvel);
 
     mjModel* m = nullptr; // MuJoCo model
     mjData* d = nullptr;  // MuJoCo data

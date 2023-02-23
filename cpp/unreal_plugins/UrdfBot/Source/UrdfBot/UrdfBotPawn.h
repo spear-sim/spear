@@ -43,6 +43,8 @@ public:
 
     // debug
     void addGravityCompensationAction();
+    void taskSpaceControl();
+
     void testKey();
     void testKey2();
     UFUNCTION(BlueprintCallable)
@@ -54,4 +56,5 @@ private:
     UrdfMujocoControl* mujoco_control_;
     std::vector<std::string> joint_names_;
     int flag = 0;
+    UStaticMeshComponent* eef_target_ ;
 };
