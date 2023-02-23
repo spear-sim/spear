@@ -11,11 +11,11 @@
           Four:
             ADD_ACTION: { "joint_0": -0.1 }
     -->
-    <mujoco>
-        <option gravity="0 0 0">
-            <flag contact="disable"/>
-        </option>
-    </mujoco>
+<!--    <mujoco>-->
+<!--        <option gravity="0 0 0">-->
+<!--            <flag contact="disable"/>-->
+<!--        </option>-->
+<!--    </mujoco>-->
 
     <link name="base_link">
         <inertial>
@@ -26,16 +26,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="-2 -2 -10"/>
             <geometry>
-                <box size="1 0.4 0.4"/>
+                <box size="1 1 1"/>
             </geometry>
             <material>
                 <color rgba="1 0 0 1"/>
             </material>
         </visual>
         <collision>
-            <origin rpy="0 0 0" xyz="-2 -2 -10"/>
+            <origin rpy="0 0 0" xyz="-2 -2 -2"/>
             <geometry>
-                <box size="1 0.4 0.4"/>
+                <box size="1 1 1"/>
             </geometry>
         </collision>
     </link>
@@ -66,7 +66,7 @@
         <origin rpy="0 0 0" xyz="1 0 0"/>
         <parent link="base_link"/>
         <child link="link_0"/>
-        <axis xyz="1 0 0"/>
+        <axis xyz="0 0 1"/>
         <limit effort="0" velocity="1000"/>
         <dynamics type="torque"/>
     </joint>

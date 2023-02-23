@@ -162,7 +162,7 @@ void AUrdfBotPawn::addGravityCompensationAction()
     for (int i = 0; i < dof; i++) {
         actions[joint_names_[i]] = qfrc_applied[i];
     }
-    // urdf_robot_component_->addAction(actions);
+    urdf_robot_component_->addAction(actions);
 }
 
 void AUrdfBotPawn::resetConfig()
