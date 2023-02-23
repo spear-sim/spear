@@ -122,6 +122,40 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     SetDisableCollision(true);
 }
 
+float UUrdfJointComponent::getQPos()
+{
+    // TODO
+    FTransform joint_tf = GetRelativeTransform();
+    FTransform parent_pos = parent_link_component_->GetRelativeTransform();
+    FTransform child_tf = child_link_component_->GetRelativeTransform();
+
+    FTransform joint_tf_relative(joint_tf.InverseTransformRotation(child_tf.GetRotation()).Rotator());
+
+    FVector pos = joint_tf.InverseTransformPosition(child_tf.GetLocation());
+    FRotator ori = joint_tf.InverseTransformRotation(child_tf.GetRotation()).Rotator();
+
+    FVector temp;
+    UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQPos %f %s %s"), -ConstraintInstance.GetCurrentTwist(), *pos.ToString(), *ori.ToString());
+    return -ConstraintInstance.GetCurrentTwist();
+}
+
+float UUrdfJointComponent::getQVel()
+{
+    parent_link_component_->GetRelativeLocation();
+
+    FVector parent_vel = parent_link_component_->GetPhysicsLinearVelocity();
+    FVector parent_ori_vel = parent_link_component_->GetPhysicsAngularVelocityInRadians();
+
+    FVector child_vel = child_link_component_->GetPhysicsLinearVelocity();
+    FVector child_ori_vel = child_link_component_->GetPhysicsAngularVelocityInRadians();
+
+    FVector vel_diff = child_vel - parent_vel;
+    FVector angular_vel_diff = child_ori_vel - parent_ori_vel;
+
+    // UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQvel %s %s"), *vel_diff.ToString(), *angular_vel_diff.ToString());
+    return 0.0f;
+}
+
 void UUrdfJointComponent::addAction(float action)
 {
     float m_to_cm = 100.0f;

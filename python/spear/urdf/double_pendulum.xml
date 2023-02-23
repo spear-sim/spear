@@ -66,7 +66,7 @@
         <origin rpy="0 0 0" xyz="1 0 0"/>
         <parent link="base_link"/>
         <child link="link_0"/>
-    <axis xyz="0 0 1" />
+        <axis xyz="1 0 0"/>
         <limit effort="0" velocity="1000"/>
         <dynamics type="torque"/>
     </joint>
@@ -97,7 +97,7 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_0"/>
         <child link="link_1"/>
-    <axis xyz="0 1 0" />
+        <axis xyz="0 1 0"/>
         <limit effort="0" velocity="1000"/>
         <dynamics type="torque"/>
     </joint>
@@ -128,7 +128,7 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_1"/>
         <child link="link_2"/>
-    <axis xyz="1 0 0" />
+        <axis xyz="1 0 0"/>
         <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
@@ -159,7 +159,7 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_2"/>
         <child link="link_3"/>
-    <axis xyz="0 1 0" />
+        <axis xyz="0 1 0"/>
         <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
@@ -190,43 +190,12 @@
         <origin rpy="0 0 0" xyz="0 0 -2"/>
         <parent link="link_3"/>
         <child link="link_4"/>
-    <axis xyz="1 0 0" />
+        <axis xyz="1 0 0"/>
         <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
 
     <link name="link_5">
-        <inertial>
-            <origin rpy="0 0 0" xyz="0 0 -1"/>
-            <mass value="1"/>
-            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
-        </inertial>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 -1"/>
-            <geometry>
-                <box size="1 1 1"/>
-            </geometry>
-            <material>
-                <color rgba="1 1 0 1"/>
-            </material>
-        </visual>
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 -1"/>
-            <geometry>
-                <box size="1 1 1"/>
-            </geometry>
-        </collision>
-    </link>
-    <joint name="joint_5" type="continuous">
-        <origin rpy="0 0 0" xyz="0 0 -2"/>
-        <parent link="link_4"/>
-        <child link="link_5"/>
-    <axis xyz="0 1 0" />
-        <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
-        <dynamics type="torque"/>
-    </joint>
-
-    <link name="link_6">
         <inertial>
             <origin rpy="0 0 0" xyz="0 0 -1"/>
             <mass value="1"/>
@@ -248,12 +217,13 @@
             </geometry>
         </collision>
     </link>
-    <joint name="joint_6" type="continuous">
+    <joint name="joint_5" type="continuous">
         <origin rpy="0 0 0" xyz="0 0 -2"/>
-        <parent link="link_5"/>
-        <child link="link_6"/>
-    <axis xyz="1 0 0" />
+        <parent link="link_4"/>
+        <child link="link_5"/>
+        <axis xyz="0 1 0"/>
         <!--        <limit effort="1000.0" lower="-1.57" upper="1.57" velocity="0.1"/>-->
         <dynamics type="torque"/>
     </joint>
+
 </robot>

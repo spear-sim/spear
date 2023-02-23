@@ -74,7 +74,7 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 
     eef_target_->SetupAttachment(RootComponent);
     this->AddInstanceComponent(eef_target_);
-    
+
     camera_component_->SetupAttachment(eef_target_);
 }
 
@@ -138,8 +138,8 @@ void AUrdfBotPawn::Tick(float delta_time)
 
     // InverseDynamics
     if (flag % 2 == 0) {
-        //addGravityCompensationAction();
-        taskSpaceControl();
+        addGravityCompensationAction();
+        // taskSpaceControl();
     }
 }
 
@@ -148,18 +148,21 @@ void AUrdfBotPawn::addGravityCompensationAction()
     int dof = joint_names_.size();
 
     Eigen::VectorXf qpos;
+    Eigen::VectorXf qvel;
     qpos.resize(dof);
+    qvel.resize(dof);
     for (int i = 0; i < dof; i++) {
         UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names_[i]);
-        // TODO why negative sign???
-        qpos[i] = -joint->ConstraintInstance.GetCurrentTwist();
+        // negative sign as unreal consider joint direction differently
+        qpos[i] = joint->getQPos();
+        qvel[i] = joint->getQVel();
     }
     Eigen::VectorXf qfrc_applied = mujoco_control_->inverseDynamics(qpos);
     std::map<std::string, float> actions;
     for (int i = 0; i < dof; i++) {
         actions[joint_names_[i]] = qfrc_applied[i];
     }
-    urdf_robot_component_->addAction(actions);
+    // urdf_robot_component_->addAction(actions);
 }
 
 void AUrdfBotPawn::resetConfig()
@@ -199,7 +202,7 @@ void AUrdfBotPawn::taskSpaceControl()
         // TODO why negative sign???
         qpos[i] = -joint->ConstraintInstance.GetCurrentTwist();
         // TODO how to find current joint velocity ?
-        qvel[i] = 0.0f;
+        qvel[i] = joint->getQVel();
     }
     Eigen::VectorXf qfrc_applied = mujoco_control_->task_space_control(eef_target_->GetRelativeTransform(), eef_link_component->GetRelativeTransform(), eef_link_component->GetComponentVelocity(),
                                                                        eef_link_component->GetPhysicsAngularVelocity(), qpos, qvel);

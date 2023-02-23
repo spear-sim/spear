@@ -42,9 +42,9 @@ Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTra
 
     // update mj_model
     Eigen::VectorXd qpos_d = qpos.cast<double>();
-    Eigen::VectorXd qvel_d = qpos.cast<double>();
+    Eigen::VectorXd qvel_d = qvel.cast<double>();
     mju_copy(d->qpos, qpos_d.data(), m->nv);
-    mju_zero(d->qvel, m->nv);
+    mju_copy(d->qpos, qvel_d.data(), m->nv);
     mju_zero(d->qacc, m->nv);
     mju_zero(d->qfrc_applied, m->nv);
     mju_zero(d->ctrl, m->nv);

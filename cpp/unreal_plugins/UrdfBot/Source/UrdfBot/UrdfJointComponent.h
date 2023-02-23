@@ -26,6 +26,9 @@ public:
     void BeginPlay() override;
 
     void initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
+    
+    float getQPos();
+    float getQVel();
 
     void applyAction(float action);
     void addAction(float action);
