@@ -186,7 +186,7 @@
         <origin rpy="0 0 0" xyz="1 0 0"/>
         <parent link="link_3"/>
         <child link="link_4"/>
-        <axis xyz="1 0 0"/>x
+        <axis xyz="1 0 0"/>
         <dynamics type="torque"/>
     </joint>
 
