@@ -18,7 +18,7 @@ if __name__ == "__main__":
     unreal_projects_dir = os.path.realpath(os.path.join(tools_dir, "..", "cpp", "unreal_projects"))
 
     if args.unreal_project_dir:
-        unreal_project_dirs = [ os.path.realpath(args.unreal_project_dir) ]
+        unreal_project_dirs = [os.path.realpath(args.unreal_project_dir)]
     else:
         unreal_project_dirs = [ os.path.join(unreal_projects_dir, project) for project in os.listdir(unreal_projects_dir) ]
 

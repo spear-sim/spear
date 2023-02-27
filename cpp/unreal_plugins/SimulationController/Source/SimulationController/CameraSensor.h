@@ -8,7 +8,10 @@
 #include <string>
 #include <vector>
 
+#include <Containers/Array.h>
 #include <Math/Color.h>
+
+#include "SimulationController/BoostInterprocess.h"
 
 class AActor;
 class UCameraComponent;
@@ -21,6 +24,12 @@ struct RenderPass
 {
     USceneCaptureComponent2D* scene_capture_component_ = nullptr;
     UTextureRenderTarget2D* texture_render_target_ = nullptr;
+
+    // only used if SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY is set to True
+    int shared_memory_num_bytes_ = -1;
+    std::string shared_memory_name_; // externally visible name
+    std::string shared_memory_id_;   // ID used to manage the shared memory resource internally
+    boost::interprocess::mapped_region shared_memory_mapped_region_;
 };
 
 class CameraSensor

@@ -9,7 +9,6 @@
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineTypes.h>
 #include <Math/Vector.h>
 
 #include "SimulationController/Task.h"
@@ -18,9 +17,9 @@ class AActor;
 class ARecastNavMesh;
 class UNavigationSystemV1;
 class UWorld;
+struct FHitResult;
 
 class UActorHitEvent;
-
 struct Box;
 
 class ImitationLearningTask : public Task {

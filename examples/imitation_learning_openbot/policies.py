@@ -79,7 +79,7 @@ class OpenBotPIDPolicy():
         if waypoint_reached: 
             num_waypoints = len(self._trajectory) - 1 # discarding the initial position
             if self._index_waypoint < num_waypoints:  # if this waypoint is not the final "goal"
-                print(f"Waypoint {self._index_waypoint} of {num_waypoints} reached.")
+                print(f"[SPEAR | policies.py] Waypoint {self._index_waypoint} of {num_waypoints} reached.")
                 self._index_waypoint += 1 # set the next way point as the current target to be tracked by the agent
                 goal_reached = False 
             else: # if this waypoint is the final "goal"
@@ -111,12 +111,10 @@ class OpenBotPilotNetPolicy():
         self._output_details = self._interpreter.get_output_details()
         
         # the policy takes two inputs: normalized rgb image and a 3D compass observation.
-        print(f"Input details of the control policy: {self._input_details}")
-        print()
+        print(f"[SPEAR | policies.py] Input details of the control policy: {self._input_details}")
 
         # the policy gives a 2D output consisting of the duty cycles to be sent to the left (resp. right) motors on a [0, 1] scale
-        print(f"Output details of the control policy: {self._output_details}")
-        print()
+        print(f"[SPEAR | policies.py] Output details of the control policy: {self._output_details}")
 
     def step(self, obs, position_xy_desired):
     

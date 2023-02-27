@@ -11,15 +11,17 @@ public class OpenBot : ModuleRules
     public OpenBot(ReadOnlyTargetRules Target) : base(Target)
     {
         // Disable precompiled headers (in our code but not Unreal code) for faster builds,
-        // easier debugging of compile errors, and strict enforcement of include-what-you-use
+        // easier debugging of compile errors, and strict enforcement of include-what-you-use.
         PCHUsage = ModuleRules.PCHUsageMode.Default;
         PrivatePCHHeaderFile = "";
         bUseUnity = false;
 
-        // Turn off code optimization except in shipping builds for faster build times
+        // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
-        // Enable exceptions because some of our third-party dependencies use them
+        // Our ASSERT macro throws exceptions, and so does our templated function Config::get(...),
+        // because it depends on yaml-cpp, which throws exceptions. So we need to enable exceptions
+        // everywhere.
         bEnableExceptions = true;
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "PhysX", "PhysXVehicleLib", "PhysXVehicles" });
@@ -36,7 +38,7 @@ public class OpenBot : ModuleRules
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "libeigen", "BUILD", "Linux", "include", "eigen3"));
         } else {
-            throw new Exception("Unexpected: Target.Platform == " + Target.Platform);
+            throw new Exception("[SPEAR | OpenBot.Build.cs] Unexpected: Target.Platform == " + Target.Platform);
         }
     }
 }

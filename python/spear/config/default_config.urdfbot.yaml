@@ -1,0 +1,19 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+URDFBOT:
+  URDFBOT_PAWN:
+    URDF_DIR: "" # Directory to look for URDF_FILE. This will be set automatically to a default location by spear.get_config().
+    URDF_FILE: "locobot.xml"
+    CAMERA_COMPONENT:
+      POSITION_X: 0.0
+      POSITION_Y: 0.0
+      POSITION_Z: 50.0
+      ROLL: 0.0
+      YAW: 0.0
+      PITCH: 0.0
+      FOV: 90.0
+  URDF_LINK_COMPONENT:
+    POSITION_SOLVER_ITERATION_COUNT: 100
+    VELOCITY_SOLVER_ITERATION_COUNT: 100

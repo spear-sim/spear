@@ -11,27 +11,57 @@ public class SimulationController : ModuleRules
     public SimulationController(ReadOnlyTargetRules Target) : base(Target)
     {
         // Disable precompiled headers (in our code but not Unreal code) for faster builds,
-        // easier debugging of compile errors, and strict enforcement of include-what-you-use
+        // easier debugging of compile errors, and strict enforcement of include-what-you-use.
         PCHUsage = ModuleRules.PCHUsageMode.Default;
         PrivatePCHHeaderFile = "";
         bUseUnity = false;
 
-        // Turn off code optimization except in shipping builds for faster build times
+        // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
-
-        // Enable exceptions because some of our third-party dependencies use them
-        bEnableExceptions = true;
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
+        // Our ASSERT macro throws exceptions, and so does our templated function Config::get(...),
+        // because it depends on yaml-cpp, which throws exceptions. So we need to enable exceptions
+        // everywhere. Note that boost::interprocess::mapped_region also throws exceptions, so we
+        // would need to enable exceptions here even if we did not need them for our ASSERT macro
+        // or Config::get(...).
+        bEnableExceptions = true;
+
         //
-        // asio
+        // Boost (asio, interprocess) 
         //
 
-        PublicDefinitions.Add("ASIO_NO_TYPEID");
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "asio", "asio", "include"));
+        // asio
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "align", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "asio", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "bind", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "date_time", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "exception", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "mpl", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "numeric", "conversion", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "preprocessor", "include"));        
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "regex", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "smart_ptr", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "system", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "throw_exception", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "type_traits", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "utility", "include"));
+
+        // interprocess
+        bEnableUndefinedIdentifierWarnings = false;
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "assert", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "config", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "container", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "core", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "interprocess", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "intrusive", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "move", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "predef", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "static_assert", "include"));
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "winapi", "include"));
 
         //
         // rpclib
@@ -46,7 +76,7 @@ public class SimulationController : ModuleRules
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Linux", "librpc.a"));
         } else {
-            throw new Exception("Target.Platform == " + Target.Platform);
+            throw new Exception("[SPEAR | SimulationController.Build.cs] Target.Platform == " + Target.Platform);
         }
     }
 }

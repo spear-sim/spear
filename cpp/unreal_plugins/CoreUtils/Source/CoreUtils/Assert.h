@@ -1,23 +1,23 @@
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright(c) 2004 Sam Hocevar <sam@hocevar.net>. Licensed under the WTFPLv2 License <http://www.wtfpl.net>.
+// Copyright(c) 2004 Gregory Pakosz. Licensed under the WTFPLv2 License <http://www.wtfpl.net>.
 //
-
-#pragma once
 
 // Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
 
-// Define below macros to 0 as it is required to build successfully on Linux and Windows
-#if !defined(__APPLE__)
+#pragma once
+
+#include <boost/predef.h>
+
+#define PPK_ASSERT_ENABLED 1
+
+// Required to build successfully on Windows and Linux
+#if !BOOST_OS_MACOS
     #define TARGET_OS_IPHONE 0
     #define TARGET_IPHONE_SIMULATOR 0
 #endif
 
-// Define macros required to enable assert functionality through PPK_ASSERT
-#define PPK_ASSERT_ENABLED 1
-#define PPK_ASSERT_DEFAULT_LEVEL Error
-
-
+// ------------------------------------------------------------------------------
 
 // see README.md for usage instructions.
 // (‑●‑●)> released under the WTFPL v2 license, by Gregory Pakosz (@gpakosz)
@@ -494,6 +494,25 @@
     #define PPK_ASSERT_FUNCSPEC
   #endif
 
+    // ---- BEGIN SPEAR MODIFICATION ----
+    //
+    // Export these functions to our other plugins via the COREUTILS_API macro.
+    //
+    // PPK_ASSERT_FUNCSPEC
+    // AssertAction::AssertAction PPK_ASSERT_CALL handleAssert(const char* file,
+    //                                                         int line,
+    //                                                         const char* function,
+    //                                                         const char* expression,
+    //                                                         int level,
+    //                                                         bool* ignoreLine,
+    //                                                         const char* message, ...) PPK_ASSERT_HANDLE_ASSERT_FORMAT;
+    //
+    // PPK_ASSERT_FUNCSPEC
+    // void PPK_ASSERT_CALL ignoreAllAsserts(bool value);
+    //
+    // PPK_ASSERT_FUNCSPEC
+    // bool PPK_ASSERT_CALL ignoreAllAsserts();
+
     PPK_ASSERT_FUNCSPEC
     AssertAction::AssertAction COREUTILS_API PPK_ASSERT_CALL handleAssert(const char* file,
                                                                           int line,
@@ -504,13 +523,15 @@
                                                                           const char* message, ...) PPK_ASSERT_HANDLE_ASSERT_FORMAT;
 
     PPK_ASSERT_FUNCSPEC
-    AssertHandler PPK_ASSERT_CALL setAssertHandler(AssertHandler handler);
-
-    PPK_ASSERT_FUNCSPEC
     void COREUTILS_API PPK_ASSERT_CALL ignoreAllAsserts(bool value);
 
     PPK_ASSERT_FUNCSPEC
     bool COREUTILS_API PPK_ASSERT_CALL ignoreAllAsserts();
+
+    // ---- END SPEAR MODIFICATION ----
+
+    PPK_ASSERT_FUNCSPEC
+    AssertHandler PPK_ASSERT_CALL setAssertHandler(AssertHandler handler);
 
   #if defined(PPK_ASSERT_CXX11)
 
@@ -641,10 +662,6 @@
   #pragma GCC diagnostic pop
 #endif
 
-
+// ------------------------------------------------------------------------------
 
 #define ASSERT PPK_ASSERT
-#define ASSERT_WARNING PPK_ASSERT_WARNING
-#define ASSERT_DEBUG PPK_ASSERT_DEBUG
-#define ASSERT_ERROR PPK_ASSERT_ERROR
-#define ASSERT_FATAL PPK_ASSERT_FATAL

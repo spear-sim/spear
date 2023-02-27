@@ -38,7 +38,7 @@ SIMULATION_CONTROLLER:
       NAV_MODIFIER_OFFSET_X: 0.0
       NAV_MODIFIER_OFFSET_Y: 0.0
       NAV_MODIFIER_OFFSET_Z: 0.0
-      BOUNDS_VOLUME_ACTOR_TAGS: ["architecture", "furniture"]
+      BOUNDS_VOLUME_ACTOR_TAGS: []
       EXPORT_NAV_DATA_OBJ: False
       EXPORT_NAV_DATA_OBJ_DIR: ""
 
@@ -49,7 +49,7 @@ SIMULATION_CONTROLLER:
     STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
     IS_READY_VELOCITY_THRESHOLD: 0.001
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals" 
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -70,7 +70,7 @@ SIMULATION_CONTROLLER:
       NAV_MODIFIER_OFFSET_X: 0.0
       NAV_MODIFIER_OFFSET_Y: 0.0
       NAV_MODIFIER_OFFSET_Z: 0.0
-      BOUNDS_VOLUME_ACTOR_TAGS: ["architecture", "furniture"]
+      BOUNDS_VOLUME_ACTOR_TAGS: []
       EXPORT_NAV_DATA_OBJ: False
       EXPORT_NAV_DATA_OBJ_DIR: ""
 
@@ -111,9 +111,9 @@ SIMULATION_CONTROLLER:
     OBSTACLE_IGNORE_ACTOR_NAMES: []
     GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
     POSITIONS_FILE: ""
-    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000
-    TRAJECTORY_SAMPLING_MAX_ITERS: 10000
-    TRAJECTORY_SAMPLING_DEBUG_RENDER: False
+    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
+    TRAJECTORY_SAMPLING_MAX_ITERS: 100
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
@@ -154,18 +154,22 @@ SIMULATION_CONTROLLER:
     SPAWN_CAMERA_ORIENTATION_YAW: 0.0
     SPAWN_CAMERA_ORIENTATION_ROLL: 0.0
 
-  # We have found these values achieve a good trade-off between image quality and
-  # rendering speed. When Unreal defines ClampMin/ClampMax values, it will clamp
-  # those values in the engine. When Unreal defines UIMin/UIMax vales, it will
-  # only clamp those values values in the editor.
   CAMERA_SENSOR:
+
+    USE_SHARED_MEMORY: True       # write image data to shared memory for fast interprocess communication
+    SKIP_READ_SURFACE_DATA: False # skip reading image data from the GPU, useful for debugging and benchmarking
+
+    # We have found these values achieve a good trade-off between image quality and
+    # rendering speed. When Unreal defines ClampMin/ClampMax values, it will clamp
+    # those values in the engine. When Unreal defines UIMin/UIMax vales, it will
+    # only clamp those values values in the editor.
     SCENE_CAPTURE_COMPONENT_CAPTURE_SOURCE: "SCS_FinalToneCurveHDR"     # "SCS_FinalColorHDR", "SCS_FinalToneCurveHDR"
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_UP: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_UP: 9999.0                          # ClampMin=0.02, UIMax=20.0
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN: 9999.0                        # ClampMin=0.02, UIMax=20.0
     FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY: True
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # set to 0.0 on Windows for ray-traced global illumination, set to 1.0 on macOS and Linux to use baked lighting
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # set to 0.0 for raytracing, set to 1.0 for baked
     FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: True                         # set to True to use ray-tracing features
     FINAL_COLOR_OVERRIDE_RAYTRACING_GI: True
     FINAL_COLOR_RAYTRACING_GI_TYPE: "BruteForce"                        # set to "BruteForce" when using ray-tracing

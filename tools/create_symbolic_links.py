@@ -12,17 +12,27 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--unreal_project_dir")
+    parser.add_argument("--unreal_plugins_dir")
+    parser.add_argument("--third_party_dir")
     args = parser.parse_args()
 
-    tools_dir           = os.path.dirname(os.path.realpath(__file__))
-    unreal_projects_dir = os.path.realpath(os.path.join(tools_dir, "..", "cpp", "unreal_projects"))
-    unreal_plugins_dir  = os.path.realpath(os.path.join(tools_dir, "..", "cpp", "unreal_plugins"))
-    third_party_dir     = os.path.realpath(os.path.join(tools_dir, "..", "third_party"))
+    tools_dir = os.path.dirname(os.path.realpath(__file__))
 
     if args.unreal_project_dir:
-        unreal_project_dirs = [ os.path.realpath(args.unreal_project_dir) ]
+        unreal_project_dirs = [os.path.realpath(args.unreal_project_dir)]
     else:
+        unreal_projects_dir = os.path.realpath(os.path.join(tools_dir, "..", "cpp", "unreal_projects"))
         unreal_project_dirs = [ os.path.join(unreal_projects_dir, project) for project in os.listdir(unreal_projects_dir) ]
+
+    if args.unreal_plugins_dir:
+        unreal_plugins_dir = os.path.realpath(args.unreal_plugins_dir)
+    else:
+        unreal_plugins_dir = os.path.realpath(os.path.join(tools_dir, "..", "cpp", "unreal_plugins"))
+
+    if args.third_party_dir:
+        third_party_dir = os.path.realpath(args.third_party_dir)
+    else:
+        third_party_dir = os.path.realpath(os.path.join(tools_dir, "..", "third_party"))
 
     unreal_plugins = os.listdir(unreal_plugins_dir)
 
@@ -57,7 +67,7 @@ if __name__ == "__main__":
             print(f"[SPEAR | create_sybmolic_links.py] Found uproject: {uproject}")
 
             # create a symlink to third_party
-            symlink_third_party_dir = os.path.join(unreal_projects_dir, project, "ThirdParty")
+            symlink_third_party_dir = os.path.join(unreal_project_dir, "ThirdParty")
             if spear.path_exists(symlink_third_party_dir):
                 print(f"[SPEAR | create_sybmolic_links.py]     File or directory or symlink exists, removing: {symlink_third_party_dir}")
                 spear.remove_path(symlink_third_party_dir)
@@ -65,12 +75,12 @@ if __name__ == "__main__":
             os.symlink(third_party_dir, symlink_third_party_dir)
 
             # get list of plugins from the uproject file
-            with open(os.path.join(unreal_projects_dir, project, project + ".uproject")) as f:
+            with open(os.path.join(unreal_project_dir, project + ".uproject")) as f:
                 project_plugins = [ p["Name"] for p in json.load(f)["Plugins"] ]
             print(f"[SPEAR | create_sybmolic_links.py]     Plugin dependencies: {project_plugins}")
 
             # create a Plugins dir in the project dir
-            project_plugins_dir = os.path.join(unreal_projects_dir, project, "Plugins")
+            project_plugins_dir = os.path.join(unreal_project_dir, "Plugins")
             os.makedirs(project_plugins_dir, exist_ok=True)
 
             # create symlink for each plugin listed in the project, if the plugin is in our unreal_plugins dir

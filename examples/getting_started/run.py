@@ -24,7 +24,7 @@ if __name__ == "__main__":
     np.set_printoptions(linewidth=200)
 
     # load config
-    config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
+    config = spear.get_config(user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
 
     # create Env object
     env = spear.Env(config)
@@ -35,20 +35,20 @@ if __name__ == "__main__":
     if args.benchmark:
         start_time_seconds = time.time()
     else:
-        cv2.imshow("camera.final_color", obs["camera.final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+        cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
         cv2.waitKey(0)
 
     # take a few steps
     for i in range(NUM_STEPS):
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
-            obs, reward, done, info = env.step({"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
+            obs, reward, done, info = env.step(action={"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
             if not args.benchmark:
                 print("[SPEAR | run.py] SphereAgent: ")
                 print(obs["compass"])
                 print(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 print(reward, done, info)
         elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
-            obs, reward, done, info = env.step({"apply_voltage": np.array([1.0, 0.715], dtype=np.float32)})
+            obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 0.715], dtype=np.float32)})
             if not args.benchmark:
                 print("[SPEAR | run.py] OpenBotAgent: ")
                 print(obs["state_data"])
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             assert False
 
         if not args.benchmark:
-            cv2.imshow("camera.final_color", obs["camera.final_color"][:,:,[2,1,0]]) # OpenCV expects BGR instead of RGB
+            cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
             cv2.waitKey(0)
 
         if done:

@@ -67,7 +67,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # load config
-    config = spear.get_config(user_config_files=[ os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml") ])
+    config = spear.get_config(user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
 
     # read data from csv
     df = pd.read_csv(args.poses_file, dtype={"scene_id":str})
@@ -141,7 +141,13 @@ if __name__ == "__main__":
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.join(args.images_dir, render_pass)
                 assert os.path.exists(render_pass_dir)
-                plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs["camera." + render_pass].squeeze())
+
+                obs_render_pass = obs["camera." + render_pass].squeeze()
+                if render_pass in ["final_color", "lens_distortion", "normals", "segmentation"]:
+                    assert obs_render_pass.shape[2] == 4
+                    obs_render_pass = obs_render_pass[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
+
+                plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs_render_pass)
 
         # useful for comparing the game window to the image that has been saved to disk
         if args.wait_for_key_press:
