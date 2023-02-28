@@ -36,9 +36,9 @@ Eigen::VectorXf UrdfMujocoControl::inverseDynamics(Eigen::VectorXf qpos)
 
 Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTransform eef_pose, FVector velocity, FVector angular_velocity, Eigen::VectorXf qpos, Eigen::VectorXf qvel)
 {
-    int eef_id = 6;
-    float kp = 1;
-    float kd = kp / 6;
+    int eef_id = m->nbody - 1;
+    float kp = 100;
+    float kd = kp;
     double cm_to_m = 0.01;
 
     // update mj_model state
@@ -52,13 +52,16 @@ Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTra
     mju_zero(d->xfrc_applied, 6 * m->nbody);
     mj_forward(m, d);
 
+    // TODO find eef pose from qpos and check if correct?
+
     // find target
     Eigen::Vector3d target_location = toEigen(goal_pose.GetLocation() * cm_to_m);
     Eigen::Vector3d eef_location = toEigen(eef_pose.GetLocation() * cm_to_m);
-    Eigen::Vector3d position_velocity_error = toEigen(velocity * cm_to_m);
-    Eigen::Vector3d angular_velocity_error = toEigen(angular_velocity);
-    Eigen::Vector3d desired_force = 0.0 * kp * (target_location - eef_location) - kd * position_velocity_error;
-    Eigen::Vector3d desired_torque = -kd * angular_velocity_error;
+    Eigen::Vector3d position_velocity_error(velocity.X * cm_to_m, -velocity.Y * cm_to_m, velocity.Z * cm_to_m);
+    Eigen::Vector3d angular_velocity_error(angular_velocity.X, angular_velocity.Y, -angular_velocity.Z);
+
+    Eigen::Vector3d desired_force = 1.0 * kp * (target_location - eef_location) - 1.0 * kd * position_velocity_error;
+    Eigen::Vector3d desired_torque = 1.0 * -kd * angular_velocity_error;
 
     // compute jacobian
     Eigen::MatrixXd jac_pos(m->nv, 3);
@@ -83,12 +86,12 @@ Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTra
     desired_wrench.head<3>() = lambda_pos * desired_force;
     desired_wrench.tail<3>() = lambda_rot * desired_torque;
 
-    Eigen::MatrixXd torques = J_full_T * desired_wrench;
+    Eigen::VectorXd torques = J_full_T * desired_wrench;
 
-    printMatrix("mass_matrix", mass_matrix);
-    printMatrix("lambda_pos", lambda_pos);
-    printMatrix("lambda_rot", lambda_rot);
-    printMatrix("J_full_T", J_full_T);
+    // printMatrix("mass_matrix", mass_matrix);
+    // printMatrix("lambda_pos", lambda_pos);
+    // printMatrix("lambda_rot", lambda_rot);
+    // printMatrix("J_full_T", J_full_T);
     printMatrix("desired_force", desired_force);
     printMatrix("desired_torque", desired_torque);
     printMatrix("torques", torques);
@@ -108,7 +111,9 @@ void UrdfMujocoControl::printMatrix(std::string name, Eigen::MatrixXd data)
         for (int j = 0; j < data.cols(); j++) {
             ss << " " << data(i, j);
         }
-        ss << std::endl;
+        if (data.cols() > 1) {
+            ss << std::endl;
+        }
     }
     ss << "-----------" << std::endl;
 
