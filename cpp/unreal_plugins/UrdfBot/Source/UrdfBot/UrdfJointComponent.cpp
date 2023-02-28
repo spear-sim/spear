@@ -131,25 +131,28 @@ float UUrdfJointComponent::getQPos()
     FQuat child_rotation_in_parent_frame = parent_rotation.Inverse() * child_rotation;
 
     float angle = child_rotation_in_parent_frame.GetTwistAngle(axis_);
-    UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQPos %s - %f %f %f"), *FString(-ConstraintInstance.GetCurrentTwist() - angle < 1e-4 ? "T" : "F"), -ConstraintInstance.GetCurrentTwist(), angle);
+    // UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQPos %s - %f %f %f"), *FString(-ConstraintInstance.GetCurrentTwist() - angle < 1e-4 ? "T" : "F"), -ConstraintInstance.GetCurrentTwist(), angle);
     return -ConstraintInstance.GetCurrentTwist();
 }
 
 float UUrdfJointComponent::getQVel()
 {
-    parent_link_component_->GetRelativeLocation();
+    FTransform parent_tf = parent_link_component_->GetRelativeTransform();
 
-    FVector parent_vel = parent_link_component_->GetPhysicsLinearVelocity();
-    FVector parent_ori_vel = parent_link_component_->GetPhysicsAngularVelocityInRadians();
+    FVector parent_vel_world = parent_link_component_->GetPhysicsLinearVelocity();
+    FVector parent_ori_vel_world = parent_link_component_->GetPhysicsAngularVelocityInRadians();
 
-    FVector child_vel = child_link_component_->GetPhysicsLinearVelocity();
-    FVector child_ori_vel = child_link_component_->GetPhysicsAngularVelocityInRadians();
+    FVector child_vel_world = child_link_component_->GetPhysicsLinearVelocity();
+    FVector child_ori_vel_world = child_link_component_->GetPhysicsAngularVelocityInRadians();
 
-    FVector vel_diff = child_vel - parent_vel;
-    FVector angular_vel_diff = child_ori_vel - parent_ori_vel;
+    FVector parent_vel_ori_parent = parent_tf.InverseTransformVector(parent_ori_vel_world);
+    FVector child_vel_ori_parent = parent_tf.InverseTransformVector(child_ori_vel_world);
 
-    // UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQvel %s %s"), *vel_diff.ToString(), *angular_vel_diff.ToString());
-    return 0.0f;
+    FVector relative_vel_ori = child_vel_ori_parent - parent_vel_ori_parent;
+    
+    float qvel = FVector::DotProduct(relative_vel_ori, axis_);
+    UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQvel %f %s %s"),qvel, *relative_vel_ori.ToString(),*axis_.ToString());
+    return qvel;
 }
 
 void UUrdfJointComponent::addAction(float action)
