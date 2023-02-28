@@ -40,6 +40,7 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
 
     joint_type_ = joint_desc->type_;
     control_type_ = joint_desc->control_type_;
+    axis_ = joint_desc->axis_;
 
     parent_link_component_ = parent_link_component;
     child_link_component_ = child_link_component;
@@ -124,18 +125,13 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
 
 float UUrdfJointComponent::getQPos()
 {
-    // TODO
-    FTransform joint_tf = GetRelativeTransform();
-    FTransform parent_pos = parent_link_component_->GetRelativeTransform();
-    FTransform child_tf = child_link_component_->GetRelativeTransform();
+    FQuat parent_rotation = parent_link_component_->GetRelativeRotation().Quaternion();
+    FQuat child_rotation = child_link_component_->GetRelativeRotation().Quaternion();
 
-    FTransform joint_tf_relative(joint_tf.InverseTransformRotation(child_tf.GetRotation()).Rotator());
+    FQuat child_rotation_in_parent_frame = parent_rotation.Inverse() * child_rotation;
 
-    FVector pos = joint_tf.InverseTransformPosition(child_tf.GetLocation());
-    FRotator ori = joint_tf.InverseTransformRotation(child_tf.GetRotation()).Rotator();
-
-    FVector temp;
-    UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQPos %f %s %s"), -ConstraintInstance.GetCurrentTwist(), *pos.ToString(), *ori.ToString());
+    float angle = child_rotation_in_parent_frame.GetTwistAngle(axis_);
+    UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQPos %s - %f %f %f"), *FString(-ConstraintInstance.GetCurrentTwist() - angle < 1e-4 ? "T" : "F"), -ConstraintInstance.GetCurrentTwist(), angle);
     return -ConstraintInstance.GetCurrentTwist();
 }
 

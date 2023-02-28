@@ -65,8 +65,8 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 
     eef_target_->SetRelativeRotation(FRotator::ZeroRotator);
     eef_target_->SetRelativeScale3D(FVector::OneVector * 2);
-    UStaticMesh* ballMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-    eef_target_->SetStaticMesh(ballMesh);
+    //UStaticMesh* ballMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+    //eef_target_->SetStaticMesh(ballMesh);
     eef_target_->SetMobility(EComponentMobility::Movable);
     eef_target_->SetSimulatePhysics(false);
     eef_target_->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);

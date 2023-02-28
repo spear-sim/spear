@@ -38,4 +38,6 @@ public:
 
     UrdfJointType joint_type_;
     UrdfJointControlType control_type_;
+
+    FVector axis_;
 };
