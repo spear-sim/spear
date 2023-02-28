@@ -34,11 +34,11 @@ Eigen::VectorXf UrdfMujocoControl::inverseDynamics(Eigen::VectorXf qpos)
     return qfrc_applied.cast<float>();
 }
 
-Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTransform eef_pose, FVector velocity, FVector angular_velocity, Eigen::VectorXf qpos, Eigen::VectorXf qvel)
+Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTransform eef_pose, FVector eef_velocity, FVector eef_angular_velocity, Eigen::VectorXf qpos, Eigen::VectorXf qvel)
 {
     int eef_id = m->nbody - 1;
-    float kp = 100;
-    float kd = kp / 6;
+    double kp = 100;
+    double kd = kp / 6;
     double cm_to_m = 0.01;
 
     // update mj_model state
@@ -52,41 +52,42 @@ Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTra
     mju_zero(d->xfrc_applied, 6 * m->nbody);
     mj_forward(m, d);
 
-    // TODO find eef pose from qpos and check if correct?
-
     // find target
     Eigen::Vector3d target_location = toEigen(goal_pose.GetLocation() * cm_to_m);
     Eigen::Vector3d eef_location = toEigen(eef_pose.GetLocation() * cm_to_m);
-    Eigen::Vector3d position_velocity_error(velocity.X * cm_to_m, velocity.Y * cm_to_m, velocity.Z * cm_to_m);
-    Eigen::Vector3d angular_velocity_error(angular_velocity.X, angular_velocity.Y, angular_velocity.Z);
+    Eigen::Vector3d position_velocity_error = toEigen(eef_velocity * cm_to_m);
+    Eigen::Vector3d angular_velocity_error = toEigen(eef_angular_velocity);
 
     Eigen::Vector3d desired_force = 1.0 * kp * (target_location - eef_location) - 1.0 * kd * position_velocity_error;
     Eigen::Vector3d desired_torque = 1.0 * -kd * angular_velocity_error;
 
     // compute jacobian
-    Eigen::MatrixXd jac_pos(m->nv, 3);
-    Eigen::MatrixXd jac_rot(m->nv, 3);
-    mj_jacGeom(m, d, jac_pos.data(), jac_rot.data(), eef_id);
-    Eigen::MatrixXd J_full_T(jac_pos.rows(), jac_pos.cols() + jac_rot.cols());
-    J_full_T << jac_pos, jac_rot;
+    Eigen::MatrixXd jac_pos_t(m->nv, 3);
+    Eigen::MatrixXd jac_rot_t(m->nv, 3);
+    mj_jacGeom(m, d, jac_pos_t.data(), jac_rot_t.data(), eef_id);
+    Eigen::MatrixXd jac_full_t(jac_pos_t.rows(), jac_pos_t.cols() + jac_rot_t.cols());
+    jac_full_t << jac_pos_t, jac_rot_t;
 
+    // mass matrix
     Eigen::MatrixXd mass_matrix(m->nv, m->nv);
     mj_fullM(m, mass_matrix.data(), d->qM);
     Eigen::MatrixXd mass_matrix_inv = mass_matrix.completeOrthogonalDecomposition().pseudoInverse().eval();
 
-    Eigen::MatrixXd lambda_pos_inv = jac_pos.transpose() * mass_matrix_inv * jac_pos;
+    // lambda^-1 = J^T  * M^-1 * J
+    Eigen::MatrixXd lambda_pos_inv = jac_pos_t.transpose() * mass_matrix_inv * jac_pos_t;
     lambda_pos_inv = (lambda_pos_inv.array() < 1e-6).select(0, lambda_pos_inv);
     Eigen::MatrixXd lambda_pos = lambda_pos_inv.completeOrthogonalDecomposition().pseudoInverse().eval();
 
-    Eigen::MatrixXd lambda_rot_inv = jac_rot.transpose() * mass_matrix_inv * jac_rot;
+    Eigen::MatrixXd lambda_rot_inv = jac_rot_t.transpose() * mass_matrix_inv * jac_rot_t;
     lambda_rot_inv = (lambda_rot_inv.array() < 1e-6).select(0, lambda_rot_inv);
     Eigen::MatrixXd lambda_rot = lambda_rot_inv.completeOrthogonalDecomposition().pseudoInverse().eval();
 
     Eigen::VectorXd desired_wrench(6);
-    desired_wrench.head<3>() = lambda_pos * desired_force;
-    desired_wrench.tail<3>() = lambda_rot * desired_torque;
+    desired_wrench << lambda_pos * desired_force, lambda_rot * desired_torque;
+    //desired_wrench.head<3>() = lambda_pos * desired_force;
+    //desired_wrench.tail<3>() = lambda_rot * desired_torque;
 
-    Eigen::VectorXd torques = J_full_T * desired_wrench;
+    Eigen::VectorXd torques = jac_full_t * desired_wrench;
 
     // printMatrix("mass_matrix", mass_matrix);
     // printMatrix("lambda_pos", lambda_pos);

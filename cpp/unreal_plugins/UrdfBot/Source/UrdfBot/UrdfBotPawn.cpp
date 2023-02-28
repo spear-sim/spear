@@ -94,6 +94,12 @@ void AUrdfBotPawn::BeginPlay()
     std::string urdf_filename = Unreal::toStdString(
         FPaths::Combine(Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")), Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE"))));
     mujoco_control_ = new UrdfMujocoControl(urdf_filename);
+
+    UMaterialInterface* base_material = LoadObject<UMaterialInterface>(nullptr, *FString("Material'/UrdfBot/Common/M_PureColor.M_PureColor'"));
+    UMaterialInstanceDynamic* material = UMaterialInstanceDynamic::Create(base_material, this);
+    material->SetVectorParameterValue("BaseColor_Color", FLinearColor(1,0,0,1));
+
+    eef_target_->SetMaterial(0, material);
 }
 
 void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
