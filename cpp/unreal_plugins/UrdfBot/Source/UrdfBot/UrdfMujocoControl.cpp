@@ -38,7 +38,7 @@ Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTra
 {
     int eef_id = m->nbody - 1;
     float kp = 100;
-    float kd = kp;
+    float kd = kp / 6;
     double cm_to_m = 0.01;
 
     // update mj_model state
@@ -57,8 +57,8 @@ Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTra
     // find target
     Eigen::Vector3d target_location = toEigen(goal_pose.GetLocation() * cm_to_m);
     Eigen::Vector3d eef_location = toEigen(eef_pose.GetLocation() * cm_to_m);
-    Eigen::Vector3d position_velocity_error(velocity.X * cm_to_m, -velocity.Y * cm_to_m, velocity.Z * cm_to_m);
-    Eigen::Vector3d angular_velocity_error(angular_velocity.X, angular_velocity.Y, -angular_velocity.Z);
+    Eigen::Vector3d position_velocity_error(velocity.X * cm_to_m, velocity.Y * cm_to_m, velocity.Z * cm_to_m);
+    Eigen::Vector3d angular_velocity_error(angular_velocity.X, angular_velocity.Y, angular_velocity.Z);
 
     Eigen::Vector3d desired_force = 1.0 * kp * (target_location - eef_location) - 1.0 * kd * position_velocity_error;
     Eigen::Vector3d desired_torque = 1.0 * -kd * angular_velocity_error;

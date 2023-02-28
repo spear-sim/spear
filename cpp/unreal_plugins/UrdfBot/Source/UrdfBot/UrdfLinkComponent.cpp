@@ -86,7 +86,7 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc, UUrdfLinkC
     SetCollisionObjectType(ECollisionChannel::ECC_Vehicle);
     SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
     SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-    // SetCollisionResponseToChannel(ECC_Vehicle, ECR_Overlap); // ignore collision between robot links
+    SetCollisionResponseToChannel(ECC_Vehicle, ECR_Overlap); // ignore collision between robot links
     SetNotifyRigidBodyCollision(true);
 
     // set never sleep

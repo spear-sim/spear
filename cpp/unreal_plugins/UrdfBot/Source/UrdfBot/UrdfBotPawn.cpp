@@ -205,7 +205,7 @@ void AUrdfBotPawn::taskSpaceControl()
         qvel[i] = joint->getQVel();
     }
     Eigen::VectorXf qfrc_applied = mujoco_control_->task_space_control(eef_target_->GetRelativeTransform(), eef_link_component->GetRelativeTransform(), eef_link_component->GetComponentVelocity(),
-                                                                       eef_link_component->GetPhysicsAngularVelocity(), qpos, qvel);
+                                                                       FMath::DegreesToRadians(eef_link_component->GetPhysicsAngularVelocity()), qpos, qvel);
 
     std::map<std::string, float> actions;
     for (int i = 0; i < dof; i++) {
