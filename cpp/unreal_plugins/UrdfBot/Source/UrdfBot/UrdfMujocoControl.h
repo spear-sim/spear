@@ -6,7 +6,7 @@
 
 #include <CoreMinimal.h>
 
-#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <memory>
 #include <mujoco/mujoco.h>
 
@@ -23,4 +23,7 @@ public:
 
     mjModel* m = nullptr; // MuJoCo model
     mjData* d = nullptr;  // MuJoCo data
+
+    static Eigen::Vector3d toEigen(FVector vector);
+    static void printMatrix(std::string name,Eigen::MatrixXd mat);
 };

@@ -151,7 +151,7 @@ float UUrdfJointComponent::getQVel()
     FVector relative_vel_ori = child_vel_ori_parent - parent_vel_ori_parent;
     
     float qvel = FVector::DotProduct(relative_vel_ori, axis_);
-    UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQvel %f %s %s"),qvel, *relative_vel_ori.ToString(),*axis_.ToString());
+    // UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQvel %f %s %s"),qvel, *relative_vel_ori.ToString(),*axis_.ToString());
     return qvel;
 }
 

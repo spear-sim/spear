@@ -9,6 +9,7 @@
 #include <Camera/CameraComponent.h>
 #include <Components/InputComponent.h>
 #include <GameFramework/PlayerInput.h>
+#include <DrawDebugHelpers.h>
 
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
@@ -62,11 +63,11 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 
     // FRotator track_ball_orientation(Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "PITCH"}), Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "YAW"}),
     //                                Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "ROLL"}));
-
+    eef_target_->SetRelativeLocation(FVector(200,200,200));
     eef_target_->SetRelativeRotation(FRotator::ZeroRotator);
-    eef_target_->SetRelativeScale3D(FVector::OneVector * 2);
-    //UStaticMesh* ballMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-    //eef_target_->SetStaticMesh(ballMesh);
+    eef_target_->SetRelativeScale3D(FVector::OneVector * 1);
+    UStaticMesh* sphere_static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+    eef_target_->SetStaticMesh(sphere_static_mesh);
     eef_target_->SetMobility(EComponentMobility::Movable);
     eef_target_->SetSimulatePhysics(false);
     eef_target_->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
@@ -138,9 +139,11 @@ void AUrdfBotPawn::Tick(float delta_time)
 
     // InverseDynamics
     if (flag % 2 == 0) {
-        addGravityCompensationAction();
-        // taskSpaceControl();
+        // addGravityCompensationAction();
+        taskSpaceControl();
     }
+    FTransform eef_transform = eef_target_->GetRelativeTransform();
+    DrawDebugCoordinateSystem(GetWorld(), eef_transform.GetLocation(), eef_transform.GetRotation().Rotator(), 100, false, -1.0F, 0U, 2.f);
 }
 
 void AUrdfBotPawn::addGravityCompensationAction()
@@ -193,15 +196,12 @@ void AUrdfBotPawn::taskSpaceControl()
 
     UUrdfLinkComponent* eef_link_component = urdf_robot_component_->joint_components_.at(joint_names_[dof - 1])->child_link_component_;
 
-    Eigen::VectorXf qpos;
-    Eigen::VectorXf qvel;
-    qpos.resize(dof);
-    qvel.resize(dof);
+    Eigen::VectorXf qpos(dof);
+    Eigen::VectorXf qvel(dof);
     for (int i = 0; i < dof; i++) {
         UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names_[i]);
-        // TODO why negative sign???
-        qpos[i] = -joint->ConstraintInstance.GetCurrentTwist();
-        // TODO how to find current joint velocity ?
+        qpos[i] = joint->getQPos();
+        // -joint->ConstraintInstance.GetCurrentTwist();
         qvel[i] = joint->getQVel();
     }
     Eigen::VectorXf qfrc_applied = mujoco_control_->task_space_control(eef_target_->GetRelativeTransform(), eef_link_component->GetRelativeTransform(), eef_link_component->GetComponentVelocity(),
