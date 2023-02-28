@@ -9,6 +9,8 @@ UrdfMujocoControl::UrdfMujocoControl(std::string filename)
     char error[1000] = "Could not load binary model";
     m = mj_loadXML(filename.c_str(), 0, error, 1000);
     d = mj_makeData(m);
+
+    eef_id = m->ngeom - 1;
 }
 
 UrdfMujocoControl::~UrdfMujocoControl()
@@ -34,68 +36,48 @@ Eigen::VectorXf UrdfMujocoControl::inverseDynamics(Eigen::VectorXf qpos)
     return qfrc_applied.cast<float>();
 }
 
-Eigen::VectorXf UrdfMujocoControl::task_space_control(FTransform goal_pose, FTransform eef_pose, FVector eef_velocity, FVector eef_angular_velocity, Eigen::VectorXf qpos, Eigen::VectorXf qvel)
+Eigen::VectorXf UrdfMujocoControl::taskSpaceControl(FTransform goal_pose, FTransform eef_pose, FVector eef_velocity, FVector eef_angular_velocity, Eigen::VectorXf qpos, Eigen::VectorXf qvel)
 {
-    int eef_id = m->nbody - 1;
-    double kp = 100;
-    double kd = kp / 6;
     double cm_to_m = 0.01;
 
     // update mj_model state
     Eigen::VectorXd qpos_d = qpos.cast<double>();
     Eigen::VectorXd qvel_d = qvel.cast<double>();
     mju_copy(d->qpos, qpos_d.data(), m->nv);
-    mju_copy(d->qvel, qvel_d.data(), m->nv);
+    // mju_copy(d->qvel, qvel_d.data(), m->nv);
+    mju_zero(d->qvel, m->nv);
     mju_zero(d->act, m->na);
     mju_zero(d->ctrl, m->nu);
     mju_zero(d->qfrc_applied, m->nv);
     mju_zero(d->xfrc_applied, 6 * m->nbody);
     mj_forward(m, d);
 
-    // find target
-    Eigen::Vector3d target_location = toEigen(goal_pose.GetLocation() * cm_to_m);
-    Eigen::Vector3d eef_location = toEigen(eef_pose.GetLocation() * cm_to_m);
-    Eigen::Vector3d position_velocity_error = toEigen(eef_velocity * cm_to_m);
-    Eigen::Vector3d angular_velocity_error = toEigen(eef_angular_velocity);
+    FVector desired_force = kp * (goal_pose.GetLocation() * cm_to_m - eef_pose.GetLocation() * cm_to_m) - kd * eef_velocity * cm_to_m;
+    FVector desired_torque = -kd * eef_angular_velocity;
 
-    Eigen::Vector3d desired_force = 1.0 * kp * (target_location - eef_location) - 1.0 * kd * position_velocity_error;
-    Eigen::Vector3d desired_torque = 1.0 * -kd * angular_velocity_error;
-
-    // compute jacobian
+    // get jacobian
     Eigen::MatrixXd jac_pos_t(m->nv, 3);
     Eigen::MatrixXd jac_rot_t(m->nv, 3);
     mj_jacGeom(m, d, jac_pos_t.data(), jac_rot_t.data(), eef_id);
     Eigen::MatrixXd jac_full_t(jac_pos_t.rows(), jac_pos_t.cols() + jac_rot_t.cols());
     jac_full_t << jac_pos_t, jac_rot_t;
 
-    // mass matrix
+    // get mass matrix
     Eigen::MatrixXd mass_matrix(m->nv, m->nv);
     mj_fullM(m, mass_matrix.data(), d->qM);
     Eigen::MatrixXd mass_matrix_inv = mass_matrix.completeOrthogonalDecomposition().pseudoInverse().eval();
 
-    // lambda^-1 = J^T  * M^-1 * J
+    // lambda = (J * M^-1 * J^T)^-1
     Eigen::MatrixXd lambda_pos_inv = jac_pos_t.transpose() * mass_matrix_inv * jac_pos_t;
-    lambda_pos_inv = (lambda_pos_inv.array() < 1e-6).select(0, lambda_pos_inv);
     Eigen::MatrixXd lambda_pos = lambda_pos_inv.completeOrthogonalDecomposition().pseudoInverse().eval();
-
     Eigen::MatrixXd lambda_rot_inv = jac_rot_t.transpose() * mass_matrix_inv * jac_rot_t;
-    lambda_rot_inv = (lambda_rot_inv.array() < 1e-6).select(0, lambda_rot_inv);
     Eigen::MatrixXd lambda_rot = lambda_rot_inv.completeOrthogonalDecomposition().pseudoInverse().eval();
 
     Eigen::VectorXd desired_wrench(6);
-    desired_wrench << lambda_pos * desired_force, lambda_rot * desired_torque;
-    //desired_wrench.head<3>() = lambda_pos * desired_force;
-    //desired_wrench.tail<3>() = lambda_rot * desired_torque;
+    desired_wrench << lambda_pos * toEigen(desired_force), lambda_rot * toEigen(desired_torque);
 
     Eigen::VectorXd torques = jac_full_t * desired_wrench;
 
-    // printMatrix("mass_matrix", mass_matrix);
-    // printMatrix("lambda_pos", lambda_pos);
-    // printMatrix("lambda_rot", lambda_rot);
-    // printMatrix("J_full_T", J_full_T);
-    printMatrix("desired_force", desired_force);
-    printMatrix("desired_torque", desired_torque);
-    printMatrix("torques", torques);
     return torques.cast<float>();
 }
 
@@ -117,16 +99,5 @@ void UrdfMujocoControl::printMatrix(std::string name, Eigen::MatrixXd data)
         }
     }
     ss << "-----------" << std::endl;
-
-    UE_LOG(LogTemp, Log, TEXT("UrdfMujocoControl::printMatrix %s"), *FString(ss.str().c_str()));
+    UE_LOG(LogTemp, Log, TEXT("[UrdfMujocoControl::printMatrix] %s"), *FString(ss.str().c_str()));
 }
-
-#if 0
-    // Compute nullspace matrix (I - Jbar * J) and lambda matrices ((J * M^-1 * J^T)^-1)
-
-    // Gamma (without null torques) = J^T * F + gravity compensations
-
-    // Calculate and add nullspace torques (nullspace_matrix^T * Gamma_null) to final torques
-    // Note: Gamma_null = desired nullspace pose torques, assumed to be positional joint control relative
-    //                     to the initial joint positions
-#endif

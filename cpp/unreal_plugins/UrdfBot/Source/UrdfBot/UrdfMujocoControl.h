@@ -19,11 +19,14 @@ public:
     ~UrdfMujocoControl();
 
     Eigen::VectorXf inverseDynamics(Eigen::VectorXf qpos);
-    Eigen::VectorXf task_space_control(FTransform goal_pose, FTransform eef_pose,FVector velocity,FVector angular_velocity, Eigen::VectorXf qpos, Eigen::VectorXf qvel);
+    Eigen::VectorXf taskSpaceControl(FTransform goal_pose, FTransform eef_pose, FVector velocity, FVector angular_velocity, Eigen::VectorXf qpos, Eigen::VectorXf qvel);
 
-    mjModel* m = nullptr; // MuJoCo model
-    mjData* d = nullptr;  // MuJoCo data
+    mjModel* m = nullptr;
+    mjData* d = nullptr;
+    int eef_id;
+    double kp = 150;
+    double kd = 25;
 
     static Eigen::Vector3d toEigen(FVector vector);
-    static void printMatrix(std::string name,Eigen::MatrixXd mat);
+    static void printMatrix(std::string name, Eigen::MatrixXd mat);
 };
