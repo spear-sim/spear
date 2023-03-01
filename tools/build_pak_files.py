@@ -61,7 +61,7 @@ if __name__ == '__main__':
                 "-UTF8Output"
             ]
             print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
-            cmd_result = subprocess.run(cmd, stdout=sys.stdout.buffer, stderr=sys.stdout.buffer, check=True)
+            cmd_result = subprocess.run(cmd, check=True)
 
             platform_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", f"{platform}NoEditor"))
             content_dirs = [
@@ -88,7 +88,7 @@ if __name__ == '__main__':
                 with open(txt_path, mode="w" if i==0 else "a") as f:
                     for content_file in glob.glob(os.path.join(content_dir, "**", "*.*"), recursive=True):
                         content_file = content_file.replace('\\', "/")
-                        mount_file = posixpath.join("..", "..", "..", content_file.split(f"{platform}NoEditor")[1])
+                        mount_file = posixpath.join("..", "..", f"..{content_file.split(platform + 'NoEditor')[1]}")
                         f.write(f'"{content_file}" "{mount_file}" "" \n')
 
             # command to generate the final pak file
@@ -101,7 +101,7 @@ if __name__ == '__main__':
                 "-compress"
             ]
             print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
-            cmd_result = subprocess.run(cmd, stdout=sys.stdout.buffer, stderr=sys.stdout.buffer, check=True)
+            cmd_result = subprocess.run(cmd, check=True)
 
             assert os.path.exists(pak_file)
             print(f"[SPEAR | build_pak_files.py] Successfully built {pak_file} for {platform} platform.")
