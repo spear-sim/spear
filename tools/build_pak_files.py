@@ -87,6 +87,7 @@ if __name__ == '__main__':
             for i, content_dir in enumerate(content_dirs):
                 with open(txt_path, mode="w" if i==0 else "a") as f:
                     for content_file in glob.glob(os.path.join(content_dir, "**", "*.*"), recursive=True):
+                        assert content_file.startswith(platform_dir)
                         content_file = content_file.replace('\\', "/")
                         mount_file = posixpath.join("..", "..", f"..{content_file.split(platform + 'NoEditor')[1]}")
                         f.write(f'"{content_file}" "{mount_file}" "" \n')
