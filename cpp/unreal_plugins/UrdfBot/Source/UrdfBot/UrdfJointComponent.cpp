@@ -123,6 +123,7 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     SetDisableCollision(true);
 }
 
+// TODO prismatic
 float UUrdfJointComponent::getQPos()
 {
     FQuat parent_rotation = parent_link_component_->GetRelativeRotation().Quaternion();
@@ -131,10 +132,10 @@ float UUrdfJointComponent::getQPos()
     FQuat child_rotation_in_parent_frame = parent_rotation.Inverse() * child_rotation;
 
     float angle = child_rotation_in_parent_frame.GetTwistAngle(axis_);
-    // UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQPos %s - %f %f %f"), *FString(-ConstraintInstance.GetCurrentTwist() - angle < 1e-4 ? "T" : "F"), -ConstraintInstance.GetCurrentTwist(), angle);
     return -ConstraintInstance.GetCurrentTwist();
 }
 
+// TODO prismatic
 float UUrdfJointComponent::getQVel()
 {
     FTransform parent_tf = parent_link_component_->GetRelativeTransform();
@@ -149,10 +150,8 @@ float UUrdfJointComponent::getQVel()
     FVector child_vel_ori_parent = parent_tf.InverseTransformVector(child_ori_vel_world);
 
     FVector relative_vel_ori = child_vel_ori_parent - parent_vel_ori_parent;
-    
-    float qvel = FVector::DotProduct(relative_vel_ori, axis_);
-    // UE_LOG(LogTemp, Log, TEXT("UUrdfJointComponent::getQvel %f %s %s"),qvel, *relative_vel_ori.ToString(),*axis_.ToString());
-    return qvel;
+
+    return FVector::DotProduct(relative_vel_ori, axis_);
 }
 
 void UUrdfJointComponent::addAction(float action)

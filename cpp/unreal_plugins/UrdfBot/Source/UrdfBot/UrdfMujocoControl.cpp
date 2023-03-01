@@ -19,7 +19,7 @@ UrdfMujocoControl::~UrdfMujocoControl()
     mj_deleteModel(m);
 }
 
-Eigen::VectorXf UrdfMujocoControl::inverseDynamics(Eigen::VectorXf qpos)
+Eigen::VectorXf UrdfMujocoControl::gravityCompensation(Eigen::VectorXf qpos)
 {
     Eigen::VectorXd qpos_d = qpos.cast<double>();
     mju_copy(d->qpos, qpos_d.data(), m->nv);

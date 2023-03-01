@@ -115,7 +115,7 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc, UUrdfLinkC
 
             SetMaterial(0, material);
         } else {
-            UMaterialInterface* base_material = LoadObject<UMaterialInterface>(nullptr, *FString("Material'/UrdfBot/Common/M_PureColor.M_PureColor'"));
+            UMaterialInterface* base_material = LoadObject<UMaterialInterface>(nullptr, TEXT("Material'/UrdfBot/Common/M_PureColor.M_PureColor'"));
             UMaterialInstanceDynamic* material = UMaterialInstanceDynamic::Create(base_material, this);
             material->SetVectorParameterValue("BaseColor_Color", FLinearColor(material_desc->color_));
 

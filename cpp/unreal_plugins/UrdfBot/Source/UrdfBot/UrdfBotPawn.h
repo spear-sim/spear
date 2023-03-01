@@ -42,7 +42,7 @@ public:
     UCameraComponent* camera_component_ = nullptr;
 
     // debug
-    void addGravityCompensationAction();
+    void gravityCompensation();
     void taskSpaceControl();
 
     void testKey();
@@ -52,9 +52,11 @@ public:
 
 private:
     std::vector<KeyboardAction> keyboard_actions_;
-
+    
     UrdfMujocoControl* mujoco_control_;
     std::vector<std::string> joint_names_;
-    int flag = 0;
     UStaticMeshComponent* eef_target_ ;
+    
+    // debug
+    int flag = 0;
 };

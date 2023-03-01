@@ -45,8 +45,22 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.FOV");
 
-    // setup InverseDynamics
+    // config high level control
     joint_names_ = robot_desc.joint_names_;
+
+    // create track_ball_ if required
+    eef_target_ = CreateDefaultSubobject<UStaticMeshComponent>(FName("EndEffectorTarget"));
+    eef_target_->SetRelativeLocation(FVector(200, 200, 200));
+    eef_target_->SetRelativeRotation(FRotator::ZeroRotator);
+    eef_target_->SetRelativeScale3D(FVector::OneVector);
+    UStaticMesh* sphere_static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+    eef_target_->SetStaticMesh(sphere_static_mesh);
+    eef_target_->SetMobility(EComponentMobility::Movable);
+    eef_target_->SetSimulatePhysics(false);
+    eef_target_->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+    eef_target_->SetCollisionObjectType(ECollisionChannel::ECC_Visibility);
+    eef_target_->SetupAttachment(RootComponent);
+
     // debug
     for (auto& pair : urdf_robot_component_->link_components_) {
         AddInstanceComponent(pair.second);
@@ -54,28 +68,7 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     for (auto& pair : urdf_robot_component_->joint_components_) {
         AddInstanceComponent(pair.second);
     }
-
-    // create track_ball_ if required
-    eef_target_ = CreateDefaultSubobject<UStaticMeshComponent>(FName("TrackBall"));
-
-    // FVector track_ball_position(Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "POSITION_X"}), Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "POSITION_Y"}),
-    //                            Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "POSITION_Z"}));
-
-    // FRotator track_ball_orientation(Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "PITCH"}), Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "YAW"}),
-    //                                Config::getValue<float>({"URDFBOT", "TRACK_BALL_COMPONENT", "ROLL"}));
-    eef_target_->SetRelativeLocation(FVector(200, 200, 200));
-    eef_target_->SetRelativeRotation(FRotator::ZeroRotator);
-    eef_target_->SetRelativeScale3D(FVector::OneVector * 1);
-    UStaticMesh* sphere_static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-    eef_target_->SetStaticMesh(sphere_static_mesh);
-    eef_target_->SetMobility(EComponentMobility::Movable);
-    eef_target_->SetSimulatePhysics(false);
-    eef_target_->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-    eef_target_->SetCollisionObjectType(ECollisionChannel::ECC_Visibility);
-
-    eef_target_->SetupAttachment(RootComponent);
     this->AddInstanceComponent(eef_target_);
-
     camera_component_->SetupAttachment(eef_target_);
 }
 
@@ -94,12 +87,6 @@ void AUrdfBotPawn::BeginPlay()
     std::string urdf_filename = Unreal::toStdString(
         FPaths::Combine(Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")), Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE"))));
     mujoco_control_ = new UrdfMujocoControl(urdf_filename);
-
-    UMaterialInterface* base_material = LoadObject<UMaterialInterface>(nullptr, *FString("Material'/UrdfBot/Common/M_PureColor.M_PureColor'"));
-    UMaterialInstanceDynamic* material = UMaterialInstanceDynamic::Create(base_material, this);
-    material->SetVectorParameterValue("BaseColor_Color", FLinearColor(1, 0, 0, 1));
-
-    eef_target_->SetMaterial(0, material);
 }
 
 void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
@@ -144,14 +131,14 @@ void AUrdfBotPawn::Tick(float delta_time)
     }
 
     if (flag % 2 == 0) {
-        // addGravityCompensationAction();
+        gravityCompensation();
         taskSpaceControl();
     }
     FTransform eef_transform = eef_target_->GetRelativeTransform();
     DrawDebugCoordinateSystem(GetWorld(), eef_transform.GetLocation(), eef_transform.GetRotation().Rotator(), 100, false, -1.0F, 0U, 2.f);
 }
 
-void AUrdfBotPawn::addGravityCompensationAction()
+void AUrdfBotPawn::gravityCompensation()
 {
     int dof = joint_names_.size();
 
@@ -160,10 +147,10 @@ void AUrdfBotPawn::addGravityCompensationAction()
         UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names_[i]);
         qpos[i] = joint->getQPos();
     }
-    Eigen::VectorXf qfrc_applied = mujoco_control_->inverseDynamics(qpos);
+    Eigen::VectorXf torques = mujoco_control_->gravityCompensation(qpos);
     std::map<std::string, float> actions;
     for (int i = 0; i < dof; i++) {
-        actions[joint_names_[i]] = qfrc_applied[i];
+        actions[joint_names_[i]] = torques[i];
     }
     urdf_robot_component_->addAction(actions);
 }
@@ -196,15 +183,15 @@ void AUrdfBotPawn::taskSpaceControl()
 
     UUrdfLinkComponent* eef_link_component = urdf_robot_component_->joint_components_.at(joint_names_[dof - 1])->child_link_component_;
 
-    Eigen::VectorXf qpos(dof);
-    Eigen::VectorXf qvel(dof);
+    Eigen::VectorXf q_pos(dof);
+    Eigen::VectorXf q_vel(dof);
     for (int i = 0; i < dof; i++) {
         UUrdfJointComponent* joint = urdf_robot_component_->joint_components_.at(joint_names_[i]);
-        qpos[i] = joint->getQPos();
-        qvel[i] = joint->getQVel();
+        q_pos[i] = joint->getQPos();
+        q_vel[i] = joint->getQVel();
     }
     Eigen::VectorXf qfrc_applied = mujoco_control_->taskSpaceControl(eef_target_->GetRelativeTransform(), eef_link_component->GetRelativeTransform(), eef_link_component->GetComponentVelocity(),
-                                                                     FMath::DegreesToRadians(eef_link_component->GetPhysicsAngularVelocity()), qpos, qvel);
+                                                                     FMath::DegreesToRadians(eef_link_component->GetPhysicsAngularVelocity()), q_pos, q_vel);
 
     std::map<std::string, float> actions;
     for (int i = 0; i < dof; i++) {

@@ -18,7 +18,7 @@ public:
     UrdfMujocoControl(std::string filename);
     ~UrdfMujocoControl();
 
-    Eigen::VectorXf inverseDynamics(Eigen::VectorXf qpos);
+    Eigen::VectorXf gravityCompensation(Eigen::VectorXf qpos);
     Eigen::VectorXf taskSpaceControl(FTransform goal_pose, FTransform eef_pose, FVector velocity, FVector angular_velocity, Eigen::VectorXf qpos, Eigen::VectorXf qvel);
 
     mjModel* m = nullptr;
