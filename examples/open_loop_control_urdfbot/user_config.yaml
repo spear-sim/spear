@@ -1,0 +1,36 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+SPEAR:
+  LAUNCH_MODE: "running_instance"
+
+  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
+
+  CUSTOM_COMMAND_LINE_ARGUMENTS: []
+  RENDER_OFFSCREEN: False
+  WINDOW_RESOLUTION_X: 512
+  WINDOW_RESOLUTION_Y: 512
+
+SIMULATION_CONTROLLER:
+  TASK: "NullTask"
+  AGENT: "UrdfBotAgent" # "SphereAgent" or "OpenBotAgent"
+  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+
+  URDFBOT_AGENT:
+    URDFBOT_ACTOR_NAME: "OpenBotActor"
+    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
+    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
+    STEP_INFO_COMPONENTS: []
+    CAMERA:
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
+
+  VISUALIZER:
+    ACTOR_NAME: "DebugCameraActor"
+    SPAWN_CAMERA: False
+
+  CAMERA_SENSOR:
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
