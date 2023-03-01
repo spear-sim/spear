@@ -36,8 +36,8 @@ if __name__ == "__main__":
     if args.benchmark:
         start_time_seconds = time.time()
     else:
-        # cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
-        # cv2.waitKey(0)
+        cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
+        cv2.waitKey(1)
         pass
     # take a few steps
     for i in range(NUM_STEPS):
@@ -48,14 +48,14 @@ if __name__ == "__main__":
             if not args.benchmark:
                 print("[SPEAR | run.py] UrdfBotAgent: ")
                 print("    ", obs["link_state.base_link"])
-                # print(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                print("    ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 print("    ", reward, done, info)
         else:
             assert False
 
-        # if not args.benchmark:
-        #     cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
-        #     cv2.waitKey(0)
+        if not args.benchmark:
+            cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
+            cv2.waitKey(1)
 
         if done:
             env.reset()

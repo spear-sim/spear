@@ -38,11 +38,34 @@ UrdfBotAgent::UrdfBotAgent(UWorld* world)
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     urdf_bot_pawn_ = world->SpawnActor<AUrdfBotPawn>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
     ASSERT(urdf_bot_pawn_);
+    
+    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
+
+    if (Std::contains(observation_components, "camera")) {
+        camera_sensor_ = std::make_unique<CameraSensor>(
+            urdf_bot_pawn_->camera_component_,
+            Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.RENDER_PASSES"),
+            Config::get<unsigned int>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.IMAGE_WIDTH"),
+            Config::get<unsigned int>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.IMAGE_HEIGHT"));
+        ASSERT(camera_sensor_);
+
+        // update FOV
+        for (auto& pass : Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.RENDER_PASSES")) {
+            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle =
+                Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.FOV");
+        }
+    }
+
 }
 
 UrdfBotAgent::~UrdfBotAgent()
 {
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
+    
+    if (Std::contains(observation_components, "camera")) {
+        ASSERT(camera_sensor_);
+        camera_sensor_ = nullptr;
+    }
 
     ASSERT(urdf_bot_pawn_);
     urdf_bot_pawn_->Destroy();
@@ -97,6 +120,12 @@ std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
             observation_space["link_state." + link_pair.first] = std::move(box);
         }
     }
+    
+    std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
+    for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
+        observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
+    }
+    
     return observation_space;
 }
 
@@ -134,6 +163,11 @@ std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getObservation() const
             FRotator rotation = link_pair.second->GetRelativeRotation();
             observation["link_state." + link_pair.first] = Std::reinterpret_as<uint8_t>(std::vector<float>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
         }
+    }
+    
+    std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
+    for (auto& camera_sensor_observation_component : camera_sensor_observation) {
+        observation[camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
     }
 
     return observation;
