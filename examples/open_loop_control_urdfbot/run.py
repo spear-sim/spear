@@ -8,6 +8,7 @@ import argparse
 import cv2
 import numpy as np
 import os
+import pandas as pd
 import spear
 import time
 
@@ -17,6 +18,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark", action="store_true")
+    parser.add_argument("--actions_file",default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "fetch_actions.csv"))
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
@@ -24,6 +26,8 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(
         user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
+
+    df = pd.read_csv(args.actions_file)
 
     # create Env object
     env = spear.Env(config)
@@ -40,11 +44,15 @@ if __name__ == "__main__":
         cv2.waitKey(1)
         pass
     # take a few steps
-    for i in range(NUM_STEPS):
+    for i in range(df.shape[0]):
         if config.SIMULATION_CONTROLLER.AGENT == "UrdfBotAgent":
-            # obs, reward, done, info = env.step(action={"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
-            obs, reward, done, info = env.step(action={"joint.r_wheel_joint": np.array([1.0], dtype=np.float32),
-                                                       "joint.l_wheel_joint": np.array([1.0], dtype=np.float32)})
+            action = {}
+            data = df.to_records()[i]
+            for dname in data.dtype.names:
+                if dname.startswith("joint"):
+                    action[dname] = np.array([data[dname]], dtype=np.float32)
+            print(action)
+            obs, reward, done, info = env.step(action=action)
             if not args.benchmark:
                 print("[SPEAR | run.py] UrdfBotAgent: ")
                 print("    ", obs["link_state.base_link"])
@@ -64,7 +72,7 @@ if __name__ == "__main__":
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         print("[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % (
-            (elapsed_time_seconds / NUM_STEPS) * 1000.0, NUM_STEPS / elapsed_time_seconds))
+            (elapsed_time_seconds / df.shape[0]) * 1000.0, df.shape[0] / elapsed_time_seconds))
     else:
         cv2.destroyAllWindows()
 

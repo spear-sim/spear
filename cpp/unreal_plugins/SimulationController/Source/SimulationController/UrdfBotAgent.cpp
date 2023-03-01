@@ -148,6 +148,7 @@ void UrdfBotAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
             joint_actions[joint_name] = action_data.at(0);
         }
     }
+
     urdf_bot_pawn_->urdf_robot_component_->applyAction(joint_actions);
 }
 
