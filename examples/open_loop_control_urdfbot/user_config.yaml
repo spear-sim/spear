@@ -18,9 +18,9 @@ SIMULATION_CONTROLLER:
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   URDFBOT_AGENT:
-    URDFBOT_ACTOR_NAME: "OpenBotActor"
-    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
-    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
+    URDFBOT_ACTOR_NAME: "UrdfBotActor"
+    ACTION_COMPONENTS: ["joint"]
+    OBSERVATION_COMPONENTS: ["link_state", "camera"]
     STEP_INFO_COMPONENTS: []
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"

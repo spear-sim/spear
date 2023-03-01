@@ -16,6 +16,8 @@ class UWorld;
 
 class AUrdfBotPawn;
 class CameraSensor;
+class ImuSensor;
+class SonarSensor;
 struct Box;
 
 class UrdfBotAgent : public Agent
@@ -45,6 +47,4 @@ private:
     std::unique_ptr<CameraSensor> camera_sensor_;
     std::unique_ptr<ImuSensor> imu_sensor_;
     std::unique_ptr<SonarSensor> sonar_sensor_;
-
-    std::vector<float> trajectory_;
 };

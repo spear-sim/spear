@@ -32,7 +32,7 @@ enum class UrdfJointType
     Planar,
 };
 
-enum class UrdfJointControlType
+enum class URDFBOT_API UrdfJointControlType
 {
     Invalid,
     Position,

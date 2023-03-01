@@ -27,6 +27,8 @@ if __name__ == "__main__":
 
     # create Env object
     env = spear.Env(config)
+    print("env.action_space", env.action_space)
+    print("env.observation_space", env.observation_space)
 
     # reset the simulation to get the first observation    
     obs = env.reset()
@@ -34,25 +36,26 @@ if __name__ == "__main__":
     if args.benchmark:
         start_time_seconds = time.time()
     else:
-        cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
-        cv2.waitKey(0)
-
+        # cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
+        # cv2.waitKey(0)
+        pass
     # take a few steps
     for i in range(NUM_STEPS):
         if config.SIMULATION_CONTROLLER.AGENT == "UrdfBotAgent":
             # obs, reward, done, info = env.step(action={"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
-            obs, reward, done, info = env.step(action={})
+            obs, reward, done, info = env.step(action={"joint.r_wheel_joint": np.array([1.0], dtype=np.float32),
+                                                       "joint.l_wheel_joint": np.array([1.0], dtype=np.float32)})
             if not args.benchmark:
                 print("[SPEAR | run.py] UrdfBotAgent: ")
-                print(obs["compass"])
-                print(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                print(reward, done, info)
+                print("    ", obs["link_state.base_link"])
+                # print(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                print("    ", reward, done, info)
         else:
             assert False
 
-        if not args.benchmark:
-            cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
-            cv2.waitKey(0)
+        # if not args.benchmark:
+        #     cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
+        #     cv2.waitKey(0)
 
         if done:
             env.reset()
@@ -61,7 +64,7 @@ if __name__ == "__main__":
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         print("[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % (
-        (elapsed_time_seconds / NUM_STEPS) * 1000.0, NUM_STEPS / elapsed_time_seconds))
+            (elapsed_time_seconds / NUM_STEPS) * 1000.0, NUM_STEPS / elapsed_time_seconds))
     else:
         cv2.destroyAllWindows()
 

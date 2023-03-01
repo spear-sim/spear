@@ -108,7 +108,7 @@ SIMULATION_CONTROLLER:
   URDFBOT_AGENT:
     URDFBOT_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["joint"]
-    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
+    OBSERVATION_COMPONENTS: ["state_data", "camera"]
     STEP_INFO_COMPONENTS: []
     CAMERA:
       ACTOR_NAME: ""
@@ -119,6 +119,7 @@ SIMULATION_CONTROLLER:
       POSITION_OFFSET_X: 0.0
       POSITION_OFFSET_Y: 0.0
       POSITION_OFFSET_Z: 0.0
+    IS_READY_VELOCITY_THRESHOLD: 0.001
 
   IMITATION_LEARNING_TASK:
     AGENT_ACTOR_NAME: ""

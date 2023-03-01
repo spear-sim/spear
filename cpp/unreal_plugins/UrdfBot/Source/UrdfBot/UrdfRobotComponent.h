@@ -19,7 +19,7 @@ struct UrdfLinkDesc;
 struct UrdfRobotDesc;
 
 UCLASS()
-class UUrdfRobotComponent : public USceneComponent
+class URDFBOT_API UUrdfRobotComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
