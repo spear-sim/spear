@@ -148,6 +148,9 @@ struct UrdfJointDesc
     float soft_upper_limit_ = 0.0f;
     float k_position_       = 0.0f;
     float k_velocity_       = 0.0f;
+    
+    // derived data
+    UrdfLinkDesc* parent_link_desc_ = nullptr;
 };
 
 struct UrdfRobotDesc

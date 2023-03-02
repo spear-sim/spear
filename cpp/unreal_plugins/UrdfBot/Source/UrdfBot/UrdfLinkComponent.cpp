@@ -35,7 +35,7 @@ void UUrdfLinkComponent::BeginPlay()
     SetMassOverrideInKg(NAME_None, mass_, true);
 }
 
-void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc, UUrdfLinkComponent* parent_link)
+void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 {
     // for now link with no visual node or multiple visual node is not supported
     ASSERT(link_desc->visual_descs_.size() == 1);
@@ -47,8 +47,9 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc, UUrdfLinkC
     UrdfJointDesc* joint_desc = link_desc->parent_joint_desc_;
     if (joint_desc) {
         float m_to_cm = 100.0f;
-        link_origin_ = link_desc->visual_descs_[0].origin_;
-        SetRelativeLocation((joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation() - parent_link->link_origin_.GetLocation()) * m_to_cm);
+        UrdfLinkDesc* parent_link_desc = joint_desc->parent_link_desc_;
+        FTransform link_origin_ = parent_link_desc->visual_descs_[0].origin_;
+        SetRelativeLocation((joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation() - link_origin_.GetLocation()) * m_to_cm);
         SetRelativeRotation(joint_desc->origin_.GetRotation().Rotator() + link_desc->visual_descs_[0].origin_.GetRotation().Rotator());
     }
 

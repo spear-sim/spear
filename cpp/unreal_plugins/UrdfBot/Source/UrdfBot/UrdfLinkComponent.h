@@ -23,9 +23,8 @@ public:
     // UStaticMeshComponent interface
     void BeginPlay() override;
 
-    void initializeComponent(UrdfLinkDesc* link_desc,UUrdfLinkComponent* parent_link);
+    void initializeComponent(UrdfLinkDesc* link_desc);
 
     float mass_;
-    FTransform link_origin_;
     FVector relative_scale_;
 };
