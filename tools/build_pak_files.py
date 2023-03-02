@@ -50,22 +50,13 @@ if __name__ == '__main__':
 
         for content_dir in content_dirs:
 
-            # remove existing symlinks
+            # remove existing Content dir
             unreal_project_content_dir = os.path.join(unreal_project_dir, "Content")
-            # for file in os.listdir(unreal_project_content_dir):
-            #     path = os.path.join(unreal_project_content_dir, file)
-            #     if os.path.islink(path):
-            #         print(f"[SPEAR | build_pak_files.py] Symlink exists, removing: {path}")
-            #         os.unlink(path)
             if spear.path_exists(unreal_project_content_dir):
                 print(f"[SPEAR | build_pak_files.py] Symlink exists, removing: {unreal_project_content_dir}")
                 spear.remove_path(unreal_project_content_dir)
 
-            # for file in os.listdir(content_dir):
-            #     dst_file = os.path.join(unreal_project_content_dir, file)
-            #     src_file = os.path.join(content_dir, file)
-            #     print(f"[SPEAR | build_pak_files.py] Creating symlink: {dst_file} -> {src_file}")
-            #     os.symlink(src_file, dst_file)
+            # create symlink
             print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_dir} -> {content_dir}")
             os.symlink(content_dir, unreal_project_content_dir)
 
