@@ -49,8 +49,8 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
         float m_to_cm = 100.0f;
         UrdfLinkDesc* parent_link_desc = joint_desc->parent_link_desc_;
         FTransform link_origin_ = parent_link_desc->visual_descs_[0].origin_;
-        SetRelativeLocation((joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation() - link_origin_.GetLocation()) * m_to_cm);
-        SetRelativeRotation(joint_desc->origin_.GetRotation().Rotator() + link_desc->visual_descs_[0].origin_.GetRotation().Rotator());
+        SetRelativeLocation((link_desc->visual_descs_[0].origin_.GetLocation()) * m_to_cm);
+        SetRelativeRotation(link_desc->visual_descs_[0].origin_.GetRotation().Rotator());
     }
 
     UStaticMesh* static_mesh = nullptr;
@@ -79,7 +79,11 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 
     // set physical property
     SetSimulatePhysics(true);
-    SetMobility(EComponentMobility::Movable);
+    if (joint_desc) {
+        SetMobility(EComponentMobility::Movable);
+    } else {
+        SetMobility(EComponentMobility::Static);
+    }
     SetCollisionObjectType(ECollisionChannel::ECC_Vehicle);
     SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
     SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);

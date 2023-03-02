@@ -55,8 +55,10 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     float m_to_cm = 100.0f;
     
     FTransform link_offset_ = joint_desc->parent_link_desc_->visual_descs_[0].origin_;
-    SetRelativeLocation((joint_desc->origin_.GetLocation() - link_offset_.GetLocation()) * m_to_cm);
-    SetRelativeRotation(FRotationMatrix::MakeFromX(joint_desc->origin_.GetRotation().Rotator().RotateVector(joint_desc->axis_)).Rotator());
+    SetRelativeLocation((joint_desc->origin_.GetLocation() ) * m_to_cm);
+    FRotator joint_rotation = joint_desc->origin_.GetRotation().Rotator() ;
+    //TODO what if axis not (1 0 0)
+    SetRelativeRotation(FRotationMatrix::MakeFromX(joint_rotation.RotateVector(joint_desc->axis_)).Rotator());
 
     switch (joint_desc->type_) {
         case UrdfJointType::Revolute: {
