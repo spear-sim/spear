@@ -15,22 +15,22 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--contents_dir", required=True)
-    parser.add_argument("--unreal_binaries_dir", required=True)
+    parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--platforms", nargs="*", required=True)
     parser.add_argument("--output_dir", required=True)
     parser.add_argument("--unreal_project_dir")
     args = parser.parse_args()
     
-    assert os.path.exists(args.unreal_binaries_dir)
+    assert os.path.exists(args.unreal_engine_dir)
     if sys.platform == "win32":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_binaries_dir, "Win64", "UE4Editor.exe"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_binaries_dir, "Win64", "UnrealPak.exe"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Win64", "UE4Editor.exe"))
+        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Win64", "UnrealPak.exe"))
     elif sys.platform == "darwin":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_binaries_dir, "Mac", "UE4Editor"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_binaries_dir, "Mac", "UnrealPak"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Mac", "UE4Editor"))
+        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Mac", "UnrealPak"))
     elif sys.platform == "linux":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_binaries_dir, "Linux", "UE4Editor.sh"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_binaries_dir, "Linux", "UnrealPak.sh"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Linux", "UE4Editor.sh"))
+        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Linux", "UnrealPak.sh"))
     
     if args.unreal_project_dir:
         unreal_project_dirs = [os.path.realpath(args.unreal_project_dir)]
@@ -39,7 +39,7 @@ if __name__ == '__main__':
         unreal_project_dirs = [ os.path.join(unreal_projects_dir, project) for project in os.listdir(unreal_projects_dir) ]
     
     assert os.path.exists(args.contents_dir)
-    content_dirs = [os.path.realpath(os.path.join(args.contents_dir, x)) for x in os.listdir(args.contents_dir)]
+    content_dirs = [ os.path.realpath(os.path.join(args.contents_dir, x)) for x in os.listdir(args.contents_dir) ]
     assert len(content_dirs) > 0
 
     for unreal_project_dir in unreal_project_dirs:
@@ -81,7 +81,7 @@ if __name__ == '__main__':
                 cmd_result = subprocess.run(cmd, check=True)
 
                 platform_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", f"{platform}NoEditor"))
-                content_dirs = [
+                content_dirs_for_pak = [
                     os.path.join(platform_dir, "Engine", "Content", "Animation"),
                     os.path.join(platform_dir, "Engine", "Content", "BasicShapes"),
                     os.path.join(platform_dir, "Engine", "Content", "EngineResources"),
@@ -95,17 +95,17 @@ if __name__ == '__main__':
                 # create the output_dir
                 os.makedirs(args.output_dir, exist_ok=True)
 
-                file_name = f"Map_{os.path.basename(content_dir)}_{platform}"
+                pak_file_prefix = f"Map_{os.path.basename(content_dir)}_{platform}"
 
                 # construct path to the output pak file
-                pak_file = os.path.join(args.output_dir, file_name + ".pak")
+                pak_file = os.path.join(args.output_dir, pak_file_prefix + ".pak")
 
                 # text file used to generate the final pak file
-                txt_path = os.path.join(args.output_dir, file_name + ".txt")
+                txt_file = os.path.join(args.output_dir, pak_file_prefix + ".txt")
 
-                for i, content_dir in enumerate(content_dirs):
-                    with open(txt_path, mode="w" if i==0 else "a") as f:
-                        for content_file in glob.glob(os.path.join(content_dir, "**", "*.*"), recursive=True):
+                for i, dir in enumerate(content_dirs_for_pak):
+                    with open(txt_file, mode="w" if i==0 else "a") as f:
+                        for content_file in glob.glob(os.path.join(dir, "**", "*.*"), recursive=True):
                             assert content_file.startswith(platform_dir)
                             content_file = content_file.replace('\\', "/")
                             mount_file = posixpath.join("..", "..", f"..{content_file.split(platform + 'NoEditor')[1]}")
@@ -115,7 +115,7 @@ if __name__ == '__main__':
                 cmd = [
                     unreal_pak_bin,
                     pak_file,
-                    "-create=" + txt_path,
+                    "-create=" + txt_file,
                     "-platform=" + platform,
                     "-multiprocess",
                     "-compress"
