@@ -98,7 +98,7 @@ FTransform UUrdfRobotComponent::getChildTransfromInWorld(const FTransform& paren
 
 FVector UUrdfRobotComponent::rightHandToLeftHand(FVector input)
 {
-    return FVector(input.X, -input.Y, input.Z);
+    return 100.0f * FVector(input.X, -input.Y, input.Z);
 }
 
 FQuat UUrdfRobotComponent::rightHandToLeftHand(FQuat input)
@@ -110,7 +110,7 @@ FQuat UUrdfRobotComponent::rightHandToLeftHand(FQuat input)
 Eigen::Affine3f UUrdfRobotComponent::transformToAffine(const FTransform& transform)
 {
     FVector location = transform.GetLocation();
-    FVector euler = FMath::DegreesToRadians(transform.GetRotation().Euler());
+    FVector euler = transform.GetRotation().Euler();
 
     Eigen::Affine3f affine;
     affine = Eigen::Translation<float, 3>(location.X, location.Y, location.Z);

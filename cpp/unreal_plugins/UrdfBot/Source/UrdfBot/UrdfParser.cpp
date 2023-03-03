@@ -96,7 +96,7 @@ UrdfInertialDesc UrdfParser::parseInertialNode(FXmlNode* inertial_node)
 
     FXmlNode* origin_node = inertial_node->FindChildNode(TEXT("origin"));
     if (origin_node) {
-        inertial_desc_.origin_.SetLocation(100.0f * parseVector(origin_node->GetAttribute(TEXT("xyz"))));
+        inertial_desc_.origin_.SetLocation(parseVector(origin_node->GetAttribute(TEXT("xyz"))));
         inertial_desc_.origin_.SetRotation(parseRotation(origin_node->GetAttribute(TEXT("rpy"))));
     }
 
@@ -127,7 +127,7 @@ UrdfVisualDesc UrdfParser::parseVisualNode(FXmlNode* visual_node)
 
     FXmlNode* origin_node = visual_node->FindChildNode(TEXT("origin"));
     if (origin_node) {
-        visual_desc_.origin_.SetLocation(100.0f *parseVector(origin_node->GetAttribute(TEXT("xyz"))));
+        visual_desc_.origin_.SetLocation(parseVector(origin_node->GetAttribute(TEXT("xyz"))));
         visual_desc_.origin_.SetRotation(parseRotation(origin_node->GetAttribute(TEXT("rpy"))));
     }
 
@@ -152,7 +152,7 @@ UrdfCollisionDesc UrdfParser::parseCollisionNode(FXmlNode* collision_node)
 
     FXmlNode* origin_node = collision_node->FindChildNode(TEXT("origin"));
     if (origin_node) {
-        collision_desc.origin_.SetLocation(100.0f * parseVector(origin_node->GetAttribute(TEXT("xyz"))));
+        collision_desc.origin_.SetLocation(parseVector(origin_node->GetAttribute(TEXT("xyz"))));
         collision_desc.origin_.SetRotation(parseRotation(origin_node->GetAttribute(TEXT("rpy"))));
     }
 
@@ -211,7 +211,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 
     FXmlNode* origin_node = joint_node->FindChildNode(TEXT("origin"));
     if (origin_node) {
-        joint_desc.origin_.SetLocation(100.0f * parseVector(origin_node->GetAttribute(TEXT("xyz"))));
+        joint_desc.origin_.SetLocation(parseVector(origin_node->GetAttribute(TEXT("xyz"))));
         joint_desc.origin_.SetRotation(parseRotation(origin_node->GetAttribute(TEXT("rpy"))));
     }
 
@@ -417,8 +417,8 @@ FQuat UrdfParser::parseRotation(const FString& input_string)
     TArray<FString> split_string_array;
     input_string.ParseIntoArray(split_string_array, TEXT(" "), true);
     ASSERT(split_string_array.Num() == 3);
-    return FMath::RadiansToDegrees(FRotator(
+    return FRotator(
         FCString::Atof(*split_string_array[1]),
         FCString::Atof(*split_string_array[2]),
-        FCString::Atof(*split_string_array[0]))).Quaternion();
+        FCString::Atof(*split_string_array[0])).Quaternion();
 }
