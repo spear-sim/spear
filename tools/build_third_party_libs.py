@@ -12,17 +12,17 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--third_party_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--c_compiler")
     parser.add_argument("--cxx_compiler")
     args = parser.parse_args()
 
-
     #
     # define build variables
     #
 
-    tools_dir = os.path.dirname(os.path.realpath(__file__))
+    third_party_dir = os.path.realpath(args.third_party_dir)
 
     if args.c_compiler is None:
         if sys.platform == "win32":
@@ -51,14 +51,13 @@ if __name__ == "__main__":
     elif sys.platform == "linux":
         platform_dir = "Linux"
 
-
     #
     # Eigen
     #
 
     print("[SPEAR | build_third_party_libs.py] Building Eigen...")
 
-    build_dir = os.path.realpath(os.path.join(tools_dir, "..", "third_party", "libeigen", "BUILD", platform_dir))
+    build_dir = os.path.realpath(os.path.join(third_party_dir, "libeigen", "BUILD", platform_dir))
 
     if os.path.isdir(build_dir):
         print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {build_dir}")
@@ -92,15 +91,14 @@ if __name__ == "__main__":
     print("[SPEAR | build_third_party_libs.py] Built Eigen successfully.")
     print()
 
-
     #
     # rbdl
     #
 
     print("[SPEAR | build_third_party_libs.py] Building rbdl...")
 
-    build_dir = os.path.realpath(os.path.join(tools_dir, "..", "third_party", "rbdl", "BUILD", platform_dir))
-    eigen3_include_dir = os.path.realpath(os.path.join(tools_dir, "..", "third_party", "libeigen", "BUILD", platform_dir, "include", "eigen3"))
+    build_dir = os.path.realpath(os.path.join(third_party_dir, "rbdl", "BUILD", platform_dir))
+    eigen3_include_dir = os.path.realpath(os.path.join(third_party_dir, "libeigen", "BUILD", platform_dir, "include", "eigen3"))
 
     if os.path.isdir(build_dir):
         print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {build_dir}")
@@ -194,14 +192,13 @@ if __name__ == "__main__":
     print("[SPEAR | build_third_party_libs.py] Built rbdl successfully.")
     print()
 
-
     #
     # rpclib
     #
 
     print("[SPEAR | build_third_party_libs.py] Building rpclib...")
 
-    build_dir = os.path.realpath(os.path.join(tools_dir, "..", "third_party", "rpclib", "BUILD", platform_dir))
+    build_dir = os.path.realpath(os.path.join(third_party_dir, "rpclib", "BUILD", platform_dir))
 
     if os.path.isdir(build_dir):
         print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {build_dir}")
@@ -286,13 +283,12 @@ if __name__ == "__main__":
     print("[SPEAR | build_third_party_libs.py] Built rpclib successfully.")
     print()
 
-
     #
     # yamp-cpp
     #
 
     print("[SPEAR | build_third_party_libs.py] Building yaml-cpp...")
-    build_dir = os.path.realpath(os.path.join(tools_dir, "..", "third_party", "yaml-cpp", "BUILD", platform_dir))
+    build_dir = os.path.realpath(os.path.join(third_party_dir, "yaml-cpp", "BUILD", platform_dir))
 
     if os.path.isdir(build_dir):
         print("[SPEAR | build_third_party_libs.py] Directory exists, removing: " + build_dir)
@@ -376,6 +372,5 @@ if __name__ == "__main__":
 
     print("[SPEAR | build_third_party_libs.py] Built yaml-cpp successfully.")
     print()
-
 
     print("[SPEAR | build_third_party_libs.py] Done.")

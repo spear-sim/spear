@@ -19,13 +19,13 @@ if __name__ == "__main__":
     assert sys.platform == "darwin"
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_dir", required=True)
-    parser.add_argument("--output_dir", required=True)
     parser.add_argument("--developer_id", required=True)
     parser.add_argument("--apple_username", required=True)
     parser.add_argument("--apple_password", required=True)
-    parser.add_argument("--temp_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp"))
-    parser.add_argument("--entitlements_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "entitlements.plist"))
+    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp", "SpearSim-Mac-Shipping-Unsigned")))
+    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp", "SpearSim-Mac-Shipping")))
+    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
+    parser.add_argument("--entitlements_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "entitlements.plist")))
     parser.add_argument("--wait_time_seconds", type=float, default=600.0)
     parser.add_argument("--request_uuid")
     args = parser.parse_args()
@@ -75,8 +75,7 @@ if __name__ == "__main__":
         for dir, dylib in zip(add_rpath_dirs, add_rpath_dylibs):
             cmd = ["install_name_tool", "-add_rpath", dir, dylib]
             print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
-            cmd_result = subprocess.run(cmd)
-            assert cmd_result.returncode == 0
+            subprocess.run(cmd, check=True)
 
         change_rpath_dylibs = [
             os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3.dylib"),
@@ -97,8 +96,7 @@ if __name__ == "__main__":
                 os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac"),
                 dylib]
             print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
-            cmd_result = subprocess.run(cmd)
-            assert cmd_result.returncode == 0
+            subprocess.run(cmd, check=True)
 
         # revert current working directory
         print(f"[SPEAR | sign_executable.py] Changing working directory to {cwd}.")
@@ -126,8 +124,7 @@ if __name__ == "__main__":
                 "sudo", "codesign", "-f", "-s", "-v", "--options", "runtime", "--timestamp", "--entitlements", 
                 args.entitlements_file, "--sign", f"Developer ID Application: {args.developer_id}", file]
             print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
-            cmd_result = subprocess.run(cmd)
-            assert cmd_result.returncode == 0
+            subprocess.run(cmd, check=True)
 
         os.makedirs(args.temp_dir, exist_ok=True)
 
@@ -135,8 +132,7 @@ if __name__ == "__main__":
         notarization_zip = os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip")
         cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", executable, notarization_zip]
         print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd)
-        assert cmd_result.returncode == 0
+        subprocess.run(cmd, check=True)
 
         # send the zip file for notarization
         cmd = [
@@ -178,9 +174,7 @@ if __name__ == "__main__":
     # staple the executable
     cmd = ["xcrun", "stapler", "staple", executable]
     print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd)
-    assert cmd_result.returncode == 0
+    subprocess.run(cmd, check=True)
 
     print(f"[SPEAR | sign_executable.py] {executable} has been successfully signed.")
     print(f"[SPEAR | sign_executable.py] Done.")
-

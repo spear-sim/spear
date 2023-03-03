@@ -54,3 +54,4 @@ examples/imitation_learning_openbot/videos
 python/spear_sim.egg-info
 
 tools/scene_downloader/tmp
+tools/tmp
