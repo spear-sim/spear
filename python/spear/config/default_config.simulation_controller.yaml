@@ -5,8 +5,8 @@
 SIMULATION_CONTROLLER:
   IP: "127.0.0.1"
   PORT: 30000
-  WORLD_PATH_NAME: "" # full path to the map including the repeated name, e.g., "/Game/DefaultMap.DefaultMap"
-  LEVEL_NAME: ""      # full path to the map excluding the repeated name, e.g., "/Game/DefaultMap"
+  WORLD_PATH_NAME: "" # full path to the map including the repeated name, e.g., "/Game/Scenes/default/DefaultMap.DefaultMap"
+  LEVEL_NAME: ""      # full path to the map excluding the repeated name, e.g., "/Game/Scenes/default/DefaultMap"
   SCENE_ID: ""        # raw map id, e.g. "DefaultMap"
   SIMULATION_STEP_TIME_SECONDS: 0.1
   TASK: ""
