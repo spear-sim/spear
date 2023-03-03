@@ -123,8 +123,8 @@ if __name__ == "__main__":
             # change config based on current scene
             config.defrost()
             config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str + "." + "Map_" + episode["scene_id"] + rendering_mode_map_str
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Maps/Map_" + episode["scene_id"] + rendering_mode_map_str
+                "/Game/Scenes/" + episode["scene_id"] + "/Maps/"+ episode["scene_id"] + rendering_mode_map_str + "." + episode["scene_id"] + rendering_mode_map_str
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + rendering_mode_map_str
             config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
             config.freeze()
 
