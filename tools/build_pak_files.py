@@ -129,7 +129,7 @@ if __name__ == '__main__':
             assert os.path.exists(pak_file)
             print(f"[SPEAR | build_pak_files.py] Successfully built {pak_file} for {platform} platform.")
 
-            print(f"[SPEAR | build_pak_files.py] Removing symlink {unreal_project_content_scene_dir}")
+            print(f"[SPEAR | build_pak_files.py] Removing symlink: {unreal_project_content_scene_dir}")
             spear.remove_path(unreal_project_content_scene_dir)
 
     print("[SPEAR | build_pak_files.py] Done.")
