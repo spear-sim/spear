@@ -47,6 +47,8 @@ void UUrdfRobotComponent::createChildComponents(UrdfLinkDesc* parent_link_desc, 
 
         UUrdfLinkComponent* child_link_component = NewObject<UUrdfLinkComponent>(this);
         ASSERT(child_link_component);
+        child_link_component->initializeComponent(child_link_desc);
+        child_link_component->SetupAttachment(parent_link_component);
         link_components_[child_link_desc->name_] = child_link_component;
 
         UrdfJointDesc* child_joint_desc = child_link_desc->parent_joint_desc_;
@@ -57,9 +59,6 @@ void UUrdfRobotComponent::createChildComponents(UrdfLinkDesc* parent_link_desc, 
         child_joint_component->initializeComponent(child_joint_desc, parent_link_component, child_link_component);
         child_joint_component->SetupAttachment(parent_link_component);
         joint_components_[child_joint_desc->name_] = child_joint_component;
-        
-        child_link_component->initializeComponent(child_link_desc);
-        child_link_component->SetupAttachment(child_joint_component);
 
         createChildComponents(child_link_desc, child_link_component);
     }
