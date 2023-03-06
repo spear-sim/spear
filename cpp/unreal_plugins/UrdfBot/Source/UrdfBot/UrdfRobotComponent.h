@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <Eigen/Dense>
 #include <map>
 #include <string>
 #include <vector>
@@ -37,10 +36,5 @@ public:
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
 private:
-    void createChildComponents(UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link,FTransform parent_tf);
-
-    static FTransform getChildTransfromInWorld(const FTransform& parent_transform_in_world, const FTransform& child_transform_in_parent);
-    static FVector rightHandToLeftHand(FVector input);
-    static FQuat rightHandToLeftHand(FQuat input);
-    static Eigen::Affine3f transformToAffine(const FTransform& tf);
+    void createChildComponents(UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link);
 };
