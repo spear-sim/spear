@@ -53,7 +53,7 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     ConstraintInstance.UpdateAngularLimit();
 
     float m_to_cm = 100.0f;
-    
+
     FTransform link_offset_ = joint_desc->parent_link_desc_->visual_descs_[0].origin_;
     SetRelativeLocation((joint_desc->origin_.GetLocation() - link_offset_.GetLocation()) * m_to_cm);
     SetRelativeRotation(FRotationMatrix::MakeFromX(joint_desc->origin_.GetRotation().Rotator().RotateVector(joint_desc->axis_)).Rotator());
@@ -132,10 +132,10 @@ void UUrdfJointComponent::addAction(float action)
             switch (joint_type_) {
                 case UrdfJointType::Continuous:
                 case UrdfJointType::Revolute:
-                    SetAngularOrientationTarget(FRotator(0, 0, ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Roll + action));
+                    SetAngularOrientationTarget(FRotator(0, 0, ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Roll + FMath::RadiansToDegrees(action)));
                     break;
                 case UrdfJointType::Prismatic:
-                    SetLinearPositionTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X + action, 0, 0));
+                    SetLinearPositionTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X + m_to_cm * action, 0, 0));
                     break;
                 default:
                     ASSERT(false);
@@ -146,10 +146,10 @@ void UUrdfJointComponent::addAction(float action)
             switch (joint_type_) {
                 case UrdfJointType::Continuous:
                 case UrdfJointType::Revolute:
-                    SetAngularVelocityTarget(FVector(ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X + action, 0, 0));
+                    SetAngularVelocityTarget(FVector(ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X + FMath::RadiansToDegrees(action), 0, 0));
                     break;
                 case UrdfJointType::Prismatic:
-                    SetLinearVelocityTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X + action, 0, 0));
+                    SetLinearVelocityTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X + m_to_cm * action, 0, 0));
                     break;
                 default:
                     ASSERT(false);
@@ -187,15 +187,17 @@ void UUrdfJointComponent::addAction(float action)
 
 void UUrdfJointComponent::applyAction(float action)
 {
+    float m_to_cm = 100.0f;
+
     switch (control_type_) {
         case UrdfJointControlType::Position:
             switch (joint_type_) {
                 case UrdfJointType::Continuous:
                 case UrdfJointType::Revolute:
-                    SetAngularOrientationTarget(FRotator(0, 0, action));
+                    SetAngularOrientationTarget(FRotator(0, 0, FMath::RadiansToDegrees(action)));
                     break;
                 case UrdfJointType::Prismatic:
-                    SetLinearPositionTarget(FVector(action, 0, 0));
+                    SetLinearPositionTarget(FVector(m_to_cm * action, 0, 0));
                     break;
                 default:
                     ASSERT(false);
@@ -206,10 +208,10 @@ void UUrdfJointComponent::applyAction(float action)
             switch (joint_type_) {
                 case UrdfJointType::Continuous:
                 case UrdfJointType::Revolute:
-                    SetAngularVelocityTarget(FVector(action, 0, 0));
+                    SetAngularVelocityTarget(FVector(FMath::RadiansToDegrees(action), 0, 0));
                     break;
                 case UrdfJointType::Prismatic:
-                    SetLinearVelocityTarget(FVector(action, 0, 0));
+                    SetLinearVelocityTarget(FVector(m_to_cm * action, 0, 0));
                     break;
                 default:
                     ASSERT(false);
@@ -217,7 +219,27 @@ void UUrdfJointComponent::applyAction(float action)
             }
             break;
         case UrdfJointControlType::Torque:
-            // TODO
+            switch (joint_type_) {
+                case UrdfJointType::Continuous:
+                case UrdfJointType::Revolute: {
+                    // action in unit [N * m], force in unit [N*cm]
+                    FVector torque = action * m_to_cm * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
+                    child_link_component_->AddTorqueInRadians(torque);
+                    parent_link_component_->AddTorqueInRadians(-torque);
+                    break;
+                }
+                case UrdfJointType::Prismatic: {
+                    // action in unit [N], force in unit [N*cm/m]
+                    FVector force = action * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
+                    child_link_component_->AddForce(force);
+                    parent_link_component_->AddForce(-force);
+                    break;
+                }
+                default: {
+                    ASSERT(false);
+                    break;
+                }
+            }
             break;
         default:
             ASSERT(false);
