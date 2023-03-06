@@ -26,11 +26,11 @@ if __name__ == '__main__':
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Win64", "UE4Editor.exe"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Win64", "UnrealPak.exe"))
     elif sys.platform == "darwin":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Mac", "UE4Editor"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Mac", "UnrealPak"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UE4Editor"))
+        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
     elif sys.platform == "linux":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Linux", "UE4Editor.sh"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Linux", "UnrealPak.sh"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UE4Editor"))
+        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
 
     unreal_project_dir         = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
     uproject                   = os.path.join(unreal_project_dir, "SpearSim.uproject")
