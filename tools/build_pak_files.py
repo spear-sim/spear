@@ -3,6 +3,7 @@
 #
 
 import argparse
+import fnmatch
 import glob
 import os
 import posixpath
@@ -18,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("--contents_dir", required=True)
     parser.add_argument("--platforms", nargs="*", required=True)
     parser.add_argument("--output_dir", required=True)
+    parser.add_argument("--scene_names")
     args = parser.parse_args()
     
     assert os.path.exists(args.unreal_engine_dir)
@@ -46,7 +48,13 @@ if __name__ == '__main__':
         os.symlink(shared_dir, unreal_project_content_shared_dir)
 
     assert os.path.exists(scenes_dir)
-    scene_content_dirs = [ os.path.realpath(os.path.join(scenes_dir, x)) for x in os.listdir(scenes_dir) if x.startswith("kujiale") ]
+    scene_names = [ os.path.basename(x) for x in glob.glob(os.path.join(scenes_dir, "*")) ]
+    assert len(scene_names) > 0
+
+    if args.scene_names is not None:
+        scene_content_dirs = [ os.path.realpath(os.path.join(scenes_dir, x)) for x in scene_names if fnmatch.fnmatch(x, args.scene_names) ]
+    else:
+        scene_content_dirs = [ os.path.realpath(os.path.join(scenes_dir, x)) for x in scene_names ]
     assert len(scene_content_dirs) > 0
 
     for scene_content_dir in scene_content_dirs:
