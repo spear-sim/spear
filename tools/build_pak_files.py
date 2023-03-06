@@ -23,8 +23,8 @@ if __name__ == '__main__':
     
     assert os.path.exists(args.unreal_engine_dir)
     if sys.platform == "win32":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Win64", "UE4Editor.exe"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Binaries", "Win64", "UnrealPak.exe"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UE4Editor.exe"))
+        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
     elif sys.platform == "darwin":
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UE4Editor.app", "Contents", "MacOS", "UE4Editor"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
