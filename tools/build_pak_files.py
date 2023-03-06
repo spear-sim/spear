@@ -72,6 +72,8 @@ if __name__ == '__main__':
         
         for platform in args.platforms:
 
+            # construct command to cook the unreal project
+            # refer https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Deployment/Cooking/ for more information on the parameters
             cmd = [
                 unreal_editor_bin,
                 uproject,
@@ -121,7 +123,7 @@ if __name__ == '__main__':
                         mount_file = posixpath.join("..", "..", f"..{content_file.split(platform + 'NoEditor')[1]}")
                         f.write(f'"{content_file}" "{mount_file}" "" \n')
 
-            # command to generate the final pak file
+            # construct command to generate the final pak file
             cmd = [
                 unreal_pak_bin,
                 pak_file,
