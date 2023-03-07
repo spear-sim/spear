@@ -99,7 +99,7 @@ class Env(gym.Env):
             return
 
         # write temp file
-        temp_config_file = os.path.join(os.path.realpath(self._config.SPEAR.TEMP_DIR), "config.yaml")
+        temp_config_file = os.path.realpath(os.path.join(self._config.SPEAR.TEMP_DIR, "config.yaml"))
 
         print("[SPEAR | env.py] Writing temp config file: " + temp_config_file)
 
