@@ -22,9 +22,9 @@ if __name__ == "__main__":
     parser.add_argument("--developer_id", required=True)
     parser.add_argument("--apple_username", required=True)
     parser.add_argument("--apple_password", required=True)
-    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp", "SpearSim-Mac-Shipping-Unsigned")))
-    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp", "SpearSim-Mac-Shipping")))
-    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
+    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp", "SpearSim-Mac-Shipping-Unsigned")))
+    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp", "SpearSim-Mac-Shipping")))
+    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
     parser.add_argument("--entitlements_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "entitlements.plist")))
     parser.add_argument("--wait_time_seconds", type=float, default=600.0)
     parser.add_argument("--request_uuid")
@@ -35,19 +35,18 @@ if __name__ == "__main__":
         shutil.rmtree(args.output_dir, ignore_errors=True)
         
     # create a copy of the executable in output_dir and use it throughout this file
-    input_dir_name = os.path.basename(os.path.realpath(args.input_dir))
-    shutil.copytree(args.input_dir, os.path.join(args.output_dir, input_dir_name))
+    shutil.copytree(args.input_dir, args.output_dir)
 
-    executable = glob.glob(os.path.join(args.output_dir, input_dir_name, '*.*'))[0]
+    executable = os.path.realpath(os.path.join(args.output_dir, "MacNoEditor", "SpearSim-Mac-Shipping.app"))
     assert os.path.exists(executable)
 
     if not args.request_uuid:
         radio_effect_unit_component = os.path.join(executable, "Contents", "Resources", "RadioEffectUnit.component")
-        print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit_component}.")
+        print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit_component}")
         shutil.rmtree(radio_effect_unit_component, ignore_errors=True)
         
         radio_effect_unit = os.path.join(executable, "Contents", "UE4", "Engine", "Build", "Mac", "RadioEffectUnit")
-        print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit}.")
+        print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit}")
         shutil.rmtree(radio_effect_unit, ignore_errors=True)
 
         print("[SPEAR | sign_executable.py] Changing rpaths...")
@@ -55,7 +54,7 @@ if __name__ == "__main__":
         # change current working directory to add relative rpaths
         cwd = os.getcwd()
         new_wd = os.path.realpath(os.path.join(executable, ".."))
-        print(f"[SPEAR | sign_executable.py] Changing working directory to {new_wd}.")
+        print(f"[SPEAR | sign_executable.py] Changing working directory to {new_wd}")
         os.chdir(new_wd)
 
         executable_name = os.path.basename(executable)
@@ -99,7 +98,7 @@ if __name__ == "__main__":
             subprocess.run(cmd, check=True)
 
         # revert current working directory
-        print(f"[SPEAR | sign_executable.py] Changing working directory to {cwd}.")
+        print(f"[SPEAR | sign_executable.py] Changing working directory to {cwd}")
         os.chdir(cwd)
 
         # files that need to be code-signed
@@ -165,7 +164,7 @@ if __name__ == "__main__":
         ps.wait()
         ps.stdout.close()
         elapsed_time = time.time() - start_time
-        print(f"[SPEAR | sign_executable.py] Waiting to get more information on the notarization request UUID {request_uuid}, current status is {output} ...")
+        print(f'[SPEAR | sign_executable.py] Waiting to get more information on the notarization request UUID {request_uuid}, current status is "{output}"...')
     
     if elapsed_time > args.wait_time_seconds:
         print(f"[SPEAR | sign_executable.py] Exceeded maximum wait time ({args.wait_time_seconds}s) for request UUID {request_uuid}. Please complete the rest of the procedure after notarization is complete.")
