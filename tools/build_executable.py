@@ -33,7 +33,6 @@ if __name__ == "__main__":
         target_platform = "Win64"
         archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{args.config_mode}"))
         cmd_prefix      = f"conda activate {args.conda_env}& "
-        unreal_tmp_dir  = None
 
     elif sys.platform == "darwin":
         run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
@@ -49,11 +48,19 @@ if __name__ == "__main__":
 
         cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
 
+        # We need to remove this temp dir (created by the Unreal build process) because it contains paths from previous builds.
+        # If we don't do this step, we will get many warnings during this build:
+        #     Warning: Unable to generate long package name for path/to/previous/build/Some.uasset because FilenameToLongPackageName failed to convert
+        #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
+        #     path contains illegal characters '.'
+        if os.path.exists(unreal_tmp_dir):
+            print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
+            shutil.rmtree(unreal_tmp_dir)
+
     elif sys.platform == "linux":
         run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
         target_platform = "Linux"
         archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{args.config_mode}"))
-        unreal_tmp_dir  = None
 
         if args.conda_script:
             conda_script = args.conda_script
@@ -71,15 +78,6 @@ if __name__ == "__main__":
         print(f"[SPEAR | build_executable.py] Repository exists, removing: {repo_dir}")
         shutil.rmtree(repo_dir)
         os.makedirs(repo_dir)
-
-    # We need to remove this temp dir (created by the Unreal build process) because it contains paths from previous builds.
-    # If we don't do this step, we will get many warnings during this build:
-    #     Warning: Unable to generate long package name for path/to/previous/build/Some.uasset because FilenameToLongPackageName failed to convert
-    #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
-    #     path contains illegal characters '.'
-    if os.path.exists(unreal_tmp_dir):
-        print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
-        shutil.rmtree(unreal_tmp_dir)
 
     # clone repo with submodules
     cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", repo_dir]
@@ -124,16 +122,17 @@ if __name__ == "__main__":
         "-clientconfig=" + args.config_mode
     ]
     print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True)
 
-    # We need to remove this temp dir (created by the Unreal build process) because it contains paths from the above build.
-    # If we don't do this step, we will get many warnings during subsequent builds:
-    #     Warning: Unable to generate long package name for path/to/previous/build/Some.uasset because FilenameToLongPackageName failed to convert
-    #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
-    #     path contains illegal characters '.'
-    if os.path.exists(unreal_tmp_dir):
-        print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
-        shutil.rmtree(unreal_tmp_dir)
+    if sys.platform == "darwin":
+        # We need to remove this temp dir (created by the Unreal build process) because it contains paths from previous builds.
+        # If we don't do this step, we will get many warnings during this build:
+        #     Warning: Unable to generate long package name for path/to/previous/build/Some.uasset because FilenameToLongPackageName failed to convert
+        #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
+        #     path contains illegal characters '.'
+        if os.path.exists(unreal_tmp_dir):
+            print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
+            shutil.rmtree(unreal_tmp_dir)
 
     print(f"[SPEAR | build_executable.py] Successfully built SpearSim at {archive_dir}")
     print(f"[SPEAR | build_executable.py] Done.")
