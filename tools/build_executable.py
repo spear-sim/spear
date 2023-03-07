@@ -78,7 +78,7 @@ if __name__ == "__main__":
     #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
     #     path contains illegal characters '.'
     if os.path.exists(unreal_tmp_dir):
-        print(f"[SPEAR | build_executable.py] Global cache directory exists, removing: {unreal_tmp_dir}")
+        print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
         shutil.rmtree(unreal_tmp_dir)
 
     # clone repo with submodules
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
     #     path contains illegal characters '.'
     if os.path.exists(unreal_tmp_dir):
-        print(f"[SPEAR | build_executable.py] Global cache directory exists, removing: {unreal_tmp_dir}")
+        print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
         shutil.rmtree(unreal_tmp_dir)
 
     print(f"[SPEAR | build_executable.py] Successfully built SpearSim at {archive_dir}")
