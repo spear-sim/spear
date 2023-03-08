@@ -125,8 +125,8 @@ if __name__ == "__main__":
     subprocess.run(cmd, check=True)
 
     if sys.platform == "darwin":
-        # We need to remove this temp dir (created by the Unreal build process) because it contains paths from previous builds.
-        # If we don't do this step, we will get many warnings during this build:
+        # We need to remove this temp dir (created by the Unreal build process) because it contains paths from the above build.
+        # If we don't do this step, we will get many warnings during subsequent builds:
         #     Warning: Unable to generate long package name for path/to/previous/build/Some.uasset because FilenameToLongPackageName failed to convert
         #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
         #     path contains illegal characters '.'
