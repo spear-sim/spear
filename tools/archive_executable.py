@@ -29,8 +29,8 @@ if __name__ == "__main__":
 
     executable_dir    = os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{platform_name}-Shipping"))
     archive_file_name = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{args.tag}-{platform_name}-Shipping"))
-    shutil.make_archive(base_name=archive_file_name, format='zip', root_dir=os.path.join(executable_dir, f"{platform_dir_name}"), verbose=1)
+    shutil.make_archive(base_name=archive_file_name, format='zip', root_dir=os.path.join(executable_dir, platform_dir_name), verbose=1)
     assert os.path.exists(archive_file_name + ".zip")
 
     print(f"[SPEAR | archive_executable.py] Successfully archived executable to {archive_file_name}.zip")
-    print(f"[SPEAR | archive_executable.py] Done.")
+    print("[SPEAR | archive_executable.py] Done.")

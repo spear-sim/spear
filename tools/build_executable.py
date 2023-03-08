@@ -135,4 +135,4 @@ if __name__ == "__main__":
             shutil.rmtree(unreal_tmp_dir)
 
     print(f"[SPEAR | build_executable.py] Successfully built SpearSim at {archive_dir}")
-    print(f"[SPEAR | build_executable.py] Done.")
+    print("[SPEAR | build_executable.py] Done.")
