@@ -6,7 +6,6 @@
 # for pre-requisites and setup your system before trying to run this file.
 
 import argparse
-import glob
 import os
 import shutil
 import subprocess
