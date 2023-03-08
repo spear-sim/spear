@@ -17,23 +17,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if sys.platform == "win32":
-        executable_dir    = os.path.realpath(os.path.join(args.input_dir, "SpearSim-Win64-Shipping"))
-        archive_file_name = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{args.tag}-Win64-Shipping"))
-        shutil.make_archive(base_name=archive_file_name, format='zip', root_dir=os.path.join(executable_dir, "WindowsNoEditor"), verbose=1)
+        platform_name     = "Win64"
+        platform_dir_name = "WindowsNoEditor"
     elif sys.platform == "darwin":
-        executable_dir    = os.path.realpath(os.path.join(args.input_dir, "SpearSim-Mac-Shipping"))
-        executable        = os.path.realpath(os.path.join(args.input_dir, "SpearSim-Mac-Shipping", "MacNoEditor", "SpearSim-Mac-Shipping.app"))
-        archive_file_name = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{args.tag}-Mac-Shipping"))
-        cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", os.path.dirname(executable), archive_file_name + ".zip"]
-        print(f"[SPEAR | archive_executable.py] Executing: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
+        platform_name     = "Mac"
+        platform_dir_name = "MacNoEditor"
     elif sys.platform == "linux":
-        executable_dir    = os.path.realpath(os.path.join(args.input_dir, "SpearSim-Linux-Shipping"))
-        archive_file_name = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{args.tag}-Linux-Shipping"))
-        shutil.make_archive(base_name=archive_file_name, format='zip', root_dir=os.path.join(executable_dir, "LinuxNoEditor"), verbose=1)
+        platform_name     = "Linux"
+        platform_dir_name = "LinuxNoEditor"
     else:
         assert False
 
+    executable_dir    = os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{platform_name}-Shipping"))
+    archive_file_name = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{args.tag}-{platform_name}-Shipping"))
+    shutil.make_archive(base_name=archive_file_name, format='zip', root_dir=os.path.join(executable_dir, f"{platform_dir_name}"), verbose=1)
     assert os.path.exists(archive_file_name + ".zip")
 
     print(f"[SPEAR | archive_executable.py] Successfully archived executable to {archive_file_name}.zip")
