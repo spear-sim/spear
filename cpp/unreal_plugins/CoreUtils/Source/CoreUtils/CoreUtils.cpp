@@ -15,7 +15,7 @@ void CoreUtils::StartupModule()
     Config::initialize();
 
     // Wait for keyboard input, which is useful when attempting to attach a debugger to the running executable.
-    if (Config::get<bool>("CORE_UTILS.WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION")) {
+    if (Config::isEnabled() && Config::get<bool>("CORE_UTILS.WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION")) {
         std::cout << "[SPEAR | CoreUtils.cpp] Press ENTER to continue..." << std::endl;
         std::cin.get();
     }

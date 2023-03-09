@@ -17,6 +17,7 @@ class COREUTILS_API Config
 public:
     static void initialize();
     static void terminate();
+    static bool isEnabled();
 
     //
     // This function is used to extract a value from the Config system. This function takes as input
@@ -73,5 +74,6 @@ private:
     Config() = default;
     ~Config() = default;
 
+    static bool is_enabled_;
     static YAML::Node s_config_;
 };

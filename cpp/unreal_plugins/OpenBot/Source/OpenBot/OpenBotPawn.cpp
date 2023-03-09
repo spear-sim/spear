@@ -34,6 +34,10 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn
 {
     std::cout << "[SPEAR | OpenBotPawn.cpp] AOpenBotPawn::AOpenBotPawn" << std::endl;
 
+    if (!Config::isEnabled()) {
+        return;
+    }
+
     ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*Unreal::toFString(Config::get<std::string>("OPENBOT.OPENBOT_PAWN.SKELETAL_MESH")));
     ASSERT(skeletal_mesh.Succeeded());
 
