@@ -13,8 +13,8 @@ SPEAR:
   WINDOW_RESOLUTION_Y: 512
 
 SIMULATION_CONTROLLER:
-  WORLD_PATH_NAME: "/Game/UrdfExample.UrdfExample"
-  LEVEL_NAME: "/Game/UrdfExample"
+  WORLD_PATH_NAME: ""
+  LEVEL_NAME: ""
   TASK: "NullTask"
   AGENT: "UrdfBotAgent"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []

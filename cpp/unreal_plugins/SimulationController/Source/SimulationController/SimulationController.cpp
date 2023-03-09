@@ -40,14 +40,7 @@
 #include "SimulationController/Visualizer.h"
 
 // Different possible frame states for thread synchronization
-enum class FrameState
-{
-    Idle,
-    RequestPreTick,
-    ExecutingPreTick,
-    ExecutingTick,
-    ExecutingPostTick
-};
+enum class FrameState { Idle, RequestPreTick, ExecutingPreTick, ExecutingTick, ExecutingPostTick };
 
 void SimulationController::StartupModule()
 {
@@ -56,9 +49,8 @@ void SimulationController::StartupModule()
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
-    
-    post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(
-        this, &SimulationController::postWorldInitializationEventHandler);
+
+    post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
@@ -81,7 +73,7 @@ void SimulationController::ShutdownModule()
 
     FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_delegate_handle_);
     world_cleanup_delegate_handle_.Reset();
-    
+
     FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_delegate_handle_);
     post_world_initialization_delegate_handle_.Reset();
 }
@@ -91,8 +83,11 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::postWorldInitializationEventHandler" << std::endl;
 
     ASSERT(world);
-
+#if WITH_EDITOR
+    if (world->IsGameWorld()){
+#else
     if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+#endif
         auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");
         auto level_name = Config::get<std::string>("SIMULATION_CONTROLLER.LEVEL_NAME");
 
@@ -186,9 +181,7 @@ void SimulationController::worldBeginPlayEventHandler()
     frame_state_ = FrameState::Idle;
 
     // initialize RPC server
-    rpc_server_ = std::make_unique<RpcServer>(
-        Config::get<std::string>("SIMULATION_CONTROLLER.IP"),
-        Config::get<int>("SIMULATION_CONTROLLER.PORT"));
+    rpc_server_ = std::make_unique<RpcServer>(Config::get<std::string>("SIMULATION_CONTROLLER.IP"), Config::get<int>("SIMULATION_CONTROLLER.PORT"));
     ASSERT(rpc_server_);
 
     bindFunctionsToRpcServer();
@@ -207,11 +200,11 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
     // We only need to perform any additional steps if the world being cleaned up is the world we cached in our world_ member variable.
     if (world == world_) {
-        
+
         // The worldCleanupEventHandler(...) function is called for all worlds, but some local state (such as rpc_server_ and agent_)
         // is initialized only when worldBeginPlayEventHandler(...) is called for a particular world. So we check if worldBeginPlayEventHandler(...)
         // has been executed.
-        if(has_world_begin_play_executed_) {
+        if (has_world_begin_play_executed_) {
             has_world_begin_play_executed_ = false;
 
             ASSERT(rpc_server_);
@@ -294,9 +287,7 @@ void SimulationController::bindFunctionsToRpcServer()
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
-    rpc_server_->bindAsync("ping", []() -> std::string {
-        return "SimulationController received a call to ping()...";
-    });
+    rpc_server_->bindAsync("ping", []() -> std::string { return "SimulationController received a call to ping()..."; });
 
     rpc_server_->bindAsync("getByteOrder", []() -> std::string {
         uint32_t dummy = 0x01020304;
