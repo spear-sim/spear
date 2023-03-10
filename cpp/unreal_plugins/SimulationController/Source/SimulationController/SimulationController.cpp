@@ -90,6 +90,10 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
     ASSERT(world);
 
+    if (!Config::s_initialized_) {
+        return;
+    }
+
     if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
         auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");
         auto level_name = Config::get<std::string>("SIMULATION_CONTROLLER.LEVEL_NAME");
