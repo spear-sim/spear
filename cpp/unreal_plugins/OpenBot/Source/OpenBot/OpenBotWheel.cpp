@@ -16,7 +16,7 @@ UOpenBotWheel::UOpenBotWheel()
 {
     std::cout << "[SPEAR | OpenBotWheel.cpp] UOpenBotWheel::UOpenBotWheel" << std::endl;
 
-    if (!Config::isEnabled()) {
+    if (!Config::s_initialized_) {
         return;
     }
 

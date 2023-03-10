@@ -12,7 +12,7 @@
 #include "CoreUtils/Unreal.h"
 #include "CoreUtils/YamlCpp.h"
 
-bool Config::is_enabled_;
+bool Config::s_initialized_;
 YAML::Node Config::s_config_;
 
 void Config::initialize()
@@ -22,26 +22,15 @@ void Config::initialize()
     // If a config file is provided via the command-line, then load it
     if (FParse::Value(FCommandLine::Get(), TEXT("config_file="), config_file)) {
         s_config_ = YAML::LoadFile(Unreal::toStdString(config_file));
-        is_enabled_=true;
-
-    // Otherwise, if MyProject/Temp/config.yaml exists, then load it
-    } else if (FPaths::FileExists(FPaths::ConvertRelativePathToFull(FPaths::ProjectDir().Append("Temp/config.yaml")))) {
-        config_file = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir().Append("Temp/config.yaml"));
-        s_config_ = YAML::LoadFile(Unreal::toStdString(config_file));
-        is_enabled_=true;
+        s_initialized_ = true;
 
     // Otherwise assert
     } else {
-        is_enabled_ = false;
+        s_initialized_ = false;
     }
 }
 
 void Config::terminate()
 {
     s_config_.reset();
-}
-
-bool Config::isEnabled()
-{
-    return is_enabled_;
 }

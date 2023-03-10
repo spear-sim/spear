@@ -34,7 +34,7 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn
 {
     std::cout << "[SPEAR | OpenBotPawn.cpp] AOpenBotPawn::AOpenBotPawn" << std::endl;
 
-    if (!Config::isEnabled()) {
+    if (!Config::s_initialized_) {
         return;
     }
 

@@ -21,7 +21,7 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 {
     std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::AUrdfBotPawn" << std::endl;
 
-    if (!Config::isEnabled()) {
+    if (!Config::s_initialized_) {
         return;
     }
 
