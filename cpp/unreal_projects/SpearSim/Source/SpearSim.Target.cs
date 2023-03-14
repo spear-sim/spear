@@ -14,7 +14,7 @@ public class SpearSimTarget : TargetRules
         DefaultBuildSettings = BuildSettingsVersion.V2;
         ExtraModuleNames.AddRange(new string[] { "SpearSim" });
 
-        if (Target.Platform == UnrealTargetPlatform.Win64) {
+        if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Win32) {
 
             // On Windows, we need to build an additional app so that calls to UE_Log and writes to std::cout are visible in the terminal.
             bBuildAdditionalConsoleApp = true;

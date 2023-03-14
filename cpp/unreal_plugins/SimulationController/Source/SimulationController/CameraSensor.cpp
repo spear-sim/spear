@@ -386,6 +386,31 @@ void CameraSensor::initializeSceneCaptureComponentNonFinalColor(USceneCaptureCom
     ASSERT(material);
     scene_capture_component->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, scene_capture_component), 1.0f);
     scene_capture_component->ShowFlags.SetPostProcessMaterial(true);
+
+    // assign custom depth stencil values in segmentation mode by reading from our config system
+    if (render_pass_name == "segmentation") {
+
+        UWorld* world = parent_actor_->GetWorld();
+        std::map<std::string, int> semantic_tag_id_mapping = Config::get<std::map<std::string, int>>("SIMULATION_CONTROLLER.CAMERA_SENSOR.SEMANTIC_MAPPING");
+
+        for (TActorIterator<AActor> actor_itr(world); actor_itr; ++actor_itr) {
+
+            // get all UStaticMeshComponents for tagging
+            TArray<UStaticMeshComponent*> static_mesh_components;
+            actor_itr->GetComponents(static_mesh_components, true);
+
+            for (auto component : static_mesh_components) {
+                for (auto component_tag : component->ComponentTags) {
+                    std::string semantic_tag = Unreal::toStdString(component_tag);
+                    if (Std::containsKey(semantic_tag_id_mapping, semantic_tag)) {
+                        component->SetRenderCustomDepth(true);
+                        component->SetCustomDepthStencilValue(semantic_tag_id_mapping.at(semantic_tag));
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
 
 std::map<std::string, TArray<FColor>> CameraSensor::getRenderData() const

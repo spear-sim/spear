@@ -30,6 +30,12 @@ public:
         return std::string(TCHAR_TO_UTF8(*str));
     }
 
+    static std::string toStdString(const FName& str)
+    {
+        // Note that str.ToString() converts FName to FString
+        return Unreal::toStdString(str.ToString());
+    }
+
     static FString toFString(const std::string& str)
     {
         return FString(UTF8_TO_TCHAR(str.c_str()));
