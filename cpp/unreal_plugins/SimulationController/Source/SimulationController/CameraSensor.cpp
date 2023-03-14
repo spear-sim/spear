@@ -399,8 +399,8 @@ void CameraSensor::initializeSceneCaptureComponentNonFinalColor(USceneCaptureCom
             TArray<UStaticMeshComponent*> static_mesh_components;
             actor_itr->GetComponents(static_mesh_components, true);
 
-            for (auto component : static_mesh_components) {
-                for (auto component_tag : component->ComponentTags) {
+            for (auto& component : static_mesh_components) {
+                for (auto& component_tag : component->ComponentTags) {
                     std::string semantic_tag = Unreal::toStdString(component_tag);
                     if (Std::containsKey(semantic_tag_id_mapping, semantic_tag)) {
                         component->SetRenderCustomDepth(true);
