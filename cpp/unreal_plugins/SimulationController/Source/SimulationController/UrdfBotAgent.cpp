@@ -81,7 +81,7 @@ std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
                 box.high_ = std::numeric_limits<float>::max();
                 box.shape_ = {1};
                 box.datatype_ = DataType::Float32;
-                action_space["joint." + joint_component.first] = std::move(box);
+                action_space[joint_component.first] = std::move(box);
             }
         }
     }
@@ -102,7 +102,7 @@ std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
             box.high_ = std::numeric_limits<float>::max();
             box.shape_ = {6};
             box.datatype_ = DataType::Float32;
-            observation_space["link_state." + link_component.first] = std::move(box);
+            observation_space[link_component.first] = std::move(box);
         }
     }
 
