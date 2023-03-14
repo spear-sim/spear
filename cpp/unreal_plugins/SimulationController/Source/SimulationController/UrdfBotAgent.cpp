@@ -62,12 +62,10 @@ UrdfBotAgent::~UrdfBotAgent()
 
 void UrdfBotAgent::findObjectReferences(UWorld* world)
 {
-    auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.STEP_INFO_COMPONENTS");
 }
 
 void UrdfBotAgent::cleanUpObjectReferences()
 {
-    auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.STEP_INFO_COMPONENTS");
 }
 
 std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
@@ -76,14 +74,14 @@ std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "joint")) {
-        for (auto& joint_pair : urdf_bot_pawn_->urdf_robot_component_->joint_components_) {
-            if (joint_pair.second->control_type_ != UrdfJointControlType::Invalid) {
+        for (auto& joint_component  : urdf_bot_pawn_->urdf_robot_component_->joint_components_) {
+            if (joint_component.second->control_type_ != UrdfJointControlType::Invalid) {
                 Box box;
                 box.low_ = std::numeric_limits<float>::lowest();
                 box.high_ = std::numeric_limits<float>::max();
                 box.shape_ = {1};
                 box.datatype_ = DataType::Float32;
-                action_space["joint." + joint_pair.first] = std::move(box);
+                action_space["joint." + joint_component.first] = std::move(box);
             }
         }
     }
@@ -98,13 +96,13 @@ std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "link_state")) {
-        for (auto& link_pair : urdf_bot_pawn_->urdf_robot_component_->link_components_) {
+        for (auto& link_component : urdf_bot_pawn_->urdf_robot_component_->link_components_) {
             Box box;
             box.low_ = std::numeric_limits<float>::lowest();
             box.high_ = std::numeric_limits<float>::max();
             box.shape_ = {6};
             box.datatype_ = DataType::Float32;
-            observation_space["link_state." + link_pair.first] = std::move(box);
+            observation_space["link_state." + link_component.first] = std::move(box);
         }
     }
 
@@ -118,21 +116,19 @@ std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
 
 std::map<std::string, Box> UrdfBotAgent::getStepInfoSpace() const
 {
-    std::map<std::string, Box> step_info_space;
-
-    return step_info_space;
+    return {};
 }
 
 void UrdfBotAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& actions)
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.ACTION_COMPONENTS");
+
     std::map<std::string, float> joint_actions;
 
-    for (auto& action : actions) {
-        if (Std::contains(action_components, "joint") && action.first.find("joint.") == 0) {
+    if (Std::contains(action_components, "joint")){
+        for (auto& action : actions) {
             std::vector<float> action_data = Std::reinterpret_as<float>(action.second);
-            std::string joint_name = action.first.substr(std::strlen("joint."));
-            joint_actions[joint_name] = action_data.at(0);
+            joint_actions[action.first] = action_data.at(0);
         }
     }
 
@@ -149,7 +145,7 @@ std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getObservation() const
         for (auto& link_pair : urdf_bot_pawn_->urdf_robot_component_->link_components_) {
             FVector position = link_pair.second->GetRelativeLocation();
             FRotator rotation = link_pair.second->GetRelativeRotation();
-            observation["link_state." + link_pair.first] = Std::reinterpret_as<uint8_t>(std::vector<float>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
+            observation[link_pair.first] = Std::reinterpret_as<uint8_t>(std::vector<float>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
         }
     }
 
@@ -163,14 +159,11 @@ std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getObservation() const
 
 std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getStepInfo() const
 {
-    std::map<std::string, std::vector<uint8_t>> step_info;
-
-    return step_info;
+    return {};
 }
 
 void UrdfBotAgent::reset()
 {
-    auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.STEP_INFO_COMPONENTS");
 }
 
 bool UrdfBotAgent::isReady() const

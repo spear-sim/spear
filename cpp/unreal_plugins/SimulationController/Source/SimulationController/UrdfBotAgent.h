@@ -42,7 +42,6 @@ public:
 
 private:
     AUrdfBotPawn* urdf_bot_pawn_ = nullptr;
-    AActor* goal_actor_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
     std::unique_ptr<ImuSensor> imu_sensor_;
