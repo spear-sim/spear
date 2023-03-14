@@ -120,7 +120,7 @@ void UrdfBotAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "joint")) {
-        urdf_bot_pawn_->urdf_robot_component_->applyAction(action_components);
+        urdf_bot_pawn_->urdf_robot_component_->applyAction(actions);
     }
 }
 
