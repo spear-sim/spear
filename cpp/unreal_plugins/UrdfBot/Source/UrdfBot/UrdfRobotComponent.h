@@ -27,6 +27,9 @@ public:
     ~UUrdfRobotComponent();
 
     void createChildComponents(UrdfRobotDesc* robot_desc);
+    
+    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
+    std::map<std::string, std::vector<uint8_t>> getObservation(const std::vector<std::string>& observation_components) const;
 
     void applyAction(std::map<std::string, float> action);
     void addAction(std::map<std::string, float> action);

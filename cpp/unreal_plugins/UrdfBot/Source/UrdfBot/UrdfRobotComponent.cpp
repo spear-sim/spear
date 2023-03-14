@@ -64,6 +64,34 @@ void UUrdfRobotComponent::createChildComponents(UrdfLinkDesc* parent_link_desc, 
     }
 }
 
+void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<uint8_t>>& actions)
+{
+    std::map<std::string, float> joint_actions;
+    for (auto& action : actions) {
+        if (Std::containsKey(joint_components_, action.first)) {
+            std::vector<float> action_data = Std::reinterpret_as<float>(action.second);
+            joint_actions[action.first] = action_data.at(0);
+        }
+    }
+    applyAction(joint_actions);
+}
+
+std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation(const std::vector<std::string>& observation_components) const
+{
+    std::map<std::string, std::vector<uint8_t>> observation;
+
+    if (Std::contains(observation_components, "link_state")) {
+        for (auto& link_component : link_components_) {
+            FVector position = link_component.second->GetRelativeLocation();
+            FRotator rotation = link_component.second->GetRelativeRotation();
+            observation[link_component.first] =
+                Std::reinterpret_as<uint8_t>(std::vector<float>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
+        }
+    }
+
+    return observation;
+}
+
 void UUrdfRobotComponent::applyAction(std::map<std::string, float> actions)
 {
     for (auto& action : actions) {

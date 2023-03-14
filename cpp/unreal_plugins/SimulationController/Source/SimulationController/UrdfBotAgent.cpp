@@ -70,7 +70,7 @@ std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "joint")) {
-        for (auto& joint_component  : urdf_bot_pawn_->urdf_robot_component_->joint_components_) {
+        for (auto& joint_component : urdf_bot_pawn_->urdf_robot_component_->joint_components_) {
             if (joint_component.second->control_type_ != UrdfJointControlType::Invalid) {
                 Box box;
                 box.low_ = std::numeric_limits<float>::lowest();
@@ -119,16 +119,9 @@ void UrdfBotAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.ACTION_COMPONENTS");
 
-    std::map<std::string, float> joint_actions;
-
-    if (Std::contains(action_components, "joint")){
-        for (auto& action : actions) {
-            std::vector<float> action_data = Std::reinterpret_as<float>(action.second);
-            joint_actions[action.first] = action_data.at(0);
-        }
+    if (Std::contains(action_components, "joint")) {
+        urdf_bot_pawn_->urdf_robot_component_->applyAction(action_components);
     }
-
-    urdf_bot_pawn_->urdf_robot_component_->applyAction(joint_actions);
 }
 
 std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getObservation() const
@@ -137,13 +130,9 @@ std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getObservation() const
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "link_state")) {
-        for (auto& link_pair : urdf_bot_pawn_->urdf_robot_component_->link_components_) {
-            FVector position = link_pair.second->GetRelativeLocation();
-            FRotator rotation = link_pair.second->GetRelativeRotation();
-            observation[link_pair.first] = 
-                Std::reinterpret_as<uint8_t>(std::vector<float>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
-        }
+    std::map<std::string, std::vector<uint8_t>> robot_component_observation = urdf_bot_pawn_->urdf_robot_component_->getObservation(observation_components);
+    for (auto& robot_component_observation_component : robot_component_observation) {
+        observation[robot_component_observation_component.first] = std::move(robot_component_observation_component.second);
     }
 
     std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
