@@ -50,7 +50,8 @@ void SimulationController::StartupModule()
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
 
-    post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
+    post_world_initialization_delegate_handle_ =
+        FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
@@ -83,11 +84,14 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::postWorldInitializationEventHandler" << std::endl;
 
     ASSERT(world);
+
 #if WITH_EDITOR
-    if (world->IsGameWorld()){
+    bool ready_to_open_level = world->IsGameWorld();
 #else
-    if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+    bool ready_to_open_level = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
 #endif
+
+    if (ready_to_open_level) {
         auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");
         auto level_name = Config::get<std::string>("SIMULATION_CONTROLLER.LEVEL_NAME");
 

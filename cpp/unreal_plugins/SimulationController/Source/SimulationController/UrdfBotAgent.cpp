@@ -60,13 +60,9 @@ UrdfBotAgent::~UrdfBotAgent()
     urdf_bot_pawn_ = nullptr;
 }
 
-void UrdfBotAgent::findObjectReferences(UWorld* world)
-{
-}
+void UrdfBotAgent::findObjectReferences(UWorld* world) {}
 
-void UrdfBotAgent::cleanUpObjectReferences()
-{
-}
+void UrdfBotAgent::cleanUpObjectReferences() {}
 
 std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
 {
@@ -145,7 +141,8 @@ std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getObservation() const
         for (auto& link_pair : urdf_bot_pawn_->urdf_robot_component_->link_components_) {
             FVector position = link_pair.second->GetRelativeLocation();
             FRotator rotation = link_pair.second->GetRelativeRotation();
-            observation[link_pair.first] = Std::reinterpret_as<uint8_t>(std::vector<float>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
+            observation[link_pair.first] = 
+                Std::reinterpret_as<uint8_t>(std::vector<float>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
         }
     }
 
@@ -162,11 +159,10 @@ std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getStepInfo() const
     return {};
 }
 
-void UrdfBotAgent::reset()
-{
-}
+void UrdfBotAgent::reset() {}
 
 bool UrdfBotAgent::isReady() const
 {
-    return urdf_bot_pawn_->urdf_robot_component_->GetComponentVelocity().Size() <= Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
+    return urdf_bot_pawn_->urdf_robot_component_->GetComponentVelocity().Size() <=
+           Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }
