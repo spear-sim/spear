@@ -37,6 +37,9 @@ def get_config(user_config_files):
     # at runtime, but isn't available when we are authoring our default_config.*.yaml files.
     config.URDFBOT.URDFBOT_PAWN.URDF_DIR = os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "urdf"))
 
+    # If we do not set this here, yacs has issues merging a: {} type values.
+    config.set_new_allowed(True)
+
     for c in user_config_files:
         config.merge_from_file(c)
 

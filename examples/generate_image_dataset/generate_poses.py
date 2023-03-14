@@ -10,7 +10,6 @@ import numpy as np
 import os
 import pandas as pd
 import spear
-import sys
 
 
 if __name__ == "__main__":
