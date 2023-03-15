@@ -1,0 +1,102 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+SPEAR:
+  LAUNCH_MODE: "standalone_executable"
+
+  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
+
+  DATA_DIR: "/Users/mroberts/Downloads/spear_data"
+
+  CONTENT_DIR: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app/Contents/UE4/SpearSim/Content"
+
+  CUSTOM_COMMAND_LINE_ARGUMENTS: []
+  RENDER_OFFSCREEN: False
+  WINDOW_RESOLUTION_X: 1024
+  WINDOW_RESOLUTION_Y: 768
+
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 300.0
+
+SIMULATION_CONTROLLER:
+  TASK: "NullTask"
+  AGENT: "CameraAgent"
+  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+
+  CAMERA_AGENT:
+    ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
+    OBSERVATION_COMPONENTS: ["camera"] # "camera"
+    STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
+    CAMERA:
+      ACTOR_NAME: "CameraActor"
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation"
+      IMAGE_HEIGHT: 768
+      IMAGE_WIDTH: 1024
+      FOV: 90.0
+    NAVMESH:
+      AGENT_RADIUS: 5.0
+      AGENT_HEIGHT: 180.0
+      CELL_SIZE: 10.0 
+      CELL_HEIGHT: 10.0
+      AGENT_MAX_STEP_HEIGHT: 1.0
+      AGENT_MAX_SLOPE: 1.0
+      MERGE_REGION_SIZE: 0.0
+      MIN_REGION_AREA: 100.0
+      TILE_SIZE_UU: 1600
+      TILE_POOL_SIZE: 1024
+      MAX_SIMPLIFICATION_ERROR: 1.3
+      NAV_MODIFIER_OFFSET_Z: 100.0
+      BOUNDS_VOLUME_ACTOR_TAGS: ["wall"]
+
+  CAMERA_SENSOR:
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
+    SEMANTIC_MAPPING:
+      semantic:air_extractor: 1
+      semantic:bar: 2
+      semantic:barrel: 3
+      semantic:base_pillar: 4
+      semantic:beam: 5
+      semantic:bin: 6
+      semantic:cardboard_box: 7
+      semantic:ceiling: 8
+      semantic:ceiling_lamp: 9
+      semantic:column: 10
+      semantic:cone: 11
+      semantic:container: 12
+      semantic:conveyor: 13
+      semantic:conveyor_column: 14
+      semantic:conveyor_support: 15
+      semantic:electric_box: 16
+      semantic:exit_door: 17
+      semantic:fence: 18
+      semantic:fire_extinguisher: 19
+      semantic:floor: 20
+      semantic:floor_platform: 21
+      semantic:gate_lamp: 22
+      semantic:human: 23
+      semantic:incandescent_lamp: 24
+      semantic:item: 25
+      semantic:lanemark: 26
+      semantic:light: 27
+      semantic:outdoor_pillar: 28
+      semantic:pallet: 29
+      semantic:pallet_box: 30
+      semantic:pallet_truck: 31
+      semantic:pillar: 32
+      semantic:pipeline: 33
+      semantic:robot: 34
+      semantic:roof_structure: 35
+      semantic:scanner: 36
+      semantic:shelf: 37
+      semantic:smart_shelf: 38
+      semantic:storing_desk: 39
+      semantic:tray: 40
+      semantic:tray_items: 41
+      semantic:trolley: 42
+      semantic:truck_gate: 43 
+      semantic:unboxing_desk: 44
+      semantic:wall : 45
+
+  VISUALIZER:
+    ACTOR_NAME: "CameraActor"
+    SPAWN_CAMERA: False

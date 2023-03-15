@@ -42,9 +42,12 @@ if __name__ == '__main__':
 
     assert os.path.exists(shared_dir)
     unreal_project_content_shared_dir = os.path.join(unreal_project_content_dir, "Shared")
+    unreal_project_content_shared_dir_symlink_created = False
+
     if not os.path.exists(unreal_project_content_shared_dir):
         print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_shared_dir} -> {shared_dir}")
         os.symlink(shared_dir, unreal_project_content_shared_dir)
+        unreal_project_content_shared_dir_symlink_created = True
 
     assert os.path.exists(scenes_dir)
     scene_names = [ os.path.basename(x) for x in glob.glob(os.path.join(scenes_dir, "*")) ]
@@ -93,14 +96,9 @@ if __name__ == '__main__':
             subprocess.run(cmd, check=True)
 
             platform_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", f"{platform}NoEditor"))
+
             content_dirs_for_pak = [
-                os.path.join(platform_dir, "Engine", "Content", "Animation"),
-                os.path.join(platform_dir, "Engine", "Content", "BasicShapes"),
-                os.path.join(platform_dir, "Engine", "Content", "EngineResources"),
-                os.path.join(platform_dir, "Engine", "Content", "Functions", "Engine_MaterialFunctions02", "Math"),
-                os.path.join(platform_dir, "Engine", "Content", "Functions", "Engine_MaterialFunctions02", "Texturing"),
-                os.path.join(platform_dir, "Engine", "Content", "Functions", "Engine_MaterialFunctions02", "Utility"),
-                os.path.join(platform_dir, "Engine", "Content", "Functions", "MaterialLayerFunctions"),
+                os.path.join(platform_dir, "Engine", "Content"),
                 os.path.join(platform_dir, "SpearSim", "Content")
             ]
 
@@ -140,5 +138,10 @@ if __name__ == '__main__':
 
             print(f"[SPEAR | build_pak_files.py] Removing symlink: {unreal_project_content_scene_dir}")
             os.unlink(unreal_project_content_scene_dir)
+
+    if unreal_project_content_shared_dir_symlink_created:
+        assert os.path.islink(unreal_project_content_shared_dir)
+        print(f"[SPEAR | build_pak_files.py] Removing symlink: {unreal_project_content_shared_dir}")
+        os.unlink(unreal_project_content_shared_dir)
 
     print("[SPEAR | build_pak_files.py] Done.")

@@ -16,6 +16,10 @@
             "Enabled": true
         },
         {
+            "Name": "HDRIBackdrop",
+            "Enabled": true
+        },
+        {
             "Name": "OpenBot",
             "Enabled": true
         },
