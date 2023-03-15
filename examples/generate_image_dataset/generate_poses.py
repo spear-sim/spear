@@ -38,8 +38,13 @@ if __name__ == "__main__":
 
         # change config based on current scene
         config.defrost()
-        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake" + "." + scene_id + "_bake"
-        config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake"
+        if "kujiale_0000" in scene_id:
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake" + "." + scene_id + "_bake"
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake"
+        elif "smart_factory_0000" in scene_id:
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "." + scene_id
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + scene_id + "/Maps/" + scene_id
         config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
         config.freeze()
 

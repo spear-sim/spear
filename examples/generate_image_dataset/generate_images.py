@@ -112,9 +112,13 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"] + rendering_mode_map_str + "." + pose["scene_id"] + rendering_mode_map_str
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"] + rendering_mode_map_str
+            if "kujiale_0000" in pose["scene_id"]:
+                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+                    "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"] + rendering_mode_map_str + "." + pose["scene_id"] + rendering_mode_map_str
+                config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"] + rendering_mode_map_str
+            elif "smart_factory_0000" in pose["scene_id"]:
+                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"] + "." + pose["scene_id"]
+                config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"]
             config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
             config.freeze()
 
