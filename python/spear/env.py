@@ -148,7 +148,7 @@ class Env(gym.Env):
             launch_executable_internal = launch_executable
         elif sys.platform == "darwin":
             assert launch_executable_ext == ".app"
-            launch_executable_internal = os.path.join(launch_executable, "Contents", "MacOS", launch_executable_name)
+            launch_executable_internal = os.path.join(launch_executable, "Contents", "MacOS", os.path.basename(launch_executable_name))
         elif sys.platform == "linux":
             assert launch_executable_ext == "" or launch_executable_ext == ".sh"
             launch_executable_internal = launch_executable

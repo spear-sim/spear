@@ -85,6 +85,10 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
     ASSERT(world);
 
+    if (!Config::s_initialized_) {
+        return;
+    }
+    
 #if WITH_EDITOR
     bool ready_to_open_level = world->IsGameWorld();
 #else

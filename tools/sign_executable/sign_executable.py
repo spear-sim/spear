@@ -6,7 +6,6 @@
 # for pre-requisites and setup your system before trying to run this file.
 
 import argparse
-import glob
 import os
 import shutil
 import subprocess
@@ -176,4 +175,4 @@ if __name__ == "__main__":
     subprocess.run(cmd, check=True)
 
     print(f"[SPEAR | sign_executable.py] {executable} has been successfully signed.")
-    print(f"[SPEAR | sign_executable.py] Done.")
+    print("[SPEAR | sign_executable.py] Done.")
