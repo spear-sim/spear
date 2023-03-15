@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <string>
-
 #include <CoreMinimal.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 

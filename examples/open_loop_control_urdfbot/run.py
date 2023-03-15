@@ -73,7 +73,7 @@ if __name__ == "__main__":
         cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
         cv2.waitKey(1)
         if args.save_camera_obs:
-            cv2.imwrite(f"img/{i:04d}.jpeg",obs["camera.final_color"])
+            cv2.imwrite(f"img/{i:04d}.jpeg", obs["camera.final_color"])
 
         if done:
             env.reset()
