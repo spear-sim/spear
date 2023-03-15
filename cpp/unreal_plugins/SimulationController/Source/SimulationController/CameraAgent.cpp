@@ -239,6 +239,9 @@ void CameraAgent::buildNavMesh()
         bounds_volume += actor->GetComponentsBoundingBox(false, true);
     }
 
+    std::cout << "Min bounds_volume " << bounds_volume.Min.X << ", " << bounds_volume.Min.Y << ", " << bounds_volume.Min.Z << std::endl;
+    std::cout << "Max bounds_volume " << bounds_volume.Max.X << ", " << bounds_volume.Max.Y << ", " << bounds_volume.Max.Z << std::endl;
+
     // get references to ANavMeshBoundsVolume and ANavModifierVolume
     ANavMeshBoundsVolume* nav_mesh_bounds_volume = Unreal::findActorByType<ANavMeshBoundsVolume>(camera_actor_->GetWorld());
     ASSERT(nav_mesh_bounds_volume);
@@ -249,15 +252,20 @@ void CameraAgent::buildNavMesh()
     // update ANavMeshBoundsVolume
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_mesh_bounds_volume->SetActorLocation(bounds_volume.GetCenter(), false);
-    nav_mesh_bounds_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.0f);
+    nav_mesh_bounds_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.BOUNDS_VOLUME_SCALE_FACTOR"));
     nav_mesh_bounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
+    std::cout << "nav mesh bounds volume location " << nav_mesh_bounds_volume->GetActorLocation().X << ", " << nav_mesh_bounds_volume->GetActorLocation().Y << ", " << nav_mesh_bounds_volume->GetActorLocation().Z << std::endl;
+    FBox nav_mesh_bounds_box = nav_mesh_bounds_volume->GetComponentsBoundingBox(true, true);
+    std::cout << "Min nav_mesh_bounds_volume " << nav_mesh_bounds_box.Min.X << ", " << nav_mesh_bounds_box.Min.Y << ", " << nav_mesh_bounds_box.Min.Z << std::endl;
+    std::cout << "Max nav_mesh_bounds_volume " << nav_mesh_bounds_box.Max.X << ", " << nav_mesh_bounds_box.Max.Y << ", " << nav_mesh_bounds_box.Max.Z << std::endl;
+
     // update ANavModifierVolume
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_modifier_volume->SetActorLocation(bounds_volume.GetCenter(), false);
-    nav_modifier_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.f);
+    nav_modifier_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.MODIFIER_VOLUME_SCALE_FACTOR"));
     nav_modifier_volume->AddActorWorldOffset(FVector(
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.NAV_MODIFIER_OFFSET_X"),
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.NAV_MODIFIER_OFFSET_Y"),
@@ -265,6 +273,11 @@ void CameraAgent::buildNavMesh()
     nav_modifier_volume->GetRootComponent()->UpdateBounds();
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
     nav_modifier_volume->RebuildNavigationData();
+
+    std::cout << "nav mesh modifier volume location " << nav_modifier_volume->GetActorLocation().X << ", " << nav_modifier_volume->GetActorLocation().Y << ", " << nav_modifier_volume->GetActorLocation().Z << std::endl;
+    FBox nav_mod_bounds_box = nav_modifier_volume->GetComponentsBoundingBox(true, true);
+    std::cout << "Min nav_modifier_volume " << nav_mod_bounds_box.Min.X << ", " << nav_mod_bounds_box.Min.Y << ", " << nav_mod_bounds_box.Min.Z << std::endl;
+    std::cout << "Max nav_modifier_volume " << nav_mod_bounds_box.Max.X << ", " << nav_mod_bounds_box.Max.Y << ", " << nav_mod_bounds_box.Max.Z << std::endl;
 
     // rebuild navmesh
     nav_sys_->Build();
