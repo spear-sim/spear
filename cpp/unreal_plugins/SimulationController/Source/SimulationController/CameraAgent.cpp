@@ -194,7 +194,8 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "random_points")) {
-        std::vector<float> component_data = Std::reinterpret_as<float>(action_.at("set_num_random_points"));
+
+        std::vector<uint32> component_data = Std::reinterpret_as<uint32>(action_.at("set_num_random_points"));
         std::vector<float> random_points;
         int num_random_points = static_cast<int>(component_data.at(0));
         for (int i = 0; i < num_random_points; i++) {
@@ -256,7 +257,7 @@ void CameraAgent::buildNavMesh()
     // update ANavModifierVolume
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_modifier_volume->SetActorLocation(bounds_volume.GetCenter(), false);
-    nav_modifier_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.f);
+    nav_modifier_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.0f);
     nav_modifier_volume->AddActorWorldOffset(FVector(
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.NAV_MODIFIER_OFFSET_X"),
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.NAV_MODIFIER_OFFSET_Y"),
