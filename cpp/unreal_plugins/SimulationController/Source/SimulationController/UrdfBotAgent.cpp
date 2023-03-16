@@ -7,10 +7,10 @@
 #include <Components/SceneCaptureComponent2D.h>
 
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
-#include "SimulationController/Box.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/ImuSensor.h"
 #include "SimulationController/SonarSensor.h"

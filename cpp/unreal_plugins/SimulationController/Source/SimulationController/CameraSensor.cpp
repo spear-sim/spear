@@ -25,11 +25,11 @@
 #include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/BoostInterprocess.h"
-#include "SimulationController/Box.h"
 
 const std::string MATERIALS_PATH = "/SimulationController/PostProcessMaterials";
 

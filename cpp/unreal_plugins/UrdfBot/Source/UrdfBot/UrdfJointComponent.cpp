@@ -132,7 +132,8 @@ void UUrdfJointComponent::addAction(float action)
             switch (joint_type_) {
                 case UrdfJointType::Continuous:
                 case UrdfJointType::Revolute:
-                    SetAngularOrientationTarget(FRotator(0, 0, ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Roll + FMath::RadiansToDegrees(action)));
+                    SetAngularOrientationTarget(
+                        FRotator(0, 0, ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Roll + FMath::RadiansToDegrees(action)));
                     break;
                 case UrdfJointType::Prismatic:
                     SetLinearPositionTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X + m_to_cm * action, 0, 0));
@@ -146,7 +147,8 @@ void UUrdfJointComponent::addAction(float action)
             switch (joint_type_) {
                 case UrdfJointType::Continuous:
                 case UrdfJointType::Revolute:
-                    SetAngularVelocityTarget(FVector(ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X + FMath::RadiansToDegrees(action), 0, 0));
+                    SetAngularVelocityTarget(
+                        FVector(ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X + FMath::RadiansToDegrees(action), 0, 0));
                     break;
                 case UrdfJointType::Prismatic:
                     SetLinearVelocityTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X + m_to_cm * action, 0, 0));

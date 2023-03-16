@@ -67,12 +67,14 @@ void UUrdfRobotComponent::createChildComponents(UrdfLinkDesc* parent_link_desc, 
 void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<uint8_t>>& actions)
 {
     std::map<std::string, float> joint_actions;
+
     for (auto& action : actions) {
         if (Std::containsKey(joint_components_, action.first)) {
             std::vector<float> action_data = Std::reinterpret_as<float>(action.second);
             joint_actions[action.first] = action_data.at(0);
         }
     }
+
     applyAction(joint_actions);
 }
 

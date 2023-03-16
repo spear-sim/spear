@@ -86,10 +86,11 @@ class Env(gym.Env):
         self._observation_space_info.terminate()
         self._task_step_info_space_info.terminate()
         self._agent_step_info_space_info.terminate()
-        if self._config.SPEAR.LAUNCH_MODE != "running_instance":
-            self._close()
-            self._wait_until_unreal_instance_is_closed()
-            self._close_client()
+
+        # Note that in the constructor, we launch the Unreal instance first and then initialize the client. Normally, we
+        # would do things in the reverse order here. But if we close the client first, then we can't send a command to
+        # the Unreal instance to close it. So we close the Unreal instance first and then close the client.
+        self._request_close_unreal_instance()
 
         print("[SPEAR | env.py] Finished closing Unreal instance.")
 
@@ -203,6 +204,11 @@ class Env(gym.Env):
             self._force_kill_unreal_instance()
             self._close_client_server_connection()
             assert False
+
+    def _request_close_unreal_instance(self):
+        if self._config.SPEAR.LAUNCH_MODE != "running_instance":
+            self._close()
+            self._wait_until_unreal_instance_is_closed()
 
     def _initialize_client(self):
 

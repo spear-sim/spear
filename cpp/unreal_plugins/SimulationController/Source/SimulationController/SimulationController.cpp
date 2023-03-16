@@ -23,11 +23,11 @@
 #include <PhysicsEngine/PhysicsSettings.h>
 
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
-#include "SimulationController/Box.h"
 #include "SimulationController/CameraAgent.h"
 #include "SimulationController/ImitationLearningTask.h"
 #include "SimulationController/NullTask.h"
@@ -49,6 +49,10 @@ void SimulationController::StartupModule()
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
+
+    if (!Config::s_initialized_) {
+        return;
+    }
 
     post_world_initialization_delegate_handle_ =
         FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
@@ -85,15 +89,11 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
     ASSERT(world);
 
-    if (!Config::s_initialized_) {
-        return;
-    }
-    
-#if WITH_EDITOR
-    bool ready_to_open_level = world->IsGameWorld();
-#else
-    bool ready_to_open_level = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
-#endif
+    #if WITH_EDITOR
+        bool ready_to_open_level = world->IsGameWorld();
+    #else
+        bool ready_to_open_level = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
+    #endif
 
     if (ready_to_open_level) {
         auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");

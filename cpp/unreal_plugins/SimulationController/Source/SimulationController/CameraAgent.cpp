@@ -23,10 +23,10 @@
 #include <NavModifierVolume.h>
 
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
-#include "SimulationController/Box.h"
 #include "SimulationController/CameraSensor.h"
 
 CameraAgent::CameraAgent(UWorld* world)

@@ -62,21 +62,5 @@ public class SimulationController : ModuleRules
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "predef", "include"));
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "static_assert", "include"));
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "winapi", "include"));
-
-        //
-        // rpclib
-        //
-
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "include"));
-
-        if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Win64", "Release", "rpc.lib"));
-        } else if (Target.Platform == UnrealTargetPlatform.Mac) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Mac", "librpc.a"));
-        } else if (Target.Platform == UnrealTargetPlatform.Linux) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Linux", "librpc.a"));
-        } else {
-            throw new Exception("[SPEAR | SimulationController.Build.cs] Target.Platform == " + Target.Platform);
-        }
     }
 }

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "SimulationController/Box.h"
+#include "CoreUtils/Box.h"
 #include "SimulationController/Task.h"
 
 class NullTask: public Task

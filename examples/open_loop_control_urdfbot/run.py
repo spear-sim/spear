@@ -49,9 +49,10 @@ if __name__ == "__main__":
     if config.SIMULATION_CONTROLLER.AGENT != "UrdfBotAgent":
         assert False
 
-    for action in df.to_records():
-        for k in action.keys():
-            action[k] = np.array([action[k]], dtype=np.float32)
+    for index ,row in df.iterrows():
+        action = {}
+        for k in row.to_dict():
+            action[k] = np.array([row[k]], dtype=np.float32)
         obs, reward, done, info = env.step(action=action)
 
         print("[SPEAR | run.py] UrdfBotAgent: ", reward, done, info)
@@ -59,8 +60,8 @@ if __name__ == "__main__":
         cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
         cv2.waitKey(1)
 
-        if args.save_camera_obs:
-            cv2.imwrite(os.path.join(args.image_dir, f"{i:04d}.jpeg"), obs["camera.final_color"])
+        if args.save_images:
+            cv2.imwrite(os.path.join(args.image_dir, f"{index:04d}.jpeg"), obs["camera.final_color"])
         if done:
             env.reset()
 

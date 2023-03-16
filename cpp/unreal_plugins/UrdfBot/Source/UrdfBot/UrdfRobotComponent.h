@@ -27,10 +27,12 @@ public:
     ~UUrdfRobotComponent();
 
     void createChildComponents(UrdfRobotDesc* robot_desc);
-    
+
+    // Agent interface used by UrdfBotAgent
     void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
     std::map<std::string, std::vector<uint8_t>> getObservation(const std::vector<std::string>& observation_components) const;
 
+    // Pawn interface used by UrdfBotPawn
     void applyAction(std::map<std::string, float> action);
     void addAction(std::map<std::string, float> action);
 

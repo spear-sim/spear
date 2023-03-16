@@ -7,7 +7,7 @@
 #include <cmath>
 #include <vector>
 
-#include "SimulationController/Rpclib.h"
+#include "CoreUtils/Rpclib.h"
 
 // enum values must match python/spear/env.py, which is why we write them out explicitly
 enum class DataType
