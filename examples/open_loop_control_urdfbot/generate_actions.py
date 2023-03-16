@@ -25,28 +25,28 @@ def add_actions(move_forward=0.0, move_right=0.0, gripper_state=50.0, arm_curren
     action_map = {}
 
     # base joints
-    action_map["joint.wheel_joint_r"] = move_forward - move_right
-    action_map["joint.wheel_joint_l"] = move_forward + move_right
+    action_map["joint.wheel_joint_r"] = [move_forward - move_right]
+    action_map["joint.wheel_joint_l"] = [move_forward + move_right]
 
     # arm joints
     arm_pose = arm_poses[arm_current] * (1.0 - arm_alpha) + arm_poses[arm_next] * arm_alpha
-    action_map["joint.arm_joint_0"] = arm_pose[0]
-    action_map["joint.arm_joint_1"] = arm_pose[1]
-    action_map["joint.arm_joint_2"] = arm_pose[2]
-    action_map["joint.arm_joint_3"] = arm_pose[3]
-    action_map["joint.arm_joint_4"] = arm_pose[4]
-    action_map["joint.arm_joint_5"] = arm_pose[5]
-    action_map["joint.arm_joint_6"] = arm_pose[6]
+    action_map["joint.arm_joint_0"] = [arm_pose[0]]
+    action_map["joint.arm_joint_1"] = [arm_pose[1]]
+    action_map["joint.arm_joint_2"] = [arm_pose[2]]
+    action_map["joint.arm_joint_3"] = [arm_pose[3]]
+    action_map["joint.arm_joint_4"] = [arm_pose[4]]
+    action_map["joint.arm_joint_5"] = [arm_pose[5]]
+    action_map["joint.arm_joint_6"] = [arm_pose[6]]
 
     # gripper joints
-    action_map["joint.gripper_finger_joint_r"] = gripper_state
-    action_map["joint.gripper_finger_joint_l"] = gripper_state
+    action_map["joint.gripper_finger_joint_r"] = [gripper_state]
+    action_map["joint.gripper_finger_joint_l"] = [gripper_state]
 
     # other joints
-    action_map["joint.head_pan_joint"] = 0.0
-    action_map["joint.head_tilt_joint"] = 0.0
+    action_map["joint.head_pan_joint"] = [0.0]
+    action_map["joint.head_tilt_joint"] = [0.0]
 
-    return pd.DataFrame(action_map, index=[0])
+    return action_map
 
 
 if __name__ == '__main__':
@@ -59,29 +59,29 @@ if __name__ == '__main__':
 
     # move forward
     for i in range(0, 100):
-        df = pd.concat([df, add_actions(move_forward=0.01)], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame(add_actions(move_forward=0.01))])
     # hold target
     for i in range(0, 30):
-        df = pd.concat([df, add_actions(gripper_state=-50)], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame(add_actions(gripper_state=-50))])
     # rotate base
     for i in range(0, 30):
-        df = pd.concat([df, add_actions(move_right=0.009, gripper_state=-100)], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame(add_actions(move_right=0.009, gripper_state=-100))])
     # move forward while moving arm
     for i in range(0, 100):
-        df = pd.concat([df, add_actions(move_forward=0.01, gripper_state=-100, arm_current="init", arm_next="diagonal45", arm_alpha=i / 100)],
-                       ignore_index=True)
+        df = pd.concat(
+            [df, pd.DataFrame(add_actions(move_forward=0.01, gripper_state=-100, arm_current="init", arm_next="diagonal45", arm_alpha=i / 100))])
     # release gripper
     for i in range(0, 30):
-        df = pd.concat([df, add_actions(gripper_state=50, arm_current="diagonal45")], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame(add_actions(gripper_state=50, arm_current="diagonal45"))])
     # move back and fold arm
     for i in range(0, 30):
-        df = pd.concat([df, add_actions(move_forward=-0.01, arm_current="diagonal45", arm_next="default", arm_alpha=i / 100)], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame(add_actions(move_forward=-0.01, arm_current="diagonal45", arm_next="default", arm_alpha=i / 100))])
     # keep folding arm
     for i in range(30, 100):
-        df = pd.concat([df, add_actions(move_forward=0, arm_current="diagonal45", arm_next="default", arm_alpha=i / 100)], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame(add_actions(move_forward=0, arm_current="diagonal45", arm_next="default", arm_alpha=i / 100))])
     # stay still
     for i in range(0, 30):
-        df = pd.concat([df, add_actions(arm_current="default")], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame(add_actions(arm_current="default"))])
 
     # save to csv
     df.to_csv(args.actions_file, mode="w", index=False, header=True)

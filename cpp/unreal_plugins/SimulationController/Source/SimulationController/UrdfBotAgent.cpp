@@ -15,9 +15,7 @@
 #include "SimulationController/ImuSensor.h"
 #include "SimulationController/SonarSensor.h"
 #include "UrdfBot/UrdfBotPawn.h"
-#include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfRobotComponent.h"
-#include "UrdfBot/UrdfParser.h"
 
 UrdfBotAgent::UrdfBotAgent(UWorld* world)
 {
@@ -69,7 +67,7 @@ std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.ACTION_COMPONENTS");
 
     std::map<std::string, Box> robot_component_action_space = urdf_bot_pawn_->urdf_robot_component_->getActionSpace(action_components);
-    for (auto&  robot_component_observation_action_component : robot_component_action_space) {
+    for (auto& robot_component_observation_action_component : robot_component_action_space) {
         action_space[robot_component_observation_action_component.first] = std::move(robot_component_observation_action_component.second);
     }
 
@@ -83,7 +81,7 @@ std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
 
     std::map<std::string, Box> robot_component_observation_space = urdf_bot_pawn_->urdf_robot_component_->getObservationSpace(observation_components);
-    for (auto&  robot_component_observation_space_component : robot_component_observation_space) {
+    for (auto& robot_component_observation_space_component : robot_component_observation_space) {
         observation_space[robot_component_observation_space_component.first] = std::move(robot_component_observation_space_component.second);
     }
 

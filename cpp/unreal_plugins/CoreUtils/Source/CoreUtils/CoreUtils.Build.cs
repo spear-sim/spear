@@ -68,7 +68,7 @@ public class CoreUtils : ModuleRules
         }
         else
         {
-            throw new Exception("[SPEAR | SimulationController.Build.cs] Target.Platform == " + Target.Platform);
+            throw new Exception("[SPEAR | CoreUtils.Build.cs] Target.Platform == " + Target.Platform);
         }
 
         //

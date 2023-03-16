@@ -40,7 +40,14 @@
 #include "SimulationController/Visualizer.h"
 
 // Different possible frame states for thread synchronization
-enum class FrameState { Idle, RequestPreTick, ExecutingPreTick, ExecutingTick, ExecutingPostTick };
+enum class FrameState
+{
+    Idle,
+    RequestPreTick,
+    ExecutingPreTick,
+    ExecutingTick,
+    ExecutingPostTick
+};
 
 void SimulationController::StartupModule()
 {
@@ -54,8 +61,8 @@ void SimulationController::StartupModule()
         return;
     }
 
-    post_world_initialization_delegate_handle_ =
-        FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
+    post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(
+        this, &SimulationController::postWorldInitializationEventHandler);
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
     begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
@@ -65,6 +72,10 @@ void SimulationController::StartupModule()
 void SimulationController::ShutdownModule()
 {
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::ShutdownModule" << std::endl;
+
+    if (!Config::s_initialized_) {
+        return;
+    }
 
     // If this module is unloaded in the middle of simulation for some reason, raise an error.
     // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
@@ -189,7 +200,9 @@ void SimulationController::worldBeginPlayEventHandler()
     frame_state_ = FrameState::Idle;
 
     // initialize RPC server
-    rpc_server_ = std::make_unique<RpcServer>(Config::get<std::string>("SIMULATION_CONTROLLER.IP"), Config::get<int>("SIMULATION_CONTROLLER.PORT"));
+    rpc_server_ = std::make_unique<RpcServer>(
+        Config::get<std::string>("SIMULATION_CONTROLLER.IP"),
+        Config::get<int>("SIMULATION_CONTROLLER.PORT"));
     ASSERT(rpc_server_);
 
     bindFunctionsToRpcServer();
@@ -295,7 +308,9 @@ void SimulationController::bindFunctionsToRpcServer()
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
-    rpc_server_->bindAsync("ping", []() -> std::string { return "SimulationController received a call to ping()..."; });
+    rpc_server_->bindAsync("ping", []() -> std::string {
+        return "SimulationController received a call to ping()...";
+    });
 
     rpc_server_->bindAsync("getByteOrder", []() -> std::string {
         uint32_t dummy = 0x01020304;
