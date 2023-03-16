@@ -7,6 +7,7 @@ import fnmatch
 import glob
 import os
 import posixpath
+import spear
 import subprocess
 import sys
 
@@ -42,15 +43,16 @@ if __name__ == '__main__':
 
     assert os.path.exists(shared_dir)
     unreal_project_content_shared_dir = os.path.join(unreal_project_content_dir, "Shared")
-    unreal_project_content_shared_dir_symlink_created = False
 
-    if not os.path.exists(unreal_project_content_shared_dir):
-        print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_shared_dir} -> {shared_dir}")
-        os.symlink(shared_dir, unreal_project_content_shared_dir)
-        unreal_project_content_shared_dir_symlink_created = True
+    if spear.path_exists(unreal_project_content_shared_dir):
+        print(f"[SPEAR | build_pak_files.py] Removing file or directory or symlink: {unreal_project_content_shared_dir}")
+        spear.remove_path(unreal_project_content_shared_dir)
+
+    print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_shared_dir} -> {shared_dir}")
+    os.symlink(shared_dir, unreal_project_content_shared_dir)
 
     assert os.path.exists(scenes_dir)
-    scene_names = [ os.path.basename(x) for x in glob.glob(os.path.join(scenes_dir, "*")) ]
+    scene_names = [ os.path.basename(x) for x in os.listdir(scenes_dir) ]
     assert len(scene_names) > 0
 
     if args.scene_names is not None:
@@ -67,7 +69,7 @@ if __name__ == '__main__':
         # remove existing scene dir
         if os.path.exists(unreal_project_content_scene_dir):
             print(f"[SPEAR | build_pak_files.py] File or directory or symlink exists, removing: {unreal_project_content_scene_dir}")
-            os.unlink(unreal_project_content_scene_dir)
+            spear.remove_path(unreal_project_content_scene_dir)
 
         # create symlink
         print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_scene_dir} -> {scene_content_dir}")
@@ -136,12 +138,11 @@ if __name__ == '__main__':
             assert os.path.exists(pak_file)
             print(f"[SPEAR | build_pak_files.py] Successfully built {pak_file} for {platform} platform.")
 
-            print(f"[SPEAR | build_pak_files.py] Removing symlink: {unreal_project_content_scene_dir}")
-            os.unlink(unreal_project_content_scene_dir)
+        print(f"[SPEAR | build_pak_files.py] Removing symlink: {unreal_project_content_scene_dir}")
+        spear.remove_path(unreal_project_content_scene_dir)
 
-    if unreal_project_content_shared_dir_symlink_created:
-        assert os.path.islink(unreal_project_content_shared_dir)
-        print(f"[SPEAR | build_pak_files.py] Removing symlink: {unreal_project_content_shared_dir}")
-        os.unlink(unreal_project_content_shared_dir)
+    assert spear.path_exists(unreal_project_content_shared_dir)
+    print(f"[SPEAR | build_pak_files.py] Removing symlink: {unreal_project_content_shared_dir}")
+    spear.remove_path(unreal_project_content_shared_dir)
 
     print("[SPEAR | build_pak_files.py] Done.")
