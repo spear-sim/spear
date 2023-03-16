@@ -14,6 +14,7 @@ public class SpearSimTarget : TargetRules
         DefaultBuildSettings = BuildSettingsVersion.V2;
         ExtraModuleNames.AddRange(new string[] { "SpearSim" });
 
+        // We need to include a check for UnrealTargetPlatform.Win32 here (but not in SpearSimEditorTarget), otherwise we get an error when running Unreal's GenerateProjectFiles.bat script.
         if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Win32) {
 
             // On Windows, we need to build an additional app so that calls to UE_Log and writes to std::cout are visible in the terminal.
