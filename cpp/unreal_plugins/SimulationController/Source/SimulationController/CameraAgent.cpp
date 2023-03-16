@@ -249,7 +249,7 @@ void CameraAgent::buildNavMesh()
     // update ANavMeshBoundsVolume
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_mesh_bounds_volume->SetActorLocation(bounds_volume.GetCenter(), false);
-    nav_mesh_bounds_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.f);
+    nav_mesh_bounds_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.0f);
     nav_mesh_bounds_volume->GetRootComponent()->UpdateBounds();
     nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
     nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
@@ -257,7 +257,7 @@ void CameraAgent::buildNavMesh()
     // update ANavModifierVolume
     nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
     nav_modifier_volume->SetActorLocation(bounds_volume.GetCenter(), false);
-    nav_modifier_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.f);
+    nav_modifier_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.0f);
     nav_modifier_volume->AddActorWorldOffset(FVector(
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.NAV_MODIFIER_OFFSET_X"),
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.NAV_MODIFIER_OFFSET_Y"),

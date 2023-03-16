@@ -38,13 +38,27 @@ if __name__ == "__main__":
 
         # change config based on current scene
         config.defrost()
-        if "kujiale_0000" in scene_id:
+
+        if scene_id == "kujiale_0000":
             config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
                 "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake" + "." + scene_id + "_bake"
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake"
-        elif "smart_factory_0000" in scene_id:
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "." + scene_id
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + scene_id + "/Maps/" + scene_id
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = \
+                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake"
+
+            # kujiale_0000 has scene-specific config values
+            scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
+
+        elif scene_id == "smart_factory_0000":
+            # smart_factory_0000 doesn't need a rendering mode when referring to its map
+            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "." + scene_id
+            config.SIMULATION_CONTROLLER.LEVEL_NAME = \
+                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id
+
+            # smart_factory_0000 has scene-specific config values
+            scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.smart_factory_0000.yaml")
+
+        config.merge_from_file(scene_config_file)
         config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
         config.freeze()
 

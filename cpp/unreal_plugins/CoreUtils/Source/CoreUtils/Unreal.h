@@ -33,7 +33,7 @@ public:
     static std::string toStdString(const FName& str)
     {
         // Note that str.ToString() converts FName to FString
-        return Unreal::toStdString(str.ToString());
+        return toStdString(str.ToString());
     }
 
     static FString toFString(const std::string& str)
