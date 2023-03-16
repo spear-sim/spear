@@ -15,7 +15,6 @@
 #include "SimulationController/ImuSensor.h"
 #include "SimulationController/SonarSensor.h"
 #include "UrdfBot/UrdfBotPawn.h"
-#include "UrdfBot/UrdfJointComponent.h"
 #include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfRobotComponent.h"
 #include "UrdfBot/UrdfParser.h"
@@ -69,17 +68,9 @@ std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
     std::map<std::string, Box> action_space;
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.ACTION_COMPONENTS");
 
-    if (Std::contains(action_components, "joint")) {
-        for (auto& joint_component : urdf_bot_pawn_->urdf_robot_component_->joint_components_) {
-            if (joint_component.second->control_type_ != UrdfJointControlType::Invalid) {
-                Box box;
-                box.low_ = std::numeric_limits<float>::lowest();
-                box.high_ = std::numeric_limits<float>::max();
-                box.shape_ = {1};
-                box.datatype_ = DataType::Float32;
-                action_space[joint_component.first] = std::move(box);
-            }
-        }
+    std::map<std::string, Box> robot_component_action_space = urdf_bot_pawn_->urdf_robot_component_->getActionSpace(action_components);
+    for (auto&  robot_component_observation_action_component : robot_component_action_space) {
+        action_space[robot_component_observation_action_component.first] = std::move(robot_component_observation_action_component.second);
     }
 
     return action_space;
@@ -91,15 +82,9 @@ std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "link_state")) {
-        for (auto& link_component : urdf_bot_pawn_->urdf_robot_component_->link_components_) {
-            Box box;
-            box.low_ = std::numeric_limits<float>::lowest();
-            box.high_ = std::numeric_limits<float>::max();
-            box.shape_ = {6};
-            box.datatype_ = DataType::Float32;
-            observation_space[link_component.first] = std::move(box);
-        }
+    std::map<std::string, Box> robot_component_observation_space = urdf_bot_pawn_->urdf_robot_component_->getObservationSpace(observation_components);
+    for (auto&  robot_component_observation_space_component : robot_component_observation_space) {
+        observation_space[robot_component_observation_space_component.first] = std::move(robot_component_observation_space_component.second);
     }
 
     std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
@@ -119,7 +104,7 @@ void UrdfBotAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.ACTION_COMPONENTS");
 
-    if (Std::contains(action_components, "joint")) {
+    if (Std::contains(action_components, "control_joints")) {
         urdf_bot_pawn_->urdf_robot_component_->applyAction(actions);
     }
 }

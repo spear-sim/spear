@@ -6,6 +6,7 @@
 
 #include <iostream>
 
+#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfBot/UrdfJointComponent.h"
@@ -62,6 +63,44 @@ void UUrdfRobotComponent::createChildComponents(UrdfLinkDesc* parent_link_desc, 
 
         createChildComponents(child_link_desc, child_link_component);
     }
+}
+
+std::map<std::string, Box> UUrdfRobotComponent::getActionSpace(const std::vector<std::string>& action_components) const
+{
+    std::map<std::string, Box> action_space;
+
+    if (Std::contains(action_components, "control_joints")) {
+        for (auto& joint_component : joint_components_) {
+            if (joint_component.second->control_type_ != UrdfJointControlType::Invalid) {
+                Box box;
+                box.low_ = std::numeric_limits<float>::lowest();
+                box.high_ = std::numeric_limits<float>::max();
+                box.shape_ = {1};
+                box.datatype_ = DataType::Float32;
+                action_space[joint_component.first] = std::move(box);
+            }
+        }
+    }
+
+    return action_space;
+}
+
+std::map<std::string, Box> UUrdfRobotComponent::getObservationSpace(const std::vector<std::string>& observation_components) const
+{
+    std::map<std::string, Box> observation_space;
+
+    if (Std::contains(observation_components, "link_state")) {
+        for (auto& link_component : link_components_) {
+            Box box;
+            box.low_ = std::numeric_limits<float>::lowest();
+            box.high_ = std::numeric_limits<float>::max();
+            box.shape_ = {6};
+            box.datatype_ = DataType::Float32;
+            observation_space[link_component.first] = std::move(box);
+        }
+    }
+
+    return observation_space;
 }
 
 void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<uint8_t>>& actions)
