@@ -174,6 +174,7 @@ SIMULATION_CONTROLLER:
 
     USE_SHARED_MEMORY: True       # write image data to shared memory for fast interprocess communication
     SKIP_READ_SURFACE_DATA: False # skip reading image data from the GPU, useful for debugging and benchmarking
+    SEMANTIC_TAGS: {}
 
     # We have found these values achieve a good trade-off between image quality and
     # rendering speed. When Unreal defines ClampMin/ClampMax values, it will clamp
