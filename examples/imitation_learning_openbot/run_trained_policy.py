@@ -114,9 +114,27 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + rendering_mode_map_str + "." + episode["scene_id"] + rendering_mode_map_str
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + rendering_mode_map_str
+
+            if episode["scene_id"] == "kujiale_0000":
+                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + rendering_mode_map_str + "." + episode["scene_id"] + rendering_mode_map_str
+                config.SIMULATION_CONTROLLER.LEVEL_NAME = \
+                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + rendering_mode_map_str
+
+                # kujiale_0000 has scene-specific config values
+                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
+
+            elif episode["scene_id"] == "warehouse_0000":
+                # warehouse_0000 doesn't need a rendering mode when referring to its map
+                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + "." + episode["scene_id"]
+                config.SIMULATION_CONTROLLER.LEVEL_NAME = \
+                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"]
+
+                # warehouse_0000 has scene-specific config values
+                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.warehouse_0000.yaml")
+
+            config.merge_from_file(scene_config_file)
             config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
             config.freeze()
 
