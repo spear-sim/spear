@@ -122,15 +122,15 @@ if __name__ == "__main__":
                 # kujiale_0000 has scene-specific config values
                 scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
 
-            elif pose["scene_id"] == "smart_factory_0000":
-                # smart_factory_0000 doesn't need a rendering mode when referring to its map
+            elif pose["scene_id"] == "warehouse_0000":
+                # warehouse_0000 doesn't need a rendering mode when referring to its map
                 config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
                     "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"] + "." + pose["scene_id"]
                 config.SIMULATION_CONTROLLER.LEVEL_NAME = \
                     "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"]
 
-                # smart_factory_0000 has scene-specific config values
-                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.smart_factory_0000.yaml")
+                # warehouse_0000 has scene-specific config values
+                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.warehouse_0000.yaml")
 
             config.merge_from_file(scene_config_file)
             config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
