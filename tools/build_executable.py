@@ -33,7 +33,7 @@ if __name__ == "__main__":
         target_platform = "Win64"
         archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{args.config_mode}"))
         cmd_prefix      = f"conda activate {args.conda_env}& "
-        unreal_tmp_dir  = None
+        unreal_tmp_dir  = ""
 
     elif sys.platform == "darwin":
         run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
         target_platform = "Linux"
         archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{args.config_mode}"))
-        unreal_tmp_dir  = None
+        unreal_tmp_dir  = ""
 
         if args.conda_script:
             conda_script = args.conda_script
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         "-clientconfig=" + args.config_mode
     ]
     print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True)
 
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from the above build.
     # If we don't do this step, we will get many warnings during subsequent builds:
@@ -136,4 +136,4 @@ if __name__ == "__main__":
         shutil.rmtree(unreal_tmp_dir)
 
     print(f"[SPEAR | build_executable.py] Successfully built SpearSim at {archive_dir}")
-    print(f"[SPEAR | build_executable.py] Done.")
+    print("[SPEAR | build_executable.py] Done.")

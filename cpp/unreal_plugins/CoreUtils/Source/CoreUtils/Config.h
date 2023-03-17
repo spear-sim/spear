@@ -68,7 +68,9 @@ public:
 
         return node.as<TValue>();
     }
-    
+
+    static bool s_initialized_;
+
 private:
     Config() = default;
     ~Config() = default;

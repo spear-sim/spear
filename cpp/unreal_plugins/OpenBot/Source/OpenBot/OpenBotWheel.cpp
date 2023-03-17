@@ -16,6 +16,10 @@ UOpenBotWheel::UOpenBotWheel()
 {
     std::cout << "[SPEAR | OpenBotWheel.cpp] UOpenBotWheel::UOpenBotWheel" << std::endl;
 
+    if (!Config::s_initialized_) {
+        return;
+    }
+
     ConstructorHelpers::FObjectFinder<UStaticMesh> collision_mesh(TEXT("/Engine/EngineMeshes/Cylinder"));
     ASSERT(collision_mesh.Succeeded());
 
