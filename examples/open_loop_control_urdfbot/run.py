@@ -16,8 +16,7 @@ import spear
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--actions_file",
-                        default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions.csv"))
+    parser.add_argument("--actions_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions.csv"))
     parser.add_argument("--save_images", default=True)
     parser.add_argument("--image_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "images"))
     args = parser.parse_args()
