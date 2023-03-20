@@ -12,8 +12,8 @@
 #include <type_traits>
 #include <utility>
 
+#include "CoreUtils/Rpclib.h"
 #include "SimulationController/BoostAsio.h"
-#include "SimulationController/Rpclib.h"
 
 // This class defines an RPC server in which user-specified functions can be bound to run synchronously in a specific
 // thread, or asynchronously in a worker thread. Use runAsync() to start the server, and use stopRunAsync() to terminate

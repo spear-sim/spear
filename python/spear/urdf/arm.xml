@@ -1,0 +1,225 @@
+<robot name="arm">
+    <!--
+        URDF_FILE: "arm.xml"
+        KEYBOARD_ACTIONS:
+          One:
+            ADD_ACTION: { "joint_0": 9.8 }
+          Two:
+            ADD_ACTION: { "joint_0": -10 }
+          Three:
+            ADD_ACTION: { "joint_0": 0.1 }
+          Four:
+            ADD_ACTION: { "joint_0": -0.1 }
+    -->
+    <!--
+        <mujoco>
+            <option gravity="0 0 0">
+                <flag contact="disable"/>
+            </option>
+        </mujoco>
+    -->
+
+    <link name="base_link">
+        <inertial>
+            <origin rpy="0 0 0" xyz="2 2 2"/>
+            <mass value="100"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="2 2 2"/>
+            <geometry>
+                <box size="1 1 1"/>
+            </geometry>
+            <material>
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="2 2 2"/>
+            <geometry>
+                <box size="1 1 1"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <link name="link_0">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <mass value="1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+            <material>
+                <color rgba="0 1.0 0 1.0"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="joint_0" type="continuous">
+        <origin rpy="0 0 0" xyz="1 0 0"/>
+        <parent link="base_link"/>
+        <child link="link_0"/>
+        <axis xyz="0 0 1"/>
+        <dynamics type="torque"/>
+    </joint>
+
+    <link name="link_1">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <mass value="1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+            <material>
+                <color rgba="1 1 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="joint_1" type="continuous">
+        <origin rpy="0 0 0" xyz="1 0 0"/>
+        <parent link="link_0"/>
+        <child link="link_1"/>
+        <axis xyz="0 1 0"/>
+        <dynamics type="torque"/>
+    </joint>
+
+    <link name="link_2">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <mass value="1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+            <material>
+                <color rgba="1 1 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="joint_2" type="continuous">
+        <origin rpy="0 0 0" xyz="1 0 0"/>
+        <parent link="link_1"/>
+        <child link="link_2"/>
+        <axis xyz="1 0 0"/>
+        <dynamics type="torque"/>
+    </joint>
+
+    <link name="link_3">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <mass value="1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+            <material>
+                <color rgba="1 1 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="joint_3" type="continuous">
+        <origin rpy="0 0 0" xyz="1 0 0"/>
+        <parent link="link_2"/>
+        <child link="link_3"/>
+        <axis xyz="0 1 0"/>
+        <dynamics type="torque"/>
+    </joint>
+
+    <link name="link_4">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <mass value="1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+            <material>
+                <color rgba="1 1 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="joint_4" type="continuous">
+        <origin rpy="0 0 0" xyz="1 0 0"/>
+        <parent link="link_3"/>
+        <child link="link_4"/>
+        <axis xyz="1 0 0"/>
+        <dynamics type="torque"/>
+    </joint>
+
+    <link name="link_5">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <mass value="1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+            <material>
+                <color rgba="0 0 1 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.4 0.4"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="joint_5" type="continuous">
+        <origin rpy="0 0 0" xyz="1 0 0"/>
+        <parent link="link_4"/>
+        <child link="link_5"/>
+        <axis xyz="0 1 0"/>
+        <dynamics type="torque"/>
+    </joint>
+
+</robot>

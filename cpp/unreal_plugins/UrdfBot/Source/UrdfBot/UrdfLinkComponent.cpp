@@ -25,6 +25,9 @@ void UUrdfLinkComponent::BeginPlay()
 {
     Super::BeginPlay();
 
+    // set relative scale at `BeginPlay` to avoid propagating scale to child components
+    SetRelativeScale3D(relative_scale_);
+
     // SetMassOverrideInKg(...) in constructor leads to following warning message during cooking:
     //     Error: FBodyInstance::GetSimplePhysicalMaterial : GEngine not initialized! Cannot call this during
     //     native CDO construction, wrap with if(!HasAnyFlags(RF_ClassDefaultObject)) or move out of constructor,
@@ -44,35 +47,35 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
     UrdfJointDesc* joint_desc = link_desc->parent_joint_desc_;
     if (joint_desc) {
         float m_to_cm = 100.0f;
-        SetRelativeLocation((joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation()) * m_to_cm);
+        UrdfLinkDesc* parent_link_desc = joint_desc->parent_link_desc_;
+        FTransform link_origin_ = parent_link_desc->visual_descs_[0].origin_;
+        SetRelativeLocation((joint_desc->origin_.GetLocation() + link_desc->visual_descs_[0].origin_.GetLocation() - link_origin_.GetLocation()) * m_to_cm);
         SetRelativeRotation(joint_desc->origin_.GetRotation().Rotator() + link_desc->visual_descs_[0].origin_.GetRotation().Rotator());
     }
 
     UStaticMesh* static_mesh = nullptr;
-    FVector relative_scale;
     switch (geometry_desc.type_) {
         case UrdfGeometryType::Box:
             static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
-            relative_scale = geometry_desc.size_;
+            relative_scale_ = geometry_desc.size_;
             break;
         case UrdfGeometryType::Cylinder:
             static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-            relative_scale = FVector(geometry_desc.radius_ * 2.0f, geometry_desc.radius_ * 2.0f, geometry_desc.length_);
+            relative_scale_ = FVector(geometry_desc.radius_ * 2.0f, geometry_desc.radius_ * 2.0f, geometry_desc.length_);
             break;
         case UrdfGeometryType::Sphere:
             static_mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-            relative_scale = FVector(geometry_desc.radius_) * 2.0f;
+            relative_scale_ = FVector(geometry_desc.radius_) * 2.0f;
             break;
         case UrdfGeometryType::Mesh:
             static_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(geometry_desc.filename_));
-            relative_scale = FVector(geometry_desc.scale_);
+            relative_scale_ = FVector(geometry_desc.scale_);
             break;
         default:
             ASSERT(false);
     }
     ASSERT(static_mesh);
     SetStaticMesh(static_mesh);
-    SetRelativeScale3D(relative_scale);
 
     // set physical property
     SetSimulatePhysics(true);
@@ -103,10 +106,17 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
             material_desc = material_desc->material_desc_;
         }
         ASSERT(material_desc);
+        if (material_desc->texture_.size() > 0) {
+            UMaterialInterface* material = LoadObject<UMaterialInterface>(nullptr, *Unreal::toFString(material_desc->texture_));
+            ASSERT(material);
 
-        UMaterialInterface* material = LoadObject<UMaterialInterface>(nullptr, *Unreal::toFString(material_desc->texture_));
-        ASSERT(material);
+            SetMaterial(0, material);
+        } else {
+            UMaterialInterface* base_material = LoadObject<UMaterialInterface>(nullptr, TEXT("Material'/UrdfBot/Common/M_PureColor.M_PureColor'"));
+            UMaterialInstanceDynamic* material = UMaterialInstanceDynamic::Create(base_material, this);
+            material->SetVectorParameterValue("BaseColor_Color", FLinearColor(material_desc->color_));
 
-        SetMaterial(0, material);
+            SetMaterial(0, material);
+        }
     }
 }

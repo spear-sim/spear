@@ -15,11 +15,12 @@
 
 class UUrdfJointComponent;
 class UUrdfLinkComponent;
+struct Box;
 struct UrdfLinkDesc;
 struct UrdfRobotDesc;
 
 UCLASS()
-class UUrdfRobotComponent : public USceneComponent
+class URDFBOT_API UUrdfRobotComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
@@ -28,6 +29,13 @@ public:
 
     void createChildComponents(UrdfRobotDesc* robot_desc);
 
+    // Agent interface used by UrdfBotAgent
+    std::map<std::string, Box> getActionSpace(const std::vector<std::string>& action_components) const;
+    std::map<std::string, Box> getObservationSpace(const std::vector<std::string>& observation_components) const;
+    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
+    std::map<std::string, std::vector<uint8_t>> getObservation(const std::vector<std::string>& observation_components) const;
+
+    // Pawn interface used by UrdfBotPawn
     void applyAction(std::map<std::string, float> action);
     void addAction(std::map<std::string, float> action);
 

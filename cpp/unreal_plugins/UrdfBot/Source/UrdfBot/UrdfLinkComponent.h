@@ -13,7 +13,7 @@ class UUrdfJointComponent;
 struct UrdfLinkDesc;
 
 UCLASS()
-class UUrdfLinkComponent : public UStaticMeshComponent
+class URDFBOT_API UUrdfLinkComponent : public UStaticMeshComponent
 {
     GENERATED_BODY()
 public:
@@ -26,4 +26,5 @@ public:
     void initializeComponent(UrdfLinkDesc* link_desc);
 
     float mass_;
+    FVector relative_scale_;
 };

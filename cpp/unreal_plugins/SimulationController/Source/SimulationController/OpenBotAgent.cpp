@@ -26,11 +26,11 @@
 #include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "OpenBot/OpenBotPawn.h"
-#include "SimulationController/Box.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/ImuSensor.h"
 #include "SimulationController/SonarSensor.h"

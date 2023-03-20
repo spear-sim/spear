@@ -23,11 +23,11 @@
 #include <PhysicsEngine/PhysicsSettings.h>
 
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
-#include "SimulationController/Box.h"
 #include "SimulationController/CameraAgent.h"
 #include "SimulationController/ImitationLearningTask.h"
 #include "SimulationController/NullTask.h"
@@ -36,6 +36,7 @@
 #include "SimulationController/RpcServer.h"
 #include "SimulationController/SphereAgent.h"
 #include "SimulationController/Task.h"
+#include "SimulationController/UrdfBotAgent.h"
 #include "SimulationController/Visualizer.h"
 
 // Different possible frame states for thread synchronization
@@ -54,7 +55,12 @@ void SimulationController::StartupModule()
 
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
-    
+    ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
+
+    if (!Config::s_initialized_) {
+        return;
+    }
+
     post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(
         this, &SimulationController::postWorldInitializationEventHandler);
     world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
@@ -66,6 +72,10 @@ void SimulationController::StartupModule()
 void SimulationController::ShutdownModule()
 {
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::ShutdownModule" << std::endl;
+
+    if (!Config::s_initialized_) {
+        return;
+    }
 
     // If this module is unloaded in the middle of simulation for some reason, raise an error.
     // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
@@ -79,7 +89,7 @@ void SimulationController::ShutdownModule()
 
     FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_delegate_handle_);
     world_cleanup_delegate_handle_.Reset();
-    
+
     FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_delegate_handle_);
     post_world_initialization_delegate_handle_.Reset();
 }
@@ -90,11 +100,13 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
     ASSERT(world);
 
-    if (!Config::s_initialized_) {
-        return;
-    }
+    #if WITH_EDITOR
+        bool ready_to_open_level = world->IsGameWorld();
+    #else
+        bool ready_to_open_level = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
+    #endif
 
-    if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+    if (ready_to_open_level) {
         auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");
         auto level_name = Config::get<std::string>("SIMULATION_CONTROLLER.LEVEL_NAME");
 
@@ -156,6 +168,8 @@ void SimulationController::worldBeginPlayEventHandler()
         agent_ = std::make_unique<OpenBotAgent>(world_);
     } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
+        agent_ = std::make_unique<UrdfBotAgent>(world_);
     } else {
         ASSERT(false);
     }
@@ -207,11 +221,11 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
     // We only need to perform any additional steps if the world being cleaned up is the world we cached in our world_ member variable.
     if (world == world_) {
-        
+
         // The worldCleanupEventHandler(...) function is called for all worlds, but some local state (such as rpc_server_ and agent_)
         // is initialized only when worldBeginPlayEventHandler(...) is called for a particular world. So we check if worldBeginPlayEventHandler(...)
         // has been executed.
-        if(has_world_begin_play_executed_) {
+        if (has_world_begin_play_executed_) {
             has_world_begin_play_executed_ = false;
 
             ASSERT(rpc_server_);
