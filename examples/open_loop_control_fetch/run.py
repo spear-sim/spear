@@ -49,10 +49,6 @@ if __name__ == "__main__":
         cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
         cv2.waitKey(1)
 
-    # take a few steps
-    if config.SIMULATION_CONTROLLER.AGENT != "UrdfBotAgent":
-        assert False
-
     for i,row in df.iterrows():
         action = { k:np.array([v], dtype=np.float32) for k,v in row.to_dict().items() }
         obs, reward, done, info = env.step(action=action)
