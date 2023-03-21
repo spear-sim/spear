@@ -21,7 +21,7 @@ arm_poses = {
 }
 
 
-def get_action(move_forward=0.0, move_right=0.0, gripper_state=50.0, arm_pose_blend_weights={}):
+def get_action(move_forward=0.0, move_right=0.0, gripper_force=50.0, arm_pose_blend_weights={"init":1.0}):
     action = {}
 
     # base joints
@@ -30,12 +30,12 @@ def get_action(move_forward=0.0, move_right=0.0, gripper_state=50.0, arm_pose_bl
 
     # arm joints
     arm_pose = np.zeros([7])
-    total_weight = 0
-    for key, weight in arm_pose_blend_weights.items():
-        arm_pose += arm_poses[key] * weight
+    total_weight = 0.0
+    for pose_name, weight in arm_pose_blend_weights.items():
+        arm_pose += arm_poses[pose_name] * weight
         total_weight += weight
-    if total_weight > 0:
-        arm_pose /= total_weight
+    assert total_weight > 0.0    
+    arm_pose /= total_weight
     action["joint.arm_joint_0"] = arm_pose[0]
     action["joint.arm_joint_1"] = arm_pose[1]
     action["joint.arm_joint_2"] = arm_pose[2]
@@ -45,8 +45,8 @@ def get_action(move_forward=0.0, move_right=0.0, gripper_state=50.0, arm_pose_bl
     action["joint.arm_joint_6"] = arm_pose[6]
 
     # gripper joints
-    action["joint.gripper_finger_joint_r"] = gripper_state
-    action["joint.gripper_finger_joint_l"] = gripper_state
+    action["joint.gripper_finger_joint_r"] = gripper_force
+    action["joint.gripper_finger_joint_l"] = gripper_force
 
     # other joints
     action["joint.head_pan_joint"] = 0.0
@@ -65,29 +65,42 @@ if __name__ == '__main__':
 
     # move forward
     for i in range(0, 100):
-        df = pd.concat([df, pd.DataFrame(get_action(move_forward=0.01), index=[0])])
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(move_forward=0.01), index=[0])])
+
     # hold target
     for i in range(0, 30):
-        df = pd.concat([df, pd.DataFrame(get_action(gripper_state=-50), index=[0])])
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(gripper_force=-100.0), index=[0])])
+
     # rotate base
     for i in range(0, 30):
-        df = pd.concat([df, pd.DataFrame(get_action(move_right=0.009, gripper_state=-100), index=[0])])
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(move_right=0.009, gripper_force=-100.0), index=[0])])
+
     # move forward while moving arm
     for i in range(0, 100):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=0.01, gripper_state=-100, arm_pose_blend_weights={"init": 100 - i, "diagonal45": i}), index=[0])])
+            [df, pd.DataFrame(get_action(move_forward=0.01, gripper_force=-100.0, arm_pose_blend_weights={"init": (100.0 - i)/100.0, "diagonal45": i/100.0}), index=[0])])
+
     # release gripper
     for i in range(0, 30):
-        df = pd.concat([df, pd.DataFrame(get_action(gripper_state=50, arm_pose_blend_weights={"diagonal45": 1}), index=[0])])
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(gripper_force=50, arm_pose_blend_weights={"diagonal45": 1.0}), index=[0])])
+
     # move back and fold arm
     for i in range(0, 30):
-        df = pd.concat([df, pd.DataFrame(get_action(move_forward=-0.01, arm_pose_blend_weights={"diagonal45": 100 - i, "default": i}), index=[0])])
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(move_forward=-0.01, arm_pose_blend_weights={"diagonal45": (100.0 - i)/100.0, "default": i/100.0}), index=[0])])
+
     # keep folding arm
     for i in range(30, 100):
-        df = pd.concat([df, pd.DataFrame(get_action(move_forward=0, arm_pose_blend_weights={"diagonal45": 100 - i, "default": i}), index=[0])])
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(move_forward=0, arm_pose_blend_weights={"diagonal45": (100 - i)/100.0, "default": i/100.0}), index=[0])])
+
     # stay still
     for i in range(0, 30):
-        df = pd.concat([df, pd.DataFrame(get_action(arm_pose_blend_weights={"default": 1}), index=[0])])
+        df = pd.concat([df, pd.DataFrame(get_action(arm_pose_blend_weights={"default": 1.0}), index=[0])])
 
     # save to csv
     df.to_csv(args.actions_file, float_format="%.5f", mode="w", index=False, header=True)

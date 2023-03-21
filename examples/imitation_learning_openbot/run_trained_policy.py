@@ -199,7 +199,7 @@ if __name__ == "__main__":
                 obs_final_color = obs_final_color[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
 
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpeg"%i), obs_final_color)
+                plt.imsave(os.path.join(image_dir, "%04d.jpg"%i), obs_final_color)
 
                 # populate buffer and result data file
                 state_data[i] = obs["state_data"]

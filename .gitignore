@@ -11,6 +11,7 @@ cpp/unreal_projects/SpearSim/Build
 cpp/unreal_projects/SpearSim/CMakeLists.txt
 cpp/unreal_projects/SpearSim/Content/Maps
 cpp/unreal_projects/SpearSim/Content/Scene
+cpp/unreal_projects/SpearSim/Content/StarterContent
 cpp/unreal_projects/SpearSim/DerivedDataCache
 cpp/unreal_projects/SpearSim/Intermediate
 cpp/unreal_projects/SpearSim/Makefile
@@ -50,6 +51,10 @@ examples/imitation_learning_openbot/eval
 examples/imitation_learning_openbot/tmp
 examples/imitation_learning_openbot/user_config.yaml
 examples/imitation_learning_openbot/videos
+
+examples/open_loop_control_urdfbot/images
+examples/open_loop_control_urdfbot/tmp
+examples/open_loop_control_urdfbot/user_config.yaml
 
 python/spear_sim.egg-info
 

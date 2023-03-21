@@ -5,13 +5,14 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import shutil
-
 import cv2
 import numpy as np
 import os
 import pandas as pd
+import shutil
 import spear
+import time
+
 
 if __name__ == "__main__":
 
@@ -19,6 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--actions_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions.csv"))
     parser.add_argument("--save_images", default=True)
     parser.add_argument("--image_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "images"))
+    parser.add_argument("--benchmark", action="store_true")
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
@@ -41,30 +43,36 @@ if __name__ == "__main__":
     # reset the simulation to get the first observation    
     obs = env.reset()
 
-    cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
-    cv2.waitKey(1)
+    if args.benchmark:
+        start_time_seconds = time.time()
+    else:
+        cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
+        cv2.waitKey(1)
 
     # take a few steps
     if config.SIMULATION_CONTROLLER.AGENT != "UrdfBotAgent":
         assert False
 
-    for index ,row in df.iterrows():
-        action = {}
-        for k in row.to_dict():
-            action[k] = np.array([row[k]], dtype=np.float32)
+    for i,row in df.iterrows():
+        action = { k:np.array([v], dtype=np.float32) for k,v in row.to_dict().items() }
         obs, reward, done, info = env.step(action=action)
 
-        print("[SPEAR | run.py] UrdfBotAgent: ", reward, done, info)
-
-        cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
-        cv2.waitKey(1)
+        if not args.benchmark:
+            cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
+            cv2.waitKey(1)
 
         if args.save_images:
-            cv2.imwrite(os.path.join(args.image_dir, f"{index:04d}.jpeg"), obs["camera.final_color"])
+            cv2.imwrite(os.path.join(args.image_dir, f"{i:04d}.jpg"), obs["camera.final_color"])
+
         if done:
             env.reset()
 
-    cv2.destroyAllWindows()
+    if args.benchmark:
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        print("[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / df.shape[0])*1000.0, df.shape[0] / elapsed_time_seconds))
+    else:
+        cv2.destroyAllWindows()
 
     # close the environment
     env.close()

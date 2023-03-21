@@ -54,9 +54,10 @@ UrdfGeometryDesc UrdfParser::parseGeometryNode(FXmlNode* geometry_node)
     if (mesh_node) {
         geometry.type_     = UrdfGeometryType::Mesh;
         geometry.filename_ = Unreal::toStdString(mesh_node->GetAttribute(TEXT("filename")));
-        FString scale      = mesh_node->GetAttribute(TEXT("scale"));
+
+        FString scale = mesh_node->GetAttribute(TEXT("scale"));
         if (!scale.IsEmpty()) {
-            geometry.scale_ = FCString::Atof(*scale);
+            geometry.scale_ = FCString::Atof(*scale); // we need to check if scale exists because we want the default to be 1.0, not 0.0
         }
     }
 
@@ -230,19 +231,9 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 
     FXmlNode* calibration_node = joint_node->FindChildNode(TEXT("calibration"));
     if (calibration_node) {
-        FString rising = calibration_node->GetAttribute(TEXT("rising"));
-        if (!rising.IsEmpty()) {
-            ASSERT(joint_desc.calibration_type_ == CalibrationType::Invalid);
-            joint_desc.calibration_type_ = CalibrationType::Rising;
-            joint_desc.rising_           = FCString::Atof(*rising);
-        }
-
-        FString falling = calibration_node->GetAttribute(TEXT("falling"));
-        if (!falling.IsEmpty()) {
-            ASSERT(joint_desc.calibration_type_ == CalibrationType::Invalid);
-            joint_desc.calibration_type_ = CalibrationType::Falling;
-            joint_desc.falling_          = FCString::Atof(*falling);
-        }
+        // default values are not documented, so we assume 0.0
+        joint_desc.rising_ = FCString::Atof(*calibration_node->GetAttribute(TEXT("rising")));
+        joint_desc.falling_ = FCString::Atof(*calibration_node->GetAttribute(TEXT("falling")));
     }
 
     FXmlNode* dynamics_node = joint_node->FindChildNode(TEXT("dynamics"));
@@ -287,6 +278,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
 
         FString multiplier = mimic_node->GetAttribute(TEXT("multiplier"));
         if (!multiplier.IsEmpty()) {
+            // default value is not documented, so we assume 1.0, and therefore we need to check if multiplier exists
             joint_desc.multiplier_ = FCString::Atof(*multiplier);
         }
 

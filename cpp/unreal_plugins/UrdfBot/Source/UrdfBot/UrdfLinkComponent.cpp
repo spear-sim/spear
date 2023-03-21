@@ -11,16 +11,6 @@
 #include "CoreUtils/Unreal.h"
 #include "UrdfBot/UrdfParser.h"
 
-UUrdfLinkComponent::UUrdfLinkComponent()
-{
-    std::cout << "[SPEAR | UrdfLinkComponent.cpp] UUrdfLinkComponent::UUrdfLinkComponent" << std::endl;
-}
-
-UUrdfLinkComponent::~UUrdfLinkComponent()
-{
-    std::cout << "[SPEAR | UrdfLinkComponent.cpp] UUrdfLinkComponent::~UUrdfLinkComponent" << std::endl;
-}
-
 void UUrdfLinkComponent::BeginPlay()
 {
     Super::BeginPlay();

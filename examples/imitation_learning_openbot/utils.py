@@ -95,8 +95,8 @@ def generate_video(image_dir, video_path, rate, compress=False):
     images = [os.path.join(image_dir, img) for img in sorted(os.listdir(image_dir))]
     for image in images:
         with open(image, "rb") as f:
-            jpeg_data = f.read()
-            process.stdin.write(jpeg_data)
+            jpg_data = f.read()
+            process.stdin.write(jpg_data)
     
     process.stdin.close()
     process.wait()

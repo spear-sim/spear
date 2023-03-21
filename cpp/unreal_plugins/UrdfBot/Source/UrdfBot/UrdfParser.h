@@ -40,13 +40,6 @@ enum class URDFBOT_API UrdfJointControlType
     Torque,
 };
 
-enum class CalibrationType
-{
-    Invalid,
-    Rising,
-    Falling,
-};
-
 struct UrdfGeometryDesc
 {
     UrdfGeometryType type_ = UrdfGeometryType::Invalid;
@@ -128,9 +121,8 @@ struct UrdfJointDesc
     float friction_                    = 0.0f;
 
     // calibration
-    CalibrationType calibration_type_ = CalibrationType::Invalid;
-    float rising_                     = 0.0f;
-    float falling_                    = 0.0f;
+    float rising_  = 0.0f;
+    float falling_ = 0.0f;
 
     // limits
     float lower_    = 0.0f;

@@ -17,9 +17,6 @@ class URDFBOT_API UUrdfLinkComponent : public UStaticMeshComponent
 {
     GENERATED_BODY()
 public:
-    UUrdfLinkComponent();
-    ~UUrdfLinkComponent();
-
     // UStaticMeshComponent interface
     void BeginPlay() override;
 

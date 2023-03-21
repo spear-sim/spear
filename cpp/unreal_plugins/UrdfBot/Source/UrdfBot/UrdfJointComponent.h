@@ -19,9 +19,6 @@ class URDFBOT_API UUrdfJointComponent : public UPhysicsConstraintComponent
 {
     GENERATED_BODY()
 public:
-    UUrdfJointComponent();
-    ~UUrdfJointComponent();
-
     // UPhysicsConstraintComponent interface
     void BeginPlay() override;
 
