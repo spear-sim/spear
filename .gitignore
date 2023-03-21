@@ -52,9 +52,9 @@ examples/imitation_learning_openbot/tmp
 examples/imitation_learning_openbot/user_config.yaml
 examples/imitation_learning_openbot/videos
 
-examples/open_loop_control_urdfbot/images
-examples/open_loop_control_urdfbot/tmp
-examples/open_loop_control_urdfbot/user_config.yaml
+examples/open_loop_control_fetch/images
+examples/open_loop_control_fetch/tmp
+examples/open_loop_control_fetch/user_config.yaml
 
 python/spear_sim.egg-info
 
