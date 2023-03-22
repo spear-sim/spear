@@ -5,6 +5,8 @@
 #include "SimulationController/UrdfBotAgent.h"
 
 #include <Components/SceneCaptureComponent2D.h>
+#include <GameFramework/PlayerStart.h>
+#include <Kismet/GameplayStatics.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Box.h"
@@ -19,26 +21,33 @@
 
 UrdfBotAgent::UrdfBotAgent(UWorld* world)
 {
+    FVector location = FVector::ZeroVector;
+    FRotator rotation = FRotator::ZeroRotator;
+    if (Config::get<bool>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_AT_PLAYER_START")) {
+        AActor* player_start = UGameplayStatics::GetActorOfClass(world, APlayerStart::StaticClass());
+        ASSERT(player_start);
+        location = player_start->GetActorLocation();
+        rotation = player_start->GetActorRotation();
+    }
+
     FActorSpawnParameters actor_spawn_params;
     actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.URDFBOT_AGENT.URDFBOT_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    urdf_bot_pawn_ = world->SpawnActor<AUrdfBotPawn>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
+    urdf_bot_pawn_ = world->SpawnActor<AUrdfBotPawn>(location, rotation, actor_spawn_params);
     ASSERT(urdf_bot_pawn_);
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
-        camera_sensor_ = std::make_unique<CameraSensor>(
-            urdf_bot_pawn_->camera_component_,
-            Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.RENDER_PASSES"),
-            Config::get<unsigned int>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.IMAGE_WIDTH"),
-            Config::get<unsigned int>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.IMAGE_HEIGHT"));
+        camera_sensor_ = std::make_unique<CameraSensor>(urdf_bot_pawn_->camera_component_,
+                                                        Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.RENDER_PASSES"),
+                                                        Config::get<unsigned int>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.IMAGE_WIDTH"),
+                                                        Config::get<unsigned int>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.IMAGE_HEIGHT"));
         ASSERT(camera_sensor_);
 
         // update FOV
         for (auto& pass : Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.RENDER_PASSES")) {
-            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle =
-                Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.FOV");
+            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle = Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.FOV");
         }
     }
 }
@@ -57,9 +66,13 @@ UrdfBotAgent::~UrdfBotAgent()
     urdf_bot_pawn_ = nullptr;
 }
 
-void UrdfBotAgent::findObjectReferences(UWorld* world) {}
+void UrdfBotAgent::findObjectReferences(UWorld* world)
+{
+}
 
-void UrdfBotAgent::cleanUpObjectReferences() {}
+void UrdfBotAgent::cleanUpObjectReferences()
+{
+}
 
 std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
 {
@@ -79,7 +92,7 @@ std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
     std::map<std::string, Box> observation_space;
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
-
+    
     std::map<std::string, Box> robot_component_observation_space = urdf_bot_pawn_->urdf_robot_component_->getObservationSpace(observation_components);
     for (auto& robot_component_observation_space_component : robot_component_observation_space) {
         observation_space[robot_component_observation_space_component.first] = std::move(robot_component_observation_space_component.second);
@@ -131,7 +144,9 @@ std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getStepInfo() const
     return {};
 }
 
-void UrdfBotAgent::reset() {}
+void UrdfBotAgent::reset()
+{
+}
 
 bool UrdfBotAgent::isReady() const
 {
