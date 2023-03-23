@@ -71,7 +71,7 @@ if __name__ == "__main__":
         if args.conda_script:
             conda_script = args.conda_script
         else:
-            # see https://docs.anaconda.com/anaconda/user-guide/faq/
+            # see https://docs.anaconda.com/anaconda/user-guide/faq
             conda_script = os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh"))
 
         cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
