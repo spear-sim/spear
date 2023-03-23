@@ -114,7 +114,12 @@ if __name__ == "__main__":
     if not args.skip_build_third_party_libs:
 
         # build third-party libs
-        cmd = ["python", os.path.join("..", "build_third_party_libs.py"), "--third_party_dir", third_party_dir, "--num_parallel_jobs", f"{args.num_parallel_jobs}"]
+        cmd = [
+            "python",
+            os.path.join("..", "build_third_party_libs.py"),
+            "--third_party_dir", third_party_dir,
+            "--num_parallel_jobs", f"{args.num_parallel_jobs}"
+        ]
         print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
