@@ -13,7 +13,6 @@ import shutil
 import spear
 import time
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -40,7 +39,7 @@ if __name__ == "__main__":
     # create Env object
     env = spear.Env(config)
 
-    # reset the simulation to get the first observation    
+    # reset the simulation to get the first observation
     obs = env.reset()
 
     if args.benchmark:
@@ -49,12 +48,12 @@ if __name__ == "__main__":
         cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
         cv2.waitKey(1)
 
-    for i,row in df.iterrows():
-        action = { k:np.array([v], dtype=np.float32) for k,v in row.to_dict().items() }
+    for i, row in df.iterrows():
+        action = {k: np.array([v], dtype=np.float32) for k, v in row.to_dict().items()}
         obs, reward, done, info = env.step(action=action)
 
         if not args.benchmark:
-            cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
+            cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
             cv2.waitKey(1)
 
         if args.save_images:
@@ -66,7 +65,8 @@ if __name__ == "__main__":
     if args.benchmark:
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        print("[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / df.shape[0])*1000.0, df.shape[0] / elapsed_time_seconds))
+        print(
+            "[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / df.shape[0]) * 1000.0, df.shape[0] / elapsed_time_seconds))
     else:
         cv2.destroyAllWindows()
 
