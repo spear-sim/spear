@@ -19,6 +19,9 @@ SIMULATION_CONTROLLER:
   AGENT: "UrdfBotAgent"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
+  WORLD_PATH_NAME: "/Game/Scenes/starter_content_0000/Maps/starter_content_0000.starter_content_0000"
+  LEVEL_NAME: "/Game/Scenes/starter_content_0000/Maps/starter_content_0000"
+
   URDFBOT_AGENT:
     URDFBOT_ACTOR_NAME: "UrdfBotActor"
     ACTION_COMPONENTS: ["control_joints"]
