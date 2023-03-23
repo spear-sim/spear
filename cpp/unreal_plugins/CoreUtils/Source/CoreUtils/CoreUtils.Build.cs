@@ -54,20 +54,13 @@ public class CoreUtils : ModuleRules
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "include"));
 
-        if (Target.Platform == UnrealTargetPlatform.Win64)
-        {
+        if (Target.Platform == UnrealTargetPlatform.Win64) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Win64", "Release", "rpc.lib"));
-        }
-        else if (Target.Platform == UnrealTargetPlatform.Mac)
-        {
+        } else if (Target.Platform == UnrealTargetPlatform.Mac) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Mac", "librpc.a"));
-        }
-        else if (Target.Platform == UnrealTargetPlatform.Linux)
-        {
+        } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Linux", "librpc.a"));
-        }
-        else
-        {
+        } else {
             throw new Exception("[SPEAR | CoreUtils.Build.cs] Target.Platform == " + Target.Platform);
         }
 
