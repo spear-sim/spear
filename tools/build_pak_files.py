@@ -16,13 +16,15 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--contents_dir", required=True)
+    parser.add_argument("--perforce_content_dir", required=True)
     parser.add_argument("--platforms", nargs="*", required=True)
     parser.add_argument("--output_dir", required=True)
     parser.add_argument("--scene_names")
     args = parser.parse_args()
     
     assert os.path.exists(args.unreal_engine_dir)
+    assert args.platforms in ["Win64", "Mac", "Linux"]
+    
     if sys.platform == "win32":
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UE4Editor.exe"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
@@ -37,9 +39,9 @@ if __name__ == '__main__':
     uproject                   = os.path.join(unreal_project_dir, "SpearSim.uproject")
     unreal_project_content_dir = os.path.join(unreal_project_dir, "Content")
 
-    assert os.path.exists(args.contents_dir)
-    shared_dir = os.path.realpath(os.path.join(args.contents_dir, "Shared"))
-    scenes_dir = os.path.realpath(os.path.join(args.contents_dir, "Scenes"))
+    assert os.path.exists(args.perforce_content_dir)
+    shared_dir = os.path.realpath(os.path.join(args.perforce_content_dir, "Shared"))
+    scenes_dir = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
 
     assert os.path.exists(shared_dir)
     unreal_project_content_shared_dir = os.path.join(unreal_project_content_dir, "Shared")
@@ -75,8 +77,7 @@ if __name__ == '__main__':
         
         for platform in args.platforms:
 
-            # construct command to cook the unreal project
-            # refer https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Deployment/Cooking/ for more information on the parameters
+            # see https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
             cmd = [
                 unreal_editor_bin,
                 uproject,
@@ -94,7 +95,7 @@ if __name__ == '__main__':
             ]
             print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
-
+            
             platform_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", f"{platform}NoEditor"))
 
             content_dirs_for_pak = [
