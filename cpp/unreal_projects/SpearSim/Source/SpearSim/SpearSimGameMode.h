@@ -5,18 +5,16 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include <CoreMinimal.h>
+#include <GameFramework/GameModeBase.h>
 
 #include "SpearSimGameMode.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class ASpearSimGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 public:
-    ASpearSimGameMode(const FObjectInitializer& ObjectInitializer);
+    ASpearSimGameMode(const FObjectInitializer& object_initializer);
+    ~ASpearSimGameMode();
 };

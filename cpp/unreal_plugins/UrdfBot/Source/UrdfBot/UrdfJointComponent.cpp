@@ -14,7 +14,7 @@
 
 void UUrdfJointComponent::BeginPlay()
 {
-    Super::BeginPlay();
+    UPhysicsConstraintComponent::BeginPlay();
 
     // SetConstrainedComponents(...) in constructor functions properly yet leads to warning message:
     //     Warning: Constraint in '/Script/UrdfBot.Default__UrdfBotPawn:AUrdfBotPawn::urdf_robot_component_.UrdfJointComponent_0'

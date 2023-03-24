@@ -60,9 +60,9 @@ AUrdfBotPawn::~AUrdfBotPawn()
     std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::~AUrdfBotPawn" << std::endl;
 }
 
-void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
+void AUrdfBotPawn::SetupPlayerInputComponent(UInputComponent* input_component)
 {
-    Super::SetupPlayerInputComponent(input_component);
+    APawn::SetupPlayerInputComponent(input_component);
 
     UPlayerInput* player_input = GetWorld()->GetFirstPlayerController()->PlayerInput;
     auto keyboard_actions = Config::get<std::map<std::string, std::map<std::string, std::map<std::string, float>>>>("URDFBOT.URDFBOT_PAWN.KEYBOARD_ACTIONS");
@@ -78,7 +78,7 @@ void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
             keyboard_action.add_action_ = keyboard_action_config.second.at("ADD_ACTION");
         }
 
-        player_input->AddAxisMapping(FInputAxisKeyMapping(Unreal::toFName(keyboard_action.axis_), FKey(Unreal::toFName(keyboard_action_config.first)), 1));
+        player_input->AddAxisMapping(FInputAxisKeyMapping(Unreal::toFName(keyboard_action.axis_), FKey(Unreal::toFName(keyboard_action_config.first)), 1.0f));
         input_component->BindAxis(Unreal::toFName(keyboard_action.axis_));
 
         keyboard_actions_.push_back(keyboard_action);
@@ -87,7 +87,7 @@ void AUrdfBotPawn::SetupPlayerInputComponent(class UInputComponent* input_compon
 
 void AUrdfBotPawn::Tick(float delta_time)
 {
-    Super::Tick(delta_time);
+    APawn::Tick(delta_time);
 
     for (auto& keyboard_action : keyboard_actions_) {
         float axis_value = InputComponent->GetAxisValue(Unreal::toFName(keyboard_action.axis_));

@@ -14,6 +14,7 @@
 #include <GameFramework/Actor.h>
 #include <UObject/NameTypes.h>
 
+#include "CoreUtils/Assert.h"
 #include "CoreUtils/Std.h"
 
 class COREUTILS_API Unreal

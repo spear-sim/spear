@@ -154,7 +154,7 @@ AOpenBotPawn::~AOpenBotPawn()
     std::cout << "[SPEAR | OpenBotPawn.cpp] AOpenBotPawn::~AOpenBotPawn" << std::endl;
 }
 
-void AOpenBotPawn::SetupPlayerInputComponent(class UInputComponent* input_component)
+void AOpenBotPawn::SetupPlayerInputComponent(UInputComponent* input_component)
 {
     ASSERT(input_component);
     APawn::SetupPlayerInputComponent(input_component);
