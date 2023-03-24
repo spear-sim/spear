@@ -22,7 +22,7 @@ public class SpearSim : ModuleRules
         // everywhere.
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine"});
+        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "CoreUtils", "Engine"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }
