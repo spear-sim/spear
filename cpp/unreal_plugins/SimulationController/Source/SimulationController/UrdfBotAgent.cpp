@@ -66,13 +66,9 @@ UrdfBotAgent::~UrdfBotAgent()
     urdf_bot_pawn_ = nullptr;
 }
 
-void UrdfBotAgent::findObjectReferences(UWorld* world)
-{
-}
+void UrdfBotAgent::findObjectReferences(UWorld* world) {}
 
-void UrdfBotAgent::cleanUpObjectReferences()
-{
-}
+void UrdfBotAgent::cleanUpObjectReferences() {}
 
 std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
 {
@@ -144,9 +140,7 @@ std::map<std::string, std::vector<uint8_t>> UrdfBotAgent::getStepInfo() const
     return {};
 }
 
-void UrdfBotAgent::reset()
-{
-}
+void UrdfBotAgent::reset() {}
 
 bool UrdfBotAgent::isReady() const
 {
