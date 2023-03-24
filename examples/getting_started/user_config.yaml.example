@@ -17,6 +17,9 @@ SIMULATION_CONTROLLER:
   AGENT: "SphereAgent" # "SphereAgent" or "OpenBotAgent"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
+  WORLD_PATH_NAME: "/Game/Scenes/starter_content_0000/Maps/starter_content_0000.starter_content_0000"
+  LEVEL_NAME: "/Game/Scenes/starter_content_0000/Maps/starter_content_0000"
+
   OPENBOT_AGENT:
     OPENBOT_ACTOR_NAME: "OpenBotActor"
     ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
@@ -53,7 +56,7 @@ SIMULATION_CONTROLLER:
     AGENT_ACTOR_NAME: "SphereActor"
     GOAL_ACTOR_NAME: "GoalActor"
     GOAL_SCALE: 0.5
-    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor"]
+    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor0"]
     RANDOM_SEED: 0
     REWARD:
       HIT_GOAL: 100.0

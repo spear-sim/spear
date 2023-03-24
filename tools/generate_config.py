@@ -10,11 +10,9 @@ import spear
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     parser.add_argument("--user_config_files", nargs="*")
+    parser.add_argument("--output_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp", "config.yaml")))
     args = parser.parse_args()
-
-    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
 
     if args.user_config_files:
         user_config_files = args.user_config_files
@@ -22,26 +20,14 @@ if __name__ == "__main__":
         user_config_files = []
 
     # create a single CfgNode that contains data from all config files
-    config_node = spear.get_config(user_config_files=user_config_files)
+    config = spear.get_config(user_config_files=user_config_files)
 
-    # for the SpearSim each project...
-    assert os.path.exists(unreal_project_dir)
+    # dump config params into a new yaml file
+    output_dir = os.path.realpath(os.path.dirname(args.output_file))
+    os.makedirs(output_dir, exist_ok=True)
 
-    # ...if the project is a valid project (i.e., project dir has a uproject file)
-    _, project = os.path.split(unreal_project_dir)
-    uproject = os.path.join(unreal_project_dir, project + ".uproject")
-    if os.path.exists(uproject):
+    with open(args.output_file, "w") as output:
+        config.dump(stream=output, default_flow_style=False)
 
-        print(f"[SPEAR | generate_config.py] Found uproject: {uproject}")
-
-        # dump config params into a new yaml file
-        output_temp_dir = os.path.realpath(os.path.join(unreal_project_dir, "Temp"))
-        os.makedirs(output_temp_dir, exist_ok=True)
-
-        output_config_file = os.path.join(output_temp_dir, "config.yaml")
-        with open(output_config_file, "w") as output:
-            config_node.dump(stream=output, default_flow_style=False)
-
-        print("[SPEAR | generate_config.py] Generated config file: " + output_config_file)
-
+    print("[SPEAR | generate_config.py] Generated config file: " + args.output_file)
     print("[SPEAR | generate_config.py] Done.")

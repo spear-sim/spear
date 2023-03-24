@@ -42,13 +42,9 @@ if __name__ == "__main__":
             os.symlink(third_party_dir, symlink_third_party_dir)
             print()
 
-    # for the SpearSim project...
     assert os.path.exists(unreal_project_dir)
-
-    # ...if the project is a valid project (i.e., project dir has a uproject file)
     _, project = os.path.split(unreal_project_dir)
     uproject = os.path.join(unreal_project_dir, project + ".uproject")
-
     assert os.path.exists(uproject)
 
     print(f"[SPEAR | create_sybmolic_links.py] Found uproject: {uproject}")

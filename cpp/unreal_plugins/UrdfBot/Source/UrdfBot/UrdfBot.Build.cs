@@ -40,24 +40,5 @@ public class UrdfBot : ModuleRules
         } else {
             throw new Exception("[SPEAR | UrdfBot.Build.cs] Unexpected: Target.Platform == " + Target.Platform);
         }
-
-        //
-        // RBDL
-        //
-
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "include"));
-
-        if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Win64", "include"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Win64", "Release", "rbdl.lib"));
-        } else if (Target.Platform == UnrealTargetPlatform.Mac) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Mac", "include"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Mac", "librbdl.a"));
-        } else if (Target.Platform == UnrealTargetPlatform.Linux) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Linux", "include"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Linux", "librbdl.a"));
-        } else {
-            throw new Exception("[SPEAR | UrdfBot.Build.cs] Unexpected: Target.Platform == " + Target.Platform);
-        }
     }
 }
