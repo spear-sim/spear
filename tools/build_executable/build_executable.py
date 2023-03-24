@@ -14,6 +14,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--paks_dir", required=True)
+    parser.add_argument("--version_tag", required=True)
     parser.add_argument("--conda_env", default="spear-env")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
@@ -83,8 +84,8 @@ if __name__ == "__main__":
         assert False
 
     # once we know pak_platform, set our default pak file src and dest
-    pak_file_src  = os.path.realpath(os.path.join(args.paks_dir, "kujiale_0000_" + pak_platform + ".pak"))
-    pak_file_dest = os.path.realpath(os.path.join(paks_dir_dest, "kujiale_0000_" + pak_platform + ".pak"))
+    pak_file_src  = os.path.realpath(os.path.join(args.paks_dir, "kujiale_0000-" + args.version_tag + "-" + pak_platform + ".pak"))
+    pak_file_dest = os.path.realpath(os.path.join(paks_dir_dest, "kujiale_0000-" + args.version_tag + "-" + pak_platform + ".pak"))
 
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from previous builds.
     # If we don't do this step, we will get many warnings during this build:
