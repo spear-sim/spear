@@ -123,8 +123,17 @@ if __name__ == "__main__":
         print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-    # create symbolic links (need shell=True because we want to run in a specific anaconda env)
-    cmd = cmd_prefix + f"python {os.path.join('..', 'create_symbolic_links.py')} --unreal_engine_dir {args.unreal_engine_dir} --unreal_project_dir {unreal_project_dir} --unreal_plugins_dir {unreal_plugins_dir} --third_party_dir {third_party_dir}"
+    # create symbolic links (we need shell=True because we want to run in a specific anaconda env,
+    # and we need to break up this string extra carefully so we can enclose unreal_engine_dir in
+    # quotes, since it will often have spaces in its path on Windows)
+    cmd = \
+        cmd_prefix + \
+        "python " + \
+        f"{os.path.join('..', 'create_symbolic_links.py')} " + \
+        f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
+        f"--unreal_project_dir {unreal_project_dir} " + \
+        f"--unreal_plugins_dir {unreal_plugins_dir} " \
+        f"--third_party_dir {third_party_dir}"
     print(f"[SPEAR | build_executable.py] Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
