@@ -58,6 +58,5 @@ examples/open_loop_control_fetch/user_config.yaml
 
 python/spear_sim.egg-info
 
-tools/scene_downloader/tmp
 tools/sign_executable/tmp
 tools/tmp
