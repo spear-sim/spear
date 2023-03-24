@@ -21,19 +21,32 @@
 
 UrdfBotAgent::UrdfBotAgent(UWorld* world)
 {
-    FVector location = FVector::ZeroVector;
-    FRotator rotation = FRotator::ZeroRotator;
-    if (Config::get<bool>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_AT_PLAYER_START")) {
+    FVector spawn_location = FVector::ZeroVector;
+    FRotator spawn_rotation = FRotator::ZeroRotator;
+    std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_MODE");
+    if (spawn_mode == "player_start") {
         AActor* player_start = UGameplayStatics::GetActorOfClass(world, APlayerStart::StaticClass());
         ASSERT(player_start);
-        location = player_start->GetActorLocation();
-        rotation = player_start->GetActorRotation();
+        spawn_location = player_start->GetActorLocation();
+        spawn_rotation = player_start->GetActorRotation();
+    } else if (spawn_mode == "world_transform") {
+        spawn_location = FVector(
+            Config::get<float>("URDFBOT.URDFBOT_PAWN.POSITION_X"),
+            Config::get<float>("URDFBOT.URDFBOT_PAWN.POSITION_Y"),
+            Config::get<float>("URDFBOT.URDFBOT_PAWN.POSITION_Z"));
+    
+        spawn_rotation = FRotator(
+            Config::get<float>("URDFBOT.URDFBOT_PAWN.PITCH"),
+            Config::get<float>("URDFBOT.URDFBOT_PAWN.YAW"),
+            Config::get<float>("URDFBOT.URDFBOT_PAWN.ROLL"));
+    } else {
+        ASSERT(false);
     }
 
     FActorSpawnParameters actor_spawn_params;
     actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.URDFBOT_AGENT.URDFBOT_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    urdf_bot_pawn_ = world->SpawnActor<AUrdfBotPawn>(location, rotation, actor_spawn_params);
+    urdf_bot_pawn_ = world->SpawnActor<AUrdfBotPawn>(spawn_location, spawn_rotation, actor_spawn_params);
     ASSERT(urdf_bot_pawn_);
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");

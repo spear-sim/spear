@@ -1,0 +1,20 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+URDFBOT:
+  URDFBOT_PAWN:
+    CAMERA_COMPONENT:
+      PITCH: -15.0
+      POSITION_X: 50.0
+      POSITION_Y: -200.0
+      POSITION_Z: 120.0
+      ROLL: 0.0
+      YAW: 90.0
+    SPAWN_MODE: "world_transform" # "player_start", "world_transform"
+    POSITION_X: -530.0
+    POSITION_Y: 200.0
+    POSITION_Z: 0.0
+    PITCH: 0.0
+    YAW: -90.0
+    ROLL: 0.0

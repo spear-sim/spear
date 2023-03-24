@@ -20,6 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_images", default=True)
     parser.add_argument("--image_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "images"))
     parser.add_argument("--benchmark", action="store_true")
+    parser.add_argument("--scene_id", default="kujiale_0000")
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
@@ -35,6 +36,32 @@ if __name__ == "__main__":
         if os.path.exists(args.image_dir):
             shutil.rmtree(args.image_dir)
         os.makedirs(args.image_dir)
+
+    # change config based on current scene
+    config.defrost()
+    scene_config_file = ""
+    if args.scene_id == "default_map":
+        # warehouse_0000 doesn't need a rendering mode when referring to its map
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+            "/Game/Scenes/default/Maps/" + args.scene_id + "." + args.scene_id
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = \
+            "/Game/Scenes/default/Maps/" + args.scene_id
+
+        # default_map has scene-specific config values
+        scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.default_map.yaml")
+    elif args.scene_id == "kujiale_0000":
+        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
+            "/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id + "_bake" + "." + args.scene_id + "_bake"
+        config.SIMULATION_CONTROLLER.LEVEL_NAME = \
+            "/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id + "_bake"
+
+        # kujiale_0000 has scene-specific config values
+        scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
+
+    if os.path.exists(scene_config_file):
+        config.merge_from_file(scene_config_file)
+        # config.SIMULATION_CONTROLLER.SCENE_ID = args.scene_id
+    config.freeze()
 
     # create Env object
     env = spear.Env(config)

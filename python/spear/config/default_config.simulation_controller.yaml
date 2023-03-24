@@ -110,7 +110,13 @@ SIMULATION_CONTROLLER:
     ACTION_COMPONENTS: ["control_joints"]
     OBSERVATION_COMPONENTS: ["link_state", "camera"]
     STEP_INFO_COMPONENTS: []
-    SPAWN_AT_PLAYER_START: True
+    SPAWN_MODE: "player_start" # "player_start", "world_transform"
+    POSITION_X: 0.0
+    POSITION_Y: 0.0
+    POSITION_Z: 0.0
+    PITCH: 0.0
+    YAW: 0.0
+    ROLL: 0.0
     CAMERA:
       ACTOR_NAME: ""
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
