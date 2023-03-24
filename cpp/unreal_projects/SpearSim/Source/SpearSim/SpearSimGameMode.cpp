@@ -3,12 +3,20 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 //
 
-#include "SpearSimGameMode.h"
+#include "SpearSim/SpearSimGameMode.h"
 
-#include <GameFramework/SpectatorPawn.h>
+#include <iostream>
 
-ASpearSimGameMode::ASpearSimGameMode(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
+#include "SpearSim/SpearSimSpectatorPawn.h"
+
+ASpearSimGameMode::ASpearSimGameMode(const FObjectInitializer& object_initializer) : AGameModeBase(object_initializer)
 {
-    DefaultPawnClass = ASpectatorPawn::StaticClass();
+    std::cout << "[SPEAR | SpearSimGameMode.cpp] ASpearSimGameMode::ASpearSimGameMode" << std::endl;
+
+    DefaultPawnClass = ASpearSimSpectatorPawn::StaticClass();
+}
+
+ASpearSimGameMode::~ASpearSimGameMode()
+{
+    std::cout << "[SPEAR | SpearSimGameMode.cpp] ASpearSimGameMode::~ASpearSimGameMode" << std::endl;
 }

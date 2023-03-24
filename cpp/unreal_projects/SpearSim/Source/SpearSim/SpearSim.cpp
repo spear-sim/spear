@@ -3,7 +3,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 //
 
-#include "SpearSim.h"
+#include "SpearSim/SpearSim.h"
+
 #include <Modules/ModuleManager.h>
 
 IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, SpearSim, "SpearSim");

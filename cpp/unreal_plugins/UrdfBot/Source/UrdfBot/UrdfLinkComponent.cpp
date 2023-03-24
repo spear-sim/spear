@@ -13,7 +13,7 @@
 
 void UUrdfLinkComponent::BeginPlay()
 {
-    Super::BeginPlay();
+    UStaticMeshComponent::BeginPlay();
 
     // set relative scale at `BeginPlay` to avoid propagating scale to child components
     SetRelativeScale3D(relative_scale_);
