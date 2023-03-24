@@ -36,20 +36,20 @@ if __name__ == '__main__':
     unreal_project_content_shared_dir = os.path.join(unreal_project_content_dir, "Shared")
 
     if sys.platform == "win32":
-        target_platform   = "Win64"
+        platform          = "Windows"
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UE4Editor.exe"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
     elif sys.platform == "darwin":
-        target_platform   = "Mac"
+        platform          = "Mac"
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UE4Editor.app", "Contents", "MacOS", "UE4Editor"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
     elif sys.platform == "linux":
-        target_platform   = "Linux"
+        platform          = "Linux"
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UE4Editor"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
 
-    # once we know target_platform, set our cooked dir
-    unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", target_platform + "NoEditor"))
+    # once we know the platform, set our cooked dir
+    unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform + "NoEditor"))
 
     if spear.path_exists(unreal_project_content_shared_dir):
         print(f"[SPEAR | build_pak_files.py] Removing file or directory or symlink: {unreal_project_content_shared_dir}")
@@ -75,8 +75,8 @@ if __name__ == '__main__':
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_name)),
         ]
 
-        txt_file = os.path.realpath(os.path.join(output_dir, scene_name + "_" + target_platform + ".txt"))
-        pak_file = os.path.realpath(os.path.join(output_dir, scene_name + "_" + target_platform + ".pak"))
+        txt_file = os.path.realpath(os.path.join(output_dir, scene_name + "_" + platform + ".txt"))
+        pak_file = os.path.realpath(os.path.join(output_dir, scene_name + "_" + platform + ".pak"))
 
         perforce_content_scene_dir = os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_name))
 
@@ -96,7 +96,7 @@ if __name__ == '__main__':
             unreal_editor_bin,
             uproject,
             "-run=Cook",
-            "-TargetPlatform=" + target_platform + "NoEditor",
+            "-TargetPlatform=" + platform + "NoEditor",
             "-fileopenlog",
             "-ddc=InstalledDerivedDataBackendGraph",
             "-unversioned",
@@ -118,7 +118,7 @@ if __name__ == '__main__':
                 for content_file in glob.glob(os.path.join(pak_dir, "**", "*.*"), recursive=True):
                     assert content_file.startswith(unreal_project_cooked_dir)
                     content_file = content_file.replace('\\', "/")
-                    mount_file = posixpath.join("..", "..", ".." + content_file.split(target_platform + "NoEditor")[1])
+                    mount_file = posixpath.join("..", "..", ".." + content_file.split(platform + "NoEditor")[1])
                     f.write(f'"{content_file}" "{mount_file}" "" \n')
 
         # construct command to generate the final pak file
@@ -126,7 +126,7 @@ if __name__ == '__main__':
             unreal_pak_bin,
             pak_file,
             "-create=" + txt_file,
-            "-platform=" + target_platform,
+            "-platform=" + platform,
             "-multiprocess",
             "-compress"
         ]
