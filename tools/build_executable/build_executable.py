@@ -110,9 +110,12 @@ if __name__ == "__main__":
 
         # reset to a specific commit ID
         if args.commit_id:
+            cwd = os.getcwd()
+            os.chdir(repo_dir)
             cmd = ["git", "reset", "--hard", args.commit_id]
             print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
+            os.chdir(cwd)
 
     if not args.skip_build_third_party_libs:
 
