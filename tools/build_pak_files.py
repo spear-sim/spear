@@ -18,6 +18,7 @@ if __name__ == '__main__':
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--perforce_content_dir", required=True)
     parser.add_argument("--output_dir", required=True)
+    parser.add_argument("--version_tag", required=True)
     parser.add_argument("--scene_names")
     args = parser.parse_args()
     
@@ -75,8 +76,8 @@ if __name__ == '__main__':
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_name)),
         ]
 
-        txt_file = os.path.realpath(os.path.join(output_dir, scene_name + "_" + platform + ".txt"))
-        pak_file = os.path.realpath(os.path.join(output_dir, scene_name + "_" + platform + ".pak"))
+        txt_file = os.path.realpath(os.path.join(output_dir, scene_name + "-" + platform + ".txt"))
+        pak_file = os.path.realpath(os.path.join(output_dir, scene_name + "-" + args.version_tag + "-" + platform + ".pak"))
 
         perforce_content_scene_dir = os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_name))
 
