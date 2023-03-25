@@ -115,8 +115,9 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         std::string level_name;
 
         std::string scene_id = Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID");
+        std::string map_id = Config::get<std::string>("SIMULATION_CONTROLLER.MAP_ID");
+
         if (scene_id != "") {
-            std::string map_id = Config::get<std::string>("SIMULATION_CONTROLLER.MAP_ID");
             if (map_id == "") {
                 map_id = scene_id;
             } else {
