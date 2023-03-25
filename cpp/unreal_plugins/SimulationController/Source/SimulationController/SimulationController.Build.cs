@@ -38,15 +38,5 @@ public class SimulationController : ModuleRules
         //
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost"));
-
-        if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "stage", "lib", "libboost_filesystem.lib"));
-        } else if (Target.Platform == UnrealTargetPlatform.Mac) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "stage", "lib", "libboost_filesystem.a"));
-        } else if (Target.Platform == UnrealTargetPlatform.Linux) {
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "stage", "lib", "libboost_filesystem.a"));
-        } else {
-            throw new Exception("[SPEAR | CoreUtils.Build.cs] Target.Platform == " + Target.Platform);
-        }
     }
 }

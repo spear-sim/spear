@@ -84,16 +84,14 @@ if __name__ == "__main__":
     if sys.platform == "win32":
 
         cmd = [
-            "bootstrap.bat",
-            "--with-toolset=" + toolset,
-            "--with-libraries=filesystem"
+            "bootstrap.bat"
         ]
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
             "b2",
-            "toolset=" + c_compiler
+            "headers"
         ]
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
@@ -101,17 +99,14 @@ if __name__ == "__main__":
     elif sys.platform == "darwin":
 
         cmd = [
-            "./bootstrap.sh",
-            "--with-toolset=" + toolset,
-            "--with-libraries=filesystem"
+            "./bootstrap.sh"
         ]
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
             "./b2",
-            "toolset=" + c_compiler,
-            'cxxflags="-mmacosx-version-min=10.14"'
+            "headers"
         ]
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
@@ -119,16 +114,14 @@ if __name__ == "__main__":
     elif sys.platform == "linux":
 
         cmd = [
-            "./bootstrap.sh",
-            "--with-toolset=" + toolset,
-            "--with-libraries=filesystem"
+            "./bootstrap.sh"
         ]
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
             "./b2",
-            "toolset=" + c_compiler
+            "headers"
         ]
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
