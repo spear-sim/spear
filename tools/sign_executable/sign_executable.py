@@ -147,6 +147,8 @@ if __name__ == "__main__":
         ps.stdout.close()
         assert request_uuid != ""
         print(f"[SPEAR | sign_executable.py] Zip file sent for notarization. Request UUID: {request_uuid}")
+    else:
+        request_uuid = args.request_uuid
 
     # check notarization status
     cmd = ["xcrun", "altool", "--notarization-info", request_uuid, "--username", args.apple_username, "--password", args.apple_password]
