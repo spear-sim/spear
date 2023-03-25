@@ -13,8 +13,6 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--paks_dir", required=True)
-    parser.add_argument("--version_tag", required=True)
     parser.add_argument("--conda_env", default="spear-env")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
@@ -40,7 +38,6 @@ if __name__ == "__main__":
         archive_dir      = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}"))
         config_file_src  = os.path.realpath(os.path.join(os.path.dirname(__file__), "WindowsEngine.ini"))
         config_file_dest = os.path.realpath(os.path.join(unreal_project_dir, "Config", "Windows", "WindowsEngine.ini"))
-        paks_dir_dest    = os.path.realpath(os.path.join(archive_dir, "WindowsNoEditor", "SpearSim", "Content", "Paks"))
         unreal_tmp_dir   = ""
         cmd_prefix       = f"conda activate {args.conda_env}& "
 
@@ -51,7 +48,6 @@ if __name__ == "__main__":
         archive_dir      = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}-Unsigned"))
         config_file_src  = os.path.realpath(os.path.join(os.path.dirname(__file__), "MacEngine.ini"))
         config_file_dest = os.path.realpath(os.path.join(unreal_project_dir, "Config", "Mac", "MacEngine.ini"))
-        paks_dir_dest    = os.path.realpath(os.path.join(archive_dir, "MacNoEditor", "SpearSim-Mac-Shipping.app", "Contents", "UE4", "SpearSim", "Content", "Paks"))
         unreal_tmp_dir   = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
 
         if args.conda_script:
@@ -69,7 +65,6 @@ if __name__ == "__main__":
         archive_dir      = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}"))
         config_file_src  = os.path.realpath(os.path.join(os.path.dirname(__file__), "LinuxEngine.ini"))
         config_file_dest = os.path.realpath(os.path.join(unreal_project_dir, "Config", "Linux", "LinuxEngine.ini"))
-        paks_dir_dest    = os.path.realpath(os.path.join(archive_dir, "LinuxNoEditor", "SpearSim", "Content", "Paks"))
         unreal_tmp_dir   = ""
 
         if args.conda_script:
@@ -82,10 +77,6 @@ if __name__ == "__main__":
 
     else:
         assert False
-
-    # once we know pak_platform, set our default pak file src and dest
-    pak_file_src  = os.path.realpath(os.path.join(args.paks_dir, "kujiale_0000-" + args.version_tag + "-" + pak_platform + ".pak"))
-    pak_file_dest = os.path.realpath(os.path.join(paks_dir_dest, "kujiale_0000-" + args.version_tag + "-" + pak_platform + ".pak"))
 
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from previous builds.
     # If we don't do this step, we will get many warnings during this build:
@@ -166,10 +157,6 @@ if __name__ == "__main__":
     ]
     print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
-
-    # copy our custom pak file
-    shutil.copyfile(pak_file_src, pak_file_dest)
-    print(f"[SPEAR | build_executable.py] Copied {pak_file_src} to {pak_file_dest}")
 
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from the above build.
     # If we don't do this step, we will get many warnings during subsequent builds:
