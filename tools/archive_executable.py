@@ -20,27 +20,27 @@ if __name__ == "__main__":
     if sys.platform == "win32":
         platform_name     = "Win64"
         platform_dir_name = "WindowsNoEditor"
-        pak_platform      = "Windows"
+        pak_platform_name = "Windows"
         executable_dir    = os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{platform_name}-Shipping"))
         paks_dir_dest     = os.path.realpath(os.path.join(executable_dir, "WindowsNoEditor", "SpearSim", "Content", "Paks"))
     elif sys.platform == "darwin":
         platform_name     = "Mac"
         platform_dir_name = "MacNoEditor"
-        pak_platform      = "Mac"
+        pak_platform_name = "Mac"
         executable_dir    = os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{platform_name}-Shipping"))
         paks_dir_dest     = os.path.realpath(os.path.join(executable_dir, "MacNoEditor", "SpearSim-Mac-Shipping.app", "Contents", "UE4", "SpearSim", "Content", "Paks"))
     elif sys.platform == "linux":
         platform_name     = "Linux"
         platform_dir_name = "LinuxNoEditor"
-        pak_platform      = "Linux"
+        pak_platform_name = "Linux"
         executable_dir    = os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{platform_name}-Shipping"))
         paks_dir_dest     = os.path.realpath(os.path.join(executable_dir, "LinuxNoEditor", "SpearSim", "Content", "Paks"))
     else:
         assert False
 
-    # once we know pak_platform, set our default pak file src and dest
-    pak_file_src  = os.path.realpath(os.path.join(args.paks_dir, "kujiale_0000-" + args.version_tag + "-" + pak_platform + ".pak"))
-    pak_file_dest = os.path.realpath(os.path.join(paks_dir_dest, "kujiale_0000-" + args.version_tag + "-" + pak_platform + ".pak"))
+    # once we know pak_platform_name, set our default pak file src and dest
+    pak_file_src  = os.path.realpath(os.path.join(args.paks_dir, "kujiale_0000-" + args.version_tag + "-" + pak_platform_name + ".pak"))
+    pak_file_dest = os.path.realpath(os.path.join(paks_dir_dest, "kujiale_0000-" + args.version_tag + "-" + pak_platform_name + ".pak"))
     
     # copy our custom pak file
     shutil.copyfile(pak_file_src, pak_file_dest)
