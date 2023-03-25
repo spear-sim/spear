@@ -52,6 +52,91 @@ if __name__ == "__main__":
         platform_dir = "Linux"
 
     #
+    # Boost
+    #
+
+    print("[SPEAR | build_third_party_libs.py] Building Boost...")
+
+    boost_dir = os.path.realpath(os.path.join(third_party_dir, "boost"))
+    include_dir = os.path.realpath(os.path.join(third_party_dir, "boost", "boost"))
+    build_dir = os.path.realpath(os.path.join(third_party_dir, "boost", "stage"))
+
+    if cxx_compiler.startswith("clang"):
+        toolset = "clang"
+    elif cxx_compiler.startswith("g++"):
+        toolset = "gcc"
+    elif cxx_compiler.startswith("cl"):
+        toolset = "msvc"
+    else:
+        assert False
+
+    if os.path.isdir(include_dir):
+        print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {include_dir}")
+        shutil.rmtree(include_dir, ignore_errors=True)
+
+    if os.path.isdir(build_dir):
+        print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {include_dir}")
+        shutil.rmtree(include_dir, ignore_errors=True)
+
+    print(f"[SPEAR | build_third_party_libs.py] Creating directory and changing to working: {boost_dir}")
+    os.chdir(boost_dir)
+
+    if sys.platform == "win32":
+
+        cmd = [
+            "bootstrap.bat",
+            "--with-toolset=" + toolset,
+            "--with-libraries=filesystem"
+        ]
+        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+        cmd = [
+            "b2",
+            "toolset=" + c_compiler
+        ]
+        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+    elif sys.platform == "darwin":
+
+        cmd = [
+            "./bootstrap.sh",
+            "--with-toolset=" + toolset,
+            "--with-libraries=filesystem"
+        ]
+        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+        cmd = [
+            "./b2",
+            "toolset=" + c_compiler,
+            'cxxflags="-mmacosx-version-min=10.14"'
+        ]
+        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+    elif sys.platform == "linux":
+
+        cmd = [
+            "./bootstrap.sh",
+            "--with-toolset=" + toolset,
+            "--with-libraries=filesystem"
+        ]
+        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+        cmd = [
+            "./b2",
+            "toolset=" + c_compiler
+        ]
+        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+    else:
+        assert False
+
+    #
     # Eigen
     #
 
@@ -74,8 +159,7 @@ if __name__ == "__main__":
         "-DCMAKE_INSTALL_PREFIX=" + build_dir,
         os.path.join("..", "..")]
     print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd)
-    assert cmd_result.returncode == 0
+    subprocess.run(cmd, check=True)
 
     cmd = [
         "cmake",
@@ -85,8 +169,7 @@ if __name__ == "__main__":
         "install"]
 
     print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd)
-    assert cmd_result.returncode == 0
+    subprocess.run(cmd, check=True)
 
     print("[SPEAR | build_third_party_libs.py] Built Eigen successfully.")
 
@@ -116,8 +199,7 @@ if __name__ == "__main__":
             os.path.join("..", "..")]
 
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd)
-        assert cmd_result.returncode == 0
+        subprocess.run(cmd, check=True)
 
         cmd = [
             "cmake",
@@ -139,8 +221,7 @@ if __name__ == "__main__":
             os.path.join("..", "..")]
 
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd)
-        assert cmd_result.returncode == 0
+        subprocess.run(cmd, check=True)
 
         cmd = [
             "cmake",
@@ -161,8 +242,7 @@ if __name__ == "__main__":
             os.path.join("..", "..")]
 
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd)
-        assert cmd_result.returncode == 0
+        subprocess.run(cmd, check=True)
 
         cmd = [
             "cmake",
@@ -175,8 +255,7 @@ if __name__ == "__main__":
         assert False
 
     print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd)
-    assert cmd_result.returncode == 0
+    subprocess.run(cmd, check=True)
 
     print("[SPEAR | build_third_party_libs.py] Built rpclib successfully.")
 
@@ -205,8 +284,7 @@ if __name__ == "__main__":
             os.path.join("..", "..")]
 
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd)
-        assert cmd_result.returncode == 0
+        subprocess.run(cmd, check=True)
 
         cmd = [
             "cmake",
@@ -228,8 +306,7 @@ if __name__ == "__main__":
             os.path.join("..", "..")]
 
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd)
-        assert cmd_result.returncode == 0
+        subprocess.run(cmd, check=True)
 
         cmd = [
             "cmake",
@@ -250,8 +327,7 @@ if __name__ == "__main__":
             os.path.join("..", "..")]
 
         print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-        cmd_result = subprocess.run(cmd)
-        assert cmd_result.returncode == 0
+        subprocess.run(cmd, check=True)
 
         cmd = [
             "cmake",
@@ -264,8 +340,7 @@ if __name__ == "__main__":
         assert False
 
     print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
-    cmd_result = subprocess.run(cmd)
-    assert cmd_result.returncode == 0
+    subprocess.run(cmd, check=True)
 
     print("[SPEAR | build_third_party_libs.py] Built yaml-cpp successfully.")
     print("[SPEAR | build_third_party_libs.py] Done.")

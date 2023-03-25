@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("--perforce_content_dir", required=True)
     parser.add_argument("--output_dir", required=True)
     parser.add_argument("--version_tag", required=True)
-    parser.add_argument("--scene_names")
+    parser.add_argument("--scene_ids")
     args = parser.parse_args()
     
     assert os.path.exists(args.unreal_engine_dir)
@@ -62,30 +62,30 @@ if __name__ == '__main__':
     os.symlink(perforce_content_shared_dir, unreal_project_content_shared_dir)
 
     assert os.path.exists(perforce_content_scenes_dir)
-    scene_names = [ os.path.basename(x) for x in os.listdir(perforce_content_scenes_dir) ]
-    assert len(scene_names) > 0
+    scene_ids = [ os.path.basename(x) for x in os.listdir(perforce_content_scenes_dir) ]
+    assert len(scene_ids) > 0
 
-    if args.scene_names is not None:
-        scene_names = [ s for s in scene_names if fnmatch.fnmatch(s, args.scene_names) ]
+    if args.scene_ids is not None:
+        scene_ids = [ s for s in scene_ids if fnmatch.fnmatch(s, args.scene_ids) ]
 
-    assert len(scene_names) > 0
+    assert len(scene_ids) > 0
 
-    for scene_name in scene_names:
+    for scene_id in scene_ids:
 
         pak_dirs = [
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Content")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Shared")),
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_name)),
+            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id)),
         ]
 
-        txt_file = os.path.realpath(os.path.join(output_dir, scene_name + "-" + platform + ".txt"))
-        pak_file = os.path.realpath(os.path.join(output_dir, scene_name + "-" + args.version_tag + "-" + platform + ".pak"))
+        txt_file = os.path.realpath(os.path.join(output_dir, scene_id + "-" + platform + ".txt"))
+        pak_file = os.path.realpath(os.path.join(output_dir, scene_id + "-" + args.version_tag + "-" + platform + ".pak"))
 
-        perforce_content_scene_dir = os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_name))
+        perforce_content_scene_dir = os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_id))
 
         # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the user's Perforce workspace.
         # Instead, we want this path to refer to the symlinked version inside the user's unreal project directory.
-        unreal_project_content_scene_dir = os.path.join(unreal_project_content_dir, "Scenes", scene_name)
+        unreal_project_content_scene_dir = os.path.join(unreal_project_content_dir, "Scenes", scene_id)
 
         if spear.path_exists(unreal_project_content_scene_dir):
             print(f"[SPEAR | build_pak_files.py] File or directory or symlink exists, removing: {unreal_project_content_scene_dir}")
