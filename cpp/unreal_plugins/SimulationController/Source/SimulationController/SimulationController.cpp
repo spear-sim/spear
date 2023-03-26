@@ -120,8 +120,6 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         if (scene_id != "") {
             if (map_id == "") {
                 map_id = scene_id;
-            } else {
-                map_id = scene_id;
             }
             world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id + "." + map_id;
             level_name      = "/Game/Scenes/" + scene_id + "/Maps/" + map_id;            
@@ -165,10 +163,6 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 void SimulationController::worldBeginPlayEventHandler()
 {
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::worldBeginPlayEventHandler" << std::endl;
-
-    if (!Config::s_initialized_) {
-        return;
-    }
 
     // execute optional console commands from python client
     for (auto& command : Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CUSTOM_UNREAL_CONSOLE_COMMANDS")) {
@@ -272,8 +266,10 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
         }
 
         // remove event handlers bound to this world before world gets cleaned up
-        world_->OnWorldBeginPlay.Remove(world_begin_play_delegate_handle_);
-        world_begin_play_delegate_handle_.Reset();
+        if (Config::get<std::string>("SIMULATION_CONTROLLER.INTERACTION_MODE") == "programmatic") {
+            world_->OnWorldBeginPlay.Remove(world_begin_play_delegate_handle_);
+            world_begin_play_delegate_handle_.Reset();
+        }
 
         // clear cached world_ pointer
         world_ = nullptr;

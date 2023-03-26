@@ -9,6 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 
+
 # fetch arm poses come from https://github.com/StanfordVL/iGibson/blob/master/igibson/robots/fetch.py#L100
 arm_poses = {
     "init": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
@@ -58,7 +59,7 @@ def get_action(move_forward=0.0, move_right=0.0, gripper_force=50.0, arm_pose_bl
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--actions_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions.csv"))
+    parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.csv")))
     args = parser.parse_args()
 
     df = pd.DataFrame()

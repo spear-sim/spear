@@ -22,9 +22,9 @@ if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_iterations_per_episode", type=int, default=500)
-    parser.add_argument("--episodes_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_episodes.csv"))
-    parser.add_argument("--policy_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "models", "test.tflite"))
-    parser.add_argument("--eval_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "eval"))
+    parser.add_argument("--episodes_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "test_episodes.csv")))
+    parser.add_argument("--policy_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "models", "test.tflite")))
+    parser.add_argument("--eval_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "eval")))
     parser.add_argument("--rendering_mode", default="baked")
     parser.add_argument("--create_videos", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # load config
-    config = spear.get_config(user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     # make sure that we are not in trajectory sampling mode
     config.defrost()
@@ -116,23 +116,18 @@ if __name__ == "__main__":
             config.defrost()
 
             if episode["scene_id"] == "kujiale_0000":
-                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + rendering_mode_map_str + "." + episode["scene_id"] + rendering_mode_map_str
-                config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + rendering_mode_map_str
+                config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
+                config.SIMULATION_CONTROLLER.MAP_ID   = episode["scene_id"] + rendering_mode_map_str
 
                 # kujiale_0000 has scene-specific config values
-                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
+                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
 
             elif episode["scene_id"] == "warehouse_0000":
-                # warehouse_0000 doesn't need a rendering mode when referring to its map
-                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + "." + episode["scene_id"]
-                config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"]
+                config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
+                config.SIMULATION_CONTROLLER.MAP_ID   = episode["scene_id"]
 
                 # warehouse_0000 has scene-specific config values
-                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.warehouse_0000.yaml")
+                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
 
             config.merge_from_file(scene_config_file)
             config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
@@ -159,11 +154,11 @@ if __name__ == "__main__":
             start_time_seconds = time.time()
         else:
             # create dirs for storing data
-            scene_dir = os.path.join(args.eval_dir, episode["scene_id"])
-            episode_dir = os.path.join(scene_dir, "%04d" % episode["index"])
-            image_dir = os.path.join(episode_dir, "images")
-            result_dir = os.path.join(episode_dir, "results")
-            plots_dir = os.path.join(episode_dir, "plots")
+            scene_dir = os.path.realpath(os.path.join(args.eval_dir, episode["scene_id"]))
+            episode_dir = os.path.realpath(os.path.join(scene_dir, "%04d" % episode["index"]))
+            image_dir = os.path.realpath(os.path.join(episode_dir, "images"))
+            result_dir = os.path.realpath(os.path.join(episode_dir, "results"))
+            plots_dir = os.path.realpath(os.path.join(episode_dir, "plots"))
             os.makedirs(image_dir, exist_ok=True)
             os.makedirs(result_dir, exist_ok=True)
             os.makedirs(plots_dir, exist_ok=True)
@@ -175,7 +170,7 @@ if __name__ == "__main__":
             df_trajectory = pd.DataFrame({"x_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,0]],
                                           "y_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,1]],
                                           "z_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,2]]})
-            df_trajectory.to_csv(os.path.join(result_dir,"trajectoryLog.txt"), mode="w", index=False, header=True)
+            df_trajectory.to_csv(os.path.realpath(os.path.join(result_dir,"trajectoryLog.txt")), mode="w", index=False, header=True)
 
         # execute the desired number of iterations in a given episode
         num_iterations = 0
@@ -199,7 +194,7 @@ if __name__ == "__main__":
                 obs_final_color = obs_final_color[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
 
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpg"%i), obs_final_color)
+                plt.imsave(os.path.realpath(os.path.join(image_dir, "%04d.jpg"%i)), obs_final_color)
 
                 # populate buffer and result data file
                 state_data[i] = obs["state_data"]
@@ -216,7 +211,7 @@ if __name__ == "__main__":
                                           "goal_z[cm]"   : goal[2],
                                           "goal_reached" : policy_step_info["goal_reached"],
                                           "hit_obstacle" : env_step_info["task_step_info"]["hit_obstacle"]})
-                df_result.to_csv(os.path.join(result_dir,"resultLog.txt"), mode="a", index=False, header=i==0)
+                df_result.to_csv(os.path.realpath(os.path.join(result_dir,"resultLog.txt")), mode="a", index=False, header=i==0)
             
             # debug
             if args.debug:
@@ -240,20 +235,22 @@ if __name__ == "__main__":
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
             print("[SPEAR | run_trained_policy.py] Average frame time: %0.4f ms (%0.4f fps)" %
-                ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
+                ((elapsed_time_seconds / num_iterations)*1000.0, num_iterations / elapsed_time_seconds))
             continue
 
         # create plots
         plot_tracking_performance_spatial(
-            state_data[:num_iterations][:], env_step_info["agent_step_info"]["trajectory_data"], os.path.join(plots_dir, "tracking_performance_spatial.png"))
+            state_data[:num_iterations][:],
+            env_step_info["agent_step_info"]["trajectory_data"],
+            os.path.realpath(os.path.join(plots_dir, "tracking_performance_spatial.png")))
 
         if args.create_videos: # if desired, generate a video from the collected rgb observations 
-            video_dir = os.path.join(args.eval_dir, "videos")
+            video_dir = os.path.realpath(os.path.join(args.eval_dir, "videos"))
             os.makedirs(video_dir, exist_ok=True)
             generate_video(
                 image_dir,
-                os.path.join(video_dir, "%04d.mp4" % episode["index"]),
-                rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
+                os.path.realpath(os.path.join(video_dir, "%04d.mp4" % episode["index"])),
+                rate=int(1.0/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
         
     # close the current scene
     env.close()

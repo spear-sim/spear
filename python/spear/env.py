@@ -100,20 +100,33 @@ class Env(gym.Env):
             return
 
         # write temp file
-        temp_config_file = os.path.realpath(os.path.join(self._config.SPEAR.TEMP_DIR, "config.yaml"))
+        temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.TEMP_DIR))
+        temp_config_file = os.path.realpath(os.path.join(temp_dir, "config.yaml"))
 
         print("[SPEAR | env.py] Writing temp config file: " + temp_config_file)
 
-        if not os.path.exists(os.path.realpath(self._config.SPEAR.TEMP_DIR)):
-            os.makedirs(os.path.realpath(self._config.SPEAR.TEMP_DIR))
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
         with open(temp_config_file, "w") as output:
             self._config.dump(stream=output, default_flow_style=False)
 
         # create a symlink to SPEAR.DATA_DIR
         if self._config.SPEAR.DATA_DIR != "":
 
-            paks_dir = os.path.join(self._config.SPEAR.CONTENT_DIR, "Paks")
+            assert os.path.exists(self._config.SPEAR.DATA_DIR)
+
+            if sys.platform == "win32":
+                paks_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(args.executable)), "..", "..", "Content", "Paks"))
+            elif sys.platform == "darwin":
+                paks_dir = os.path.realpath(os.path.join(args.executable, "Contents", "UE4", "SpearSim", "Content", "Paks"))
+            elif sys.platform == "linux":
+                paks_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(args.executable)), "SpearSim", "Content", "Paks"))
+            else:
+                assert False
+
             assert os.path.exists(paks_dir)
+
+            # we don't use os.path.realpath here because we don't want to resolve the symlink
             spear_data_dir = os.path.join(paks_dir, "SpearData")
 
             if spear.path_exists(spear_data_dir):
@@ -121,7 +134,7 @@ class Env(gym.Env):
                 spear.remove_path(spear_data_dir)
 
             print(f"[SPEAR | env.py] Creating symlink: {spear_data_dir} -> {self._config.SPEAR.DATA_DIR}")
-            os.symlink(self._config.SPEAR.DATA_DIR, spear_data_dir)
+            os.symlink(args.data_dir, spear_data_dir)
 
         # provide additional control over which Vulkan devices are recognized by Unreal
         if len(self._config.SPEAR.VULKAN_DEVICE_FILES) > 0:
@@ -144,14 +157,14 @@ class Env(gym.Env):
         launch_executable_name, launch_executable_ext = os.path.splitext(launch_executable)
 
         if sys.platform == "win32":
-            assert launch_executable_ext == ".exe"
             assert launch_executable_name[-4:] == "-Cmd"
+            assert launch_executable_ext == ".exe"
             launch_executable_internal = launch_executable
         elif sys.platform == "darwin":
             assert launch_executable_ext == ".app"
-            launch_executable_internal = os.path.join(launch_executable, "Contents", "MacOS", os.path.basename(launch_executable_name))
+            launch_executable_internal = os.path.realpath(os.path.join(launch_executable, "Contents", "MacOS", os.path.basename(launch_executable_name)))
         elif sys.platform == "linux":
-            assert launch_executable_ext == "" or launch_executable_ext == ".sh"
+            assert launch_executable_ext == ".sh"
             launch_executable_internal = launch_executable
         else:
             assert False
@@ -161,16 +174,14 @@ class Env(gym.Env):
         launch_args.append("-game")
         launch_args.append("-windowed")
         launch_args.append("-novsync")
-        launch_args.append("-NoSound")
-        launch_args.append("-NoTextureStreaming")
+        launch_args.append("-nosound")
+        launch_args.append("-notexturestreaming")
         launch_args.append("-resx={}".format(self._config.SPEAR.WINDOW_RESOLUTION_X))
         launch_args.append("-resy={}".format(self._config.SPEAR.WINDOW_RESOLUTION_Y))
         launch_args.append("-graphicsadapter={}".format(self._config.SPEAR.GPU_ID))
 
-        launch_args.append("-config_file={}".format(temp_config_file))
-
         if self._config.SPEAR.RENDER_OFFSCREEN:
-            launch_args.append("-RenderOffscreen")
+            launch_args.append("-renderoffscreen")
 
         if len(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE) > 0:
             launch_args.append("-log={}".format(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
@@ -180,7 +191,9 @@ class Env(gym.Env):
         if sys.platform == "win32":
             launch_args.append("-dx12")            
             launch_args.append("-stdout")
-            launch_args.append("-FullStdOutLogOutput")
+            launch_args.append("-fullstdoutlogoutput")
+
+        launch_args.append("-config_file={}".format(temp_config_file))
 
         for a in self._config.SPEAR.CUSTOM_COMMAND_LINE_ARGUMENTS:
             launch_args.append("{}".format(a))

@@ -78,7 +78,7 @@ if __name__ == '__main__':
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id)),
         ]
 
-        txt_file = os.path.realpath(os.path.join(output_dir, scene_id + "-" + platform + ".txt"))
+        txt_file = os.path.realpath(os.path.join(output_dir, scene_id + "-" + args.version_tag + "-" + platform + ".txt"))
         pak_file = os.path.realpath(os.path.join(output_dir, scene_id + "-" + args.version_tag + "-" + platform + ".pak"))
 
         perforce_content_scene_dir = os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_id))
@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
         for i, pak_dir in enumerate(pak_dirs):
             with open(txt_file, mode="w" if i==0 else "a") as f:
-                for content_file in glob.glob(os.path.join(pak_dir, "**", "*.*"), recursive=True):
+                for content_file in glob.glob(os.path.realpath(os.path.join(pak_dir, "**", "*.*")), recursive=True):
                     assert content_file.startswith(unreal_project_cooked_dir)
                     content_file = content_file.replace('\\', "/")
                     mount_file = posixpath.join("..", "..", ".." + content_file.split(platform + "NoEditor")[1])
