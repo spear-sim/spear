@@ -92,7 +92,7 @@ def generate_video(image_dir, video_path, rate, compress=False):
     else:
         process = ffmpeg.input("pipe:", r=rate, f="jpeg_pipe").output(video_path, vcodec="libx264").overwrite_output().run_async(pipe_stdin=True)
     
-    images = [os.path.realpath(os.path.join(image_dir, img)) for img in sorted(os.listdir(image_dir))]
+    images = [ os.path.realpath(os.path.join(image_dir, img)) for img in sorted(os.listdir(image_dir)) ]
     for image in images:
         with open(image, "rb") as f:
             jpg_data = f.read()
