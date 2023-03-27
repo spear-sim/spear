@@ -111,16 +111,20 @@ class Env(gym.Env):
             self._config.dump(stream=output, default_flow_style=False)
 
         # create a symlink to SPEAR.DATA_DIR
-        if self._config.SPEAR.DATA_DIR != "":
+        if self._config.SPEAR.LAUNCH_MODE == "standalone_executable" and self._config.SPEAR.DATA_DIR != "":
 
+            assert os.path.exists(self._config.SPEAR.STANDALONE_EXECUTABLE)
             assert os.path.exists(self._config.SPEAR.DATA_DIR)
 
             if sys.platform == "win32":
-                paks_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(args.executable)), "..", "..", "Content", "Paks"))
+                paks_dir = \
+                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.STANDALONE_EXECUTABLE)), "..", "..", "Content", "Paks"))
             elif sys.platform == "darwin":
-                paks_dir = os.path.realpath(os.path.join(args.executable, "Contents", "UE4", "SpearSim", "Content", "Paks"))
+                paks_dir = \
+                    os.path.realpath(os.path.join(self._config.SPEAR.STANDALONE_EXECUTABLE, "Contents", "UE4", "SpearSim", "Content", "Paks"))
             elif sys.platform == "linux":
-                paks_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(args.executable)), "SpearSim", "Content", "Paks"))
+                paks_dir = \
+                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.STANDALONE_EXECUTABLE)), "SpearSim", "Content", "Paks"))
             else:
                 assert False
 
@@ -134,7 +138,7 @@ class Env(gym.Env):
                 spear.remove_path(spear_data_dir)
 
             print(f"[SPEAR | env.py] Creating symlink: {spear_data_dir} -> {self._config.SPEAR.DATA_DIR}")
-            os.symlink(args.data_dir, spear_data_dir)
+            os.symlink(self._config.SPEAR.DATA_DIR, spear_data_dir)
 
         # provide additional control over which Vulkan devices are recognized by Unreal
         if len(self._config.SPEAR.VULKAN_DEVICE_FILES) > 0:

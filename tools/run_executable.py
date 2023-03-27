@@ -27,13 +27,13 @@ if __name__ == '__main__':
     if sys.platform == "win32":
         assert executable_name[-4:] == "-Cmd"
         assert executable_ext == ".exe"
-        executable_internal = executable
+        executable_internal = os.path.realpath(args.executable)
     elif sys.platform == "darwin":
         assert executable_ext == ".app"
         executable_internal = os.path.realpath(os.path.join(args.executable, "Contents", "MacOS", os.path.basename(executable_name)))
     elif sys.platform == "linux":
-        assert launch_executable_ext == ".sh"
-        executable_internal = launch_executable
+        assert executable_ext == ".sh"
+        executable_internal = os.path.realpath(args.executable)
     else:
         assert False
 

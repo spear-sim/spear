@@ -57,28 +57,14 @@ if __name__ == "__main__":
 
     print("[SPEAR | build_third_party_libs.py] Building Boost...")
 
-    boost_dir = os.path.realpath(os.path.join(third_party_dir, "boost"))
+    boost_dir   = os.path.realpath(os.path.join(third_party_dir, "boost"))
     include_dir = os.path.realpath(os.path.join(third_party_dir, "boost", "boost"))
-    build_dir = os.path.realpath(os.path.join(third_party_dir, "boost", "stage"))
-
-    if cxx_compiler.startswith("clang"):
-        toolset = "clang"
-    elif cxx_compiler.startswith("g++"):
-        toolset = "gcc"
-    elif cxx_compiler.startswith("cl"):
-        toolset = "msvc"
-    else:
-        assert False
 
     if os.path.isdir(include_dir):
         print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {include_dir}")
         shutil.rmtree(include_dir, ignore_errors=True)
 
-    if os.path.isdir(build_dir):
-        print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {include_dir}")
-        shutil.rmtree(include_dir, ignore_errors=True)
-
-    print(f"[SPEAR | build_third_party_libs.py] Creating directory and changing to working: {boost_dir}")
+    print(f"[SPEAR | build_third_party_libs.py] Changing directory to working: {boost_dir}")
     os.chdir(boost_dir)
 
     if sys.platform == "win32":
