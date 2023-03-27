@@ -3,13 +3,8 @@
 #
 
 import argparse
-import fnmatch
-import glob
 import os
-import posixpath
 import spear
-import subprocess
-import sys
 
 
 if __name__ == '__main__':
