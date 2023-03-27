@@ -5,7 +5,7 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
 
-  STANDALONE_EXECUTABLE: "E:/intel/interiorsim/dist/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
@@ -19,8 +19,7 @@ SIMULATION_CONTROLLER:
   AGENT: "UrdfBotAgent"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  WORLD_PATH_NAME: "/Game/Scenes/starter_content_0000/Maps/starter_content_0000.starter_content_0000"
-  LEVEL_NAME: "/Game/Scenes/starter_content_0000/Maps/starter_content_0000"
+  SCENE_ID: "starter_content_0000"
 
   URDFBOT_AGENT:
     URDFBOT_ACTOR_NAME: "UrdfBotActor"

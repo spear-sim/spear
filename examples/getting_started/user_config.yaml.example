@@ -17,8 +17,7 @@ SIMULATION_CONTROLLER:
   AGENT: "SphereAgent" # "SphereAgent" or "OpenBotAgent"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  WORLD_PATH_NAME: "/Game/Scenes/starter_content_0000/Maps/starter_content_0000.starter_content_0000"
-  LEVEL_NAME: "/Game/Scenes/starter_content_0000/Maps/starter_content_0000"
+  SCENE_ID: "starter_content_0000"
 
   OPENBOT_AGENT:
     OPENBOT_ACTOR_NAME: "OpenBotActor"

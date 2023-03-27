@@ -29,7 +29,7 @@ if __name__ == "__main__":
     unreal_project_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_projects", "SpearSim"))
     unreal_plugins_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_plugins"))
     third_party_dir    = os.path.realpath(os.path.join(repo_dir, "third_party"))
-    uproject           = os.path.join(unreal_project_dir, "SpearSim.uproject"),
+    uproject           = os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))
     build_config       = "Shipping"
 
     # set various platform-specific variables that we use throughout our build procedure
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     cmd = [
         run_uat_script,
         "BuildCookRun",
-        "-project=" + os.path.join(unreal_project_dir, "SpearSim.uproject"),
+        "-project=" + os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject")),
         "-build",
         "-cook",
         "-stage",

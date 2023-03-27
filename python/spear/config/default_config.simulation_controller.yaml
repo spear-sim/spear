@@ -3,11 +3,17 @@
 #
 
 SIMULATION_CONTROLLER:
+
+  INTERACTION_MODE: "programmatic" # "interactive", "programmatic"
+
+  # Setting SCENE_ID and MAP_ID will load the following map: /Game/Scenes/SCENE_ID/Maps/MAP_ID.MAP_ID
+  # If SCENE_ID is not set, the default map will be loaded. If MAP_ID is not set, it will be set to SCENE_ID.
+  SCENE_ID: "" 
+  MAP_ID: ""
+
   IP: "127.0.0.1"
   PORT: 30000
-  WORLD_PATH_NAME: "" # full path to the map including the repeated name, e.g., "/Game/Scenes/default/Maps/DefaultMap.DefaultMap"
-  LEVEL_NAME: ""      # full path to the map excluding the repeated name, e.g., "/Game/Scenes/default/Maps/DefaultMap"
-  SCENE_ID: ""        # raw map id, e.g. "DefaultMap"
+
   SIMULATION_STEP_TIME_SECONDS: 0.1
   TASK: ""
   AGENT: ""

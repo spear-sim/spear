@@ -7,9 +7,7 @@ SPEAR:
 
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
 
-  DATA_DIR: "/Users/mroberts/Downloads/spear_data"
-
-  CONTENT_DIR: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app/Contents/UE4/SpearSim/Content"
+  DATA_DIR: "/Users/mroberts/Downloads/spear-data"
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
