@@ -23,8 +23,8 @@ if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_iterations_per_episode", type=int, default=500)
-    parser.add_argument("--episodes_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "train_episodes.csv"))
-    parser.add_argument("--dataset_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset"))
+    parser.add_argument("--episodes_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "train_episodes.csv")))
+    parser.add_argument("--dataset_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "dataset")))
     parser.add_argument("--split", default="train")
     parser.add_argument("--rendering_mode", default="baked")
     parser.add_argument("--create_videos", action="store_true")
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # load config
-    config = spear.get_config(user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     # make sure that we are not in trajectory sampling mode
     config.defrost()
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     # clean the episode data folder 
     if not args.benchmark:
         shutil.rmtree(args.dataset_dir, ignore_errors=True) # remove the previous dataset to prevent data corruption
-        split_dir = os.path.join(args.dataset_dir, args.split + "_data")
+        split_dir = os.path.realpath(os.path.join(args.dataset_dir, args.split + "_data"))
 
     # iterate over all episodes
     prev_scene_id = ""
@@ -124,23 +124,18 @@ if __name__ == "__main__":
             config.defrost()
 
             if episode["scene_id"] == "kujiale_0000":
-                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + rendering_mode_map_str + "." + episode["scene_id"] + rendering_mode_map_str
-                config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + rendering_mode_map_str
+                config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
+                config.SIMULATION_CONTROLLER.MAP_ID   = episode["scene_id"] + rendering_mode_map_str
 
                 # kujiale_0000 has scene-specific config values
-                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
+                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
 
             elif episode["scene_id"] == "warehouse_0000":
-                # warehouse_0000 doesn't need a rendering mode when referring to its map
-                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"] + "." + episode["scene_id"]
-                config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                    "/Game/Scenes/" + episode["scene_id"] + "/Maps/" + episode["scene_id"]
+                config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
+                config.SIMULATION_CONTROLLER.MAP_ID   = episode["scene_id"]
 
                 # warehouse_0000 has scene-specific config values
-                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.warehouse_0000.yaml")
+                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
 
             config.merge_from_file(scene_config_file)
             config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
@@ -171,11 +166,11 @@ if __name__ == "__main__":
         else:     
             # build the episode data folder and its subfolders following the guidelines of the OpenBot public repository 
             # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
-            scene_dir = os.path.join(split_dir, episode["scene_id"])
-            episode_dir = os.path.join(scene_dir, "%04d" % episode["index"])
-            image_dir = os.path.join(episode_dir, "images")
-            sensor_dir = os.path.join(episode_dir, "sensor_data")
-            plots_dir = os.path.join(episode_dir, "plots")
+            scene_dir = os.path.realpath(os.path.join(split_dir, episode["scene_id"]))
+            episode_dir = os.path.realpath(os.path.join(scene_dir, "%04d" % episode["index"]))
+            image_dir = os.path.realpath(os.path.join(episode_dir, "images"))
+            sensor_dir = os.path.realpath(os.path.join(episode_dir, "sensor_data"))
+            plots_dir = os.path.realpath(os.path.join(episode_dir, "plots"))
             os.makedirs(image_dir, exist_ok=True)
             os.makedirs(sensor_dir, exist_ok=True)
             os.makedirs(plots_dir, exist_ok=True)
@@ -211,7 +206,7 @@ if __name__ == "__main__":
                 obs_final_color = obs_final_color[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
 
                 # save the collected rgb observations
-                plt.imsave(os.path.join(image_dir, "%04d.jpg"%i), obs_final_color)
+                plt.imsave(os.path.realpath(os.path.join(image_dir, "%04d.jpg"%i)), obs_final_color)
 
                 # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training
                 # purposes. In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole
@@ -268,12 +263,12 @@ if __name__ == "__main__":
         df_ctrl = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
                                 "left_ctrl"     : control_data[:num_iterations, 0],
                                 "right_ctrl"    : control_data[:num_iterations, 1]})
-        df_ctrl.to_csv(os.path.join(sensor_dir, "ctrlLog.txt"), mode="w", index=False, header=True)
+        df_ctrl.to_csv(os.path.realpath(os.path.join(sensor_dir, "ctrlLog.txt")), mode="w", index=False, header=True)
 
         # reference of the images correespoinding to each control input
         df_rgb = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
                                "frame"         : frame_data[:num_iterations]})
-        df_rgb.to_csv(os.path.join(sensor_dir, "rgbFrames.txt"), mode="w", index=False, header=True)
+        df_rgb.to_csv(os.path.realpath(os.path.join(sensor_dir, "rgbFrames.txt")), mode="w", index=False, header=True)
 
         # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
         df_pose = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
@@ -283,38 +278,38 @@ if __name__ == "__main__":
                                 "pitch[rad]"    : state_data[:num_iterations, 3],
                                 "yaw[rad]"      : state_data[:num_iterations, 4],
                                 "roll[rad]"     : state_data[:num_iterations, 5]})
-        df_pose.to_csv(os.path.join(sensor_dir, "poseData.txt"), mode="w", index=False, header=True)
+        df_pose.to_csv(os.path.realpath(os.path.join(sensor_dir, "poseData.txt")), mode="w", index=False, header=True)
 
         # waypoint data (for debug purposes)
         df_waypoint = pd.DataFrame({"timestamp[ns]"  : time_data[:num_iterations],
                                     "waypoint_x[cm]" : waypoint_data[:num_iterations, 0],
                                     "waypoint_y[cm]" : waypoint_data[:num_iterations, 1],
                                     "waypoint_z[cm]" : waypoint_data[:num_iterations, 2]})
-        df_waypoint.to_csv(os.path.join(sensor_dir, "waypointData.txt"), mode="w", index=False, header=True)
+        df_waypoint.to_csv(os.path.realpath(os.path.join(sensor_dir, "waypointData.txt")), mode="w", index=False, header=True)
 
         # high level commands
         df_goal = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
                                 "dist[m]"       : compass_data[:num_iterations, 0],
                                 "sinYaw"        : compass_data[:num_iterations, 1],
                                 "cosYaw"        : compass_data[:num_iterations, 2]})
-        df_goal.to_csv(os.path.join(sensor_dir, "goalLog.txt"), mode="w", index=False, header=True)
+        df_goal.to_csv(os.path.realpath(os.path.join(sensor_dir, "goalLog.txt")), mode="w", index=False, header=True)
 
         # Create plots. Note that creating these plots will resize our cv2 windows in an
         # unpleasant way, so we only generate these plots if we're not in debug mode.
         if not args.debug:
             plot_tracking_performance_spatial(
-                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_spatial.png"))
+                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.realpath(os.path.join(plots_dir, "tracking_performance_spatial.png")))
             plot_tracking_performance_temporal(
-                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.join(plots_dir, "tracking_performance_temporal.png"))
+                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.realpath(os.path.join(plots_dir, "tracking_performance_temporal.png")))
 
         if args.create_videos: # if desired, generate a video from the collected RGB observations 
-            video_dir = os.path.join(args.dataset_dir, "videos")
-            video_split_dir = os.path.join(video_dir, args.split + "_data")
+            video_dir = os.path.realpath(os.path.join(args.dataset_dir, "videos"))
+            video_split_dir = os.path.realpath(os.path.join(video_dir, args.split + "_data"))
             os.makedirs(video_split_dir, exist_ok=True)
             generate_video(
                 image_dir,
-                os.path.join(video_split_dir, "%04d.mp4" % episode["index"]),
-                rate=int(1/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
+                os.path.realpath(os.path.join(video_split_dir, "%04d.mp4" % episode["index"])),
+                rate=int(1.0/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS), compress=True)
 
     # close the current scene
     env.close()

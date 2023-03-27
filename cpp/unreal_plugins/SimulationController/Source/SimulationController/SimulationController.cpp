@@ -61,12 +61,15 @@ void SimulationController::StartupModule()
         return;
     }
 
-    post_world_initialization_delegate_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(
-        this, &SimulationController::postWorldInitializationEventHandler);
-    world_cleanup_delegate_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
+    post_world_initialization_delegate_handle_ =
+        FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
+    world_cleanup_delegate_handle_ =
+        FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
 
-    begin_frame_delegate_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
-    end_frame_delegate_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
+    begin_frame_delegate_handle_ =
+        FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
+    end_frame_delegate_handle_ =
+        FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
 }
 
 void SimulationController::ShutdownModule()
@@ -77,6 +80,12 @@ void SimulationController::ShutdownModule()
         return;
     }
 
+    FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_delegate_handle_);
+    world_cleanup_delegate_handle_.Reset();
+
+    FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_delegate_handle_);
+    post_world_initialization_delegate_handle_.Reset();
+
     // If this module is unloaded in the middle of simulation for some reason, raise an error.
     // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
     ASSERT(!world_begin_play_delegate_handle_.IsValid());
@@ -86,12 +95,6 @@ void SimulationController::ShutdownModule()
 
     FCoreDelegates::OnBeginFrame.Remove(begin_frame_delegate_handle_);
     begin_frame_delegate_handle_.Reset();
-
-    FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_delegate_handle_);
-    world_cleanup_delegate_handle_.Reset();
-
-    FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_delegate_handle_);
-    post_world_initialization_delegate_handle_.Reset();
 }
 
 void SimulationController::postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
@@ -107,17 +110,31 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     #endif
 
     if (ready_to_open_level) {
-        auto world_path_name = Config::get<std::string>("SIMULATION_CONTROLLER.WORLD_PATH_NAME");
-        auto level_name = Config::get<std::string>("SIMULATION_CONTROLLER.LEVEL_NAME");
 
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():                      " << Unreal::toStdString(world->GetName()) << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():                  " << Unreal::toStdString(world->GetPathName()) << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.WORLD_PATH_NAME: " << world_path_name << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] SIMULATION_CONTROLLER.LEVEL_NAME:      " << level_name << std::endl;
+        std::string world_path_name;
+        std::string level_name;
+
+        std::string scene_id = Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID");
+        std::string map_id = Config::get<std::string>("SIMULATION_CONTROLLER.MAP_ID");
+
+        if (scene_id != "") {
+            if (map_id == "") {
+                map_id = scene_id;
+            }
+            world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id + "." + map_id;
+            level_name      = "/Game/Scenes/" + scene_id + "/Maps/" + map_id;            
+        }
+
+        std::cout << "[SPEAR | SimulationController.cpp] scene_id:             " << scene_id << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] map_id:               " << map_id << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world_path_name:      " << world_path_name << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] level_name:           " << level_name << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():     " << Unreal::toStdString(world->GetName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName(): " << Unreal::toStdString(world->GetPathName()) << std::endl;
 
         // if the current world is not the desired one, open the desired one
         if (world_path_name != "" && world_path_name != Unreal::toStdString(world->GetPathName())) {
-            std::cout << "[SPEAR | SimulationController.cpp] Opening: " << level_name << std::endl;
+            std::cout << "[SPEAR | SimulationController.cpp] Opening level: " << level_name << std::endl;
 
             // assert that we haven't already tried to open the level, because that means we failed
             ASSERT(!has_open_level_executed_);
@@ -128,14 +145,17 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         } else {
             has_open_level_executed_ = false;
 
-            // we expect worldCleanupEventHandler(...) to be called before a new world is created.
+            // we expect worldCleanupEventHandler(...) to be called before a new world is created
             ASSERT(!world_);
 
             // cache local reference to the UWorld
             world_ = world;
 
-            // defer the rest of our initialization code until the OnWorldBeginPlay event
-            world_begin_play_delegate_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
+            // We need to defer initializing this handler until after we have a valid world_ pointer,
+            // and we defer the rest of our initialization code until the OnWorldBeginPlay event.
+            if (Config::get<std::string>("SIMULATION_CONTROLLER.INTERACTION_MODE") == "programmatic") {
+                world_begin_play_delegate_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
+            }
         }
     }
 }
@@ -246,8 +266,10 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
         }
 
         // remove event handlers bound to this world before world gets cleaned up
-        world_->OnWorldBeginPlay.Remove(world_begin_play_delegate_handle_);
-        world_begin_play_delegate_handle_.Reset();
+        if (Config::get<std::string>("SIMULATION_CONTROLLER.INTERACTION_MODE") == "programmatic") {
+            world_->OnWorldBeginPlay.Remove(world_begin_play_delegate_handle_);
+            world_begin_play_delegate_handle_.Reset();
+        }
 
         // clear cached world_ pointer
         world_ = nullptr;

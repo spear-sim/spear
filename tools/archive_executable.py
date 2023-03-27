@@ -47,8 +47,7 @@ if __name__ == "__main__":
     print(f"[SPEAR | build_executable.py] Copied {pak_file_src} to {pak_file_dest}")
 
     archive_file_name = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping"))
-
-    shutil.make_archive(base_name=archive_file_name, format="zip", root_dir=os.path.join(executable_dir, platform_dir_name), verbose=1)
+    shutil.make_archive(base_name=archive_file_name, format="zip", root_dir=os.path.realpath(os.path.join(executable_dir, platform_dir_name)), verbose=1)
     assert os.path.exists(archive_file_name + ".zip")
 
     print(f"[SPEAR | archive_executable.py] Successfully archived executable to {archive_file_name}.zip")

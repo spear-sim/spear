@@ -40,11 +40,11 @@ if __name__ == "__main__":
     assert os.path.exists(executable)
 
     if not args.request_uuid:
-        radio_effect_unit_component = os.path.join(executable, "Contents", "Resources", "RadioEffectUnit.component")
+        radio_effect_unit_component = os.path.realpath(os.path.join(executable, "Contents", "Resources", "RadioEffectUnit.component"))
         print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit_component}")
         shutil.rmtree(radio_effect_unit_component, ignore_errors=True)
         
-        radio_effect_unit = os.path.join(executable, "Contents", "UE4", "Engine", "Build", "Mac", "RadioEffectUnit")
+        radio_effect_unit = os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Build", "Mac", "RadioEffectUnit"))
         print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit}")
         shutil.rmtree(radio_effect_unit, ignore_errors=True)
 
@@ -102,18 +102,19 @@ if __name__ == "__main__":
 
         # files that need to be code-signed
         sign_files = [
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3Common.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPxFoundation.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libAPEX_Clothing.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPxPvdSDK.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libNvCloth.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3Cooking.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libAPEX_Legacy.dylib"),
-            os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libApexFramework.dylib"),
-            os.path.join(executable, "Contents", "MacOS", os.path.splitext(executable_name)[0])]
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3Common.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPxFoundation.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libAPEX_Clothing.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPxPvdSDK.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libNvCloth.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3Cooking.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libAPEX_Legacy.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libApexFramework.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "MacOS", os.path.splitext(executable_name)[0]))
+        ]
 
         assert os.path.exists(args.entitlements_file)
 
@@ -127,7 +128,7 @@ if __name__ == "__main__":
         os.makedirs(args.temp_dir, exist_ok=True)
 
         # create a zip file for notarization
-        notarization_zip = os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip")
+        notarization_zip = os.path.realpath(os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip"))
         cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", executable, notarization_zip]
         print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)

@@ -24,7 +24,7 @@ public class UrdfBot : ModuleRules
         // everywhere.
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "Slate", "XmlParser", });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "Slate", "XmlParser" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
