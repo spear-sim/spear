@@ -55,7 +55,7 @@ if __name__ == '__main__':
     unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform + "NoEditor"))
 
     if spear.path_exists(unreal_project_content_shared_dir):
-        print(f"[SPEAR | build_pak_files.py] Removing file or directory or symlink: {unreal_project_content_shared_dir}")
+        print(f"[SPEAR | build_pak_files.py] File or directory or symlink exists, removing: {unreal_project_content_shared_dir}")
         spear.remove_path(unreal_project_content_shared_dir)
 
     print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_shared_dir} -> {perforce_content_shared_dir}")
