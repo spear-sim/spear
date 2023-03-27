@@ -14,7 +14,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--executable", required=True)
     parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
-    parser.add_argument("--data_dir")
+    parser.add_argument("--paks_dir")
     parser.add_argument("--scene_id")
     parser.add_argument("--map_id")
     args = parser.parse_args()
@@ -60,10 +60,10 @@ if __name__ == '__main__':
     with open(temp_config_file, "w") as output:
         config.dump(stream=output, default_flow_style=False)
 
-    # create a symlink to data_dir
-    if args.data_dir is not None:
+    # create a symlink to paks_dir
+    if args.paks_dir is not None:
 
-        assert os.path.exists(args.data_dir)
+        assert os.path.exists(args.paks_dir)
 
         if sys.platform == "win32":
             paks_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(args.executable)), "..", "..", "Content", "Paks"))
@@ -83,8 +83,8 @@ if __name__ == '__main__':
             print(f"[SPEAR | run_executable.py] File or directory or symlink exists, removing: {spear_data_dir}")
             spear.remove_path(spear_data_dir)
 
-        print(f"[SPEAR | run_executable.py] Creating symlink: {spear_data_dir} -> {args.data_dir}")
-        os.symlink(args.data_dir, spear_data_dir)
+        print(f"[SPEAR | run_executable.py] Creating symlink: {spear_data_dir} -> {args.paks_dir}")
+        os.symlink(args.paks_dir, spear_data_dir)
 
     # provide additional control over which Vulkan devices are recognized by Unreal
     if len(config.SPEAR.VULKAN_DEVICE_FILES) > 0:
