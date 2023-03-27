@@ -21,6 +21,7 @@ if __name__ == '__main__':
 
     # Create and/or remove symlink for Shared directory
     perforce_content_shared_dir = os.path.realpath(os.path.join(args.perforce_content_dir, "Shared"))
+    assert os.path.exists(perforce_content_shared_dir)
 
     # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the user's Perforce workspace.
     # Instead, we want this path to refer to the symlinked version inside the user's unreal project directory.
@@ -36,12 +37,11 @@ if __name__ == '__main__':
 
     # Create and/or remove symlink for scene directory
     perforce_content_scene_dir = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes", args.scene_id))
+    assert os.path.exists(perforce_content_scene_dir)
 
     # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the user's Perforce workspace.
     # Instead, we want this path to refer to the symlinked version inside the user's unreal project directory.
     unreal_project_content_scene_dir = os.path.join(unreal_project_content_dir, "Scenes", args.scene_id)
-
-    assert os.path.exists(perforce_content_scene_dir)
 
     if spear.path_exists(unreal_project_content_scene_dir):
         print(f"[SPEAR | prepare_scene_for_editing.py] File or directory or symlink exists, removing: {unreal_project_content_scene_dir}")
