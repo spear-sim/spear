@@ -27,12 +27,16 @@ if __name__ == "__main__":
     parser.add_argument("--entitlements_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "entitlements.plist")))
     parser.add_argument("--wait_time_seconds", type=float, default=600.0)
     parser.add_argument("--request_uuid")
+    parser.add_argument("--version_tag")
     args = parser.parse_args()
 
     # make sure output_dir is empty
     if os.path.exists(args.output_dir):
         shutil.rmtree(args.output_dir, ignore_errors=True)
-        
+
+    # create the temp directory
+    os.makedirs(args.temp_dir, exist_ok=True)
+
     # create a copy of the executable in output_dir and use it throughout this file
     shutil.copytree(args.input_dir, args.output_dir)
 
@@ -47,6 +51,11 @@ if __name__ == "__main__":
         radio_effect_unit = os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Build", "Mac", "RadioEffectUnit"))
         print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit}")
         shutil.rmtree(radio_effect_unit, ignore_errors=True)
+
+        pak_file_src  = os.path.realpath(os.path.join(executable, "Contents", "UE4", "SpearSim", "Content", "Paks", f"kujiale_0000-{args.version_tag}-Mac"))
+        pak_file_dest = os.path.realpath(os.path.join(args.temp_dir, f"kujiale_0000-{args.version_tag}-Mac"))
+        print(f"[SPEAR | sign_executable.py] Temporarily moving {pak_file_src} to {pak_file_dest}")
+        shutil.move(pak_file_src, pak_file_dest)
 
         print("[SPEAR | sign_executable.py] Changing rpaths...")
 
@@ -125,8 +134,6 @@ if __name__ == "__main__":
             print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
 
-        os.makedirs(args.temp_dir, exist_ok=True)
-
         # create a zip file for notarization
         notarization_zip = os.path.realpath(os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip"))
         cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", executable, notarization_zip]
@@ -177,5 +184,9 @@ if __name__ == "__main__":
     print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
+    # move the pak file
+    print(f"[SPEAR | sign_executable.py] Moving {pak_file_dest} to {pak_file_src}")
+    shutil.move(pak_file_dest, pak_file_src)
+    
     print(f"[SPEAR | sign_executable.py] {executable} has been successfully signed.")
     print("[SPEAR | sign_executable.py] Done.")
