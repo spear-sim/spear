@@ -40,7 +40,6 @@ if __name__ == '__main__':
         os.symlink(perforce_content_shared_dir, unreal_project_content_shared_dir)
 
     # Create and/or remove symlink for scene directory
-
     perforce_content_scene_dir = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes", args.scene_id))
 
     # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the user's Perforce workspace.
