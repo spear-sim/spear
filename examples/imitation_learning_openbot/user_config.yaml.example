@@ -19,9 +19,7 @@ SPEAR:
 
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
 
-  DATA_DIR: "/Users/mroberts/Downloads/spear_data"
-
-  CONTENT_DIR: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app/Contents/UE4/SpearSim/Content"
+  DATA_DIR: "/Users/mroberts/Downloads/spear-data"
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
@@ -48,7 +46,7 @@ SIMULATION_CONTROLLER:
       IMAGE_WIDTH: 160
       FOV: 70.0
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation"
-  
+
   IMITATION_LEARNING_TASK:
     AGENT_ACTOR_NAME: "OpenBotActor"
     GOAL_ACTOR_NAME: "GoalActor"
