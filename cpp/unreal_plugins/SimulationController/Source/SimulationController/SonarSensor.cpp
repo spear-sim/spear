@@ -15,7 +15,6 @@
 #include <GameFramework/Actor.h>
 #include <Math/UnrealMathUtility.h>
 #include <PxScene.h>
-#include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"

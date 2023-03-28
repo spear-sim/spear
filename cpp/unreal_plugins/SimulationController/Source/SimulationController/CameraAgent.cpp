@@ -12,11 +12,9 @@
 #include <AI/NavDataGenerator.h>
 #include <Camera/CameraActor.h>
 #include <Components/SceneCaptureComponent2D.h>
-#include <Engine/SpotLight.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
-#include <Kismet/GameplayStatics.h>
 #include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
@@ -31,15 +29,35 @@
 
 CameraAgent::CameraAgent(UWorld* world)
 {
+    FVector spawn_location = FVector::ZeroVector;
+    FRotator spawn_rotation = FRotator::ZeroRotator;
+    std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_MODE");
+    if (spawn_mode == "specify_existing_actor") {
+        AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_ACTOR_NAME"));
+        ASSERT(spawn_actor);
+        spawn_location = spawn_actor->GetActorLocation();
+        spawn_rotation = spawn_actor->GetActorRotation();
+    } else if (spawn_mode == "specify_pose") {
+        spawn_location = FVector(
+            Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_POSITION_X"),
+            Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_POSITION_Y"),
+            Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_POSITION_Z"));
+        spawn_rotation = FRotator(
+            Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_PITCH"),
+            Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_YAW"),
+            Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_ROLL"));
+    } else {
+        ASSERT(false);
+    }
+    FActorSpawnParameters actor_spawn_params;
+    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA_ACTOR_NAME"));
+    actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    camera_actor_ = world->SpawnActor<ACameraActor>(spawn_location, spawn_rotation, actor_spawn_params);
+    ASSERT(camera_actor_);
+
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
-        FActorSpawnParameters actor_spawn_params;
-        actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.ACTOR_NAME"));
-        actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
-        ASSERT(camera_actor_);
-
         camera_sensor_ = std::make_unique<CameraSensor>(
             camera_actor_->GetCameraComponent(),
             Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES"),
@@ -61,11 +79,11 @@ CameraAgent::~CameraAgent()
     if (Std::contains(observation_components, "camera")) {
         ASSERT(camera_sensor_);
         camera_sensor_ = nullptr;
-
-        ASSERT(camera_actor_);
-        camera_actor_->Destroy();
-        camera_actor_ = nullptr;
     }
+
+    ASSERT(camera_actor_);
+    camera_actor_->Destroy();
+    camera_actor_ = nullptr;
 }
 
 void CameraAgent::findObjectReferences(UWorld* world)
@@ -176,7 +194,6 @@ void CameraAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
 std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
     std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
@@ -190,7 +207,6 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
 std::map<std::string, std::vector<uint8_t>> CameraAgent::getStepInfo() const
 {
     std::map<std::string, std::vector<uint8_t>> step_info;
-
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "random_points")) {
