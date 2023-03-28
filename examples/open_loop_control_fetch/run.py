@@ -5,7 +5,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
@@ -23,7 +23,6 @@ if __name__ == "__main__":
     parser.add_argument("--save_images", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
     args = parser.parse_args()
-    args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
 
@@ -32,11 +31,6 @@ if __name__ == "__main__":
 
     # get pregenerated actions for fetch urdf agent
     df = pd.read_csv(args.actions_file)
-
-    if args.save_images:
-        if os.path.exists(args.image_dir):
-            shutil.rmtree(args.image_dir)
-        os.makedirs(args.image_dir)
 
     # do some config modifications based on the rendering mode
     if args.rendering_mode == "baked":
@@ -82,19 +76,27 @@ if __name__ == "__main__":
     if args.benchmark:
         start_time_seconds = time.time()
     else:
-        cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
-        cv2.waitKey(1)
+        if args.save_images:
+            if os.path.exists(args.image_dir):
+                shutil.rmtree(args.image_dir)
+            os.makedirs(args.image_dir)
 
     for i, row in df.iterrows():
         action = {k: np.array([v], dtype=np.float32) for k, v in row.to_dict().items()}
         obs, reward, done, info = env.step(action=action)
 
-        if not args.benchmark:
-            cv2.imshow("camera.final_color", obs["camera.final_color"])  # note that spear.Env returns BGRA by default
-            cv2.waitKey(1)
+        # save images for each render pass
+        if not args.benchmark and args.save_images:
+            for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+                render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
+                assert os.path.exists(render_pass_dir)
 
-        if args.save_images:
-            cv2.imwrite(os.path.realpath(os.path.join(args.image_dir, f"{i:04d}.jpg")), obs["camera.final_color"])
+                obs_render_pass = obs["camera." + render_pass].squeeze()
+                if render_pass in ["final_color", "lens_distortion", "normals", "segmentation"]:
+                    assert obs_render_pass.shape[2] == 4
+                    obs_render_pass = obs_render_pass[:, :, [2, 1, 0, 3]].copy()  # note that spear.Env returns BGRA by default
+
+                plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png" % i)), obs_render_pass)
 
         if done:
             env.reset()
@@ -103,8 +105,6 @@ if __name__ == "__main__":
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         print("[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / df.shape[0]) * 1000.0, df.shape[0] / elapsed_time_seconds))
-    else:
-        cv2.destroyAllWindows()
 
     # close the environment
     env.close()

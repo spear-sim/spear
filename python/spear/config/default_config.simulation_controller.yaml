@@ -29,9 +29,9 @@ SIMULATION_CONTROLLER:
     SPAWN_POSITION_X: 0.0
     SPAWN_POSITION_Y: 0.0
     SPAWN_POSITION_Z: 0.0
-    SPAWN_POSITION_PITCH: 0.0
-    SPAWN_POSITION_YAW: 0.0
-    SPAWN_POSITION_ROLL: 0.0
+    SPAWN_PITCH: 0.0
+    SPAWN_YAW: 0.0
+    SPAWN_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
       IMAGE_HEIGHT: 512
@@ -67,9 +67,9 @@ SIMULATION_CONTROLLER:
     SPAWN_POSITION_X: 0.0
     SPAWN_POSITION_Y: 0.0
     SPAWN_POSITION_Z: 0.0
-    SPAWN_POSITION_PITCH: 0.0
-    SPAWN_POSITION_YAW: 0.0
-    SPAWN_POSITION_ROLL: 0.0
+    SPAWN_PITCH: 0.0
+    SPAWN_YAW: 0.0
+    SPAWN_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation" 
       IMAGE_HEIGHT: 512
@@ -107,9 +107,9 @@ SIMULATION_CONTROLLER:
     SPAWN_POSITION_X: 0.0
     SPAWN_POSITION_Y: 0.0
     SPAWN_POSITION_Z: 0.0
-    SPAWN_POSITION_PITCH: 0.0
-    SPAWN_POSITION_YAW: 0.0
-    SPAWN_POSITION_ROLL: 0.0
+    SPAWN_PITCH: 0.0
+    SPAWN_YAW: 0.0
+    SPAWN_ROLL: 0.0
     SPHERE:
       STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
       MATERIAL: "/SimulationController/Materials/Agent_MAT.Agent_MAT"
@@ -145,9 +145,9 @@ SIMULATION_CONTROLLER:
     SPAWN_POSITION_X: 0.0
     SPAWN_POSITION_Y: 0.0
     SPAWN_POSITION_Z: 0.0
-    SPAWN_POSITION_PITCH: 0.0
-    SPAWN_POSITION_YAW: 0.0
-    SPAWN_POSITION_ROLL: 0.0
+    SPAWN_PITCH: 0.0
+    SPAWN_YAW: 0.0
+    SPAWN_ROLL: 0.0
     CAMERA:
       ACTOR_NAME: ""
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
