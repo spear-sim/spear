@@ -137,8 +137,10 @@ if __name__ == "__main__":
                 # warehouse_0000 has scene-specific config values
                 scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
 
+            else:
+                assert False
+
             config.merge_from_file(scene_config_file)
-            config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
             config.freeze()
 
             # create Env object
