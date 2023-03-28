@@ -3,22 +3,36 @@
 #
 
 SIMULATION_CONTROLLER:
+
+  INTERACTION_MODE: "programmatic" # "interactive", "programmatic"
+
+  # Setting SCENE_ID and MAP_ID will load the following map: /Game/Scenes/SCENE_ID/Maps/MAP_ID.MAP_ID
+  # If SCENE_ID is not set, the default map will be loaded. If MAP_ID is not set, it will be set to SCENE_ID.
+  SCENE_ID: ""
+  MAP_ID: ""
+
   IP: "127.0.0.1"
   PORT: 30000
-  WORLD_PATH_NAME: "" # full path to the map including the repeated name, e.g., "/Game/Scenes/default/Maps/DefaultMap.DefaultMap"
-  LEVEL_NAME: ""      # full path to the map excluding the repeated name, e.g., "/Game/Scenes/default/Maps/DefaultMap"
-  SCENE_ID: ""        # raw map id, e.g. "DefaultMap"
+
   SIMULATION_STEP_TIME_SECONDS: 0.1
   TASK: ""
   AGENT: ""
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   CAMERA_AGENT:
+    CAMERA_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
     STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
+    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_POSITION_X: 0.0
+    SPAWN_POSITION_Y: 0.0
+    SPAWN_POSITION_Z: 0.0
+    SPAWN_POSITION_PITCH: 0.0
+    SPAWN_POSITION_YAW: 0.0
+    SPAWN_POSITION_ROLL: 0.0
     CAMERA:
-      ACTOR_NAME: ""
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
@@ -48,6 +62,14 @@ SIMULATION_CONTROLLER:
     OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera", "encoder", "imu", "sonar"
     STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
     IS_READY_VELOCITY_THRESHOLD: 0.001
+    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_POSITION_X: 0.0
+    SPAWN_POSITION_Y: 0.0
+    SPAWN_POSITION_Z: 0.0
+    SPAWN_POSITION_PITCH: 0.0
+    SPAWN_POSITION_YAW: 0.0
+    SPAWN_POSITION_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation" 
       IMAGE_HEIGHT: 512
@@ -75,11 +97,20 @@ SIMULATION_CONTROLLER:
       EXPORT_NAV_DATA_OBJ_DIR: ""
 
   SPHERE_AGENT:
+    SPHERE_ACTOR_NAME: ""
+    CAMERA_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
     OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
     STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
+    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_POSITION_X: 0.0
+    SPAWN_POSITION_Y: 0.0
+    SPAWN_POSITION_Z: 0.0
+    SPAWN_POSITION_PITCH: 0.0
+    SPAWN_POSITION_YAW: 0.0
+    SPAWN_POSITION_ROLL: 0.0
     SPHERE:
-      ACTOR_NAME: ""
       STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
       MATERIAL: "/SimulationController/Materials/Agent_MAT.Agent_MAT"
       MESH_SCALE: 0.5
@@ -93,7 +124,6 @@ SIMULATION_CONTROLLER:
       LINEAR_VELOCITY_SCALE: 1.0
       YAW_SCALE: 1.0
     CAMERA:
-      ACTOR_NAME: ""
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
@@ -110,13 +140,14 @@ SIMULATION_CONTROLLER:
     ACTION_COMPONENTS: ["control_joints"]
     OBSERVATION_COMPONENTS: ["link_state", "camera"]
     STEP_INFO_COMPONENTS: []
-    SPAWN_MODE: "player_start" # "player_start", "world_transform"
-    POSITION_X: 0.0
-    POSITION_Y: 0.0
-    POSITION_Z: 0.0
-    PITCH: 0.0
-    YAW: 0.0
-    ROLL: 0.0
+    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_POSITION_X: 0.0
+    SPAWN_POSITION_Y: 0.0
+    SPAWN_POSITION_Z: 0.0
+    SPAWN_POSITION_PITCH: 0.0
+    SPAWN_POSITION_YAW: 0.0
+    SPAWN_POSITION_ROLL: 0.0
     CAMERA:
       ACTOR_NAME: ""
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"

@@ -8,7 +8,7 @@ using UnrealBuildTool;
 
 public class SpearSimEditorTarget : TargetRules
 {
-    public SpearSimEditorTarget( TargetInfo Target) : base(Target)
+    public SpearSimEditorTarget(TargetInfo Target) : base(Target)
     {
         Type = TargetType.Editor;
         DefaultBuildSettings = BuildSettingsVersion.V2;

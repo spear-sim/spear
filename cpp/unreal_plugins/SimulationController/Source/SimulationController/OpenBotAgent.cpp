@@ -10,20 +10,17 @@
 #include <vector>
 
 #include <AI/NavDataGenerator.h>
-#include <Components/SceneCaptureComponent2D.h>
 #include <Components/BoxComponent.h>
 #include <Components/PrimitiveComponent.h>
+#include <Components/SceneCaptureComponent2D.h>
 #include <Components/StaticMeshComponent.h>
-#include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
-#include <Kismet/GameplayStatics.h>
 #include <NavigationSystem.h>
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
 #include <NavModifierVolume.h>
-#include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Box.h"
@@ -37,10 +34,30 @@
 
 OpenBotAgent::OpenBotAgent(UWorld* world)
 {
+    FVector spawn_location = FVector::ZeroVector;
+    FRotator spawn_rotation = FRotator::ZeroRotator;
+    std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.OPENBOT_AGENT.SPAWN_MODE");
+    if (spawn_mode == "specify_existing_actor") {
+        AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.OPENBOT_AGENT.SPAWN_ACTOR_NAME"));
+        ASSERT(spawn_actor);
+        spawn_location = spawn_actor->GetActorLocation();
+        spawn_rotation = spawn_actor->GetActorRotation();
+    } else if (spawn_mode == "specify_pose") {
+        spawn_location = FVector(
+            Config::get<float>("SIMULATION_CONTROLLER.OPENBOT_AGENT.SPAWN_POSITION_X"),
+            Config::get<float>("SIMULATION_CONTROLLER.OPENBOT_AGENT.SPAWN_POSITION_Y"),
+            Config::get<float>("SIMULATION_CONTROLLER.OPENBOT_AGENT.SPAWN_POSITION_Z"));
+        spawn_rotation = FRotator(
+            Config::get<float>("SIMULATION_CONTROLLER.OPENBOT_AGENT.SPAWN_PITCH"),
+            Config::get<float>("SIMULATION_CONTROLLER.OPENBOT_AGENT.SPAWN_YAW"),
+            Config::get<float>("SIMULATION_CONTROLLER.OPENBOT_AGENT.SPAWN_ROLL"));
+    } else {
+        ASSERT(false);
+    }
     FActorSpawnParameters actor_spawn_params;
     actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.OPENBOT_AGENT.OPENBOT_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
+    open_bot_pawn_ = world->SpawnActor<AOpenBotPawn>(spawn_location, spawn_rotation, actor_spawn_params);
     ASSERT(open_bot_pawn_);
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS");

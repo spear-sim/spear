@@ -11,7 +11,6 @@
 #include <Materials/Material.h>
 #include <Math/RandomStream.h>
 #include <Math/Vector.h>
-#include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Box.h"

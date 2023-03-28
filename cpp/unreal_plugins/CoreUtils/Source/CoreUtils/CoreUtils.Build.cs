@@ -28,25 +28,10 @@ public class CoreUtils : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
-        // Boost (predef, tokenizer)
+        // Boost
         //
 
-        // predef
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "predef", "include"));
-
-        // tokenizer
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "assert", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "config", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "core", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "detail", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "iterator", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "mpl", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "preprocessor", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "throw_exception", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "tokenizer", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "type_traits", "include"));
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost", "libs", "static_assert", "include"));
-
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "boost"));
 
         //
         // rpclib
@@ -54,20 +39,13 @@ public class CoreUtils : ModuleRules
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "include"));
 
-        if (Target.Platform == UnrealTargetPlatform.Win64)
-        {
+        if (Target.Platform == UnrealTargetPlatform.Win64) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Win64", "Release", "rpc.lib"));
-        }
-        else if (Target.Platform == UnrealTargetPlatform.Mac)
-        {
+        } else if (Target.Platform == UnrealTargetPlatform.Mac) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Mac", "librpc.a"));
-        }
-        else if (Target.Platform == UnrealTargetPlatform.Linux)
-        {
+        } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rpclib", "BUILD", "Linux", "librpc.a"));
-        }
-        else
-        {
+        } else {
             throw new Exception("[SPEAR | CoreUtils.Build.cs] Target.Platform == " + Target.Platform);
         }
 

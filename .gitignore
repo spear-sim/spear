@@ -9,8 +9,9 @@ cpp/unreal_plugins/*/ThirdParty
 cpp/unreal_projects/SpearSim/Binaries
 cpp/unreal_projects/SpearSim/Build
 cpp/unreal_projects/SpearSim/CMakeLists.txt
-cpp/unreal_projects/SpearSim/Content/Maps
-cpp/unreal_projects/SpearSim/Content/Scene
+cpp/unreal_projects/SpearSim/Content/Scenes/kujiale_*
+cpp/unreal_projects/SpearSim/Content/Scenes/warehouse_*
+cpp/unreal_projects/SpearSim/Content/Shared
 cpp/unreal_projects/SpearSim/Content/StarterContent
 cpp/unreal_projects/SpearSim/DerivedDataCache
 cpp/unreal_projects/SpearSim/Intermediate
@@ -58,6 +59,4 @@ examples/open_loop_control_fetch/user_config.yaml
 
 python/spear_sim.egg-info
 
-tools/scene_downloader/tmp
-tools/sign_executable/tmp
 tools/tmp

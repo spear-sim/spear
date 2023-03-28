@@ -24,7 +24,7 @@ public class UrdfBot : ModuleRules
         // everywhere.
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "Slate", "XmlParser", });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "Slate", "XmlParser" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //
@@ -37,25 +37,6 @@ public class UrdfBot : ModuleRules
             PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "libeigen", "BUILD", "Mac", "include", "eigen3"));
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "libeigen", "BUILD", "Linux", "include", "eigen3"));
-        } else {
-            throw new Exception("[SPEAR | UrdfBot.Build.cs] Unexpected: Target.Platform == " + Target.Platform);
-        }
-
-        //
-        // RBDL
-        //
-
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "include"));
-
-        if (Target.Platform == UnrealTargetPlatform.Win64) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Win64", "include"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Win64", "Release", "rbdl.lib"));
-        } else if (Target.Platform == UnrealTargetPlatform.Mac) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Mac", "include"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Mac", "librbdl.a"));
-        } else if (Target.Platform == UnrealTargetPlatform.Linux) {
-            PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Linux", "include"));
-            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "rbdl", "BUILD", "Linux", "librbdl.a"));
         } else {
             throw new Exception("[SPEAR | UrdfBot.Build.cs] Unexpected: Target.Platform == " + Target.Platform);
         }

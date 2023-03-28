@@ -4,9 +4,12 @@
 
 #include "SimulationController/UrdfBotAgent.h"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <Components/SceneCaptureComponent2D.h>
-#include <GameFramework/PlayerStart.h>
-#include <Kismet/GameplayStatics.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Box.h"
@@ -24,29 +27,27 @@ UrdfBotAgent::UrdfBotAgent(UWorld* world)
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
     std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_MODE");
-    if (spawn_mode == "player_start") {
-        AActor* player_start = UGameplayStatics::GetActorOfClass(world, APlayerStart::StaticClass());
-        ASSERT(player_start);
-        spawn_location = player_start->GetActorLocation();
-        spawn_rotation = player_start->GetActorRotation();
-    } else if (spawn_mode == "world_transform") {
+    if (spawn_mode == "specify_existing_actor") {
+        AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_ACTOR_NAME"));
+        ASSERT(spawn_actor);
+        spawn_location = spawn_actor->GetActorLocation();
+        spawn_rotation = spawn_actor->GetActorRotation();
+    } else if (spawn_mode == "specify_pose") {
         spawn_location = FVector(
-            Config::get<float>("URDFBOT.URDFBOT_PAWN.POSITION_X"),
-            Config::get<float>("URDFBOT.URDFBOT_PAWN.POSITION_Y"),
-            Config::get<float>("URDFBOT.URDFBOT_PAWN.POSITION_Z"));
-    
+            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_POSITION_X"),
+            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_POSITION_Y"),
+            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_POSITION_Z"));
         spawn_rotation = FRotator(
-            Config::get<float>("URDFBOT.URDFBOT_PAWN.PITCH"),
-            Config::get<float>("URDFBOT.URDFBOT_PAWN.YAW"),
-            Config::get<float>("URDFBOT.URDFBOT_PAWN.ROLL"));
+            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_PITCH"),
+            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_YAW"),
+            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.SPAWN_ROLL"));
     } else {
         ASSERT(false);
     }
-
     FActorSpawnParameters actor_spawn_params;
     actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.URDFBOT_AGENT.URDFBOT_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    urdf_bot_pawn_ = world->SpawnActor<AUrdfBotPawn>(spawn_location, spawn_rotation, actor_spawn_params);
+    urdf_bot_pawn_ = world->SpawnActor<AUrdfBotPawn>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
     ASSERT(urdf_bot_pawn_);
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
@@ -103,7 +104,7 @@ std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
     std::map<std::string, Box> observation_space;
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
-    
+
     std::map<std::string, Box> robot_component_observation_space = urdf_bot_pawn_->urdf_robot_component_->getObservationSpace(observation_components);
     for (auto& robot_component_observation_space_component : robot_component_observation_space) {
         observation_space[robot_component_observation_space_component.first] = std::move(robot_component_observation_space_component.second);

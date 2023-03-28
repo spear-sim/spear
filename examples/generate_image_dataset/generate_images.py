@@ -57,8 +57,8 @@ class CustomEnv(spear.Env):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--poses_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "poses.csv"))
-    parser.add_argument("--images_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "images"))
+    parser.add_argument("--poses_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "poses.csv")))
+    parser.add_argument("--images_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "images")))
     parser.add_argument("--rendering_mode", default="baked")
     parser.add_argument("--num_internal_steps", type=int)
     parser.add_argument("--benchmark", action="store_true")
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # load config
-    config = spear.get_config(user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     # read data from csv
     df = pd.read_csv(args.poses_file, dtype={"scene_id":str})
@@ -107,33 +107,30 @@ if __name__ == "__main__":
             # create dir for storing images
             if not args.benchmark:
                 for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-                    render_pass_dir = os.path.join(args.images_dir, render_pass)
+                    render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                     os.makedirs(render_pass_dir, exist_ok=True)
 
             # change config based on current scene
             config.defrost()
 
             if pose["scene_id"] == "kujiale_0000":
-                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                    "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"] + rendering_mode_map_str + "." + pose["scene_id"] + rendering_mode_map_str
-                config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                    "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"] + rendering_mode_map_str
+                config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
+                config.SIMULATION_CONTROLLER.MAP_ID   = pose["scene_id"] + rendering_mode_map_str
 
                 # kujiale_0000 has scene-specific config values
-                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
+                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
 
             elif pose["scene_id"] == "warehouse_0000":
-                # warehouse_0000 doesn't need a rendering mode when referring to its map
-                config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                    "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"] + "." + pose["scene_id"]
-                config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                    "/Game/Scenes/" + pose["scene_id"] + "/Maps/" + pose["scene_id"]
+                config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
+                config.SIMULATION_CONTROLLER.MAP_ID   = pose["scene_id"]
 
                 # warehouse_0000 has scene-specific config values
-                scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.warehouse_0000.yaml")
+                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
+
+            else:
+                assert False
 
             config.merge_from_file(scene_config_file)
-            config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
             config.freeze()
 
             # create Env object
@@ -156,7 +153,7 @@ if __name__ == "__main__":
         # save images for each render pass
         if not args.benchmark:
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-                render_pass_dir = os.path.join(args.images_dir, render_pass)
+                render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 assert os.path.exists(render_pass_dir)
 
                 obs_render_pass = obs["camera." + render_pass].squeeze()
@@ -164,7 +161,7 @@ if __name__ == "__main__":
                     assert obs_render_pass.shape[2] == 4
                     obs_render_pass = obs_render_pass[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
 
-                plt.imsave(os.path.join(render_pass_dir, "%04d.png"%pose["index"]), obs_render_pass)
+                plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%pose["index"])), obs_render_pass)
 
         # useful for comparing the game window to the image that has been saved to disk
         if args.wait_for_key_press:

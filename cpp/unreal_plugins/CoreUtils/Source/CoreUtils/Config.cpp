@@ -23,8 +23,6 @@ void Config::initialize()
     if (FParse::Value(FCommandLine::Get(), TEXT("config_file="), config_file)) {
         s_config_ = YAML::LoadFile(Unreal::toStdString(config_file));
         s_initialized_ = true;
-
-    // Otherwise assert
     } else {
         s_initialized_ = false;
     }

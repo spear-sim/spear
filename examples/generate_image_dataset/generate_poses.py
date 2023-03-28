@@ -15,17 +15,17 @@ import spear
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--poses_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "poses.csv"))
+    parser.add_argument("--poses_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "poses.csv")))
     parser.add_argument("--num_poses_per_scene", type=int, default=10)
     parser.add_argument("--scene_id")
     args = parser.parse_args()
 
     # load config
-    config = spear.get_config(user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is None:
-        scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
+        scenes_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scenes.csv"))
         assert os.path.exists(scenes_csv_file)
         scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
     else:
@@ -40,26 +40,23 @@ if __name__ == "__main__":
         config.defrost()
 
         if scene_id == "kujiale_0000":
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake" + "." + scene_id + "_bake"
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake"
+            config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
+            config.SIMULATION_CONTROLLER.MAP_ID   = scene_id + "_bake"
 
             # kujiale_0000 has scene-specific config values
-            scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
+            scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
 
         elif scene_id == "warehouse_0000":
-            # warehouse_0000 doesn't need a rendering mode when referring to its map
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "." + scene_id
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id
+            config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
+            config.SIMULATION_CONTROLLER.MAP_ID   = scene_id
 
             # warehouse_0000 has scene-specific config values
-            scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.warehouse_0000.yaml")
+            scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
+
+        else:
+            assert False
 
         config.merge_from_file(scene_config_file)
-        config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
         config.freeze()
 
         # create Env object

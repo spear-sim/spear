@@ -18,7 +18,6 @@
 #include <NavMesh/NavMeshBoundsVolume.h>
 #include <NavMesh/RecastNavMesh.h>
 #include <NavigationSystem.h>
-#include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Box.h"

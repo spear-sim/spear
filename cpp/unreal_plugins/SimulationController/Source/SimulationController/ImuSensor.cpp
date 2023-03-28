@@ -14,7 +14,6 @@
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <Math/Vector.h>
-#include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"

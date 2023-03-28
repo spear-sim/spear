@@ -16,9 +16,9 @@ import time
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--actions_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions.csv"))
+    parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.csv")))
     parser.add_argument("--save_images", default=True)
-    parser.add_argument("--image_dir", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "images"))
+    parser.add_argument("--image_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "images")))
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--scene_id", default="kujiale_0000")
     args = parser.parse_args()
@@ -26,8 +26,7 @@ if __name__ == "__main__":
     np.set_printoptions(linewidth=200)
 
     # load config
-    config = spear.get_config(
-        user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     # get pregenerated actions for fetch urdf agent
     df = pd.read_csv(args.actions_file)
@@ -84,7 +83,7 @@ if __name__ == "__main__":
             cv2.waitKey(1)
 
         if args.save_images:
-            cv2.imwrite(os.path.join(args.image_dir, f"{i:04d}.jpg"), obs["camera.final_color"])
+            cv2.imwrite(os.path.realpath(os.path.join(args.image_dir, f"{i:04d}.jpg")), obs["camera.final_color"])
 
         if done:
             env.reset()

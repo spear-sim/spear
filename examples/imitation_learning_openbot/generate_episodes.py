@@ -16,18 +16,18 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_episodes_per_scene", type=int, default=10)
-    parser.add_argument("--episodes_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "train_episodes.csv"))
+    parser.add_argument("--episodes_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "train_episodes.csv")))
     parser.add_argument("--scene_id")
     args = parser.parse_args()
 
     # directory for trajectory image storage
     split_name = os.path.splitext(os.path.basename(args.episodes_file))[0] # isolate filename and remove extension
-    episodes_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "episodes")
-    split_dir = os.path.join(episodes_dir, split_name)
+    episodes_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "episodes"))
+    split_dir = os.path.realpath(os.path.join(episodes_dir, split_name))
     os.makedirs(split_dir, exist_ok=True)
 
     # load config
-    config = spear.get_config(user_config_files=[os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_config.yaml")])
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     # make sure that we are in trajectory sampling mode
     config.defrost()
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is None:
-        scenes_csv_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scenes.csv")
+        scenes_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scenes.csv"))
         assert os.path.exists(scenes_csv_file)
         scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
     else:
@@ -51,26 +51,23 @@ if __name__ == "__main__":
         config.defrost()
 
         if scene_id == "kujiale_0000":
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake" + "." + scene_id + "_bake"
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "_bake"
+            config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
+            config.SIMULATION_CONTROLLER.MAP_ID   = scene_id + "_bake"
 
             # kujiale_0000 has scene-specific config values
-            scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
+            scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
 
         elif scene_id == "warehouse_0000":
-            # warehouse_0000 doesn't need a rendering mode when referring to its map
-            config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id + "." + scene_id
-            config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-                "/Game/Scenes/" + scene_id + "/Maps/" + scene_id
+            config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
+            config.SIMULATION_CONTROLLER.MAP_ID   = scene_id
 
             # warehouse_0000 has scene-specific config values
-            scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.warehouse_0000.yaml")
+            scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
+
+        else:
+            assert False
 
         config.merge_from_file(scene_config_file)
-        config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
         config.freeze()
 
         # create Env object
@@ -120,7 +117,7 @@ if __name__ == "__main__":
         plt.grid()
         plt.title(f"scene_id {scene_id}")
         
-        plt.savefig(os.path.join(split_dir, scene_id), bbox_extra_artists=[legend], bbox_inches="tight")
+        plt.savefig(os.path.realpath(os.path.join(split_dir, scene_id)), bbox_extra_artists=[legend], bbox_inches="tight")
 
         # close the current scene
         env.close()
