@@ -47,7 +47,7 @@ UrdfBotAgent::UrdfBotAgent(UWorld* world)
     FActorSpawnParameters actor_spawn_params;
     actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.URDFBOT_AGENT.URDFBOT_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    urdf_bot_pawn_ = world->SpawnActor<AUrdfBotPawn>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
+    urdf_bot_pawn_ = world->SpawnActor<AUrdfBotPawn>(spawn_location, spawn_rotation, actor_spawn_params);
     ASSERT(urdf_bot_pawn_);
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
