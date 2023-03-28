@@ -17,10 +17,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.csv")))
-    parser.add_argument("--save_images", default=True)
     parser.add_argument("--image_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "images")))
-    parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--scene_id", default="kujiale_0000")
+    parser.add_argument("--rendering_mode", default="baked")
+    parser.add_argument("--save_images", action="store_true")
+    parser.add_argument("--benchmark", action="store_true")
+    args = parser.parse_args()
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
@@ -36,30 +38,39 @@ if __name__ == "__main__":
             shutil.rmtree(args.image_dir)
         os.makedirs(args.image_dir)
 
+    # do some config modifications based on the rendering mode
+    if args.rendering_mode == "baked":
+        rendering_mode_map_str = "_bake"
+        config.defrost()
+        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 1.0
+        config.freeze()
+    elif args.rendering_mode == "raytracing":
+        rendering_mode_map_str = "_rtx"
+        config.defrost()
+        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 0.0
+        config.freeze()
+    else:
+        assert False
+
     # change config based on current scene
     config.defrost()
-    scene_config_file = ""
-    if args.scene_id == "default_map":
-        # warehouse_0000 doesn't need a rendering mode when referring to its map
-        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-            "/Game/Scenes/default/Maps/" + args.scene_id + "." + args.scene_id
-        config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-            "/Game/Scenes/default/Maps/" + args.scene_id
 
-        # default_map has scene-specific config values
-        scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.default_map.yaml")
+    if args.scene_id == "starter_content_0000":
+        # starter_content_0000 doesn't need a rendering mode when referring to its map
+        config.SIMULATION_CONTROLLER.SCENE_ID = args.scene_id
+        config.SIMULATION_CONTROLLER.MAP_ID   = args.scene_id
+
+        # starter_content_0000 has scene-specific config values
+        scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.starter_content_0000.yaml")
+
     elif args.scene_id == "kujiale_0000":
-        config.SIMULATION_CONTROLLER.WORLD_PATH_NAME = \
-            "/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id + "_bake" + "." + args.scene_id + "_bake"
-        config.SIMULATION_CONTROLLER.LEVEL_NAME = \
-            "/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id + "_bake"
+        config.SIMULATION_CONTROLLER.SCENE_ID = args.scene_id
+        config.SIMULATION_CONTROLLER.MAP_ID   = args.scene_id + rendering_mode_map_str
 
         # kujiale_0000 has scene-specific config values
         scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.kujiale_0000.yaml")
 
-    if os.path.exists(scene_config_file):
-        config.merge_from_file(scene_config_file)
-        # config.SIMULATION_CONTROLLER.SCENE_ID = args.scene_id
+    config.merge_from_file(scene_config_file)
     config.freeze()
 
     # create Env object

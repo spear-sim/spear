@@ -9,7 +9,6 @@ import os
 import numpy as np
 import pandas as pd
 
-
 # fetch arm poses come from https://github.com/StanfordVL/iGibson/blob/master/igibson/robots/fetch.py#L100
 arm_poses = {
     "init": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
@@ -57,12 +56,7 @@ def get_action(move_forward=0.0, move_right=0.0, gripper_force=50.0, arm_pose_bl
     return action
 
 
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.csv")))
-    args = parser.parse_args()
-
+def get_actions_for_starter_content_0000():
     df = pd.DataFrame()
 
     # move forward
@@ -109,7 +103,7 @@ if __name__ == '__main__':
     return df
 
 
-def get_actions_kujiale_0000():
+def get_actions_for_kujiale_0000():
     df = pd.DataFrame()
 
     # move to target object
@@ -153,8 +147,7 @@ def get_actions_kujiale_0000():
     # keep target still
     for i in range(0, 30):
         df = pd.concat(
-            [df,
-             pd.DataFrame(get_action(gripper_force=-0, arm_pose_blend_weights={"horizontal_high": 1}), index=[0])])
+            [df, pd.DataFrame(get_action(gripper_force=-0, arm_pose_blend_weights={"horizontal_high": 1}), index=[0])])
 
     # withdraw base
     for i in range(0, 20):
@@ -164,27 +157,26 @@ def get_actions_kujiale_0000():
     # rotate around and fold arm
     for i in range(0, 100):
         df = pd.concat(
-            [df,
-             pd.DataFrame(get_action(move_right=-0.002, arm_pose_blend_weights={"horizontal_high": (100.0 - i) / 100.0, "default": i / 100.0}), index=[0])])
+            [df, pd.DataFrame(get_action(move_right=-0.002, arm_pose_blend_weights={"horizontal_high": (100.0 - i) / 100.0, "default": i / 100.0}), index=[0])])
 
-    # # stay still
-    # for i in range(0, 20):
-    #     df = pd.concat(
-    #         [df, pd.DataFrame(get_action(arm_pose_blend_weights={"default": 1}), index=[0])])
+    # stay still
+    for i in range(0, 20):
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(arm_pose_blend_weights={"default": 1}), index=[0])])
 
     return df
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--actions_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions.csv"))
-    parser.add_argument("--scene_id", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "default_map"))
+    parser.add_argument("--actions_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions.starter_content_0000.csv"))
+    parser.add_argument("--scene_id", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "starter_content_0000"))
     args = parser.parse_args()
 
-    if args.scene_id == "default_map":
-        df = get_actions_default_map()
+    if args.scene_id == "starter_content_0000":
+        df = get_actions_for_starter_content_0000()
     elif args.scene_id == "kujiale_0000":
-        df = get_actions_kujiale_0000()
+        df = get_actions_for_kujiale_0000()
     else:
         assert False
 
