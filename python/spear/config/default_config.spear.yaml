@@ -21,7 +21,7 @@ SPEAR:
 
   # The location of downloaded (or built) pak files. This must be specified if you are attempting
   # to load any scene other than the default scene.
-  DATA_DIR: ""
+  PAKS_DIR: ""
 
   # Set this parameter to true True to launch the executable in headless mode. Has no effect
   # if launch_mode is "running_instance".
