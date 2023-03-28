@@ -149,7 +149,6 @@ SIMULATION_CONTROLLER:
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
     CAMERA:
-      ACTOR_NAME: ""
       RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
