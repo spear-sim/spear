@@ -19,7 +19,7 @@ SPEAR:
 
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
 
-  DATA_DIR: "/Users/mroberts/Downloads/spear-data"
+  PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
@@ -27,8 +27,8 @@ SPEAR:
   WINDOW_RESOLUTION_Y: 120
 
 SIMULATION_CONTROLLER:
-  TASK: "ImitationLearningTask"
   AGENT: "OpenBotAgent"
+  TASK: "ImitationLearningTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   SIMULATION_STEP_TIME_SECONDS: 0.033

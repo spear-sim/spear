@@ -7,7 +7,7 @@ SPEAR:
 
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
 
-  DATA_DIR: "/Users/mroberts/Downloads/spear-data"
+  PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
@@ -15,8 +15,8 @@ SPEAR:
   WINDOW_RESOLUTION_Y: 768
 
 SIMULATION_CONTROLLER:
-  TASK: "NullTask"
   AGENT: "CameraAgent"
+  TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   CAMERA_AGENT:

@@ -33,7 +33,7 @@ SIMULATION_CONTROLLER:
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", segmentation"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -124,7 +124,7 @@ SIMULATION_CONTROLLER:
       LINEAR_VELOCITY_SCALE: 1.0
       YAW_SCALE: 1.0
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals" 
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -149,8 +149,7 @@ SIMULATION_CONTROLLER:
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
     CAMERA:
-      ACTOR_NAME: ""
-      RENDER_PASSES: ["final_color"] # "final_color", "segmentation", "depth", "normals"
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0

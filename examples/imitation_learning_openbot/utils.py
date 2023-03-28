@@ -26,7 +26,7 @@ def show_obs(obs, obs_components, render_passes):
             print(f"[SPEAR | utils.py] sonar: {obs['sonar'][0]:.2f}")
         elif obs_component == "camera":
             for render_pass in render_passes:
-                if render_pass == "final_color" or render_pass == "segmentation" or render_pass == "normals":
+                if render_pass in ["final_color", "normals", "segmentation"]:                    
                     cv2.imshow(render_pass, obs["camera." + render_pass]) # note that spear.Env returns BGRA by default
                 elif render_pass == "depth":
                     depth = obs["camera.depth"]

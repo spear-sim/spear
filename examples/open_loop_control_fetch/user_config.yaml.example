@@ -7,17 +7,17 @@ SPEAR:
 
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
 
+  PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
+
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
   WINDOW_RESOLUTION_X: 512
   WINDOW_RESOLUTION_Y: 512
 
 SIMULATION_CONTROLLER:
-  TASK: "NullTask"
   AGENT: "UrdfBotAgent"
+  TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
-
-  SCENE_ID: "starter_content_0000"
 
   URDFBOT_AGENT:
     URDFBOT_ACTOR_NAME: "UrdfBotActor"
@@ -40,3 +40,10 @@ SIMULATION_CONTROLLER:
 URDFBOT:
   URDFBOT_PAWN:
     URDF_FILE: "fetch.xml"
+    CAMERA_COMPONENT:
+      POSITION_X: 50.0
+      POSITION_Y: -200.0
+      POSITION_Z: 80.0
+      PITCH: 0.0
+      YAW: 90.0
+      ROLL: 0.0

@@ -110,11 +110,11 @@ class Env(gym.Env):
         with open(temp_config_file, "w") as output:
             self._config.dump(stream=output, default_flow_style=False)
 
-        # create a symlink to SPEAR.DATA_DIR
-        if self._config.SPEAR.LAUNCH_MODE == "standalone_executable" and self._config.SPEAR.DATA_DIR != "":
+        # create a symlink to SPEAR.PAKS_DIR
+        if self._config.SPEAR.LAUNCH_MODE == "standalone_executable" and self._config.SPEAR.PAKS_DIR != "":
 
             assert os.path.exists(self._config.SPEAR.STANDALONE_EXECUTABLE)
-            assert os.path.exists(self._config.SPEAR.DATA_DIR)
+            assert os.path.exists(self._config.SPEAR.PAKS_DIR)
 
             if sys.platform == "win32":
                 paks_dir = \
@@ -131,14 +131,14 @@ class Env(gym.Env):
             assert os.path.exists(paks_dir)
 
             # we don't use os.path.realpath here because we don't want to resolve the symlink
-            spear_data_dir = os.path.join(paks_dir, "SpearData")
+            spear_paks_dir = os.path.join(paks_dir, "SpearPaks")
 
-            if spear.path_exists(spear_data_dir):
-                print(f"[SPEAR | env.py] File or directory or symlink exists, removing: {spear_data_dir}")
-                spear.remove_path(spear_data_dir)
+            if spear.path_exists(spear_paks_dir):
+                print(f"[SPEAR | env.py] File or directory or symlink exists, removing: {spear_paks_dir}")
+                spear.remove_path(spear_paks_dir)
 
-            print(f"[SPEAR | env.py] Creating symlink: {spear_data_dir} -> {self._config.SPEAR.DATA_DIR}")
-            os.symlink(self._config.SPEAR.DATA_DIR, spear_data_dir)
+            print(f"[SPEAR | env.py] Creating symlink: {spear_paks_dir} -> {self._config.SPEAR.PAKS_DIR}")
+            os.symlink(self._config.SPEAR.PAKS_DIR, spear_paks_dir)
 
         # provide additional control over which Vulkan devices are recognized by Unreal
         if len(self._config.SPEAR.VULKAN_DEVICE_FILES) > 0:

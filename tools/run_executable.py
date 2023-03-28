@@ -17,12 +17,18 @@ if __name__ == '__main__':
     parser.add_argument("--paks_dir")
     parser.add_argument("--scene_id")
     parser.add_argument("--map_id")
+    parser.add_argument("--vulkan_device_files")
     args = parser.parse_args()
     
     assert os.path.exists(args.executable)
 
     # determine the internal executable we will actually launch
     executable_name, executable_ext = os.path.splitext(args.executable)
+
+    # provide additional control over which Vulkan devices are recognized by Unreal
+    if args.vulkan_device_files is not None:
+        print("[SPEAR | run_executable.py] Setting VK_ICD_FILENAMES environment variable: " + args.vulkan_device_files)
+        os.environ["VK_ICD_FILENAMES"] = args.vulkan_device_files
 
     if sys.platform == "win32":
         assert executable_name[-4:] == "-Cmd"
@@ -77,14 +83,14 @@ if __name__ == '__main__':
         assert os.path.exists(paks_dir)
 
         # we don't use os.path.realpath here because we don't want to resolve the symlink
-        spear_data_dir = os.path.join(paks_dir, "SpearData")
+        spear_paks_dir = os.path.join(paks_dir, "SpearPaks")
 
-        if spear.path_exists(spear_data_dir):
-            print(f"[SPEAR | run_executable.py] File or directory or symlink exists, removing: {spear_data_dir}")
-            spear.remove_path(spear_data_dir)
+        if spear.path_exists(spear_paks_dir):
+            print(f"[SPEAR | run_executable.py] File or directory or symlink exists, removing: {spear_paks_dir}")
+            spear.remove_path(spear_paks_dir)
 
-        print(f"[SPEAR | run_executable.py] Creating symlink: {spear_data_dir} -> {args.paks_dir}")
-        os.symlink(args.paks_dir, spear_data_dir)
+        print(f"[SPEAR | run_executable.py] Creating symlink: {spear_paks_dir} -> {args.paks_dir}")
+        os.symlink(args.paks_dir, spear_paks_dir)
 
     # provide additional control over which Vulkan devices are recognized by Unreal
     if len(config.SPEAR.VULKAN_DEVICE_FILES) > 0:
