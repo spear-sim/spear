@@ -22,7 +22,6 @@
 #include <GameFramework/Actor.h>
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Math/Color.h>
-#include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Box.h"

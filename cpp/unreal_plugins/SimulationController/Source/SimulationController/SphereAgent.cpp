@@ -22,7 +22,6 @@
 #include <GameFramework/Actor.h>
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
-#include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Box.h"
@@ -34,11 +33,31 @@
 
 SphereAgent::SphereAgent(UWorld* world)
 {
-    // spawn sphere_actor
+    // spawn sphere
+    FVector spawn_location = FVector::ZeroVector;
+    FRotator spawn_rotation = FRotator::ZeroRotator;
+    std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_MODE");
+    if (spawn_mode == "specify_existing_actor") {
+        AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_ACTOR_NAME"));
+        ASSERT(spawn_actor);
+        spawn_location = spawn_actor->GetActorLocation();
+        spawn_rotation = spawn_actor->GetActorRotation();
+    } else if (spawn_mode == "specify_pose") {
+        spawn_location = FVector(
+            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_POSITION_X"),
+            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_POSITION_Y"),
+            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_POSITION_Z"));
+        spawn_rotation = FRotator(
+            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_PITCH"),
+            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_YAW"),
+            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_ROLL"));
+    } else {
+        ASSERT(false);
+    }
     FActorSpawnParameters actor_spawn_params;
-    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.ACTOR_NAME"));
+    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    sphere_actor_ = world->SpawnActor<AStaticMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
+    sphere_actor_ = world->SpawnActor<AStaticMeshActor>(spawn_location, spawn_rotation, actor_spawn_params);
     ASSERT(sphere_actor_);
 
     sphere_actor_->SetMobility(EComponentMobility::Type::Movable);
@@ -46,7 +65,7 @@ SphereAgent::SphereAgent(UWorld* world)
     static_mesh_component_ = sphere_actor_->GetStaticMeshComponent();
     ASSERT(static_mesh_component_);
 
-    // load agent mesh and material
+    // load mesh and material
     UStaticMesh* sphere_mesh = LoadObject<UStaticMesh>(
         nullptr,
         *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.STATIC_MESH")));
@@ -75,9 +94,10 @@ SphereAgent::SphereAgent(UWorld* world)
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
+    // set up camera
     if (Std::contains(observation_components, "camera")) {
         FActorSpawnParameters camera_spawn_params;
-        camera_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.ACTOR_NAME"));
+        camera_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA_ACTOR_NAME"));
         camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, camera_spawn_params);
         ASSERT(camera_actor_);

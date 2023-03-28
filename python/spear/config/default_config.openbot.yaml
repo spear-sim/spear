@@ -29,26 +29,26 @@ OPENBOT:
       POSITION_X: 9.0              # Camera relative position in [cm]
       POSITION_Y: 5.0              # Camera relative position in [cm]
       POSITION_Z: 10.0             # Camera relative position in [cm]
-      ROLL: 0.0                    # Camera relative orientation in [cm]
-      YAW: 0.0                     # Camera relative orientation in [°]
       PITCH: 0.0                   # Camera relative orientation in [°]
+      YAW: 0.0                     # Camera relative orientation in [°]
+      ROLL: 0.0                    # Camera relative orientation in [°]
       FOV: 70.0                    # Camera field of view in [°]
     
     IMU_COMPONENT:
       POSITION_X: 8.0              # IMU relative position in [cm]
       POSITION_Y: 0.0              # IMU relative position in [cm]
       POSITION_Z: 10.0             # IMU relative position in [cm]
-      ROLL: 0.0                    # IMU relative orientation in [°]
-      YAW: 0.0                     # IMU relative orientation in [°]
       PITCH: 0.0                   # IMU relative orientation in [°]
+      YAW: 0.0                     # IMU relative orientation in [°]
+      ROLL: 0.0                    # IMU relative orientation in [°]
       
     SONAR_COMPONENT:
       POSITION_X: 15.0             # Sonar relative position in [cm]
       POSITION_Y: 0.0              # Sonar relative position in [cm]
       POSITION_Z: -1.5             # Sonar relative position in [cm]
-      ROLL: 0.0                    # Sonar relative orientation in [°]
-      YAW: 0.0                     # Sonar relative orientation in [°]
       PITCH: 0.0                   # Sonar relative orientation in [°]
+      YAW: 0.0                     # Sonar relative orientation in [°]
+      ROLL: 0.0                    # Sonar relative orientation in [°]
 
   OPENBOT_WHEEL:
     AFFECTED_BY_HANDBRAKE: True       # Whether handbrake should affect this wheel

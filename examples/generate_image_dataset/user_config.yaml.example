@@ -20,11 +20,11 @@ SIMULATION_CONTROLLER:
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   CAMERA_AGENT:
+    CAMERA_ACTOR_NAME: "CameraActor"
     ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
     STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
     CAMERA:
-      ACTOR_NAME: "CameraActor"
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation"
       IMAGE_HEIGHT: 768
       IMAGE_WIDTH: 1024
