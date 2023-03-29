@@ -93,6 +93,7 @@ if __name__ == "__main__":
 
                 obs_render_pass = obs["camera." + render_pass].squeeze()
                 if render_pass in ["final_color", "normals", "segmentation"]:
+                    assert len(obs_render_pass.shape) == 3
                     assert obs_render_pass.shape[2] == 4
                     obs_render_pass = obs_render_pass[:, :, [2, 1, 0, 3]].copy()  # note that spear.Env returns BGRA by default
 
