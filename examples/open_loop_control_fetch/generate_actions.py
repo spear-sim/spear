@@ -9,6 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 
+
 # fetch arm poses come from https://github.com/StanfordVL/iGibson/blob/master/igibson/robots/fetch.py#L100
 arm_poses = {
     "init": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
@@ -20,7 +21,6 @@ arm_poses = {
     "horizontal": np.array([-1.43016, 0.20965, 1.86816, 1.77576, -0.27289, 1.31715, 2.01226]),
     "horizontal_high": np.array([-0.94121, -0.30, 1.55186, 1.25672, -0.93218, 0.0, -0.2]),
 }
-
 
 def get_action(move_forward=0.0, move_right=0.0, gripper_force=50.0, arm_pose_blend_weights={"init": 1.0}):
     action = {}
@@ -54,7 +54,6 @@ def get_action(move_forward=0.0, move_right=0.0, gripper_force=50.0, arm_pose_bl
     action["joint.head_tilt_joint"] = 0.0
 
     return action
-
 
 def get_actions_for_starter_content_0000():
     df = pd.DataFrame()
@@ -101,7 +100,6 @@ def get_actions_for_starter_content_0000():
         df = pd.concat([df, pd.DataFrame(get_action(arm_pose_blend_weights={"default": 1.0}), index=[0])])
 
     return df
-
 
 def get_actions_for_kujiale_0000():
     df = pd.DataFrame()
@@ -166,10 +164,9 @@ def get_actions_for_kujiale_0000():
 
     return df
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scene_id", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "kujiale_0000"))
+    parser.add_argument("--scene_id", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "starter_content_0000"))
     args = parser.parse_args()
 
     if args.scene_id == "starter_content_0000":
