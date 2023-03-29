@@ -169,7 +169,6 @@ def get_actions_for_kujiale_0000():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--actions_file", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions.starter_content_0000.csv"))
     parser.add_argument("--scene_id", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "starter_content_0000"))
     args = parser.parse_args()
 
@@ -181,4 +180,5 @@ if __name__ == '__main__':
         assert False
 
     # save to csv
-    df.to_csv(args.actions_file, float_format="%.5f", mode="w", index=False, header=True)
+    actions_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "actions." + args.scene_id + ".csv"))
+    df.to_csv(actions_file, float_format="%.5f", mode="w", index=False, header=True)
