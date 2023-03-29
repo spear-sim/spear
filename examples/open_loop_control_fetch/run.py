@@ -16,7 +16,7 @@ import time
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.csv")))
+    parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.kujiale_0000.csv")))
     parser.add_argument("--image_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "images")))
     parser.add_argument("--scene_id", default="kujiale_0000")
     parser.add_argument("--rendering_mode", default="baked")
