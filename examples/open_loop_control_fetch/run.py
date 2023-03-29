@@ -104,7 +104,7 @@ if __name__ == "__main__":
     if args.benchmark:
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        print("[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / df.shape[0]) * 1000.0, df.shape[0] / elapsed_time_seconds))
+        print("[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / df.shape[0])*1000.0, df.shape[0] / elapsed_time_seconds))
 
     # close the environment
     env.close()
