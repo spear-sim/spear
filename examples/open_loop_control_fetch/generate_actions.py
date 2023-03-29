@@ -169,7 +169,7 @@ def get_actions_for_kujiale_0000():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scene_id", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "starter_content_0000"))
+    parser.add_argument("--scene_id", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "kujiale_0000"))
     args = parser.parse_args()
 
     if args.scene_id == "starter_content_0000":
