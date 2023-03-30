@@ -109,7 +109,7 @@ if __name__ == "__main__":
             if not args.benchmark:
                 for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                     render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
-                    shutil.rmtree(render_pass_dir)
+                    shutil.rmtree(render_pass_dir, ignore_errors=True)
                     os.makedirs(render_pass_dir)
 
             # change config based on current scene
