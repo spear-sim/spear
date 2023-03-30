@@ -42,11 +42,13 @@ public class SpearSimTarget : TargetRules
                     Path.Combine(plugin, "ThirdParty") + "=" +
                     Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "..", "third_party"));
             }
-        // we can't throw an exception here because when we invoke GenerateProjectFiles.bat/GenerateProjectFiles.sh script, Unreal Build Tool
-        // creates an instance of this module's 'Rules' object for different target platforms such as IOS, TVOS, Win32, etc.
+        }
+
+        // We can't throw an exception here, because when we invoke GenerateProjectFiles.bat or GenerateProjectFiles.sh (packaged with
+        // the Unreal Engine), instances of this class gets created with Target.Platform set to many different platforms (e.g., iOS, tvOS,
+        // Win32, etc).
         // } else {
         //    throw new Exception("[SPEAR | SpearSim.Target.cs] Target.Platform == " + Target.Platform);            
         // }
-        }
     }
 }

@@ -175,9 +175,9 @@ void SimulationController::worldBeginPlayEventHandler()
     physics_settings->bSubstepping = Config::get<bool>("SIMULATION_CONTROLLER.ENABLE_SUBSTEPPING");
     physics_settings->MaxSubstepDeltaTime = Config::get<float>("SIMULATION_CONTROLLER.MAX_SUBSTEP_DELTA_TIME");
     physics_settings->MaxSubsteps = Config::get<int32>("SIMULATION_CONTROLLER.MAX_SUBSTEPS");
-    physics_settings->ContactOffsetMultiplier = Config::get<float>("SIMULATION_CONTROLLER.ContactOffsetMultiplier");
-    physics_settings->MinContactOffset = Config::get<float>("SIMULATION_CONTROLLER.MinContactOffset");
-    physics_settings->MaxContactOffset = Config::get<float>("SIMULATION_CONTROLLER.MaxContactOffset");
+    physics_settings->ContactOffsetMultiplier = Config::get<float>("SIMULATION_CONTROLLER.CONTACT_OFFSET_MULTIPLIER");
+    physics_settings->MinContactOffset = Config::get<float>("SIMULATION_CONTROLLER.MIN_CONTACT_OFFSET");
+    physics_settings->MaxContactOffset = Config::get<float>("SIMULATION_CONTROLLER.MAX_CONTACT_OFFSET");
 
     // Check that the physics substepping parameters match our deired simulation step time.
     // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep
