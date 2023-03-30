@@ -14,9 +14,7 @@ public class SpearSimTarget : TargetRules
         DefaultBuildSettings = BuildSettingsVersion.V2;
         ExtraModuleNames.AddRange(new string[] { "SpearSim" });
 
-        // We need to include a check for UnrealTargetPlatform.Win32 here (but not in SpearSimEditorTarget), otherwise we get an error when
-        // running Unreal's GenerateProjectFiles.bat script.
-        if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Win32) {
+        if (Target.Platform == UnrealTargetPlatform.Win64) {
 
             // On Windows, we need to build an additional app so that calls to UE_Log and writes to std::cout are visible in the terminal.
             bBuildAdditionalConsoleApp = true;
@@ -45,8 +43,11 @@ public class SpearSimTarget : TargetRules
                     Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "..", "third_party"));
             }
             
-        } else {
-            throw new Exception("[SPEAR | SpearSim.Target.cs] Target.Platform == " + Target.Platform);            
+	    // we can't throw an exception here because when we invoke GenerateProjectFiles.bat/GenerateProjectFiles.sh script, Unreal Build Tool
+	    // creates an instance of this module's 'Rules' object for different target platforms such as IOS, TVOS, Win32, etc.
+        // } else {
+        //    throw new Exception("[SPEAR | SpearSim.Target.cs] Target.Platform == " + Target.Platform);            
+        // }
         }
     }
 }
