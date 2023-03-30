@@ -77,8 +77,10 @@ if __name__ == "__main__":
         start_time_seconds = time.time()
     else:
         if args.save_images:
-            shutil.rmtree(args.image_dir, ignore_errors=True)
-            os.makedirs(args.image_dir, exist_ok=True)
+            for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+                render_pass_dir = os.path.realpath(os.path.join(args.image_dir, render_pass))
+                shutil.rmtree(render_pass_dir, ignore_errors=True)
+                os.makedirs(render_pass_dir)
 
     for i, row in df.iterrows():
         action = {k: np.array([v], dtype=np.float32) for k, v in row.to_dict().items()}
@@ -87,7 +89,7 @@ if __name__ == "__main__":
         # save images for each render pass
         if not args.benchmark and args.save_images:
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-                render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
+                render_pass_dir = os.path.realpath(os.path.join(args.image_dir, render_pass))
                 assert os.path.exists(render_pass_dir)
 
                 obs_render_pass = obs["camera." + render_pass].squeeze()

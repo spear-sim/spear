@@ -169,12 +169,23 @@ void SimulationController::worldBeginPlayEventHandler()
         GEngine->Exec(world_, *Unreal::toFString(command));
     }
 
-    // Set fixed simulation step time in seconds. Check that the physics substepping parameters match our deired simulation step time.
-    // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep
+    // set physics parameters
     UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
-    ASSERT(physics_settings->bSubstepping);
-    ASSERT(Config::get<float>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps);
+    physics_settings->bEnableEnhancedDeterminism = Config::get<bool>("SIMULATION_CONTROLLER.ENABLE_ENHANCED_DETERMINISM");
+    physics_settings->bSubstepping = Config::get<bool>("SIMULATION_CONTROLLER.ENABLE_SUBSTEPPING");
+    physics_settings->MaxSubstepDeltaTime = Config::get<float>("SIMULATION_CONTROLLER.MAX_SUBSTEP_DELTA_TIME");
+    physics_settings->MaxSubsteps = Config::get<int32>("SIMULATION_CONTROLLER.MAX_SUBSTEPS");
+    physics_settings->ContactOffsetMultiplier = Config::get<float>("SIMULATION_CONTROLLER.CONTACT_OFFSET_MULTIPLIER");
+    physics_settings->MinContactOffset = Config::get<float>("SIMULATION_CONTROLLER.MIN_CONTACT_OFFSET");
+    physics_settings->MaxContactOffset = Config::get<float>("SIMULATION_CONTROLLER.MAX_CONTACT_OFFSET");
 
+    // Check that the physics substepping parameters match our deired simulation step time.
+    // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep
+    if (physics_settings->bSubstepping) {
+        ASSERT(Config::get<float>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps);
+    }
+
+    // set fixed simulation step time in seconds
     FApp::SetBenchmarking(true);
     FApp::SetFixedDeltaTime(Config::get<double>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS"));
 

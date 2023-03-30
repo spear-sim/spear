@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
+import shutil
 import spear
 import time
 
@@ -108,7 +109,8 @@ if __name__ == "__main__":
             if not args.benchmark:
                 for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                     render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
-                    os.makedirs(render_pass_dir, exist_ok=True)
+                    shutil.rmtree(render_pass_dir, ignore_errors=True)
+                    os.makedirs(render_pass_dir)
 
             # change config based on current scene
             config.defrost()

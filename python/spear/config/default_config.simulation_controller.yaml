@@ -14,10 +14,18 @@ SIMULATION_CONTROLLER:
   IP: "127.0.0.1"
   PORT: 30000
 
-  SIMULATION_STEP_TIME_SECONDS: 0.1
   TASK: ""
   AGENT: ""
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+
+  SIMULATION_STEP_TIME_SECONDS: 0.1
+  ENABLE_ENHANCED_DETERMINISM: True
+  ENABLE_SUBSTEPPING: True
+  MAX_SUBSTEP_DELTA_TIME: 0.01
+  MAX_SUBSTEPS: 100
+  CONTACT_OFFSET_MULTIPLIER: 0.02 # This value is copied from UnrealEngine/Engine/Source/Runtime/PhysicsCore/Private/PhysicsSettingsCore.cpp
+  MIN_CONTACT_OFFSET: 2.0         # This value is copied from UnrealEngine/Engine/Source/Runtime/PhysicsCore/Private/PhysicsSettingsCore.cpp
+  MAX_CONTACT_OFFSET: 8.0         # This value is copied from UnrealEngine/Engine/Source/Runtime/PhysicsCore/Private/PhysicsSettingsCore.cpp
 
   CAMERA_AGENT:
     CAMERA_ACTOR_NAME: ""
