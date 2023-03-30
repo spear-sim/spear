@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
-import shutil
 import spear
 import time
 
@@ -75,11 +74,6 @@ if __name__ == "__main__":
 
     if args.benchmark:
         start_time_seconds = time.time()
-    else:
-        if args.save_images:
-            if os.path.exists(args.image_dir):
-                shutil.rmtree(args.image_dir)
-            os.makedirs(args.image_dir)
 
     for i, row in df.iterrows():
         action = {k: np.array([v], dtype=np.float32) for k, v in row.to_dict().items()}
@@ -88,8 +82,8 @@ if __name__ == "__main__":
         # save images for each render pass
         if not args.benchmark and args.save_images:
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-                render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
-                assert os.path.exists(render_pass_dir)
+                render_pass_dir = os.path.realpath(os.path.join(args.image_dir, render_pass))
+                os.makedirs(render_pass_dir, exist_ok=True)
 
                 obs_render_pass = obs["camera." + render_pass].squeeze()
                 if render_pass in ["final_color", "normals", "segmentation"]:
