@@ -23,10 +23,10 @@ SIMULATION_CONTROLLER:
   ENABLE_SUBSTEPPING: True
   MAX_SUBSTEP_DELTA_TIME: 0.01
   MAX_SUBSTEPS: 100
-  CONTACT_OFFSET_MULTIPLIER: 0.01
-  MIN_CONTACT_OFFSET: 0.0001
-  MAX_CONTACT_OFFSET: 1.0
-  
+  CONTACT_OFFSET_MULTIPLIER: 0.02 # This value is copied from UnrealEngine/Engine/Source/Runtime/PhysicsCore/Private/PhysicsSettingsCore.cpp
+  MIN_CONTACT_OFFSET: 2.0         # This value is copied from UnrealEngine/Engine/Source/Runtime/PhysicsCore/Private/PhysicsSettingsCore.cpp
+  MAX_CONTACT_OFFSET: 8.0         # This value is copied from UnrealEngine/Engine/Source/Runtime/PhysicsCore/Private/PhysicsSettingsCore.cpp
+
   CAMERA_AGENT:
     CAMERA_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
