@@ -105,8 +105,7 @@ class Env(gym.Env):
 
         print("[SPEAR | env.py] Writing temp config file: " + temp_config_file)
 
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
+        os.makedirs(temp_dir, exist_ok=True)
         with open(temp_config_file, "w") as output:
             self._config.dump(stream=output, default_flow_style=False)
 

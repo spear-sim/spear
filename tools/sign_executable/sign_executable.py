@@ -31,8 +31,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # make sure output_dir is empty
-    if os.path.exists(args.output_dir):
-        shutil.rmtree(args.output_dir, ignore_errors=True)
+    shutil.rmtree(args.output_dir, ignore_errors=True)
 
     # create the temp directory
     os.makedirs(args.temp_dir, exist_ok=True)

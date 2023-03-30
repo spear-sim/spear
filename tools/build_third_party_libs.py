@@ -128,7 +128,7 @@ if __name__ == "__main__":
         shutil.rmtree(build_dir, ignore_errors=True)
 
     print(f"[SPEAR | build_third_party_libs.py] Creating directory and changing to working: {build_dir}")
-    os.makedirs(build_dir)
+    os.makedirs(build_dir, exist_ok=True)
     os.chdir(build_dir)
 
     cmd = [
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         shutil.rmtree(build_dir, ignore_errors=True)
 
     print(f"[SPEAR | build_third_party_libs.py] Creating directory and changing to working: {build_dir}")
-    os.makedirs(build_dir)
+    os.makedirs(build_dir, exist_ok=True)
     os.chdir(build_dir)
 
     if sys.platform == "win32":
@@ -250,7 +250,7 @@ if __name__ == "__main__":
         shutil.rmtree(build_dir, ignore_errors=True)
 
     print("[SPEAR | build_third_party_libs.py] Creating directory and changing to working: " + build_dir)
-    os.makedirs(build_dir)
+    os.makedirs(build_dir, exist_ok=True)
     os.chdir(build_dir)
 
     if sys.platform == "win32":

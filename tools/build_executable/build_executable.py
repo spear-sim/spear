@@ -94,15 +94,14 @@ if __name__ == "__main__":
     #     path contains illegal characters '.'
     if os.path.exists(unreal_tmp_dir):
         print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
-        shutil.rmtree(unreal_tmp_dir)
+        shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
     if not args.skip_clone_github_repo:
         
         # remove our temporary repository directory to ensure a clean build
         if os.path.exists(repo_dir):
             print(f"[SPEAR | build_executable.py] Repository exists, removing: {repo_dir}")
-            shutil.rmtree(repo_dir)
-            os.makedirs(repo_dir)
+            shutil.rmtree(repo_dir, ignore_errors=True)
 
         # clone repo with submodules
         cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", repo_dir]
@@ -178,7 +177,7 @@ if __name__ == "__main__":
     #     path contains illegal characters '.'
     if os.path.exists(unreal_tmp_dir):
         print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
-        shutil.rmtree(unreal_tmp_dir)
+        shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
     print(f"[SPEAR | build_executable.py] Successfully built SpearSim at {archive_dir}")
     print("[SPEAR | build_executable.py] Done.")
