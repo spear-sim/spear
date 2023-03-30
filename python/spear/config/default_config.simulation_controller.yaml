@@ -19,6 +19,9 @@ SIMULATION_CONTROLLER:
   ENABLE_SUBSTEPPING: True
   MAX_SUBSTEP_DELTA_TIME: 0.01
   MAX_SUBSTEPS: 100
+  ContactOffsetMultiplier: 0.010000
+  MinContactOffset: 0.000100
+  MaxContactOffset: 1.000000
 
   TASK: ""
   AGENT: ""
