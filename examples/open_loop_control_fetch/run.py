@@ -77,9 +77,8 @@ if __name__ == "__main__":
         start_time_seconds = time.time()
     else:
         if args.save_images:
-            if os.path.exists(args.image_dir):
-                shutil.rmtree(args.image_dir)
-            os.makedirs(args.image_dir)
+            shutil.rmtree(args.image_dir, ignore_errors=True)
+            os.makedirs(args.image_dir, exist_ok=True)
 
     for i, row in df.iterrows():
         action = {k: np.array([v], dtype=np.float32) for k, v in row.to_dict().items()}
