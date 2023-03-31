@@ -36,7 +36,6 @@ Running `generate_episodes.py` will generate navigation episodes and store them 
 
 Running `generate_dataset.py` will generate a dataset of goals, observations, and actions for each episode. The structure of the generated dataset precisely mimics the structure expected by the OpenBot framework, and can therefore be plugged into the OpenBot training code directly. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
   - `--episodes_file` can be used to read episodes from a specific CSV file.
-  - `--rendering_mode` can be set to `baked` to use baked lighting, or `raytracing` for ray-traced lighting if you are running on Windows and you have a GPU that supports DirectX ray-tracing.
   - `--create_videos` can be used to generate videos from OpenBot observations. If you use this optional argument, the `ffmpeg` command-line tool must be visible on your path.
   - `--benchmark` can be used to test the overall speed of the simulation.
 
