@@ -45,7 +45,7 @@ At this point, you can use our `run_executable.py` command-line tool to select w
 python tools/run_executable.py --executable path/to/executable --paks_dir path/to/paks --scene_id <scene_id>
 ```
 
-Depending on your platform, you will need to specify the following path to your `executable`.
+Depending on your platform, you will need to specify the following path to your `--executable`.
 
 ```
 Windows: path/to/SpearSim-v0.2.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
@@ -55,8 +55,8 @@ Linux:   path/to/SpearSim-v0.2.0-Linux-Shipping/SpearSim.sh
 
 You will also need to specify the following command-line arguments.
 
-  - `paks_dir` is the directory containing the scene data you downloaded.
-  - `scene_id` is the name of the scene you want to navigate around. It must be set to one of `starter_content_0000`, `kujiale_0000`, or `warehouse_0000`. If you specify `kujiale_0000`, you must also specify the argument `--map_id kujiale_0000_bake`.
+  - `--paks_dir` is the directory containing the scene data you downloaded.
+  - `--scene_id` is the name of the scene you want to navigate around. It must be set to one of `starter_content_0000`, `kujiale_0000`, or `warehouse_0000`. If you specify `kujiale_0000`, you must also specify the argument `--map_id kujiale_0000_bake`.
 
 ## Programmatically interacting with SPEAR via Python
 
