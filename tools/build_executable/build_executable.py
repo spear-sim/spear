@@ -25,6 +25,9 @@ if __name__ == "__main__":
     parser.add_argument("--skip_build_third_party_libs", action="store_true")
     args = parser.parse_args()
 
+    assert os.path.exists(args.unreal_engine_dir)
+    assert os.path.exists(args.paks_dir)
+
     repo_dir           = os.path.realpath(os.path.join(args.temp_dir, "spear"))
     unreal_project_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_projects", "SpearSim"))
     unreal_plugins_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_plugins"))
@@ -82,6 +85,8 @@ if __name__ == "__main__":
 
     else:
         assert False
+
+    assert os.path.exists(run_uat_script)
 
     # once we know pak_platform, set our default pak file src and dest
     pak_file_src  = os.path.realpath(os.path.join(args.paks_dir, "kujiale_0000-" + args.version_tag + "-" + pak_platform + ".pak"))

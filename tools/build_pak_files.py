@@ -51,6 +51,9 @@ if __name__ == '__main__':
     else:
         assert False
 
+    assert os.path.exists(unreal_editor_bin)
+    assert os.path.exists(unreal_pak_bin)
+
     # once we know the platform, set our cooked dir
     unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform + "NoEditor"))
 
