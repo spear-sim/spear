@@ -29,9 +29,9 @@ Minimum and recommended system specifications for the Unreal Engine are given [h
 
 ### Precompiled binaries
 
-See our latest release notes for download links.
+See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.2.0) for download links.
 
-The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with one of our indoor scenes. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
+The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
 
 ### Working with multiple scenes
 
