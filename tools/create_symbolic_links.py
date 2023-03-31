@@ -22,6 +22,8 @@ if __name__ == "__main__":
     unreal_plugins_dir  = os.path.realpath(args.unreal_plugins_dir)
     third_party_dir     = os.path.realpath(args.third_party_dir)
 
+    assert os.path.exists(starter_content_dir)
+
     unreal_plugins = os.listdir(unreal_plugins_dir)
 
     # for each plugin...
