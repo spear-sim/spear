@@ -102,16 +102,16 @@ if __name__ == '__main__':
             unreal_editor_bin,
             uproject,
             "-run=Cook",
-            "-TargetPlatform=" + platform + "NoEditor",
+            "-targetplatform=" + platform + "NoEditor",
             "-fileopenlog",
             "-ddc=InstalledDerivedDataBackendGraph",
             "-unversioned",
             "-stdout",
-            "-FullStdOutLogOutput",
-            "-CrashForUAT",
+            "-fullstdoutlogoutput",
+            "-crashforuat",
             "-unattended",
-            "-NoLogTimes",
-            "-UTF8Output"
+            "-nologtimes",
+            "-utf8output"
         ]
         print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
