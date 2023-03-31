@@ -54,7 +54,7 @@ See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
 ## Licenses
 
 - The SPEAR code in this repository ([MIT License](LICENSE.txt))
-- All of our third-party software dependencies (see [here](ACKNOWLEDGMENTS.txt))
+- All of our external code dependencies (see [here](ACKNOWLEDGMENTS.txt))
 - The OpenBot and Fetch assets included in this repository ([CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0))
 - The external assets referenced in `starter_content_0000` ([Unreal Engine End-User License Agreement](https://www.unrealengine.com/en-US/eula/unreal))
 - The `starter_content_0000` scene included in this repository ([CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0))
