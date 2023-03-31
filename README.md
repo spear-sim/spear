@@ -35,11 +35,11 @@ The easiest way to start working with SPEAR is to download a precompiled binary 
 
 ### Working with multiple scenes
 
-See our Getting Started [Getting Started](docs/getting_started.md) tutorial.
+See our [Getting Started](docs/getting_started.md) tutorial.
 
 ### Programmatically interacting with SPEAR via Python 
 
-See our Getting Started [Getting Started](docs/getting_started.md) tutorial.
+See our [Getting Started](docs/getting_started.md) tutorial.
 
 ### Building from source
 
