@@ -56,7 +56,7 @@ See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
 - The SPEAR code in this repository is released under an [MIT License](LICENSE.txt).
 - The licenses for all of our third-party software dependencies are listed [here](ACKNOWLEDGMENTS.txt).
 - The OpenBot and Fetch assets included in this repository are released under a [CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0).
-- The `starter_content_0000` scene included in this repository is released under a [CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0).
 - The external assets referenced in `starter_content_0000` are licensed under the [Unreal Engine End-User License Agreement](https://www.unrealengine.com/en-US/eula/unreal).
+- The `starter_content_0000` scene included in this repository is released under a [CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0).
 - The `warehouse_0000` scene is released under a [CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0).
 - The `kujiale_0000` scene is released under a [license](LICENSE_KUJIALE.txt) that permits academic use.
