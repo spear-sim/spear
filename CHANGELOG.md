@@ -6,14 +6,14 @@ This release includes the following new user-facing features and improvements.
 
 ![warehouse_0000](https://user-images.githubusercontent.com/2341965/229026112-5500bd96-9066-4784-811c-d6ac1ed543b1.jpg)
 
-- A new scene that is intended for debugging, `starter_content_0000`, which loads very quickly and is suitable for simple manipulation and navigation tasks.
-
-![starter_content_0000](https://user-images.githubusercontent.com/2341965/229026038-59214f2d-cbba-4683-a8d9-7afa9a5d6e4a.jpg)
-
 - A new agent, Fetch, that is capable of mobile manipulation tasks.
 - A new example application, `open_loop_control_fetch`, which demonstrates our Fetch agent performing a simple mobile manipulation task.
 
 ![fetch](https://user-images.githubusercontent.com/2341965/229025943-34aa91e2-acf0-46ae-aa81-2a49424897e6.jpg)
+
+- A new scene that is intended for debugging, `starter_content_0000`, which loads very quickly and is suitable for simple manipulation and navigation tasks.
+
+![starter_content_0000](https://user-images.githubusercontent.com/2341965/229026660-e78a8459-5263-4683-be30-50fb45aae2cb.jpg)
 
 - Improved behavior when running the `SpearSim` executable with no additional arguments. The default behavior is now an interactive navigation mode, where a user can navigate around a the `kujiale_0000` scene.
 - A new tool, `run_executable`, which launches `SpearSim` in interactive navigation mode and loads a user-specified scene.
