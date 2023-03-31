@@ -1,13 +1,5 @@
 # Getting Started
 
-## Minimum system specifications
-
-The minimum hardware and software specifications for the Unreal Engine are given [here](http://docs.unrealengine.com/4.26/en-US/Basics/RecommendedSpecifications).
-
-## Precompiled binaries
-
-The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with one of our indoor scenes. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments. See our latest release notes for download links.
-
 ## Working with multiple scenes
 
 If you'd like to work with multiple scenes, you'll need to download them separately. See our latest release notes for download links. You'll also need to use one of our command-line tools, which means you'll need to follow the steps below.
