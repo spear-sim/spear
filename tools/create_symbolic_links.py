@@ -17,6 +17,11 @@ if __name__ == "__main__":
     parser.add_argument("--third_party_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
     args = parser.parse_args()
 
+    assert os.path.exists(args.unreal_engine_dir)
+    assert os.path.exists(args.unreal_project_dir)
+    assert os.path.exists(args.unreal_plugins_dir)
+    assert os.path.exists(args.third_party_dir)
+
     starter_content_dir = os.path.realpath(os.path.join(args.unreal_engine_dir, "Samples", "StarterContent", "Content", "StarterContent"))
     unreal_project_dir  = os.path.realpath(args.unreal_project_dir)
     unreal_plugins_dir  = os.path.realpath(args.unreal_plugins_dir)
