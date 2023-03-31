@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_iterations_per_episode", type=int, default=500)
     parser.add_argument("--episodes_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "test_episodes.csv")))
-    parser.add_argument("--policy_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "models", "test.tflite")))
+    parser.add_argument("--policy_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "trained_policy.tflite")))
     parser.add_argument("--eval_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "eval")))
     parser.add_argument("--rendering_mode", default="baked")
     parser.add_argument("--create_videos", action="store_true")
