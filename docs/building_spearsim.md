@@ -2,11 +2,11 @@
 
 ## Assumptions
 
-We will assume for simplicity that you are developing on macOS, although most of these steps map straightforwardly across platforms. We will also assume that you're using Anaconda Python to manage your Python environment, and you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package installed, as described in our top-level [README](http://github.com/isl-org/spear). All `cd` commands in this tutorial are specified relative to the top-level repository directory.
+We will assume for simplicity that you are developing on macOS, although most of these steps map straightforwardly across platforms. We will also assume that you're using Anaconda Python to manage your Python environment, and you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package installed, as described in our [Getting Started](getting_started.md) tutorial. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
 
 ## Install the Unreal Engine
 
-We recommend installing the Unreal Engine version 4.26 via the Epic Games Launcher, rather than building it from source. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure you select _Editor symbols for debugging_ from the list of optional components.
+We recommend installing the Unreal Engine version 4.26 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure you select _Editor symbols for debugging_ from the list of optional components.
 
 If you're building on Linux, you will need to build the Unreal Engine from source. See [this tutorial](https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Linux/BeginnerLinuxDeveloper/SettingUpAnUnrealWorkflow/) for details.
 
@@ -31,16 +31,7 @@ If you're building on Windows, you will need to run this tool with administrator
 
 ```console
 cd tools
-python create_symbolic_links.py
-```
-
-## Generate a config file
-
-Our `SpearSim` project assumes that all of its required parameters are declared in a configuration file. We usually launch our projects via the `spear` Python package, which takes care of generating the appropriate configuration file automatically. However, a valid configuration file is also required when building our projects, and we must generate this configuration file explicitly before attempting to build. To generate a configuration file, run the following command-line tool.
-
-```console
-cd tools
-python generate_config.py
+python create_symbolic_links.py --unreal_engine_dir path/to/UE_4.26
 ```
 
 ## Build the `SpearSim` executable
@@ -52,19 +43,13 @@ We build the `SpearSim` executable as follows.
 path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
 ```
 
-This step will build a standalone executable at the following path. This executable is ready to use with any of our example applications.
+Depending on your platform, this step will build an executable at different paths.
 
 ```
-cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app
+Windows: cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
+Mac:     cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app
+Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim.sh
 ```
-
-If you're running on Windows, you need to use the executable that is built at the following path.
-
-```
-cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
-```
-
-This executable ensures that `stdout` output is routed correctly to the Windows terminal.
 
 ### Helpful command-line options
 
