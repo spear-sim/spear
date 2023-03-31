@@ -1,4 +1,4 @@
-# Imitation learning with OpenBot
+# Imitation Learning with OpenBot
 
 In this example application, we demonstrate how to collect training data that can be plugged into the [OpenBot](http://www.openbot.org) framework and used to train a navigation policy.
 
