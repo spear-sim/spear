@@ -6,7 +6,7 @@ If you'd like to work with multiple scenes, you'll need to download them separat
 
 ### Clone this repository including submodules
 
-Our next step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following commands.
+The first step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following commands.
 
 ```console
 git clone --recurse-submodules https://github.com/isl-org/spear path/to/spear
@@ -18,7 +18,7 @@ git checkout v0.2.0
 
 ### Install the `spear` Python package
 
-Our next step is to install the `spear` Python package as follows.
+The next step is to install the `spear` Python package as follows.
 
 ```console
 # create environment
@@ -60,7 +60,7 @@ In typical use cases, you will need to configure the behavior of SPEAR before yo
 
 ### Running an example application
 
-We are now ready to run an example application.
+You are now ready to run an example application.
 
 ```console
 python examples/getting_started/run.py
