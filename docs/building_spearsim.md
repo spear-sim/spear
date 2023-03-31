@@ -47,7 +47,7 @@ Depending on your platform, this step will build an executable at different path
 
 ```
 Windows: cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
-Mac:     cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app
+macOS:   cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app
 Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim.sh
 ```
 
