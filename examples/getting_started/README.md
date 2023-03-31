@@ -2,7 +2,7 @@
 
 In this example application, we demonstrate how to control a simple sphere agent or an OpenBot agent and obtain egocentric visual observations.
 
-Before running this example, rename `user_config.yaml.example` to `user_config.yaml` and modify the contents appropriately for your system, as described in our top-level [README](http://github.com/isl-org/spear).
+Before running this example, rename `user_config.yaml.example` to `user_config.yaml` and modify the contents appropriately for your system, as described in our [Getting Started](../../docs/getting_started.md) tutorial.
 
 ### Important configuration options
 
