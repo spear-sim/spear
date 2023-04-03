@@ -48,7 +48,7 @@ python tools/run_executable.py --executable path/to/executable --paks_dir path/t
 Depending on your platform, you will need to specify the following path to your `--executable`.
 
 ```
-Windows: path/to/SpearSim-v0.2.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
+Windows: path/to/SpearSim-v0.2.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
 macOS:   path/to/SpearSim-Mac-Shipping.app
 Linux:   path/to/SpearSim-v0.2.0-Linux-Shipping/SpearSim.sh
 ```
