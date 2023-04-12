@@ -6,9 +6,9 @@ SIMULATION_CONTROLLER:
   URDFBOT_AGENT:
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_POSITION_X: -530.0
-    SPAWN_POSITION_Y: 200.0
-    SPAWN_POSITION_Z: 0.0
+    SPAWN_POSITION_X: -466.0
+    SPAWN_POSITION_Y: 150.0
+    SPAWN_POSITION_Z: 2.0
     SPAWN_PITCH: 0.0
     SPAWN_YAW: -90.0
     SPAWN_ROLL: 0.0

@@ -19,10 +19,10 @@ arm_poses = {
     "diagonal30": np.array([-1.06595, -0.22184, 1.53448, 1.46076, -0.84995, 1.36904, 1.90996]),
     "diagonal45": np.array([-1.11479, -0.0685, 1.5696, 1.37304, -0.74273, 1.3983, 1.79618]),
     "horizontal": np.array([-1.43016, 0.20965, 1.86816, 1.77576, -0.27289, 1.31715, 2.01226]),
-    "horizontal_high": np.array([-0.94121, -0.30, 1.55186, 1.25672, -0.93218, 0.0, -0.2]),
+    "horizontal_high": np.array([-0.94121, -0.60, 1.55186, 1.25672, -0.93218, 0.0, -0.2]),
 }
 
-def get_action(move_forward=0.0, move_right=0.0, gripper_force=50.0, arm_pose_blend_weights={"init": 1.0}):
+def get_action(move_forward=0.0, move_right=0.0, gripper_force=1.0, arm_pose_blend_weights={"init": 1.0}):
     action = {}
 
     # base joints
@@ -66,34 +66,39 @@ def get_actions_for_starter_content_0000():
     # hold target
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(gripper_force=-100.0), index=[0])])
+            [df, pd.DataFrame(get_action(gripper_force=-1.0), index=[0])])
 
     # rotate base
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_right=0.009, gripper_force=-100.0), index=[0])])
+            [df, pd.DataFrame(get_action(move_right=0.0095, gripper_force=-1.0), index=[0])])
 
     # move forward while moving arm
-    for i in range(0, 100):
+    for i in range(0, 50):
         df = pd.concat(
             [df,
-             pd.DataFrame(get_action(move_forward=0.01, gripper_force=-100.0, arm_pose_blend_weights={"init": (100.0 - i) / 100.0, "diagonal45": i / 100.0}),
+             pd.DataFrame(get_action(move_forward=0.01, gripper_force=-1.0, arm_pose_blend_weights={"init": (50.0 - i) / 50.0, "vertical": i / 50.0}),
                           index=[0])])
+
+    # move forward
+    for i in range(0, 50):
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(move_forward=0.01, gripper_force=-1.0, arm_pose_blend_weights={"vertical": 1.0}), index=[0])])
 
     # release gripper
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(gripper_force=50, arm_pose_blend_weights={"diagonal45": 1.0}), index=[0])])
+            [df, pd.DataFrame(get_action(gripper_force=0, arm_pose_blend_weights={"vertical": 1.0}), index=[0])])
 
     # move back and fold arm
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=-0.01, arm_pose_blend_weights={"diagonal45": (100.0 - i) / 100.0, "default": i / 100.0}), index=[0])])
+            [df, pd.DataFrame(get_action(move_forward=-0.01, arm_pose_blend_weights={"vertical": (100.0 - i) / 100.0, "default": i / 100.0}), index=[0])])
 
     # keep folding arm
     for i in range(30, 100):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=0, arm_pose_blend_weights={"diagonal45": (100 - i) / 100.0, "default": i / 100.0}), index=[0])])
+            [df, pd.DataFrame(get_action(move_forward=0, arm_pose_blend_weights={"vertical": (100 - i) / 100.0, "default": i / 100.0}), index=[0])])
 
     # stay still
     for i in range(0, 30):
@@ -105,47 +110,41 @@ def get_actions_for_kujiale_0000():
     df = pd.DataFrame()
 
     # move to target object
-    for i in range(0, 50):
-        df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=0.0115, move_right=0.001), index=[0])])
-    for i in range(0, 50):
-        df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=0.0115, move_right=-0.001), index=[0])])
-    for i in range(0, 13):
+    for i in range(0, 100):
         df = pd.concat(
             [df, pd.DataFrame(get_action(move_forward=0.01), index=[0])])
 
     # hold target
     for i in range(0, 10):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(gripper_force=-100.0), index=[0])])
+            [df, pd.DataFrame(get_action(gripper_force=-1.0), index=[0])])
 
     # move backward
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=-0.01, gripper_force=-100.0), index=[0])])
+            [df, pd.DataFrame(get_action(move_forward=-0.01, gripper_force=-1.0), index=[0])])
 
     # rotate base
     for i in range(0, 12):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_right=-0.009, gripper_force=-100.0), index=[0])])
+            [df, pd.DataFrame(get_action(move_right=-0.009, gripper_force=-1.0), index=[0])])
 
     # move and change arm pose
     for i in range(0, 60):
         df = pd.concat(
             [df, pd.DataFrame(
-                get_action(move_forward=0.009, gripper_force=-100.0, arm_pose_blend_weights={"init": (60.0 - i) / 60.0, "horizontal_high": i / 60.0}),
+                get_action(move_forward=0.009, gripper_force=-1.0, arm_pose_blend_weights={"init": (60.0 - i) / 60.0, "horizontal_high": i / 60.0}),
                 index=[0])])
 
     # move to target pose
     for i in range(0, 40):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=0.009, gripper_force=-100.0, arm_pose_blend_weights={"horizontal_high": 1}), index=[0])])
+            [df, pd.DataFrame(get_action(move_forward=0.009, gripper_force=-1.0, arm_pose_blend_weights={"horizontal_high": 1}), index=[0])])
 
     # keep target still
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(gripper_force=-0, arm_pose_blend_weights={"horizontal_high": 1}), index=[0])])
+            [df, pd.DataFrame(get_action(gripper_force=0, arm_pose_blend_weights={"horizontal_high": 1}), index=[0])])
 
     # withdraw base
     for i in range(0, 20):
