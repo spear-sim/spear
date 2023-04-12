@@ -153,6 +153,7 @@ if __name__ == '__main__':
         spear.remove_path(unreal_project_content_shared_dir)
 
         print("[SPEAR | build_pak_files.py] Done.")
+    # build pak file from uncooked contents in SpearSim project
     else:
         # see https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
         cmd = [
@@ -172,3 +173,34 @@ if __name__ == '__main__':
         ]
         print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
+
+        pak_dirs = [
+            os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Content")),
+            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content"))
+        ]
+
+        txt_file = os.path.realpath(os.path.join(output_dir, "SpearSim-" + args.version_tag + "-" + platform + ".txt"))
+        pak_file = os.path.realpath(os.path.join(output_dir, "SpearSim-" + args.version_tag + "-" + platform + ".pak"))
+
+        for i, pak_dir in enumerate(pak_dirs):
+            with open(txt_file, mode="w" if i==0 else "a") as f:
+                for content_file in glob.glob(os.path.realpath(os.path.join(pak_dir, "**", "*.*")), recursive=True):
+                    assert content_file.startswith(unreal_project_cooked_dir)
+                    content_file = content_file.replace('\\', "/")
+                    mount_file = posixpath.join("..", "..", ".." + content_file.split(platform + "NoEditor")[1])
+                    f.write(f'"{content_file}" "{mount_file}" "" \n')
+
+        # construct command to generate the final pak file
+        cmd = [
+            unreal_pak_bin,
+            pak_file,
+            "-create=" + txt_file,
+            "-platform=" + platform,
+            "-multiprocess",
+            "-compress"
+        ]
+        print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+        assert os.path.exists(pak_file)
+        print(f"[SPEAR | build_pak_files.py] Successfully built {pak_file}")
