@@ -24,6 +24,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
+    if args.skip_create_symlinks:
+        assert args.scene_ids is not None
+    else:
+        assert os.path.exists(args.perforce_content_dir)
 
     unreal_project_dir         = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
     uproject                   = os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))
@@ -51,14 +55,16 @@ if __name__ == '__main__':
     # once we know the platform, set our cooked dir
     unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform + "NoEditor"))
 
+    # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the user's Perforce workspace.
+    # Instead, we want this path to refer to the symlinked version inside the user's unreal project directory.
+    unreal_project_content_scenes_dir = os.path.join(unreal_project_content_dir, "Scenes")
+
     # We use different strategies for setting scene_ids, depending on if we're creating symlinks or not.
     # If we're not creating symlinks, then the user must specify args.scene_ids. If we are creating
     # symlinks, then we get a list of candidate scene_ids from Perforce and optionally filter.
     if args.skip_create_symlinks:
-        assert args.scene_ids is not None
         scene_ids = [args.scene_ids]
     else:
-        assert os.path.exists(args.perforce_content_dir)
         perforce_content_scenes_dir = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
         assert os.path.exists(perforce_content_scenes_dir)
 
@@ -84,11 +90,6 @@ if __name__ == '__main__':
 
         print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_shared_dir} -> {perforce_content_shared_dir}")
         os.symlink(perforce_content_shared_dir, unreal_project_content_shared_dir)
-
-    # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the user's Perforce workspace.
-    # Instead, we want this path to refer to the symlinked version inside the user's unreal project directory.
-    unreal_project_content_scenes_dir = os.path.join(unreal_project_content_dir, "Scenes")
-    assert os.path.exists(unreal_project_content_scenes_dir)
 
     for scene_id in scene_ids:
 
