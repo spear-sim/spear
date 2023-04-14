@@ -66,7 +66,7 @@ if __name__ == '__main__':
         scene_ids = [ os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) ]
         assert "starter_content_0000" in scene_ids
         scene_ids.remove("starter_content_0000")
-        assert len(scene_ids) == 1      # there should only be one other scene, other than starter_content_0000
+        assert len(scene_ids) == 1      # apart from starter_content_0000, there should only be one other scene.
         assert args.scene_ids in scene_ids
 
     # scenario wherein we want to create symlinks
@@ -116,6 +116,11 @@ if __name__ == '__main__':
 
             print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_scene_dir} -> {perforce_content_scene_dir}")
             os.symlink(perforce_content_scene_dir, unreal_project_content_scene_dir)
+
+            # Apart from starter_content_0000, there should only be one other scene.
+            project_scene_ids = [ os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) ]
+            assert "starter_content_0000" in project_scene_ids
+            assert len(project_scene_ids) == 2
 
         # see https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
         cmd = [
