@@ -68,7 +68,7 @@ if __name__ == '__main__':
         perforce_content_scenes_dir = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
         assert os.path.exists(perforce_content_scenes_dir)
 
-        ignore_names = [".DS_STORE"]
+        ignore_names = [".DS_Store"]
         scene_ids = [ os.path.basename(x) for x in os.listdir(perforce_content_scenes_dir) if x not in ignore_names ]
         assert len(scene_ids) > 0
         if args.scene_ids is not None:
@@ -117,7 +117,7 @@ if __name__ == '__main__':
             os.symlink(perforce_content_scene_dir, unreal_project_content_scene_dir)
 
         # Now that we have created a symlink, our Unreal project should contain exactly two scenes: starter_content_0000 and scene_id
-        ignore_names = [".DS_STORE"]
+        ignore_names = [".DS_Store"]
         unreal_project_scenes = { os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) if x not in ignore_names }
         assert unreal_project_scenes == {"starter_content_0000", scene_id}
 

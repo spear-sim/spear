@@ -180,7 +180,7 @@ void SimulationController::worldBeginPlayEventHandler()
     physics_settings->MaxContactOffset = Config::get<float>("SIMULATION_CONTROLLER.MAX_CONTACT_OFFSET");
 
     // Check that the physics substepping parameters match our deired simulation step time.
-    // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep
+    // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep for more details.
     if (physics_settings->bSubstepping) {
         ASSERT(Config::get<float>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps);
     }

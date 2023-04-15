@@ -239,7 +239,7 @@ if __name__ == "__main__":
     print("[SPEAR | build_third_party_libs.py] Built rpclib successfully.")
 
     #
-    # yamp-cpp
+    # yaml-cpp
     #
 
     print("[SPEAR | build_third_party_libs.py] Building yaml-cpp...")

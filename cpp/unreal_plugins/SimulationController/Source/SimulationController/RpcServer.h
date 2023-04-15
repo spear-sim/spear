@@ -80,7 +80,7 @@ namespace detail
 
 // The purpose of this MoveWrapper class and moveHandler(...) function are to trick boost::asio into
 // accepting move-only handlers. If the handler was actually copied, it would result in a link error.
-// See https://stackoverflow.com/a/22891509
+// See https://stackoverflow.com/a/22891509 for more details.
 template <typename TFunctor>
 struct MoveWrapper : TFunctor
 {
@@ -125,7 +125,6 @@ struct FunctionWrapper<TReturn (*)(TArgs...)>
         };
     }
 
-    //
     // This function wraps an "inner" functor in an "outer" function with an equivalent signature. The outer
     // function posts the inner functor into a work queue represented by boost::asio::io_context, waits for the
     // inner functor to finish executing, and returns the result. This design enables precise control over
@@ -138,7 +137,6 @@ struct FunctionWrapper<TReturn (*)(TArgs...)>
     // function to run at a specific time on the game thread, we simply call runSync() from the game thread,
     // which calls boost::asio::io_context::run(). Doing so will run all previously queued user-specified
     // functions that have been bound to the rpc::server using wrapSync(...).
-    //
 
     template <typename TFunctor>
     static auto wrapSync(boost::asio::io_context& io_context, TFunctor&& functor)
