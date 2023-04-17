@@ -34,6 +34,14 @@ cd tools
 python create_symbolic_links.py --unreal_engine_dir path/to/UE_4.26
 ```
 
+Depending in your platform, `path/to/UE_4.26` is:
+
+```
+Windows: 
+macOS: /Users/Shared/Epic_Games/UE_4.26
+Linux:
+````
+
 ## Build the `SpearSim` executable
 
 We build the `SpearSim` executable as follows.
