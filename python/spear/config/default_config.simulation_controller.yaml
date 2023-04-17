@@ -219,6 +219,7 @@ SIMULATION_CONTROLLER:
 
     USE_SHARED_MEMORY: True       # write image data to shared memory for fast interprocess communication
     SKIP_READ_SURFACE_DATA: False # skip reading image data from the GPU, useful for debugging and benchmarking
+
     SEMANTIC_TAGS: {}
 
     # We have found these values achieve a good trade-off between image quality and
@@ -231,7 +232,7 @@ SIMULATION_CONTROLLER:
     FINAL_COLOR_OVERRIDE_AUTO_EXPOSURE_SPEED_DOWN: True
     FINAL_COLOR_AUTO_EXPOSURE_SPEED_DOWN: 20.0                          # ClampMin=0.02, UIMax=20.0
     FINAL_COLOR_OVERRIDE_INDIRECT_LIGHTING_INTENSITY: True
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 0.0                        # set to 0.0 for raytracing, set to 1.0 for baked
+    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0                        # set to 0.0 for raytracing, set to 1.0 for baked
     FINAL_COLOR_USE_RAYTRACING_IF_ENABLED: True                         # set to True to use ray-tracing features
     FINAL_COLOR_OVERRIDE_RAYTRACING_GI: True
     FINAL_COLOR_RAYTRACING_GI_TYPE: "BruteForce"                        # set to "BruteForce" when using ray-tracing

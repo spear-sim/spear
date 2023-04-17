@@ -30,9 +30,6 @@ SIMULATION_CONTROLLER:
       IMAGE_WIDTH: 1024
       FOV: 90.0
 
-  CAMERA_SENSOR:
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
-
   VISUALIZER:
     ACTOR_NAME: "CameraActor"
     SPAWN_CAMERA: False

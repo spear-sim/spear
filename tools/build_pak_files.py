@@ -133,7 +133,7 @@ if __name__ == '__main__':
             "-ddc=InstalledDerivedDataBackendGraph", # use the default cache location for installed (i.e., not source) builds of the engine
             "-unversioned",                          # save all of the cooked packages without versions
             "-stdout",                               # ensure log output is written to the terminal 
-            "-fullstdoutlogoutput"                   # ensure log output is written to the terminal
+            "-fullstdoutlogoutput",                  # ensure log output is written to the terminal
             "-nologtimes"                            # don't print timestamps next to log messages twice
         ]
         print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")

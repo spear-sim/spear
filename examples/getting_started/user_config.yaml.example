@@ -76,6 +76,3 @@ SIMULATION_CONTROLLER:
   VISUALIZER:
     ACTOR_NAME: "DebugCameraActor"
     SPAWN_CAMERA: False
-
-  CAMERA_SENSOR:
-    FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY: 1.0 # set to 0.0 for raytracing, set to 1.0 for baked
