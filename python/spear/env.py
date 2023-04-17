@@ -150,6 +150,7 @@ class Env(gym.Env):
         if self._config.SPEAR.LAUNCH_MODE == "uproject":
             launch_executable = self._config.SPEAR.UNREAL_EDITOR_EXECUTABLE
             launch_args.append(self._config.SPEAR.UPROJECT)
+            launch_args.append("-game") # launch the game using uncooked content
         elif self._config.SPEAR.LAUNCH_MODE == "standalone_executable":
             launch_executable = self._config.SPEAR.STANDALONE_EXECUTABLE
         else:
@@ -174,13 +175,15 @@ class Env(gym.Env):
 
         assert os.path.exists(launch_executable_internal)
 
-        launch_args.append("-game")
         launch_args.append("-windowed")
-        launch_args.append("-novsync")
-        launch_args.append("-nosound")
         launch_args.append("-resx={}".format(self._config.SPEAR.WINDOW_RESOLUTION_X))
         launch_args.append("-resy={}".format(self._config.SPEAR.WINDOW_RESOLUTION_Y))
         launch_args.append("-graphicsadapter={}".format(self._config.SPEAR.GPU_ID))
+        launch_args.append("-nosound")
+        launch_args.append("-fileopenlog")         # generate a log of which files are opened in which order
+        launch_args.append("-stdout")              # ensure log output is written to the terminal 
+        launch_args.append("-fullstdoutlogoutput") # ensure log output is written to the terminal
+        launch_args.append("-nologtimes")          # don't print timestamps next to log messages twice
 
         if self._config.SPEAR.RENDER_OFFSCREEN:
             launch_args.append("-renderoffscreen")
@@ -188,13 +191,6 @@ class Env(gym.Env):
         if len(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE) > 0:
             launch_args.append("-log={}".format(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
        
-        # on Windows, we need to pass in extra command-line parameters to enable DirectX 12
-        # and so that calls to UE_Log and writes to std::cout are visible on the command-line
-        if sys.platform == "win32":
-            launch_args.append("-dx12")            
-            launch_args.append("-stdout")
-            launch_args.append("-fullstdoutlogoutput")
-
         launch_args.append("-config_file={}".format(temp_config_file))
 
         for a in self._config.SPEAR.CUSTOM_COMMAND_LINE_ARGUMENTS:

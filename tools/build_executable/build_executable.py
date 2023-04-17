@@ -148,7 +148,7 @@ if __name__ == "__main__":
     print(f"[SPEAR | build_executable.py] Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
-    # copy our custom ini file
+    # copy our custom ini file, used to update the default map for public release executables
     shutil.copyfile(config_file_src, config_file_dest)
     print(f"[SPEAR | build_executable.py] Copied {config_file_src} to {config_file_dest}")
 
@@ -157,16 +157,17 @@ if __name__ == "__main__":
         run_uat_script,
         "BuildCookRun",
         "-project=" + os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject")),
-        "-build",
-        "-cook",
-        "-stage",
-        "-package",
-        "-archive",
-        "-pak",
+        "-build",            # build C++ executable
+        "-cook",             # prepare cross-platform content for a specific platform (e.g., compile shaders)
+        "-stage",            # copy C++ executable to a staging directory (required for -pak)
+        "-package",          # prepare staged executable for distribution on a specific platform (e.g., runs otool and xcrun on macOS)
+        "-archive",          # copy staged executable to -archivedirectory (on some platforms this will also move directories around relative to the executable)
+        "-pak",              # generate a pak file for cooked content and configure executable so it can load pak files
+        "-iterativecooking", # only cook content that needs to be updated
         "-targetplatform=" + target_platform,
         "-target=SpearSim",
         "-archivedirectory=" + archive_dir,
-        "-clientconfig=" + build_config
+        "-clientconfig=" + build_config,
     ]
     print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)

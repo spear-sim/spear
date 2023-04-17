@@ -99,23 +99,18 @@ if __name__ == '__main__':
     # set up launch executable and command-line arguments
     launch_args = []
 
-    launch_args.append("-game")
     launch_args.append("-windowed")
-    launch_args.append("-novsync")
-    launch_args.append("-nosound")
     launch_args.append("-resx={}".format(config.SPEAR.WINDOW_RESOLUTION_X))
     launch_args.append("-resy={}".format(config.SPEAR.WINDOW_RESOLUTION_Y))
     launch_args.append("-graphicsadapter={}".format(config.SPEAR.GPU_ID))
+    launch_args.append("-nosound")
+    launch_args.append("-fileopenlog")         # generate a log of which files are opened in which order
+    launch_args.append("-stdout")              # ensure log output is written to the terminal 
+    launch_args.append("-fullstdoutlogoutput") # ensure log output is written to the terminal
+    launch_args.append("-nologtimes")          # don't print timestamps next to log messages twice
 
     if len(config.SPEAR.UNREAL_INTERNAL_LOG_FILE) > 0:
         launch_args.append("-log={}".format(config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
-   
-    # on Windows, we need to pass in extra command-line parameters to enable DirectX 12
-    # and so that calls to UE_Log and writes to std::cout are visible on the command-line
-    if sys.platform == "win32":
-        launch_args.append("-dx12")            
-        launch_args.append("-stdout")
-        launch_args.append("-fullstdoutlogoutput")
 
     launch_args.append("-config_file={}".format(temp_config_file))
 

@@ -127,15 +127,14 @@ if __name__ == '__main__':
             uproject,
             "-run=Cook",
             "-targetplatform=" + platform + "NoEditor",
-            "-fileopenlog",
-            "-ddc=InstalledDerivedDataBackendGraph",
-            "-unversioned",
-            "-stdout",
-            "-fullstdoutlogoutput",
-            "-crashforuat",
-            "-unattended",
-            "-nologtimes",
-            "-utf8output"
+            "-unattended",                           # don't require any user input
+            "-iterate",                              # only cook content that needs to be updated
+            "-fileopenlog",                          # generate a log of which files are opened in which order
+            "-ddc=InstalledDerivedDataBackendGraph", # use the default cache location for installed (i.e., not source) builds of the engine
+            "-unversioned",                          # save all of the cooked packages without versions
+            "-stdout",                               # ensure log output is written to the terminal 
+            "-fullstdoutlogoutput"                   # ensure log output is written to the terminal
+            "-nologtimes"                            # don't print timestamps next to log messages twice
         ]
         print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
