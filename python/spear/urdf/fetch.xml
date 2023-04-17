@@ -373,7 +373,7 @@
         <parent link="arm_link_1"/>
         <child link="arm_link_2"/>
         <axis xyz="1 0 0"/>
-        <dynamics type="position" spring="50.0" damping="5.0"/>
+        <dynamics type="position" spring="100.0" damping="10.0"/>
         <limit effort="76.94" velocity="1.571"/>
     </joint>
 
@@ -401,7 +401,7 @@
         <parent link="arm_link_2"/>
         <child link="arm_link_3"/>
         <axis xyz="0 1 0"/>
-        <dynamics type="position" spring="10.0" damping="1.0"/>
+        <dynamics type="position" spring="50.0" damping="1.0"/>
         <limit effort="66.18" lower="-2.251" upper="2.251" velocity="1.521"/>
     </joint>
 
@@ -429,7 +429,7 @@
         <parent link="arm_link_3"/>
         <child link="arm_link_4"/>
         <axis xyz="1 0 0"/>
-        <dynamics type="position" spring="50.0" damping="5.0"/>
+        <dynamics type="position" spring="100.0" damping="10.0"/>
         <limit effort="29.35" velocity="1.571"/>
     </joint>
 
@@ -457,7 +457,7 @@
         <parent link="arm_link_4"/>
         <child link="arm_link_5"/>
         <axis xyz="0 1 0"/>
-        <dynamics type="position" spring="10.0" damping="1.0"/>
+        <dynamics type="position" spring="100.0" damping="10.0"/>
         <limit effort="25.7" lower="-2.16" upper="2.16" velocity="2.268"/>
     </joint>
 
@@ -486,7 +486,7 @@
         <child link="arm_link_6"/>
         <axis xyz="1 0 0"/>
         <limit effort="7.36" velocity="2.268"/>
-        <dynamics type="position" spring="50.0" damping="5.0"/>
+        <dynamics type="position" spring="100.0" damping="10.0"/>
     </joint>
 
     <link name="gripper_link">

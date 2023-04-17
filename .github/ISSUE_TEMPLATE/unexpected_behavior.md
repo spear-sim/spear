@@ -1,6 +1,6 @@
 ---
-name: Are you experiencing unexpected behavior?
-about: Use this template as a starting point for submitting issues that describe some kind of unexpected behavior.
+name: Unexpected behavior
+about: Use this template as a starting point for submitting SPEAR issues that describe some kind of unexpected behavior.
 title: ''
 labels: ''
 assignees: ''
@@ -11,7 +11,9 @@ assignees: ''
 
 #### What commit of the `spear` repository am I on? Am I synced to a specific tag, or am I synced to the head of the `main` branch?
 
-#### What `SpearSim` executable am I using? Did I build it myself or download it? If I downloaded it, does my issue go away when I sync my code to the tag corresponding to my `SpearSim` executable?
+#### What `SpearSim` executable am I using? Did I build it myself or download it? If I downloaded it, is my code synced to the correct tag?
+
+#### If I built my own executable, what were the command-line options I used to build it? Does my issue go away if I download a pre-compiled executable and sync my code to the correct tag?
 
 #### What am I attempting to do, what do I expect to happen, and what actually happened?
 

@@ -17,7 +17,7 @@ import time
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
 # However, in this example, we are teleporting the camera in an incoherent way. Hence, we implement a 
 # CustomEnv that can render multiple internal frames per step(), so that Unreal Engine's rendering
-# system is  warmed up by the time we get observations. Doing this can improve overall image quality
+# system is warmed up by the time we get observations. Doing this can improve overall image quality
 # due to Unreal's strategy of accumulating rendering information across multiple frames. These extra
 # frames are not necessary in typical embodied AI scenarios, but are useful when teleporting a camera.
 class CustomEnv(spear.Env):
@@ -94,6 +94,13 @@ if __name__ == "__main__":
     if args.num_internal_steps is not None:
         num_internal_steps = args.num_internal_steps
 
+    # create dir for storing images
+    if not args.benchmark:
+        for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+            render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
+            shutil.rmtree(render_pass_dir, ignore_errors=True)
+            os.makedirs(render_pass_dir)
+
     # iterate over all poses
     prev_scene_id = ""
     for pose in df.to_records():
@@ -104,13 +111,6 @@ if __name__ == "__main__":
             # close the previous Env
             if prev_scene_id != "":
                 env.close()
-
-            # create dir for storing images
-            if not args.benchmark:
-                for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-                    render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
-                    shutil.rmtree(render_pass_dir, ignore_errors=True)
-                    os.makedirs(render_pass_dir)
 
             # change config based on current scene
             config.defrost()

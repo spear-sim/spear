@@ -103,7 +103,6 @@ if __name__ == '__main__':
     launch_args.append("-windowed")
     launch_args.append("-novsync")
     launch_args.append("-nosound")
-    launch_args.append("-notexturestreaming")
     launch_args.append("-resx={}".format(config.SPEAR.WINDOW_RESOLUTION_X))
     launch_args.append("-resy={}".format(config.SPEAR.WINDOW_RESOLUTION_Y))
     launch_args.append("-graphicsadapter={}".format(config.SPEAR.GPU_ID))

@@ -178,7 +178,6 @@ class Env(gym.Env):
         launch_args.append("-windowed")
         launch_args.append("-novsync")
         launch_args.append("-nosound")
-        launch_args.append("-notexturestreaming")
         launch_args.append("-resx={}".format(self._config.SPEAR.WINDOW_RESOLUTION_X))
         launch_args.append("-resy={}".format(self._config.SPEAR.WINDOW_RESOLUTION_Y))
         launch_args.append("-graphicsadapter={}".format(self._config.SPEAR.GPU_ID))
@@ -242,7 +241,7 @@ class Env(gym.Env):
                 connected = True
             except:
                 # Client may not clean up resources correctly in this case, so we clean things up explicitly.
-                # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
+                # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more details.
                 self._close_client_server_connection()
 
         # otherwise try to connect repeatedly, since the RPC server might not have started yet
@@ -251,7 +250,7 @@ class Env(gym.Env):
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
             while not connected and elapsed_time_seconds < self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS:
-                # See https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
+                # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
                 status = self._process.status()
                 if status not in ["disk-sleep", "running", "sleeping", "stopped"]:
                     print("[SPEAR | env.py] ERROR: Unrecognized process status: " + status)
@@ -268,7 +267,7 @@ class Env(gym.Env):
                     connected = True
                 except:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
-                    # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14
+                    # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more details.
                     self._close_client()
                 time.sleep(self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
