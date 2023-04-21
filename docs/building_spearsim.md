@@ -16,12 +16,14 @@ In order to build the `SpearSim` project on macOS, you need to install a specifi
 
 ## Build third-party C++ libraries
 
-Our `SpearSim` project requires you to build several third-party C++ libraries. We provide a command-line tool for this purpose. You can adjust the `--num_parallel_jobs` argument for your system.
+Our `SpearSim` project requires you to build several third-party C++ libraries. We provide a command-line tool for this purpose.
 
 ```console
 cd tools
-python build_third_party_libs.py --num_parallel_jobs 8
+python build_third_party_libs.py
 ```
+
+This command-line tool accepts an optional `--num_parallel_jobs` argument. This argument can be used to specify the number of parallel jobs that `cmake` should use when building third-party libraries.
 
 ## Create symbolic links
 
@@ -34,13 +36,21 @@ cd tools
 python create_symbolic_links.py --unreal_engine_dir path/to/UE_4.26
 ```
 
+The `--unreal_engine_dir` argument must point to the top-level directory where you installed (or built) the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're building on Linux, you must specify the path to the top-level `UnrealEngine` GitHub repository.
+
+```
+Windows: C:\Program Files\Epic Games\UE_4.26
+macOS:   /Users/Shared/Epic Games/UE_4.26
+Linux:   path/to/github/UnrealEngine
+```
+
 ## Build the `SpearSim` executable
 
 We build the `SpearSim` executable as follows.
 
 ```console
 # build, cook, stage, package, archive
-path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
+path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -iterativecooking -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
 ```
 
 Depending on your platform, this step will build an executable at different paths.
@@ -53,9 +63,10 @@ Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/Spear
 
 ### Helpful command-line options
 
-- You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`. After doing a complete `-build -cook -stage -package -archive`, you only need to `-cook` if you have edited the `.uproject` in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`
+- You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`. After doing a complete `-build -cook -stage -package -archive`, you only need to `-cook` if you have edited the project in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`
 - If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a special executable that is only required when cooking.
 - If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`.
+- If you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to the executable in `-archivedirectory`, you can specify `-skipbuild -skipcook`.
 - You can replace `Development` with `Shipping` to build a more optimized executable.
 - You can specify `-clean` to do a clean build.
 - You can specify `-verbose`, `-UbtArgs="-verbose"`, and `-UbtArgs="-VeryVerbose"` to see additional build details (e.g., the exact command-line arguments that Unreal uses when invoking the underlying compiler).
