@@ -8,15 +8,15 @@ We will assume for simplicity that you are developing on macOS, although most of
 
 We recommend installing the Unreal Engine version 4.26 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure you select _Editor symbols for debugging_ from the list of optional components.
 
-If you're building on Linux, you need to build the Unreal Engine from source. See [this tutorial](https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Linux/BeginnerLinuxDeveloper/SettingUpAnUnrealWorkflow/) for details.
+If you're building on Linux, you will need to build the Unreal Engine from source. See [this tutorial](https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Linux/BeginnerLinuxDeveloper/SettingUpAnUnrealWorkflow/) for details.
 
 ## Install XCode
 
-In order to build the `SpearSim` project on macOS, you need to install a specific version of XCode that matches your Unreal Engine version. For Unreal Engine version 4.26, we have verified that XCode 13.0 behaves as expected. See [this tutorial](https://github.com/botman99/ue4-xcode-vscode-mac) for details.
+If you're building on macOS, you will need to install a specific version of XCode that matches your Unreal Engine version. For Unreal Engine version 4.26, we have verified that XCode 13.0 behaves as expected. See [this tutorial](https://github.com/botman99/ue4-xcode-vscode-mac) for details.
 
 ## Install `clang` and `libc++`
 
-If you're building on Linux, you need to install `clang` and `libc++`.
+If you're building on Linux, you will need to install `clang` and `libc++`.
 
 ```console
 sudo apt install libc++-dev libc++abi-dev clang
@@ -37,7 +37,7 @@ This command-line tool accepts an optional `--num_parallel_jobs` argument. This 
 
 Our `SpearSim` project requires you to create several symbolic links. We provide a command-line tool for this purpose.
 
-If you're building on Windows, you need to run this tool with administrator privileges.
+If you're building on Windows, you will need to run this tool with administrator privileges.
 
 ```console
 cd tools
