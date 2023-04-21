@@ -60,7 +60,7 @@ You will also need to specify the following command-line arguments.
 
 The following command-line arguments are optional.
 
-  - `--vulkan_device_files` is an optional argument to force the Vulkan runtime to load a vendor-specific driver. Our `run_executable.py` script will set the `VK_ICD_FILENAMES` environment variable to whatever is passed into `--vulkan_device_files`. This argument may or may not be necessary, depending on your specific hardware setup. If you have already set the `VK_ICD_FILENAMES` environment variable before invoking `run_executable.py`, you do not need to specify this argument. If you have an NVIDIA GPU, you probably need to specify `/usr/share/vulkan/icd.d/nvidia_icd.json`.
+  - `--vulkan_device_files` is an optional argument to force the Vulkan runtime to load a vendor-specific driver. Our `run_executable.py` script will set the `VK_ICD_FILENAMES` environment variable to whatever is passed into `--vulkan_device_files`. This argument may or may not be necessary, depending on your specific hardware setup. If you have already set the `VK_ICD_FILENAMES` environment variable before invoking `run_executable.py`, you do not need to specify this argument. If you have an NVIDIA GPU, you probably need to specify `--vulkan_device_files /usr/share/vulkan/icd.d/nvidia_icd.json`.
 
 ## Programmatically interacting with SPEAR via Python
 
