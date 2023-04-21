@@ -58,6 +58,10 @@ You will also need to specify the following command-line arguments.
   - `--paks_dir` is the directory containing the scene data you downloaded.
   - `--scene_id` is the name of the scene you want to navigate around. It must be set to one of `starter_content_0000`, `kujiale_0000`, or `warehouse_0000`. If you specify `kujiale_0000`, you must also specify the argument `--map_id kujiale_0000_bake`.
 
+The following command-line arguments are optional.
+
+  - `--vulkan_device_files` is an optional argument to force the Vulkan runtime to load a vendor-specific driver. Our `run_executable.py` script will set the `VK_ICD_FILENAMES` environment variable to whatever is passed into `--vulkan_device_files`. This argument may or may not be necessary, depending on your specific hardware setup. If you have already set the `VK_ICD_FILENAMES` environment variable before invoking `run_executable.py`, you do not need to specify this argument. If you have an NVIDIA GPU, you probably need to specify `/usr/share/vulkan/icd.d/nvidia_icd.json`.
+
 ## Programmatically interacting with SPEAR via Python
 
 We provide several example applications that demonstrate how to programmatically interact with SPEAR via Python, and highlight what is currently possible with SPEAR. In order to run our example applications, you will need to follow the steps below.
@@ -65,6 +69,8 @@ We provide several example applications that demonstrate how to programmatically
 ### Configuring the behavior of SPEAR
 
 In typical use cases, you will need to configure the behavior of SPEAR before you interact with it. In each of our example applications, we include a configuration file named `user_config.yaml.example` to use as a starting point. To run each example application, you must rename this file to `user_config.yaml` and modify the contents appropriately for your system. In all cases, you will need to set the `SPEAR.STANDALONE_EXECUTABLE` parameter to the location of your `SpearSim` executable (see the note above for which executable to use, depending on your platform). Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
+
+If you're running on Linux, you may need to set the `SPEAR.VULKAN_DEVICE_FILES` parameter, which will be used to set the `VK_ICD_FILENAMES` environment variable before launching `SpearSim`. See above for a more detailed discussion.
 
 ### Running an example application
 
