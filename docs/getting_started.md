@@ -2,7 +2,7 @@
 
 ## Working with multiple scenes
 
-If you'd like to work with multiple scenes, you'll need to download them separately. See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.2.0) for download links. You'll also need to use one of our command-line tools, which means you'll need to follow the steps below.
+If you'd like to work with multiple scenes, you will need to download them separately. See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.2.0) for download links. You'll also need to use one of our command-line tools, which means you'll need to follow the steps below.
 
 ### Clone this repository including submodules
 
