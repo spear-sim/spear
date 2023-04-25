@@ -1,3 +1,4 @@
+/*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
@@ -47,3 +48,4 @@ private:
     std::unique_ptr<ImuSensor> imu_sensor_;
     std::unique_ptr<SonarSensor> sonar_sensor_;
 };
+*/

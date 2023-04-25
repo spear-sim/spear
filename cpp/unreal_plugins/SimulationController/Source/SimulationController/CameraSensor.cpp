@@ -195,11 +195,11 @@ CameraSensor::~CameraSensor()
         }
 
         ASSERT(render_pass.second.scene_capture_component_);
-        render_pass.second.scene_capture_component_->MarkPendingKill();
+        render_pass.second.scene_capture_component_->MarkAsGarbage();
         render_pass.second.scene_capture_component_ = nullptr;
 
         ASSERT(render_pass.second.texture_render_target_);
-        render_pass.second.texture_render_target_->MarkPendingKill();
+        render_pass.second.texture_render_target_->MarkAsGarbage();
         render_pass.second.texture_render_target_ = nullptr;
     }
     render_passes_.clear();
@@ -335,16 +335,17 @@ void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureCompon
     scene_capture_component->PostProcessSettings.RayTracingAORadius =
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_AO_RADIUS");
 
+    // NO LONGER PRESENT IN UE5
     // update raytracing reflections
-    scene_capture_component->PostProcessSettings.bOverride_ReflectionsType =
-        Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE");
+    //scene_capture_component->PostProcessSettings.bOverride_ReflectionsType =
+    //    Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE");
 
-    auto reflections_type = Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_REFLECTIONS_TYPE");
-    if (reflections_type == "RayTracing") {
-        scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing; 
-    } else if (reflections_type != "") {
-        ASSERT(false); 
-    }
+    //auto reflections_type = Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_REFLECTIONS_TYPE");
+    //if (reflections_type == "RayTracing") {
+    //    scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing; 
+    //} else if (reflections_type != "") {
+    //    ASSERT(false); 
+    //}
 
     scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces =
         Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES");

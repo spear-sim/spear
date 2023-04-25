@@ -1,3 +1,4 @@
+/*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
@@ -163,3 +164,4 @@ bool UrdfBotAgent::isReady() const
     return urdf_bot_pawn_->urdf_robot_component_->GetComponentVelocity().Size() <=
            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }
+*/
