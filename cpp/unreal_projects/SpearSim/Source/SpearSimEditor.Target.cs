@@ -12,6 +12,7 @@ public class SpearSimEditorTarget : TargetRules
     {
         Type = TargetType.Editor;
         DefaultBuildSettings = BuildSettingsVersion.V2;
+        IncludeOrderVersion  = EngineIncludeOrderVersion.Latest;
         ExtraModuleNames.AddRange(new string[] { "SpearSim" });
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {

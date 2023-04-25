@@ -15,6 +15,7 @@ public class CoreUtils : ModuleRules
         PCHUsage = ModuleRules.PCHUsageMode.Default;
         PrivatePCHHeaderFile = "";
         bUseUnity = false;
+        bEnableUndefinedIdentifierWarnings = false;
 
         // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
