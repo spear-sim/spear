@@ -29,7 +29,7 @@ public class SpearSimTarget : TargetRules
             AdditionalCompilerArguments = "";
 
             string arg = "";
-            Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs] Additional compiler arguments:");
+            Console.WriteLine("[SPEAR | SpearSim.Target.cs] Additional compiler arguments:");
 
             foreach (string pluginDir in Directory.GetDirectories(Path.Combine(ProjectFile.Directory.FullName, "Plugins"))) {
                 string plugin = (new DirectoryInfo(pluginDir)).Name;
@@ -44,7 +44,7 @@ public class SpearSimTarget : TargetRules
                     Path.GetFullPath(Path.Combine(pluginDir, "ThirdParty")) + "=" +
                     Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "..", "third_party"));
                 AdditionalCompilerArguments += arg;
-                Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs]     " + arg);
+                Console.WriteLine("[SPEAR | SpearSim.Target.cs]     " + arg);
 
                 // Old: path/to/spear/cpp/unreal_projects/SpearSim/Plugins/MyPlugin
                 // New: path/to/spear/cpp/unreal_plugins/MyPlugin
@@ -53,7 +53,7 @@ public class SpearSimTarget : TargetRules
                     Path.GetFullPath(Path.Combine(pluginDir)) + "=" +
                     Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "unreal_plugins", plugin));
                 AdditionalCompilerArguments += arg;
-                Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs]     " + arg);
+                Console.WriteLine("[SPEAR | SpearSim.Target.cs]     " + arg);
             }
 
             // Old: path/to/spear/cpp/unreal_projects/SpearSim/ThirdParty
@@ -63,7 +63,7 @@ public class SpearSimTarget : TargetRules
                 Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "ThirdParty")) + "=" +
                 Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "..", "third_party"));
             AdditionalCompilerArguments += arg;
-            Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs]     " + arg);
+            Console.WriteLine("[SPEAR | SpearSim.Target.cs]     " + arg);
         }
 
         // We can't throw an exception here, because when we invoke GenerateProjectFiles.bat or GenerateProjectFiles.sh (packaged with
