@@ -10,9 +10,11 @@ public class SpearSimTarget : TargetRules
 {
     public SpearSimTarget(TargetInfo Target) : base(Target)
     {
+        Console.WriteLine("[SPEAR | SpearSim.Target.cs] SpearSimTarget::SpearSimTarget");
+
         Type = TargetType.Game;
         DefaultBuildSettings = BuildSettingsVersion.V2;
-        ExtraModuleNames.AddRange(new string[] { "SpearSim" });
+        ExtraModuleNames.AddRange(new string[] {"SpearSim"});
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
 
@@ -45,10 +47,10 @@ public class SpearSimTarget : TargetRules
         }
 
         // We can't throw an exception here, because when we invoke GenerateProjectFiles.bat or GenerateProjectFiles.sh (packaged with
-        // the Unreal Engine), instances of this class gets created with Target.Platform set to many different platforms (e.g., iOS, tvOS,
+        // the Unreal Engine), instances of this class get created with Target.Platform set to many different platforms (e.g., iOS, tvOS,
         // Win32, etc).
         // } else {
-        //    throw new Exception("[SPEAR | SpearSim.Target.cs] Target.Platform == " + Target.Platform);            
+        //    throw new Exception("[SPEAR | SpearSim.Target.cs] Unexpected target platform: " + Target.Platform);            
         // }
     }
 }

@@ -10,9 +10,11 @@ public class SpearSimEditorTarget : TargetRules
 {
     public SpearSimEditorTarget(TargetInfo Target) : base(Target)
     {
+        Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs] SpearSimEditorTarget::SpearSimEditorTarget");
+
         Type = TargetType.Editor;
         DefaultBuildSettings = BuildSettingsVersion.V2;
-        ExtraModuleNames.AddRange(new string[] { "SpearSim" });
+        ExtraModuleNames.AddRange(new string[] {"SpearSim"});
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
 
@@ -44,7 +46,7 @@ public class SpearSimEditorTarget : TargetRules
             }
 
         } else {
-            throw new Exception("[SPEAR | SpearSimEditor.Target.cs] Target.Platform == " + Target.Platform);            
+            throw new Exception("[SPEAR | SpearSimEditor.Target.cs] Unexpected target platform: " + Target.Platform);            
         }
     }
 }
