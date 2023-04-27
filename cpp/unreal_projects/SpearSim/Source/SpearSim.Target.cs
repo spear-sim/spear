@@ -28,22 +28,42 @@ public class SpearSimTarget : TargetRules
             bOverrideBuildEnvironment = true;
             AdditionalCompilerArguments = "";
 
-            AdditionalCompilerArguments +=
-                " -ffile-prefix-map=" +
-                Path.Combine(ProjectFile.Directory.FullName, "Plugins") + "=" +
-                Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "unreal_plugins"));
+            string arg = "";
+            Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs] Additional compiler arguments:");
 
-            AdditionalCompilerArguments +=
-                " -ffile-prefix-map=" +
-                Path.Combine(ProjectFile.Directory.FullName, "ThirdParty") + "=" +
-                Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "..", "third_party"));
+            foreach (string pluginDir in Directory.GetDirectories(Path.Combine(ProjectFile.Directory.FullName, "Plugins"))) {
+                string plugin = (new DirectoryInfo(pluginDir)).Name;
 
-            foreach (string plugin in Directory.GetDirectories(Path.Combine(ProjectFile.Directory.FullName, "Plugins"))) {
-                AdditionalCompilerArguments +=
+                // Do the most specific substitution first. If we do a less specific substitution first, then we might not ever perform the
+                // more specific substitution, depending on how the -ffile-prefix-map argument is handled by the compiler.                
+
+                // Old: path/to/spear/cpp/unreal_projects/SpearSim/Plugins/MyPlugin/ThirdParty
+                // New: path/to/spear/third_party
+                arg =
                     " -ffile-prefix-map=" +
-                    Path.Combine(plugin, "ThirdParty") + "=" +
+                    Path.GetFullPath(Path.Combine(pluginDir, "ThirdParty")) + "=" +
                     Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "..", "third_party"));
+                AdditionalCompilerArguments += arg;
+                Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs]     " + arg);
+
+                // Old: path/to/spear/cpp/unreal_projects/SpearSim/Plugins/MyPlugin
+                // New: path/to/spear/cpp/unreal_plugins/MyPlugin
+                arg =
+                    " -ffile-prefix-map=" +
+                    Path.GetFullPath(Path.Combine(pluginDir)) + "=" +
+                    Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "unreal_plugins", plugin));
+                AdditionalCompilerArguments += arg;
+                Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs]     " + arg);
             }
+
+            // Old: path/to/spear/cpp/unreal_projects/SpearSim/ThirdParty
+            // New: path/to/spear/cpp/unreal_plugins/ThirdParty
+            arg =
+                " -ffile-prefix-map=" +
+                Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "ThirdParty")) + "=" +
+                Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "..", "third_party"));
+            AdditionalCompilerArguments += arg;
+            Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs]     " + arg);
         }
 
         // We can't throw an exception here, because when we invoke GenerateProjectFiles.bat or GenerateProjectFiles.sh (packaged with
