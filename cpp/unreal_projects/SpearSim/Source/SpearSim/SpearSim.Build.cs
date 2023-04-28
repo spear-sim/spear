@@ -16,7 +16,6 @@ public class SpearSim : ModuleRules
         PCHUsage = ModuleRules.PCHUsageMode.Default;
         PrivatePCHHeaderFile = "";
         bUseUnity = false;
-        bEnableUndefinedIdentifierWarnings = false;
 
         // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
@@ -25,6 +24,13 @@ public class SpearSim : ModuleRules
         // because it depends on yaml-cpp, which throws exceptions. So we need to enable exceptions
         // everywhere.
         bEnableExceptions = true;
+
+        // This is required for the usage of boost/tokenizer.h, and boost/predef.h. If not, boost throws the following exceptions.
+        // C:\github\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
+        //      '__GNUC__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+        // C:\github\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
+        //      '__GNUC_MINOR__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+        bEnableUndefinedIdentifierWarnings = false;
 
         PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "CoreUtils", "Engine", "InputCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
