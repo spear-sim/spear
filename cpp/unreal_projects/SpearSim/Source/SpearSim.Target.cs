@@ -57,7 +57,7 @@ public class SpearSimTarget : TargetRules
             }
 
             // Old: path/to/spear/cpp/unreal_projects/SpearSim/ThirdParty
-            // New: path/to/spear/cpp/unreal_plugins/ThirdParty
+            // New: path/to/spear/third_party
             arg =
                 " -ffile-prefix-map=" +
                 Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "ThirdParty")) + "=" +
