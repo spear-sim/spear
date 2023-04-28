@@ -54,8 +54,13 @@ void SimulationController::StartupModule()
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::StartupModule" << std::endl;
 
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
-    //ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
-    //ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
+    ////------ BEGIN UE5 MIGRATION ------////
+    //// Comment out OpenBot, UrdfBot plugins as they are not supported yet
+    /*
+        ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
+        ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
+    */
+    ////------ END UE5 MIGRATION ------////
 
     if (!Config::s_initialized_) {
         return;
@@ -192,6 +197,8 @@ void SimulationController::worldBeginPlayEventHandler()
     // pause gameplay
     UGameplayStatics::SetGamePaused(world_, true);
 
+    ////------ BEGIN UE5 MIGRATION ------////
+    //// Comment out OpenBot, UrdfBot plugins as they are not supported yet
     // create Agent
     if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "CameraAgent") {
         agent_ = std::make_unique<CameraAgent>(world_);
@@ -205,6 +212,7 @@ void SimulationController::worldBeginPlayEventHandler()
         ASSERT(false);
     }
     ASSERT(agent_);
+    ////------ END UE5 MIGRATION ------////
 
     // create Task
     if (Config::get<std::string>("SIMULATION_CONTROLLER.TASK") == "ImitationLearningTask") {

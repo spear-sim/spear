@@ -335,17 +335,21 @@ void CameraSensor::initializeSceneCaptureComponentFinalColor(USceneCaptureCompon
     scene_capture_component->PostProcessSettings.RayTracingAORadius =
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_RAYTRACING_AO_RADIUS");
 
-    // NO LONGER PRESENT IN UE5
-    // update raytracing reflections
-    //scene_capture_component->PostProcessSettings.bOverride_ReflectionsType =
-    //    Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE");
+    ////------ BEGIN UE5 MIGRATION ------////
+    //// Option to set raytracing reflections is not present in UE5
+    /*
+        // update raytracing reflections
+        scene_capture_component->PostProcessSettings.bOverride_ReflectionsType =
+            Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_REFLECTIONS_TYPE");
 
-    //auto reflections_type = Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_REFLECTIONS_TYPE");
-    //if (reflections_type == "RayTracing") {
-    //    scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing; 
-    //} else if (reflections_type != "") {
-    //    ASSERT(false); 
-    //}
+        auto reflections_type = Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_REFLECTIONS_TYPE");
+        if (reflections_type == "RayTracing") {
+            scene_capture_component->PostProcessSettings.ReflectionsType = EReflectionsType::RayTracing; 
+        } else if (reflections_type != "") {
+            ASSERT(false); 
+        }
+    */
+   ////------ END UE5 MIGRATION ------////
 
     scene_capture_component->PostProcessSettings.bOverride_RayTracingReflectionsMaxBounces =
         Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_OVERRIDE_RAYTRACING_REFLECTIONS_MAX_BOUNCES");
