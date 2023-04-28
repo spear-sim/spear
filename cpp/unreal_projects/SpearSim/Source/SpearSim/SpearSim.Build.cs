@@ -25,10 +25,11 @@ public class SpearSim : ModuleRules
         // everywhere.
         bEnableExceptions = true;
 
-        // This is required for the usage of boost/tokenizer.h, and boost/predef.h. If not, boost throws the following exceptions.
-        // C:\github\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
+        // This is required when using boost/tokenizer.h and boost/predef.h. If this flag is not set
+        // to false, including either of these files will cause the following error on Windows.
+        // path\to\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
         //      '__GNUC__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-        // C:\github\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
+        // path\to\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
         //      '__GNUC_MINOR__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
         bEnableUndefinedIdentifierWarnings = false;
 
