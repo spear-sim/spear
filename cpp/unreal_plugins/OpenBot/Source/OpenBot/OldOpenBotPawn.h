@@ -1,3 +1,4 @@
+/*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
@@ -7,15 +8,17 @@
 #include <Eigen/Dense>
 
 #include <CoreMinimal.h>
-#include <WheeledVehiclePawn.h>
+#include <GameFramework/Pawn.h>
 
 #include "OpenBotPawn.generated.h"
 
+class UBoxComponent;
 class UCameraComponent;
 class UOpenBotMovementComponent;
 class USkeletalMeshComponent;
 
-
+// This class is inspired by the WheeledVehicle class, defined in:
+//     Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/WheeledVehicle.h
 UCLASS()
 class OPENBOT_API AOpenBotPawn : public APawn
 {
@@ -28,12 +31,30 @@ public:
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
     void Tick(float delta_time) override;
 
+    // Reset the physics state of the wheels.
+    void resetWheels();
+
+    // Set brake torques, which can be used to make sure the wheels don't move.
+    void setBrakeTorques(const Eigen::Vector4f& brake_torques);
+
+    // Provides access to the current command sent to the OpenBot (e.g., to return
+    // to a Python client). This function is required because the command to be
+    // executed by the OpenBot might come from keyboard user input.
+    Eigen::Vector4f getDutyCycle() const;
+
+    // Function that applies a given command to the vehicle (e.g., as a result
+    // of a remote call from a Python client). The input vector will be clamped
+    // to be between -1.0 and 1.0.
+    void setDutyCycle(const Eigen::Vector4f& duty_cycle);
+
+    // Provides access to the wheels rotation speed in rad/s
+    Eigen::Vector4f getWheelRotationSpeeds() const;
+
     USkeletalMeshComponent* skeletal_mesh_component_ = nullptr;
     UOpenBotMovementComponent* vehicle_movement_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
-
-    // The duty cycle of the PWM signal applied to the motors in [%]
-    Eigen::Vector4f duty_cycle_;
+    //UBoxComponent* imu_component_ = nullptr;
+    //UBoxComponent* sonar_component_ = nullptr;
 
 private:
     // Function that applies wheel torque on a vehicle to generate linear
@@ -84,7 +105,7 @@ private:
     // friction, this quantity is what makes the rotation speed of a DC motor
     // saturate.
     //
-
+    
     void setDriveTorquesFromDutyCycle();
 
     // Rev per minute to rad/s
@@ -92,4 +113,8 @@ private:
 
     // Rad/s to rev per minute
     static Eigen::VectorXf radSecToRpm(Eigen::VectorXf omega);
+
+    // The duty cycle of the PWM signal applied to the motors in [%]
+    Eigen::Vector4f duty_cycle_;
 };
+*/

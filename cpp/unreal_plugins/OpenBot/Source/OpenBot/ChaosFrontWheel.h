@@ -7,16 +7,16 @@
 #include <CoreMinimal.h>
 #include <ChaosVehicleWheel.h>
 
-#include "OpenBotWheel.generated.h"
+#include "ChaosFrontWheel.generated.h"
 
 UCLASS()
-class UOpenBotWheel : public UChaosVehicleWheel
+class UChaosFrontWheel : public UChaosVehicleWheel
 {
     GENERATED_BODY()
 
 public:
 
-    UOpenBotWheel();
-    
-    ~UOpenBotWheel();
+    UChaosFrontWheel();
+
+    ~UChaosFrontWheel();
 };

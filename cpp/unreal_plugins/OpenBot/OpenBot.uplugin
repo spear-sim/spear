@@ -27,7 +27,7 @@
             "Enabled": true
         },
         {
-            "Name": "PhysXVehicles",
+            "Name": "ChaosVehiclesPlugin",
             "Enabled": true
         }
     ]

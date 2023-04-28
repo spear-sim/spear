@@ -54,7 +54,7 @@ void SimulationController::StartupModule()
     std::cout << "[SPEAR | SimulationController.cpp] SimulationController::StartupModule" << std::endl;
 
     ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
-    //ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
+    ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
     //ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
 
     if (!Config::s_initialized_) {
@@ -195,8 +195,8 @@ void SimulationController::worldBeginPlayEventHandler()
     // create Agent
     if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "CameraAgent") {
         agent_ = std::make_unique<CameraAgent>(world_);
-    /*} else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "OpenBotAgent") {
-        agent_ = std::make_unique<OpenBotAgent>(world_);*/
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "OpenBotAgent") {
+        agent_ = std::make_unique<OpenBotAgent>(world_);
     } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
     /*} else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {

@@ -22,7 +22,7 @@ public class SimulationController : ModuleRules
         //PublicDependencyModuleNames.AddRange(new string[] {
         //    "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI", "UrdfBot" });
         PublicDependencyModuleNames.AddRange(new string[] {
-            "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "RenderCore", "RHI" });
+            "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Our ASSERT macro throws exceptions, and so does our templated function Config::get(...),
@@ -32,7 +32,7 @@ public class SimulationController : ModuleRules
         // or Config::get(...).
         bEnableExceptions = true;
 
-         // Required for boost::interprocess
+         // Required for boost::interprocess, Assert.cpp
         bEnableUndefinedIdentifierWarnings = false;
 
         //

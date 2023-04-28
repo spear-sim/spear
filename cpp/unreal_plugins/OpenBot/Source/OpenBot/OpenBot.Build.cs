@@ -24,7 +24,10 @@ public class OpenBot : ModuleRules
         // everywhere.
         bEnableExceptions = true;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "CoreUtils", "Engine", "PhysX", "PhysXVehicleLib", "PhysXVehicles" });
+        // Required for Assert.cpp
+        bEnableUndefinedIdentifierWarnings = false;
+
+        PublicDependencyModuleNames.AddRange(new string[] { "ChaosVehicles", "ChaosVehiclesCore", "Core", "CoreUObject", "CoreUtils", "Engine"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         //

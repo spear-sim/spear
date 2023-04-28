@@ -1,4 +1,3 @@
-/*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
@@ -304,7 +303,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
     if (Std::contains(observation_components, "state_data")) {
         FVector location = open_bot_pawn_->GetActorLocation();
         FRotator rotation = open_bot_pawn_->GetActorRotation();
-        observation["state_data"] = Std::reinterpret_as<uint8_t>(std::vector<float>{
+        observation["state_data"] = Std::reinterpret_as<uint8_t>(std::vector<double>{
             location.X,
             location.Y,
             location.Z,
@@ -318,14 +317,14 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
         Eigen::Vector2f control_state;
         control_state(0) = (duty_cycle(0) + duty_cycle(2)) / 2;
         control_state(1) = (duty_cycle(1) + duty_cycle(3)) / 2;
-        observation["control_data"] = Std::reinterpret_as<uint8_t>(std::vector<float>{
+        observation["control_data"] = Std::reinterpret_as<uint8_t>(std::vector<double>{
             control_state(0),
             control_state(1)});
     }
 
     if (Std::contains(observation_components, "encoder")) {
         Eigen::Vector4f wheel_rotation_speeds = open_bot_pawn_->getWheelRotationSpeeds();
-        observation["encoder"] = Std::reinterpret_as<uint8_t>(std::vector<float>{
+        observation["encoder"] = Std::reinterpret_as<uint8_t>(std::vector<double>{
             wheel_rotation_speeds(0),
             wheel_rotation_speeds(1),
             wheel_rotation_speeds(2),
@@ -333,7 +332,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
     }
 
     if (Std::contains(observation_components, "imu")) {
-        observation["imu"] = Std::reinterpret_as<uint8_t>(std::vector<float>{
+        observation["imu"] = Std::reinterpret_as<uint8_t>(std::vector<double>{
             imu_sensor_->linear_acceleration_.X,
             imu_sensor_->linear_acceleration_.Y,
             imu_sensor_->linear_acceleration_.Z,
@@ -343,7 +342,7 @@ std::map<std::string, std::vector<uint8_t>> OpenBotAgent::getObservation() const
     }
 
     if (Std::contains(observation_components, "sonar")) {
-        observation["sonar"] = Std::reinterpret_as<uint8_t>(std::vector<float>{
+        observation["sonar"] = Std::reinterpret_as<uint8_t>(std::vector<double>{
             sonar_sensor_->range_});
     }
 
@@ -518,4 +517,3 @@ void OpenBotAgent::generateTrajectoryToGoal()
     }
     std::cout << "[SPEAR | OpenBotAgent.cpp] ----------------------" << std::endl;
 }
-*/
