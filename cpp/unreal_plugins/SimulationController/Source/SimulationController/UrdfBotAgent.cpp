@@ -1,3 +1,5 @@
+////------ BEGIN UE5 MIGRATION ------////
+//// Uncomment this file when UrdfBot is supported in UE5.
 /*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -165,3 +167,4 @@ bool UrdfBotAgent::isReady() const
            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }
 */
+////------ END UE5 MIGRATION ------////
