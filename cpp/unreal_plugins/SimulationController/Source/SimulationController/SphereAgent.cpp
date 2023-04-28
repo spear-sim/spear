@@ -275,7 +275,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
         FVector linear_velocity = static_mesh_component_->GetPhysicsLinearVelocity();
         float yaw = rotation_.Yaw;
 
-        observation["compass"] = Std::reinterpret_as<uint8_t>(std::vector<float>{
+        observation["compass"] = Std::reinterpret_as<uint8_t>(std::vector<double>{
             Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.OFFSET_TO_GOAL_SCALE") * sphere_to_goal.X,
             Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.OFFSET_TO_GOAL_SCALE") * sphere_to_goal.Y,
             Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.LINEAR_VELOCITY_SCALE") * linear_velocity.X,

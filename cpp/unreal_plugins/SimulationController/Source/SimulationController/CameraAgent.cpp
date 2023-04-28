@@ -234,12 +234,19 @@ bool CameraAgent::isReady() const
 }
 
 void CameraAgent::buildNavMesh()
-{
+{  
     // set the navmesh properties
+    
+    ////------ BEGIN UE5 MIGRATION ------////
+    //// In UE-52, CellSize and CellHeight are members of NavMeshResolutionParams
+    nav_mesh_->NavMeshResolutionParams->CellSize   = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.CELL_SIZE");
+    nav_mesh_->NavMeshResolutionParams->CellHeight = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.CELL_HEIGHT");
+    //nav_mesh_->CellSize               = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.CELL_SIZE");
+    //nav_mesh_->CellHeight             = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.CELL_HEIGHT");     
+    ////------ END UE5 MIGRATION ------////
+
     nav_mesh_->AgentRadius            = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.AGENT_RADIUS");
     nav_mesh_->AgentHeight            = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.AGENT_HEIGHT");
-    nav_mesh_->CellSize               = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.CELL_SIZE");
-    nav_mesh_->CellHeight             = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.CELL_HEIGHT");
     nav_mesh_->AgentMaxStepHeight     = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.AGENT_MAX_STEP_HEIGHT");
     nav_mesh_->AgentMaxSlope          = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.AGENT_MAX_SLOPE");
     nav_mesh_->MergeRegionSize        = Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.MERGE_REGION_SIZE");

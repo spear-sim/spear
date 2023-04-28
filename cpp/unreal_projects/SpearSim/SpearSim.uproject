@@ -1,6 +1,6 @@
 {
     "FileVersion": 3,
-    "EngineAssociation": "4.26",
+    "EngineAssociation": "5.2",
     "Category": "",
     "Description": "",
     "Modules": [
@@ -25,7 +25,7 @@
         },
         {
             "Name": "OpenBot",
-            "Enabled": true
+            "Enabled": false
         },
         {
             "Name": "SimulationController",
@@ -33,7 +33,7 @@
         },
         {
             "Name": "UrdfBot",
-            "Enabled": true
+            "Enabled": false
         }
     ]
 }

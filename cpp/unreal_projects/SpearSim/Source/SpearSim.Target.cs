@@ -14,6 +14,7 @@ public class SpearSimTarget : TargetRules
 
         Type = TargetType.Game;
         DefaultBuildSettings = BuildSettingsVersion.V2;
+        IncludeOrderVersion  = EngineIncludeOrderVersion.Latest;
         ExtraModuleNames.AddRange(new string[] {"SpearSim"});
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {

@@ -14,7 +14,11 @@
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <Math/UnrealMathUtility.h>
-#include <PxScene.h>
+
+////------ BEGIN UE5 MIGRATION ------////
+//// PhysX is no longer supported
+    // #include <PxScene.h>
+////------ END UE5 MIGRATION ------////
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
@@ -84,8 +88,11 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
 
     float min_distance = Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX");
     
-    component_->GetWorld()->GetPhysicsScene()->GetPxScene()->lockRead();
-    {
+    ////------ BEGIN UE5 MIGRATION ------////
+    //// Need to modify this section as PhysX is no longer supported
+    /*
+        component_->GetWorld()->GetPhysicsScene()->GetPxScene()->lockRead();
+        {
         for (int i = 0; i < Config::get<int>("SIMULATION_CONTROLLER.SONAR_SENSOR.NUM_RAYS"); i++) {
             hit_results[i] = FHitResult(EForceInit::ForceInit);
             float distance = Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX");
@@ -126,8 +133,10 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
                 distance = Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX");
             }
         }
-    }
-    component_->GetWorld()->GetPhysicsScene()->GetPxScene()->unlockRead();
+        }
+        component_->GetWorld()->GetPhysicsScene()->GetPxScene()->unlockRead();
+    */
+   ////------ END UE5 MIGRATION ------////
 
     range_ = min_distance + Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.NOISE_STD_DEV") * std::uniform_real_distribution<float>()(random_gen_);
 

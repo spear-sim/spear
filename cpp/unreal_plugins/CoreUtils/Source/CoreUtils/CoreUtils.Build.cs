@@ -26,33 +26,29 @@ public class CoreUtils : ModuleRules
         // everywhere.
         bEnableExceptions = true;
 
+        // This is required when using boost/tokenizer.h and boost/predef.h. If this flag is not set
+        // to false, including either of these files will cause the following error on Windows.
+        // path\to\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
+        //      '__GNUC__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+        // path\to\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
+        //      '__GNUC_MINOR__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+        bEnableUndefinedIdentifierWarnings = false;
+
         PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
-        // TODO: This code needs to be wrapped in an #ifdef block because the function Directory.ResolveLinkTarget(...)
-        // is not defined for the older C# standard library that ships with UE 4.26. Once we are ready to migrate to UE
-        // 5.2, we can remove the #ifdef.
+        // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.
+        // The top-level module directory can be a symlink or not, and the ThirdParty directory can be a symlink
+        // or not. This is required to work around a bug that was introduced in UE 5.2.
+        string topLevelModuleDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", ".."));
+        FileSystemInfo topLevelModuleDirInfo = Directory.ResolveLinkTarget(topLevelModuleDir, true);
+        topLevelModuleDir = (topLevelModuleDirInfo != null) ? topLevelModuleDirInfo.FullName : topLevelModuleDir;
+        Console.WriteLine("[SPEAR | CoreUtils.Build.cs] Resolved top-level module directory: " + topLevelModuleDir);
 
-        #if UE_52
-            // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.
-            // The top-level module directory can be a symlink or not, and the ThirdParty directory can be a symlink
-            // or not. This is required to work around a bug that was introduced in UE 5.2.
-            string topLevelModuleDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", ".."));
-            FileSystemInfo topLevelModuleDirInfo = Directory.ResolveLinkTarget(topLevelModuleDir, true);
-            topLevelModuleDir = (topLevelModuleDirInfo != null) ? topLevelModuleDirInfo.FullName : topLevelModuleDir;
-            Console.WriteLine("[SPEAR | CoreUtils.Build.cs] Resolved top-level module directory: " + topLevelModuleDir);
-
-            string thirdPartyDir = Path.GetFullPath(Path.Combine(topLevelModuleDir, "ThirdParty"));
-            FileSystemInfo thirdPartyDirInfo = Directory.ResolveLinkTarget(thirdPartyDir, true);
-            thirdPartyDir = (thirdPartyDirInfo != null) ? thirdPartyDirInfo.FullName : thirdPartyDir;
-            Console.WriteLine("[SPEAR | CoreUtils.Build.cs] Resolved third-party directory: " + thirdPartyDir);
-        #else
-            string topLevelModuleDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", ".."));
-            Console.WriteLine("[SPEAR | CoreUtils.Build.cs] Resolved top-level module directory: " + topLevelModuleDir);
-
-            string thirdPartyDir = Path.GetFullPath(Path.Combine(topLevelModuleDir, "ThirdParty"));
-            Console.WriteLine("[SPEAR | CoreUtils.Build.cs] Resolved third-party directory: " + thirdPartyDir);
-        #endif
+        string thirdPartyDir = Path.GetFullPath(Path.Combine(topLevelModuleDir, "ThirdParty"));
+        FileSystemInfo thirdPartyDirInfo = Directory.ResolveLinkTarget(thirdPartyDir, true);
+        thirdPartyDir = (thirdPartyDirInfo != null) ? thirdPartyDirInfo.FullName : thirdPartyDir;
+        Console.WriteLine("[SPEAR | CoreUtils.Build.cs] Resolved third-party directory: " + thirdPartyDir);
 
         //
         // Boost
