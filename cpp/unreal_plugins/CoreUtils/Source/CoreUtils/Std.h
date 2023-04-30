@@ -8,6 +8,7 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <vector>
 
 #include <boost/tokenizer.hpp>
 

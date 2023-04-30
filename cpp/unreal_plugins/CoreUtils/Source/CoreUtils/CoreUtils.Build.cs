@@ -26,13 +26,10 @@ public class CoreUtils : ModuleRules
         // everywhere.
         bEnableExceptions = true;
 
-        // Setting this flag to false is required when including boost/tokenizer.h or
-        // boost/predef.h, otherwise it will cause the following compiler error on Windows:
-        //     path\to\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
-        //     '__GNUC__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-        //     path\to\spear\third_party\boost\boost\exception\exception.hpp(22): error C4668:
-        //     '__GNUC_MINOR__' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-        // bEnableUndefinedIdentifierWarnings = false;
+        // Required for:
+        //     ... > CoreUtils/Std.h    > boost/tokenizer.hpp > ... > boost/exception/exception.h
+        //     ... > CoreUtils/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
+        bEnableUndefinedIdentifierWarnings = false;
 
         PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine"});
         PrivateDependencyModuleNames.AddRange(new string[] {});

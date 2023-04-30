@@ -24,6 +24,10 @@ public class SpearSimTarget : TargetRules
             // On Windows, we need to build an additional app so that calls to UE_Log and writes to std::cout are visible in the terminal.
             bBuildAdditionalConsoleApp = true;
 
+            // Sometimes useful for debugging
+            // bOverrideBuildEnvironment = true;
+            // AdditionalCompilerArguments = "/showIncludes";
+
         } else if (Target.Platform == UnrealTargetPlatform.Mac || Target.Platform == UnrealTargetPlatform.Linux) {
 
             // On macOS and Linux, we need to remap the paths of our symbolic links as we're compiling our executable, so the paths that get

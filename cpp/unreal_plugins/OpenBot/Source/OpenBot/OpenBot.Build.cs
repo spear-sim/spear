@@ -26,6 +26,11 @@ public class OpenBot : ModuleRules
         // everywhere.
         bEnableExceptions = true;
 
+        // Required for:
+        //     ... > CoreUtils/Std.h    > boost/tokenizer.hpp > ... > boost/exception/exception.h
+        //     ... > CoreUtils/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
+        bEnableUndefinedIdentifierWarnings = false;
+
         PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "CoreUtils", "Engine", "PhysX", "PhysXVehicleLib", "PhysXVehicles"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 

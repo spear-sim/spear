@@ -40,8 +40,10 @@ public class SimulationController : ModuleRules
         // or Config::get(...).
         bEnableExceptions = true;
 
-        // Required for boost::interprocess
-        // bEnableUndefinedIdentifierWarnings = false;
+        // Required for:
+        //     ... > CoreUtils/Std.h    > boost/tokenizer.hpp > ... > boost/exception/exception.h
+        //     ... > CoreUtils/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
+        bEnableUndefinedIdentifierWarnings = false;
 
         // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.
         // The top-level module directory can be a symlink or not, and the ThirdParty directory can be a symlink
