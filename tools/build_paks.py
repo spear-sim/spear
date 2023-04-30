@@ -85,10 +85,10 @@ if __name__ == '__main__':
         unreal_project_content_shared_dir = os.path.join(unreal_project_content_dir, "Shared")
 
         if spear.path_exists(unreal_project_content_shared_dir):
-            print(f"[SPEAR | build_pak_files.py] File or directory or symlink exists, removing: {unreal_project_content_shared_dir}")
+            print(f"[SPEAR | build_paks.py] File or directory or symlink exists, removing: {unreal_project_content_shared_dir}")
             spear.remove_path(unreal_project_content_shared_dir)
 
-        print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_shared_dir} -> {perforce_content_shared_dir}")
+        print(f"[SPEAR | build_paks.py] Creating symlink: {unreal_project_content_shared_dir} -> {perforce_content_shared_dir}")
         os.symlink(perforce_content_shared_dir, unreal_project_content_shared_dir)
 
     for scene_id in scene_ids:
@@ -110,10 +110,10 @@ if __name__ == '__main__':
             perforce_content_scene_dir = os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_id))
 
             if spear.path_exists(unreal_project_content_scene_dir):
-                print(f"[SPEAR | build_pak_files.py] File or directory or symlink exists, removing: {unreal_project_content_scene_dir}")
+                print(f"[SPEAR | build_paks.py] File or directory or symlink exists, removing: {unreal_project_content_scene_dir}")
                 spear.remove_path(unreal_project_content_scene_dir)
 
-            print(f"[SPEAR | build_pak_files.py] Creating symlink: {unreal_project_content_scene_dir} -> {perforce_content_scene_dir}")
+            print(f"[SPEAR | build_paks.py] Creating symlink: {unreal_project_content_scene_dir} -> {perforce_content_scene_dir}")
             os.symlink(perforce_content_scene_dir, unreal_project_content_scene_dir)
 
         # Now that we have created a symlink, our Unreal project should contain exactly two scenes: starter_content_0000 and scene_id
@@ -136,7 +136,7 @@ if __name__ == '__main__':
             "-fullstdoutlogoutput",                  # ensure log output is written to the terminal
             "-nologtimes"                            # don't print timestamps next to log messages twice
         ]
-        print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
+        print(f"[SPEAR | build_paks.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         # create the output_dir
@@ -159,18 +159,18 @@ if __name__ == '__main__':
             "-multiprocess",
             "-compress"
         ]
-        print(f"[SPEAR | build_pak_files.py] Executing: {' '.join(cmd)}")
+        print(f"[SPEAR | build_paks.py] Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         assert os.path.exists(pak_file)
-        print(f"[SPEAR | build_pak_files.py] Successfully built {pak_file}")
+        print(f"[SPEAR | build_paks.py] Successfully built {pak_file}")
 
         if not args.skip_create_symlinks:
-            print(f"[SPEAR | build_pak_files.py] Removing symlink: {unreal_project_content_scene_dir}")
+            print(f"[SPEAR | build_paks.py] Removing symlink: {unreal_project_content_scene_dir}")
             spear.remove_path(unreal_project_content_scene_dir)
 
     if not args.skip_create_symlinks:
-        print(f"[SPEAR | build_pak_files.py] Removing symlink: {unreal_project_content_shared_dir}")
+        print(f"[SPEAR | build_paks.py] Removing symlink: {unreal_project_content_shared_dir}")
         spear.remove_path(unreal_project_content_shared_dir)
 
-    print("[SPEAR | build_pak_files.py] Done.")
+    print("[SPEAR | build_paks.py] Done.")
