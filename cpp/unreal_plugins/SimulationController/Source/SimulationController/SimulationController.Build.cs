@@ -40,8 +40,8 @@ public class SimulationController : ModuleRules
         // or Config::get(...).
         bEnableExceptions = true;
 
-         // Required for boost::interprocess
-        bEnableUndefinedIdentifierWarnings = false;
+        // Required for boost::interprocess
+        // bEnableUndefinedIdentifierWarnings = false;
 
         // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.
         // The top-level module directory can be a symlink or not, and the ThirdParty directory can be a symlink

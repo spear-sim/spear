@@ -12,9 +12,11 @@ public class SpearSimEditorTarget : TargetRules
     {
         Console.WriteLine("[SPEAR | SpearSimEditor.Target.cs] SpearSimEditorTarget::SpearSimEditorTarget");
 
+        // Added to projects by default in UE 5.2. Note that the default value in UE 5.2 preview 2 for IncludeOrderVersion is
+        // EngineIncludeOrderVersion.Unreal5_1, but that triggers a build warning.
         Type = TargetType.Editor;
         DefaultBuildSettings = BuildSettingsVersion.V2;
-        IncludeOrderVersion  = EngineIncludeOrderVersion.Latest;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
         ExtraModuleNames.AddRange(new string[] {"SpearSim"});
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
