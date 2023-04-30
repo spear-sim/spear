@@ -21,16 +21,7 @@ public class SimulationController : ModuleRules
         // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
-        ////------ BEGIN UE5 MIGRATION ------////
-        //// Comment out OpenBot, UrdfBot plugins as they are not supported yet
-        /*
-            PublicDependencyModuleNames.AddRange(new string[] {
-                "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "OpenBot", "RenderCore", "RHI", "UrdfBot" });
-        */
-        ////------ END UE5 MIGRATION ------////
-
-        PublicDependencyModuleNames.AddRange(new string[] {
-            "Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "RenderCore", "RHI" });
+        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "CoreUtils", "Engine", "NavigationSystem", "RenderCore", "RHI"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Our ASSERT macro throws exceptions, and so does our templated function Config::get(...),

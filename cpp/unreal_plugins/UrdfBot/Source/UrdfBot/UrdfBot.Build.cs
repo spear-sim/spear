@@ -34,30 +34,18 @@ public class UrdfBot : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "Slate", "XmlParser"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
-        // TODO: This code needs to be wrapped in an #ifdef block because the function Directory.ResolveLinkTarget(...)
-        // is not defined for the older C# standard library that ships with UE 4.26. Once we are ready to migrate to UE
-        // 5.2, we can remove the #ifdef.
+        // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.
+        // The top-level module directory can be a symlink or not, and the ThirdParty directory can be a symlink
+        // or not. This is required to work around a bug that was introduced in UE 5.2.
+        string topLevelModuleDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", ".."));
+        FileSystemInfo topLevelModuleDirInfo = Directory.ResolveLinkTarget(topLevelModuleDir, true);
+        topLevelModuleDir = (topLevelModuleDirInfo != null) ? topLevelModuleDirInfo.FullName : topLevelModuleDir;
+        Console.WriteLine("[SPEAR | UrdfBot.Build.cs] Resolved top-level module directory: " + topLevelModuleDir);
 
-        #if UE_52
-            // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.
-            // The top-level module directory can be a symlink or not, and the ThirdParty directory can be a symlink
-            // or not. This is required to work around a bug that was introduced in UE 5.2.
-            string topLevelModuleDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", ".."));
-            FileSystemInfo topLevelModuleDirInfo = Directory.ResolveLinkTarget(topLevelModuleDir, true);
-            topLevelModuleDir = (topLevelModuleDirInfo != null) ? topLevelModuleDirInfo.FullName : topLevelModuleDir;
-            Console.WriteLine("[SPEAR | UrdfBot.Build.cs] Resolved top-level module directory: " + topLevelModuleDir);
-
-            string thirdPartyDir = Path.GetFullPath(Path.Combine(topLevelModuleDir, "ThirdParty"));
-            FileSystemInfo thirdPartyDirInfo = Directory.ResolveLinkTarget(thirdPartyDir, true);
-            thirdPartyDir = (thirdPartyDirInfo != null) ? thirdPartyDirInfo.FullName : thirdPartyDir;
-            Console.WriteLine("[SPEAR | UrdfBot.Build.cs] Resolved third-party directory: " + thirdPartyDir);
-        #else
-            string topLevelModuleDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", ".."));
-            Console.WriteLine("[SPEAR | UrdfBot.Build.cs] Resolved top-level module directory: " + topLevelModuleDir);
-
-            string thirdPartyDir = Path.GetFullPath(Path.Combine(topLevelModuleDir, "ThirdParty"));
-            Console.WriteLine("[SPEAR | UrdfBot.Build.cs] Resolved third-party directory: " + thirdPartyDir);
-        #endif
+        string thirdPartyDir = Path.GetFullPath(Path.Combine(topLevelModuleDir, "ThirdParty"));
+        FileSystemInfo thirdPartyDirInfo = Directory.ResolveLinkTarget(thirdPartyDir, true);
+        thirdPartyDir = (thirdPartyDirInfo != null) ? thirdPartyDirInfo.FullName : thirdPartyDir;
+        Console.WriteLine("[SPEAR | UrdfBot.Build.cs] Resolved third-party directory: " + thirdPartyDir);
 
         //
         // Eigen
