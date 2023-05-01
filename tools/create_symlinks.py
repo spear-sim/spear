@@ -42,7 +42,6 @@ if __name__ == "__main__":
                 spear.remove_path(symlink_third_party_dir)
             print(f"[SPEAR | create_symlinks.py]     Creating symlink: {symlink_third_party_dir} -> {third_party_dir}")
             os.symlink(third_party_dir, symlink_third_party_dir)
-            print()
 
     _, project = os.path.split(unreal_project_dir)
     uproject = os.path.realpath(os.path.join(unreal_project_dir, project + ".uproject"))
