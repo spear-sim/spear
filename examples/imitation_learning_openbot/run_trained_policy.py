@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     # load the episodes to be executed
     assert os.path.exists(args.episodes_file)
-    df = pd.read_csv(args.episodes_file, dtype={"scene_id":str})
+    df = pd.read_csv(args.episodes_file)
 
     # do some config modifications based on the rendering mode
     if args.rendering_mode == "baked":

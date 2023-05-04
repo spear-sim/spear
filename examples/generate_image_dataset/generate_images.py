@@ -60,8 +60,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--poses_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "poses.csv")))
     parser.add_argument("--images_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "images")))
-    parser.add_argument("--rendering_mode", default="baked")
-    parser.add_argument("--num_internal_steps", type=int)
+    parser.add_argument("--num_internal_steps", default=1)
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--wait_for_key_press", action="store_true")
     args = parser.parse_args()
@@ -70,25 +69,7 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     # read data from csv
-    df = pd.read_csv(args.poses_file, dtype={"scene_id":str})
-
-    # do some config modifications based on the rendering mode
-    if args.rendering_mode == "baked":
-        rendering_mode_map_str = "_bake"
-        if args.num_internal_steps is None:
-            num_internal_steps = 1
-        config.defrost()
-        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 1.0
-        config.freeze()
-    elif args.rendering_mode == "raytracing":
-        rendering_mode_map_str = "_rtx"
-        if args.num_internal_steps is None:
-            num_internal_steps = 5
-        config.defrost()
-        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 0.0
-        config.freeze()
-    else:
-        assert False
+    df = pd.read_csv(args.poses_file)
 
     # if the user specified num_internal_steps, then use it
     if args.num_internal_steps is not None:
@@ -112,29 +93,6 @@ if __name__ == "__main__":
             if prev_scene_id != "":
                 env.close()
 
-            # change config based on current scene
-            config.defrost()
-
-            if pose["scene_id"] == "kujiale_0000":
-                config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
-                config.SIMULATION_CONTROLLER.MAP_ID   = pose["scene_id"] + rendering_mode_map_str
-
-                # kujiale_0000 has scene-specific config values
-                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
-
-            elif pose["scene_id"] == "warehouse_0000":
-                config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
-                config.SIMULATION_CONTROLLER.MAP_ID   = pose["scene_id"]
-
-                # warehouse_0000 has scene-specific config values
-                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
-
-            else:
-                assert False
-
-            config.merge_from_file(scene_config_file)
-            config.freeze()
-
             # create Env object
             env = CustomEnv(config, num_internal_steps=num_internal_steps)
 
@@ -144,13 +102,9 @@ if __name__ == "__main__":
             if args.benchmark and prev_scene_id == "":
                 start_time_seconds = time.time()
 
-        # set the pose and obtain corresponding images
-        obs, _, _, _ = env.step(
-            action={
-                "set_pose": np.array(
-                    [pose["pos_x_cms"], pose["pos_y_cms"], pose["pos_z_cms"],
-                    pose["pitch_degs"], pose["yaw_degs"], pose["roll_degs"]], np.float32),
-                "set_num_random_points": np.array([0], np.uint32)})
+        obs, _, _, _ = env.step(action={
+            "set_position": np.array([pose["position_x"], pose["position_y"], pose["position_z"]], np.float32),
+            "set_rotation": np.array([pose["rotation_pitch"], pose["rotation_yaw"], pose["rotation_roll"]], np.float32)})
 
         # save images for each render pass
         if not args.benchmark:
@@ -158,16 +112,34 @@ if __name__ == "__main__":
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 assert os.path.exists(render_pass_dir)
 
-                obs_render_pass = obs["camera." + render_pass].squeeze()
-                if render_pass in ["final_color", "normals", "segmentation"]:
-                    assert len(obs_render_pass.shape) == 3
-                    assert obs_render_pass.shape[2] == 4
-                    obs_render_pass = obs_render_pass[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
+                obs_render_pass = obs["camera." + render_pass]
+                assert len(obs_render_pass.shape) == 3
+                assert obs_render_pass.shape[2] == 4
 
-                plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%pose["index"])), obs_render_pass)
+                obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # note that spear.Env returns BGRA by default
+
+                if render_pass == "depth":
+                    # discard very large depth values
+                    max_depth_meters = 20.0
+                    obs_render_pass_vis = obs_render_pass_vis[:,:,0]
+                    obs_render_pass_vis = np.clip(0.0, max_depth_meters, obs_render_pass_vis)
+                elif render_pass == "final_color":
+                    pass
+                elif render_pass == "normal":
+                    # discard normals that aren't properly normalized, i.e., length of 1.0
+                    discard_mask = np.logical_not(np.isclose(np.linalg.norm(obs_render_pass_vis, axis=2), 1.0, rtol=0.001, atol=0.001))
+                    obs_render_pass_vis = np.clip(0.0, 1.0, (obs_render_pass_vis + 1.0) / 2.0)
+                    obs_render_pass_vis[discard_mask] = np.nan
+                elif render_pass == "segmentation":
+                    pass
+                else:
+                    assert false
+
+                plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%pose["index"])), obs_render_pass_vis)
 
         # useful for comparing the game window to the image that has been saved to disk
         if args.wait_for_key_press:
+            print("[SPEAR | generate_images.py] Press any key to continue...")
             input()
 
         prev_scene_id = pose["scene_id"]

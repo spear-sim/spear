@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if args.scene_id is None:
         scenes_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scenes.csv"))
         assert os.path.exists(scenes_csv_file)
-        scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
+        scene_ids = pd.read_csv(scenes_csv_file)["scene_id"]
     else:
         scene_ids = [args.scene_id]
 

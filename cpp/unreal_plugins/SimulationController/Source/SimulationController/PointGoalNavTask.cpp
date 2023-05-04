@@ -12,8 +12,8 @@
 #include <Math/RandomStream.h>
 #include <Math/Vector.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
-#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
@@ -134,22 +134,22 @@ bool PointGoalNavTask::isEpisodeDone() const
     return hit_goal_ || hit_obstacle_;
 }
 
-std::map<std::string, Box> PointGoalNavTask::getStepInfoSpace() const
+std::map<std::string, ArrayDesc> PointGoalNavTask::getStepInfoSpace() const
 {
-    std::map<std::string, Box> step_info_space;
-    Box box;
+    std::map<std::string, ArrayDesc> step_info_space;
+    ArrayDesc array_desc;
     
-    box.low_ = 0.0f;
-    box.high_ = 1.0f;
-    box.shape_ = {1};
-    box.datatype_ = DataType::Boolean;
-    step_info_space["hit_goal"] = std::move(box);
+    array_desc.low_ = 0.0f;
+    array_desc.high_ = 1.0f;
+    array_desc.shape_ = {1};
+    array_desc.datatype_ = DataType::UInteger8;
+    step_info_space["hit_goal"] = std::move(array_desc);
 
-    box.low_ = 0.0f;
-    box.high_ = 1.0f;
-    box.shape_ = {1};
-    box.datatype_ = DataType::Boolean;
-    step_info_space["hit_obstacle"] = std::move(box);
+    array_desc.low_ = 0.0f;
+    array_desc.high_ = 1.0f;
+    array_desc.shape_ = {1};
+    array_desc.datatype_ = DataType::UInteger8;
+    step_info_space["hit_obstacle"] = std::move(array_desc);
 
     return step_info_space;
 }

@@ -73,13 +73,11 @@ SPEAR:
   # time before throwing when calling a server function.
   RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 5.0
 
-  # Once a connection has been established, the Env class will wait for this amount of
-  # time before returning from its constructor. This gives the Unreal executable a bit
-  # of extra time after launching the RPC server, before the Env class starts to call
-  # RPC functions.
-  RPC_CLIENT_AFTER_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS: 1.0
-
   # The maximum number of ticks to execute during env.reset() before giving up. This is
   # useful in situations where the physics simulation does not successfully settle down
   # after calling env.reset().
   MAX_NUM_TICKS_AFTER_RESET: 10
+
+  # Number of ticks to execute after launching the Unreal instance. This is useful to warm up
+  # various caches and rendering features that leverage temporal coherence between frames.
+  NUM_EXTRA_WARMUP_TICKS: 20

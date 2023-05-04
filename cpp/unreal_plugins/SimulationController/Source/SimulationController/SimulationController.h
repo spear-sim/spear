@@ -51,7 +51,7 @@ private:
     std::unique_ptr<RpcServer> rpc_server_;
 
     bool has_world_begin_play_executed_ = false;
-    bool has_open_level_executed_ = false;
+    bool open_level_is_pending_ = false;
 
     // thread sychronization
     std::atomic<FrameState> frame_state_;

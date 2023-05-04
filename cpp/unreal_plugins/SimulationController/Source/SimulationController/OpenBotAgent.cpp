@@ -25,8 +25,8 @@
 #include <NavMesh/RecastNavMesh.h>
 #include <NavModifierVolume.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
-#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
@@ -157,90 +157,93 @@ void OpenBotAgent::cleanUpObjectReferences()
     }
 }
 
-std::map<std::string, Box> OpenBotAgent::getActionSpace() const
+std::map<std::string, ArrayDesc> OpenBotAgent::getActionSpace() const
 {
     
-    std::map<std::string, Box> action_space;
+    std::map<std::string, ArrayDesc> action_space;
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.OPENBOT_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "apply_voltage")) {
-        Box box;
-        box.low_ = -1.f;
-        box.high_ = 1.f;
-        box.shape_ = {2};
-        box.datatype_ = DataType::Float32;
-        action_space["apply_voltage"] = std::move(box);
+        ArrayDesc array_desc;
+        array_desc.low_ = -1.f;
+        array_desc.high_ = 1.f;
+        array_desc.shape_ = {2};
+        array_desc.datatype_ = DataType::Float32;
+        action_space["apply_voltage"] = std::move(array_desc);
     }
 
     if (Std::contains(action_components, "set_position_xyz_centimeters")) {
-        Box box;
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.shape_ = {3};
-        box.datatype_ = DataType::Float32;
-        action_space["set_position_xyz_centimeters"] = std::move(box);
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.shape_ = {3};
+        array_desc.datatype_ = DataType::Float32;
+        action_space["set_position_xyz_centimeters"] = std::move(array_desc);
     }
 
     if (Std::contains(action_components, "set_orientation_pyr_radians")) {
-        Box box;
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.shape_ = {3};
-        box.datatype_ = DataType::Float32;
-        action_space["set_orientation_pyr_radians"] = std::move(box);
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.shape_ = {3};
+        array_desc.datatype_ = DataType::Float32;
+        action_space["set_orientation_pyr_radians"] = std::move(array_desc);
     }
 
     return action_space;
 }
 
-std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
+std::map<std::string, ArrayDesc> OpenBotAgent::getObservationSpace() const
 {
-    std::map<std::string, Box> observation_space;
-    Box box;
-
+    std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "state_data")) {
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.datatype_ = DataType::Float32;
-        box.shape_ = {6};
-        observation_space["state_data"] = std::move(box); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.datatype_ = DataType::Float32;
+        array_desc.shape_ = {6};
+        observation_space["state_data"] = std::move(array_desc); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
     }
 
     if (Std::contains(observation_components, "control_data")) {
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.datatype_ = DataType::Float32;
-        box.shape_ = {2};
-        observation_space["control_data"] = std::move(box); // ctrl_left, ctrl_right
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.datatype_ = DataType::Float32;
+        array_desc.shape_ = {2};
+        observation_space["control_data"] = std::move(array_desc); // ctrl_left, ctrl_right
     }
 
     if (Std::contains(observation_components, "encoder")) {
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.datatype_ = DataType::Float32;
-        box.shape_ = {4};
-        observation_space["encoder"] = std::move(box); // FL, FR, RL, RR
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.datatype_ = DataType::Float32;
+        array_desc.shape_ = {4};
+        observation_space["encoder"] = std::move(array_desc); // FL, FR, RL, RR
     }
 
     if (Std::contains(observation_components, "imu")) {
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.datatype_ = DataType::Float32;
-        box.shape_ = {6};
-        observation_space["imu"] = std::move(box); // a_x, a_y, a_z, g_x, g_y, g_z
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.datatype_ = DataType::Float32;
+        array_desc.shape_ = {6};
+        observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z, g_x, g_y, g_z
     }
 
     if (Std::contains(observation_components, "sonar")) {
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.datatype_ = DataType::Float32;
-        box.shape_ = {1};
-        observation_space["sonar"] = std::move(box); // Front obstacle distance in [m]
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.datatype_ = DataType::Float32;
+        array_desc.shape_ = {1};
+        observation_space["sonar"] = std::move(array_desc); // Front obstacle distance in [m]
     }
     
-    std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
+    std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
     for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
         observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
     }
@@ -248,19 +251,18 @@ std::map<std::string, Box> OpenBotAgent::getObservationSpace() const
     return observation_space;
 }
 
-std::map<std::string, Box> OpenBotAgent::getStepInfoSpace() const
+std::map<std::string, ArrayDesc> OpenBotAgent::getStepInfoSpace() const
 {
-    std::map<std::string, Box> step_info_space;
-    Box box;
-
+    std::map<std::string, ArrayDesc> step_info_space;
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.OPENBOT_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "trajectory_data")) {
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.datatype_ = DataType::Float32;
-        box.shape_ = {-1, 3};
-        step_info_space["trajectory_data"] = std::move(box); // Vector of the waypoints x,y,z in the world frame.
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.datatype_ = DataType::Float32;
+        array_desc.shape_ = {-1, 3};
+        step_info_space["trajectory_data"] = std::move(array_desc); // Vector of the waypoints x,y,z in the world frame.
     }
 
     return step_info_space;

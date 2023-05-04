@@ -13,19 +13,19 @@
 enum class DataType
 {
     Invalid    = -1,
-    Boolean    = 0,
-    UInteger8  = 1,
-    Integer8   = 2,
-    UInteger16 = 3,
-    Integer16  = 4,
-    UInteger32 = 5,
-    Integer32  = 6,
+    UInteger8  = 0,
+    Integer8   = 1,
+    UInteger16 = 2,
+    Integer16  = 3,
+    UInteger32 = 4,
+    Integer32  = 5,
+    Float16    = 6,
     Float32    = 7,
-    Double     = 8,
+    Float64    = 8,
 };
 MSGPACK_ADD_ENUM(DataType);
 
-struct Box
+struct ArrayDesc
 {
     double low_ = std::nan("");
     double high_ = std::nan("");

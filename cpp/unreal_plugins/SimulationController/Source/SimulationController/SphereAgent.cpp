@@ -23,8 +23,8 @@
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
-#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
@@ -106,14 +106,9 @@ SphereAgent::SphereAgent(UWorld* world)
             camera_actor_->GetCameraComponent(),
             Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.RENDER_PASSES"),
             Config::get<unsigned int>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_WIDTH"),
-            Config::get<unsigned int>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT"));
+            Config::get<unsigned int>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT"),
+            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.FOV"));
         ASSERT(camera_sensor_);
-
-        // update FOV
-        for (auto& pass : Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.RENDER_PASSES")) {
-            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle =
-                Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.FOV");
-        }
 
         parent_actor_ = world->SpawnActor<AActor>();
         ASSERT(parent_actor_);
@@ -177,38 +172,38 @@ void SphereAgent::cleanUpObjectReferences()
     }
 }
 
-std::map<std::string, Box> SphereAgent::getActionSpace() const
+std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
 {
-    std::map<std::string, Box> action_space;
+    std::map<std::string, ArrayDesc> action_space;
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "apply_force")) {
-        Box box;
-        box.low_ = -1.f;
-        box.high_ = 1.f;
-        box.shape_ = {2};
-        box.datatype_ = DataType::Float32;
-        action_space["apply_force"] = std::move(box);
+        ArrayDesc array_desc;
+        array_desc.low_ = -1.f;
+        array_desc.high_ = 1.f;
+        array_desc.shape_ = {2};
+        array_desc.datatype_ = DataType::Float32;
+        action_space["apply_force"] = std::move(array_desc);
     }
 
     return action_space;
 }
 
-std::map<std::string, Box> SphereAgent::getObservationSpace() const
+std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
 {
-    std::map<std::string, Box> observation_space;
+    std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "compass")) {
-        Box box;
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.shape_ = {5};
-        box.datatype_ = DataType::Float32;
-        observation_space["compass"] = std::move(box);
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.shape_ = {5};
+        array_desc.datatype_ = DataType::Float32;
+        observation_space["compass"] = std::move(array_desc);
     }
 
-    std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
+    std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
     for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
         observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
     }
@@ -216,18 +211,18 @@ std::map<std::string, Box> SphereAgent::getObservationSpace() const
     return observation_space;
 }
 
-std::map<std::string, Box> SphereAgent::getStepInfoSpace() const
+std::map<std::string, ArrayDesc> SphereAgent::getStepInfoSpace() const
 {
-    std::map<std::string, Box> step_info_space;
+    std::map<std::string, ArrayDesc> step_info_space;
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "debug_info")) {
-        Box box;
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.shape_ = {-1,3};
-        box.datatype_ = DataType::Float32;
-        step_info_space["debug_info"] = std::move(box);
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.shape_ = {-1,3};
+        array_desc.datatype_ = DataType::Float32;
+        step_info_space["debug_info"] = std::move(array_desc);
     }
 
     return step_info_space;

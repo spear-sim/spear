@@ -27,7 +27,7 @@ if __name__ == "__main__":
     if args.scene_id is None:
         scenes_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scenes.csv"))
         assert os.path.exists(scenes_csv_file)
-        scene_ids = pd.read_csv(scenes_csv_file, dtype={"scene_id":str})["scene_id"]
+        scene_ids = pd.read_csv(scenes_csv_file)["scene_id"]
     else:
         scene_ids = [args.scene_id]
 
@@ -36,28 +36,28 @@ if __name__ == "__main__":
 
         print("[SPEAR | generate_poses.py] Processing scene: " + scene_id)
 
-        # change config based on current scene
-        config.defrost()
+        # # change config based on current scene
+        # config.defrost()
 
-        if scene_id == "kujiale_0000":
-            config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
-            config.SIMULATION_CONTROLLER.MAP_ID   = scene_id + "_bake"
+        # if scene_id == "kujiale_0000":
+        #     config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
+        #     config.SIMULATION_CONTROLLER.MAP_ID   = scene_id + "_bake"
 
-            # kujiale_0000 has scene-specific config values
-            scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
+        #     # kujiale_0000 has scene-specific config values
+        #     scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
 
-        elif scene_id == "warehouse_0000":
-            config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
-            config.SIMULATION_CONTROLLER.MAP_ID   = scene_id
+        # elif scene_id == "warehouse_0000":
+        #     config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
+        #     config.SIMULATION_CONTROLLER.MAP_ID   = scene_id
 
-            # warehouse_0000 has scene-specific config values
-            scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
+        #     # warehouse_0000 has scene-specific config values
+        #     scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
 
-        else:
-            assert False
+        # else:
+        #     assert False
 
-        config.merge_from_file(scene_config_file)
-        config.freeze()
+        # config.merge_from_file(scene_config_file)
+        # config.freeze()
 
         # create Env object
         env = spear.Env(config)
