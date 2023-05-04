@@ -125,12 +125,12 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         // if the current world is not the desired one, open the desired one
         bool open_level = desired_world_path_name != "" && desired_world_path_name != Unreal::toStdString(world->GetPathName());
 
-        std::cout << "[SPEAR | SimulationController.cpp] scene_id:                     " << scene_id << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] map_id:                       " << map_id << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] desired_world_path_name:      " << desired_world_path_name << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] desired_level_name:           " << desired_level_name << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] current world->GetPathName(): " << Unreal::toStdString(world->GetPathName()) << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] open_level:                   " << open_level << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] scene_id:                " << scene_id << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] map_id:                  " << map_id << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] desired_world_path_name: " << desired_world_path_name << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] desired_level_name:      " << desired_level_name << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():    " << Unreal::toStdString(world->GetPathName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] open_level:              " << open_level << std::endl;
 
         if (open_level) {
             std::cout << "[SPEAR | SimulationController.cpp] Opening level: " << desired_level_name << std::endl;
