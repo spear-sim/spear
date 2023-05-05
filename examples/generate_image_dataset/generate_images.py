@@ -139,7 +139,7 @@ if __name__ == "__main__":
                     obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # final_color is returned as BGRA
 
                 else:
-                    assert false
+                    assert False
 
                 plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%pose["index"])), obs_render_pass_vis)
 
