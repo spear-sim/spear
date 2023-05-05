@@ -116,22 +116,28 @@ if __name__ == "__main__":
                 assert len(obs_render_pass.shape) == 3
                 assert obs_render_pass.shape[2] == 4
 
-                obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # note that spear.Env returns BGRA by default
-
                 if render_pass == "depth":
+                    obs_render_pass_vis = obs_render_pass[:,:,[0,1,2]].copy() # depth is returned as RGBA
+
                     # discard very large depth values
                     max_depth_meters = 20.0
                     obs_render_pass_vis = obs_render_pass_vis[:,:,0]
                     obs_render_pass_vis = np.clip(0.0, max_depth_meters, obs_render_pass_vis)
+
                 elif render_pass == "final_color":
-                    pass
+                    obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # final_color is returned as BGRA
+
                 elif render_pass == "normal":
+                    obs_render_pass_vis = obs_render_pass[:,:,[0,1,2]].copy() # normal is returned as RGBA
+
                     # discard normals that aren't properly normalized, i.e., length of 1.0
                     discard_mask = np.logical_not(np.isclose(np.linalg.norm(obs_render_pass_vis, axis=2), 1.0, rtol=0.001, atol=0.001))
                     obs_render_pass_vis = np.clip(0.0, 1.0, (obs_render_pass_vis + 1.0) / 2.0)
                     obs_render_pass_vis[discard_mask] = np.nan
+
                 elif render_pass == "segmentation":
-                    pass
+                    obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # final_color is returned as BGRA
+
                 else:
                     assert false
 
