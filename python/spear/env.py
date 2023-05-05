@@ -74,7 +74,7 @@ class Env(gym.Env):
 
         return obs
 
-    # need to override gym.Env member function
+    # needed to comply with the gym.Env interface
     def render(self):
         pass
 
@@ -87,8 +87,8 @@ class Env(gym.Env):
         self._task_step_info_space_desc.terminate()
         self._agent_step_info_space_desc.terminate()
 
-        # Note that in the constructor, we launch the Unreal instance first and then initialize the client. Normally, we
-        # would do things in the reverse order here. But if we close the client first, then we can't send a command to
+        # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC client. Normally,
+        # we would do things in the reverse order here. But if we close the client first, then we can't send a command to
         # the Unreal instance to close it. So we close the Unreal instance first and then close the client.
         self._request_close_unreal_instance()
         self._close_rpc_client()
@@ -192,7 +192,7 @@ class Env(gym.Env):
         if self._config.SPEAR.RENDER_OFFSCREEN:
             launch_args.append("-renderoffscreen")
 
-        if len(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE) > 0:
+        if self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE != "":
             launch_args.append("-log={}".format(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
        
         launch_args.append("-config_file={}".format(temp_config_file))
@@ -217,7 +217,7 @@ class Env(gym.Env):
             print("[SPEAR | env.py] ERROR: Unrecognized process status: " + status)
             print("[SPEAR | env.py] ERROR: Killing process " + str(self._process.pid) + "...")
             self._force_kill_unreal_instance()
-            self._close_client_server_connection()
+            self._close_rpc_client()
             assert False
 
     def _request_close_unreal_instance(self):
