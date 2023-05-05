@@ -124,7 +124,7 @@ class Env(gym.Env):
                     os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.STANDALONE_EXECUTABLE)), "..", "..", "Content", "Paks"))
             elif sys.platform == "darwin":
                 paks_dir = \
-                    os.path.realpath(os.path.join(self._config.SPEAR.STANDALONE_EXECUTABLE, "Contents", "UE4", "SpearSim", "Content", "Paks"))
+                    os.path.realpath(os.path.join(self._config.SPEAR.STANDALONE_EXECUTABLE, "Contents", "UE", "SpearSim", "Content", "Paks"))
             elif sys.platform == "linux":
                 paks_dir = \
                     os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.STANDALONE_EXECUTABLE)), "SpearSim", "Content", "Paks"))
