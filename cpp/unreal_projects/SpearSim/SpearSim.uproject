@@ -8,6 +8,11 @@
             "Name": "SpearSim",
             "Type": "Runtime",
             "LoadingPhase": "Default"
+        },
+        {
+            "Name": "SpearSimEditor",
+            "Type": "Editor",
+            "LoadingPhase": "Default"
         }
     ],
     "Plugins": [

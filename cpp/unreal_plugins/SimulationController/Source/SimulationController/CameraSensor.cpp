@@ -15,10 +15,8 @@
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
-#include <Engine/Engine.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <Engine/World.h>
-#include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Math/Color.h>

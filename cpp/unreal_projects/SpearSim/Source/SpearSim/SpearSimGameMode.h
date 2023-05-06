@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <Containers/UnrealString.h>
 #include <CoreMinimal.h>
 #include <GameFramework/GameModeBase.h>
 
@@ -13,8 +14,11 @@
 UCLASS()
 class ASpearSimGameMode : public AGameModeBase
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 public:
     ASpearSimGameMode(const FObjectInitializer& object_initializer);
     ~ASpearSimGameMode();
+
+    UFUNCTION(Exec)
+    void SpearSimAddOnScreenDebugMessage(float display_time, FString debug_message);
 };

@@ -15,7 +15,6 @@
 
 #include <Engine/Engine.h>
 #include <Engine/World.h>
-#include <EngineUtils.h>
 #include <GameFramework/GameModeBase.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/CoreDelegates.h>

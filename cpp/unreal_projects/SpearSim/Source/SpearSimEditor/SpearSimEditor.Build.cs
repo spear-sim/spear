@@ -5,12 +5,12 @@
 using System;
 using UnrealBuildTool;
 
-public class SpearSim : ModuleRules
+public class SpearSimEditor : ModuleRules
 {
-    public SpearSim(ReadOnlyTargetRules Target) : base(Target)
+    public SpearSimEditor(ReadOnlyTargetRules Target) : base(Target)
     {
-        Console.WriteLine("[SPEAR | SpearSim.Build.cs] SpearSim::SpearSim");
-        Console.WriteLine("[SPEAR | SpearSim.Build.cs] Target type: " + Target.Type);
+        Console.WriteLine("[SPEAR | SpearSimEditor.Build.cs] SpearSimEditor::SpearSimEditor");
+        Console.WriteLine("[SPEAR | SpearSimEditor.Build.cs] Target type: " + Target.Type);
 
         // Disable precompiled headers (in our code but not Unreal code) for faster builds,
         // easier debugging of compile errors, and strict enforcement of include-what-you-use.
@@ -31,7 +31,7 @@ public class SpearSim : ModuleRules
         //     ... > CoreUtils/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
         bEnableUndefinedIdentifierWarnings = false;
 
-        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "CoreUtils", "Engine", "InputCore"});
+        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "CoreUtils", "Engine", "InputCore", "SpearSim", "UnrealEd"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }
