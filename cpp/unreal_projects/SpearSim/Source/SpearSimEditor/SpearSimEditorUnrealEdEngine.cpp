@@ -17,11 +17,13 @@ DEFINE_LOG_CATEGORY(LogSpearSimEditor);
 USpearSimEditorUnrealEdEngine::USpearSimEditorUnrealEdEngine()
 {
     std::cout << "[SPEAR | SpearSimEditorUnrealEdEngine.cpp] USpearSimGameEngine::USpearSimGameEngine" << std::endl;
+    UE_LOG(LogSpearSimEditor, Log, TEXT("[SPEAR | SpearSimEditorUnrealEdEngine.cpp] USpearSimGameEngine::USpearSimGameEngine"));
 }
 
 USpearSimEditorUnrealEdEngine::~USpearSimEditorUnrealEdEngine()
 {
     std::cout << "[SPEAR | SpearSimEditorUnrealEdEngine.cpp] USpearSimGameEngine::~USpearSimGameEngine" << std::endl;
+    UE_LOG(LogSpearSimEditor, Log, TEXT("[SPEAR | SpearSimEditorUnrealEdEngine.cpp] USpearSimGameEngine::USpearSimGameEngine"));
 }
 
 bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device)

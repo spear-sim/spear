@@ -17,6 +17,9 @@ public class SpearSimTarget : TargetRules
         Type = TargetType.Game;
         DefaultBuildSettings = BuildSettingsVersion.V2;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
+
+        // We don't include SpearSimEditor here, because the SpearSimEditor module needs to extend Unreal's UnrealEdEngine class, which is only
+        // available in editor builds.
         ExtraModuleNames.AddRange(new string[] {"SpearSim"});
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {

@@ -13,7 +13,9 @@
 class FOutputDevice;
 class UWorld;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogSpearSim, Log, All);
+// This class is intended to mimic the functionality of SpearSimEditorUnrealEdEngine. SpearSimEditorUnrealEdEngine
+// inherits from UnrealEdEngine and is active when the editor is running, whereas this class inherits from UGameEngine
+// and is active when the game is running in standalone mode.
 
 UCLASS()
 class USpearSimGameEngine : public UGameEngine
@@ -23,5 +25,5 @@ public:
     USpearSimGameEngine();
     ~USpearSimGameEngine();
 
-    bool Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device);
+    bool Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device) override;
 };

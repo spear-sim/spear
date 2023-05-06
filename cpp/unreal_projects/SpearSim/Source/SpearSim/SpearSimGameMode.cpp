@@ -25,8 +25,11 @@ ASpearSimGameMode::~ASpearSimGameMode()
     std::cout << "[SPEAR | SpearSimGameMode.cpp] ASpearSimGameMode::~ASpearSimGameMode" << std::endl;
 }
 
-void ASpearSimGameMode::SpearSimAddOnScreenDebugMessage(float display_time, FString message)
+void ASpearSimGameMode::spearAddOnScreenDebugMessage(float display_time, FString message)
 {
+    // Note that GEngine->AddOnScreenDebugMessage(...) is only available when the game is running, either in standalone mode or
+    // in play-in-editor mode. But in pracice this is not an issue, because UFUNTION(Exec) methods only execute when the game
+    // is running anyway.
     uint64 key = -1;
     GEngine->AddOnScreenDebugMessage(key, display_time, FColor::Yellow, *Unreal::toFString("[SPEAR | SpearSimGameMode.cpp] " + Unreal::toStdString(message)));
 }
