@@ -21,9 +21,9 @@ class UWorld;
 //    https://forums.unrealengine.com/t/what-is-the-proper-method-for-extending-the-editor-engine/282885
 
 // We don't typically use Unreal's built-in logging functionality, but we make an exception in this case. This class is
-// only active when running the Unreal Editor, and we don't necessarily have a way of outputting to stdout. But we still
-// try to write to stdout as well, because there are situations where we will see the stdout output and not the Unreal
-// log output.
+// only active when running the Unreal Editor, where we don't necessarily have a way of outputting to stdout. But we still
+// try to write to stdout as well, because there are situations where we will see the stdout output but not the Unreal log
+// output.
 DECLARE_LOG_CATEGORY_EXTERN(LogSpearSimEditor, Log, All);
 
 UCLASS()
