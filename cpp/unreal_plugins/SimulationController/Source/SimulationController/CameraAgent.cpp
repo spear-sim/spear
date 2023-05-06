@@ -138,13 +138,18 @@ void CameraAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.ACTION_COMPONENTS");
 
-    if (Std::contains(action_components, "set_pose")) {
-        std::vector<float> component_data = Std::reinterpret_as<float>(action.at("set_pose"));
+    if (Std::contains(action_components, "set_position")) {
+        std::vector<float> component_data = Std::reinterpret_as<float>(action.at("set_position"));
         FVector agent_location(component_data.at(0), component_data.at(1), component_data.at(2));
-        FRotator agent_rotation(component_data.at(3), component_data.at(4), component_data.at(5));
         bool sweep = false;
         FHitResult* hit_result = nullptr;
-        camera_actor_->SetActorLocationAndRotation(agent_location, agent_rotation, sweep, hit_result, ETeleportType::ResetPhysics);
+        camera_actor_->SetActorLocation(agent_location, sweep, hit_result, ETeleportType::ResetPhysics);
+    }
+
+    if (Std::contains(action_components, "set_rotation")) {
+        std::vector<float> component_data = Std::reinterpret_as<float>(action.at("set_rotation"));
+        FRotator agent_rotation(component_data.at(0), component_data.at(1), component_data.at(2));
+        camera_actor_->SetActorRotation(agent_rotation, ETeleportType::ResetPhysics);
     }
 }
 

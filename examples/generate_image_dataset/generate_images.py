@@ -71,10 +71,6 @@ if __name__ == "__main__":
     # read data from csv
     df = pd.read_csv(args.poses_file)
 
-    # if the user specified num_internal_steps, then use it
-    if args.num_internal_steps is not None:
-        num_internal_steps = args.num_internal_steps
-
     # create dir for storing images
     if not args.benchmark:
         for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
@@ -94,7 +90,7 @@ if __name__ == "__main__":
                 env.close()
 
             # create Env object
-            env = CustomEnv(config, num_internal_steps=num_internal_steps)
+            env = CustomEnv(config, num_internal_steps=args.num_internal_steps)
 
             # reset the simulation
             _ = env.reset()
