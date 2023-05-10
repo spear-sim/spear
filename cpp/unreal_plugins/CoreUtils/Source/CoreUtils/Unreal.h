@@ -37,6 +37,11 @@ public:
         return toStdString(str.ToString());
     }
 
+    static std::string toStdString(const TCHAR* str)
+    {
+        return std::string(TCHAR_TO_UTF8(str));
+    }
+
     static FString toFString(const std::string& str)
     {
         return FString(UTF8_TO_TCHAR(str.c_str()));

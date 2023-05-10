@@ -1,4 +1,4 @@
-scene_id,pos_x_cms,pos_y_cms,pos_z_cms,pitch_degs,yaw_degs,roll_degs
+scene_id,position_x,position_y,position_z,rotation_pitch,rotation_yaw,rotation_roll
 kujiale_0000,-918.5875,-168.45586,180.9,0.0,-172.76169934103666,0.0
 kujiale_0000,-718.0559,-393.99255,180.9,0.0,111.08290026366899,0.0
 kujiale_0000,-752.53,-647.8372,180.9,0.0,-104.85261435867135,0.0

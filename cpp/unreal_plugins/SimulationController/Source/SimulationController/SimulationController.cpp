@@ -15,15 +15,14 @@
 
 #include <Engine/Engine.h>
 #include <Engine/World.h>
-#include <EngineUtils.h>
 #include <GameFramework/GameModeBase.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/CoreDelegates.h>
 #include <Modules/ModuleManager.h>
 #include <PhysicsEngine/PhysicsSettings.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
-#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
@@ -46,7 +45,7 @@ enum class FrameState
     RequestPreTick,
     ExecutingPreTick,
     ExecutingTick,
-    ExecutingPostTick
+    ExecutingPostTick,
 };
 
 void SimulationController::StartupModule()
@@ -104,46 +103,47 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     ASSERT(world);
 
     #if WITH_EDITOR
-        bool ready_to_open_level = world->IsGameWorld();
+        bool world_is_ready = world->IsGameWorld();
     #else
-        bool ready_to_open_level = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
+        bool world_is_ready = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
     #endif
 
-    if (ready_to_open_level) {
-
-        std::string world_path_name;
-        std::string level_name;
+    if (world_is_ready) {
 
         std::string scene_id = Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID");
         std::string map_id = Config::get<std::string>("SIMULATION_CONTROLLER.MAP_ID");
 
+        std::string desired_world_path_name;
+        std::string desired_level_name;
         if (scene_id != "") {
             if (map_id == "") {
                 map_id = scene_id;
             }
-            world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id + "." + map_id;
-            level_name      = "/Game/Scenes/" + scene_id + "/Maps/" + map_id;            
+            desired_world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id + "." + map_id;
+            desired_level_name      = "/Game/Scenes/" + scene_id + "/Maps/" + map_id;            
         }
 
-        std::cout << "[SPEAR | SimulationController.cpp] scene_id:             " << scene_id << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] map_id:               " << map_id << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] world_path_name:      " << world_path_name << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] level_name:           " << level_name << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetName():     " << Unreal::toStdString(world->GetName()) << std::endl;
-        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName(): " << Unreal::toStdString(world->GetPathName()) << std::endl;
-
         // if the current world is not the desired one, open the desired one
-        if (world_path_name != "" && world_path_name != Unreal::toStdString(world->GetPathName())) {
-            std::cout << "[SPEAR | SimulationController.cpp] Opening level: " << level_name << std::endl;
+        bool open_level = desired_world_path_name != "" && desired_world_path_name != Unreal::toStdString(world->GetPathName());
 
-            // assert that we haven't already tried to open the level, because that means we failed
-            ASSERT(!has_open_level_executed_);
+        std::cout << "[SPEAR | SimulationController.cpp] scene_id:                " << scene_id << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] map_id:                  " << map_id << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] desired_world_path_name: " << desired_world_path_name << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] desired_level_name:      " << desired_level_name << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] world->GetPathName():    " << Unreal::toStdString(world->GetPathName()) << std::endl;
+        std::cout << "[SPEAR | SimulationController.cpp] open_level:              " << open_level << std::endl;
 
-            UGameplayStatics::OpenLevel(world, Unreal::toFName(level_name));
-            has_open_level_executed_ = true;
+        if (open_level) {
+            std::cout << "[SPEAR | SimulationController.cpp] Opening level: " << desired_level_name << std::endl;
+
+            // if we're at this line of code and OpenLevel is already pending, it means we failed
+            ASSERT(!open_level_is_pending_);
+
+            UGameplayStatics::OpenLevel(world, Unreal::toFName(desired_level_name));
+            open_level_is_pending_ = true;
 
         } else {
-            has_open_level_executed_ = false;
+            open_level_is_pending_ = false;
 
             // we expect worldCleanupEventHandler(...) to be called before a new world is created
             ASSERT(!world_);
@@ -152,7 +152,10 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
             world_ = world;
 
             // We need to defer initializing this handler until after we have a valid world_ pointer,
-            // and we defer the rest of our initialization code until the OnWorldBeginPlay event.
+            // and we defer the rest of our initialization code until the OnWorldBeginPlay event. We
+            // wrap this code in an if block to enable interactive navigation mode, which will potentially
+            // need to load a new map via the config system, but should not initialize the rest of the
+            // code.
             if (Config::get<std::string>("SIMULATION_CONTROLLER.INTERACTION_MODE") == "programmatic") {
                 world_begin_play_delegate_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
             }
@@ -171,36 +174,32 @@ void SimulationController::worldBeginPlayEventHandler()
 
     // set physics parameters
     UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
-    physics_settings->bEnableEnhancedDeterminism = Config::get<bool>("SIMULATION_CONTROLLER.ENABLE_ENHANCED_DETERMINISM");
-    physics_settings->bSubstepping = Config::get<bool>("SIMULATION_CONTROLLER.ENABLE_SUBSTEPPING");
-    physics_settings->MaxSubstepDeltaTime = Config::get<float>("SIMULATION_CONTROLLER.MAX_SUBSTEP_DELTA_TIME");
-    physics_settings->MaxSubsteps = Config::get<int32>("SIMULATION_CONTROLLER.MAX_SUBSTEPS");
-    physics_settings->ContactOffsetMultiplier = Config::get<float>("SIMULATION_CONTROLLER.CONTACT_OFFSET_MULTIPLIER");
-    physics_settings->MinContactOffset = Config::get<float>("SIMULATION_CONTROLLER.MIN_CONTACT_OFFSET");
-    physics_settings->MaxContactOffset = Config::get<float>("SIMULATION_CONTROLLER.MAX_CONTACT_OFFSET");
+    physics_settings->bEnableEnhancedDeterminism = Config::get<bool>("SIMULATION_CONTROLLER.PHYSICS.ENABLE_ENHANCED_DETERMINISM");
+    physics_settings->bSubstepping = Config::get<bool>("SIMULATION_CONTROLLER.PHYSICS.ENABLE_SUBSTEPPING");
+    physics_settings->MaxSubstepDeltaTime = Config::get<float>("SIMULATION_CONTROLLER.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
+    physics_settings->MaxSubsteps = Config::get<int32>("SIMULATION_CONTROLLER.PHYSICS.MAX_SUBSTEPS");
+    physics_settings->ContactOffsetMultiplier = Config::get<float>("SIMULATION_CONTROLLER.PHYSICS.CONTACT_OFFSET_MULTIPLIER");
+    physics_settings->MinContactOffset = Config::get<float>("SIMULATION_CONTROLLER.PHYSICS.MIN_CONTACT_OFFSET");
+    physics_settings->MaxContactOffset = Config::get<float>("SIMULATION_CONTROLLER.PHYSICS.MAX_CONTACT_OFFSET");
 
     // Check that the physics substepping parameters match our deired simulation step time.
     // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep for more details.
     if (physics_settings->bSubstepping) {
-        ASSERT(Config::get<float>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps);
+        ASSERT(Config::get<float>("SIMULATION_CONTROLLER.PHYSICS.SIMULATION_STEP_TIME_SECONDS") <= physics_settings->MaxSubstepDeltaTime * physics_settings->MaxSubsteps);
     }
 
     // set fixed simulation step time in seconds
     FApp::SetBenchmarking(true);
-    FApp::SetFixedDeltaTime(Config::get<double>("SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS"));
+    FApp::SetFixedDeltaTime(Config::get<double>("SIMULATION_CONTROLLER.PHYSICS.SIMULATION_STEP_TIME_SECONDS"));
 
-    // pause gameplay
+    // pause the game
     UGameplayStatics::SetGamePaused(world_, true);
 
     // create Agent
     if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "CameraAgent") {
         agent_ = std::make_unique<CameraAgent>(world_);
-    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "OpenBotAgent") {
-        agent_ = std::make_unique<OpenBotAgent>(world_);
     } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
-    /*} else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
-        agent_ = std::make_unique<UrdfBotAgent>(world_);*/
     } else {
         ASSERT(false);
     }
@@ -336,11 +335,6 @@ void SimulationController::endFrameEventHandler()
 
 void SimulationController::bindFunctionsToRpcServer()
 {
-    rpc_server_->bindAsync("close", []() -> void {
-        bool immediate_shutdown = false;
-        FGenericPlatformMisc::RequestExit(immediate_shutdown);
-    });
-
     rpc_server_->bindAsync("ping", []() -> std::string {
         return "SimulationController received a call to ping()...";
     });
@@ -348,6 +342,11 @@ void SimulationController::bindFunctionsToRpcServer()
     rpc_server_->bindAsync("getByteOrder", []() -> std::string {
         uint32_t dummy = 0x01020304;
         return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
+    });
+
+    rpc_server_->bindAsync("requestClose", []() -> void {
+        bool immediate_shutdown = false;
+        FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
     rpc_server_->bindAsync("beginTick", [this]() -> void {
@@ -389,22 +388,22 @@ void SimulationController::bindFunctionsToRpcServer()
         ASSERT(frame_state_ == FrameState::Idle);
     });
 
-    rpc_server_->bindAsync("getActionSpace", [this]() -> std::map<std::string, Box> {
+    rpc_server_->bindAsync("getActionSpace", [this]() -> std::map<std::string, ArrayDesc> {
         ASSERT(agent_);
         return agent_->getActionSpace();
     });
 
-    rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, Box> {
+    rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, ArrayDesc> {
         ASSERT(agent_);
         return agent_->getObservationSpace();
     });
 
-    rpc_server_->bindAsync("getAgentStepInfoSpace", [this]() -> std::map<std::string, Box> {
+    rpc_server_->bindAsync("getAgentStepInfoSpace", [this]() -> std::map<std::string, ArrayDesc> {
         ASSERT(agent_);
         return agent_->getStepInfoSpace();
     });
 
-    rpc_server_->bindAsync("getTaskStepInfoSpace", [this]() -> std::map<std::string, Box> {
+    rpc_server_->bindAsync("getTaskStepInfoSpace", [this]() -> std::map<std::string, ArrayDesc> {
         ASSERT(task_);
         return task_->getStepInfoSpace();
     });

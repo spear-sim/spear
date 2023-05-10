@@ -20,7 +20,7 @@ class UWorld;
 struct FHitResult;
 
 class UActorHitEvent;
-struct Box;
+struct ArrayDesc;
 
 class ImitationLearningTask : public Task {
 public:
@@ -34,7 +34,7 @@ public:
     void endFrame() override;
     float getReward() const override;
     bool isEpisodeDone() const override;
-    std::map<std::string, Box> getStepInfoSpace() const override;
+    std::map<std::string, ArrayDesc> getStepInfoSpace() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
     void reset() override;
     bool isReady() const override;

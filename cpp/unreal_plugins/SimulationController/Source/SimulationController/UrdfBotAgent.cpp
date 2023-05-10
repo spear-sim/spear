@@ -1,3 +1,5 @@
+////------ BEGIN UE5 MIGRATION ------////
+//// Uncomment this file when UrdfBot is supported in UE5.
 /*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -12,8 +14,8 @@
 
 #include <Components/SceneCaptureComponent2D.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
-#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
@@ -87,12 +89,12 @@ void UrdfBotAgent::findObjectReferences(UWorld* world) {}
 
 void UrdfBotAgent::cleanUpObjectReferences() {}
 
-std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
+std::map<std::string, ArrayDesc> UrdfBotAgent::getActionSpace() const
 {
-    std::map<std::string, Box> action_space;
+    std::map<std::string, ArrayDesc> action_space;
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.ACTION_COMPONENTS");
 
-    std::map<std::string, Box> robot_component_action_space = urdf_bot_pawn_->urdf_robot_component_->getActionSpace(action_components);
+    std::map<std::string, ArrayDesc> robot_component_action_space = urdf_bot_pawn_->urdf_robot_component_->getActionSpace(action_components);
     for (auto& robot_component_observation_action_component : robot_component_action_space) {
         action_space[robot_component_observation_action_component.first] = std::move(robot_component_observation_action_component.second);
     }
@@ -100,18 +102,18 @@ std::map<std::string, Box> UrdfBotAgent::getActionSpace() const
     return action_space;
 }
 
-std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
+std::map<std::string, ArrayDesc> UrdfBotAgent::getObservationSpace() const
 {
-    std::map<std::string, Box> observation_space;
+    std::map<std::string, ArrayDesc> observation_space;
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.OBSERVATION_COMPONENTS");
 
-    std::map<std::string, Box> robot_component_observation_space = urdf_bot_pawn_->urdf_robot_component_->getObservationSpace(observation_components);
+    std::map<std::string, ArrayDesc> robot_component_observation_space = urdf_bot_pawn_->urdf_robot_component_->getObservationSpace(observation_components);
     for (auto& robot_component_observation_space_component : robot_component_observation_space) {
         observation_space[robot_component_observation_space_component.first] = std::move(robot_component_observation_space_component.second);
     }
 
-    std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
+    std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
     for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
         observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
     }
@@ -119,7 +121,7 @@ std::map<std::string, Box> UrdfBotAgent::getObservationSpace() const
     return observation_space;
 }
 
-std::map<std::string, Box> UrdfBotAgent::getStepInfoSpace() const
+std::map<std::string, ArrayDesc> UrdfBotAgent::getStepInfoSpace() const
 {
     return {};
 }
@@ -165,3 +167,4 @@ bool UrdfBotAgent::isReady() const
            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }
 */
+////------ END UE5 MIGRATION ------////

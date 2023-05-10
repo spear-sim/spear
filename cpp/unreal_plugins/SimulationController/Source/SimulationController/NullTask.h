@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "CoreUtils/Box.h"
+#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Task.h"
 
 class NullTask: public Task
@@ -29,7 +29,7 @@ public:
         return false;
     }
 
-    std::map<std::string, Box> getStepInfoSpace() const override
+    std::map<std::string, ArrayDesc> getStepInfoSpace() const override
     {
         return {};
     }

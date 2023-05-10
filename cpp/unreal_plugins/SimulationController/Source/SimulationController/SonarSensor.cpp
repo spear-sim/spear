@@ -14,7 +14,11 @@
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <Math/UnrealMathUtility.h>
-//#include <PxScene.h>
+
+////------ BEGIN UE5 MIGRATION ------////
+//// PhysX is no longer supported
+    // #include <PxScene.h>
+////------ END UE5 MIGRATION ------////
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
@@ -84,24 +88,27 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
 
     float min_distance = Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX");
     
-    //component_->GetWorld()->GetPhysicsScene()->GetPxScene()->lockRead();
-    //{
-    //    for (int i = 0; i < Config::get<int>("SIMULATION_CONTROLLER.SONAR_SENSOR.NUM_RAYS"); i++) {
-    //        hit_results[i] = FHitResult(EForceInit::ForceInit);
-    //        float distance = Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX");
-    //        float radius = std::uniform_real_distribution<float>()(random_gen_);
-    //        float angle = std::uniform_real_distribution<float>(0.0f, 2.0f * PI)(random_gen_); // Uniform distibution of vales between 0 and 2*PI
-    //        FVector end_location = start_location + transform_rotator.RotateVector({
-    //                Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX") * world_to_meters,
-    //                max_rx * radius * std::cosf(angle),
-    //                max_ry * radius * std::sinf(angle)});
-    //        
-    //        bool hit = component_->GetWorld()->LineTraceSingleByChannel(
-    //            hit_results.at(i),
-    //            start_location,
-    //            end_location,
-    //            ECollisionChannel::ECC_Visibility, collision_query_params, FCollisionResponseParams::DefaultResponseParam);
-    //        TWeakObjectPtr<AActor> hit_actor = hit_results.at(i).Actor;
+    ////------ BEGIN UE5 MIGRATION ------////
+    //// Need to modify this section as PhysX is no longer supported
+    /*
+        component_->GetWorld()->GetPhysicsScene()->GetPxScene()->lockRead();
+        {
+        for (int i = 0; i < Config::get<int>("SIMULATION_CONTROLLER.SONAR_SENSOR.NUM_RAYS"); i++) {
+            hit_results[i] = FHitResult(EForceInit::ForceInit);
+            float distance = Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX");
+            float radius = std::uniform_real_distribution<float>()(random_gen_);
+            float angle = std::uniform_real_distribution<float>(0.0f, 2.0f * PI)(random_gen_); // Uniform distibution of vales between 0 and 2*PI
+            FVector end_location = start_location + transform_rotator.RotateVector({
+                    Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX") * world_to_meters,
+                    max_rx * radius * std::cosf(angle),
+                    max_ry * radius * std::sinf(angle)});
+            
+            bool hit = component_->GetWorld()->LineTraceSingleByChannel(
+                hit_results.at(i),
+                start_location,
+                end_location,
+                ECollisionChannel::ECC_Visibility, collision_query_params, FCollisionResponseParams::DefaultResponseParam);
+            TWeakObjectPtr<AActor> hit_actor = hit_results.at(i).Actor;
 
     //        // If we hit anything...
     //        if (hit && hit_actor.Get()) {
@@ -121,13 +128,15 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
     //                }
     //            }
 
-    //        } else { // If we didn't hit anything...
-    //            hits[i] = false;
-    //            distance = Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX");
-    //        }
-    //    }
-    //}
-    //component_->GetWorld()->GetPhysicsScene()->GetPxScene()->unlockRead();
+            } else { // If we didn't hit anything...
+                hits[i] = false;
+                distance = Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX");
+            }
+        }
+        }
+        component_->GetWorld()->GetPhysicsScene()->GetPxScene()->unlockRead();
+    */
+   ////------ END UE5 MIGRATION ------////
 
     range_ = min_distance + Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.NOISE_STD_DEV") * std::uniform_real_distribution<float>()(random_gen_);
 

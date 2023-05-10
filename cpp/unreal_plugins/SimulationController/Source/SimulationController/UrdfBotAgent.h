@@ -1,3 +1,5 @@
+////------ BEGIN UE5 MIGRATION ------////
+//// Uncomment this file when UrdfBot is supported in UE5.
 /*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -19,7 +21,7 @@ class AUrdfBotPawn;
 class CameraSensor;
 class ImuSensor;
 class SonarSensor;
-struct Box;
+struct ArrayDesc;
 
 class UrdfBotAgent : public Agent
 {
@@ -30,9 +32,9 @@ public:
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
 
-    std::map<std::string, Box> getActionSpace() const override;
-    std::map<std::string, Box> getObservationSpace() const override;
-    std::map<std::string, Box> getStepInfoSpace() const override;
+    std::map<std::string, ArrayDesc> getActionSpace() const override;
+    std::map<std::string, ArrayDesc> getObservationSpace() const override;
+    std::map<std::string, ArrayDesc> getStepInfoSpace() const override;
 
     void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
@@ -49,3 +51,4 @@ private:
     std::unique_ptr<SonarSensor> sonar_sensor_;
 };
 */
+////------ END UE5 MIGRATION ------////

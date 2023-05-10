@@ -1,39 +1,44 @@
 {
-	"FileVersion": 3,
-	"EngineAssociation": "5.2",
-	"Category": "",
-	"Description": "",
-	"Modules": [
-		{
-			"Name": "SpearSim",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "CoreUtils",
-			"Enabled": true
-		},
-		{
-			"Name": "GPULightmass",
-			"Enabled": true
-		},
-		{
-			"Name": "HDRIBackdrop",
-			"Enabled": true
-		},
-		{
-			"Name": "OpenBot",
-			"Enabled": true
-		},
-		{
-			"Name": "SimulationController",
-			"Enabled": false
-		},
-		{
-			"Name": "UrdfBot",
-			"Enabled": false
-		}
-	]
+    "FileVersion": 3,
+    "EngineAssociation": "5.2",
+    "Category": "",
+    "Description": "",
+    "Modules": [
+        {
+            "Name": "SpearSim",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "SpearSimEditor",
+            "Type": "Editor",
+            "LoadingPhase": "Default"
+        }
+    ],
+    "Plugins": [
+        {
+            "Name": "CoreUtils",
+            "Enabled": true
+        },
+        {
+            "Name": "GPULightmass",
+            "Enabled": true
+        },
+        {
+            "Name": "HDRIBackdrop",
+            "Enabled": true
+        },
+        {
+            "Name": "OpenBot",
+            "Enabled": false
+        },
+        {
+            "Name": "SimulationController",
+            "Enabled": true
+        },
+        {
+            "Name": "UrdfBot",
+            "Enabled": false
+        }
+    ]
 }
