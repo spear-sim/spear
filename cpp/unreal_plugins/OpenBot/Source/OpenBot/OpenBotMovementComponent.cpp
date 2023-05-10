@@ -40,10 +40,16 @@ UOpenBotMovementComponent::UOpenBotMovementComponent()
     DragCoefficient    = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.DRAG_COEFFICIENT");
     ChassisWidth       = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_WIDTH");
     ChassisHeight      = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_HEIGHT");
-    EngineSetup.MaxRPM = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MOTOR_MAX_RPM");
+    
+    ConstructorHelpers::FObjectFinder<UCurveFloat> torque_curve_asset(TEXT("/Script/Engine.CurveFloat'/OpenBot/TorqueCurve.TorqueCurve'"));
+    ASSERT(torque_curve_asset.Succeeded());
+
+    EngineSetup.MaxRPM    = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MOTOR_MAX_RPM");
     EngineSetup.MaxTorque = Config::get<float>("OPENBOT.OPENBOT_PAWN.MOTOR_TORQUE_MAX");
-    DifferentialSetup.DifferentialType = EVehicleDifferential::AllWheelDrive;
-    SteeringSetup.SteeringType = ESteeringType::SingleAngle;
+    //EngineSetup.TorqueCurve.ExternalCurve = torque_curve_asset.Object;
+
+    //DifferentialSetup.DifferentialType = EVehicleDifferential::AllWheelDrive;
+    //SteeringSetup.SteeringType = ESteeringType::SingleAngle;
 }
 
 UOpenBotMovementComponent::~UOpenBotMovementComponent()
@@ -58,5 +64,18 @@ Eigen::Vector4f UOpenBotMovementComponent::getWheelRotationSpeeds() const
     wheel_rotation_speeds(1) = VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity(); // Expressed in [RPM]
     wheel_rotation_speeds(2) = VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity(); // Expressed in [RPM]
     wheel_rotation_speeds(3) = VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity(); // Expressed in [RPM]
-    return wheel_rotation_speeds;                                                               // Expressed in [RPM]
+    return wheel_rotation_speeds;
+}
+
+void UOpenBotMovementComponent::printDebugValues()
+{
+    UE_LOG(LogTemp, Warning, TEXT("UOpenBotMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity() = %f"), VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity());
+    UE_LOG(LogTemp, Warning, TEXT("UOpenBotMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity() = %f"), VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity());
+    UE_LOG(LogTemp, Warning, TEXT("UOpenBotMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity() = %f"), VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity());
+    UE_LOG(LogTemp, Warning, TEXT("UOpenBotMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity() = %f"), VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity());
+
+    UE_LOG(LogTemp, Warning, TEXT("UOpenBotMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(0).GetDriveTorque() = %f"), VehicleSimulationPT->PVehicle->GetWheel(0).GetDriveTorque());
+    UE_LOG(LogTemp, Warning, TEXT("UOpenBotMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(1).GetDriveTorque() = %f"), VehicleSimulationPT->PVehicle->GetWheel(1).GetDriveTorque());
+    UE_LOG(LogTemp, Warning, TEXT("UOpenBotMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(2).GetDriveTorque() = %f"), VehicleSimulationPT->PVehicle->GetWheel(2).GetDriveTorque());
+    UE_LOG(LogTemp, Warning, TEXT("UOpenBotMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(3).GetDriveTorque() = %f"), VehicleSimulationPT->PVehicle->GetWheel(3).GetDriveTorque());
 }

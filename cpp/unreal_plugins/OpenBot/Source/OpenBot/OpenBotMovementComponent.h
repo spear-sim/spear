@@ -21,4 +21,7 @@ public:
 
     // Provides access to the wheels rotation speed in rad/s
     Eigen::Vector4f getWheelRotationSpeeds() const;
+    
+    UFUNCTION(BlueprintCallable)
+    void printDebugValues();
 };

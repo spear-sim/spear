@@ -26,6 +26,7 @@ public:
 
     // APawn interface
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
+    void BeginPlay() override;
     void Tick(float delta_time) override;
 
     USkeletalMeshComponent* skeletal_mesh_component_ = nullptr;

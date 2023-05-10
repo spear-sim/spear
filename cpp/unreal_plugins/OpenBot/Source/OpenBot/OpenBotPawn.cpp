@@ -19,7 +19,6 @@
 #include "CoreUtils/Unreal.h"
 #include "OpenBot/OpenBotMovementComponent.h"
 
-
 AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
     std::cout << "[SPEAR | OpenBotPawn.cpp] AOpenBotPawn::AOpenBotPawn" << std::endl;
@@ -27,6 +26,8 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn
     if (!Config::s_initialized_) {
         return;
     }
+
+    //SetActorTickEnabled(true);
 
     ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*Unreal::toFString(Config::get<std::string>("OPENBOT.OPENBOT_PAWN.SKELETAL_MESH")));
     ASSERT(skeletal_mesh.Succeeded());
@@ -91,10 +92,19 @@ void AOpenBotPawn::SetupPlayerInputComponent(UInputComponent* input_component)
     input_component->BindAxis("MoveRight", this, &AOpenBotPawn::moveRight);
 }
 
+void AOpenBotPawn::BeginPlay()
+{
+    APawn::BeginPlay();
+    vehicle_movement_component_->EnableMechanicalSim(true);
+}
+
 void AOpenBotPawn::Tick(float delta_time)
 {
     APawn::Tick(delta_time);
     setDriveTorquesFromDutyCycle();
+
+    // print debug values
+    vehicle_movement_component_->printDebugValues();
 }
 
 void AOpenBotPawn::moveForward(float forward)
@@ -123,6 +133,13 @@ void AOpenBotPawn::moveRight(float right)
 
 void AOpenBotPawn::setDriveTorquesFromDutyCycle()
 {
+    //duty_cycle_.setConstant(1);
+
+    UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(0) = %f"), duty_cycle_(0));
+    UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(1) = %f"), duty_cycle_(1));
+    UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(2) = %f"), duty_cycle_(2));
+    UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(3) = %f"), duty_cycle_(3));
+
     // Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
     // Gear ratio: 50
     // Max wheel torque: 5.88399 N.m
@@ -152,11 +169,6 @@ void AOpenBotPawn::setDriveTorquesFromDutyCycle()
 
     // The ground truth velocity of the robot wheels in [RPM]
     Eigen::Vector4f wheel_rotation_speeds = vehicle_movement_component_->getWheelRotationSpeeds();
-    //Eigen::Vector4f wheel_rotation_speeds;
-    //wheel_rotation_speeds(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
-    //wheel_rotation_speeds(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
-    //wheel_rotation_speeds(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
-    //wheel_rotation_speeds(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
 
     // The ground truth rotation speed of the motors in [rad/s]
     Eigen::Vector4f motor_speed = gear_ratio * rpmToRadSec(wheel_rotation_speeds); // Expressed in [rad/s]
@@ -175,7 +187,7 @@ void AOpenBotPawn::setDriveTorquesFromDutyCycle()
     motor_torque = motor_torque.cwiseMin(motor_torque_max).cwiseMax(-motor_torque_max);
 
     // The torque applied to the robot wheels is finally computed accounting for the gear ratio
-    Eigen::Vector4f wheel_torque = gear_ratio * motor_torque;
+    Eigen::Vector4f wheel_torque = 0.001 * gear_ratio * motor_torque; // multiplying by 400 here to mirror BP torque values
 
     // Control dead zone at near-zero speed. This is a simplified but reliable way to deal with
     // the friction behavior observed on the real vehicle in the low-speed/low-duty-cycle regime.
@@ -193,6 +205,11 @@ void AOpenBotPawn::setDriveTorquesFromDutyCycle()
     //
     // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
     // Please take a look if you want to modify the way the simulated vehicle is being controlled.
+
+    UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(0) = %f"), wheel_torque(0));
+    UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(1) = %f"), wheel_torque(1));
+    UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(2) = %f"), wheel_torque(2));
+    UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(3) = %f"), wheel_torque(3));
 
     vehicle_movement_component_->SetDriveTorque(wheel_torque(0), 0);
     vehicle_movement_component_->SetDriveTorque(wheel_torque(1), 1);

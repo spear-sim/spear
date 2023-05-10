@@ -18,16 +18,17 @@ UChaosFrontWheel::UChaosFrontWheel()
         return;
     }
 
-    AxleType = EAxleType::Front;
-    bAffectedByEngine = true;
-    bAffectedBySteering = true;
+    ExternalTorqueCombineMethod = ETorqueCombineMethod::Override;
+    //AxleType = EAxleType::Front;
+    bAffectedByEngine   = false;
+    bAffectedBySteering = false;
     MaxSteerAngle = Config::get<float>("OPENBOT.OPENBOT_WHEEL.STEER_ANGLE");
-    WheelRadius = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SHAPE_RADIUS");
-    WheelWidth = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SHAPE_WIDTH");
+    WheelRadius   = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SHAPE_RADIUS");
+    WheelWidth    = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SHAPE_WIDTH");
 
-    SuspensionMaxRaise         = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SUSPENSION_MAX_RAISE");
-    SuspensionMaxDrop          = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SUSPENSION_MAX_DROP");
-    SuspensionDampingRatio     = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SUSPENSION_DAMPING_RATIO");
+    SuspensionMaxRaise     = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SUSPENSION_MAX_RAISE");
+    SuspensionMaxDrop      = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SUSPENSION_MAX_DROP");
+    SuspensionDampingRatio = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SUSPENSION_DAMPING_RATIO");
 }
 
 UChaosFrontWheel::~UChaosFrontWheel()
