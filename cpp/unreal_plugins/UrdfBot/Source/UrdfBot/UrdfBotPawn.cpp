@@ -16,22 +16,14 @@
 #include "UrdfBot/UrdfParser.h"
 #include "UrdfBot/UrdfLinkComponent.h"
 #include "UrdfBot/UrdfRobotComponent.h"
+#include "UrdfBot/UrdfJointComponent.h"
 
 AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
     std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::AUrdfBotPawn" << std::endl;
 
-    if (!Config::s_initialized_) {
-        return;
-    }
+    urdf_robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::urdf_robot_component_"));
 
-    // setup UUrdfRobotComponent
-    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(FPaths::Combine(
-        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
-        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
-
-    urdf_robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::urdf_robot_component_::" + robot_desc.name_));
-    urdf_robot_component_->createChildComponents(&robot_desc);
 
     RootComponent = urdf_robot_component_;
 
@@ -53,6 +45,13 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.FOV");
     camera_component_->SetupAttachment(urdf_robot_component_->root_link_component_);
+
+    for (auto& kvp:urdf_robot_component_->link_components_ ) {
+        AddInstanceComponent(kvp.second);
+    }
+    for (auto& kvp:urdf_robot_component_->joint_components_ ) {
+        AddInstanceComponent(kvp.second);
+    }
 }
 
 AUrdfBotPawn::~AUrdfBotPawn()

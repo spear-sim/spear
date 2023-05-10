@@ -316,7 +316,7 @@
         <parent link="torso_link"/>
         <child link="arm_link_0"/>
         <axis xyz="0 0 1"/>
-        <dynamics type="position" spring="100.0" damping="10.0"/>
+        <dynamics type="position" spring="1000.0" damping="10.0"/>
         <limit effort="33.82" lower="-1.6056" upper="1.6056" velocity="1.256"/>
     </joint>
 

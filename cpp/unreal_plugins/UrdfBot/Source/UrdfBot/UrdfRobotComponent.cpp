@@ -16,6 +16,17 @@
 UUrdfRobotComponent::UUrdfRobotComponent()
 {
     std::cout << "[SPEAR | UrdfRobotComponent.cpp] UUrdfRobotComponent::UUrdfRobotComponent" << std::endl;
+    
+    if (!Config::s_initialized_) {
+        return;
+    }
+
+    // setup UUrdfRobotComponent
+    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(FPaths::Combine(
+        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
+        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
+    
+    createChildComponents(&robot_desc);
 }
 
 UUrdfRobotComponent::~UUrdfRobotComponent()
@@ -30,7 +41,7 @@ void UUrdfRobotComponent::createChildComponents(UrdfRobotDesc* robot_desc)
     UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
     ASSERT(root_link_desc);
 
-    root_link_component_ = NewObject<UUrdfLinkComponent>(this);
+    root_link_component_ = CreateDefaultSubobject<UUrdfLinkComponent>(Unreal::toFName("AUrdfBotPawn::urdf_link_component_::" + root_link_desc->name_));
     root_link_component_->initializeComponent(root_link_desc);
     root_link_component_->SetupAttachment(this);
     link_components_["link." + root_link_desc->name_] = root_link_component_;
@@ -46,7 +57,7 @@ void UUrdfRobotComponent::createChildComponents(UrdfLinkDesc* parent_link_desc, 
     for (auto& child_link_desc : parent_link_desc->child_link_descs_) {
         ASSERT(child_link_desc);
 
-        UUrdfLinkComponent* child_link_component = NewObject<UUrdfLinkComponent>(this);
+        UUrdfLinkComponent* child_link_component = CreateDefaultSubobject<UUrdfLinkComponent>(Unreal::toFName("AUrdfBotPawn::urdf_link_component_::" + child_link_desc->name_));
         ASSERT(child_link_component);
         child_link_component->initializeComponent(child_link_desc);
         child_link_component->SetupAttachment(parent_link_component);
@@ -55,7 +66,7 @@ void UUrdfRobotComponent::createChildComponents(UrdfLinkDesc* parent_link_desc, 
         UrdfJointDesc* child_joint_desc = child_link_desc->parent_joint_desc_;
         ASSERT(child_joint_desc);
 
-        UUrdfJointComponent* child_joint_component = NewObject<UUrdfJointComponent>(this);
+        UUrdfJointComponent* child_joint_component = CreateDefaultSubobject<UUrdfJointComponent>(Unreal::toFName("AUrdfBotPawn::urdf_joint_component_::" + child_joint_desc->name_));
         ASSERT(child_joint_component);
         child_joint_component->initializeComponent(child_joint_desc, parent_link_component, child_link_component);
         child_joint_component->SetupAttachment(parent_link_component);
@@ -92,10 +103,10 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getObservationSpace(const 
     if (Std::contains(observation_components, "link_state")) {
         for (auto& link_component : link_components_) {
             ArrayDesc array_desc;
-            array_desc.low_ = std::numeric_limits<float>::lowest();
-            array_desc.high_ = std::numeric_limits<float>::max();
+            array_desc.low_ = std::numeric_limits<double>::lowest();
+            array_desc.high_ = std::numeric_limits<double>::max();
             array_desc.shape_ = {6};
-            array_desc.datatype_ = DataType::Float32;
+            array_desc.datatype_ = DataType::Float64;
             observation_space[link_component.first] = std::move(array_desc);
         }
     }
@@ -126,7 +137,7 @@ std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation(
             FVector position = link_component.second->GetRelativeLocation();
             FRotator rotation = link_component.second->GetRelativeRotation();
             observation[link_component.first] =
-                Std::reinterpret_as<uint8_t>(std::vector<float>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
+                Std::reinterpret_as<uint8_t>(std::vector<double>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
         }
     }
 

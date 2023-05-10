@@ -9,7 +9,6 @@ import os
 import numpy as np
 import pandas as pd
 
-
 # fetch arm poses come from https://github.com/StanfordVL/iGibson/blob/master/igibson/robots/fetch.py#L100
 arm_poses = {
     "init": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
@@ -20,14 +19,17 @@ arm_poses = {
     "diagonal45": np.array([-1.11479, -0.0685, 1.5696, 1.37304, -0.74273, 1.3983, 1.79618]),
     "horizontal": np.array([-1.43016, 0.20965, 1.86816, 1.77576, -0.27289, 1.31715, 2.01226]),
     "horizontal_high": np.array([-0.94121, -0.60, 1.55186, 1.25672, -0.93218, 0.0, -0.2]),
+    "init_up": np.array([0.0, -0.20, 0.0, 0.0, 0.0, 0.0, 0.0]),
+    "vertical_high": np.array([-0.74121, -1.00, 1.55186, 1.05672, -0.93218, 2.0, 0]),
 }
+
 
 def get_action(move_forward=0.0, move_right=0.0, gripper_force=1.0, arm_pose_blend_weights={"init": 1.0}):
     action = {}
 
     # base joints
-    action["joint.wheel_joint_r"] = move_forward + move_right
-    action["joint.wheel_joint_l"] = move_forward - move_right
+    action["joint.wheel_joint_r"] = - move_forward + move_right
+    action["joint.wheel_joint_l"] = - move_forward - move_right
 
     # arm joints
     arm_pose = np.zeros([7])
@@ -55,56 +57,68 @@ def get_action(move_forward=0.0, move_right=0.0, gripper_force=1.0, arm_pose_ble
 
     return action
 
-def get_actions_for_starter_content_0000():
+
+def get_actions_for_debug_0000():
     df = pd.DataFrame()
+
+    # wait until stabilzed
+    for i in range(0, 10):
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(), index=[0])])
+
+    # adjust orientation
+    for i in range(0, 4):
+        df = pd.concat(
+            [df, pd.DataFrame(get_action(move_right=-0.001), index=[0])])
 
     # move forward
     for i in range(0, 100):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=0.01), index=[0])])
+            [df, pd.DataFrame(get_action(move_forward=0.012, arm_pose_blend_weights={"init": (100.0 - i) / 100.0, "init_up": i / 100.0}), index=[0])])
 
     # hold target
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(gripper_force=-1.0), index=[0])])
+            [df, pd.DataFrame(get_action(gripper_force=-1.0, arm_pose_blend_weights={"init_up": 1}), index=[0])])
 
     # rotate base
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_right=0.0095, gripper_force=-1.0), index=[0])])
+            [df, pd.DataFrame(get_action(move_right=0.0088, gripper_force=-1.0, arm_pose_blend_weights={"init_up": 1}), index=[0])])
 
     # move forward while moving arm
-    for i in range(0, 50):
+    for i in range(0, 100):
         df = pd.concat(
             [df,
-             pd.DataFrame(get_action(move_forward=0.01, gripper_force=-1.0, arm_pose_blend_weights={"init": (50.0 - i) / 50.0, "vertical": i / 50.0}),
+             pd.DataFrame(get_action(move_forward=0.01, gripper_force=-1.0, arm_pose_blend_weights={"init_up": (100.0 - i) / 100.0, "vertical_high": i / 100.0}),
                           index=[0])])
 
     # move forward
-    for i in range(0, 50):
+    for i in range(0, 100):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=0.01, gripper_force=-1.0, arm_pose_blend_weights={"vertical": 1.0}), index=[0])])
+            [df, pd.DataFrame(get_action(move_forward=0.01, gripper_force=-1.0, arm_pose_blend_weights={"vertical_high": 1.0}), index=[0])])
 
     # release gripper
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(gripper_force=0, arm_pose_blend_weights={"vertical": 1.0}), index=[0])])
+            [df, pd.DataFrame(get_action(gripper_force=0, arm_pose_blend_weights={"vertical_high": 1.0}), index=[0])])
 
-    # move back and fold arm
+    # move back
     for i in range(0, 30):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=-0.01, arm_pose_blend_weights={"vertical": (100.0 - i) / 100.0, "default": i / 100.0}), index=[0])])
+            [df, pd.DataFrame(get_action(move_forward=-0.01, arm_pose_blend_weights={"vertical_high": 1.0}), index=[0])])
 
-    # keep folding arm
-    for i in range(30, 100):
+    # folding arm
+    for i in range(0, 50):
         df = pd.concat(
-            [df, pd.DataFrame(get_action(move_forward=0, arm_pose_blend_weights={"vertical": (100 - i) / 100.0, "default": i / 100.0}), index=[0])])
+            [df, pd.DataFrame(get_action(move_forward=0, arm_pose_blend_weights={"vertical_high": (50 - i) / 50.0, "default": i / 50.0}), index=[0])])
 
     # stay still
     for i in range(0, 30):
         df = pd.concat([df, pd.DataFrame(get_action(arm_pose_blend_weights={"default": 1.0}), index=[0])])
 
     return df
+
 
 def get_actions_for_kujiale_0000():
     df = pd.DataFrame()
@@ -163,13 +177,14 @@ def get_actions_for_kujiale_0000():
 
     return df
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--scene_id", default=os.path.join(os.path.dirname(os.path.realpath(__file__)), "kujiale_0000"))
     args = parser.parse_args()
 
-    if args.scene_id == "starter_content_0000":
-        df = get_actions_for_starter_content_0000()
+    if args.scene_id == "debug_0000":
+        df = get_actions_for_debug_0000()
     elif args.scene_id == "kujiale_0000":
         df = get_actions_for_kujiale_0000()
     else:

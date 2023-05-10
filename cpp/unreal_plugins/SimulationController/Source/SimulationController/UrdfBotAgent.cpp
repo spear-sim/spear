@@ -1,6 +1,3 @@
-////------ BEGIN UE5 MIGRATION ------////
-//// Uncomment this file when UrdfBot is supported in UE5.
-/*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
@@ -60,14 +57,9 @@ UrdfBotAgent::UrdfBotAgent(UWorld* world)
             urdf_bot_pawn_->camera_component_,
             Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.RENDER_PASSES"),
             Config::get<unsigned int>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.IMAGE_WIDTH"),
-            Config::get<unsigned int>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.IMAGE_HEIGHT"));
+            Config::get<unsigned int>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.IMAGE_HEIGHT"),
+            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.FOV"));
         ASSERT(camera_sensor_);
-
-        // update FOV
-        for (auto& pass : Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.RENDER_PASSES")) {
-            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle =
-                Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.CAMERA.FOV");
-        }
     }
 }
 
@@ -166,5 +158,3 @@ bool UrdfBotAgent::isReady() const
     return urdf_bot_pawn_->urdf_robot_component_->GetComponentVelocity().Size() <=
            Config::get<float>("SIMULATION_CONTROLLER.URDFBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }
-*/
-////------ END UE5 MIGRATION ------////
