@@ -75,18 +75,17 @@ if __name__ == '__main__':
             scene_ids = [ s for s in scene_ids if fnmatch.fnmatch(s, args.scene_ids) ]
         assert len(scene_ids) > 0
 
+    # We do not want to use os.path.realpath(...) for the values in this dictionary, because that will resolve
+    # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
+    # version inside the user's Unreal project directory.
+    perforce_dirs_to_unreal_dirs = {
+        os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
+        os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets"),
+        os.path.realpath(os.path.join(args.perforce_content_dir, "Shared")) : os.path.join(unreal_project_content_dir, "Shared")
+    }
+
     # Create a symlink to common top-level directories
     if not args.skip_create_symlinks:
-
-        # We do not want to use os.path.realpath(...) for the values in this dictionary, because that will resolve
-        # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
-        # version inside the user's Unreal project directory.
-        perforce_dirs_to_unreal_dirs = {
-            os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
-            os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets"),
-            os.path.realpath(os.path.join(args.perforce_content_dir, "Shared")) : os.path.join(unreal_project_content_dir, "Shared")
-        }
-
         for perforce_dir, unreal_project_dir in perforce_dirs_to_unreal_dirs.items():
             assert os.path.exists(perforce_dir)
 
@@ -94,8 +93,8 @@ if __name__ == '__main__':
                 spear.log(f"File or directory or symlink exists, removing: {unreal_project_dir}")
                 spear.remove_path(unreal_project_dir)
 
-        spear.log(f"Creating symlink: {unreal_project_content_shared_dir} -> {perforce_content_shared_dir}")
-        os.symlink(perforce_dir, unreal_project_dir)
+            spear.log(f"Creating symlink: {unreal_project_dir} -> {perforce_dir}")
+            os.symlink(perforce_dir, unreal_project_dir)
 
     for scene_id in scene_ids:
 
@@ -178,7 +177,8 @@ if __name__ == '__main__':
             spear.remove_path(unreal_project_content_scene_dir)
 
     if not args.skip_create_symlinks:
-        spear.log(f"Removing symlink: {unreal_project_content_shared_dir}")
-        spear.remove_path(unreal_project_content_shared_dir)
+        for perforce_dir, unreal_project_dir in perforce_dirs_to_unreal_dirs.items():
+            spear.log(f"File or directory or symlink exists, removing: {unreal_project_dir}")
+            spear.remove_path(unreal_project_dir)
 
     spear.log("Done.")
