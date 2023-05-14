@@ -238,13 +238,13 @@ void SphereAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "add_rotation")) {
-        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("increment_yaw"));
-        rotation_.Add(0.0f, component_data.at(0), 0.0f);
+        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("add_rotation"));
+        rotation_.Add(component_data.at(0), component_data.at(1), component_data.at(2));
     }
 
     if (Std::contains(action_components, "add_force")) {
-        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("increment_yaw"));
-        FVector force = rotation_.RotateVector(FVector(component_data.at(0), 0.0f, 0.0f));
+        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("add_force"));
+        FVector force = rotation_.RotateVector(FVector(component_data.at(0), component_data.at(1), component_data.at(2)));
         static_mesh_component_->AddForce(force);
     }
 }
@@ -252,7 +252,6 @@ void SphereAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
 std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "position")) {
@@ -275,11 +274,10 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
 std::map<std::string, std::vector<uint8_t>> SphereAgent::getStepInfo() const
 {
     std::map<std::string, std::vector<uint8_t>> step_info;
-
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.STEP_INFO_COMPONENTS");
 
-    if (Std::contains(step_info_components, "debug_info")) {
-        step_info["debug_info"] = Std::reinterpretAs<uint8_t>(std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0, 6.0});
+    if (Std::contains(step_info_components, "debug")) {
+        step_info["debug"] = Std::reinterpretAs<uint8_t>(std::vector<double>{0.0, 1.0, 2.0, 3.0, 4.0, 5.0});
     }
 
     return step_info;
@@ -303,15 +301,9 @@ bool SphereAgent::isReady() const
 void SphereAgent::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
-        FVector location =
-            static_mesh_actor_->GetActorLocation() +
-            FVector(Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.POSITION_OFFSET_X"),
-                    Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.POSITION_OFFSET_Y"),
-                    Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.POSITION_OFFSET_Z"));
-        camera_actor_->SetActorLocationAndRotation(location, rotation_);
+        camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);
     }
 }
