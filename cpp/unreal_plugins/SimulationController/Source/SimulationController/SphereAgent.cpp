@@ -221,13 +221,13 @@ std::map<std::string, ArrayDesc> SphereAgent::getStepInfoSpace() const
     std::map<std::string, ArrayDesc> step_info_space;
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.STEP_INFO_COMPONENTS");
 
-    if (Std::contains(step_info_components, "debug_info")) {
+    if (Std::contains(step_info_components, "debug")) {
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {-1, 3};
         array_desc.datatype_ = DataType::Float64;
-        step_info_space["debug_info"] = std::move(array_desc);
+        step_info_space["debug"] = std::move(array_desc);
     }
 
     return step_info_space;

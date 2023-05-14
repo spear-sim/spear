@@ -66,7 +66,7 @@ SIMULATION_CONTROLLER:
     CAMERA_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["add_rotation", "add_force"] # "add_rotation", "add_force"
     OBSERVATION_COMPONENTS: ["position", "rotation", "camera"] # "position", "rotation", "camera"
-    STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
+    STEP_INFO_COMPONENTS: ["debug"] # "debug"
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
     SPAWN_POSITION_X: 0.0

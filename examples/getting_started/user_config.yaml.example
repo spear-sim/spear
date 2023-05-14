@@ -34,8 +34,8 @@ SIMULATION_CONTROLLER:
     SPHERE_ACTOR_NAME: "SphereActor"
     CAMERA_ACTOR_NAME: "CameraActor"
     ACTION_COMPONENTS: ["apply_force"] # "apply_force"
-    OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
-    STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
+    OBSERVATION_COMPONENTS: ["camera"] # "camera"
+    STEP_INFO_COMPONENTS: ["debug"] # "debug"
     COMPASS:
       GOAL_ACTOR_NAME: "GoalActor"
     CAMERA:
