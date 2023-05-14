@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 
-class UWorld;
+#include "CoreUtils/ArrayDesc.h"
 
-struct ArrayDesc;
+class UWorld;
 
 class Agent
 {

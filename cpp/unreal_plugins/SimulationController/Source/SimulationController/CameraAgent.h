@@ -9,15 +9,13 @@
 #include <string>
 #include <vector>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 
 class ACameraActor;
-class ARecastNavMesh;
-class UNavigationSystemV1;
 class UWorld;
 
 class CameraSensor;
-struct ArrayDesc;
 
 class CameraAgent : public Agent
 {

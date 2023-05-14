@@ -22,10 +22,10 @@ if __name__ == "__main__":
     project_starter_content_dir = os.path.join(args.unreal_project_dir, "Content", "StarterContent") # don't want os.path.realpath here in case it is a symlink
 
     if spear.path_exists(project_starter_content_dir):
-        print(f"[SPEAR | copy_starter_content.py] File or directory or symlink exists, removing: {project_starter_content_dir}")
+        spear.log(f"File or directory or symlink exists, removing: {project_starter_content_dir}")
         spear.remove_path(project_starter_content_dir)
 
-    print(f"[SPEAR | copy_starter_content.py] Copying: {unreal_engine_starter_content_dir} -> {project_starter_content_dir}")
+    spear.log(f"Copying: {unreal_engine_starter_content_dir} -> {project_starter_content_dir}")
     shutil.copytree(unreal_engine_starter_content_dir, project_starter_content_dir)
 
-    print("[SPEAR | copy_starter_content.py] Done.")
+    spear.log("Done.")

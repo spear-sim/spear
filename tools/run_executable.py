@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     # provide additional control over which Vulkan devices are recognized by Unreal
     if args.vulkan_device_files is not None:
-        print("[SPEAR | run_executable.py] Setting VK_ICD_FILENAMES environment variable: " + args.vulkan_device_files)
+        spear.log("Setting VK_ICD_FILENAMES environment variable: " + args.vulkan_device_files)
         os.environ["VK_ICD_FILENAMES"] = args.vulkan_device_files
 
     if sys.platform == "win32":
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     temp_dir = os.path.realpath(args.temp_dir)
     temp_config_file = os.path.realpath(os.path.join(temp_dir, "config.yaml"))
 
-    print("[SPEAR | run_executable.py] Writing temp config file: " + temp_config_file)
+    spear.log("Writing temp config file: " + temp_config_file)
 
     os.makedirs(temp_dir, exist_ok=True)
     with open(temp_config_file, "w") as output:
@@ -85,15 +85,15 @@ if __name__ == '__main__':
         spear_paks_dir = os.path.join(paks_dir, "SpearPaks")
 
         if spear.path_exists(spear_paks_dir):
-            print(f"[SPEAR | run_executable.py] File or directory or symlink exists, removing: {spear_paks_dir}")
+            spear.log(f"File or directory or symlink exists, removing: {spear_paks_dir}")
             spear.remove_path(spear_paks_dir)
 
-        print(f"[SPEAR | run_executable.py] Creating symlink: {spear_paks_dir} -> {args.paks_dir}")
+        spear.log(f"Creating symlink: {spear_paks_dir} -> {args.paks_dir}")
         os.symlink(args.paks_dir, spear_paks_dir)
 
     # provide additional control over which Vulkan devices are recognized by Unreal
     if len(config.SPEAR.VULKAN_DEVICE_FILES) > 0:
-        print("[SPEAR | run_executable.py] Setting VK_ICD_FILENAMES environment variable: " + config.SPEAR.VULKAN_DEVICE_FILES)
+        spear.log("Setting VK_ICD_FILENAMES environment variable: " + config.SPEAR.VULKAN_DEVICE_FILES)
         os.environ["VK_ICD_FILENAMES"] = config.SPEAR.VULKAN_DEVICE_FILES
 
     # set up launch executable and command-line arguments
@@ -120,12 +120,12 @@ if __name__ == '__main__':
     # launch executable
     cmd = [executable_internal] + launch_args
 
-    print("[SPEAR | run_executable.py] Launching executable with the following command-line arguments:")
-    print(" ".join(cmd))
+    spear.log("Launching executable with the following command-line arguments:")
+    spear.log(" ".join(cmd))
 
-    print("[SPEAR | run_executable.py] Launching executable with the following config values:")
-    print(config)
+    spear.log("Launching executable with the following config values:")
+    spear.log(config)
 
     subprocess.run(cmd, check=True)
     
-    print("[SPEAR | run_executable.py] Done.")
+    spear.log("Done.")

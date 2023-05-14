@@ -109,9 +109,9 @@ if __name__ == "__main__":
     prev_scene_id = ""
     for episode in df.to_records():
 
-        print("[SPEAR | generate_dataset.py] ----------------------")
-        print(f"[SPEAR | generate_dataset.py] Episode {episode['index']} of {df.shape[0]}")
-        print("[SPEAR | generate_dataset.py] ----------------------")
+        spear.log("----------------------")
+        spear.log(f"Episode {episode['index']} of {df.shape[0]}")
+        spear.log("----------------------")
 
         # if the scene_id of our current episode has changed, then create a new Env
         if episode["scene_id"] != prev_scene_id:
@@ -153,7 +153,7 @@ if __name__ == "__main__":
 
         # if it took too long to reset the simulation, then continue
         if not env_reset_info["success"]:
-            print("[SPEAR | generate_dataset.py] Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Skipping...")
+            spear.log("Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Skipping...")
             prev_scene_id = episode["scene_id"]
             continue
 
@@ -189,7 +189,7 @@ if __name__ == "__main__":
         hit_obstacle = False
         for i in range(args.num_iterations_per_episode):
 
-            print(f"[SPEAR | generate_dataset.py] Iteration {i} of {args.num_iterations_per_episode}")
+            spear.log(f"Iteration {i} of {args.num_iterations_per_episode}")
 
             time_stamp = int(10000*datetime.datetime.now().timestamp())
 
@@ -230,11 +230,11 @@ if __name__ == "__main__":
 
             # termination conditions
             if env_step_info["task_step_info"]["hit_obstacle"]: 
-                print("[SPEAR | generate_dataset.py] Collision detected.")
+                spear.log("Collision detected.")
                 hit_obstacle = True 
                 break
             elif env_step_info["task_step_info"]["hit_goal"] or policy_step_info["goal_reached"]: 
-                print("[SPEAR | generate_dataset.py] Goal reached.")
+                spear.log("Goal reached.")
                 break
 
         # episode loop executed: update scene reference
@@ -244,7 +244,7 @@ if __name__ == "__main__":
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
-            print("[SPEAR | generate_dataset.py] Average frame time: %0.4f ms (%0.4f fps)" %
+            spear.log("Average frame time: %0.4f ms (%0.4f fps)" %
                 ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
             continue
         
@@ -253,7 +253,7 @@ if __name__ == "__main__":
             shutil.rmtree(episode_dir, ignore_errors=True) # remove the collected data as it is improper for training purposes
             continue
         
-        print("[SPEAR | generate_dataset.py] Filling CSV files...")
+        spear.log("Filling CSV files...")
         
         # get the updated compass observation (with the last recorded position set as goal)
         goal_position_xy = state_data[num_iterations-1][0:2]
@@ -317,4 +317,4 @@ if __name__ == "__main__":
     # close the current scene
     env.close()
     
-    print("[SPEAR | generate_dataset.py] Done.")
+    spear.log("Done.")
