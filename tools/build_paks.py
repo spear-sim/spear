@@ -128,7 +128,7 @@ if __name__ == '__main__':
         unreal_project_scenes = { os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) if x not in ignore_names }
         assert unreal_project_scenes == {"debug_0000", scene_id}
 
-        # see https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
+        # see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
         cmd = [
             unreal_editor_bin,
             uproject,
