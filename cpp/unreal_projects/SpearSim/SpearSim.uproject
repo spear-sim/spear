@@ -30,11 +30,11 @@
         },
         {
             "Name": "OpenBot",
-            "Enabled": false
+            "Enabled": true
         },
         {
             "Name": "SimulationController",
-            "Enabled": true
+            "Enabled": false
         },
         {
             "Name": "UrdfBot",
