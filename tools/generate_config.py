@@ -29,5 +29,5 @@ if __name__ == "__main__":
     with open(args.output_file, "w") as output:
         config.dump(stream=output, default_flow_style=False)
 
-    print("[SPEAR | generate_config.py] Generated config file: " + args.output_file)
-    print("[SPEAR | generate_config.py] Done.")
+    spear.log("Generated config file: " + args.output_file)
+    spear.log("Done.")

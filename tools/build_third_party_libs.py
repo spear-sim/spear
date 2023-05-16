@@ -5,6 +5,7 @@
 import argparse
 import os 
 import shutil
+import spear
 import subprocess
 import sys
 
@@ -55,16 +56,16 @@ if __name__ == "__main__":
     # Boost
     #
 
-    print("[SPEAR | build_third_party_libs.py] Building Boost...")
+    spear.log("Building Boost...")
 
     boost_dir   = os.path.realpath(os.path.join(third_party_dir, "boost"))
     include_dir = os.path.realpath(os.path.join(third_party_dir, "boost", "boost"))
 
     if os.path.isdir(include_dir):
-        print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {include_dir}")
+        spear.log(f"Directory exists, removing: {include_dir}")
         shutil.rmtree(include_dir, ignore_errors=True)
 
-    print(f"[SPEAR | build_third_party_libs.py] Changing directory to working: {boost_dir}")
+    spear.log(f"Changing directory to working: {boost_dir}")
     os.chdir(boost_dir)
 
     if sys.platform == "win32":
@@ -72,14 +73,14 @@ if __name__ == "__main__":
         cmd = [
             "bootstrap.bat"
         ]
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
             "b2",
             "headers"
         ]
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
     elif sys.platform == "darwin":
@@ -87,14 +88,14 @@ if __name__ == "__main__":
         cmd = [
             "./bootstrap.sh"
         ]
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
             "./b2",
             "headers"
         ]
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
     elif sys.platform == "linux":
@@ -102,14 +103,14 @@ if __name__ == "__main__":
         cmd = [
             "./bootstrap.sh"
         ]
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
             "./b2",
             "headers"
         ]
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
     else:
@@ -119,15 +120,15 @@ if __name__ == "__main__":
     # Eigen
     #
 
-    print("[SPEAR | build_third_party_libs.py] Building Eigen...")
+    spear.log("Building Eigen...")
 
     build_dir = os.path.realpath(os.path.join(third_party_dir, "libeigen", "BUILD", platform_dir))
 
     if os.path.isdir(build_dir):
-        print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {build_dir}")
+        spear.log(f"Directory exists, removing: {build_dir}")
         shutil.rmtree(build_dir, ignore_errors=True)
 
-    print(f"[SPEAR | build_third_party_libs.py] Creating directory and changing to working: {build_dir}")
+    spear.log(f"Creating directory and changing to working: {build_dir}")
     os.makedirs(build_dir, exist_ok=True)
     os.chdir(build_dir)
 
@@ -137,7 +138,7 @@ if __name__ == "__main__":
         "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
         "-DCMAKE_INSTALL_PREFIX=" + build_dir,
         os.path.join("..", "..")]
-    print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+    spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
     cmd = [
@@ -147,24 +148,24 @@ if __name__ == "__main__":
         "--target",
         "install"]
 
-    print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+    spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
-    print("[SPEAR | build_third_party_libs.py] Built Eigen successfully.")
+    spear.log("Built Eigen successfully.")
 
     #
     # rpclib
     #
 
-    print("[SPEAR | build_third_party_libs.py] Building rpclib...")
+    spear.log("Building rpclib...")
 
     build_dir = os.path.realpath(os.path.join(third_party_dir, "rpclib", "BUILD", platform_dir))
 
     if os.path.isdir(build_dir):
-        print(f"[SPEAR | build_third_party_libs.py] Directory exists, removing: {build_dir}")
+        spear.log(f"Directory exists, removing: {build_dir}")
         shutil.rmtree(build_dir, ignore_errors=True)
 
-    print(f"[SPEAR | build_third_party_libs.py] Creating directory and changing to working: {build_dir}")
+    spear.log(f"Creating directory and changing to working: {build_dir}")
     os.makedirs(build_dir, exist_ok=True)
     os.chdir(build_dir)
 
@@ -177,7 +178,7 @@ if __name__ == "__main__":
             "-DCMAKE_BUILD_TYPE=Release",
             os.path.join("..", "..")]
 
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
@@ -199,7 +200,7 @@ if __name__ == "__main__":
             "-DCMAKE_CXX_FLAGS='-mmacosx-version-min=10.14'",
             os.path.join("..", "..")]
 
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
@@ -220,7 +221,7 @@ if __name__ == "__main__":
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             os.path.join("..", "..")]
 
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
@@ -233,23 +234,23 @@ if __name__ == "__main__":
     else:
         assert False
 
-    print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+    spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
-    print("[SPEAR | build_third_party_libs.py] Built rpclib successfully.")
+    spear.log("Built rpclib successfully.")
 
     #
     # yaml-cpp
     #
 
-    print("[SPEAR | build_third_party_libs.py] Building yaml-cpp...")
+    spear.log("Building yaml-cpp...")
     build_dir = os.path.realpath(os.path.join(third_party_dir, "yaml-cpp", "BUILD", platform_dir))
 
     if os.path.isdir(build_dir):
-        print("[SPEAR | build_third_party_libs.py] Directory exists, removing: " + build_dir)
+        spear.log("Directory exists, removing: " + build_dir)
         shutil.rmtree(build_dir, ignore_errors=True)
 
-    print("[SPEAR | build_third_party_libs.py] Creating directory and changing to working: " + build_dir)
+    spear.log("Creating directory and changing to working: " + build_dir)
     os.makedirs(build_dir, exist_ok=True)
     os.chdir(build_dir)
 
@@ -262,7 +263,7 @@ if __name__ == "__main__":
             "-DCMAKE_BUILD_TYPE=Release",
             os.path.join("..", "..")]
 
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
@@ -284,7 +285,7 @@ if __name__ == "__main__":
             "-DCMAKE_CXX_FLAGS='-mmacosx-version-min=10.14'",
             os.path.join("..", "..")]
 
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
@@ -305,7 +306,7 @@ if __name__ == "__main__":
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             os.path.join("..", "..")]
 
-        print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
@@ -318,8 +319,8 @@ if __name__ == "__main__":
     else:
         assert False
 
-    print(f"[SPEAR | build_third_party_libs.py] Executing: {' '.join(cmd)}")
+    spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
-    print("[SPEAR | build_third_party_libs.py] Built yaml-cpp successfully.")
-    print("[SPEAR | build_third_party_libs.py] Done.")
+    spear.log("Built yaml-cpp successfully.")
+    spear.log("Done.")

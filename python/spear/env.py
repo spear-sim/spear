@@ -80,8 +80,6 @@ class Env(gym.Env):
 
     def close(self):
 
-        print("[SPEAR | env.py] Closing Unreal instance...")
-
         self._action_space_desc.terminate()
         self._observation_space_desc.terminate()
         self._task_step_info_space_desc.terminate()
@@ -93,21 +91,19 @@ class Env(gym.Env):
         self._request_close_unreal_instance()
         self._close_rpc_client()
 
-        print("[SPEAR | env.py] Finished closing Unreal instance.")
-
     def _request_launch_unreal_instance(self):
 
         if self._config.SPEAR.LAUNCH_MODE == "running_instance":
-            print('[SPEAR | env.py] SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance has already launched...')
+            spear.log('SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance has already launched...')
             return
 
-        print("[SPEAR | env.py] Launching Unreal instance...")
+        spear.log("Launching Unreal instance...")
 
         # write temp file
         temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.TEMP_DIR))
         temp_config_file = os.path.realpath(os.path.join(temp_dir, "config.yaml"))
 
-        print("[SPEAR | env.py] Writing temp config file: " + temp_config_file)
+        spear.log("Writing temp config file: " + temp_config_file)
 
         os.makedirs(temp_dir, exist_ok=True)
         with open(temp_config_file, "w") as output:
@@ -137,15 +133,15 @@ class Env(gym.Env):
             spear_paks_dir = os.path.join(paks_dir, "SpearPaks")
 
             if spear.path_exists(spear_paks_dir):
-                print(f"[SPEAR | env.py] File or directory or symlink exists, removing: {spear_paks_dir}")
+                spear.log(f"File or directory or symlink exists, removing: {spear_paks_dir}")
                 spear.remove_path(spear_paks_dir)
 
-            print(f"[SPEAR | env.py] Creating symlink: {spear_paks_dir} -> {self._config.SPEAR.PAKS_DIR}")
+            spear.log(f"Creating symlink: {spear_paks_dir} -> {self._config.SPEAR.PAKS_DIR}")
             os.symlink(self._config.SPEAR.PAKS_DIR, spear_paks_dir)
 
         # provide additional control over which Vulkan devices are recognized by Unreal
         if len(self._config.SPEAR.VULKAN_DEVICE_FILES) > 0:
-            print("[SPEAR | env.py] Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.VULKAN_DEVICE_FILES)
+            spear.log("Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.VULKAN_DEVICE_FILES)
             os.environ["VK_ICD_FILENAMES"] = self._config.SPEAR.VULKAN_DEVICE_FILES
 
         # set up launch executable and command-line arguments
@@ -202,20 +198,20 @@ class Env(gym.Env):
 
         cmd = [launch_executable_internal] + launch_args
 
-        print("[SPEAR | env.py] Launching executable with the following command-line arguments:")
-        print(" ".join(cmd))
+        spear.log("Launching executable with the following command-line arguments:")
+        spear.log_no_prefix(" ".join(cmd))
 
-        print("[SPEAR | env.py] Launching executable with the following config values:")
-        print(self._config)
-        
+        spear.log("Launching executable with the following config values:")
+        spear.log_no_prefix(self._config)
+
         popen = Popen(cmd)
         self._process = psutil.Process(popen.pid)
 
         # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
         status = self._process.status()
         if status not in ["running", "sleeping", "disk-sleep"]:
-            print("[SPEAR | env.py] ERROR: Unrecognized process status: " + status)
-            print("[SPEAR | env.py] ERROR: Killing process " + str(self._process.pid) + "...")
+            spear.log("ERROR: Unrecognized process status: " + status)
+            spear.log("ERROR: Killing process " + str(self._process.pid) + "...")
             self._force_kill_unreal_instance()
             self._close_rpc_client()
             assert False
@@ -223,15 +219,19 @@ class Env(gym.Env):
     def _request_close_unreal_instance(self):
 
         if self._config.SPEAR.LAUNCH_MODE == "running_instance":
-            print('[SPEAR | env.py] SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance should remain open...')
+            spear.log('SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance should remain open...')
             return
+
+        spear.log("Closing Unreal instance...")
 
         self._request_close()
         self._wait_until_unreal_instance_is_closed()
 
+        spear.log("Finished closing Unreal instance.")
+
     def _initialize_rpc_client(self):
 
-        print(f"[SPEAR | env.py] Initializing RPC client...")
+        spear.log("Initializing RPC client...")
         
         # if we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
         if self._config.SPEAR.LAUNCH_MODE == "running_instance":
@@ -257,8 +257,8 @@ class Env(gym.Env):
                 # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
                 status = self._process.status()
                 if status not in ["disk-sleep", "running", "sleeping", "stopped"]:
-                    print("[SPEAR | env.py] ERROR: Unrecognized process status: " + status)
-                    print("[SPEAR | env.py] ERROR: Killing process " + str(self._process.pid) + "...")
+                    spear.log("ERROR: Unrecognized process status: " + status)
+                    spear.log("ERROR: Killing process " + str(self._process.pid) + "...")
                     self._force_kill_unreal_instance()
                     self._close_rpc_client()
                     assert False
@@ -278,20 +278,20 @@ class Env(gym.Env):
 
         if not connected:
             if self._config.SPEAR.LAUNCH_MODE != "running_instance":
-                print("[SPEAR | env.py] ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
+                spear.log("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
                 self._force_kill_unreal_instance()
                 self._close_rpc_client()
             assert False
 
-        print(f"[SPEAR | env.py] Finished initializing RPC client.")
+        spear.log("Finished initializing RPC client.")
 
     def _initialize_unreal_instance(self):
 
         if self._config.SPEAR.LAUNCH_MODE == "running_instance":
-            print('[SPEAR | env.py] SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance is already initialized...')
+            spear.log('SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance is already initialized...')
             return
 
-        print("[SPEAR | env.py] Initializing Unreal instance, warming up for " + str(1 + self._config.SPEAR.NUM_EXTRA_WARMUP_TICKS) + " ticks...")
+        spear.log("Initializing Unreal instance, warming up for " + str(1 + self._config.SPEAR.NUM_EXTRA_WARMUP_TICKS) + " ticks...")
 
         # Do at least one complete tick to guarantee that we can receive valid observations. If we don't
         # do this, it is possible that Unreal will return an initial visual observation of all zeros. We
@@ -302,7 +302,7 @@ class Env(gym.Env):
             self._tick()
             self._end_tick()
 
-        print("[SPEAR | env.py] Finished initializing Unreal instance.")
+        spear.log("Finished initializing Unreal instance.")
 
     def _wait_until_unreal_instance_is_closed(self):
         try:

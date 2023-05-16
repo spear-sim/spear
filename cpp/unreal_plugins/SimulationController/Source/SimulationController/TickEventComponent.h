@@ -4,31 +4,35 @@
 
 #pragma once
 
-#include <iostream>
-
 #include <CoreMinimal.h>
 #include <Components/ActorComponent.h>
+#include <Engine/EngineBaseTypes.h>
 
-#include "TickEvent.generated.h"
+#include "CoreUtils/Log.h"
+
+#include "TickEventComponent.generated.h"
+
+class FObjectInitializer;
+struct FActorComponentTickFunction;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FTickDelegate, float, enum ELevelTick);
 
 UCLASS()
-class UTickEvent : public UActorComponent
+class UTickEventComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    UTickEvent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
+    UTickEventComponent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
     {
-        std::cout << "[SPEAR | TickEvent.h] UTickEvent::UTickEvent" << std::endl;
+        SP_LOG_CURRENT_FUNCTION();
 
         PrimaryComponentTick.bCanEverTick = true;
         PrimaryComponentTick.bTickEvenWhenPaused = false;
     }
 
-    ~UTickEvent()
+    ~UTickEventComponent()
     {
-        std::cout << "[SPEAR | TickEvent.h] UTickEvent::~UTickEvent" << std::endl;
+        SP_LOG_CURRENT_FUNCTION();
     }
     
     // UActorComponent interface

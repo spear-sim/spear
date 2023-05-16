@@ -8,6 +8,7 @@
 import argparse
 import os
 import shutil
+import spear
 import subprocess
 import sys
 import time
@@ -44,24 +45,24 @@ if __name__ == "__main__":
 
     if not args.request_uuid:
         radio_effect_unit_component = os.path.realpath(os.path.join(executable, "Contents", "Resources", "RadioEffectUnit.component"))
-        print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit_component}")
+        spear.log(f"Removing {radio_effect_unit_component}")
         shutil.rmtree(radio_effect_unit_component, ignore_errors=True)
         
         radio_effect_unit = os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Build", "Mac", "RadioEffectUnit"))
-        print(f"[SPEAR | sign_executable.py] Removing {radio_effect_unit}")
+        spear.log(f"Removing {radio_effect_unit}")
         shutil.rmtree(radio_effect_unit, ignore_errors=True)
 
         pak_file_src  = os.path.realpath(os.path.join(executable, "Contents", "UE4", "SpearSim", "Content", "Paks", f"kujiale_0000-{args.version_tag}-Mac.pak"))
         pak_file_dest = os.path.realpath(os.path.join(args.temp_dir, f"kujiale_0000-{args.version_tag}-Mac.pak"))
-        print(f"[SPEAR | sign_executable.py] Temporarily moving {pak_file_src} to {pak_file_dest}")
+        spear.log(f"Temporarily moving {pak_file_src} to {pak_file_dest}")
         shutil.move(pak_file_src, pak_file_dest)
 
-        print("[SPEAR | sign_executable.py] Changing rpaths...")
+        spear.log("Changing rpaths...")
 
         # change current working directory to add relative rpaths
         cwd = os.getcwd()
         new_wd = os.path.realpath(os.path.join(executable, ".."))
-        print(f"[SPEAR | sign_executable.py] Changing working directory to {new_wd}")
+        spear.log(f"Changing working directory to {new_wd}")
         os.chdir(new_wd)
 
         executable_name = os.path.basename(executable)
@@ -80,7 +81,7 @@ if __name__ == "__main__":
 
         for dir, dylib in zip(add_rpath_dirs, add_rpath_dylibs):
             cmd = ["install_name_tool", "-add_rpath", dir, dylib]
-            print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
+            spear.log(f"Executing: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
 
         change_rpath_dylibs = [
@@ -101,11 +102,11 @@ if __name__ == "__main__":
                 "/Volumes/Work/Perforce/UE4/Engine/Binaries/ThirdParty/PhysX3/Mac",
                 os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac"),
                 dylib]
-            print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
+            spear.log(f"Executing: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
 
         # revert current working directory
-        print(f"[SPEAR | sign_executable.py] Changing working directory to {cwd}")
+        spear.log(f"Changing working directory to {cwd}")
         os.chdir(cwd)
 
         # files that need to be code-signed
@@ -130,62 +131,62 @@ if __name__ == "__main__":
             cmd = [
                 "sudo", "codesign", "-f", "-s", "-v", "--options", "runtime", "--timestamp", "--entitlements", 
                 args.entitlements_file, "--sign", f"Developer ID Application: {args.developer_id}", file]
-            print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
+            spear.log(f"Executing: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
 
         # create a zip file for notarization
         notarization_zip = os.path.realpath(os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip"))
         cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", executable, notarization_zip]
-        print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         # send the zip file for notarization
         cmd = [
             "xcrun", "altool", "--notarize-app", "--primary-bundle-id", "org.embodiedaifoundation.spear", 
             "--username", args.apple_username, "--password", args.apple_password, "--file", notarization_zip]
-        print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
         request_uuid = ""
         for line in ps.stdout:
-            print(f"[SPEAR | sign_executable.py] {line}")
+            spear.log(f"{line}")
             if "RequestUUID = " in line:
                 request_uuid = line.split("RequestUUID = ")[1].strip()
         ps.wait()
         ps.stdout.close()
         assert request_uuid != ""
-        print(f"[SPEAR | sign_executable.py] Zip file sent for notarization. Request UUID: {request_uuid}")
+        spear.log(f"Zip file sent for notarization. Request UUID: {request_uuid}")
     else:
         request_uuid = args.request_uuid
 
     # check notarization status
     cmd = ["xcrun", "altool", "--notarization-info", request_uuid, "--username", args.apple_username, "--password", args.apple_password]
-    print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
+    spear.log(f"Executing: {' '.join(cmd)}")
     output = "in progress"
     start_time = time.time()
     elapsed_time = time.time() - start_time
     while output == "in progress" and elapsed_time < args.wait_time_seconds:
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
         for line in ps.stdout:
-            print(f"[SPEAR | sign_executable.py] {line}")
+            spear.log(f"{line}")
             if "Status:" in line:
                 output = line.split("     Status:")[1].strip()
         ps.wait()
         ps.stdout.close()
         elapsed_time = time.time() - start_time
-        print(f'[SPEAR | sign_executable.py] Waiting to get more information on the notarization request UUID {request_uuid}, current status is "{output}"...')
+        spear.log(f'Waiting to get more information on the notarization request UUID {request_uuid}, current status is "{output}"...')
     
     if elapsed_time > args.wait_time_seconds:
-        print(f"[SPEAR | sign_executable.py] Exceeded maximum wait time ({args.wait_time_seconds}s) for request UUID {request_uuid}. Please complete the rest of the procedure after notarization is complete.")
+        spear.log(f"Exceeded maximum wait time ({args.wait_time_seconds}s) for request UUID {request_uuid}. Please complete the rest of the procedure after notarization is complete.")
         assert False
             
     # staple the executable
     cmd = ["xcrun", "stapler", "staple", executable]
-    print(f"[SPEAR | sign_executable.py] Executing: {' '.join(cmd)}")
+    spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
     # move the pak file
-    print(f"[SPEAR | sign_executable.py] Moving {pak_file_dest} to {pak_file_src}")
+    spear.log(f"Moving {pak_file_dest} to {pak_file_src}")
     shutil.move(pak_file_dest, pak_file_src)
     
-    print(f"[SPEAR | sign_executable.py] {executable} has been successfully signed.")
-    print("[SPEAR | sign_executable.py] Done.")
+    spear.log(f"{executable} has been successfully signed.")
+    spear.log("Done.")

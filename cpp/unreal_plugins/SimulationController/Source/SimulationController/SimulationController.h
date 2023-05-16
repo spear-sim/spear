@@ -36,11 +36,11 @@ private:
     void worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources);
 
     // FDelegateHandle objects corresponding to each event handler defined in this class
-    FDelegateHandle begin_frame_delegate_handle_;
-    FDelegateHandle end_frame_delegate_handle_;
-    FDelegateHandle post_world_initialization_delegate_handle_;
-    FDelegateHandle world_begin_play_delegate_handle_;
-    FDelegateHandle world_cleanup_delegate_handle_;
+    FDelegateHandle begin_frame_handle_;
+    FDelegateHandle end_frame_handle_;
+    FDelegateHandle post_world_initialization_handle_;
+    FDelegateHandle world_begin_play_handle_;
+    FDelegateHandle world_cleanup_handle_;
 
     // store a local reference to a game world
     UWorld* world_ = nullptr;
@@ -51,7 +51,7 @@ private:
     std::unique_ptr<RpcServer> rpc_server_;
 
     bool has_world_begin_play_executed_ = false;
-    bool open_level_is_pending_ = false;
+    bool open_level_pending_ = false;
 
     // thread sychronization
     std::atomic<FrameState> frame_state_;

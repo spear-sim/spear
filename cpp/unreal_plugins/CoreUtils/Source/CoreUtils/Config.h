@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <iostream>
 #include <string>
 #include <vector>
 
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Log.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/YamlCpp.h"
 
@@ -35,29 +35,30 @@ public:
     template <typename TValue>
     static TValue get(const std::string& key)
     {
-        ASSERT(key != "");
+        SP_ASSERT(key != "");
         return getFromKeys<TValue>(Std::tokenize(key, "."));
     }
 
     template <typename TValue>
     static TValue getFromKeys(const std::vector<std::string>& keys)
     {
-        // At least one key should be present when this function is called
-        ASSERT(keys.size() > 0);
+        // at least one key should be present when this function is called
+        SP_ASSERT(keys.size() > 0);
 
-        // Make sure we have s_config_ defined before trying to read from it
-        ASSERT(s_config_.IsDefined());
+        // make sure we have s_config_ defined before trying to read from it
+        SP_ASSERT(s_config_.IsDefined());
 
         YAML::Node node = s_config_;
         for (auto& key : keys) {
-            // If key doesn't exist, then print an informative error message and assert
+            // if key doesn't exist, then print an informative error message and assert
             if (!node[key]) {
-                std::cout << "[SPEAR | Config.h] Invalid key, keys == [";
+                std::string str = "Invalid key, keys == [";
                 for (int i = 0; i < keys.size() - 1; i++) {
-                    std::cout << "\"" << keys.at(i) << "\", ";
+                    str = str + "\"" + keys.at(i)  + "\", ";
                 }
-                std::cout << "\"" << keys.at(keys.size() - 1) << "\"], key " << key << " is invalid." << std::endl;
-                ASSERT(false);
+                str = str + "\"" + keys.at(keys.size() - 1) + "\"], key \"" + key + "\" is invalid.";
+                SP_LOG(str);
+                SP_ASSERT(false);
             }
 
             // We don't use node = node[key], because operator= merges the right-hand side into the left-hand

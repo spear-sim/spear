@@ -5,13 +5,14 @@
 #pragma once
 
 #include <map>
+#include <random>
 #include <string>
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h>
-#include <Math/RandomStream.h>
 #include <Math/Vector.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Task.h"
 
 class AActor;
@@ -19,7 +20,7 @@ class AStaticMeshActor;
 class UWorld;
 struct FHitResult;
 
-class UActorHitEvent;
+class UActorHitEventComponent;
 struct ArrayDesc;
 
 class PointGoalNavTask: public Task
@@ -33,6 +34,7 @@ public:
 
     void beginFrame() override;
     void endFrame() override;
+
     float getReward() const override;
     bool isEpisodeDone() const override;
     std::map<std::string, ArrayDesc> getStepInfoSpace() const override;
@@ -49,10 +51,10 @@ private:
 
     std::vector<AActor*> obstacle_ignore_actors_;
 
-    UActorHitEvent* actor_hit_event_ = nullptr;
-    FDelegateHandle actor_hit_event_delegate_handle_;
+    UActorHitEventComponent* actor_hit_event_component_ = nullptr;
+    FDelegateHandle actor_hit_event_handle_;
 
-    FRandomStream random_stream_;    
+    std::minstd_rand minstd_rand_;
 
     bool hit_goal_ = false;
     bool hit_obstacle_ = false;
