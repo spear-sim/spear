@@ -18,11 +18,10 @@ UChaosRearWheel::UChaosRearWheel()
         return;
     }
 
-    ExternalTorqueCombineMethod = ETorqueCombineMethod::Override;
-    //AxleType = EAxleType::Rear;
-    bAffectedByHandbrake = false;
-    bAffectedByEngine   = false;
-    bAffectedBySteering = false;
+    AxleType = EAxleType::Rear;
+    bAffectedByEngine   = true;
+    bAffectedBySteering = true;
+
     MaxSteerAngle = Config::get<float>("OPENBOT.OPENBOT_WHEEL.STEER_ANGLE");
     WheelRadius   = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SHAPE_RADIUS");
     WheelWidth    = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SHAPE_WIDTH");

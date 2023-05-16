@@ -5,6 +5,7 @@
 #include "OpenBot/OpenBotPawn.h"
 
 #include <iostream>
+#include <conio.h>
 
 #include <Eigen/Dense>
 
@@ -26,8 +27,6 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn
     if (!Config::s_initialized_) {
         return;
     }
-
-    //SetActorTickEnabled(true);
 
     ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*Unreal::toFString(Config::get<std::string>("OPENBOT.OPENBOT_PAWN.SKELETAL_MESH")));
     ASSERT(skeletal_mesh.Succeeded());
@@ -54,6 +53,8 @@ AOpenBotPawn::AOpenBotPawn(const FObjectInitializer& object_initializer) : APawn
     ASSERT(vehicle_movement_component_);
     vehicle_movement_component_->SetIsReplicated(true); // Enable replication by default
     vehicle_movement_component_->UpdatedComponent = skeletal_mesh_component_;
+    // this ensures that the body doesn't ever sleep. Need this to bypass a Chaos bug that doesn't take torque inputs to wheels into consideration for determining the sleep state of the body.
+    vehicle_movement_component_->SleepThreshold = 0;
 
     // Setup camera
     FVector camera_location(
@@ -95,23 +96,17 @@ void AOpenBotPawn::SetupPlayerInputComponent(UInputComponent* input_component)
 void AOpenBotPawn::BeginPlay()
 {
     APawn::BeginPlay();
-    vehicle_movement_component_->EnableMechanicalSim(true);
 }
 
 void AOpenBotPawn::Tick(float delta_time)
 {
     APawn::Tick(delta_time);
-    setDriveTorquesFromDutyCycle();
 
-    // print debug values
-    vehicle_movement_component_->printDebugValues();
+    setDriveTorquesFromDutyCycle();
 }
 
 void AOpenBotPawn::moveForward(float forward)
 {
-    // forward describes the percentage of input voltage to be applied to the
-    // motor by the H-bridge controller: 1.0 = 100%, -1.0 = reverse 100%
-
     duty_cycle_(0) += forward; // in [%]
     duty_cycle_(1) += forward; // in [%]
     duty_cycle_(2) += forward; // in [%]
@@ -121,9 +116,6 @@ void AOpenBotPawn::moveForward(float forward)
 
 void AOpenBotPawn::moveRight(float right)
 {
-    // right describes the percentage of input voltage to be applied to the
-    // motor by the H-bridge controller: 1.0 = 100%, -1.0 = reverse 100%
-
     duty_cycle_(0) += right; // in [%]
     duty_cycle_(1) -= right; // in [%]
     duty_cycle_(2) += right; // in [%]
@@ -132,13 +124,13 @@ void AOpenBotPawn::moveRight(float right)
 }
 
 void AOpenBotPawn::setDriveTorquesFromDutyCycle()
-{
-    //duty_cycle_.setConstant(1);
+{    
+    vehicle_movement_component_->SetSleeping(false);
 
-    UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(0) = %f"), duty_cycle_(0));
-    UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(1) = %f"), duty_cycle_(1));
-    UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(2) = %f"), duty_cycle_(2));
-    UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(3) = %f"), duty_cycle_(3));
+    //UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(0) = %f"), duty_cycle_(0));
+    //UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(1) = %f"), duty_cycle_(1));
+    //UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(2) = %f"), duty_cycle_(2));
+    //UE_LOG(LogTemp, Warning, TEXT("OpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), duty_cycle_(3) = %f"), duty_cycle_(3));
 
     // Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
     // Gear ratio: 50
@@ -187,7 +179,7 @@ void AOpenBotPawn::setDriveTorquesFromDutyCycle()
     motor_torque = motor_torque.cwiseMin(motor_torque_max).cwiseMax(-motor_torque_max);
 
     // The torque applied to the robot wheels is finally computed accounting for the gear ratio
-    Eigen::Vector4f wheel_torque = 0.001 * gear_ratio * motor_torque; // multiplying by 400 here to mirror BP torque values
+    Eigen::Vector4f wheel_torque = 0.001 * gear_ratio * motor_torque;
 
     // Control dead zone at near-zero speed. This is a simplified but reliable way to deal with
     // the friction behavior observed on the real vehicle in the low-speed/low-duty-cycle regime.
@@ -201,15 +193,15 @@ void AOpenBotPawn::setDriveTorquesFromDutyCycle()
     // Apply the drive torque in [N.m] to the vehicle wheels. The applied driveTorque persists until the
     // next call to SetDriveTorque. Note that the SetDriveTorque command can be found in the code of the
     // Unreal Engine at the following location:
-    //     Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/SimpleWheeledVehicleMovementComponent.h
+    //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosWheeledVehicleMovementComponent.h
     //
     // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
     // Please take a look if you want to modify the way the simulated vehicle is being controlled.
 
-    UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(0) = %f"), wheel_torque(0));
-    UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(1) = %f"), wheel_torque(1));
-    UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(2) = %f"), wheel_torque(2));
-    UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(3) = %f"), wheel_torque(3));
+    //UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(0) = %f"), wheel_torque(0));
+    //UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(1) = %f"), wheel_torque(1));
+    //UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(2) = %f"), wheel_torque(2));
+    //UE_LOG(LogTemp, Warning, TEXT("AOpenBotPawn.cpp::setDriveTorquesFromDutyCycle(), setting wheel_torque(3) = %f"), wheel_torque(3));
 
     vehicle_movement_component_->SetDriveTorque(wheel_torque(0), 0);
     vehicle_movement_component_->SetDriveTorque(wheel_torque(1), 1);

@@ -7,7 +7,7 @@
 #include <Eigen/Dense>
 
 #include <CoreMinimal.h>
-#include <WheeledVehiclePawn.h>
+#include <GameFramework/Pawn.h>
 
 #include "OpenBotPawn.generated.h"
 
