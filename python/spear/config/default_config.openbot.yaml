@@ -7,17 +7,6 @@ OPENBOT:
     SKELETAL_MESH: "/OpenBot/V0/Meshes/OpenBot_V0_Mesh.OpenBot_V0_Mesh"
     ANIM_INSTANCE: "/OpenBot/V0/Meshes/OpenBot_V0_Animation.OpenBot_V0_Animation_C"
 
-    MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
-    GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
-
-    BATTERY_VOLTAGE: 12.0          # Voltage of the battery powering the OpenBot [V]
-    CONTROL_DEAD_ZONE: 2.5         # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
-    MOTOR_TORQUE_MAX: 0.19         # Motor maximal torque [N.m]
-    ELECTRICAL_RESISTANCE: 0.5     # Motor winding electrical resistance [Ohms]
-    ELECTRICAL_INDUCTANCE: 0.5     # Motor winding electrical inductance [Henry]
-    
-    ACTION_SCALE: 255              # Action scaling factor
-
     VEHICLE_COMPONENT:
       MASS: 1.12                   # Mass of the vehicle chassis in [kg]
       DRAG_COEFFICIENT: 1.0        # DragCoefficient of the vehicle chassis

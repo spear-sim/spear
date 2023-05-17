@@ -60,15 +60,13 @@ SIMULATION_CONTROLLER:
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
-    TRAJECTORY_DATA:
-      GOAL_ACTOR_NAME: ""
 
   SPHERE_AGENT:
     SPHERE_ACTOR_NAME: ""
     CAMERA_ACTOR_NAME: ""
-    ACTION_COMPONENTS: ["apply_force"] # "apply_force"
-    OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
-    STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
+    ACTION_COMPONENTS: ["add_rotation", "add_force"] # "add_rotation", "add_force"
+    OBSERVATION_COMPONENTS: ["position", "rotation", "camera"] # "position", "rotation", "camera"
+    STEP_INFO_COMPONENTS: ["debug"] # "debug"
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
     SPAWN_POSITION_X: 0.0
@@ -81,26 +79,14 @@ SIMULATION_CONTROLLER:
       STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
       MATERIAL: "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"
       MESH_SCALE: 0.5
-      MASS_SCALE: 1.0
       MAX_ANGULAR_VELOCITY: 1.0
       LINEAR_DAMPING: 0.0
       ANGULAR_DAMPING: 0.0
-    COMPASS:
-      GOAL_ACTOR_NAME: ""
-      OFFSET_TO_GOAL_SCALE: 1.0
-      LINEAR_VELOCITY_SCALE: 1.0
-      YAW_SCALE: 1.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
-      POSITION_OFFSET_X: 0.0
-      POSITION_OFFSET_Y: 0.0
-      POSITION_OFFSET_Z: 5.0
-    APPLY_FORCE:
-      FORCE_SCALE: 1.0
-      ROTATE_SCALE: 1.0
 
   URDFBOT_AGENT:
     URDFBOT_ACTOR_NAME: ""
@@ -134,18 +120,6 @@ SIMULATION_CONTROLLER:
     READ_SURFACE_DATA: True # read image data from the GPU, useful for debugging and benchmarking
 
   IMU_SENSOR:
-    ACCELEROMETER_NOISE_STD_DEV: 
-      X: 0.0
-      Y: 0.0
-      Z: 0.0
-    GYROSCOPE_NOISE_STD_DEV: 
-      X: 0.0
-      Y: 0.0
-      Z: 0.0
-    GYROSCOPE_BIAS: 
-      X: 0.0
-      Y: 0.0
-      Z: 0.0
     DEBUG_RENDER: False
 
   SONAR_SENSOR:
@@ -156,7 +130,6 @@ SIMULATION_CONTROLLER:
     RANGE:
       MIN: 0.01
       MAX: 10.0
-    NOISE_STD_DEV: 0.0
     DEBUG_RENDER: False
 
   #
@@ -172,23 +145,17 @@ SIMULATION_CONTROLLER:
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
     TRAJECTORY_SAMPLING_MAX_ITERS: 100
     TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
-    NAVMESH:
-      AGENT_RADIUS: 20.0
-      AGENT_HEIGHT: 20.0
-      AGENT_MAX_STEP_HEIGHT: 2.0
 
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: ""
     GOAL_ACTOR_NAME: ""
     GOAL_MESH: "/Engine/BasicShapes/Cylinder.Cylinder"
     GOAL_MATERIAL: "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"
-    GOAL_SCALE: 0.5
     OBSTACLE_IGNORE_ACTOR_NAMES: []
     RANDOM_SEED: 0
     REWARD:
       HIT_GOAL: 1.0
       HIT_OBSTACLE: -1.0
-      DISTANCE_TO_GOAL_SCALE: 1.0
     EPISODE_BEGIN:
       AGENT_POSITION_X_MIN: .NAN
       AGENT_POSITION_X_MAX: .NAN
@@ -221,14 +188,11 @@ SIMULATION_CONTROLLER:
   #
 
   PHYSICS:
-    SIMULATION_STEP_TIME_SECONDS: 0.1
+    SIMULATION_STEP_TIME: 0.05
     ENABLE_ENHANCED_DETERMINISM: True
     ENABLE_SUBSTEPPING: True
     MAX_SUBSTEP_DELTA_TIME: 0.01
     MAX_SUBSTEPS: 100
-    CONTACT_OFFSET_MULTIPLIER: 0.02 # copied from Engine/Source/Runtime/PhysicsCore/Private/PhysicsSettingsCore.cpp
-    MIN_CONTACT_OFFSET: 2.0         # copied from Engine/Source/Runtime/PhysicsCore/Private/PhysicsSettingsCore.cpp
-    MAX_CONTACT_OFFSET: 8.0         # copied from Engine/Source/Runtime/PhysicsCore/Private/PhysicsSettingsCore.cpp
 
   NAVMESH:
     AGENT_RADIUS: 1.0

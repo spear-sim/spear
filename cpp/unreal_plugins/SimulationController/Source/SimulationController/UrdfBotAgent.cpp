@@ -13,6 +13,9 @@
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
+#include <Engine/World.h>
+#include <Math/Rotator.h>
+#include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"

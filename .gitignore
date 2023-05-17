@@ -1,7 +1,5 @@
 __pycache__
 
-cpp/.vs
-
 cpp/unreal_plugins/*/Binaries
 cpp/unreal_plugins/*/Intermediate
 cpp/unreal_plugins/*/ThirdParty
@@ -9,6 +7,8 @@ cpp/unreal_plugins/*/ThirdParty
 cpp/unreal_projects/SpearSim/Binaries
 cpp/unreal_projects/SpearSim/Build
 cpp/unreal_projects/SpearSim/CMakeLists.txt
+cpp/unreal_projects/SpearSim/Content/Megascans
+cpp/unreal_projects/SpearSim/Content/MSPresets
 cpp/unreal_projects/SpearSim/Content/Scenes/kujiale_*
 cpp/unreal_projects/SpearSim/Content/Scenes/warehouse_*
 cpp/unreal_projects/SpearSim/Content/Shared
@@ -33,7 +33,6 @@ cpp/unreal_projects/SpearSim/SpearSimSource.pri
 cpp/unreal_projects/SpearSim/Saved
 cpp/unreal_projects/SpearSim/Standalone-Development
 cpp/unreal_projects/SpearSim/Standalone-Shipping
-cpp/unreal_projects/SpearSim/Temp
 cpp/unreal_projects/SpearSim/ThirdParty
 cpp/unreal_projects/SpearSim/user_config.yaml
 cpp/unreal_projects/SpearSim/.vs

@@ -13,6 +13,7 @@
 #include <Engine/EngineBaseTypes.h>
 #include <Math/Rotator.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 
 class AActor;
@@ -22,8 +23,7 @@ class UStaticMeshComponent;
 class UWorld;
 
 class CameraSensor;
-class UTickEvent;
-struct ArrayDesc;
+class UTickEventComponent;
 
 class SphereAgent : public Agent
 {
@@ -48,16 +48,15 @@ public:
     void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
 
 private:
-    AStaticMeshActor* sphere_actor_ = nullptr;
+    AStaticMeshActor* static_mesh_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
-    AActor* goal_actor_ = nullptr;
     AActor* parent_actor_ = nullptr;
 
     UStaticMeshComponent* static_mesh_component_ = nullptr;
 
     FRotator rotation_ = FRotator::ZeroRotator;
 
-    UTickEvent* tick_event_ = nullptr;
+    UTickEventComponent* tick_event_component_ = nullptr;
     FDelegateHandle tick_event_handle_;
 
     std::unique_ptr<CameraSensor> camera_sensor_;

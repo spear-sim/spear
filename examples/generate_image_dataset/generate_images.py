@@ -60,7 +60,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--poses_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "poses.csv")))
     parser.add_argument("--images_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "images")))
-    parser.add_argument("--num_internal_steps", default=1)
+    parser.add_argument("--num_internal_steps", type=int, default=1)
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--wait_for_key_press", action="store_true")
     args = parser.parse_args()
@@ -98,9 +98,10 @@ if __name__ == "__main__":
             if args.benchmark and prev_scene_id == "":
                 start_time_seconds = time.time()
 
-        obs, _, _, _ = env.step(action={
-            "set_position": np.array([pose["position_x"], pose["position_y"], pose["position_z"]], np.float32),
-            "set_rotation": np.array([pose["rotation_pitch"], pose["rotation_yaw"], pose["rotation_roll"]], np.float32)})
+        obs, _, _, _ = env.step(
+            action={
+                "set_position": np.array([pose["position_x"], pose["position_y"], pose["position_z"]], np.float64),
+                "set_rotation": np.array([pose["rotation_pitch"], pose["rotation_yaw"], pose["rotation_roll"]], np.float64)})
 
         # save images for each render pass
         if not args.benchmark:
@@ -141,7 +142,7 @@ if __name__ == "__main__":
 
         # useful for comparing the game window to the image that has been saved to disk
         if args.wait_for_key_press:
-            print("[SPEAR | generate_images.py] Press any key to continue...")
+            spear.log("Press any key to continue...")
             input()
 
         prev_scene_id = pose["scene_id"]
@@ -149,10 +150,11 @@ if __name__ == "__main__":
     if args.benchmark:
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        print("[SPEAR | generate_images.py] Average frame time: %0.4f ms (%0.4f fps)" %
-            ((elapsed_time_seconds / (df.shape[0]*num_internal_steps))*1000, (df.shape[0]*num_internal_steps) / elapsed_time_seconds))
+        spear.log(
+            "Average frame time: %0.4f ms (%0.4f fps)" %
+            ((elapsed_time_seconds / (df.shape[0]*args.num_internal_steps))*1000, (df.shape[0]*args.num_internal_steps) / elapsed_time_seconds))
 
     # close the current Env
     env.close()
 
-    print("[SPEAR | generate_images.py] Done.")
+    spear.log("Done.")

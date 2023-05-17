@@ -17,11 +17,11 @@
     ],
     "Plugins": [
         {
-            "Name": "CoreUtils",
+            "Name": "CommonModuleRules",
             "Enabled": true
         },
         {
-            "Name": "GPULightmass",
+            "Name": "CoreUtils",
             "Enabled": true
         },
         {

@@ -5,6 +5,7 @@
 import argparse
 import os
 import shutil
+import spear
 import sys
 
 
@@ -33,5 +34,5 @@ if __name__ == "__main__":
     shutil.make_archive(base_name=archive_file_name, format="zip", root_dir=os.path.realpath(os.path.join(executable_dir, platform_dir_name)), verbose=1)
     assert os.path.exists(archive_file_name + ".zip")
 
-    print(f"[SPEAR | archive_executable.py] Successfully archived executable to {archive_file_name}.zip")
-    print("[SPEAR | archive_executable.py] Done.")
+    spear.log(f"Successfully archived executable to {archive_file_name}.zip")
+    spear.log("Done.")

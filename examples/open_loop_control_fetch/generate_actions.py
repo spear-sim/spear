@@ -179,4 +179,4 @@ if __name__ == '__main__':
     actions_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "actions." + args.scene_id + ".csv"))
     df.to_csv(actions_file, float_format="%.5f", mode="w", index=False, header=True)
 
-    print("[SPEAR | generate_actions.py] Done.")
+    spear.log("Done.")

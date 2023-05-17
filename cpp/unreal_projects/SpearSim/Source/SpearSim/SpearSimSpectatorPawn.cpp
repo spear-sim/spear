@@ -4,8 +4,6 @@
 
 #include "SpearSim/SpearSimSpectatorPawn.h"
 
-#include <iostream>
-
 #include <Components/InputComponent.h>
 #include <GameFramework/PlayerInput.h>
 #include <GameFramework/SpectatorPawn.h>
@@ -14,9 +12,11 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 
+class FObjectInitializer;
+
 ASpearSimSpectatorPawn::ASpearSimSpectatorPawn(const FObjectInitializer& object_initializer) : ASpectatorPawn(object_initializer)
 {
-    std::cout << "[SPEAR | SpearSimSpectatorPawn.cpp] ASpearSimSpectatorPawn::ASpearSimSpectatorPawn" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 
     if (!Config::s_initialized_) {
         return;
@@ -25,7 +25,7 @@ ASpearSimSpectatorPawn::ASpearSimSpectatorPawn(const FObjectInitializer& object_
 
 ASpearSimSpectatorPawn::~ASpearSimSpectatorPawn()
 {
-    std::cout << "[SPEAR | SpearSimSpectatorPawn.cpp] ASpearSimSpectatorPawn::~ASpearSimSpectatorPawn" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 }
 
 void ASpearSimSpectatorPawn::SetupPlayerInputComponent(UInputComponent* input_component)

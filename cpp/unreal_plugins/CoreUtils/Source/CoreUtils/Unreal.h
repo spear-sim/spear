@@ -10,6 +10,7 @@
 
 #include <Containers/Array.h>
 #include <Containers/UnrealString.h>
+#include <CoreMinimal.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <UObject/NameTypes.h>
@@ -57,12 +58,12 @@ public:
     //
 
     template <typename TDest, typename TSrc>
-    static std::vector<TDest> reinterpret_as(const TArray<TSrc>& src)
+    static std::vector<TDest> reinterpretAs(const TArray<TSrc>& src)
     {
         std::vector<TDest> dest;
         if (src.Num() > 0) {
             size_t src_bytes = src.Num() * sizeof(TSrc);
-            ASSERT(src_bytes % sizeof(TDest) == 0);
+            SP_ASSERT(src_bytes % sizeof(TDest) == 0);
             size_t dest_elements = src_bytes / sizeof(TDest);
             dest.resize(dest_elements);
             std::memcpy(dest.data(), src.GetData(), src_bytes);
@@ -236,7 +237,7 @@ public:
     template <typename TActor>
     static std::vector<TActor*> findActorsByTagAny(UWorld* world, const std::vector<std::string>& tags)
     {
-        ASSERT(world);
+        SP_ASSERT(world);
         std::vector<TActor*> actors;
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
             TActor* actor = *itr;
@@ -253,7 +254,7 @@ public:
     template <typename TActor>
     static std::vector<TActor*> findActorsByTagAll(UWorld* world, const std::vector<std::string>& tags)
     {
-        ASSERT(world);
+        SP_ASSERT(world);
         std::vector<TActor*> actors;
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
             TActor* actor = *itr;
@@ -274,7 +275,7 @@ public:
     template <typename TActor>
     static std::vector<TActor*> findActorsByType(UWorld* world)
     {
-        ASSERT(world);
+        SP_ASSERT(world);
         std::vector<TActor*> actors;
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
             actors.push_back(*itr);
@@ -289,7 +290,7 @@ public:
     template <typename TActor>
     static std::map<std::string, TActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
     {
-        ASSERT(world);
+        SP_ASSERT(world);
         std::map<std::string, TActor*> actor_map;
         for (auto& name : names) {
             actor_map[name] = nullptr;
@@ -298,7 +299,7 @@ public:
             TActor* a = *itr;
             std::string name = toStdString(a->GetName());
             if (Std::containsKey(actor_map, name)) {
-                ASSERT(!actor_map.at(name)); // There shouldn't be two actors with the same name
+                SP_ASSERT(!actor_map.at(name)); // There shouldn't be two actors with the same name
                 actor_map[name] = a;
             }
         }
@@ -337,9 +338,9 @@ public:
     {
         std::map<std::string, TActor*> actor_map;
         for (auto& a : actors) {
-            ASSERT(a);
+            SP_ASSERT(a);
             std::string name = toStdString(a->GetName());
-            ASSERT(!Std::containsKey(actor_map, name)); // There shouldn't be two actors with the same name
+            SP_ASSERT(!Std::containsKey(actor_map, name)); // There shouldn't be two actors with the same name
             actor_map[name] = a;
         }
         return actor_map;
@@ -350,14 +351,14 @@ public:
     {
         if (vec.size() == 0) {
             if (assert_if_size_is_zero) {
-                ASSERT(false);
+                SP_ASSERT(false);
             }
             return default_val;
         } else if (vec.size() == 1) {
             return vec.at(0);
         } else {
             if (assert_if_size_is_greater_than_one) {
-                ASSERT(false);
+                SP_ASSERT(false);
             }
             return vec.at(0);
         }

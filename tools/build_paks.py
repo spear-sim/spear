@@ -36,15 +36,15 @@ if __name__ == '__main__':
 
     if sys.platform == "win32":
         platform          = "Windows"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UE4Editor.exe"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor.exe"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
     elif sys.platform == "darwin":
         platform          = "Mac"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UE4Editor.app", "Contents", "MacOS", "UE4Editor"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app", "Contents", "MacOS", "UnrealEditor"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
     elif sys.platform == "linux":
         platform          = "Linux"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UE4Editor"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
     else:
         assert False
@@ -75,26 +75,33 @@ if __name__ == '__main__':
             scene_ids = [ s for s in scene_ids if fnmatch.fnmatch(s, args.scene_ids) ]
         assert len(scene_ids) > 0
 
-    # Create a symlink to the Shared directory
+    # We do not want to use os.path.realpath(...) for the values in this dictionary, because that will resolve
+    # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
+    # version inside the user's Unreal project directory.
+    perforce_dirs_to_unreal_dirs = {
+        os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
+        os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets"),
+        os.path.realpath(os.path.join(args.perforce_content_dir, "Shared")) : os.path.join(unreal_project_content_dir, "Shared")
+    }
+
+    # Create a symlink to common top-level directories
     if not args.skip_create_symlinks:
-        perforce_content_shared_dir = os.path.realpath(os.path.join(args.perforce_content_dir, "Shared"))
-        assert os.path.exists(perforce_content_shared_dir)
+        for perforce_dir, unreal_project_dir in perforce_dirs_to_unreal_dirs.items():
+            assert os.path.exists(perforce_dir)
 
-        # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the user's Perforce workspace.
-        # Instead, we want this path to refer to the symlinked version inside the user's unreal project directory.
-        unreal_project_content_shared_dir = os.path.join(unreal_project_content_dir, "Shared")
+            if spear.path_exists(unreal_project_dir):
+                spear.log(f"File or directory or symlink exists, removing: {unreal_project_dir}")
+                spear.remove_path(unreal_project_dir)
 
-        if spear.path_exists(unreal_project_content_shared_dir):
-            print(f"[SPEAR | build_paks.py] File or directory or symlink exists, removing: {unreal_project_content_shared_dir}")
-            spear.remove_path(unreal_project_content_shared_dir)
-
-        print(f"[SPEAR | build_paks.py] Creating symlink: {unreal_project_content_shared_dir} -> {perforce_content_shared_dir}")
-        os.symlink(perforce_content_shared_dir, unreal_project_content_shared_dir)
+            spear.log(f"Creating symlink: {unreal_project_dir} -> {perforce_dir}")
+            os.symlink(perforce_dir, unreal_project_dir)
 
     for scene_id in scene_ids:
 
         pak_dirs = [
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Content")),
+            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Megascans")),
+            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "MSPresets")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Shared")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id)),
         ]
@@ -110,18 +117,18 @@ if __name__ == '__main__':
             perforce_content_scene_dir = os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_id))
 
             if spear.path_exists(unreal_project_content_scene_dir):
-                print(f"[SPEAR | build_paks.py] File or directory or symlink exists, removing: {unreal_project_content_scene_dir}")
+                spear.log(f"File or directory or symlink exists, removing: {unreal_project_content_scene_dir}")
                 spear.remove_path(unreal_project_content_scene_dir)
 
-            print(f"[SPEAR | build_paks.py] Creating symlink: {unreal_project_content_scene_dir} -> {perforce_content_scene_dir}")
+            spear.log(f"Creating symlink: {unreal_project_content_scene_dir} -> {perforce_content_scene_dir}")
             os.symlink(perforce_content_scene_dir, unreal_project_content_scene_dir)
 
-        # Now that we have created a symlink, our Unreal project should contain exactly two scenes: starter_content_0000 and scene_id
+        # Now that we have created a symlink, our Unreal project should contain exactly two scenes: debug_0000 and scene_id
         ignore_names = [".DS_Store"]
         unreal_project_scenes = { os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) if x not in ignore_names }
-        assert unreal_project_scenes == {"starter_content_0000", scene_id}
+        assert unreal_project_scenes == {"debug_0000", scene_id}
 
-        # see https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
+        # see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
         cmd = [
             unreal_editor_bin,
             uproject,
@@ -136,7 +143,7 @@ if __name__ == '__main__':
             "-fullstdoutlogoutput",                  # ensure log output is written to the terminal
             "-nologtimes"                            # don't print timestamps next to log messages twice
         ]
-        print(f"[SPEAR | build_paks.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         # create the output_dir
@@ -159,18 +166,19 @@ if __name__ == '__main__':
             "-multiprocess",
             "-compress"
         ]
-        print(f"[SPEAR | build_paks.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         assert os.path.exists(pak_file)
-        print(f"[SPEAR | build_paks.py] Successfully built {pak_file}")
+        spear.log(f"Successfully built {pak_file}")
 
         if not args.skip_create_symlinks:
-            print(f"[SPEAR | build_paks.py] Removing symlink: {unreal_project_content_scene_dir}")
+            spear.log(f"Removing symlink: {unreal_project_content_scene_dir}")
             spear.remove_path(unreal_project_content_scene_dir)
 
     if not args.skip_create_symlinks:
-        print(f"[SPEAR | build_paks.py] Removing symlink: {unreal_project_content_shared_dir}")
-        spear.remove_path(unreal_project_content_shared_dir)
+        for perforce_dir, unreal_project_dir in perforce_dirs_to_unreal_dirs.items():
+            spear.log(f"File or directory or symlink exists, removing: {unreal_project_dir}")
+            spear.remove_path(unreal_project_dir)
 
-    print("[SPEAR | build_paks.py] Done.")
+    spear.log("Done.")
