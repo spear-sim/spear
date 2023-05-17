@@ -13,9 +13,7 @@
 class FOutputDevice;
 class UWorld;
 
-// This class is intended to mimic the functionality of SpearSimEditorUnrealEdEngine. SpearSimEditorUnrealEdEngine
-// inherits from UnrealEdEngine and is active when the editor is running, whereas this class inherits from UGameEngine
-// and is active when the game is running in standalone mode.
+// The purpose of this class is to access Unreal console commands when the game is running.
 
 UCLASS()
 class USpearSimGameEngine : public UGameEngine

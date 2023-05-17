@@ -43,18 +43,18 @@ if __name__ == "__main__":
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
             obs, reward, done, info = env.step(action={"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
             if not args.benchmark:
-                print("[SPEAR | run.py] SphereAgent: ")
-                print(obs["compass"])
-                print(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                print(reward, done, info)
+                spear.log("SphereAgent: ")
+                spear.log(obs["compass"])
+                spear.log(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log(reward, done, info)
         elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
             obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 0.715], dtype=np.float32)})
             if not args.benchmark:
-                print("[SPEAR | run.py] OpenBotAgent: ")
-                print(obs["state_data"])
-                print(obs["control_data"])
-                print(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                print(reward, done, info)
+                spear.log("OpenBotAgent: ")
+                spear.log(obs["state_data"])
+                spear.log(obs["control_data"])
+                spear.log(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log(reward, done, info)
         else:
             assert False
 
@@ -68,11 +68,11 @@ if __name__ == "__main__":
     if args.benchmark:
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        print("[SPEAR | run.py] Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000.0, NUM_STEPS / elapsed_time_seconds))
+        spear.log("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000.0, NUM_STEPS / elapsed_time_seconds))
     else:
         cv2.destroyAllWindows()
 
     # close the environment
     env.close()
 
-    print("[SPEAR | run.py] Done.")
+    spear.log("Done.")

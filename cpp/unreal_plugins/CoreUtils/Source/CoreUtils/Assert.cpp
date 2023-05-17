@@ -10,7 +10,7 @@
 #include "CoreUtils/SuppressCompilerWarnings.h"
 #include "CoreUtils/Windows.h"
 
-BEGIN_SUPPRESS_COMPILER_WARNINGS
+SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
 
 // ------------------------------------------------------------------------------
 
@@ -516,4 +516,4 @@ namespace implementation {
 
 // ------------------------------------------------------------------------------
 
-END_SUPPRESS_COMPILER_WARNINGS
+SP_END_SUPPRESS_COMPILER_WARNINGS

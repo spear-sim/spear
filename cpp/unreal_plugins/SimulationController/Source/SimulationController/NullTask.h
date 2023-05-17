@@ -4,8 +4,14 @@
 
 #pragma once
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Task.h"
+
+class UWorld;
 
 class NullTask: public Task
 {

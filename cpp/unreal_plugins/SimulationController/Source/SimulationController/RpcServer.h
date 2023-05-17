@@ -9,7 +9,6 @@
 #include <future>
 #include <mutex>
 #include <string>
-#include <type_traits>
 #include <utility>
 
 #include "CoreUtils/Rpclib.h"

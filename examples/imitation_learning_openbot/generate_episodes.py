@@ -45,7 +45,7 @@ if __name__ == "__main__":
     # iterate over all scenes
     for i, scene_id in enumerate(scene_ids):
 
-        print("[SPEAR | generate_episodes.py] Processing scene: " + scene_id)
+        spear.log("Processing scene: " + scene_id)
 
         # change config based on current scene
         config.defrost()
@@ -83,7 +83,7 @@ if __name__ == "__main__":
             
             # if it took too long to reset the simulation, then continue
             if not env_reset_info["success"]:
-                print("[SPEAR | generate_episodes.py] Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Retrying...")
+                spear.log("Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Retrying...")
                 continue
                 
             # get random start-goal pairs
@@ -122,4 +122,4 @@ if __name__ == "__main__":
         # close the current scene
         env.close()
 
-    print("[SPEAR | generate_episodes.py] Done.")
+    spear.log("Done.")

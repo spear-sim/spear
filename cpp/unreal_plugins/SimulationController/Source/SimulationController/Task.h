@@ -8,15 +8,15 @@
 #include <string>
 #include <vector>
 
-struct ArrayDesc;
+#include "CoreUtils/ArrayDesc.h"
+
+class UWorld;
 
 class Task
 {
 public:
-    // A Task class must spawn new objects in the constructor if they are
-    // intended to be findable by other classes. A Task class must not attempt
-    // to find object references in the constructor, because these objects might
-    // not be spawned yet. Use findObjectReferences(...) instead.
+    // A Task class must spawn new objects in the constructor if they are intended to be findable by other classes. A Task class must not attempt
+    // to find object references in the constructor, because these objects might not be spawned yet. Use findObjectReferences(...) instead.
     Task() = default;
     virtual ~Task() = default;
 
@@ -25,6 +25,7 @@ public:
 
     virtual void beginFrame() = 0;
     virtual void endFrame() = 0;
+
     virtual float getReward() const = 0;
     virtual bool isEpisodeDone() const = 0;
     virtual std::map<std::string, ArrayDesc> getStepInfoSpace() const = 0;

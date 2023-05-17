@@ -4,39 +4,43 @@
 
 #pragma once
 
-#include <iostream>
-
 #include <CoreMinimal.h>
 #include <Components/ActorComponent.h>
 #include <GameFramework/Actor.h>
+#include <Math/Vector.h>
 
-#include "ActorHitEvent.generated.h"
+#include "CoreUtils/Log.h"
+
+#include "ActorHitEventComponent.generated.h"
+
+class FObjectInitializer;
+struct FHitResult;
 
 DECLARE_MULTICAST_DELEGATE_FourParams(FActorHitDelegate, AActor*, AActor*, FVector, const FHitResult&);
 
 UCLASS()
-class UActorHitEvent : public UActorComponent
+class UActorHitEventComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    UActorHitEvent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
+    UActorHitEventComponent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
     {
-        std::cout << "[SPEAR | ActorHitEvent.h] UActorHitEvent::UActorHitEvent" << std::endl;
+        SP_LOG_CURRENT_FUNCTION();
     }
 
-    ~UActorHitEvent()
+    ~UActorHitEventComponent()
     {
-        std::cout << "[SPEAR | ActorHitEvent.h] UActorHitEvent::~UActorHitEvent" << std::endl;
+        SP_LOG_CURRENT_FUNCTION();
     }
 
     void subscribeToActor(AActor* actor)
     {
-        actor->OnActorHit.AddDynamic(this, &UActorHitEvent::actorHitEventHandler);
+        actor->OnActorHit.AddDynamic(this, &UActorHitEventComponent::actorHitEventHandler);
     }
 
     void unsubscribeFromActor(AActor* actor)
     {
-        actor->OnActorHit.RemoveDynamic(this, &UActorHitEvent::actorHitEventHandler);
+        actor->OnActorHit.RemoveDynamic(this, &UActorHitEventComponent::actorHitEventHandler);
     }
 
     FActorHitDelegate delegate_;

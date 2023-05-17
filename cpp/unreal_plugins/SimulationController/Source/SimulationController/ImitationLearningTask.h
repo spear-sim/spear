@@ -11,6 +11,7 @@
 #include <Delegates/IDelegateInstance.h>
 #include <Math/Vector.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Task.h"
 
 class AActor;
@@ -19,8 +20,7 @@ class UNavigationSystemV1;
 class UWorld;
 struct FHitResult;
 
-class UActorHitEvent;
-struct ArrayDesc;
+class UActorHitEventComponent;
 
 class ImitationLearningTask : public Task {
 public:
@@ -32,6 +32,7 @@ public:
 
     void beginFrame() override;
     void endFrame() override;
+
     float getReward() const override;
     bool isEpisodeDone() const override;
     std::map<std::string, ArrayDesc> getStepInfoSpace() const override;
@@ -60,11 +61,11 @@ private:
 
     std::vector<AActor*> obstacle_ignore_actors_;
 
-    UActorHitEvent* actor_hit_event_ = nullptr;
-    FDelegateHandle actor_hit_event_delegate_handle_;
-
     UNavigationSystemV1* nav_sys_ = nullptr;
     ARecastNavMesh* nav_mesh_ = nullptr;
+
+    UActorHitEventComponent* actor_hit_event_component_ = nullptr;
+    FDelegateHandle actor_hit_event_handle_;
 
     // Task state
     std::vector<FVector> agent_initial_positions_; // Initial position of the learning agent

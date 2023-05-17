@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "SimulationController",
-    "Description": "WARNING: The loading phases for {CoreUtils, OpenBot, SimulationController} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(OpenBot) < LoadingPhase(SimulationController)",
+    "Description": "WARNING: The loading phases for {CoreUtils, OpenBot, SimulationController, UrdfBot} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(OpenBot, UrdfBot) < LoadingPhase(SimulationController)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",

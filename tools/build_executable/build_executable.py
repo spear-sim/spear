@@ -5,6 +5,7 @@
 import argparse
 import os
 import shutil
+import spear
 import subprocess
 import sys
 
@@ -98,19 +99,19 @@ if __name__ == "__main__":
     #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
     #     path contains illegal characters '.'
     if os.path.exists(unreal_tmp_dir):
-        print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
+        spear.log(f"Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
         shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
     if not args.skip_clone_github_repo:
         
         # remove our temporary repository directory to ensure a clean build
         if os.path.exists(repo_dir):
-            print(f"[SPEAR | build_executable.py] Repository exists, removing: {repo_dir}")
+            spear.log(f"Repository exists, removing: {repo_dir}")
             shutil.rmtree(repo_dir, ignore_errors=True)
 
         # clone repo with submodules
         cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", repo_dir]
-        print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         # reset to a specific commit ID
@@ -118,7 +119,7 @@ if __name__ == "__main__":
             cwd = os.getcwd()
             os.chdir(repo_dir)
             cmd = ["git", "reset", "--hard", args.commit_id]
-            print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
+            spear.log(f"Executing: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
             os.chdir(cwd)
 
@@ -131,7 +132,7 @@ if __name__ == "__main__":
             "--third_party_dir", third_party_dir,
             "--num_parallel_jobs", f"{args.num_parallel_jobs}"
         ]
-        print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
     # create symbolic links (we need shell=True because we want to run in a specific anaconda env,
@@ -145,12 +146,12 @@ if __name__ == "__main__":
         f"--unreal_project_dir {unreal_project_dir} " + \
         f"--unreal_plugins_dir {unreal_plugins_dir} " \
         f"--third_party_dir {third_party_dir}"
-    print(f"[SPEAR | build_executable.py] Executing: {cmd}")
+    spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
     # copy our custom ini file, used to update the default map for public release executables
     shutil.copyfile(config_file_src, config_file_dest)
-    print(f"[SPEAR | build_executable.py] Copied {config_file_src} to {config_file_dest}")
+    spear.log(f"Copied {config_file_src} to {config_file_dest}")
 
     # build SpearSim project
     cmd = [
@@ -169,12 +170,12 @@ if __name__ == "__main__":
         "-archivedirectory=" + archive_dir,
         "-clientconfig=" + build_config,
     ]
-    print(f"[SPEAR | build_executable.py] Executing: {' '.join(cmd)}")
+    spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
     # copy our custom pak file
     shutil.copyfile(pak_file_src, pak_file_dest)
-    print(f"[SPEAR | build_executable.py] Copied {pak_file_src} to {pak_file_dest}")
+    spear.log(f"Copied {pak_file_src} to {pak_file_dest}")
 
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from the above build.
     # If we don't do this step, we will get many warnings during subsequent builds:
@@ -182,8 +183,8 @@ if __name__ == "__main__":
     #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
     #     path contains illegal characters '.'
     if os.path.exists(unreal_tmp_dir):
-        print(f"[SPEAR | build_executable.py] Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
+        spear.log(f"Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
         shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
-    print(f"[SPEAR | build_executable.py] Successfully built SpearSim at {archive_dir}")
-    print("[SPEAR | build_executable.py] Done.")
+    spear.log(f"Successfully built SpearSim at {archive_dir}")
+    spear.log("Done.")

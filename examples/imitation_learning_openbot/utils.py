@@ -13,17 +13,17 @@ def show_obs(obs, obs_components, render_passes):
         
     for obs_component in obs_components:
         if obs_component == "state_data":
-            print(f"[SPEAR | utils.py] state_data: xyz [{obs['state_data'][0]:.2f}, {obs['state_data'][1]:.2f}, {obs['state_data'][2]:.2f}]")
-            print(f"[SPEAR | utils.py] state_data: pitch yaw roll [{obs['state_data'][3]:.2f}, {obs['state_data'][4]:.2f},{obs['state_data'][5]:.2f}]")
+            spear.log(f"state_data: xyz [{obs['state_data'][0]:.2f}, {obs['state_data'][1]:.2f}, {obs['state_data'][2]:.2f}]")
+            spear.log(f"state_data: pitch yaw roll [{obs['state_data'][3]:.2f}, {obs['state_data'][4]:.2f},{obs['state_data'][5]:.2f}]")
         elif obs_component == "control_data":
-            print(f"[SPEAR | utils.py] control_data: left right [{obs['control_data'][0]:.2f}, {obs['control_data'][1]:.2f}]")
+            spear.log(f"control_data: left right [{obs['control_data'][0]:.2f}, {obs['control_data'][1]:.2f}]")
         elif obs_component == "encoder":
-            print(f"[SPEAR | utils.py] encoder: fl fr rl rr [{obs['encoder'][0]:.2f}, {obs['encoder'][1]:.2f}, {obs['encoder'][2]:.2f}, {obs['encoder'][3]:.2f}]")
+            spear.log(f"encoder: fl fr rl rr [{obs['encoder'][0]:.2f}, {obs['encoder'][1]:.2f}, {obs['encoder'][2]:.2f}, {obs['encoder'][3]:.2f}]")
         elif obs_component == "imu":
-            print(f"[SPEAR | utils.py] imu: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]")
-            print(f"[SPEAR | utils.py] imu: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
+            spear.log(f"imu: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]")
+            spear.log(f"imu: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
         elif obs_component == "sonar":
-            print(f"[SPEAR | utils.py] sonar: {obs['sonar'][0]:.2f}")
+            spear.log(f"sonar: {obs['sonar'][0]:.2f}")
         elif obs_component == "camera":
             for render_pass in render_passes:
                 if render_pass in ["final_color", "normals", "segmentation"]:                    
@@ -35,10 +35,10 @@ def show_obs(obs, obs_components, render_passes):
                     depth_normalized = (depth-depth_min) / (depth_max-depth_min)
                     cv2.imshow(render_pass, depth_normalized)
                 else:
-                    print(f"[SPEAR | utils.py] Error: {render_pass} is an unknown camera render pass.")
+                    spear.log(f"Error: {render_pass} is an unknown camera render pass.")
                     assert False
         else:
-            print(f"[SPEAR | utils.py] Error: {obs_component} is an unknown observation component.")
+            spear.log(f"Error: {obs_component} is an unknown observation component.")
             assert False
 
     cv2.waitKey(0)
