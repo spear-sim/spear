@@ -39,6 +39,10 @@
         {
             "Name": "UrdfBot",
             "Enabled": false
+        },
+        {
+            "Name": "WheeledVehicle",
+            "Enabled": true
         }
     ]
 }
