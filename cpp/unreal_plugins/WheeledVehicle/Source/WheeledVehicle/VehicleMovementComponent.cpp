@@ -4,14 +4,12 @@
 
 #include "WheeledVehicle/VehicleMovementComponent.h"
 
-#include <iostream>
-
 #include "CoreUtils/Config.h"
 #include "WheeledVehicle/VehicleWheel.h"
 
 UVehicleMovementComponent::UVehicleMovementComponent()
 {
-    std::cout << "[SPEAR | WheeledVehicleComponent.cpp] UVehicleMovementComponent::UVehicleMovementComponent" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 
     WheelSetups.SetNum(4);
 
@@ -45,7 +43,7 @@ UVehicleMovementComponent::UVehicleMovementComponent()
 
 UVehicleMovementComponent::~UVehicleMovementComponent()
 {
-    std::cout << "[SPEAR | WheeledVehicleComponent.cpp] UVehicleMovementComponent::~UVehicleMovementComponent" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 }
 
 Eigen::Vector4f UVehicleMovementComponent::getWheelRotationSpeeds() const
@@ -65,13 +63,13 @@ bool UVehicleMovementComponent::isSleeping() const
 
 void UVehicleMovementComponent::printDebugValues()
 {
-    UE_LOG(LogTemp, Warning, TEXT("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity() = %f"), VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity());
-    UE_LOG(LogTemp, Warning, TEXT("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity() = %f"), VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity());
-    UE_LOG(LogTemp, Warning, TEXT("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity() = %f"), VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity());
-    UE_LOG(LogTemp, Warning, TEXT("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity() = %f"), VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity());
+    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity() = %f", VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity());
+    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity() = %f", VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity());
+    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity() = %f", VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity());
+    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity() = %f", VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity());
 
-    UE_LOG(LogTemp, Warning, TEXT("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(0).GetDriveTorque() = %f"), VehicleSimulationPT->PVehicle->GetWheel(0).GetDriveTorque());
-    UE_LOG(LogTemp, Warning, TEXT("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(1).GetDriveTorque() = %f"), VehicleSimulationPT->PVehicle->GetWheel(1).GetDriveTorque());
-    UE_LOG(LogTemp, Warning, TEXT("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(2).GetDriveTorque() = %f"), VehicleSimulationPT->PVehicle->GetWheel(2).GetDriveTorque());
-    UE_LOG(LogTemp, Warning, TEXT("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(3).GetDriveTorque() = %f"), VehicleSimulationPT->PVehicle->GetWheel(3).GetDriveTorque());
+    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(0).GetDriveTorque() = %f", VehicleSimulationPT->PVehicle->GetWheel(0).GetDriveTorque());
+    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(1).GetDriveTorque() = %f", VehicleSimulationPT->PVehicle->GetWheel(1).GetDriveTorque());
+    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(2).GetDriveTorque() = %f", VehicleSimulationPT->PVehicle->GetWheel(2).GetDriveTorque());
+    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(3).GetDriveTorque() = %f", VehicleSimulationPT->PVehicle->GetWheel(3).GetDriveTorque());
 }

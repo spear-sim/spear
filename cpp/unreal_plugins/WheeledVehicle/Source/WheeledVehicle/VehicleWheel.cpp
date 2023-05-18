@@ -4,13 +4,12 @@
 
 #include "WheeledVehicle/VehicleWheel.h"
 
-#include <iostream>
-
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Log.h"
 
 UVehicleWheel::UVehicleWheel()
 {
-    std::cout << "[SPEAR | VehicleWheelWheel.cpp] UVehicleWheel::UVehicleWheel" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 
     if (!Config::s_initialized_) {
         return;
@@ -39,5 +38,5 @@ UVehicleWheel::UVehicleWheel()
 
 UVehicleWheel::~UVehicleWheel()
 {
-    std::cout << "[SPEAR | VehicleWheelWheel.cpp] UVehicleWheel::~UVehicleWheel" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 }

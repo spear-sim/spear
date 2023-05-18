@@ -39,8 +39,8 @@ UOpenBotMovementComponent::UOpenBotMovementComponent()
     ChassisWidth       = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_WIDTH");
     ChassisHeight      = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.CHASSIS_HEIGHT");
     
-    EngineSetup.MaxRPM    = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MOTOR_MAX_RPM");
-    EngineSetup.MaxTorque = Config::get<float>("OPENBOT.OPENBOT_PAWN.MOTOR_TORQUE_MAX");
+    //EngineSetup.MaxRPM    = Config::get<float>("OPENBOT.OPENBOT_PAWN.VEHICLE_COMPONENT.MOTOR_MAX_RPM");
+    //EngineSetup.MaxTorque = Config::get<float>("OPENBOT.OPENBOT_PAWN.MOTOR_TORQUE_MAX");
 }
 
 UOpenBotMovementComponent::~UOpenBotMovementComponent()

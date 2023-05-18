@@ -10,7 +10,7 @@ public class OpenBot : CommonModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils"});
+        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "ChaosVehiclesCore", "CoreUtils"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }
