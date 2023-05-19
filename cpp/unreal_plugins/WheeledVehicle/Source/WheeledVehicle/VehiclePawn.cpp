@@ -6,8 +6,11 @@
 
 #include <vector>
 
+#include <Eigen/Dense>
+
 #include <Animation/AnimInstance.h>
 #include <Camera/CameraComponent.h>
+#include <Components/BoxComponent.h>
 #include <Components/InputComponent.h>
 #include <Components/SkeletalMeshComponent.h>
 #include <Engine/CollisionProfile.h>
@@ -73,6 +76,23 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
     camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.FOV");
+
+    // Setup IMU sensor
+    FVector imu_location(
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_X"),
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_Y"),
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_Z"));
+
+    FRotator imu_orientation(
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.PITCH"),
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.YAW"),
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.ROLL"));
+
+    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("AVehiclePawn::imu_component_"));
+    ASSERT(imu_component_);
+
+    imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation);
+    imu_component_->SetupAttachment(skeletal_mesh_component_);
 }
 
 AVehiclePawn::~AVehiclePawn()
@@ -102,17 +122,39 @@ void AVehiclePawn::moveRight(float right)
 {
     float torque = right * 10.0;
     vehicle_movement_component_->SetDriveTorque(torque, 0);
-    vehicle_movement_component_->SetDriveTorque(torque, 1);
+    vehicle_movement_component_->SetDriveTorque(-1.0 * torque, 1);
     vehicle_movement_component_->SetDriveTorque(torque, 2);
-    vehicle_movement_component_->SetDriveTorque(torque, 3);
+    vehicle_movement_component_->SetDriveTorque(-1.0 * torque, 3);
 }
 
-void AVehiclePawn::setWheelTorques(const std::vector<double>& wheel_torques)
+// Apply the drive torque in[N.m] to the vehicle wheels.The applied driveTorque persists until the
+// next call to SetDriveTorque.Note that the SetDriveTorque command can be found in the code of the
+// Unreal Engine at the following location :
+//     Engine / Plugins / Runtime / PhysXVehicles / Source / PhysXVehicles / Public / SimpleWheeledVehicleMovementComponent.h
+// This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
+// Please take a look if you want to modify the way the simulated vehicle is being controlled.
+void AVehiclePawn::setDriveTorques(const Eigen::Vector4d& drive_torques)
 {
-    SP_ASSERT(wheel_torques.size() == 4);
+    vehicle_movement_component_->SetDriveTorque(drive_torques(0), 0);
+    vehicle_movement_component_->SetDriveTorque(drive_torques(1), 1);
+    vehicle_movement_component_->SetDriveTorque(drive_torques(2), 2);
+    vehicle_movement_component_->SetDriveTorque(drive_torques(3), 3);
+}
 
-    vehicle_movement_component_->SetDriveTorque(wheel_torques.at(0), 0);
-    vehicle_movement_component_->SetDriveTorque(wheel_torques.at(1), 1);
-    vehicle_movement_component_->SetDriveTorque(wheel_torques.at(2), 2);
-    vehicle_movement_component_->SetDriveTorque(wheel_torques.at(3), 3);
+void AVehiclePawn::setBrakeTorques(const Eigen::Vector4d& brake_torques)
+{
+    vehicle_movement_component_->SetBrakeTorque(brake_torques(0), 0);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques(1), 1);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques(2), 2);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques(3), 3);
+}
+
+Eigen::Vector4d AVehiclePawn::getWheelRotationSpeeds() const
+{
+    return vehicle_movement_component_->getWheelRotationSpeeds(); // Expressed in [rad/s]
+}
+
+void AVehiclePawn::resetVehicle()
+{
+    vehicle_movement_component_->ResetVehicle();
 }

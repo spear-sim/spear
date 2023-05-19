@@ -20,7 +20,7 @@ public:
     ~UVehicleMovementComponent();
 
     // Provides access to the wheels rotation speed in rad/s
-    Eigen::Vector4f getWheelRotationSpeeds() const;
+    Eigen::Vector4d getWheelRotationSpeeds() const;
 
     bool isSleeping() const;
 

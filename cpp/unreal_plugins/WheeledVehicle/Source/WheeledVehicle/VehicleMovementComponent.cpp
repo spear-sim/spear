@@ -4,12 +4,19 @@
 
 #include "WheeledVehicle/VehicleMovementComponent.h"
 
+#include <Eigen/Dense>
+
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Log.h"
 #include "WheeledVehicle/VehicleWheel.h"
 
 UVehicleMovementComponent::UVehicleMovementComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    if (!Config::s_initialized_) {
+        return;
+    }
 
     WheelSetups.SetNum(4);
 
@@ -46,9 +53,9 @@ UVehicleMovementComponent::~UVehicleMovementComponent()
     SP_LOG_CURRENT_FUNCTION();
 }
 
-Eigen::Vector4f UVehicleMovementComponent::getWheelRotationSpeeds() const
+Eigen::Vector4d UVehicleMovementComponent::getWheelRotationSpeeds() const
 {
-    Eigen::Vector4f wheel_rotation_speeds;
+    Eigen::Vector4d wheel_rotation_speeds;
     wheel_rotation_speeds(0) = VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity(); // Expressed in [RPM]
     wheel_rotation_speeds(1) = VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity(); // Expressed in [RPM]
     wheel_rotation_speeds(2) = VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity(); // Expressed in [RPM]

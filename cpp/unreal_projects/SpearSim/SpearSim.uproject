@@ -34,7 +34,7 @@
         },
         {
             "Name": "SimulationController",
-            "Enabled": false
+            "Enabled": true
         },
         {
             "Name": "UrdfBot",

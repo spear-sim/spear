@@ -1,6 +1,3 @@
-////------ BEGIN UE5 MIGRATION ------////
-//// Uncomment this file when OpenBot is supported in UE5.
-/*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
@@ -19,17 +16,17 @@ class ARecastNavMesh;
 class UNavigationSystemV1;
 class UWorld;
 
-class AOpenBotPawn;
+class AVehiclePawn;
 class CameraSensor;
 class ImuSensor;
-class SonarSensor;
+//class SonarSensor;
 struct ArrayDesc;
 
-class OpenBotAgent : public Agent
+class WheeledVehicleAgent : public Agent
 {
 public:
-    OpenBotAgent(UWorld* world);
-    ~OpenBotAgent();
+    WheeledVehicleAgent(UWorld* world);
+    ~WheeledVehicleAgent();
 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
@@ -49,7 +46,7 @@ private:
     void buildNavMesh();
     void generateTrajectoryToGoal();
 
-    AOpenBotPawn* open_bot_pawn_ = nullptr;
+    AVehiclePawn* wheeled_vehicle_pawn_ = nullptr;
     AActor* goal_actor_ = nullptr;
 
     UNavigationSystemV1* nav_sys_ = nullptr;
@@ -57,9 +54,7 @@ private:
 
     std::unique_ptr<CameraSensor> camera_sensor_;
     std::unique_ptr<ImuSensor> imu_sensor_;
-    std::unique_ptr<SonarSensor> sonar_sensor_;
+    //std::unique_ptr<SonarSensor> sonar_sensor_;
 
     std::vector<float> trajectory_;
 };
-*/
-////------ END UE5 MIGRATION ------////

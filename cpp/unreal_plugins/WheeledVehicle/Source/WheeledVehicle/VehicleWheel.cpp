@@ -18,7 +18,7 @@ UVehicleWheel::UVehicleWheel()
     // is this needed?
     //bAffectedByHandbrake = true;
 
-    // we need to set this for external torque values to be used to drive the vehicle
+    // we need to set this for external torque values to be used to drive and brake the vehicle
     ExternalTorqueCombineMethod = ETorqueCombineMethod::Override;
 
     // this needs to be non-zero to be able to steer

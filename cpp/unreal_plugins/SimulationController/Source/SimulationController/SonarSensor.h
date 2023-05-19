@@ -26,7 +26,7 @@ public:
     float range_ = 0.0f;
 
 private:
-    // Updates Sonar measurements by shoting num_rays rays, randomly distributed in a pyramid,
+    // Updates Sonar measurements by shooting num_rays rays, randomly distributed in a pyramid,
     // parametrized by (range_min, range_max, horizontal_fov, vertical_fov), and return the
     // closest measured distance
     void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);

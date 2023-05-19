@@ -6,11 +6,14 @@
 
 #include <vector>
 
+#include <Eigen/Dense>
+
 #include <CoreMinimal.h>
 #include <GameFramework/Pawn.h>
 
 #include "VehiclePawn.generated.h"
 
+class UBoxComponent;
 class UCameraComponent;
 class UVehicleMovementComponent;
 class USkeletalMeshComponent;
@@ -28,11 +31,15 @@ public:
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
     
     // WheelVehicleAgent interface
-    void setWheelTorques(const std::vector<double>& wheel_torques);
+    void setDriveTorques(const Eigen::Vector4d& drive_torques);
+    void setBrakeTorques(const Eigen::Vector4d& brake_torques); // Torque applied to the brakes, expressed in [N.m]. The applied torque persists until the next call to SetBrakeTorques.
+    Eigen::Vector4d getWheelRotationSpeeds() const;
+    void resetVehicle();
 
     USkeletalMeshComponent* skeletal_mesh_component_ = nullptr;
     UVehicleMovementComponent* vehicle_movement_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
+    UBoxComponent* imu_component_ = nullptr;
 
 private:
     // Function that applies wheel torque on a vehicle to generate linear
