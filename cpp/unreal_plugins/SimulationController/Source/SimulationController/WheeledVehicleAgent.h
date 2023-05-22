@@ -19,7 +19,7 @@ class UWorld;
 class AVehiclePawn;
 class CameraSensor;
 class ImuSensor;
-//class SonarSensor;
+class SonarSensor;
 struct ArrayDesc;
 
 class WheeledVehicleAgent : public Agent
@@ -54,7 +54,7 @@ private:
 
     std::unique_ptr<CameraSensor> camera_sensor_;
     std::unique_ptr<ImuSensor> imu_sensor_;
-    //std::unique_ptr<SonarSensor> sonar_sensor_;
+    std::unique_ptr<SonarSensor> sonar_sensor_;
 
     std::vector<float> trajectory_;
 };

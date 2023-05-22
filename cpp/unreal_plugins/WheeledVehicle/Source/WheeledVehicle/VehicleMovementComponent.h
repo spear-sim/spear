@@ -15,8 +15,11 @@ UCLASS()
 class WHEELEDVEHICLE_API UVehicleMovementComponent : public UChaosWheeledVehicleMovementComponent
 {
     GENERATED_BODY()
+
 public:
+
     UVehicleMovementComponent();
+    
     ~UVehicleMovementComponent();
 
     // Provides access to the wheels rotation speed in rad/s
@@ -25,5 +28,5 @@ public:
     bool isSleeping() const;
 
     UFUNCTION(BlueprintCallable)
-        void printDebugValues();
+    void printDebugValues();
 };

@@ -4,7 +4,7 @@
 
 #include "WheeledVehicle/VehiclePawn.h"
 
-#include <vector>
+#include <string>
 
 #include <Eigen/Dense>
 
@@ -93,6 +93,23 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
 
     imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation);
     imu_component_->SetupAttachment(skeletal_mesh_component_);
+
+    // Setup Sonar sensor
+    FVector sonar_location(
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_X"),
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_Y"),
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_Z"));
+
+    FRotator sonar_orientation(
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.PITCH"),
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.YAW"),
+        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.ROLL"));
+
+    sonar_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("AVehiclePawn::sonar_component_"));
+    ASSERT(sonar_component_);
+
+    sonar_component_->SetRelativeLocationAndRotation(sonar_location, sonar_orientation);
+    sonar_component_->SetupAttachment(skeletal_mesh_component_);
 }
 
 AVehiclePawn::~AVehiclePawn()
@@ -130,7 +147,7 @@ void AVehiclePawn::moveRight(float right)
 // Apply the drive torque in[N.m] to the vehicle wheels.The applied driveTorque persists until the
 // next call to SetDriveTorque.Note that the SetDriveTorque command can be found in the code of the
 // Unreal Engine at the following location :
-//     Engine / Plugins / Runtime / PhysXVehicles / Source / PhysXVehicles / Public / SimpleWheeledVehicleMovementComponent.h
+//     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosWheeledVehicleMovementComponent.cpp
 // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
 // Please take a look if you want to modify the way the simulated vehicle is being controlled.
 void AVehiclePawn::setDriveTorques(const Eigen::Vector4d& drive_torques)

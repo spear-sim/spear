@@ -82,11 +82,10 @@ WheeledVehicleAgent::WheeledVehicleAgent(UWorld* world)
         SP_ASSERT(imu_sensor_);
     }
 
-    // TODO: uncomment when SonarSensor is supported
-    //if (Std::contains(observation_components, "sonar")) {
-    //    sonar_sensor_ = std::make_unique<SonarSensor>(wheeled_vehicle_pawn_->sonar_component_);
-    //    SP_ASSERT(sonar_sensor_);
-    //}
+    if (Std::contains(observation_components, "sonar")) {
+        sonar_sensor_ = std::make_unique<SonarSensor>(wheeled_vehicle_pawn_->sonar_component_);
+        SP_ASSERT(sonar_sensor_);
+    }
 }
 
 WheeledVehicleAgent::~WheeledVehicleAgent()
@@ -95,11 +94,10 @@ WheeledVehicleAgent::~WheeledVehicleAgent()
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
-    // TODO: uncomment when SonarSensor is supported
-    //if (Std::contains(observation_components, "sonar")) {
-    //    SP_ASSERT(sonar_sensor_);
-    //    sonar_sensor_ = nullptr;
-    //}
+    if (Std::contains(observation_components, "sonar")) {
+        SP_ASSERT(sonar_sensor_);
+        sonar_sensor_ = nullptr;
+    }
 
     if (Std::contains(observation_components, "imu")) {
         SP_ASSERT(imu_sensor_);
@@ -234,14 +232,14 @@ std::map<std::string, ArrayDesc> WheeledVehicleAgent::getObservationSpace() cons
         observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z, g_x, g_y, g_z
     }
 
-    //if (Std::contains(observation_components, "sonar")) {
-    //    ArrayDesc array_desc;
-    //    array_desc.low_ = std::numeric_limits<float>::lowest();
-    //    array_desc.high_ = std::numeric_limits<float>::max();
-    //    array_desc.datatype_ = DataType::Float64;
-    //    array_desc.shape_ = { 1 };
-    //    observation_space["sonar"] = std::move(array_desc); // Front obstacle distance in [m]
-    //}
+    if (Std::contains(observation_components, "sonar")) {
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<float>::lowest();
+        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.datatype_ = DataType::Float64;
+        array_desc.shape_ = { 1 };
+        observation_space["sonar"] = std::move(array_desc); // Front obstacle distance in [m]
+    }
 
     std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
     for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
@@ -347,10 +345,10 @@ std::map<std::string, std::vector<uint8_t>> WheeledVehicleAgent::getObservation(
             imu_sensor_->angular_velocity_body_.Z});
     }
 
-    //if (Std::contains(observation_components, "sonar")) {
-    //    observation["sonar"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
-    //        sonar_sensor_->range_});
-    //}
+    if (Std::contains(observation_components, "sonar")) {
+        observation["sonar"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+            sonar_sensor_->range_});
+    }
 
     std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
     for (auto& camera_sensor_observation_component : camera_sensor_observation) {

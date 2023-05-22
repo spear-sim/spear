@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <vector>
-
 #include <Eigen/Dense>
 
 #include <CoreMinimal.h>
@@ -40,6 +38,7 @@ public:
     UVehicleMovementComponent* vehicle_movement_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
     UBoxComponent* imu_component_ = nullptr;
+    UBoxComponent* sonar_component_ = nullptr;
 
 private:
     // Function that applies wheel torque on a vehicle to generate linear

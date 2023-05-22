@@ -4,8 +4,6 @@
 
 #include "SimulationController/ImuSensor.h"
 
-#include <array>
-
 #include <Components/PrimitiveComponent.h>
 #include <Delegates/IDelegateInstance.h>
 #include <DrawDebugHelpers.h>
@@ -18,10 +16,13 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Log.h"
 #include "SimulationController/TickEventComponent.h"
 
 ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     SP_ASSERT(primitive_component);
     primitive_component_ = primitive_component;
 
@@ -37,6 +38,8 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
 
 ImuSensor::~ImuSensor()
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     SP_ASSERT(tick_event_component_);
     tick_event_component_->delegate_.Remove(tick_event_handle_);
     tick_event_handle_.Reset();

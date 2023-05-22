@@ -1,6 +1,3 @@
-////------ BEGIN UE5 MIGRATION ------////
-//// Uncomment this file when OpenBot is supported in UE5.
-/*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
@@ -9,12 +6,13 @@
 
 #include <random>
 
+#include <Delegates/IDelegateInstance.h>
 #include <Engine/EngineBaseTypes.h>
 
 class AActor;
 class UBoxComponent;
 
-class UTickEvent;
+class UTickEventComponent;
 
 class SonarSensor 
 {
@@ -33,13 +31,11 @@ private:
 
     AActor* parent_actor_ = nullptr;
 
-    UBoxComponent* component_ = nullptr;
+    UBoxComponent* box_component_ = nullptr;
 
-    UTickEvent* tick_event_ = nullptr;
-    FDelegateHandle tick_event_handle_;
+    UTickEventComponent* tick_event_component_ = nullptr;
+    FDelegateHandle tick_event_component_handle_;
 
     // Random number generator
     std::minstd_rand random_gen_;
 };
-*/
-////------ END UE5 MIGRATION ------////

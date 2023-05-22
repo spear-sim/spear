@@ -18,6 +18,7 @@ UVehicleMovementComponent::UVehicleMovementComponent()
         return;
     }
 
+    // setup wheels
     WheelSetups.SetNum(4);
 
     UClass* wheel_class = UVehicleWheel::StaticClass();
@@ -38,14 +39,11 @@ UVehicleMovementComponent::UVehicleMovementComponent()
     WheelSetups[3].BoneName = FName("RR");
     WheelSetups[3].AdditionalOffset = FVector::ZeroVector; // Offset the wheel from the bone's location
 
-    InertiaTensorScale = FVector::OneVector;
-    Mass = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.MASS");
-    DragCoefficient = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.DRAG_COEFFICIENT");
-    ChassisWidth = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.CHASSIS_WIDTH");
-    ChassisHeight = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.CHASSIS_HEIGHT");
-
-    EngineSetup.MaxRPM = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.MOTOR_MAX_RPM");
-    EngineSetup.MaxTorque = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.MOTOR_TORQUE_MAX");
+    ChassisWidth       = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.CHASSIS_WIDTH");
+    ChassisHeight      = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.CHASSIS_HEIGHT");
+    DragCoefficient    = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.DRAG_COEFFICIENT");
+    Mass               = Config::get<float>("WHEELED_VEHICLE.VEHICLE_COMPONENT.MASS");
+    InertiaTensorScale = FVector::OneVector;    
 }
 
 UVehicleMovementComponent::~UVehicleMovementComponent()
