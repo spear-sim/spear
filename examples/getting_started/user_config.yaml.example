@@ -2,6 +2,19 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+OPENBOT:
+    MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
+    GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
+
+    BATTERY_VOLTAGE: 12.0          # Voltage of the battery powering the OpenBot [V]
+    CONTROL_DEAD_ZONE: 2.5         # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
+    MOTOR_TORQUE_MAX: 0.19         # Motor maximal torque [N.m]
+    ELECTRICAL_RESISTANCE: 0.5     # Motor winding electrical resistance [Ohms]
+    ELECTRICAL_INDUCTANCE: 0.5     # Motor winding electrical inductance [Henry]
+
+    ACTION_SCALE: 255              # Action scaling factor
+
+
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
 
@@ -12,20 +25,30 @@ SPEAR:
   WINDOW_RESOLUTION_X: 512
   WINDOW_RESOLUTION_Y: 512
 
+
 SIMULATION_CONTROLLER:
-  AGENT: "SphereAgent" # "SphereAgent" or "OpenBotAgent"
-  TASK: "PointGoalNavTask"
+  AGENT: "SphereAgent" # "SphereAgent" or "WheeledVehicleAgent"
+  TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  SCENE_ID: "starter_content_0000"
+  SCENE_ID: "debug_0000"
 
-  OPENBOT_AGENT:
-    OPENBOT_ACTOR_NAME: "OpenBotActor"
-    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
-    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
-    STEP_INFO_COMPONENTS: []
+  WHEELED_VEHICLE_AGENT:
+    WHEELED_VEHICLE_ACTOR_NAME: ""
+    ACTION_COMPONENTS: ["apply_wheel_torques"] # "apply_wheel_torques", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
+    OBSERVATION_COMPONENTS: ["state_data", "camera"] # "state_data", "control_data", "camera", "encoder", "imu", "sonar"
+    STEP_INFO_COMPONENTS: [""] # "trajectory_data"
+    IS_READY_VELOCITY_THRESHOLD: 0.001
+    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_POSITION_X: 0.0
+    SPAWN_POSITION_Y: 0.0
+    SPAWN_POSITION_Z: 20.0
+    SPAWN_PITCH: 0.0
+    SPAWN_YAW: 0.0
+    SPAWN_ROLL: 0.0
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -33,22 +56,29 @@ SIMULATION_CONTROLLER:
   SPHERE_AGENT:
     SPHERE_ACTOR_NAME: "SphereActor"
     CAMERA_ACTOR_NAME: "CameraActor"
-    ACTION_COMPONENTS: ["apply_force"] # "apply_force"
-    OBSERVATION_COMPONENTS: ["camera"] # "camera"
+    ACTION_COMPONENTS: ["add_force"] # "add_rotation", "add_force"
+    OBSERVATION_COMPONENTS: ["position", "rotation", "camera"] # "position", "rotation", "camera"
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
-    COMPASS:
-      GOAL_ACTOR_NAME: "GoalActor"
+    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_POSITION_X: 0.0
+    SPAWN_POSITION_Y: 0.0
+    SPAWN_POSITION_Z: 20.0
+    SPAWN_PITCH: 0.0
+    SPAWN_YAW: 0.0
+    SPAWN_ROLL: 0.0
+    SPHERE:
+      STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
+      MATERIAL: "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"
+      MESH_SCALE: 0.5
+      MAX_ANGULAR_VELOCITY: 1.0
+      LINEAR_DAMPING: 0.0
+      ANGULAR_DAMPING: 0.0
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
-      POSITION_OFFSET_X: 0.0
-      POSITION_OFFSET_Y: 0.0
-      POSITION_OFFSET_Z: 1.0
-    APPLY_FORCE:
-      FORCE_SCALE: 10000.0
-      ROTATE_SCALE: 2.5
 
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: "SphereActor"

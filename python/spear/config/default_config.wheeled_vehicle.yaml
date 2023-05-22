@@ -7,22 +7,12 @@ WHEELED_VEHICLE:
     SKELETAL_MESH: "/WheeledVehicle/OpenBot_V1/Meshes/OpenBot_V1_Mesh.OpenBot_V1_Mesh"
     ANIM_INSTANCE: "/WheeledVehicle/OpenBot_V1/Meshes/OpenBot_V1_Animation.OpenBot_V1_Animation_C"
 
-    MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
-    GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
-
-    BATTERY_VOLTAGE: 12.0          # Voltage of the battery powering the OpenBot [V]
-    CONTROL_DEAD_ZONE: 2.5         # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
-    ELECTRICAL_RESISTANCE: 0.5     # Motor winding electrical resistance [Ohms]
-    ELECTRICAL_INDUCTANCE: 0.5     # Motor winding electrical inductance [Henry]
-    
-    ACTION_SCALE: 255              # Action scaling factor
-
     CAMERA_COMPONENT:
-      POSITION_X: 9.0              # Camera relative position in [cm]
-      POSITION_Y: 5.0              # Camera relative position in [cm]
-      POSITION_Z: 10.0             # Camera relative position in [cm]
-      PITCH: 0.0                   # Camera relative orientation in [°]
-      YAW: 0.0                     # Camera relative orientation in [°]
+      POSITION_X: -60.0              # Camera relative position in [cm]
+      POSITION_Y: 50.0              # Camera relative position in [cm]
+      POSITION_Z: 50.0             # Camera relative position in [cm]
+      PITCH: -30.0                   # Camera relative orientation in [°]
+      YAW: -30.0                     # Camera relative orientation in [°]
       ROLL: 0.0                    # Camera relative orientation in [°]
       FOV: 70.0                    # Camera field of view in [°]
     
@@ -47,25 +37,23 @@ WHEELED_VEHICLE:
     DRAG_COEFFICIENT: 1.0        # DragCoefficient of the vehicle chassis
     CHASSIS_WIDTH: 15.0          # Chassis width used for drag force computation in [cm]
     CHASSIS_HEIGHT: 15.0         # Chassis height used for drag force computation in [cm]
-    MOTOR_MAX_RPM: 20000.0       # Max RPM for engine
-    MOTOR_TORQUE_MAX: 0.19       # Motor maximal torque [N.m]
 
   VEHICLE_WHEEL:
     AFFECTED_BY_HANDBRAKE: True       # Whether handbrake should affect this wheel
-    DAMPING_RATE: 0.25                # Damping rate for this wheel (Kgm^2/s) 
     MAX_BRAKE_TORQUE: 1500.0          # Max brake torque for this wheel (Nm)
     MAX_HAND_BRAKE_TORQUE: 3000.0     # Max handbrake brake torque for this wheel (Nm). A handbrake should have a stronger brake torque than the brake.
+    
     LAT_STIFF_MAX_LOAD: 2.0           # Max normalized tire load at which the tire can deliver no more lateral stiffness no matter how much extra load
                                       # is applied to the tire.
     LAT_STIFF_VALUE: 17.0             # How much lateral stiffness to have given lateral slip
     LONG_STIFF_VALUE: 1000.0          # How much longitudinal stiffness to have given longitudinal slip
-    SHAPE_RADIUS: 3.3                 # Radius of the wheel in [cm]
-    SHAPE_WIDTH: 2.5                  # Width of the wheel in [cm]
-    STEER_ANGLE: 0.0                  # Steer angle in degrees for this wheel
+    
     SUSPENSION_MAX_RAISE: 0.0         # How far the wheel can go above the resting position in [m]
     SUSPENSION_MAX_DROP: 0.0          # How far the wheel can drop below the resting position in [m]
     SUSPENSION_FORCE_OFFSET: 0.0      # Vertical offset from where suspension forces are applied (along Z-axis) 
-    SUSPENSION_NATURAL_FREQUENCY: 7.0 # Oscillation frequency of suspension. Standard cars have values between 5 and 10
+    SUSPENSION_NATURAL_FREQUENCY: 7   # Oscillation frequency of suspension. Standard cars have values between 5 and 10
     SUSPENSION_DAMPING_RATIO: 1.0     # The rate at which energy is dissipated from the spring. Standard cars have values between 0.8 and 1.2. Values < 1
                                       # are more sluggish, values > 1 or more twitchy.
-    MASS: 0.033                       # Mass of this wheel in [kg]
+    WHEEL_MASS: 0.033                 # Mass of this wheel in [kg]
+    WHEEL_RADIUS: 3.3                 # Radius of the wheel in [cm]
+    WHEEL_WIDTH: 2.5                  # Width of the wheel in [cm]

@@ -27,7 +27,10 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     # create Env object
-    env = spear.Env(config)
+    if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
+        env = spear.Env(config)
+    elif config.SIMULATION_CONTROLLER.AGENT == "WheeledVehicleAgent":
+        env = spear.OpenBotEnv(config)
 
     # reset the simulation to get the first observation    
     obs = env.reset()
@@ -41,19 +44,21 @@ if __name__ == "__main__":
     # take a few steps
     for i in range(NUM_STEPS):
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
-            obs, reward, done, info = env.step(action={"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
+            obs, reward, done, info = env.step(action={"add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64)})
             if not args.benchmark:
                 spear.log("SphereAgent: ")
-                spear.log(obs["compass"])
-                spear.log(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log("position:", obs["position"])
+                spear.log("rotation:", obs["rotation"])
+                spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 spear.log(reward, done, info)
-        elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
-            obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 0.715], dtype=np.float32)})
+        elif config.SIMULATION_CONTROLLER.AGENT == "WheeledVehicleAgent":
+            obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 1.0], dtype=np.float64)})
             if not args.benchmark:
-                spear.log("OpenBotAgent: ")
-                spear.log(obs["state_data"])
-                spear.log(obs["control_data"])
-                spear.log(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log("WheeledVehicleAgent: ")
+                spear.log("state_data:", obs["state_data"])
+                spear.log("encoder:", obs["encoder"])
+                spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log("sonar:", obs["sonar"])
                 spear.log(reward, done, info)
         else:
             assert False
