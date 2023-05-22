@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 
-#include <AI/NavDataGenerator.h>
 #include <Components/BoxComponent.h>
 #include <Components/PrimitiveComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
@@ -17,10 +16,6 @@
 #include <Engine/World.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
-#include <NavigationSystem.h>
-#include <NavMesh/NavMeshBoundsVolume.h>
-#include <NavMesh/RecastNavMesh.h>
-#include <NavModifierVolume.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -114,47 +109,9 @@ WheeledVehicleAgent::~WheeledVehicleAgent()
     wheeled_vehicle_pawn_ = nullptr;
 }
 
-void WheeledVehicleAgent::findObjectReferences(UWorld* world)
-{
-    auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.STEP_INFO_COMPONENTS");
+void WheeledVehicleAgent::findObjectReferences(UWorld* world) {}
 
-    if (Std::contains(step_info_components, "trajectory_data")) {
-        goal_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.TRAJECTORY_DATA.GOAL_ACTOR_NAME"));
-        SP_ASSERT(goal_actor_);
-
-        nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-        SP_ASSERT(nav_sys_);
-
-        FNavAgentProperties agent_properties;
-        agent_properties.AgentHeight = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.AGENT_HEIGHT");
-        agent_properties.AgentRadius = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.AGENT_RADIUS");
-        agent_properties.AgentStepHeight = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.AGENT_MAX_STEP_HEIGHT");
-
-        ANavigationData* nav_data = nav_sys_->GetNavDataForProps(agent_properties);
-        SP_ASSERT(nav_data);
-
-        nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
-        SP_ASSERT(nav_mesh_);
-
-        buildNavMesh();
-    }
-}
-
-void WheeledVehicleAgent::cleanUpObjectReferences()
-{
-    auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.STEP_INFO_COMPONENTS");
-
-    if (Std::contains(step_info_components, "trajectory_data")) {
-        SP_ASSERT(nav_mesh_);
-        nav_mesh_ = nullptr;
-
-        SP_ASSERT(nav_sys_);
-        nav_sys_ = nullptr;
-
-        SP_ASSERT(goal_actor_);
-        goal_actor_ = nullptr;
-    }
-}
+void WheeledVehicleAgent::cleanUpObjectReferences() {}
 
 std::map<std::string, ArrayDesc> WheeledVehicleAgent::getActionSpace() const
 {
@@ -205,15 +162,6 @@ std::map<std::string, ArrayDesc> WheeledVehicleAgent::getObservationSpace() cons
         observation_space["state_data"] = std::move(array_desc); // position (X, Y, Z) and orientation (Roll, Pitch, Yaw) of the agent relative to the world frame.
     }
 
-    //if (Std::contains(observation_components, "control_data")) {
-    //    ArrayDesc array_desc;
-    //    array_desc.low_ = std::numeric_limits<float>::lowest();
-    //    array_desc.high_ = std::numeric_limits<float>::max();
-    //    array_desc.datatype_ = DataType::Float64;
-    //    array_desc.shape_ = { 2 };
-    //    observation_space["control_data"] = std::move(array_desc); // ctrl_left, ctrl_right
-    //}
-
     if (Std::contains(observation_components, "encoder")) {
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<float>::lowest();
@@ -251,19 +199,7 @@ std::map<std::string, ArrayDesc> WheeledVehicleAgent::getObservationSpace() cons
 
 std::map<std::string, ArrayDesc> WheeledVehicleAgent::getStepInfoSpace() const
 {
-    std::map<std::string, ArrayDesc> step_info_space;
-    auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.STEP_INFO_COMPONENTS");
-
-    if (Std::contains(step_info_components, "trajectory_data")) {
-        ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
-        array_desc.datatype_ = DataType::Float64;
-        array_desc.shape_ = { -1, 3 };
-        step_info_space["trajectory_data"] = std::move(array_desc); // Vector of the waypoints x,y,z in the world frame.
-    }
-
-    return step_info_space;
+    return {};
 }
 
 void WheeledVehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
@@ -315,17 +251,6 @@ std::map<std::string, std::vector<uint8_t>> WheeledVehicleAgent::getObservation(
             FMath::DegreesToRadians(rotation.Roll)});
     }
 
-    // This should be available in python code, move to OpenBotEnv class
-    //if (Std::contains(observation_components, "control_data")) {
-    //    Eigen::Vector4d duty_cycle = wheeled_vehicle_pawn_->getDutyCycle();
-    //    Eigen::Vector2f control_state;
-    //    control_state(0) = (duty_cycle(0) + duty_cycle(2)) / 2;
-    //    control_state(1) = (duty_cycle(1) + duty_cycle(3)) / 2;
-    //    observation["control_data"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
-    //        control_state(0),
-    //        control_state(1)});
-    //}
-
     if (Std::contains(observation_components, "encoder")) {
         Eigen::Vector4d wheel_rotation_speeds = wheeled_vehicle_pawn_->getWheelRotationSpeeds();
         observation["encoder"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
@@ -360,15 +285,7 @@ std::map<std::string, std::vector<uint8_t>> WheeledVehicleAgent::getObservation(
 
 std::map<std::string, std::vector<uint8_t>> WheeledVehicleAgent::getStepInfo() const
 {
-    std::map<std::string, std::vector<uint8_t>> step_info;
-
-    auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.STEP_INFO_COMPONENTS");
-
-    if (Std::contains(step_info_components, "trajectory_data")) {
-        step_info["trajectory_data"] = Std::reinterpretAs<uint8_t>(trajectory_);
-    }
-
-    return step_info;
+    return {};
 }
 
 void WheeledVehicleAgent::reset()
@@ -386,132 +303,9 @@ void WheeledVehicleAgent::reset()
     // Reset vehicle
     wheeled_vehicle_pawn_->resetVehicle();
     wheeled_vehicle_pawn_->setBrakeTorques(Eigen::Vector4d(1000.0f, 1000.0f, 1000.0f, 1000.0f)); // TODO: get value from the config system
-
-    // Compute a new trajectory for step_info["trajectory_data"]
-    auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.STEP_INFO_COMPONENTS");
-
-    if (Std::contains(step_info_components, "trajectory_data")) {
-        generateTrajectoryToGoal();
-    }
 }
 
 bool WheeledVehicleAgent::isReady() const
 {
     return wheeled_vehicle_pawn_->GetVelocity().Size() <= Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.IS_READY_VELOCITY_THRESHOLD");
-}
-
-void WheeledVehicleAgent::buildNavMesh()
-{
-    // Set the navmesh properties
-    nav_mesh_->AgentRadius = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.AGENT_RADIUS");
-    nav_mesh_->AgentHeight = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.AGENT_HEIGHT");
-    nav_mesh_->CellSize = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.CELL_SIZE");
-    nav_mesh_->CellHeight = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.CELL_HEIGHT");
-    nav_mesh_->AgentMaxStepHeight = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.AGENT_MAX_STEP_HEIGHT");
-    nav_mesh_->AgentMaxSlope = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.AGENT_MAX_SLOPE");
-    nav_mesh_->MergeRegionSize = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.MERGE_REGION_SIZE");
-    nav_mesh_->MinRegionArea = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.MIN_REGION_AREA");
-    nav_mesh_->TileSizeUU = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.TILE_SIZE_UU");
-    nav_mesh_->TilePoolSize = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.TILE_POOL_SIZE");
-    nav_mesh_->MaxSimplificationError = Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.MAX_SIMPLIFICATION_ERROR");
-
-    // get bounds volume
-    FBox bounds_volume(EForceInit::ForceInit);
-    auto tags = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.BOUNDS_VOLUME_ACTOR_TAGS");
-    for (auto& actor : Unreal::findActorsByTagAny(wheeled_vehicle_pawn_->GetWorld(), tags)) {
-        bounds_volume += actor->GetComponentsBoundingBox(false, true);
-    }
-
-    // get references to ANavMeshBoundsVolume and ANavModifierVolume
-    ANavMeshBoundsVolume* nav_mesh_bounds_volume = Unreal::findActorByType<ANavMeshBoundsVolume>(wheeled_vehicle_pawn_->GetWorld());
-    SP_ASSERT(nav_mesh_bounds_volume);
-
-    ANavModifierVolume* nav_modifier_volume = Unreal::findActorByType<ANavModifierVolume>(wheeled_vehicle_pawn_->GetWorld());
-    SP_ASSERT(nav_modifier_volume);
-
-    // update ANavMeshBoundsVolume
-    nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    nav_mesh_bounds_volume->SetActorLocation(bounds_volume.GetCenter(), false);
-    nav_mesh_bounds_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.0f);
-    nav_mesh_bounds_volume->GetRootComponent()->UpdateBounds();
-    nav_sys_->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
-    nav_mesh_bounds_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
-
-    // update ANavModifierVolume
-    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-    nav_modifier_volume->SetActorLocation(bounds_volume.GetCenter(), false);
-    nav_modifier_volume->SetActorRelativeScale3D(bounds_volume.GetSize() / 200.f);
-    nav_modifier_volume->AddActorWorldOffset(FVector(
-        Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.NAV_MODIFIER_OFFSET_X"),
-        Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.NAV_MODIFIER_OFFSET_Y"),
-        Config::get<float>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.NAV_MODIFIER_OFFSET_Z")));
-    nav_modifier_volume->GetRootComponent()->UpdateBounds();
-    nav_modifier_volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
-    nav_modifier_volume->RebuildNavigationData();
-
-    // rebuild navmesh
-    nav_sys_->Build();
-
-    // We need to wrap this call with guards because ExportNavigationData(...) is only implemented in non-shipping builds, see:
-    //     Engine/Source/Runtime/Engine/Public/AI/NavDataGenerator.h
-    //     Engine/Source/Runtime/NavigationSystem/Public/NavMesh/RecastNavMeshGenerator.h
-    //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
-#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
-    if (Config::get<bool>("SIMULATION_CONTROLLER.WHEELED_VEHICLE_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ")) {
-        nav_mesh_->GetGenerator()->ExportNavigationData(FPaths::Combine(
-            Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.NAVMESH.EXPORT_NAV_DATA_OBJ_DIR")),
-            wheeled_vehicle_pawn_->GetWorld()->GetName()));
-    }
-#endif
-}
-
-void WheeledVehicleAgent::generateTrajectoryToGoal()
-{
-    trajectory_.clear();
-
-    // Update navigation query with the new agent position and goal position
-    FPathFindingQuery nav_query = FPathFindingQuery(wheeled_vehicle_pawn_, *nav_mesh_, wheeled_vehicle_pawn_->GetActorLocation(), goal_actor_->GetActorLocation());
-
-    // Generate a collision-free path between the agent position and the goal position
-    FPathFindingResult path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
-
-    // Ensure that path generation process was successful and that the generated path is valid
-    SP_ASSERT(path.IsSuccessful());
-    SP_ASSERT(path.Path.IsValid());
-
-    // Update trajectory_
-    TArray<FNavPathPoint> path_points = path.Path->GetPathPoints();
-    SP_ASSERT(path_points.Num() > 1); // There should be at least a starting point and a goal point
-
-    for (auto& path_point : path_points) {
-        trajectory_.push_back(path_point.Location.X);
-        trajectory_.push_back(path_point.Location.Y);
-        trajectory_.push_back(path_point.Location.Z);
-    }
-
-    // Debug output
-    if (path.IsPartial()) {
-        SP_LOG("Only a partial path could be found...");
-    }
-
-    int num_waypoints = path.Path->GetPathPoints().Num();
-    float trajectory_length = 0.0f;
-    for (int i = 0; i < num_waypoints - 1; i++) {
-        trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
-    }
-    trajectory_length /= wheeled_vehicle_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters;
-    FVector2D relative_position_to_goal(
-        (goal_actor_->GetActorLocation() - wheeled_vehicle_pawn_->GetActorLocation()).X, (goal_actor_->GetActorLocation() - wheeled_vehicle_pawn_->GetActorLocation()).Y);
-
-    SP_LOG("Number of waypoints: ", num_waypoints);
-    SP_LOG("Goal distance: ", relative_position_to_goal.Size() / wheeled_vehicle_pawn_->GetWorld()->GetWorldSettings()->WorldToMeters, "m");
-    SP_LOG("Path length: ", trajectory_length, "m");
-    SP_LOG("Initial position: [", wheeled_vehicle_pawn_->GetActorLocation().X, ", ", wheeled_vehicle_pawn_->GetActorLocation().Y, ", ", wheeled_vehicle_pawn_->GetActorLocation().Z, "].");
-    SP_LOG("Goal position: [", goal_actor_->GetActorLocation().X, ", ", goal_actor_->GetActorLocation().Y, ", ", goal_actor_->GetActorLocation().Z, "].");
-    SP_LOG("----------------------");
-    SP_LOG("Waypoints: ");
-    for (auto& point : path_points) {
-        SP_LOG("[", point.Location.X, ", ", point.Location.Y, ", ", point.Location.Z, "]");
-    }
-    SP_LOG("----------------------");
 }

@@ -555,6 +555,7 @@ def _serialize_array(array, space, byte_order):
     return data
 
 
+# Custom Env implementation for OpenBot
 class OpenBotEnv(Env):
 
     def __init__(self, config):
@@ -564,44 +565,21 @@ class OpenBotEnv(Env):
     
     def step(self, action):
 
-        self._begin_tick()
-        self._apply_action(action)
-        self._tick()
-        obs = self._get_observation()
-        reward = self._get_reward()
-        is_done = not self._ready or self._is_episode_done() # if the last call to reset() failed or the episode is done
-        step_info = self._get_step_info()
-        self._end_tick()
-
+        obs, reward, is_done, step_info = super().step(action=action)
         self._prev_obs = obs
 
         return obs, reward, is_done, step_info
 
     def reset(self, reset_info=None):
     
-        for i in range(self._config.SPEAR.MAX_NUM_TICKS_AFTER_RESET):
-            self._begin_tick()
-            if i == 0:
-                self._reset() # only reset the simulation once
-            self._tick()
-            ready = self._is_ready()
-            if ready or i == self._config.SPEAR.MAX_NUM_TICKS_AFTER_RESET - 1:
-                obs = self._get_observation() # only get the observation if ready, or if we're about to give up
-            self._end_tick()
-            if ready:
-                break
-        
-        self._ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were unsuccessful
-
-        if reset_info is not None:
-            assert isinstance(reset_info, dict)
-            reset_info["success"] = ready
-
+        obs = super().reset(reset_info=reset_info)
         self._prev_obs = obs
+
         return obs
 
     def _apply_action(self, action):
 
+        # calculate wheel torques based on input PWM signals
         if "apply_voltage" in action.keys():
 
             assert self._prev_obs is not None
@@ -662,88 +640,7 @@ class OpenBotEnv(Env):
                 if abs(motor_speed[i]) < 1e-5 and abs(duty_cycle[i]) <= control_dead_zone / action_scale :
                     wheel_torques[i] = 0.0
 
-            print("SPEAR. wheel_torques: ", wheel_torques)
             action["apply_wheel_torques"] = wheel_torques
             action.pop("apply_voltage")
 
-        assert action.keys() == self._action_space_desc.space.spaces.keys()
-
-        action_shared = { name:component for name, component in action.items() if name in self._action_space_desc.space_shared.spaces.keys() }
-        self._action_space_desc.set_shared_memory_data(action_shared)
-
-        action_non_shared = { name:component for name, component in action.items() if name in self._action_space_desc.space_non_shared.spaces.keys() }
-        action_non_shared_serialized = _serialize_arrays(
-            action_non_shared, space=self._action_space_desc.space_non_shared, byte_order=self._byte_order)
-        self._rpc_client.call("applyAction", action_non_shared_serialized)
-
-"""
-    // Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
-    // Gear ratio: 50
-    // Max wheel torque: 5.88399 N.m
-    // https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html
-
-    auto motor_velocity_constant = Config::get<float>("OPENBOT.OPENBOT_PAWN.MOTOR_VELOCITY_CONSTANT"); // Motor torque constant in [N.m/A]
-    auto gear_ratio              = Config::get<float>("OPENBOT.OPENBOT_PAWN.GEAR_RATIO");              // Gear ratio of the OpenBot motors
-    auto motor_torque_constant   = 1.f / motor_velocity_constant;                                      // Motor torque constant in [rad/s/V]
-
-    auto battery_voltage         = Config::get<float>("OPENBOT.OPENBOT_PAWN.BATTERY_VOLTAGE");         // Voltage of the battery powering the OpenBot [V]
-    auto control_dead_zone       = Config::get<float>("OPENBOT.OPENBOT_PAWN.CONTROL_DEAD_ZONE");       // Absolute duty cycle (in the ACTION_SCALE range)
-                                                                                                       // below which a command does not produces any torque
-                                                                                                       // on the vehicle
-    auto motor_torque_max        = Config::get<float>("OPENBOT.OPENBOT_PAWN.MOTOR_TORQUE_MAX");        // Motor maximal torque [N.m]
-    auto electrical_resistance   = Config::get<float>("OPENBOT.OPENBOT_PAWN.ELECTRICAL_RESISTANCE");   // Motor winding electrical resistance [Ohms]
-    auto electrical_inductance   = Config::get<float>("OPENBOT.OPENBOT_PAWN.ELECTRICAL_INDUCTANCE");   // Motor winding electrical inductance [Henry]
-
-    // Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to
-    // be processed by the low-level microcontroller. For more details, feel free to check the
-    // "speedMultiplier" command in the OpenBot code.
-    // https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
-    
-    auto action_scale = Config::get<float>("OPENBOT.OPENBOT_PAWN.ACTION_SCALE");
-
-    // Acquire the ground truth motor and wheel velocity for motor counter-electromotive force
-    // computation purposes (or alternatively friction computation purposes).
-
-    // The ground truth velocity of the robot wheels in [RPM]
-    Eigen::Vector4f wheel_rotation_speeds;
-    wheel_rotation_speeds(0) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(0); // Expressed in [RPM]
-    wheel_rotation_speeds(1) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(1); // Expressed in [RPM]
-    wheel_rotation_speeds(2) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(2); // Expressed in [RPM]
-    wheel_rotation_speeds(3) = vehicle_movement_component_->PVehicle->mWheelsDynData.getWheelRotationSpeed(3); // Expressed in [RPM]
-
-    // The ground truth rotation speed of the motors in [rad/s]
-    Eigen::Vector4f motor_speed = gear_ratio * rpmToRadSec(wheel_rotation_speeds); // Expressed in [rad/s]
-
-    // Compute the counter electromotive force using the motor torque constant
-    Eigen::Vector4f counter_electromotive_force = motor_torque_constant * motor_speed; // Expressed in [V]
-
-    // The electrical current allowed to circulate in the motor is the result of the
-    // difference between the applied voltage and the counter electromotive force
-    Eigen::Vector4f motor_winding_current = ((battery_voltage * duty_cycle_) - counter_electromotive_force) / electrical_resistance; // Expressed in [A]
-
-    // The torque is then obtained using the torque coefficient of the motor in [N.m]
-    Eigen::Vector4f motor_torque = motor_torque_constant * motor_winding_current;
-
-    // Motor torque is saturated to match the motor limits
-    motor_torque = motor_torque.cwiseMin(motor_torque_max).cwiseMax(-motor_torque_max);
-
-    // The torque applied to the robot wheels is finally computed accounting for the gear ratio
-    Eigen::Vector4f wheel_torque = gear_ratio * motor_torque;
-
-    // Control dead zone at near-zero speed. This is a simplified but reliable way to deal with
-    // the friction behavior observed on the real vehicle in the low-speed/low-duty-cycle regime.
-    for (int i = 0; i < duty_cycle_.size(); i++) {
-        // TODO: get value from the config system
-        if (std::abs(motor_speed(i)) < 1e-5f && std::abs(duty_cycle_(i)) <= control_dead_zone / action_scale) {
-            wheel_torque(i) = 0.0f;
-        }
-    }
-
-    // Apply the drive torque in [N.m] to the vehicle wheels. The applied driveTorque persists until the
-    // next call to SetDriveTorque. Note that the SetDriveTorque command can be found in the code of the
-    // Unreal Engine at the following location:
-    //     Engine/Plugins/Runtime/PhysXVehicles/Source/PhysXVehicles/Public/SimpleWheeledVehicleMovementComponent.h
-    //
-    // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
-    // Please take a look if you want to modify the way the simulated vehicle is being controlled.
-"""
+        super()._apply_action(action)
