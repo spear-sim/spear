@@ -23,10 +23,10 @@
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
-#include "WheeledVehicle/VehiclePawn.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/ImuSensor.h"
 #include "SimulationController/SonarSensor.h"
+#include "WheeledVehicle/VehiclePawn.h"
 
 WheeledVehicleAgent::WheeledVehicleAgent(UWorld* world)
 {
@@ -271,8 +271,7 @@ std::map<std::string, std::vector<uint8_t>> WheeledVehicleAgent::getObservation(
     }
 
     if (Std::contains(observation_components, "sonar")) {
-        observation["sonar"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
-            sonar_sensor_->range_});
+        observation["sonar"] = Std::reinterpretAs<uint8_t>(std::vector<double>{sonar_sensor_->range_});
     }
 
     std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);

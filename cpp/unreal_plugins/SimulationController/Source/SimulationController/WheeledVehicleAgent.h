@@ -11,9 +11,6 @@
 
 #include "SimulationController/Agent.h"
 
-class AActor;
-//class ARecastNavMesh;
-//class UNavigationSystemV1;
 class UWorld;
 
 class AVehiclePawn;
@@ -43,18 +40,10 @@ public:
     bool isReady() const override;
 
 private:
-    //void buildNavMesh();
-    //void generateTrajectoryToGoal();
 
     AVehiclePawn* wheeled_vehicle_pawn_ = nullptr;
-    AActor* goal_actor_ = nullptr;
-
-    //UNavigationSystemV1* nav_sys_ = nullptr;
-    //ARecastNavMesh* nav_mesh_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
     std::unique_ptr<ImuSensor> imu_sensor_;
     std::unique_ptr<SonarSensor> sonar_sensor_;
-
-    std::vector<float> trajectory_;
 };
