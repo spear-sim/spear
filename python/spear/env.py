@@ -561,19 +561,21 @@ class OpenBotEnv(Env):
     def __init__(self, config):
     
         super().__init__(config)
-        self._prev_obs = None
+        self._wheel_rotation_speeds = None
     
     def step(self, action):
 
         obs, reward, is_done, step_info = super().step(action=action)
-        self._prev_obs = obs
+        assert "encoder" in obs.keys()
+        self._wheel_rotation_speeds = obs["encoder"]
 
         return obs, reward, is_done, step_info
 
     def reset(self, reset_info=None):
     
         obs = super().reset(reset_info=reset_info)
-        self._prev_obs = obs
+        assert "encoder" in obs.keys()
+        self._wheel_rotation_speeds = obs["encoder"]
 
         return obs
 
@@ -582,7 +584,7 @@ class OpenBotEnv(Env):
         # calculate wheel torques based on input PWM signals
         if "apply_voltage" in action.keys():
 
-            assert self._prev_obs is not None
+            assert self._wheel_rotation_speeds is not None
             assert len(action["apply_voltage"]) == 2
 
             duty_cycle = np.array([action["apply_voltage"][0], action["apply_voltage"][1], action["apply_voltage"][0], action["apply_voltage"][1]], dtype=np.float64)
@@ -594,13 +596,12 @@ class OpenBotEnv(Env):
 
             motor_velocity_constant = self._config.OPENBOT.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
             gear_ratio              = self._config.OPENBOT.GEAR_RATIO              # Gear ratio of the OpenBot motors
-            motor_torque_constant   = 1. / motor_velocity_constant;                # Motor torque constant in [rad/s/V]
+            motor_torque_constant   = 1.0 / motor_velocity_constant;                # Motor torque constant in [rad/s/V]
 
             battery_voltage         = self._config.OPENBOT.BATTERY_VOLTAGE         # Voltage of the battery powering the OpenBot [V]
             control_dead_zone       = self._config.OPENBOT.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produce any torque on the vehicle
             motor_torque_max        = self._config.OPENBOT.MOTOR_TORQUE_MAX        # Motor maximal torque [N.m]
             electrical_resistance   = self._config.OPENBOT.ELECTRICAL_RESISTANCE   # Motor winding electrical resistance [Ohms]
-            electrical_inductance   = self._config.OPENBOT.ELECTRICAL_INDUCTANCE   # Motor winding electrical inductance [Henry]
 
             # Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to 
             # be processed by the low-level microcontroller. For more details, feel free to check the
@@ -612,7 +613,7 @@ class OpenBotEnv(Env):
             # computation purposes (or alternatively friction computation purposes).
 
             # The ground truth velocity of the robot wheels in [RPM]
-            wheel_rotation_speeds = self._prev_obs["encoder"]
+            wheel_rotation_speeds = self._wheel_rotation_speeds
 
             # The ground truth rotation speed of the motors in [rad/s]
             motor_speed = gear_ratio * wheel_rotation_speeds * np.pi / 30.0 # Expressed in [rad/s]
@@ -640,7 +641,7 @@ class OpenBotEnv(Env):
                 if abs(motor_speed[i]) < 1e-5 and abs(duty_cycle[i]) <= control_dead_zone / action_scale :
                     wheel_torques[i] = 0.0
 
-            spear.log("wheel_torques:", wheel_torques)
+            # modify action before sending it to the simulator
             action["apply_wheel_torques"] = wheel_torques
             action.pop("apply_voltage")
 

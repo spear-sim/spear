@@ -60,21 +60,3 @@ Eigen::Vector4d UVehicleMovementComponent::getWheelRotationSpeeds() const
     wheel_rotation_speeds(3) = VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity(); // Expressed in [RPM]
     return wheel_rotation_speeds;
 }
-
-bool UVehicleMovementComponent::isSleeping() const
-{
-    return VehicleSimulationPT->VehicleState.bSleeping;
-}
-
-void UVehicleMovementComponent::printDebugValues()
-{
-    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity() = %f", VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity());
-    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity() = %f", VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity());
-    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity() = %f", VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity());
-    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity() = %f", VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity());
-
-    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(0).GetDriveTorque() = %f", VehicleSimulationPT->PVehicle->GetWheel(0).GetDriveTorque());
-    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(1).GetDriveTorque() = %f", VehicleSimulationPT->PVehicle->GetWheel(1).GetDriveTorque());
-    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(2).GetDriveTorque() = %f", VehicleSimulationPT->PVehicle->GetWheel(2).GetDriveTorque());
-    SP_LOG("UVehicleMovementComponent.cpp::printDebugValues(), VehicleSimulationPT->PVehicle->GetWheel(3).GetDriveTorque() = %f", VehicleSimulationPT->PVehicle->GetWheel(3).GetDriveTorque());
-}

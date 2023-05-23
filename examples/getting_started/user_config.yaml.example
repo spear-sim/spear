@@ -10,7 +10,6 @@ OPENBOT:
     CONTROL_DEAD_ZONE: 2.5         # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
     MOTOR_TORQUE_MAX: 0.19         # Motor maximal torque [N.m]
     ELECTRICAL_RESISTANCE: 0.5     # Motor winding electrical resistance [Ohms]
-    ELECTRICAL_INDUCTANCE: 0.5     # Motor winding electrical inductance [Henry]
 
     ACTION_SCALE: 255              # Action scaling factor
 

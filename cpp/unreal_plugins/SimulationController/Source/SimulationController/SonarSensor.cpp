@@ -75,11 +75,11 @@ void SonarSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelT
         Config::get<float>("SIMULATION_CONTROLLER.SONAR_SENSOR.RANGE.MAX") *
         world_to_meters;
     FTransform sensor_transform = box_component_->GetComponentTransform();
-    FRotator transform_rotator = sensor_transform.Rotator();
-    FVector start_location = sensor_transform.GetLocation();
-    FVector transform_x_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::X));
-    FVector transform_y_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Y));
-    FVector transform_z_axis = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Z));
+    FRotator transform_rotator  = sensor_transform.Rotator();
+    FVector start_location      = sensor_transform.GetLocation();
+    FVector transform_x_axis    = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::X));
+    FVector transform_y_axis    = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Y));
+    FVector transform_z_axis    = transform_rotator.RotateVector(sensor_transform.GetUnitAxis(EAxis::Z));
 
     std::vector<bool> hits;
     hits.clear();
