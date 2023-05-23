@@ -29,6 +29,7 @@ UChaosFrontWheel::UChaosFrontWheel()
     SuspensionMaxRaise     = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SUSPENSION_MAX_RAISE");
     SuspensionMaxDrop      = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SUSPENSION_MAX_DROP");
     SuspensionDampingRatio = Config::get<float>("OPENBOT.OPENBOT_WHEEL.SUSPENSION_DAMPING_RATIO");
+    SuspensionForceOffset  = FVector(0.0, 0.0, Config::get<float>("WHEELED_VEHICLE.VEHICLE_WHEEL.SUSPENSION_FORCE_OFFSET"));
 }
 
 UChaosFrontWheel::~UChaosFrontWheel()

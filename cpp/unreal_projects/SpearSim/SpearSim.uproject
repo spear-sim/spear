@@ -30,7 +30,7 @@
         },
         {
             "Name": "OpenBot",
-            "Enabled":  false
+            "Enabled":  true
         },
         {
             "Name": "SimulationController",

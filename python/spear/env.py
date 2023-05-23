@@ -640,6 +640,7 @@ class OpenBotEnv(Env):
                 if abs(motor_speed[i]) < 1e-5 and abs(duty_cycle[i]) <= control_dead_zone / action_scale :
                     wheel_torques[i] = 0.0
 
+            spear.log("wheel_torques:", wheel_torques)
             action["apply_wheel_torques"] = wheel_torques
             action.pop("apply_voltage")
 

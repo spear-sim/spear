@@ -20,5 +20,5 @@ public:
     ~UChaosOpenBotMovementComponent();
 
     UFUNCTION(BlueprintCallable)
-        void printDebugValues();
+    void printDebugValues();
 };
