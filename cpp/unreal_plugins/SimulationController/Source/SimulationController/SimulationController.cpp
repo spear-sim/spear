@@ -187,10 +187,10 @@ void SimulationController::worldBeginPlayEventHandler()
     // create Agent
     if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "CameraAgent") {
         agent_ = std::make_unique<CameraAgent>(world_);
-     } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "WheeledVehicleAgent") {
-         agent_ = std::make_unique<WheeledVehicleAgent>(world_);
     } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "WheeledVehicleAgent") {
+        agent_ = std::make_unique<WheeledVehicleAgent>(world_);
     // TODO: uncomment when we're ready to re-enable UrdfBot
     // } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
     //     agent_ = std::make_unique<SphereAgent>(world_);
