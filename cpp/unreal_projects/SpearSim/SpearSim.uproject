@@ -29,10 +29,6 @@
             "Enabled": true
         },
         {
-            "Name": "OpenBot",
-            "Enabled":  true
-        },
-        {
             "Name": "SimulationController",
             "Enabled": true
         },
