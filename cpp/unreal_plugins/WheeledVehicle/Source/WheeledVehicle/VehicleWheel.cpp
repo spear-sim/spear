@@ -15,8 +15,8 @@ UVehicleWheel::UVehicleWheel()
         return;
     }
     
-    // we need to set the torque combine method to override for external torque 
-    // values to be used to drive and brake the vehicle
+    // We need to set the torque combine method to override mode for external torque 
+    // values to be effective in applying drive torques and brake torques to the vehicle.
     ExternalTorqueCombineMethod = ETorqueCombineMethod::Override;
 
     bAffectedByHandbrake = Config::get<bool>("WHEELED_VEHICLE.VEHICLE_WHEEL.AFFECTED_BY_HANDBRAKE");
@@ -34,14 +34,7 @@ UVehicleWheel::UVehicleWheel()
     SuspensionDampingRatio = Config::get<float>("WHEELED_VEHICLE.VEHICLE_WHEEL.SUSPENSION_DAMPING_RATIO");
  
     // check if smoothing parameter translates to natural frequency parameter from PhysX
-    SuspensionSmoothing    = Config::get<int>("WHEELED_VEHICLE.VEHICLE_WHEEL.SUSPENSION_NATURAL_FREQUENCY");
-
-    /** Wheel Lateral Skid Grip Loss, lower number less grip on skid */
-    /*UPROPERTY(EditAnywhere, Category = Wheel, meta = (ClampMin = "0.0", UIMin = "0.0", ClampMax = "1.0", UIMax = "1.0"))
-    float SideSlipModifier;*/
-
-    SlipThreshold = Config::get<float>("WHEELED_VEHICLE.VEHICLE_WHEEL.LONG_STIFF_VALUE");
-    SkidThreshold = Config::get<float>("WHEELED_VEHICLE.VEHICLE_WHEEL.LAT_STIFF_VALUE");
+    //SuspensionSmoothing    = Config::get<int>("WHEELED_VEHICLE.VEHICLE_WHEEL.SUSPENSION_NATURAL_FREQUENCY");
 }
 
 UVehicleWheel::~UVehicleWheel()
