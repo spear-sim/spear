@@ -9,7 +9,6 @@ import os
 import numpy as np
 import pandas as pd
 
-
 # fetch arm poses come from https://github.com/StanfordVL/iGibson/blob/master/igibson/robots/fetch.py#L100
 arm_poses = {
     "init": np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),

@@ -27,7 +27,7 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(FPaths::Combine(
         Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
         Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
-    
+
     createChildComponents(&robot_desc);
 }
 
