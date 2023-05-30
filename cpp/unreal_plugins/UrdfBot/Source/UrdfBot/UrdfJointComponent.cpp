@@ -24,22 +24,22 @@ void UUrdfJointComponent::BeginPlay()
 
 void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
 {
-    ASSERT(joint_desc);
-    ASSERT(parent_link_component);
-    ASSERT(child_link_component);
+    SP_ASSERT(joint_desc);
+    SP_ASSERT(parent_link_component);
+    SP_ASSERT(child_link_component);
 
-    joint_type_ = joint_desc->type_;
+    joint_type_   = joint_desc->type_;
     control_type_ = joint_desc->control_type_;
 
     parent_link_component_ = parent_link_component;
-    child_link_component_ = child_link_component;
+    child_link_component_  = child_link_component;
 
-    ConstraintInstance.ProfileInstance.ConeLimit.Swing1Motion = EAngularConstraintMotion::ACM_Locked;
-    ConstraintInstance.ProfileInstance.ConeLimit.Swing2Motion = EAngularConstraintMotion::ACM_Locked;
-    ConstraintInstance.ProfileInstance.TwistLimit.TwistMotion = EAngularConstraintMotion::ACM_Locked;
+    ConstraintInstance.ProfileInstance.ConeLimit.Swing1Motion        = EAngularConstraintMotion::ACM_Locked;
+    ConstraintInstance.ProfileInstance.ConeLimit.Swing2Motion        = EAngularConstraintMotion::ACM_Locked;
+    ConstraintInstance.ProfileInstance.TwistLimit.TwistMotion        = EAngularConstraintMotion::ACM_Locked;
     ConstraintInstance.ProfileInstance.AngularDrive.AngularDriveMode = EAngularDriveMode::TwistAndSwing;
-    ConstraintInstance.ProfileInstance.ConeLimit.bSoftConstraint = true;
-    ConstraintInstance.ProfileInstance.TwistLimit.bSoftConstraint = false;
+    ConstraintInstance.ProfileInstance.ConeLimit.bSoftConstraint     = true;
+    ConstraintInstance.ProfileInstance.TwistLimit.bSoftConstraint    = false;
     ConstraintInstance.UpdateAngularLimit();
 
     float m_to_cm = 100.0f;
@@ -51,9 +51,9 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
     switch (joint_desc->type_) {
         case UrdfJointType::Revolute: {
             float twist_limit_angle = FMath::RadiansToDegrees(joint_desc->upper_ - joint_desc->lower_) * 0.5f;
-            float spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
-            float damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
-            float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm;
+            float spring            = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
+            float damping           = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
+            float force_limit       = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm;
 
             // use twist degree for single angular freedom with best PhysX optimization
             ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, twist_limit_angle);
@@ -63,8 +63,8 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
             break;
         }
         case UrdfJointType::Continuous: {
-            float spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
-            float damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
+            float spring      = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
+            float damping     = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
             float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm;
 
             // use twist degree for single angular freedom with best PhysX optimization
@@ -76,9 +76,9 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
         }
         case UrdfJointType::Prismatic: {
             float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm;
-            float spring = joint_desc->spring_ * m_to_cm * m_to_cm;
-            float damping = joint_desc->damping_ * m_to_cm * m_to_cm;
-            float force_limit = joint_desc->effort_ * m_to_cm * m_to_cm;
+            float spring            = joint_desc->spring_ * m_to_cm * m_to_cm;
+            float damping           = joint_desc->damping_ * m_to_cm * m_to_cm;
+            float force_limit       = joint_desc->effort_ * m_to_cm * m_to_cm;
 
             ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
             ConstraintInstance.SetLinearDriveParams(spring, damping, force_limit);
@@ -105,7 +105,7 @@ void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLi
             break;
         }
         default: {
-            ASSERT(false);
+            SP_ASSERT(false);
             break;
         }
     }
@@ -129,7 +129,7 @@ void UUrdfJointComponent::addAction(float action)
                     SetLinearPositionTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X + m_to_cm * action, 0, 0));
                     break;
                 default:
-                    ASSERT(false);
+                    SP_ASSERT(false);
                     break;
             }
             break;
@@ -144,7 +144,7 @@ void UUrdfJointComponent::addAction(float action)
                     SetLinearVelocityTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X + m_to_cm * action, 0, 0));
                     break;
                 default:
-                    ASSERT(false);
+                    SP_ASSERT(false);
                     break;
             }
             break;
@@ -166,13 +166,13 @@ void UUrdfJointComponent::addAction(float action)
                     break;
                 }
                 default: {
-                    ASSERT(false);
+                    SP_ASSERT(false);
                     break;
                 }
             }
             break;
         default:
-            ASSERT(false);
+            SP_ASSERT(false);
             break;
     }
 }
@@ -192,7 +192,7 @@ void UUrdfJointComponent::applyAction(float action)
                     SetLinearPositionTarget(FVector(m_to_cm * action, 0, 0));
                     break;
                 default:
-                    ASSERT(false);
+                    SP_ASSERT(false);
                     break;
             }
             break;
@@ -206,7 +206,7 @@ void UUrdfJointComponent::applyAction(float action)
                     SetLinearVelocityTarget(FVector(m_to_cm * action, 0, 0));
                     break;
                 default:
-                    ASSERT(false);
+                    SP_ASSERT(false);
                     break;
             }
             break;
@@ -228,13 +228,13 @@ void UUrdfJointComponent::applyAction(float action)
                     break;
                 }
                 default: {
-                    ASSERT(false);
+                    SP_ASSERT(false);
                     break;
                 }
             }
             break;
         default:
-            ASSERT(false);
+            SP_ASSERT(false);
             break;
     }
 }

@@ -192,9 +192,8 @@ void SimulationController::worldBeginPlayEventHandler()
     //     agent_ = std::make_unique<OpenBotAgent>(world_);
     } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
-    // TODO: uncomment when we're ready to re-enable OpenBot and UrdfBot
-    // } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
-    //     agent_ = std::make_unique<SphereAgent>(world_);
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
+        agent_ = std::make_unique<UrdfBotAgent>(world_);
     } else {
         SP_ASSERT(false);
     }

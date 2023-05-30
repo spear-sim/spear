@@ -19,25 +19,15 @@
 
 AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
-    std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::AUrdfBotPawn" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 
-    if (!Config::s_initialized_) {
-        return;
-    }
-
-    // setup UUrdfRobotComponent
-    UrdfRobotDesc robot_desc = UrdfParser::parse(Unreal::toStdString(FPaths::Combine(
-        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_DIR")),
-        Unreal::toFString(Config::get<std::string>("URDFBOT.URDFBOT_PAWN.URDF_FILE")))));
-
-    urdf_robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::urdf_robot_component_::" + robot_desc.name_));
-    urdf_robot_component_->createChildComponents(&robot_desc);
+    urdf_robot_component_ = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("AUrdfBotPawn::urdf_robot_component_"));
 
     RootComponent = urdf_robot_component_;
 
     // setup UCameraComponent
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("AUrdfBotPawn::camera_component_"));
-    ASSERT(camera_component_);
+    SP_ASSERT(camera_component_);
 
     FVector camera_location(
         Config::get<float>("URDFBOT.URDFBOT_PAWN.CAMERA_COMPONENT.POSITION_X"),
@@ -57,7 +47,7 @@ AUrdfBotPawn::AUrdfBotPawn(const FObjectInitializer& object_initializer) : APawn
 
 AUrdfBotPawn::~AUrdfBotPawn()
 {
-    std::cout << "[SPEAR | UrdfBotPawn.cpp] AUrdfBotPawn::~AUrdfBotPawn" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 }
 
 void AUrdfBotPawn::SetupPlayerInputComponent(UInputComponent* input_component)

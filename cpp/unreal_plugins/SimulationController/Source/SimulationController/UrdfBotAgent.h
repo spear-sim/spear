@@ -1,6 +1,3 @@
-////------ BEGIN UE5 MIGRATION ------////
-//// Uncomment this file when UrdfBot is supported in UE5.
-/*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
@@ -20,7 +17,7 @@ class UWorld;
 class AUrdfBotPawn;
 class CameraSensor;
 class ImuSensor;
-class SonarSensor;
+//class SonarSensor;
 struct ArrayDesc;
 
 class UrdfBotAgent : public Agent
@@ -48,7 +45,5 @@ private:
 
     std::unique_ptr<CameraSensor> camera_sensor_;
     std::unique_ptr<ImuSensor> imu_sensor_;
-    std::unique_ptr<SonarSensor> sonar_sensor_;
+    //std::unique_ptr<SonarSensor> sonar_sensor_;
 };
-*/
-////------ END UE5 MIGRATION ------////

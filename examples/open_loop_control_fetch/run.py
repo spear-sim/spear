@@ -16,9 +16,9 @@ import time
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.kujiale_0000.csv")))
+    parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.debug_0000.csv")))
     parser.add_argument("--image_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "images")))
-    parser.add_argument("--scene_id", default="kujiale_0000")
+    parser.add_argument("--scene_id", default="debug_0000")
     parser.add_argument("--rendering_mode", default="baked")
     parser.add_argument("--save_images", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
@@ -49,13 +49,13 @@ if __name__ == "__main__":
     # change config based on current scene
     config.defrost()
 
-    if args.scene_id == "starter_content_0000":
-        # starter_content_0000 doesn't need a rendering mode when referring to its map
+    if args.scene_id == "debug_0000":
+        # debug_0000 doesn't need a rendering mode when referring to its map
         config.SIMULATION_CONTROLLER.SCENE_ID = args.scene_id
         config.SIMULATION_CONTROLLER.MAP_ID   = args.scene_id
 
-        # starter_content_0000 has scene-specific config values
-        scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.starter_content_0000.yaml")
+        # debug_0000 has scene-specific config values
+        scene_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scene_config.debug_0000.yaml")
 
     elif args.scene_id == "kujiale_0000":
         config.SIMULATION_CONTROLLER.SCENE_ID = args.scene_id

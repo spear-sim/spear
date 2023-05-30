@@ -38,7 +38,7 @@
         },
         {
             "Name": "UrdfBot",
-            "Enabled": false
+            "Enabled": true
         }
     ]
 }

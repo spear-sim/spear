@@ -4,20 +4,19 @@
 
 #include "UrdfBot/UrdfBot.h"
 
-#include <iostream>
-
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Log.h"
 
 void UrdfBot::StartupModule()
 {
-    std::cout << "[SPEAR | UrdfBot.cpp] UrdfBot::StartupModule" << std::endl;
-
-    ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
+    SP_LOG_CURRENT_FUNCTION();
+    
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 }
 
 void UrdfBot::ShutdownModule()
 {
-    std::cout << "[SPEAR | UrdfBot.cpp] UrdfBot::ShutdownModule" << std::endl;    
+    SP_LOG_CURRENT_FUNCTION();
 }
 
 IMPLEMENT_MODULE(UrdfBot, UrdfBot)

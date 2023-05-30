@@ -10,7 +10,7 @@ public class UrdfBot : CommonModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils"});
+        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils", "XmlParser"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

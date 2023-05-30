@@ -28,7 +28,7 @@ void UUrdfLinkComponent::BeginPlay()
 void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
 {
     // for now link with no visual node or multiple visual node is not supported
-    ASSERT(link_desc->visual_descs_.size() == 1);
+    SP_ASSERT(link_desc->visual_descs_.size() == 1);
 
     UrdfVisualDesc& visual_desc = link_desc->visual_descs_[0];
     UrdfGeometryDesc& geometry_desc = visual_desc.geometry_desc_;
@@ -62,9 +62,9 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
             relative_scale_ = FVector(geometry_desc.scale_);
             break;
         default:
-            ASSERT(false);
+            SP_ASSERT(false);
     }
-    ASSERT(static_mesh);
+    SP_ASSERT(static_mesh);
     SetStaticMesh(static_mesh);
 
     // set physical property
@@ -85,7 +85,7 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
     GetBodyInstance()->VelocitySolverIterationCount = Config::get<float>("URDFBOT.URDF_LINK_COMPONENT.VELOCITY_SOLVER_ITERATION_COUNT");
 
     // set mass
-    ASSERT(link_desc->inertial_desc_.mass_ > 0);
+    SP_ASSERT(link_desc->inertial_desc_.mass_ > 0);
     mass_ = link_desc->inertial_desc_.mass_;
 
     // set rendering material
@@ -95,10 +95,10 @@ void UUrdfLinkComponent::initializeComponent(UrdfLinkDesc* link_desc)
         if (material_desc->is_reference_) {
             material_desc = material_desc->material_desc_;
         }
-        ASSERT(material_desc);
+        SP_ASSERT(material_desc);
         if (material_desc->texture_.size() > 0) {
             UMaterialInterface* material = LoadObject<UMaterialInterface>(nullptr, *Unreal::toFString(material_desc->texture_));
-            ASSERT(material);
+            SP_ASSERT(material);
 
             SetMaterial(0, material);
         } else {
