@@ -2,7 +2,7 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-OPENBOT:
+OPENBOT_ENV:
     MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
     GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
 
