@@ -8,7 +8,7 @@
 #include <CoreMinimal.h>
 #include <Modules/ModuleManager.h>
 
-class WheeledVehicle : public IModuleInterface
+class Vehicle : public IModuleInterface
 {
 public:
     void StartupModule() override;

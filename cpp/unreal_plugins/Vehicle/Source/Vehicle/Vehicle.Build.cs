@@ -4,9 +4,9 @@
 
 using UnrealBuildTool;
 
-public class WheeledVehicle : CommonModuleRules
+public class Vehicle : CommonModuleRules
 {
-    public WheeledVehicle(ReadOnlyTargetRules target) : base(target)
+    public Vehicle(ReadOnlyTargetRules target) : base(target)
     {
         SP_LOG_CURRENT_FUNCTION();
 

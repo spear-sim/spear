@@ -17,6 +17,5 @@ class UVehicleWheel : public UChaosVehicleWheel
 public:
 
     UVehicleWheel();
-
     ~UVehicleWheel();
 };

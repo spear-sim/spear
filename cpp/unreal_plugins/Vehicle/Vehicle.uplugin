@@ -2,8 +2,8 @@
     "FileVersion": 3,
     "Version": 1,
     "VersionName": "1.0",
-    "FriendlyName": "WheeledVehicle",
-    "Description": "WARNING: The loading phases for {CoreUtils, WheeledVehicle} must be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(WheeledVehicle)",
+    "FriendlyName": "Vehicle",
+    "Description": "WARNING: The loading phases for {CoreUtils, Vehicle} must be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(Vehicle)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -16,7 +16,7 @@
     "Installed": false,
     "Modules": [
         {
-            "Name": "WheeledVehicle",
+            "Name": "Vehicle",
             "Type": "Runtime",
             "LoadingPhase": "Default"
         }

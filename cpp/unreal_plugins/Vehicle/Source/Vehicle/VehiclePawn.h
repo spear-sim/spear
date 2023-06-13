@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Eigen/Dense>
+#include <vector>
 
 #include <CoreMinimal.h>
 #include <GameFramework/Pawn.h>
@@ -16,9 +16,8 @@ class UCameraComponent;
 class UVehicleMovementComponent;
 class USkeletalMeshComponent;
 
-
 UCLASS()
-class WHEELEDVEHICLE_API AVehiclePawn : public APawn
+class VEHICLE_API AVehiclePawn : public APawn
 {
     GENERATED_BODY()
 public:
@@ -29,9 +28,9 @@ public:
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
     
     // WheelVehicleAgent interface
-    void setDriveTorques(const Eigen::Vector4d& drive_torques);
-    void setBrakeTorques(const Eigen::Vector4d& brake_torques); // Torque applied to the brakes, expressed in [N.m]. The applied torque persists until the next call to SetBrakeTorques.
-    Eigen::Vector4d getWheelRotationSpeeds() const;
+    void setDriveTorques(const std::vector<double>& drive_torques);
+    void setBrakeTorques(const std::vector<double>& brake_torques); // Torque applied to the brakes, expressed in [N.m]. The applied torque persists until the next call to SetBrakeTorques.
+    std::vector<double> getWheelRotationSpeeds() const;
     void resetVehicle();
 
     USkeletalMeshComponent* skeletal_mesh_component_ = nullptr;

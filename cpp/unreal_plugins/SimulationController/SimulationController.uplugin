@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "SimulationController",
-    "Description": "WARNING: The loading phases for {CoreUtils, SimulationController, UrdfBot, WheeledVehicle} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(UrdfBot, WheeledVehicle) < LoadingPhase(SimulationController)",
+    "Description": "WARNING: The loading phases for {CoreUtils, SimulationController, UrdfBot, Vehicle} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(UrdfBot, Vehicle) < LoadingPhase(SimulationController)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -31,7 +31,7 @@
             "Enabled": false
         },
         {
-            "Name": "WheeledVehicle",
+            "Name": "Vehicle",
             "Enabled": true
         }
     ]

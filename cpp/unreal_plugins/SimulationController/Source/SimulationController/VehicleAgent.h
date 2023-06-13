@@ -19,11 +19,11 @@ class ImuSensor;
 class SonarSensor;
 struct ArrayDesc;
 
-class WheeledVehicleAgent : public Agent
+class VehicleAgent : public Agent
 {
 public:
-    WheeledVehicleAgent(UWorld* world);
-    ~WheeledVehicleAgent();
+    VehicleAgent(UWorld* world);
+    ~VehicleAgent();
 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;

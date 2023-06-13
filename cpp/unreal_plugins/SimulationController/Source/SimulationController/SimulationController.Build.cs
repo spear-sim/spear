@@ -10,7 +10,7 @@ public class SimulationController : CommonModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils", "WheeledVehicle"});
+        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils", "Vehicle"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

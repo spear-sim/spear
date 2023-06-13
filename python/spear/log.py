@@ -7,7 +7,7 @@ import os
 
 def log(*message):
     current_frame = inspect.currentframe()
-    print(_log_get_prefix(current_frame) + ', '.join([str(x) for x in message]))
+    print(_log_get_prefix(current_frame) + ','.join([str(x) for x in message]))
 
 def log_current_function():
     current_frame = inspect.currentframe()

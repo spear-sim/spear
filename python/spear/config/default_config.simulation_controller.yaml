@@ -41,8 +41,8 @@ SIMULATION_CONTROLLER:
       IMAGE_WIDTH: 512
       FOV: 90.0
 
-  WHEELED_VEHICLE_AGENT:
-    WHEELED_VEHICLE_ACTOR_NAME: ""
+  VEHICLE_AGENT:
+    VEHICLE_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["apply_wheel_torques"] # "apply_wheel_torques", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
     OBSERVATION_COMPONENTS: ["state_data", "camera"] # "state_data", "control_data", "camera", "encoder", "imu", "sonar"
     STEP_INFO_COMPONENTS: [""]

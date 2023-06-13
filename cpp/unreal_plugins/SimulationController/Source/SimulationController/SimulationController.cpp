@@ -33,7 +33,7 @@
 #include "SimulationController/Task.h"
 #include "SimulationController/UrdfBotAgent.h"
 #include "SimulationController/Visualizer.h"
-#include "SimulationController/WheeledVehicleAgent.h"
+#include "SimulationController/VehicleAgent.h"
 
 // Different possible frame states for thread synchronization
 enum class FrameState
@@ -49,7 +49,7 @@ void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("WheeledVehicle")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("Vehicle")));
 
     // TODO: uncomment when we're ready to re-enable UrdfBot
     // SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
@@ -189,8 +189,8 @@ void SimulationController::worldBeginPlayEventHandler()
         agent_ = std::make_unique<CameraAgent>(world_);
     } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
-    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "WheeledVehicleAgent") {
-        agent_ = std::make_unique<WheeledVehicleAgent>(world_);
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "VehicleAgent") {
+        agent_ = std::make_unique<VehicleAgent>(world_);
     // TODO: uncomment when we're ready to re-enable UrdfBot
     // } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
     //     agent_ = std::make_unique<SphereAgent>(world_);

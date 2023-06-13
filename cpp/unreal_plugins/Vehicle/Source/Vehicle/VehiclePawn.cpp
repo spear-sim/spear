@@ -2,11 +2,10 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "WheeledVehicle/VehiclePawn.h"
+#include "Vehicle/VehiclePawn.h"
 
 #include <string>
-
-#include <Eigen/Dense>
+#include <vector>
 
 #include <Animation/AnimInstance.h>
 #include <Camera/CameraComponent.h>
@@ -20,7 +19,7 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
-#include "WheeledVehicle/VehicleMovementComponent.h"
+#include "Vehicle/VehicleMovementComponent.h"
 
 AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
@@ -30,10 +29,10 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
         return;
     }
 
-    ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*Unreal::toFString(Config::get<std::string>("WHEELED_VEHICLE.VEHICLE_PAWN.SKELETAL_MESH")));
+    ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*Unreal::toFString(Config::get<std::string>("VEHICLE.VEHICLE_PAWN.SKELETAL_MESH")));
     SP_ASSERT(skeletal_mesh.Succeeded());
 
-    ConstructorHelpers::FClassFinder<UAnimInstance> anim_instance(*Unreal::toFString(Config::get<std::string>("WHEELED_VEHICLE.VEHICLE_PAWN.ANIM_INSTANCE")));
+    ConstructorHelpers::FClassFinder<UAnimInstance> anim_instance(*Unreal::toFString(Config::get<std::string>("VEHICLE.VEHICLE_PAWN.ANIM_INSTANCE")));
     SP_ASSERT(anim_instance.Succeeded());
 
     skeletal_mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("AVehiclePawn::skeletal_mesh_component_"));
@@ -60,14 +59,14 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
 
     // Setup camera
     FVector camera_location(
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_X"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Y"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Z"));
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_X"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Y"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Z"));
 
     FRotator camera_orientation(
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.PITCH"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL"));
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.PITCH"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL"));
 
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("AVehiclePawn::camera_component_"));
     SP_ASSERT(camera_component_);
@@ -75,18 +74,18 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
     camera_component_->SetupAttachment(skeletal_mesh_component_);
     camera_component_->bUsePawnControlRotation = false;
-    camera_component_->FieldOfView = Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.FOV");
+    camera_component_->FieldOfView = Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.FOV");
 
     // Setup IMU sensor
     FVector imu_location(
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_X"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_Y"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_Z"));
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_X"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_Y"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_Z"));
 
     FRotator imu_orientation(
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.PITCH"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.YAW"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.ROLL"));
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.PITCH"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.YAW"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.ROLL"));
 
     imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("AVehiclePawn::imu_component_"));
     ASSERT(imu_component_);
@@ -96,14 +95,14 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
 
     // Setup Sonar sensor
     FVector sonar_location(
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_X"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_Y"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_Z"));
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_X"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_Y"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_Z"));
 
     FRotator sonar_orientation(
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.PITCH"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.YAW"),
-        Config::get<float>("WHEELED_VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.ROLL"));
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.PITCH"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.YAW"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.ROLL"));
 
     sonar_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("AVehiclePawn::sonar_component_"));
     ASSERT(sonar_component_);
@@ -150,23 +149,23 @@ void AVehiclePawn::moveRight(float right)
 //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosWheeledVehicleMovementComponent.cpp
 // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
 // Please take a look if you want to modify the way the simulated vehicle is being controlled.
-void AVehiclePawn::setDriveTorques(const Eigen::Vector4d& drive_torques)
+void AVehiclePawn::setDriveTorques(const std::vector<double>& drive_torques)
 {
-    vehicle_movement_component_->SetDriveTorque(drive_torques(0), 0);
-    vehicle_movement_component_->SetDriveTorque(drive_torques(1), 1);
-    vehicle_movement_component_->SetDriveTorque(drive_torques(2), 2);
-    vehicle_movement_component_->SetDriveTorque(drive_torques(3), 3);
+    vehicle_movement_component_->SetDriveTorque(drive_torques.at(0), 0);
+    vehicle_movement_component_->SetDriveTorque(drive_torques.at(1), 1);
+    vehicle_movement_component_->SetDriveTorque(drive_torques.at(2), 2);
+    vehicle_movement_component_->SetDriveTorque(drive_torques.at(3), 3);
 }
 
-void AVehiclePawn::setBrakeTorques(const Eigen::Vector4d& brake_torques)
+void AVehiclePawn::setBrakeTorques(const std::vector<double>& brake_torques)
 {
-    vehicle_movement_component_->SetBrakeTorque(brake_torques(0), 0);
-    vehicle_movement_component_->SetBrakeTorque(brake_torques(1), 1);
-    vehicle_movement_component_->SetBrakeTorque(brake_torques(2), 2);
-    vehicle_movement_component_->SetBrakeTorque(brake_torques(3), 3);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques.at(0), 0);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques.at(1), 1);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques.at(2), 2);
+    vehicle_movement_component_->SetBrakeTorque(brake_torques.at(3), 3);
 }
 
-Eigen::Vector4d AVehiclePawn::getWheelRotationSpeeds() const
+std::vector<double> AVehiclePawn::getWheelRotationSpeeds() const
 {
     return vehicle_movement_component_->getWheelRotationSpeeds(); // Expressed in [rad/s]
 }

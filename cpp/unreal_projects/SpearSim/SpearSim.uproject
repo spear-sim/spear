@@ -37,7 +37,7 @@
             "Enabled": false
         },
         {
-            "Name": "WheeledVehicle",
+            "Name": "Vehicle",
             "Enabled": true
         }
     ]
