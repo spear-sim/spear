@@ -2,8 +2,6 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#pragma once
-
 #include "CoreUtils/Log.h"
 
 #include <iostream>
@@ -45,14 +43,30 @@ std::string Log::getCurrentFileAbbreviated(const std::filesystem::path& current_
 
 std::string Log::getCurrentFunctionAbbreviated(const std::string& current_function)
 {
-    // This function expects function strings in the following format, i.e., the format used by the BOOST_CURRENT_FUNCTION macro:
+    //
+    // This function expects an input string in the format used by the BOOST_CURRENT_FUNCTION macro, which can vary depending on the compiler.
+    //
+    // On MSVC, the strings are in the following format, i.e., the format used by the BOOST_CURRENT_FUNCTION macro:
     //     __cdecl MyClass::MyClass(const class MyInputType1 &, const class MyInputType2 &, ...)
     //     MyReturnType __cdecl MyClass::myFunction<MyReturnType>(const class MyInputType1 &, const class MyInputType2 &, ...)
-    // so we tokenize using " ()<>" as our string of separator tokens, and select the token after __cdecl as our abbreviated
-    // function name.
-    std::vector<std::string> tokens = Std::tokenize(current_function, " ()<>");
-    int index = Std::index(tokens, "__cdecl");
-    SP_ASSERT(index != -1);
-    SP_ASSERT(tokens.size() > index+1);
-    return tokens.at(index+1);
+    //
+    // On Clang, this function expects function strings in the following format:
+    //     MyClass::MyClass(const MyInputType1 &, const MyInputType2 &, ...)
+    //     virtual MyReturnType MyClass::myFunction()
+    //
+    // The most robust strategy for obtaining a sensible abbreviated function name seems to be the following: tokenize into coarse tokens, then
+    // find a coarse token that contains "(", then tokenize the coarse token into fine tokens, then return the 0th fine token.
+    //
+
+    std::vector<std::string> coarse_tokens = Std::tokenize(current_function, " ");
+    for (auto& coarse_token : coarse_tokens) {
+        if (Std::containsSubstring(coarse_token, "(")) {
+            std::vector<std::string> fine_tokens = Std::tokenize(coarse_token, " ()<>");
+            SP_ASSERT(fine_tokens.size() > 0);
+            return fine_tokens.at(0);
+        }
+    }
+
+    SP_ASSERT(false);
+    return "";
 }

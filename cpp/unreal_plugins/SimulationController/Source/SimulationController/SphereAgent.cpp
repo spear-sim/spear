@@ -63,9 +63,9 @@ SphereAgent::SphereAgent(UWorld* world)
 
     FVector scale =
         FVector(
-            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE"),
-            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE"),
-            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE"));
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE_X"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE_Y"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE_Z"));
     static_mesh_actor_->SetActorScale3D(scale);
 
     // load mesh and material
@@ -164,15 +164,6 @@ std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
     std::map<std::string, ArrayDesc> action_space;
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
-    if (Std::contains(action_components, "add_rotation")) {
-        ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<double>::lowest();
-        array_desc.high_ = std::numeric_limits<double>::max();
-        array_desc.shape_ = {3};
-        array_desc.datatype_ = DataType::Float64;
-        action_space["add_rotation"] = std::move(array_desc);
-    }
-
     if (Std::contains(action_components, "add_force")) {
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
@@ -180,6 +171,15 @@ std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
         action_space["add_force"] = std::move(array_desc);
+    }
+
+    if (Std::contains(action_components, "add_rotation")) {
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.shape_ = {3};
+        array_desc.datatype_ = DataType::Float64;
+        action_space["add_rotation"] = std::move(array_desc);
     }
 
     return action_space;
@@ -209,9 +209,7 @@ std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
     }
 
     std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
-    for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
-        observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
-    }
+    observation_space.merge(camera_sensor_observation_space);
 
     return observation_space;
 }
@@ -237,15 +235,15 @@ void SphereAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
-    if (Std::contains(action_components, "add_rotation")) {
-        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("add_rotation"));
-        rotation_.Add(component_data.at(0), component_data.at(1), component_data.at(2));
-    }
-
     if (Std::contains(action_components, "add_force")) {
         std::vector<double> component_data = Std::reinterpretAs<double>(action.at("add_force"));
         FVector force = rotation_.RotateVector(FVector(component_data.at(0), component_data.at(1), component_data.at(2)));
         static_mesh_component_->AddForce(force);
+    }
+
+    if (Std::contains(action_components, "add_rotation")) {
+        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("add_rotation"));
+        rotation_.Add(component_data.at(0), component_data.at(1), component_data.at(2));
     }
 }
 
@@ -264,9 +262,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
     }
 
     std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
-    for (auto& camera_sensor_observation_component : camera_sensor_observation) {
-        observation[camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
-    }
+    observation.merge(camera_sensor_observation);
 
     return observation;
 }

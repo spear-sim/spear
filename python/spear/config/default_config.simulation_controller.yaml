@@ -64,8 +64,8 @@ SIMULATION_CONTROLLER:
   SPHERE_AGENT:
     SPHERE_ACTOR_NAME: ""
     CAMERA_ACTOR_NAME: ""
-    ACTION_COMPONENTS: ["add_rotation", "add_force"] # "add_rotation", "add_force"
-    OBSERVATION_COMPONENTS: ["position", "rotation", "camera"] # "position", "rotation", "camera"
+    ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_force", "add_rotation"
+    OBSERVATION_COMPONENTS: ["camera", "position", "rotation"] # "camera", "position", "rotation"
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
@@ -78,7 +78,9 @@ SIMULATION_CONTROLLER:
     SPHERE:
       STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
       MATERIAL: "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"
-      MESH_SCALE: 0.5
+      MESH_SCALE_X: 0.5
+      MESH_SCALE_Y: 0.5
+      MESH_SCALE_Z: 0.5
       MAX_ANGULAR_VELOCITY: 1.0
       LINEAR_DAMPING: 0.0
       ANGULAR_DAMPING: 0.0

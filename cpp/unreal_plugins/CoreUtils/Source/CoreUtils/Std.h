@@ -11,8 +11,10 @@
 #include <utility>
 #include <vector>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
+
+#include "CoreUtils/Assert.h"
+#include "CoreUtils/BoostLexicalCast.h"
 
 class COREUTILS_API Std
 {
@@ -47,6 +49,11 @@ public:
             tokens.push_back(token);
         }
         return tokens;
+    }
+
+    static bool containsSubstring(const std::string& string, const std::string& substring)
+    {
+        return string.find(substring) != std::string::npos;
     }
 
     //
@@ -88,7 +95,7 @@ public:
         std::vector<TDest> dest;
         if (src.size() > 0) {
             size_t src_bytes = src.size() * sizeof(TSrc);
-            ASSERT(src_bytes % sizeof(TDest) == 0);
+            SP_ASSERT(src_bytes % sizeof(TDest) == 0);
             size_t dest_elements = src_bytes / sizeof(TDest);
             dest.resize(dest_elements);
             std::memcpy(dest.data(), src.data(), src_bytes);
