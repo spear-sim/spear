@@ -54,9 +54,8 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
     //     MyClass::MyClass(const MyInputType1 &, const MyInputType2 &, ...)
     //     virtual MyReturnType MyClass::myFunction()
     //
-    // The most robust strategy for obtaining a sensible abbreviated function name in all cases seems to be the following: tokenize into
-    // coarse tokens, then find a coarse token that contains "(", then tokenize this coarse token into fine tokens, then return the 0th
-    // fine token.
+    // The most robust strategy for obtaining a sensible abbreviated function name seems to be the following: tokenize into coarse tokens, then
+    // find a coarse token that contains "(", then tokenize the coarse token into fine tokens, then return the 0th fine token.
     //
 
     std::vector<std::string> coarse_tokens = Std::tokenize(current_function, " ");
