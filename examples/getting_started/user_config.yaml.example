@@ -17,7 +17,7 @@ SIMULATION_CONTROLLER:
   TASK: "PointGoalNavTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  SCENE_ID: "starter_content_0000"
+  SCENE_ID: "debug_0000"
 
   OPENBOT_AGENT:
     OPENBOT_ACTOR_NAME: "OpenBotActor"
@@ -33,45 +33,17 @@ SIMULATION_CONTROLLER:
   SPHERE_AGENT:
     SPHERE_ACTOR_NAME: "SphereActor"
     CAMERA_ACTOR_NAME: "CameraActor"
-    ACTION_COMPONENTS: ["apply_force"] # "apply_force"
-    OBSERVATION_COMPONENTS: ["camera"] # "camera"
+    ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_force", "add_rotation"
+    OBSERVATION_COMPONENTS: ["camera", "position", "rotation"] # "camera", "position", "rotation"
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
-    COMPASS:
-      GOAL_ACTOR_NAME: "GoalActor"
+    SPAWN_POSITION_X: 0.0
+    SPAWN_POSITION_Y: 0.0
+    SPAWN_POSITION_Z: 100.0
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
-      POSITION_OFFSET_X: 0.0
-      POSITION_OFFSET_Y: 0.0
-      POSITION_OFFSET_Z: 1.0
-    APPLY_FORCE:
-      FORCE_SCALE: 10000.0
-      ROTATE_SCALE: 2.5
-
-  POINT_GOAL_NAV_TASK:
-    AGENT_ACTOR_NAME: "SphereActor"
-    GOAL_ACTOR_NAME: "GoalActor"
-    GOAL_SCALE: 0.5
-    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor0"]
-    RANDOM_SEED: 0
-    REWARD:
-      HIT_GOAL: 100.0
-      HIT_OBSTACLE: -100.0
-      DISTANCE_TO_GOAL_SCALE: 0.00001
-    EPISODE_BEGIN:
-      AGENT_POSITION_X_MIN: 0.0
-      AGENT_POSITION_X_MAX: 100.0
-      AGENT_POSITION_Y_MIN: 0.0
-      AGENT_POSITION_Y_MAX: 100.0
-      AGENT_POSITION_Z: 1.0
-      GOAL_POSITION_X_MIN: -250.0
-      GOAL_POSITION_X_MAX: 250.0
-      GOAL_POSITION_Y_MIN: -250.0
-      GOAL_POSITION_Y_MAX: 250.0
-      GOAL_POSITION_Z: -25.0
-      SPAWN_DISTANCE_THRESHOLD: 50.0
 
   VISUALIZER:
     ACTOR_NAME: "DebugCameraActor"

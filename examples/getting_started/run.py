@@ -41,12 +41,16 @@ if __name__ == "__main__":
     # take a few steps
     for i in range(NUM_STEPS):
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
-            obs, reward, done, info = env.step(action={"apply_force": np.array([1.0, 1.0], dtype=np.float32)})
+            obs, reward, done, info = env.step(action={
+                "add_force": np.array([5000.0, 0.0, 0.0], dtype=np.float64),
+                "add_rotation": np.array([0.0, 1.0, 0.0], dtype=np.float64)
+            })
             if not args.benchmark:
                 spear.log("SphereAgent: ")
-                spear.log(obs["compass"])
-                spear.log(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                spear.log(reward, done, info)
+                spear.log(obs["position"])
+                spear.log(obs["rotation"])
+                spear.log(obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
+                spear.log(reward, " ", done, " ", info)
         elif config.SIMULATION_CONTROLLER.AGENT == "OpenBotAgent":
             obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 0.715], dtype=np.float32)})
             if not args.benchmark:
@@ -54,7 +58,7 @@ if __name__ == "__main__":
                 spear.log(obs["state_data"])
                 spear.log(obs["control_data"])
                 spear.log(obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                spear.log(reward, done, info)
+                spear.log(reward, " ", done, " ", info)
         else:
             assert False
 
