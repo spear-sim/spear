@@ -55,16 +55,16 @@ VehicleAgent::VehicleAgent(UWorld* world)
         SP_ASSERT(false);
     }
     FActorSpawnParameters actor_spawn_params;
-    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.WHEELED_VEHICLE_ACTOR_NAME"));
+    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    wheeled_vehicle_pawn_ = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_params);
-    SP_ASSERT(wheeled_vehicle_pawn_);
+    vehicle_pawn_ = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_params);
+    SP_ASSERT(vehicle_pawn_);
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
         camera_sensor_ = std::make_unique<CameraSensor>(
-            wheeled_vehicle_pawn_->camera_component_,
+            vehicle_pawn_->camera_component_,
             Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES"),
             Config::get<unsigned int>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH"),
             Config::get<unsigned int>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT"),
@@ -73,12 +73,12 @@ VehicleAgent::VehicleAgent(UWorld* world)
     }
 
     if (Std::contains(observation_components, "imu")) {
-        imu_sensor_ = std::make_unique<ImuSensor>(wheeled_vehicle_pawn_->imu_component_);
+        imu_sensor_ = std::make_unique<ImuSensor>(vehicle_pawn_->imu_component_);
         SP_ASSERT(imu_sensor_);
     }
 
     if (Std::contains(observation_components, "sonar")) {
-        sonar_sensor_ = std::make_unique<SonarSensor>(wheeled_vehicle_pawn_->sonar_component_);
+        sonar_sensor_ = std::make_unique<SonarSensor>(vehicle_pawn_->sonar_component_);
         SP_ASSERT(sonar_sensor_);
     }
 }
@@ -104,9 +104,9 @@ VehicleAgent::~VehicleAgent()
         camera_sensor_ = nullptr;
     }
 
-    SP_ASSERT(wheeled_vehicle_pawn_);
-    wheeled_vehicle_pawn_->Destroy();
-    wheeled_vehicle_pawn_ = nullptr;
+    SP_ASSERT(vehicle_pawn_);
+    vehicle_pawn_->Destroy();
+    vehicle_pawn_ = nullptr;
 }
 
 void VehicleAgent::findObjectReferences(UWorld* world) {}
@@ -208,8 +208,8 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
 
     if (Std::contains(action_components, "apply_wheel_torques")) {
         std::vector<double> component_data = Std::reinterpretAs<double>(action.at("apply_wheel_torques"));
-        wheeled_vehicle_pawn_->setDriveTorques({component_data.at(0), component_data.at(1), component_data.at(2), component_data.at(3)});
-        wheeled_vehicle_pawn_->setBrakeTorques({0.0f, 0.0f, 0.0f, 0.0f});
+        vehicle_pawn_->setDriveTorques({component_data.at(0), component_data.at(1), component_data.at(2), component_data.at(3)});
+        vehicle_pawn_->setBrakeTorques({0.0f, 0.0f, 0.0f, 0.0f});
     }
 
     if (Std::contains(action_components, "set_position_xyz_centimeters")) {
@@ -217,8 +217,8 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
         FVector location(component_data.at(0), component_data.at(1), component_data.at(2));
         bool sweep = false;
         FHitResult* hit_result = nullptr;
-        wheeled_vehicle_pawn_->SetActorLocation(location, sweep, hit_result, ETeleportType::TeleportPhysics);
-        wheeled_vehicle_pawn_->setBrakeTorques({1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
+        vehicle_pawn_->SetActorLocation(location, sweep, hit_result, ETeleportType::TeleportPhysics);
+        vehicle_pawn_->setBrakeTorques({1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
     }
 
     if (Std::contains(action_components, "set_orientation_pyr_radians")) {
@@ -227,8 +227,8 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
             FMath::RadiansToDegrees(component_data.at(0)),
             FMath::RadiansToDegrees(component_data.at(1)),
             FMath::RadiansToDegrees(component_data.at(2)));
-        wheeled_vehicle_pawn_->SetActorRotation(rotation, ETeleportType::TeleportPhysics);
-        wheeled_vehicle_pawn_->setBrakeTorques({1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
+        vehicle_pawn_->SetActorRotation(rotation, ETeleportType::TeleportPhysics);
+        vehicle_pawn_->setBrakeTorques({1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
     }
 }
 
@@ -239,8 +239,8 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "state_data")) {
-        FVector location = wheeled_vehicle_pawn_->GetActorLocation();
-        FRotator rotation = wheeled_vehicle_pawn_->GetActorRotation();
+        FVector location = vehicle_pawn_->GetActorLocation();
+        FRotator rotation = vehicle_pawn_->GetActorRotation();
         observation["state_data"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
             location.X,
             location.Y,
@@ -251,7 +251,7 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
     }
 
     if (Std::contains(observation_components, "wheel_encoder")) {
-        std::vector<double> wheel_rotation_speeds = wheeled_vehicle_pawn_->getWheelRotationSpeeds();
+        std::vector<double> wheel_rotation_speeds = vehicle_pawn_->getWheelRotationSpeeds();
         observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(wheel_rotation_speeds);
     }
 
@@ -289,17 +289,17 @@ void VehicleAgent::reset()
     // in a general way, they must therefore use ETeleportType::TeleportPhysics to set the pose of actors, because the
     // actor they're attempting to reset might be an AOpenBotPawn. But this means that our velocity will be maintained
     // unless we explicitly reset it, so we reset our velocity here.
-    wheeled_vehicle_pawn_->skeletal_mesh_component_->SetPhysicsLinearVelocity(FVector::ZeroVector, false);
-    wheeled_vehicle_pawn_->skeletal_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector, false);
-    wheeled_vehicle_pawn_->skeletal_mesh_component_->GetBodyInstance()->ClearTorques();
-    wheeled_vehicle_pawn_->skeletal_mesh_component_->GetBodyInstance()->ClearForces();
+    vehicle_pawn_->skeletal_mesh_component_->SetPhysicsLinearVelocity(FVector::ZeroVector, false);
+    vehicle_pawn_->skeletal_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector, false);
+    vehicle_pawn_->skeletal_mesh_component_->GetBodyInstance()->ClearTorques();
+    vehicle_pawn_->skeletal_mesh_component_->GetBodyInstance()->ClearForces();
 
     // Reset vehicle
-    wheeled_vehicle_pawn_->resetVehicle();
-    wheeled_vehicle_pawn_->setBrakeTorques({1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
+    vehicle_pawn_->resetVehicle();
+    vehicle_pawn_->setBrakeTorques({1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
 }
 
 bool VehicleAgent::isReady() const
 {
-    return wheeled_vehicle_pawn_->GetVelocity().Size() <= Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.IS_READY_VELOCITY_THRESHOLD");
+    return vehicle_pawn_->GetVelocity().Size() <= Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }

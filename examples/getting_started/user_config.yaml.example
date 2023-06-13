@@ -32,8 +32,8 @@ SIMULATION_CONTROLLER:
 
   SCENE_ID: "debug_0000"
 
-  WHEELED_VEHICLE_AGENT:
-    WHEELED_VEHICLE_ACTOR_NAME: ""
+  VEHICLE_AGENT:
+    VEHICLE_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["apply_wheel_torques"] # "apply_wheel_torques", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
     OBSERVATION_COMPONENTS: ["state_data", "camera"] # "state_data", "camera", "wheel_encoder", "imu", "sonar"
     IS_READY_VELOCITY_THRESHOLD: 0.001
