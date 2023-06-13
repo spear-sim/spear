@@ -8,6 +8,8 @@
 #include <string>
 #include <utility>
 
+#include <CoreGlobals.h>
+
 #include <boost/current_function.hpp>
 
 #include "CoreUtils/Std.h"
@@ -18,7 +20,7 @@
 // for this purpose. These need to be macros rather than functions, because they interact with __FILE__ and BOOST_CURRENT_FUNCTION,
 // similar to our assert implementation. In future, we could make the logging targets configurable, but for now, we simply
 // write to UE_LOG if we're in editor mode (i.e., if WITH_EDITOR evaluates to true) and std::cout otherwise.
-#define SP_LOG(...)               Log::log(__FILE__, __VA_ARGS__)
+#define SP_LOG(...)               Log::log(__FILE__ __VA_OPT__(,) __VA_ARGS__)
 #define SP_LOG_CURRENT_FUNCTION() Log::logCurrentFunction(__FILE__, BOOST_CURRENT_FUNCTION)
 
 // Helper macro that can be useful when printing to the game viewport or some other target
@@ -31,10 +33,15 @@ public:
     static void log(const std::filesystem::path& current_file, TArgs&&... args)
     {
         std::string str = getPrefix(current_file) + Std::toString(std::forward<TArgs>(args)...);
+        
         #if WITH_EDITOR
-            logUnreal(str);
+            if (IsRunningCommandlet()) {
+                logStdout(str); // editor mode via command-line (e.g., during cooking)
+            } else {
+                logUnreal(str); // editor mode via GUI
+            }
         #else
-            logStdout(str);
+            logStdout(str); // standalone mode
         #endif
     }
 
