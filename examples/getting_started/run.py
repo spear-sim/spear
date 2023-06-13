@@ -56,11 +56,11 @@ class OpenBotEnv(spear.Env):
 
             motor_velocity_constant = self._config.OPENBOT_ENV.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
             gear_ratio              = self._config.OPENBOT_ENV.GEAR_RATIO              # Gear ratio of the OpenBot motors
-            motor_torque_constant   = 1.0 / motor_velocity_constant;                # Motor torque constant in [rad/s/V]
+            motor_torque_constant   = 1.0 / motor_velocity_constant;                   # Motor torque constant in [rad/s/V]
 
             battery_voltage         = self._config.OPENBOT_ENV.BATTERY_VOLTAGE         # Voltage of the battery powering the OpenBot [V]
             control_dead_zone       = self._config.OPENBOT_ENV.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produce any torque on the vehicle
-            motor_torque_max        = self._config.OPENBOT_ENV.MOTOR_TORQUE_MAX        # Motor maximal torque [N.m]
+            motor_torque_max        = self._config.OPENBOT_ENV.MOTOR_TORQUE_MAX # Motor maximal torque [N.m]
             electrical_resistance   = self._config.OPENBOT_ENV.ELECTRICAL_RESISTANCE   # Motor winding electrical resistance [Ohms]
 
             # Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     # create Env object
     if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
         env = spear.Env(config)
-    elif config.SIMULATION_CONTROLLER.AGENT == "WheeledVehicleAgent":
+    elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
         env = OpenBotEnv(config)
 
     # reset the simulation to get the first observation    
@@ -144,10 +144,10 @@ if __name__ == "__main__":
                 spear.log("rotation:", obs["rotation"])
                 spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 spear.log(reward, done, info)
-        elif config.SIMULATION_CONTROLLER.AGENT == "WheeledVehicleAgent":
+        elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
             obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 1.0], dtype=np.float64)})
             if not args.benchmark:
-                spear.log("WheeledVehicleAgent: ")
+                spear.log("VehicleAgent: ")
                 spear.log("state_data:", obs["state_data"])
                 spear.log("wheel_encoder:", obs["wheel_encoder"])
                 spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)

@@ -25,7 +25,6 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/ImuSensor.h"
-#include "SimulationController/SonarSensor.h"
 #include "Vehicle/VehiclePawn.h"
 
 VehicleAgent::VehicleAgent(UWorld* world)
@@ -76,11 +75,6 @@ VehicleAgent::VehicleAgent(UWorld* world)
         imu_sensor_ = std::make_unique<ImuSensor>(vehicle_pawn_->imu_component_);
         SP_ASSERT(imu_sensor_);
     }
-
-    if (Std::contains(observation_components, "sonar")) {
-        sonar_sensor_ = std::make_unique<SonarSensor>(vehicle_pawn_->sonar_component_);
-        SP_ASSERT(sonar_sensor_);
-    }
 }
 
 VehicleAgent::~VehicleAgent()
@@ -88,11 +82,6 @@ VehicleAgent::~VehicleAgent()
     SP_LOG_CURRENT_FUNCTION();
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
-
-    if (Std::contains(observation_components, "sonar")) {
-        SP_ASSERT(sonar_sensor_);
-        sonar_sensor_ = nullptr;
-    }
 
     if (Std::contains(observation_components, "imu")) {
         SP_ASSERT(imu_sensor_);
@@ -180,15 +169,6 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z, g_x, g_y, g_z
     }
 
-    if (Std::contains(observation_components, "sonar")) {
-        ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
-        array_desc.datatype_ = DataType::Float64;
-        array_desc.shape_ = { 1 };
-        observation_space["sonar"] = std::move(array_desc); // Front obstacle distance in [m]
-    }
-
     std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
     for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
         observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
@@ -208,8 +188,8 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
 
     if (Std::contains(action_components, "apply_wheel_torques")) {
         std::vector<double> component_data = Std::reinterpretAs<double>(action.at("apply_wheel_torques"));
-        vehicle_pawn_->setDriveTorques({component_data.at(0), component_data.at(1), component_data.at(2), component_data.at(3)});
-        vehicle_pawn_->setBrakeTorques({0.0f, 0.0f, 0.0f, 0.0f});
+        vehicle_pawn_->setDriveTorques(std::vector<double>{component_data.at(0), component_data.at(1), component_data.at(2), component_data.at(3)});
+        vehicle_pawn_->setBrakeTorques(std::vector<double>{0.0f, 0.0f, 0.0f, 0.0f});
     }
 
     if (Std::contains(action_components, "set_position_xyz_centimeters")) {
@@ -218,7 +198,7 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
         bool sweep = false;
         FHitResult* hit_result = nullptr;
         vehicle_pawn_->SetActorLocation(location, sweep, hit_result, ETeleportType::TeleportPhysics);
-        vehicle_pawn_->setBrakeTorques({1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
+        vehicle_pawn_->setBrakeTorques(std::vector<double>{1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
     }
 
     if (Std::contains(action_components, "set_orientation_pyr_radians")) {
@@ -228,7 +208,7 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
             FMath::RadiansToDegrees(component_data.at(1)),
             FMath::RadiansToDegrees(component_data.at(2)));
         vehicle_pawn_->SetActorRotation(rotation, ETeleportType::TeleportPhysics);
-        vehicle_pawn_->setBrakeTorques({1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
+        vehicle_pawn_->setBrakeTorques(std::vector<double>{1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
     }
 }
 
@@ -251,8 +231,7 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
     }
 
     if (Std::contains(observation_components, "wheel_encoder")) {
-        std::vector<double> wheel_rotation_speeds = vehicle_pawn_->getWheelRotationSpeeds();
-        observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(wheel_rotation_speeds);
+        observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(vehicle_pawn_->getWheelRotationSpeeds());
     }
 
     if (Std::contains(observation_components, "imu")) {
@@ -263,10 +242,6 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
             imu_sensor_->angular_velocity_body_.X,
             imu_sensor_->angular_velocity_body_.Y,
             imu_sensor_->angular_velocity_body_.Z});
-    }
-
-    if (Std::contains(observation_components, "sonar")) {
-        observation["sonar"] = Std::reinterpretAs<uint8_t>(std::vector<double>{sonar_sensor_->range_});
     }
 
     std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
@@ -296,7 +271,7 @@ void VehicleAgent::reset()
 
     // Reset vehicle
     vehicle_pawn_->resetVehicle();
-    vehicle_pawn_->setBrakeTorques({1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
+    vehicle_pawn_->setBrakeTorques(std::vector<double>{1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
 }
 
 bool VehicleAgent::isReady() const

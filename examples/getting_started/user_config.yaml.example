@@ -8,7 +8,7 @@ OPENBOT_ENV:
 
     BATTERY_VOLTAGE: 12.0          # Voltage of the battery powering the OpenBot [V]
     CONTROL_DEAD_ZONE: 2.5         # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
-    MOTOR_TORQUE_MAX: 0.19         # Motor maximal torque [N.m]
+    MOTOR_TORQUE_MAX: 0.0019         # Motor maximal torque [N.m]
     ELECTRICAL_RESISTANCE: 0.5     # Motor winding electrical resistance [Ohms]
 
     ACTION_SCALE: 255              # Action scaling factor
@@ -26,7 +26,7 @@ SPEAR:
 
 
 SIMULATION_CONTROLLER:
-  AGENT: "SphereAgent" # "SphereAgent" or "WheeledVehicleAgent"
+  AGENT: "SphereAgent" # "SphereAgent" or "VehicleAgent"
   TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
@@ -35,7 +35,7 @@ SIMULATION_CONTROLLER:
   VEHICLE_AGENT:
     VEHICLE_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["apply_wheel_torques"] # "apply_wheel_torques", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
-    OBSERVATION_COMPONENTS: ["state_data", "camera"] # "state_data", "camera", "wheel_encoder", "imu", "sonar"
+    OBSERVATION_COMPONENTS: ["wheel_encoder", "camera"] # "state_data", "camera", "wheel_encoder", "imu"
     IS_READY_VELOCITY_THRESHOLD: 0.001
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""

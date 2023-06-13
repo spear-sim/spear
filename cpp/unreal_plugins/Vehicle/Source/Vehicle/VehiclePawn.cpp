@@ -92,23 +92,6 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
 
     imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation);
     imu_component_->SetupAttachment(skeletal_mesh_component_);
-
-    // Setup Sonar sensor
-    FVector sonar_location(
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_X"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_Y"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.POSITION_Z"));
-
-    FRotator sonar_orientation(
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.PITCH"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.YAW"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.SONAR_COMPONENT.ROLL"));
-
-    sonar_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("AVehiclePawn::sonar_component_"));
-    ASSERT(sonar_component_);
-
-    sonar_component_->SetRelativeLocationAndRotation(sonar_location, sonar_orientation);
-    sonar_component_->SetupAttachment(skeletal_mesh_component_);
 }
 
 AVehiclePawn::~AVehiclePawn()
@@ -120,27 +103,6 @@ void AVehiclePawn::SetupPlayerInputComponent(UInputComponent* input_component)
 {
     SP_ASSERT(input_component);
     APawn::SetupPlayerInputComponent(input_component);
-
-    input_component->BindAxis("MoveForward", this, &AVehiclePawn::moveForward);
-    input_component->BindAxis("MoveRight", this, &AVehiclePawn::moveRight);
-}
-
-void AVehiclePawn::moveForward(float forward)
-{
-    float torque = forward * 10.0;
-    vehicle_movement_component_->SetDriveTorque(torque, 0);
-    vehicle_movement_component_->SetDriveTorque(torque, 1);
-    vehicle_movement_component_->SetDriveTorque(torque, 2);
-    vehicle_movement_component_->SetDriveTorque(torque, 3);
-}
-
-void AVehiclePawn::moveRight(float right)
-{
-    float torque = right * 10.0;
-    vehicle_movement_component_->SetDriveTorque(torque, 0);
-    vehicle_movement_component_->SetDriveTorque(-1.0 * torque, 1);
-    vehicle_movement_component_->SetDriveTorque(torque, 2);
-    vehicle_movement_component_->SetDriveTorque(-1.0 * torque, 3);
 }
 
 // Apply the drive torque in[N.m] to the vehicle wheels.The applied driveTorque persists until the

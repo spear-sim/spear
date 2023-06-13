@@ -1,3 +1,5 @@
+// TODO: uncomment when we're ready to re-enable Sonar sensor
+/*
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
@@ -39,3 +41,4 @@ private:
     // Random number generator
     std::minstd_rand random_gen_;
 };
+*/

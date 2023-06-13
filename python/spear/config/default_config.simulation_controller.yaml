@@ -44,7 +44,7 @@ SIMULATION_CONTROLLER:
   VEHICLE_AGENT:
     VEHICLE_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["apply_wheel_torques"] # "apply_wheel_torques", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
-    OBSERVATION_COMPONENTS: ["state_data", "camera"] # "state_data", "control_data", "camera", "encoder", "imu", "sonar"
+    OBSERVATION_COMPONENTS: ["state_data", "camera"] # "state_data", "control_data", "camera", "wheel_encoder", "imu"
     STEP_INFO_COMPONENTS: [""]
     IS_READY_VELOCITY_THRESHOLD: 0.001
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
@@ -120,17 +120,6 @@ SIMULATION_CONTROLLER:
     READ_SURFACE_DATA: True # read image data from the GPU, useful for debugging and benchmarking
 
   IMU_SENSOR:
-    DEBUG_RENDER: False
-
-  SONAR_SENSOR:
-    NUM_RAYS: 21
-    MAX_REFLECTION_ANGLE: 45.0
-    HORIZONTAL_FOV: 30.0
-    VERTICAL_FOV: 10.0
-    RANGE:
-      MIN: 0.01
-      MAX: 10.0
-    NOISE_STD_DEV: 0.0
     DEBUG_RENDER: False
 
   #

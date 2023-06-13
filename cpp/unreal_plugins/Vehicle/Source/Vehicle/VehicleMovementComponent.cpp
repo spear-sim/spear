@@ -55,7 +55,7 @@ UVehicleMovementComponent::~UVehicleMovementComponent()
 
 std::vector<double> UVehicleMovementComponent::getWheelRotationSpeeds() const
 {
-    std::vector<double> wheel_rotation_speeds;
+    std::vector<double> wheel_rotation_speeds(4, 0.0);
     wheel_rotation_speeds.at(0) = VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity(); // Expressed in [rad/s]
     wheel_rotation_speeds.at(1) = VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity(); // Expressed in [rad/s]
     wheel_rotation_speeds.at(2) = VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity(); // Expressed in [rad/s]
