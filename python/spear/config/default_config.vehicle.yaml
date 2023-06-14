@@ -9,10 +9,10 @@ VEHICLE:
 
     CAMERA_COMPONENT:
       POSITION_X: -60.0            # Camera relative position in [cm]
-      POSITION_Y: 50.0             # Camera relative position in [cm]
-      POSITION_Z: 50.0             # Camera relative position in [cm]
-      PITCH: -30.0                 # Camera relative orientation in [°]
-      YAW: -30.0                   # Camera relative orientation in [°]
+      POSITION_Y: 0.0              # Camera relative position in [cm]
+      POSITION_Z: 30.0             # Camera relative position in [cm]
+      PITCH: -10.0                 # Camera relative orientation in [°]
+      YAW: 0.0                     # Camera relative orientation in [°]
       ROLL: 0.0                    # Camera relative orientation in [°]
       FOV: 70.0                    # Camera field of view in [°]
     
@@ -37,18 +37,10 @@ VEHICLE:
     WHEEL_MASS: 0.033                 # Mass of this wheel in [kg]
     WHEEL_RADIUS: 3.3                 # Radius of the wheel in [cm]
     WHEEL_WIDTH: 2.5                  # Width of the wheel in [cm]
-    CORNERING_STIFFNESS: 1000.0
-    FRICTION_FORCE_MULTIPLIER: 2.0
-    SIDE_SLIP_MODIFIER: 1.0           # Wheel Lateral Skid Grip Loss, lower number less grip on skid
-    SLIP_THRESHOLD: 20.0              # Wheel Longitudinal Slip Threshold
-    SKID_THRESHOLD: 20.0              # Wheel Lateral Skid Threshold
+    FRICTION_FORCE_MULTIPLIER: 3.0
     SUSPENSION_MAX_RAISE: 0.001       # How far the wheel can go above the resting position in [m]
     SUSPENSION_MAX_DROP: 0.001        # How far the wheel can drop below the resting position in [m]
     SUSPENSION_DAMPING_RATIO: 0.5     # The rate at which energy is dissipated from the spring. Standard cars have values between 0.8 and 1.2. Values < 1
                                       # are more sluggish, values > 1 or more twitchy.
     SPRING_RATE: 0.167                # Spring force in [N/m]
     SPRING_PRELOAD: 0.033             # Spring preload in [N/m]
-    SUSPENSION_FORCE_OFFSET_X: 0.0    # Offset from where suspension forces are applied (along X-axis) 
-    SUSPENSION_FORCE_OFFSET_Y: 0.0    # Offset from where suspension forces are applied (along Y-axis) 
-    SUSPENSION_FORCE_OFFSET_Z: 0.0    # Offset from where suspension forces are applied (along Z-axis) 
-    MAX_BRAKE_TORQUE: 0.015           # Max brake torque for this wheel (Nm)

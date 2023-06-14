@@ -22,21 +22,12 @@ UVehicleWheel::UVehicleWheel()
     WheelMass               = Config::get<float>("VEHICLE.VEHICLE_WHEEL.WHEEL_MASS");
     WheelRadius             = Config::get<float>("VEHICLE.VEHICLE_WHEEL.WHEEL_RADIUS");
     WheelWidth              = Config::get<float>("VEHICLE.VEHICLE_WHEEL.WHEEL_WIDTH");
-    CorneringStiffness      = Config::get<float>("VEHICLE.VEHICLE_WHEEL.CORNERING_STIFFNESS");
     FrictionForceMultiplier = Config::get<float>("VEHICLE.VEHICLE_WHEEL.FRICTION_FORCE_MULTIPLIER");
-    SideSlipModifier        = Config::get<float>("VEHICLE.VEHICLE_WHEEL.SIDE_SLIP_MODIFIER");
-    SlipThreshold           = Config::get<float>("VEHICLE.VEHICLE_WHEEL.SLIP_THRESHOLD");
-    SkidThreshold           = Config::get<float>("VEHICLE.VEHICLE_WHEEL.SKID_THRESHOLD");
     SuspensionMaxRaise      = Config::get<float>("VEHICLE.VEHICLE_WHEEL.SUSPENSION_MAX_RAISE");
     SuspensionMaxDrop       = Config::get<float>("VEHICLE.VEHICLE_WHEEL.SUSPENSION_MAX_DROP");
     SuspensionDampingRatio  = Config::get<float>("VEHICLE.VEHICLE_WHEEL.SUSPENSION_DAMPING_RATIO");
     SpringRate              = Config::get<float>("VEHICLE.VEHICLE_WHEEL.SPRING_RATE");
     SpringPreload           = Config::get<float>("VEHICLE.VEHICLE_WHEEL.SPRING_PRELOAD");
-    SuspensionForceOffset   = FVector(
-        Config::get<float>("VEHICLE.VEHICLE_WHEEL.SUSPENSION_FORCE_OFFSET_X"),
-        Config::get<float>("VEHICLE.VEHICLE_WHEEL.SUSPENSION_FORCE_OFFSET_Y"),
-        Config::get<float>("VEHICLE.VEHICLE_WHEEL.SUSPENSION_FORCE_OFFSET_Z"));
-    MaxBrakeTorque          = Config::get<float>("VEHICLE.VEHICLE_WHEEL.MAX_BRAKE_TORQUE");
 }
 
 UVehicleWheel::~UVehicleWheel()

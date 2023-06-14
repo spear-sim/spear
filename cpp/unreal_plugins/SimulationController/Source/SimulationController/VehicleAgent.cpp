@@ -245,10 +245,10 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getStepInfo() const
 
 void VehicleAgent::reset()
 {
-    // For some reason, the pose of AOpenBotPawn needs to be set using ETeleportType::TeleportPhysics, which maintains
+    // For some reason, the pose of AVehiclePawn needs to be set using ETeleportType::TeleportPhysics, which maintains
     // velocity information across calls to SetActorPositionAndRotation(...). Since tasks are supposed to be implemented
     // in a general way, they must therefore use ETeleportType::TeleportPhysics to set the pose of actors, because the
-    // actor they're attempting to reset might be an AOpenBotPawn. But this means that our velocity will be maintained
+    // actor they're attempting to reset might be an AVehiclePawn. But this means that our velocity will be maintained
     // unless we explicitly reset it, so we reset our velocity here.
     vehicle_pawn_->skeletal_mesh_component_->SetPhysicsLinearVelocity(FVector::ZeroVector, false);
     vehicle_pawn_->skeletal_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector, false);
