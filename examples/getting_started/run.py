@@ -12,7 +12,7 @@ import spear
 import time
 
 
-NUM_STEPS = 100
+NUM_STEPS = 200
 
 
 # Custom Env implementation for OpenBot
@@ -56,11 +56,11 @@ class OpenBotEnv(spear.Env):
 
             motor_velocity_constant = self._config.OPENBOT_ENV.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
             gear_ratio              = self._config.OPENBOT_ENV.GEAR_RATIO              # Gear ratio of the OpenBot motors
-            motor_torque_constant   = 1.0 / motor_velocity_constant;                   # Motor torque constant in [rad/s/V]
+            motor_torque_constant   = 1.0 / motor_velocity_constant                    # Motor torque constant in [rad/s/V]
 
             battery_voltage         = self._config.OPENBOT_ENV.BATTERY_VOLTAGE         # Voltage of the battery powering the OpenBot [V]
             control_dead_zone       = self._config.OPENBOT_ENV.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produce any torque on the vehicle
-            motor_torque_max        = self._config.OPENBOT_ENV.MOTOR_TORQUE_MAX # Motor maximal torque [N.m]
+            motor_torque_max        = self._config.OPENBOT_ENV.MOTOR_TORQUE_MAX        # Motor maximal torque [N.m]
             electrical_resistance   = self._config.OPENBOT_ENV.ELECTRICAL_RESISTANCE   # Motor winding electrical resistance [Ohms]
 
             # Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to 
@@ -72,18 +72,18 @@ class OpenBotEnv(spear.Env):
             # Acquire the ground truth motor and wheel velocity for motor counter-electromotive force
             # computation purposes (or alternatively friction computation purposes).
 
-            # The ground truth velocity of the robot wheels in [RPM]
+            # The ground truth velocity of the robot wheels in [rad/s]
             wheel_rotation_speeds = self._wheel_rotation_speeds
 
             # The ground truth rotation speed of the motors in [rad/s]
-            motor_speed = gear_ratio * wheel_rotation_speeds * np.pi / 30.0 # Expressed in [rad/s]
+            motor_speed = gear_ratio * wheel_rotation_speeds
 
             # Compute the counter electromotive force using the motor torque constant
-            counter_electromotive_force = motor_torque_constant * motor_speed; # Expressed in [V]
+            counter_electromotive_force = motor_torque_constant * motor_speed # Expressed in [V]
 
             # The electrical current allowed to circulate in the motor is the result of the
             # difference between the applied voltage and the counter electromotive force
-            motor_winding_current = ((battery_voltage * duty_cycle) - counter_electromotive_force) / electrical_resistance; # Expressed in [A]
+            motor_winding_current = ((battery_voltage * duty_cycle) - counter_electromotive_force) / electrical_resistance # Expressed in [A]
 
             # The torque is then obtained using the torque coefficient of the motor in [N.m]
             motor_torque = motor_torque_constant * motor_winding_current
@@ -96,13 +96,13 @@ class OpenBotEnv(spear.Env):
 
             # Control dead zone at near-zero speed. This is a simplified but reliable way to deal with
             # the friction behavior observed on the real vehicle in the low-speed/low-duty-cycle regime.
-            for i in range(len(duty_cycle)):
-                # TODO: get value from the config system
-                if abs(motor_speed[i]) < 1e-5 and abs(duty_cycle[i]) <= control_dead_zone / action_scale :
-                    wheel_torques[i] = 0.0
+            # TODO: get value from the config system
+            wheel_torques[np.where(np.logical_and(abs(motor_speed) < 1e-5, abs(duty_cycle) <= control_dead_zone / action_scale))] = 0.0
+
+            spear.log("wheel_torques: ", wheel_torques)
 
             # modify action before sending it to the simulator
-            action["apply_wheel_torques"] = wheel_torques
+            action["set_drive_torques"] = wheel_torques
             action.pop("apply_voltage")
 
         super()._apply_action(action)
@@ -145,13 +145,13 @@ if __name__ == "__main__":
                 spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 spear.log(reward, done, info)
         elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
-            obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 1.0], dtype=np.float64)})
+            obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 0.715], dtype=np.float64)})
             if not args.benchmark:
                 spear.log("VehicleAgent: ")
-                spear.log("state_data:", obs["state_data"])
+                spear.log("position:", obs["position"])
+                spear.log("orientation:", obs["orientation"])
                 spear.log("wheel_encoder:", obs["wheel_encoder"])
                 spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                spear.log("sonar:", obs["sonar"])
                 spear.log(reward, done, info)
         else:
             assert False

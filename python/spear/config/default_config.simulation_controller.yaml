@@ -43,8 +43,8 @@ SIMULATION_CONTROLLER:
 
   VEHICLE_AGENT:
     VEHICLE_ACTOR_NAME: ""
-    ACTION_COMPONENTS: ["apply_wheel_torques"] # "apply_wheel_torques", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
-    OBSERVATION_COMPONENTS: ["state_data", "camera"] # "state_data", "control_data", "camera", "wheel_encoder", "imu"
+    ACTION_COMPONENTS: ["set_drive_torques"] # "set_drive_torques", "set_brake_torques"
+    OBSERVATION_COMPONENTS: ["position", "orientation", "camera"] # "position", "orientation", "camera", "wheel_encoder", "imu"
     STEP_INFO_COMPONENTS: [""]
     IS_READY_VELOCITY_THRESHOLD: 0.001
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
