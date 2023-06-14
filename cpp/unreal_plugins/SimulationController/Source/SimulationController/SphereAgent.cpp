@@ -208,8 +208,7 @@ std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
         observation_space["rotation"] = std::move(array_desc);
     }
 
-    std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
-    observation_space.merge(camera_sensor_observation_space);
+    observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
 
     return observation_space;
 }
@@ -261,8 +260,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
         observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation_.Pitch, rotation_.Yaw, rotation_.Roll}); 
     }
 
-    std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
-    observation.merge(camera_sensor_observation);
+    observation.merge(camera_sensor_->getObservation(observation_components));
 
     return observation;
 }
