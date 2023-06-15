@@ -46,15 +46,10 @@ class OpenBotEnv(spear.Env):
     def _apply_action(self, action):
 
         assert "set_duty_cycle" in action.keys()
+        assert action["set_duty_cycle"].shape[0] == 2
         assert self._wheel_rotation_speeds is not None
-        assert len(action["set_duty_cycle"]) == 2
 
         duty_cycles = np.array([action["set_duty_cycle"][0], action["set_duty_cycle"][1], action["set_duty_cycle"][0], action["set_duty_cycle"][1]], dtype=np.float64)
-
-        # Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
-        # Gear ratio: 50
-        # Max wheel torque: 5.88399 N.m
-        # https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html
 
         motor_velocity_constant = self._config.OPENBOT_ENV.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
         gear_ratio              = self._config.OPENBOT_ENV.GEAR_RATIO              # Gear ratio of the OpenBot motors
@@ -101,7 +96,7 @@ class OpenBotEnv(spear.Env):
         # TODO: get value from the config system
         wheel_torques[np.where(np.logical_and(abs(motor_speed) < 1e-5, abs(duty_cycles) <= control_dead_zone / action_scale))] = 0.0
 
-        spear.log("wheel_torques: ", wheel_torques)
+        spear.log("    wheel_torques: ", wheel_torques)
 
         # modify action before sending it to the simulator
         action["set_drive_torques"] = wheel_torques
@@ -142,20 +137,24 @@ if __name__ == "__main__":
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
             obs, reward, done, info = env.step(action={"add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64), "add_rotation": np.array([0.0, 0.0, 1.0])})
             if not args.benchmark:
-                spear.log("SphereAgent: ")
-                spear.log("location:", obs["location"])
-                spear.log("rotation:", obs["rotation"])
-                spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                spear.log(reward, done, info)
+                spear.log("    SphereAgent: ")
+                spear.log("    location: ", obs["location"])
+                spear.log("    rotation: ", obs["rotation"])
+                spear.log("    camera: ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log("    reward: ", reward)
+                spear.log("    done: ", done)
+                spear.log("    info: ", info)
         elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
             obs, reward, done, info = env.step(action={"set_duty_cycle": np.array([1.0, 0.715], dtype=np.float64)})
             if not args.benchmark:
-                spear.log("VehicleAgent: ")
-                spear.log("location:", obs["location"])
-                spear.log("rotation:", obs["rotation"])
-                spear.log("wheel_encoder:", obs["wheel_encoder"])
-                spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                spear.log(reward, done, info)
+                spear.log("    VehicleAgent: ")
+                spear.log("    location: ", obs["location"])
+                spear.log("    rotation: ", obs["rotation"])
+                spear.log("    wheel_encoder: ", obs["wheel_encoder"])
+                spear.log("    camera: ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log("    reward: ", reward)
+                spear.log("    done: ", done)
+                spear.log("    info: ", info)
         else:
             assert False
 
@@ -169,11 +168,11 @@ if __name__ == "__main__":
     if args.benchmark:
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000.0, NUM_STEPS / elapsed_time_seconds))
+        spear.log("    Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000.0, NUM_STEPS / elapsed_time_seconds))
     else:
         cv2.destroyAllWindows()
 
     # close the environment
     env.close()
 
-    spear.log("Done.")
+    spear.log("    Done.")
