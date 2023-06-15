@@ -73,37 +73,35 @@ class OpenBotEnv(spear.Env):
         wheel_rotation_speeds = self._wheel_rotation_speeds
 
         # The ground truth rotation speed of the motors in [rad/s]
-        motor_speed = gear_ratio * wheel_rotation_speeds
+        motor_speeds = gear_ratio * wheel_rotation_speeds
 
         # Compute the counter electromotive force using the motor torque constant
-        counter_electromotive_force = motor_torque_constant * motor_speed # Expressed in [V]
+        counter_electromotive_forces = motor_torque_constant * motor_speeds # Expressed in [V]
 
         # The electrical current allowed to circulate in the motor is the result of the
         # difference between the applied voltage and the counter electromotive force
-        motor_winding_current = ((battery_voltage * duty_cycles) - counter_electromotive_force) / electrical_resistance # Expressed in [A]
+        motor_winding_currents = ((battery_voltage * duty_cycles) - counter_electromotive_forces) / electrical_resistance # Expressed in [A]
 
         # The torque is then obtained using the torque coefficient of the motor in [N.m]
-        motor_torque = motor_torque_constant * motor_winding_current
+        drive_torques = motor_torque_constant * motor_winding_currents
 
         # Motor torque is saturated to match the motor limits
-        motor_torque = np.clip(motor_torque, -motor_torque_max, motor_torque_max)
+        drive_torques = np.clip(drive_torques, -motor_torque_max, motor_torque_max)
 
         # The torque applied to the robot wheels is finally computed accounting for the gear ratio
-        wheel_torques = gear_ratio * motor_torque
+        wheel_torques = gear_ratio * drive_torques
 
         # Control dead zone at near-zero speed. This is a simplified but reliable way to deal with
         # the friction behavior observed on the real vehicle in the low-speed/low-duty-cycle regime.
         # TODO: get value from the config system
-        wheel_torques[np.where(np.logical_and(abs(motor_speed) < 1e-5, abs(duty_cycles) <= control_dead_zone / action_scale))] = 0.0
+        wheel_torques[np.logical_and(abs(motor_speeds) < 1e-5, abs(duty_cycles) <= control_dead_zone / action_scale)] = 0.0
 
         spear.log("    wheel_torques: ", wheel_torques)
 
-        # modify action before sending it to the simulator
-        action["set_drive_torques"] = wheel_torques
-        action["set_brake_torques"] = np.zeros(shape=(4), dtype=np.float64)
-        action.pop("set_duty_cycle")
+        # formulate action before sending it to the simulator
+        action_super = {"set_drive_torques": drive_torques, "set_brake_torques": np.zeros(shape=(4), dtype=np.float64)}
 
-        super()._apply_action(action)
+        super()._apply_action(action_super)
 
 
 if __name__ == "__main__":

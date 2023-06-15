@@ -113,7 +113,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getActionSpace() const
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
-        array_desc.shape_ = { 4 };
+        array_desc.shape_ = {4};
         array_desc.datatype_ = DataType::Float64;
         action_space["set_drive_torques"] = std::move(array_desc);
     }
@@ -122,7 +122,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getActionSpace() const
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
-        array_desc.shape_ = { 4 };
+        array_desc.shape_ = {4};
         array_desc.datatype_ = DataType::Float64;
         action_space["set_brake_torques"] = std::move(array_desc);
     }
@@ -140,7 +140,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
-        array_desc.shape_ = { 3 };
+        array_desc.shape_ = {3};
         observation_space["location"] = std::move(array_desc); // position (X, Y, Z) in [cms] of the agent relative to the world frame.
     }
 
@@ -149,7 +149,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
-        array_desc.shape_ = { 3 };
+        array_desc.shape_ = {3};
         observation_space["rotation"] = std::move(array_desc); // orientation (Pitch, Yaw, Roll) in [degs] of the agent relative to the world frame.
     }
 
@@ -158,7 +158,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
-        array_desc.shape_ = { 4 };
+        array_desc.shape_ = {4};
         observation_space["wheel_encoder"] = std::move(array_desc); // FL, FR, RL, RR, in [rad/s]
     }
 
@@ -167,7 +167,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
-        array_desc.shape_ = { 6 };
+        array_desc.shape_ = {6};
         observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^s] g_x, g_y, g_z in [rad/s]
     }
 
