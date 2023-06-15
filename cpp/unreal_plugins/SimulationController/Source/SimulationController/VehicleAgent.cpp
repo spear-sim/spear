@@ -171,10 +171,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^s] g_x, g_y, g_z in [rad/s]
     }
 
-    std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
-    for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
-        observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
-    }
+    observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
 
     return observation_space;
 }
@@ -190,8 +187,9 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
 
     if (Std::contains(action_components, "set_drive_torques")) {
         vehicle_pawn_->setDriveTorques(Std::reinterpretAs<double>(action.at("set_drive_torques")));
-        vehicle_pawn_->setBrakeTorques(std::vector<double>{0.0, 0.0, 0.0, 0.0});
-    } else if (Std::contains(action_components, "set_brake_torques")) {
+    }
+
+    if (Std::contains(action_components, "set_brake_torques")) {
         vehicle_pawn_->setBrakeTorques(Std::reinterpretAs<double>(action.at("set_brake_torques")));
     }
 }
@@ -233,10 +231,7 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
             imu_sensor_->angular_velocity_body_.Z});
     }
 
-    std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
-    for (auto& camera_sensor_observation_component : camera_sensor_observation) {
-        observation[camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
-    }
+    observation.merge(camera_sensor_->getObservation(observation_components));
 
     return observation;
 }

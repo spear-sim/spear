@@ -118,13 +118,9 @@ std::map<std::string, ArrayDesc> CameraAgent::getActionSpace() const
 
 std::map<std::string, ArrayDesc> CameraAgent::getObservationSpace() const
 {
-    std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
-    for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
-        observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
-    }
+    std::map<std::string, ArrayDesc> observation_space = camera_sensor_->getObservationSpace(observation_components);
 
     return observation_space;
 }
@@ -155,13 +151,9 @@ void CameraAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
 
 std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
 {
-    std::map<std::string, std::vector<uint8_t>> observation;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
-    for (auto& camera_sensor_observation_component : camera_sensor_observation) {
-        observation[camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
-    }
+    std::map<std::string, std::vector<uint8_t>> observation = camera_sensor_->getObservation(observation_components);
 
     return observation;
 }
