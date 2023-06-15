@@ -150,7 +150,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = { 3 };
-        observation_space["rotation"] = std::move(array_desc); // orientation (Roll, Pitch, Yaw) in [degs] of the agent relative to the world frame.
+        observation_space["rotation"] = std::move(array_desc); // orientation (Pitch, Yaw, Roll) in [degs] of the agent relative to the world frame.
     }
 
     if (Std::contains(observation_components, "wheel_encoder")) {
@@ -187,10 +187,28 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
 
     if (Std::contains(action_components, "set_drive_torques")) {
         vehicle_pawn_->setDriveTorques(Std::reinterpretAs<double>(action.at("set_drive_torques")));
+
+        // Apply the drive torque in [N.m] to the vehicle wheels.The applied drive torque persists until the
+        // next call to SetDriveTorque. Note that the SetDriveTorque command can be found in the code of the
+        // Unreal Engine at the following location:
+        //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosWheeledVehicleMovementComponent.cpp
+        // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
+        // Please take a look if you want to modify the way the simulated vehicle is being controlled.
+        //std::vector<double> drive_torques = Std::reinterpretAs<double>(action.at("set_drive_torques"));
+        //vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(0), 0);
+        //vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(1), 1);
+        //vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(2), 2);
+        //vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(3), 3);
     }
 
     if (Std::contains(action_components, "set_brake_torques")) {
         vehicle_pawn_->setBrakeTorques(Std::reinterpretAs<double>(action.at("set_brake_torques")));
+
+        //std::vector<double> brake_torques = Std::reinterpretAs<double>(action.at("set_brake_torques"));
+        //vehicle_movement_component_->SetBrakeTorque(brake_torques.at(0), 0);
+        //vehicle_movement_component_->SetBrakeTorque(brake_torques.at(1), 1);
+        //vehicle_movement_component_->SetBrakeTorque(brake_torques.at(2), 2);
+        //vehicle_movement_component_->SetBrakeTorque(brake_torques.at(3), 3);
     }
 }
 
@@ -256,7 +274,7 @@ void VehicleAgent::reset()
     // Reset vehicle
     //vehicle_pawn_->vehicle_movement_component_->ResetVehicle();
     vehicle_pawn_->resetVehicle();
-    vehicle_pawn_->setBrakeTorques(std::vector<double>{1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
+    //vehicle_pawn_->setBrakeTorques(std::vector<double>{1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
 }
 
 bool VehicleAgent::isReady() const
