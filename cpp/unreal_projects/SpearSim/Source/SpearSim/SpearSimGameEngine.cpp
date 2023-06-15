@@ -18,6 +18,7 @@
 #include <NavMesh/RecastNavMesh.h>
 #include <NavModifierVolume.h>
 
+#include "CoreUtils/BoostLexicalCast.h"
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
 
@@ -43,7 +44,7 @@ bool USpearSimGameEngine::Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& o
 
         for (int i = 0; i < nav_modifier_volumes.size(); i++) {
             ANavModifierVolume* nav_modifier_volume = nav_modifier_volumes.at(i);
-            ASSERT(nav_modifier_volume);
+            SP_ASSERT(nav_modifier_volume);
 
             FVector position = nav_modifier_volume->GetActorLocation();
             FRotator rotation = nav_modifier_volume->GetActorRotation();
@@ -68,16 +69,15 @@ bool USpearSimGameEngine::Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& o
 
         return true;
 
-    }
-    else if (cmd_str == "spear setNavigationData") {
+    } else if (cmd_str == "spear setNavigationData") {
 
         std::vector<ANavModifierVolume*> nav_modifier_volumes = Unreal::findActorsByType<ANavModifierVolume>(world);
 
         UNavigationSystemV1* nav_sys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-        ASSERT(nav_sys);
+        SP_ASSERT(nav_sys);
 
         ANavMeshBoundsVolume* nav_mesh_bounds_volume = Unreal::findActorByType<ANavMeshBoundsVolume>(world);
-        ASSERT(nav_mesh_bounds_volume);
+        SP_ASSERT(nav_mesh_bounds_volume);
 
         nav_mesh_bounds_volume->SetActorScale3D(FVector(3.5f, 3.5f, 3.5f));
         nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
@@ -94,23 +94,22 @@ bool USpearSimGameEngine::Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& o
 
         return true;
 
-    }
-    else if (cmd_str == "spear resetNavigationData") {
+    } else if (cmd_str == "spear resetNavigationData") {
 
         std::vector<ANavModifierVolume*> nav_modifier_volumes = Unreal::findActorsByType<ANavModifierVolume>(world);
 
         UNavigationSystemV1* nav_sys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-        ASSERT(nav_sys);
+        SP_ASSERT(nav_sys);
 
         ANavMeshBoundsVolume* nav_mesh_bounds_volume = Unreal::findActorByType<ANavMeshBoundsVolume>(world);
-        ASSERT(nav_mesh_bounds_volume);
+        SP_ASSERT(nav_mesh_bounds_volume);
 
         nav_mesh_bounds_volume->SetActorScale3D(FVector(7.0f, 7.0f, 2.0f));
         nav_sys->OnNavigationBoundsUpdated(nav_mesh_bounds_volume);
 
         for (int i = 0; i < nav_modifier_volumes.size(); i++) {
             ANavModifierVolume* nav_modifier_volume = nav_modifier_volumes.at(i);
-            ASSERT(nav_modifier_volume);
+            SP_ASSERT(nav_modifier_volume);
 
             nav_modifier_volume->SetActorScale3D(FVector(1.0f, 1.0f, 1.0f));
             nav_modifier_volume->RebuildNavigationData();
@@ -120,11 +119,10 @@ bool USpearSimGameEngine::Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& o
 
         return true;
 
-    }
-    else if (cmd_str == "spear sampleNavigationData") {
+    } else if (cmd_str == "spear sampleNavigationData") {
 
         ARecastNavMesh* nav_mesh = Unreal::findActorByType<ARecastNavMesh>(world);
-        ASSERT(nav_mesh);
+        SP_ASSERT(nav_mesh);
 
         int num_spheres = 5000;
         static int j = 0;
@@ -135,18 +133,18 @@ bool USpearSimGameEngine::Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& o
             actor_spawn_params.Name = Unreal::toFName("DebugSphere_" + boost::lexical_cast<std::string>(i + j));
             actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
             AStaticMeshActor* sphere_actor = world->SpawnActor<AStaticMeshActor>(spawn_location, spawn_rotation, actor_spawn_params);
-            ASSERT(sphere_actor);
+            SP_ASSERT(sphere_actor);
 
             sphere_actor->SetMobility(EComponentMobility::Type::Movable);
             sphere_actor->SetActorScale3D(FVector(0.2f, 0.2f, 0.2f));
 
             UStaticMesh* sphere_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString("/Engine/BasicShapes/Sphere.Sphere"));
-            ASSERT(sphere_mesh);
+            SP_ASSERT(sphere_mesh);
             UMaterial* sphere_material = LoadObject<UMaterial>(nullptr, *Unreal::toFString("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-            ASSERT(sphere_material);
+            SP_ASSERT(sphere_material);
 
             UStaticMeshComponent* static_mesh_component = sphere_actor->GetStaticMeshComponent();
-            ASSERT(static_mesh_component);
+            SP_ASSERT(static_mesh_component);
 
             static_mesh_component->SetStaticMesh(sphere_mesh);
             static_mesh_component->SetMaterial(0, sphere_material);
@@ -156,8 +154,7 @@ bool USpearSimGameEngine::Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& o
 
         return true;
 
-    }
-    else if (cmd_str == "spear callPython") {
+    } else if (cmd_str == "spear callPython") {
         GEngine->Exec(world, TEXT("py _hello.py"));
         return true;
     }

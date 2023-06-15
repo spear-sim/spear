@@ -5,16 +5,16 @@
 import inspect
 import os
 
-def log(*message):
+def log(*args):
     current_frame = inspect.currentframe()
-    print(_log_get_prefix(current_frame) + ','.join([str(x) for x in message]))
+    print(_log_get_prefix(current_frame) + "".join([str(arg) for arg in args]))
 
 def log_current_function():
     current_frame = inspect.currentframe()
     print(_log_get_prefix(current_frame) + _get_current_function_abbreviated(current_frame))
 
-def log_no_prefix(message):
-    print(message)
+def log_no_prefix(*args):
+    print("".join([str(arg) for arg in args]))
 
 def log_get_prefix():
     current_frame = inspect.currentframe()

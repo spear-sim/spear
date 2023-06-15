@@ -59,26 +59,14 @@ SIMULATION_CONTROLLER:
   SPHERE_AGENT:
     SPHERE_ACTOR_NAME: "SphereActor"
     CAMERA_ACTOR_NAME: "CameraActor"
-    ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_rotation", "add_force"
+    ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_force", "add_rotation"
     OBSERVATION_COMPONENTS: ["location", "rotation", "camera"] # "location", "rotation", "camera"
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
-    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
-    SPAWN_ACTOR_NAME: ""
     SPAWN_LOCATION_X: 0.0
     SPAWN_LOCATION_Y: 0.0
     SPAWN_LOCATION_Z: 20.0
-    SPAWN_PITCH: 0.0
-    SPAWN_YAW: 0.0
-    SPAWN_ROLL: 0.0
-    SPHERE:
-      STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
-      MATERIAL: "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"
-      MESH_SCALE: 0.5
-      MAX_ANGULAR_VELOCITY: 1.0
-      LINEAR_DAMPING: 0.0
-      ANGULAR_DAMPING: 0.0
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -105,7 +93,6 @@ SIMULATION_CONTROLLER:
       GOAL_POSITION_Y_MAX: 250.0
       GOAL_POSITION_Z: -25.0
       SPAWN_DISTANCE_THRESHOLD: 50.0
-
   VISUALIZER:
     ACTOR_NAME: "DebugCameraActor"
     SPAWN_CAMERA: False
