@@ -141,7 +141,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {3};
-        observation_space["location"] = std::move(array_desc); // position (X, Y, Z) in [cms] of the agent relative to the world frame.
+        observation_space["location"] = std::move(array_desc); // location (X, Y, Z) in [cms] of the agent relative to the world frame.
     }
 
     if (Std::contains(observation_components, "rotation")) {
@@ -150,7 +150,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {3};
-        observation_space["rotation"] = std::move(array_desc); // orientation (Pitch, Yaw, Roll) in [degs] of the agent relative to the world frame.
+        observation_space["rotation"] = std::move(array_desc); // rotation (Pitch, Yaw, Roll) in [degs] of the agent relative to the world frame.
     }
 
     if (Std::contains(observation_components, "wheel_encoder")) {
