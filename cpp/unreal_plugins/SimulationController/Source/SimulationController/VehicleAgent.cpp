@@ -44,9 +44,9 @@ VehicleAgent::VehicleAgent(UWorld* world)
     }
     else if (spawn_mode == "specify_pose") {
         spawn_location = FVector(
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_POSITION_X"),
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_POSITION_Y"),
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_POSITION_Z"));
+            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_X"),
+            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Y"),
+            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Z"));
         spawn_rotation = FRotator(
             Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_PITCH"),
             Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_YAW"),

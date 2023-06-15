@@ -43,9 +43,9 @@ SphereAgent::SphereAgent(UWorld* world)
         spawn_rotation = spawn_actor->GetActorRotation();
     } else if (spawn_mode == "specify_pose") {
         spawn_location = FVector(
-            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_POSITION_X"),
-            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_POSITION_Y"),
-            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_POSITION_Z"));
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_LOCATION_X"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_LOCATION_Y"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_LOCATION_Z"));
         spawn_rotation = FRotator(
             Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_PITCH"),
             Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_YAW"),

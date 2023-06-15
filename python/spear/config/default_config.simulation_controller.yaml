@@ -24,14 +24,14 @@ SIMULATION_CONTROLLER:
 
   CAMERA_AGENT:
     CAMERA_ACTOR_NAME: ""
-    ACTION_COMPONENTS: ["set_position", "set_rotation"] # "set_position", "set_rotation"
+    ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
     STEP_INFO_COMPONENTS: []
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_POSITION_X: 0.0
-    SPAWN_POSITION_Y: 0.0
-    SPAWN_POSITION_Z: 0.0
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 0.0
     SPAWN_PITCH: 0.0
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
@@ -49,9 +49,9 @@ SIMULATION_CONTROLLER:
     IS_READY_VELOCITY_THRESHOLD: 0.001
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_POSITION_X: 0.0
-    SPAWN_POSITION_Y: 0.0
-    SPAWN_POSITION_Z: 0.0
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 0.0
     SPAWN_PITCH: 0.0
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
@@ -69,9 +69,9 @@ SIMULATION_CONTROLLER:
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_POSITION_X: 0.0
-    SPAWN_POSITION_Y: 0.0
-    SPAWN_POSITION_Z: 0.0
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 0.0
     SPAWN_PITCH: 0.0
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
