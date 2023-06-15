@@ -105,6 +105,7 @@ class OpenBotEnv(spear.Env):
 
         # modify action before sending it to the simulator
         action["set_drive_torques"] = wheel_torques
+        action["set_brake_torques"] = np.zeros(shape=(4), dtype=np.float64)
         action.pop("set_duty_cycle")
 
         super()._apply_action(action)
