@@ -35,7 +35,7 @@ SIMULATION_CONTROLLER:
   VEHICLE_AGENT:
     VEHICLE_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["set_drive_torques", "set_brake_torques"] # "set_drive_torques", "set_brake_torques"
-    OBSERVATION_COMPONENTS: ["position", "orientation", "wheel_encoder", "camera"] # "position", "orientation", "camera", "wheel_encoder", "imu"
+    OBSERVATION_COMPONENTS: ["location", "rotation", "wheel_encoder", "camera"] # "location", "rotation", "camera", "wheel_encoder", "imu"
     IS_READY_VELOCITY_THRESHOLD: 0.001
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
@@ -55,7 +55,7 @@ SIMULATION_CONTROLLER:
     SPHERE_ACTOR_NAME: "SphereActor"
     CAMERA_ACTOR_NAME: "CameraActor"
     ACTION_COMPONENTS: ["add_force"] # "add_rotation", "add_force"
-    OBSERVATION_COMPONENTS: ["position", "orientation", "camera"] # "position", "orientation", "camera"
+    OBSERVATION_COMPONENTS: ["location", "rotation", "camera"] # "location", "rotation", "camera"
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""

@@ -23,11 +23,11 @@
     ],
     "Plugins": [
         {
-            "Name": "CoreUtils",
+            "Name": "ChaosVehiclesPlugin",
             "Enabled": true
         },
         {
-            "Name": "ChaosVehiclesPlugin",
+            "Name": "CoreUtils",
             "Enabled": true
         }
     ]

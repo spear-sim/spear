@@ -35,7 +35,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
     ConstructorHelpers::FClassFinder<UAnimInstance> anim_instance(*Unreal::toFString(Config::get<std::string>("VEHICLE.VEHICLE_PAWN.ANIM_INSTANCE")));
     SP_ASSERT(anim_instance.Succeeded());
 
-    skeletal_mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("AVehiclePawn::skeletal_mesh_component_"));
+    skeletal_mesh_component_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("skeletal_mesh_component"));
     SP_ASSERT(skeletal_mesh_component_);
     skeletal_mesh_component_->SetSkeletalMesh(skeletal_mesh.Object);
     skeletal_mesh_component_->SetAnimClass(anim_instance.Class);
@@ -43,19 +43,15 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
     skeletal_mesh_component_->BodyInstance.bSimulatePhysics = true;
     skeletal_mesh_component_->BodyInstance.bNotifyRigidBodyCollision = true;
     skeletal_mesh_component_->BodyInstance.bUseCCD = true;
-    skeletal_mesh_component_->bBlendPhysics = true;
     skeletal_mesh_component_->SetGenerateOverlapEvents(true);
     skeletal_mesh_component_->SetCanEverAffectNavigation(false);
 
     RootComponent = skeletal_mesh_component_;
 
     // Setup vehicle movement
-    vehicle_movement_component_ = CreateDefaultSubobject<UVehicleMovementComponent>(TEXT("AVehiclePawn::vehicle_movement_component_"));
+    vehicle_movement_component_ = CreateDefaultSubobject<UVehicleMovementComponent>(TEXT("vehicle_movement_component"));
     SP_ASSERT(vehicle_movement_component_);
-    vehicle_movement_component_->SetIsReplicated(true); // Enable replication by default
     vehicle_movement_component_->UpdatedComponent = skeletal_mesh_component_;
-    // this ensures that the body doesn't ever sleep. Need this to bypass a Chaos bug that doesn't take torque inputs to wheels into consideration for determining the sleep state of the body.
-    vehicle_movement_component_->SleepThreshold = 0;
 
     // Setup camera
     FVector camera_location(
@@ -68,7 +64,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
         Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW"),
         Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL"));
 
-    camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("AVehiclePawn::camera_component_"));
+    camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("camera_component"));
     SP_ASSERT(camera_component_);
 
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
@@ -87,7 +83,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : APawn
         Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.YAW"),
         Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.ROLL"));
 
-    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("AVehiclePawn::imu_component_"));
+    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("imu_component"));
     ASSERT(imu_component_);
 
     imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation);
@@ -99,15 +95,9 @@ AVehiclePawn::~AVehiclePawn()
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void AVehiclePawn::SetupPlayerInputComponent(UInputComponent* input_component)
-{
-    SP_ASSERT(input_component);
-    APawn::SetupPlayerInputComponent(input_component);
-}
-
 // Apply the drive torque in[N.m] to the vehicle wheels.The applied driveTorque persists until the
-// next call to SetDriveTorque.Note that the SetDriveTorque command can be found in the code of the
-// Unreal Engine at the following location :
+// next call to SetDriveTorque. Note that the SetDriveTorque command can be found in the code of the
+// Unreal Engine at the following location:
 //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosWheeledVehicleMovementComponent.cpp
 // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
 // Please take a look if you want to modify the way the simulated vehicle is being controlled.

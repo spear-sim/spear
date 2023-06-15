@@ -23,9 +23,6 @@ class VEHICLE_API AVehiclePawn : public APawn
 public:
     AVehiclePawn(const FObjectInitializer& object_initializer);
     ~AVehiclePawn();
-
-    // APawn interface
-    void SetupPlayerInputComponent(UInputComponent* input_component) override;
     
     // VehicleAgent interface
     void setDriveTorques(const std::vector<double>& drive_torques); // Torque expressed in [N.m]. The applied torque persists until the next call to SetBrakeTorques.

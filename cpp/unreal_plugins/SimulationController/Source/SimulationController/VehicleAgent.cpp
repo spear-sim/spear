@@ -4,6 +4,7 @@
 
 #include "SimulationController/VehicleAgent.h"
 
+#include <limits>
 #include <map>
 #include <memory>
 #include <string>
@@ -25,6 +26,7 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/ImuSensor.h"
+//#include "Vehicle/VehicleMovementComponent.h"
 #include "Vehicle/VehiclePawn.h"
 
 VehicleAgent::VehicleAgent(UWorld* world)
@@ -109,8 +111,8 @@ std::map<std::string, ArrayDesc> VehicleAgent::getActionSpace() const
 
     if (Std::contains(action_components, "set_drive_torques")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = { 4 };
         array_desc.datatype_ = DataType::Float64;
         action_space["set_drive_torques"] = std::move(array_desc);
@@ -118,8 +120,8 @@ std::map<std::string, ArrayDesc> VehicleAgent::getActionSpace() const
 
     if (Std::contains(action_components, "set_brake_torques")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = { 4 };
         array_desc.datatype_ = DataType::Float64;
         action_space["set_brake_torques"] = std::move(array_desc);
@@ -133,28 +135,28 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
     std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "position")) {
+    if (Std::contains(observation_components, "location")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = { 3 };
-        observation_space["position"] = std::move(array_desc); // position (X, Y, Z) in [cms] of the agent relative to the world frame.
+        observation_space["location"] = std::move(array_desc); // position (X, Y, Z) in [cms] of the agent relative to the world frame.
     }
 
-    if (Std::contains(observation_components, "orientation")) {
+    if (Std::contains(observation_components, "rotation")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = { 3 };
-        observation_space["orientation"] = std::move(array_desc); // orientation (Roll, Pitch, Yaw) in [degs] of the agent relative to the world frame.
+        observation_space["rotation"] = std::move(array_desc); // orientation (Roll, Pitch, Yaw) in [degs] of the agent relative to the world frame.
     }
 
     if (Std::contains(observation_components, "wheel_encoder")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = { 4 };
         observation_space["wheel_encoder"] = std::move(array_desc); // FL, FR, RL, RR, in [rad/s]
@@ -162,8 +164,8 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
 
     if (Std::contains(observation_components, "imu")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = { 6 };
         observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^s] g_x, g_y, g_z in [rad/s]
@@ -200,23 +202,24 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "position")) {
+    if (Std::contains(observation_components, "location")) {
         FVector location = vehicle_pawn_->GetActorLocation();
-        observation["position"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+        observation["location"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
             location.X,
             location.Y,
             location.Z});
     }
 
-    if (Std::contains(observation_components, "orientation")) {
+    if (Std::contains(observation_components, "rotation")) {
         FRotator rotation = vehicle_pawn_->GetActorRotation();
-        observation["orientation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+        observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
             rotation.Pitch,
             rotation.Yaw,
             rotation.Roll});
     }
 
     if (Std::contains(observation_components, "wheel_encoder")) {
+        //observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(vehicle_pawn_->vehicle_movement_component_->getWheelRotationSpeeds());
         observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(vehicle_pawn_->getWheelRotationSpeeds());
     }
 
@@ -256,6 +259,7 @@ void VehicleAgent::reset()
     vehicle_pawn_->skeletal_mesh_component_->GetBodyInstance()->ClearForces();
 
     // Reset vehicle
+    //vehicle_pawn_->vehicle_movement_component_->ResetVehicle();
     vehicle_pawn_->resetVehicle();
     vehicle_pawn_->setBrakeTorques(std::vector<double>{1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
 }

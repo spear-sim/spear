@@ -190,22 +190,22 @@ std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
     std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "position")) {
+    if (Std::contains(observation_components, "location")) {
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
-        observation_space["position"] = std::move(array_desc);
+        observation_space["location"] = std::move(array_desc);
     }
 
-    if (Std::contains(observation_components, "orientation")) {
+    if (Std::contains(observation_components, "rotation")) {
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
-        observation_space["orientation"] = std::move(array_desc);
+        observation_space["rotation"] = std::move(array_desc);
     }
 
     std::map<std::string, ArrayDesc> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
@@ -254,13 +254,13 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
     std::map<std::string, std::vector<uint8_t>> observation;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "position")) {
+    if (Std::contains(observation_components, "location")) {
         FVector location = static_mesh_actor_->GetActorLocation();
-        observation["position"] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+        observation["location"] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
     }
 
-    if (Std::contains(observation_components, "orientation")) {
-        observation["orientation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation_.Pitch, rotation_.Yaw, rotation_.Roll}); 
+    if (Std::contains(observation_components, "rotation")) {
+        observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation_.Pitch, rotation_.Yaw, rotation_.Roll}); 
     }
 
     std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);

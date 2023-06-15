@@ -20,6 +20,10 @@ class OpenBotEnv(spear.Env):
 
     def __init__(self, config):
     
+        assert config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent"
+        assert "set_drive_torques" in config.SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS
+        assert "wheel_encoder" in config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS
+
         super().__init__(config)
         self._wheel_rotation_speeds = None
     
@@ -41,69 +45,67 @@ class OpenBotEnv(spear.Env):
 
     def _apply_action(self, action):
 
-        # calculate wheel torques based on input PWM signals
-        if "apply_voltage" in action.keys():
+        assert "set_duty_cycle" in action.keys()
+        assert self._wheel_rotation_speeds is not None
+        assert len(action["set_duty_cycle"]) == 2
 
-            assert self._wheel_rotation_speeds is not None
-            assert len(action["apply_voltage"]) == 2
+        duty_cycles = np.array([action["set_duty_cycle"][0], action["set_duty_cycle"][1], action["set_duty_cycle"][0], action["set_duty_cycle"][1]], dtype=np.float64)
 
-            duty_cycle = np.array([action["apply_voltage"][0], action["apply_voltage"][1], action["apply_voltage"][0], action["apply_voltage"][1]], dtype=np.float64)
+        # Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
+        # Gear ratio: 50
+        # Max wheel torque: 5.88399 N.m
+        # https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html
 
-            # Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
-            # Gear ratio: 50
-            # Max wheel torque: 5.88399 N.m
-            # https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html
+        motor_velocity_constant = self._config.OPENBOT_ENV.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
+        gear_ratio              = self._config.OPENBOT_ENV.GEAR_RATIO              # Gear ratio of the OpenBot motors
+        motor_torque_constant   = 1.0 / motor_velocity_constant                    # Motor torque constant in [rad/s/V]
 
-            motor_velocity_constant = self._config.OPENBOT_ENV.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
-            gear_ratio              = self._config.OPENBOT_ENV.GEAR_RATIO              # Gear ratio of the OpenBot motors
-            motor_torque_constant   = 1.0 / motor_velocity_constant                    # Motor torque constant in [rad/s/V]
+        battery_voltage         = self._config.OPENBOT_ENV.BATTERY_VOLTAGE         # Voltage of the battery powering the OpenBot [V]
+        control_dead_zone       = self._config.OPENBOT_ENV.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produce any torque on the vehicle
+        motor_torque_max        = self._config.OPENBOT_ENV.MOTOR_TORQUE_MAX        # Motor maximal torque [N.m]
+        electrical_resistance   = self._config.OPENBOT_ENV.ELECTRICAL_RESISTANCE   # Motor winding electrical resistance [Ohms]
 
-            battery_voltage         = self._config.OPENBOT_ENV.BATTERY_VOLTAGE         # Voltage of the battery powering the OpenBot [V]
-            control_dead_zone       = self._config.OPENBOT_ENV.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produce any torque on the vehicle
-            motor_torque_max        = self._config.OPENBOT_ENV.MOTOR_TORQUE_MAX        # Motor maximal torque [N.m]
-            electrical_resistance   = self._config.OPENBOT_ENV.ELECTRICAL_RESISTANCE   # Motor winding electrical resistance [Ohms]
+        # Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to 
+        # be processed by the low-level microcontroller. For more details, feel free to check the
+        # "speedMultiplier" command in the OpenBot code.
+        # https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
+        action_scale = self._config.OPENBOT_ENV.ACTION_SCALE
 
-            # Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to 
-            # be processed by the low-level microcontroller. For more details, feel free to check the
-            # "speedMultiplier" command in the OpenBot code.
-            # https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
-            action_scale = self._config.OPENBOT_ENV.ACTION_SCALE
+        # Acquire the ground truth motor and wheel velocity for motor counter-electromotive force
+        # computation purposes (or alternatively friction computation purposes).
 
-            # Acquire the ground truth motor and wheel velocity for motor counter-electromotive force
-            # computation purposes (or alternatively friction computation purposes).
+        # The ground truth velocity of the robot wheels in [rad/s]
+        wheel_rotation_speeds = self._wheel_rotation_speeds
 
-            # The ground truth velocity of the robot wheels in [rad/s]
-            wheel_rotation_speeds = self._wheel_rotation_speeds
+        # The ground truth rotation speed of the motors in [rad/s]
+        motor_speed = gear_ratio * wheel_rotation_speeds
 
-            # The ground truth rotation speed of the motors in [rad/s]
-            motor_speed = gear_ratio * wheel_rotation_speeds
+        # Compute the counter electromotive force using the motor torque constant
+        counter_electromotive_force = motor_torque_constant * motor_speed # Expressed in [V]
 
-            # Compute the counter electromotive force using the motor torque constant
-            counter_electromotive_force = motor_torque_constant * motor_speed # Expressed in [V]
+        # The electrical current allowed to circulate in the motor is the result of the
+        # difference between the applied voltage and the counter electromotive force
+        motor_winding_current = ((battery_voltage * duty_cycles) - counter_electromotive_force) / electrical_resistance # Expressed in [A]
 
-            # The electrical current allowed to circulate in the motor is the result of the
-            # difference between the applied voltage and the counter electromotive force
-            motor_winding_current = ((battery_voltage * duty_cycle) - counter_electromotive_force) / electrical_resistance # Expressed in [A]
+        # The torque is then obtained using the torque coefficient of the motor in [N.m]
+        motor_torque = motor_torque_constant * motor_winding_current
 
-            # The torque is then obtained using the torque coefficient of the motor in [N.m]
-            motor_torque = motor_torque_constant * motor_winding_current
+        # Motor torque is saturated to match the motor limits
+        motor_torque = np.clip(motor_torque, -motor_torque_max, motor_torque_max)
 
-            # Motor torque is saturated to match the motor limits
-            motor_torque = np.clip(motor_torque, -motor_torque_max, motor_torque_max)
+        # The torque applied to the robot wheels is finally computed accounting for the gear ratio
+        wheel_torques = gear_ratio * motor_torque
 
-            # The torque applied to the robot wheels is finally computed accounting for the gear ratio
-            wheel_torques = gear_ratio * motor_torque
+        # Control dead zone at near-zero speed. This is a simplified but reliable way to deal with
+        # the friction behavior observed on the real vehicle in the low-speed/low-duty-cycle regime.
+        # TODO: get value from the config system
+        wheel_torques[np.where(np.logical_and(abs(motor_speed) < 1e-5, abs(duty_cycles) <= control_dead_zone / action_scale))] = 0.0
 
-            # Control dead zone at near-zero speed. This is a simplified but reliable way to deal with
-            # the friction behavior observed on the real vehicle in the low-speed/low-duty-cycle regime.
-            # TODO: get value from the config system
-            wheel_torques[np.where(np.logical_and(abs(motor_speed) < 1e-5, abs(duty_cycle) <= control_dead_zone / action_scale))] = 0.0
+        spear.log("wheel_torques: ", wheel_torques)
 
-            spear.log("wheel_torques: ", wheel_torques)
-
-            # modify action before sending it to the simulator
-            action["set_drive_torques"] = wheel_torques
-            action.pop("apply_voltage")
+        # modify action before sending it to the simulator
+        action["set_drive_torques"] = wheel_torques
+        action.pop("set_duty_cycle")
 
         super()._apply_action(action)
 
@@ -125,7 +127,7 @@ if __name__ == "__main__":
     elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
         env = OpenBotEnv(config)
 
-    # reset the simulation to get the first observation    
+    # reset the simulation to get the first observation
     obs = env.reset()
 
     if args.benchmark:
@@ -137,19 +139,19 @@ if __name__ == "__main__":
     # take a few steps
     for i in range(NUM_STEPS):
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
-            obs, reward, done, info = env.step(action={"add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64)})
+            obs, reward, done, info = env.step(action={"add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64), "add_rotation": np.array([0.0, 0.0, 1.0])})
             if not args.benchmark:
                 spear.log("SphereAgent: ")
-                spear.log("position:", obs["position"])
+                spear.log("location:", obs["location"])
                 spear.log("rotation:", obs["rotation"])
                 spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 spear.log(reward, done, info)
         elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
-            obs, reward, done, info = env.step(action={"apply_voltage": np.array([1.0, 0.715], dtype=np.float64)})
+            obs, reward, done, info = env.step(action={"set_duty_cycle": np.array([1.0, 0.715], dtype=np.float64)})
             if not args.benchmark:
                 spear.log("VehicleAgent: ")
-                spear.log("position:", obs["position"])
-                spear.log("orientation:", obs["orientation"])
+                spear.log("location:", obs["location"])
+                spear.log("rotation:", obs["rotation"])
                 spear.log("wheel_encoder:", obs["wheel_encoder"])
                 spear.log("camera:", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
                 spear.log(reward, done, info)

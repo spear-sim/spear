@@ -18,6 +18,9 @@ UVehicleMovementComponent::UVehicleMovementComponent()
         return;
     }
 
+    // This ensures that the body doesn't ever sleep. Need this to bypass a Chaos bug that doesn't take torque inputs to wheels into consideration for determining the sleep state of the body.
+    SleepThreshold = 0.0;
+
     // we only support vehicles with 4 wheels. So 
     WheelSetups.SetNum(4);
 
