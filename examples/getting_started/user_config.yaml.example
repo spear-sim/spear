@@ -60,7 +60,7 @@ SIMULATION_CONTROLLER:
     SPHERE_ACTOR_NAME: "SphereActor"
     CAMERA_ACTOR_NAME: "CameraActor"
     ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_force", "add_rotation"
-    OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] #  "camera", "location", "rotation"
+    OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] # "camera", "location", "rotation"
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
     SPAWN_LOCATION_X: 0.0
     SPAWN_LOCATION_Y: 0.0
