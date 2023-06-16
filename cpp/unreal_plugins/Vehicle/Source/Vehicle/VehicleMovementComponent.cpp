@@ -21,11 +21,11 @@ UVehicleMovementComponent::UVehicleMovementComponent()
     // In Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosVehicleMovementComponent.cpp:1200,
     // Chaos doesn't take into consideration the torque inputs to wheels for determining the sleep state of the body. Since we
     // are providing direct torque inputs to wheels, these torque inputs are not used to determine the sleep state of the body
-    // and the body is set to sleep every Tick. This prohibits us from being able to control the vehicle.
-    // Setting SleepThreshold=0.0 ensures that Chaos doesn't put this body to sleep.
+    // and the body is set to sleep every Tick. This prohibits us from being able to control the vehicle. Setting SleepThreshold=0.0
+    // ensures that Chaos doesn't put this body to sleep.
     SleepThreshold = 0.0;
 
-    // we only support vehicles with 4 wheels. So 
+    // We only support vehicles with 4 wheels.
     WheelSetups.SetNum(4);
 
     UClass* wheel_class = UVehicleWheel::StaticClass();
@@ -62,6 +62,8 @@ UVehicleMovementComponent::~UVehicleMovementComponent()
 
 std::vector<double> UVehicleMovementComponent::getWheelRotationSpeeds() const
 {
+    // We typically try to avoid trivial get() and set() methods like this, but VehicleSimulationPT is protected, so we need
+    // to explicitly provide access to it through this public function.
     std::vector<double> wheel_rotation_speeds(4, 0.0);
     wheel_rotation_speeds.at(0) = VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity(); // Expressed in [rad/s]
     wheel_rotation_speeds.at(1) = VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity(); // Expressed in [rad/s]
