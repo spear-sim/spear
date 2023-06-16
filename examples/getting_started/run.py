@@ -83,25 +83,21 @@ class OpenBotEnv(spear.Env):
         motor_winding_currents = ((battery_voltage * duty_cycles) - counter_electromotive_forces) / electrical_resistance # Expressed in [A]
 
         # The torque is then obtained using the torque coefficient of the motor in [N.m]
-        drive_torques = motor_torque_constant * motor_winding_currents
+        motor_torques = motor_torque_constant * motor_winding_currents
 
         # Motor torque is saturated to match the motor limits
-        drive_torques = np.clip(drive_torques, -motor_torque_max, motor_torque_max)
+        motor_torques = np.clip(motor_torques, -motor_torque_max, motor_torque_max)
 
         # The torque applied to the robot wheels is finally computed accounting for the gear ratio
-        wheel_torques = gear_ratio * drive_torques
+        drive_torques = gear_ratio * motor_torques
 
         # Control dead zone at near-zero speed. This is a simplified but reliable way to deal with
         # the friction behavior observed on the real vehicle in the low-speed/low-duty-cycle regime.
         # TODO: get value from the config system
-        wheel_torques[np.logical_and(abs(motor_speeds) < 1e-5, abs(duty_cycles) <= control_dead_zone / action_scale)] = 0.0
-
-        spear.log("    wheel_torques: ", wheel_torques)
+        drive_torques[np.logical_and(abs(motor_speeds) < 1e-5, abs(duty_cycles) <= control_dead_zone / action_scale)] = 0.0
 
         # formulate action before sending it to the simulator
-        action_super = {"set_drive_torques": drive_torques, "set_brake_torques": np.zeros(shape=(4), dtype=np.float64)}
-
-        super()._apply_action(action_super)
+        super()._apply_action(action={"set_drive_torques": drive_torques, "set_brake_torques": np.zeros(shape=(4), dtype=np.float64)})
 
 
 if __name__ == "__main__":
@@ -135,10 +131,10 @@ if __name__ == "__main__":
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
             obs, reward, done, info = env.step(action={
                 "add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64),
-                "add_rotation": np.array([0.0, 0.0, 1.0])
+                "add_rotation": np.array([0.0, 1.0, 0.0])
             })
             if not args.benchmark:
-                spear.log("    SphereAgent: ")
+                spear.log("SphereAgent:")
                 spear.log("    location: ", obs["location"])
                 spear.log("    rotation: ", obs["rotation"])
                 spear.log("    camera: ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
@@ -148,7 +144,7 @@ if __name__ == "__main__":
         elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
             obs, reward, done, info = env.step(action={"set_duty_cycle": np.array([1.0, 0.715], dtype=np.float64)})
             if not args.benchmark:
-                spear.log("    VehicleAgent: ")
+                spear.log("VehicleAgent:")
                 spear.log("    location: ", obs["location"])
                 spear.log("    rotation: ", obs["rotation"])
                 spear.log("    wheel_encoder: ", obs["wheel_encoder"])
@@ -169,11 +165,11 @@ if __name__ == "__main__":
     if args.benchmark:
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("    Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000.0, NUM_STEPS / elapsed_time_seconds))
+        spear.log("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / NUM_STEPS)*1000.0, NUM_STEPS / elapsed_time_seconds))
     else:
         cv2.destroyAllWindows()
 
     # close the environment
     env.close()
 
-    spear.log("    Done.")
+    spear.log("Done.")
