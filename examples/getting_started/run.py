@@ -30,9 +30,9 @@ class OpenBotEnv(spear.Env):
 
         # In this derived class, we are expecting different actions than the base spear.Env class. So
         # we need to override self.action_space. We need to do this after calling super().__init__(...),
-        # because the base spear.Env class will set self.action_space to the set of low-level actions it
-        # is expecting internally.
-        self.action_space = gym.spaces.Dict({"set_duty_cycles": gym.Spaces.Box(-1, 1, (2), np.float64)})
+        # because the base spear.Env class will set self.action_space to the lower-level actions it is
+        # expecting internally.
+        self.action_space = gym.spaces.Dict(spaces={"set_duty_cycles": gym.Spaces.Box(low=-1, high=1, shape=(2), dtype=np.float64)})
     
     def reset(self, reset_info=None):
     
