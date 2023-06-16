@@ -28,12 +28,12 @@
 #include "SimulationController/Agent.h"
 #include "SimulationController/CameraAgent.h"
 #include "SimulationController/NullTask.h"
-#include "SimulationController/OpenBotAgent.h"
 #include "SimulationController/RpcServer.h"
 #include "SimulationController/SphereAgent.h"
 #include "SimulationController/Task.h"
 #include "SimulationController/UrdfBotAgent.h"
 #include "SimulationController/Visualizer.h"
+#include "SimulationController/VehicleAgent.h"
 
 // Different possible frame states for thread synchronization
 enum class FrameState
@@ -49,9 +49,9 @@ void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("Vehicle")));
 
-    // TODO: uncomment when we're ready to re-enable OpenBot and UrdfBot
-    // SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
+    // TODO: uncomment when we're ready to re-enable UrdfBot
     // SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
 
     if (!Config::s_initialized_) {
@@ -187,12 +187,11 @@ void SimulationController::worldBeginPlayEventHandler()
     // create Agent
     if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "CameraAgent") {
         agent_ = std::make_unique<CameraAgent>(world_);
-    // TODO: uncomment when we're ready to re-enable OpenBot and UrdfBot
-    // } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "OpenBotAgent") {
-    //     agent_ = std::make_unique<OpenBotAgent>(world_);
     } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
-    // TODO: uncomment when we're ready to re-enable OpenBot and UrdfBot
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "VehicleAgent") {
+        agent_ = std::make_unique<VehicleAgent>(world_);
+    // TODO: uncomment when we're ready to re-enable UrdfBot
     // } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
     //     agent_ = std::make_unique<SphereAgent>(world_);
     } else {

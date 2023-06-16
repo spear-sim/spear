@@ -29,16 +29,16 @@
             "Enabled": true
         },
         {
-            "Name": "OpenBot",
-            "Enabled": false
-        },
-        {
             "Name": "SimulationController",
             "Enabled": true
         },
         {
             "Name": "UrdfBot",
             "Enabled": false
+        },
+        {
+            "Name": "Vehicle",
+            "Enabled": true
         }
     ]
 }

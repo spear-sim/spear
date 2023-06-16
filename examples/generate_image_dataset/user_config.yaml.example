@@ -23,7 +23,7 @@ SIMULATION_CONTROLLER:
     CAMERA_ACTOR_NAME: "CameraActor"
     SPAWN_MODE: "specify_existing_actor"
     SPAWN_ACTOR_NAME: "PlayerStart"
-    ACTION_COMPONENTS: ["set_position", "set_rotation"] # "set_position", "set_rotation"
+    ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
     STEP_INFO_COMPONENTS: []
     CAMERA:

@@ -24,14 +24,14 @@ SIMULATION_CONTROLLER:
 
   CAMERA_AGENT:
     CAMERA_ACTOR_NAME: ""
-    ACTION_COMPONENTS: ["set_position", "set_rotation"] # "set_position", "set_rotation"
+    ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
     STEP_INFO_COMPONENTS: []
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_POSITION_X: 0.0
-    SPAWN_POSITION_Y: 0.0
-    SPAWN_POSITION_Z: 0.0
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 0.0
     SPAWN_PITCH: 0.0
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
@@ -41,17 +41,17 @@ SIMULATION_CONTROLLER:
       IMAGE_WIDTH: 512
       FOV: 90.0
 
-  OPENBOT_AGENT:
-    OPENBOT_ACTOR_NAME: ""
-    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
-    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera", "encoder", "imu", "sonar"
-    STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
+  VEHICLE_AGENT:
+    VEHICLE_ACTOR_NAME: ""
+    ACTION_COMPONENTS: ["set_drive_torques", "set_brake_torques"] # "set_drive_torques", "set_brake_torques"
+    OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_encoder"] # "camera", "imu", "location", "rotation", "wheel_encoder"
+    STEP_INFO_COMPONENTS: [""]
     IS_READY_VELOCITY_THRESHOLD: 0.001
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_POSITION_X: 0.0
-    SPAWN_POSITION_Y: 0.0
-    SPAWN_POSITION_Z: 0.0
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 0.0
     SPAWN_PITCH: 0.0
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
@@ -65,13 +65,13 @@ SIMULATION_CONTROLLER:
     SPHERE_ACTOR_NAME: ""
     CAMERA_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_force", "add_rotation"
-    OBSERVATION_COMPONENTS: ["camera", "position", "rotation"] # "camera", "position", "rotation"
+    OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] #  "camera", "location", "rotation"
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_POSITION_X: 0.0
-    SPAWN_POSITION_Y: 0.0
-    SPAWN_POSITION_Z: 0.0
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 0.0
     SPAWN_PITCH: 0.0
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
@@ -122,16 +122,6 @@ SIMULATION_CONTROLLER:
     READ_SURFACE_DATA: True # read image data from the GPU, useful for debugging and benchmarking
 
   IMU_SENSOR:
-    DEBUG_RENDER: False
-
-  SONAR_SENSOR:
-    NUM_RAYS: 21
-    MAX_REFLECTION_ANGLE: 45.0
-    HORIZONTAL_FOV: 30.0
-    VERTICAL_FOV: 10.0
-    RANGE:
-      MIN: 0.01
-      MAX: 10.0
     DEBUG_RENDER: False
 
   #

@@ -4,8 +4,6 @@
 
 #include "SimulationController/ImuSensor.h"
 
-#include <array>
-
 #include <Components/PrimitiveComponent.h>
 #include <Delegates/IDelegateInstance.h>
 #include <DrawDebugHelpers.h>
