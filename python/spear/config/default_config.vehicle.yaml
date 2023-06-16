@@ -4,8 +4,8 @@
 
 VEHICLE:
   VEHICLE_PAWN:
-    SKELETAL_MESH: "/Vehicle/OpenBot/Meshes/OpenBot_Mesh.OpenBot_Mesh"
-    ANIM_INSTANCE: "/Vehicle/OpenBot/Meshes/OpenBot_Animation.OpenBot_Animation_C"
+    SKELETAL_MESH: "/Vehicle/OpenBot/Meshes/SK_OpenBot.SK_OpenBot"
+    ANIM_INSTANCE: "/Vehicle/OpenBot/Meshes/ABP_OpenBot.ABP_OpenBot_C"
 
     CAMERA_COMPONENT:
       POSITION_X: -60.0               # Camera relative position in [cm]
