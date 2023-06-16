@@ -168,7 +168,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {6};
-        observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^s] g_x, g_y, g_z in [rad/s]
+        observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^2] g_x, g_y, g_z in [rad/s]
     }
 
     observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
@@ -186,13 +186,12 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_drive_torques")) {
-        // Apply the drive torque in [N.m] to the vehicle wheels.The applied drive torque persists until the
+        // Apply the drive torque in [N.m] to the vehicle wheels. The applied drive torque persists until the
         // next call to SetDriveTorque. Note that the SetDriveTorque command can be found in the code of the
         // Unreal Engine at the following location:
         //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosWheeledVehicleMovementComponent.cpp
         // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
         // Please take a look if you want to modify the way the simulated vehicle is being controlled.
-
         UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
         SP_ASSERT(vehicle_movement_component);
 
@@ -225,18 +224,12 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
 
     if (Std::contains(observation_components, "location")) {
         FVector location = vehicle_pawn_->GetActorLocation();
-        observation["location"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
-            location.X,
-            location.Y,
-            location.Z});
+        observation["location"] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
     }
 
     if (Std::contains(observation_components, "rotation")) {
         FRotator rotation = vehicle_pawn_->GetActorRotation();
-        observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
-            rotation.Pitch,
-            rotation.Yaw,
-            rotation.Roll});
+        observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.Pitch, rotation.Yaw, rotation.Roll});
     }
 
     if (Std::contains(observation_components, "wheel_encoder")) {
