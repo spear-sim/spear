@@ -97,7 +97,7 @@ class OpenBotEnv(spear.Env):
         drive_torques[np.logical_and(abs(motor_speeds) < 1e-5, abs(duty_cycles) <= control_dead_zone / action_scale)] = 0.0
 
         # formulate action before sending it to the simulator
-        super()._apply_action(action={"set_drive_torques": drive_torques, "set_brake_torques": np.zeros(shape=(4), dtype=np.float64)})
+        super()._apply_action(action={"set_drive_torques": drive_torques})
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/ImuSensor.h"
-//#include "Vehicle/VehicleMovementComponent.h"
+#include "Vehicle/VehicleMovementComponent.h"
 #include "Vehicle/VehiclePawn.h"
 
 VehicleAgent::VehicleAgent(UWorld* world)
@@ -186,29 +186,34 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_drive_torques")) {
-        vehicle_pawn_->setDriveTorques(Std::reinterpretAs<double>(action.at("set_drive_torques")));
-
         // Apply the drive torque in [N.m] to the vehicle wheels.The applied drive torque persists until the
         // next call to SetDriveTorque. Note that the SetDriveTorque command can be found in the code of the
         // Unreal Engine at the following location:
         //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosWheeledVehicleMovementComponent.cpp
         // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
         // Please take a look if you want to modify the way the simulated vehicle is being controlled.
-        //std::vector<double> drive_torques = Std::reinterpretAs<double>(action.at("set_drive_torques"));
-        //vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(0), 0);
-        //vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(1), 1);
-        //vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(2), 2);
-        //vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(3), 3);
+
+        UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
+        SP_ASSERT(vehicle_movement_component);
+
+        std::vector<double> drive_torques = Std::reinterpretAs<double>(action.at("set_drive_torques"));
+
+        vehicle_movement_component->SetDriveTorque(drive_torques.at(0), 0);
+        vehicle_movement_component->SetDriveTorque(drive_torques.at(1), 1);
+        vehicle_movement_component->SetDriveTorque(drive_torques.at(2), 2);
+        vehicle_movement_component->SetDriveTorque(drive_torques.at(3), 3);
     }
 
     if (Std::contains(action_components, "set_brake_torques")) {
-        vehicle_pawn_->setBrakeTorques(Std::reinterpretAs<double>(action.at("set_brake_torques")));
+        UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
+        SP_ASSERT(vehicle_movement_component);
 
-        //std::vector<double> brake_torques = Std::reinterpretAs<double>(action.at("set_brake_torques"));
-        //vehicle_movement_component_->SetBrakeTorque(brake_torques.at(0), 0);
-        //vehicle_movement_component_->SetBrakeTorque(brake_torques.at(1), 1);
-        //vehicle_movement_component_->SetBrakeTorque(brake_torques.at(2), 2);
-        //vehicle_movement_component_->SetBrakeTorque(brake_torques.at(3), 3);
+        std::vector<double> brake_torques = Std::reinterpretAs<double>(action.at("set_brake_torques"));
+
+        vehicle_movement_component->SetBrakeTorque(brake_torques.at(0), 0);
+        vehicle_movement_component->SetBrakeTorque(brake_torques.at(1), 1);
+        vehicle_movement_component->SetBrakeTorque(brake_torques.at(2), 2);
+        vehicle_movement_component->SetBrakeTorque(brake_torques.at(3), 3);
     }
 }
 
@@ -235,8 +240,9 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
     }
 
     if (Std::contains(observation_components, "wheel_encoder")) {
-        //observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(vehicle_pawn_->vehicle_movement_component_->getWheelRotationSpeeds());
-        observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(vehicle_pawn_->getWheelRotationSpeeds());
+        UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
+        SP_ASSERT(vehicle_movement_component);
+        observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(vehicle_movement_component->getWheelRotationSpeeds());
     }
 
     if (Std::contains(observation_components, "imu")) {
@@ -261,20 +267,7 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getStepInfo() const
 
 void VehicleAgent::reset()
 {
-    // For some reason, the pose of AVehiclePawn needs to be set using ETeleportType::TeleportPhysics, which maintains
-    // velocity information across calls to SetActorPositionAndRotation(...). Since tasks are supposed to be implemented
-    // in a general way, they must therefore use ETeleportType::TeleportPhysics to set the pose of actors, because the
-    // actor they're attempting to reset might be an AVehiclePawn. But this means that our velocity will be maintained
-    // unless we explicitly reset it, so we reset our velocity here.
-    vehicle_pawn_->skeletal_mesh_component_->SetPhysicsLinearVelocity(FVector::ZeroVector, false);
-    vehicle_pawn_->skeletal_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector, false);
-    vehicle_pawn_->skeletal_mesh_component_->GetBodyInstance()->ClearTorques();
-    vehicle_pawn_->skeletal_mesh_component_->GetBodyInstance()->ClearForces();
-
-    // Reset vehicle
-    //vehicle_pawn_->vehicle_movement_component_->ResetVehicle();
-    vehicle_pawn_->resetVehicle();
-    //vehicle_pawn_->setBrakeTorques(std::vector<double>{1000.0f, 1000.0f, 1000.0f, 1000.0f}); // TODO: get value from the config system
+    vehicle_pawn_->GetVehicleMovementComponent()->ResetVehicle();
 }
 
 bool VehicleAgent::isReady() const
