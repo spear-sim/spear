@@ -24,46 +24,51 @@ class OpenBotEnv(spear.Env):
         assert "set_drive_torques" in config.SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS
         assert "wheel_encoder" in config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS
 
-        super().__init__(config)
         self._wheel_rotation_speeds = None
+
+        super().__init__(config)
+
+        # In this derived class, we are expecting different actions, so we need to override self.action_space.
+        # We need to do this after calling super().__init__(...), because the base Env class will set
+        # self.action_space to whatever low-level actions it is expecting internally.
+        self.action_space = gym.spaces.Dict({"set_duty_cycles": gym.Spaces.Box(-1, 1, (2), np.float64)})
     
-    def step(self, action):
-
-        obs, reward, is_done, step_info = super().step(action=action)
-        assert "wheel_encoder" in obs.keys()
-        self._wheel_rotation_speeds = obs["wheel_encoder"]
-
-        return obs, reward, is_done, step_info
-
     def reset(self, reset_info=None):
     
         obs = super().reset(reset_info=reset_info)
         assert "wheel_encoder" in obs.keys()
         self._wheel_rotation_speeds = obs["wheel_encoder"]
-
         return obs
 
+    def _get_observation(self):
+
+        obs = super()._get_observation()
+        assert "wheel_encoder" in obs.keys()
+        self._wheel_rotation_speeds = obs["wheel_encoder"]
+        return obs
+        
     def _apply_action(self, action):
 
-        assert "set_duty_cycle" in action.keys()
-        assert action["set_duty_cycle"].shape[0] == 2
+        assert "set_duty_cycles" in action.keys()
+        assert action["set_duty_cycles"].shape[0] == 2
         assert self._wheel_rotation_speeds is not None
 
-        duty_cycles = np.array([action["set_duty_cycle"][0], action["set_duty_cycle"][1], action["set_duty_cycle"][0], action["set_duty_cycle"][1]], dtype=np.float64)
+        duty_cycles = np.array([action["set_duty_cycles"][0], action["set_duty_cycles"][1], action["set_duty_cycles"][0], action["set_duty_cycles"][1]], dtype=np.float64)
 
         motor_velocity_constant = self._config.OPENBOT_ENV.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
         gear_ratio              = self._config.OPENBOT_ENV.GEAR_RATIO              # Gear ratio of the OpenBot motors
         motor_torque_constant   = 1.0 / motor_velocity_constant                    # Motor torque constant in [rad/s/V]
 
         battery_voltage         = self._config.OPENBOT_ENV.BATTERY_VOLTAGE         # Voltage of the battery powering the OpenBot [V]
-        control_dead_zone       = self._config.OPENBOT_ENV.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produce any torque on the vehicle
+        control_dead_zone       = self._config.OPENBOT_ENV.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not
+                                                                                   # produce any torque on the vehicle
         motor_torque_max        = self._config.OPENBOT_ENV.MOTOR_TORQUE_MAX        # Motor maximal torque [N.m]
         electrical_resistance   = self._config.OPENBOT_ENV.ELECTRICAL_RESISTANCE   # Motor winding electrical resistance [Ohms]
 
         # Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to 
         # be processed by the low-level microcontroller. For more details, feel free to check the
         # "speedMultiplier" command in the OpenBot code.
-        # https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
+        #     https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
         action_scale = self._config.OPENBOT_ENV.ACTION_SCALE
 
         # Acquire the ground truth motor and wheel velocity for motor counter-electromotive force
@@ -93,7 +98,8 @@ class OpenBotEnv(spear.Env):
 
         # Control dead zone at near-zero speed. This is a simplified but reliable way to deal with
         # the friction behavior observed on the real vehicle in the low-speed/low-duty-cycle regime.
-        # TODO: get value from the config system
+        # For simplicity, we hardcode the threshold value 1e-5, but in future we should get this
+        # value from the config system.
         drive_torques[np.logical_and(abs(motor_speeds) < 1e-5, abs(duty_cycles) <= control_dead_zone / action_scale)] = 0.0
 
         # formulate action before sending it to the simulator
@@ -137,21 +143,21 @@ if __name__ == "__main__":
                 spear.log("SphereAgent:")
                 spear.log("    location: ", obs["location"])
                 spear.log("    rotation: ", obs["rotation"])
-                spear.log("    camera: ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                spear.log("    reward: ", reward)
-                spear.log("    done: ", done)
-                spear.log("    info: ", info)
+                spear.log("    camera:   ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log("    reward:   ", reward)
+                spear.log("    done:     ", done)
+                spear.log("    info:     ", info)
         elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
             obs, reward, done, info = env.step(action={"set_duty_cycle": np.array([1.0, 0.715], dtype=np.float64)})
             if not args.benchmark:
                 spear.log("VehicleAgent:")
-                spear.log("    location: ", obs["location"])
-                spear.log("    rotation: ", obs["rotation"])
+                spear.log("    location:      ", obs["location"])
+                spear.log("    rotation:      ", obs["rotation"])
                 spear.log("    wheel_encoder: ", obs["wheel_encoder"])
-                spear.log("    camera: ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
-                spear.log("    reward: ", reward)
-                spear.log("    done: ", done)
-                spear.log("    info: ", info)
+                spear.log("    camera:        ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log("    reward:        ", reward)
+                spear.log("    done:          ", done)
+                spear.log("    info:          ", info)
         else:
             assert False
 
