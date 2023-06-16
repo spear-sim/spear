@@ -39,7 +39,7 @@ SIMULATION_CONTROLLER:
 
   VEHICLE_AGENT:
     VEHICLE_ACTOR_NAME: ""
-    ACTION_COMPONENTS: ["set_drive_torques"]# "set_drive_torques", "set_brake_torques"
+    ACTION_COMPONENTS: ["set_drive_torques"] # "set_drive_torques", "set_brake_torques"
     OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_encoder"] # "camera", "imu", "location", "rotation", "wheel_encoder"
     IS_READY_VELOCITY_THRESHOLD: 0.001
     SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
