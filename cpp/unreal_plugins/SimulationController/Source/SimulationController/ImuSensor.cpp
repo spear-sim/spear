@@ -16,7 +16,6 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
-#include "CoreUtils/Log.h"
 #include "SimulationController/TickEventComponent.h"
 
 ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
