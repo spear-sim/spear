@@ -55,20 +55,6 @@ public class CommonModuleRules : ModuleRules
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));
 
         //
-        // Eigen
-        //
-
-        if (target.Platform == UnrealTargetPlatform.Win64) {
-            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "libeigen", "BUILD", "Win64", "include", "eigen3")));
-        } else if (target.Platform == UnrealTargetPlatform.Mac) {
-            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "libeigen", "BUILD", "Mac", "include", "eigen3")));
-        } else if (target.Platform == UnrealTargetPlatform.Linux) {
-            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "libeigen", "BUILD", "Linux", "include", "eigen3")));
-        } else {
-            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + target.Platform);
-        }
-
-        //
         // rpclib
         //
 

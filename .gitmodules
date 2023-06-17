@@ -1,9 +1,6 @@
 [submodule "boost"]
 	path = third_party/boost
 	url = https://github.com/boostorg/boost
-[submodule "libeigen"]
-	path = third_party/libeigen
-	url = https://gitlab.com/libeigen/eigen.git
 [submodule "msgpack-rpc-python"]
 	path = third_party/msgpack-rpc-python
 	url = https://github.com/dvdhfnr/msgpack-rpc-python.git
