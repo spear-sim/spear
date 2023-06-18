@@ -13,7 +13,6 @@
 
 class UBoxComponent;
 class UCameraComponent;
-class UVehicleMovementComponent;
 
 UCLASS()
 class VEHICLE_API AVehiclePawn : public AWheeledVehiclePawn

@@ -27,36 +27,16 @@ SIMULATION_CONTROLLER:
     ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
     STEP_INFO_COMPONENTS: []
-    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
+    SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
     SPAWN_ACTOR_NAME: ""
     SPAWN_LOCATION_X: 0.0
     SPAWN_LOCATION_Y: 0.0
     SPAWN_LOCATION_Z: 0.0
-    SPAWN_PITCH: 0.0
-    SPAWN_YAW: 0.0
-    SPAWN_ROLL: 0.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", segmentation"
-      IMAGE_HEIGHT: 512
-      IMAGE_WIDTH: 512
-      FOV: 90.0
-
-  VEHICLE_AGENT:
-    VEHICLE_ACTOR_NAME: ""
-    ACTION_COMPONENTS: ["set_drive_torques", "set_brake_torques"] # "set_drive_torques", "set_brake_torques"
-    OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_encoder"] # "camera", "imu", "location", "rotation", "wheel_encoder"
-    STEP_INFO_COMPONENTS: [""]
-    IS_READY_VELOCITY_THRESHOLD: 0.001
-    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
-    SPAWN_ACTOR_NAME: ""
-    SPAWN_LOCATION_X: 0.0
-    SPAWN_LOCATION_Y: 0.0
-    SPAWN_LOCATION_Z: 0.0
-    SPAWN_PITCH: 0.0
-    SPAWN_YAW: 0.0
-    SPAWN_ROLL: 0.0
-    CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
@@ -67,14 +47,14 @@ SIMULATION_CONTROLLER:
     ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_force", "add_rotation"
     OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] #  "camera", "location", "rotation"
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
-    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
+    SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
     SPAWN_ACTOR_NAME: ""
     SPAWN_LOCATION_X: 0.0
     SPAWN_LOCATION_Y: 0.0
     SPAWN_LOCATION_Z: 0.0
-    SPAWN_PITCH: 0.0
-    SPAWN_YAW: 0.0
-    SPAWN_ROLL: 0.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
     SPHERE:
       STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
       MATERIAL: "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"
@@ -95,7 +75,7 @@ SIMULATION_CONTROLLER:
     ACTION_COMPONENTS: ["control_joints"]
     OBSERVATION_COMPONENTS: ["link_state", "camera"]
     STEP_INFO_COMPONENTS: []
-    SPAWN_MODE: "specify_pose" # "specify_pose", "specify_existing_actor"
+    SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
     SPAWN_ACTOR_NAME: ""
     SPAWN_POSITION_X: 0.0
     SPAWN_POSITION_Y: 0.0
@@ -103,6 +83,7 @@ SIMULATION_CONTROLLER:
     SPAWN_PITCH: 0.0
     SPAWN_YAW: 0.0
     SPAWN_ROLL: 0.0
+    IS_READY_VELOCITY_THRESHOLD: 0.001
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
       IMAGE_HEIGHT: 512
@@ -111,7 +92,26 @@ SIMULATION_CONTROLLER:
       POSITION_OFFSET_X: 0.0
       POSITION_OFFSET_Y: 0.0
       POSITION_OFFSET_Z: 0.0
+
+  VEHICLE_AGENT:
+    VEHICLE_ACTOR_NAME: ""
+    ACTION_COMPONENTS: ["set_brake_torques", "set_drive_torques"] # "set_brake_torques", "set_drive_torques"
+    OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_encoder"] # "camera", "imu", "location", "rotation", "wheel_encoder"
+    STEP_INFO_COMPONENTS: [""]
+    SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 0.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
     IS_READY_VELOCITY_THRESHOLD: 0.001
+    CAMERA:
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
 
   #
   # Sensors
@@ -168,12 +168,12 @@ SIMULATION_CONTROLLER:
   VISUALIZER:
     ACTOR_NAME: ""
     SPAWN_CAMERA: True
-    SPAWN_CAMERA_POSITION_X: 0.0
-    SPAWN_CAMERA_POSITION_Y: 0.0
-    SPAWN_CAMERA_POSITION_Z: 0.0
-    SPAWN_CAMERA_ORIENTATION_PITCH: 0.0
-    SPAWN_CAMERA_ORIENTATION_YAW: 0.0
-    SPAWN_CAMERA_ORIENTATION_ROLL: 0.0
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 0.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
 
   #
   # Unreal systems

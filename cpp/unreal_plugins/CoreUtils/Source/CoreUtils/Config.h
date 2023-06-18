@@ -70,11 +70,11 @@ public:
         return node.as<TValue>();
     }
 
-    static bool s_initialized_;
+    inline static bool s_initialized_ = false;
 
 private:
     Config() = default;
     ~Config() = default;
 
-    static YAML::Node s_config_;
+    inline static YAML::Node s_config_;
 };

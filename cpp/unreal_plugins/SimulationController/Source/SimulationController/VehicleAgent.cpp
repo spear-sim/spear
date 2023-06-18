@@ -41,18 +41,16 @@ VehicleAgent::VehicleAgent(UWorld* world)
         SP_ASSERT(spawn_actor);
         spawn_location = spawn_actor->GetActorLocation();
         spawn_rotation = spawn_actor->GetActorRotation();
-    }
-    else if (spawn_mode == "specify_pose") {
+    } else if (spawn_mode == "specify_pose") {
         spawn_location = FVector(
             Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_X"),
             Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Y"),
             Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Z"));
         spawn_rotation = FRotator(
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_PITCH"),
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_YAW"),
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROLL"));
-    }
-    else {
+            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_PITCH"),
+            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_YAW"),
+            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_ROLL"));
+    } else {
         SP_ASSERT(false);
     }
     FActorSpawnParameters actor_spawn_params;
@@ -109,15 +107,6 @@ std::map<std::string, ArrayDesc> VehicleAgent::getActionSpace() const
     std::map<std::string, ArrayDesc> action_space;
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS");
 
-    if (Std::contains(action_components, "set_drive_torques")) {
-        ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<double>::lowest();
-        array_desc.high_ = std::numeric_limits<double>::max();
-        array_desc.shape_ = {4};
-        array_desc.datatype_ = DataType::Float64;
-        action_space["set_drive_torques"] = std::move(array_desc);
-    }
-
     if (Std::contains(action_components, "set_brake_torques")) {
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
@@ -127,6 +116,15 @@ std::map<std::string, ArrayDesc> VehicleAgent::getActionSpace() const
         action_space["set_brake_torques"] = std::move(array_desc);
     }
 
+    if (Std::contains(action_components, "set_drive_torques")) {
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.shape_ = {4};
+        array_desc.datatype_ = DataType::Float64;
+        action_space["set_drive_torques"] = std::move(array_desc);
+    }
+
     return action_space;
 }
 
@@ -134,6 +132,15 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
 {
     std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
+
+    if (Std::contains(observation_components, "imu")) {
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.datatype_ = DataType::Float64;
+        array_desc.shape_ = {6};
+        observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^2] g_x, g_y, g_z in [rad/s]
+    }
 
     if (Std::contains(observation_components, "location")) {
         ArrayDesc array_desc;
@@ -162,15 +169,6 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         observation_space["wheel_encoder"] = std::move(array_desc); // FL, FR, RL, RR, in [rad/s]
     }
 
-    if (Std::contains(observation_components, "imu")) {
-        ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<double>::lowest();
-        array_desc.high_ = std::numeric_limits<double>::max();
-        array_desc.datatype_ = DataType::Float64;
-        array_desc.shape_ = {6};
-        observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^2] g_x, g_y, g_z in [rad/s]
-    }
-
     observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
 
     return observation_space;
@@ -184,6 +182,18 @@ std::map<std::string, ArrayDesc> VehicleAgent::getStepInfoSpace() const
 void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS");
+
+    if (Std::contains(action_components, "set_brake_torques")) {
+        UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
+        SP_ASSERT(vehicle_movement_component);
+
+        std::vector<double> brake_torques = Std::reinterpretAs<double>(action.at("set_brake_torques"));
+
+        vehicle_movement_component->SetBrakeTorque(brake_torques.at(0), 0);
+        vehicle_movement_component->SetBrakeTorque(brake_torques.at(1), 1);
+        vehicle_movement_component->SetBrakeTorque(brake_torques.at(2), 2);
+        vehicle_movement_component->SetBrakeTorque(brake_torques.at(3), 3);
+    }
 
     if (Std::contains(action_components, "set_drive_torques")) {
         // Apply the drive torque in [N.m] to the vehicle wheels. The applied drive torque persists until the
@@ -202,18 +212,6 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
         vehicle_movement_component->SetDriveTorque(drive_torques.at(2), 2);
         vehicle_movement_component->SetDriveTorque(drive_torques.at(3), 3);
     }
-
-    if (Std::contains(action_components, "set_brake_torques")) {
-        UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
-        SP_ASSERT(vehicle_movement_component);
-
-        std::vector<double> brake_torques = Std::reinterpretAs<double>(action.at("set_brake_torques"));
-
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(0), 0);
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(1), 1);
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(2), 2);
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(3), 3);
-    }
 }
 
 std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
@@ -221,6 +219,16 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
     std::map<std::string, std::vector<uint8_t>> observation;
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
+
+    if (Std::contains(observation_components, "imu")) {
+        observation["imu"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+            imu_sensor_->linear_acceleration_body_.X,
+            imu_sensor_->linear_acceleration_body_.Y,
+            imu_sensor_->linear_acceleration_body_.Z,
+            imu_sensor_->angular_velocity_body_.X,
+            imu_sensor_->angular_velocity_body_.Y,
+            imu_sensor_->angular_velocity_body_.Z});
+    }
 
     if (Std::contains(observation_components, "location")) {
         FVector location = vehicle_pawn_->GetActorLocation();
@@ -236,16 +244,6 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
         UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
         SP_ASSERT(vehicle_movement_component);
         observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(vehicle_movement_component->getWheelRotationSpeeds());
-    }
-
-    if (Std::contains(observation_components, "imu")) {
-        observation["imu"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
-            imu_sensor_->linear_acceleration_body_.X,
-            imu_sensor_->linear_acceleration_body_.Y,
-            imu_sensor_->linear_acceleration_body_.Z,
-            imu_sensor_->angular_velocity_body_.X,
-            imu_sensor_->angular_velocity_body_.Y,
-            imu_sensor_->angular_velocity_body_.Z});
     }
 
     observation.merge(camera_sensor_->getObservation(observation_components));

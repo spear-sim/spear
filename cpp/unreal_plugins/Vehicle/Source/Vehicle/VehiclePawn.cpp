@@ -20,7 +20,11 @@
 #include "CoreUtils/Unreal.h"
 #include "Vehicle/VehicleMovementComponent.h"
 
-AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : AWheeledVehiclePawn(object_initializer.SetDefaultSubobjectClass<UVehicleMovementComponent>(TEXT("VehicleMovementComp")))
+// Calling the AWheeledVehiclePawn constructor in this way is necessary to override the UChaosWheeledVehicleMovementComponent
+// class used by AWheeledVehiclePawn. See the following link for details:
+//     https://docs.unrealengine.com/5.2/en-US/API/Plugins/ChaosVehicles/AWheeledVehiclePawn
+AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
+    AWheeledVehiclePawn(object_initializer.SetDefaultSubobjectClass<UVehicleMovementComponent>(AWheeledVehiclePawn::VehicleMovementComponentName))
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -39,38 +43,39 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) : AWhee
     GetMesh()->BodyInstance.bSimulatePhysics = true;
 
     // Setup camera
-    FVector camera_location(
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_X"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Y"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Z"));
-
-    FRotator camera_orientation(
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.PITCH"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL"));
-
     camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("camera_component"));
     SP_ASSERT(camera_component_);
 
-    camera_component_->SetRelativeLocationAndRotation(camera_location, camera_orientation);
+    FVector camera_location(
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_X"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Y"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Z"));
+
+    FRotator camera_rotation(
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_PITCH"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_YAW"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_ROLL"));
+
+    camera_component_->SetRelativeLocationAndRotation(camera_location, camera_rotation);
     camera_component_->SetupAttachment(GetMesh());
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.FOV");
 
     // Setup IMU sensor
-    FVector imu_location(Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_X"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_Y"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.POSITION_Z"));
-
-    FRotator imu_orientation(
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.PITCH"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.YAW"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.ROLL"));
-
     imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("imu_component"));
     ASSERT(imu_component_);
 
-    imu_component_->SetRelativeLocationAndRotation(imu_location, imu_orientation);
+    FVector imu_location(
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.LOCATION_X"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.LOCATION_Y"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.LOCATION_Z"));
+
+    FRotator imu_rotation(
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.ROTATION_PITCH"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.ROTATION_YAW"),
+        Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.ROTATION_ROLL"));
+
+    imu_component_->SetRelativeLocationAndRotation(imu_location, imu_rotation);
     imu_component_->SetupAttachment(GetMesh());
 }
 

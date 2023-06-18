@@ -15,9 +15,7 @@ UCLASS()
 class VEHICLE_API UVehicleMovementComponent : public UChaosWheeledVehicleMovementComponent
 {
     GENERATED_BODY()
-
 public:
-
     UVehicleMovementComponent();
     ~UVehicleMovementComponent();
 

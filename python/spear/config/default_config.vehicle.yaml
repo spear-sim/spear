@@ -8,21 +8,21 @@ VEHICLE:
     ANIM_INSTANCE: "/Vehicle/OpenBot/Meshes/ABP_OpenBot.ABP_OpenBot_C"
 
     CAMERA_COMPONENT:
-      POSITION_X: -60.0               # Camera relative position in [cm]
-      POSITION_Y: 0.0                 # Camera relative position in [cm]
-      POSITION_Z: 30.0                # Camera relative position in [cm]
-      PITCH: -10.0                    # Camera relative orientation in [°]
-      YAW: 0.0                        # Camera relative orientation in [°]
-      ROLL: 0.0                       # Camera relative orientation in [°]
+      LOCATION_X: -60.0               # Camera relative location in [cm]
+      LOCATION_Y: 0.0                 # Camera relative location in [cm]
+      LOCATION_Z: 30.0                # Camera relative location in [cm]
+      ROTATION_PITCH: -10.0           # Camera relative rotation in [°]
+      ROTATION_YAW: 0.0               # Camera relative rotation in [°]
+      ROTATION_ROLL: 0.0              # Camera relative rotation in [°]
       FOV: 70.0                       # Camera field of view in [°]
     
     IMU_COMPONENT:
-      POSITION_X: 8.0                 # IMU relative position in [cm]
-      POSITION_Y: 0.0                 # IMU relative position in [cm]
-      POSITION_Z: 10.0                # IMU relative position in [cm]
-      PITCH: 0.0                      # IMU relative orientation in [°]
-      YAW: 0.0                        # IMU relative orientation in [°]
-      ROLL: 0.0                       # IMU relative orientation in [°]
+      LOCATION_X: 8.0                 # IMU relative location in [cm]
+      LOCATION_Y: 0.0                 # IMU relative location in [cm]
+      LOCATION_Z: 10.0                # IMU relative location in [cm]
+      ROTATION_PITCH: 0.0             # IMU relative rotation in [°]
+      ROTATION_YAW: 0.0               # IMU relative rotation in [°]
+      ROTATION_ROLL: 0.0              # IMU relative rotation in [°]
 
   VEHICLE_COMPONENT:
     MASS: 11.2                        # Mass of the vehicle chassis in [kg]

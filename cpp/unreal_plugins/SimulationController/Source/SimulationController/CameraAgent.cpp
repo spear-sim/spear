@@ -44,9 +44,9 @@ CameraAgent::CameraAgent(UWorld* world)
             Config::get<double>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_LOCATION_Y"),
             Config::get<double>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_LOCATION_Z"));
         spawn_rotation = FRotator(
-            Config::get<double>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_PITCH"),
-            Config::get<double>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_YAW"),
-            Config::get<double>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_ROLL"));
+            Config::get<double>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_ROTATION_PITCH"),
+            Config::get<double>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_ROTATION_YAW"),
+            Config::get<double>("SIMULATION_CONTROLLER.CAMERA_AGENT.SPAWN_ROTATION_ROLL"));
     } else {
         SP_ASSERT(false);
     }

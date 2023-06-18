@@ -13,9 +13,7 @@ UCLASS()
 class UVehicleWheel : public UChaosVehicleWheel
 {
     GENERATED_BODY()
-
 public:
-
     UVehicleWheel();
     ~UVehicleWheel();
 };

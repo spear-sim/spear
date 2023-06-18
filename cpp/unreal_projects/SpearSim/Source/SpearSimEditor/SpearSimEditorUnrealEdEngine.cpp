@@ -47,15 +47,15 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
             UCubeBuilder* cube_builder = dynamic_cast<UCubeBuilder*>(nav_modifier_volume->BrushBuilder.Get());
             ASSERT(cube_builder);
 
-            FVector position = nav_modifier_volume->GetActorLocation();
+            FVector location = nav_modifier_volume->GetActorLocation();
             FRotator rotation = nav_modifier_volume->GetActorRotation();
             FVector scale = nav_modifier_volume->GetActorScale3D();
 
             SP_LOG("nav_modifier_volume->GetName():                 ", Unreal::toStdString(nav_modifier_volume->GetName()));
             SP_LOG("nav_modifier_volume->GetAreaClass()->GetName(): ", Unreal::toStdString(nav_modifier_volume->GetAreaClass()->GetName()));
-            SP_LOG("position.X:                                     ", position.X);
-            SP_LOG("position.Y:                                     ", position.Y);
-            SP_LOG("position.Z:                                     ", position.Z);
+            SP_LOG("location.X:                                     ", location.X);
+            SP_LOG("location.Y:                                     ", location.Y);
+            SP_LOG("location.Z:                                     ", location.Z);
             SP_LOG("rotation.Pitch:                                 ", rotation.Pitch);
             SP_LOG("rotation.Yaw:                                   ", rotation.Yaw);
             SP_LOG("rotation.Roll:                                  ", rotation.Roll);
@@ -131,7 +131,7 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
             FVector spawn_location = nav_mesh->GetRandomPoint().Location;
             FRotator spawn_rotation = FRotator::ZeroRotator;
             FActorSpawnParameters actor_spawn_params;
-            actor_spawn_params.Name = Unreal::toFName("DebugSphere_" + boost::lexical_cast<std::string>(i+j));
+            actor_spawn_params.Name = Unreal::toFName("debug_sphere_" + boost::lexical_cast<std::string>(i+j));
             actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
             AStaticMeshActor* sphere_actor = world->SpawnActor<AStaticMeshActor>(spawn_location, spawn_rotation, actor_spawn_params);
             ASSERT(sphere_actor);
