@@ -15,7 +15,7 @@
 #undef verify
 
 // macOS supports native posix shared memory objects, but doesn't export the _POSIX_SHARED_MEMORY_OBJECTS
-// macro, but Boost uses this macro to decide whether or not to use native posix shared memory objects,
+// macro. However, Boost uses this macro to decide whether or not to use native posix shared memory objects,
 // rather than emulating them through memory-mapped files. To address this issue, we explicitly define
 // BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS, because this forces Boost to use native posix shared
 // memory objects.
