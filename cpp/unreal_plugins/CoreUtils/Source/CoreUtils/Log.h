@@ -14,8 +14,8 @@
 
 #include "CoreUtils/Std.h"
 
-// This macro returns an empty string if If __VA_ARGS__ is empty, and returns __VA_ARGS__ with a leading comma otherwise. This
-// macro enables variadic macro arguments to be passed into a function that accepts other arguments, regardless of whether or not
+// This macro returns an empty string if __VA_ARGS__ is empty, and returns __VA_ARGS__ with a leading comma otherwise. This macro
+// enables variadic macro arguments to be passed into a function that accepts other arguments, regardless of whether or not
 // __VA_ARGS__ is empty. It must be defined conditionally because MSVC doesn't support __VA_OPT__ by default.
 #if BOOST_COMP_MSVC
     #define SP_VA_ARGS_WITH_LEADING_COMMA(...) , __VA_ARGS__
@@ -33,7 +33,7 @@
 #define SP_LOG(...)               Log::log(__FILE__ SP_VA_ARGS_WITH_LEADING_COMMA(__VA_ARGS__))
 #define SP_LOG_CURRENT_FUNCTION() Log::logCurrentFunction(__FILE__, BOOST_CURRENT_FUNCTION)
 
-// Helper macro that can be useful when printing to the game viewport or some other target
+// Helper macro that can be useful when printing to the game viewport or some other target.
 #define SP_LOG_GET_PREFIX() Log::getPrefix(__FILE__)
 
 class COREUTILS_API Log
