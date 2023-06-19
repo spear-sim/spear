@@ -55,6 +55,8 @@ void NavMesh::findObjectReferences(UWorld* world)
     recast_nav_mesh_->NavMeshResolutionParams[static_cast<uint8>(ENavigationDataResolution::High)].CellSize      = cell_size;
     recast_nav_mesh_->NavMeshResolutionParams[static_cast<uint8>(ENavigationDataResolution::High)].CellHeight    = cell_height;
 
+    SP_LOG("Building navigation mesh...");
+
     navigation_system_v1->Build();
 
     // We need to wrap this call with guards because ExportNavigationData(...) is only implemented in non-shipping builds, see:
