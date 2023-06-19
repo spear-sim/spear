@@ -13,7 +13,7 @@ import spear
 import time
 
 
-NUM_STEPS = 200
+NUM_STEPS = 100
 
 
 # Custom Env implementation for OpenBot
@@ -145,7 +145,7 @@ if __name__ == "__main__":
                 spear.log("SphereAgent:")
                 spear.log("    location: ", obs["location"])
                 spear.log("    rotation: ", obs["rotation"])
-                spear.log("    camera:   ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log("    camera:   ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
                 spear.log("    reward:   ", reward)
                 spear.log("    done:     ", done)
                 spear.log("    info:     ", info)
@@ -156,7 +156,7 @@ if __name__ == "__main__":
                 spear.log("    location:      ", obs["location"])
                 spear.log("    rotation:      ", obs["rotation"])
                 spear.log("    wheel_encoder: ", obs["wheel_encoder"])
-                spear.log("    camera:        ", obs["camera.final_color"].shape, obs["camera.final_color"].dtype)
+                spear.log("    camera:        ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
                 spear.log("    reward:        ", reward)
                 spear.log("    done:          ", done)
                 spear.log("    info:          ", info)
