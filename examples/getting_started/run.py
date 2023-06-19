@@ -125,6 +125,13 @@ if __name__ == "__main__":
     elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
         env = OpenBotEnv(config)
 
+    # get a few random points
+    num_random_points = 10000
+    points = env.get_random_points(num_random_points)
+
+    spear.log("env.get_random_points:")
+    spear.log_no_prefix(points)
+
     # reset the simulation to get the first observation
     obs = env.reset()
 
@@ -148,7 +155,7 @@ if __name__ == "__main__":
                 spear.log("    camera:   ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
                 spear.log("    reward:   ", reward)
                 spear.log("    done:     ", done)
-                spear.log("    info:     ", info)
+                spear.log("    info:     ", info.keys())
         elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
             obs, reward, done, info = env.step(action={"set_duty_cycles": np.array([1.0, 0.715], dtype=np.float64)})
             if not args.benchmark:
@@ -159,7 +166,7 @@ if __name__ == "__main__":
                 spear.log("    camera:        ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
                 spear.log("    reward:        ", reward)
                 spear.log("    done:          ", done)
-                spear.log("    info:          ", info)
+                spear.log("    info:          ", info.keys())
         else:
             assert False
 
