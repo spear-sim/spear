@@ -15,10 +15,6 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 
-NavMesh::NavMesh(UWorld* world) {}
-
-NavMesh::~NavMesh() {}
-
 void NavMesh::findObjectReferences(UWorld* world)
 {
     auto navigation_system_v1 = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);

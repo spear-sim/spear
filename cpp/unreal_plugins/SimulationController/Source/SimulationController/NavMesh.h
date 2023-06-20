@@ -11,9 +11,9 @@ class UWorld;
 
 class NavMesh
 {
-public:
-    NavMesh(UWorld* world);
-    ~NavMesh();
+public:    
+    NavMesh() = default;
+    ~NavMesh() = default;
 
     void findObjectReferences(UWorld* world);
     void cleanUpObjectReferences();

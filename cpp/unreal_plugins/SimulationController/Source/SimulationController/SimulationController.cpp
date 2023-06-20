@@ -209,7 +209,7 @@ void SimulationController::worldBeginPlayEventHandler()
     SP_ASSERT(task_);
 
     // create NavMesh
-    nav_mesh_ = std::make_unique<NavMesh>(world_);
+    nav_mesh_ = std::make_unique<NavMesh>();
     SP_ASSERT(nav_mesh_);
 
     // create Visualizer
