@@ -59,8 +59,8 @@ CameraAgent::CameraAgent(UWorld* world)
     camera_actor_->GetCameraComponent()->FieldOfView =
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.FOV");
     camera_actor_->GetCameraComponent()->AspectRatio =
-        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_WIDTH") /
-        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT");
+        Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.IMAGE_WIDTH") /
+        Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.IMAGE_HEIGHT");
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
