@@ -1,0 +1,47 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+VEHICLE:
+  VEHICLE_PAWN:
+    SKELETAL_MESH: "/Vehicle/OpenBot/Meshes/SK_OpenBot.SK_OpenBot"
+    ANIM_INSTANCE: "/Vehicle/OpenBot/Meshes/ABP_OpenBot.ABP_OpenBot_C"
+
+    CAMERA_COMPONENT:
+      LOCATION_X: -60.0               # Camera relative location in [cm]
+      LOCATION_Y: 0.0                 # Camera relative location in [cm]
+      LOCATION_Z: 30.0                # Camera relative location in [cm]
+      ROTATION_PITCH: -10.0           # Camera relative rotation in [°]
+      ROTATION_YAW: 0.0               # Camera relative rotation in [°]
+      ROTATION_ROLL: 0.0              # Camera relative rotation in [°]
+      FOV: 70.0                       # Camera field of view in [°], typically overwritten by VehicleAgent
+      ASPECT_RATIO: 1.333333          # Camera aspect ratio, width/height == 160/120, typically overwritten by VehicleAgent
+
+    IMU_COMPONENT:
+      LOCATION_X: 8.0                 # IMU relative location in [cm]
+      LOCATION_Y: 0.0                 # IMU relative location in [cm]
+      LOCATION_Z: 10.0                # IMU relative location in [cm]
+      ROTATION_PITCH: 0.0             # IMU relative rotation in [°]
+      ROTATION_YAW: 0.0               # IMU relative rotation in [°]
+      ROTATION_ROLL: 0.0              # IMU relative rotation in [°]
+
+  VEHICLE_COMPONENT:
+    MASS: 11.2                        # Mass of the vehicle chassis in [kg]
+    DRAG_COEFFICIENT: 1.0             # DragCoefficient of the vehicle chassis
+    CHASSIS_WIDTH: 15.0               # Chassis width used for drag force computation in [cm]
+    CHASSIS_HEIGHT: 15.0              # Chassis height used for drag force computation in [cm]
+    ENABLE_SUSPENSION: True
+    ENABLE_WHEEL_FRICTION: True
+    ENABLE_LEGACY_WHEEL_FRICTION: False
+
+  VEHICLE_WHEEL:
+    WHEEL_MASS: 0.033                 # Mass of this wheel in [kg]
+    WHEEL_RADIUS: 3.3                 # Radius of the wheel in [cm]
+    WHEEL_WIDTH: 2.5                  # Width of the wheel in [cm]
+    FRICTION_FORCE_MULTIPLIER: 3.0
+    SUSPENSION_MAX_RAISE: 0.001       # How far the wheel can go above the resting position in [m]
+    SUSPENSION_MAX_DROP: 0.001        # How far the wheel can drop below the resting position in [m]
+    SUSPENSION_DAMPING_RATIO: 0.5     # The rate at which energy is dissipated from the spring. Standard cars have values between 0.8 and 1.2. Values < 1
+                                      # are more sluggish, values > 1 are more twitchy.
+    SPRING_RATE: 0.167                # Spring force in [N/m]
+    SPRING_PRELOAD: 0.033             # Spring preload in [N/m]

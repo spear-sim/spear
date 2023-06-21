@@ -55,9 +55,9 @@ const std::map<std::string, ETextureRenderTargetFormat> RENDER_PASS_TEXTURE_REND
     {"segmentation", ETextureRenderTargetFormat::RTF_RGBA8}};
 
 const std::map<std::string, std::string> RENDER_PASS_MATERIAL = {
-    {"depth",        "/SimulationController/Materials/M_Depth.M_Depth"},
-    {"normal",       "/SimulationController/Materials/M_Normal.M_Normal"},
-    {"segmentation", "/SimulationController/Materials/M_Segmentation.M_Segmentation"}};
+    {"depth",        "/SimulationController/Materials/PPM_Depth.PPM_Depth"},
+    {"normal",       "/SimulationController/Materials/PPM_Normal.PPM_Normal"},
+    {"segmentation", "/SimulationController/Materials/PPM_Segmentation.PPM_Segmentation"}};
 
 const std::map<std::string, float> RENDER_PASS_LOW = {
     {"depth",        0.0f},

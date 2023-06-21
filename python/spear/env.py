@@ -91,6 +91,15 @@ class Env(gym.Env):
         self._request_close_unreal_instance()
         self._close_rpc_client()
 
+    def get_random_points(self, num_points):
+
+        self._begin_tick()
+        self._tick()
+        points = self._get_random_points(num_points)
+        self._end_tick()
+
+        return points
+
     def _request_launch_unreal_instance(self):
 
         if self._config.SPEAR.LAUNCH_MODE == "running_instance":
@@ -326,7 +335,7 @@ class Env(gym.Env):
         self._rpc_client._loop._ioloop.close()
     
     def _get_byte_order(self):
-        unreal_instance_byte_order = self._rpc_client.call("getByteOrder")
+        unreal_instance_byte_order = self._rpc_client.call("get_byte_order")
         rpc_client_byte_order = sys.byteorder
         if unreal_instance_byte_order == rpc_client_byte_order:
             return None
@@ -341,32 +350,32 @@ class Env(gym.Env):
         return self._rpc_client.call("ping")
 
     def _request_close(self):
-        self._rpc_client.call("requestClose")
+        self._rpc_client.call("request_close")
 
     def _begin_tick(self):
-        self._rpc_client.call("beginTick")
+        self._rpc_client.call("begin_tick")
 
     def _tick(self):
         self._rpc_client.call("tick")
 
     def _end_tick(self):
-        self._rpc_client.call("endTick")
+        self._rpc_client.call("end_tick")
 
     def _get_action_space(self):
-        array_desc = self._rpc_client.call("getActionSpace")
+        array_desc = self._rpc_client.call("get_action_space")
         assert len(array_desc) > 0
         return array_desc
 
     def _get_observation_space(self):
-        array_desc = self._rpc_client.call("getObservationSpace")
+        array_desc = self._rpc_client.call("get_observation_space")
         assert len(array_desc) > 0
         return array_desc
 
     def _get_task_step_info_space(self):
-        return self._rpc_client.call("getTaskStepInfoSpace")
+        return self._rpc_client.call("get_task_step_info_space")
 
     def _get_agent_step_info_space(self):
-        return self._rpc_client.call("getAgentStepInfoSpace")
+        return self._rpc_client.call("get_agent_step_info_space")
 
     def _apply_action(self, action):
 
@@ -378,13 +387,13 @@ class Env(gym.Env):
         action_non_shared = { name:component for name, component in action.items() if name in self._action_space_desc.space_non_shared.spaces.keys() }
         action_non_shared_serialized = _serialize_arrays(
             action_non_shared, space=self._action_space_desc.space_non_shared, byte_order=self._byte_order)
-        self._rpc_client.call("applyAction", action_non_shared_serialized)
+        self._rpc_client.call("apply_action", action_non_shared_serialized)
 
     def _get_observation(self):
 
         observation_shared = self._observation_space_desc.shared_memory_arrays
 
-        observation_non_shared_serialized = self._rpc_client.call("getObservation")
+        observation_non_shared_serialized = self._rpc_client.call("get_observation")
         observation_non_shared = _deserialize_arrays(
             observation_non_shared_serialized, space=self._observation_space_desc.space_non_shared, byte_order=self._byte_order)
 
@@ -393,18 +402,18 @@ class Env(gym.Env):
         return {**observation_shared, **observation_non_shared}
 
     def _get_reward(self):
-        return self._rpc_client.call("getReward")
+        return self._rpc_client.call("get_reward")
     
     def _is_episode_done(self):
-        return self._rpc_client.call("isEpisodeDone")
+        return self._rpc_client.call("is_episode_done")
 
     def _get_step_info(self):
 
         task_step_info_shared = self._task_step_info_space_desc.shared_memory_arrays
         agent_step_info_shared = self._agent_step_info_space_desc.shared_memory_arrays
 
-        task_step_info_non_shared_serialized = self._rpc_client.call("getTaskStepInfo")
-        agent_step_info_non_shared_serialized = self._rpc_client.call("getAgentStepInfo")
+        task_step_info_non_shared_serialized = self._rpc_client.call("get_task_step_info")
+        agent_step_info_non_shared_serialized = self._rpc_client.call("get_agent_step_info")
 
         task_step_info_non_shared = _deserialize_arrays(
             task_step_info_non_shared_serialized, space=self._task_step_info_space_desc.space_non_shared, byte_order=self._byte_order)
@@ -415,17 +424,23 @@ class Env(gym.Env):
         assert len(set(agent_step_info_shared.keys()) & set(agent_step_info_non_shared.keys())) == 0
 
         return {
-            "task_step_info":{**task_step_info_shared, **task_step_info_non_shared},
-            "agent_step_info":{**agent_step_info_shared, **agent_step_info_non_shared}}
+            "task_step_info": {**task_step_info_shared, **task_step_info_non_shared},
+            "agent_step_info": {**agent_step_info_shared, **agent_step_info_non_shared}}
 
     def _reset(self):
         # reset the task first in case it needs to set the pose of actors,
         # then reset agent so it can refine the pose of actors
-        self._rpc_client.call("resetTask")
-        self._rpc_client.call("resetAgent")
+        self._rpc_client.call("reset_task")
+        self._rpc_client.call("reset_agent")
 
     def _is_ready(self):
-        return self._rpc_client.call("isTaskReady") and self._rpc_client.call("isAgentReady")
+        return self._rpc_client.call("is_task_ready") and self._rpc_client.call("is_agent_ready")
+
+    def _get_random_points(self, num_points):
+        random_points_serialized = self._rpc_client.call("get_random_points", num_points)
+        random_points = _deserialize_array(
+            random_points_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)
+        return random_points
 
 
 # metadata for describing a space including the shared memory objects
@@ -519,7 +534,7 @@ DATATYPE_TO_DTYPE = {
 
 # functions for creating Python spaces from C++ array_descs
 def _create_dict_space(array_descs, dict_space_type, box_space_type):
-    return dict_space_type({ name:_create_box_space(array_desc, box_space_type=box_space_type) for name, array_desc in array_descs.items() })
+    return dict_space_type({ name: _create_box_space(array_desc, box_space_type=box_space_type) for name, array_desc in array_descs.items() })
 
 def _create_box_space(array_desc, box_space_type):
     low = array_desc["low_"]
@@ -532,11 +547,11 @@ def _create_box_space(array_desc, box_space_type):
 # functions for converting arrays between Python and C++ data
 def _deserialize_arrays(data, space, byte_order):
     assert data.keys() == space.spaces.keys()
-    return { name:_deserialize_array(component, space=space.spaces[name], byte_order=byte_order) for name, component in data.items() }
+    return { name: _deserialize_array(component, space=space.spaces[name], byte_order=byte_order) for name, component in data.items() }
 
 def _serialize_arrays(arrays, space, byte_order):
     assert arrays.keys() == space.spaces.keys()
-    return { name:_serialize_array(component, space=space.spaces[name], byte_order=byte_order) for name, component in arrays.items() }
+    return { name: _serialize_array(component, space=space.spaces[name], byte_order=byte_order) for name, component in arrays.items() }
 
 def _deserialize_array(data, space, byte_order):
     dtype = space.dtype if byte_order is None else space.dtype.newbyteorder(byte_order)

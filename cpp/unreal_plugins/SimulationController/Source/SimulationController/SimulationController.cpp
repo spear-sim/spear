@@ -27,13 +27,14 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/CameraAgent.h"
+#include "SimulationController/NavMesh.h"
 #include "SimulationController/NullTask.h"
-#include "SimulationController/OpenBotAgent.h"
 #include "SimulationController/RpcServer.h"
 #include "SimulationController/SphereAgent.h"
 #include "SimulationController/Task.h"
 #include "SimulationController/UrdfBotAgent.h"
 #include "SimulationController/Visualizer.h"
+#include "SimulationController/VehicleAgent.h"
 
 // Different possible frame states for thread synchronization
 enum class FrameState
@@ -49,9 +50,9 @@ void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("Vehicle")));
 
-    // TODO: uncomment when we're ready to re-enable OpenBot and UrdfBot
-    // SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("OpenBot")));
+    // TODO: uncomment when we're ready to re-enable UrdfBot
     // SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
 
     if (!Config::s_initialized_) {
@@ -187,12 +188,11 @@ void SimulationController::worldBeginPlayEventHandler()
     // create Agent
     if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "CameraAgent") {
         agent_ = std::make_unique<CameraAgent>(world_);
-    // TODO: uncomment when we're ready to re-enable OpenBot and UrdfBot
-    // } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "OpenBotAgent") {
-    //     agent_ = std::make_unique<OpenBotAgent>(world_);
     } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
         agent_ = std::make_unique<SphereAgent>(world_);
-    // TODO: uncomment when we're ready to re-enable OpenBot and UrdfBot
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "VehicleAgent") {
+        agent_ = std::make_unique<VehicleAgent>(world_);
+    // TODO: uncomment when we're ready to re-enable UrdfBot
     // } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
     //     agent_ = std::make_unique<SphereAgent>(world_);
     } else {
@@ -208,6 +208,10 @@ void SimulationController::worldBeginPlayEventHandler()
     }
     SP_ASSERT(task_);
 
+    // create NavMesh
+    nav_mesh_ = std::make_unique<NavMesh>();
+    SP_ASSERT(nav_mesh_);
+
     // create Visualizer
     visualizer_ = std::make_unique<Visualizer>(world_);
     SP_ASSERT(visualizer_);
@@ -215,6 +219,7 @@ void SimulationController::worldBeginPlayEventHandler()
     // deferred initialization for Agent, Task, and Visualizer
     agent_->findObjectReferences(world_);
     task_->findObjectReferences(world_);
+    nav_mesh_->findObjectReferences(world_);
     visualizer_->findObjectReferences(world_);
 
     // initialize frame state used for thread synchronization
@@ -255,6 +260,10 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             SP_ASSERT(visualizer_);
             visualizer_->cleanUpObjectReferences();
             visualizer_ = nullptr;
+
+            SP_ASSERT(nav_mesh_);
+            nav_mesh_->cleanUpObjectReferences();
+            nav_mesh_ = nullptr;
 
             SP_ASSERT(task_);
             task_->cleanUpObjectReferences();
@@ -329,17 +338,17 @@ void SimulationController::bindFunctionsToRpcServer()
         return "SimulationController received a call to ping()...";
     });
 
-    rpc_server_->bindAsync("getByteOrder", []() -> std::string {
+    rpc_server_->bindAsync("get_byte_order", []() -> std::string {
         uint32_t dummy = 0x01020304;
         return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
     });
 
-    rpc_server_->bindAsync("requestClose", []() -> void {
+    rpc_server_->bindAsync("request_close", []() -> void {
         bool immediate_shutdown = false;
         FGenericPlatformMisc::RequestExit(immediate_shutdown);
     });
 
-    rpc_server_->bindAsync("beginTick", [this]() -> void {
+    rpc_server_->bindAsync("begin_tick", [this]() -> void {
         SP_ASSERT(frame_state_ == FrameState::Idle);
 
         // reset promises and futures
@@ -368,7 +377,7 @@ void SimulationController::bindFunctionsToRpcServer()
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
     });
 
-    rpc_server_->bindAsync("endTick", [this]() -> void {
+    rpc_server_->bindAsync("end_tick", [this]() -> void {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
         // allow endFrameEventHandler() to finish executing, wait here until frame_state == FrameState::Idle
@@ -378,84 +387,90 @@ void SimulationController::bindFunctionsToRpcServer()
         SP_ASSERT(frame_state_ == FrameState::Idle);
     });
 
-    rpc_server_->bindAsync("getActionSpace", [this]() -> std::map<std::string, ArrayDesc> {
+    rpc_server_->bindAsync("get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
         SP_ASSERT(agent_);
         return agent_->getActionSpace();
     });
 
-    rpc_server_->bindAsync("getObservationSpace", [this]() -> std::map<std::string, ArrayDesc> {
+    rpc_server_->bindAsync("get_observation_space", [this]() -> std::map<std::string, ArrayDesc> {
         SP_ASSERT(agent_);
         return agent_->getObservationSpace();
     });
 
-    rpc_server_->bindAsync("getAgentStepInfoSpace", [this]() -> std::map<std::string, ArrayDesc> {
+    rpc_server_->bindAsync("get_agent_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
         SP_ASSERT(agent_);
         return agent_->getStepInfoSpace();
     });
 
-    rpc_server_->bindAsync("getTaskStepInfoSpace", [this]() -> std::map<std::string, ArrayDesc> {
+    rpc_server_->bindAsync("get_task_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
         SP_ASSERT(task_);
         return task_->getStepInfoSpace();
     });
 
-    rpc_server_->bindSync("applyAction", [this](std::map<std::string, std::vector<uint8_t>> action) -> void {
+    rpc_server_->bindSync("apply_action", [this](std::map<std::string, std::vector<uint8_t>> action) -> void {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(agent_);
         agent_->applyAction(action);
     });
 
-    rpc_server_->bindSync("getObservation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+    rpc_server_->bindSync("get_observation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(agent_);
         return agent_->getObservation();
     });
 
-    rpc_server_->bindSync("getReward", [this]() -> float {
+    rpc_server_->bindSync("get_reward", [this]() -> float {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(task_);
         return task_->getReward();
     });
 
-    rpc_server_->bindSync("isEpisodeDone", [this]() -> bool {
+    rpc_server_->bindSync("is_episode_done", [this]() -> bool {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(task_);
         return task_->isEpisodeDone();
     });
 
-    rpc_server_->bindSync("getAgentStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+    rpc_server_->bindSync("get_agent_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(agent_);
         return agent_->getStepInfo();
     });
 
-    rpc_server_->bindSync("getTaskStepInfo", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+    rpc_server_->bindSync("get_task_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(task_);
         return task_->getStepInfo();
     });
 
-    rpc_server_->bindSync("resetAgent", [this]() -> void {
+    rpc_server_->bindSync("reset_agent", [this]() -> void {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(agent_);
         agent_->reset();
     });
 
-    rpc_server_->bindSync("resetTask", [this]() -> void {
+    rpc_server_->bindSync("reset_task", [this]() -> void {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(task_);
         task_->reset();
     });
 
-    rpc_server_->bindSync("isAgentReady", [this]() -> bool {
+    rpc_server_->bindSync("is_agent_ready", [this]() -> bool {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(agent_);
         return agent_->isReady();
     });
 
-    rpc_server_->bindSync("isTaskReady", [this]() -> bool {
+    rpc_server_->bindSync("is_task_ready", [this]() -> bool {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(task_);
         return task_->isReady();
+    });
+
+    rpc_server_->bindSync("get_random_points", [this](int num_points) -> std::vector<uint8_t> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(nav_mesh_);
+        return nav_mesh_->getRandomPoints(num_points);
     });
 }
 

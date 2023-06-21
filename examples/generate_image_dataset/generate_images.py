@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
         obs, _, _, _ = env.step(
             action={
-                "set_position": np.array([pose["position_x"], pose["position_y"], pose["position_z"]], np.float64),
+                "set_location": np.array([pose["location_x"], pose["location_y"], pose["location_z"]], np.float64),
                 "set_rotation": np.array([pose["rotation_pitch"], pose["rotation_yaw"], pose["rotation_roll"]], np.float64)})
 
         # save images for each render pass

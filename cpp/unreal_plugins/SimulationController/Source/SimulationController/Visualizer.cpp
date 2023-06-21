@@ -21,13 +21,13 @@ Visualizer::Visualizer(UWorld* world)
 {
     if (Config::get<bool>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA")) {
         FVector location(
-            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_POSITION_X"),
-            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_POSITION_Y"),
-            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_POSITION_Z"));
+            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_LOCATION_X"),
+            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_LOCATION_Y"),
+            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_LOCATION_Z"));
         FRotator rotation(
-            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_ORIENTATION_PITCH"),
-            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_ORIENTATION_YAW"),
-            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_CAMERA_ORIENTATION_ROLL"));
+            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_ROTATION_PITCH"),
+            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_ROTATION_YAW"),
+            Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_ROTATION_ROLL"));
 
         FActorSpawnParameters actor_spawn_params;
         actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VISUALIZER.ACTOR_NAME"));
