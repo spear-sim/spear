@@ -125,11 +125,6 @@ if __name__ == "__main__":
     elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
         env = OpenBotEnv(config)
 
-    # get a few random points
-    points = env.get_random_points(num_points=1000)
-    spear.log("env.get_random_points:")
-    spear.log_no_prefix(points)
-
     # reset the simulation to get the first observation
     obs = env.reset()
 
