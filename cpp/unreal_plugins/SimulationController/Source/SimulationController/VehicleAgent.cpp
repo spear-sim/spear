@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include <Camera/CameraComponent.h>
 #include <Components/BoxComponent.h>
 #include <Components/PrimitiveComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
@@ -58,6 +59,12 @@ VehicleAgent::VehicleAgent(UWorld* world)
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     vehicle_pawn_ = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_params);
     SP_ASSERT(vehicle_pawn_);
+
+    vehicle_pawn_->camera_component_->FieldOfView =
+        Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.FOV");
+    vehicle_pawn_->camera_component_->AspectRatio =
+        Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH") /
+        Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT");
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 

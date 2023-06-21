@@ -8,17 +8,17 @@
 #include <CoreMinimal.h>
 #include <GameFramework/Actor.h>
 
-#include "SpearSimEditorUtils.generated.h"
+#include "DebugWidget.generated.h"
 
 class FObjectInitializer;
 
 UCLASS(Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
-class ASpearSimEditorUtils : public AActor
+class ADebugWidget : public AActor
 {
     GENERATED_BODY()
 public: 
-    ASpearSimEditorUtils(const FObjectInitializer& object_initializer);
-    ~ASpearSimEditorUtils();
+    ADebugWidget(const FObjectInitializer& object_initializer);
+    ~ADebugWidget();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void loadConfig();

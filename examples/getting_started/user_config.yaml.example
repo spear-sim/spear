@@ -72,5 +72,5 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
 
   VISUALIZER:
-    ACTOR_NAME: "DebugCameraActor"
+    ACTOR_NAME: "camera_actor"
     SPAWN_CAMERA: False

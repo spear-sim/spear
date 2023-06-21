@@ -14,8 +14,9 @@ VEHICLE:
       ROTATION_PITCH: -10.0           # Camera relative rotation in [°]
       ROTATION_YAW: 0.0               # Camera relative rotation in [°]
       ROTATION_ROLL: 0.0              # Camera relative rotation in [°]
-      FOV: 70.0                       # Camera field of view in [°]
-    
+      FOV: 70.0                       # Camera field of view in [°], typically overwritten by VehicleAgent
+      ASPECT_RATIO: 1.333333          # Camera aspect ratio, width/height == 160/120, typically overwritten by VehicleAgent
+
     IMU_COMPONENT:
       LOCATION_X: 8.0                 # IMU relative location in [cm]
       LOCATION_Y: 0.0                 # IMU relative location in [cm]
