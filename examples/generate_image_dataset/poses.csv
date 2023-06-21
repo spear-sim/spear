@@ -1,4 +1,4 @@
-scene_id,loc_x_cms,loc_y_cms,loc_z_cms,rot_pitch_degs,rot_yaw_degs,rot_roll_degs
+scene_id,location_x_cms,location_y_cms,location_z_cms,rotation_pitch_degs,rotation_yaw_degs,rotation_roll_degs
 debug_0000,224.79530571596226,-222.10572368193363,200.2608570841492,0.0,13.768007518039411,0.0
 debug_0000,211.6925136249925,75.41587635836132,200.31687343007715,0.0,-46.90693676148487,0.0
 debug_0000,-425.5355469474903,-457.4389614184742,200.0,0.0,-62.71749926049314,0.0

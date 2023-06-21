@@ -100,8 +100,8 @@ if __name__ == "__main__":
 
         obs, _, _, _ = env.step(
             action={
-                "set_location": np.array([pose["loc_x_cms"], pose["loc_y_cms"], pose["loc_z_cms"]], np.float64),
-                "set_rotation": np.array([pose["rot_pitch_degs"], pose["rot_yaw_degs"], pose["rot_roll_degs"]], np.float64)})
+                "set_location": np.array([pose["location_x_cms"], pose["location_y_cms"], pose["location_z_cms"]], np.float64),
+                "set_rotation": np.array([pose["rotation_pitch_degs"], pose["rotation_yaw_degs"], pose["rotation_roll_degs"]], np.float64)})
 
         # save images for each render pass
         if not args.benchmark:
