@@ -56,6 +56,8 @@ CameraAgent::CameraAgent(UWorld* world)
     camera_actor_ = world->SpawnActor<ACameraActor>(spawn_location, spawn_rotation, actor_spawn_params);
     SP_ASSERT(camera_actor_);
 
+    camera_actor_->GetCameraComponent()->FieldOfView =
+        Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.FOV");
     camera_actor_->GetCameraComponent()->AspectRatio =
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.IMAGE_WIDTH") /
         Config::get<float>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.IMAGE_HEIGHT");

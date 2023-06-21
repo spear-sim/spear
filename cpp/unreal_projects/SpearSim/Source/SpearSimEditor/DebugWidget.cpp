@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpearSimEditor/SpearSimEditorUtils.h"
+#include "SpearSimEditor/DebugWidget.h"
 
 #include <Containers/UnrealString.h>
 #include <CoreMinimal.h>
@@ -13,27 +13,27 @@
 
 class FObjectInitializer;
 
-ASpearSimEditorUtils::ASpearSimEditorUtils(const FObjectInitializer& object_initializer)
+ADebugWidget::ADebugWidget(const FObjectInitializer& object_initializer)
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-ASpearSimEditorUtils::~ASpearSimEditorUtils()
+ADebugWidget::~ADebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void ASpearSimEditorUtils::loadConfig()
+void ADebugWidget::loadConfig()
 {
     LoadConfig();
 }
 
-void ASpearSimEditorUtils::saveConfig()
+void ADebugWidget::saveConfig()
 {
     SaveConfig();
 }
 
-void ASpearSimEditorUtils::printDummyString()
+void ADebugWidget::printDummyString()
 {
     SP_LOG("dummy_string_: ", Unreal::toStdString(dummy_string_));
 }

@@ -60,6 +60,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     camera_component_->SetupAttachment(GetMesh());
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.FOV");
+    camera_component_->AspectRatio = Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ASPECT_RATIO");
 
     // Setup IMU sensor
     imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("imu_component"));

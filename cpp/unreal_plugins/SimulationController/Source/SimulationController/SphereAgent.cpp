@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <Camera/CameraActor.h>
+#include <Camera/CameraComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Delegates/IDelegateInstance.h>
 #include <Engine/CollisionProfile.h>
@@ -32,7 +33,7 @@
 
 SphereAgent::SphereAgent(UWorld* world)
 {
-    // spawn actor
+    // spawn main actor
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
     std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_MODE");
@@ -89,16 +90,32 @@ SphereAgent::SphereAgent(UWorld* world)
     static_mesh_component_->SetSimulatePhysics(true);
     static_mesh_component_->SetNotifyRigidBodyCollision(true);
 
+    // set up camera
+    FActorSpawnParameters camera_spawn_params;
+    camera_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA_ACTOR_NAME"));
+    camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, camera_spawn_params);
+    SP_ASSERT(camera_actor_);
+
+    camera_actor_->GetCameraComponent()->FieldOfView =
+        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.FOV");
+    camera_actor_->GetCameraComponent()->AspectRatio =
+        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_WIDTH") /
+        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT");
+
+    // set up tick handler
+    parent_actor_ = world->SpawnActor<AActor>();
+    SP_ASSERT(parent_actor_);
+
+    tick_event_component_ = NewObject<UTickEventComponent>(parent_actor_);
+    SP_ASSERT(tick_event_component_);
+    tick_event_component_->RegisterComponent();
+    tick_event_component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
+    tick_event_handle_ = tick_event_component_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
+
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
-    // set up camera
     if (Std::contains(observation_components, "camera")) {
-        FActorSpawnParameters camera_spawn_params;
-        camera_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA_ACTOR_NAME"));
-        camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, camera_spawn_params);
-        SP_ASSERT(camera_actor_);
-
         camera_sensor_ = std::make_unique<CameraSensor>(
             camera_actor_->GetCameraComponent(),
             Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.RENDER_PASSES"),
@@ -106,15 +123,6 @@ SphereAgent::SphereAgent(UWorld* world)
             Config::get<unsigned int>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT"),
             Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.FOV"));
         SP_ASSERT(camera_sensor_);
-
-        parent_actor_ = world->SpawnActor<AActor>();
-        SP_ASSERT(parent_actor_);
-
-        tick_event_component_ = NewObject<UTickEventComponent>(parent_actor_);
-        SP_ASSERT(tick_event_component_);
-        tick_event_component_->RegisterComponent();
-        tick_event_component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
-        tick_event_handle_ = tick_event_component_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
     }
 }
 
@@ -123,23 +131,23 @@ SphereAgent::~SphereAgent()
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {        
-        SP_ASSERT(tick_event_component_);
-        tick_event_component_->delegate_.Remove(tick_event_handle_);
-        tick_event_handle_.Reset();
-        tick_event_component_->DestroyComponent();
-        tick_event_component_ = nullptr;
-
-        SP_ASSERT(parent_actor_);
-        parent_actor_->Destroy();
-        parent_actor_ = nullptr;
-
         SP_ASSERT(camera_sensor_);
         camera_sensor_ = nullptr;
-
-        SP_ASSERT(camera_actor_);
-        camera_actor_->Destroy();
-        camera_actor_ = nullptr;
     }
+
+    SP_ASSERT(tick_event_component_);
+    tick_event_component_->delegate_.Remove(tick_event_handle_);
+    tick_event_handle_.Reset();
+    tick_event_component_->DestroyComponent();
+    tick_event_component_ = nullptr;
+
+    SP_ASSERT(parent_actor_);
+    parent_actor_->Destroy();
+    parent_actor_ = nullptr;
+
+    SP_ASSERT(camera_actor_);
+    camera_actor_->Destroy();
+    camera_actor_ = nullptr;
 
     SP_ASSERT(static_mesh_component_);
     static_mesh_component_ = nullptr;
