@@ -46,6 +46,9 @@ SIMULATION_CONTROLLER:
     SPAWN_LOCATION_X: 0.0
     SPAWN_LOCATION_Y: 0.0
     SPAWN_LOCATION_Z: 20.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation"
       IMAGE_HEIGHT: 512
@@ -62,9 +65,9 @@ SIMULATION_CONTROLLER:
     SPAWN_LOCATION_X: 0.0
     SPAWN_LOCATION_Y: 0.0
     SPAWN_LOCATION_Z: 20.0
-    SPAWN_PITCH: 0.0
-    SPAWN_YAW: 0.0
-    SPAWN_ROLL: 0.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
       IMAGE_HEIGHT: 512
