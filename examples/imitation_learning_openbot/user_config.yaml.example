@@ -35,19 +35,32 @@ SIMULATION_CONTROLLER:
   MAX_SUBSTEP_DELTA_TIME: 0.001
   MAX_SUBSTEPS: 100
 
-  OPENBOT_AGENT:
+  VEHICLE_AGENT:
+    VEHICLE_ACTOR_NAME: "vehicle_actor"
+    ACTION_COMPONENTS: ["set_drive_torques"] # "set_brake_torques", "set_drive_torques"
+    OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_encoder"] # "camera", "imu", "location", "rotation", "wheel_encoder"
+    IS_READY_VELOCITY_THRESHOLD: 0.001
+    SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 20.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
+    CAMERA:
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
+
+  VEHICLE_AGENT:
     OPENBOT_ACTOR_NAME: "OpenBotActor"
     TRAJECTORY_DATA:
       GOAL_ACTOR_NAME: "GoalActor"
     ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
     STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
     OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
-   
-    CAMERA:
-      IMAGE_HEIGHT: 120
-      IMAGE_WIDTH: 160
-      FOV: 70.0
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation"
 
   IMITATION_LEARNING_TASK:
     AGENT_ACTOR_NAME: "OpenBotActor"
@@ -58,10 +71,6 @@ SIMULATION_CONTROLLER:
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
     TRAJECTORY_SAMPLING_MAX_ITERS: 100
     TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
-    NAVMESH:
-      AGENT_RADIUS: 20.0
-      AGENT_HEIGHT: 20.0
-      AGENT_MAX_STEP_HEIGHT: 1.0
 
   VISUALIZER:
     ACTOR_NAME: "OpenBotActor"

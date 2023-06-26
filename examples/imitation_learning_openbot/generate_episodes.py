@@ -8,6 +8,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from examples.getting_started.OpenBotEnv import OpenBotEnv
 import pandas as pd
 import spear
 
@@ -50,28 +51,16 @@ if __name__ == "__main__":
         # change config based on current scene
         config.defrost()
 
-        if scene_id == "kujiale_0000":
-            config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
-            config.SIMULATION_CONTROLLER.MAP_ID   = scene_id + "_bake"
+        config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
 
-            # kujiale_0000 has scene-specific config values
-            scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
-
-        elif scene_id == "warehouse_0000":
-            config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
-            config.SIMULATION_CONTROLLER.MAP_ID   = scene_id
-
-            # warehouse_0000 has scene-specific config values
-            scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
-
-        else:
-            assert False
+        # load scene-specific config values
+        scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config." + scene_id + ".yaml"))
 
         config.merge_from_file(scene_config_file)
         config.freeze()
 
         # create Env object
-        env = spear.Env(config)
+        env = OpenBotEnv(config)
 
         j = 0
         while j < args.num_episodes_per_scene:
@@ -87,9 +76,7 @@ if __name__ == "__main__":
                 continue
                 
             # get random start-goal pairs
-            _, _, _, env_step_info = env.step(action={"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
-
-            positions = env_step_info["agent_step_info"]["trajectory_data"] 
+            positions = env.get_trajectory_between_two_points()
 
             # store poses in a csv file
             df = pd.DataFrame({"scene_id"       : [scene_id],

@@ -15,8 +15,6 @@
 #include "SimulationController/Task.h"
 
 class AActor;
-class ARecastNavMesh;
-class UNavigationSystemV1;
 class UWorld;
 struct FHitResult;
 
@@ -47,22 +45,14 @@ private:
     // Positions are in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z".
     void getPositionsFromFile();
 
-    // Generate a pair of random (initial point, reachable goal point) as well as a collision-free trajectory between them.
-    // Multiple pairs of (initial point, reachable target point) as well as trajectories between them are generated and evaluated.
-    // Only the best pair is kept.
-    void getPositionsFromTrajectorySampling();
-
     // Clear our lists of initial and goal positions.
     void clearPositions();
-    
+
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
     AActor* parent_actor_ = nullptr;
 
     std::vector<AActor*> obstacle_ignore_actors_;
-
-    UNavigationSystemV1* nav_sys_ = nullptr;
-    ARecastNavMesh* nav_mesh_ = nullptr;
 
     UActorHitEventComponent* actor_hit_event_component_ = nullptr;
     FDelegateHandle actor_hit_event_handle_;

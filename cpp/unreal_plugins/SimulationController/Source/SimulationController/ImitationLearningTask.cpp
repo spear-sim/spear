@@ -9,8 +9,6 @@
 #include <string>
 #include <vector>
 
-#include <AI/Navigation/NavigationTypes.h>
-#include <AI/NavigationSystemBase.h>
 #include <Components/SceneComponent.h>
 #include <Delegates/IDelegateInstance.h>
 #include <DrawDebugHelpers.h>
@@ -19,10 +17,6 @@
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <NavigationData.h>
-#include <NavigationSystem.h>
-#include <NavigationSystemTypes.h>
-#include <NavMesh/RecastNavMesh.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -88,30 +82,10 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
 
     // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_component_->subscribeToActor(agent_actor_);
-
-    nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-    SP_ASSERT(nav_sys_);
-
-    FNavAgentProperties agent_properties;
-    agent_properties.AgentHeight     = Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.NAVMESH.AGENT_HEIGHT");
-    agent_properties.AgentRadius     = Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.NAVMESH.AGENT_RADIUS");
-    agent_properties.AgentStepHeight = Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.NAVMESH.AGENT_MAX_STEP_HEIGHT");
-
-    ANavigationData* nav_data = nav_sys_->GetNavDataForProps(agent_properties);
-    SP_ASSERT(nav_data);
-
-    nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
-    SP_ASSERT(nav_mesh_);
 }
 
 void ImitationLearningTask::cleanUpObjectReferences()
 {
-    SP_ASSERT(nav_mesh_);
-    nav_mesh_ = nullptr;
-
-    SP_ASSERT(nav_sys_);
-    nav_sys_ = nullptr;
-
     SP_ASSERT(actor_hit_event_component_);
     actor_hit_event_component_->unsubscribeFromActor(agent_actor_);
 
@@ -242,102 +216,6 @@ void ImitationLearningTask::getPositionsFromFile()
     fs.close();
 
     position_index_ = 0;
-}
-
-void ImitationLearningTask::getPositionsFromTrajectorySampling()
-{
-    agent_initial_positions_.clear();
-    agent_goal_positions_.clear();
-    position_index_ = -1;
-
-    float best_path_score = 0.0f;
-    FNavLocation best_init_location;
-    FNavLocation best_goal_location;
-    TArray<FNavPathPoint> best_path_points;
-
-    // Trajectory sampling to get an interesting path
-    for (int i = 0; i < Config::get<int>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_MAX_ITERS"); i++) {
-
-        FNavLocation init_location;
-        FNavLocation goal_location;
-        
-        // Get a random initial point
-        init_location = nav_mesh_->GetRandomPoint();
-
-        // Get a random reachable goal point, to be reached by the agent from init_location.Location
-        bool found = nav_mesh_->GetRandomReachablePointInRadius(
-            init_location.Location, Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_SEARCH_RADIUS"), goal_location);
-        SP_ASSERT(found);
-
-        // Update navigation query with the new goal
-        FPathFindingQuery nav_query = FPathFindingQuery(agent_actor_, *nav_mesh_, init_location.Location, goal_location.Location);
-
-        // Generate a collision-free path between the initial position and the goal position
-        FPathFindingResult path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
-
-        // If path finding is sucessful, make sure that it is not too simple
-        if (path.IsSuccessful() && path.Path.IsValid()) {
-
-            // Debug output
-            if (path.IsPartial()) {
-                SP_LOG("Only a partial path could be found...");
-            }
-
-            // Compute a path score to evaluate its complexity
-            int num_waypoints = path.Path->GetPathPoints().Num();
-            FVector2D relative_position_to_goal((goal_location.Location - init_location.Location).X, (goal_location.Location - init_location.Location).Y);
-            float path_score = relative_position_to_goal.Size() * num_waypoints;
-
-            // If the path_score is the best we've seen so far, update best_init_location and best_goal_location
-            if (best_path_score <= path_score) {
-                best_path_score = path_score;
-                best_init_location = init_location;
-                best_goal_location = goal_location;
-                best_path_points = path.Path->GetPathPoints();
-
-                // Debug output
-                if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")) {
-                    float trajectory_length = 0.0f;
-                    for (int j = 0; j < num_waypoints - 1; j++) {
-                        trajectory_length += FVector::Dist(best_path_points[j].Location, best_path_points[j + 1].Location);
-                    }
-
-                    float world_to_meters = agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
-
-                    SP_LOG("Iteration:           ", i);
-                    SP_LOG("Score:               ", best_path_score);
-                    SP_LOG("Number of waypoints: ", num_waypoints);
-                    SP_LOG("Goal distance:       ", relative_position_to_goal.Size() / world_to_meters, "m");
-                    SP_LOG("Path length:         ", trajectory_length / world_to_meters, "m");
-                }
-            }
-        }
-    }
-
-    SP_ASSERT(best_path_points.Num() > 1);
-
-    // Update positions
-    agent_initial_positions_.push_back(best_init_location.Location);
-    agent_goal_positions_.push_back(best_goal_location.Location);
-    position_index_ = 0;
-
-    // Debug output
-    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")) {
-        SP_LOG("Initial position: ", agent_initial_positions_.at(0).X, ", ", agent_initial_positions_.at(0).Y, ", ", agent_initial_positions_.at(0).Z);
-        SP_LOG("Goal position:    ", agent_goal_positions_.at(0).X,    ", ", agent_goal_positions_.at(0).Y,    ", ", agent_goal_positions_.at(0).Z);
-        SP_LOG("Waypoints:");
-        for (int i = 1; i < best_path_points.Num(); i++) {
-            SP_LOG("    ", best_path_points[i].Location.X, ", ", best_path_points[i].Location.Y, ", ", best_path_points[i].Location.Z);
-        }
-
-        for (int i = 0; i < best_path_points.Num(); i++) {
-            DrawDebugPoint(agent_actor_->GetWorld(), best_path_points[i].Location, 20.0f, FColor(25, 116, 210), false, 10.0f, 0);
-        }
-
-        for (int i = 0; i < best_path_points.Num() - 1; i++) {
-            DrawDebugLine(agent_actor_->GetWorld(), best_path_points[i].Location, best_path_points[i+1].Location, FColor(25, 116, 210), false, 10.0f, 0, 0.15f);
-        }
-    }
 }
 
 void ImitationLearningTask::clearPositions()

@@ -472,6 +472,12 @@ void SimulationController::bindFunctionsToRpcServer()
         SP_ASSERT(nav_mesh_);
         return nav_mesh_->getRandomPoints(num_points);
     });
+
+    rpc_server_->bindSync("get_trajectory_between_two_points", [this](const std::vector<float>& start_point, const std::vector<float>& end_point) -> std::vector<uint8_t> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(nav_mesh_);
+        return nav_mesh_->getTrajectoryBetweenTwoPoints(start_point, end_point);
+    });
 }
 
 IMPLEMENT_MODULE(SimulationController, SimulationController)

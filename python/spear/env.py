@@ -100,6 +100,15 @@ class Env(gym.Env):
 
         return points
 
+    def get_trajectory_between_two_points(self, start_point, end_point):
+
+        self._begin_tick()
+        self._tick()
+        points = self._get_trajectory_between_two_points(start_point, end_point)
+        self._end_tick()
+
+        return points
+
     def _request_launch_unreal_instance(self):
 
         if self._config.SPEAR.LAUNCH_MODE == "running_instance":
@@ -442,7 +451,12 @@ class Env(gym.Env):
             random_points_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)
         return random_points
 
-
+    def _get_trajectory_between_two_points(self, start_point, end_point):
+        trajectory_points_serialized = self._rpc_client.call("get_trajectory_between_two_points", start_point, end_point)
+        trajectory_points = _deserialize_array(
+            trajectory_points_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)
+        return trajectory_points
+        
 # metadata for describing a space including the shared memory objects
 class SpaceDesc():
     def __init__(self, array_descs, dict_space_type, box_space_type):
