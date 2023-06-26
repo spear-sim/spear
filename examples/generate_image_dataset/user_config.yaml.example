@@ -20,20 +20,10 @@ SIMULATION_CONTROLLER:
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   NAVMESH:
-    TILE_POOL_SIZE: 1024
-    TILE_SIZE_UU: 1000.0
-    CELL_SIZE: 1.0
-    CELL_HEIGHT: 1.0
-    AGENT_RADIUS: 50.0
-    AGENT_HEIGHT: 200.0
-    AGENT_MAX_SLOPE: 1.0
-    AGENT_MAX_STEP_HEIGHT: 1.0
     MIN_REGION_AREA: 0.0
-    MERGE_REGION_SIZE: 400.0
-    MAX_SIMPLIFICATION_ERROR: 1.3
 
   CAMERA_AGENT:
-    CAMERA_ACTOR_NAME: "CameraActor"
+    CAMERA_ACTOR_NAME: "camera_actor"
     SPAWN_MODE: "specify_existing_actor"
     SPAWN_ACTOR_NAME: "PlayerStart"
     ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
@@ -46,5 +36,5 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
 
   VISUALIZER:
-    ACTOR_NAME: "CameraActor"
+    ACTOR_NAME: "camera_actor"
     SPAWN_CAMERA: False
