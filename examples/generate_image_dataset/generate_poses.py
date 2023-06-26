@@ -12,6 +12,9 @@ import pandas as pd
 import spear
 
 
+CAMERA_LOCATION_Z_OFFSET = 200.0
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -30,6 +33,10 @@ if __name__ == "__main__":
         scene_ids = pd.read_csv(scenes_csv_file)["scene_id"]
     else:
         scene_ids = [args.scene_id]
+
+    # create dataframe
+    df_columns = ["scene_id", "location_x", "location_y", "location_z", "rotation_pitch", "rotation_yaw", "rotation_roll"]
+    df = pd.DataFrame(columns=df_columns)
 
     # iterate over all scenes
     for i, scene_id in enumerate(scene_ids):
@@ -51,14 +58,17 @@ if __name__ == "__main__":
         roll_values  = np.random.uniform(low=0.0, high=0.0, size=args.num_poses_per_scene)
 
         # store poses in a csv file
-        df = pd.DataFrame({"scene_id"            : scene_id,
-                           "location_x_cms"      : points[:,0],
-                           "location_y_cms"      : points[:,1],
-                           "location_z_cms"      : points[:,2] + config.SIMULATION_CONTROLLER.NAVMESH.AGENT_HEIGHT,
-                           "rotation_pitch_degs" : pitch_values,
-                           "rotation_yaw_degs"   : yaw_values,
-                           "rotation_roll_degs"  : roll_values})
-        df.to_csv(args.poses_file, mode="w" if i==0 else "a", index=False, header=i==0)
+        df_ = pd.DataFrame(
+            columns=df_columns,
+            data={"scene_id"       : scene_id,
+                  "location_x"     : points[:,0],
+                  "location_y"     : points[:,1],
+                  "location_z"     : points[:,2] + CAMERA_LOCATION_Z_OFFSET,
+                  "rotation_pitch" : pitch_values,
+                  "rotation_yaw"   : yaw_values,
+                  "rotation_roll"  : roll_values})
+
+        df = pd.concat([df, df_])
 
         plt.scatter(points[:,0], points[:,1], s=1.0)
         plt.gca().set_aspect("equal")
@@ -67,5 +77,8 @@ if __name__ == "__main__":
 
         # close the current scene
         env.close()
+
+    # write to a csv file
+    df.to_csv(args.poses_file, index=False)
 
     spear.log("Done.")
