@@ -19,8 +19,11 @@ SIMULATION_CONTROLLER:
   TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
+  NAVMESH:
+    MIN_REGION_AREA: 0.0
+
   CAMERA_AGENT:
-    CAMERA_ACTOR_NAME: "CameraActor"
+    CAMERA_ACTOR_NAME: "camera_actor"
     SPAWN_MODE: "specify_existing_actor"
     SPAWN_ACTOR_NAME: "PlayerStart"
     ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
@@ -33,5 +36,5 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
 
   VISUALIZER:
-    ACTOR_NAME: "CameraActor"
+    ACTOR_NAME: "camera_actor"
     SPAWN_CAMERA: False
