@@ -47,9 +47,9 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
     // If the start/goal positions are not randomly generated, get them from a file
-    if (!Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING")) {
-        getPositionsFromFile();
-    }
+    //if (!Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING")) {
+        //getPositionsFromFile();
+    //}
 }
 
 ImitationLearningTask::~ImitationLearningTask()
@@ -145,27 +145,20 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
-    // If we are generating positions via trajectory sampling, then update agent_initial_positions_
-    // and agent_goal_positions_ to store the results from one round of trajectory sampling, and
-    // reset position_index_ to 0.
-    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING")) {
-        getPositionsFromTrajectorySampling();
-    }
+    //// Set agent and goal positions
+    //bool sweep = false;
+    //FHitResult* hit_result = nullptr;
+    //agent_actor_->SetActorLocationAndRotation(
+    //    agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+    //goal_actor_->SetActorLocationAndRotation(
+    //    agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
 
-    // Set agent and goal positions
-    bool sweep = false;
-    FHitResult* hit_result = nullptr;
-    agent_actor_->SetActorLocationAndRotation(
-        agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
-    goal_actor_->SetActorLocationAndRotation(
-        agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
-
-    // Increment position_index_
-    if (position_index_ < agent_goal_positions_.size() - 1) { 
-        position_index_++;
-    }  else {
-        position_index_ = 0;
-    }
+    //// Increment position_index_
+    //if (position_index_ < agent_goal_positions_.size() - 1) { 
+    //    position_index_++;
+    //}  else {
+    //    position_index_ = 0;
+    //}
 }
 
 bool ImitationLearningTask::isReady() const

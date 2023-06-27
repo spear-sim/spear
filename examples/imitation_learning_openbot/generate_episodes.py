@@ -8,7 +8,13 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from examples.getting_started.OpenBotEnv import OpenBotEnv
+
+# hack to import OpenBotEnv
+import sys
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+from getting_started.OpenBotEnv import OpenBotEnv
+
 import pandas as pd
 import spear
 
@@ -17,23 +23,19 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_episodes_per_scene", type=int, default=10)
+    parser.add_argument("--num_candidate_points_per_episode", type=int, default=10)
     parser.add_argument("--episodes_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "train_episodes.csv")))
     parser.add_argument("--scene_id")
     args = parser.parse_args()
 
     # directory for trajectory image storage
-    split_name = os.path.splitext(os.path.basename(args.episodes_file))[0] # isolate filename and remove extension
+    file_name = os.path.splitext(os.path.basename(args.episodes_file))[0] # isolate filename and remove extension
     episodes_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "episodes"))
-    split_dir = os.path.realpath(os.path.join(episodes_dir, split_name))
-    os.makedirs(split_dir, exist_ok=True)
+    output_dir = os.path.realpath(os.path.join(episodes_dir, file_name))
+    os.makedirs(output_dir, exist_ok=True)
 
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-
-    # make sure that we are in trajectory sampling mode
-    config.defrost()
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING = True
-    config.freeze()
 
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is None:
@@ -50,61 +52,59 @@ if __name__ == "__main__":
 
         # change config based on current scene
         config.defrost()
-
         config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
-
-        # load scene-specific config values
-        scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config." + scene_id + ".yaml"))
-
-        config.merge_from_file(scene_config_file)
         config.freeze()
 
         # create Env object
         env = OpenBotEnv(config)
 
-        j = 0
-        while j < args.num_episodes_per_scene:
-
-            # reset the simulation
-            env_reset_info = {}
-            _ = env.reset(reset_info=env_reset_info)
-            assert "success" in env_reset_info
+        # reset the simulation
+        env_reset_info = {}
+        _ = env.reset(reset_info=env_reset_info)
+        assert "success" in env_reset_info
             
-            # if it took too long to reset the simulation, then continue
-            if not env_reset_info["success"]:
-                spear.log("Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Retrying...")
-                continue
-                
-            # get random start-goal pairs
-            positions = env.get_trajectory_between_two_points()
+        # generate candidate points based of args.num_episodes_per_scene
+        points = env.get_random_points(args.num_episodes_per_scene * args.num_candidate_points_per_episode)
 
-            # store poses in a csv file
-            df = pd.DataFrame({"scene_id"       : [scene_id],
-                               "init_pos_x_cms" : positions[0,0],
-                               "init_pos_y_cms" : positions[0,1],
-                               "init_pos_z_cms" : positions[0,2],
-                               "goal_pos_x_cms" : positions[-1,0],
-                               "goal_pos_y_cms" : positions[-1,1],
-                               "goal_pos_z_cms" : positions[-1,2]})
-            df.to_csv(args.episodes_file, mode="w" if i==0 and j==0 else "a", index=False, header=i==0 and j==0)
+        spear.log("random_points:", points.tolist())
+
+        # obtain a reachable goal point for every candidate
+        reachable_points = env.get_reachable_points(points.tolist())
+
+        spear.log("reachable_points:", reachable_points)
+
+        # get trajectories
+        trajectories = env.get_trajectories(points.tolist(), reachable_points.tolist())
+
+        spear.log("trajectories:", trajectories)
+
+        # store poses in a csv file
+        # df = pd.DataFrame({"scene_id"       : [scene_id],
+        #                     "init_pos_x_cms" : positions[0,0],
+        #                     "init_pos_y_cms" : positions[0,1],
+        #                     "init_pos_z_cms" : positions[0,2],
+        #                     "goal_pos_x_cms" : positions[-1,0],
+        #                     "goal_pos_y_cms" : positions[-1,1],
+        #                     "goal_pos_z_cms" : positions[-1,2]})
+        # df.to_csv(args.episodes_file, mode="w" if i==0 and j==0 else "a", index=False, header=i==0 and j==0)
+    
+        # plt.plot(positions[0,0], positions[0,1], "^", markersize=12.0, label="Start", color="tab:blue", alpha=0.3)
+        # plt.plot(positions[-1,0], positions[-1,1], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
+        # plt.plot(positions[:,0], positions[:,1], "-o", markersize=8.0, label="Desired trajectory", color="tab:green", alpha=0.3)
+
+
+
+        # handles, labels = plt.gca().get_legend_handles_labels()
+        # by_label = dict(zip(labels, handles))
+        # legend = plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, -0.2), loc="center", ncol=3)
+        # plt.gca().set_aspect("equal")
+        # plt.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
+        # plt.xlabel("x[cm]")
+        # plt.ylabel("y[cm]")
+        # plt.grid()
+        # plt.title(f"scene_id {scene_id}")
         
-            plt.plot(positions[0,0], positions[0,1], "^", markersize=12.0, label="Start", color="tab:blue", alpha=0.3)
-            plt.plot(positions[-1,0], positions[-1,1], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
-            plt.plot(positions[:,0], positions[:,1], "-o", markersize=8.0, label="Desired trajectory", color="tab:green", alpha=0.3)
-
-            j = j+1
-
-        handles, labels = plt.gca().get_legend_handles_labels()
-        by_label = dict(zip(labels, handles))
-        legend = plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, -0.2), loc="center", ncol=3)
-        plt.gca().set_aspect("equal")
-        plt.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
-        plt.xlabel("x[cm]")
-        plt.ylabel("y[cm]")
-        plt.grid()
-        plt.title(f"scene_id {scene_id}")
-        
-        plt.savefig(os.path.realpath(os.path.join(split_dir, scene_id)), bbox_extra_artists=[legend], bbox_inches="tight")
+        # plt.savefig(os.path.realpath(os.path.join(output_dir, scene_id)), bbox_extra_artists=[legend], bbox_inches="tight")
 
         # close the current scene
         env.close()

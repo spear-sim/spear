@@ -27,6 +27,7 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/CameraAgent.h"
+#include "SimulationController/ImitationLearningTask.h"
 #include "SimulationController/NavMesh.h"
 #include "SimulationController/NullTask.h"
 #include "SimulationController/RpcServer.h"
@@ -203,6 +204,8 @@ void SimulationController::worldBeginPlayEventHandler()
     // create Task
     if (Config::get<std::string>("SIMULATION_CONTROLLER.TASK") == "NullTask") {
         task_ = std::make_unique<NullTask>();
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.TASK") == "ImitationLearningTask") {
+        task_ = std::make_unique<ImitationLearningTask>(world_);
     } else {
         SP_ASSERT(false);
     }
@@ -473,10 +476,16 @@ void SimulationController::bindFunctionsToRpcServer()
         return nav_mesh_->getRandomPoints(num_points);
     });
 
-    rpc_server_->bindSync("get_trajectory_between_two_points", [this](const std::vector<float>& start_point, const std::vector<float>& end_point) -> std::vector<uint8_t> {
+    rpc_server_->bindSync("get_reachable_points", [this](const std::vector<std::vector<float>>& start_points) -> std::vector<uint8_t> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
-        return nav_mesh_->getTrajectoryBetweenTwoPoints(start_point, end_point);
+        return nav_mesh_->getReachablePoints(start_points);
+        });
+
+    rpc_server_->bindSync("get_trajectories", [this](const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points) -> std::vector<uint8_t> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(nav_mesh_);
+        return nav_mesh_->getTrajectories(start_points, end_points);
     });
 }
 

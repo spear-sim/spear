@@ -5,6 +5,7 @@
 import numpy as np
 import tflite_runtime.interpreter as tflite
 
+import spear
 from utils import get_compass_observation, get_relative_target_pose
 
 

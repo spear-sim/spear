@@ -27,13 +27,16 @@ SPEAR:
   WINDOW_RESOLUTION_Y: 120
 
 SIMULATION_CONTROLLER:
-  AGENT: "OpenBotAgent"
+  AGENT: "VehicleAgent"
   TASK: "ImitationLearningTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   SIMULATION_STEP_TIME: 0.033
   MAX_SUBSTEP_DELTA_TIME: 0.001
   MAX_SUBSTEPS: 100
+
+  NAVMESH:
+    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
 
   VEHICLE_AGENT:
     VEHICLE_ACTOR_NAME: "vehicle_actor"
@@ -54,26 +57,15 @@ SIMULATION_CONTROLLER:
       IMAGE_WIDTH: 512
       FOV: 90.0
 
-  VEHICLE_AGENT:
-    OPENBOT_ACTOR_NAME: "OpenBotActor"
-    TRAJECTORY_DATA:
-      GOAL_ACTOR_NAME: "GoalActor"
-    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
-    STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
-    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
-
   IMITATION_LEARNING_TASK:
-    AGENT_ACTOR_NAME: "OpenBotActor"
-    GOAL_ACTOR_NAME: "GoalActor"
+    AGENT_ACTOR_NAME: "vehicle_actor"
+    GOAL_ACTOR_NAME: "goal_actor"
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0"]
-    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
     POSITIONS_FILE: ""
-    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
-    TRAJECTORY_SAMPLING_MAX_ITERS: 100
     TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
 
   VISUALIZER:
-    ACTOR_NAME: "OpenBotActor"
+    ACTOR_NAME: "vehicle_actor"
     SPAWN_CAMERA: False
   
   IMU_SENSOR:

@@ -100,11 +100,20 @@ class Env(gym.Env):
 
         return points
 
-    def get_trajectory_between_two_points(self, start_point, end_point):
+    def get_reachable_points(self, start_points):
 
         self._begin_tick()
         self._tick()
-        points = self._get_trajectory_between_two_points(start_point, end_point)
+        points = self._get_reachable_points(start_points)
+        self._end_tick()
+
+        return points
+
+    def get_trajectories(self, start_points, end_points):
+
+        self._begin_tick()
+        self._tick()
+        points = self._get_trajectories(start_points, end_points)
         self._end_tick()
 
         return points
@@ -451,12 +460,18 @@ class Env(gym.Env):
             random_points_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)
         return random_points
 
-    def _get_trajectory_between_two_points(self, start_point, end_point):
-        trajectory_points_serialized = self._rpc_client.call("get_trajectory_between_two_points", start_point, end_point)
+    def _get_reachable_points(self, start_points):
+        reachable_points_serialized = self._rpc_client.call("get_reachable_points", start_points)
+        reachable_points = _deserialize_array(
+            reachable_points_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)
+        return reachable_points
+
+    def _get_trajectories(self, start_points, end_points):
+        trajectory_points_serialized = self._rpc_client.call("get_trajectories", start_points, end_points)
         trajectory_points = _deserialize_array(
             trajectory_points_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)
         return trajectory_points
-        
+
 # metadata for describing a space including the shared memory objects
 class SpaceDesc():
     def __init__(self, array_descs, dict_space_type, box_space_type):
