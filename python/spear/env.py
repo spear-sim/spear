@@ -467,10 +467,15 @@ class Env(gym.Env):
         return reachable_points
 
     def _get_trajectories(self, start_points, end_points):
-        trajectory_points_serialized = self._rpc_client.call("get_trajectories", start_points, end_points)
-        trajectory_points = _deserialize_array(
-            trajectory_points_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)
-        return trajectory_points
+        trajectories_serialized_list = self._rpc_client.call("get_trajectories", start_points, end_points)
+
+        trajectories = np.array(
+            [
+                _deserialize_array(trajectory_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order) 
+                for trajectory_serialized in trajectories_serialized_list
+            ],
+            dtype=object)
+        return trajectories
 
 # metadata for describing a space including the shared memory objects
 class SpaceDesc():

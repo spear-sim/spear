@@ -111,11 +111,11 @@ std::vector<uint8_t> NavMesh::getReachablePoints(const std::vector<std::vector<f
     return Std::reinterpretAs<uint8_t>(end_points);
 }
 
-std::vector<uint8_t> NavMesh::getTrajectories(const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points)
+std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points)
 {
     SP_ASSERT(start_points.size() == end_points.size());
 
-    std::vector<std::vector<double>> trajectories;
+    std::vector<std::vector<uint8_t>> trajectories;
 
     for (int i = 0; i < start_points.size(); ++i) {
         SP_ASSERT(start_points.at(i).size() == 3);
@@ -147,7 +147,7 @@ std::vector<uint8_t> NavMesh::getTrajectories(const std::vector<std::vector<floa
             trajectory.push_back(path_point.Location.Z);
         }
 
-        trajectories.push_back(trajectory);
+        trajectories.push_back(Std::reinterpretAs<uint8_t>(trajectory));
     }
 
     // Debug output
@@ -178,5 +178,5 @@ std::vector<uint8_t> NavMesh::getTrajectories(const std::vector<std::vector<floa
     //}
     //SP_LOG("----------------------");
 
-    return Std::reinterpretAs<uint8_t>(trajectories);
+    return trajectories;
 }
