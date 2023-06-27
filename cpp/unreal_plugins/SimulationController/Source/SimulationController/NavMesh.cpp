@@ -150,33 +150,5 @@ std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std
         trajectories.push_back(Std::reinterpretAs<uint8_t>(trajectory));
     }
 
-    // Debug output
-    //if (path.IsPartial()) {
-    //    SP_LOG("Only a partial path could be found...");
-    //}
-
-    //int num_waypoints = path.Path->GetPathPoints().Num();
-    //float trajectory_length = 0.0f;
-    //for (int i = 0; i < num_waypoints - 1; i++) {
-    //    trajectory_length += FVector::Dist(path_points[i].Location, path_points[i + 1].Location);
-    //}
-    //trajectory_length /= world_->GetWorldSettings()->WorldToMeters;
-    //FVector2D relative_position_to_goal(
-    //    (end_point_fvector - start_point_fvector).X, (end_point_fvector - start_point_fvector).Y);
-
-    //SP_LOG("Number of waypoints: ", num_waypoints);
-    //SP_LOG("Goal distance: ", relative_position_to_goal.Size() / world_->GetWorldSettings()->WorldToMeters, "m");
-    //SP_LOG("Path length: ", trajectory_length, "m");
-    //SP_LOG("Initial position: [",
-    //    start_point_fvector.X, ", ", start_point_fvector.Y, ", ", start_point_fvector.Z, "].");
-    //SP_LOG("Goal position: [",
-    //    end_point_fvector.X, ", ", end_point_fvector.Y, ", ", end_point_fvector.Z, "].");
-    //SP_LOG("----------------------");
-    //SP_LOG("Waypoints: ");
-    //for (auto& point : path_points) {
-    //    SP_LOG("[", point.Location.X, ", ", point.Location.Y, ", ", point.Location.Z, "]");
-    //}
-    //SP_LOG("----------------------");
-
     return trajectories;
 }
