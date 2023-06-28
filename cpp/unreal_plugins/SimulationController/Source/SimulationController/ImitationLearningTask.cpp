@@ -46,10 +46,8 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_component_->RegisterComponent();
     actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
-    // If the start/goal positions are not randomly generated, get them from a file
-    //if (!Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING")) {
-        //getPositionsFromFile();
-    //}
+    // Get start and end goal locations from a file
+    getPositionsFromFile();
 }
 
 ImitationLearningTask::~ImitationLearningTask()
@@ -145,20 +143,20 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
-    //// Set agent and goal positions
-    //bool sweep = false;
-    //FHitResult* hit_result = nullptr;
-    //agent_actor_->SetActorLocationAndRotation(
-    //    agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
-    //goal_actor_->SetActorLocationAndRotation(
-    //    agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+    // Set agent and goal positions
+    bool sweep = false;
+    FHitResult* hit_result = nullptr;
+    agent_actor_->SetActorLocationAndRotation(
+        agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+    goal_actor_->SetActorLocationAndRotation(
+        agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
 
-    //// Increment position_index_
-    //if (position_index_ < agent_goal_positions_.size() - 1) { 
-    //    position_index_++;
-    //}  else {
-    //    position_index_ = 0;
-    //}
+    // Increment position_index_
+    if (position_index_ < agent_goal_positions_.size() - 1) { 
+        position_index_++;
+    }  else {
+        position_index_ = 0;
+    }
 }
 
 bool ImitationLearningTask::isReady() const
@@ -184,7 +182,7 @@ void ImitationLearningTask::getPositionsFromFile()
     position_index_ = -1;
 
     // Create an input filestream 
-    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.POSITIONS_FILE")); 
+    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE")); 
     SP_ASSERT(fs.is_open());
 
     // Read file data, line-by-line in the format:

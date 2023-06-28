@@ -70,7 +70,7 @@ if __name__ == "__main__":
         # generate candidate points based of args.num_episodes_per_scene
         points = env.get_random_points(args.num_episodes_per_scene * args.num_candidate_points_per_episode)
 
-        spear.log("random_points:", points.tolist())
+        spear.log("random_points:", points)
 
         # obtain a reachable goal point for every candidate
         reachable_points = env.get_reachable_points(points.tolist())

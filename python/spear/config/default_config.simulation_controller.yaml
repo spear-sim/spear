@@ -132,8 +132,7 @@ SIMULATION_CONTROLLER:
     AGENT_ACTOR_NAME: ""
     GOAL_ACTOR_NAME: ""
     OBSTACLE_IGNORE_ACTOR_NAMES: []
-    POSITIONS_FILE: ""
-    GET_LOCATIONS_FROM_FILE: False
+    TRAJECTORY_LOCATIONS_FILE: ""
     TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
     TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
 

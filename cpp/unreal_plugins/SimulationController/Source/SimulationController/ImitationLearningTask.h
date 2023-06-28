@@ -42,7 +42,7 @@ private:
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
 
     // Get a list of the different initial and goal positions the agent is expected to navigate to.
-    // Positions are in the format "init.X, init.Y, init.Z, goal.X, goal.Y, goal.Z".
+    // Positions are in the format "start_location.X, start_location.Y, start_location.Z, end_location.X, end_location.Y, end_location.Z".
     void getPositionsFromFile();
 
     // Clear our lists of initial and goal positions.

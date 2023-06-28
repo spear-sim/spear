@@ -121,24 +121,24 @@ std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std
         SP_ASSERT(start_points.at(i).size() == 3);
         SP_ASSERT(end_points.at(i).size() == 3);
 
-        FVector start_point_fvector{ start_points.at(i).at(0), start_points.at(i).at(1), start_points.at(i).at(2) };
-        FVector end_point_fvector{ end_points.at(i).at(0), end_points.at(i).at(1), end_points.at(i).at(2) };
+        FVector start_point_fvector{start_points.at(i).at(0), start_points.at(i).at(1), start_points.at(i).at(2)};
+        FVector end_point_fvector{end_points.at(i).at(0), end_points.at(i).at(1), end_points.at(i).at(2)};
 
-        // Update navigation query with the new agent position and goal position
+        // Update navigation query with the start and end location
         // TODO: check if we need to store reference to world because this is the only place it is being used.
         //       Can we just use recast_nav_mesh_ or navigation_system_v1_ as the owner object instead of world_?
         FPathFindingQuery nav_query = FPathFindingQuery(world_, *recast_nav_mesh_, start_point_fvector, end_point_fvector);
 
-        // Generate a collision-free path between the agent position and the goal position
+        // Generate a collision-free path between the start location and the end location
         FPathFindingResult path = navigation_system_v1_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
 
         // Ensure that path generation process was successful and that the generated path is valid
         SP_ASSERT(path.IsSuccessful());
         SP_ASSERT(path.Path.IsValid());
 
-        // Update trajectory
+        // Update trajectory with the waypoints
         TArray<FNavPathPoint> path_points = path.Path->GetPathPoints();
-        SP_ASSERT(path_points.Num() > 1); // There should be at least a starting point and a goal point
+        SP_ASSERT(path_points.Num() > 1);
 
         std::vector<double> trajectory;
         for (auto& path_point : path_points) {
