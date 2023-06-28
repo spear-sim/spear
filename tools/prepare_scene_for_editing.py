@@ -27,7 +27,7 @@ if __name__ == '__main__':
     perforce_dirs_to_unreal_dirs = {
         os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
         os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets"),
-        os.path.realpath(os.path.join(args.perforce_content_dir, "Shared")) : os.path.join(unreal_project_content_dir, "Shared"),
+        os.path.realpath(os.path.join(args.perforce_content_dir, "Kujiale")) : os.path.join(unreal_project_content_dir, "Kujiale"),
         os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes", args.scene_id)) : os.path.join(unreal_project_content_dir, "Scenes", args.scene_id)
     }
 
