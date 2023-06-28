@@ -61,6 +61,7 @@ SIMULATION_CONTROLLER:
     AGENT_ACTOR_NAME: "vehicle_actor"
     GOAL_ACTOR_NAME: "goal_actor"
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0"]
+    GET_LOCATIONS_FROM_FILE: False
     POSITIONS_FILE: ""
     TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
 

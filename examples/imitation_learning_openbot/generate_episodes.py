@@ -45,6 +45,10 @@ if __name__ == "__main__":
     else:
         scene_ids = [args.scene_id]
 
+    # create dataframe
+    df_columns = ["scene_id", "start_location_x", "start_location_y", "start_location_z", "goal_location_x", "goal_location_y", "goal_location_z"]
+    df = pd.DataFrame(columns=df_columns)
+
     # iterate over all scenes
     for i, scene_id in enumerate(scene_ids):
 
@@ -73,26 +77,47 @@ if __name__ == "__main__":
 
         spear.log("reachable_points:", reachable_points)
 
-        # get trajectories
+        # get trajectories for every point in points and corresponding point in reachable_points
         trajectories = env.get_trajectories(points.tolist(), reachable_points.tolist())
 
         spear.log("trajectories:", trajectories)
 
-        # store poses in a csv file
-        # df = pd.DataFrame({"scene_id"       : [scene_id],
-        #                     "init_pos_x_cms" : positions[0,0],
-        #                     "init_pos_y_cms" : positions[0,1],
-        #                     "init_pos_z_cms" : positions[0,2],
-        #                     "goal_pos_x_cms" : positions[-1,0],
-        #                     "goal_pos_y_cms" : positions[-1,1],
-        #                     "goal_pos_z_cms" : positions[-1,2]})
-        # df.to_csv(args.episodes_file, mode="w" if i==0 and j==0 else "a", index=False, header=i==0 and j==0)
-    
+        # score trajectories based on a custom sort function
+        def score_trajectory(trajectory):
+            num_waypoints = trajectory.shape[0]
+            trajectory_length = np.sqrt(np.sum((trajectory[-1] - trajectory[0])[:2] ** 2))
+            spear.log("trajectory_length:", trajectory_length)
+            return num_waypoints * trajectory_length
+
+        trajectory_scores = np.vectorize(lambda trajectory : score_trajectory(trajectory=trajectory))(trajectories)
+        sorted_indicies = np.argsort(trajectory_scores)
+
+        # choose only the top args.num_episodes_per_scene trajectories
+        start_points_sorted = points[sorted_indicies]        
+        top_start_points = start_points_sorted[-args.num_episodes_per_scene:]
+        
+        end_points_sorted = reachable_points[sorted_indicies]        
+        top_end_points = end_points_sorted[-args.num_episodes_per_scene:]
+
+        # concat arrays for easier pd dataframe creation
+        concat = np.hstack((top_start_points, top_end_points))
+
+        # store start and end location of the trajectories
+        df_ = pd.DataFrame(
+            columns=df_columns,
+            data={"scene_id"         : [scene_id]*concat.shape[0],
+                  "start_location_x" : concat[:,0],
+                  "start_location_y" : concat[:,1],
+                  "start_location_z" : concat[:,2],
+                  "goal_location_x"  : concat[:,3],
+                  "goal_location_y"  : concat[:,4],
+                  "goal_location_z"  : concat[:,5]})
+        
+        df = pd.concat([df, df_])
+
         # plt.plot(positions[0,0], positions[0,1], "^", markersize=12.0, label="Start", color="tab:blue", alpha=0.3)
         # plt.plot(positions[-1,0], positions[-1,1], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
         # plt.plot(positions[:,0], positions[:,1], "-o", markersize=8.0, label="Desired trajectory", color="tab:green", alpha=0.3)
-
-
 
         # handles, labels = plt.gca().get_legend_handles_labels()
         # by_label = dict(zip(labels, handles))
@@ -108,5 +133,8 @@ if __name__ == "__main__":
 
         # close the current scene
         env.close()
+
+    # write start and goal locations of all episodes to a csv file
+    df.to_csv(args.episodes_file, index=False)
 
     spear.log("Done.")
