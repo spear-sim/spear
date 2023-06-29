@@ -79,9 +79,9 @@ if __name__ == '__main__':
     # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
     # version inside the user's Unreal project directory.
     perforce_dirs_to_unreal_dirs = {
+        os.path.realpath(os.path.join(args.perforce_content_dir, "Kujiale")) : os.path.join(unreal_project_content_dir, "Kujiale"),
         os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
-        os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets"),
-        os.path.realpath(os.path.join(args.perforce_content_dir, "Shared")) : os.path.join(unreal_project_content_dir, "Shared")
+        os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets")
     }
 
     # Create a symlink to common top-level directories
@@ -100,9 +100,9 @@ if __name__ == '__main__':
 
         pak_dirs = [
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Content")),
+            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Kujiale")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Megascans")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "MSPresets")),
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Shared")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id)),
         ]
 
