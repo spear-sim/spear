@@ -43,8 +43,8 @@ if __name__ == "__main__":
 
     # make sure that we are not in trajectory sampling mode
     config.defrost()
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE = os.path.abspath(args.episodes_file)
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE == True
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
  
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
@@ -142,10 +142,10 @@ if __name__ == "__main__":
             os.makedirs(sensor_dir, exist_ok=True)
             os.makedirs(plots_dir, exist_ok=True)
 
-            control_data  = np.empty([args.num_iterations_per_episode, 2], dtype=np.float32) # control_data observations made by the agent during a episode
-            state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32) # state_data observations made by the agent during an episode
-            waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # waypoints being tracked by the agent during an episode
-            compass_data  = np.empty([args.num_iterations_per_episode, 3], dtype=np.float32) # compass observations made by the agent during a episode
+            control_data  = np.empty([args.num_iterations_per_episode, 2], dtype=np.float64) # control_data observations made by the agent during a episode
+            state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float64) # state_data observations made by the agent during an episode
+            waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64) # waypoints being tracked by the agent during an episode
+            compass_data  = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64) # compass observations made by the agent during a episode
             time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int64)      # time stamps of observations made by the agent during an episode
             frame_data    = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # frame ids
 
@@ -228,7 +228,7 @@ if __name__ == "__main__":
         # get the updated compass observation (with the last recorded position set as goal)
         goal_position_xy = state_data[num_iterations-1][0:2]
         for i in range(num_iterations):
-            position_xy_current = np.array([state_data[i][0], state_data[i][1]], dtype=np.float32)
+            position_xy_current = np.array([state_data[i][0], state_data[i][1]], dtype=np.float64)
             yaw_current = state_data[i][4]
             compass_data[i] = get_compass_observation(goal_position_xy, position_xy_current, yaw_current)
 

@@ -8,6 +8,13 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+
+# hack to import OpenBotEnv
+import sys
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+from getting_started.OpenBotEnv import OpenBotEnv
+
 import pandas as pd
 import shutil
 import spear
@@ -25,7 +32,6 @@ if __name__ == "__main__":
     parser.add_argument("--episodes_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "test_episodes.csv")))
     parser.add_argument("--policy_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "trained_policy.tflite")))
     parser.add_argument("--eval_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "eval")))
-    parser.add_argument("--rendering_mode", default="baked")
     parser.add_argument("--create_videos", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--debug", action="store_true")
@@ -36,36 +42,35 @@ if __name__ == "__main__":
 
     # make sure that we are not in trajectory sampling mode
     config.defrost()
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING = False
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.POSITIONS_FILE = os.path.abspath(args.episodes_file)
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE == True
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
 
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
     if args.debug:
         config.defrost()
-        config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER = True
+        config.SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True
-        config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = True
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 1080
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 1920
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.PITCH = -35.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.YAW = 45.0
-        config.OPENBOT.OPENBOT_PAWN.CAMERA_COMPONENT.ROLL = 0.0
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 1080
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 1920
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_encoder"]
+        config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
+        config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
+        config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
+        config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.PITCH = -35.0
+        config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW = 45.0
+        config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL = 0.0
         config.freeze()
     else:
         config.defrost()
-        config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER = False
+        config.SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = False
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_HEIGHT = 120
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.IMAGE_WIDTH = 160
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
-        config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS = ["state_data", "control_data", "camera"]
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 120
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 160
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "location", "rotation", "wheel_encoder"]
         config.freeze()
 
     # load driving policy
@@ -78,20 +83,6 @@ if __name__ == "__main__":
     # load the episodes to be executed
     assert os.path.exists(args.episodes_file)
     df = pd.read_csv(args.episodes_file)
-
-    # do some config modifications based on the rendering mode
-    if args.rendering_mode == "baked":
-        rendering_mode_map_str = "_bake"
-        config.defrost()
-        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 1.0
-        config.freeze()
-    elif args.rendering_mode == "raytracing":
-        rendering_mode_map_str = "_rtx"
-        config.defrost()
-        config.SIMULATION_CONTROLLER.CAMERA_SENSOR.FINAL_COLOR_INDIRECT_LIGHTING_INTENSITY = 0.0
-        config.freeze()
-    else:
-        assert False
 
     # clean the episode data folder 
     if not args.benchmark:
@@ -114,43 +105,21 @@ if __name__ == "__main__":
 
             # change config based on current scene
             config.defrost()
-
-            if episode["scene_id"] == "kujiale_0000":
-                config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
-                config.SIMULATION_CONTROLLER.MAP_ID   = episode["scene_id"] + rendering_mode_map_str
-
-                # kujiale_0000 has scene-specific config values
-                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.kujiale_0000.yaml"))
-
-            elif episode["scene_id"] == "warehouse_0000":
-                config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
-                config.SIMULATION_CONTROLLER.MAP_ID   = episode["scene_id"]
-
-                # warehouse_0000 has scene-specific config values
-                scene_config_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scene_config.warehouse_0000.yaml"))
-
-            else:
-                assert False
-                
-            config.merge_from_file(scene_config_file)
+            config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
             config.freeze()
 
             # create Env object
-            env = spear.Env(config=config)
+            env = OpenBotEnv(config=config)
 
         # reset the simulation
         env_reset_info = {}
         _ = env.reset(reset_info=env_reset_info)
         assert "success" in env_reset_info
 
-        # if it took too long to reset the simulation, then continue
-        if not env_reset_info["success"]:
-            spear.log("Call to env.reset(...) was not successful. Simulation took too long to return to a ready state. Skipping...")
-            prev_scene_id = episode["scene_id"]
-            continue
-
-        # send zero action to the agent and collect initial trajectory observations:
-        obs, _, _, env_step_info = env.step(action={"apply_voltage": np.array([0.0, 0.0], dtype=np.float32)})
+        # get a trajectory for this episode based on start and end point
+        episode_start_location = [episode["start_location_x"], episode["start_location_y"], episode["start_location_z"]]
+        episode_goal_location  = [episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]]
+        trajectory = env.get_trajectories([episode_start_location], [episode_goal_location])
 
         if args.benchmark:
             start_time_seconds = time.time()
@@ -166,17 +135,17 @@ if __name__ == "__main__":
             os.makedirs(plots_dir, exist_ok=True)
 
             # buffer containing the state_data observations made by the agent during an episode
-            state_data = np.empty([args.num_iterations_per_episode, 6], dtype=np.float32)
+            state_data = np.empty([args.num_iterations_per_episode, 6], dtype=np.float64)
 
             # save the optimal goal trajectory in a dedicated file
-            df_trajectory = pd.DataFrame({"x_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,0]],
-                                          "y_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,1]],
-                                          "z_d[cm]" : [env_step_info["agent_step_info"]["trajectory_data"][:,2]]})
+            df_trajectory = pd.DataFrame({"x_d[cm]" : trajectory[0][:,0],
+                                          "y_d[cm]" : trajectory[0][:,1],
+                                          "z_d[cm]" : trajectory[0][:,2]})
             df_trajectory.to_csv(os.path.realpath(os.path.join(result_dir,"trajectoryLog.txt")), mode="w", index=False, header=True)
 
         # execute the desired number of iterations in a given episode
         num_iterations = 0
-        goal           = np.array([episode["goal_pos_x_cms"], episode["goal_pos_y_cms"], episode["goal_pos_z_cms"]], dtype=np.float32) # goal position
+        goal           = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64) # goal position
         for i in range(args.num_iterations_per_episode):
 
             spear.log(f"Iteration {i} of {args.num_iterations_per_episode}")
@@ -185,7 +154,7 @@ if __name__ == "__main__":
             action, policy_step_info = policy.step(obs, goal[0:2])
 
             # send control action to the agent and collect observations
-            obs, _, _, env_step_info = env.step(action={"apply_voltage": action})
+            obs, _, _, env_step_info = env.step(action={"set_duty_cycles": action})
 
             num_iterations = num_iterations + 1
             
@@ -200,7 +169,7 @@ if __name__ == "__main__":
                 plt.imsave(os.path.realpath(os.path.join(image_dir, "%04d.jpg"%i)), obs_final_color)
 
                 # populate buffer and result data file
-                state_data[i] = obs["state_data"]
+                state_data[i] = np.concatenate((obs["location"], np.deg2rad(obs["rotation"])), axis=None)
                 df_result = pd.DataFrame({"left_ctrl"    : action[0],
                                           "right_ctrl"   : action[1],
                                           "x[cm]"        : obs["state_data"][0],
@@ -220,8 +189,8 @@ if __name__ == "__main__":
             if args.debug:
                 show_obs(
                     obs,
-                    config.SIMULATION_CONTROLLER.OPENBOT_AGENT.OBSERVATION_COMPONENTS,
-                    config.SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES)
+                    config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS,
+                    config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES)
             
             # termination conditions
             if env_step_info["task_step_info"]["hit_obstacle"]: 
