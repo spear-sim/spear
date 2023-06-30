@@ -8,13 +8,6 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-
-# hack to import OpenBotEnv
-import sys
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(SCRIPT_DIR))
-from getting_started.OpenBotEnv import OpenBotEnv
-
 import pandas as pd
 import spear
 
@@ -36,6 +29,10 @@ if __name__ == "__main__":
 
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+
+    config.defrost()
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE == False
+    config.freeze()
 
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is None:
@@ -60,7 +57,7 @@ if __name__ == "__main__":
         config.freeze()
 
         # create Env object
-        env = OpenBotEnv(config)
+        env = spear.Env(config)
 
         # reset the simulation
         env_reset_info = {}
@@ -70,12 +67,12 @@ if __name__ == "__main__":
         # generate candidate points based of args.num_episodes_per_scene
         points = env.get_random_points(args.num_episodes_per_scene * args.num_candidate_points_per_episode)
 
-        spear.log("random_points:", points)
+        spear.log("random_points:", points.tolist())
 
         # obtain a reachable goal point for every candidate
         reachable_points = env.get_reachable_points(points.tolist())
 
-        spear.log("reachable_points:", reachable_points)
+        spear.log("reachable_points:", reachable_points.tolist())
 
         # get trajectories for every point in points and corresponding point in reachable_points
         trajectories = env.get_trajectories(points.tolist(), reachable_points.tolist())

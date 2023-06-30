@@ -26,15 +26,15 @@ class OpenBotPIDPolicy():
         assert self._config.IMITATION_LEARNING_OPENBOT.PID.PROPORTIONAL_GAIN_HEADING >= 0.0
         assert self._config.IMITATION_LEARNING_OPENBOT.PID.DERIVATIVE_GAIN_HEADING >= 0.0
         assert self._config.IMITATION_LEARNING_OPENBOT.PID.FORWARD_MIN_ANGLE >= 0.0
-        assert self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS > 0.0 
+        assert self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME > 0.0 
     
-    def reset(self, obs, env_step_info):
+    def reset(self, obs, trajectory):
         
-        self._trajectory = env_step_info["agent_step_info"]["trajectory_data"]
+        self._trajectory = trajectory[0]
         assert len(self._trajectory) >= 1
         self._index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
-        self._position_xy_old = obs["state_data"][0:2]
-        self._yaw_old = obs["state_data"][4]
+        self._position_xy_old = obs["location"][0:2]
+        self._yaw_old = obs["rotation"][1]
 
     def step(self, obs):
 
@@ -42,14 +42,14 @@ class OpenBotPIDPolicy():
         position_xy_desired = self._trajectory[self._index_waypoint][0:2] # [x_des, y_des]
 
         # compute the relative agent-target pose from the raw observation dictionary
-        xy_position_error, yaw_error = get_relative_target_pose(position_xy_desired, obs["state_data"][0:2], obs["state_data"][4])
+        xy_position_error, yaw_error = get_relative_target_pose(position_xy_desired, obs["location"][0:2], obs["rotation"][1])
 
         # compute Euclidean distance to target in [m]:
         xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01
 
         # velocity computation
-        lin_vel_norm = np.linalg.norm((obs["state_data"][0:2] - self._position_xy_old) / self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS) * 0.01 
-        ang_vel_norm = (obs["state_data"][4] - self._yaw_old)/self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME_SECONDS
+        lin_vel_norm = np.linalg.norm((obs["location"][0:2] - self._position_xy_old) / self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME) * 0.01 
+        ang_vel_norm = (obs["rotation"][1] - self._yaw_old)/self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME
         
         # compute angular component of motion 
         right_ctrl = -self._config.IMITATION_LEARNING_OPENBOT.PID.PROPORTIONAL_GAIN_HEADING * yaw_error - self._config.IMITATION_LEARNING_OPENBOT.PID.DERIVATIVE_GAIN_HEADING * ang_vel_norm;
@@ -70,8 +70,8 @@ class OpenBotPIDPolicy():
         action = np.array([left_wheel_command,right_wheel_command], dtype=np.float32)
 
         # update member variables
-        self._position_xy_old = obs["state_data"][0:2]
-        self._yaw_old = obs["state_data"][4]
+        self._position_xy_old = obs["location"][0:2]
+        self._yaw_old = obs["rotation"][1]
         
         # is the current waypoint close enough to be considered as "reached" ?
         waypoint_reached = (xy_position_error_norm <= self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS)
@@ -136,7 +136,7 @@ class OpenBotPilotNetPolicy():
             elif "cmd_input" in input_detail["name"] or "goal_input" in input_detail["name"] :
                 
                 # get the updated compass observation
-                compass_observation = get_compass_observation(position_xy_desired, obs["state_data"][0:2], obs["state_data"][4])
+                compass_observation = get_compass_observation(position_xy_desired, obs["location"][0:2], obs["rotation"][1])
                 self._interpreter.set_tensor(input_detail["index"], compass_observation[np.newaxis])   
 
             else:
@@ -150,7 +150,7 @@ class OpenBotPilotNetPolicy():
         action = np.array([tflite_output[0][0],tflite_output[0][1]], dtype=np.float32)
 
         # compute the relative agent-target pose from the raw observation dictionary
-        xy_position_error, _ = get_relative_target_pose(position_xy_desired, obs["state_data"][0:2], obs["state_data"][4])
+        xy_position_error, _ = get_relative_target_pose(position_xy_desired, obs["location"][0:2], obs["rotation"][1])
 
         # compute Euclidean distance to target in [m]:
         xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01

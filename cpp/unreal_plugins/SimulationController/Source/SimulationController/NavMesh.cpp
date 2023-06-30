@@ -148,6 +148,14 @@ std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std
         }
 
         trajectories.push_back(Std::reinterpretAs<uint8_t>(trajectory));
+
+        // Debug drawings
+        if (Config::get<bool>("SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER")) {
+            for (int j = 1; j < path_points.Num(); ++j) {
+                DrawDebugPoint(world_, path_points[j].Location, 20.0f, FColor(25, 116, 210), false, 10.0f, 0);
+                DrawDebugLine(world_, path_points[j - 1].Location, path_points[j].Location, FColor(25, 116, 210), false, 10.0f, 0, 0.15f);
+            }
+        }
     }
 
     return trajectories;
