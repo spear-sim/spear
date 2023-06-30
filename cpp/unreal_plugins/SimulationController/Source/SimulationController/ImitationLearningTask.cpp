@@ -47,12 +47,16 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
     // Get start and end goal locations from a file
-    getPositionsFromFile();
+    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE")) {
+        getPositionsFromFile();
+    }
 }
 
 ImitationLearningTask::~ImitationLearningTask()
 {
-    clearPositions();
+    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE")) {
+        clearPositions();
+    }
     
     SP_ASSERT(actor_hit_event_component_);
     actor_hit_event_component_->delegate_.Remove(actor_hit_event_handle_);
@@ -146,10 +150,13 @@ void ImitationLearningTask::reset()
     // Set agent and goal positions
     bool sweep = false;
     FHitResult* hit_result = nullptr;
-    agent_actor_->SetActorLocationAndRotation(
-        agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
-    goal_actor_->SetActorLocationAndRotation(
-        agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+
+    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE")) {
+        agent_actor_->SetActorLocationAndRotation(
+            agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+        goal_actor_->SetActorLocationAndRotation(
+            agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+    }
 
     // Increment position_index_
     if (position_index_ < agent_goal_positions_.size() - 1) { 
@@ -186,7 +193,7 @@ void ImitationLearningTask::getPositionsFromFile()
     SP_ASSERT(fs.is_open());
 
     // Read file data, line-by-line in the format:
-    // scene_id, init_pos_x_cms, init_pos_y_cms, init_pos_z_cms, goal_pos_x_cms, goal_pos_y_cms, goal_pos_z_cms
+    // scene_id, start_location_x, start_location_y, start_location_z, end_location_x, end_location_y, end_location_z
     std::string line;
     std::getline(fs, line); // header
     while (std::getline(fs, line)) {        
