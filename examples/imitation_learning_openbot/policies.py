@@ -8,15 +8,14 @@ import tflite_runtime.interpreter as tflite
 import spear
 from utils import get_compass_observation, get_relative_target_pose
 
-
 class OpenBotPIDPolicy():
 
     def __init__(self, config): 
 
         self._config = config
-        self._trajectory = np.empty((0, 3), dtype=float)
+        self._trajectory = np.empty((0, 3), dtype=np.float64)
         self._index_waypoint = 0
-        self._position_xy_old = np.zeros(2, dtype=np.float32)
+        self._position_xy_old = np.zeros(2, dtype=np.float64)
         self._yaw_old = 0.0
 
         assert self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS >= 0.0
@@ -34,50 +33,53 @@ class OpenBotPIDPolicy():
         assert len(self._trajectory) >= 1
         self._index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
         self._position_xy_old = obs["location"][0:2]
-        self._yaw_old = obs["rotation"][1]
+        self._yaw_old = np.deg2rad(obs["rotation"][1])
 
     def step(self, obs):
-
+        
         # xy position of the next waypoint in world frame:
         position_xy_desired = self._trajectory[self._index_waypoint][0:2] # [x_des, y_des]
 
         # compute the relative agent-target pose from the raw observation dictionary
-        xy_position_error, yaw_error = get_relative_target_pose(position_xy_desired, obs["location"][0:2], obs["rotation"][1])
+        xy_position_error, yaw_error = get_relative_target_pose(position_xy_desired, obs["location"][0:2], np.deg2rad(obs["rotation"][1]))
 
         # compute Euclidean distance to target in [m]:
         xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01
 
         # velocity computation
         lin_vel_norm = np.linalg.norm((obs["location"][0:2] - self._position_xy_old) / self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME) * 0.01 
-        ang_vel_norm = (obs["rotation"][1] - self._yaw_old)/self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME
+        ang_vel_norm = (np.deg2rad(obs["rotation"][1]) - self._yaw_old)/self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME
         
         # compute angular component of motion 
-        right_ctrl = -self._config.IMITATION_LEARNING_OPENBOT.PID.PROPORTIONAL_GAIN_HEADING * yaw_error - self._config.IMITATION_LEARNING_OPENBOT.PID.DERIVATIVE_GAIN_HEADING * ang_vel_norm;
+        right_ctrl = -self._config.IMITATION_LEARNING_OPENBOT.PID.PROPORTIONAL_GAIN_HEADING * yaw_error - self._config.IMITATION_LEARNING_OPENBOT.PID.DERIVATIVE_GAIN_HEADING * ang_vel_norm
         right_ctrl = np.clip(right_ctrl, -self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION, self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION)
 
         # only compute the linear component of motion if the vehicle is facing its target (modulo config.IMITATION_LEARNING_OPENBOT.PID.FORWARD_MIN_ANGLE)
         forward_ctrl = 0.0
         if abs(yaw_error) <= self._config.IMITATION_LEARNING_OPENBOT.PID.FORWARD_MIN_ANGLE:
+            spear.log("The vehicle is facing forward towards the goal")
             forward_ctrl += self._config.IMITATION_LEARNING_OPENBOT.PID.PROPORTIONAL_GAIN_DIST * xy_position_error_norm - self._config.IMITATION_LEARNING_OPENBOT.PID.DERIVATIVE_GAIN_DIST * lin_vel_norm
             forward_ctrl = np.clip(forward_ctrl, -self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION, self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION)
             forward_ctrl *= abs(np.cos(yaw_error)); # full throttle if the vehicle facing the objective. Otherwise give more priority to the yaw command.
+        else:
+            spear.log("The vehicle is not facing forward, so only rotational input provided")
 
         # compute action for each wheel as the sum of the linear and angular control inputs
         left_wheel_command = forward_ctrl + right_ctrl
         left_wheel_command = np.clip(left_wheel_command, -self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION, self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION)
         right_wheel_command = forward_ctrl - right_ctrl
         right_wheel_command = np.clip(right_wheel_command, -self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION, self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION)
-        action = np.array([left_wheel_command,right_wheel_command], dtype=np.float32)
+        action = np.array([left_wheel_command,right_wheel_command], dtype=np.float64)
 
         # update member variables
         self._position_xy_old = obs["location"][0:2]
-        self._yaw_old = obs["rotation"][1]
+        self._yaw_old = np.deg2rad(obs["rotation"][1])
         
         # is the current waypoint close enough to be considered as "reached" ?
         waypoint_reached = (xy_position_error_norm <= self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS)
 
         # if a waypoint of the trajectory is "reached", based on the autopilot's config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS condition 
-        if waypoint_reached: 
+        if waypoint_reached:
             num_waypoints = len(self._trajectory) - 1 # discarding the initial position
             if self._index_waypoint < num_waypoints:  # if this waypoint is not the final "goal"
                 spear.log(f"Waypoint {self._index_waypoint} of {num_waypoints} reached.")
@@ -122,7 +124,6 @@ class OpenBotPilotNetPolicy():
         for input_detail in self._input_details:
 
             if "img_input" in input_detail["name"]:
-
                 # preprocess (normalize + crop) visual observations:
                 target_height = input_detail["shape"][1] 
                 target_width = input_detail["shape"][2] 
@@ -130,15 +131,12 @@ class OpenBotPilotNetPolicy():
                 image_width = obs["camera.final_color"].shape[1]
                 assert image_height-target_height >= 0.0
                 assert image_width-target_width >= 0.0
-                img_input = np.float32(obs["camera.final_color"][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
+                img_input = np.float32(obs["camera.final_color"][:,:,:-1][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
                 self._interpreter.set_tensor(input_detail["index"], img_input[np.newaxis])
-
-            elif "cmd_input" in input_detail["name"] or "goal_input" in input_detail["name"] :
-                
+            elif "cmd_input" in input_detail["name"] or "goal_input" in input_detail["name"]:
                 # get the updated compass observation
-                compass_observation = get_compass_observation(position_xy_desired, obs["location"][0:2], obs["rotation"][1])
+                compass_observation = get_compass_observation(position_xy_desired, obs["location"][0:2], np.deg2rad(obs["rotation"][1]))
                 self._interpreter.set_tensor(input_detail["index"], compass_observation[np.newaxis])   
-
             else:
                 assert False
         
@@ -147,10 +145,10 @@ class OpenBotPilotNetPolicy():
 
         # generate an action from inference result
         tflite_output = np.clip(self._interpreter.get_tensor(self._output_details[0]["index"]).astype(np.float32), -1.0, 1.0)
-        action = np.array([tflite_output[0][0],tflite_output[0][1]], dtype=np.float32)
+        action = np.array([tflite_output[0][0],tflite_output[0][1]], dtype=np.float64)
 
         # compute the relative agent-target pose from the raw observation dictionary
-        xy_position_error, _ = get_relative_target_pose(position_xy_desired, obs["location"][0:2], obs["rotation"][1])
+        xy_position_error, _ = get_relative_target_pose(position_xy_desired, obs["location"][0:2], np.deg2rad(obs["rotation"][1]))
 
         # compute Euclidean distance to target in [m]:
         xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01

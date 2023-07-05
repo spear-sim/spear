@@ -7,6 +7,7 @@ import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import spear
 
 
 def show_obs(obs, obs_components, render_passes):
@@ -52,7 +53,7 @@ def get_relative_target_pose(position_xy_desired, position_xy_current, yaw_xy_cu
     relative_agent_target_xy = position_xy_desired - position_xy_current
 
     # compute agent forward axis (global coordinate system)
-    rot = np.array([[np.cos(yaw_xy_current), -np.sin(yaw_xy_current)], [np.sin(yaw_xy_current), np.cos(yaw_xy_current)]], dtype=np.float32)
+    rot = np.array([[np.cos(yaw_xy_current), -np.sin(yaw_xy_current)], [np.sin(yaw_xy_current), np.cos(yaw_xy_current)]], dtype=np.float64)
     forward = np.array([1,0]) # front axis is the x axis.
     forward_rotated = np.dot(rot, forward)
 
@@ -102,14 +103,14 @@ def generate_video(image_dir, video_path, rate, compress=False):
     process.wait()
 
 
-def plot_tracking_performance_spatial(poses_current, poses_desired, plot_path):
+def plot_tracking_performance_spatial(poses_tracked, poses_desired, plot_path):
 
     fig, (ax) = plt.subplots(1, 1)
 
-    ax.plot(poses_current[0,0], poses_current[0,1], marker="^", markersize=12.0, label="Start", color="tab:blue")
+    ax.plot(poses_tracked[0,0], poses_tracked[0,1], marker="^", markersize=12.0, label="Start", color="tab:blue")
     ax.plot(poses_desired[-1,0], poses_desired[-1,1], marker="^", markersize=12.0, label="Goal", color="tab:orange")
     ax.plot(poses_desired[:,0], poses_desired[:,1], marker="o", markersize=8.0, label="Desired trajectory", color="tab:green")
-    ax.plot(poses_current[:,0], poses_current[:,1], marker="x", markersize=3.0, label="Actual trajectory", color="tab:purple")
+    ax.plot(poses_tracked[:,0], poses_tracked[:,1], marker="x", markersize=3.0, label="Actual trajectory", color="tab:purple")
 
     x_0,x_1 = ax.get_xlim()
     y_0,y_1 = ax.get_ylim()
@@ -135,26 +136,26 @@ def plot_tracking_performance_spatial(poses_current, poses_desired, plot_path):
     plt.savefig(plot_path, bbox_extra_artists=[legend], bbox_inches="tight")
 
 
-def plot_tracking_performance_temporal(poses_current, poses_desired, plot_path):
+def plot_tracking_performance_temporal(poses_tracked, poses_desired, plot_path):
 
     fig, (ax0,ax1,ax2) = plt.subplots(3, 1)
 
     ax0.plot(poses_desired[:,0], label="Desired x", color="tab:blue")
-    ax0.plot(poses_current[:,0], label="Actual x", color="tab:orange")
+    ax0.plot(poses_tracked[:,0], label="Actual x", color="tab:orange")
     ax0.legend(loc="upper left")
     ax0.set_xlabel("iterations")
     ax0.set_ylabel("x[cm]")
     ax0.grid()
     
     ax1.plot(poses_desired[:,1], label="Desired y", color="tab:blue")
-    ax1.plot(poses_current[:,1], label="Actual y", color="tab:orange")
+    ax1.plot(poses_tracked[:,1], label="Actual y", color="tab:orange")
     ax1.legend(loc="upper left")
     ax1.set_xlabel("iterations")
     ax1.set_ylabel("y[cm]")
     ax1.grid()
     
-    ax2.plot(np.arctan2(poses_desired[:,1] - poses_current[:,1], poses_desired[:,0] - poses_current[:,0]), label="Desired yaw", color="tab:blue")
-    ax2.plot(poses_current[:,4], label='Actual yaw', color="tab:orange")
+    ax2.plot(np.arctan2(poses_desired[:,1] - poses_tracked[:,1], poses_desired[:,0] - poses_tracked[:,0]), label="Desired yaw", color="tab:blue")
+    ax2.plot(poses_tracked[:,4], label='Actual yaw', color="tab:orange")
     ax2.legend(loc="upper left")
     ax2.set_xlabel("iterations")
     ax2.set_ylabel('yaw[rad]')

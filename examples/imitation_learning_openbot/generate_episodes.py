@@ -31,7 +31,7 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     config.defrost()
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE == False
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE = False
     config.freeze()
 
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
@@ -97,36 +97,37 @@ if __name__ == "__main__":
         top_end_points = end_points_sorted[-args.num_episodes_per_scene:]
 
         # concat arrays for easier pd dataframe creation
-        concat = np.hstack((top_start_points, top_end_points))
+        merged_array = np.hstack((top_start_points, top_end_points))
 
         # store start and end location of the trajectories
         df_ = pd.DataFrame(
             columns=df_columns,
-            data={"scene_id"         : [scene_id]*concat.shape[0],
-                  "start_location_x" : concat[:,0],
-                  "start_location_y" : concat[:,1],
-                  "start_location_z" : concat[:,2],
-                  "goal_location_x"  : concat[:,3],
-                  "goal_location_y"  : concat[:,4],
-                  "goal_location_z"  : concat[:,5]})
+            data={"scene_id"         : [scene_id]*merged_array.shape[0],
+                  "start_location_x" : merged_array[:,0],
+                  "start_location_y" : merged_array[:,1],
+                  "start_location_z" : merged_array[:,2],
+                  "goal_location_x"  : merged_array[:,3],
+                  "goal_location_y"  : merged_array[:,4],
+                  "goal_location_z"  : merged_array[:,5]})
         
         df = pd.concat([df, df_])
 
-        # plt.plot(positions[0,0], positions[0,1], "^", markersize=12.0, label="Start", color="tab:blue", alpha=0.3)
-        # plt.plot(positions[-1,0], positions[-1,1], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
-        # plt.plot(positions[:,0], positions[:,1], "-o", markersize=8.0, label="Desired trajectory", color="tab:green", alpha=0.3)
+        plt.plot(merged_array[:,0], merged_array[:,1], "^", markersize=12.0, label="Start", color="tab:blue", alpha=0.3)
+        plt.plot(merged_array[:,3], merged_array[:,4], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
+        for trajectory in trajectories[sorted_indicies]:
+            plt.plot(trajectory[:,0], trajectory[:,1], "-o", markersize=8.0, label="Desired trajectory", color="tab:green", alpha=0.3)
 
-        # handles, labels = plt.gca().get_legend_handles_labels()
-        # by_label = dict(zip(labels, handles))
-        # legend = plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, -0.2), loc="center", ncol=3)
-        # plt.gca().set_aspect("equal")
-        # plt.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
-        # plt.xlabel("x[cm]")
-        # plt.ylabel("y[cm]")
-        # plt.grid()
-        # plt.title(f"scene_id {scene_id}")
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        legend = plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, -0.2), loc="center", ncol=3)
+        plt.gca().set_aspect("equal")
+        plt.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
+        plt.xlabel("x[cm]")
+        plt.ylabel("y[cm]")
+        plt.grid()
+        plt.title(f"scene_id {scene_id}")
         
-        # plt.savefig(os.path.realpath(os.path.join(output_dir, scene_id)), bbox_extra_artists=[legend], bbox_inches="tight")
+        plt.savefig(os.path.realpath(os.path.join(output_dir, scene_id)), bbox_extra_artists=[legend], bbox_inches="tight")
 
         # close the current scene
         env.close()

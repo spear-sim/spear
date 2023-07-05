@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # make sure that we are not in trajectory sampling mode
     config.defrost()
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE == True
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE = True
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
 
@@ -66,7 +66,6 @@ if __name__ == "__main__":
         config.defrost()
         config.SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
-        config.SIMULATION_CONTROLLER.SONAR_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 120
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 160
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
@@ -113,7 +112,7 @@ if __name__ == "__main__":
 
         # reset the simulation
         env_reset_info = {}
-        _ = env.reset(reset_info=env_reset_info)
+        obs = env.reset(reset_info=env_reset_info)
         assert "success" in env_reset_info
 
         # get a trajectory for this episode based on start and end point
@@ -125,11 +124,11 @@ if __name__ == "__main__":
             start_time_seconds = time.time()
         else:
             # create dirs for storing data
-            scene_dir = os.path.realpath(os.path.join(args.eval_dir, episode["scene_id"]))
+            scene_dir   = os.path.realpath(os.path.join(args.eval_dir, episode["scene_id"]))
             episode_dir = os.path.realpath(os.path.join(scene_dir, "%04d" % episode["index"]))
-            image_dir = os.path.realpath(os.path.join(episode_dir, "images"))
-            result_dir = os.path.realpath(os.path.join(episode_dir, "results"))
-            plots_dir = os.path.realpath(os.path.join(episode_dir, "plots"))
+            image_dir   = os.path.realpath(os.path.join(episode_dir, "images"))
+            result_dir  = os.path.realpath(os.path.join(episode_dir, "results"))
+            plots_dir   = os.path.realpath(os.path.join(episode_dir, "plots"))
             os.makedirs(image_dir, exist_ok=True)
             os.makedirs(result_dir, exist_ok=True)
             os.makedirs(plots_dir, exist_ok=True)
@@ -145,7 +144,7 @@ if __name__ == "__main__":
 
         # execute the desired number of iterations in a given episode
         num_iterations = 0
-        goal           = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64) # goal position
+        goal = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64) # goal position
         for i in range(args.num_iterations_per_episode):
 
             spear.log(f"Iteration {i} of {args.num_iterations_per_episode}")
@@ -172,12 +171,12 @@ if __name__ == "__main__":
                 state_data[i] = np.concatenate((obs["location"], np.deg2rad(obs["rotation"])), axis=None)
                 df_result = pd.DataFrame({"left_ctrl"    : action[0],
                                           "right_ctrl"   : action[1],
-                                          "x[cm]"        : obs["state_data"][0],
-                                          "y[cm]"        : obs["state_data"][1],
-                                          "z[cm]"        : obs["state_data"][2],
-                                          "pitch[rad]"   : obs["state_data"][3],
-                                          "yaw[rad]"     : obs["state_data"][4],
-                                          "roll[rad]"    : obs["state_data"][5],
+                                          "x[cm]"        : state_data[i][0],
+                                          "y[cm]"        : state_data[i][1],
+                                          "z[cm]"        : state_data[i][2],
+                                          "pitch[rad]"   : state_data[i][3],
+                                          "yaw[rad]"     : state_data[i][4],
+                                          "roll[rad]"    : state_data[i][5],
                                           "goal_x[cm]"   : goal[0],
                                           "goal_y[cm]"   : goal[1],
                                           "goal_z[cm]"   : goal[2],
@@ -213,7 +212,7 @@ if __name__ == "__main__":
         # create plots
         plot_tracking_performance_spatial(
             state_data[:num_iterations][:],
-            env_step_info["agent_step_info"]["trajectory_data"],
+            trajectory[0],
             os.path.realpath(os.path.join(plots_dir, "tracking_performance_spatial.png")))
 
         if args.create_videos: # if desired, generate a video from the collected rgb observations 

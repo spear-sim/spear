@@ -10,7 +10,7 @@ import numpy as np
 import os
 import spear
 import time
-
+from OpenBotEnv import OpenBotEnv
 
 NUM_STEPS = 100
 

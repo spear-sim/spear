@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     # make sure that we are not in trajectory sampling mode
     config.defrost()
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE == True
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE = True
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
  
@@ -182,16 +182,11 @@ if __name__ == "__main__":
                 # the new goal position. Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather
                 # than directly writing all the observations in a file iteration by iteration, we append these observations in a buffer, named "observation"
                 # to later process them once the episode is completed. 
-                control_data[i]     = action                                    # control_data: [ctrl_left, ctrl_right]
-                state_data[i]       = np.concatenate((obs["location"], np.deg2rad(obs["rotation"])), axis=None)   # state_data: [x, y, z, pitch, yaw, roll]
-                waypoint_data[i]    = policy_step_info["current_waypoint"]      # current waypoint being tracked by the agent
-                time_data[i]        = time_stamp                                # current time stamp
-                frame_data[i]       = i                                         # current frame
-
-                spear.log("control_data:", control_data)
-                spear.log("state_data:", state_data)
-                spear.log("waypoint_data:", waypoint_data)
-                spear.log("time_data:", time_data)
+                control_data[i]     = action                                                                    # control_data: [ctrl_left, ctrl_right]
+                state_data[i]       = np.concatenate((obs["location"], np.deg2rad(obs["rotation"])), axis=None) # state_data: [x, y, z, pitch, yaw, roll]
+                waypoint_data[i]    = policy_step_info["current_waypoint"]                                      # current waypoint being tracked by the agent
+                time_data[i]        = time_stamp                                                                # current time stamp
+                frame_data[i]       = i                                                                         # current frame
 
             # debug
             if args.debug:
