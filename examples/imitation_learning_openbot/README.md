@@ -8,7 +8,7 @@ Before running this example, rename `user_config.yaml.example` to `user_config.y
 
 You can control the behavior of this example by setting the following parameters in your `user_config.yaml` file, e.g.,
   - `SPEAR.PAKS_DIR` is the directory containing scene data in the form of PAK files.
-  - `SIMULATION_CONTROLLER.OPENBOT_AGENT.CAMERA.RENDER_PASSES` can be set to a list of image modalities that you want the agent to return (e.g., setting the value `["depth", "final_color", "segmentation"]` will return depth images, photorealistic RGB images, and segmentation images).
+  - `SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES` can be set to a list of image modalities that you want the agent to return (e.g., setting the value `["depth", "final_color", "segmentation"]` will return depth images, photorealistic RGB images, and segmentation images).
 
 Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
 
@@ -31,7 +31,8 @@ python run_trained_policy.py --episodes_file test_episodes.csv
 ```
 
 Running `generate_episodes.py` will generate navigation episodes and store them in a CSV file. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
-  - `--num_episodes_per_scene` can be used to set the number of episodes generated per scene. Our default is in this example is 10, but you should increase this to 1000 if you intend to train your own navigation policy.
+  - `--num_episodes_per_scene` can be used to set the number of episodes generated per scene. Our default in this example is 10, but you should increase this to 1000 if you intend to train your own navigation policy.
+  - `--num_candidate_points_per_episode` can be used to set the number of candidate points you want to sample per episode. Our default in this example is 10, but you can increase it depending on your use case. In the end, one trajectory per episode is selected.
   - `--episodes_file` can be used to output to a specific CSV file.
 
 Running `generate_dataset.py` will generate a dataset of goals, observations, and actions for each episode. The structure of the generated dataset precisely mimics the structure expected by the OpenBot framework, and can therefore be plugged into the OpenBot training code directly. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,

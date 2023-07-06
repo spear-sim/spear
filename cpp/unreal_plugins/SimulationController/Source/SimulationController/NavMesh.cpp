@@ -12,6 +12,7 @@
 #include <NavigationSystem.h>
 #include <NavMesh/RecastNavMesh.h>
 
+#include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
