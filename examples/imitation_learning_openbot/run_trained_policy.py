@@ -8,22 +8,21 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pandas as pd
+import shutil
+import time
 
+from policies import *
+import spear
+from utils import *
+  
 # hack to import OpenBotEnv
 import sys
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 from getting_started.OpenBotEnv import OpenBotEnv
 
-import pandas as pd
-import shutil
-import spear
-import time
 
-from policies import *
-from utils import *
-  
-  
 if __name__ == "__main__":
 
     # parse arguments
@@ -40,7 +39,7 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
-    # make sure that we are not in trajectory sampling mode
+    # make sure that we are loading trajectories from a file
     config.defrost()
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE = True
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE = os.path.abspath(args.episodes_file)
@@ -116,9 +115,9 @@ if __name__ == "__main__":
         assert "success" in env_reset_info
 
         # get a trajectory for this episode based on start and end point
-        episode_start_location = [episode["start_location_x"], episode["start_location_y"], episode["start_location_z"]]
-        episode_goal_location  = [episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]]
-        trajectory = env.get_trajectories([episode_start_location], [episode_goal_location])
+        episode_start_location = [[episode["start_location_x"], episode["start_location_y"], episode["start_location_z"]]]
+        episode_goal_location  = [[episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]]]
+        trajectory = env.get_trajectories(episode_start_location, episode_goal_location)
 
         if args.benchmark:
             start_time_seconds = time.time()
