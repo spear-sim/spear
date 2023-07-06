@@ -125,8 +125,6 @@ std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std
         FVector end_point_fvector{end_points.at(i).at(0), end_points.at(i).at(1), end_points.at(i).at(2)};
 
         // Update navigation query with the start and end location
-        // TODO: check if we need to store reference to world because this is the only place it is being used.
-        //       Can we just use recast_nav_mesh_ or navigation_system_v1_ as the owner object instead of world_?
         FPathFindingQuery nav_query = FPathFindingQuery(world_, *recast_nav_mesh_, start_point_fvector, end_point_fvector);
 
         // Generate a collision-free path between the start location and the end location
