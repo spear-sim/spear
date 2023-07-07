@@ -57,12 +57,9 @@ class OpenBotPIDPolicy():
         # only compute the linear component of motion if the vehicle is facing its target (modulo config.IMITATION_LEARNING_OPENBOT.PID.FORWARD_MIN_ANGLE)
         forward_ctrl = 0.0
         if abs(yaw_error) <= self._config.IMITATION_LEARNING_OPENBOT.PID.FORWARD_MIN_ANGLE:
-            spear.log("The vehicle is facing forward towards the goal")
             forward_ctrl += self._config.IMITATION_LEARNING_OPENBOT.PID.PROPORTIONAL_GAIN_DIST * xy_position_error_norm - self._config.IMITATION_LEARNING_OPENBOT.PID.DERIVATIVE_GAIN_DIST * lin_vel_norm
             forward_ctrl = np.clip(forward_ctrl, -self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION, self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION)
             forward_ctrl *= abs(np.cos(yaw_error)); # full throttle if the vehicle facing the objective. Otherwise give more priority to the yaw command.
-        else:
-            spear.log("The vehicle is not facing forward, so only rotational input provided")
 
         # compute action for each wheel as the sum of the linear and angular control inputs
         left_wheel_command = forward_ctrl + right_ctrl
