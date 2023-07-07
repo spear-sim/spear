@@ -46,8 +46,8 @@ if __name__ == "__main__":
     config.freeze()
 
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
+    config.defrost()
     if args.debug:
-        config.defrost()
         config.SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 1080
@@ -60,16 +60,14 @@ if __name__ == "__main__":
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.PITCH = -35.0
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW = 45.0
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL = 0.0
-        config.freeze()
     else:
-        config.defrost()
         config.SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 120
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 160
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "location", "rotation", "wheel_encoder"]
-        config.freeze()
+    config.freeze()
 
     # load driving policy
     assert os.path.exists(args.policy_file)
