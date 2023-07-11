@@ -11,13 +11,12 @@ import numpy as np
 import os
 import pandas as pd
 import shutil
+import spear
 import time
 
 from policies import *
-import spear
 from utils import *
-
-# hack to import OpenBotEnv from another example folder
+# hack to import OpenBotEnv from common example folder
 import sys
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))

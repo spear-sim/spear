@@ -3,9 +3,9 @@
 #
 
 import numpy as np
+import spear
 import tensorflow as tf
 
-import spear
 from utils import get_compass_observation, get_relative_target_pose
 
 class OpenBotPIDPolicy():
