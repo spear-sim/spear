@@ -58,7 +58,6 @@ SIMULATION_CONTROLLER:
     AGENT_MAX_SLOPE: 0.1
     MIN_REGION_AREA: 400.0
     MERGE_REGION_SIZE: 0.0
-    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
     TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
 
   VEHICLE_AGENT:
@@ -84,8 +83,7 @@ SIMULATION_CONTROLLER:
     AGENT_ACTOR_NAME: "vehicle_actor"
     GOAL_ACTOR_NAME: "goal_actor"
     OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor_2", "Floor_3", "Floor_4", "Floor_5", "Floor_6", "Floor_7", "Floor_8", "Floor_9", "Floor_10"]
-    LOAD_TRAJECTORY_FROM_FILE: False
-    TRAJECTORY_LOCATIONS_FILE: ""
+    EPISODES_FILE: ""
 
   VISUALIZER:
     ACTOR_NAME: "vehicle_actor"

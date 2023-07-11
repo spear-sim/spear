@@ -105,11 +105,11 @@ class OpenBotPilotNetPolicy():
         # load the control policy
         self._interpreter = tflite.Interpreter(config.IMITATION_LEARNING_OPENBOT.PILOT_NET.PATH)
         self._interpreter.allocate_tensors()
-        
+
         # get input and output tensor details
         self._input_details = self._interpreter.get_input_details()
         self._output_details = self._interpreter.get_output_details()
-        
+
         # the policy takes two inputs: normalized rgb image and a 3D compass observation.
         spear.log(f"Input details of the control policy: {self._input_details}")
 
@@ -117,7 +117,7 @@ class OpenBotPilotNetPolicy():
         spear.log(f"Output details of the control policy: {self._output_details}")
 
     def step(self, obs, position_xy_desired):
-    
+
         for input_detail in self._input_details:
 
             if "img_input" in input_detail["name"]:
@@ -136,7 +136,7 @@ class OpenBotPilotNetPolicy():
                 self._interpreter.set_tensor(input_detail["index"], compass_observation[np.newaxis])   
             else:
                 assert False
-        
+
         # run inference
         self._interpreter.invoke()
 
@@ -152,5 +152,5 @@ class OpenBotPilotNetPolicy():
 
         # is the current waypoint close enough to be considered as "reached" ?
         step_info = {"goal_reached" : (xy_position_error_norm <= self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS)}
-    
+
         return action, step_info

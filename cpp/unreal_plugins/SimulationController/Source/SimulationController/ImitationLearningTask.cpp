@@ -11,7 +11,6 @@
 
 #include <Components/SceneComponent.h>
 #include <Delegates/IDelegateInstance.h>
-#include <DrawDebugHelpers.h>
 #include <Engine/EngineTypes.h>
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
@@ -46,18 +45,53 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_component_->RegisterComponent();
     actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
-    // Get start and end goal locations from a file
-    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE")) {
-        getPositionsFromFile();
+    // Get initial and goal locations of all episodes.
+    // Locations are in the format "initial_location.X, initial_location.Y, initial_location.Z, goal_location.X, goal_location.Y, goal_location.Z".
+    agent_initial_locations_.clear();
+    agent_goal_locations_.clear();
+    episode_index_ = -1;
+
+    // Create an input filestream
+    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE"));
+    SP_ASSERT(fs.is_open());
+
+    // Read file data, line-by-line in the format:
+    // scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
+    std::string line;
+    std::getline(fs, line); // read header
+    std::vector<std::string> tokens = Std::tokenize(line, ",");
+    SP_ASSERT(tokens.size() == 7);
+    SP_ASSERT(tokens.at(0) == "scene_id");
+    SP_ASSERT(tokens.at(1) == "initial_location_x");
+    SP_ASSERT(tokens.at(2) == "initial_location_y");
+    SP_ASSERT(tokens.at(3) == "initial_location_z");
+    SP_ASSERT(tokens.at(4) == "goal_location_x");
+    SP_ASSERT(tokens.at(5) == "goal_location_y");
+    SP_ASSERT(tokens.at(6) == "goal_location_z");
+    while (std::getline(fs, line)) {
+        tokens = Std::tokenize(line, ",");
+        SP_ASSERT(tokens.size() == 7);
+        std::string scene_id = tokens.at(0);
+        FVector initial_location = {std::stod(tokens.at(1)), std::stod(tokens.at(2)), std::stod(tokens.at(3))};
+        FVector goal_location = {std::stod(tokens.at(4)), std::stod(tokens.at(5)), std::stod(tokens.at(6))};
+
+        // If the scene id matches the currently opened map, then add to our list of locations
+        if (scene_id == Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID")) {
+            agent_initial_locations_.push_back(initial_location);
+            agent_goal_locations_.push_back(goal_location);
+        }
     }
+    fs.close();
+
+    episode_index_ = 0;
 }
 
 ImitationLearningTask::~ImitationLearningTask()
 {
-    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE")) {
-        clearPositions();
-    }
-    
+    agent_initial_locations_.clear();
+    agent_goal_locations_.clear();
+    episode_index_ = -1;
+
     SP_ASSERT(actor_hit_event_component_);
     actor_hit_event_component_->delegate_.Remove(actor_hit_event_handle_);
     actor_hit_event_handle_.Reset();
@@ -147,22 +181,20 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
-    // Set agent and goal positions
+    // Set agent and goal locations
     bool sweep = false;
     FHitResult* hit_result = nullptr;
 
-    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE")) {
-        agent_actor_->SetActorLocationAndRotation(
-            agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
-        goal_actor_->SetActorLocationAndRotation(
-            agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
-    }
+    agent_actor_->SetActorLocationAndRotation(
+        agent_initial_locations_.at(episode_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+    goal_actor_->SetActorLocationAndRotation(
+        agent_goal_locations_.at(episode_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
 
-    // Increment position_index_
-    if (position_index_ < agent_goal_positions_.size() - 1) { 
-        position_index_++;
+    // Increment episode_index_
+    if (episode_index_ < agent_goal_locations_.size() - 1) { 
+        episode_index_++;
     }  else {
-        position_index_ = 0;
+        episode_index_ = 0;
     }
 }
 
@@ -180,45 +212,4 @@ void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* oth
     } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
         hit_obstacle_ = true;
     }
-}
-
-void ImitationLearningTask::getPositionsFromFile()
-{
-    agent_initial_positions_.clear();
-    agent_goal_positions_.clear();
-    position_index_ = -1;
-
-    // Create an input filestream 
-    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE")); 
-    SP_ASSERT(fs.is_open());
-
-    // Read file data, line-by-line in the format:
-    // scene_id, start_location_x, start_location_y, start_location_z, end_location_x, end_location_y, end_location_z
-    std::string line;
-    std::getline(fs, line); // header
-    while (std::getline(fs, line)) {        
-        std::vector<std::string> tokens = Std::tokenize(line, ",");
-        SP_ASSERT(tokens.size() == 7);
-        std::string scene_id = tokens.at(0);
-        FVector init(std::stod(tokens.at(1)), std::stod(tokens.at(2)), std::stod(tokens.at(3)));
-        FVector goal(std::stod(tokens.at(4)), std::stod(tokens.at(5)), std::stod(tokens.at(6)));
-
-        // If the scene id matches the currently opened map, then add to our list of positions
-        if(scene_id == Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID")) {
-            agent_initial_positions_.push_back(init);
-            agent_goal_positions_.push_back(goal);
-        }
-    }
-
-    // Close file
-    fs.close();
-
-    position_index_ = 0;
-}
-
-void ImitationLearningTask::clearPositions()
-{
-    agent_initial_positions_.clear();
-    agent_goal_positions_.clear();
-    position_index_ = -1;
 }

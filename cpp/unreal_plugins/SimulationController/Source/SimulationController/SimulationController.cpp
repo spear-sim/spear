@@ -476,10 +476,10 @@ void SimulationController::bindFunctionsToRpcServer()
         return nav_mesh_->getRandomPoints(num_points);
     });
 
-    rpc_server_->bindSync("get_reachable_points", [this](const std::vector<std::vector<float>>& start_points) -> std::vector<uint8_t> {
+    rpc_server_->bindSync("get_reachable_points", [this](const std::vector<std::vector<float>>& start_points, float search_radius) -> std::vector<uint8_t> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
-        return nav_mesh_->getReachablePoints(start_points);
+        return nav_mesh_->getReachablePoints(start_points, search_radius);
         });
 
     rpc_server_->bindSync("get_trajectories", [this](const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points) -> std::vector<std::vector<uint8_t>> {

@@ -42,8 +42,8 @@ if __name__ == "__main__":
 
     # make sure that we are loading trajectories from a file
     config.defrost()
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE = True
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE = os.path.abspath(args.episodes_file)
+    config.SIMULATION_CONTROLLER.TASK = "ImitationLearningTask"
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
  
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
@@ -67,8 +67,8 @@ if __name__ == "__main__":
     else:
         config.SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 128
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 128
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 120
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 160
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "location", "rotation", "wheel_encoder"]
 
@@ -172,7 +172,7 @@ if __name__ == "__main__":
                 obs_final_color = obs_final_color[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
 
                 # save the collected rgb observations
-                plt.imsave(os.path.realpath(os.path.join(image_dir, "%04d.jpg"%i)), obs_final_color)
+                plt.imsave(os.path.realpath(os.path.join(image_dir, "%d.jpeg"%i)), obs_final_color)
 
                 # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training
                 # purposes. In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole
@@ -180,11 +180,11 @@ if __name__ == "__main__":
                 # the new goal position. Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather
                 # than directly writing all the observations in a file iteration by iteration, we append these observations in a buffer, named "observation"
                 # to later process them once the episode is completed. 
-                control_data[i]     = action                                                                    # control_data: [ctrl_left, ctrl_right]
-                state_data[i]       = np.concatenate((obs["location"], np.deg2rad(obs["rotation"])), axis=None) # state_data: [x, y, z, pitch, yaw, roll]
-                waypoint_data[i]    = policy_step_info["current_waypoint"]                                      # current waypoint being tracked by the agent
-                time_data[i]        = time_stamp                                                                # current time stamp
-                frame_data[i]       = i                                                                         # current frame
+                control_data[i]  = action                                                                    # control_data: [ctrl_left, ctrl_right]
+                state_data[i]    = np.concatenate((obs["location"], np.deg2rad(obs["rotation"])), axis=None) # state_data: [x, y, z, pitch, yaw, roll]
+                waypoint_data[i] = policy_step_info["current_waypoint"]                                      # current waypoint being tracked by the agent
+                time_data[i]     = time_stamp                                                                # current time stamp
+                frame_data[i]    = i                                                                         # current frame
 
             # debug
             if args.debug:

@@ -41,13 +41,6 @@ public:
 private:
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
 
-    // Get a list of the different initial and goal positions the agent is expected to navigate to.
-    // Positions are in the format "start_location.X, start_location.Y, start_location.Z, end_location.X, end_location.Y, end_location.Z".
-    void getPositionsFromFile();
-
-    // Clear our lists of initial and goal positions.
-    void clearPositions();
-
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
     AActor* parent_actor_ = nullptr;
@@ -58,9 +51,9 @@ private:
     FDelegateHandle actor_hit_event_handle_;
 
     // Task state
-    std::vector<FVector> agent_initial_positions_; // Initial position of the learning agent
-    std::vector<FVector> agent_goal_positions_;    // Goal position of the learning agent
-    int position_index_ = -1;                      // Index of the trajectory pair
+    std::vector<FVector> agent_initial_locations_; // Initial position of the learning agent
+    std::vector<FVector> agent_goal_locations_;    // Goal position of the learning agent
+    int episode_index_ = -1;                      // Index of the trajectory pair
     bool hit_goal_ = false;                        // Was the goal hit?
     bool hit_obstacle_ = false;                    // Was an obstacle hit?
 };

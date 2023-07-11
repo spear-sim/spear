@@ -100,20 +100,20 @@ class Env(gym.Env):
 
         return points
 
-    def get_reachable_points(self, start_points):
+    def get_reachable_points(self, reference_points, search_radius):
 
         self._begin_tick()
         self._tick()
-        points = self._get_reachable_points(start_points)
+        points = self._get_reachable_points(reference_points, search_radius)
         self._end_tick()
 
         return points
 
-    def get_trajectories(self, start_points, end_points):
+    def get_trajectories(self, initial_points, goal_points):
 
         self._begin_tick()
         self._tick()
-        points = self._get_trajectories(start_points, end_points)
+        points = self._get_trajectories(initial_points, goal_points)
         self._end_tick()
 
         return points
@@ -460,17 +460,17 @@ class Env(gym.Env):
             random_points_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)
         return random_points
 
-    def _get_reachable_points(self, start_points):
-        assert all(isinstance(i, list) for i in start_points)
-        reachable_points_serialized = self._rpc_client.call("get_reachable_points", start_points)
+    def _get_reachable_points(self, reference_points, search_radius):
+        assert all(isinstance(i, list) for i in reference_points)
+        reachable_points_serialized = self._rpc_client.call("get_reachable_points", reference_points, search_radius)
         reachable_points = _deserialize_array(
             reachable_points_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)
         return reachable_points
 
-    def _get_trajectories(self, start_points, end_points):
-        assert all(isinstance(i, list) for i in start_points)
-        assert all(isinstance(i, list) for i in end_points)
-        trajectories_serialized_list = self._rpc_client.call("get_trajectories", start_points, end_points)
+    def _get_trajectories(self, initial_points, goal_points):
+        assert all(isinstance(i, list) for i in initial_points)
+        assert all(isinstance(i, list) for i in goal_points)
+        trajectories_serialized_list = self._rpc_client.call("get_trajectories", initial_points, goal_points)
         trajectories = np.vectorize(
             lambda trajectory_serialized: 
             _deserialize_array(trajectory_serialized, space=Box(low=-np.inf, high=np.inf, shape=(-1,3), dtype=np.float64), byte_order=self._byte_order)

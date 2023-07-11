@@ -41,8 +41,8 @@ if __name__ == "__main__":
 
     # make sure that we are loading trajectories from a file
     config.defrost()
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.LOAD_TRAJECTORY_FROM_FILE = True
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_LOCATIONS_FILE = os.path.abspath(args.episodes_file)
+    config.SIMULATION_CONTROLLER.TASK = "ImitationLearningTask"
+    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
 
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
@@ -180,7 +180,7 @@ if __name__ == "__main__":
                                           "goal_reached" : policy_step_info["goal_reached"],
                                           "hit_obstacle" : env_step_info["task_step_info"]["hit_obstacle"]})
                 df_result.to_csv(os.path.realpath(os.path.join(result_dir,"resultLog.txt")), mode="a", index=False, header=i==0)
-            
+
             # debug
             if args.debug:
                 show_obs(

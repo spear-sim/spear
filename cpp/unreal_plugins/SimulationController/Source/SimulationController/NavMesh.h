@@ -20,7 +20,7 @@ public:
     void cleanUpObjectReferences();
 
     std::vector<uint8_t> getRandomPoints(int num_points);
-    std::vector<uint8_t> getReachablePoints(const std::vector<std::vector<float>>& start_points);
+    std::vector<uint8_t> getReachablePoints(const std::vector<std::vector<float>>& start_points, float search_radius);
     std::vector<std::vector<uint8_t>> getTrajectories(const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points);
 private:
     ARecastNavMesh* recast_nav_mesh_ = nullptr;

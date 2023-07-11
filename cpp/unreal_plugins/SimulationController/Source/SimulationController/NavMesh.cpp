@@ -91,25 +91,24 @@ std::vector<uint8_t> NavMesh::getRandomPoints(int num_points)
     return Std::reinterpretAs<uint8_t>(points);
 }
 
-std::vector<uint8_t> NavMesh::getReachablePoints(const std::vector<std::vector<float>>& start_points)
+std::vector<uint8_t> NavMesh::getReachablePoints(const std::vector<std::vector<float>>& reference_points, float search_radius)
 {
-    std::vector<double> end_points;
-    for (auto& start_point : start_points) {
+    std::vector<double> reachable_points;
+    for (auto& reference_point : reference_points) {
 
-        SP_ASSERT(start_point.size()==3);
+        SP_ASSERT(reference_point.size()==3);
 
-        FVector start_point_fvector{start_point.at(0), start_point.at(1), start_point.at(2)};
-        FNavLocation end_location;
+        FVector reference_point_fvector = {reference_point.at(0), reference_point.at(1), reference_point.at(2)};
+        FNavLocation nav_location;
 
-        bool found = recast_nav_mesh_->GetRandomReachablePointInRadius(
-            start_point_fvector, Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_SEARCH_RADIUS"), end_location);
+        bool found = recast_nav_mesh_->GetRandomReachablePointInRadius(reference_point_fvector, search_radius, nav_location);
         SP_ASSERT(found);
 
-        end_points.push_back(end_location.Location.X);
-        end_points.push_back(end_location.Location.Y);
-        end_points.push_back(end_location.Location.Z);
+        reachable_points.push_back(nav_location.Location.X);
+        reachable_points.push_back(nav_location.Location.Y);
+        reachable_points.push_back(nav_location.Location.Z);
     }
-    return Std::reinterpretAs<uint8_t>(end_points);
+    return Std::reinterpretAs<uint8_t>(reachable_points);
 }
 
 std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points)
