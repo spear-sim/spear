@@ -3,7 +3,7 @@
 #
 
 import numpy as np
-import tflite_runtime.interpreter as tflite
+import tensorflow as tf
 
 import spear
 from utils import get_compass_observation, get_relative_target_pose
@@ -103,7 +103,7 @@ class OpenBotPilotNetPolicy():
         assert self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION >= 0.0
 
         # load the control policy
-        self._interpreter = tflite.Interpreter(config.IMITATION_LEARNING_OPENBOT.PILOT_NET.PATH)
+        self._interpreter = tf.lite.Interpreter(config.IMITATION_LEARNING_OPENBOT.PILOT_NET.PATH)
         self._interpreter.allocate_tensors()
 
         # get input and output tensor details

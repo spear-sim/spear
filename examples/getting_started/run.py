@@ -60,13 +60,13 @@ if __name__ == "__main__":
             obs, reward, done, info = env.step(action={"set_duty_cycles": np.array([1.0, 0.715], dtype=np.float64)})
             if not args.benchmark:
                 spear.log("VehicleAgent:")
-                spear.log("    camera:        ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
-                spear.log("    location:      ", obs["location"])
-                spear.log("    rotation:      ", obs["rotation"])
-                spear.log("    wheel_encoder: ", obs["wheel_encoder"])
-                spear.log("    reward:        ", reward)
-                spear.log("    done:          ", done)
-                spear.log("    info:          ", info.keys())
+                spear.log("    camera:                ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
+                spear.log("    location:              ", obs["location"])
+                spear.log("    rotation:              ", obs["rotation"])
+                spear.log("    wheel_rotation_speeds: ", obs["wheel_rotation_speeds"])
+                spear.log("    reward:                ", reward)
+                spear.log("    done:                  ", done)
+                spear.log("    info:                  ", info.keys())
         else:
             assert False
 

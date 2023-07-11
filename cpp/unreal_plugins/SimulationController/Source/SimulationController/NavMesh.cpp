@@ -14,7 +14,6 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
-#include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
 
 void NavMesh::findObjectReferences(UWorld* world)
@@ -111,50 +110,42 @@ std::vector<uint8_t> NavMesh::getReachablePoints(const std::vector<std::vector<f
     return Std::reinterpretAs<uint8_t>(reachable_points);
 }
 
-std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points)
+std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std::vector<float>>& initial_points, const std::vector<std::vector<float>>& goal_points)
 {
-    SP_ASSERT(start_points.size() == end_points.size());
+    SP_ASSERT(initial_points.size() == goal_points.size());
 
-    std::vector<std::vector<uint8_t>> trajectories;
+    std::vector<std::vector<uint8_t>> paths;
 
-    for (int i = 0; i < start_points.size(); ++i) {
-        SP_ASSERT(start_points.at(i).size() == 3);
-        SP_ASSERT(end_points.at(i).size() == 3);
+    for (int i = 0; i < initial_points.size(); i++) {
+        SP_ASSERT(initial_points.at(i).size() == 3);
+        SP_ASSERT(goal_points.at(i).size() == 3);
 
-        FVector start_point_fvector{start_points.at(i).at(0), start_points.at(i).at(1), start_points.at(i).at(2)};
-        FVector end_point_fvector{end_points.at(i).at(0), end_points.at(i).at(1), end_points.at(i).at(2)};
+        FVector start_point = {initial_points.at(i).at(0), initial_points.at(i).at(1), initial_points.at(i).at(2)};
+        FVector end_point = {goal_points.at(i).at(0), goal_points.at(i).at(1), goal_points.at(i).at(2)};
 
         // Update navigation query with the start and end location
-        FPathFindingQuery nav_query = FPathFindingQuery(world_, *recast_nav_mesh_, start_point_fvector, end_point_fvector);
+        FPathFindingQuery nav_query = FPathFindingQuery(world_, *recast_nav_mesh_, start_point, end_point);
 
         // Generate a collision-free path between the start location and the end location
-        FPathFindingResult path = navigation_system_v1_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+        FPathFindingResult path_finding_result = navigation_system_v1_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
 
         // Ensure that path generation process was successful and that the generated path is valid
-        SP_ASSERT(path.IsSuccessful());
-        SP_ASSERT(path.Path.IsValid());
+        SP_ASSERT(path_finding_result.IsSuccessful());
+        SP_ASSERT(path_finding_result.Path.IsValid());
 
         // Update trajectory with the waypoints
-        TArray<FNavPathPoint> path_points = path.Path->GetPathPoints();
-        SP_ASSERT(path_points.Num() > 1);
+        TArray<FNavPathPoint> nav_path_points = path_finding_result.Path->GetPathPoints();
+        SP_ASSERT(nav_path_points.Num() > 1);
 
-        std::vector<double> trajectory;
-        for (auto& path_point : path_points) {
-            trajectory.push_back(path_point.Location.X);
-            trajectory.push_back(path_point.Location.Y);
-            trajectory.push_back(path_point.Location.Z);
+        std::vector<double> path;
+        for (auto& path_point : nav_path_points) {
+            path.push_back(path_point.Location.X);
+            path.push_back(path_point.Location.Y);
+            path.push_back(path_point.Location.Z);
         }
 
-        trajectories.push_back(Std::reinterpretAs<uint8_t>(trajectory));
-
-        // Debug drawings
-        if (Config::get<bool>("SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER")) {
-            for (int j = 1; j < path_points.Num(); ++j) {
-                DrawDebugPoint(world_, path_points[j].Location, 20.0f, FColor(25, 116, 210), false, 10.0f, 0);
-                DrawDebugLine(world_, path_points[j - 1].Location, path_points[j].Location, FColor(25, 116, 210), false, 10.0f, 0, 0.15f);
-            }
-        }
+        paths.push_back(Std::reinterpretAs<uint8_t>(path));
     }
 
-    return trajectories;
+    return paths;
 }

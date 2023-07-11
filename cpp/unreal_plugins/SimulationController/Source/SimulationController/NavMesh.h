@@ -23,7 +23,7 @@ public:
     std::vector<uint8_t> getReachablePoints(const std::vector<std::vector<float>>& start_points, float search_radius);
     std::vector<std::vector<uint8_t>> getTrajectories(const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points);
 private:
-    ARecastNavMesh* recast_nav_mesh_ = nullptr;
-    UNavigationSystemV1* navigation_system_v1_ = nullptr;
     UWorld* world_ = nullptr;
+    UNavigationSystemV1* navigation_system_v1_ = nullptr;
+    ARecastNavMesh* recast_nav_mesh_ = nullptr;
 };

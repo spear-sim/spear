@@ -20,7 +20,7 @@ from utils import *
 import sys
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from getting_started.OpenBotEnv import OpenBotEnv
+from common.openbot_env import OpenBotEnv
 
 
 if __name__ == "__main__":
@@ -48,12 +48,11 @@ if __name__ == "__main__":
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
     config.defrost()
     if args.debug:
-        config.SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 1080
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 1920
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_encoder"]
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_rotation_speeds"]
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
@@ -61,12 +60,11 @@ if __name__ == "__main__":
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW = 45.0
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL = 0.0
     else:
-        config.SIMULATION_CONTROLLER.NAVMESH.TRAJECTORY_SAMPLING_DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 120
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 160
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "location", "rotation", "wheel_encoder"]
+        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "location", "rotation", "wheel_rotation_speeds"]
     config.freeze()
 
     # load driving policy
@@ -113,7 +111,7 @@ if __name__ == "__main__":
         assert "success" in env_reset_info
 
         # get a trajectory for this episode based on start and end point
-        episode_start_location = [[episode["start_location_x"], episode["start_location_y"], episode["start_location_z"]]]
+        episode_start_location = [[episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]]]
         episode_goal_location  = [[episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]]]
         trajectory = env.get_trajectories(episode_start_location, episode_goal_location)
 

@@ -93,7 +93,7 @@ if __name__ == "__main__":
         # concat arrays for easier pd dataframe creation
         merged_array = np.hstack((top_initial_points, top_goal_points))
 
-        # store start and end location of the trajectories
+        # store initial and end location of the trajectories
         df_ = pd.DataFrame(
             columns=df_columns,
             data={"scene_id"           : [scene_id] * merged_array.shape[0],
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
         df = pd.concat([df, df_])
 
-        plt.plot(merged_array[:,0], merged_array[:,1], "^", markersize=12.0, label="Start", color="tab:blue", alpha=0.3)
+        plt.plot(merged_array[:,0], merged_array[:,1], "^", markersize=12.0, label="Initial", color="tab:blue", alpha=0.3)
         plt.plot(merged_array[:,3], merged_array[:,4], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
         for trajectory in trajectories[sorted_indicies]:
             plt.plot(trajectory[:,0], trajectory[:,1], "-o", markersize=8.0, label="Desired trajectory", color="tab:green", alpha=0.3)
@@ -125,7 +125,7 @@ if __name__ == "__main__":
         # close the current scene
         env.close()
 
-    # write start and goal locations of all episodes to a csv file
+    # write initial and goal locations of all episodes to a csv file
     df.to_csv(args.episodes_file, index=False)
 
     spear.log("Done.")

@@ -14,7 +14,7 @@ class OpenBotEnv(spear.Env):
     
         assert config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent"
         assert "set_drive_torques" in config.SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS
-        assert "wheel_encoder" in config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS
+        assert "wheel_rotation_speeds" in config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS
 
         self._wheel_rotation_speeds = None
 
@@ -29,15 +29,15 @@ class OpenBotEnv(spear.Env):
     def reset(self, reset_info=None):
     
         obs = super().reset(reset_info=reset_info)
-        assert "wheel_encoder" in obs.keys()
-        self._wheel_rotation_speeds = obs["wheel_encoder"]
+        assert "wheel_rotation_speeds" in obs.keys()
+        self._wheel_rotation_speeds = obs["wheel_rotation_speeds"]
         return obs
 
     def _get_observation(self):
 
         obs = super()._get_observation()
-        assert "wheel_encoder" in obs.keys()
-        self._wheel_rotation_speeds = obs["wheel_encoder"]
+        assert "wheel_rotation_speeds" in obs.keys()
+        self._wheel_rotation_speeds = obs["wheel_rotation_speeds"]
         return obs
         
     def _apply_action(self, action):
