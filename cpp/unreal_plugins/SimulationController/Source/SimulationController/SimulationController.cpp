@@ -50,6 +50,7 @@ enum class FrameState
 void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CommonModuleRules")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("Vehicle")));
 

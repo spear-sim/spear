@@ -16,10 +16,11 @@ import time
 
 from policies import *
 from utils import *
+
 # hack to import OpenBotEnv from common example folder
+COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(SCRIPT_DIR))
+sys.path.append(COMMON_DIR)
 from common.openbot_env import OpenBotEnv
 
 
@@ -48,13 +49,12 @@ if __name__ == "__main__":
     # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
     config.defrost()
     if args.debug:
-        config.SPEAR.RENDER_OFFSCREEN = True
+        config.SPEAR.RENDER_OFFSCREEN = False
         config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 512
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 512
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_rotation_speeds"]
-
         # aim camera in a third-person vieww facing backwards at an angle
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
@@ -62,21 +62,10 @@ if __name__ == "__main__":
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.PITCH = -35.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW = 45.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL = 0.0
-    else:
-        config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 120
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 160
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "location", "rotation", "wheel_rotation_speeds"]
-
-        # aim camera in a third-person view facing forward
-        config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
-        config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Y = 0.0
-        config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Z = 5.0
     config.freeze()
 
     # load driving policy
-    policy = OpenBotPIDPolicy(config)
+    policy = OpenBotPathFollowingPolicy(config)
 
     # load the episodes to be executed
     assert os.path.exists(args.episodes_file)
@@ -114,6 +103,7 @@ if __name__ == "__main__":
         env_reset_info = {}
         obs = env.reset(reset_info=env_reset_info)
         assert "success" in env_reset_info
+        assert env_reset_info["success"]
 
         # get a trajectory for this episode based on start and end point
         episode_start_location = [episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]]

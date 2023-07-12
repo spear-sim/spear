@@ -8,15 +8,19 @@ import tensorflow as tf
 
 from utils import get_compass_observation, get_relative_target_pose
 
-class OpenBotPIDPolicy():
+class OpenBotPathFollowingPolicy():
 
     def __init__(self, config): 
 
         self._config = config
-        self._trajectory = np.empty((0, 3), dtype=np.float64)
-        self._index_waypoint = 0
-        self._position_xy_old = np.zeros(2, dtype=np.float64)
-        self._yaw_old = 0.0
+
+        # Our convention in this example is to store all data that comes directly from Unreal in the native format
+        # exported by Unreal, i.e., centimeters and degrees. We eventually need to convert some of this data to
+        # meters and radians, but we only do so in local temporary variables.
+        self._path              = None
+        self._waypoint_index    = None
+        self._location_xy_prev  = None
+        self._rotation_yaw_prev = None
 
         assert self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS >= 0.0
         assert self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION >= 0.0
@@ -27,18 +31,19 @@ class OpenBotPIDPolicy():
         assert self._config.IMITATION_LEARNING_OPENBOT.PID.FORWARD_MIN_ANGLE >= 0.0
         assert self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME > 0.0 
     
-    def reset(self, obs, trajectory):
+    def reset(self, obs, path):
         
-        self._trajectory = trajectory[0]
-        assert len(self._trajectory) >= 1
-        self._index_waypoint = 1 # initialized to 1 as waypoint with index 0 refers to the agent initial position
-        self._position_xy_old = obs["location"][0:2]
-        self._yaw_old = np.deg2rad(obs["rotation"][1])
+        assert path.shape[0] >= 1
+
+        self._path              = path
+        self._waypoint_index    = 1     # initialized to 1 as waypoint with index 0 refers to the agent initial position
+        self._location_xy_prev  = obs["location"][0:2]
+        self._rotation_yaw_prev = obs["rotation"][1]
 
     def step(self, obs):
-        
+
         # xy position of the next waypoint in world frame:
-        position_xy_desired = self._trajectory[self._index_waypoint][0:2] # [x_des, y_des]
+        position_xy_desired = self._path[self._waypoint_index][0:2] # [x_des, y_des]
 
         # compute the relative agent-target pose from the raw observation dictionary
         xy_position_error, yaw_error = get_relative_target_pose(position_xy_desired, obs["location"][0:2], np.deg2rad(obs["rotation"][1]))
@@ -47,9 +52,9 @@ class OpenBotPIDPolicy():
         xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01
 
         # velocity computation
-        lin_vel_norm = np.linalg.norm((obs["location"][0:2] - self._position_xy_old) / self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME) * 0.01 
-        ang_vel_norm = (np.deg2rad(obs["rotation"][1]) - self._yaw_old)/self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME
-        
+        lin_vel_norm = np.linalg.norm((obs["location"][0:2] - self._location_xy_prev) / self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME) * 0.01 
+        ang_vel_norm = (np.deg2rad(obs["rotation"][1]) - np.deg2rad(self._rotation_yaw_prev))/self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME
+
         # compute angular component of motion 
         right_ctrl = -self._config.IMITATION_LEARNING_OPENBOT.PID.PROPORTIONAL_GAIN_HEADING * yaw_error - self._config.IMITATION_LEARNING_OPENBOT.PID.DERIVATIVE_GAIN_HEADING * ang_vel_norm
         right_ctrl = np.clip(right_ctrl, -self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION, self._config.IMITATION_LEARNING_OPENBOT.CONTROL_SATURATION)
@@ -69,18 +74,18 @@ class OpenBotPIDPolicy():
         action = np.array([left_wheel_command,right_wheel_command], dtype=np.float64)
 
         # update member variables
-        self._position_xy_old = obs["location"][0:2]
-        self._yaw_old = np.deg2rad(obs["rotation"][1])
-        
+        self._location_xy_prev = obs["location"][0:2]
+        self._rotation_yaw_prev = obs["rotation"][1]
+
         # is the current waypoint close enough to be considered as "reached" ?
         waypoint_reached = (xy_position_error_norm <= self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS)
 
         # if a waypoint of the trajectory is "reached", based on the autopilot's config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS condition 
         if waypoint_reached:
-            num_waypoints = len(self._trajectory) - 1 # discarding the initial position
-            if self._index_waypoint < num_waypoints:  # if this waypoint is not the final "goal"
-                spear.log(f"Waypoint {self._index_waypoint} of {num_waypoints} reached.")
-                self._index_waypoint += 1 # set the next way point as the current target to be tracked by the agent
+            num_waypoints = len(self._path) - 1 # discarding the initial position
+            if self._waypoint_index < num_waypoints:  # if this waypoint is not the final "goal"
+                spear.log(f"Waypoint {self._waypoint_index} of {num_waypoints} reached.")
+                self._waypoint_index += 1 # set the next way point as the current target to be tracked by the agent
                 goal_reached = False 
             else: # if this waypoint is the final "goal"
                 goal_reached = True 
@@ -88,7 +93,7 @@ class OpenBotPIDPolicy():
             goal_reached = False 
 
         # compute step_info object
-        step_info = {"current_waypoint": self._trajectory[self._index_waypoint], "waypoint_reached": waypoint_reached, "goal_reached": goal_reached}
+        step_info = {"current_waypoint": self._path[self._waypoint_index], "waypoint_reached": waypoint_reached, "goal_reached": goal_reached}
 
         return action, step_info
 

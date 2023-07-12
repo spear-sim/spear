@@ -66,7 +66,7 @@ class Env(gym.Env):
             if ready:
                 break
         
-        self._ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were unsuccessful
+        self._ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were successful
 
         if reset_info is not None:
             assert isinstance(reset_info, dict)

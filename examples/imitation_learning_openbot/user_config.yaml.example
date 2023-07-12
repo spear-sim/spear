@@ -30,6 +30,13 @@ OPENBOT_ENV:
 
     ACTION_SCALE: 255              # Action scaling factor
 
+VEHICLE:
+  VEHICLE_PAWN:
+    CAMERA_COMPONENT:
+      POSITION_X: -50.0
+      POSITION_Y: 0.0
+      POSITION_Z: 5.0
+
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
 
@@ -74,9 +81,9 @@ SIMULATION_CONTROLLER:
     SPAWN_ROTATION_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
-      IMAGE_HEIGHT: 512
-      IMAGE_WIDTH: 512
-      FOV: 90.0
+      IMAGE_HEIGHT: 120
+      IMAGE_WIDTH: 160
+      FOV: 70.0
 
   IMITATION_LEARNING_TASK:
     AGENT_ACTOR_NAME: "vehicle_actor"

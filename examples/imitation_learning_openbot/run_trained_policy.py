@@ -15,10 +15,11 @@ import time
 
 from policies import *
 from utils import *
-# hack to import OpenBotEnv
+
+# hack to import OpenBotEnv from common example folder
+COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(SCRIPT_DIR))
+sys.path.append(COMMON_DIR)
 from common.openbot_env import OpenBotEnv
 
 
@@ -58,12 +59,6 @@ if __name__ == "__main__":
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.PITCH = -35.0
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW = 45.0
         config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL = 0.0
-    else:
-        config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = False
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 120
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 160
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["final_color"]
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "location", "rotation", "wheel_rotation_speeds"]
     config.freeze()
 
     # load driving policy
