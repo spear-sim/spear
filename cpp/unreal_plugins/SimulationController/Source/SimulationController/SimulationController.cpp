@@ -470,22 +470,22 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->isReady();
     });
 
-    rpc_server_->bindSync("get_random_points", [this](int num_points) -> std::vector<uint8_t> {
+    rpc_server_->bindSync("get_random_points", [this](int num_points) -> std::vector<double> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
         return nav_mesh_->getRandomPoints(num_points);
     });
 
-    rpc_server_->bindSync("get_reachable_points", [this](const std::vector<std::vector<float>>& start_points, float search_radius) -> std::vector<uint8_t> {
+    rpc_server_->bindSync("get_random_reachable_points_in_radius", [this](const std::vector<double>& initial_points, float radius) -> std::vector<double> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
-        return nav_mesh_->getReachablePoints(start_points, search_radius);
-        });
+        return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
+    });
 
-    rpc_server_->bindSync("get_trajectories", [this](const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points) -> std::vector<std::vector<uint8_t>> {
+    rpc_server_->bindSync("get_paths", [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
-        return nav_mesh_->getTrajectories(start_points, end_points);
+        return nav_mesh_->getPaths(initial_points, goal_points);
     });
 }
 

@@ -69,21 +69,21 @@ if __name__ == "__main__":
         candidate_points = env.get_random_points(args.num_episodes_per_scene * args.num_candidate_points_per_episode)
 
         # obtain a reachable goal point for every candidate point
-        reachable_points = env.get_reachable_points(candidate_points.tolist(), search_radius=10000.0)
+        reachable_points = env.get_random_reachable_points_in_radius(candidate_points.flatten().tolist(), 10000.0)
 
-        # get trajectories for every candidate_points and corresponding reachable_points
-        trajectories = env.get_trajectories(candidate_points.tolist(), reachable_points.tolist())
+        # get paths for every candidate_points and corresponding reachable_points
+        paths = env.get_paths(candidate_points.flatten().tolist(), reachable_points.flatten().tolist())
 
-        # score trajectories based on a custom sort function
-        def score_trajectory(trajectory):
+        # score paths based on a custom sort function
+        def score_path(trajectory):
             num_waypoints = trajectory.shape[0]
             trajectory_length = np.sqrt(np.sum((trajectory[-1] - trajectory[0])[:2] ** 2))
             return num_waypoints * trajectory_length
 
-        trajectory_scores = np.vectorize(lambda trajectory : score_trajectory(trajectory=trajectory))(trajectories)
+        trajectory_scores = np.vectorize(lambda trajectory : score_path(trajectory=trajectory))(paths)
         sorted_indicies = np.argsort(trajectory_scores)
 
-        # choose only the top args.num_episodes_per_scene trajectories
+        # choose only the top args.num_episodes_per_scene paths
         initial_points_sorted = candidate_points[sorted_indicies]
         top_initial_points = initial_points_sorted[-args.num_episodes_per_scene:]
         
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         # concat arrays for easier pd dataframe creation
         merged_array = np.hstack((top_initial_points, top_goal_points))
 
-        # store initial and end location of the trajectories
+        # store initial and end location of the paths
         df_ = pd.DataFrame(
             columns=df_columns,
             data={"scene_id"           : [scene_id] * merged_array.shape[0],
@@ -108,8 +108,8 @@ if __name__ == "__main__":
 
         plt.plot(merged_array[:,0], merged_array[:,1], "^", markersize=12.0, label="Initial", color="tab:blue", alpha=0.3)
         plt.plot(merged_array[:,3], merged_array[:,4], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
-        for trajectory in trajectories[sorted_indicies]:
-            plt.plot(trajectory[:,0], trajectory[:,1], "-o", markersize=8.0, label="Desired trajectory", color="tab:green", alpha=0.3)
+        for path in paths[sorted_indicies]:
+            plt.plot(path[:,0], path[:,1], "-o", markersize=8.0, label="Desired path", color="tab:green", alpha=0.3)
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = dict(zip(labels, handles))
         legend = plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, -0.2), loc="center", ncol=3)

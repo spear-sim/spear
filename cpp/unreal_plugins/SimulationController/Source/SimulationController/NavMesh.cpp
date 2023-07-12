@@ -16,6 +16,8 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 
+#include "CoreUtils/Log.h"
+
 void NavMesh::findObjectReferences(UWorld* world)
 {
     SP_ASSERT(world);
@@ -78,7 +80,7 @@ void NavMesh::cleanUpObjectReferences()
     world_ = nullptr;
 }
 
-std::vector<uint8_t> NavMesh::getRandomPoints(int num_points)
+std::vector<double> NavMesh::getRandomPoints(int num_points)
 {
     std::vector<double> points;
     for (int i = 0; i < num_points; i++) {
@@ -87,53 +89,53 @@ std::vector<uint8_t> NavMesh::getRandomPoints(int num_points)
         points.push_back(point.Y);
         points.push_back(point.Z);
     }
-    return Std::reinterpretAs<uint8_t>(points);
+    return points;
 }
 
-std::vector<uint8_t> NavMesh::getReachablePoints(const std::vector<std::vector<float>>& reference_points, float search_radius)
+std::vector<double> NavMesh::getRandomReachablePointsInRadius(const std::vector<double>& reference_points, float radius)
 {
+    SP_ASSERT(reference_points.size() % 3 == 0);
+
     std::vector<double> reachable_points;
-    for (auto& reference_point : reference_points) {
 
-        SP_ASSERT(reference_point.size()==3);
+    for (int i = 0; i < reference_points.size(); i+=3) {
 
-        FVector reference_point_fvector = {reference_point.at(0), reference_point.at(1), reference_point.at(2)};
+        FVector reference_point = {reference_points.at(i), reference_points.at(i+1), reference_points.at(i+2)};
         FNavLocation nav_location;
 
-        bool found = recast_nav_mesh_->GetRandomReachablePointInRadius(reference_point_fvector, search_radius, nav_location);
+        bool found = recast_nav_mesh_->GetRandomReachablePointInRadius(reference_point, radius, nav_location);
         SP_ASSERT(found);
 
         reachable_points.push_back(nav_location.Location.X);
         reachable_points.push_back(nav_location.Location.Y);
         reachable_points.push_back(nav_location.Location.Z);
     }
-    return Std::reinterpretAs<uint8_t>(reachable_points);
+    return reachable_points;
 }
 
-std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std::vector<float>>& initial_points, const std::vector<std::vector<float>>& goal_points)
+std::vector<std::vector<double>> NavMesh::getPaths(const std::vector<double>& initial_points, const std::vector<double>& goal_points)
 {
     SP_ASSERT(initial_points.size() == goal_points.size());
+    SP_ASSERT(initial_points.size() % 3 == 0);
 
-    std::vector<std::vector<uint8_t>> paths;
+    std::vector<std::vector<double>> paths;
 
-    for (int i = 0; i < initial_points.size(); i++) {
-        SP_ASSERT(initial_points.at(i).size() == 3);
-        SP_ASSERT(goal_points.at(i).size() == 3);
+    for (int i = 0; i < initial_points.size(); i+=3) {
 
-        FVector start_point = {initial_points.at(i).at(0), initial_points.at(i).at(1), initial_points.at(i).at(2)};
-        FVector end_point = {goal_points.at(i).at(0), goal_points.at(i).at(1), goal_points.at(i).at(2)};
+        FVector initial_point = {initial_points.at(i), initial_points.at(i+1), initial_points.at(i+2)};
+        FVector goal_point   = {goal_points.at(i), goal_points.at(i+1), goal_points.at(i+2)};
 
-        // Update navigation query with the start and end location
-        FPathFindingQuery nav_query = FPathFindingQuery(world_, *recast_nav_mesh_, start_point, end_point);
+        // Update navigation query with the initial and goal location
+        FPathFindingQuery nav_query = FPathFindingQuery(world_, *recast_nav_mesh_, initial_point, goal_point);
 
-        // Generate a collision-free path between the start location and the end location
+        // Generate a collision-free path between the initial location and the goal location
         FPathFindingResult path_finding_result = navigation_system_v1_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
 
         // Ensure that path generation process was successful and that the generated path is valid
         SP_ASSERT(path_finding_result.IsSuccessful());
         SP_ASSERT(path_finding_result.Path.IsValid());
 
-        // Update trajectory with the waypoints
+        // Update path with the waypoints
         TArray<FNavPathPoint> nav_path_points = path_finding_result.Path->GetPathPoints();
         SP_ASSERT(nav_path_points.Num() > 1);
 
@@ -143,8 +145,7 @@ std::vector<std::vector<uint8_t>> NavMesh::getTrajectories(const std::vector<std
             path.push_back(path_point.Location.Y);
             path.push_back(path_point.Location.Z);
         }
-
-        paths.push_back(Std::reinterpretAs<uint8_t>(path));
+        paths.push_back(path);
     }
 
     return paths;

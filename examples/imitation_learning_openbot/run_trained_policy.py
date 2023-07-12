@@ -110,9 +110,9 @@ if __name__ == "__main__":
         assert "success" in env_reset_info
 
         # get a trajectory for this episode based on start and end point
-        episode_start_location = [[episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]]]
-        episode_goal_location  = [[episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]]]
-        trajectory = env.get_trajectories(episode_start_location, episode_goal_location)
+        episode_start_location = [episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]]
+        episode_goal_location  = [episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]]
+        trajectory = env.get_paths(episode_start_location, episode_goal_location)
 
         if args.benchmark:
             start_time_seconds = time.time()

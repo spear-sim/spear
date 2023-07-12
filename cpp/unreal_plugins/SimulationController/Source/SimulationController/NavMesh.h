@@ -19,9 +19,9 @@ public:
     void findObjectReferences(UWorld* world);
     void cleanUpObjectReferences();
 
-    std::vector<uint8_t> getRandomPoints(int num_points);
-    std::vector<uint8_t> getReachablePoints(const std::vector<std::vector<float>>& start_points, float search_radius);
-    std::vector<std::vector<uint8_t>> getTrajectories(const std::vector<std::vector<float>>& start_points, const std::vector<std::vector<float>>& end_points);
+    std::vector<double> getRandomPoints(int num_points);
+    std::vector<double> getRandomReachablePointsInRadius(const std::vector<double>& initial_points, float radius);
+    std::vector<std::vector<double>> getPaths(const std::vector<double>& initial_points, const std::vector<double>& goal_points);
 private:
     UWorld* world_ = nullptr;
     UNavigationSystemV1* navigation_system_v1_ = nullptr;
