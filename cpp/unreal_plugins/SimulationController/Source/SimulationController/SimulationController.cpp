@@ -291,7 +291,7 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
 
 void SimulationController::beginFrameEventHandler()
 {
-    // if beginTick() has indicated that we should advance the simulation
+    // if begin_tick() has indicated that we should advance the simulation
     if (frame_state_ == FrameState::RequestPreTick) {
 
         // update frame state, allow begin_tick() to finish executing
@@ -301,7 +301,7 @@ void SimulationController::beginFrameEventHandler()
         // unpause the game
         UGameplayStatics::SetGamePaused(world_, false);
 
-        // execute all pre-tick synchronous work, wait here for tick() to unblock
+        // execute all pre-tick synchronous work, wait here for tick() to unblock us
         rpc_server_->runSync();
 
         // execute task-specific beginFrame() work
