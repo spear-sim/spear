@@ -104,7 +104,7 @@ class Env(gym.Env):
 
         self._begin_tick()
         self._tick()
-        points = self._get_random_reachable_points_in_radius(reference_points, radius)
+        points = self._get_random_reachable_points_in_radius(reference_points.flatten().tolist(), radius)
         self._end_tick()
 
         return points
@@ -113,7 +113,7 @@ class Env(gym.Env):
 
         self._begin_tick()
         self._tick()
-        points = self._get_paths(initial_points, goal_points)
+        points = self._get_paths(initial_points.flatten().tolist(), goal_points.flatten().tolist())
         self._end_tick()
 
         return points

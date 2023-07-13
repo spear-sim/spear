@@ -105,7 +105,7 @@ def generate_video(image_dir, video_path, rate, compress=False):
 
 def plot_tracking_performance_spatial(poses_tracked, poses_desired, plot_path):
 
-    fig, (ax) = plt.subplots(1, 1)
+    fig, ax = plt.subplots(1, 1)
 
     ax.plot(poses_tracked[0,0], poses_tracked[0,1], marker="^", markersize=12.0, label="Start", color="tab:blue")
     ax.plot(poses_desired[-1,0], poses_desired[-1,1], marker="^", markersize=12.0, label="Goal", color="tab:orange")
@@ -164,3 +164,24 @@ def plot_tracking_performance_temporal(poses_tracked, poses_desired, plot_path):
     fig.tight_layout()
 
     plt.savefig(plot_path, bbox_inches="tight")
+
+def plot_paths(scene_id, paths, plot_path):
+
+    fig, ax = plt.subplots(1, 1)
+
+    for path in paths:
+        ax.plot(path[0,0], path[0,1], "^", markersize=12.0, label="Initial", color="tab:blue", alpha=0.3)
+        ax.plot(path[-1,0], path[-1,1], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
+        ax.plot(path[:,0], path[:,1], "-o", markersize=8.0, label="Desired path", color="tab:green", alpha=0.3)
+
+    handles, labels = fig.gca().get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    legend = ax.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, -0.2), loc="center", ncol=3)
+    fig.gca().set_aspect("equal")
+    fig.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
+    ax.set_xlabel("x[cm]")
+    ax.set_ylabel("y[cm]")
+    ax.grid()
+    ax.set_title(f"scene_id: {scene_id}")
+    
+    plt.savefig(plot_path, bbox_extra_artists=[legend], bbox_inches="tight")
