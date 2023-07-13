@@ -5,27 +5,26 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import spear
+
+from utils import plot_paths
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_episodes_per_scene", type=int, default=10)
-    parser.add_argument("--num_candidate_points_per_episode", type=int, default=10)
-    parser.add_argument("--episodes_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "train_episodes.csv")))
+    parser.add_argument("--num_candidates_per_episode", type=int, default=10)
+    parser.add_argument("--episodes_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "episodes")))
     parser.add_argument("--scene_id")
     args = parser.parse_args()
 
-    # create directory for storing episodes information
-    file_name = os.path.splitext(os.path.basename(args.episodes_file))[0] # isolate filename and remove extension
-    episodes_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "episodes"))
-    output_dir = os.path.realpath(os.path.join(episodes_dir, file_name))
-    os.makedirs(output_dir, exist_ok=True)
+    # create directory for storing episode information
+    os.makedirs(args.episodes_dir, exist_ok=True)
+    episodes_file = os.path.realpath(os.path.join(args.episodes_dir, "episodes.csv"))
 
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
@@ -44,11 +43,11 @@ if __name__ == "__main__":
         scene_ids = [args.scene_id]
 
     # create dataframe
-    df_columns = ["scene_id", "inital_location_x", "initial_location_y", "initial_location_z", "goal_location_x", "goal_location_y", "goal_location_z"]
+    df_columns = ["scene_id", "initial_location_x", "initial_location_y", "initial_location_z", "goal_location_x", "goal_location_y", "goal_location_z"]
     df = pd.DataFrame(columns=df_columns)
 
     # iterate over all scenes
-    for i, scene_id in enumerate(scene_ids):
+    for scene_id in scene_ids:
 
         spear.log("Processing scene: " + scene_id)
 
@@ -66,66 +65,40 @@ if __name__ == "__main__":
         assert "success" in env_reset_info
             
         # generate candidate points based out of args.num_episodes_per_scene
-        candidate_points = env.get_random_points(args.num_episodes_per_scene * args.num_candidate_points_per_episode)
+        candidate_initial_points = env.get_random_points(args.num_episodes_per_scene * args.num_candidates_per_episode)
 
         # obtain a reachable goal point for every candidate point
-        reachable_points = env.get_random_reachable_points_in_radius(candidate_points.flatten().tolist(), 10000.0)
+        candidate_goal_points = env.get_random_reachable_points_in_radius(candidate_initial_points, 10000.0)
 
-        # get paths for every candidate_points and corresponding reachable_points
-        paths = env.get_paths(candidate_points.flatten().tolist(), reachable_points.flatten().tolist())
+        # obtain candidate paths for the candidate initial and goal points
+        candidate_paths = env.get_paths(candidate_initial_points, candidate_goal_points)
 
-        # score paths based on a custom sort function
-        def score_path(trajectory):
-            num_waypoints = trajectory.shape[0]
-            trajectory_length = np.sqrt(np.sum((trajectory[-1] - trajectory[0])[:2] ** 2))
-            return num_waypoints * trajectory_length
+        # score each path and obtain best paths
+        candidate_num_waypoints = np.array([ path.shape[0] for path in candidate_paths ])
+        candidate_path_lengths  = np.array([ np.sum(np.linalg.norm(path[1:] - path[:-1], axis=1)) for path in candidate_paths ])
+        candidate_scores        = candidate_num_waypoints * candidate_path_lengths
+        candidate_best_indices  = np.argsort(candidate_scores)[::-1][:args.num_episodes_per_scene] # argsort in descending order, select the best indices
 
-        trajectory_scores = np.vectorize(lambda trajectory : score_path(trajectory=trajectory))(paths)
-        sorted_indicies = np.argsort(trajectory_scores)
-
-        # choose only the top args.num_episodes_per_scene paths
-        initial_points_sorted = candidate_points[sorted_indicies]
-        top_initial_points = initial_points_sorted[-args.num_episodes_per_scene:]
-        
-        goal_points_sorted = reachable_points[sorted_indicies]
-        top_goal_points = goal_points_sorted[-args.num_episodes_per_scene:]
-
-        # concat arrays for easier pd dataframe creation
-        merged_array = np.hstack((top_initial_points, top_goal_points))
-
-        # store initial and end location of the paths
+        # store initial and goal locations of the best paths
         df_ = pd.DataFrame(
-            columns=df_columns,
-            data={"scene_id"           : [scene_id] * merged_array.shape[0],
-                  "initial_location_x" : merged_array[:,0],
-                  "initial_location_y" : merged_array[:,1],
-                  "initial_location_z" : merged_array[:,2],
-                  "goal_location_x"    : merged_array[:,3],
-                  "goal_location_y"    : merged_array[:,4],
-                  "goal_location_z"    : merged_array[:,5]})
+            columns=df_columns, 
+            data={"scene_id"           : [scene_id] * args.num_episodes_per_scene,
+                  "initial_location_x" : candidate_initial_points[candidate_best_indices, 0],
+                  "initial_location_y" : candidate_initial_points[candidate_best_indices, 1],
+                  "initial_location_z" : candidate_initial_points[candidate_best_indices, 2],
+                  "goal_location_x"    : candidate_goal_points[candidate_best_indices, 0],
+                  "goal_location_y"    : candidate_goal_points[candidate_best_indices, 1],
+                  "goal_location_z"    : candidate_goal_points[candidate_best_indices, 2]
+        })
 
         df = pd.concat([df, df_])
 
-        plt.plot(merged_array[:,0], merged_array[:,1], "^", markersize=12.0, label="Initial", color="tab:blue", alpha=0.3)
-        plt.plot(merged_array[:,3], merged_array[:,4], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
-        for path in paths[sorted_indicies]:
-            plt.plot(path[:,0], path[:,1], "-o", markersize=8.0, label="Desired path", color="tab:green", alpha=0.3)
-        handles, labels = plt.gca().get_legend_handles_labels()
-        by_label = dict(zip(labels, handles))
-        legend = plt.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, -0.2), loc="center", ncol=3)
-        plt.gca().set_aspect("equal")
-        plt.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
-        plt.xlabel("x[cm]")
-        plt.ylabel("y[cm]")
-        plt.grid()
-        plt.title(f"scene_id: {scene_id}")
-        
-        plt.savefig(os.path.realpath(os.path.join(output_dir, scene_id)), bbox_extra_artists=[legend], bbox_inches="tight")
+        plot_paths(scene_id, candidate_paths[candidate_best_indices], os.path.realpath(os.path.join(args.episodes_dir, scene_id + ".png")))
 
         # close the current scene
         env.close()
 
     # write initial and goal locations of all episodes to a csv file
-    df.to_csv(args.episodes_file, index=False)
+    df.to_csv(episodes_file, index=False)
 
     spear.log("Done.")
