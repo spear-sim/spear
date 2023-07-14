@@ -100,6 +100,7 @@ if __name__ == '__main__':
 
         pak_dirs = [
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Content")),
+            os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Plugins")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Kujiale")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Megascans")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "MSPresets")),
