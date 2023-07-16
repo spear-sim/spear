@@ -6,8 +6,6 @@ import numpy as np
 import spear
 import tensorflow as tf
 
-from utils import get_compass_observation, get_relative_target_pose
-
 class OpenBotPathFollowingPolicy():
 
     def __init__(self, config): 
@@ -87,12 +85,12 @@ class OpenBotPathFollowingPolicy():
         # if a waypoint of the trajectory is "reached", based on the autopilot's config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS condition 
         if waypoint_reached:
             num_waypoints = len(self._path) - 1 # discarding the initial position
-            if self._waypoint_index < num_waypoints:  # if this waypoint is not the final "goal"
-                spear.log(f"Waypoint {self._waypoint_index} of {num_waypoints} reached.")
+            spear.log(f"Waypoint {self._waypoint_index} of {num_waypoints} reached.")
+            step_info = {"waypoint": self._path[self._waypoint_index], "waypoint_reached": waypoint_reached}
+            if self._waypoint_index < num_waypoints:  # if this waypoint is not the final "goal"                
                 self._waypoint_index += 1 # set the next way point as the current target to be tracked by the agent
-
-        # compute step_info object
-        step_info = {"current_waypoint": self._path[self._waypoint_index], "waypoint_reached": waypoint_reached, "waypoint_index": self._waypoint_index}
+        else:
+            step_info = {"waypoint": self._path[self._waypoint_index], "waypoint_reached": waypoint_reached}
 
         return action, step_info
 

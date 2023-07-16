@@ -155,13 +155,16 @@ if __name__ == "__main__":
             obs, _, _, env_step_info = env.step(action={"set_duty_cycles": action})
 
             # compute goal reached condition
-            if policy_step_info["waypoint_reached"]:
-                num_waypoints = path.shape[0] - 1 # discarding the initial location
-                if policy_step_info["waypoint_index"] < num_waypoints:  # if this waypoint is not the final "goal"
-                    goal_reached = False
-                else: # if this waypoint is the final "goal"
+            if policy_step_info["waypoint_reached"]: # if a waypoint is reached, check if it's the goal
+                cm_to_m = 0.01
+                waypoint_xy = policy_step_info["waypoint"][:2] * cm_to_m
+                goal_waypoint_xy = path[0][-1][:2] * cm_to_m
+                goal_dist_error = np.linalg.norm(goal_waypoint_xy - waypoint_xy)
+                if goal_dist_error <= config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS:
                     goal_reached = True
-            else:
+                else:
+                    goal_reached = False
+            else: # if no wayppint is reached, then certainly goal isn't reached
                 goal_reached = False
 
             num_iterations_executed = num_iterations_executed + 1
@@ -189,7 +192,7 @@ if __name__ == "__main__":
                 episode_control_data[i]   = action                               # [ctrl_left, ctrl_right]
                 episode_location_data[i]  = obs["location"]                      # [x, y, z] in cms
                 episode_rotation_data[i]  = obs["rotation"]                      # [pitch, yaw, roll] in degs
-                episode_waypoint_data[i]  = policy_step_info["current_waypoint"] # current waypoint being tracked by the agent
+                episode_waypoint_data[i]  = policy_step_info["waypoint"] # current waypoint being tracked by the agent
                 episode_timestamp_data[i] = timestamp                            # current time stamp
                 episode_frame_id_data[i]  = i                                    # current frame
 
@@ -223,6 +226,7 @@ if __name__ == "__main__":
         spear.log(f"    Writing log files...")
   
         # compute goal observations using last recorded position as the goal position
+        # https://github.com/isl-org/OpenBot/blob/7868c54742f8ba3df0ba2a886247a753df982772/android/app/src/main/java/org/openbot/pointGoalNavigation/PointGoalNavigationFragment.java#L103
         cm_to_m = 0.01
         location_xy_desired = episode_location_data[num_iterations_executed-1][0:2] * cm_to_m
         for i in range(num_iterations_executed):
@@ -231,7 +235,7 @@ if __name__ == "__main__":
             
             rotation_yaw_current = np.deg2rad(episode_rotation_data[i, 1])
             heading_xy_current   = np.array([np.cos(rotation_yaw_current), np.sin(rotation_yaw_current)])
-            heading_xy_desired   = (location_xy_desired - location_xy_current) / np.linalg.norm(location_xy_desired - location_xy_current)
+            heading_xy_desired   = (location_xy_desired - location_xy_current) / (np.linalg.norm(location_xy_desired - location_xy_current) + 1e-10) # adding 1e-10 to present div by zero
             rotation_yaw_error   = np.arctan2(heading_xy_desired[1], heading_xy_desired[0]) - np.arctan2(heading_xy_current[1], heading_xy_current[0])
 
             if rotation_yaw_error < -np.pi:
