@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
         df = pd.concat([df, df_])
 
-        plot_paths(scene_id, candidate_paths[candidate_best_indices], os.path.realpath(os.path.join(args.episodes_dir, scene_id + ".png")))
+        plot_paths(scene_id, candidate_paths[candidate_best_indices], os.path.realpath(os.path.join(args.episodes_dir, scene_id + "_paths.png")))
 
         # close the current scene
         env.close()

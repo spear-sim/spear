@@ -18,7 +18,7 @@ from policies import *
 from utils import *
 
 # hack to import OpenBotEnv from common example folder
-COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
+COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(COMMON_DIR)
 from common.openbot_env import OpenBotEnv
@@ -73,16 +73,14 @@ if __name__ == "__main__":
 
     # clean the episode data folder
     if not args.benchmark:
-        shutil.rmtree(args.dataset_dir, ignore_errors=True) # remove the previous dataset to prevent data corruption
         split_dir = os.path.realpath(os.path.join(args.dataset_dir, args.split + "_data"))
+        shutil.rmtree(split_dir, ignore_errors=True) # remove the dir if already present to prevent data corruption
 
     # iterate over all episodes
     prev_scene_id = ""
     for episode in df.to_records():
 
-        spear.log("----------------------")
-        spear.log(f"Episode {episode['index']} of {df.shape[0]}")
-        spear.log("----------------------")
+        spear.log(f"Generating data for episode {episode['index']} of {df.shape[0]}...")
 
         # if the scene_id of our current episode has changed, then create a new Env
         if episode["scene_id"] != prev_scene_id:
@@ -105,43 +103,50 @@ if __name__ == "__main__":
         assert "success" in env_reset_info
         assert env_reset_info["success"]
 
-        # get a trajectory for this episode based on start and end point
-        episode_start_location = [episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]]
-        episode_goal_location  = [episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]]
-        trajectory = env.get_paths(episode_start_location, episode_goal_location)
+        # get a path for this episode based on start and end point
+        episode_start_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64)
+        episode_goal_location  = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64)
+        path = env.get_paths(episode_start_location, episode_goal_location)
 
-        # initialize the driving policy with the desired trajectory
-        policy.reset(obs, trajectory)
+        # initialize the driving policy with the desired path
+        policy.reset(obs, path[0])
 
         if args.benchmark:
             start_time_seconds = time.time()
         else:     
             # build the episode data folder and its subfolders following the guidelines of the OpenBot public repository 
             # https://github.com/isl-org/OpenBot/tree/master/policy#data-collection
-            scene_dir   = os.path.realpath(os.path.join(split_dir, episode["scene_id"]))
-            episode_dir = os.path.realpath(os.path.join(scene_dir, "%04d" % episode["index"]))
-            image_dir   = os.path.realpath(os.path.join(episode_dir, "images"))
-            sensor_dir  = os.path.realpath(os.path.join(episode_dir, "sensor_data"))
-            plots_dir   = os.path.realpath(os.path.join(episode_dir, "plots"))
-            os.makedirs(image_dir, exist_ok=True)
-            os.makedirs(sensor_dir, exist_ok=True)
+            episode_dir     = os.path.realpath(os.path.join(args.dataset_dir, args.split + "_data", episode["scene_id"], "%04d" % episode["index"]))
+            images_dir      = os.path.realpath(os.path.join(episode_dir, "images"))
+            sensor_data_dir = os.path.realpath(os.path.join(episode_dir, "sensor_data"))
+            plots_dir       = os.path.realpath(os.path.join(episode_dir, "plots"))
+            os.makedirs(images_dir, exist_ok=True)
+            os.makedirs(sensor_data_dir, exist_ok=True)
             os.makedirs(plots_dir, exist_ok=True)
 
-            control_data  = np.empty([args.num_iterations_per_episode, 2], dtype=np.float64) # control_data observations made by the agent during a episode
-            state_data    = np.empty([args.num_iterations_per_episode, 6], dtype=np.float64) # state_data observations made by the agent during an episode
-            waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64) # waypoints being tracked by the agent during an episode
-            compass_data  = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64) # compass observations made by the agent during a episode
-            time_data     = np.empty([args.num_iterations_per_episode], dtype=np.int64)      # time stamps of observations made by the agent during an episode
-            frame_data    = np.empty([args.num_iterations_per_episode], dtype=np.int32)      # frame ids
+            episode_timestamp_data = np.empty([args.num_iterations_per_episode], dtype=np.int64)
+            episode_frame_id_data  = np.empty([args.num_iterations_per_episode], dtype=np.int32)
+
+            # Our convention in this example is to store all data that comes directly from Unreal in the native format
+            # exported by Unreal, i.e., centimeters and degrees. We eventually need to convert some of this data to
+            # meters and radians, but we only do so in local temporary variables.
+            episode_location_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64) 
+            episode_rotation_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64)
+            episode_waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64)
+
+            # Note that we store distance_to_goal in meters for compatibility with the OpenBot framework.
+            episode_control_data = np.empty([args.num_iterations_per_episode, 2], dtype=np.float64) # [control_left, control_right]
+            episode_goal_data    = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64) # [distance_to_goal, sin_yaw, cos_yaw]
 
         # execute the desired number of iterations in a given episode
-        num_iterations = 0
-        hit_obstacle = False
+        num_iterations_executed = 0
+        collect_data_for_episode = True
+
         for i in range(args.num_iterations_per_episode):
 
-            spear.log(f"Iteration {i} of {args.num_iterations_per_episode}")
+            spear.log(f"    Executing iteration {i} of {args.num_iterations_per_episode}...")
 
-            time_stamp = int(10000*datetime.datetime.now().timestamp())
+            timestamp = int(1e5 * datetime.datetime.now().timestamp())
 
             # update control action 
             action, policy_step_info = policy.step(obs)
@@ -149,7 +154,21 @@ if __name__ == "__main__":
             # send control action to the agent and collect observations
             obs, _, _, env_step_info = env.step(action={"set_duty_cycles": action})
 
-            num_iterations = num_iterations + 1
+            # compute goal reached condition
+            if policy_step_info["waypoint_reached"]:
+                num_waypoints = path.shape[0] - 1 # discarding the initial location
+                if policy_step_info["waypoint_index"] < num_waypoints:  # if this waypoint is not the final "goal"
+                    goal_reached = False
+                else: # if this waypoint is the final "goal"
+                    goal_reached = True
+            else:
+                goal_reached = False
+
+            num_iterations_executed = num_iterations_executed + 1
+
+            if args.debug:
+                show_obs(
+                    obs, config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES)
 
             if not args.benchmark:
 
@@ -159,32 +178,31 @@ if __name__ == "__main__":
                 obs_final_color = obs_final_color[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
 
                 # save the collected rgb observations
-                plt.imsave(os.path.realpath(os.path.join(image_dir, "%d.jpeg"%i)), obs_final_color)
+                plt.imsave(os.path.realpath(os.path.join(images_dir, "%d.jpeg"%i)), obs_final_color)
 
                 # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training
                 # purposes. In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole
-                # trajectory. In this case, rather than considering the whole episode as a fail, one can consider the last position reached by the agent as
+                # path. In this case, rather than considering the whole episode as a fail, one can consider the last position reached by the agent as
                 # the new goal position. Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather
                 # than directly writing all the observations in a file iteration by iteration, we append these observations in a buffer, named "observation"
                 # to later process them once the episode is completed. 
-                control_data[i]  = action                                                                    # control_data: [ctrl_left, ctrl_right]
-                state_data[i]    = np.concatenate((obs["location"], np.deg2rad(obs["rotation"])), axis=None) # state_data: [x, y, z, pitch, yaw, roll]
-                waypoint_data[i] = policy_step_info["current_waypoint"]                                      # current waypoint being tracked by the agent
-                time_data[i]     = time_stamp                                                                # current time stamp
-                frame_data[i]    = i                                                                         # current frame
+                episode_control_data[i]   = action                               # [ctrl_left, ctrl_right]
+                episode_location_data[i]  = obs["location"]                      # [x, y, z] in cms
+                episode_rotation_data[i]  = obs["rotation"]                      # [pitch, yaw, roll] in degs
+                episode_waypoint_data[i]  = policy_step_info["current_waypoint"] # current waypoint being tracked by the agent
+                episode_timestamp_data[i] = timestamp                            # current time stamp
+                episode_frame_id_data[i]  = i                                    # current frame
 
-            # debug
-            if args.debug:
-                show_obs(
-                    obs, config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES)
-
-            # termination conditions
+            # check conditions for ending an episode
             if env_step_info["task_step_info"]["hit_obstacle"]: 
-                spear.log("Collision detected.")
-                hit_obstacle = True 
+                spear.log("    Collision detected, ending episode...")
+                collect_data_for_episode = False
                 break
-            elif env_step_info["task_step_info"]["hit_goal"] or policy_step_info["goal_reached"]: 
-                spear.log("Goal reached.")
+            elif env_step_info["task_step_info"]["hit_goal"]: 
+                spear.log("    Goal reached according to env_step_info, ending episode...")
+                break
+            elif goal_reached: 
+                spear.log("    Goal reached according to local distance calculation, ending episode...")
                 break
 
         # episode loop executed: update scene reference
@@ -194,77 +212,82 @@ if __name__ == "__main__":
         if args.benchmark:
             end_time_seconds = time.time()
             elapsed_time_seconds = end_time_seconds - start_time_seconds
-            spear.log("Average frame time: %0.4f ms (%0.4f fps)" %
-                ((elapsed_time_seconds / num_iterations)*1000, num_iterations / elapsed_time_seconds))
+            spear.log("    Average frame time: %0.4f ms (%0.4f fps)" %
+                ((elapsed_time_seconds / num_iterations_executed)*1000, num_iterations_executed / elapsed_time_seconds))
             continue
-        
-        # check the termination flags
-        if hit_obstacle and not args.benchmark: # if the collision flag is raised during the episode
-            shutil.rmtree(episode_dir, ignore_errors=True) # remove the collected data as it is improper for training purposes
-            continue
-        
-        spear.log("Filling CSV files...")
-        
-        # get the updated compass observation (with the last recorded position set as goal)
-        goal_position_xy = state_data[num_iterations-1][0:2]
-        for i in range(num_iterations):
-            position_xy_current = np.array([state_data[i][0], state_data[i][1]], dtype=np.float64)
-            yaw_current = state_data[i][4]
-            compass_data[i] = get_compass_observation(goal_position_xy, position_xy_current, yaw_current)
+        else:
+            if not collect_data_for_episode: # if the collision flag is raised during the episode
+                shutil.rmtree(episode_dir, ignore_errors=True)  # remove the collected data as it is improper for training purposes
+                continue
+
+        spear.log(f"    Writing log files...")
+  
+        # compute goal observations using last recorded position as the goal position
+        cm_to_m = 0.01
+        location_xy_desired = episode_location_data[num_iterations_executed-1][0:2] * cm_to_m
+        for i in range(num_iterations_executed):
+            location_xy_current = episode_location_data[i, 0:2] * cm_to_m
+            location_xy_error   = np.linalg.norm(location_xy_desired - location_xy_current)
+            
+            rotation_yaw_current = np.deg2rad(episode_rotation_data[i, 1])
+            heading_xy_current   = np.array([np.cos(rotation_yaw_current), np.sin(rotation_yaw_current)])
+            heading_xy_desired   = (location_xy_desired - location_xy_current) / np.linalg.norm(location_xy_desired - location_xy_current)
+            rotation_yaw_error   = np.arctan2(heading_xy_desired[1], heading_xy_desired[0]) - np.arctan2(heading_xy_current[1], heading_xy_current[0])
+
+            if rotation_yaw_error < -np.pi:
+                rotation_yaw_error += 2*np.pi
+            if rotation_yaw_error > np.pi:
+                rotation_yaw_error -= 2*np.pi
+
+            episode_goal_data[i] = np.array([location_xy_error, np.sin(rotation_yaw_error), np.cos(rotation_yaw_error)])
 
         # low-level commands sent to the motors
-        df_ctrl = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
-                                "left_ctrl"     : control_data[:num_iterations, 0],
-                                "right_ctrl"    : control_data[:num_iterations, 1]})
-        df_ctrl.to_csv(os.path.realpath(os.path.join(sensor_dir, "ctrlLog.txt")), mode="w", index=False, header=True)
+        df_ctrl = pd.DataFrame({"timestamp"     : episode_timestamp_data[:num_iterations_executed],
+                                "control_left"  : episode_control_data[:num_iterations_executed, 0],
+                                "control_right" : episode_control_data[:num_iterations_executed, 1]})
+        df_ctrl.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "ctrlLog.txt")), mode="w", index=False, header=True)
 
         # reference of the images correespoinding to each control input
-        df_rgb = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
-                               "frame"         : frame_data[:num_iterations]})
-        df_rgb.to_csv(os.path.realpath(os.path.join(sensor_dir, "rgbFrames.txt")), mode="w", index=False, header=True)
-
-        # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
-        df_pose = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
-                                "x[cm]"         : state_data[:num_iterations, 0],
-                                "y[cm]"         : state_data[:num_iterations, 1],
-                                "z[cm]"         : state_data[:num_iterations, 2],
-                                "pitch[rad]"    : state_data[:num_iterations, 3],
-                                "yaw[rad]"      : state_data[:num_iterations, 4],
-                                "roll[rad]"     : state_data[:num_iterations, 5]})
-        df_pose.to_csv(os.path.realpath(os.path.join(sensor_dir, "poseData.txt")), mode="w", index=False, header=True)
-
-        # waypoint data (for debug purposes)
-        df_waypoint = pd.DataFrame({"timestamp[ns]"  : time_data[:num_iterations],
-                                    "waypoint_x[cm]" : waypoint_data[:num_iterations, 0],
-                                    "waypoint_y[cm]" : waypoint_data[:num_iterations, 1],
-                                    "waypoint_z[cm]" : waypoint_data[:num_iterations, 2]})
-        df_waypoint.to_csv(os.path.realpath(os.path.join(sensor_dir, "waypointData.txt")), mode="w", index=False, header=True)
+        df_rgb = pd.DataFrame({"timestamp" : episode_timestamp_data[:num_iterations_executed],
+                               "frame_id"  : episode_frame_id_data[:num_iterations_executed]})
+        df_rgb.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "rgbFrames.txt")), mode="w", index=False, header=True)
 
         # high level commands
-        df_goal = pd.DataFrame({"timestamp[ns]" : time_data[:num_iterations],
-                                "dist[m]"       : compass_data[:num_iterations, 0],
-                                "sinYaw"        : compass_data[:num_iterations, 1],
-                                "cosYaw"        : compass_data[:num_iterations, 2]})
-        df_goal.to_csv(os.path.realpath(os.path.join(sensor_dir, "goalLog.txt")), mode="w", index=False, header=True)
+        df_goal = pd.DataFrame({"timestamp"        : episode_timestamp_data[:num_iterations_executed],
+                                "distance_to_goal" : episode_goal_data[:num_iterations_executed, 0],
+                                "sin_yaw"          : episode_goal_data[:num_iterations_executed, 1],
+                                "cos_yaw"          : episode_goal_data[:num_iterations_executed, 2]})
+        df_goal.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "goalLog.txt")), mode="w", index=False, header=True)
+
+        # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
+        df_pose = pd.DataFrame({"timestamp"      : episode_timestamp_data[:num_iterations_executed],
+                                "frame_id"       : episode_frame_id_data[:num_iterations_executed],
+                                "location_x"     : episode_location_data[:num_iterations_executed, 0],
+                                "location_y"     : episode_location_data[:num_iterations_executed, 1],
+                                "location_z"     : episode_location_data[:num_iterations_executed, 2],
+                                "rotation_pitch" : episode_rotation_data[:num_iterations_executed, 0],
+                                "rotation_yaw"   : episode_rotation_data[:num_iterations_executed, 1],
+                                "rotation_roll"  : episode_rotation_data[:num_iterations_executed, 2],
+                                "waypoint_x"     : episode_waypoint_data[:num_iterations_executed, 0],
+                                "waypoint_y"     : episode_waypoint_data[:num_iterations_executed, 1],
+                                "waypoint_z"     : episode_waypoint_data[:num_iterations_executed, 2]})
+        df_pose.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "debugLog.txt")), mode="w", index=False, header=True)
 
         # Create plots. Note that creating these plots will resize our cv2 windows in an
         # unpleasant way, so we only generate these plots if we're not in debug mode.
         if not args.debug:
+            spear.log(f"    Generating plots...")
             plot_tracking_performance_spatial(
-                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.realpath(os.path.join(plots_dir, "tracking_performance_spatial.png")))
+                episode_location_data[:num_iterations_executed][:], episode_waypoint_data[:num_iterations_executed][:], os.path.realpath(os.path.join(plots_dir, "tracking_performance_spatial.png")))
             plot_tracking_performance_temporal(
-                state_data[:num_iterations][:], waypoint_data[:num_iterations][:], os.path.realpath(os.path.join(plots_dir, "tracking_performance_temporal.png")))
+                episode_location_data[:num_iterations_executed][:], episode_waypoint_data[:num_iterations_executed][:], episode_rotation_data[:num_iterations_executed][:,1], os.path.realpath(os.path.join(plots_dir, "tracking_performance_temporal.png")))
 
         if args.create_videos: # if desired, generate a video from the collected RGB observations 
-            video_dir = os.path.realpath(os.path.join(args.dataset_dir, "videos"))
-            video_split_dir = os.path.realpath(os.path.join(video_dir, args.split + "_data"))
-            os.makedirs(video_split_dir, exist_ok=True)
-            generate_video(
-                image_dir,
-                os.path.realpath(os.path.join(video_split_dir, "%04d.mp4" % episode["index"])),
-                rate=int(1.0/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME), compress=True)
+            spear.log(f"    Generating video...")
+            video_file = os.path.realpath(os.path.join(args.dataset_dir, "videos", args.split + "_data", episode["scene_id"], "%04d.mp4" % episode["index"]))
+            generate_video(images_dir, video_file, rate=int(1.0/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME), compress=True)
 
     # close the current scene
     env.close()
-    
+
     spear.log("Done.")

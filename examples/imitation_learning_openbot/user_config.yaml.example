@@ -4,13 +4,12 @@
 
 IMITATION_LEARNING_OPENBOT:
   ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent
-  CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
-  PID:
-    PROPORTIONAL_GAIN_HEADING: 4.25 # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
-    PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_DIST: 0.1       # PID derivative gain for the autopilot
-    FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
+  MAX_ACTION: 0.9                   # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+  LOCATION_XY_HALF_LIFE: 0.5
+  LOCATION_XY_PROPORTIONAL_GAIN: 4.25 # proportional gain for the autopilot
+  LOCATION_XY_DERIVATIVE_GAIN: 1.0    # derivative gain for the autopilot
+  ROTATION_YAW_PROPORTIONAL_GAIN: 4.0 # proportional gain for the autopilot
+  ROTATION_YAW_DERIVATIVE_GAIN: 0.1   # derivative gain for the autopilot
   PILOT_NET:
     PATH: ""
 
