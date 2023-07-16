@@ -11,9 +11,6 @@
 #include "CoreUtils/Unreal.h"
 #include "CoreUtils/YamlCpp.h"
 
-bool Config::s_initialized_ = false;
-YAML::Node Config::s_config_;
-
 void Config::initialize()
 {
     FString config_file;

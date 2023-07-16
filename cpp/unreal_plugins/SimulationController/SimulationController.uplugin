@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "SimulationController",
-    "Description": "WARNING: The loading phases for {CoreUtils, OpenBot, SimulationController, UrdfBot} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(OpenBot, UrdfBot) < LoadingPhase(SimulationController)",
+    "Description": "WARNING: The loading phases for {CoreUtils, SimulationController, UrdfBot, Vehicle} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(UrdfBot, Vehicle) < LoadingPhase(SimulationController)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -23,16 +23,20 @@
     ],
     "Plugins": [
         {
+            "Name": "ChaosVehiclesPlugin",
+            "Enabled":  true
+        },
+        {
             "Name": "CoreUtils",
             "Enabled": true
         },
         {
-            "Name": "OpenBot",
+            "Name": "UrdfBot",
             "Enabled": false
         },
         {
-            "Name": "UrdfBot",
-            "Enabled": false
+            "Name": "Vehicle",
+            "Enabled": true
         }
     ]
 }

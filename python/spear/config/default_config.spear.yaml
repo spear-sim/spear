@@ -56,8 +56,8 @@ SPEAR:
 
   # This parameter can be used for additional control over which Vulkan devices are recognized
   # by Unreal. This parameter can be useful to force Unreal to use an NVIDIA GPU. Only has an
-  # effect on Linux. See
-  # https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/blob/master/loader/LoaderAndLayerInterface.md
+  # effect on Linux. See the following link for details:
+  #     https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/blob/master/loader/LoaderAndLayerInterface.md
   VULKAN_DEVICE_FILES: ""
   
   # Maximum time to wait when initializing the RPC client
