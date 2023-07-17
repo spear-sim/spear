@@ -51,9 +51,9 @@ private:
     FDelegateHandle actor_hit_event_handle_;
 
     // Task state
-    std::vector<FVector> agent_initial_locations_; // Initial position of the learning agent
-    std::vector<FVector> agent_goal_locations_;    // Goal position of the learning agent
-    int episode_index_ = -1;                      // Index of the trajectory pair
-    bool hit_goal_ = false;                        // Was the goal hit?
-    bool hit_obstacle_ = false;                    // Was an obstacle hit?
+    std::vector<FVector> agent_initial_locations_;
+    std::vector<FVector> agent_goal_locations_;
+    int episode_index_ = -1;
+    bool hit_goal_ = false;
+    bool hit_obstacle_ = false;
 };
