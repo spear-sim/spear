@@ -153,7 +153,7 @@ class OpenBotPilotNetPolicy():
         rotation_yaw_current = np.deg2rad(obs["rotation"][1])
         heading_xy_current   = np.array([np.cos(rotation_yaw_current), np.sin(rotation_yaw_current)])
         heading_xy_desired   = (location_xy_desired - location_xy_current) / np.linalg.norm(location_xy_desired - location_xy_current)
-        rotation_yaw_error   = -np.arctan2(heading_xy_desired[1], heading_xy_desired[0]) + np.arctan2(heading_xy_current[1], heading_xy_current[0])
+        rotation_yaw_error   = np.arctan2(heading_xy_desired[1], heading_xy_desired[0]) - np.arctan2(heading_xy_current[1], heading_xy_current[0])
 
         if rotation_yaw_error < -np.pi:
             rotation_yaw_error += 2*np.pi
