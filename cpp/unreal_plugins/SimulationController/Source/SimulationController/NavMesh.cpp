@@ -119,31 +119,22 @@ std::vector<std::vector<double>> NavMesh::getPaths(const std::vector<double>& in
     SP_ASSERT(initial_points.size() % 3 == 0);
 
     std::vector<std::vector<double>> paths;
-
-    for (int i = 0; i < initial_points.size(); i+=3) {
-
-        FVector initial_point = {initial_points.at(i), initial_points.at(i+1), initial_points.at(i+2)};
-        FVector goal_point   = {goal_points.at(i), goal_points.at(i+1), goal_points.at(i+2)};
-
-        // Update navigation query with the initial and goal location
-        FPathFindingQuery nav_query = FPathFindingQuery(world_, *recast_nav_mesh_, initial_point, goal_point);
-
-        // Generate a collision-free path between the initial location and the goal location
+    for (int i = 0; i < initial_points.size(); i += 3) {
+        FVector initial_point                  = {initial_points.at(i), initial_points.at(i+1), initial_points.at(i+2)};
+        FVector goal_point                     = {goal_points.at(i), goal_points.at(i+1), goal_points.at(i+2)};
+        FPathFindingQuery path_finding_query   = FPathFindingQuery(world_, *recast_nav_mesh_, initial_point, goal_point);
         FPathFindingResult path_finding_result = navigation_system_v1_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
-
-        // Ensure that path generation process was successful and that the generated path is valid
         SP_ASSERT(path_finding_result.IsSuccessful());
         SP_ASSERT(path_finding_result.Path.IsValid());
 
-        // Update path with the waypoints
         TArray<FNavPathPoint> nav_path_points = path_finding_result.Path->GetPathPoints();
-        SP_ASSERT(nav_path_points.Num() > 1);
+        SP_ASSERT(nav_path_points.Num() >= 2);
 
         std::vector<double> path;
-        for (auto& path_point : nav_path_points) {
-            path.push_back(path_point.Location.X);
-            path.push_back(path_point.Location.Y);
-            path.push_back(path_point.Location.Z);
+        for (auto& point : nav_path_points) {
+            path.push_back(point.Location.X);
+            path.push_back(point.Location.Y);
+            path.push_back(point.Location.Z);
         }
         paths.push_back(path);
     }
