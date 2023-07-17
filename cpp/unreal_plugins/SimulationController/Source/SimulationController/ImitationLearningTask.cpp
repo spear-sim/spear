@@ -45,8 +45,8 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_component_->RegisterComponent();
     actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
-    // Get initial and goal locations of all episodes.
-    // Locations are in the format "initial_location.X, initial_location.Y, initial_location.Z, goal_location.X, goal_location.Y, goal_location.Z".
+    // Get initial and goal locations of all episodes in the following format:
+    //    scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
     agent_initial_locations_.clear();
     agent_goal_locations_.clear();
     episode_index_ = -1;
@@ -68,6 +68,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     SP_ASSERT(tokens.at(4) == "goal_location_x");
     SP_ASSERT(tokens.at(5) == "goal_location_y");
     SP_ASSERT(tokens.at(6) == "goal_location_z");
+    
     while (std::getline(fs, line)) {
         tokens = Std::tokenize(line, ",");
         SP_ASSERT(tokens.size() == 7);
