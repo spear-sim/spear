@@ -193,10 +193,10 @@ if __name__ == "__main__":
                 episode_goal_reached[i]               = goal_reached
 
             # check conditions for ending an episode
-            if env_step_info["task_step_info"]["hit_obstacle"]: 
+            if env_step_info["task_step_info"]["hit_obstacle"][0]:
                 spear.log("    Collision detected, ending episode...")
                 break
-            elif env_step_info["task_step_info"]["hit_goal"]:
+            elif env_step_info["task_step_info"]["hit_goal"][0]:
                 spear.log("    Goal reached according to env_step_info, ending episode...")
                 break
             elif goal_reached:
