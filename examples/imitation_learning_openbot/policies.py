@@ -100,17 +100,27 @@ class OpenBotPilotNetPolicy():
     def __init__(self, config):
 
         self._config = config
+        self._goal_location = None
+        self._img_input_height = None
+        self._img_input_width = None
 
         assert self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS >= 0.0
         assert self._config.IMITATION_LEARNING_OPENBOT.MAX_ACTION >= 0.0
 
         # load the control policy
-        self._interpreter = tf.lite.Interpreter(config.IMITATION_LEARNING_OPENBOT.PILOT_NET.PATH)
+        self._interpreter = tf.lite.Interpreter(self._config.IMITATION_LEARNING_OPENBOT.PILOT_NET.PATH)
         self._interpreter.allocate_tensors()
 
         # get input and output tensor details
         self._input_details = self._interpreter.get_input_details()
         self._output_details = self._interpreter.get_output_details()
+
+        for input_detail in self._input_details:
+            if "img_input" in input_detail["name"]:
+                self._img_input_height = input_detail["shape"][1]
+                self._img_input_width =input_detail["shape"][2]
+
+        assert self._img_input_height and self._img_input_width
 
         # the policy takes two inputs: normalized rgb image and a 3D compass observation.
         spear.log(f"Input details of the control policy: {self._input_details}")
@@ -118,26 +128,53 @@ class OpenBotPilotNetPolicy():
         # the policy gives a 2D output consisting of the duty cycles to be sent to the left (resp. right) motors on a [0, 1] scale
         spear.log(f"Output details of the control policy: {self._output_details}")
 
-    def step(self, obs, position_xy_desired):
+    def reset(self, goal_location):
+        assert goal_location.shape[0] == 3
+        self._goal_location = goal_location
 
+    def step(self, obs):
+
+        # compute an image observation
+        obs_height = obs["camera.final_color"].shape[0]
+        obs_width  = obs["camera.final_color"].shape[1]
+
+        assert obs_height >= self._img_input_height
+        assert obs_width >= self._img_input_width
+
+        img_input = obs["camera.final_color"][np.newaxis, obs_height-self._img_input_height:, obs_width-self._img_input_width:, :-1].astype(np.float32) / 255.0
+
+        # compute a goal observation
+        cm_to_m = 0.01
+
+        location_xy_current = obs["location"][0:2] * cm_to_m
+        location_xy_desired = self._goal_location[0:2] * cm_to_m
+        location_xy_error   = np.linalg.norm(location_xy_desired - location_xy_current)
+
+        rotation_yaw_current = np.deg2rad(obs["rotation"][1])
+        heading_xy_current   = np.array([np.cos(rotation_yaw_current), np.sin(rotation_yaw_current)])
+        heading_xy_desired   = (location_xy_desired - location_xy_current) / np.linalg.norm(location_xy_desired - location_xy_current)
+        rotation_yaw_error   = -np.arctan2(heading_xy_desired[1], heading_xy_desired[0]) + np.arctan2(heading_xy_current[1], heading_xy_current[0])
+
+        if rotation_yaw_error < -np.pi:
+            rotation_yaw_error += 2*np.pi
+        if rotation_yaw_error > np.pi:
+            rotation_yaw_error -= 2*np.pi
+
+        goal_input = np.array([[location_xy_error, np.sin(rotation_yaw_error), np.cos(rotation_yaw_error)]], dtype=np.float32)
+
+        set_img_input = False
+        set_goal_input = False
         for input_detail in self._input_details:
-
             if "img_input" in input_detail["name"]:
-                # preprocess (normalize + crop) visual observations:
-                target_height = input_detail["shape"][1] 
-                target_width = input_detail["shape"][2] 
-                image_height = obs["camera.final_color"].shape[0]
-                image_width = obs["camera.final_color"].shape[1]
-                assert image_height-target_height >= 0.0
-                assert image_width-target_width >= 0.0
-                img_input = np.float32(obs["camera.final_color"][:,:,:-1][image_height-target_height:image_height, image_width-target_width:image_width])/255.0 # crop and normalization in the [0.0, 1.0] range
-                self._interpreter.set_tensor(input_detail["index"], img_input[np.newaxis])
-            elif "cmd_input" in input_detail["name"] or "goal_input" in input_detail["name"]:
-                # get the updated compass observation
-                compass_observation = get_compass_observation(position_xy_desired, obs["location"][0:2], obs["rotation"][1])
-                self._interpreter.set_tensor(input_detail["index"], compass_observation[np.newaxis])   
+                self._interpreter.set_tensor(input_detail["index"], img_input)
+                set_img_input = True
+            elif "goal_input" in input_detail["name"]:
+                self._interpreter.set_tensor(input_detail["index"], goal_input)
+                set_goal_input = True
             else:
                 assert False
+
+        assert set_img_input and set_goal_input
 
         # run inference
         self._interpreter.invoke()
@@ -146,13 +183,4 @@ class OpenBotPilotNetPolicy():
         tflite_output = np.clip(self._interpreter.get_tensor(self._output_details[0]["index"]).astype(np.float32), -1.0, 1.0)
         action = np.array([tflite_output[0][0],tflite_output[0][1]], dtype=np.float64)
 
-        # compute the relative agent-target pose from the raw observation dictionary
-        xy_position_error, _ = get_relative_target_pose(position_xy_desired, obs["location"][0:2], obs["rotation"][1])
-
-        # compute Euclidean distance to target in [m]:
-        xy_position_error_norm = np.linalg.norm(xy_position_error) * 0.01
-
-        # is the current waypoint close enough to be considered as "reached" ?
-        step_info = {"goal_reached" : (xy_position_error_norm <= self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS)}
-
-        return action, step_info
+        return action

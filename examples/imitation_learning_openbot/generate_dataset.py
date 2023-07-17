@@ -103,10 +103,10 @@ if __name__ == "__main__":
         assert "success" in env_reset_info
         assert env_reset_info["success"]
 
-        # get a path for this episode based on start and end point
-        episode_start_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64)
+        # get a path for this episode based on start and goal point
+        episode_initial_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64)
         episode_goal_location  = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64)
-        path = env.get_paths(episode_start_location, episode_goal_location)
+        path = env.get_paths(episode_initial_location, episode_goal_location)
 
         # initialize the driving policy with the desired path
         policy.reset(obs, path[0])
