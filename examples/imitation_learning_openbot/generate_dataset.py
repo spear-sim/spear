@@ -17,7 +17,7 @@ import time
 from policies import *
 from utils import *
 
-# hack to import OpenBotEnv from common example folder
+# import OpenBotEnv from common folder
 COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(COMMON_DIR)
@@ -46,23 +46,21 @@ if __name__ == "__main__":
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
  
-    # handle debug configuration (markers are only produed in Developent configuration; NOT in Shipping configuration)
-    config.defrost()
     if args.debug:
-        config.SPEAR.RENDER_OFFSCREEN = False
-        config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True
+        config.defrost()
+        config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True # only has an effect in Development mode, not shipping mode
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 512
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 512
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_rotation_speeds"]
-        # aim camera in a third-person vieww facing backwards at an angle
+        # aim camera in a third-person view facing backwards at an angle
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.PITCH = -35.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW = 45.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL = 0.0
-    config.freeze()
+        config.freeze()
 
     # load driving policy
     policy = OpenBotPathFollowingPolicy(config)
@@ -96,24 +94,27 @@ if __name__ == "__main__":
 
             # create Env object
             env = OpenBotEnv(config=config)
-                
+
+        # per-episode state
+        episode_initial_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64)
+        episode_goal_location = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64)
+        collect_data_for_episode = True
+        goal_reached = False
+
         # reset the simulation
         env_reset_info = {}
         obs = env.reset(reset_info=env_reset_info)
         assert "success" in env_reset_info
-        
+
+        # check conditions that should end an episode (TODO: check goal_reached here)
         if not env_reset_info["success"]:
-            spear.log(f"    The velocity of the robot is not stable for this episode during reset, so skipping this episode...")
+            spear.log(f"    Calling env.reset() was not successful. Skipping this episode...")
             prev_scene_id = episode["scene_id"]
             continue
 
-        # get a path for this episode based on start and goal point
-        episode_initial_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64)
-        episode_goal_location  = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64)
-        path = env.get_paths(episode_initial_location, episode_goal_location)
-
         # initialize the driving policy with the desired path
-        policy.reset(obs, path[0])
+        path = env.get_paths(episode_initial_location, episode_goal_location)[0]
+        policy.reset(obs, path)
 
         if args.benchmark:
             start_time_seconds = time.time()
@@ -142,10 +143,7 @@ if __name__ == "__main__":
             episode_control_data = np.empty([args.num_iterations_per_episode, 2], dtype=np.float64) # [control_left, control_right]
             episode_goal_data    = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64) # [distance_to_goal, sin_yaw, cos_yaw]
 
-        # execute the desired number of iterations in a given episode
         num_iterations_executed = 0
-        collect_data_for_episode = True
-
         for i in range(args.num_iterations_per_episode):
 
             spear.log(f"    Executing iteration {i} of {args.num_iterations_per_episode}...")
@@ -178,7 +176,6 @@ if __name__ == "__main__":
                     obs, config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS, config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES)
 
             if not args.benchmark:
-
                 obs_final_color = obs["camera.final_color"]
                 assert len(obs_final_color.shape) == 3
                 assert obs_final_color.shape[2] == 4
@@ -206,7 +203,7 @@ if __name__ == "__main__":
                 collect_data_for_episode = False
                 break
             elif env_step_info["task_step_info"]["hit_goal"][0]:
-                spear.log("    Goal reached according to env_step_info, ending episode...")
+                spear.log("    Goal reached according to env.step(), ending episode...")
                 break
             elif goal_reached:
                 spear.log("    Goal reached according to local distance calculation, ending episode...")
