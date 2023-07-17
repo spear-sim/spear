@@ -19,12 +19,13 @@ if __name__ == "__main__":
     parser.add_argument("--num_episodes_per_scene", type=int, default=10)
     parser.add_argument("--num_candidates_per_episode", type=int, default=10)
     parser.add_argument("--episodes_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "episodes")))
+    parser.add_argument("--split", default="train")
     parser.add_argument("--scene_id")
     args = parser.parse_args()
 
     # create directory for storing episode information
     os.makedirs(args.episodes_dir, exist_ok=True)
-    episodes_file = os.path.realpath(os.path.join(args.episodes_dir, "episodes.csv"))
+    episodes_file = os.path.realpath(os.path.join(args.episodes_dir, f"{args.split}_episodes.csv"))
 
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
@@ -93,7 +94,7 @@ if __name__ == "__main__":
 
         df = pd.concat([df, df_])
 
-        plots_filename = os.path.realpath(os.path.join(args.episodes_dir, scene_id + "_paths.png"))
+        plots_filename = os.path.realpath(os.path.join(args.episodes_dir, scene_id + "_" + args.split + "_paths.png"))
         plot_paths(scene_id, candidate_paths[candidate_best_indices], plots_filename)
 
         # close the current scene

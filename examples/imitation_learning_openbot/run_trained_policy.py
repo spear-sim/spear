@@ -80,7 +80,7 @@ if __name__ == "__main__":
     prev_scene_id = ""
     for episode in df.to_records():
 
-        spear.log(f"Generating data for episode {episode['index']} of {df.shape[0]}...")
+        spear.log(f"Running trained policy on episode {episode['index']} of {df.shape[0]}...")
 
         # if the scene_id of our current episode has changed, then create a new Env
         if episode["scene_id"] != prev_scene_id:
@@ -101,7 +101,11 @@ if __name__ == "__main__":
         env_reset_info = {}
         obs = env.reset(reset_info=env_reset_info)
         assert "success" in env_reset_info
-        assert env_reset_info["success"]
+        
+        if not env_reset_info["success"]:
+            spear.log(f"    The velocity of the robot is not stable for this episode during reset, so skipping this episode...")
+            prev_scene_id = episode["scene_id"]
+            continue
 
         # get a path for this episode based on initial and goal point
         episode_initial_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64)

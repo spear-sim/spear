@@ -101,7 +101,11 @@ if __name__ == "__main__":
         env_reset_info = {}
         obs = env.reset(reset_info=env_reset_info)
         assert "success" in env_reset_info
-        assert env_reset_info["success"]
+        
+        if not env_reset_info["success"]:
+            spear.log(f"    The velocity of the robot is not stable for this episode during reset, so skipping this episode...")
+            prev_scene_id = episode["scene_id"]
+            continue
 
         # get a path for this episode based on start and goal point
         episode_initial_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64)
