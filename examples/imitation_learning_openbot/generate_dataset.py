@@ -200,8 +200,6 @@ if __name__ == "__main__":
                 episode_timestamp_data[i] = timestamp                            # current time stamp
                 episode_frame_id_data[i]  = i                                    # current frame
 
-            spear.log("env_step_info['task_step_info']['hit_obstacle'] : ", env_step_info["task_step_info"]["hit_obstacle"][0])
-
             # check conditions for ending an episode
             if env_step_info["task_step_info"]["hit_obstacle"][0]:
                 spear.log("    Collision detected, ending episode...")
