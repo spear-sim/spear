@@ -117,43 +117,6 @@ if __name__ == "__main__":
         assert False
 
     #
-    # Eigen
-    #
-
-    spear.log("Building Eigen...")
-
-    build_dir = os.path.realpath(os.path.join(third_party_dir, "libeigen", "BUILD", platform_dir))
-
-    if os.path.isdir(build_dir):
-        spear.log(f"Directory exists, removing: {build_dir}")
-        shutil.rmtree(build_dir, ignore_errors=True)
-
-    spear.log(f"Creating directory and changing to working: {build_dir}")
-    os.makedirs(build_dir, exist_ok=True)
-    os.chdir(build_dir)
-
-    cmd = [
-        "cmake",
-        "-DCMAKE_C_COMPILER=" + c_compiler,
-        "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-        "-DCMAKE_INSTALL_PREFIX=" + build_dir,
-        os.path.join("..", "..")]
-    spear.log(f"Executing: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
-
-    cmd = [
-        "cmake",
-        "--build",
-        ".",
-        "--target",
-        "install"]
-
-    spear.log(f"Executing: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
-
-    spear.log("Built Eigen successfully.")
-
-    #
     # rpclib
     #
 
