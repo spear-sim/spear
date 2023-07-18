@@ -123,7 +123,7 @@ std::vector<std::vector<double>> NavMesh::getPaths(const std::vector<double>& in
         FVector initial_point                  = {initial_points.at(i), initial_points.at(i+1), initial_points.at(i+2)};
         FVector goal_point                     = {goal_points.at(i), goal_points.at(i+1), goal_points.at(i+2)};
         FPathFindingQuery path_finding_query   = FPathFindingQuery(world_, *recast_nav_mesh_, initial_point, goal_point);
-        FPathFindingResult path_finding_result = navigation_system_v1_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
+        FPathFindingResult path_finding_result = navigation_system_v1_->FindPathSync(path_finding_query, EPathFindingMode::Type::Regular);
         SP_ASSERT(path_finding_result.IsSuccessful());
         SP_ASSERT(path_finding_result.Path.IsValid());
 
