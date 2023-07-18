@@ -86,11 +86,10 @@ class OpenBotPathFollowingPolicy():
         if waypoint_reached:
             num_waypoints = len(self._path) - 1 # discarding the initial position
             spear.log(f"Waypoint {self._waypoint_index} of {num_waypoints} reached.")
-            step_info = {"waypoint": self._path[self._waypoint_index], "waypoint_reached": waypoint_reached}
             if self._waypoint_index < num_waypoints:  # if this waypoint is not the final "goal"                
                 self._waypoint_index += 1 # set the next way point as the current target to be tracked by the agent
-        else:
-            step_info = {"waypoint": self._path[self._waypoint_index], "waypoint_reached": waypoint_reached}
+
+        step_info = {"waypoint": self._path[self._waypoint_index]}
 
         return action, step_info
 

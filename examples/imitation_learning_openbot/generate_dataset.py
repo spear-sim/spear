@@ -17,6 +17,8 @@ import time
 from policies import *
 from utils import *
 
+import cv2
+
 # import OpenBotEnv from common folder
 COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
@@ -156,17 +158,14 @@ if __name__ == "__main__":
             # send control action to the agent and collect observations
             obs, _, _, env_step_info = env.step(action={"set_duty_cycles": action})
 
-            # compute goal reached condition
-            if policy_step_info["waypoint_reached"]: # if a waypoint is reached, check if it's the goal
-                cm_to_m = 0.01
-                waypoint_xy = policy_step_info["waypoint"][:2] * cm_to_m
-                goal_waypoint_xy = path[0][-1][:2] * cm_to_m
-                goal_dist_error = np.linalg.norm(goal_waypoint_xy - waypoint_xy)
-                if goal_dist_error <= config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS:
-                    goal_reached = True
-                else:
-                    goal_reached = False
-            else: # if no wayppint is reached, then certainly goal isn't reached
+            # compute whether goal has been reached based on a proximity condition
+            cm_to_m = 0.01
+            location_xy_current = obs["location"][0:2] * cm_to_m
+            location_xy_desired = episode_goal_location[0:2] * cm_to_m
+            location_xy_error   = np.linalg.norm(location_xy_desired - location_xy_current)
+            if location_xy_error <= config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS:
+                goal_reached = True
+            else:
                 goal_reached = False
 
             num_iterations_executed = num_iterations_executed + 1
@@ -193,7 +192,7 @@ if __name__ == "__main__":
                 episode_control_data[i]   = action                               # [ctrl_left, ctrl_right]
                 episode_location_data[i]  = obs["location"]                      # [x, y, z] in cms
                 episode_rotation_data[i]  = obs["rotation"]                      # [pitch, yaw, roll] in degs
-                episode_waypoint_data[i]  = policy_step_info["waypoint"] # current waypoint being tracked by the agent
+                episode_waypoint_data[i]  = policy_step_info["waypoint"]         # current waypoint being tracked by the agent
                 episode_timestamp_data[i] = timestamp                            # current time stamp
                 episode_frame_id_data[i]  = i                                    # current frame
 
