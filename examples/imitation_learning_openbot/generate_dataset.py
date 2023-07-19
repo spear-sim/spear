@@ -96,8 +96,8 @@ if __name__ == "__main__":
             env = OpenBotEnv(config=config)
 
         # per-episode state
-        episode_initial_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64)
-        episode_goal_location = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64)
+        episode_initial_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64).reshape(1,3)
+        episode_goal_location = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64).reshape(1,3)
         collect_data_for_episode = True
         goal_reached = False
 
@@ -154,7 +154,7 @@ if __name__ == "__main__":
             # compute whether goal has been reached based on a proximity condition
             cm_to_m = 0.01
             location_xy_current = obs["location"][0:2] * cm_to_m
-            location_xy_desired = episode_goal_location[0:2] * cm_to_m
+            location_xy_desired = episode_goal_location[0, 0:2] * cm_to_m
             location_xy_error   = np.linalg.norm(location_xy_desired - location_xy_current)
             if location_xy_error <= config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS:
                 goal_reached = True

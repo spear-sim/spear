@@ -467,7 +467,7 @@ class Env(gym.Env):
         assert initial_points.shape[1] == 3
         assert goal_points.shape[1] == 3
         paths = self._rpc_client.call("get_paths", initial_points.flatten().tolist(), goal_points.flatten().tolist())
-        return [ np.asarray(path, dtype=np.float64).reshape(-1, 3) for path in paths ]
+        return np.asarray([ np.asarray(path, dtype=np.float64).reshape(-1, 3) for path in paths ], dtype=object)
 
 
 # metadata for describing a space including the shared memory objects
