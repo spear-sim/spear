@@ -10,9 +10,9 @@ import os
 import spear
 
 
-def show_obs(obs, obs_components, render_passes):
-        
-    for obs_component in obs_components:
+def show_obs(obs):
+
+    for obs_component in obs.keys():
         if obs_component == "location":
             spear.log(f"location_data: xyz [{obs['location'][0]:.2f}, {obs['location'][1]:.2f}, {obs['location'][2]:.2f}]")
         elif obs_component == "rotation":
@@ -22,24 +22,19 @@ def show_obs(obs, obs_components, render_passes):
         elif obs_component == "imu":
             spear.log(f"imu: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]")
             spear.log(f"imu: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
-        elif obs_component == "camera":
-            for render_pass in render_passes:
-                if render_pass in ["final_color", "normals", "segmentation"]:                    
-                    cv2.imshow(render_pass, obs["camera." + render_pass]) # note that spear.Env returns BGRA by default
-                elif render_pass == "depth":
-                    depth = obs["camera.depth"]
-                    depth_min = np.min(depth)
-                    depth_max = np.max(depth)
-                    depth_normalized = (depth-depth_min) / (depth_max-depth_min)
-                    cv2.imshow(render_pass, depth_normalized)
-                else:
-                    spear.log(f"Error: {render_pass} is an unknown camera render pass.")
-                    assert False
+        elif obs_component in ["camera.final_color", "camera.normal", "camera.segmentation"]:
+            cv2.imshow(render_pass, obs[obs_component]) # note that spear.Env returns BGRA by default
+        elif obs_component in ["camera.depth"]:
+            depth = obs[obs_component]
+            depth_min = np.min(depth)
+            depth_max = np.max(depth)
+            depth_normalized = (depth-depth_min) / (depth_max-depth_min)
+            cv2.imshow(render_pass, depth_normalized)
         else:
-            spear.log(f"Error: {obs_component} is an unknown observation component.")
             assert False
 
-    cv2.waitKey(0)
+    if "camera.depth" in obs.keys() or "camera.final_color" in obs.keys() or "camera.normal" in obs.keys() or "camera.segmentation" in obs.keys():
+        cv2.waitKey(0)
 
 
 def generate_video(image_dir, video_path, rate, compress=False):
