@@ -35,6 +35,8 @@ SIMULATION_CONTROLLER:
   TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
+  SCENE_ID: "apartment_0000"
+
   SPHERE_AGENT:
     SPHERE_ACTOR_NAME: "sphere_actor"
     CAMERA_ACTOR_NAME: "camera_actor"
