@@ -83,19 +83,21 @@ void NavMesh::cleanUpObjectReferences()
 std::vector<double> NavMesh::getRandomPoints(int num_points)
 {
     std::vector<double> points;
+    
     for (int i = 0; i < num_points; i++) {
         FVector point = recast_nav_mesh_->GetRandomPoint().Location;
         points.push_back(point.X);
         points.push_back(point.Y);
         points.push_back(point.Z);
     }
+    
     return points;
 }
 
 std::vector<double> NavMesh::getRandomReachablePointsInRadius(const std::vector<double>& reference_points, float radius)
 {
     SP_ASSERT(reference_points.size() % 3 == 0);
-
+    
     std::vector<double> reachable_points;
 
     for (int i = 0; i < reference_points.size(); i+=3) {
@@ -110,6 +112,7 @@ std::vector<double> NavMesh::getRandomReachablePointsInRadius(const std::vector<
         reachable_points.push_back(nav_location.Location.Y);
         reachable_points.push_back(nav_location.Location.Z);
     }
+    
     return reachable_points;
 }
 
@@ -119,6 +122,7 @@ std::vector<std::vector<double>> NavMesh::getPaths(const std::vector<double>& in
     SP_ASSERT(initial_points.size() % 3 == 0);
 
     std::vector<std::vector<double>> paths;
+    
     for (int i = 0; i < initial_points.size(); i += 3) {
         FVector initial_point                  = {initial_points.at(i), initial_points.at(i+1), initial_points.at(i+2)};
         FVector goal_point                     = {goal_points.at(i), goal_points.at(i+1), goal_points.at(i+2)};
