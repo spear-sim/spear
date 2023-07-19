@@ -73,5 +73,5 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
 
   VISUALIZER:
-    ACTOR_NAME: "agent_actor"
+    ACTOR_NAME: "vehicle_actor"
     SPAWN_CAMERA: False
