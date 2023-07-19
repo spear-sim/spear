@@ -17,8 +17,8 @@ if __name__ == "__main__":
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--conda_env", default="spear-env")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
-    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
-    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
+    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build")))
+    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
     parser.add_argument("--conda_script")
     parser.add_argument("--commit_id")
     parser.add_argument("--skip_clone_github_repo", action="store_true")
@@ -38,14 +38,14 @@ if __name__ == "__main__":
     if sys.platform == "win32":
         target_platform = "Win64"
         run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat"))
-        archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}"))
+        archive_dir     = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}"))
         unreal_tmp_dir  = ""
         cmd_prefix      = f"conda activate {args.conda_env}& "
 
     elif sys.platform == "darwin":
         target_platform = "Mac"
         run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
-        archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}-Unsigned"))
+        archive_dir     = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}-Unsigned"))
         unreal_tmp_dir  = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
 
         if args.conda_script:
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     elif sys.platform == "linux":
         target_platform = "Linux"
         run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))        
-        archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}"))
+        archive_dir     = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}"))
         unreal_tmp_dir  = ""
 
         if args.conda_script:
@@ -109,8 +109,8 @@ if __name__ == "__main__":
 
         # build third-party libs
         cmd = [
-            "python",
-            os.path.join("..", "build_third_party_libs.py"),
+            "python ",
+            "build_third_party_libs.py ",
             "--third_party_dir", third_party_dir,
             "--num_parallel_jobs", f"{args.num_parallel_jobs}"
         ]
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        f"{os.path.join('..', 'create_symlinks.py')} " + \
+        "create_symlinks.py " + \
         f"--unreal_project_dir {unreal_project_dir} " + \
         f"--unreal_plugins_dir {unreal_plugins_dir} " \
         f"--third_party_dir {third_party_dir}"
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        f"{os.path.join('..', 'copy_starter_content.py')} " + \
+        "copy_starter_content.py " + \
         f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
         f"--unreal_project_dir {unreal_project_dir} "
     spear.log(f"Executing: {cmd}")
