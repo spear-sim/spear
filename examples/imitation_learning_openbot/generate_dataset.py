@@ -107,7 +107,7 @@ if __name__ == "__main__":
         
         # check conditions for skipping the episode
         cm_to_m = 0.01
-        goal_reached = np.linalg.norm(episode_goal_location[0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
+        goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
         if goal_reached:
             spear.log("    Goal reached before calling env.step(), skipping episode...")
             episode_skip = True
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
                 # check if we've reached the goal
                 cm_to_m = 0.01
-                goal_reached = np.linalg.norm(episode_goal_location[0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
+                goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
 
                 if args.debug:
                     show_obs(obs)
@@ -222,7 +222,7 @@ if __name__ == "__main__":
                 spear.log("    Average frame time: %0.4f ms (%0.4f fps)" %
                     ((elapsed_time_seconds / num_iterations_executed)*1000, num_iterations_executed / elapsed_time_seconds))
     
-            elif not episode_end_successful:
+            elif not episode_successful:
                 shutil.rmtree(episode_dir, ignore_errors=True)
     
             else:

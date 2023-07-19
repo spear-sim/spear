@@ -85,6 +85,7 @@ def plot_tracking_performance_spatial(actual_locations, desired_locations, plot_
     fig.tight_layout()
 
     plt.savefig(plot_path, bbox_extra_artists=[legend], bbox_inches="tight")
+    plt.close()
 
 
 def plot_tracking_performance_temporal(actual_locations, desired_locations, actual_yaw, desired_yaw, plot_path):
@@ -115,6 +116,7 @@ def plot_tracking_performance_temporal(actual_locations, desired_locations, actu
     fig.tight_layout()
 
     plt.savefig(plot_path, bbox_inches="tight")
+    plt.close()
 
 
 def plot_paths(scene_id, paths, plot_path):
@@ -137,3 +139,4 @@ def plot_paths(scene_id, paths, plot_path):
     ax.set_title(f"scene_id: {scene_id}")
     
     plt.savefig(plot_path, bbox_extra_artists=[legend], bbox_inches="tight")
+    plt.close()

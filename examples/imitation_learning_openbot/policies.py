@@ -96,7 +96,7 @@ class OpenBotPilotNetPolicy():
         self._img_input_width = None
 
         # load the control policy
-        self._interpreter = tf.lite.Interpreter(self._config.IMITATION_LEARNING_OPENBOT.PILOT_NET.PATH)
+        self._interpreter = tf.lite.Interpreter(self._config.IMITATION_LEARNING_OPENBOT.PILOT_NET_POLICY_PATH)
         self._interpreter.allocate_tensors()
 
         # get input and output tensor details
@@ -117,7 +117,7 @@ class OpenBotPilotNetPolicy():
         spear.log(f"Output details of the control policy: {self._output_details}")
 
     def reset(self, goal_location):
-        assert goal_location.shape[0] == 3
+        assert goal_location.shape[1] == 3
         self._goal_location = goal_location
 
     def step(self, obs):
@@ -135,7 +135,7 @@ class OpenBotPilotNetPolicy():
         cm_to_m = 0.01
 
         location_xy_current = obs["location"][0:2] * cm_to_m
-        location_xy_desired = self._goal_location[0:2] * cm_to_m
+        location_xy_desired = self._goal_location[0, 0:2] * cm_to_m
         location_xy_error   = np.linalg.norm(location_xy_desired - location_xy_current)
 
         rotation_yaw_current = np.deg2rad(obs["rotation"][1])

@@ -107,13 +107,15 @@ if __name__ == "__main__":
 
         # check conditions for skipping the episode
         cm_to_m = 0.01
-        goal_reached = np.linalg.norm(episode_goal_location[0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
+        goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
         if goal_reached:
             spear.log("    Goal reached before calling env.step(), skipping episode...")
             episode_skip = True
 
         # if we aren't skipping the episode
         if not episode_skip:
+
+            path = env.get_paths(episode_initial_location, episode_goal_location)[0]
 
             # initialize the policy with the desired goal location
             policy.reset(episode_goal_location)
@@ -156,7 +158,7 @@ if __name__ == "__main__":
     
                 # check if we've reached the goal
                 cm_to_m = 0.01
-                goal_reached = np.linalg.norm(episode_goal_location[0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
+                goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
     
                 if args.debug:
                     show_obs(obs)
@@ -206,9 +208,9 @@ if __name__ == "__main__":
                 spear.log(f"    Writing log files...")
         
                 # save the reference path to a dedicated file
-                df_episode_reference_path = pd.DataFrame({"waypoint_x" : path[0][:,0],
-                                                          "waypoint_y" : path[0][:,1],
-                                                          "waypoint_z" : path[0][:,2]})
+                df_episode_reference_path = pd.DataFrame({"waypoint_x" : path[:,0],
+                                                          "waypoint_y" : path[:,1],
+                                                          "waypoint_z" : path[:,2]})
                 df_episode_reference_path.to_csv(os.path.realpath(os.path.join(logs_dir, "episode_reference_path.csv")), mode="w", index=False, header=True)
         
                 # save the per-iteration data to a file
@@ -231,7 +233,7 @@ if __name__ == "__main__":
                     spear.log(f"    Generating plots...")
                     plot_tracking_performance_spatial(
                         episode_location_data[:num_iterations_executed][:],
-                        path[0],
+                        path,
                         os.path.realpath(os.path.join(plots_dir, "tracking_performance_spatial.png")))
         
                 if args.create_videos:
