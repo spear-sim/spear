@@ -142,7 +142,7 @@ if __name__ == "__main__":
                 episode_rotation_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64)
                 episode_waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64)
 
-                # The desired yaw is derived data, so we store it in radians.
+                # The desired yaw is derived data, but we also store it in degrees for consistency with our other rotation data.
                 episode_rotation_yaw_desired_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64)
     
                 # We store distance_to_goal in meters for compatibility with the OpenBot framework.
@@ -285,13 +285,13 @@ if __name__ == "__main__":
                 if not args.debug:
                     spear.log(f"    Generating plots...")
                     plot_tracking_performance_spatial(
-                        episode_location_data[:num_iterations_executed][:],
-                        episode_waypoint_data[:num_iterations_executed][:],
+                        episode_location_data[:num_iterations_executed],
+                        episode_waypoint_data[:num_iterations_executed],
                         os.path.realpath(os.path.join(plots_dir, "tracking_performance_spatial.png")))
                     plot_tracking_performance_temporal(
-                        episode_location_data[:num_iterations_executed][:],
-                        episode_waypoint_data[:num_iterations_executed][:],
-                        np.deg2rad(episode_rotation_data[:num_iterations_executed][:,1]),
+                        episode_location_data[:num_iterations_executed],
+                        episode_waypoint_data[:num_iterations_executed],
+                        episode_rotation_data[:num_iterations_executed, 1],
                         episode_rotation_yaw_desired_data[:num_iterations_executed],
                         os.path.realpath(os.path.join(plots_dir, "tracking_performance_temporal.png")))
         
