@@ -52,12 +52,12 @@ if __name__ == "__main__":
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
         config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_rotation_speeds"]
         # aim camera in a third-person view facing backwards at an angle
-        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_X = -50.0
-        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Y = -50.0
-        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.POSITION_Z = 45.0
-        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.PITCH = -35.0
-        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.YAW = 45.0
-        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROLL = 0.0
+        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_X = -50.0
+        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Y = -50.0
+        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Z = 45.0
+        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_PITCH = -35.0
+        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_YAW = 45.0
+        # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_ROLL = 0.0
         config.freeze()
 
     if not args.benchmark:
