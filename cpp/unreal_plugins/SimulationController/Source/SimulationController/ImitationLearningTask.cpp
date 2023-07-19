@@ -120,7 +120,6 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     obstacle_ignore_actors_ = Unreal::findActorsByName(
         world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
-    // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_component_->subscribeToActor(agent_actor_);
 }
 
@@ -185,16 +184,13 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
-    // Set agent and goal locations
     bool sweep = false;
     FHitResult* hit_result = nullptr;
-
     agent_actor_->SetActorLocationAndRotation(
         agent_initial_locations_.at(episode_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
     goal_actor_->SetActorLocationAndRotation(
         agent_goal_locations_.at(episode_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
 
-    // Increment episode_index_
     if (episode_index_ < agent_goal_locations_.size() - 1) { 
         episode_index_++;
     }  else {
