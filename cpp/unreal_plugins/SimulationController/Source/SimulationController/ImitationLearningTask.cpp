@@ -186,8 +186,17 @@ void ImitationLearningTask::reset()
 {
     bool sweep = false;
     FHitResult* hit_result = nullptr;
+
+    FVector offset_location = {
+        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_X"),
+        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Y"),
+        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Z")
+    };
+
+    FVector agent_initial_location = agent_initial_locations_.at(episode_index_) + offset_location;
+
     agent_actor_->SetActorLocationAndRotation(
-        agent_initial_locations_.at(episode_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+        agent_initial_location, FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
     goal_actor_->SetActorLocationAndRotation(
         agent_goal_locations_.at(episode_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
 
