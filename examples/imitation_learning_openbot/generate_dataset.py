@@ -93,7 +93,7 @@ if __name__ == "__main__":
             # create Env object
             env = OpenBotEnv(config=config)
 
-        # now that we have checked episode["scene_id"], we can update prev_scene_id
+        # now that we have checked if we need to create a new Env, we can update prev_scene_id
         prev_scene_id = episode["scene_id"]
 
         # reset the simulation
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         episode_goal_location = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64).reshape(1,3)
         episode_skip = False
         
-        # check conditions for skipping an episode
+        # check conditions for skipping the episode
         cm_to_m = 0.01
         goal_reached = np.linalg.norm(episode_goal_location[0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
         if goal_reached:
@@ -296,7 +296,7 @@ if __name__ == "__main__":
                     video_file = os.path.realpath(os.path.join(args.dataset_dir, "videos", args.split + "_data", episode["scene_id"], "%04d.mp4" % episode["index"]))
                     generate_video(images_dir, video_file, rate=int(1.0/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME), compress=True)
         
-    # at this point, we're finished executing all episodes, so close the env
+    # at this point, we're finished executing all episodes, so close the Env
     env.close()
 
     spear.log("Done.")
