@@ -8,8 +8,6 @@ VEHICLE:
     ANIM_INSTANCE: "/Vehicle/OpenBot/Meshes/ABP_OpenBot.ABP_OpenBot_C"
 
     CAMERA_COMPONENT:
-  VEHICLE_PAWN:
-    CAMERA_COMPONENT:
       LOCATION_X: 9.0                # Camera relative location in [cm]
       LOCATION_Y: 5.0                # Camera relative location in [cm]
       LOCATION_Z: 10.0               # Camera relative location in [cm]
