@@ -141,8 +141,11 @@ if __name__ == "__main__":
                 episode_location_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64) 
                 episode_rotation_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64)
                 episode_waypoint_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64)
+
+                # The desired yaw is derived data, so we store it in radians.
+                episode_rotation_yaw_desired_data = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64)
     
-                # Note that we store distance_to_goal in meters for compatibility with the OpenBot framework.
+                # We store distance_to_goal in meters for compatibility with the OpenBot framework.
                 episode_control_data = np.empty([args.num_iterations_per_episode, 2], dtype=np.float64) # [control_left, control_right]
                 episode_goal_data    = np.empty([args.num_iterations_per_episode, 3], dtype=np.float64) # [distance_to_goal, sin_yaw, cos_yaw]
 
@@ -188,12 +191,13 @@ if __name__ == "__main__":
                     # the new goal position. Doing so requires a recomputation of the compass observation, since the latter is goal dependant. Therefore, rather
                     # than directly writing all the observations in a file iteration by iteration, we append these observations in a buffer, named "observation"
                     # to later process them once the episode is completed. 
-                    episode_control_data[i]   = action                               # [ctrl_left, ctrl_right]
-                    episode_location_data[i]  = obs["location"]                      # [x, y, z] in cms
-                    episode_rotation_data[i]  = obs["rotation"]                      # [pitch, yaw, roll] in degs
-                    episode_waypoint_data[i]  = policy_step_info["waypoint"]         # current waypoint being tracked by the agent
-                    episode_timestamp_data[i] = timestamp                            # current time stamp
-                    episode_frame_id_data[i]  = i                                    # current frame
+                    episode_frame_id_data[i]             = i                                        # current frame
+                    episode_timestamp_data[i]            = timestamp                                # current time stamp
+                    episode_control_data[i]              = action                                   # [ctrl_left, ctrl_right]
+                    episode_location_data[i]             = obs["location"]                          # [x, y, z] in cms
+                    episode_rotation_data[i]             = obs["rotation"]                          # [pitch, yaw, roll] in degs
+                    episode_waypoint_data[i]             = policy_step_info["waypoint"]             # current waypoint being tracked by the policy
+                    episode_rotation_yaw_desired_data[i] = policy_step_info["rotation_yaw_desired"] # desired yaw computed by the policy
     
                 # check conditions for ending an episode
                 if env_step_info["task_step_info"]["hit_obstacle"][0]:
@@ -287,7 +291,8 @@ if __name__ == "__main__":
                     plot_tracking_performance_temporal(
                         episode_location_data[:num_iterations_executed][:],
                         episode_waypoint_data[:num_iterations_executed][:],
-                        episode_rotation_data[:num_iterations_executed][:,1],
+                        np.deg2rad(episode_rotation_data[:num_iterations_executed][:,1]),
+                        episode_rotation_yaw_desired_data[:num_iterations_executed],
                         os.path.realpath(os.path.join(plots_dir, "tracking_performance_temporal.png")))
         
                 if args.create_videos:
