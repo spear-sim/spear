@@ -87,7 +87,7 @@ def plot_tracking_performance_spatial(actual_locations, desired_locations, plot_
     plt.savefig(plot_path, bbox_extra_artists=[legend], bbox_inches="tight")
 
 
-def plot_tracking_performance_temporal(actual_locations, desired_locations, tracked_yaw, plot_path):
+def plot_tracking_performance_temporal(actual_locations, desired_locations, actual_yaw, plot_path):
 
     fig, (ax0,ax1,ax2) = plt.subplots(3, 1)
 
@@ -106,10 +106,10 @@ def plot_tracking_performance_temporal(actual_locations, desired_locations, trac
     ax1.grid()
     
     ax2.plot(np.arctan2(desired_locations[:,1] - actual_locations[:,1], desired_locations[:,0] - actual_locations[:,0]), label="Desired yaw", color="tab:blue")
-    ax2.plot(np.deg2rad(tracked_yaw[:]), label='Actual yaw', color="tab:orange")
+    ax2.plot(np.deg2rad(actual_yaw), label="Actual yaw", color="tab:orange")
     ax2.legend(loc="upper left")
     ax2.set_xlabel("iterations")
-    ax2.set_ylabel('yaw[rad]')
+    ax2.set_ylabel("yaw[rad]")
     ax2.grid()
     
     fig.tight_layout()
