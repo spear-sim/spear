@@ -124,7 +124,7 @@ if __name__ == '__main__':
             spear.log(f"Creating symlink: {unreal_project_content_scene_dir} -> {perforce_content_scene_dir}")
             os.symlink(perforce_content_scene_dir, unreal_project_content_scene_dir)
 
-        # Now that we have created a symlink, our Unreal project should contain exactly two scenes: debug_0000 and scene_id
+        # Now that we have created a symlink, our Unreal project should contain exactly three scenes: apartment_0000, debug_0000 and scene_id
         ignore_names = [".DS_Store"]
         unreal_project_scenes = { os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) if x not in ignore_names }
         assert unreal_project_scenes == {"apartment_0000", "debug_0000", scene_id}
@@ -150,8 +150,8 @@ if __name__ == '__main__':
         # create the output_dir
         os.makedirs(output_dir, exist_ok=True)
 
-        for i, pak_dir in enumerate(pak_dirs):
-            with open(txt_file, mode="w" if i==0 else "a") as f:
+        with open(txt_file, mode="w") as f:
+            for pak_dir in pak_dirs:
                 for content_file in glob.glob(os.path.realpath(os.path.join(pak_dir, "**", "*.*")), recursive=True):
                     assert content_file.startswith(unreal_project_cooked_dir)
                     content_file = content_file.replace('\\', "/")
