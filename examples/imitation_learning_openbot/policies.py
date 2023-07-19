@@ -81,7 +81,7 @@ class OpenBotPathFollowingPolicy():
             if self._waypoint_index < num_waypoints:                
                 self._waypoint_index += 1
 
-        step_info = {"rotation_yaw_desired": rotation_yaw_desired, "waypoint": self._path[self._waypoint_index]}
+        step_info = {"rotation_yaw_desired": np.rad2deg(rotation_yaw_desired), "waypoint": self._path[self._waypoint_index]}
 
         return action, step_info
 
