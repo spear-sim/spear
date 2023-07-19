@@ -27,7 +27,7 @@ VEHICLE:
 
   VEHICLE_COMPONENT:
     MASS: 11.2                        # Mass of the vehicle chassis in [kg]
-    DRAG_COEFFICIENT: 1.0             # DragCoefficient of the vehicle chassis
+    DRAG_COEFFICIENT: 1.0             # Drag coefficient of the vehicle chassis
     CHASSIS_WIDTH: 15.0               # Chassis width used for drag force computation in [cm]
     CHASSIS_HEIGHT: 15.0              # Chassis height used for drag force computation in [cm]
     SUSPENSION_ENABLED: True

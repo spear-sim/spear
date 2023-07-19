@@ -31,9 +31,9 @@ if __name__ == "__main__":
     parser.add_argument("--episodes_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "test_episodes.csv")))
     parser.add_argument("--policy_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "trained_policy.tflite")))
     parser.add_argument("--eval_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "eval")))
-    parser.add_argument("--create_videos", action="store_true")
-    parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--benchmark", action="store_true")
+    parser.add_argument("--create_videos", action="store_true")
     args = parser.parse_args()
     
     # load config
