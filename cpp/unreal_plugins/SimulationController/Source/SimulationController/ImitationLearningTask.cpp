@@ -76,7 +76,10 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         FVector initial_location = {std::stod(tokens.at(1)), std::stod(tokens.at(2)), std::stod(tokens.at(3))};
         FVector goal_location = {std::stod(tokens.at(4)), std::stod(tokens.at(5)), std::stod(tokens.at(6))};
 
-        // If the scene id matches the currently opened map, then add to our list of locations
+        // If scene_id matches the currently opened map, then add to our list of episodes.
+        // TODO (MR): Maybe scene_id should be passed in, because currently this lower-level code is
+        // reading a config parameter that belongs to a higher-level system, which we usually avoid.
+        // I think this is ok for now though, because we intend to migrate this code to Python soon.
         if (scene_id == Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID")) {
             agent_initial_locations_.push_back(initial_location);
             agent_goal_locations_.push_back(goal_location);
