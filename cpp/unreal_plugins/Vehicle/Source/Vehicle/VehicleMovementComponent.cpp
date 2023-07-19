@@ -50,9 +50,9 @@ UVehicleMovementComponent::UVehicleMovementComponent()
     ChassisWidth                 = Config::get<float>("VEHICLE.VEHICLE_COMPONENT.CHASSIS_WIDTH");
     ChassisHeight                = Config::get<float>("VEHICLE.VEHICLE_COMPONENT.CHASSIS_HEIGHT");
     DragCoefficient              = Config::get<float>("VEHICLE.VEHICLE_COMPONENT.DRAG_COEFFICIENT");
-    bSuspensionEnabled           = Config::get<bool>("VEHICLE.VEHICLE_COMPONENT.ENABLE_SUSPENSION");
-    bWheelFrictionEnabled        = Config::get<bool>("VEHICLE.VEHICLE_COMPONENT.ENABLE_WHEEL_FRICTION");
-    bLegacyWheelFrictionPosition = Config::get<bool>("VEHICLE.VEHICLE_COMPONENT.ENABLE_LEGACY_WHEEL_FRICTION");
+    bSuspensionEnabled           = Config::get<bool>("VEHICLE.VEHICLE_COMPONENT.SUSPENSION_ENABLED");
+    bWheelFrictionEnabled        = Config::get<bool>("VEHICLE.VEHICLE_COMPONENT.WHEEL_FRICTION_ENABLED");
+    bLegacyWheelFrictionPosition = Config::get<bool>("VEHICLE.VEHICLE_COMPONENT.LEGACY_WHEEL_FRICTION_POSITION_ENABLED");
 }
 
 UVehicleMovementComponent::~UVehicleMovementComponent()

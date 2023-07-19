@@ -8,10 +8,10 @@ VEHICLE:
     ANIM_INSTANCE: "/Vehicle/OpenBot/Meshes/ABP_OpenBot.ABP_OpenBot_C"
 
     CAMERA_COMPONENT:
-      LOCATION_X: 9.0                # Camera relative location in [cm]
-      LOCATION_Y: 5.0                # Camera relative location in [cm]
-      LOCATION_Z: 10.0               # Camera relative location in [cm]
-      ROTATION_PITCH: 0.0            # Camera relative rotation in [°]
+      LOCATION_X: 9.0                 # Camera relative location in [cm]
+      LOCATION_Y: 5.0                 # Camera relative location in [cm]
+      LOCATION_Z: 10.0                # Camera relative location in [cm]
+      ROTATION_PITCH: 0.0             # Camera relative rotation in [°]
       ROTATION_YAW: 0.0               # Camera relative rotation in [°]
       ROTATION_ROLL: 0.0              # Camera relative rotation in [°]
       FOV: 70.0                       # Camera field of view in [°], typically overwritten by VehicleAgent
@@ -30,9 +30,9 @@ VEHICLE:
     DRAG_COEFFICIENT: 1.0             # DragCoefficient of the vehicle chassis
     CHASSIS_WIDTH: 15.0               # Chassis width used for drag force computation in [cm]
     CHASSIS_HEIGHT: 15.0              # Chassis height used for drag force computation in [cm]
-    ENABLE_SUSPENSION: True
-    ENABLE_WHEEL_FRICTION: True
-    ENABLE_LEGACY_WHEEL_FRICTION: False
+    SUSPENSION_ENABLED: True
+    WHEEL_FRICTION_ENABLED: True
+    LEGACY_WHEEL_FRICTION_POSITION_ENABLED: False
 
   VEHICLE_WHEEL:
     WHEEL_MASS: 0.033                 # Mass of this wheel in [kg]

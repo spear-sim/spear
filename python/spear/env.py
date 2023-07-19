@@ -65,8 +65,8 @@ class Env(gym.Env):
             self._end_tick()
             if ready:
                 break
-        
-        self._ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were successful
+
+        self._ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were unsuccessful
 
         if reset_info is not None:
             assert isinstance(reset_info, dict)
@@ -104,7 +104,7 @@ class Env(gym.Env):
 
         self._begin_tick()
         self._tick()
-        points = self._get_random_reachable_points_in_radius(reference_points.flatten().tolist(), radius)
+        points = self._get_random_reachable_points_in_radius(reference_points, radius)
         self._end_tick()
 
         return points
@@ -113,7 +113,7 @@ class Env(gym.Env):
 
         self._begin_tick()
         self._tick()
-        points = self._get_paths(initial_points.flatten().tolist(), goal_points.flatten().tolist())
+        points = self._get_paths(initial_points, goal_points)
         self._end_tick()
 
         return points
@@ -459,20 +459,16 @@ class Env(gym.Env):
         return np.asarray(random_points, dtype=np.float64).reshape(num_points, 3)
 
     def _get_random_reachable_points_in_radius(self, reference_points, search_radius):
-        assert isinstance(reference_points, list)
-        reachable_points = self._rpc_client.call("get_random_reachable_points_in_radius", reference_points, search_radius)
-        assert len(reference_points) % 3 == 0
-        return np.asarray(reachable_points, dtype=np.float64).reshape(len(reference_points) // 3, 3)
+        assert reference_points.shape[1] == 3
+        reachable_points = self._rpc_client.call("get_random_reachable_points_in_radius", reference_points.flatten().tolist(), search_radius)
+        return np.asarray(reachable_points, dtype=np.float64).reshape(reference_points.shape)
 
     def _get_paths(self, initial_points, goal_points):
-        assert isinstance(initial_points, list)
-        assert isinstance(goal_points, list)
-        paths = self._rpc_client.call("get_paths", initial_points, goal_points)
-        return_path = []
-        for path in paths:
-            assert len(path) % 3 == 0
-            return_path.append(np.asarray(path, dtype=np.float64).reshape(len(path) // 3, 3))
-        return np.asarray(return_path, dtype=object)
+        assert initial_points.shape[1] == 3
+        assert goal_points.shape[1] == 3
+        paths = self._rpc_client.call("get_paths", initial_points.flatten().tolist(), goal_points.flatten().tolist())
+        return [ np.asarray(path, dtype=np.float64).reshape(-1, 3) for path in paths ]
+
 
 # metadata for describing a space including the shared memory objects
 class SpaceDesc():
