@@ -17,8 +17,6 @@ import time
 from policies import *
 from utils import *
 
-import cv2
-
 # import OpenBotEnv from common folder
 COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
@@ -107,12 +105,7 @@ if __name__ == "__main__":
         env_reset_info = {}
         obs = env.reset(reset_info=env_reset_info)
         assert "success" in env_reset_info
-
-        # check conditions that should end an episode (TODO: check goal_reached here)
-        if not env_reset_info["success"]:
-            spear.log(f"    Calling env.reset() was not successful. Skipping this episode...")
-            prev_scene_id = episode["scene_id"]
-            continue
+        assert env_reset_info["success"]
 
         # initialize the driving policy with the desired path
         path = env.get_paths(episode_initial_location, episode_goal_location)[0]

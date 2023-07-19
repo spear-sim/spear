@@ -4,8 +4,8 @@
 
 IMITATION_LEARNING_OPENBOT:
   ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent
-  MAX_ACTION: 0.9                   # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
-  LOCATION_XY_HALF_LIFE: 0.5
+  MAX_ACTION: 1.0                   # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
+  LOCATION_XY_HALF_LIFE: 0.05
   LOCATION_XY_PROPORTIONAL_GAIN: 4.25 # proportional gain for the autopilot
   LOCATION_XY_DERIVATIVE_GAIN: 1.0    # derivative gain for the autopilot
   ROTATION_YAW_PROPORTIONAL_GAIN: 4.0 # proportional gain for the autopilot
@@ -29,12 +29,16 @@ OPENBOT_ENV:
 
     ACTION_SCALE: 255              # Action scaling factor
 
-VEHICLE:
-  VEHICLE_PAWN:
-    CAMERA_COMPONENT:
-      POSITION_X: -50.0
-      POSITION_Y: 0.0
-      POSITION_Z: 5.0
+# commented out values for a third-person view of OpenBot
+#VEHICLE:
+  #VEHICLE_PAWN:
+  #  CAMERA_COMPONENT:
+  #    LOCATION_X: -60.0
+  #    LOCATION_Y: 0.0
+  #    LOCATION_Z: 30.0
+  #    ROTATION_PITCH: -10.0
+  #    ROTATION_YAW: 0.0
+  #    ROTATION_ROLL: 0.0
 
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
@@ -74,7 +78,7 @@ SIMULATION_CONTROLLER:
     SPAWN_ACTOR_NAME: ""
     SPAWN_LOCATION_X: 0.0
     SPAWN_LOCATION_Y: 0.0
-    SPAWN_LOCATION_Z: 20.0
+    SPAWN_LOCATION_Z: 10.0
     SPAWN_ROTATION_PITCH: 0.0
     SPAWN_ROTATION_YAW: 0.0
     SPAWN_ROTATION_ROLL: 0.0
@@ -87,7 +91,8 @@ SIMULATION_CONTROLLER:
   IMITATION_LEARNING_TASK:
     AGENT_ACTOR_NAME: "vehicle_actor"
     GOAL_ACTOR_NAME: "goal_actor"
-    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor_2", "Floor_3", "Floor_4", "Floor_5", "Floor_6", "Floor_7", "Floor_8", "Floor_9", "Floor_10"]
+    # OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor_2", "Floor_3", "Floor_4", "Floor_5", "Floor_6", "Floor_7", "Floor_8", "Floor_9", "Floor_10"] # for debug_0000 scene
+    OBSTACLE_IGNORE_ACTOR_NAMES: ["floor_00", "floor_01", "floor_02", "floor_03", "floor_04", "floor_05", "floor_06", "floor_slab_00"]  # for kujiale_0000 scene
     EPISODES_FILE: ""
 
   VISUALIZER:

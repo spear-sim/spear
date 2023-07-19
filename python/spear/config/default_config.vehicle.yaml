@@ -8,10 +8,12 @@ VEHICLE:
     ANIM_INSTANCE: "/Vehicle/OpenBot/Meshes/ABP_OpenBot.ABP_OpenBot_C"
 
     CAMERA_COMPONENT:
-      LOCATION_X: -60.0               # Camera relative location in [cm]
-      LOCATION_Y: 0.0                 # Camera relative location in [cm]
-      LOCATION_Z: 30.0                # Camera relative location in [cm]
-      ROTATION_PITCH: -10.0           # Camera relative rotation in [°]
+  VEHICLE_PAWN:
+    CAMERA_COMPONENT:
+      LOCATION_X: 9.0                # Camera relative location in [cm]
+      LOCATION_Y: 5.0                # Camera relative location in [cm]
+      LOCATION_Z: 10.0               # Camera relative location in [cm]
+      ROTATION_PITCH: 0.0            # Camera relative rotation in [°]
       ROTATION_YAW: 0.0               # Camera relative rotation in [°]
       ROTATION_ROLL: 0.0              # Camera relative rotation in [°]
       FOV: 70.0                       # Camera field of view in [°], typically overwritten by VehicleAgent
