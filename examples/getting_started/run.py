@@ -10,7 +10,12 @@ import numpy as np
 import os
 import spear
 import time
-from OpenBotEnv import OpenBotEnv
+
+# import OpenBotEnv from common folder
+COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+import sys
+sys.path.append(COMMON_DIR)
+from common.openbot_env import OpenBotEnv
 
 NUM_STEPS = 100
 
