@@ -27,6 +27,7 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/CameraAgent.h"
+#include "SimulationController/ImitationLearningTask.h"
 #include "SimulationController/NavMesh.h"
 #include "SimulationController/NullTask.h"
 #include "SimulationController/RpcServer.h"
@@ -49,6 +50,7 @@ enum class FrameState
 void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CommonModuleRules")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("Vehicle")));
 
@@ -203,6 +205,8 @@ void SimulationController::worldBeginPlayEventHandler()
     // create Task
     if (Config::get<std::string>("SIMULATION_CONTROLLER.TASK") == "NullTask") {
         task_ = std::make_unique<NullTask>();
+    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.TASK") == "ImitationLearningTask") {
+        task_ = std::make_unique<ImitationLearningTask>(world_);
     } else {
         SP_ASSERT(false);
     }
@@ -467,10 +471,22 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->isReady();
     });
 
-    rpc_server_->bindSync("get_random_points", [this](int num_points) -> std::vector<uint8_t> {
+    rpc_server_->bindSync("get_random_points", [this](int num_points) -> std::vector<double> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
         return nav_mesh_->getRandomPoints(num_points);
+    });
+
+    rpc_server_->bindSync("get_random_reachable_points_in_radius", [this](const std::vector<double>& initial_points, float radius) -> std::vector<double> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(nav_mesh_);
+        return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
+    });
+
+    rpc_server_->bindSync("get_paths", [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(nav_mesh_);
+        return nav_mesh_->getPaths(initial_points, goal_points);
     });
 }
 

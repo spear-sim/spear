@@ -53,7 +53,7 @@ if __name__ == '__main__':
     assert os.path.exists(unreal_pak_bin)
 
     # once we know the platform, set our cooked dir
-    unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform + "NoEditor"))
+    unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
 
     # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the user's Perforce workspace.
     # Instead, we want this path to refer to the symlinked version inside the user's unreal project directory.
@@ -75,17 +75,17 @@ if __name__ == '__main__':
             scene_ids = [ s for s in scene_ids if fnmatch.fnmatch(s, args.scene_ids) ]
         assert len(scene_ids) > 0
 
-    # We do not want to use os.path.realpath(...) for the values in this dictionary, because that will resolve
-    # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
-    # version inside the user's Unreal project directory.
-    perforce_dirs_to_unreal_dirs = {
-        os.path.realpath(os.path.join(args.perforce_content_dir, "Kujiale")) : os.path.join(unreal_project_content_dir, "Kujiale"),
-        os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
-        os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets")
-    }
-
     # Create a symlink to common top-level directories
-    if not args.skip_create_symlinks:
+    if not args.skip_create_symlinks:        
+        # We do not want to use os.path.realpath(...) for the values in this dictionary, because that will resolve
+        # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
+        # version inside the user's Unreal project directory.
+        perforce_dirs_to_unreal_dirs = {
+            os.path.realpath(os.path.join(args.perforce_content_dir, "Kujiale")) : os.path.join(unreal_project_content_dir, "Kujiale"),
+            os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
+            os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets")
+        }
+
         for perforce_dir, unreal_project_dir in perforce_dirs_to_unreal_dirs.items():
             assert os.path.exists(perforce_dir)
 
@@ -100,6 +100,7 @@ if __name__ == '__main__':
 
         pak_dirs = [
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Content")),
+            os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Plugins")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Kujiale")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Megascans")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "MSPresets")),
@@ -126,14 +127,14 @@ if __name__ == '__main__':
         # Now that we have created a symlink, our Unreal project should contain exactly two scenes: debug_0000 and scene_id
         ignore_names = [".DS_Store"]
         unreal_project_scenes = { os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) if x not in ignore_names }
-        assert unreal_project_scenes == {"debug_0000", scene_id}
+        assert unreal_project_scenes == {"apartment_0000", "debug_0000", scene_id}
 
         # see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
         cmd = [
             unreal_editor_bin,
             uproject,
             "-run=Cook",
-            "-targetplatform=" + platform + "NoEditor",
+            "-targetplatform=" + platform,
             "-unattended",                           # don't require any user input
             "-iterate",                              # only cook content that needs to be updated
             "-fileopenlog",                          # generate a log of which files are opened in which order
@@ -154,7 +155,7 @@ if __name__ == '__main__':
                 for content_file in glob.glob(os.path.realpath(os.path.join(pak_dir, "**", "*.*")), recursive=True):
                     assert content_file.startswith(unreal_project_cooked_dir)
                     content_file = content_file.replace('\\', "/")
-                    mount_file = posixpath.join("..", "..", ".." + content_file.split(platform + "NoEditor")[1])
+                    mount_file = posixpath.join("..", "..", ".." + content_file.split(platform)[1])
                     f.write(f'"{content_file}" "{mount_file}" "" \n')
 
         # construct command to generate the final pak file

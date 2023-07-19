@@ -96,7 +96,7 @@ SIMULATION_CONTROLLER:
   VEHICLE_AGENT:
     VEHICLE_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["set_brake_torques", "set_drive_torques"] # "set_brake_torques", "set_drive_torques"
-    OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_encoder"] # "camera", "imu", "location", "rotation", "wheel_encoder"
+    OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_rotation_speeds"] # "camera", "imu", "location", "rotation", "wheel_rotation_speeds"
     STEP_INFO_COMPONENTS: [""]
     SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
     SPAWN_ACTOR_NAME: ""
@@ -132,11 +132,10 @@ SIMULATION_CONTROLLER:
     AGENT_ACTOR_NAME: ""
     GOAL_ACTOR_NAME: ""
     OBSTACLE_IGNORE_ACTOR_NAMES: []
-    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
-    POSITIONS_FILE: ""
-    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
-    TRAJECTORY_SAMPLING_MAX_ITERS: 100
-    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
+    EPISODES_FILE: ""
+    AGENT_SPAWN_OFFSET_LOCATION_X: 0.0
+    AGENT_SPAWN_OFFSET_LOCATION_Y: 0.0
+    AGENT_SPAWN_OFFSET_LOCATION_Z: 0.0
 
   POINT_GOAL_NAV_TASK:
     AGENT_ACTOR_NAME: ""
@@ -149,16 +148,16 @@ SIMULATION_CONTROLLER:
       HIT_GOAL: 1.0
       HIT_OBSTACLE: -1.0
     EPISODE_BEGIN:
-      AGENT_POSITION_X_MIN: .NAN
-      AGENT_POSITION_X_MAX: .NAN
-      AGENT_POSITION_Y_MIN: .NAN
-      AGENT_POSITION_Y_MAX: .NAN
-      AGENT_POSITION_Z: .NAN
-      GOAL_POSITION_X_MIN: .NAN
-      GOAL_POSITION_X_MAX: .NAN
-      GOAL_POSITION_Y_MIN: .NAN
-      GOAL_POSITION_Y_MAX: .NAN
-      GOAL_POSITION_Z: .NAN
+      AGENT_LOCATION_X_MIN: .NAN
+      AGENT_LOCATION_X_MAX: .NAN
+      AGENT_LOCATION_Y_MIN: .NAN
+      AGENT_LOCATION_Y_MAX: .NAN
+      AGENT_LOCATION_Z: .NAN
+      GOAL_LOCATION_X_MIN: .NAN
+      GOAL_LOCATION_X_MAX: .NAN
+      GOAL_LOCATION_Y_MIN: .NAN
+      GOAL_LOCATION_Y_MAX: .NAN
+      GOAL_LOCATION_Z: .NAN
       SPAWN_DISTANCE_THRESHOLD: 1.0
 
   #
@@ -198,4 +197,6 @@ SIMULATION_CONTROLLER:
     MIN_REGION_AREA: 100.0
     MERGE_REGION_SIZE: 400.0
     MAX_SIMPLIFICATION_ERROR: 1.3
+    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 0.0
     DEBUG_NAVIGATION_DATA_FILE: ""
+    TRAJECTORY_SAMPLING_DEBUG_RENDER: False
