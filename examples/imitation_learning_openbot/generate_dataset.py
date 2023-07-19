@@ -166,7 +166,7 @@ if __name__ == "__main__":
                 # send control action to the agent and collect observations
                 obs, _, _, env_step_info = env.step(action={"set_duty_cycles": action})
     
-                num_iterations_executed = num_iterations_executed + 1
+                num_iterations_executed += 1
     
                 if args.debug:
                     show_obs(obs)
