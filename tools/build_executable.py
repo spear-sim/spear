@@ -26,7 +26,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
-    assert os.path.exists(args.paks_dir)
 
     repo_dir           = os.path.realpath(os.path.join(args.temp_dir, "spear"))
     unreal_project_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_projects", "SpearSim"))
@@ -118,17 +117,26 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-    # create symbolic links (we need shell=True because we want to run in a specific anaconda env,
+    # create symbolic links (we need shell=True because we want to run in a specific anaconda env)
+    cmd = \
+        cmd_prefix + \
+        "python " + \
+        f"{os.path.join('..', 'create_symlinks.py')} " + \
+        f"--unreal_project_dir {unreal_project_dir} " + \
+        f"--unreal_plugins_dir {unreal_plugins_dir} " \
+        f"--third_party_dir {third_party_dir}"
+    spear.log(f"Executing: {cmd}")
+    subprocess.run(cmd, shell=True, check=True)
+
+    # copy starter content (we need shell=True because we want to run in a specific anaconda env,
     # and we need to break up this string extra carefully so we can enclose unreal_engine_dir in
     # quotes, since it will often have spaces in its path on Windows)
     cmd = \
         cmd_prefix + \
         "python " + \
-        f"{os.path.join('..', 'create_symbolic_links.py')} " + \
+        f"{os.path.join('..', 'copy_starter_content.py')} " + \
         f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
-        f"--unreal_project_dir {unreal_project_dir} " + \
-        f"--unreal_plugins_dir {unreal_plugins_dir} " \
-        f"--third_party_dir {third_party_dir}"
+        f"--unreal_project_dir {unreal_project_dir} "
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
@@ -151,10 +159,6 @@ if __name__ == "__main__":
     ]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
-
-    # copy our custom pak file
-    shutil.copyfile(pak_file_src, pak_file_dest)
-    spear.log(f"Copied {pak_file_src} to {pak_file_dest}")
 
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from the above build.
     # If we don't do this step, we will get many warnings during subsequent builds:
