@@ -36,7 +36,7 @@ SIMULATION_CONTROLLER:
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   SPHERE_AGENT:
-    SPHERE_ACTOR_NAME: "agent_actor"
+    SPHERE_ACTOR_NAME: "sphere_actor"
     CAMERA_ACTOR_NAME: "camera_actor"
     ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_force", "add_rotation"
     OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] # "camera", "location", "rotation"
@@ -54,7 +54,7 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
 
   VEHICLE_AGENT:
-    VEHICLE_ACTOR_NAME: "agent_actor"
+    VEHICLE_ACTOR_NAME: "vehicle_actor"
     ACTION_COMPONENTS: ["set_drive_torques"] # "set_brake_torques", "set_drive_torques"
     OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_rotation_speeds"] # "camera", "imu", "location", "rotation", "wheel_rotation_speeds"
     IS_READY_VELOCITY_THRESHOLD: 0.001
