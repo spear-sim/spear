@@ -14,7 +14,6 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--paks_dir", required=True)
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--conda_env", default="spear-env")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
@@ -38,25 +37,17 @@ if __name__ == "__main__":
 
     # set various platform-specific variables that we use throughout our build procedure
     if sys.platform == "win32":
-        target_platform  = "Win64"
-        pak_platform     = "Windows"
-        run_uat_script   = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat"))
-        archive_dir      = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}"))
-        config_file_src  = os.path.realpath(os.path.join(os.path.dirname(__file__), "WindowsEngine.ini"))
-        config_file_dest = os.path.realpath(os.path.join(unreal_project_dir, "Config", "Windows", "WindowsEngine.ini"))
-        paks_dir_dest    = os.path.realpath(os.path.join(archive_dir, "WindowsNoEditor", "SpearSim", "Content", "Paks"))
-        unreal_tmp_dir   = ""
-        cmd_prefix       = f"conda activate {args.conda_env}& "
+        target_platform = "Win64"
+        run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat"))
+        archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}"))
+        unreal_tmp_dir  = ""
+        cmd_prefix      = f"conda activate {args.conda_env}& "
 
     elif sys.platform == "darwin":
-        target_platform  = "Mac"
-        pak_platform     = "Mac"
-        run_uat_script   = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
-        archive_dir      = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}-Unsigned"))
-        config_file_src  = os.path.realpath(os.path.join(os.path.dirname(__file__), "MacEngine.ini"))
-        config_file_dest = os.path.realpath(os.path.join(unreal_project_dir, "Config", "Mac", "MacEngine.ini"))
-        paks_dir_dest    = os.path.realpath(os.path.join(archive_dir, "MacNoEditor", "SpearSim-Mac-Shipping.app", "Contents", "UE4", "SpearSim", "Content", "Paks"))
-        unreal_tmp_dir   = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
+        target_platform = "Mac"
+        run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
+        archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}-Unsigned"))
+        unreal_tmp_dir  = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
 
         if args.conda_script:
             conda_script = args.conda_script
@@ -67,14 +58,10 @@ if __name__ == "__main__":
         cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
 
     elif sys.platform == "linux":
-        target_platform  = "Linux"
-        pak_platform     = "Linux"
-        run_uat_script   = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))        
-        archive_dir      = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}"))
-        config_file_src  = os.path.realpath(os.path.join(os.path.dirname(__file__), "LinuxEngine.ini"))
-        config_file_dest = os.path.realpath(os.path.join(unreal_project_dir, "Config", "Linux", "LinuxEngine.ini"))
-        paks_dir_dest    = os.path.realpath(os.path.join(archive_dir, "LinuxNoEditor", "SpearSim", "Content", "Paks"))
-        unreal_tmp_dir   = ""
+        target_platform = "Linux"
+        run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))        
+        archive_dir     = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{target_platform}-{build_config}"))
+        unreal_tmp_dir  = ""
 
         if args.conda_script:
             conda_script = args.conda_script
@@ -88,10 +75,6 @@ if __name__ == "__main__":
         assert False
 
     assert os.path.exists(run_uat_script)
-
-    # once we know pak_platform, set our default pak file src and dest
-    pak_file_src  = os.path.realpath(os.path.join(args.paks_dir, "kujiale_0000-" + args.version_tag + "-" + pak_platform + ".pak"))
-    pak_file_dest = os.path.realpath(os.path.join(paks_dir_dest, "kujiale_0000-" + args.version_tag + "-" + pak_platform + ".pak"))
 
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from previous builds.
     # If we don't do this step, we will get many warnings during this build:
@@ -148,10 +131,6 @@ if __name__ == "__main__":
         f"--third_party_dir {third_party_dir}"
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
-
-    # copy our custom ini file, used to update the default map for public release executables
-    shutil.copyfile(config_file_src, config_file_dest)
-    spear.log(f"Copied {config_file_src} to {config_file_dest}")
 
     # build SpearSim project
     cmd = [
