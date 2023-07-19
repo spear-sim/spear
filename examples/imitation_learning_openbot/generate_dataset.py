@@ -39,7 +39,6 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
-    # make sure that we are loading trajectories from a file
     config.defrost()
     config.SIMULATION_CONTROLLER.TASK = "ImitationLearningTask"
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE = os.path.abspath(args.episodes_file)
@@ -69,7 +68,6 @@ if __name__ == "__main__":
     policy = OpenBotPathFollowingPolicy(config)
 
     # load the episodes to be executed
-    assert os.path.exists(args.episodes_file)
     df = pd.read_csv(args.episodes_file)
 
     # iterate over all episodes
@@ -167,7 +165,11 @@ if __name__ == "__main__":
                 obs, _, _, env_step_info = env.step(action={"set_duty_cycles": action})
     
                 num_iterations_executed += 1
-    
+
+                # check if we've reached the goal
+                cm_to_m = 0.01
+                goal_reached = np.linalg.norm(episode_goal_location[0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
+
                 if args.debug:
                     show_obs(obs)
     
@@ -194,9 +196,6 @@ if __name__ == "__main__":
                     episode_frame_id_data[i]  = i                                    # current frame
     
                 # check conditions for ending an episode
-                cm_to_m = 0.01
-                goal_reached = np.linalg.norm(episode_goal_location[0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
-
                 if env_step_info["task_step_info"]["hit_obstacle"][0]:
                     spear.log("    Collision detected according to env.step(), ending episode...")
                     episode_successful = False
