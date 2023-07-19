@@ -15,26 +15,18 @@ class OpenBotPathFollowingPolicy():
         # Our convention in this example is to store all data that comes directly from Unreal in the native format
         # exported by Unreal, i.e., centimeters and degrees. We eventually need to convert some of this data to
         # meters and radians, but we only do so in local temporary variables.
-        self._path              = None
-        self._waypoint_index    = None
-        self._location_xy_prev  = None
+        self._path = None
+        self._waypoint_index = None
+        self._location_xy_prev = None
         self._rotation_yaw_prev = None
-
-        assert self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS >= 0.0
-        assert self._config.IMITATION_LEARNING_OPENBOT.MAX_ACTION >= 0.0
-        assert self._config.IMITATION_LEARNING_OPENBOT.LOCATION_XY_PROPORTIONAL_GAIN >= 0.0
-        assert self._config.IMITATION_LEARNING_OPENBOT.LOCATION_XY_DERIVATIVE_GAIN >= 0.0
-        assert self._config.IMITATION_LEARNING_OPENBOT.ROTATION_YAW_PROPORTIONAL_GAIN >= 0.0
-        assert self._config.IMITATION_LEARNING_OPENBOT.ROTATION_YAW_DERIVATIVE_GAIN >= 0.0
-        assert self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME > 0.0 
     
     def reset(self, obs, path):
         
-        assert path.shape[0] >= 2       # path should contain atleast an initial and goal location
+        assert path.shape[0] >= 2 # path must contain at least an initial and goal location
 
-        self._path              = path
-        self._waypoint_index    = 1     # initialized to 1 as waypoint with index 0 refers to the agent's initial location
-        self._location_xy_prev  = obs["location"][0:2]
+        self._path = path
+        self._waypoint_index = 1 # initialized to 1 because waypoint 0 is the agent's initial position
+        self._location_xy_prev = obs["location"][0:2]
         self._rotation_yaw_prev = obs["rotation"][1]
 
     def step(self, obs):
@@ -79,15 +71,14 @@ class OpenBotPathFollowingPolicy():
         self._location_xy_prev = obs["location"][0:2]
         self._rotation_yaw_prev = obs["rotation"][1]
 
-        # is the current waypoint close enough to be considered as "reached" ?
-        waypoint_reached = (location_xy_error <= self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS)
+        # update waypoint state
+        waypoint_reached = location_xy_error <= self._config.IMITATION_LEARNING_OPENBOT.WAYPOINT_REACHED_RADIUS
 
-        # if a waypoint of the trajectory is "reached", based on the autopilot's config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS condition 
         if waypoint_reached:
-            num_waypoints = len(self._path) - 1 # discarding the initial position
-            spear.log(f"Waypoint {self._waypoint_index} of {num_waypoints} reached.")
-            if self._waypoint_index < num_waypoints:  # if this waypoint is not the final "goal"                
-                self._waypoint_index += 1 # set the next way point as the current target to be tracked by the agent
+            num_waypoints = self._path.shape[0] - 1 # don't count the initial position
+            spear.log(f"    Waypoint {self._waypoint_index} of {num_waypoints} reached.")
+            if self._waypoint_index < num_waypoints:                
+                self._waypoint_index += 1
 
         step_info = {"waypoint": self._path[self._waypoint_index]}
 
@@ -102,9 +93,6 @@ class OpenBotPilotNetPolicy():
         self._goal_location = None
         self._img_input_height = None
         self._img_input_width = None
-
-        assert self._config.IMITATION_LEARNING_OPENBOT.ACCEPTANCE_RADIUS >= 0.0
-        assert self._config.IMITATION_LEARNING_OPENBOT.MAX_ACTION >= 0.0
 
         # load the control policy
         self._interpreter = tf.lite.Interpreter(self._config.IMITATION_LEARNING_OPENBOT.PILOT_NET.PATH)
@@ -121,10 +109,10 @@ class OpenBotPilotNetPolicy():
 
         assert self._img_input_height and self._img_input_width
 
-        # the policy takes two inputs: normalized rgb image and a 3D compass observation.
+        # the policy takes two inputs: normalized rgb image and a 3D compass observation
         spear.log(f"Input details of the control policy: {self._input_details}")
 
-        # the policy gives a 2D output consisting of the duty cycles to be sent to the left (resp. right) motors on a [0, 1] scale
+        # the policy produces a 2D output consisting of the duty cycles to be sent to the left and right motors on a [0, 1] scale
         spear.log(f"Output details of the control policy: {self._output_details}")
 
     def reset(self, goal_location):
@@ -179,7 +167,7 @@ class OpenBotPilotNetPolicy():
         self._interpreter.invoke()
 
         # generate an action from inference result
-        tflite_output = np.clip(self._interpreter.get_tensor(self._output_details[0]["index"]).astype(np.float32), -1.0, 1.0)
-        action = np.array([tflite_output[0][0],tflite_output[0][1]], dtype=np.float64)
+        tf_output = self._interpreter.get_tensor(self._output_details[0]["index"]).astype(np.float64)
+        action = np.clip(tf_output[0], -1.0, 1.0)
 
         return action
