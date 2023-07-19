@@ -40,7 +40,7 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     config.defrost()
-    config.IMITATION_LEARNING_OPENBOT.PILOT_NET.PATH = os.path.realpath(args.policy_file)
+    config.IMITATION_LEARNING_OPENBOT.PILOT_NET_POLICY_PATH = os.path.realpath(args.policy_file)
     config.SIMULATION_CONTROLLER.TASK = "ImitationLearningTask"
     config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE = os.path.realpath(args.episodes_file)
     config.freeze()
