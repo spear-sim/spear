@@ -112,7 +112,7 @@ if __name__ == "__main__":
             cmd_prefix + \
             "python " + \
             "build_third_party_libs.py " + \
-            f"--third_party_dir  {third_party_dir}" + \
+            f"--third_party_dir  {third_party_dir} " + \
             f"--num_parallel_jobs {args.num_parallel_jobs}"
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, shell=True, check=True)
@@ -136,7 +136,7 @@ if __name__ == "__main__":
         "python " + \
         "copy_starter_content.py " + \
         f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
-        f"--unreal_project_dir {unreal_project_dir} "
+        f"--unreal_project_dir {unreal_project_dir}"
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
