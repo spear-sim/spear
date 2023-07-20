@@ -74,7 +74,7 @@ We build the `SpearSim` executable as follows.
 path/to/UE_5.2/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -iterativecooking -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
 ```
 
-Depending on your platform, you will need to specify `-targetPlatform` as `Win64`, `Mac`, or `Linux`. You will obtain an executable at the following locations, depending on your platform.
+Depending on your platform, you will need to specify `-targetPlatform` as `Win64`, `Mac`, or `Linux`. You will obtain an executable at one of the following locations.
 
 ```
 Windows: cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
