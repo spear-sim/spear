@@ -108,12 +108,12 @@ if __name__ == "__main__":
     if not args.skip_build_third_party_libs:
 
         # build third-party libs
-        cmd = [
-            "python ",
-            "build_third_party_libs.py ",
-            "--third_party_dir", third_party_dir,
-            "--num_parallel_jobs", f"{args.num_parallel_jobs}"
-        ]
+        cmd = \
+            cmd_prefix + \
+            "python " + \
+            "build_third_party_libs.py " + \
+            f"--third_party_dir  {third_party_dir}" + \
+            f"--num_parallel_jobs {args.num_parallel_jobs}"
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         "python " + \
         "create_symlinks.py " + \
         f"--unreal_project_dir {unreal_project_dir} " + \
-        f"--unreal_plugins_dir {unreal_plugins_dir} " \
+        f"--unreal_plugins_dir {unreal_plugins_dir} " + \
         f"--third_party_dir {third_party_dir}"
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
