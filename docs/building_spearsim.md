@@ -2,7 +2,7 @@
 
 ## Assumptions
 
-We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.2. We will also assume that you're using Anaconda Python to manage your Python environment, and you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package installed, as described in our [Getting Started](getting_started.md) tutorial. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
+We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.2. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package installed, as described in our [Getting Started](getting_started.md) tutorial. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
 
 ## Install the Unreal Engine
 
