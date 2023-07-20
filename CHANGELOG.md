@@ -1,3 +1,23 @@
+## SPEAR v0.3.0
+
+This release includes the following new user-facing features and improvements.
+
+- We are releasing a new photorealistic scene, `apartment_0000` under a Creative Commons license. We include all of the Unreal content for this scene directly in our GitHub repository, so users can easily modify and experiment with the content directly in the Unreal Editor. The following image of `apartment_0000` was captured in SPEAR running at 4K resolution at 60 fps.
+
+![teaser](https://github.com/isl-org/spear/assets/2341965/f08aa881-5873-4d84-8113-b9b37d126939)
+
+- We have upgraded from Unreal Engine 4 to Unreal Engine 5. This update significantly improves the overall visual quality that users can expect from SPEAR, and makes rendering noticeably more consistent across platforms. The following image shows our `kujiale_0000` scene, and demonstrates the visual quality users can expect in Unreal Engine 5. This image was captured in SPEAR running at 4K resolution at 40 fps.
+
+![Screenshot_48](https://github.com/isl-org/spear/assets/2341965/8c6413b4-b72d-4f8e-9efc-fa264b7ec825)
+
+- Under the hood, upgrading to Unreal Engine 5 enables SPEAR to advantage of Unreal's latest rendering features, including a state-of-the-art fully dynamic global illumination lighting system known as Lumen, and a state-of-the-art virtual geometry streaming system known as Nanite. Lumen enables all lights and objects to be moved fully dynamically with no precomputation required, and Nanite enables very high-resolution geometry to be imported and rendered such that the overall rendering cost scales with pixels rather than triangles. We expect these features to be especially useful as we scale the number of scenes that are available in SPEAR in the coming months.
+
+- We have improved the visual appearance of our OpenBot model.
+
+![Screenshot_53](https://github.com/isl-org/spear/assets/2341965/0b339a91-ca0b-4b1b-ae6b-2c6d2a57ff79)
+
+- We have improved the readability of our code examples.
+
 ## SPEAR v0.2.0
 
 This release includes the following new user-facing features and improvements.
