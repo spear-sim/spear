@@ -16,7 +16,7 @@ This release includes the following new user-facing features and improvements.
 
 ![Screenshot_53](https://github.com/isl-org/spear/assets/2341965/0b339a91-ca0b-4b1b-ae6b-2c6d2a57ff79)
 
-- We have made several usability and readability improvements to our code, especially to our code examples.
+- We have made several usability and readability improvements to our code, especially to our examples.
 
 ## SPEAR v0.2.0
 
