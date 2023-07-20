@@ -29,9 +29,13 @@ Minimum and recommended system specifications for the Unreal Engine are given [h
 
 ### Precompiled binaries
 
-The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments. See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.3.0) for download links.
+See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.3.0) for download links. The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
 
-### Programmatically interacting with multiple scenes
+### Working with multiple scenes
+
+See our [Getting Started](docs/getting_started.md) tutorial.
+
+### Programmatically interacting with multiple scenes via Python
 
 See our [Getting Started](docs/getting_started.md) tutorial.
 
@@ -47,6 +51,6 @@ See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
 
 - The SPEAR code in this repository is licensed under an [MIT License](LICENSE.txt)
 - The licenses for all of our third-party code dependencies are given [here](ACKNOWLEDGMENTS.txt)
-- The `apartment_0000`, `debug_0000`, `warehouse_0000` scenes are licensed under a [CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0)
+- The `apartment_0000`, `debug_0000`, `warehouse_0000` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
 - The license for the `kujiale_0000` scene is given [here](LICENSE_KUJIALE.txt)
 - The external assets in `debug_0000` are licensed under the [Unreal Engine End-User License Agreement](https://www.unrealengine.com/en-US/eula/unreal)
