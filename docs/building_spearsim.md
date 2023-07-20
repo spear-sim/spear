@@ -2,21 +2,25 @@
 
 ## Assumptions
 
-We will assume for simplicity that you are developing on macOS, although most of these steps map straightforwardly across platforms. We will also assume that you're using Anaconda Python to manage your Python environment, and you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package installed, as described in our [Getting Started](getting_started.md) tutorial. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
+We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.2. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package, as described in our [Getting Started](getting_started.md) tutorial. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
 
 ## Install the Unreal Engine
 
-We recommend installing the Unreal Engine version 4.26 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure you select _Editor symbols for debugging_ from the list of optional components.
+We recommend installing the Unreal Engine version 5.2 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure you select _Editor symbols for debugging_ from the list of optional components.
 
-If you're building on Linux, you will need to build the Unreal Engine from source. See [this tutorial](https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Linux/BeginnerLinuxDeveloper/SettingUpAnUnrealWorkflow/) for details.
+If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
-## Install XCode
+## Install the appropriate compiler for your platform
 
-If you're building on macOS, you will need to install a specific version of XCode that matches your Unreal Engine version. For Unreal Engine version 4.26, we have verified that XCode 13.0 behaves as expected. See [this tutorial](https://github.com/botman99/ue4-xcode-vscode-mac) for details.
+For each platform, you will need to install a specific compiler that is compatible with Unreal Engine 5.2. We have verified that the following compilers behave as expected.
 
-## Install `clang` and `libc++`
+```
+Windows: Visual Studio 2022
+macOS:   XCode 14.3
+Linux:   clang and libc++
+```
 
-If you're building on Linux, you will need to install `clang` and `libc++`.
+If you're developing on Linux, you can install `clang` and `libc++` as follows.
 
 ```console
 sudo apt install libc++-dev libc++abi-dev clang
@@ -37,19 +41,28 @@ This command-line tool accepts an optional `--num_parallel_jobs` argument. This 
 
 Our `SpearSim` project requires you to create several symbolic links. We provide a command-line tool for this purpose.
 
-If you're building on Windows, you will need to run this tool with administrator privileges.
+If you're developing on Windows, you will need to run this tool with administrator privileges.
 
 ```console
 cd tools
-python create_symbolic_links.py --unreal_engine_dir path/to/UE_4.26
+python create_symlinks.py
 ```
 
-The `--unreal_engine_dir` argument must point to the top-level directory where you installed (or built) the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're building on Linux, you must specify the path to the top-level `UnrealEngine` GitHub repository.
+## Copy starter content
+
+Our `SpearSim` project requires you to explicitly copy some starter content from your Unreal Engine installation to the project directory.
+
+```console
+cd tools
+python copy_starter_content.py --unreal_engine_dir path/to/UE_5.2
+```
+
+The `--unreal_engine_dir` argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.2.0.zip` you downloaded earlier.
 
 ```
-Windows: C:\Program Files\Epic Games\UE_4.26
-macOS:   /Users/Shared/Epic Games/UE_4.26
-Linux:   path/to/github/UnrealEngine
+Windows: C:\Program Files\Epic Games\UE_5.2
+macOS:   /Users/Shared/Epic Games/UE_5.2
+Linux:   path/to/Linux_Unreal_Engine_5.2.0/
 ```
 
 ## Build the `SpearSim` executable
@@ -58,10 +71,10 @@ We build the `SpearSim` executable as follows.
 
 ```console
 # build, cook, stage, package, archive
-path/to/UE_4.26/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -iterativecooking -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
+path/to/UE_5.2/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -iterativecooking -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
 ```
 
-Depending on your platform, this step will build an executable at different paths.
+Depending on your platform, you will need to specify `-targetPlatform` as `Win64`, `Mac`, or `Linux`. If you're developing on Windows, you will need to execute this command in an terminal with access to the Visual Studio command-line tools. You will obtain an executable at one of the following locations.
 
 ```
 Windows: cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe

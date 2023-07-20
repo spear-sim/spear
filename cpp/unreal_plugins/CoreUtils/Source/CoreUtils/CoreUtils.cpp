@@ -6,11 +6,14 @@
 
 #include <iostream>
 
+#include <Modules/ModuleManager.h>
+
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Log.h"
 
 void CoreUtils::StartupModule()
 {
-    std::cout << "[SPEAR | CoreUtils.cpp] CoreUtils::StartupModule" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 
     Config::initialize();
 
@@ -22,14 +25,14 @@ void CoreUtils::StartupModule()
 
     // Wait for keyboard input, which is useful when attempting to attach a debugger to the running executable.
     if (Config::get<bool>("CORE_UTILS.WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION")) {
-        std::cout << "[SPEAR | CoreUtils.cpp] Press ENTER to continue..." << std::endl;
+        SP_LOG("Press ENTER to continue...");
         std::cin.get();
     }
 }
 
 void CoreUtils::ShutdownModule()
 {
-    std::cout << "[SPEAR | CoreUtils.cpp] CoreUtils::ShutdownModule" << std::endl;
+    SP_LOG_CURRENT_FUNCTION();
 
     Config::terminate();
 }

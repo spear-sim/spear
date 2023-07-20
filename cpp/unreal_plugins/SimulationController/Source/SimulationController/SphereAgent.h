@@ -13,6 +13,7 @@
 #include <Engine/EngineBaseTypes.h>
 #include <Math/Rotator.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 
 class AActor;
@@ -22,8 +23,7 @@ class UStaticMeshComponent;
 class UWorld;
 
 class CameraSensor;
-class UTickEvent;
-struct Box;
+class UTickEventComponent;
 
 class SphereAgent : public Agent
 {
@@ -34,9 +34,9 @@ public:
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
 
-    std::map<std::string, Box> getActionSpace() const override;
-    std::map<std::string, Box> getObservationSpace() const override;
-    std::map<std::string, Box> getStepInfoSpace() const override;
+    std::map<std::string, ArrayDesc> getActionSpace() const override;
+    std::map<std::string, ArrayDesc> getObservationSpace() const override;
+    std::map<std::string, ArrayDesc> getStepInfoSpace() const override;
 
     void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
@@ -48,16 +48,15 @@ public:
     void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
 
 private:
-    AStaticMeshActor* sphere_actor_ = nullptr;
+    AStaticMeshActor* static_mesh_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
-    AActor* goal_actor_ = nullptr;
     AActor* parent_actor_ = nullptr;
 
     UStaticMeshComponent* static_mesh_component_ = nullptr;
 
     FRotator rotation_ = FRotator::ZeroRotator;
 
-    UTickEvent* tick_event_ = nullptr;
+    UTickEventComponent* tick_event_component_ = nullptr;
     FDelegateHandle tick_event_handle_;
 
     std::unique_ptr<CameraSensor> camera_sensor_;

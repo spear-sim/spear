@@ -183,7 +183,7 @@ FString my_string = "My String";
 std::string = "My string";
 ```
 
-**Prefer `std::unique_ptr` over a raw pointer, when an object owns a pointer to another object.** It is easy to accidentally forget to delete raw pointers.
+**Prefer `std::unique_ptr` over a raw pointer when an object owns a pointer to another object.** It is easy to accidentally forget to delete raw pointers.
 
 ```cpp
 // bad

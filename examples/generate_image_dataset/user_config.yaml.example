@@ -12,24 +12,29 @@ SPEAR:
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
   WINDOW_RESOLUTION_X: 1024
-  WINDOW_RESOLUTION_Y: 768
+  WINDOW_RESOLUTION_Y: 1024
 
 SIMULATION_CONTROLLER:
   AGENT: "CameraAgent"
   TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
+  NAVMESH:
+    MIN_REGION_AREA: 0.0
+
   CAMERA_AGENT:
-    CAMERA_ACTOR_NAME: "CameraActor"
-    ACTION_COMPONENTS: ["set_pose", "set_num_random_points"] # "set_pose", "set_num_random_points"
+    CAMERA_ACTOR_NAME: "camera_actor"
+    SPAWN_MODE: "specify_existing_actor"
+    SPAWN_ACTOR_NAME: "PlayerStart_0"
+    ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
     OBSERVATION_COMPONENTS: ["camera"] # "camera"
-    STEP_INFO_COMPONENTS: ["random_points"] # "random_points"
+    STEP_INFO_COMPONENTS: []
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation"
-      IMAGE_HEIGHT: 768
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation"
+      IMAGE_HEIGHT: 1024
       IMAGE_WIDTH: 1024
       FOV: 90.0
 
   VISUALIZER:
-    ACTOR_NAME: "CameraActor"
+    ACTOR_NAME: "camera_actor"
     SPAWN_CAMERA: False
