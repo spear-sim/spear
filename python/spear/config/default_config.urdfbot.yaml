@@ -5,7 +5,7 @@
 URDFBOT:
   URDFBOT_PAWN:
     URDF_DIR: "" # Directory to look for URDF_FILE. This will be set automatically to a default location by spear.get_config().
-    URDF_FILE: "locobot.xml"
+    URDF_FILE: ""
     CAMERA_COMPONENT:
       POSITION_X: 0.0
       POSITION_Y: 0.0

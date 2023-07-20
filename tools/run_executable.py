@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument("--paks_dir")
     parser.add_argument("--scene_id")
     parser.add_argument("--map_id")
-    parser.add_argument("--vulkan_device_files")
+    parser.add_argument("--vk_icd_filenames")
     args = parser.parse_args()
     
     assert os.path.exists(args.executable)
@@ -26,9 +26,9 @@ if __name__ == '__main__':
     executable_name, executable_ext = os.path.splitext(args.executable)
 
     # provide additional control over which Vulkan devices are recognized by Unreal
-    if args.vulkan_device_files is not None:
-        spear.log("Setting VK_ICD_FILENAMES environment variable: " + args.vulkan_device_files)
-        os.environ["VK_ICD_FILENAMES"] = args.vulkan_device_files
+    if args.vk_icd_filenames is not None:
+        spear.log("Setting VK_ICD_FILENAMES environment variable: " + args.vk_icd_filenames)
+        os.environ["VK_ICD_FILENAMES"] = args.vk_icd_filenames
 
     if sys.platform == "win32":
         assert executable_name[-4:] == "-Cmd"

@@ -21,10 +21,10 @@ You can run the example as follows.
 python generate_episodes.py --episodes_file train_episodes.csv
 python generate_episodes.py --episodes_file test_episodes.csv
 
-# execute navigation episodes using a global path planner, and save goals, observations, and actions
+# execute episodes using a global path planner and save data to use during training
 python generate_dataset.py --episodes_file train_episodes.csv --split train
 
-# optional: train a navigation policy using the OpenBot framework, see the OpenBot GitHub repository
+# optional: train a navigation policy using the OpenBot framework (see the OpenBot GitHub repository)
 
 # execute navigation episodes using a trained policy
 python run_trained_policy.py --episodes_file test_episodes.csv

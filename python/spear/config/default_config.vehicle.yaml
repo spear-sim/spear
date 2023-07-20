@@ -11,19 +11,19 @@ VEHICLE:
       LOCATION_X: 9.0                 # Camera relative location in [cm]
       LOCATION_Y: 5.0                 # Camera relative location in [cm]
       LOCATION_Z: 10.0                # Camera relative location in [cm]
-      ROTATION_PITCH: 0.0             # Camera relative rotation in [°]
-      ROTATION_YAW: 0.0               # Camera relative rotation in [°]
-      ROTATION_ROLL: 0.0              # Camera relative rotation in [°]
-      FOV: 70.0                       # Camera field of view in [°], typically overwritten by VehicleAgent
+      ROTATION_PITCH: 0.0             # Camera relative rotation in [deg]
+      ROTATION_YAW: 0.0               # Camera relative rotation in [deg]
+      ROTATION_ROLL: 0.0              # Camera relative rotation in [deg]
+      FOV: 70.0                       # Camera field of view in [deg], typically overwritten by VehicleAgent
       ASPECT_RATIO: 1.333333          # Camera aspect ratio, width/height == 160/120, typically overwritten by VehicleAgent
 
     IMU_COMPONENT:
       LOCATION_X: 8.0                 # IMU relative location in [cm]
       LOCATION_Y: 0.0                 # IMU relative location in [cm]
       LOCATION_Z: 10.0                # IMU relative location in [cm]
-      ROTATION_PITCH: 0.0             # IMU relative rotation in [°]
-      ROTATION_YAW: 0.0               # IMU relative rotation in [°]
-      ROTATION_ROLL: 0.0              # IMU relative rotation in [°]
+      ROTATION_PITCH: 0.0             # IMU relative rotation in [deg]
+      ROTATION_YAW: 0.0               # IMU relative rotation in [deg]
+      ROTATION_ROLL: 0.0              # IMU relative rotation in [deg]
 
   VEHICLE_COMPONENT:
     MASS: 11.2                        # Mass of the vehicle chassis in [kg]
