@@ -19,13 +19,13 @@ if __name__ == "__main__":
 
     if sys.platform == "win32":
         platform_name     = "Win64"
-        platform_dir_name = "WindowsNoEditor"
+        platform_dir_name = "Windows"
     elif sys.platform == "darwin":
         platform_name     = "Mac"
-        platform_dir_name = "MacNoEditor"
+        platform_dir_name = "Mac"
     elif sys.platform == "linux":
         platform_name     = "Linux"
-        platform_dir_name = "LinuxNoEditor"
+        platform_dir_name = "Linux"
     else:
         assert False
 
