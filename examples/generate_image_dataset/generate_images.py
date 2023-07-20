@@ -60,7 +60,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--poses_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "poses.csv")))
     parser.add_argument("--images_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "images")))
-    parser.add_argument("--num_internal_steps", type=int, default=1)
+    parser.add_argument("--num_internal_steps", type=int, default=10)
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--wait_for_key_press", action="store_true")
     args = parser.parse_args()
