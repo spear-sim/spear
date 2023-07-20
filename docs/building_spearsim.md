@@ -10,7 +10,7 @@ We recommend installing the Unreal Engine version 5.2 via the Epic Games Launche
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux) for details.
 
-## Install the appropriate compiler for your system
+## Install the appropriate compiler for your platform
 
 For each platform, you will need to install a specific compiler version that matches Unreal Engine 5.2.
 
