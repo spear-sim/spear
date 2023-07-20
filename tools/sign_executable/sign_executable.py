@@ -23,8 +23,8 @@ if __name__ == "__main__":
     parser.add_argument("--apple_username", required=True)
     parser.add_argument("--apple_password", required=True)
     parser.add_argument("--version_tag", required=True)
-    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp", "SpearSim-Mac-Shipping-Unsigned")))
-    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp", "SpearSim-Mac-Shipping")))
+    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "build", "SpearSim-Mac-Shipping-Unsigned")))
+    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "build", "SpearSim-Mac-Shipping")))
     parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
     parser.add_argument("--entitlements_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "entitlements.plist")))
     parser.add_argument("--wait_time_seconds", type=float, default=600.0)
@@ -51,11 +51,6 @@ if __name__ == "__main__":
         radio_effect_unit = os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Build", "Mac", "RadioEffectUnit"))
         spear.log(f"Removing {radio_effect_unit}")
         shutil.rmtree(radio_effect_unit, ignore_errors=True)
-
-        pak_file_src  = os.path.realpath(os.path.join(executable, "Contents", "UE4", "SpearSim", "Content", "Paks", f"kujiale_0000-{args.version_tag}-Mac.pak"))
-        pak_file_dest = os.path.realpath(os.path.join(args.temp_dir, f"kujiale_0000-{args.version_tag}-Mac.pak"))
-        spear.log(f"Temporarily moving {pak_file_src} to {pak_file_dest}")
-        shutil.move(pak_file_src, pak_file_dest)
 
         spear.log("Changing rpaths...")
 
@@ -183,10 +178,6 @@ if __name__ == "__main__":
     cmd = ["xcrun", "stapler", "staple", executable]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
-
-    # move the pak file
-    spear.log(f"Moving {pak_file_dest} to {pak_file_src}")
-    shutil.move(pak_file_dest, pak_file_src)
     
     spear.log(f"{executable} has been successfully signed.")
     spear.log("Done.")

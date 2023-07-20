@@ -89,6 +89,11 @@ if __name__ == "__main__":
             if prev_scene_id != "":
                 env.close()
 
+            # update scene_id
+            config.defrost()
+            config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
+            config.freeze()
+
             # create Env object
             env = CustomEnv(config, num_internal_steps=args.num_internal_steps)
 

@@ -35,7 +35,7 @@ SIMULATION_CONTROLLER:
   TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  SCENE_ID: "debug_0000"
+  SCENE_ID: "apartment_0000"
 
   SPHERE_AGENT:
     SPHERE_ACTOR_NAME: "sphere_actor"
@@ -62,11 +62,11 @@ SIMULATION_CONTROLLER:
     IS_READY_VELOCITY_THRESHOLD: 0.001
     SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_LOCATION_X: 0.0
-    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_X: 80.0
+    SPAWN_LOCATION_Y: 475.0
     SPAWN_LOCATION_Z: 20.0
     SPAWN_ROTATION_PITCH: 0.0
-    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_YAW: 70.0
     SPAWN_ROTATION_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 

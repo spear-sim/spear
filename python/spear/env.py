@@ -503,9 +503,13 @@ class SpaceDesc():
     def terminate(self):
         self.shared_memory_arrays = {}
         for name, shared_memory_object in self.shared_memory_objects.items():
-            if sys.platform in ["darwin", "linux"]:
+            if sys.platform == "win32":
+                shared_memory_object.close()
+            elif sys.platform in ["darwin", "linux"]:
                 shared_memory_object.close()
                 shared_memory_object.unlink()
+            else:
+                assert False
 
     def set_shared_memory_data(self, data):
         assert data.keys() == self.space_shared.spaces.keys()

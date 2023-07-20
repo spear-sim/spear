@@ -13,8 +13,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--version_tag", required=True)
-    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
-    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
+    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build")))
+    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build")))
     args = parser.parse_args()
 
     if sys.platform == "win32":

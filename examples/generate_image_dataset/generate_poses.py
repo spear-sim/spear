@@ -39,9 +39,14 @@ if __name__ == "__main__":
     df = pd.DataFrame(columns=df_columns)
 
     # iterate over all scenes
-    for i, scene_id in enumerate(scene_ids):
+    for scene_id in scene_ids:
 
         spear.log("Processing scene: " + scene_id)
+
+        # update scene_id
+        config.defrost()
+        config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
+        config.freeze()
 
         # create Env object
         env = spear.Env(config)
