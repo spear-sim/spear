@@ -92,9 +92,9 @@ if __name__ == '__main__':
         os.symlink(args.paks_dir, spear_paks_dir)
 
     # provide additional control over which Vulkan devices are recognized by Unreal
-    if len(config.SPEAR.VULKAN_DEVICE_FILES) > 0:
-        spear.log("Setting VK_ICD_FILENAMES environment variable: " + config.SPEAR.VULKAN_DEVICE_FILES)
-        os.environ["VK_ICD_FILENAMES"] = config.SPEAR.VULKAN_DEVICE_FILES
+    if len(config.SPEAR.VK_ICD_FILENAMES) > 0:
+        spear.log("Setting VK_ICD_FILENAMES environment variable: " + config.SPEAR.VK_ICD_FILENAMES)
+        os.environ["VK_ICD_FILENAMES"] = config.SPEAR.VK_ICD_FILENAMES
 
     # set up launch executable and command-line arguments
     launch_args = []
