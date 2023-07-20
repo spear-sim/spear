@@ -115,7 +115,7 @@ if __name__ == "__main__":
             f"--third_party_dir  {third_party_dir}" + \
             f"--num_parallel_jobs {args.num_parallel_jobs}"
         spear.log(f"Executing: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, shell=True, check=True)
 
     # create symbolic links (we need shell=True because we want to run in a specific anaconda env)
     cmd = \
