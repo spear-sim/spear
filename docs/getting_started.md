@@ -2,7 +2,7 @@
 
 ## Working with multiple scenes
 
-If you'd like to work with multiple scenes, you will need to download them separately. See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.3.0) for download links. You'll also need to use one of our command-line tools, which means you'll need to follow the steps below.
+If you'd like to work with multiple scenes, you will need to download them separately. See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.3.0) for download links. You'll also need to use our command-line tools, which means you'll need to follow the steps below.
 
 ### Clone this repository including submodules
 
@@ -42,7 +42,7 @@ At this point, you can use our `run_executable.py` command-line tool to select w
 
 ```console
 # interactively navigate through a specific scene
-python tools/run_executable.py --executable path/to/executable --paks_dir path/to/paks --scene_id <scene_id>
+python tools/run_executable.py --executable path/to/executable --scene_id <scene_id>
 ```
 
 Depending on your platform, you will need to specify the following path to your `--executable`.
