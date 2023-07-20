@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     if not args.skip_build_third_party_libs:
 
-        # build third-party libs
+        # build third-party libs (we need shell=True because we want to run in a specific anaconda env)
         cmd = \
             cmd_prefix + \
             "python " + \
