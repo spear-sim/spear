@@ -167,9 +167,9 @@ class Env(gym.Env):
             os.symlink(self._config.SPEAR.PAKS_DIR, spear_paks_dir)
 
         # provide additional control over which Vulkan devices are recognized by Unreal
-        if len(self._config.SPEAR.VULKAN_DEVICE_FILES) > 0:
-            spear.log("Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.VULKAN_DEVICE_FILES)
-            os.environ["VK_ICD_FILENAMES"] = self._config.SPEAR.VULKAN_DEVICE_FILES
+        if len(self._config.SPEAR.VK_ICD_FILENAMES) > 0:
+            spear.log("Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.VK_ICD_FILENAMES)
+            os.environ["VK_ICD_FILENAMES"] = self._config.SPEAR.VK_ICD_FILENAMES
 
         # set up launch executable and command-line arguments
         launch_args = []
