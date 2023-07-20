@@ -15,7 +15,7 @@
 #undef verify
 
 // macOS supports native posix shared memory objects, but doesn't export the _POSIX_SHARED_MEMORY_OBJECTS
-// macro, but Boost uses this macro to decide whether or not to use native posix shared memory objects,
+// macro. However, Boost uses this macro to decide whether or not to use native posix shared memory objects,
 // rather than emulating them through memory-mapped files. To address this issue, we explicitly define
 // BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS, because this forces Boost to use native posix shared
 // memory objects.
@@ -23,17 +23,17 @@
     #define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
 #endif
 
-BEGIN_SUPPRESS_COMPILER_WARNINGS
+SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
 #if BOOST_OS_WINDOWS
     #include <boost/interprocess/windows_shared_memory.hpp>
-#elif BOOST_OS_MACOS || BOOST_OS_UNIX
+#elif BOOST_OS_MACOS || BOOST_OS_LINUX
     #include <boost/interprocess/shared_memory_object.hpp>
 #else
     #error
 #endif
 
 #include <boost/interprocess/mapped_region.hpp>
-END_SUPPRESS_COMPILER_WARNINGS
+SP_END_SUPPRESS_COMPILER_WARNINGS
 
 // Restore the state of Unreal macros.
 #pragma pop_macro("verify")

@@ -664,4 +664,7 @@
 
 // ------------------------------------------------------------------------------
 
-#define ASSERT PPK_ASSERT
+#define SP_ASSERT PPK_ASSERT
+
+// TODO: remove this #define when we're ready to completely switch to SP_ASSERT
+#define ASSERT SP_ASSERT

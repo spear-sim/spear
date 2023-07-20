@@ -15,7 +15,7 @@
 
 class UUrdfJointComponent;
 class UUrdfLinkComponent;
-struct Box;
+struct ArrayDesc;
 struct UrdfLinkDesc;
 struct UrdfRobotDesc;
 
@@ -30,8 +30,8 @@ public:
     void createChildComponents(UrdfRobotDesc* robot_desc);
 
     // Agent interface used by UrdfBotAgent
-    std::map<std::string, Box> getActionSpace(const std::vector<std::string>& action_components) const;
-    std::map<std::string, Box> getObservationSpace(const std::vector<std::string>& observation_components) const;
+    std::map<std::string, ArrayDesc> getActionSpace(const std::vector<std::string>& action_components) const;
+    std::map<std::string, ArrayDesc> getObservationSpace(const std::vector<std::string>& observation_components) const;
     void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
     std::map<std::string, std::vector<uint8_t>> getObservation(const std::vector<std::string>& observation_components) const;
 

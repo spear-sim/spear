@@ -9,6 +9,7 @@
 
 #include "SpearSimSpectatorPawn.generated.h"
 
+class FObjectInitializer;
 class UInputComponent;
 
 UCLASS()

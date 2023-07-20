@@ -10,7 +10,7 @@
 #include <vector>
 
 #include <Camera/CameraActor.h>
-#include <Components/SceneCaptureComponent2D.h>
+#include <Camera/CameraComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Delegates/IDelegateInstance.h>
 #include <Engine/CollisionProfile.h>
@@ -18,111 +18,111 @@
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>
-#include <EngineUtils.h>
 #include <GameFramework/Actor.h>
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
+#include <Math/Vector.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
-#include "CoreUtils/Box.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
-#include "SimulationController/TickEvent.h"
+#include "SimulationController/TickEventComponent.h"
 
 SphereAgent::SphereAgent(UWorld* world)
 {
-    // spawn sphere
+    // spawn main actor
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
     std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_MODE");
     if (spawn_mode == "specify_existing_actor") {
         AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_ACTOR_NAME"));
-        ASSERT(spawn_actor);
+        SP_ASSERT(spawn_actor);
         spawn_location = spawn_actor->GetActorLocation();
         spawn_rotation = spawn_actor->GetActorRotation();
     } else if (spawn_mode == "specify_pose") {
         spawn_location = FVector(
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_POSITION_X"),
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_POSITION_Y"),
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_POSITION_Z"));
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_LOCATION_X"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_LOCATION_Y"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_LOCATION_Z"));
         spawn_rotation = FRotator(
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_PITCH"),
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_YAW"),
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_ROLL"));
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_ROTATION_PITCH"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_ROTATION_YAW"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_ROTATION_ROLL"));
     } else {
-        ASSERT(false);
+        SP_ASSERT(false);
     }
     FActorSpawnParameters actor_spawn_params;
     actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    sphere_actor_ = world->SpawnActor<AStaticMeshActor>(spawn_location, spawn_rotation, actor_spawn_params);
-    ASSERT(sphere_actor_);
+    static_mesh_actor_ = world->SpawnActor<AStaticMeshActor>(spawn_location, spawn_rotation, actor_spawn_params);
+    SP_ASSERT(static_mesh_actor_);
 
-    sphere_actor_->SetMobility(EComponentMobility::Type::Movable);
+    static_mesh_actor_->SetMobility(EComponentMobility::Type::Movable);
 
-    static_mesh_component_ = sphere_actor_->GetStaticMeshComponent();
-    ASSERT(static_mesh_component_);
+    FVector scale =
+        FVector(
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE_X"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE_Y"),
+            Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE_Z"));
+    static_mesh_actor_->SetActorScale3D(scale);
 
     // load mesh and material
     UStaticMesh* sphere_mesh = LoadObject<UStaticMesh>(
         nullptr,
         *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.STATIC_MESH")));
-    ASSERT(sphere_mesh);
+    SP_ASSERT(sphere_mesh);
     UMaterial* sphere_material = LoadObject<UMaterial>(
         nullptr,
         *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MATERIAL")));
-    ASSERT(sphere_material);
+    SP_ASSERT(sphere_material);
+
+    // configure static mesh component
+    static_mesh_component_ = static_mesh_actor_->GetStaticMeshComponent();
+    SP_ASSERT(static_mesh_component_);
     
     static_mesh_component_->SetStaticMesh(sphere_mesh);
     static_mesh_component_->SetMaterial(0, sphere_material);
-    sphere_actor_->SetActorScale3D(FVector(
-        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE"),
-        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE"),
-        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE")));
-
-    // set physics state
     static_mesh_component_->SetMobility(EComponentMobility::Type::Movable);
     static_mesh_component_->BodyInstance.SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
     static_mesh_component_->SetSimulatePhysics(true);
-    static_mesh_component_->SetAngularDamping(Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.ANGULAR_DAMPING"));
-    static_mesh_component_->SetLinearDamping(Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.LINEAR_DAMPING"));
-    static_mesh_component_->BodyInstance.MaxAngularVelocity = Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MAX_ANGULAR_VELOCITY");
-    static_mesh_component_->BodyInstance.MassScale = Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MASS_SCALE");
     static_mesh_component_->SetNotifyRigidBodyCollision(true);
+
+    // set up camera
+    FActorSpawnParameters camera_spawn_params;
+    camera_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA_ACTOR_NAME"));
+    camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, camera_spawn_params);
+    SP_ASSERT(camera_actor_);
+
+    camera_actor_->GetCameraComponent()->FieldOfView =
+        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.FOV");
+    camera_actor_->GetCameraComponent()->AspectRatio =
+        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_WIDTH") /
+        Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT");
+
+    // set up tick handler
+    parent_actor_ = world->SpawnActor<AActor>();
+    SP_ASSERT(parent_actor_);
+
+    tick_event_component_ = NewObject<UTickEventComponent>(parent_actor_);
+    SP_ASSERT(tick_event_component_);
+    tick_event_component_->RegisterComponent();
+    tick_event_component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
+    tick_event_handle_ = tick_event_component_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
-    // set up camera
     if (Std::contains(observation_components, "camera")) {
-        FActorSpawnParameters camera_spawn_params;
-        camera_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA_ACTOR_NAME"));
-        camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, camera_spawn_params);
-        ASSERT(camera_actor_);
-
         camera_sensor_ = std::make_unique<CameraSensor>(
             camera_actor_->GetCameraComponent(),
             Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.RENDER_PASSES"),
             Config::get<unsigned int>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_WIDTH"),
-            Config::get<unsigned int>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT"));
-        ASSERT(camera_sensor_);
-
-        // update FOV
-        for (auto& pass : Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.RENDER_PASSES")) {
-            camera_sensor_->render_passes_.at(pass).scene_capture_component_->FOVAngle =
-                Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.FOV");
-        }
-
-        parent_actor_ = world->SpawnActor<AActor>();
-        ASSERT(parent_actor_);
-
-        tick_event_ = NewObject<UTickEvent>(parent_actor_);
-        ASSERT(tick_event_);
-        tick_event_->RegisterComponent();
-        tick_event_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
-        tick_event_handle_ = tick_event_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
+            Config::get<unsigned int>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT"),
+            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.FOV"));
+        SP_ASSERT(camera_sensor_);
     }
 }
 
@@ -131,103 +131,108 @@ SphereAgent::~SphereAgent()
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {        
-        ASSERT(tick_event_);
-        tick_event_->delegate_.Remove(tick_event_handle_);
-        tick_event_handle_.Reset();
-        tick_event_->DestroyComponent();
-        tick_event_ = nullptr;
-
-        ASSERT(parent_actor_);
-        parent_actor_->Destroy();
-        parent_actor_ = nullptr;
-
-        ASSERT(camera_sensor_);
+        SP_ASSERT(camera_sensor_);
         camera_sensor_ = nullptr;
-
-        ASSERT(camera_actor_);
-        camera_actor_->Destroy();
-        camera_actor_ = nullptr;
     }
 
-    ASSERT(static_mesh_component_);
+    SP_ASSERT(tick_event_component_);
+    tick_event_component_->delegate_.Remove(tick_event_handle_);
+    tick_event_handle_.Reset();
+    tick_event_component_->DestroyComponent();
+    tick_event_component_ = nullptr;
+
+    SP_ASSERT(parent_actor_);
+    parent_actor_->Destroy();
+    parent_actor_ = nullptr;
+
+    SP_ASSERT(camera_actor_);
+    camera_actor_->Destroy();
+    camera_actor_ = nullptr;
+
+    SP_ASSERT(static_mesh_component_);
     static_mesh_component_ = nullptr;
 
-    ASSERT(sphere_actor_);
-    sphere_actor_->Destroy();
-    sphere_actor_ = nullptr;
+    SP_ASSERT(static_mesh_actor_);
+    static_mesh_actor_->Destroy();
+    static_mesh_actor_ = nullptr;
 }
 
 void SphereAgent::findObjectReferences(UWorld* world)
 {
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
-
-    if (Std::contains(observation_components, "compass")) {
-        goal_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.GOAL_ACTOR_NAME"));
-        ASSERT(goal_actor_);
-    }
 }
 
 void SphereAgent::cleanUpObjectReferences()
 {
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
-
-    if (Std::contains(observation_components, "compass")) {
-        ASSERT(goal_actor_);
-        goal_actor_ = nullptr;
-    }
 }
 
-std::map<std::string, Box> SphereAgent::getActionSpace() const
+std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
 {
-    std::map<std::string, Box> action_space;
+    std::map<std::string, ArrayDesc> action_space;
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
-    if (Std::contains(action_components, "apply_force")) {
-        Box box;
-        box.low_ = -1.f;
-        box.high_ = 1.f;
-        box.shape_ = {2};
-        box.datatype_ = DataType::Float32;
-        action_space["apply_force"] = std::move(box);
+    if (Std::contains(action_components, "add_force")) {
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.shape_ = {3};
+        array_desc.datatype_ = DataType::Float64;
+        action_space["add_force"] = std::move(array_desc);
+    }
+
+    if (Std::contains(action_components, "add_rotation")) {
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.shape_ = {3};
+        array_desc.datatype_ = DataType::Float64;
+        action_space["add_rotation"] = std::move(array_desc);
     }
 
     return action_space;
 }
 
-std::map<std::string, Box> SphereAgent::getObservationSpace() const
+std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
 {
-    std::map<std::string, Box> observation_space;
+    std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "compass")) {
-        Box box;
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.shape_ = {5};
-        box.datatype_ = DataType::Float32;
-        observation_space["compass"] = std::move(box);
+    if (Std::contains(observation_components, "location")) {
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.shape_ = {3};
+        array_desc.datatype_ = DataType::Float64;
+        observation_space["location"] = std::move(array_desc);
     }
 
-    std::map<std::string, Box> camera_sensor_observation_space = camera_sensor_->getObservationSpace(observation_components);
-    for (auto& camera_sensor_observation_space_component : camera_sensor_observation_space) {
-        observation_space[camera_sensor_observation_space_component.first] = std::move(camera_sensor_observation_space_component.second);
+    if (Std::contains(observation_components, "rotation")) {
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.shape_ = {3};
+        array_desc.datatype_ = DataType::Float64;
+        observation_space["rotation"] = std::move(array_desc);
     }
+
+    observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
 
     return observation_space;
 }
 
-std::map<std::string, Box> SphereAgent::getStepInfoSpace() const
+std::map<std::string, ArrayDesc> SphereAgent::getStepInfoSpace() const
 {
-    std::map<std::string, Box> step_info_space;
+    std::map<std::string, ArrayDesc> step_info_space;
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.STEP_INFO_COMPONENTS");
 
-    if (Std::contains(step_info_components, "debug_info")) {
-        Box box;
-        box.low_ = std::numeric_limits<float>::lowest();
-        box.high_ = std::numeric_limits<float>::max();
-        box.shape_ = {-1,3};
-        box.datatype_ = DataType::Float32;
-        step_info_space["debug_info"] = std::move(box);
+    if (Std::contains(step_info_components, "debug")) {
+        ArrayDesc array_desc;
+        array_desc.low_ = std::numeric_limits<double>::lowest();
+        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.shape_ = {-1, 3};
+        array_desc.datatype_ = DataType::Float64;
+        step_info_space["debug"] = std::move(array_desc);
     }
 
     return step_info_space;
@@ -237,56 +242,33 @@ void SphereAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
-    if (Std::contains(action_components, "apply_force")) {
-
-        // get component data
-        std::vector<float> component_data = Std::reinterpret_as<float>(action.at("apply_force"));
-
-        // apply force to the sphere in the current yaw direction
-        FVector force = rotation_.RotateVector(
-            FVector(component_data.at(0), 0.0f, 0.0f)) * Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.APPLY_FORCE.FORCE_SCALE");
-
-        ASSERT(isfinite(force.X));
-        ASSERT(isfinite(force.Y));
-        ASSERT(isfinite(force.Z));
-
+    if (Std::contains(action_components, "add_force")) {
+        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("add_force"));
+        FVector force = rotation_.RotateVector(FVector(component_data.at(0), component_data.at(1), component_data.at(2)));
         static_mesh_component_->AddForce(force);
+    }
 
-        // increment the current yaw direction
-        rotation_.Add(0.0f, component_data.at(1) * Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.APPLY_FORCE.ROTATE_SCALE"), 0.0f);
-
-        ASSERT(isfinite(rotation_.Pitch));
-        ASSERT(isfinite(rotation_.Yaw));
-        ASSERT(isfinite(rotation_.Roll));
-        ASSERT(rotation_.Pitch >= -360.0f && rotation_.Pitch <= 360.0f, "%f", rotation_.Pitch);
-        ASSERT(rotation_.Yaw   >= -360.0f && rotation_.Yaw   <= 360.0f, "%f", rotation_.Yaw);
-        ASSERT(rotation_.Roll  >= -360.0f && rotation_.Roll  <= 360.0f, "%f", rotation_.Roll);
+    if (Std::contains(action_components, "add_rotation")) {
+        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("add_rotation"));
+        rotation_.Add(component_data.at(0), component_data.at(1), component_data.at(2));
     }
 }
 
 std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
-    if (Std::contains(observation_components, "compass")) {
-        FVector sphere_to_goal = goal_actor_->GetActorLocation() - sphere_actor_->GetActorLocation();
-        FVector linear_velocity = static_mesh_component_->GetPhysicsLinearVelocity();
-        float yaw = rotation_.Yaw;
-
-        observation["compass"] = Std::reinterpret_as<uint8_t>(std::vector<float>{
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.OFFSET_TO_GOAL_SCALE") * sphere_to_goal.X,
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.OFFSET_TO_GOAL_SCALE") * sphere_to_goal.Y,
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.LINEAR_VELOCITY_SCALE") * linear_velocity.X,
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.LINEAR_VELOCITY_SCALE") * linear_velocity.Y,
-            Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.COMPASS.YAW_SCALE") * yaw});
+    if (Std::contains(observation_components, "location")) {
+        FVector location = static_mesh_actor_->GetActorLocation();
+        observation["location"] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
     }
 
-    std::map<std::string, std::vector<uint8_t>> camera_sensor_observation = camera_sensor_->getObservation(observation_components);
-    for (auto& camera_sensor_observation_component : camera_sensor_observation) {
-        observation[camera_sensor_observation_component.first] = std::move(camera_sensor_observation_component.second);
+    if (Std::contains(observation_components, "rotation")) {
+        observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation_.Pitch, rotation_.Yaw, rotation_.Roll}); 
     }
+
+    observation.merge(camera_sensor_->getObservation(observation_components));
 
     return observation;
 }
@@ -294,11 +276,10 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
 std::map<std::string, std::vector<uint8_t>> SphereAgent::getStepInfo() const
 {
     std::map<std::string, std::vector<uint8_t>> step_info;
-
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.STEP_INFO_COMPONENTS");
 
-    if (Std::contains(step_info_components, "debug_info")) {
-        step_info["debug_info"] = {};
+    if (Std::contains(step_info_components, "debug")) {
+        step_info["debug"] = Std::reinterpretAs<uint8_t>(std::vector<double>{0.0, 1.0, 2.0, 3.0, 4.0, 5.0});
     }
 
     return step_info;
@@ -322,15 +303,9 @@ bool SphereAgent::isReady() const
 void SphereAgent::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
-        camera_actor_->SetActorLocationAndRotation(
-            sphere_actor_->GetActorLocation() +
-            FVector(Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.POSITION_OFFSET_X"),
-                    Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.POSITION_OFFSET_Y"),
-                    Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.POSITION_OFFSET_Z")),
-            rotation_);
+        camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);
     }
 }

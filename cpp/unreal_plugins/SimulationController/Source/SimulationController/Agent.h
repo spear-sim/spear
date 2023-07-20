@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 
-class UWorld;
+#include "CoreUtils/ArrayDesc.h"
 
-struct Box;
+class UWorld;
 
 class Agent
 {
@@ -25,9 +25,9 @@ public:
     virtual void findObjectReferences(UWorld* world) = 0;
     virtual void cleanUpObjectReferences() = 0;
 
-    virtual std::map<std::string, Box> getActionSpace() const = 0;
-    virtual std::map<std::string, Box> getObservationSpace() const = 0;
-    virtual std::map<std::string, Box> getStepInfoSpace() const = 0;   
+    virtual std::map<std::string, ArrayDesc> getActionSpace() const = 0;
+    virtual std::map<std::string, ArrayDesc> getObservationSpace() const = 0;
+    virtual std::map<std::string, ArrayDesc> getStepInfoSpace() const = 0;   
  
     virtual void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) = 0;
     virtual std::map<std::string, std::vector<uint8_t>> getObservation() const = 0;

@@ -2,6 +2,23 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+OPENBOT_ENV:
+    # Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
+    # Gear ratio: 50
+    # Max wheel torque: 5.88399 N.m
+    # https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html
+    
+    MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
+    GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
+
+    BATTERY_VOLTAGE: 12.0          # Voltage of the battery powering the OpenBot [V]
+    CONTROL_DEAD_ZONE: 2.5         # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
+    MOTOR_TORQUE_MAX: 0.0019       # Motor maximal torque [N.m]
+    ELECTRICAL_RESISTANCE: 0.5     # Motor winding electrical resistance [Ohms]
+
+    ACTION_SCALE: 255              # Action scaling factor
+
+
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
 
@@ -12,67 +29,51 @@ SPEAR:
   WINDOW_RESOLUTION_X: 512
   WINDOW_RESOLUTION_Y: 512
 
+
 SIMULATION_CONTROLLER:
-  AGENT: "SphereAgent" # "SphereAgent" or "OpenBotAgent"
-  TASK: "PointGoalNavTask"
+  AGENT: "VehicleAgent" # "SphereAgent", "VehicleAgent"
+  TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  SCENE_ID: "starter_content_0000"
-
-  OPENBOT_AGENT:
-    OPENBOT_ACTOR_NAME: "OpenBotActor"
-    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
-    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera"] # "state_data", "control_data", "camera"
-    STEP_INFO_COMPONENTS: []
-    CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
-      IMAGE_HEIGHT: 512
-      IMAGE_WIDTH: 512
-      FOV: 90.0
+  SCENE_ID: "apartment_0000"
 
   SPHERE_AGENT:
-    SPHERE_ACTOR_NAME: "SphereActor"
-    CAMERA_ACTOR_NAME: "CameraActor"
-    ACTION_COMPONENTS: ["apply_force"] # "apply_force"
-    OBSERVATION_COMPONENTS: ["compass", "camera"] # "compass", "camera"
-    STEP_INFO_COMPONENTS: ["debug_info"] # "debug_info"
-    COMPASS:
-      GOAL_ACTOR_NAME: "GoalActor"
+    SPHERE_ACTOR_NAME: "sphere_actor"
+    CAMERA_ACTOR_NAME: "camera_actor"
+    ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_force", "add_rotation"
+    OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] # "camera", "location", "rotation"
+    STEP_INFO_COMPONENTS: ["debug"] # "debug"
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 20.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
     CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation"
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
-      POSITION_OFFSET_X: 0.0
-      POSITION_OFFSET_Y: 0.0
-      POSITION_OFFSET_Z: 1.0
-    APPLY_FORCE:
-      FORCE_SCALE: 10000.0
-      ROTATE_SCALE: 2.5
 
-  POINT_GOAL_NAV_TASK:
-    AGENT_ACTOR_NAME: "SphereActor"
-    GOAL_ACTOR_NAME: "GoalActor"
-    GOAL_SCALE: 0.5
-    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor0"]
-    RANDOM_SEED: 0
-    REWARD:
-      HIT_GOAL: 100.0
-      HIT_OBSTACLE: -100.0
-      DISTANCE_TO_GOAL_SCALE: 0.00001
-    EPISODE_BEGIN:
-      AGENT_POSITION_X_MIN: 0.0
-      AGENT_POSITION_X_MAX: 100.0
-      AGENT_POSITION_Y_MIN: 0.0
-      AGENT_POSITION_Y_MAX: 100.0
-      AGENT_POSITION_Z: 1.0
-      GOAL_POSITION_X_MIN: -250.0
-      GOAL_POSITION_X_MAX: 250.0
-      GOAL_POSITION_Y_MIN: -250.0
-      GOAL_POSITION_Y_MAX: 250.0
-      GOAL_POSITION_Z: -25.0
-      SPAWN_DISTANCE_THRESHOLD: 50.0
+  VEHICLE_AGENT:
+    VEHICLE_ACTOR_NAME: "vehicle_actor"
+    ACTION_COMPONENTS: ["set_drive_torques"] # "set_brake_torques", "set_drive_torques"
+    OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_rotation_speeds"] # "camera", "imu", "location", "rotation", "wheel_rotation_speeds"
+    IS_READY_VELOCITY_THRESHOLD: 0.001
+    SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_LOCATION_X: 80.0
+    SPAWN_LOCATION_Y: 475.0
+    SPAWN_LOCATION_Z: 20.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 70.0
+    SPAWN_ROTATION_ROLL: 0.0
+    CAMERA:
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
+      IMAGE_HEIGHT: 512
+      IMAGE_WIDTH: 512
+      FOV: 90.0
 
   VISUALIZER:
-    ACTOR_NAME: "DebugCameraActor"
+    ACTOR_NAME: "vehicle_actor"
     SPAWN_CAMERA: False

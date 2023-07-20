@@ -3,16 +3,33 @@
 #
 
 IMITATION_LEARNING_OPENBOT:
-  ACCEPTANCE_RADIUS: 0.15           # Radius in [m], of the region around the desination coordinates where the goal will be considered as "reached" by the agent
-  CONTROL_SATURATION: 0.9           # Saturates the ammount of linar (resp. angular) command before merging them into left/right wheels command
-  PID:
-    PROPORTIONAL_GAIN_HEADING: 4.25 # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_HEADING: 1.0    # PID derivative gain for the autopilot
-    PROPORTIONAL_GAIN_DIST: 4.0     # PID proportional gain for the autopilot
-    DERIVATIVE_GAIN_DIST: 0.1       # PID derivative gain for the autopilot
-    FORWARD_MIN_ANGLE: 0.5          # Angular range within which the vehicle moves forward to the target in [rad]
-  PILOT_NET:
-    PATH: ""
+  GOAL_REACHED_RADIUS: 0.15           # radius in [m] of the region within which the goal is considered reached
+  WAYPOINT_REACHED_RADIUS: 0.15       # same as GOAL_REACHED_RADIUS, but for each waypoint
+  MAX_ACTION: 1.0                     # max action magnitude
+  LOCATION_XY_HALF_LIFE: 0.05         # this amount of rotation error (in degrees) reduces the influence of forward control by half, to prioritize rotation errors 
+  LOCATION_XY_PROPORTIONAL_GAIN: 4.25 # proportional gain for the autopilot
+  LOCATION_XY_DERIVATIVE_GAIN: 1.0    # derivative gain for the autopilot
+  ROTATION_YAW_PROPORTIONAL_GAIN: 4.0 # proportional gain for the autopilot
+  ROTATION_YAW_DERIVATIVE_GAIN: 0.1   # derivative gain for the autopilot
+  PILOT_NET_POLICY_PATH: ""
+
+
+OPENBOT_ENV:
+    # Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
+    # Gear ratio: 50
+    # Max wheel torque: 5.88399 N.m
+    # https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html
+    
+    MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
+    GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
+
+    BATTERY_VOLTAGE: 12.0          # Voltage of the battery powering the OpenBot [V]
+    CONTROL_DEAD_ZONE: 2.5         # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
+    MOTOR_TORQUE_MAX: 0.0019       # Motor maximal torque [N.m]
+    ELECTRICAL_RESISTANCE: 0.5     # Motor winding electrical resistance [Ohms]
+
+    ACTION_SCALE: 255              # Action scaling factor
+
 
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
@@ -23,55 +40,51 @@ SPEAR:
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
-  WINDOW_RESOLUTION_X: 160
-  WINDOW_RESOLUTION_Y: 120
+  WINDOW_RESOLUTION_X: 512
+  WINDOW_RESOLUTION_Y: 512
+
 
 SIMULATION_CONTROLLER:
-  AGENT: "OpenBotAgent"
+  AGENT: "VehicleAgent"
   TASK: "ImitationLearningTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  SIMULATION_STEP_TIME_SECONDS: 0.033
-  MAX_SUBSTEP_DELTA_TIME: 0.001
-  MAX_SUBSTEPS: 100
-  CONTACT_OFFSET_MULTIPLIER: 0.01
-  MIN_CONTACT_OFFSET: 0.0001
-  MAX_CONTACT_OFFSET: 1.0
-
-  OPENBOT_AGENT:
-    OPENBOT_ACTOR_NAME: "OpenBotActor"
-    TRAJECTORY_DATA:
-      GOAL_ACTOR_NAME: "GoalActor"
-    ACTION_COMPONENTS: ["apply_voltage"] # "apply_voltage", "set_position_xyz_centimeters", "set_orientation_pyr_radians"
-    STEP_INFO_COMPONENTS: ["trajectory_data"] # "trajectory_data"
-    OBSERVATION_COMPONENTS: ["state_data", "control_data", "camera", "encoder", "imu", "sonar"]
-   
+  VEHICLE_AGENT:
+    VEHICLE_ACTOR_NAME: "vehicle_actor"
+    ACTION_COMPONENTS: ["set_drive_torques"] # "set_brake_torques", "set_drive_torques"
+    OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_rotation_speeds"] # "camera", "imu", "location", "rotation", "wheel_rotation_speeds"
+    IS_READY_VELOCITY_THRESHOLD: 0.001
+    SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
+    SPAWN_ACTOR_NAME: ""
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 10.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
     CAMERA:
+      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
       IMAGE_HEIGHT: 120
       IMAGE_WIDTH: 160
       FOV: 70.0
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", "segmentation"
 
   IMITATION_LEARNING_TASK:
-    AGENT_ACTOR_NAME: "OpenBotActor"
-    GOAL_ACTOR_NAME: "GoalActor"
-    OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor", "obj0"]
-    GET_POSITIONS_FROM_TRAJECTORY_SAMPLING: True
-    POSITIONS_FILE: ""
-    TRAJECTORY_SAMPLING_SEARCH_RADIUS: 10000.0 # Region around a sampled initial position to look for a reachable goal position
-    TRAJECTORY_SAMPLING_MAX_ITERS: 100
-    TRAJECTORY_SAMPLING_DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
-    NAVMESH:
-      AGENT_RADIUS: 20.0
-      AGENT_HEIGHT: 20.0
-      AGENT_MAX_STEP_HEIGHT: 1.0
+    AGENT_ACTOR_NAME: "vehicle_actor"
+    GOAL_ACTOR_NAME: "goal_actor"
+    # OBSTACLE_IGNORE_ACTOR_NAMES: ["Floor_2", "Floor_3", "Floor_4", "Floor_5", "Floor_6", "Floor_7", "Floor_8", "Floor_9", "Floor_10"] # for debug_0000 scene
+    OBSTACLE_IGNORE_ACTOR_NAMES: ["floor_00", "floor_01", "floor_02", "floor_03", "floor_04", "floor_05", "floor_06", "floor_slab_00"]  # for kujiale_0000 scene
+    EPISODES_FILE: ""
+    AGENT_SPAWN_OFFSET_LOCATION_X: 0.0
+    AGENT_SPAWN_OFFSET_LOCATION_Y: 0.0
+    AGENT_SPAWN_OFFSET_LOCATION_Z: 1.3
 
   VISUALIZER:
-    ACTOR_NAME: "OpenBotActor"
+    ACTOR_NAME: "vehicle_actor"
     SPAWN_CAMERA: False
-  
-  IMU_SENSOR:
-    DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
 
-  SONAR_SENSOR:
-    DEBUG_RENDER: False # Displays markers when set to True (only applies in Development builds)
+  NAVMESH:
+    AGENT_RADIUS: 20.0
+    AGENT_HEIGHT: 20.0
+    AGENT_MAX_SLOPE: 0.1
+    MIN_REGION_AREA: 400.0
+    MERGE_REGION_SIZE: 0.0
