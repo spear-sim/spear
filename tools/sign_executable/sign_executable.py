@@ -56,13 +56,13 @@ if __name__ == "__main__":
 
         add_rpath_dirs = [
             os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac"),
-            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac")
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac"),
             os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac"),
             os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac"),
         ]
 
         add_rpath_dylibs = [
-            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbb.dylib")
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbb.dylib"),
             os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbbmalloc.dylib"),
             os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib"),
             os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib"),
@@ -79,11 +79,11 @@ if __name__ == "__main__":
 
         # files that need to be code-signed
         sign_files = [
+            os.path.realpath(os.path.join(executable, "Contents", "MacOS", os.path.splitext(executable_name)[0])),
             os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbb.dylib")),
             os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbbmalloc.dylib")),
             os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "MacOS", os.path.splitext(executable_name)[0]))
+            os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib"))
         ]
 
         assert os.path.exists(args.entitlements_file)
