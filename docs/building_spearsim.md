@@ -12,7 +12,7 @@ If you're developing on Linux, you will need to download the Unreal Engine from 
 
 ## Install the appropriate compiler for your platform
 
-For each platform, you will need to install a specific compiler version that matches Unreal Engine 5.2.
+For each platform, you will need to install a specific compiler that is compatible with Unreal Engine 5.2. We have verified that the following compilers behave as expected.
 
 ```
 Windows: Visual Studio 2022
@@ -20,7 +20,7 @@ macOS:   XCode 14.3
 Linux:   clang and libc++
 ```
 
-If you're developing on Linux, you can install clang and libc++ as follows.
+If you're developing on Linux, you can install `clang` and `libc++` as follows.
 
 ```console
 sudo apt install libc++-dev libc++abi-dev clang
@@ -48,9 +48,9 @@ cd tools
 python create_symlinks.py
 ```
 
-## Copy Unreal Engine starter content
+## Copy starter content
 
-Our `SpearSim` project requires you to explicitly copy some starter content from your Unreal Engine installation to the project folder.
+Our `SpearSim` project requires you to explicitly copy some starter content from your Unreal Engine installation to the project directory.
 
 ```console
 cd tools
@@ -74,7 +74,7 @@ We build the `SpearSim` executable as follows.
 path/to/UE_5.2/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -iterativecooking -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
 ```
 
-Depending on your platform, you will need to specify `-targetPlatform` as `Win64`, `Mac`, or `Linux`. You will obtain an executable at one of the following locations.
+Depending on your platform, you will need to specify `-targetPlatform` as `Win64`, `Mac`, or `Linux`. If you're developing on Windows, you will need to execute this command in an terminal with access to the Visual Studio command-line tools. You will obtain an executable at one of the following locations.
 
 ```
 Windows: cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
