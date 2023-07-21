@@ -38,11 +38,11 @@ pip install -e python
 
 ### Navigate around a specific scene
 
-At this point, you can use our `run_executable.py` command-line tool to select which scene you want to navigate.
+At this point, you can use our `run_executable.py` command-line tool to select which scene you want to navigate around. If you wanted to explore our `kujiale_0000` scene, you would use the following command.
 
 ```console
 # interactively navigate through a specific scene
-python tools/run_executable.py --executable <path/to/executable> --scene_id <scene_id>
+python tools/run_executable.py --executable path/to/executable --scene_id kujiale_0000
 ```
 
 Depending on your platform, you will need to specify the following path to your `--executable`.
