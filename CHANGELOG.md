@@ -10,7 +10,7 @@ This release includes the following new user-facing features and improvements.
 
 ![Screenshot_48](https://github.com/isl-org/spear/assets/2341965/8c6413b4-b72d-4f8e-9efc-fa264b7ec825)
 
-- Under the hood, upgrading to Unreal Engine 5 enables SPEAR to advantage of Unreal's latest rendering features, including a state-of-the-art fully dynamic global illumination lighting system known as Lumen, and a state-of-the-art virtual geometry streaming system known as Nanite. Lumen enables all lights and objects to be moved fully dynamically with no precomputation required, and Nanite enables very high-resolution geometry to be imported and rendered such that the overall rendering cost scales with pixels rather than triangles. We expect these features to be especially useful as we scale the number of scenes that are available in SPEAR in the coming months.
+- Under the hood, upgrading to Unreal Engine 5 enables SPEAR to take advantage of Unreal's latest rendering features, including a state-of-the-art fully dynamic global illumination lighting system known as Lumen, and a state-of-the-art virtual geometry streaming system known as Nanite. Lumen enables all lights and objects to be moved fully dynamically with minimal precomputation required, and Nanite enables very high-resolution geometry to be imported and rendered such that the overall rendering cost scales with pixels rather than triangles. We expect these features to be especially useful as we scale the number of scenes that are available in SPEAR in the coming months.
 
 - We have improved the visual appearance of our OpenBot model.
 
