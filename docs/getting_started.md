@@ -42,7 +42,7 @@ At this point, you can use our `run_executable.py` command-line tool to select w
 
 ```console
 # interactively navigate through a specific scene
-python tools/run_executable.py --executable path/to/executable --scene_id <scene_id>
+python tools/run_executable.py --executable <path/to/executable> --scene_id <scene_id>
 ```
 
 Depending on your platform, you will need to specify the following path to your `--executable`.
