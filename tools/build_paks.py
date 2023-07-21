@@ -5,6 +5,7 @@
 import argparse
 import fnmatch
 import glob
+import ntpath
 import os
 import posixpath
 import spear
@@ -154,8 +155,8 @@ if __name__ == '__main__':
             for pak_dir in pak_dirs:
                 for content_file in glob.glob(os.path.realpath(os.path.join(pak_dir, "**", "*.*")), recursive=True):
                     assert content_file.startswith(unreal_project_cooked_dir)
-                    content_file = content_file.replace('\\', "/")
-                    mount_file = posixpath.join("..", "..", ".." + content_file.split(platform)[1])
+                    content_file = content_file.replace(ntpath.sep, posixpath.sep)
+                    mount_file = posixpath.join("..", "..", "..", content_file.replace(unreal_project_cooked_dir + posixpath.sep, ""))
                     f.write(f'"{content_file}" "{mount_file}" "" \n')
 
         # construct command to generate the final pak file
