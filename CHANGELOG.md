@@ -14,7 +14,7 @@ This release includes the following new user-facing features and improvements.
 
 - We have improved the visual appearance of our OpenBot model.
 
-![Screenshot_53](https://github.com/isl-org/spear/assets/2341965/0b339a91-ca0b-4b1b-ae6b-2c6d2a57ff79)
+![Screenshot_58](https://github.com/isl-org/spear/assets/2341965/a1fbf106-ae32-49d7-a5b1-cc98a58d59bc)
 
 - We have made several usability and readability improvements to our code, especially to our examples.
 
