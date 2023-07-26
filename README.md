@@ -1,4 +1,4 @@
-![SPEAR](https://user-images.githubusercontent.com/2341965/229026429-38d957b4-9259-448d-8fb6-c1fe5b24aaab.jpg)
+![teaser](https://github.com/isl-org/spear/assets/2341965/1d59e386-64fd-436e-923d-d89b9beb2f8e)
 
 # SPEAR: A Simulator for Photorealistic Embodied AI Research
 
@@ -25,27 +25,23 @@ If you find SPEAR useful in your research, please cite this repository as follow
 
 ### Minimum and recommended system specifications
 
-Minimum and recommended system specifications for the Unreal Engine are given [here](http://docs.unrealengine.com/4.26/en-US/Basics/RecommendedSpecifications).
+Minimum and recommended system specifications for the Unreal Engine are given [here](https://docs.unrealengine.com/5.2/en-US/hardware-and-software-specifications-for-unreal-engine). Note that some of the Unreal Engine's latest rendering features are [not available](https://www.unrealengine.com/en-US/tech-blog/unreal-engine-5-2-brings-native-support-for-apple-silicon-and-other-developments-for-macos) on macOS.
 
 ### Precompiled binaries
 
-See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.2.0) for download links.
-
-The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
+See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.3.0) for download links. The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
 
 ### Working with multiple scenes
 
 See our [Getting Started](docs/getting_started.md) tutorial.
 
-### Programmatically interacting with SPEAR via Python 
+### Programmatically interacting with multiple scenes via Python
 
 See our [Getting Started](docs/getting_started.md) tutorial.
 
 ### Building from source
 
-See our [Building SpearSim](docs/building_spearsim.md) tutorial.
-
-Note that building from source is optional because we provide links to precompiled binaries.
+See our [Building SpearSim](docs/building_spearsim.md) tutorial. Note that building from source is optional because we provide links to precompiled binaries.
 
 ### Contributing
 
@@ -53,10 +49,8 @@ See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
 
 ## Licenses
 
-- The SPEAR code in this repository ([MIT License](LICENSE.txt))
-- All of our external code dependencies (see [here](ACKNOWLEDGMENTS.txt))
-- The OpenBot and Fetch assets included in this repository ([CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0))
-- The external assets referenced in `starter_content_0000` ([Unreal Engine End-User License Agreement](https://www.unrealengine.com/en-US/eula/unreal))
-- The `starter_content_0000` scene included in this repository ([CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0))
-- The `warehouse_0000` scene ([CC0 Creative Commons License](http://creativecommons.org/publicdomain/zero/1.0))
-- The `kujiale_0000` scene (see [here](LICENSE_KUJIALE.txt))
+- The code in this repository is licensed under an [MIT License](LICENSE.txt)
+- The licenses for all of our third-party code dependencies are given [here](ACKNOWLEDGMENTS.txt)
+- The `apartment_0000`, `debug_0000`, `warehouse_0000` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
+- The license for the `kujiale_0000` scene is given [here](LICENSE_KUJIALE.txt)
+- The external assets in `debug_0000` are licensed under the [Unreal Engine End-User License Agreement](https://www.unrealengine.com/en-US/eula/unreal)

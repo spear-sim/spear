@@ -58,7 +58,7 @@ SPEAR:
   # by Unreal. This parameter can be useful to force Unreal to use an NVIDIA GPU. Only has an
   # effect on Linux. See the following link for details:
   #     https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/blob/master/loader/LoaderAndLayerInterface.md
-  VULKAN_DEVICE_FILES: ""
+  VK_ICD_FILENAMES: ""
   
   # Maximum time to wait when initializing the RPC client
   RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS: 120.0

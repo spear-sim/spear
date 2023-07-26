@@ -40,6 +40,11 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
 
     GetMesh()->SetSkeletalMesh(skeletal_mesh.Object);
     GetMesh()->SetAnimClass(anim_instance.Class);
+
+    // The AWheeledVehiclePawn constructor sets this parameter to false, but we want it set to true.
+    // We choose to exactly undo the behavior of the AWheeledVehiclePawn constructor and set this bool
+    // directly, rather than calling GetMesh()->SetSimulatePhysics(true), to avoid any other possible
+    // side effects.
     GetMesh()->BodyInstance.bSimulatePhysics = true;
 
     // Setup camera

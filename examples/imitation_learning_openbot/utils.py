@@ -7,82 +7,34 @@ import ffmpeg
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import spear
 
 
-def show_obs(obs, obs_components, render_passes):
-        
-    for obs_component in obs_components:
-        if obs_component == "state_data":
-            spear.log(f"state_data: xyz [{obs['state_data'][0]:.2f}, {obs['state_data'][1]:.2f}, {obs['state_data'][2]:.2f}]")
-            spear.log(f"state_data: pitch yaw roll [{obs['state_data'][3]:.2f}, {obs['state_data'][4]:.2f},{obs['state_data'][5]:.2f}]")
-        elif obs_component == "control_data":
-            spear.log(f"control_data: left right [{obs['control_data'][0]:.2f}, {obs['control_data'][1]:.2f}]")
-        elif obs_component == "encoder":
-            spear.log(f"encoder: fl fr rl rr [{obs['encoder'][0]:.2f}, {obs['encoder'][1]:.2f}, {obs['encoder'][2]:.2f}, {obs['encoder'][3]:.2f}]")
+def show_obs(obs):
+
+    for obs_component in obs.keys():
+        if obs_component == "location":
+            spear.log(f"location_data: xyz [{obs['location'][0]:.2f}, {obs['location'][1]:.2f}, {obs['location'][2]:.2f}]")
+        elif obs_component == "rotation":
+            spear.log(f"rotation_data: xyz [{obs['rotation'][0]:.2f}, {obs['rotation'][1]:.2f}, {obs['rotation'][2]:.2f}]")
+        elif obs_component == "wheel_rotation_speeds":
+            spear.log(f"wheel_rotation_speeds: fl fr rl rr [{obs['wheel_rotation_speeds'][0]:.2f}, {obs['wheel_rotation_speeds'][1]:.2f}, {obs['wheel_rotation_speeds'][2]:.2f}, {obs['wheel_rotation_speeds'][3]:.2f}]")
         elif obs_component == "imu":
             spear.log(f"imu: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]")
             spear.log(f"imu: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
-        elif obs_component == "sonar":
-            spear.log(f"sonar: {obs['sonar'][0]:.2f}")
-        elif obs_component == "camera":
-            for render_pass in render_passes:
-                if render_pass in ["final_color", "normals", "segmentation"]:                    
-                    cv2.imshow(render_pass, obs["camera." + render_pass]) # note that spear.Env returns BGRA by default
-                elif render_pass == "depth":
-                    depth = obs["camera.depth"]
-                    depth_min = np.min(depth)
-                    depth_max = np.max(depth)
-                    depth_normalized = (depth-depth_min) / (depth_max-depth_min)
-                    cv2.imshow(render_pass, depth_normalized)
-                else:
-                    spear.log(f"Error: {render_pass} is an unknown camera render pass.")
-                    assert False
+        elif obs_component in ["camera.final_color", "camera.normal", "camera.segmentation"]:
+            cv2.imshow(render_pass, obs[obs_component]) # note that spear.Env returns BGRA by default
+        elif obs_component in ["camera.depth"]:
+            depth = obs[obs_component]
+            depth_min = np.min(depth)
+            depth_max = np.max(depth)
+            depth_normalized = (depth-depth_min) / (depth_max-depth_min)
+            cv2.imshow(render_pass, depth_normalized)
         else:
-            spear.log(f"Error: {obs_component} is an unknown observation component.")
             assert False
 
-    cv2.waitKey(0)
-
-
-# computes the 2D target position relative to the agent in world frame 
-# as well as the relative yaw angle between the agent forward axis and the agent-target vector
-def get_relative_target_pose(position_xy_desired, position_xy_current, yaw_xy_current):
-
-    # target error vector (global coordinate system)
-    relative_agent_target_xy = position_xy_desired - position_xy_current
-
-    # compute agent forward axis (global coordinate system)
-    rot = np.array([[np.cos(yaw_xy_current), -np.sin(yaw_xy_current)], [np.sin(yaw_xy_current), np.cos(yaw_xy_current)]], dtype=np.float32)
-    forward = np.array([1,0]) # front axis is the x axis.
-    forward_rotated = np.dot(rot, forward)
-
-    # compute relative yaw angle between the agent forward axis and the agent-target vector
-    relative_agent_target_yaw = np.arctan2(forward_rotated[1], forward_rotated[0]) - np.arctan2(relative_agent_target_xy[1], relative_agent_target_xy[0])
-
-    # fit to range [-pi, pi]
-    if relative_agent_target_yaw > np.pi:
-        relative_agent_target_yaw -= 2 * np.pi
-    elif relative_agent_target_yaw <= -np.pi:
-        relative_agent_target_yaw += 2 * np.pi
-
-    return relative_agent_target_xy, relative_agent_target_yaw
-
-
-# compute the compass observation following conventions of the actual OpenBot code:
-# https://github.com/isl-org/OpenBot/blob/7868c54742f8ba3df0ba2a886247a753df982772/android/app/src/main/java/org/openbot/pointGoalNavigation/PointGoalNavigationFragment.java#L103
-def get_compass_observation(position_xy_desired, position_xy_current, yaw_current):
-
-    # get the 2D reative pose between the agent and its target
-    relative_agent_target_xy, relative_agent_target_yaw = get_relative_target_pose(position_xy_desired, position_xy_current, yaw_current)
-
-    # compute Euclidean distance to target in [m]
-    dist = np.linalg.norm(relative_agent_target_xy) * 0.01 
-
-    # projection 
-    sin_yaw = np.sin(relative_agent_target_yaw)
-    cos_yaw = np.cos(relative_agent_target_yaw)
-
-    return np.array([dist, sin_yaw, cos_yaw], dtype=np.float32)
+    if "camera.depth" in obs.keys() or "camera.final_color" in obs.keys() or "camera.normal" in obs.keys() or "camera.segmentation" in obs.keys():
+        cv2.waitKey(0)
 
 
 def generate_video(image_dir, video_path, rate, compress=False):
@@ -102,14 +54,14 @@ def generate_video(image_dir, video_path, rate, compress=False):
     process.wait()
 
 
-def plot_tracking_performance_spatial(poses_current, poses_desired, plot_path):
+def plot_tracking_performance_spatial(actual_locations, desired_locations, plot_path):
 
-    fig, (ax) = plt.subplots(1, 1)
+    fig, ax = plt.subplots(1, 1)
 
-    ax.plot(poses_current[0,0], poses_current[0,1], marker="^", markersize=12.0, label="Start", color="tab:blue")
-    ax.plot(poses_desired[-1,0], poses_desired[-1,1], marker="^", markersize=12.0, label="Goal", color="tab:orange")
-    ax.plot(poses_desired[:,0], poses_desired[:,1], marker="o", markersize=8.0, label="Desired trajectory", color="tab:green")
-    ax.plot(poses_current[:,0], poses_current[:,1], marker="x", markersize=3.0, label="Actual trajectory", color="tab:purple")
+    ax.plot(actual_locations[0,0], actual_locations[0,1], marker="^", markersize=12.0, label="Start", color="tab:blue")
+    ax.plot(desired_locations[-1,0], desired_locations[-1,1], marker="^", markersize=12.0, label="Goal", color="tab:orange")
+    ax.plot(desired_locations[:,0], desired_locations[:,1], marker="o", markersize=8.0, label="Desired trajectory", color="tab:green")
+    ax.plot(actual_locations[:,0], actual_locations[:,1], marker="x", markersize=3.0, label="Actual trajectory", color="tab:purple")
 
     x_0,x_1 = ax.get_xlim()
     y_0,y_1 = ax.get_ylim()
@@ -133,33 +85,58 @@ def plot_tracking_performance_spatial(poses_current, poses_desired, plot_path):
     fig.tight_layout()
 
     plt.savefig(plot_path, bbox_extra_artists=[legend], bbox_inches="tight")
+    plt.close()
 
 
-def plot_tracking_performance_temporal(poses_current, poses_desired, plot_path):
+def plot_tracking_performance_temporal(actual_locations, desired_locations, actual_yaw, desired_yaw, plot_path):
 
     fig, (ax0,ax1,ax2) = plt.subplots(3, 1)
 
-    ax0.plot(poses_desired[:,0], label="Desired x", color="tab:blue")
-    ax0.plot(poses_current[:,0], label="Actual x", color="tab:orange")
+    ax0.plot(desired_locations[:,0], label="Desired x", color="tab:blue")
+    ax0.plot(actual_locations[:,0], label="Actual x", color="tab:orange")
     ax0.legend(loc="upper left")
     ax0.set_xlabel("iterations")
     ax0.set_ylabel("x[cm]")
     ax0.grid()
     
-    ax1.plot(poses_desired[:,1], label="Desired y", color="tab:blue")
-    ax1.plot(poses_current[:,1], label="Actual y", color="tab:orange")
+    ax1.plot(desired_locations[:,1], label="Desired y", color="tab:blue")
+    ax1.plot(actual_locations[:,1], label="Actual y", color="tab:orange")
     ax1.legend(loc="upper left")
     ax1.set_xlabel("iterations")
     ax1.set_ylabel("y[cm]")
     ax1.grid()
     
-    ax2.plot(np.arctan2(poses_desired[:,1] - poses_current[:,1], poses_desired[:,0] - poses_current[:,0]), label="Desired yaw", color="tab:blue")
-    ax2.plot(poses_current[:,4], label='Actual yaw', color="tab:orange")
+    ax2.plot(desired_yaw, label="Desired yaw", color="tab:blue")
+    ax2.plot(actual_yaw, label="Actual yaw", color="tab:orange")
     ax2.legend(loc="upper left")
     ax2.set_xlabel("iterations")
-    ax2.set_ylabel('yaw[rad]')
+    ax2.set_ylabel("yaw[deg]")
     ax2.grid()
     
     fig.tight_layout()
 
     plt.savefig(plot_path, bbox_inches="tight")
+    plt.close()
+
+
+def plot_paths(scene_id, paths, plot_path):
+
+    fig, ax = plt.subplots(1, 1)
+
+    for path in paths:
+        ax.plot(path[0,0], path[0,1], "^", markersize=12.0, label="Initial", color="tab:blue", alpha=0.3)
+        ax.plot(path[-1,0], path[-1,1], "^", markersize=12.0, label="Goal", color="tab:orange", alpha=0.3)
+        ax.plot(path[:,0], path[:,1], "-o", markersize=8.0, label="Desired path", color="tab:green", alpha=0.3)
+
+    handles, labels = fig.gca().get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    legend = ax.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(0.5, -0.2), loc="center", ncol=3)
+    fig.gca().set_aspect("equal")
+    fig.gca().invert_yaxis() # we invert the y-axis so our plot matches a top-down view of the scene in Unreal
+    ax.set_xlabel("x[cm]")
+    ax.set_ylabel("y[cm]")
+    ax.grid()
+    ax.set_title(f"scene_id: {scene_id}")
+    
+    plt.savefig(plot_path, bbox_extra_artists=[legend], bbox_inches="tight")
+    plt.close()

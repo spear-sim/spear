@@ -167,13 +167,13 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         observation_space["rotation"] = std::move(array_desc); // rotation (Pitch, Yaw, Roll) in [degs] of the agent relative to the world frame.
     }
 
-    if (Std::contains(observation_components, "wheel_encoder")) {
+    if (Std::contains(observation_components, "wheel_rotation_speeds")) {
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {4};
-        observation_space["wheel_encoder"] = std::move(array_desc); // FL, FR, RL, RR, in [rad/s]
+        observation_space["wheel_rotation_speeds"] = std::move(array_desc); // FL, FR, RL, RR, in [rad/s]
     }
 
     observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
@@ -247,10 +247,10 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
         observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.Pitch, rotation.Yaw, rotation.Roll});
     }
 
-    if (Std::contains(observation_components, "wheel_encoder")) {
+    if (Std::contains(observation_components, "wheel_rotation_speeds")) {
         UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
         SP_ASSERT(vehicle_movement_component);
-        observation["wheel_encoder"] = Std::reinterpretAs<uint8_t>(vehicle_movement_component->getWheelRotationSpeeds());
+        observation["wheel_rotation_speeds"] = Std::reinterpretAs<uint8_t>(vehicle_movement_component->getWheelRotationSpeeds());
     }
 
     observation.merge(camera_sensor_->getObservation(observation_components));

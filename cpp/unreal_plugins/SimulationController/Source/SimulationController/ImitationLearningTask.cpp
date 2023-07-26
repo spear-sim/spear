@@ -9,20 +9,13 @@
 #include <string>
 #include <vector>
 
-#include <AI/Navigation/NavigationTypes.h>
-#include <AI/NavigationSystemBase.h>
 #include <Components/SceneComponent.h>
 #include <Delegates/IDelegateInstance.h>
-#include <DrawDebugHelpers.h>
 #include <Engine/EngineTypes.h>
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <NavigationData.h>
-#include <NavigationSystem.h>
-#include <NavigationSystemTypes.h>
-#include <NavMesh/RecastNavMesh.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -52,16 +45,57 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_component_->RegisterComponent();
     actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
-    // If the start/goal positions are not randomly generated, get them from a file
-    if (!Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING")) {
-        getPositionsFromFile();
+    // Get initial and goal locations of all episodes in the following format:
+    //    scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
+    agent_initial_locations_.clear();
+    agent_goal_locations_.clear();
+    episode_index_ = -1;
+
+    // Create an input filestream
+    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE"));
+    SP_ASSERT(fs.is_open());
+
+    // Read file data, line-by-line in the format:
+    // scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
+    std::string line;
+    std::getline(fs, line); // read header
+    std::vector<std::string> tokens = Std::tokenize(line, ",");
+    SP_ASSERT(tokens.size() == 7);
+    SP_ASSERT(tokens.at(0) == "scene_id");
+    SP_ASSERT(tokens.at(1) == "initial_location_x");
+    SP_ASSERT(tokens.at(2) == "initial_location_y");
+    SP_ASSERT(tokens.at(3) == "initial_location_z");
+    SP_ASSERT(tokens.at(4) == "goal_location_x");
+    SP_ASSERT(tokens.at(5) == "goal_location_y");
+    SP_ASSERT(tokens.at(6) == "goal_location_z");
+    
+    while (std::getline(fs, line)) {
+        tokens = Std::tokenize(line, ",");
+        SP_ASSERT(tokens.size() == 7);
+        std::string scene_id = tokens.at(0);
+        FVector initial_location = {std::stod(tokens.at(1)), std::stod(tokens.at(2)), std::stod(tokens.at(3))};
+        FVector goal_location = {std::stod(tokens.at(4)), std::stod(tokens.at(5)), std::stod(tokens.at(6))};
+
+        // If scene_id matches the currently opened map, then add to our list of episodes.
+        // TODO (MR): Maybe scene_id should be passed in, because currently this lower-level code is
+        // reading a config parameter that belongs to a higher-level system, which we usually avoid.
+        // I think this is ok for now though, because we intend to migrate this code to Python soon.
+        if (scene_id == Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID")) {
+            agent_initial_locations_.push_back(initial_location);
+            agent_goal_locations_.push_back(goal_location);
+        }
     }
+    fs.close();
+
+    episode_index_ = 0;
 }
 
 ImitationLearningTask::~ImitationLearningTask()
 {
-    clearPositions();
-    
+    agent_initial_locations_.clear();
+    agent_goal_locations_.clear();
+    episode_index_ = -1;
+
     SP_ASSERT(actor_hit_event_component_);
     actor_hit_event_component_->delegate_.Remove(actor_hit_event_handle_);
     actor_hit_event_handle_.Reset();
@@ -86,32 +120,11 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     obstacle_ignore_actors_ = Unreal::findActorsByName(
         world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
-    // Subscribe to the agent actor now that we have obtained a reference to it
     actor_hit_event_component_->subscribeToActor(agent_actor_);
-
-    nav_sys_ = FNavigationSystem::GetCurrent<UNavigationSystemV1>(world);
-    SP_ASSERT(nav_sys_);
-
-    FNavAgentProperties agent_properties;
-    agent_properties.AgentHeight     = Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.NAVMESH.AGENT_HEIGHT");
-    agent_properties.AgentRadius     = Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.NAVMESH.AGENT_RADIUS");
-    agent_properties.AgentStepHeight = Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.NAVMESH.AGENT_MAX_STEP_HEIGHT");
-
-    ANavigationData* nav_data = nav_sys_->GetNavDataForProps(agent_properties);
-    SP_ASSERT(nav_data);
-
-    nav_mesh_ = dynamic_cast<ARecastNavMesh*>(nav_data);
-    SP_ASSERT(nav_mesh_);
 }
 
 void ImitationLearningTask::cleanUpObjectReferences()
 {
-    SP_ASSERT(nav_mesh_);
-    nav_mesh_ = nullptr;
-
-    SP_ASSERT(nav_sys_);
-    nav_sys_ = nullptr;
-
     SP_ASSERT(actor_hit_event_component_);
     actor_hit_event_component_->unsubscribeFromActor(agent_actor_);
 
@@ -171,26 +184,24 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
-    // If we are generating positions via trajectory sampling, then update agent_initial_positions_
-    // and agent_goal_positions_ to store the results from one round of trajectory sampling, and
-    // reset position_index_ to 0.
-    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.GET_POSITIONS_FROM_TRAJECTORY_SAMPLING")) {
-        getPositionsFromTrajectorySampling();
-    }
+    FVector offset_location = {
+        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_X"),
+        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Y"),
+        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Z")
+    };
+    FVector agent_initial_location = agent_initial_locations_.at(episode_index_) + offset_location;
 
-    // Set agent and goal positions
     bool sweep = false;
     FHitResult* hit_result = nullptr;
     agent_actor_->SetActorLocationAndRotation(
-        agent_initial_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+        agent_initial_location, FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
     goal_actor_->SetActorLocationAndRotation(
-        agent_goal_positions_.at(position_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
+        agent_goal_locations_.at(episode_index_), FRotator::ZeroRotator, sweep, hit_result, ETeleportType::TeleportPhysics);
 
-    // Increment position_index_
-    if (position_index_ < agent_goal_positions_.size() - 1) { 
-        position_index_++;
+    if (episode_index_ < agent_goal_locations_.size() - 1) { 
+        episode_index_++;
     }  else {
-        position_index_ = 0;
+        episode_index_ = 0;
     }
 }
 
@@ -208,141 +219,4 @@ void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* oth
     } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
         hit_obstacle_ = true;
     }
-}
-
-void ImitationLearningTask::getPositionsFromFile()
-{
-    agent_initial_positions_.clear();
-    agent_goal_positions_.clear();
-    position_index_ = -1;
-
-    // Create an input filestream 
-    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.POSITIONS_FILE")); 
-    SP_ASSERT(fs.is_open());
-
-    // Read file data, line-by-line in the format:
-    // scene_id, init_pos_x_cms, init_pos_y_cms, init_pos_z_cms, goal_pos_x_cms, goal_pos_y_cms, goal_pos_z_cms
-    std::string line;
-    std::getline(fs, line); // header
-    while (std::getline(fs, line)) {        
-        std::vector<std::string> tokens = Std::tokenize(line, ",");
-        SP_ASSERT(tokens.size() == 7);
-        std::string scene_id = tokens.at(0);
-        FVector init(std::stod(tokens.at(1)), std::stod(tokens.at(2)), std::stod(tokens.at(3)));
-        FVector goal(std::stod(tokens.at(4)), std::stod(tokens.at(5)), std::stod(tokens.at(6)));
-
-        // If the scene id matches the currently opened map, then add to our list of positions
-        if(scene_id == Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID")) {
-            agent_initial_positions_.push_back(init);
-            agent_goal_positions_.push_back(goal);
-        }
-    }
-
-    // Close file
-    fs.close();
-
-    position_index_ = 0;
-}
-
-void ImitationLearningTask::getPositionsFromTrajectorySampling()
-{
-    agent_initial_positions_.clear();
-    agent_goal_positions_.clear();
-    position_index_ = -1;
-
-    float best_path_score = 0.0f;
-    FNavLocation best_init_location;
-    FNavLocation best_goal_location;
-    TArray<FNavPathPoint> best_path_points;
-
-    // Trajectory sampling to get an interesting path
-    for (int i = 0; i < Config::get<int>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_MAX_ITERS"); i++) {
-
-        FNavLocation init_location;
-        FNavLocation goal_location;
-        
-        // Get a random initial point
-        init_location = nav_mesh_->GetRandomPoint();
-
-        // Get a random reachable goal point, to be reached by the agent from init_location.Location
-        bool found = nav_mesh_->GetRandomReachablePointInRadius(
-            init_location.Location, Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_SEARCH_RADIUS"), goal_location);
-        SP_ASSERT(found);
-
-        // Update navigation query with the new goal
-        FPathFindingQuery nav_query = FPathFindingQuery(agent_actor_, *nav_mesh_, init_location.Location, goal_location.Location);
-
-        // Generate a collision-free path between the initial position and the goal position
-        FPathFindingResult path = nav_sys_->FindPathSync(nav_query, EPathFindingMode::Type::Regular);
-
-        // If path finding is sucessful, make sure that it is not too simple
-        if (path.IsSuccessful() && path.Path.IsValid()) {
-
-            // Debug output
-            if (path.IsPartial()) {
-                SP_LOG("Only a partial path could be found...");
-            }
-
-            // Compute a path score to evaluate its complexity
-            int num_waypoints = path.Path->GetPathPoints().Num();
-            FVector2D relative_position_to_goal((goal_location.Location - init_location.Location).X, (goal_location.Location - init_location.Location).Y);
-            float path_score = relative_position_to_goal.Size() * num_waypoints;
-
-            // If the path_score is the best we've seen so far, update best_init_location and best_goal_location
-            if (best_path_score <= path_score) {
-                best_path_score = path_score;
-                best_init_location = init_location;
-                best_goal_location = goal_location;
-                best_path_points = path.Path->GetPathPoints();
-
-                // Debug output
-                if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")) {
-                    float trajectory_length = 0.0f;
-                    for (int j = 0; j < num_waypoints - 1; j++) {
-                        trajectory_length += FVector::Dist(best_path_points[j].Location, best_path_points[j + 1].Location);
-                    }
-
-                    float world_to_meters = agent_actor_->GetWorld()->GetWorldSettings()->WorldToMeters;
-
-                    SP_LOG("Iteration:           ", i);
-                    SP_LOG("Score:               ", best_path_score);
-                    SP_LOG("Number of waypoints: ", num_waypoints);
-                    SP_LOG("Goal distance:       ", relative_position_to_goal.Size() / world_to_meters, "m");
-                    SP_LOG("Path length:         ", trajectory_length / world_to_meters, "m");
-                }
-            }
-        }
-    }
-
-    SP_ASSERT(best_path_points.Num() > 1);
-
-    // Update positions
-    agent_initial_positions_.push_back(best_init_location.Location);
-    agent_goal_positions_.push_back(best_goal_location.Location);
-    position_index_ = 0;
-
-    // Debug output
-    if (Config::get<bool>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.TRAJECTORY_SAMPLING_DEBUG_RENDER")) {
-        SP_LOG("Initial position: ", agent_initial_positions_.at(0).X, ", ", agent_initial_positions_.at(0).Y, ", ", agent_initial_positions_.at(0).Z);
-        SP_LOG("Goal position:    ", agent_goal_positions_.at(0).X,    ", ", agent_goal_positions_.at(0).Y,    ", ", agent_goal_positions_.at(0).Z);
-        SP_LOG("Waypoints:");
-        for (int i = 1; i < best_path_points.Num(); i++) {
-            SP_LOG("    ", best_path_points[i].Location.X, ", ", best_path_points[i].Location.Y, ", ", best_path_points[i].Location.Z);
-        }
-
-        for (int i = 0; i < best_path_points.Num(); i++) {
-            DrawDebugPoint(agent_actor_->GetWorld(), best_path_points[i].Location, 20.0f, FColor(25, 116, 210), false, 10.0f, 0);
-        }
-
-        for (int i = 0; i < best_path_points.Num() - 1; i++) {
-            DrawDebugLine(agent_actor_->GetWorld(), best_path_points[i].Location, best_path_points[i+1].Location, FColor(25, 116, 210), false, 10.0f, 0, 0.15f);
-        }
-    }
-}
-
-void ImitationLearningTask::clearPositions()
-{
-    agent_initial_positions_.clear();
-    agent_goal_positions_.clear();
-    position_index_ = -1;
 }

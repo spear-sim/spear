@@ -23,8 +23,8 @@ if __name__ == "__main__":
     parser.add_argument("--apple_username", required=True)
     parser.add_argument("--apple_password", required=True)
     parser.add_argument("--version_tag", required=True)
-    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp", "SpearSim-Mac-Shipping-Unsigned")))
-    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp", "SpearSim-Mac-Shipping")))
+    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "build", "SpearSim-Mac-Shipping-Unsigned")))
+    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "build", "SpearSim-Mac-Shipping")))
     parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
     parser.add_argument("--entitlements_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "entitlements.plist")))
     parser.add_argument("--wait_time_seconds", type=float, default=600.0)
@@ -40,23 +40,10 @@ if __name__ == "__main__":
     # create a copy of the executable in output_dir and use it throughout this file
     shutil.copytree(args.input_dir, args.output_dir)
 
-    executable = os.path.realpath(os.path.join(args.output_dir, "MacNoEditor", "SpearSim-Mac-Shipping.app"))
+    executable = os.path.realpath(os.path.join(args.output_dir, "Mac", "SpearSim-Mac-Shipping.app"))
     assert os.path.exists(executable)
 
     if not args.request_uuid:
-        radio_effect_unit_component = os.path.realpath(os.path.join(executable, "Contents", "Resources", "RadioEffectUnit.component"))
-        spear.log(f"Removing {radio_effect_unit_component}")
-        shutil.rmtree(radio_effect_unit_component, ignore_errors=True)
-        
-        radio_effect_unit = os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Build", "Mac", "RadioEffectUnit"))
-        spear.log(f"Removing {radio_effect_unit}")
-        shutil.rmtree(radio_effect_unit, ignore_errors=True)
-
-        pak_file_src  = os.path.realpath(os.path.join(executable, "Contents", "UE4", "SpearSim", "Content", "Paks", f"kujiale_0000-{args.version_tag}-Mac.pak"))
-        pak_file_dest = os.path.realpath(os.path.join(args.temp_dir, f"kujiale_0000-{args.version_tag}-Mac.pak"))
-        spear.log(f"Temporarily moving {pak_file_src} to {pak_file_dest}")
-        shutil.move(pak_file_src, pak_file_dest)
-
         spear.log("Changing rpaths...")
 
         # change current working directory to add relative rpaths
@@ -68,40 +55,21 @@ if __name__ == "__main__":
         executable_name = os.path.basename(executable)
 
         add_rpath_dirs = [
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac")
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac"),
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac"),
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac"),
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac"),
         ]
 
         add_rpath_dylibs = [
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPxFoundation.dylib")
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbb.dylib"),
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbbmalloc.dylib"),
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib"),
+            os.path.join(executable_name, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib"),
         ]
 
         for dir, dylib in zip(add_rpath_dirs, add_rpath_dylibs):
             cmd = ["install_name_tool", "-add_rpath", dir, dylib]
-            spear.log(f"Executing: {' '.join(cmd)}")
-            subprocess.run(cmd, check=True)
-
-        change_rpath_dylibs = [
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3.dylib"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3Common.dylib"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libAPEX_Clothing.dylib"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPxPvdSDK.dylib"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libNvCloth.dylib"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3Cooking.dylib"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libAPEX_Legacy.dylib"),
-            os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libApexFramework.dylib")
-        ]
-
-        for dylib in change_rpath_dylibs:
-            cmd = [
-                "install_name_tool",
-                "-rpath",
-                "/Volumes/Work/Perforce/UE4/Engine/Binaries/ThirdParty/PhysX3/Mac",
-                os.path.join(executable_name, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac"),
-                dylib]
             spear.log(f"Executing: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
 
@@ -111,17 +79,10 @@ if __name__ == "__main__":
 
         # files that need to be code-signed
         sign_files = [
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3Common.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPxFoundation.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libAPEX_Clothing.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPxPvdSDK.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libNvCloth.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libPhysX3Cooking.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libAPEX_Legacy.dylib")),
-            os.path.realpath(os.path.join(executable, "Contents", "UE4", "Engine", "Binaries", "ThirdParty", "PhysX3", "Mac", "libApexFramework.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbb.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbbmalloc.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib")),
+            os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib")),
             os.path.realpath(os.path.join(executable, "Contents", "MacOS", os.path.splitext(executable_name)[0]))
         ]
 
@@ -183,10 +144,6 @@ if __name__ == "__main__":
     cmd = ["xcrun", "stapler", "staple", executable]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
-
-    # move the pak file
-    spear.log(f"Moving {pak_file_dest} to {pak_file_src}")
-    shutil.move(pak_file_dest, pak_file_src)
     
     spear.log(f"{executable} has been successfully signed.")
     spear.log("Done.")
