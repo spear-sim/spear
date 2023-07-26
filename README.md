@@ -51,6 +51,6 @@ See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
 
 - The code in this repository is licensed under an [MIT License](LICENSE.txt)
 - The licenses for all of our third-party code dependencies are given [here](ACKNOWLEDGMENTS.txt)
-- The `apartment_0000`, `debug_0000`, `warehouse_0000` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
+- The `apartment_0000` and `debug_0000` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
 - The license for the `kujiale_0000` scene is given [here](LICENSE_KUJIALE.txt)
 - The external assets in `debug_0000` are licensed under the [Unreal Engine End-User License Agreement](https://www.unrealengine.com/en-US/eula/unreal)

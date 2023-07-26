@@ -31,7 +31,8 @@ SPEAR:
 
 
 SIMULATION_CONTROLLER:
-  AGENT: "VehicleAgent" # "SphereAgent", "VehicleAgent"
+  # AGENT: "SphereAgent" # uncomment when using our sphere agent
+  AGENT: "VehicleAgent" # uncomment when using OpenBot
   TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
@@ -43,9 +44,9 @@ SIMULATION_CONTROLLER:
     ACTION_COMPONENTS: ["add_force", "add_rotation"] # "add_force", "add_rotation"
     OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] # "camera", "location", "rotation"
     STEP_INFO_COMPONENTS: ["debug"] # "debug"
-    SPAWN_LOCATION_X: 0.0
-    SPAWN_LOCATION_Y: 0.0
-    SPAWN_LOCATION_Z: 20.0
+    SPAWN_LOCATION_X: 460.0
+    SPAWN_LOCATION_Y: 260.0
+    SPAWN_LOCATION_Z: 55.0 # sphere origin is roughly 25cm above the floor, and the floor in apartment_0000 is at roughly z=30cm
     SPAWN_ROTATION_PITCH: 0.0
     SPAWN_ROTATION_YAW: 0.0
     SPAWN_ROTATION_ROLL: 0.0
@@ -62,11 +63,11 @@ SIMULATION_CONTROLLER:
     IS_READY_VELOCITY_THRESHOLD: 0.001
     SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_LOCATION_X: 80.0
-    SPAWN_LOCATION_Y: 475.0
-    SPAWN_LOCATION_Z: 20.0
+    SPAWN_LOCATION_X: 460.0
+    SPAWN_LOCATION_Y: 260.0
+    SPAWN_LOCATION_Z: 30.0 # OpenBot origin is roughly at the floor, and the floor in apartment_0000 is roughly at z=30cm
     SPAWN_ROTATION_PITCH: 0.0
-    SPAWN_ROTATION_YAW: 70.0
+    SPAWN_ROTATION_YAW: 90.0
     SPAWN_ROTATION_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
@@ -75,5 +76,6 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
 
   VISUALIZER:
-    ACTOR_NAME: "vehicle_actor"
+    # ACTOR_NAME: "camera_actor" # uncomment when using our sphere agent
+    ACTOR_NAME: "vehicle_actor" # uncomment when using OpenBot
     SPAWN_CAMERA: False

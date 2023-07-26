@@ -73,7 +73,7 @@ if __name__ == '__main__':
         if sys.platform == "win32":
             paks_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(args.executable)), "..", "..", "Content", "Paks"))
         elif sys.platform == "darwin":
-            paks_dir = os.path.realpath(os.path.join(args.executable, "Contents", "UE4", "SpearSim", "Content", "Paks"))
+            paks_dir = os.path.realpath(os.path.join(args.executable, "Contents", "UE", "SpearSim", "Content", "Paks"))
         elif sys.platform == "linux":
             paks_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(args.executable)), "SpearSim", "Content", "Paks"))
         else:
