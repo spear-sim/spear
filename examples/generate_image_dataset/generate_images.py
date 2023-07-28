@@ -124,7 +124,7 @@ if __name__ == "__main__":
                     # discard very large depth values
                     max_depth_meters = 20.0
                     obs_render_pass_vis = obs_render_pass_vis[:,:,0]
-                    obs_render_pass_vis = np.clip(0.0, max_depth_meters, obs_render_pass_vis)
+                    obs_render_pass_vis = np.clip(obs_render_pass_vis, 0.0, max_depth_meters)
 
                 elif render_pass == "final_color":
                     obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # final_color is returned as BGRA
