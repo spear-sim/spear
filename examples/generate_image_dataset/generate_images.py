@@ -138,7 +138,7 @@ if __name__ == "__main__":
                     obs_render_pass_vis[discard_mask] = np.nan
 
                 elif render_pass == "segmentation":
-                    obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # final_color is returned as BGRA
+                    obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # segmentation is returned as BGRA
 
                 else:
                     assert False
