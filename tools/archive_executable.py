@@ -6,6 +6,7 @@ import argparse
 import os
 import shutil
 import spear
+import subprocess
 import sys
 
 
@@ -31,7 +32,14 @@ if __name__ == "__main__":
 
     executable_dir    = os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{platform_name}-Shipping"))
     archive_file_name = os.path.realpath(os.path.join(args.output_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping"))
-    shutil.make_archive(base_name=archive_file_name, format="zip", root_dir=os.path.realpath(os.path.join(executable_dir, platform_dir_name)), verbose=1)
+    if sys.platform in ["win32", "linux"]:
+        shutil.make_archive(base_name=archive_file_name, format="zip", root_dir=os.path.realpath(os.path.join(executable_dir, platform_dir_name)), verbose=1)
+    elif sys.platform == "darwin":
+        cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", os.path.realpath(os.path.join(executable_dir, platform_dir_name, f"SpearSim-Mac-Shipping.app")), archive_file_name + ".zip"]
+        spear.log(f"Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+    else:
+        assert False
     assert os.path.exists(archive_file_name + ".zip")
 
     spear.log(f"Successfully archived executable to {archive_file_name}.zip")
