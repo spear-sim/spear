@@ -169,6 +169,6 @@ class OpenBotPilotNetPolicy():
 
         # generate an action from inference result
         tf_output = self._interpreter.get_tensor(self._output_details[0]["index"]).astype(np.float64)
-        action = np.clip(tf_output[0], -1.0, 1.0)
+        action = np.clip(tf_output[0], -self._config.IMITATION_LEARNING_OPENBOT.MAX_ACTION, self._config.IMITATION_LEARNING_OPENBOT.MAX_ACTION)
 
         return action

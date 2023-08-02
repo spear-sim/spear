@@ -62,7 +62,7 @@ The `--unreal_engine_dir` argument must point to the top-level directory where y
 ```
 Windows: C:\Program Files\Epic Games\UE_5.2
 macOS:   /Users/Shared/Epic Games/UE_5.2
-Linux:   path/to/Linux_Unreal_Engine_5.2.0/
+Linux:   path/to/Linux_Unreal_Engine_5.2.0
 ```
 
 ## Build the `SpearSim` executable
@@ -89,5 +89,6 @@ Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/Spear
 - If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`.
 - If you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to the executable in `-archivedirectory`, you can specify `-skipbuild -skipcook`.
 - You can replace `Development` with `Shipping` to build a more optimized executable.
+- You can specify `-specifiedarchitecture=arm64+x86_64` to build a universal binary on macOS.
 - You can specify `-clean` to do a clean build.
 - You can specify `-verbose`, `-UbtArgs="-verbose"`, and `-UbtArgs="-VeryVerbose"` to see additional build details (e.g., the exact command-line arguments that Unreal uses when invoking the underlying compiler).
