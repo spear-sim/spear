@@ -6,7 +6,6 @@ import argparse
 import os
 import shutil
 import spear
-import subprocess
 import sys
 
 
