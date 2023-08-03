@@ -75,12 +75,27 @@ if __name__ == "__main__":
     spear.log(f"Executing: {' '.join(cmd)}")
     ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     status = ""
+    submission_id = None
     for line in ps.stdout:
         spear.log(f"{line}")
+        if submission_id is None and "  id: " in line:
+            submission_id = line.split("  id: ")[1].strip()
         if "  status: " in line:
             status = line.split("  status: ")[1].strip()
     ps.wait()
     ps.stdout.close()
+    assert submission_id is not None
+
+    # obtain the log file associated with this notarization process
+    log_file = os.path.realpath(os.path.join(args.temp_dir, "notarization_log.json"))
+    cmd = [
+        "xcrun", "notarytool", "log", submission_id, "--apple-id", args.apple_id,
+        "--team-id", args.apple_teamid, "--password", args.apple_password, log_file
+    ]
+    spear.log(f"Executing: {' '.join(cmd)}")
+    subprocess.run(cmd, check=True)
+    spear.log(f"Log file associated with the notarization process has been successfully written to {log_file}.")
+
     assert status == "Accepted"
 
     # staple the executable
