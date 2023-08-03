@@ -22,7 +22,6 @@ if __name__ == "__main__":
     parser.add_argument("--apple_id", required=True)
     parser.add_argument("--apple_teamid", required=True)
     parser.add_argument("--apple_password", required=True)
-    parser.add_argument("--version_tag", required=True)
     parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "build", "SpearSim-Mac-Shipping-Unsigned")))
     parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "build", "SpearSim-Mac-Shipping")))
     parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
@@ -73,27 +72,15 @@ if __name__ == "__main__":
     ]
     spear.log(f"Executing: {' '.join(cmd)}")
     ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-    processing_complete = False
-    request_id = ""
     status = ""
     for line in ps.stdout:
         spear.log(f"{line}")
-        if "Processing complete" in line:
-            processing_complete = True
-        if not processing_complete:
-            if "  id: " in line:
-                request_id = line.split("  id: ")[1].strip()
-            elif "Current status: " in line:
-                status = line.split("Current status: ")[1].split(".")[0].strip()
-        else:
-            if "  status: " in line:
-                status = line.split("  status: ")[1].strip()
+        if "  status: " in line:
+            status = line.split("  status: ")[1].strip()
     ps.wait()
     ps.stdout.close()
-    assert request_id != ""
-    assert processing_complete
     assert status == "Accepted"
-            
+
     # staple the executable
     cmd = ["xcrun", "stapler", "staple", executable]
     spear.log(f"Executing: {' '.join(cmd)}")
