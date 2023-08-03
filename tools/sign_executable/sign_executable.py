@@ -6,6 +6,7 @@
 # for pre-requisites and setup your system before trying to run this file.
 
 import argparse
+import json
 import os
 import shutil
 import spear
@@ -95,6 +96,9 @@ if __name__ == "__main__":
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
     spear.log(f"Log file associated with the notarization process has been successfully written to {log_file}.")
+    spear.log("Printing the contents of this log file...")
+    with open(log_file) as f:
+        spear.log(json.dumps(json.load(f), indent=4))
 
     assert status == "Accepted"
 
