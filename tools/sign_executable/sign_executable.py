@@ -66,6 +66,7 @@ if __name__ == "__main__":
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
+    # send the file for notarization
     cmd = [
         "xcrun", "notarytool", "submit", notarization_zip, "--apple-id", args.apple_id,
         "--team-id", args.apple_teamid, "--password", args.apple_password, "--wait"
