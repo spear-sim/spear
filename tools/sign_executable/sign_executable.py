@@ -28,6 +28,8 @@ if __name__ == "__main__":
     parser.add_argument("--entitlements_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "entitlements.plist")))
     args = parser.parse_args()
 
+    assert os.path.exists(args.entitlements_file)
+
     # make sure output_dir is empty
     shutil.rmtree(args.output_dir, ignore_errors=True)
 
@@ -51,12 +53,11 @@ if __name__ == "__main__":
         os.path.realpath(os.path.join(executable, "Contents", "MacOS", os.path.splitext(executable_name)[0]))
     ]
 
-    assert os.path.exists(args.entitlements_file)
-
     for file in sign_files:
         cmd = [
             "sudo", "codesign", "-f", "-s", "-v", "--options", "runtime", "--timestamp", "--entitlements", 
-            args.entitlements_file, "--sign", f"Developer ID Application: {args.developer_id}", file]
+            args.entitlements_file, "--sign", f"Developer ID Application: {args.developer_id}", file
+        ]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
