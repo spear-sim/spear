@@ -36,17 +36,19 @@ if __name__ == "__main__":
 
     # set various platform-specific variables that we use throughout our build procedure
     if sys.platform == "win32":
-        target_platform = "Win64"
-        run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat"))
-        archive_dir     = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}"))
-        unreal_tmp_dir  = ""
-        cmd_prefix      = f"conda activate {args.conda_env}& "
+        target_platform       = "Win64"
+        run_uat_script        = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat"))
+        archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}"))
+        run_uat_platform_args = ""
+        unreal_tmp_dir        = ""
+        cmd_prefix            = f"conda activate {args.conda_env}& "
 
     elif sys.platform == "darwin":
-        target_platform = "Mac"
-        run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
-        archive_dir     = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}-Unsigned"))
-        unreal_tmp_dir  = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
+        target_platform       = "Mac"
+        run_uat_script        = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
+        archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}-Unsigned"))
+        run_uat_platform_args = "-specifiedarchitecture=arm64+x86_64"
+        unreal_tmp_dir        = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
 
         if args.conda_script:
             conda_script = args.conda_script
@@ -58,9 +60,10 @@ if __name__ == "__main__":
 
     elif sys.platform == "linux":
         target_platform = "Linux"
-        run_uat_script  = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))        
-        archive_dir     = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}"))
-        unreal_tmp_dir  = ""
+        run_uat_script        = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))        
+        archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}"))
+        run_uat_platform_args = ""
+        unreal_tmp_dir        = ""
 
         if args.conda_script:
             conda_script = args.conda_script
@@ -156,6 +159,7 @@ if __name__ == "__main__":
         "-target=SpearSim",
         "-archivedirectory=" + archive_dir,
         "-clientconfig=" + build_config,
+        run_uat_platform_args
     ]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
