@@ -98,7 +98,7 @@ if __name__ == "__main__":
     spear.log(f"Log file associated with the notarization process has been successfully written to {log_file}.")
     spear.log("Printing the contents of this log file...")
     with open(log_file) as f:
-        spear.log(json.dumps(json.load(f), indent=4))
+        spear.log_no_prefix(json.dumps(json.load(f), indent=4))
 
     assert status == "Accepted"
 
