@@ -71,7 +71,7 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-    # Customizing the notarization workflow - create an archive (-c) in pkzip format (-k) and embed the parent directory name (-keepParent)
+    # Customizing the notarization workflow - create an archive (-c) in pkzip format (-k) and embed the parent directory name in the archive (-keepParent)
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     notarization_zip = os.path.realpath(os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip"))
     cmd = ["ditto", "-c", "-k", "--keepParent", executable, notarization_zip]
