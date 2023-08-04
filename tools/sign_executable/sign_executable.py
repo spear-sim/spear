@@ -3,11 +3,13 @@
 #
 
 # See the following documentation for the prerequisites you need to run this file.
+#     Signing your Apps for Gatekeeper
+#         https://developer.apple.com/developer-id
 #     Creating Distribution-Signed Code for Mac
 #         https://developer.apple.com/forums/thread/701514#701514021
 #     Packaging Mac Software for Distribution
 #         https://developer.apple.com/forums/thread/701581#701581021
-#     Customizing the notarization workflow
+#     Customizing the Notarization Workflow
 #         https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
 #    Fetching the Notary Log
 #         https://developer.apple.com/forums/thread/705839
@@ -71,14 +73,14 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-    # Customizing the notarization workflow - create an archive (-c) in pkzip format (-k) and embed the parent directory name in the archive (-keepParent)
+    # Customizing the Notarization Workflow - create an archive (-c) in pkzip format (-k) and embed the parent directory name in the archive (-keepParent)
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     notarization_zip = os.path.realpath(os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip"))
     cmd = ["ditto", "-c", "-k", "--keepParent", executable, notarization_zip]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
-    # Customizing the notarization workflow - upload the archive for notarization
+    # Customizing the Notarization Workflow - upload the archive for notarization
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     cmd = [
         "xcrun", "notarytool", "submit", notarization_zip, "--apple-id", args.apple_id,
@@ -114,7 +116,7 @@ if __name__ == "__main__":
 
     assert status == "Accepted"
 
-    # Customizing the notarization workflow - staple the executable
+    # Customizing the Notarization Workflow - staple the executable
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     cmd = ["xcrun", "stapler", "staple", executable]
     spear.log(f"Executing: {' '.join(cmd)}")
