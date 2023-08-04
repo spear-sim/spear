@@ -2,7 +2,7 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-# See the following links and tutorials for the prerequisites you need to run this file.
+# See the following documentation for the prerequisites you need to run this file.
 #     Creating Distribution-Signed Code for Mac
 #         https://developer.apple.com/forums/thread/701514#701514021
 #     Packaging Mac Software for Distribution
