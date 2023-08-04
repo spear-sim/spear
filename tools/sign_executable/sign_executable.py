@@ -2,8 +2,15 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-# Please refer to https://medium.com/@parthnaik92/codesign-and-notarize-unreal-engine-mac-builds-for-distribution-outside-of-the-mac-store-d2f6e444f3a7
-# for pre-requisites and setup your system before trying to run this file.
+# See the following links and tutorials for the prerequisites you need to run this file.
+#     Creating Distribution-Signed Code for Mac
+#         https://developer.apple.com/forums/thread/701514#701514021
+#     Packaging Mac Software for Distribution
+#         https://developer.apple.com/forums/thread/701581#701581021
+#     Customizing the notarization workflow
+#         https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
+#    Fetching the Notary Log
+#         https://developer.apple.com/forums/thread/705839
 
 import argparse
 import json
@@ -45,7 +52,7 @@ if __name__ == "__main__":
 
     executable_name = os.path.basename(executable)
 
-    # files that need to be code-signed
+    # files that need to be codesigned
     sign_files = [
         os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbb.dylib")),
         os.path.realpath(os.path.join(executable, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac", "libtbbmalloc.dylib")),
@@ -54,21 +61,25 @@ if __name__ == "__main__":
         os.path.realpath(os.path.join(executable, "Contents", "MacOS", os.path.splitext(executable_name)[0]))
     ]
 
+    # Creating Distribution-Signed Code for Mac
+    #     https://developer.apple.com/forums/thread/701514#701514021
     for file in sign_files:
         cmd = [
-            "sudo", "codesign", "-f", "-s", "-v", "--options", "runtime", "--timestamp", "--entitlements", 
+            "sudo", "codesign", "--force", "--timestamp", "--verbose", "--options", "runtime", "--entitlements", 
             args.entitlements_file, "--sign", f"Developer ID Application: {args.developer_id}", file
         ]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-    # create a zip file for notarization
+    # Customizing the notarization workflow - create an archive (-c) in pkzip format (-k) and embed the parent directory name (-keepParent)
+    #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     notarization_zip = os.path.realpath(os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip"))
-    cmd = ["ditto", "-c", "-k", "--rsrc", "--keepParent", executable, notarization_zip]
+    cmd = ["ditto", "-c", "-k", "--keepParent", executable, notarization_zip]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
-    # send the file for notarization
+    # Customizing the notarization workflow - upload the archive for notarization
+    #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     cmd = [
         "xcrun", "notarytool", "submit", notarization_zip, "--apple-id", args.apple_id,
         "--team-id", args.apple_teamid, "--password", args.apple_password, "--wait"
@@ -87,7 +98,8 @@ if __name__ == "__main__":
     ps.stdout.close()
     assert submission_id is not None
 
-    # obtain the log file associated with this notarization process
+    # Fetching the Notary Log
+    #     https://developer.apple.com/forums/thread/705839
     log_file = os.path.realpath(os.path.join(args.temp_dir, "notarization_log.json"))
     cmd = [
         "xcrun", "notarytool", "log", submission_id, "--apple-id", args.apple_id,
@@ -102,7 +114,8 @@ if __name__ == "__main__":
 
     assert status == "Accepted"
 
-    # staple the executable
+    # Customizing the notarization workflow - staple the executable
+    #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     cmd = ["xcrun", "stapler", "staple", executable]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
