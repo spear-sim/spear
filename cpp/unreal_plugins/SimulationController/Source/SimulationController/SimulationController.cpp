@@ -31,6 +31,7 @@
 #include "SimulationController/NavMesh.h"
 #include "SimulationController/NullTask.h"
 #include "SimulationController/RpcServer.h"
+#include "SimulationController/SceneManager.h"
 #include "SimulationController/SphereAgent.h"
 #include "SimulationController/Task.h"
 #include "SimulationController/UrdfBotAgent.h"
@@ -216,6 +217,10 @@ void SimulationController::worldBeginPlayEventHandler()
     nav_mesh_ = std::make_unique<NavMesh>();
     SP_ASSERT(nav_mesh_);
 
+    // create SceneManager
+    scene_manager_ = std::make_unique<SceneManager>();
+    SP_ASSERT(scene_manager_);
+
     // create Visualizer
     visualizer_ = std::make_unique<Visualizer>(world_);
     SP_ASSERT(visualizer_);
@@ -224,6 +229,7 @@ void SimulationController::worldBeginPlayEventHandler()
     agent_->findObjectReferences(world_);
     task_->findObjectReferences(world_);
     nav_mesh_->findObjectReferences(world_);
+    scene_manager_->findObjectReferences(world_);
     visualizer_->findObjectReferences(world_);
 
     // initialize frame state used for thread synchronization
@@ -264,6 +270,10 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             SP_ASSERT(visualizer_);
             visualizer_->cleanUpObjectReferences();
             visualizer_ = nullptr;
+
+            SP_ASSERT(scene_manager_);
+            scene_manager_->cleanUpObjectReferences();
+            scene_manager_ = nullptr;
 
             SP_ASSERT(nav_mesh_);
             nav_mesh_->cleanUpObjectReferences();
