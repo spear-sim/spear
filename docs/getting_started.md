@@ -55,7 +55,7 @@ Linux:   path/to/SpearSim-v0.3.0-Linux-Shipping/SpearSim.sh
 
 You will also need to specify the following command-line arguments.
 
-  - `--scene_id` is the name of the scene you want to navigate around. It must be set to one of `debug_0000`, `apartment_0000`, or `kujiale_0000`. If you specify `kujiale_0000`, then you also need to specify `--paks_dir` as the directory containing the pak file for the scene you downloaded earlier.
+  - `--scene_id` is the name of the scene you want to navigate around. It must be set to one of `debug_0000`, `apartment_0000`, or `kujiale_0000`. If you specify `kujiale_0000`, then you also need to specify `--paks_dir` as the directory containing the pak file for that scene. We provide links to pak files in our [release notes](https://github.com/isl-org/spear/releases/tag/v0.3.0).
 
 The following command-line arguments are optional.
 
