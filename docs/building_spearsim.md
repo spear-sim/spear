@@ -39,7 +39,7 @@ If you're developing on Windows, you will need to run our build steps in a termi
 With these requirements in mind, we recommend using the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application to run our build steps. This profile will be installed to the Terminal application when you install Visual Studio. You can configure this profile to run with administrator privileges in the profile settings. You can configure PowerShell to access your Anaconda environment by opening an Anaconda PowerShell prompt with administrator privileges (located in your Start menu after you install Anaconda) and executing the following commands.
 
 ```console
-# This step adds a block of PowerShell code to C:\Users\username\Documents\WindowsPowerShell\profile.ps1
+# This step will add a block of PowerShell code to C:\Users\username\Documents\WindowsPowerShell\profile.ps1
 # to make your Anaconda installation visible to PowerShell.
 conda init powershell
 
