@@ -59,4 +59,4 @@ See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
 - The OpenBot and Fetch assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
 - The `apartment_0000`, `debug_0000`, and `debug_0001` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
 - The license for the `StarterContent` assets found in `debug_0000` and `debug_0001` are given [here](https://www.unrealengine.com/en-US/eula/unreal)
-- The license for `kujiale_0000` is given [here](LICENSE_KUJIALE.txt)
+- The license for `kujiale_0000` scene is given [here](LICENSE_KUJIALE.txt)
