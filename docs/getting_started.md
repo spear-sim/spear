@@ -38,11 +38,11 @@ pip install -e python
 
 ### Navigate around a specific scene
 
-At this point, you can use our `run_executable.py` command-line tool to select which scene you want to navigate around. If you wanted to explore our `kujiale_0000` scene, you would use the following command.
+At this point, you can use our `run_executable.py` command-line tool to select which scene you want to navigate around. If you wanted to explore our `debug_0000` scene, you would use the following command.
 
 ```console
 # interactively navigate through a specific scene
-python tools/run_executable.py --executable path/to/executable --scene_id kujiale_0000
+python tools/run_executable.py --executable path/to/executable --scene_id debug_0000
 ```
 
 Depending on your platform, you will need to specify the following path to your `--executable`.
@@ -55,7 +55,7 @@ Linux:   path/to/SpearSim-v0.3.0-Linux-Shipping/SpearSim.sh
 
 You will also need to specify the following command-line arguments.
 
-  - `--scene_id` is the name of the scene you want to navigate around. It must be set to one of `debug_0000`, `apartment_0000`, or `kujiale_0000`. If you specify `kujiale_0000`, then you also need to specify `--paks_dir` as the directory containing the scene data you downloaded earlier.
+  - `--scene_id` is the name of the scene you want to navigate around. It must be set to one of `debug_0000`, `apartment_0000`, or `kujiale_0000`. If you specify `kujiale_0000`, then you also need to specify `--paks_dir` as the directory containing the pak file for the scene you downloaded earlier.
 
 The following command-line arguments are optional.
 
