@@ -54,7 +54,8 @@ if __name__ == '__main__':
     assert os.path.exists(unreal_pak_bin)
 
     # once we know the platform, set our cooked dir
-    unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
+    unreal_project_cooked_dir       = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
+    unreal_project_cooked_dir_posix = unreal_project_cooked_dir.replace(ntpath.sep, posixpath.sep)
 
     # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the user's Perforce workspace.
     # Instead, we want this path to refer to the symlinked version inside the user's unreal project directory.
@@ -82,7 +83,6 @@ if __name__ == '__main__':
         # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
         # version inside the user's Unreal project directory.
         perforce_dirs_to_unreal_dirs = {
-            os.path.realpath(os.path.join(args.perforce_content_dir, "Kujiale")) : os.path.join(unreal_project_content_dir, "Kujiale"),
             os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
             os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets")
         }
@@ -102,7 +102,6 @@ if __name__ == '__main__':
         pak_dirs = [
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Content")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Plugins")),
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Kujiale")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Megascans")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "MSPresets")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id)),
@@ -128,7 +127,7 @@ if __name__ == '__main__':
         # Now that we have created a symlink, our Unreal project should contain exactly three scenes: apartment_0000, debug_0000 and scene_id
         ignore_names = [".DS_Store"]
         unreal_project_scenes = { os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) if x not in ignore_names }
-        assert unreal_project_scenes == {"apartment_0000", "debug_0000", scene_id}
+        assert unreal_project_scenes == {"apartment_0000", "debug_0000", "debug_0001", scene_id}
 
         # see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
         cmd = [
@@ -154,10 +153,10 @@ if __name__ == '__main__':
         with open(txt_file, mode="w") as f:
             for pak_dir in pak_dirs:
                 for content_file in glob.glob(os.path.realpath(os.path.join(pak_dir, "**", "*.*")), recursive=True):
-                    assert content_file.startswith(unreal_project_cooked_dir)
-                    content_file = content_file.replace(ntpath.sep, posixpath.sep)
-                    mount_file = posixpath.join("..", "..", "..", content_file.replace(unreal_project_cooked_dir + posixpath.sep, ""))
-                    f.write(f'"{content_file}" "{mount_file}" "" \n')
+                    content_file_posix = content_file.replace(ntpath.sep, posixpath.sep)
+                    assert content_file_posix.startswith(unreal_project_cooked_dir_posix)
+                    mount_file_posix = posixpath.join("..", "..", "..", content_file_posix.replace(unreal_project_cooked_dir_posix + posixpath.sep, ""))
+                    f.write(f'"{content_file_posix}" "{mount_file_posix}" "" \n')
 
         # construct command to generate the final pak file
         cmd = [
