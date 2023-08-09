@@ -34,13 +34,13 @@ If you're developing on Windows, you will need to run our build steps in a termi
 - You will need to run our build steps from within the Anaconda environment where the `spear` package is installed.
 - You will need to one of run our build steps with administrator privileges (noted below), because we need to create various symbolic links within your local copy of this repository to work around limitations of the Unreal build system.
 
-With these requirements in mind, we recommend using the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application to run our build steps. This profile will be installed to the Terminal application when you install Visual Studio. You can configure this profile to run as administrator in the profile settings. You can configure PowerShell to access your Anaconda environment by opening an Anaconda PowerShell prompt (located in your Start menu after you install Anaconda) and executing the following command.
+With these requirements in mind, we recommend using the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application to run our build steps. This profile will be installed to the Terminal application when you install Visual Studio. You can configure this profile to run with administrator privileges in the profile settings. You can configure PowerShell to access your Anaconda environment by opening an Anaconda PowerShell prompt (located in your Start menu after you install Anaconda) and executing the following command.
 
 ```
 conda init powershell
 ```
 
-After executing this command, you can use the the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application, and it will be able to access Anaconda and the Visual Studio command-line tools.
+After executing this command, you can use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application, and it will be able to access Anaconda Python and the Visual Studio command-line tools.
 
 ## Build third-party C++ libraries
 
