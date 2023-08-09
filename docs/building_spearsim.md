@@ -15,7 +15,7 @@ If you're developing on Linux, you will need to download the Unreal Engine from 
 For each platform, you will need to install a specific compiler that is compatible with Unreal Engine 5.2. We have verified that the following compilers behave as expected.
 
 ```
-Windows: Visual Studio 2022
+Windows: Visual Studio 2022 (make sure to select _Desktop development with C++_ from the _Workloads_ menu when installing) 
 macOS:   XCode 14.3
 Linux:   clang and libc++
 ```
@@ -34,10 +34,17 @@ If you're developing on Windows, you will need to run our build steps in a termi
 - You will need to run our build steps from within the Anaconda environment where the `spear` package is installed.
 - You will need to one of run our build steps with administrator privileges (noted below), because we need to create various symbolic links within your local copy of this repository to work around limitations of the Unreal build system.
 
-With these requirements in mind, we recommend using the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application to run our build steps. This profile will be installed to the Terminal application when you install Visual Studio. You can configure this profile to run with administrator privileges in the profile settings. You can configure PowerShell to access your Anaconda environment by opening an Anaconda PowerShell prompt (located in your Start menu after you install Anaconda) and executing the following command.
+With these requirements in mind, we recommend using the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application to run our build steps. This profile will be installed to the Terminal application when you install Visual Studio. You can configure this profile to run with administrator privileges in the profile settings. You can configure PowerShell to access your Anaconda environment by opening an Anaconda PowerShell prompt with administrator privileges (located in your Start menu after you install Anaconda) and executing the following commands.
 
-```
+```console
+# This step adds a block of PowerShell code to C:\Users\username\Documents\WindowsPowerShell\profile.ps1
+# to make your Anaconda installation visible to PowerShell.
 conda init powershell
+
+# PowerShell will load C:\Users\username\Documents\WindowsPowerShell\profile.ps1 automatically when running
+# as administrator, but this step will allow it to load profile.ps1 even when running as a normal user, so
+# Anaconda will always be visible to PowerShell.
+Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy Bypass
 ```
 
 After executing this command, you can use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application, and it will be able to access Anaconda Python and the Visual Studio command-line tools.
