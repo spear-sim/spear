@@ -43,13 +43,12 @@ With these requirements in mind, we recommend using the _Developer PowerShell fo
 # to make your Anaconda installation visible to PowerShell.
 conda init powershell
 
-# PowerShell will load C:\Users\username\Documents\WindowsPowerShell\profile.ps1 automatically when running
-# as administrator, but this step will allow it to load profile.ps1 even when running as a normal user, so
-# Anaconda will always be visible to PowerShell.
+# When running as administrator, PowerShell will automatically load C:\Users\username\Documents\WindowsPowerShell\profile.ps1,
+# but this step will allow it to load profile.ps1 even when running as a normal user, so Anaconda will always be visible.
 Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy Bypass
 ```
 
-After executing this command, you can use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application, and it will be able to access Anaconda Python and the Visual Studio command-line tools.
+After executing these commands, you can use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application, and it will be able to access Anaconda Python and the Visual Studio command-line tools.
 
 ## Build third-party C++ libraries
 
