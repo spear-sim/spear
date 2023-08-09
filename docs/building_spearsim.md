@@ -6,7 +6,7 @@ We will assume that you are developing on a version of Windows, macOS, or Linux 
 
 ## Install the Unreal Engine
 
-We recommend installing the Unreal Engine version 5.2 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure you select _Editor symbols for debugging_ from the list of optional components.
+We recommend installing the Unreal Engine version 5.2 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure to select _Editor symbols for debugging_ from the list of optional components.
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
