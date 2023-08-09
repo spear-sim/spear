@@ -11,6 +11,7 @@ import os
 import spear
 import time
 
+
 # import OpenBotEnv from common folder
 COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
@@ -31,11 +32,14 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
+    # create communicator object
+    communicator = spear.Communicator(config)
+
     # create Env object
     if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
-        env = spear.Env(config)
+        env = spear.Env(config, communicator)
     elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
-        env = OpenBotEnv(config)
+        env = OpenBotEnv(config, communicator)
 
     # reset the simulation to get the first observation
     obs = env.reset()
