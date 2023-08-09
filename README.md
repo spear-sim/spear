@@ -49,9 +49,14 @@ See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
 
 ## Licenses
 
+#### Code
+
 - The code in this repository is licensed under an [MIT License](LICENSE.txt)
 - The licenses for all of our third-party code dependencies are given [here](ACKNOWLEDGMENTS.txt)
+
+#### Assets
+
 - The OpenBot and Fetch assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
-- The `StarterContent` assets found in `debug_0000` and `debug_0001` are licensed under the [Unreal Engine EULA](https://www.unrealengine.com/en-US/eula/unreal)
-- The `apartment_0000`, `debug_0000`, and `debug_00001` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
+- The `apartment_0000`, `debug_0000`, and `debug_0001` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
+- The license for the `StarterContent` assets found in `debug_0000` and `debug_0001` are given [here](https://www.unrealengine.com/en-US/eula/unreal)
 - The license for `kujiale_0000` is given [here](LICENSE_KUJIALE.txt)
