@@ -18,17 +18,13 @@ if __name__ == '__main__':
     parser.add_argument("--scene_id")
     parser.add_argument("--map_id")
     parser.add_argument("--vk_icd_filenames")
+    parser.add_argument("--gpu_id")
     args = parser.parse_args()
     
     assert os.path.exists(args.executable)
 
     # determine the internal executable we will actually launch
     executable_name, executable_ext = os.path.splitext(args.executable)
-
-    # provide additional control over which Vulkan devices are recognized by Unreal
-    if args.vk_icd_filenames is not None:
-        spear.log("Setting VK_ICD_FILENAMES environment variable: " + args.vk_icd_filenames)
-        os.environ["VK_ICD_FILENAMES"] = args.vk_icd_filenames
 
     if sys.platform == "win32":
         assert executable_name[-4:] == "-Cmd"
@@ -53,6 +49,10 @@ if __name__ == '__main__':
         config.SIMULATION_CONTROLLER.SCENE_ID = args.scene_id
     if args.map_id is not None:
         config.SIMULATION_CONTROLLER.MAP_ID = args.map_id
+    if args.vk_icd_filenames is not None:
+        config.SPEAR.VK_ICD_FILENAMES = args.vk_icd_filenames
+    if args.gpu_id is not None:
+        config.SPEAR.GPU_ID = args.gpu_id
     config.freeze()
 
     # write temp file
@@ -92,7 +92,7 @@ if __name__ == '__main__':
         os.symlink(args.paks_dir, spear_paks_dir)
 
     # provide additional control over which Vulkan devices are recognized by Unreal
-    if len(config.SPEAR.VK_ICD_FILENAMES) > 0:
+    if config.SPEAR.VK_ICD_FILENAMES != "":
         spear.log("Setting VK_ICD_FILENAMES environment variable: " + config.SPEAR.VK_ICD_FILENAMES)
         os.environ["VK_ICD_FILENAMES"] = config.SPEAR.VK_ICD_FILENAMES
 
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     launch_args.append("-fullstdoutlogoutput") # ensure log output is written to the terminal
     launch_args.append("-nologtimes")          # don't print timestamps next to log messages twice
 
-    if len(config.SPEAR.UNREAL_INTERNAL_LOG_FILE) > 0:
+    if config.SPEAR.UNREAL_INTERNAL_LOG_FILE != "":
         launch_args.append("-log={}".format(config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
 
     launch_args.append("-config_file={}".format(temp_config_file))

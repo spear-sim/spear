@@ -29,7 +29,7 @@ public:
     ASpearSimGameMode(const FObjectInitializer& object_initializer);
     ~ASpearSimGameMode();
 
-    // Call this function by typing the following into the Unreal console: spearDebugMessage 10.0 Hello World
+    // Call this function by typing the following into the Unreal console: spearAddOnScreenDebugMessage 10.0 Hello World
     UFUNCTION(Exec)
-    void spearDebugMessage(float display_time, FString message);
+    void spearAddOnScreenDebugMessage(float display_time, FString message);
 };

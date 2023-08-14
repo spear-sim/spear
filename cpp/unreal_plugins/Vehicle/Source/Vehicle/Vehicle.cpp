@@ -10,7 +10,6 @@
 void Vehicle::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
-
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
 }
 

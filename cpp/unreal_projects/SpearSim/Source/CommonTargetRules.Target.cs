@@ -12,6 +12,7 @@ public class CommonTargetRulesTarget : TargetRules
     public CommonTargetRulesTarget(TargetInfo target) : base(target)
     {
         SP_LOG_CURRENT_FUNCTION();
+        SP_LOG("Target platform: " + target.Platform.ToString());
 
         // We need to set this to something other than Game or Editor or Program in order to successfully generate Visual Studio project files.
         // Needs to be overridden in derived classes.
@@ -74,6 +75,9 @@ public class CommonTargetRulesTarget : TargetRules
                 Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "..", "third_party"));
             AdditionalCompilerArguments += arg;
             SP_LOG("    " + arg);
+
+        } else if (target.Platform == UnrealTargetPlatform.LinuxArm64) {
+            SP_LOG("Note: We only expect to see target.Platform == UnrealTargetPlatform.LinuxArm64 when we're on Linux and the editor is attmepting to open SpearSim.uproject for the first time. In this case, there is no additional build configuration to do.");
 
         } else {
             throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + target.Platform);
