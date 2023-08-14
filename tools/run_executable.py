@@ -92,7 +92,7 @@ if __name__ == '__main__':
         os.symlink(args.paks_dir, spear_paks_dir)
 
     # provide additional control over which Vulkan devices are recognized by Unreal
-    if len(config.SPEAR.VK_ICD_FILENAMES) > 0:
+    if config.SPEAR.VK_ICD_FILENAMES != "":
         spear.log("Setting VK_ICD_FILENAMES environment variable: " + config.SPEAR.VK_ICD_FILENAMES)
         os.environ["VK_ICD_FILENAMES"] = config.SPEAR.VK_ICD_FILENAMES
 
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     launch_args.append("-fullstdoutlogoutput") # ensure log output is written to the terminal
     launch_args.append("-nologtimes")          # don't print timestamps next to log messages twice
 
-    if len(config.SPEAR.UNREAL_INTERNAL_LOG_FILE) > 0:
+    if config.SPEAR.UNREAL_INTERNAL_LOG_FILE != "":
         launch_args.append("-log={}".format(config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
 
     launch_args.append("-config_file={}".format(temp_config_file))
