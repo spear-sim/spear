@@ -29,10 +29,10 @@ Visualizer::Visualizer(UWorld* world)
             Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_ROTATION_YAW"),
             Config::get<double>("SIMULATION_CONTROLLER.VISUALIZER.SPAWN_ROTATION_ROLL"));
 
-        FActorSpawnParameters actor_spawn_params;
-        actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VISUALIZER.ACTOR_NAME"));
-        actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        actor_ = world->SpawnActor<ACameraActor>(location, rotation, actor_spawn_params);
+        FActorSpawnParameters actor_spawn_parameters;
+        actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VISUALIZER.ACTOR_NAME"));
+        actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        actor_ = world->SpawnActor<ACameraActor>(location, rotation, actor_spawn_parameters);
         SP_ASSERT(actor_);
 
         APlayerController* player_controller = world->GetFirstPlayerController();
