@@ -37,12 +37,57 @@ if __name__ == "__main__":
 
     # create Env object
     if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
-        env = spear.Env(config, communicator)
+        env = spear.Env(config, communicator.rpc_client)
     elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
-        env = OpenBotEnv(config, communicator)
+        env = OpenBotEnv(config, communicator.rpc_client)
 
     # reset the simulation to get the first observation
     obs = env.reset()
+
+    # create Scene object
+    scene = spear.Scene(config, communicator.rpc_client)
+    spear.log()
+    spear.log("All object names:")
+    object_names = scene.get_all_object_names()
+    spear.log(object_names)
+    
+    spear.log()
+    spear.log("all object locations")
+    object_locations = scene.get_all_object_locations()
+    for name, object_location in object_locations.items():
+        spear.log(name, object_location)
+    
+    spear.log()
+    spear.log("all object rotations")
+    object_rotations = scene.get_all_object_rotations()
+    for name, object_rotation in object_rotations.items():
+        spear.log(name, object_rotation)
+
+    spear.log()
+    value = np.array([1000, 1000, 1000], dtype=np.float64)
+    spear.log("setting object location for ", object_names[1], "value ", value)
+    scene.set_object_locations({object_names[1]: value})
+
+    spear.log()
+    value = np.array([0, 360, 0], dtype=np.float64)
+    spear.log("setting object rotation for ", object_names[1], "value ", value)
+    scene.set_object_rotations({object_names[1]: value})
+
+    spear.log()
+    spear.log("getting object locations for ", object_names[:10])
+    object_locations = scene.get_object_locations(object_names[:10])
+    for name, object_location in zip(object_names[:10], object_locations):
+        spear.log(name, object_location)
+
+    spear.log()
+    spear.log("getting object rotations for ", object_names[:10])
+    object_rotations = scene.get_object_rotations(object_names[:10])
+    for name, object_rotation in zip(object_names[:10], object_rotations):
+        spear.log(name, object_rotation)
+
+    env.close()
+    communicator.close()
+    quit()
 
     if args.benchmark:
         start_time_seconds = time.time()
@@ -95,5 +140,6 @@ if __name__ == "__main__":
 
     # close the environment
     env.close()
+    communicator.close()
 
     spear.log("Done.")

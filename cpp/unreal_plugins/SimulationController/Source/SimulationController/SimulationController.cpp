@@ -31,7 +31,7 @@
 #include "SimulationController/NavMesh.h"
 #include "SimulationController/NullTask.h"
 #include "SimulationController/RpcServer.h"
-#include "SimulationController/SceneManager.h"
+#include "SimulationController/Scene.h"
 #include "SimulationController/SphereAgent.h"
 #include "SimulationController/Task.h"
 #include "SimulationController/UrdfBotAgent.h"
@@ -217,9 +217,9 @@ void SimulationController::worldBeginPlayEventHandler()
     nav_mesh_ = std::make_unique<NavMesh>();
     SP_ASSERT(nav_mesh_);
 
-    // create SceneManager
-    scene_manager_ = std::make_unique<SceneManager>();
-    SP_ASSERT(scene_manager_);
+    // create Scene
+    scene_ = std::make_unique<Scene>();
+    SP_ASSERT(scene_);
 
     // create Visualizer
     visualizer_ = std::make_unique<Visualizer>(world_);
@@ -229,7 +229,7 @@ void SimulationController::worldBeginPlayEventHandler()
     agent_->findObjectReferences(world_);
     task_->findObjectReferences(world_);
     nav_mesh_->findObjectReferences(world_);
-    scene_manager_->findObjectReferences(world_);
+    scene_->findObjectReferences(world_);
     visualizer_->findObjectReferences(world_);
 
     // initialize frame state used for thread synchronization
@@ -271,9 +271,9 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             visualizer_->cleanUpObjectReferences();
             visualizer_ = nullptr;
 
-            SP_ASSERT(scene_manager_);
-            scene_manager_->cleanUpObjectReferences();
-            scene_manager_ = nullptr;
+            SP_ASSERT(scene_);
+            scene_->cleanUpObjectReferences();
+            scene_ = nullptr;
 
             SP_ASSERT(nav_mesh_);
             nav_mesh_->cleanUpObjectReferences();
@@ -481,22 +481,64 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->isReady();
     });
 
-    rpc_server_->bindSync("get_random_points", [this](int num_points) -> std::vector<double> {
+    rpc_server_->bindSync("navmesh.get_random_points", [this](int num_points) -> std::vector<double> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
         return nav_mesh_->getRandomPoints(num_points);
     });
 
-    rpc_server_->bindSync("get_random_reachable_points_in_radius", [this](const std::vector<double>& initial_points, float radius) -> std::vector<double> {
+    rpc_server_->bindSync("navmesh.get_random_reachable_points_in_radius", [this](const std::vector<double>& initial_points, float radius) -> std::vector<double> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
         return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
     });
 
-    rpc_server_->bindSync("get_paths", [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
+    rpc_server_->bindSync("navmesh.get_paths", [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
         return nav_mesh_->getPaths(initial_points, goal_points);
+    });
+
+    rpc_server_->bindSync("scene.set_object_locations", [this](std::map<std::string, std::vector<uint8_t>> object_locations) -> void {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        scene_->setObjectLocations(object_locations);
+    });
+
+    rpc_server_->bindSync("scene.set_object_rotations", [this](std::map<std::string, std::vector<uint8_t>> object_rotations) -> void {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        scene_->setObjectRotations(object_rotations);
+    });
+
+    rpc_server_->bindSync("scene.get_all_object_names", [this]() -> std::vector<std::string> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getAllObjectNames();
+    });
+
+    rpc_server_->bindSync("scene.get_object_locations", [this](std::vector<std::string> object_names) -> std::vector<std::uint8_t> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getObjectLocations(object_names);
+    });
+
+    rpc_server_->bindSync("scene.get_object_rotations", [this](std::vector<std::string> object_names) -> std::vector<std::uint8_t> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getObjectRotations(object_names);
+    });
+
+    rpc_server_->bindSync("scene.get_all_object_locations", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getAllObjectLocations();
+    });
+
+    rpc_server_->bindSync("scene.get_all_object_rotations", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getAllObjectRotations();
     });
 }
 

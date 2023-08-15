@@ -6,10 +6,10 @@ import numpy as np
 import spear
 
 class NavMesh():
-    def __init__(self, config, communicator: spear.Communicator):
+    def __init__(self, config, rpc_client):
 
-        self._config = config
-        self._communicator = communicator
+        self.__config = config
+        self.__rpc_client = rpc_client
 
     def get_random_points(self, num_points):
 
@@ -39,25 +39,25 @@ class NavMesh():
         return points
     
     def _get_random_points(self, num_points):
-        random_points = self._communicator.call("get_random_points", num_points)
+        random_points = self.__rpc_client.call("navmesh.get_random_points", num_points)
         return np.asarray(random_points, dtype=np.float64).reshape(num_points, 3)
 
     def _get_random_reachable_points_in_radius(self, reference_points, search_radius):
         assert reference_points.shape[1] == 3
-        reachable_points = self._communicator.call("get_random_reachable_points_in_radius", reference_points.flatten().tolist(), search_radius)
+        reachable_points = self.__rpc_client.call("navmesh.get_random_reachable_points_in_radius", reference_points.flatten().tolist(), search_radius)
         return np.asarray(reachable_points, dtype=np.float64).reshape(reference_points.shape)
 
     def _get_paths(self, initial_points, goal_points):
         assert initial_points.shape[1] == 3
         assert goal_points.shape[1] == 3
-        paths = self._communicator.call("get_paths", initial_points.flatten().tolist(), goal_points.flatten().tolist())
+        paths = self.__rpc_client.call("navmesh.get_paths", initial_points.flatten().tolist(), goal_points.flatten().tolist())
         return [ np.asarray(path, dtype=np.float64).reshape(-1, 3) for path in paths ]
     
     def _begin_tick(self):
-        self._communicator.call("begin_tick")
+        self.__rpc_client.call("begin_tick")
 
     def _tick(self):
-        self._communicator.call("tick")
+        self.__rpc_client.call("tick")
 
     def _end_tick(self):
-        self._communicator.call("end_tick")
+        self.__rpc_client.call("end_tick")

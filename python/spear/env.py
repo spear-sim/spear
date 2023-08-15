@@ -12,12 +12,12 @@ import sys
 
 
 class Env(gym.Env):
-    def __init__(self, config, communicator: spear.Communicator):
+    def __init__(self, config, rpc_client):
 
         super(Env, self).__init__()
 
-        self._config = config
-        self._communicator = communicator
+        self.__config = config
+        self.__rpc_client = rpc_client
 
         self._byte_order = self._get_byte_order()
 
@@ -46,13 +46,13 @@ class Env(gym.Env):
 
     def reset(self, reset_info=None):
         
-        for i in range(self._config.SPEAR.MAX_NUM_TICKS_AFTER_RESET):
+        for i in range(self.__config.SPEAR.MAX_NUM_TICKS_AFTER_RESET):
             self._begin_tick()
             if i == 0:
                 self._reset() # only reset the simulation once
             self._tick()
             ready = self._is_ready()
-            if ready or i == self._config.SPEAR.MAX_NUM_TICKS_AFTER_RESET - 1:
+            if ready or i == self.__config.SPEAR.MAX_NUM_TICKS_AFTER_RESET - 1:
                 obs = self._get_observation() # only get the observation if ready, or if we're about to give up
             self._end_tick()
             if ready:
@@ -77,10 +77,8 @@ class Env(gym.Env):
         self._task_step_info_space_desc.terminate()
         self._agent_step_info_space_desc.terminate()
 
-        self._communicator.close()
-
     def _get_byte_order(self):
-        unreal_instance_byte_order = self._communicator.call("get_byte_order")
+        unreal_instance_byte_order = self.__rpc_client.call("get_byte_order")
         rpc_client_byte_order = sys.byteorder
         if unreal_instance_byte_order == rpc_client_byte_order:
             return None
@@ -92,29 +90,29 @@ class Env(gym.Env):
             assert False
 
     def _begin_tick(self):
-        self._communicator.call("begin_tick")
+        self.__rpc_client.call("begin_tick")
 
     def _tick(self):
-        self._communicator.call("tick")
+        self.__rpc_client.call("tick")
 
     def _end_tick(self):
-        self._communicator.call("end_tick")
+        self.__rpc_client.call("end_tick")
 
     def _get_action_space(self):
-        array_desc = self._communicator.call("get_action_space")
+        array_desc = self.__rpc_client.call("get_action_space")
         assert len(array_desc) > 0
         return array_desc
 
     def _get_observation_space(self):
-        array_desc = self._communicator.call("get_observation_space")
+        array_desc = self.__rpc_client.call("get_observation_space")
         assert len(array_desc) > 0
         return array_desc
 
     def _get_task_step_info_space(self):
-        return self._communicator.call("get_task_step_info_space")
+        return self.__rpc_client.call("get_task_step_info_space")
 
     def _get_agent_step_info_space(self):
-        return self._communicator.call("get_agent_step_info_space")
+        return self.__rpc_client.call("get_agent_step_info_space")
 
     def _apply_action(self, action):
 
@@ -126,13 +124,13 @@ class Env(gym.Env):
         action_non_shared = { name:component for name, component in action.items() if name in self._action_space_desc.space_non_shared.spaces.keys() }
         action_non_shared_serialized = _serialize_arrays(
             action_non_shared, space=self._action_space_desc.space_non_shared, byte_order=self._byte_order)
-        self._communicator.call("apply_action", action_non_shared_serialized)
+        self.__rpc_client.call("apply_action", action_non_shared_serialized)
 
     def _get_observation(self):
 
         observation_shared = self._observation_space_desc.shared_memory_arrays
 
-        observation_non_shared_serialized = self._communicator.call("get_observation")
+        observation_non_shared_serialized = self.__rpc_client.call("get_observation")
         observation_non_shared = _deserialize_arrays(
             observation_non_shared_serialized, space=self._observation_space_desc.space_non_shared, byte_order=self._byte_order)
 
@@ -141,18 +139,18 @@ class Env(gym.Env):
         return {**observation_shared, **observation_non_shared}
 
     def _get_reward(self):
-        return self._communicator.call("get_reward")
+        return self.__rpc_client.call("get_reward")
     
     def _is_episode_done(self):
-        return self._communicator.call("is_episode_done")
+        return self.__rpc_client.call("is_episode_done")
 
     def _get_step_info(self):
 
         task_step_info_shared = self._task_step_info_space_desc.shared_memory_arrays
         agent_step_info_shared = self._agent_step_info_space_desc.shared_memory_arrays
 
-        task_step_info_non_shared_serialized = self._communicator.call("get_task_step_info")
-        agent_step_info_non_shared_serialized = self._communicator.call("get_agent_step_info")
+        task_step_info_non_shared_serialized = self.__rpc_client.call("get_task_step_info")
+        agent_step_info_non_shared_serialized = self.__rpc_client.call("get_agent_step_info")
 
         task_step_info_non_shared = _deserialize_arrays(
             task_step_info_non_shared_serialized, space=self._task_step_info_space_desc.space_non_shared, byte_order=self._byte_order)
@@ -169,11 +167,11 @@ class Env(gym.Env):
     def _reset(self):
         # reset the task first in case it needs to set the pose of actors,
         # then reset agent so it can refine the pose of actors
-        self._communicator.call("reset_task")
-        self._communicator.call("reset_agent")
+        self.__rpc_client.call("reset_task")
+        self.__rpc_client.call("reset_agent")
 
     def _is_ready(self):
-        return self._communicator.call("is_task_ready") and self._communicator.call("is_agent_ready")
+        return self.__rpc_client.call("is_task_ready") and self.__rpc_client.call("is_agent_ready")
 
 
 # metadata for describing a space including the shared memory objects

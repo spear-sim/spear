@@ -14,14 +14,11 @@ class Communicator():
     def __init__(self, config):
         
         self.__config = config
-        self.__rpc_client: msgpackrpc.Client
+        self.rpc_client: msgpackrpc.Client
 
         self._request_launch_unreal_instance()
         self._initialize_rpc_client()
         self._initialize_unreal_instance()
-
-    def call(self, command):
-        self.__rpc_client.call(command)
 
     def close(self):
         # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC client. Normally,
@@ -119,7 +116,7 @@ class Communicator():
         launch_args.append("-resy={}".format(self.__config.SPEAR.WINDOW_RESOLUTION_Y))
         launch_args.append("-graphicsadapter={}".format(self.__config.SPEAR.GPU_ID))
         launch_args.append("-nosound")
-        launch_args.append("-fileopenlog")         # generate a log of which files are opened in which order
+        # launch_args.append("-fileopenlog")         # generate a log of which files are opened in which order
         launch_args.append("-stdout")              # ensure log output is written to the terminal 
         launch_args.append("-fullstdoutlogoutput") # ensure log output is written to the terminal
         launch_args.append("-nologtimes")          # don't print timestamps next to log messages twice
@@ -176,7 +173,7 @@ class Communicator():
         if self.__config.SPEAR.LAUNCH_MODE == "running_instance":
             connected = False
             try:
-                self.__rpc_client = msgpackrpc.Client(
+                self.rpc_client = msgpackrpc.Client(
                     msgpackrpc.Address(self.__config.SIMULATION_CONTROLLER.IP, self.__config.SIMULATION_CONTROLLER.PORT),
                     timeout=self.__config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self.__config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
@@ -202,7 +199,7 @@ class Communicator():
                     self._close_rpc_client()
                     assert False
                 try:
-                    self.__rpc_client = msgpackrpc.Client(
+                    self.rpc_client = msgpackrpc.Client(
                         msgpackrpc.Address(self.__config.SIMULATION_CONTROLLER.IP, self.__config.SIMULATION_CONTROLLER.PORT), 
                         timeout=self.__config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self.__config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
@@ -263,20 +260,20 @@ class Communicator():
 
     def _close_rpc_client(self):
         spear.log("Closing RPC client...")
-        self.__rpc_client.close()
-        self.__rpc_client._loop._ioloop.close()
+        self.rpc_client.close()
+        self.rpc_client._loop._ioloop.close()
 
     def _ping(self):
-        return self.__rpc_client.call("ping")
+        return self.rpc_client.call("ping")
 
     def _request_close(self):
-        self.__rpc_client.call("request_close")
+        self.rpc_client.call("request_close")
 
     def _begin_tick(self):
-        self.__rpc_client.call("begin_tick")
+        self.rpc_client.call("begin_tick")
 
     def _tick(self):
-        self.__rpc_client.call("tick")
+        self.rpc_client.call("tick")
 
     def _end_tick(self):
-        self.__rpc_client.call("end_tick")
+        self.rpc_client.call("end_tick")
