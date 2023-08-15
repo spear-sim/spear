@@ -5,7 +5,7 @@
 __version__ = "0.3.0"
 
 from spear.config import get_config
-from spear.communicator import Communicator
+from spear.simulation_controller import SimulationController
 from spear.env import Env
 from spear.navmesh import NavMesh
 from spear.scene import Scene

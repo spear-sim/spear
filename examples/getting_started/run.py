@@ -32,20 +32,20 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
-    # create communicator object
-    communicator = spear.Communicator(config)
+    # create SimulationController object
+    simulation_controller = spear.SimulationController(config)
 
     # create Env object
     if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
-        env = spear.Env(config, communicator.rpc_client)
+        env = spear.Env(config, simulation_controller)
     elif config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent":
-        env = OpenBotEnv(config, communicator.rpc_client)
+        env = OpenBotEnv(config, simulation_controller)
 
     # reset the simulation to get the first observation
     obs = env.reset()
 
     # create Scene object
-    scene = spear.Scene(config, communicator.rpc_client)
+    scene = spear.Scene(config, simulation_controller)
     spear.log()
     spear.log("All object names:")
     object_names = scene.get_all_object_names()
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         spear.log(name, object_rotation)
 
     env.close()
-    communicator.close()
+    simulation_controller.close()
     quit()
 
     if args.benchmark:
@@ -140,6 +140,6 @@ if __name__ == "__main__":
 
     # close the environment
     env.close()
-    communicator.close()
+    simulation_controller.close()
 
     spear.log("Done.")

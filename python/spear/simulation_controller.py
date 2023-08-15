@@ -10,7 +10,7 @@ from subprocess import Popen
 import sys
 import time
 
-class Communicator():
+class SimulationController():
     def __init__(self, config):
         
         self.__config = config
@@ -26,6 +26,27 @@ class Communicator():
         # the Unreal instance to close it. So we close the Unreal instance first and then close the client.
         self._request_close_unreal_instance()
         self._close_rpc_client()
+
+    def begin_tick(self):
+        self.rpc_client.call("begin_tick")
+
+    def tick(self):
+        self.rpc_client.call("tick")
+
+    def end_tick(self):
+        self.rpc_client.call("end_tick")
+
+    def get_byte_order(self):
+        unreal_instance_byte_order = self.rpc_client.call("get_byte_order")
+        rpc_client_byte_order = sys.byteorder
+        if unreal_instance_byte_order == rpc_client_byte_order:
+            return None
+        elif unreal_instance_byte_order == "little":
+            return "<"
+        elif unreal_instance_byte_order == "big":
+            return ">"
+        else:
+            assert False
 
     def _request_launch_unreal_instance(self):
 
@@ -234,9 +255,9 @@ class Communicator():
         # generally also want to do more than one tick to warm up various caches and rendering features
         # that leverage temporal coherence between frames.
         for i in range(1 + self.__config.SPEAR.NUM_EXTRA_WARMUP_TICKS):
-            self._begin_tick()
-            self._tick()
-            self._end_tick()
+            self.begin_tick()
+            self.tick()
+            self.end_tick()
 
         spear.log("Finished initializing Unreal instance.")
 
@@ -268,12 +289,3 @@ class Communicator():
 
     def _request_close(self):
         self.rpc_client.call("request_close")
-
-    def _begin_tick(self):
-        self.rpc_client.call("begin_tick")
-
-    def _tick(self):
-        self.rpc_client.call("tick")
-
-    def _end_tick(self):
-        self.rpc_client.call("end_tick")
