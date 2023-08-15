@@ -4,7 +4,7 @@
 
 #include "CoreUtils/Config.h"
 
-#include <CoreMinimal.h>
+#include <CoreMinimal.h> // TEXT
 #include <Misc/CommandLine.h>
 #include <Misc/Parse.h>
 

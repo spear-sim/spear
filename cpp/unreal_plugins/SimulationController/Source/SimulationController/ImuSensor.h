@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineBaseTypes.h>
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/EngineBaseTypes.h>      // ELevelTick
 #include <Math/Vector.h>
 
 class AActor;

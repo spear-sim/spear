@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h>
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"

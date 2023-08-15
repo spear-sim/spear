@@ -6,11 +6,13 @@
 
 #include <filesystem>
 #include <string>
-#include <utility>
+#include <utility> // std::forward
 
-#include <CoreGlobals.h>
+#include <boost/predef.h>             // BOOST_COMP_CLANG, BOOST_COMP_MSVC
+#include <boost/current_function.hpp> // BOOST_CURRENT_FUNCTION
 
-#include <boost/current_function.hpp>
+#include <CoreGlobals.h> // IsRunningCommandlet
+#include <CoreMinimal.h> // WITH_EDITOR
 
 #include "CoreUtils/Std.h"
 

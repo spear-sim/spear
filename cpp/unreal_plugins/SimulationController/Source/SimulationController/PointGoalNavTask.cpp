@@ -4,11 +4,12 @@
 
 #include "SimulationController/PointGoalNavTask.h"
 
-#include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineTypes.h>
+#include <random>  // std::minstd_rand
+#include <utility> // std::move
+
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
-#include <Engine/World.h>
+#include <Engine/World.h> // FActorSpawnParameters
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>

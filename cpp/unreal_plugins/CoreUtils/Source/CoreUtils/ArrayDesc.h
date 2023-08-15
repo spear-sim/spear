@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <cmath>
+#include <cmath> // std::nan
 #include <string>
 #include <vector>
 

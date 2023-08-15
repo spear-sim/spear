@@ -4,16 +4,14 @@
 
 #pragma once
 
+#include <cstring> // std::memcpy
 #include <map>
 #include <string>
 #include <vector>
 
-#include <Containers/Array.h>
-#include <Containers/UnrealString.h>
-#include <CoreMinimal.h>
-#include <EngineUtils.h>
+#include <CoreMinimal.h> // FName, FString::operator*, TArray, TCHAR, TCHAR_TO_UTF8, UTF8_TO_TCHAR
 #include <GameFramework/Actor.h>
-#include <UObject/NameTypes.h>
+#include <EngineUtils.h> // TActorIterator
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Std.h"

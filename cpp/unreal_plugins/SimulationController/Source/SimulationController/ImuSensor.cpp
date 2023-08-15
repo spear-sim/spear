@@ -5,9 +5,8 @@
 #include "SimulationController/ImuSensor.h"
 
 #include <Components/PrimitiveComponent.h>
-#include <Delegates/IDelegateInstance.h>
-#include <DrawDebugHelpers.h>
-#include <Engine/EngineBaseTypes.h>
+#include <DrawDebugHelpers.h>       // DrawDebugDirectionalArrow
+#include <Engine/EngineBaseTypes.h> // ELevelTick
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>

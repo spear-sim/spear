@@ -9,7 +9,7 @@
 #include <future>
 #include <mutex>
 #include <string>
-#include <utility>
+#include <utility> // std::forward, std::move
 
 #include "CoreUtils/Rpclib.h"
 #include "SimulationController/BoostAsio.h"

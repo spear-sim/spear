@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <CoreMinimal.h>
+#include <CoreMinimal.h> // GENERATED_BODY, UCLASS
 #include <ChaosVehicleWheel.h>
 
 #include "VehicleWheel.generated.h"

@@ -1,12 +1,10 @@
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright Epic Games, Inc. All Rights Reserved.
 //
 
 #pragma once
 
-#include <Containers/UnrealString.h>
-#include <CoreMinimal.h>
+#include <CoreMinimal.h> // FString, GENERATED_BODY, UCLASS, UFUNCTION
 #include <GameFramework/GameModeBase.h>
 
 #include "SpearSimGameMode.generated.h"

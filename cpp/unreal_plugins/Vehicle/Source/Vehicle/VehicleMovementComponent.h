@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include <CoreMinimal.h>
+#include <CoreMinimal.h> // GENERATED_BODY, UCLASS
 #include <ChaosWheeledVehicleMovementComponent.h>
 
 #include "VehicleMovementComponent.generated.h"

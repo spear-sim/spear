@@ -5,18 +5,19 @@
 #include "SimulationController/SimulationController.h"
 
 #include <atomic>
-#include <future>
+#include <future> // std::promise
 #include <map>
-#include <memory>
+#include <memory> // std::make_unique, std::unique_ptr
 #include <string>
 #include <vector>
 
-#include <Engine/Engine.h>
-#include <Engine/World.h>
-#include <GameFramework/GameModeBase.h>
+#include <CoreMinimal.h>           // TEXT
+#include <Engine/Engine.h>         // GEngine
+#include <Engine/World.h>          // UWorld
 #include <Kismet/GameplayStatics.h>
+#include <Misc/App.h>
 #include <Misc/CoreDelegates.h>
-#include <Modules/ModuleManager.h>
+#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 #include <PhysicsEngine/PhysicsSettings.h>
 
 #include "CoreUtils/ArrayDesc.h"
@@ -50,7 +51,6 @@ enum class FrameState
 void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CommonModuleRules")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("Vehicle")));
 

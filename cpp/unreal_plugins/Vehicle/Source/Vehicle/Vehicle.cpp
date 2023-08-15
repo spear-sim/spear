@@ -4,6 +4,9 @@
 
 #include "Vehicle/Vehicle.h"
 
+#include <CoreMinimal.h>           // TEXT
+#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
+
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Log.h"
 

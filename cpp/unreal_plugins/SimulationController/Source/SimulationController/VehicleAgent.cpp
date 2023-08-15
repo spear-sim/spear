@@ -4,20 +4,19 @@
 
 #include "SimulationController/VehicleAgent.h"
 
-#include <limits>
+#include <limits>  // std::numeric_limits
 #include <map>
-#include <memory>
+#include <memory>  // std::make_unique
 #include <string>
+#include <utility> // std::move
 #include <vector>
 
-#include <Camera/CameraComponent.h>
-#include <Components/BoxComponent.h>
-#include <Components/PrimitiveComponent.h>
-#include <Components/SceneCaptureComponent2D.h>
-#include <Components/StaticMeshComponent.h>
-#include <Engine/World.h>
-#include <EngineUtils.h>
+#include <Camera/CameraComponent.h>  // UCameraComponent::AspectRatio, UCameraComponent::FieldOfView
+#include <Components/BoxComponent.h> // UBoxComponent, UPrimitiveComponent
+#include <Engine/World.h>            // FActorSpawnParameters
 #include <GameFramework/Actor.h>
+#include <Math/Rotator.h>
+#include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -32,8 +31,6 @@
 
 VehicleAgent::VehicleAgent(UWorld* world)
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
     std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_MODE");
@@ -54,10 +51,10 @@ VehicleAgent::VehicleAgent(UWorld* world)
     } else {
         SP_ASSERT(false);
     }
-    FActorSpawnParameters actor_spawn_params;
-    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
-    actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    vehicle_pawn_ = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_params);
+    FActorSpawnParameters actor_spawn_parameters;
+    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
+    actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    vehicle_pawn_ = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_parameters);
     SP_ASSERT(vehicle_pawn_);
 
     vehicle_pawn_->camera_component_->FieldOfView =
@@ -146,7 +143,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {6};
-        observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^2] g_x, g_y, g_z in [rad/s]
+        observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^2], g_x, g_y, g_z in [rad/s]
     }
 
     if (Std::contains(observation_components, "location")) {
@@ -155,7 +152,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {3};
-        observation_space["location"] = std::move(array_desc); // location (X, Y, Z) in [cms] of the agent relative to the world frame.
+        observation_space["location"] = std::move(array_desc); // location (X, Y, Z) in [cm] of the agent relative to the world frame
     }
 
     if (Std::contains(observation_components, "rotation")) {
@@ -164,7 +161,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {3};
-        observation_space["rotation"] = std::move(array_desc); // rotation (Pitch, Yaw, Roll) in [degs] of the agent relative to the world frame.
+        observation_space["rotation"] = std::move(array_desc); // rotation (Pitch, Yaw, Roll) in [deg] of the agent relative to the world frame
     }
 
     if (Std::contains(observation_components, "wheel_rotation_speeds")) {
@@ -173,7 +170,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {4};
-        observation_space["wheel_rotation_speeds"] = std::move(array_desc); // FL, FR, RL, RR, in [rad/s]
+        observation_space["wheel_rotation_speeds"] = std::move(array_desc); // FL, FR, RL, RR in [rad/s]
     }
 
     observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
@@ -191,15 +188,11 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_brake_torques")) {
-        UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
-        SP_ASSERT(vehicle_movement_component);
-
         std::vector<double> brake_torques = Std::reinterpretAs<double>(action.at("set_brake_torques"));
-
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(0), 0);
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(1), 1);
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(2), 2);
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(3), 3);
+        vehicle_pawn_->vehicle_movement_component_->SetBrakeTorque(brake_torques.at(0), 0);
+        vehicle_pawn_->vehicle_movement_component_->SetBrakeTorque(brake_torques.at(1), 1);
+        vehicle_pawn_->vehicle_movement_component_->SetBrakeTorque(brake_torques.at(2), 2);
+        vehicle_pawn_->vehicle_movement_component_->SetBrakeTorque(brake_torques.at(3), 3);
     }
 
     if (Std::contains(action_components, "set_drive_torques")) {
@@ -209,22 +202,17 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
         //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosWheeledVehicleMovementComponent.cpp
         // This file also contains a bunch of useful functions such as SetBrakeTorque or SetSteerAngle.
         // Please take a look if you want to modify the way the simulated vehicle is being controlled.
-        UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
-        SP_ASSERT(vehicle_movement_component);
-
         std::vector<double> drive_torques = Std::reinterpretAs<double>(action.at("set_drive_torques"));
-
-        vehicle_movement_component->SetDriveTorque(drive_torques.at(0), 0);
-        vehicle_movement_component->SetDriveTorque(drive_torques.at(1), 1);
-        vehicle_movement_component->SetDriveTorque(drive_torques.at(2), 2);
-        vehicle_movement_component->SetDriveTorque(drive_torques.at(3), 3);
+        vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(0), 0);
+        vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(1), 1);
+        vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(2), 2);
+        vehicle_pawn_->vehicle_movement_component_->SetDriveTorque(drive_torques.at(3), 3);
     }
 }
 
 std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "imu")) {
@@ -248,9 +236,7 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
     }
 
     if (Std::contains(observation_components, "wheel_rotation_speeds")) {
-        UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
-        SP_ASSERT(vehicle_movement_component);
-        observation["wheel_rotation_speeds"] = Std::reinterpretAs<uint8_t>(vehicle_movement_component->getWheelRotationSpeeds());
+        observation["wheel_rotation_speeds"] = Std::reinterpretAs<uint8_t>(vehicle_pawn_->vehicle_movement_component_->getWheelRotationSpeeds());
     }
 
     observation.merge(camera_sensor_->getObservation(observation_components));

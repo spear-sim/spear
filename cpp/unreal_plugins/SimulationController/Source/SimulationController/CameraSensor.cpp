@@ -4,24 +4,19 @@
 
 #include "SimulationController/CameraSensor.h"
 
-#include <limits>
+#include <limits>  // std::numeric_limits
 #include <map>
 #include <string>
-#include <utility>
+#include <utility> // std::move
 #include <vector>
 
-#include <boost/predef.h>
+#include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
-#include <Containers/Array.h>
-#include <Engine/EngineTypes.h>
 #include <Engine/TextureRenderTarget2D.h>
-#include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Materials/MaterialInstanceDynamic.h>
-#include <TextureResource.h>
-#include <UObject/UObjectGlobals.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"

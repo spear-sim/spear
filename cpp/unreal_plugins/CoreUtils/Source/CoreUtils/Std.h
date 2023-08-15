@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cstring>
-#include <map>
+#include <algorithm> // std::find
+#include <cstring>   // std::memcpy
+#include <iterator>  // std::distance
 #include <string>
-#include <utility>
+#include <utility>   // std::forward
 #include <vector>
 
-#include <boost/tokenizer.hpp>
+#include <boost/tokenizer.hpp> // boost::char_separator
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/BoostLexicalCast.h"

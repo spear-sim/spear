@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <CoreMinimal.h>
+#include <CoreMinimal.h> // DECLARE_MULTICAST_DELEGATE_FourParams, GENERATED_BODY, UCLASS, UFUNCTION
 #include <Components/ActorComponent.h>
 #include <GameFramework/Actor.h>
 #include <Math/Vector.h>

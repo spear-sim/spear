@@ -7,7 +7,7 @@
 #include <string>
 
 #include <Camera/CameraActor.h>
-#include <Engine/World.h>
+#include <Engine/World.h> // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <GameFramework/PlayerController.h>
 #include <Math/Rotator.h>

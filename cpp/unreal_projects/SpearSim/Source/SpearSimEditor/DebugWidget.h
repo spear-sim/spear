@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include <Containers/UnrealString.h>
-#include <CoreMinimal.h>
+#include <CoreMinimal.h> // FString, GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 #include <GameFramework/Actor.h>
 
 #include "DebugWidget.generated.h"
@@ -27,8 +26,8 @@ public:
     void saveConfig();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void printDummyString();
+    void printDebugString();
 
-    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Dummy String")
-    FString dummy_string_;
+    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Debug string")
+    FString debug_string_;
 };

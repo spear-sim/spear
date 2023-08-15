@@ -5,12 +5,12 @@
 #pragma once
 
 #include <map>
-#include <memory>
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineBaseTypes.h>
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/EngineBaseTypes.h>      // ELevelTick
 #include <Math/Rotator.h>
 
 #include "CoreUtils/ArrayDesc.h"

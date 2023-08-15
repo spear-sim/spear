@@ -10,9 +10,11 @@
 #include <Animation/AnimInstance.h>
 #include <Camera/CameraComponent.h>
 #include <Components/BoxComponent.h>
-#include <Components/SkeletalMeshComponent.h>
-#include <Engine/CollisionProfile.h>
+#include <CoreMinimal.h>            // TEXT
+#include <Engine/SkeletalMesh.h>
 #include <UObject/ConstructorHelpers.h>
+#include <UObject/UObjectGlobals.h> // FObjectInitializer
+#include <WheeledVehiclePawn.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
@@ -31,6 +33,10 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     if (!Config::s_initialized_) {
         return;
     }
+
+    // We need a dynamic cast here because of the indirect way that our UVehicleMovementComponent class is specified.
+    vehicle_movement_component_ = dynamic_cast<UVehicleMovementComponent*>(GetVehicleMovementComponent());
+    SP_ASSERT(vehicle_movement_component_);
 
     ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*Unreal::toFString(Config::get<std::string>("VEHICLE.VEHICLE_PAWN.SKELETAL_MESH")));
     SP_ASSERT(skeletal_mesh.Succeeded());
@@ -69,7 +75,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
 
     // Setup IMU sensor
     imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("imu_component"));
-    ASSERT(imu_component_);
+    SP_ASSERT(imu_component_);
 
     FVector imu_location(
         Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.LOCATION_X"),

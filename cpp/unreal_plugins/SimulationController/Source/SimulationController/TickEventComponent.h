@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <CoreMinimal.h>
+#include <CoreMinimal.h>            // DECLARE_MULTICAST_DELEGATE_TwoParams
 #include <Components/ActorComponent.h>
-#include <Engine/EngineBaseTypes.h>
+#include <Engine/EngineBaseTypes.h> // ELevelTick
 
 #include "CoreUtils/Log.h"
 

@@ -4,15 +4,15 @@
 
 #include "SimulationController/ImitationLearningTask.h"
 
-#include <fstream>
+#include <fstream> // std::ifstream
+#include <limits>  // std::numeric_limits
 #include <map>
-#include <string>
+#include <string>  // std::getline, std::stod
+#include <utility> // std::move
 #include <vector>
 
 #include <Components/SceneComponent.h>
-#include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineTypes.h>
-#include <Engine/World.h>
+#include <Engine/World.h> // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
@@ -23,6 +23,8 @@
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/ActorHitEventComponent.h"
+
+struct FHitResult;
 
 ImitationLearningTask::ImitationLearningTask(UWorld* world)
 {
@@ -39,7 +41,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     parent_actor_ = world->SpawnActor<AActor>();
     SP_ASSERT(parent_actor_);
 
-    // Create UActorHitEvent but don't subscribe to any actors yet
+    // Create UActorHitEventComponent but don't subscribe to any actors yet
     actor_hit_event_component_ = NewObject<UActorHitEventComponent>(parent_actor_);
     SP_ASSERT(actor_hit_event_component_);
     actor_hit_event_component_->RegisterComponent();

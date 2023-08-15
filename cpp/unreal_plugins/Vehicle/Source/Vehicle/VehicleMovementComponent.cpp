@@ -6,6 +6,8 @@
 
 #include <vector>
 
+#include <ChaosWheeledVehicleMovementComponent.h>
+
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
 #include "Vehicle/VehicleWheel.h"
