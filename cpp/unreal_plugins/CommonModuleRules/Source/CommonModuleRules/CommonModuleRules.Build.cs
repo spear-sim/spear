@@ -33,7 +33,7 @@ public class CommonModuleRules : ModuleRules
         //     ... > CoreUtils/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
         bEnableUndefinedIdentifierWarnings = false;
 
-        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", "RenderCore", "RHI"});
+        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", "RenderCore", "RHI", "XmlParser"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.
