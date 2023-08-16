@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-
+#include <PhysicsEngine/PhysicsConstraintComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Editor/UnrealEdEngine.h>
 #include <GameFramework/Actor.h>
@@ -36,20 +36,190 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
 
     std::vector<std::string> cmd_list = Std::tokenize(cmd_str, " ");
 
-    std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
-    std::map<AActor*, UStaticMeshComponent*> mesh_actor_ref_map;
-
-    for (auto& element: all_actors_name_ref_map) {
+    if (cmd_list.at(0) == "print") {
+        SP_LOG(cmd_list.at(1));
+        return true;
+    } 
+    else if (cmd_list.at(0) == "printAllStaticMeshComponents") {
         
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+        TArray<UStaticMeshComponent*> sm_comps;
+        for (auto& element: all_actors_name_ref_map) {
+            element.second->GetComponents<UStaticMeshComponent*>(sm_comps);
+            SP_LOG(element.first, "......");
+            for (auto& comp : sm_comps) {
+                SP_LOG("    ", Unreal::toStdString(comp->GetName()));
+            }
+        }
+        return true;
     }
+    else if (cmd_list.at(0) == "printAllPhysicsConstraintComponents") {
 
-    if (cmd_list.at(0) == "setObjectLocation") {
-        SP_ASSERT(cmd_list.size() == 5);
-        SP_ASSERT(all_actors_name_ref_map.count(cmd_list.at(1)));
-
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+        TArray<UPhysicsConstraintComponent*> sm_comps;
+        for (auto& element : all_actors_name_ref_map) {
+            element.second->GetComponents<UPhysicsConstraintComponent*>(sm_comps);
+            SP_LOG(element.first, "......");
+            for (auto& comp : sm_comps) {
+                SP_LOG("    ", Unreal::toStdString(comp->GetName()));
+            }
+        }
+        return true;
+    }
+    else if (cmd_list.at(0) == "getActorLocation") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
         
-    }
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
 
+            FVector location = all_actors_name_ref_map.at(cmd_list.at(1))->GetActorLocation(); // returns the location of the root component of this AActor
+
+            SP_LOG("actor ", cmd_list.at(1), " location is ", location.X, " ,", location.Y, ", ", location.Z);
+            
+            TArray<UStaticMeshComponent*> sm_comps;
+            all_actors_name_ref_map.at(cmd_list.at(1))->GetComponents<UStaticMeshComponent*>(sm_comps);
+            for (auto& comp : sm_comps) {
+                location = comp->GetComponentLocation();
+                SP_LOG("    ", Unreal::toStdString(comp->GetName()), " location is ", location.X, " ,", location.Y, ", ", location.Z);
+            }
+        }
+
+        return true;
+    }
+    else if (cmd_list.at(0) == "getActorRotation") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+
+            FRotator rotation = all_actors_name_ref_map.at(cmd_list.at(1))->GetActorRotation(); // returns the rotation of the root component of this AActor
+
+            SP_LOG("actor ", cmd_list.at(1), " rotation is ", rotation.Pitch, " ,", rotation.Yaw, ", ", rotation.Roll);
+
+            TArray<UStaticMeshComponent*> sm_comps;
+            all_actors_name_ref_map.at(cmd_list.at(1))->GetComponents<UStaticMeshComponent*>(sm_comps);
+            for (auto& comp : sm_comps) {
+                rotation = comp->GetComponentRotation();
+                SP_LOG("    ", Unreal::toStdString(comp->GetName()), " rotation is ", rotation.Pitch, " ,", rotation.Yaw, ", ", rotation.Roll);
+            }
+        }
+
+        return true;
+    }
+    else if (cmd_list.at(0) == "setActorLocation") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+            FVector location = { std::stof(cmd_list.at(2)), std::stof(cmd_list.at(3)), std::stof(cmd_list.at(4)) };
+            bool sweep = false;
+            FHitResult* hit_result = nullptr;
+            all_actors_name_ref_map.at(cmd_list.at(1))->SetActorLocation(location, sweep, hit_result, ETeleportType::TeleportPhysics);
+        }
+
+        return true;
+    }
+    else if (cmd_list.at(0) == "setActorRotation") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+            FRotator rotation = { std::stof(cmd_list.at(2)), std::stof(cmd_list.at(3)), std::stof(cmd_list.at(4)) };
+            bool sweep = false;
+            FHitResult* hit_result = nullptr;
+            all_actors_name_ref_map.at(cmd_list.at(1))->SetActorRotation(rotation, ETeleportType::TeleportPhysics);
+        }
+
+        return true;
+    }
+    else if (cmd_list.at(0) == "setComponentLocation") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+            
+            TArray<UStaticMeshComponent*> sm_comps;
+            all_actors_name_ref_map.at(cmd_list.at(1))->GetComponents<UStaticMeshComponent*>(sm_comps);
+
+            std::map<std::string, UStaticMeshComponent*> all_comps_name_ref_map;
+            for (auto& comp : sm_comps) {
+                all_comps_name_ref_map[Unreal::toStdString(comp->GetName())] = comp;
+            }
+
+            if (all_comps_name_ref_map.at(cmd_list.at(2))) {
+                FVector location = { std::stof(cmd_list.at(3)), std::stof(cmd_list.at(4)), std::stof(cmd_list.at(5)) };
+                bool sweep = false;
+                FHitResult* hit_result = nullptr;
+                all_comps_name_ref_map.at(cmd_list.at(2))->SetWorldLocation(location, sweep, hit_result, ETeleportType::TeleportPhysics);
+            }
+        }
+
+        return true;
+    }
+    else if (cmd_list.at(0) == "setComponentRotation") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+
+            TArray<UStaticMeshComponent*> sm_comps;
+            all_actors_name_ref_map.at(cmd_list.at(1))->GetComponents<UStaticMeshComponent*>(sm_comps);
+
+            std::map<std::string, UStaticMeshComponent*> all_comps_name_ref_map;
+            for (auto& comp : sm_comps) {
+                all_comps_name_ref_map[Unreal::toStdString(comp->GetName())] = comp;
+            }
+
+            if (all_comps_name_ref_map.at(cmd_list.at(2))) {
+                FRotator rotation = { std::stof(cmd_list.at(3)), std::stof(cmd_list.at(4)), std::stof(cmd_list.at(5)) };
+                bool sweep = false;
+                FHitResult* hit_result = nullptr;
+                all_comps_name_ref_map.at(cmd_list.at(2))->SetWorldRotation(rotation, sweep, hit_result, ETeleportType::TeleportPhysics);
+            }
+        }
+
+        return true;
+    }
+    else if (cmd_list.at(0) == "setPhysicsConstraintLocation") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+
+            TArray<UPhysicsConstraintComponent*> pc_comps;
+            all_actors_name_ref_map.at(cmd_list.at(1))->GetComponents<UPhysicsConstraintComponent*>(pc_comps);
+
+            std::map<std::string, UPhysicsConstraintComponent*> all_comps_name_ref_map;
+            for (auto& comp : pc_comps) {
+                all_comps_name_ref_map[Unreal::toStdString(comp->GetName())] = comp;
+            }
+
+            if (all_comps_name_ref_map.at(cmd_list.at(2))) {
+                FVector location = { std::stof(cmd_list.at(3)), std::stof(cmd_list.at(4)), std::stof(cmd_list.at(5)) };
+                bool sweep = false;
+                FHitResult* hit_result = nullptr;
+                all_comps_name_ref_map.at(cmd_list.at(2))->SetWorldLocation(location, sweep, hit_result, ETeleportType::TeleportPhysics);
+            }
+        }
+
+        return true;
+    }
+    else if (cmd_list.at(0) == "setComponentRelativeLocation") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+
+            TArray<UStaticMeshComponent*> sm_comps;
+            all_actors_name_ref_map.at(cmd_list.at(1))->GetComponents<UStaticMeshComponent*>(sm_comps);
+
+            std::map<std::string, UStaticMeshComponent*> all_comps_name_ref_map;
+            for (auto& comp : sm_comps) {
+                all_comps_name_ref_map[Unreal::toStdString(comp->GetName())] = comp;
+            }
+
+            if (all_comps_name_ref_map.at(cmd_list.at(2))) {
+                FVector location = { std::stof(cmd_list.at(3)), std::stof(cmd_list.at(4)), std::stof(cmd_list.at(5)) };
+                bool sweep = false;
+                FHitResult* hit_result = nullptr;
+                all_comps_name_ref_map.at(cmd_list.at(2))->SetRelativeLocation(location, sweep, hit_result, ETeleportType::TeleportPhysics);
+            }
+        }
+
+        return true;
+    }
 
     return UUnrealEdEngine::Exec(world, cmd, output_device);
 }
