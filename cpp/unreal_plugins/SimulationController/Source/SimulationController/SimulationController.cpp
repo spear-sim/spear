@@ -50,12 +50,10 @@ enum class FrameState
 void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CommonModuleRules")));
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("Vehicle")));
-
-    // TODO: uncomment when we're ready to re-enable UrdfBot
-    // SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("CommonModuleRules")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("CoreUtils")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfRobot")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("Vehicle")));
 
     if (!Config::s_initialized_) {
         return;
@@ -103,8 +101,8 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
     if (world_is_ready) {
 
-        std::string scene_id = Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID");
-        std::string map_id = Config::get<std::string>("SIMULATION_CONTROLLER.MAP_ID");
+        auto scene_id = Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID");
+        auto map_id = Config::get<std::string>("SIMULATION_CONTROLLER.MAP_ID");
 
         std::string desired_world_path_name;
         std::string desired_level_name;
@@ -155,6 +153,12 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         }
     }
 }
+
+#include <Math/Rotator.h>
+#include <Math/Vector.h>
+
+#include "UrdfRobot/UrdfRobotPawn.h"
+#include "UrdfRobot/UrdfRobotComponent.h"
 
 void SimulationController::worldBeginPlayEventHandler()
 {

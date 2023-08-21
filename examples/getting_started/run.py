@@ -51,7 +51,7 @@ if __name__ == "__main__":
         if config.SIMULATION_CONTROLLER.AGENT == "SphereAgent":
             obs, reward, done, info = env.step(action={
                 "add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64),
-                "add_rotation": np.array([0.0, 1.0, 0.0])
+                "add_to_rotation": np.array([0.0, 1.0, 0.0])
             })
             if not args.benchmark:
                 spear.log("SphereAgent:")

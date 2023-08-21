@@ -2,239 +2,184 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfBot/UrdfJointComponent.h"
+#include "UrdfRobot/UrdfJointComponent.h"
 
-#include <iostream>
+#include <string>
+#include <vector>
 
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
+#include <Math/Vector.h>
 
 #include "CoreUtils/Assert.h"
-#include "UrdfBot/UrdfLinkComponent.h"
-#include "UrdfBot/UrdfParser.h"
+#include "CoreUtils/Log.h"
+#include "CoreUtils/Unreal.h"
+#include "UrdfRobot/UrdfLinkComponent.h"
+#include "UrdfRobot/UrdfParser.h"
 
-void UUrdfJointComponent::BeginPlay()
+UUrdfJointComponent::UUrdfJointComponent()
 {
-    UPhysicsConstraintComponent::BeginPlay();
-
-    // SetConstrainedComponents(...) in constructor functions properly yet leads to warning message:
-    //     Warning: Constraint in '/Script/UrdfBot.Default__UrdfBotPawn:AUrdfBotPawn::urdf_robot_component_.UrdfJointComponent_0'
-    //     attempting to create a joint between objects that are both static.  No joint created.
-    SetConstrainedComponents(parent_link_component_, NAME_None, child_link_component_, NAME_None);
+    SP_LOG_CURRENT_FUNCTION();
 }
 
-void UUrdfJointComponent::initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
+UUrdfJointComponent::~UUrdfJointComponent()
 {
-    ASSERT(joint_desc);
-    ASSERT(parent_link_component);
-    ASSERT(child_link_component);
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+void UUrdfJointComponent::initialize(const UrdfJointDesc* const joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
+{
+    SP_ASSERT(joint_desc);
+    SP_ASSERT(parent_link_component);
+    SP_ASSERT(child_link_component);
+
+    double m_to_cm = 100.0;
 
     joint_type_ = joint_desc->type_;
-    control_type_ = joint_desc->control_type_;
-
     parent_link_component_ = parent_link_component;
     child_link_component_ = child_link_component;
 
-    ConstraintInstance.ProfileInstance.ConeLimit.Swing1Motion = EAngularConstraintMotion::ACM_Locked;
-    ConstraintInstance.ProfileInstance.ConeLimit.Swing2Motion = EAngularConstraintMotion::ACM_Locked;
-    ConstraintInstance.ProfileInstance.TwistLimit.TwistMotion = EAngularConstraintMotion::ACM_Locked;
-    ConstraintInstance.ProfileInstance.AngularDrive.AngularDriveMode = EAngularDriveMode::TwistAndSwing;
-    ConstraintInstance.ProfileInstance.ConeLimit.bSoftConstraint = true;
-    ConstraintInstance.ProfileInstance.TwistLimit.bSoftConstraint = false;
-    ConstraintInstance.UpdateAngularLimit();
+    FVector location = FVector({joint_desc->xyz_.at(0), joint_desc->xyz_.at(1), joint_desc->xyz_.at(2)}) * m_to_cm; // m to cm
+    FRotator rotation = FMath::RadiansToDegrees(FRotator({joint_desc->rpy_.at(1), joint_desc->rpy_.at(2), joint_desc->rpy_.at(0)})); // rpy to pyr, rad to deg
 
-    float m_to_cm = 100.0f;
+    SetRelativeLocation(location);
+    SetRelativeRotation(rotation);
 
-    FTransform link_offset_ = joint_desc->parent_link_desc_->visual_descs_[0].origin_;
-    SetRelativeLocation((joint_desc->origin_.GetLocation() - link_offset_.GetLocation()) * m_to_cm);
-    SetRelativeRotation(FRotationMatrix::MakeFromX(joint_desc->origin_.GetRotation().Rotator().RotateVector(joint_desc->axis_)).Rotator());
+    //    // component 1, bone name 1, component 2, bone name 2
+    //    SetConstrainedComponents(parent_link_component_, NAME_None, child_link_component_, NAME_None);
 
-    switch (joint_desc->type_) {
-        case UrdfJointType::Revolute: {
-            float twist_limit_angle = FMath::RadiansToDegrees(joint_desc->upper_ - joint_desc->lower_) * 0.5f;
-            float spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
-            float damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
-            float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm;
+    //ConstraintInstance.ProfileInstance.ConeLimit.Swing1Motion = EAngularConstraintMotion::ACM_Locked;
+    //ConstraintInstance.ProfileInstance.ConeLimit.Swing2Motion = EAngularConstraintMotion::ACM_Locked;
+    //ConstraintInstance.ProfileInstance.TwistLimit.TwistMotion = EAngularConstraintMotion::ACM_Locked;
+    //ConstraintInstance.ProfileInstance.AngularDrive.AngularDriveMode = EAngularDriveMode::TwistAndSwing;
+    //ConstraintInstance.ProfileInstance.ConeLimit.bSoftConstraint = true;
+    //ConstraintInstance.ProfileInstance.TwistLimit.bSoftConstraint = false;
+    //ConstraintInstance.UpdateAngularLimit();
 
-            // use twist degree for single angular freedom with best PhysX optimization
-            ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, twist_limit_angle);
-            ConstraintInstance.SetOrientationDriveTwistAndSwing(true, false);
-            ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(true, false);
-            ConstraintInstance.SetAngularDriveParams(spring, damping, force_limit);
-            break;
-        }
-        case UrdfJointType::Continuous: {
-            float spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
-            float damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
-            float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm;
+    //float m_to_cm = 100.0f;
 
-            // use twist degree for single angular freedom with best PhysX optimization
-            ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Free, 0.0f);
-            ConstraintInstance.SetOrientationDriveTwistAndSwing(true, false);
-            ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(true, false);
-            ConstraintInstance.SetAngularDriveParams(spring, damping, force_limit);
-            break;
-        }
-        case UrdfJointType::Prismatic: {
-            float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm;
-            float spring = joint_desc->spring_ * m_to_cm * m_to_cm;
-            float damping = joint_desc->damping_ * m_to_cm * m_to_cm;
-            float force_limit = joint_desc->effort_ * m_to_cm * m_to_cm;
+    //FTransform link_offset_ = joint_desc->parent_link_desc_->visual_descs_[0].origin_;
+    //SetRelativeLocation((joint_desc->origin_.GetLocation() - link_offset_.GetLocation()) * m_to_cm);
+    //SetRelativeRotation(FRotationMatrix::MakeFromX(joint_desc->origin_.GetRotation().Rotator().RotateVector(joint_desc->axis_)).Rotator());
 
-            ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
-            ConstraintInstance.SetLinearDriveParams(spring, damping, force_limit);
-            ConstraintInstance.SetLinearPositionDrive(true, false, false);
-            break;
-        }
-        case UrdfJointType::Fixed: {
-            break;
-        }
-        case UrdfJointType::Floating: {
-            ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
-            ConstraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
-            ConstraintInstance.SetLinearZLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
-            ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Free, 0.0f);
-            ConstraintInstance.SetAngularSwing1Limit(EAngularConstraintMotion::ACM_Free, 0.0f);
-            ConstraintInstance.SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Free, 0.0f);
-            break;
-        }
-        case UrdfJointType::Planar: {
-            float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm;
+    //switch (joint_desc->type_) {
+    //    case UrdfJointType::Revolute: {
+    //        float twist_limit_angle = FMath::RadiansToDegrees(joint_desc->upper_ - joint_desc->lower_) * 0.5f;
+    //        float spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
+    //        float damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
+    //        float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm;
 
-            ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
-            ConstraintInstance.SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
-            break;
-        }
-        default: {
-            ASSERT(false);
-            break;
-        }
-    }
+    //        // use twist degree for single angular freedom with best PhysX optimization
+    //        ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, twist_limit_angle);
+    //        ConstraintInstance.SetOrientationDriveTwistAndSwing(true, false);
+    //        ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(true, false);
+    //        ConstraintInstance.SetAngularDriveParams(spring, damping, force_limit);
+    //        break;
+    //    }
+    //    case UrdfJointType::Continuous: {
+    //        float spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm;
+    //        float damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm;
+    //        float force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm;
 
-    SetDisableCollision(true);
+    //        // use twist degree for single angular freedom with best PhysX optimization
+    //        ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Free, 0.0f);
+    //        ConstraintInstance.SetOrientationDriveTwistAndSwing(true, false);
+    //        ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(true, false);
+    //        ConstraintInstance.SetAngularDriveParams(spring, damping, force_limit);
+    //        break;
+    //    }
+    //    case UrdfJointType::Prismatic:
+    //        float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm;
+    //        float spring = joint_desc->spring_ * m_to_cm * m_to_cm;
+    //        float damping = joint_desc->damping_ * m_to_cm * m_to_cm;
+    //        float force_limit = joint_desc->effort_ * m_to_cm * m_to_cm;
+
+    //        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
+    //        ConstraintInstance.SetLinearDriveParams(spring, damping, force_limit);
+    //        ConstraintInstance.SetLinearPositionDrive(true, false, false);
+    //        break;
+
+    //    case UrdfJointType::Fixed:
+    //        break;
+
+    //    case UrdfJointType::Floating:
+    //        SP_ASSERT(false);
+    //        break;
+
+    //    case UrdfJointType::Planar:
+    //        SP_ASSERT(false);
+    //        break;
+
+    //    default:
+    //        SP_ASSERT(false);
+    //        break;
+    //}
+
+    //SetDisableCollision(true);
 }
 
-void UUrdfJointComponent::addAction(float action)
+void UUrdfJointComponent::applyAction(const std::string& action_component_name, const std::vector<double>& action_component_data)
 {
-    float m_to_cm = 100.0f;
+    switch (joint_type_) {
+        case UrdfJointType::Continuous:
+        case UrdfJointType::Revolute:
+            if (action_component_name == "set_angular_orientation_target") {
+                SetAngularOrientationTarget({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)});
 
-    switch (control_type_) {
-        case UrdfJointControlType::Position:
-            switch (joint_type_) {
-                case UrdfJointType::Continuous:
-                case UrdfJointType::Revolute:
-                    SetAngularOrientationTarget(
-                        FRotator(0, 0, ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Roll + FMath::RadiansToDegrees(action)));
-                    break;
-                case UrdfJointType::Prismatic:
-                    SetLinearPositionTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X + m_to_cm * action, 0, 0));
-                    break;
-                default:
-                    ASSERT(false);
-                    break;
+            } else if (action_component_name == "add_to_angular_orientation_target") {
+                SetAngularOrientationTarget(
+                    ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Add(
+                        action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)));
+
+            } else if (action_component_name == "set_angular_velocity_target") {
+                SetAngularVelocityTarget({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)});
+
+            } else if (action_component_name == "add_to_angular_velocity_target") {
+                SetAngularVelocityTarget({
+                    action_component_data.at(0) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X,
+                    action_component_data.at(1) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.Y,
+                    action_component_data.at(2) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.Z});
+
+            } else if (action_component_name == "add_torque_in_radians") {
+                FVector torque = GetComponentTransform().GetRotation().RotateVector({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)});
+                child_link_component_->AddTorqueInRadians(torque);
+                parent_link_component_->AddTorqueInRadians(-torque);
+
+            } else {
+                SP_ASSERT(false);
             }
             break;
-        case UrdfJointControlType::Velocity:
-            switch (joint_type_) {
-                case UrdfJointType::Continuous:
-                case UrdfJointType::Revolute:
-                    SetAngularVelocityTarget(
-                        FVector(ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X + FMath::RadiansToDegrees(action), 0, 0));
-                    break;
-                case UrdfJointType::Prismatic:
-                    SetLinearVelocityTarget(FVector(ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X + m_to_cm * action, 0, 0));
-                    break;
-                default:
-                    ASSERT(false);
-                    break;
+
+        case UrdfJointType::Prismatic:
+            if (action_component_name == "set_linear_position_target") {
+                SetLinearPositionTarget({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)});
+
+            } else if (action_component_name == "add_to_linear_position_target") {
+                SetLinearPositionTarget({
+                    action_component_data.at(0) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X,
+                    action_component_data.at(1) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.Y,
+                    action_component_data.at(2) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.Z});
+
+            } else if (action_component_name == "set_linear_velocity_target") {
+                SetLinearVelocityTarget({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)});
+
+            } else if (action_component_name == "add_to_linear_velocity_target") {
+                SetLinearVelocityTarget({
+                    action_component_data.at(0) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X,
+                    action_component_data.at(1) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.Y,
+                    action_component_data.at(2) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.Z});
+
+            } else if (action_component_name == "add_force") {
+                FVector force = GetComponentTransform().GetRotation().RotateVector({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)});
+                child_link_component_->AddForce(force);
+                parent_link_component_->AddForce(-force);
+
+            } else {
+                SP_ASSERT(false);
             }
             break;
-        case UrdfJointControlType::Torque:
-            switch (joint_type_) {
-                case UrdfJointType::Continuous:
-                case UrdfJointType::Revolute: {
-                    // action in unit [N * m], force in unit [N*cm]
-                    FVector torque = action * m_to_cm * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
-                    child_link_component_->AddTorqueInRadians(torque);
-                    parent_link_component_->AddTorqueInRadians(-torque);
-                    break;
-                }
-                case UrdfJointType::Prismatic: {
-                    // action in unit [N], force in unit [N*cm/m]
-                    FVector force = action * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
-                    child_link_component_->AddForce(force);
-                    parent_link_component_->AddForce(-force);
-                    break;
-                }
-                default: {
-                    ASSERT(false);
-                    break;
-                }
-            }
-            break;
+
         default:
-            ASSERT(false);
-            break;
-    }
-}
-
-void UUrdfJointComponent::applyAction(float action)
-{
-    float m_to_cm = 100.0f;
-
-    switch (control_type_) {
-        case UrdfJointControlType::Position:
-            switch (joint_type_) {
-                case UrdfJointType::Continuous:
-                case UrdfJointType::Revolute:
-                    SetAngularOrientationTarget(FRotator(0, 0, FMath::RadiansToDegrees(action)));
-                    break;
-                case UrdfJointType::Prismatic:
-                    SetLinearPositionTarget(FVector(m_to_cm * action, 0, 0));
-                    break;
-                default:
-                    ASSERT(false);
-                    break;
-            }
-            break;
-        case UrdfJointControlType::Velocity:
-            switch (joint_type_) {
-                case UrdfJointType::Continuous:
-                case UrdfJointType::Revolute:
-                    SetAngularVelocityTarget(FVector(FMath::RadiansToDegrees(action), 0, 0));
-                    break;
-                case UrdfJointType::Prismatic:
-                    SetLinearVelocityTarget(FVector(m_to_cm * action, 0, 0));
-                    break;
-                default:
-                    ASSERT(false);
-                    break;
-            }
-            break;
-        case UrdfJointControlType::Torque:
-            switch (joint_type_) {
-                case UrdfJointType::Continuous:
-                case UrdfJointType::Revolute: {
-                    // action in unit [N * m], force in unit [N*cm]
-                    FVector torque = action * m_to_cm * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
-                    child_link_component_->AddTorqueInRadians(torque);
-                    parent_link_component_->AddTorqueInRadians(-torque);
-                    break;
-                }
-                case UrdfJointType::Prismatic: {
-                    // action in unit [N], force in unit [N*cm/m]
-                    FVector force = action * m_to_cm * GetComponentTransform().GetRotation().RotateVector(FVector::XAxisVector);
-                    child_link_component_->AddForce(force);
-                    parent_link_component_->AddForce(-force);
-                    break;
-                }
-                default: {
-                    ASSERT(false);
-                    break;
-                }
-            }
-            break;
-        default:
-            ASSERT(false);
+            SP_ASSERT(false);
             break;
     }
 }

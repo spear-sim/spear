@@ -19,6 +19,6 @@ public:
     UVehicleMovementComponent();
     ~UVehicleMovementComponent();
 
-    // Provides access to wheel rotation speeds in rad/s
+    // provides access to wheel rotation speeds in rad/s
     std::vector<double> getWheelRotationSpeeds() const;
 };

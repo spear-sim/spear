@@ -14,9 +14,7 @@
 #include "CoreUtils/Unreal.h"
 #include "SpearSim/SpearSimSpectatorPawn.h"
 
-class FObjectInitializer;
-
-ASpearSimGameMode::ASpearSimGameMode(const FObjectInitializer& object_initializer) : AGameModeBase(object_initializer)
+ASpearSimGameMode::ASpearSimGameMode()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -36,5 +34,5 @@ void ASpearSimGameMode::spearAddOnScreenDebugMessage(float display_time, FString
     uint64 key              = -1;
     FColor color            = FColor::Yellow;
     std::string message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(message);
-    GEngine->AddOnScreenDebugMessage(key, display_time, color, *Unreal::toFString(message_str));
+    GEngine->AddOnScreenDebugMessage(key, display_time, color, Unreal::toFString(message_str));
 }

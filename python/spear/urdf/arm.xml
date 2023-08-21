@@ -2,14 +2,10 @@
     <!--
         URDF_FILE: "arm.xml"
         KEYBOARD_ACTIONS:
-          One:
-            ADD_ACTION: { "joint_0": 9.8 }
-          Two:
-            ADD_ACTION: { "joint_0": -10 }
-          Three:
-            ADD_ACTION: { "joint_0": 0.1 }
-          Four:
-            ADD_ACTION: { "joint_0": -0.1 }
+          One:   {"joint.joint_a.add_to_angular_orientation_target": [1.23, 4.56, 7.89], "joint.joint_b.set_angular_orientation_target": [1.23, 4.56, 7.89]}
+          Two:   {"joint.joint_c.add_torque_in_radians": [1.23, 4.56, 7.89]}
+          Three: {"joint.joint_d.add_force": [1.23, 4.56, 7.89]}
+
     -->
     <!--
         <mujoco>
@@ -22,7 +18,7 @@
     <link name="base_link">
         <inertial>
             <origin rpy="0 0 0" xyz="2 2 2"/>
-            <mass value="100"/>
+            <mass value="1"/>
             <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
         </inertial>
         <visual>

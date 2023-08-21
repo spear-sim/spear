@@ -13,7 +13,6 @@
 
 #include "ActorHitEventComponent.generated.h"
 
-class FObjectInitializer;
 struct FHitResult;
 
 DECLARE_MULTICAST_DELEGATE_FourParams(FActorHitDelegate, AActor*, AActor*, FVector, const FHitResult&);
@@ -23,7 +22,7 @@ class UActorHitEventComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    UActorHitEventComponent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
+    UActorHitEventComponent()
     {
         SP_LOG_CURRENT_FUNCTION();
     }

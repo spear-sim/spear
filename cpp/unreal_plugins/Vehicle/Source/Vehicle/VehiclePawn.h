@@ -11,6 +11,7 @@
 
 #include "VehiclePawn.generated.h"
 
+class FObjectInitializer;
 class UBoxComponent;
 class UCameraComponent;
 

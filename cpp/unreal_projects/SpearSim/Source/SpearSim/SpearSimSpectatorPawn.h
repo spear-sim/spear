@@ -9,7 +9,6 @@
 
 #include "SpearSimSpectatorPawn.generated.h"
 
-class FObjectInitializer;
 class UInputComponent;
 
 UCLASS()
@@ -17,7 +16,7 @@ class ASpearSimSpectatorPawn : public ASpectatorPawn
 {
     GENERATED_BODY()
 public:
-    ASpearSimSpectatorPawn(const FObjectInitializer& object_initializer);
+    ASpearSimSpectatorPawn();
     ~ASpearSimSpectatorPawn();
 
     void SetupPlayerInputComponent(UInputComponent* input_component) override;

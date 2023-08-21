@@ -48,28 +48,29 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     GetMesh()->BodyInstance.bSimulatePhysics = true;
 
     // Setup camera
-    camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("camera_component"));
+    camera_component_ = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("camera_component"));
     SP_ASSERT(camera_component_);
 
     FVector camera_location(
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_X"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Y"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Z"));
+        Config::get<double>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_X"),
+        Config::get<double>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Y"),
+        Config::get<double>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Z"));
 
     FRotator camera_rotation(
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_PITCH"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_YAW"),
-        Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_ROLL"));
+        Config::get<double>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_PITCH"),
+        Config::get<double>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_YAW"),
+        Config::get<double>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ROTATION_ROLL"));
 
     camera_component_->SetRelativeLocationAndRotation(camera_location, camera_rotation);
     camera_component_->SetupAttachment(GetMesh());
     camera_component_->bUsePawnControlRotation = false;
     camera_component_->FieldOfView = Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.FOV");
     camera_component_->AspectRatio = Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ASPECT_RATIO");
+    // no need to call RegisterComponent() in the constructor
 
     // Setup IMU sensor
-    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("imu_component"));
-    ASSERT(imu_component_);
+    imu_component_ = CreateDefaultSubobject<UBoxComponent>(Unreal::toFName("imu_component"));
+    SP_ASSERT(imu_component_);
 
     FVector imu_location(
         Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.LOCATION_X"),
@@ -83,9 +84,12 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
 
     imu_component_->SetRelativeLocationAndRotation(imu_location, imu_rotation);
     imu_component_->SetupAttachment(GetMesh());
+    // no need to call RegisterComponent() in the constructor
 }
 
 AVehiclePawn::~AVehiclePawn()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    // Pawns don't need to be cleaned up explicitly.
 }

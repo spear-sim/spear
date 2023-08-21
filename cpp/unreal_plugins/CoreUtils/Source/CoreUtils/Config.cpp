@@ -16,7 +16,7 @@ void Config::initialize()
     FString config_file;
 
     // if a config file is provided via the command-line, then load it
-    if (FParse::Value(FCommandLine::Get(), TEXT("config_file="), config_file)) {
+    if (FParse::Value(FCommandLine::Get(), *Unreal::toFString("config_file="), config_file)) {
         s_config_ = YAML::LoadFile(Unreal::toStdString(config_file));
         s_initialized_ = true;
     } else {

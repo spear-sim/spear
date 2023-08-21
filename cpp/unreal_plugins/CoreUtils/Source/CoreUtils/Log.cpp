@@ -28,6 +28,7 @@ void Log::logStdout(const std::string& str)
 
 void Log::logUnreal(const std::string& str)
 {
+    // We need to use TEXT() instead of *Unreal::toFString() because the * operator doesn't return a const pointer
     UE_LOG(LogSpear, Log, TEXT("%s"), *Unreal::toFString(str));
 }
 

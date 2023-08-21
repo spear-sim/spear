@@ -33,7 +33,9 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     SP_ASSERT(goal_actor_);
 
     auto scene_component = NewObject<USceneComponent>(goal_actor_);
+    SP_ASSERT(scene_component);
     scene_component->SetMobility(EComponentMobility::Movable);
+    scene_component->RegisterComponent();
     goal_actor_->SetRootComponent(scene_component);
 
     parent_actor_ = world->SpawnActor<AActor>();
@@ -185,9 +187,9 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 void ImitationLearningTask::reset()
 {
     FVector offset_location = {
-        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_X"),
-        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Y"),
-        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Z")
+        Config::get<double>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_X"),
+        Config::get<double>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Y"),
+        Config::get<double>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Z")
     };
     FVector agent_initial_location = agent_initial_locations_.at(episode_index_) + offset_location;
 

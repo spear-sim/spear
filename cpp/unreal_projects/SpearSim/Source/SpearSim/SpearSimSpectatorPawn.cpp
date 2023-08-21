@@ -12,9 +12,7 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Unreal.h"
 
-class FObjectInitializer;
-
-ASpearSimSpectatorPawn::ASpearSimSpectatorPawn(const FObjectInitializer& object_initializer) : ASpectatorPawn(object_initializer)
+ASpearSimSpectatorPawn::ASpearSimSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 

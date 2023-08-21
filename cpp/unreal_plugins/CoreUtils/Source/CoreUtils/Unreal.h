@@ -337,7 +337,7 @@ public:
     static std::map<std::string, TActor*> getActorsAsMap(const std::vector<TActor*>& actors)
     {
         std::map<std::string, TActor*> actor_map;
-        for (auto& a : actors) {
+        for (auto a : actors) {
             SP_ASSERT(a);
             std::string name = toStdString(a->GetName());
             SP_ASSERT(!Std::containsKey(actor_map, name)); // There shouldn't be two actors with the same name

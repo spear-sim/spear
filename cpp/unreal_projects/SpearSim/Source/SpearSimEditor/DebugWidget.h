@@ -10,15 +10,16 @@
 
 #include "DebugWidget.generated.h"
 
-class FObjectInitializer;
-
 UCLASS(Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
 class ADebugWidget : public AActor
 {
     GENERATED_BODY()
 public: 
-    ADebugWidget(const FObjectInitializer& object_initializer);
+    ADebugWidget();
     ~ADebugWidget();
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void spawnUrdfRobotPawn();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void loadConfig();
@@ -28,6 +29,9 @@ public:
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void printDummyString();
+
+    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="URDF File")
+    FString urdf_file_;
 
     UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Dummy String")
     FString dummy_string_;

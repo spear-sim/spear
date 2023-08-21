@@ -12,7 +12,6 @@
 
 #include "TickEventComponent.generated.h"
 
-class FObjectInitializer;
 struct FActorComponentTickFunction;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FTickDelegate, float, enum ELevelTick);
@@ -22,7 +21,7 @@ class UTickEventComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    UTickEventComponent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
+    UTickEventComponent()
     {
         SP_LOG_CURRENT_FUNCTION();
 

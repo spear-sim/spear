@@ -38,7 +38,7 @@ public:
     template <typename TArg, class... TArgs>
     static std::string toString(const TArg& front, TArgs&&... back)
     {
-        return boost::lexical_cast<std::string>(front) + toString(std::forward<TArgs>(back)...);
+        return toString(front) + toString(std::forward<TArgs>(back)...);
     }
 
     static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)
@@ -79,14 +79,13 @@ public:
 
         if (index < container.size()) {
             return index;
-        }
-        else {
+        } else {
             return -1;
         }
     }
 
     //
-    // Reinterpet a vector as a vector of a different type
+    // Reinterpet a vector of a given type as a vector of a different type
     //
 
     template <typename TDest, typename TSrc>

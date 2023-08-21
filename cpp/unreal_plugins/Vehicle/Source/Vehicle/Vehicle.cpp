@@ -6,11 +6,12 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Log.h"
+#include "CoreUtils/Unreal.h"
 
 void Vehicle::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("CoreUtils")));
 }
 
 void Vehicle::ShutdownModule()

@@ -176,29 +176,29 @@ void PointGoalNavTask::reset()
     FVector agent_position;
     FVector goal_position;
 
-    while ((agent_position - goal_position).Size() < Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.SPAWN_DISTANCE_THRESHOLD")) {
+    while ((agent_position - goal_position).Size() < Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.SPAWN_DISTANCE_THRESHOLD")) {
 
         std::uniform_real_distribution distribution_agent_position_x(
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_X_MIN"),
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_X_MAX"));
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_X_MIN"),
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_X_MAX"));
         std::uniform_real_distribution distribution_agent_position_y(
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Y_MIN"),
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Y_MAX"));
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Y_MIN"),
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Y_MAX"));
         std::uniform_real_distribution distribution_goal_position_x(
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_X_MIN"),
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_X_MAX"));
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_X_MIN"),
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_X_MAX"));
         std::uniform_real_distribution distribution_goal_position_y(
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Y_MIN"),
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Y_MAX"));
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Y_MIN"),
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Y_MAX"));
 
         agent_position = FVector(
             distribution_agent_position_x(minstd_rand_),
             distribution_agent_position_y(minstd_rand_),
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Z"));
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Z"));
         goal_position = FVector(
             distribution_goal_position_x(minstd_rand_),
             distribution_goal_position_y(minstd_rand_),
-            Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Z"));
+            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Z"));
     }
 
     bool sweep = false;

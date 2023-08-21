@@ -11,16 +11,17 @@
 #include <CoreMinimal.h>
 #include <GameFramework/Pawn.h>
 
-#include "UrdfBotPawn.generated.h"
+#include "UrdfRobotPawn.generated.h"
 
 class UCameraComponent;
+class UInputComponent;
+
 class UUrdfRobotComponent;
 
-struct KeyboardAction
+struct KeyboardActionDesc
 {
     std::string axis_;
-    std::map<std::string, float> apply_action_;
-    std::map<std::string, float> add_action_;
+    std::map<std::string, std::vector<double>> action_;
 };
 
 UCLASS()
@@ -28,16 +29,26 @@ class URDFROBOT_API AUrdfRobotPawn : public APawn
 {
     GENERATED_BODY()
 public:
-    AUrdfRobotPawn(const FObjectInitializer& object_initializer);
+    AUrdfRobotPawn();
     ~AUrdfRobotPawn();
 
     // APawn interface
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
     void Tick(float delta_time) override;
 
+    // Debug interface. If the config system is initialized, the component hierarchy will be
+    // initialized via the constructor, and there is no need to call this function. But this
+    // this function is useful in situations where config system is not initialized, e.g.,
+    // when running the Unreal Editor. For example, this function could be called via a UFUNCTION
+    // (backed by a button in the editor) to spawn a AUrdfRobotPawn and then initialize it using
+    // the URDF file provided as input. See DebugWidget for details.
+    void initialize(const std::string& urdf_file);
+
+    // use UPROPERTY to enable inspecting and editing in the Unreal Editor
+    UPROPERTY(EditAnywhere, DisplayName = "URDF Robot Component")
     UUrdfRobotComponent* urdf_robot_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
 
 private:
-    std::vector<KeyboardAction> keyboard_actions_;
+    std::vector<KeyboardActionDesc> keyboard_action_descs_;
 };

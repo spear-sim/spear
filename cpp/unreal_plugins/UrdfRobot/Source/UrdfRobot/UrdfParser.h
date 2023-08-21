@@ -21,7 +21,7 @@ enum class UrdfGeometryType
     Box,
     Sphere,
     Cylinder,
-    Mesh,
+    Mesh
 };
 
 enum class UrdfJointType
@@ -32,33 +32,41 @@ enum class UrdfJointType
     Prismatic,
     Fixed,
     Floating,
-    Planar,
+    Planar
 };
 
+// custom SPEAR data
 enum class UrdfJointControlType
 {
     Invalid,
     Position,
     Velocity,
-    Torque,
+    Torque
 };
 
 struct UrdfGeometryDesc
 {
-    UrdfGeometryType type_ = UrdfGeometryType::Invalid;
-    FVector size_          = FVector::ZeroVector;
-    double radius_         = 0.0f;
-    double length_         = 0.0f;
+    UrdfGeometryType type_    = UrdfGeometryType::Invalid;
+    std::vector<double> size_ = {1.0, 1.0, 1.0};
+    double radius_            = 0.0;
+    double length_            = 0.0;
     std::string filename_;
-    double scale_          = 1.0f;
+    double scale_             = 1.0;
+
+    // custom SPEAR data
+    std::string unreal_static_mesh_;
+    double unreal_static_mesh_scale_ = 1.0;
 };
 
 struct UrdfMaterialDesc
 {
     std::string name_;
 
-    FVector4 color_ = FVector4(1.0, 1.0, 1.0, 1.0);
+    std::vector<double> color_ = {1.0, 1.0, 1.0, 1.0};
     std::string texture_;
+
+    // custom SPEAR data
+    std::string unreal_material_;
 
     // derived data
     bool is_reference_               = false;
@@ -67,18 +75,23 @@ struct UrdfMaterialDesc
 
 struct UrdfInertialDesc
 {
-    FVector xyz_     = FVector::ZeroVector;
-    FVector rpy_     = FVector::ZeroVector;
-    double mass_     = 0.0f;
-    FMatrix inertia_ = FMatrix(EForceInit::ForceInitToZero);
+    std::vector<double> xyz_ = {0.0, 0.0, 0.0};
+    std::vector<double> rpy_ = {0.0, 0.0, 0.0};
+    double mass_             = 0.0;
+    double ixx_              = 0.0;
+    double iyy_              = 0.0;
+    double izz_              = 0.0;
+    double ixy_              = 0.0;
+    double ixz_              = 0.0;
+    double iyz_              = 0.0;
 };
 
 struct UrdfVisualDesc
 {
     std::string name_;
 
-    FVector xyz_ = FVector::ZeroVector;
-    FVector rpy_ = FVector::ZeroVector;
+    std::vector<double> xyz_ = {0.0, 0.0, 0.0};
+    std::vector<double> rpy_ = {0.0, 0.0, 0.0};
 
     UrdfGeometryDesc geometry_desc_;
     UrdfMaterialDesc material_desc_;
@@ -91,20 +104,10 @@ struct UrdfCollisionDesc
 {
     std::string name_;
 
-    FVector xyz_ = FVector::ZeroVector;
-    FVector rpy_ = FVector::ZeroVector;
+    std::vector<double> xyz_ = {0.0, 0.0, 0.0};
+    std::vector<double> rpy_ = {0.0, 0.0, 0.0};
 
     UrdfGeometryDesc geometry_desc_;
-};
-
-struct UrdfSpearUnrealAssetDesc
-{
-    std::string name_;
-
-    FVector xyz_ = FVector::ZeroVector;
-    FVector rpy_ = FVector::ZeroVector;
-
-    std::string path_;
 };
 
 struct UrdfJointDesc;
@@ -116,14 +119,15 @@ struct UrdfLinkDesc
     std::vector<UrdfVisualDesc> visual_descs_;
     std::vector<UrdfCollisionDesc> collision_descs_;
 
-    // custom SPEAR data
-    std::vector<UrdfSpearUnrealAssetDesc> spear_unreal_asset_descs_;
+    //// custom SPEAR data
+    //std::vector<UrdfSpearLinkDesc> spear_link_descs_;
 
     // derived data
-    bool has_parent_                  = false;
-    UrdfJointDesc* parent_joint_desc_ = nullptr;
+    bool has_parent_         = false;
     std::vector<UrdfLinkDesc*> child_link_descs_;
     std::vector<UrdfJointDesc*> child_joint_descs_;
+    std::vector<double> xyz_ = {0.0, 0.0, 0.0};
+    std::vector<double> rpy_ = {0.0, 0.0, 0.0};
 };
 
 struct UrdfJointDesc
@@ -131,45 +135,42 @@ struct UrdfJointDesc
     std::string name_;
     UrdfJointType type_;
 
-    FVector xyz_ = FVector::ZeroVector;
-    FVector rpy_ = FVector::ZeroVector;
+    std::vector<double> xyz_ = {0.0, 0.0, 0.0};
+    std::vector<double> rpy_ = {0.0, 0.0, 0.0};
 
     std::string parent_;
     std::string child_;
 
-    FVector axis_ = FVector(1.0, 0.0, 0.0);
+    std::vector<double> axis_ = {1.0, 0.0, 0.0};
 
     // calibration
-    double rising_  = 0.0f;
-    double falling_ = 0.0f;
+    double rising_  = 0.0;
+    double falling_ = 0.0;
 
     // dynamics
-    double damping_  = 0.0f;
-    double friction_ = 0.0f;
+    double damping_  = 0.0;
+    double friction_ = 0.0;
 
     // limit
-    double lower_    = 0.0f;
-    double upper_    = 0.0f;
-    double effort_   = 0.0f;
-    double velocity_ = 0.0f;
+    double lower_    = 0.0;
+    double upper_    = 0.0;
+    double effort_   = 0.0;
+    double velocity_ = 0.0;
 
     // mimic
     std::string joint_;
-    double multiplier_ = 1.0f;
-    double offset_     = 0.0f;
+    double multiplier_ = 1.0;
+    double offset_     = 0.0;
 
     // safety_controller
-    double soft_lower_limit_ = 0.0f;
-    double soft_upper_limit_ = 0.0f;
-    double k_position_       = 0.0f;
-    double k_velocity_       = 0.0f;
+    double soft_lower_limit_ = 0.0;
+    double soft_upper_limit_ = 0.0;
+    double k_position_       = 0.0;
+    double k_velocity_       = 0.0;
 
     // custom SPEAR data
     UrdfJointControlType control_type_ = UrdfJointControlType::Invalid;
-    double spring_ = 0.0f;
-
-    // derived data
-    UrdfLinkDesc* parent_link_desc_ = nullptr;
+    double spring_ = 0.0;
 };
 
 struct UrdfRobotDesc
@@ -184,7 +185,7 @@ struct UrdfRobotDesc
     UrdfLinkDesc* root_link_desc_ = nullptr;
 };
 
-class UrdfParser
+class URDFROBOT_API UrdfParser
 {
 public:
     static UrdfRobotDesc parse(const std::string& filename);
@@ -197,14 +198,13 @@ private:
     static UrdfInertialDesc parseInertialNode(FXmlNode* inertial_node);
     static UrdfVisualDesc parseVisualNode(FXmlNode* visual_node);
     static UrdfCollisionDesc parseCollisionNode(FXmlNode* collision_node);
-    static UrdfSpearUnrealAssetDesc parseSpearUnrealAssetNode(FXmlNode* spear_unreal_asset_node);
     static UrdfGeometryDesc parseGeometryNode(FXmlNode* geometry_node);
     static UrdfMaterialDesc parseMaterialNode(FXmlNode* material_node);
 
+    // get attribute from a node, assert if the attribute is required and not found
     static std::string getAttribute(FXmlNode* node, const std::string& attribute, bool required);
 
-    // parse basic parameters
-    static FVector parseVector(const std::string& str, const FVector& default_value = FVector::ZeroVector);
-    static FVector4 parseVector4(const std::string& str, const FVector4& default_value = FVector4(0.0, 0.0, 0.0, 0.0));
+    // parse strings into numerical types
+    static std::vector<double> parseVector(const std::string& str, const std::vector<double>& default_value = {});
     static double parseDouble(const std::string& str, double default_value = 0.0);
 };

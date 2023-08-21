@@ -71,12 +71,10 @@ SphereAgent::SphereAgent(UWorld* world)
 
     // load mesh and material
     UStaticMesh* sphere_mesh = LoadObject<UStaticMesh>(
-        nullptr,
-        *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.STATIC_MESH")));
+        nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.STATIC_MESH")));
     SP_ASSERT(sphere_mesh);
     UMaterial* sphere_material = LoadObject<UMaterial>(
-        nullptr,
-        *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MATERIAL")));
+        nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MATERIAL")));
     SP_ASSERT(sphere_material);
 
     // configure static mesh component
@@ -181,13 +179,13 @@ std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
         action_space["add_force"] = std::move(array_desc);
     }
 
-    if (Std::contains(action_components, "add_rotation")) {
+    if (Std::contains(action_components, "add_to_rotation")) {
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
-        action_space["add_rotation"] = std::move(array_desc);
+        action_space["add_to_rotation"] = std::move(array_desc);
     }
 
     return action_space;
@@ -243,14 +241,14 @@ void SphereAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "add_force")) {
-        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("add_force"));
-        FVector force = rotation_.RotateVector(FVector(component_data.at(0), component_data.at(1), component_data.at(2)));
+        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("add_force"));
+        FVector force = rotation_.RotateVector({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)});
         static_mesh_component_->AddForce(force);
     }
 
-    if (Std::contains(action_components, "add_rotation")) {
-        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("add_rotation"));
-        rotation_.Add(component_data.at(0), component_data.at(1), component_data.at(2));
+    if (Std::contains(action_components, "add_to_rotation")) {
+        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("add_to_rotation"));
+        rotation_.Add(action_component_data.at(0), action_component_data.at(1), action_component_data.at(2));
     }
 }
 

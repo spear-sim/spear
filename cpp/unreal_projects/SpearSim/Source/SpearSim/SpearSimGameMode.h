@@ -19,14 +19,12 @@
 // the game is running, either in standalone mode or in play-in-editor mode. To respond to console commands when only the editor is running, we
 // need to use SpearSimEditorUnrealEdEngine::Exec(...).
 
-class FObjectInitializer;
-
 UCLASS()
 class ASpearSimGameMode : public AGameModeBase
 {
     GENERATED_BODY()
 public:
-    ASpearSimGameMode(const FObjectInitializer& object_initializer);
+    ASpearSimGameMode();
     ~ASpearSimGameMode();
 
     // Call this function by typing the following into the Unreal console: spearAddOnScreenDebugMessage 10.0 Hello World

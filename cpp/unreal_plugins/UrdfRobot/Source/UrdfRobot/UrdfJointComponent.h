@@ -4,32 +4,33 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <CoreMinimal.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 
 #include "UrdfJointComponent.generated.h"
 
 class UUrdfLinkComponent;
-enum class UrdfJointControlType;
 enum class UrdfJointType;
 struct UrdfJointDesc;
 
 UCLASS()
-class URDFBOT_API UUrdfJointComponent : public UPhysicsConstraintComponent
+class URDFROBOT_API UUrdfJointComponent : public UPhysicsConstraintComponent
 {
     GENERATED_BODY()
 public:
-    // UPhysicsConstraintComponent interface
-    void BeginPlay() override;
+    UUrdfJointComponent();
+    ~UUrdfJointComponent();
 
-    void initializeComponent(UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
+    // This function configures all of the joint's properties, including configuring the joint to operate on the input parent link and child link.
+    void initialize(const UrdfJointDesc* const joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
 
-    void applyAction(float action);
-    void addAction(float action);
-
-    UUrdfLinkComponent* parent_link_component_;
-    UUrdfLinkComponent* child_link_component_;
+    // Apply a named action, e.g., "add_torque", to the joint using a given vector of input data.
+    void applyAction(const std::string& action_component_name, const std::vector<double>& action_component_data);
 
     UrdfJointType joint_type_;
-    UrdfJointControlType control_type_;
+    UUrdfLinkComponent* parent_link_component_;
+    UUrdfLinkComponent* child_link_component_;
 };

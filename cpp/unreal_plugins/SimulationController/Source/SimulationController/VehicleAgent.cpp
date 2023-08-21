@@ -36,7 +36,7 @@ VehicleAgent::VehicleAgent(UWorld* world)
 
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
-    std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_MODE");
+    auto spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_MODE");
     if (spawn_mode == "specify_existing_actor") {
         AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ACTOR_NAME"));
         SP_ASSERT(spawn_actor);
@@ -44,13 +44,13 @@ VehicleAgent::VehicleAgent(UWorld* world)
         spawn_rotation = spawn_actor->GetActorRotation();
     } else if (spawn_mode == "specify_pose") {
         spawn_location = FVector(
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_X"),
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Y"),
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Z"));
+            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_X"),
+            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Y"),
+            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Z"));
         spawn_rotation = FRotator(
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_PITCH"),
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_YAW"),
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_ROLL"));
+            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_PITCH"),
+            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_YAW"),
+            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_ROLL"));
     } else {
         SP_ASSERT(false);
     }
@@ -146,7 +146,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {6};
-        observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^2] g_x, g_y, g_z in [rad/s]
+        observation_space["imu"] = std::move(array_desc); // a_x, a_y, a_z in [cm/s^2], g_x, g_y, g_z in [rad/s]
     }
 
     if (Std::contains(observation_components, "location")) {
@@ -155,7 +155,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {3};
-        observation_space["location"] = std::move(array_desc); // location (X, Y, Z) in [cms] of the agent relative to the world frame.
+        observation_space["location"] = std::move(array_desc); // x, y, z in [cm] of the agent relative to the world frame
     }
 
     if (Std::contains(observation_components, "rotation")) {
@@ -164,7 +164,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {3};
-        observation_space["rotation"] = std::move(array_desc); // rotation (Pitch, Yaw, Roll) in [degs] of the agent relative to the world frame.
+        observation_space["rotation"] = std::move(array_desc); // pitch, yaw, roll in [deg] of the agent relative to the world frame
     }
 
     if (Std::contains(observation_components, "wheel_rotation_speeds")) {
@@ -173,7 +173,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {4};
-        observation_space["wheel_rotation_speeds"] = std::move(array_desc); // FL, FR, RL, RR, in [rad/s]
+        observation_space["wheel_rotation_speeds"] = std::move(array_desc); // front-left, front-right, rear-left, rear-right in [rad/s]
     }
 
     observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
@@ -194,12 +194,12 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
         UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
         SP_ASSERT(vehicle_movement_component);
 
-        std::vector<double> brake_torques = Std::reinterpretAs<double>(action.at("set_brake_torques"));
+        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_brake_torques"));
 
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(0), 0);
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(1), 1);
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(2), 2);
-        vehicle_movement_component->SetBrakeTorque(brake_torques.at(3), 3);
+        vehicle_movement_component->SetBrakeTorque(action_component_data.at(0), 0);
+        vehicle_movement_component->SetBrakeTorque(action_component_data.at(1), 1);
+        vehicle_movement_component->SetBrakeTorque(action_component_data.at(2), 2);
+        vehicle_movement_component->SetBrakeTorque(action_component_data.at(3), 3);
     }
 
     if (Std::contains(action_components, "set_drive_torques")) {
@@ -212,12 +212,12 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
         UVehicleMovementComponent* vehicle_movement_component = dynamic_cast<UVehicleMovementComponent*>(vehicle_pawn_->GetVehicleMovementComponent());
         SP_ASSERT(vehicle_movement_component);
 
-        std::vector<double> drive_torques = Std::reinterpretAs<double>(action.at("set_drive_torques"));
+        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_drive_torques"));
 
-        vehicle_movement_component->SetDriveTorque(drive_torques.at(0), 0);
-        vehicle_movement_component->SetDriveTorque(drive_torques.at(1), 1);
-        vehicle_movement_component->SetDriveTorque(drive_torques.at(2), 2);
-        vehicle_movement_component->SetDriveTorque(drive_torques.at(3), 3);
+        vehicle_movement_component->SetDriveTorque(action_component_data.at(0), 0);
+        vehicle_movement_component->SetDriveTorque(action_component_data.at(1), 1);
+        vehicle_movement_component->SetDriveTorque(action_component_data.at(2), 2);
+        vehicle_movement_component->SetDriveTorque(action_component_data.at(3), 3);
     }
 }
 
@@ -270,5 +270,5 @@ void VehicleAgent::reset()
 
 bool VehicleAgent::isReady() const
 {
-    return vehicle_pawn_->GetVelocity().Size() <= Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.IS_READY_VELOCITY_THRESHOLD");
+    return vehicle_pawn_->GetVelocity().Size() <= Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }

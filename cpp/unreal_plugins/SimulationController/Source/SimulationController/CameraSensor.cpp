@@ -120,7 +120,7 @@ CameraSensor::CameraSensor(
             render_pass_desc.scene_capture_component_->PostProcessSettings.LumenSurfaceCacheResolution           = 1.0f;
         } else {
             // TODO: turn off as many rendering features as possible for efficiency
-            UMaterial* material = LoadObject<UMaterial>(nullptr, *Unreal::toFString(RENDER_PASS_MATERIAL.at(render_pass_name)));
+            auto material = LoadObject<UMaterial>(nullptr, *Unreal::toFString(RENDER_PASS_MATERIAL.at(render_pass_name)));
             SP_ASSERT(material);
             render_pass_desc.scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, parent_actor_), 1.0f);
         }
