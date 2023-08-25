@@ -9,6 +9,7 @@
 #include <vector>
 
 class AActor;
+class USceneComponent;
 class UWorld;
 
 class Scene
@@ -18,17 +19,29 @@ public:
     ~Scene() = default;
 
     void findObjectReferences(UWorld* world);
-    void cleanUpObjectReferences();
+    void cleanUpObjectReferences();;
 
-    void setObjectLocations(std::map<std::string, std::vector<uint8_t>> object_locations);
-    void setObjectRotations(std::map<std::string, std::vector<uint8_t>> object_rotations);
+    std::vector<std::string> getAllActorNames();
+    std::map<std::string, std::vector<uint8_t>> getAllActorLocations();
+    std::map<std::string, std::vector<uint8_t>> getAllActorRotations();
+    std::vector<uint8_t> getActorLocations(std::vector<std::string> actor_names);
+    std::vector<uint8_t> getActorRotations(std::vector<std::string> actor_names);
+    std::map<std::string, std::vector<std::string>> getStaticMeshComponentsForActors(std::vector<std::string> actors);
+    std::map<std::string, std::vector<std::string>> getPhysicsConstraintComponentsForActors(std::vector<std::string> actors);
 
-    std::vector<std::string> getAllObjectNames();
-    std::vector<uint8_t> getObjectLocations(std::vector<std::string> object_names);
-    std::vector<uint8_t> getObjectRotations(std::vector<std::string> object_names);
-    std::map<std::string, std::vector<uint8_t>> getAllObjectLocations();
-    std::map<std::string, std::vector<uint8_t>> getAllObjectRotations();
+    std::vector<bool> isUsingAbsoluteLocation(std::vector<std::string> component_names);
+    std::vector<bool> isUsingAbsoluteRotation(std::vector<std::string> component_names);
+    std::vector<bool> isUsingAbsoluteScale(std::vector<std::string> component_names);
+
+    void SetAbolute(std::vector<std::string> component_names, std::vector<bool> blocations, std::vector<bool> brotations, std::vector<bool> bscales);
+    void setActorLocations(std::map<std::string, std::vector<uint8_t>> actor_locations);
+    void setActorRotations(std::map<std::string, std::vector<uint8_t>> actor_rotations);
+    void setComponentWorldLocations(std::map<std::string, std::vector<uint8_t>> component_locations);
+    void setComponentWorldRotations(std::map<std::string, std::vector<uint8_t>> component_rotations);
+    void setComponentRelativeLocations(std::map<std::string, std::vector<uint8_t>> component_locations);
+    void setComponentRelativeRotations(std::map<std::string, std::vector<uint8_t>> component_rotations);
 private:
     UWorld* world_ = nullptr;
-    std::map<std::string, AActor*> all_actors_name_ref_map_;
+    std::map<std::string, AActor*> actors_name_ref_map_;
+    std::map<std::string, USceneComponent*> scene_components_name_ref_map_;
 };

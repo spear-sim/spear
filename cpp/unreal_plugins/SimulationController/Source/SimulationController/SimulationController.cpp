@@ -499,46 +499,106 @@ void SimulationController::bindFunctionsToRpcServer()
         return nav_mesh_->getPaths(initial_points, goal_points);
     });
 
-    rpc_server_->bindSync("scene.set_object_locations", [this](std::map<std::string, std::vector<uint8_t>> object_locations) -> void {
+    rpc_server_->bindSync("scene.get_all_actor_names", [this]() -> std::vector<std::string> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(scene_);
-        scene_->setObjectLocations(object_locations);
+        return scene_->getAllActorNames();
+    });
+    
+    rpc_server_->bindSync("scene.get_all_actor_locations", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getAllActorLocations();
     });
 
-    rpc_server_->bindSync("scene.set_object_rotations", [this](std::map<std::string, std::vector<uint8_t>> object_rotations) -> void {
+    rpc_server_->bindSync("scene.get_all_actor_rotations", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(scene_);
-        scene_->setObjectRotations(object_rotations);
+        return scene_->getAllActorRotations();
     });
 
-    rpc_server_->bindSync("scene.get_all_object_names", [this]() -> std::vector<std::string> {
+    rpc_server_->bindSync("scene.get_actor_locations", [this](std::vector<std::string> actor_names) -> std::vector<std::uint8_t> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(scene_);
-        return scene_->getAllObjectNames();
+        return scene_->getActorLocations(actor_names);
     });
 
-    rpc_server_->bindSync("scene.get_object_locations", [this](std::vector<std::string> object_names) -> std::vector<std::uint8_t> {
+    rpc_server_->bindSync("scene.get_actor_rotations", [this](std::vector<std::string> actor_names) -> std::vector<std::uint8_t> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(scene_);
-        return scene_->getObjectLocations(object_names);
+        return scene_->getActorRotations(actor_names);
     });
 
-    rpc_server_->bindSync("scene.get_object_rotations", [this](std::vector<std::string> object_names) -> std::vector<std::uint8_t> {
+    rpc_server_->bindSync("scene.get_static_mesh_components_for_actors", [this](std::vector<std::string> actor_names) -> std::map<std::string, std::vector<std::string>> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(scene_);
-        return scene_->getObjectRotations(object_names);
+        return scene_->getStaticMeshComponentsForActors(actor_names);
     });
 
-    rpc_server_->bindSync("scene.get_all_object_locations", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+    rpc_server_->bindSync("scene.get_physics_constraint_components_for_actors", [this](std::vector<std::string> actor_names) -> std::map<std::string, std::vector<std::string>> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(scene_);
-        return scene_->getAllObjectLocations();
+        return scene_->getPhysicsConstraintComponentsForActors(actor_names);
     });
 
-    rpc_server_->bindSync("scene.get_all_object_rotations", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+    rpc_server_->bindSync("scene.is_using_absolute_location", [this](std::vector<std::string> object_names) -> std::vector<bool> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(scene_);
-        return scene_->getAllObjectRotations();
+        return scene_->isUsingAbsoluteLocation(object_names);
+    });
+
+    rpc_server_->bindSync("scene.is_using_absolute_rotation", [this](std::vector<std::string> object_names) -> std::vector<bool> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->isUsingAbsoluteRotation(object_names);
+    });
+
+    rpc_server_->bindSync("scene.is_using_absolute_scale", [this](std::vector<std::string> object_names) -> std::vector<bool> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->isUsingAbsoluteScale(object_names);
+    });
+
+    rpc_server_->bindSync("scene.set_absolute", [this](std::vector<std::string> object_names, std::vector<bool> blocations, std::vector<bool> brotations, std::vector<bool> bscales) -> void {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        scene_->SetAbolute(object_names, blocations, brotations, bscales);
+    });
+
+    rpc_server_->bindSync("scene.set_actor_locations", [this](std::map<std::string, std::vector<uint8_t>> actor_locations) -> void {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        scene_->setActorLocations(actor_locations);
+    });
+
+    rpc_server_->bindSync("scene.set_actor_rotations", [this](std::map<std::string, std::vector<uint8_t>> actor_rotations) -> void {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        scene_->setActorRotations(actor_rotations);
+    });
+
+    rpc_server_->bindSync("scene.set_component_world_locations", [this](std::map<std::string, std::vector<uint8_t>> component_locations) -> void {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        scene_->setComponentWorldLocations(component_locations);
+    });
+    
+    rpc_server_->bindSync("scene.set_component_world_rotations", [this](std::map<std::string, std::vector<uint8_t>> component_rotations) -> void {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        scene_->setComponentWorldRotations(component_rotations);
+    });
+
+    rpc_server_->bindSync("scene.set_component_relative_locations", [this](std::map<std::string, std::vector<uint8_t>> component_locations) -> void {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        scene_->setComponentRelativeLocations(component_locations);
+    });
+
+    rpc_server_->bindSync("scene.set_component_relative_rotations", [this](std::map<std::string, std::vector<uint8_t>> component_rotations) -> void {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        scene_->setComponentRelativeRotations(component_rotations);
     });
 }
 

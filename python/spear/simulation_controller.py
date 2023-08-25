@@ -13,7 +13,7 @@ import time
 class SimulationController():
     def __init__(self, config):
         
-        self.__config = config
+        self._config = config
         self.rpc_client: msgpackrpc.Client
 
         self._request_launch_unreal_instance()
@@ -50,37 +50,37 @@ class SimulationController():
 
     def _request_launch_unreal_instance(self):
 
-        if self.__config.SPEAR.LAUNCH_MODE == "running_instance":
+        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
             spear.log('SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance has already launched...')
             return
 
         spear.log("Launching Unreal instance...")
 
         # write temp file
-        temp_dir = os.path.realpath(os.path.join(self.__config.SPEAR.TEMP_DIR))
+        temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.TEMP_DIR))
         temp_config_file = os.path.realpath(os.path.join(temp_dir, "config.yaml"))
 
         spear.log("Writing temp config file: " + temp_config_file)
 
         os.makedirs(temp_dir, exist_ok=True)
         with open(temp_config_file, "w") as output:
-            self.__config.dump(stream=output, default_flow_style=False)
+            self._config.dump(stream=output, default_flow_style=False)
 
         # create a symlink to SPEAR.PAKS_DIR
-        if self.__config.SPEAR.LAUNCH_MODE == "standalone_executable" and self.__config.SPEAR.PAKS_DIR != "":
+        if self._config.SPEAR.LAUNCH_MODE == "standalone_executable" and self._config.SPEAR.PAKS_DIR != "":
 
-            assert os.path.exists(self.__config.SPEAR.STANDALONE_EXECUTABLE)
-            assert os.path.exists(self.__config.SPEAR.PAKS_DIR)
+            assert os.path.exists(self._config.SPEAR.STANDALONE_EXECUTABLE)
+            assert os.path.exists(self._config.SPEAR.PAKS_DIR)
 
             if sys.platform == "win32":
                 paks_dir = \
-                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self.__config.SPEAR.STANDALONE_EXECUTABLE)), "..", "..", "Content", "Paks"))
+                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.STANDALONE_EXECUTABLE)), "..", "..", "Content", "Paks"))
             elif sys.platform == "darwin":
                 paks_dir = \
-                    os.path.realpath(os.path.join(self.__config.SPEAR.STANDALONE_EXECUTABLE, "Contents", "UE", "SpearSim", "Content", "Paks"))
+                    os.path.realpath(os.path.join(self._config.SPEAR.STANDALONE_EXECUTABLE, "Contents", "UE", "SpearSim", "Content", "Paks"))
             elif sys.platform == "linux":
                 paks_dir = \
-                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self.__config.SPEAR.STANDALONE_EXECUTABLE)), "SpearSim", "Content", "Paks"))
+                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.STANDALONE_EXECUTABLE)), "SpearSim", "Content", "Paks"))
             else:
                 assert False
 
@@ -93,23 +93,23 @@ class SimulationController():
                 spear.log(f"File or directory or symlink exists, removing: {spear_paks_dir}")
                 spear.remove_path(spear_paks_dir)
 
-            spear.log(f"Creating symlink: {spear_paks_dir} -> {self.__config.SPEAR.PAKS_DIR}")
-            os.symlink(self.__config.SPEAR.PAKS_DIR, spear_paks_dir)
+            spear.log(f"Creating symlink: {spear_paks_dir} -> {self._config.SPEAR.PAKS_DIR}")
+            os.symlink(self._config.SPEAR.PAKS_DIR, spear_paks_dir)
 
         # provide additional control over which Vulkan devices are recognized by Unreal
-        if len(self.__config.SPEAR.VK_ICD_FILENAMES) > 0:
-            spear.log("Setting VK_ICD_FILENAMES environment variable: " + self.__config.SPEAR.VK_ICD_FILENAMES)
-            os.environ["VK_ICD_FILENAMES"] = self.__config.SPEAR.VK_ICD_FILENAMES
+        if len(self._config.SPEAR.VK_ICD_FILENAMES) > 0:
+            spear.log("Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.VK_ICD_FILENAMES)
+            os.environ["VK_ICD_FILENAMES"] = self._config.SPEAR.VK_ICD_FILENAMES
 
         # set up launch executable and command-line arguments
         launch_args = []
 
-        if self.__config.SPEAR.LAUNCH_MODE == "uproject":
-            launch_executable = self.__config.SPEAR.UNREAL_EDITOR_EXECUTABLE
-            launch_args.append(self.__config.SPEAR.UPROJECT)
+        if self._config.SPEAR.LAUNCH_MODE == "uproject":
+            launch_executable = self._config.SPEAR.UNREAL_EDITOR_EXECUTABLE
+            launch_args.append(self._config.SPEAR.UPROJECT)
             launch_args.append("-game") # launch the game using uncooked content
-        elif self.__config.SPEAR.LAUNCH_MODE == "standalone_executable":
-            launch_executable = self.__config.SPEAR.STANDALONE_EXECUTABLE
+        elif self._config.SPEAR.LAUNCH_MODE == "standalone_executable":
+            launch_executable = self._config.SPEAR.STANDALONE_EXECUTABLE
         else:
             assert False
 
@@ -133,24 +133,24 @@ class SimulationController():
         assert os.path.exists(launch_executable_internal)
 
         launch_args.append("-windowed")
-        launch_args.append("-resx={}".format(self.__config.SPEAR.WINDOW_RESOLUTION_X))
-        launch_args.append("-resy={}".format(self.__config.SPEAR.WINDOW_RESOLUTION_Y))
-        launch_args.append("-graphicsadapter={}".format(self.__config.SPEAR.GPU_ID))
+        launch_args.append("-resx={}".format(self._config.SPEAR.WINDOW_RESOLUTION_X))
+        launch_args.append("-resy={}".format(self._config.SPEAR.WINDOW_RESOLUTION_Y))
+        launch_args.append("-graphicsadapter={}".format(self._config.SPEAR.GPU_ID))
         launch_args.append("-nosound")
         # launch_args.append("-fileopenlog")         # generate a log of which files are opened in which order
         launch_args.append("-stdout")              # ensure log output is written to the terminal 
         launch_args.append("-fullstdoutlogoutput") # ensure log output is written to the terminal
         launch_args.append("-nologtimes")          # don't print timestamps next to log messages twice
 
-        if self.__config.SPEAR.RENDER_OFFSCREEN:
+        if self._config.SPEAR.RENDER_OFFSCREEN:
             launch_args.append("-renderoffscreen")
 
-        if self.__config.SPEAR.UNREAL_INTERNAL_LOG_FILE != "":
-            launch_args.append("-log={}".format(self.__config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
+        if self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE != "":
+            launch_args.append("-log={}".format(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
        
         launch_args.append("-config_file={}".format(temp_config_file))
 
-        for a in self.__config.SPEAR.CUSTOM_COMMAND_LINE_ARGUMENTS:
+        for a in self._config.SPEAR.CUSTOM_COMMAND_LINE_ARGUMENTS:
             launch_args.append("{}".format(a))
 
         cmd = [launch_executable_internal] + launch_args
@@ -159,7 +159,7 @@ class SimulationController():
         spear.log_no_prefix(" ".join(cmd))
 
         spear.log("Launching executable with the following config values:")
-        spear.log_no_prefix(self.__config)
+        spear.log_no_prefix(self._config)
 
         popen = Popen(cmd)
         self._process = psutil.Process(popen.pid)
@@ -175,7 +175,7 @@ class SimulationController():
 
     def _request_close_unreal_instance(self):
 
-        if self.__config.SPEAR.LAUNCH_MODE == "running_instance":
+        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
             spear.log('SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance should remain open...')
             return
 
@@ -191,13 +191,13 @@ class SimulationController():
         spear.log("Initializing RPC client...")
         
         # if we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
-        if self.__config.SPEAR.LAUNCH_MODE == "running_instance":
+        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
             connected = False
             try:
                 self.rpc_client = msgpackrpc.Client(
-                    msgpackrpc.Address(self.__config.SIMULATION_CONTROLLER.IP, self.__config.SIMULATION_CONTROLLER.PORT),
-                    timeout=self.__config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
-                    reconnect_limit=self.__config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
+                    msgpackrpc.Address(self._config.SIMULATION_CONTROLLER.IP, self._config.SIMULATION_CONTROLLER.PORT),
+                    timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
+                    reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                 self._ping()
                 connected = True
             except:
@@ -210,7 +210,7 @@ class SimulationController():
             connected = False
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
-            while not connected and elapsed_time_seconds < self.__config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS:
+            while not connected and elapsed_time_seconds < self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS:
                 # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
                 status = self._process.status()
                 if status not in ["disk-sleep", "running", "sleeping", "stopped"]:
@@ -221,20 +221,20 @@ class SimulationController():
                     assert False
                 try:
                     self.rpc_client = msgpackrpc.Client(
-                        msgpackrpc.Address(self.__config.SIMULATION_CONTROLLER.IP, self.__config.SIMULATION_CONTROLLER.PORT), 
-                        timeout=self.__config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
-                        reconnect_limit=self.__config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
+                        msgpackrpc.Address(self._config.SIMULATION_CONTROLLER.IP, self._config.SIMULATION_CONTROLLER.PORT), 
+                        timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
+                        reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                     self._ping()
                     connected = True
                 except:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
                     # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more details.
                     self._close_rpc_client()
-                time.sleep(self.__config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
+                time.sleep(self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
 
         if not connected:
-            if self.__config.SPEAR.LAUNCH_MODE != "running_instance":
+            if self._config.SPEAR.LAUNCH_MODE != "running_instance":
                 spear.log("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
                 self._force_kill_unreal_instance()
                 self._close_rpc_client()
@@ -244,17 +244,17 @@ class SimulationController():
 
     def _initialize_unreal_instance(self):
 
-        if self.__config.SPEAR.LAUNCH_MODE == "running_instance":
+        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
             spear.log('SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance is already initialized...')
             return
 
-        spear.log("Initializing Unreal instance, warming up for " + str(1 + self.__config.SPEAR.NUM_EXTRA_WARMUP_TICKS) + " ticks...")
+        spear.log("Initializing Unreal instance, warming up for " + str(1 + self._config.SPEAR.NUM_EXTRA_WARMUP_TICKS) + " ticks...")
 
         # Do at least one complete tick to guarantee that we can receive valid observations. If we don't
         # do this, it is possible that Unreal will return an initial visual observation of all zeros. We
         # generally also want to do more than one tick to warm up various caches and rendering features
         # that leverage temporal coherence between frames.
-        for i in range(1 + self.__config.SPEAR.NUM_EXTRA_WARMUP_TICKS):
+        for i in range(1 + self._config.SPEAR.NUM_EXTRA_WARMUP_TICKS):
             self.begin_tick()
             self.tick()
             self.end_tick()

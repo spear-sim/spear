@@ -16,49 +16,49 @@ class Env(gym.Env):
 
         super(Env, self).__init__()
 
-        self.__config = config
-        self.__simulation_controller = simulation_controller
+        self._config = config
+        self._simulation_controller = simulation_controller
 
-        self.__byte_order = self.__simulation_controller.get_byte_order()
+        self._byte_order = self._simulation_controller.get_byte_order()
 
-        self.__action_space_desc = SpaceDesc(self._get_action_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
-        self.__observation_space_desc = SpaceDesc(self._get_observation_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
-        self.__task_step_info_space_desc = SpaceDesc(self._get_task_step_info_space(), dict_space_type=Dict, box_space_type=Box)
-        self.__agent_step_info_space_desc = SpaceDesc(self._get_agent_step_info_space(), dict_space_type=Dict, box_space_type=Box)
+        self._action_space_desc = SpaceDesc(self._get_action_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
+        self._observation_space_desc = SpaceDesc(self._get_observation_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
+        self._task_step_info_space_desc = SpaceDesc(self._get_task_step_info_space(), dict_space_type=Dict, box_space_type=Box)
+        self._agent_step_info_space_desc = SpaceDesc(self._get_agent_step_info_space(), dict_space_type=Dict, box_space_type=Box)
 
-        self.action_space = self.__action_space_desc.space
-        self.observation_space = self.__observation_space_desc.space
+        self.action_space = self._action_space_desc.space
+        self.observation_space = self._observation_space_desc.space
 
-        self.__ready = False
+        self._ready = False
 
     def step(self, action):
         
-        self.__simulation_controller.begin_tick()
+        self._simulation_controller.begin_tick()
         self._apply_action(action)
-        self.__simulation_controller.tick()
+        self._simulation_controller.tick()
         obs = self._get_observation()
         reward = self._get_reward()
-        is_done = not self.__ready or self._is_episode_done() # if the last call to reset() failed or the episode is done
+        is_done = not self._ready or self._is_episode_done() # if the last call to reset() failed or the episode is done
         step_info = self._get_step_info()
-        self.__simulation_controller.end_tick()
+        self._simulation_controller.end_tick()
 
         return obs, reward, is_done, step_info
 
     def reset(self, reset_info=None):
         
-        for i in range(self.__config.SPEAR.MAX_NUM_TICKS_AFTER_RESET):
-            self.__simulation_controller.begin_tick()
+        for i in range(self._config.SPEAR.MAX_NUM_TICKS_AFTER_RESET):
+            self._simulation_controller.begin_tick()
             if i == 0:
                 self._reset() # only reset the simulation once
-            self.__simulation_controller.tick()
+            self._simulation_controller.tick()
             ready = self._is_ready()
-            if ready or i == self.__config.SPEAR.MAX_NUM_TICKS_AFTER_RESET - 1:
+            if ready or i == self._config.SPEAR.MAX_NUM_TICKS_AFTER_RESET - 1:
                 obs = self._get_observation() # only get the observation if ready, or if we're about to give up
-            self.__simulation_controller.end_tick()
+            self._simulation_controller.end_tick()
             if ready:
                 break
 
-        self.__ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were unsuccessful
+        self._ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were unsuccessful
 
         if reset_info is not None:
             assert isinstance(reset_info, dict)
@@ -72,69 +72,69 @@ class Env(gym.Env):
 
     def close(self):
 
-        self.__action_space_desc.terminate()
-        self.__observation_space_desc.terminate()
-        self.__task_step_info_space_desc.terminate()
-        self.__agent_step_info_space_desc.terminate()
+        self._action_space_desc.terminate()
+        self._observation_space_desc.terminate()
+        self._task_step_info_space_desc.terminate()
+        self._agent_step_info_space_desc.terminate()
 
     def _get_action_space(self):
-        array_desc = self.__simulation_controller.rpc_client.call("get_action_space")
+        array_desc = self._simulation_controller.rpc_client.call("get_action_space")
         assert len(array_desc) > 0
         return array_desc
 
     def _get_observation_space(self):
-        array_desc = self.__simulation_controller.rpc_client.call("get_observation_space")
+        array_desc = self._simulation_controller.rpc_client.call("get_observation_space")
         assert len(array_desc) > 0
         return array_desc
 
     def _get_task_step_info_space(self):
-        return self.__simulation_controller.rpc_client.call("get_task_step_info_space")
+        return self._simulation_controller.rpc_client.call("get_task_step_info_space")
 
     def _get_agent_step_info_space(self):
-        return self.__simulation_controller.rpc_client.call("get_agent_step_info_space")
+        return self._simulation_controller.rpc_client.call("get_agent_step_info_space")
 
     def _apply_action(self, action):
 
-        assert action.keys() == self.__action_space_desc.space.spaces.keys()
+        assert action.keys() == self._action_space_desc.space.spaces.keys()
 
-        action_shared = { name:component for name, component in action.items() if name in self.__action_space_desc.space_shared.spaces.keys() }
-        self.__action_space_desc.set_shared_memory_data(action_shared)
+        action_shared = { name:component for name, component in action.items() if name in self._action_space_desc.space_shared.spaces.keys() }
+        self._action_space_desc.set_shared_memory_data(action_shared)
 
-        action_non_shared = { name:component for name, component in action.items() if name in self.__action_space_desc.space_non_shared.spaces.keys() }
+        action_non_shared = { name:component for name, component in action.items() if name in self._action_space_desc.space_non_shared.spaces.keys() }
         action_non_shared_serialized = _serialize_arrays(
-            action_non_shared, space=self.__action_space_desc.space_non_shared, byte_order=self.__byte_order)
-        self.__simulation_controller.rpc_client.call("apply_action", action_non_shared_serialized)
+            action_non_shared, space=self._action_space_desc.space_non_shared, byte_order=self._byte_order)
+        self._simulation_controller.rpc_client.call("apply_action", action_non_shared_serialized)
 
     def _get_observation(self):
 
-        observation_shared = self.__observation_space_desc.shared_memory_arrays
+        observation_shared = self._observation_space_desc.shared_memory_arrays
 
-        observation_non_shared_serialized = self.__simulation_controller.rpc_client.call("get_observation")
+        observation_non_shared_serialized = self._simulation_controller.rpc_client.call("get_observation")
         observation_non_shared = _deserialize_arrays(
-            observation_non_shared_serialized, space=self.__observation_space_desc.space_non_shared, byte_order=self.__byte_order)
+            observation_non_shared_serialized, space=self._observation_space_desc.space_non_shared, byte_order=self._byte_order)
 
         assert len(set(observation_shared.keys()) & set(observation_non_shared.keys())) == 0
 
         return {**observation_shared, **observation_non_shared}
 
     def _get_reward(self):
-        return self.__simulation_controller.rpc_client.call("get_reward")
+        return self._simulation_controller.rpc_client.call("get_reward")
     
     def _is_episode_done(self):
-        return self.__simulation_controller.rpc_client.call("is_episode_done")
+        return self._simulation_controller.rpc_client.call("is_episode_done")
 
     def _get_step_info(self):
 
-        task_step_info_shared = self.__task_step_info_space_desc.shared_memory_arrays
-        agent_step_info_shared = self.__agent_step_info_space_desc.shared_memory_arrays
+        task_step_info_shared = self._task_step_info_space_desc.shared_memory_arrays
+        agent_step_info_shared = self._agent_step_info_space_desc.shared_memory_arrays
 
-        task_step_info_non_shared_serialized = self.__simulation_controller.rpc_client.call("get_task_step_info")
-        agent_step_info_non_shared_serialized = self.__simulation_controller.rpc_client.call("get_agent_step_info")
+        task_step_info_non_shared_serialized = self._simulation_controller.rpc_client.call("get_task_step_info")
+        agent_step_info_non_shared_serialized = self._simulation_controller.rpc_client.call("get_agent_step_info")
 
         task_step_info_non_shared = _deserialize_arrays(
-            task_step_info_non_shared_serialized, space=self.__task_step_info_space_desc.space_non_shared, byte_order=self.__byte_order)
+            task_step_info_non_shared_serialized, space=self._task_step_info_space_desc.space_non_shared, byte_order=self._byte_order)
         agent_step_info_non_shared = _deserialize_arrays(
-            agent_step_info_non_shared_serialized, space=self.__agent_step_info_space_desc.space_non_shared, byte_order=self.__byte_order)
+            agent_step_info_non_shared_serialized, space=self._agent_step_info_space_desc.space_non_shared, byte_order=self._byte_order)
 
         assert len(set(task_step_info_shared.keys()) & set(task_step_info_non_shared.keys())) == 0
         assert len(set(agent_step_info_shared.keys()) & set(agent_step_info_non_shared.keys())) == 0
@@ -146,11 +146,11 @@ class Env(gym.Env):
     def _reset(self):
         # reset the task first in case it needs to set the pose of actors,
         # then reset agent so it can refine the pose of actors
-        self.__simulation_controller.rpc_client.call("reset_task")
-        self.__simulation_controller.rpc_client.call("reset_agent")
+        self._simulation_controller.rpc_client.call("reset_task")
+        self._simulation_controller.rpc_client.call("reset_agent")
 
     def _is_ready(self):
-        return self.__simulation_controller.rpc_client.call("is_task_ready") and self.__simulation_controller.rpc_client.call("is_agent_ready")
+        return self._simulation_controller.rpc_client.call("is_task_ready") and self._simulation_controller.rpc_client.call("is_agent_ready")
 
 
 # metadata for describing a space including the shared memory objects
