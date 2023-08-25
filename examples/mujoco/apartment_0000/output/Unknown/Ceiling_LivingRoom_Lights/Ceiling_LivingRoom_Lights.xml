@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Ceiling_LivingRoom_Lights/Ceiling_LivingRoom_Lamp/cvx/Ceiling_LivingRoom_Lamp_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Ceiling_LivingRoom_Lights" pos="0.000000 0.000000 0.000000" quat="1.000000 0.000000 0.000000 0.000000">
+			<include file="output/Unknown/Ceiling_LivingRoom_Lights/Ceiling_LivingRoom_Lamp/cvx/Ceiling_LivingRoom_Lamp_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

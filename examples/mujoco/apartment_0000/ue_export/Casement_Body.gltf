@@ -1,0 +1,131 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 7152,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 1639,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ 0, -0.0302204508, -0.0293255802 ],
+			"max": [ 0.504006326, 3.4701004, 6.78111696 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 1639,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 1639,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 1639,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 1639,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Casement_Body.bin",
+			"byteLength": 106088
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 14304,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 19668,
+			"byteOffset": 14304,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 19668,
+			"byteOffset": 33972,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 26224,
+			"byteOffset": 53640,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 13112,
+			"byteOffset": 79864,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 13112,
+			"byteOffset": 92976,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Casement",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Casement_Body",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Casement_Body",
+			"translation": [ 5.44944191, 0.278754145, -0.239163801 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

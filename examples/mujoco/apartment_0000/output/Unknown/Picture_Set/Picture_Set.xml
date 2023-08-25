@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Picture_Set/cvx/Picture_Set_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Picture_Set" pos="-0.406614 4.403419 2.155357" quat="0.707108 0.000000 0.000000 -0.707106">
+			<include file="output/Unknown/Picture_Set/cvx/Picture_Set_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

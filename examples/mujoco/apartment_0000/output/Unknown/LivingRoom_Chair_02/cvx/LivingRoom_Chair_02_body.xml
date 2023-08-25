@@ -1,0 +1,18 @@
+<mujoco model="LivingRoom_Chair_02">
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02005_vis" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02005" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02005_col" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02005" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02004_vis" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02004" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02004_col" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02004" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02006_vis" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02006" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02006_col" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02006" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02007_vis" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02007" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02007_col" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02007" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02003_vis" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02003" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02003_col" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02003" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02002_vis" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02002" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02002_col" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02002" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02000_vis" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02000" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02000_col" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02000" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02001_vis" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02001" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="LivingRoom_Chair_02/LivingRoom_Chair_02001_col" mesh="LivingRoom_Chair_02/LivingRoom_Chair_02001" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+</mujoco>

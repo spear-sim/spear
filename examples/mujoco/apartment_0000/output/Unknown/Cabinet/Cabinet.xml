@@ -1,0 +1,42 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Cabinet/Cabinet_Base/cvx/Cabinet_Base_assets.xml" />
+		<include file="output/Unknown/Cabinet/Door_01/cvx/Door_01_assets.xml" />
+		<include file="output/Unknown/Cabinet/Door_02/cvx/Door_02_assets.xml" />
+		<include file="output/Unknown/Cabinet/Door_03/cvx/Door_03_assets.xml" />
+		<include file="output/Unknown/Cabinet/Door_04/cvx/Door_04_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Cabinet" pos="-1.893221 -6.160384 0.271088" quat="0.000000 0.000000 0.000000 -1.000000">
+			<freejoint name="Cabinet/free_joint" />
+			<include file="output/Unknown/Cabinet/Cabinet_Base/cvx/Cabinet_Base_body.xml" />
+			<body name="Cabinet/Door_01" pos="-1.205450 -0.333199 0.421848" quat="1.000000 0.000000 0.000000 0.000000">
+				<joint name="Cabinet/PhysicsConstraint_door_01_x_revolute" type="hinge" pos="0.00000 0.00000 0.00000" axis="0.00000 0.00000 -1.00000" range="-0.08727 1.48353" />
+				<include file="output/Unknown/Cabinet/Door_01/cvx/Door_01_body.xml" />
+			</body>
+			<body name="Cabinet/Door_02" pos="-0.012877 -0.337919 0.422915" quat="1.000000 0.000000 0.000000 0.000000">
+				<joint name="Cabinet/PhysicsConstraint_door_02_x_revolute" type="hinge" pos="0.00000 0.00000 0.00000" axis="-0.00000 0.00000 -1.00000" range="-1.48353 0.08727" />
+				<include file="output/Unknown/Cabinet/Door_02/cvx/Door_02_body.xml" />
+			</body>
+			<body name="Cabinet/Door_03" pos="0.013493 -0.337919 0.422915" quat="1.000000 0.000000 0.000000 0.000000">
+				<joint name="Cabinet/PhysicsConstraint_door_03_x_revolute" type="hinge" pos="0.00000 0.00000 0.00000" axis="0.00000 -0.00000 -1.00000" range="-0.08727 1.48353" />
+				<include file="output/Unknown/Cabinet/Door_03/cvx/Door_03_body.xml" />
+			</body>
+			<body name="Cabinet/Door_04" pos="1.207691 -0.333199 0.422915" quat="1.000000 0.000000 0.000000 0.000000">
+				<joint name="Cabinet/PhysicsConstraint_door_04_x_revolute" type="hinge" pos="0.00000 0.00000 0.00000" axis="0.00000 0.00000 -1.00000" range="-1.48353 0.08727" />
+				<include file="output/Unknown/Cabinet/Door_04/cvx/Door_04_body.xml" />
+			</body>
+		</body>
+	</worldbody>
+	<contact>
+		<exclude body1="Cabinet/Door_04" body2="Cabinet/Door_03" />
+		<exclude body1="Cabinet/Door_04" body2="Cabinet/Door_02" />
+		<exclude body1="Cabinet/Door_04" body2="Cabinet/Door_01" />
+		<exclude body1="Cabinet/Door_03" body2="Cabinet/Door_02" />
+		<exclude body1="Cabinet/Door_03" body2="Cabinet/Door_01" />
+		<exclude body1="Cabinet/Door_02" body2="Cabinet/Door_01" />
+	</contact>
+	<actuator>
+		<position kp="100" ctrllimited="true" ctrlrange="-0.08727 1.48353" forcelimited="true" forcerange="-33.82 33.82" joint="Cabinet/PhysicsConstraint_door_01_x_revolute" name="Cabinet/PhysicsConstraint_door_01_x_revolute_actuator" />
+	</actuator>
+</mujoco>

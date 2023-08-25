@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/LivingRoom_Lamp_02/cvx/LivingRoom_Lamp_02_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="LivingRoom_Lamp_02" pos="4.707834 -0.010766 1.009104" quat="1.000000 0.000000 0.000000 0.000000">
+			<include file="output/Unknown/LivingRoom_Lamp_02/cvx/LivingRoom_Lamp_02_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

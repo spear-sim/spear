@@ -1,0 +1,133 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 43950,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 8611,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.252899438, -0.000211105347, -0.239046708 ],
+			"max": [ 0.252899438, 0.943645477, 0.239046708 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 8611,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 8611,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 8611,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 8611,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Round_Table_Chair_03.bin",
+			"byteLength": 570116
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 87900,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 103332,
+			"byteOffset": 87900,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 103332,
+			"byteOffset": 191232,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 137776,
+			"byteOffset": 294564,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 68888,
+			"byteOffset": 432340,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 68888,
+			"byteOffset": 501228,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Round_Table_Chair",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Round_Table_Chair",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Round_Table_Chair_03",
+			"translation": [ -2.46866417, 0.271107286, -4.44269037 ],
+			"rotation": [ 0, 0.965925932, -0, 0.258819073 ],
+			"scale": [ 1.39999998, 1.39999998, 1.39999998 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

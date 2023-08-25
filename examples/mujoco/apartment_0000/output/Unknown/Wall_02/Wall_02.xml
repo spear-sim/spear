@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Wall_02/cvx/Wall_02_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Wall_02" pos="0.000000 0.000000 0.000000" quat="1.000000 0.000000 0.000000 0.000000">
+			<include file="output/Unknown/Wall_02/cvx/Wall_02_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

@@ -1,0 +1,197 @@
+[
+    {
+        "parent": "Kitchen_Oven",
+        "child": "Door_01",
+        "name": "PhysicsConstraint_door_01_x_revolute",
+        "range": [
+            -0.08726646259971649,
+            1.4835298641951802
+        ],
+        "axis": [
+            -1.2167964475066279e-08,
+            2.9611871893295006e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Oven",
+        "child": "Door_02",
+        "name": "PhysicsConstraint_door_02_x_revolute",
+        "range": [
+            -1.4835298641951802,
+            0.08726646259971649
+        ],
+        "axis": [
+            1.2167964475066282e-08,
+            0.0,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Oven",
+        "child": "Door_03",
+        "name": "PhysicsConstraint_door_03_x_revolute",
+        "range": [
+            -0.08726646259971649,
+            1.4835298641951802
+        ],
+        "axis": [
+            -1.2167964475066279e-08,
+            2.9611871893295006e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Oven",
+        "child": "Door_04",
+        "name": "PhysicsConstraint_door_04_x_revolute",
+        "range": [
+            -1.4835298641951802,
+            0.08726646259971649
+        ],
+        "axis": [
+            1.2167964475066282e-08,
+            0.0,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Door_Oven",
+        "child": "Kitchen_Oven_Base",
+        "name": "PhysicsConstraint_door_oven_z_revolute",
+        "range": [
+            -1.5707963267948966,
+            1.5707963267948966
+        ],
+        "axis": [
+            0.0,
+            0.9999999999999999,
+            1.2167964475066282e-08
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Drawer_01",
+        "child": "Kitchen_Oven_Base",
+        "name": "PhysicsConstraint_drawer_01_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            0.0,
+            0.0
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Drawer_02",
+        "child": "Kitchen_Oven_Base",
+        "name": "PhysicsConstraint_drawer_02_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            -2.4492935193418433e-16,
+            0.0
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Drawer_03",
+        "child": "Kitchen_Oven_Base",
+        "name": "PhysicsConstraint_drawer_03_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            -2.4492935193418433e-16,
+            0.0
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Drawer_04",
+        "child": "Kitchen_Oven_Base",
+        "name": "PhysicsConstraint_drawer_04_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            -2.4492935193418433e-16,
+            0.0
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Drawer_05",
+        "child": "Kitchen_Oven_Base",
+        "name": "PhysicsConstraint_drawer_05_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            -2.4492935193418433e-16,
+            0.0
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Drawer_06",
+        "child": "Kitchen_Oven_Base",
+        "name": "PhysicsConstraint_drawer_06_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            -2.4492935193418433e-16,
+            0.0
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Drawer_07",
+        "child": "Kitchen_Oven_Base",
+        "name": "PhysicsConstraint_drawer_07_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            -2.4492935193418433e-16,
+            0.0
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Drawer_08",
+        "child": "Kitchen_Oven_Base",
+        "name": "PhysicsConstraint_drawer_08_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            -2.4492935193418433e-16,
+            0.0
+        ],
+        "type": "slide"
+    }
+]

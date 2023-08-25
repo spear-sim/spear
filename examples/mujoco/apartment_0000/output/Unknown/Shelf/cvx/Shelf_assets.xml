@@ -1,0 +1,10 @@
+<mujoco model="Shelf">
+	<mesh file="output/Unknown/Shelf/cvx/Shelf000.obj" name="Shelf/Shelf000" />
+	<mesh file="output/Unknown/Shelf/cvx/Shelf001.obj" name="Shelf/Shelf001" />
+	<mesh file="output/Unknown/Shelf/cvx/Shelf003.obj" name="Shelf/Shelf003" />
+	<mesh file="output/Unknown/Shelf/cvx/Shelf002.obj" name="Shelf/Shelf002" />
+	<mesh file="output/Unknown/Shelf/cvx/Shelf006.obj" name="Shelf/Shelf006" />
+	<mesh file="output/Unknown/Shelf/cvx/Shelf007.obj" name="Shelf/Shelf007" />
+	<mesh file="output/Unknown/Shelf/cvx/Shelf005.obj" name="Shelf/Shelf005" />
+	<mesh file="output/Unknown/Shelf/cvx/Shelf004.obj" name="Shelf/Shelf004" />
+</mujoco>

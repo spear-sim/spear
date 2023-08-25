@@ -1,0 +1,131 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 732,
+			"type": "SCALAR",
+			"componentType": 5121
+		},
+		{
+			"bufferView": 1,
+			"count": 161,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -5.49054289, 4.08245754, -6.55013084 ],
+			"max": [ 5.69584656, 4.50470829, 6.54694939 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 161,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 161,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 161,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 161,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Ceiling.bin",
+			"byteLength": 9748
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 732,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1932,
+			"byteOffset": 732,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1932,
+			"byteOffset": 2664,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 2576,
+			"byteOffset": 4596,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1288,
+			"byteOffset": 7172,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1288,
+			"byteOffset": 8460,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Walls",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Ceiling",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Ceiling",
+			"translation": [ 0, -0.335249513, -5.16437471e-09 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

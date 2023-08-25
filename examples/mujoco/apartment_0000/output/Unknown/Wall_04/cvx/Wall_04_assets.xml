@@ -1,0 +1,9 @@
+<mujoco model="Wall_04">
+	<mesh file="output/Unknown/Wall_04/cvx/Wall_04001.obj" name="Wall_04/Wall_04001" />
+	<mesh file="output/Unknown/Wall_04/cvx/Wall_04000.obj" name="Wall_04/Wall_04000" />
+	<mesh file="output/Unknown/Wall_04/cvx/Wall_04002.obj" name="Wall_04/Wall_04002" />
+	<mesh file="output/Unknown/Wall_04/cvx/Wall_04003.obj" name="Wall_04/Wall_04003" />
+	<mesh file="output/Unknown/Wall_04/cvx/Wall_04006.obj" name="Wall_04/Wall_04006" />
+	<mesh file="output/Unknown/Wall_04/cvx/Wall_04004.obj" name="Wall_04/Wall_04004" />
+	<mesh file="output/Unknown/Wall_04/cvx/Wall_04005.obj" name="Wall_04/Wall_04005" />
+</mujoco>

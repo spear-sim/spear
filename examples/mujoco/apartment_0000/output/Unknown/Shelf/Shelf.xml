@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Shelf/cvx/Shelf_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Shelf" pos="-5.207414 4.001480 0.267677" quat="0.707107 0.000000 0.000000 0.707107">
+			<include file="output/Unknown/Shelf/cvx/Shelf_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

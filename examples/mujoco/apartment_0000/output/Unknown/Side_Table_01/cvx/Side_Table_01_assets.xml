@@ -1,0 +1,10 @@
+<mujoco model="Side_Table_01">
+	<mesh file="output/Unknown/Side_Table_01/cvx/Side_Table_01000.obj" name="Side_Table_01/Side_Table_01000" />
+	<mesh file="output/Unknown/Side_Table_01/cvx/Side_Table_01001.obj" name="Side_Table_01/Side_Table_01001" />
+	<mesh file="output/Unknown/Side_Table_01/cvx/Side_Table_01003.obj" name="Side_Table_01/Side_Table_01003" />
+	<mesh file="output/Unknown/Side_Table_01/cvx/Side_Table_01002.obj" name="Side_Table_01/Side_Table_01002" />
+	<mesh file="output/Unknown/Side_Table_01/cvx/Side_Table_01006.obj" name="Side_Table_01/Side_Table_01006" />
+	<mesh file="output/Unknown/Side_Table_01/cvx/Side_Table_01007.obj" name="Side_Table_01/Side_Table_01007" />
+	<mesh file="output/Unknown/Side_Table_01/cvx/Side_Table_01005.obj" name="Side_Table_01/Side_Table_01005" />
+	<mesh file="output/Unknown/Side_Table_01/cvx/Side_Table_01004.obj" name="Side_Table_01/Side_Table_01004" />
+</mujoco>

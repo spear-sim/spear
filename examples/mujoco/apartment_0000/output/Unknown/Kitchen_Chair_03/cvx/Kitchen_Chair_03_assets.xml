@@ -1,0 +1,10 @@
+<mujoco model="Kitchen_Chair_03">
+	<mesh file="output/Unknown/Kitchen_Chair_03/cvx/Kitchen_Chair_03002.obj" name="Kitchen_Chair_03/Kitchen_Chair_03002" />
+	<mesh file="output/Unknown/Kitchen_Chair_03/cvx/Kitchen_Chair_03003.obj" name="Kitchen_Chair_03/Kitchen_Chair_03003" />
+	<mesh file="output/Unknown/Kitchen_Chair_03/cvx/Kitchen_Chair_03001.obj" name="Kitchen_Chair_03/Kitchen_Chair_03001" />
+	<mesh file="output/Unknown/Kitchen_Chair_03/cvx/Kitchen_Chair_03000.obj" name="Kitchen_Chair_03/Kitchen_Chair_03000" />
+	<mesh file="output/Unknown/Kitchen_Chair_03/cvx/Kitchen_Chair_03004.obj" name="Kitchen_Chair_03/Kitchen_Chair_03004" />
+	<mesh file="output/Unknown/Kitchen_Chair_03/cvx/Kitchen_Chair_03005.obj" name="Kitchen_Chair_03/Kitchen_Chair_03005" />
+	<mesh file="output/Unknown/Kitchen_Chair_03/cvx/Kitchen_Chair_03007.obj" name="Kitchen_Chair_03/Kitchen_Chair_03007" />
+	<mesh file="output/Unknown/Kitchen_Chair_03/cvx/Kitchen_Chair_03006.obj" name="Kitchen_Chair_03/Kitchen_Chair_03006" />
+</mujoco>

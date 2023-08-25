@@ -1,0 +1,25 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_04/cvx/Ceiling_Light_04_assets.xml" />
+		<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_03/cvx/Ceiling_Light_03_assets.xml" />
+		<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_02/cvx/Ceiling_Light_02_assets.xml" />
+		<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_05/cvx/Ceiling_Light_05_assets.xml" />
+		<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_07/cvx/Ceiling_Light_07_assets.xml" />
+		<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_06/cvx/Ceiling_Light_06_assets.xml" />
+		<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_01/cvx/Ceiling_Light_01_assets.xml" />
+		<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_08/cvx/Ceiling_Light_08_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Ceiling_Kitchen_Lights" pos="0.000000 0.000000 0.000000" quat="1.000000 0.000000 0.000000 0.000000">
+			<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_04/cvx/Ceiling_Light_04_body.xml" />
+			<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_03/cvx/Ceiling_Light_03_body.xml" />
+			<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_02/cvx/Ceiling_Light_02_body.xml" />
+			<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_05/cvx/Ceiling_Light_05_body.xml" />
+			<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_07/cvx/Ceiling_Light_07_body.xml" />
+			<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_06/cvx/Ceiling_Light_06_body.xml" />
+			<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_01/cvx/Ceiling_Light_01_body.xml" />
+			<include file="output/Unknown/Ceiling_Kitchen_Lights/Ceiling_Light_08/cvx/Ceiling_Light_08_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

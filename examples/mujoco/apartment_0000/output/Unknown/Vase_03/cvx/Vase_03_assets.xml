@@ -1,0 +1,10 @@
+<mujoco model="Vase_03">
+	<mesh file="output/Unknown/Vase_03/cvx/Vase_03004.obj" name="Vase_03/Vase_03004" />
+	<mesh file="output/Unknown/Vase_03/cvx/Vase_03005.obj" name="Vase_03/Vase_03005" />
+	<mesh file="output/Unknown/Vase_03/cvx/Vase_03007.obj" name="Vase_03/Vase_03007" />
+	<mesh file="output/Unknown/Vase_03/cvx/Vase_03006.obj" name="Vase_03/Vase_03006" />
+	<mesh file="output/Unknown/Vase_03/cvx/Vase_03002.obj" name="Vase_03/Vase_03002" />
+	<mesh file="output/Unknown/Vase_03/cvx/Vase_03003.obj" name="Vase_03/Vase_03003" />
+	<mesh file="output/Unknown/Vase_03/cvx/Vase_03001.obj" name="Vase_03/Vase_03001" />
+	<mesh file="output/Unknown/Vase_03/cvx/Vase_03000.obj" name="Vase_03/Vase_03000" />
+</mujoco>

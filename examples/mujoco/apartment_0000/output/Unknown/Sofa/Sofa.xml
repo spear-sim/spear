@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Sofa/cvx/Sofa_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Sofa" pos="2.457896 -0.243070 0.269029" quat="0.000000 0.000000 0.000000 -1.000000">
+			<include file="output/Unknown/Sofa/cvx/Sofa_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

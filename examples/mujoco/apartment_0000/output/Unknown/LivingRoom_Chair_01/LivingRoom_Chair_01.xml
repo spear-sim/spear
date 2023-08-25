@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/LivingRoom_Chair_01/cvx/LivingRoom_Chair_01_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="LivingRoom_Chair_01" pos="4.640139 -4.754606 0.265475" quat="0.342021 0.000000 0.000000 -0.939692">
+			<include file="output/Unknown/LivingRoom_Chair_01/cvx/LivingRoom_Chair_01_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

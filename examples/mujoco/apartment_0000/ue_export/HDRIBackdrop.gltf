@@ -1,0 +1,128 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 6480,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 1082,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.974881411, -4.72741429e-17, -0.974881411 ],
+			"max": [ 0.974881411, 1, 0.974881411 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 1082,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 1082,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 1082,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "HDRIBackdrop.bin",
+			"byteLength": 64896
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 12960,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 12984,
+			"byteOffset": 12960,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 12984,
+			"byteOffset": 25944,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 17312,
+			"byteOffset": 38928,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 8656,
+			"byteOffset": 56240,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "HDRI_MID",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "EnviroDome",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "HDRIBackdrop",
+			"translation": [ -0.764814496, 0.19564645, 2.53782535 ],
+			"rotation": [ -0, -0.594822824, 0, 0.803856969 ],
+			"children": [ 1, 2 ]
+		},
+		{
+			"name": "Geometry",
+			"scale": [ 2401.04492, 2401.04492, 2401.04492 ],
+			"mesh": 0
+		},
+		{
+			"name": "Skylight",
+			"translation": [ 0, 8, 0 ]
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

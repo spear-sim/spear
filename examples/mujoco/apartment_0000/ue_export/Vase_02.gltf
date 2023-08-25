@@ -1,0 +1,133 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 7824,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 1489,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.378432989, -0.000623967033, -0.378432989 ],
+			"max": [ 0.378432989, 1.49475157, 0.378432989 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 1489,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 1489,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 1489,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 1489,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Vase_02.bin",
+			"byteLength": 99032
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 15648,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 17868,
+			"byteOffset": 15648,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 17868,
+			"byteOffset": 33516,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 23824,
+			"byteOffset": 51384,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 11912,
+			"byteOffset": 75208,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 11912,
+			"byteOffset": 87120,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Vase_02",
+			"pbrMetallicRoughness":
+			{
+			},
+			"doubleSided": true
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Vase_02",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Vase_02",
+			"translation": [ -2.93216753, 1.31021357, -3.71257186 ],
+			"scale": [ 0.400000006, 0.400000006, 0.400000006 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

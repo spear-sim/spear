@@ -1,0 +1,10 @@
+<mujoco model="LivingRoom_Table">
+	<mesh file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table006.obj" name="LivingRoom_Table/LivingRoom_Table006" />
+	<mesh file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table007.obj" name="LivingRoom_Table/LivingRoom_Table007" />
+	<mesh file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table005.obj" name="LivingRoom_Table/LivingRoom_Table005" />
+	<mesh file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table004.obj" name="LivingRoom_Table/LivingRoom_Table004" />
+	<mesh file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table000.obj" name="LivingRoom_Table/LivingRoom_Table000" />
+	<mesh file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table001.obj" name="LivingRoom_Table/LivingRoom_Table001" />
+	<mesh file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table003.obj" name="LivingRoom_Table/LivingRoom_Table003" />
+	<mesh file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table002.obj" name="LivingRoom_Table/LivingRoom_Table002" />
+</mujoco>

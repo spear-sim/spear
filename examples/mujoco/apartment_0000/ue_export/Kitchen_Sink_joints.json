@@ -1,0 +1,182 @@
+[
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Door_01",
+        "name": "PhysicsConstraint_door_01_x_revolute",
+        "range": [
+            -0.08726646259971649,
+            1.4835298641951802
+        ],
+        "axis": [
+            -1.2167964475066279e-08,
+            2.9611871893295006e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Door_02",
+        "name": "PhysicsConstraint_door_02_x_revolute",
+        "range": [
+            -1.4835298641951802,
+            0.08726646259971649
+        ],
+        "axis": [
+            -1.2167964475066279e-08,
+            2.9611871893295006e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Door_03",
+        "name": "PhysicsConstraint_door_03_x_revolute",
+        "range": [
+            -0.08726646259971649,
+            1.4835298641951802
+        ],
+        "axis": [
+            -1.2167964475066279e-08,
+            2.9611871893295006e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Door_04",
+        "name": "PhysicsConstraint_door_04_x_revolute",
+        "range": [
+            -1.4835298641951802,
+            0.08726646259971649
+        ],
+        "axis": [
+            1.216796447506627e-08,
+            -5.128413312973082e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Door_05",
+        "name": "PhysicsConstraint_door_05_x_revolute",
+        "range": [
+            -0.08726646259971649,
+            1.4835298641951802
+        ],
+        "axis": [
+            1.2167964475066267e-08,
+            -5.922374378659e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Door_06",
+        "name": "PhysicsConstraint_door_06_x_revolute",
+        "range": [
+            -1.4835298641951802,
+            0.08726646259971649
+        ],
+        "axis": [
+            -1.2167964475066279e-08,
+            -2.9611871893295006e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Door_07",
+        "name": "PhysicsConstraint_door_07_x_revolute",
+        "range": [
+            -0.08726646259971649,
+            1.4835298641951802
+        ],
+        "axis": [
+            -1.2167964475066279e-08,
+            2.9611871893295006e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Door_08",
+        "name": "PhysicsConstraint_door_08_x_revolute",
+        "range": [
+            -1.4835298641951802,
+            0.08726646259971649
+        ],
+        "axis": [
+            -1.2167964475066279e-08,
+            -2.9611871893295006e-16,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Drawer_01",
+        "name": "PhysicsConstraint_drawer_01_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            0.0,
+            -7.759920680181284e-32
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Drawer_02",
+        "name": "PhysicsConstraint_drawer_02_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            0.0,
+            -7.759920680181284e-32
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Drawer_03",
+        "name": "PhysicsConstraint_drawer_03_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            0.0,
+            -5.309419481862972e-32
+        ],
+        "type": "slide"
+    },
+    {
+        "parent": "Kitchen_Sink",
+        "child": "Drawer_04",
+        "name": "PhysicsConstraint_drawer_04_x_prismatic",
+        "range": [
+            -0.25,
+            0.25
+        ],
+        "axis": [
+            1.0,
+            0.0,
+            -4.08416880063883e-33
+        ],
+        "type": "slide"
+    }
+]

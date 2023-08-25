@@ -1,0 +1,9 @@
+<mujoco model="Vinyl_Frame_01">
+	<mesh file="output/Unknown/Vinyl_Frame_01/cvx/Vinyl_Frame_01006.obj" name="Vinyl_Frame_01/Vinyl_Frame_01006" />
+	<mesh file="output/Unknown/Vinyl_Frame_01/cvx/Vinyl_Frame_01005.obj" name="Vinyl_Frame_01/Vinyl_Frame_01005" />
+	<mesh file="output/Unknown/Vinyl_Frame_01/cvx/Vinyl_Frame_01004.obj" name="Vinyl_Frame_01/Vinyl_Frame_01004" />
+	<mesh file="output/Unknown/Vinyl_Frame_01/cvx/Vinyl_Frame_01000.obj" name="Vinyl_Frame_01/Vinyl_Frame_01000" />
+	<mesh file="output/Unknown/Vinyl_Frame_01/cvx/Vinyl_Frame_01001.obj" name="Vinyl_Frame_01/Vinyl_Frame_01001" />
+	<mesh file="output/Unknown/Vinyl_Frame_01/cvx/Vinyl_Frame_01003.obj" name="Vinyl_Frame_01/Vinyl_Frame_01003" />
+	<mesh file="output/Unknown/Vinyl_Frame_01/cvx/Vinyl_Frame_01002.obj" name="Vinyl_Frame_01/Vinyl_Frame_01002" />
+</mujoco>

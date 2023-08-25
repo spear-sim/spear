@@ -1,0 +1,3 @@
+Wed Aug  9 14:46:15 2023
+WARNING: mju_openResource: unknown file 'apartment_0000/scene.xml'
+

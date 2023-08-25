@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Ceiling/cvx/Ceiling_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Ceiling" pos="0.000000 0.000000 -0.335250" quat="1.000000 0.000000 0.000000 0.000000">
+			<include file="output/Unknown/Ceiling/cvx/Ceiling_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

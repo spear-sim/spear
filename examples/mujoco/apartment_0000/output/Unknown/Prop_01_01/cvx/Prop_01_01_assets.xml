@@ -1,0 +1,10 @@
+<mujoco model="Prop_01_01">
+	<mesh file="output/Unknown/Prop_01_01/cvx/Prop_01_01006.obj" name="Prop_01_01/Prop_01_01006" />
+	<mesh file="output/Unknown/Prop_01_01/cvx/Prop_01_01007.obj" name="Prop_01_01/Prop_01_01007" />
+	<mesh file="output/Unknown/Prop_01_01/cvx/Prop_01_01005.obj" name="Prop_01_01/Prop_01_01005" />
+	<mesh file="output/Unknown/Prop_01_01/cvx/Prop_01_01004.obj" name="Prop_01_01/Prop_01_01004" />
+	<mesh file="output/Unknown/Prop_01_01/cvx/Prop_01_01000.obj" name="Prop_01_01/Prop_01_01000" />
+	<mesh file="output/Unknown/Prop_01_01/cvx/Prop_01_01001.obj" name="Prop_01_01/Prop_01_01001" />
+	<mesh file="output/Unknown/Prop_01_01/cvx/Prop_01_01003.obj" name="Prop_01_01/Prop_01_01003" />
+	<mesh file="output/Unknown/Prop_01_01/cvx/Prop_01_01002.obj" name="Prop_01_01/Prop_01_01002" />
+</mujoco>

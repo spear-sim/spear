@@ -1,0 +1,132 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 14760,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 2621,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.0813392177, -0.000104217528, -0.0813392177 ],
+			"max": [ 0.0813392028, 0.164764255, 0.0813392177 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 2621,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 2621,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 2621,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 2621,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Prop_01_01.bin",
+			"byteLength": 176296
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 29520,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 31452,
+			"byteOffset": 29520,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 31452,
+			"byteOffset": 60972,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 41936,
+			"byteOffset": 92424,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 20968,
+			"byteOffset": 134360,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 20968,
+			"byteOffset": 155328,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Props",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Prop_01",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Prop_01_01",
+			"translation": [ -5.16344786, 1.17908406, -0.399483323 ],
+			"scale": [ 1.5, 1.5, 1.5 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

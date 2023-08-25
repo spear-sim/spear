@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Prop_01_01/cvx/Prop_01_01_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Prop_01_01" pos="-5.163448 0.399483 1.179084" quat="1.000000 0.000000 0.000000 0.000000">
+			<include file="output/Unknown/Prop_01_01/cvx/Prop_01_01_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

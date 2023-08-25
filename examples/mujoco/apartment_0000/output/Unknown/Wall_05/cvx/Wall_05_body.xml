@@ -1,0 +1,18 @@
+<mujoco model="Wall_05">
+	<geom name="Wall_05/Wall_05003_vis" mesh="Wall_05/Wall_05003" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05003_col" mesh="Wall_05/Wall_05003" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05002_vis" mesh="Wall_05/Wall_05002" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05002_col" mesh="Wall_05/Wall_05002" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05000_vis" mesh="Wall_05/Wall_05000" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05000_col" mesh="Wall_05/Wall_05000" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05001_vis" mesh="Wall_05/Wall_05001" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05001_col" mesh="Wall_05/Wall_05001" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05005_vis" mesh="Wall_05/Wall_05005" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05005_col" mesh="Wall_05/Wall_05005" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05004_vis" mesh="Wall_05/Wall_05004" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05004_col" mesh="Wall_05/Wall_05004" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05006_vis" mesh="Wall_05/Wall_05006" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05006_col" mesh="Wall_05/Wall_05006" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05007_vis" mesh="Wall_05/Wall_05007" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Wall_05/Wall_05007_col" mesh="Wall_05/Wall_05007" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+</mujoco>

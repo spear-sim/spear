@@ -1,0 +1,227 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 5916,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 1332,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ 0.119470209, -0.0664221942, 3.31132722 ],
+			"max": [ 0.427933961, 3.49758077, 6.71325684 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 1332,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 1332,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 1332,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 1332,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 6,
+			"count": 240,
+			"type": "SCALAR",
+			"componentType": 5121
+		},
+		{
+			"bufferView": 7,
+			"count": 49,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ 0.31216675, 0.0213556662, 3.38361263 ],
+			"max": [ 0.316280514, 3.38705778, 6.61333275 ]
+		},
+		{
+			"bufferView": 8,
+			"count": 49,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 9,
+			"count": 49,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 10,
+			"count": 49,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 11,
+			"count": 49,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Casement_SlidePart_02.bin",
+			"byteLength": 89408
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 11832,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 15984,
+			"byteOffset": 11832,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 15984,
+			"byteOffset": 27816,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 21312,
+			"byteOffset": 43800,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 10656,
+			"byteOffset": 65112,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 10656,
+			"byteOffset": 75768,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 240,
+			"byteOffset": 86424,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 588,
+			"byteOffset": 86664,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 588,
+			"byteOffset": 87252,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 784,
+			"byteOffset": 87840,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 392,
+			"byteOffset": 88624,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 392,
+			"byteOffset": 89016,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Casement",
+			"pbrMetallicRoughness":
+			{
+			}
+		},
+		{
+			"name": "MI_Casement_Glass",
+			"pbrMetallicRoughness":
+			{
+				"baseColorFactor": [ 0, 0.00120199996, 0.003303, 0.349999994 ],
+				"metallicFactor": 0,
+				"roughnessFactor": 0
+			},
+			"alphaMode": "BLEND"
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Casement_SlidePart_02",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				},
+				{
+					"attributes":
+					{
+						"POSITION": 7,
+						"NORMAL": 8,
+						"TANGENT": 9,
+						"TEXCOORD_0": 10,
+						"TEXCOORD_1": 11
+					},
+					"indices": 6,
+					"material": 1
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Casement_SlidePart_02",
+			"translation": [ 5.44944191, 0.278754145, -0.239163801 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

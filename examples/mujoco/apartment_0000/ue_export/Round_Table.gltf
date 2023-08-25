@@ -1,0 +1,131 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 53052,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 9790,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -1.09922957, -0.000176530928, -1.09922898 ],
+			"max": [ 1.09922969, 1.0553323, 1.09923017 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 9790,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 9790,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 9790,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 9790,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Round_Table.bin",
+			"byteLength": 654344
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 106104,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 117480,
+			"byteOffset": 106104,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 117480,
+			"byteOffset": 223584,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 156640,
+			"byteOffset": 341064,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 78320,
+			"byteOffset": 497704,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 78320,
+			"byteOffset": 576024,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Round_Table",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Round_Table",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Round_Table",
+			"translation": [ -2.93256688, 0.26949808, -3.71208978 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

@@ -1,0 +1,10 @@
+<mujoco model="Mirror">
+	<mesh file="output/Unknown/Mirror/cvx/Mirror007.obj" name="Mirror/Mirror007" />
+	<mesh file="output/Unknown/Mirror/cvx/Mirror006.obj" name="Mirror/Mirror006" />
+	<mesh file="output/Unknown/Mirror/cvx/Mirror004.obj" name="Mirror/Mirror004" />
+	<mesh file="output/Unknown/Mirror/cvx/Mirror005.obj" name="Mirror/Mirror005" />
+	<mesh file="output/Unknown/Mirror/cvx/Mirror001.obj" name="Mirror/Mirror001" />
+	<mesh file="output/Unknown/Mirror/cvx/Mirror000.obj" name="Mirror/Mirror000" />
+	<mesh file="output/Unknown/Mirror/cvx/Mirror002.obj" name="Mirror/Mirror002" />
+	<mesh file="output/Unknown/Mirror/cvx/Mirror003.obj" name="Mirror/Mirror003" />
+</mujoco>

@@ -1,0 +1,133 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 4590,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 1074,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.847271204, -0.00915413257, -1.22761047 ],
+			"max": [ 0.842918813, 0.0448519588, 1.17898834 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 1074,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 1074,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 1074,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 1074,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Big_Carpet.bin",
+			"byteLength": 69324
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 9180,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 12888,
+			"byteOffset": 9180,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 12888,
+			"byteOffset": 22068,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 17184,
+			"byteOffset": 34956,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 8592,
+			"byteOffset": 52140,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 8592,
+			"byteOffset": 60732,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Carpet",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Big_Carpet",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Big_Carpet",
+			"translation": [ 2.11982274, 0.26792264, 2.84431624 ],
+			"rotation": [ 0, 0.707106829, -0, 0.707106829 ],
+			"scale": [ 1.57007742, 1, 1.57007742 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

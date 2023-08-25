@@ -1,0 +1,62 @@
+[
+    {
+        "parent": "Cabinet",
+        "child": "Door_01",
+        "name": "PhysicsConstraint_door_01_x_revolute",
+        "range": [
+            -0.08726646259971649,
+            1.4835298641951802
+        ],
+        "axis": [
+            1.4805935946647505e-16,
+            1.216796447506628e-08,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Cabinet",
+        "child": "Door_02",
+        "name": "PhysicsConstraint_door_02_x_revolute",
+        "range": [
+            -1.4835298641951802,
+            0.08726646259971649
+        ],
+        "axis": [
+            -1.088335845379682e-08,
+            5.441678806457097e-09,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Cabinet",
+        "child": "Door_03",
+        "name": "PhysicsConstraint_door_03_x_revolute",
+        "range": [
+            -0.08726646259971649,
+            1.4835298641951802
+        ],
+        "axis": [
+            1.4805935946647505e-16,
+            -1.216796447506628e-08,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    },
+    {
+        "parent": "Cabinet",
+        "child": "Door_04",
+        "name": "PhysicsConstraint_door_04_x_revolute",
+        "range": [
+            -1.4835298641951802,
+            0.08726646259971649
+        ],
+        "axis": [
+            1.4805935946647505e-16,
+            1.216796447506628e-08,
+            -0.9999999999999999
+        ],
+        "type": "hinge"
+    }
+]

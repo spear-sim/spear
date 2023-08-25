@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Round_Table_Chair_02" pos="-2.433487 2.794128 0.271107" quat="0.965926 0.000000 0.000000 0.258819">
+			<include file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

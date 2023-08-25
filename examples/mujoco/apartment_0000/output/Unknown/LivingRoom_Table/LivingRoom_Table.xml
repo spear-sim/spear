@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="LivingRoom_Table" pos="2.353715 -2.732744 0.286379" quat="0.707106 0.000000 0.000000 -0.707107">
+			<include file="output/Unknown/LivingRoom_Table/cvx/LivingRoom_Table_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

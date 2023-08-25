@@ -1,0 +1,10 @@
+<mujoco model="Cushion_03">
+	<mesh file="output/Unknown/Cushion_03/cvx/Cushion_03001.obj" name="Cushion_03/Cushion_03001" />
+	<mesh file="output/Unknown/Cushion_03/cvx/Cushion_03000.obj" name="Cushion_03/Cushion_03000" />
+	<mesh file="output/Unknown/Cushion_03/cvx/Cushion_03002.obj" name="Cushion_03/Cushion_03002" />
+	<mesh file="output/Unknown/Cushion_03/cvx/Cushion_03003.obj" name="Cushion_03/Cushion_03003" />
+	<mesh file="output/Unknown/Cushion_03/cvx/Cushion_03007.obj" name="Cushion_03/Cushion_03007" />
+	<mesh file="output/Unknown/Cushion_03/cvx/Cushion_03006.obj" name="Cushion_03/Cushion_03006" />
+	<mesh file="output/Unknown/Cushion_03/cvx/Cushion_03004.obj" name="Cushion_03/Cushion_03004" />
+	<mesh file="output/Unknown/Cushion_03/cvx/Cushion_03005.obj" name="Cushion_03/Cushion_03005" />
+</mujoco>

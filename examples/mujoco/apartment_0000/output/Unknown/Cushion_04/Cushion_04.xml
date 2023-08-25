@@ -1,0 +1,11 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Cushion_04/cvx/Cushion_04_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Cushion_04" pos="3.350442 -0.485762 0.881700" quat="0.259838 0.061385 0.277369 0.922921">
+			<include file="output/Unknown/Cushion_04/cvx/Cushion_04_body.xml" />
+		</body>
+	</worldbody>
+	<contact />
+</mujoco>

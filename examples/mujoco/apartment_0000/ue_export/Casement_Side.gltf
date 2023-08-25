@@ -1,0 +1,226 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 792,
+			"type": "SCALAR",
+			"componentType": 5121
+		},
+		{
+			"bufferView": 1,
+			"count": 160,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -4.43441248, 1.22629929, -6.8729949 ],
+			"max": [ -1.46558738, 2.94343591, -6.84149456 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 160,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 160,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 160,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 160,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 6,
+			"count": 3930,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 7,
+			"count": 982,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -4.90926218, 0.892615557, -6.88331509 ],
+			"max": [ -0.990737438, 3.43565488, -6.44902468 ]
+		},
+		{
+			"bufferView": 8,
+			"count": 982,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 9,
+			"count": 982,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 10,
+			"count": 982,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 11,
+			"count": 982,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Casement_Side.bin",
+			"byteLength": 72604
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 792,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1920,
+			"byteOffset": 792,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1920,
+			"byteOffset": 2712,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 2560,
+			"byteOffset": 4632,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1280,
+			"byteOffset": 7192,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1280,
+			"byteOffset": 8472,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 7860,
+			"byteOffset": 9752,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 11784,
+			"byteOffset": 17612,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 11784,
+			"byteOffset": 29396,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 15712,
+			"byteOffset": 41180,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 7856,
+			"byteOffset": 56892,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 7856,
+			"byteOffset": 64748,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Glass",
+			"pbrMetallicRoughness":
+			{
+				"baseColorFactor": [ 0, 0.00120199996, 0.003303, 0.349999994 ],
+				"metallicFactor": 0,
+				"roughnessFactor": 0
+			},
+			"alphaMode": "BLEND"
+		},
+		{
+			"name": "MI_Walls",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Casement_Side",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				},
+				{
+					"attributes":
+					{
+						"POSITION": 7,
+						"NORMAL": 8,
+						"TANGENT": 9,
+						"TEXCOORD_0": 10,
+						"TEXCOORD_1": 11
+					},
+					"indices": 6,
+					"material": 1
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Casement_Side",
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

@@ -1,0 +1,18 @@
+<mujoco model="Ceiling">
+	<geom name="Ceiling/Ceiling006_vis" mesh="Ceiling/Ceiling006" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling006_col" mesh="Ceiling/Ceiling006" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling007_vis" mesh="Ceiling/Ceiling007" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling007_col" mesh="Ceiling/Ceiling007" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling005_vis" mesh="Ceiling/Ceiling005" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling005_col" mesh="Ceiling/Ceiling005" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling004_vis" mesh="Ceiling/Ceiling004" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling004_col" mesh="Ceiling/Ceiling004" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling000_vis" mesh="Ceiling/Ceiling000" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling000_col" mesh="Ceiling/Ceiling000" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling001_vis" mesh="Ceiling/Ceiling001" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling001_col" mesh="Ceiling/Ceiling001" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling003_vis" mesh="Ceiling/Ceiling003" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling003_col" mesh="Ceiling/Ceiling003" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling002_vis" mesh="Ceiling/Ceiling002" class="visual" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+	<geom name="Ceiling/Ceiling002_col" mesh="Ceiling/Ceiling002" class="collision" pos="0.00000 0.00000 0.00000" quat="1.00000 0.00000 0.00000 0.00000" />
+</mujoco>

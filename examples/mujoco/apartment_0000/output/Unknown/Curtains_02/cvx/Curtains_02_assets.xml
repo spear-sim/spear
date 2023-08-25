@@ -1,0 +1,10 @@
+<mujoco model="Curtains_02">
+	<mesh file="output/Unknown/Curtains_02/cvx/Curtains_02001.obj" name="Curtains_02/Curtains_02001" />
+	<mesh file="output/Unknown/Curtains_02/cvx/Curtains_02000.obj" name="Curtains_02/Curtains_02000" />
+	<mesh file="output/Unknown/Curtains_02/cvx/Curtains_02002.obj" name="Curtains_02/Curtains_02002" />
+	<mesh file="output/Unknown/Curtains_02/cvx/Curtains_02003.obj" name="Curtains_02/Curtains_02003" />
+	<mesh file="output/Unknown/Curtains_02/cvx/Curtains_02007.obj" name="Curtains_02/Curtains_02007" />
+	<mesh file="output/Unknown/Curtains_02/cvx/Curtains_02006.obj" name="Curtains_02/Curtains_02006" />
+	<mesh file="output/Unknown/Curtains_02/cvx/Curtains_02004.obj" name="Curtains_02/Curtains_02004" />
+	<mesh file="output/Unknown/Curtains_02/cvx/Curtains_02005.obj" name="Curtains_02/Curtains_02005" />
+</mujoco>

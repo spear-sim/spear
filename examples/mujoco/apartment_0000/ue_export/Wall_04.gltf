@@ -1,0 +1,130 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 528,
+			"type": "SCALAR",
+			"componentType": 5121
+		},
+		{
+			"bufferView": 1,
+			"count": 130,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.436038882, 0.270095944, -0.67806524 ],
+			"max": [ 5.69681644, 4.11281204, -0.24000144 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 130,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 130,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 130,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 130,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Wall_04.bin",
+			"byteLength": 7808
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 528,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1560,
+			"byteOffset": 528,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1560,
+			"byteOffset": 2088,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 2080,
+			"byteOffset": 3648,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1040,
+			"byteOffset": 5728,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 1040,
+			"byteOffset": 6768,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Walls",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Wall_04",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Wall_04",
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

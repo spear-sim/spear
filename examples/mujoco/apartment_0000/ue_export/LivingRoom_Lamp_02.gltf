@@ -1,0 +1,229 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 24321,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 5287,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.102119118, -6.70552225e-10, -0.101559728 ],
+			"max": [ 0.102119118, 0.336010098, 0.101559728 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 5287,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 5287,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 5287,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 5287,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 6,
+			"count": 2106,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 7,
+			"count": 457,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.0157151408, 0.190803409, -0.0153655764 ],
+			"max": [ 0.0157052781, 0.229837939, 0.0155774923 ]
+		},
+		{
+			"bufferView": 8,
+			"count": 457,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 9,
+			"count": 457,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 10,
+			"count": 457,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 11,
+			"count": 457,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "LivingRoom_Lamp_02.bin",
+			"byteLength": 374520
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 48642,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 63444,
+			"byteOffset": 48644,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 63444,
+			"byteOffset": 112088,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 84592,
+			"byteOffset": 175532,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 42296,
+			"byteOffset": 260124,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 42296,
+			"byteOffset": 302420,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 4212,
+			"byteOffset": 344716,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 5484,
+			"byteOffset": 348928,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 5484,
+			"byteOffset": 354412,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 7312,
+			"byteOffset": 359896,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 3656,
+			"byteOffset": 367208,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 3656,
+			"byteOffset": 370864,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_LivingRoom_Lamp",
+			"pbrMetallicRoughness":
+			{
+			}
+		},
+		{
+			"name": "EmissiveMeshMaterial",
+			"pbrMetallicRoughness":
+			{
+				"baseColorFactor": [ 0, 0, 0, 1 ],
+				"metallicFactor": 0,
+				"roughnessFactor": 0.5
+			},
+			"alphaMode": "BLEND",
+			"doubleSided": true
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_LivingRoom_Lamp",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				},
+				{
+					"attributes":
+					{
+						"POSITION": 7,
+						"NORMAL": 8,
+						"TANGENT": 9,
+						"TEXCOORD_0": 10,
+						"TEXCOORD_1": 11
+					},
+					"indices": 6,
+					"material": 1
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "LivingRoom_Lamp_02",
+			"translation": [ 4.70783377, 1.00910449, 0.0107664503 ],
+			"scale": [ 1.5, 1.5, 1.5 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

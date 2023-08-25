@@ -1,0 +1,131 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 23652,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 4165,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -2.53952885, -1.29158068, -0.0941430628 ],
+			"max": [ 2.53952885, 1.80605614, 0.0941430628 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 4165,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 4165,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 4165,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 4165,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Curtains_02.bin",
+			"byteLength": 280544
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 47304,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 49980,
+			"byteOffset": 47304,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 49980,
+			"byteOffset": 97284,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 66640,
+			"byteOffset": 147264,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 33320,
+			"byteOffset": 213904,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 33320,
+			"byteOffset": 247224,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Curtains_02",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Curtains_02",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Curtains_02",
+			"translation": [ -2.9497354, 1.92019796, -6.29265928 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

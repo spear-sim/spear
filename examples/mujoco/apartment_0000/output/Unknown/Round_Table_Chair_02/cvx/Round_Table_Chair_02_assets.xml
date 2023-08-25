@@ -1,0 +1,10 @@
+<mujoco model="Round_Table_Chair_02">
+	<mesh file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02005.obj" name="Round_Table_Chair_02/Round_Table_Chair_02005" />
+	<mesh file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02004.obj" name="Round_Table_Chair_02/Round_Table_Chair_02004" />
+	<mesh file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02006.obj" name="Round_Table_Chair_02/Round_Table_Chair_02006" />
+	<mesh file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02007.obj" name="Round_Table_Chair_02/Round_Table_Chair_02007" />
+	<mesh file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02003.obj" name="Round_Table_Chair_02/Round_Table_Chair_02003" />
+	<mesh file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02002.obj" name="Round_Table_Chair_02/Round_Table_Chair_02002" />
+	<mesh file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02000.obj" name="Round_Table_Chair_02/Round_Table_Chair_02000" />
+	<mesh file="output/Unknown/Round_Table_Chair_02/cvx/Round_Table_Chair_02001.obj" name="Round_Table_Chair_02/Round_Table_Chair_02001" />
+</mujoco>

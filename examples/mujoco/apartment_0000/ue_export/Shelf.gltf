@@ -1,0 +1,225 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 5.2.0"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 8064,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 1961,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.451000661, -4.90470747e-18, -0.185232162 ],
+			"max": [ 0.450999737, 2.00456882, 0.185232162 ]
+		},
+		{
+			"bufferView": 2,
+			"count": 1961,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 1961,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 1961,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 5,
+			"count": 1961,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 6,
+			"count": 74472,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 7,
+			"count": 15529,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.361673266, 0.156441599, -0.12922363 ],
+			"max": [ 0.413497508, 1.78526175, 0.180346176 ]
+		},
+		{
+			"bufferView": 8,
+			"count": 15529,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 9,
+			"count": 15529,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 10,
+			"count": 15529,
+			"type": "VEC2",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 11,
+			"count": 15529,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "Shelf.bin",
+			"byteLength": 1144512
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 16128,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 23532,
+			"byteOffset": 16128,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 23532,
+			"byteOffset": 39660,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 31376,
+			"byteOffset": 63192,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 15688,
+			"byteOffset": 94568,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 15688,
+			"byteOffset": 110256,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 148944,
+			"byteOffset": 125944,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 186348,
+			"byteOffset": 274888,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 186348,
+			"byteOffset": 461236,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 248464,
+			"byteOffset": 647584,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 124232,
+			"byteOffset": 896048,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 124232,
+			"byteOffset": 1020280,
+			"target": 34962
+		}
+	],
+	"materials": [
+		{
+			"name": "MI_Shelf",
+			"pbrMetallicRoughness":
+			{
+			}
+		},
+		{
+			"name": "MI_Props",
+			"pbrMetallicRoughness":
+			{
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "SM_Shelf",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4,
+						"TEXCOORD_1": 5
+					},
+					"indices": 0,
+					"material": 0
+				},
+				{
+					"attributes":
+					{
+						"POSITION": 7,
+						"NORMAL": 8,
+						"TANGENT": 9,
+						"TEXCOORD_0": 10,
+						"TEXCOORD_1": 11
+					},
+					"indices": 6,
+					"material": 1
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"name": "Shelf",
+			"translation": [ -5.20741367, 0.2676768, -4.00147963 ],
+			"rotation": [ 0, 0.707106829, -0, 0.707106829 ],
+			"scale": [ 1.5, 1.5, 1.5 ],
+			"mesh": 0
+		}
+	],
+	"scenes": [
+		{
+			"name": "apartment_0000",
+			"nodes": [ 0 ]
+		}
+	]
+}

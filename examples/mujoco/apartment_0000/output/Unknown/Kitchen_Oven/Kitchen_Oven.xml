@@ -1,0 +1,68 @@
+<mujoco>
+	<asset>
+		<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_06/cvx/Oven_Wheel_06_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_01/cvx/Oven_Wheel_01_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Kitchen_Oven_Base/cvx/Kitchen_Oven_Base_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Door_01/cvx/Door_01_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Drawer_02/cvx/Drawer_02_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Drawer_05/cvx/Drawer_05_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Drawer_04/cvx/Drawer_04_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Drawer_03/cvx/Drawer_03_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_02/cvx/Oven_Wheel_02_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_05/cvx/Oven_Wheel_05_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Door_Oven/cvx/Door_Oven_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_04/cvx/Oven_Wheel_04_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_03/cvx/Oven_Wheel_03_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Drawer_08/cvx/Drawer_08_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Drawer_06/cvx/Drawer_06_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Drawer_01/cvx/Drawer_01_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Door_02/cvx/Door_02_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Drawer_07/cvx/Drawer_07_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Door_03/cvx/Door_03_assets.xml" />
+		<include file="output/Unknown/Kitchen_Oven/Door_04/cvx/Door_04_assets.xml" />
+	</asset>
+	<worldbody>
+		<body name="Kitchen_Oven" pos="-5.226315 -2.561738 0.265102" quat="1.000000 0.000000 0.000000 0.000000">
+			<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_06/cvx/Oven_Wheel_06_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_01/cvx/Oven_Wheel_01_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Kitchen_Oven_Base/cvx/Kitchen_Oven_Base_body.xml" />
+			<body name="Kitchen_Oven/Door_01" pos="0.344284 0.624790 0.404304" quat="0.000000 0.000000 0.000000 -1.000000">
+				<joint name="Kitchen_Oven/PhysicsConstraint_door_01_x_revolute" type="hinge" pos="0.00000 0.00000 0.00000" axis="-0.00000 0.00000 -1.00000" range="-0.08727 1.48353" />
+				<include file="output/Unknown/Kitchen_Oven/Door_01/cvx/Door_01_body.xml" />
+			</body>
+			<include file="output/Unknown/Kitchen_Oven/Drawer_02/cvx/Drawer_02_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Drawer_05/cvx/Drawer_05_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Drawer_04/cvx/Drawer_04_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Drawer_03/cvx/Drawer_03_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_02/cvx/Oven_Wheel_02_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_05/cvx/Oven_Wheel_05_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Door_Oven/cvx/Door_Oven_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_04/cvx/Oven_Wheel_04_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Oven_Wheel_03/cvx/Oven_Wheel_03_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Drawer_08/cvx/Drawer_08_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Drawer_06/cvx/Drawer_06_body.xml" />
+			<include file="output/Unknown/Kitchen_Oven/Drawer_01/cvx/Drawer_01_body.xml" />
+			<body name="Kitchen_Oven/Door_02" pos="0.344284 1.940451 0.402772" quat="0.000000 0.000000 0.000000 -1.000000">
+				<joint name="Kitchen_Oven/PhysicsConstraint_door_02_x_revolute" type="hinge" pos="0.00000 0.00000 0.00000" axis="0.00000 0.00000 -1.00000" range="-1.48353 0.08727" />
+				<include file="output/Unknown/Kitchen_Oven/Door_02/cvx/Door_02_body.xml" />
+			</body>
+			<include file="output/Unknown/Kitchen_Oven/Drawer_07/cvx/Drawer_07_body.xml" />
+			<body name="Kitchen_Oven/Door_03" pos="0.344284 1.976798 0.404304" quat="0.000000 0.000000 0.000000 -1.000000">
+				<joint name="Kitchen_Oven/PhysicsConstraint_door_03_x_revolute" type="hinge" pos="0.00000 0.00000 0.00000" axis="-0.00000 0.00000 -1.00000" range="-0.08727 1.48353" />
+				<include file="output/Unknown/Kitchen_Oven/Door_03/cvx/Door_03_body.xml" />
+			</body>
+			<body name="Kitchen_Oven/Door_04" pos="0.344284 3.313365 0.400572" quat="0.000000 0.000000 0.000000 -1.000000">
+				<joint name="Kitchen_Oven/PhysicsConstraint_door_04_x_revolute" type="hinge" pos="0.00000 0.00000 0.00000" axis="0.00000 0.00000 -1.00000" range="-1.48353 0.08727" />
+				<include file="output/Unknown/Kitchen_Oven/Door_04/cvx/Door_04_body.xml" />
+			</body>
+		</body>
+	</worldbody>
+	<contact>
+		<exclude body1="Kitchen_Oven/Door_04" body2="Kitchen_Oven/Door_03" />
+		<exclude body1="Kitchen_Oven/Door_04" body2="Kitchen_Oven/Door_02" />
+		<exclude body1="Kitchen_Oven/Door_04" body2="Kitchen_Oven/Door_01" />
+		<exclude body1="Kitchen_Oven/Door_03" body2="Kitchen_Oven/Door_02" />
+		<exclude body1="Kitchen_Oven/Door_03" body2="Kitchen_Oven/Door_01" />
+		<exclude body1="Kitchen_Oven/Door_02" body2="Kitchen_Oven/Door_01" />
+	</contact>
+</mujoco>

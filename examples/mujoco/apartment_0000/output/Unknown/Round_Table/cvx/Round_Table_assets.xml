@@ -1,0 +1,10 @@
+<mujoco model="Round_Table">
+	<mesh file="output/Unknown/Round_Table/cvx/Round_Table003.obj" name="Round_Table/Round_Table003" />
+	<mesh file="output/Unknown/Round_Table/cvx/Round_Table002.obj" name="Round_Table/Round_Table002" />
+	<mesh file="output/Unknown/Round_Table/cvx/Round_Table000.obj" name="Round_Table/Round_Table000" />
+	<mesh file="output/Unknown/Round_Table/cvx/Round_Table001.obj" name="Round_Table/Round_Table001" />
+	<mesh file="output/Unknown/Round_Table/cvx/Round_Table005.obj" name="Round_Table/Round_Table005" />
+	<mesh file="output/Unknown/Round_Table/cvx/Round_Table004.obj" name="Round_Table/Round_Table004" />
+	<mesh file="output/Unknown/Round_Table/cvx/Round_Table006.obj" name="Round_Table/Round_Table006" />
+	<mesh file="output/Unknown/Round_Table/cvx/Round_Table007.obj" name="Round_Table/Round_Table007" />
+</mujoco>
