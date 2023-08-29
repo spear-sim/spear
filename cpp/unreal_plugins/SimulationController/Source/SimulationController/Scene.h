@@ -22,10 +22,15 @@ public:
     void cleanUpObjectReferences();;
 
     std::vector<std::string> getAllActorNames();
+    std::vector<std::string> getAllSceneComponentNames();
     std::map<std::string, std::vector<uint8_t>> getAllActorLocations();
     std::map<std::string, std::vector<uint8_t>> getAllActorRotations();
+    std::map<std::string, std::vector<uint8_t>> getAllComponentWorldLocations();
+    std::map<std::string, std::vector<uint8_t>> getAllComponentWorldRotations();
     std::vector<uint8_t> getActorLocations(std::vector<std::string> actor_names);
     std::vector<uint8_t> getActorRotations(std::vector<std::string> actor_names);
+    std::vector<uint8_t> getComponentWorldLocations(std::vector<std::string> component_names);
+    std::vector<uint8_t> getComponentWorldRotations(std::vector<std::string> component_names);
     std::map<std::string, std::vector<std::string>> getStaticMeshComponentsForActors(std::vector<std::string> actors);
     std::map<std::string, std::vector<std::string>> getPhysicsConstraintComponentsForActors(std::vector<std::string> actors);
 

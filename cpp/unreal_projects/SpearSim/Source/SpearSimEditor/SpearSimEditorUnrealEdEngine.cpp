@@ -48,7 +48,7 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
             element.second->GetComponents<UStaticMeshComponent*>(sm_comps);
             SP_LOG(element.first, "......");
             for (auto& comp : sm_comps) {
-                SP_LOG("    ", Unreal::toStdString(comp->GetName()));
+                SP_LOG("    ", element.first, ".", Unreal::toStdString(comp->GetName()));
             }
         }
         return true;
@@ -61,6 +61,19 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
             element.second->GetComponents<UPhysicsConstraintComponent*>(sm_comps);
             SP_LOG(element.first, "......");
             for (auto& comp : sm_comps) {
+                SP_LOG("    ", Unreal::toStdString(comp->GetName()));
+            }
+        }
+        return true;
+    }
+    else if (cmd_list.at(0) == "printAllSceneComponents") {
+
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+        TArray<USceneComponent*> sc_comps;
+        for (auto& element : all_actors_name_ref_map) {
+            element.second->GetComponents<USceneComponent*>(sc_comps);
+            SP_LOG(element.first, "......");
+            for (auto& comp : sc_comps) {
                 SP_LOG("    ", Unreal::toStdString(comp->GetName()));
             }
         }
@@ -82,7 +95,6 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
                 SP_LOG("    ", Unreal::toStdString(comp->GetName()), " location is ", location.X, " ,", location.Y, ", ", location.Z);
             }
         }
-
         return true;
     }
     else if (cmd_list.at(0) == "getActorRotation") {
@@ -101,7 +113,6 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
                 SP_LOG("    ", Unreal::toStdString(comp->GetName()), " rotation is ", rotation.Pitch, " ,", rotation.Yaw, ", ", rotation.Roll);
             }
         }
-
         return true;
     }
     else if (cmd_list.at(0) == "setActorLocation") {
@@ -113,7 +124,6 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
             FHitResult* hit_result = nullptr;
             all_actors_name_ref_map.at(cmd_list.at(1))->SetActorLocation(location, sweep, hit_result, ETeleportType::TeleportPhysics);
         }
-
         return true;
     }
     else if (cmd_list.at(0) == "setActorRotation") {
@@ -125,10 +135,9 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
             FHitResult* hit_result = nullptr;
             all_actors_name_ref_map.at(cmd_list.at(1))->SetActorRotation(rotation, ETeleportType::TeleportPhysics);
         }
-
         return true;
     }
-    else if (cmd_list.at(0) == "setComponentLocation") {
+    else if (cmd_list.at(0) == "setStaticMeshComponentLocation") {
         std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
 
         if (all_actors_name_ref_map.count(cmd_list.at(1))) {
@@ -151,7 +160,7 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
 
         return true;
     }
-    else if (cmd_list.at(0) == "setComponentRotation") {
+    else if (cmd_list.at(0) == "setStaticMeshComponentRotation") {
         std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
 
         if (all_actors_name_ref_map.count(cmd_list.at(1))) {
@@ -174,7 +183,7 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
 
         return true;
     }
-    else if (cmd_list.at(0) == "setPhysicsConstraintLocation") {
+    else if (cmd_list.at(0) == "setPhysicsConstraintComponentLocation") {
         std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
 
         if (all_actors_name_ref_map.count(cmd_list.at(1))) {
@@ -197,7 +206,30 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
 
         return true;
     }
-    else if (cmd_list.at(0) == "setComponentRelativeLocation") {
+    else if (cmd_list.at(0) == "setPhysicsConstraintComponentRotation") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+
+            TArray<UPhysicsConstraintComponent*> pc_comps;
+            all_actors_name_ref_map.at(cmd_list.at(1))->GetComponents<UPhysicsConstraintComponent*>(pc_comps);
+
+            std::map<std::string, UPhysicsConstraintComponent*> all_comps_name_ref_map;
+            for (auto& comp : pc_comps) {
+                all_comps_name_ref_map[Unreal::toStdString(comp->GetName())] = comp;
+            }
+
+            if (all_comps_name_ref_map.at(cmd_list.at(2))) {
+                FRotator rotation = { std::stof(cmd_list.at(3)), std::stof(cmd_list.at(4)), std::stof(cmd_list.at(5)) };
+                bool sweep = false;
+                FHitResult* hit_result = nullptr;
+                all_comps_name_ref_map.at(cmd_list.at(2))->SetWorldRotation(rotation, sweep, hit_result, ETeleportType::TeleportPhysics);
+            }
+        }
+
+        return true;
+    }
+    else if (cmd_list.at(0) == "setStaticMeshComponentRelativeLocation") {
         std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
 
         if (all_actors_name_ref_map.count(cmd_list.at(1))) {
@@ -218,6 +250,25 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
             }
         }
 
+        return true;
+    }
+    else if (cmd_list.at(0) == "setAbsolute") {
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+
+            TArray<UStaticMeshComponent*> sm_comps;
+            all_actors_name_ref_map.at(cmd_list.at(1))->GetComponents<UStaticMeshComponent*>(sm_comps);
+
+            std::map<std::string, UStaticMeshComponent*> all_comps_name_ref_map;
+            for (auto& comp : sm_comps) {
+                all_comps_name_ref_map[Unreal::toStdString(comp->GetName())] = comp;
+            }
+
+            if (all_comps_name_ref_map.at(cmd_list.at(2))) {
+                all_comps_name_ref_map.at(cmd_list.at(2))->SetAbsolute(static_cast<bool>(std::stoi(cmd_list.at(3))), static_cast<bool>(std::stoi(cmd_list.at(4))), static_cast<bool>(std::stoi(cmd_list.at(5))));
+            }
+        }
         return true;
     }
 

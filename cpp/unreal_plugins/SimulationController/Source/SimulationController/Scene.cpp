@@ -16,6 +16,7 @@
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Unreal.h"
 
+
 void Scene::findObjectReferences(UWorld* world)
 {
     SP_ASSERT(world);
@@ -53,6 +54,103 @@ std::vector<std::string> Scene::getAllActorNames()
     return actor_names;
 }
 
+std::vector<std::string> Scene::getAllSceneComponentNames()
+{
+    std::vector<std::string> component_names;
+    for (auto& element : scene_components_name_ref_map_) {
+        component_names.emplace_back(element.first);
+    }
+    return component_names;
+}
+
+std::map<std::string, std::vector<uint8_t>> Scene::getAllActorLocations()
+{
+    std::map<std::string, std::vector<uint8_t>> actor_locations;
+    for (auto& element : actors_name_ref_map_) {
+        FVector location = element.second->GetActorLocation();
+        actor_locations[element.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+    }
+    return actor_locations;
+}
+
+std::map<std::string, std::vector<uint8_t>> Scene::getAllActorRotations()
+{
+    std::map<std::string, std::vector<uint8_t>> actor_rotations;
+    for (auto& element : actors_name_ref_map_) {
+        FQuat rotation = element.second->GetActorQuat();
+        actor_rotations[element.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.X, rotation.Y, rotation.Z, rotation.W});
+    }
+    return actor_rotations;
+}
+
+std::map<std::string, std::vector<uint8_t>> Scene::getAllComponentWorldLocations()
+{
+    std::map<std::string, std::vector<uint8_t>> component_locations;
+    for (auto& element : scene_components_name_ref_map_) {
+        FVector location = element.second->GetComponentLocation();
+        component_locations[element.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+    }
+    return component_locations;
+}
+
+std::map<std::string, std::vector<uint8_t>> Scene::getAllComponentWorldRotations()
+{
+    std::map<std::string, std::vector<uint8_t>> component_rotations;
+    for (auto& element : scene_components_name_ref_map_) {
+        FQuat rotation = element.second->GetComponentQuat();
+        component_rotations[element.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.X, rotation.Y, rotation.Z, rotation.W});
+    }
+    return component_rotations;
+}
+
+std::vector<uint8_t> Scene::getActorLocations(std::vector<std::string> actor_names)
+{
+    std::vector<uint8_t> actor_locations;
+    for(auto& actor_name: actor_names){
+        SP_ASSERT(actors_name_ref_map_.count(actor_name));
+        FVector location = actors_name_ref_map_.at(actor_name)->GetActorLocation();
+        std::vector<uint8_t> actor_location = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+        actor_locations.insert(actor_locations.end(), actor_location.begin(), actor_location.end());
+    }
+    return actor_locations;
+}
+
+std::vector<uint8_t> Scene::getActorRotations(std::vector<std::string> actor_names)
+{
+    std::vector<uint8_t> actor_rotations;
+    for(auto& actor_name: actor_names){
+        SP_ASSERT(actors_name_ref_map_.count(actor_name));
+        FQuat rotation = actors_name_ref_map_.at(actor_name)->GetActorQuat();
+        std::vector<uint8_t> actor_rotation = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.X, rotation.Y, rotation.Z, rotation.W});
+        actor_rotations.insert(actor_rotations.end(), actor_rotation.begin(), actor_rotation.end());
+    }
+    return actor_rotations;
+}
+
+std::vector<uint8_t> Scene::getComponentWorldLocations(std::vector<std::string> component_names)
+{
+    std::vector<uint8_t> component_locations;
+    for (auto& component_name : component_names) {
+        SP_ASSERT(scene_components_name_ref_map_.count(component_name));
+        FVector location = scene_components_name_ref_map_.at(component_name)->GetComponentLocation();
+        std::vector<uint8_t> actor_location = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+        component_locations.insert(component_locations.end(), actor_location.begin(), actor_location.end());
+    }
+    return component_locations;
+}
+
+std::vector<uint8_t> Scene::getComponentWorldRotations(std::vector<std::string> component_names)
+{
+    std::vector<uint8_t> component_rotations;
+    for (auto& component_name : component_names) {
+        SP_ASSERT(scene_components_name_ref_map_.count(component_name));
+        FQuat rotation = scene_components_name_ref_map_.at(component_name)->GetComponentQuat();
+        std::vector<uint8_t> actor_rotation = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.X, rotation.Y, rotation.Z, rotation.W});
+        component_rotations.insert(component_rotations.end(), actor_rotation.begin(), actor_rotation.end());
+    }
+    return component_rotations;
+}
+
 std::map<std::string, std::vector<std::string>> Scene::getStaticMeshComponentsForActors(std::vector<std::string> actors)
 {
     std::map<std::string, std::vector<std::string>> static_mesh_components;
@@ -81,50 +179,6 @@ std::map<std::string, std::vector<std::string>> Scene::getPhysicsConstraintCompo
         }
     }
     return physics_constraint_components;
-}
-
-std::map<std::string, std::vector<uint8_t>> Scene::getAllActorLocations()
-{
-    std::map<std::string, std::vector<uint8_t>> actor_locations;
-    for (auto& element : actors_name_ref_map_) {
-        FVector location = element.second->GetActorLocation();
-        actor_locations[element.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
-    }
-    return actor_locations;
-}
-
-std::map<std::string, std::vector<uint8_t>> Scene::getAllActorRotations()
-{
-    std::map<std::string, std::vector<uint8_t>> actor_rotations;
-    for (auto& element : actors_name_ref_map_) {
-        FQuat rotation = element.second->GetActorQuat();
-        actor_rotations[element.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.X, rotation.Y, rotation.Z, rotation.W});
-    }
-    return actor_rotations;
-}
-
-std::vector<uint8_t> Scene::getActorLocations(std::vector<std::string> actor_names)
-{
-    std::vector<uint8_t> actor_locations;
-    for(auto& actor_name: actor_names){
-        SP_ASSERT(actors_name_ref_map_.count(actor_name));
-        FVector location = actors_name_ref_map_.at(actor_name)->GetActorLocation();
-        std::vector<uint8_t> actor_location = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
-        actor_locations.insert(actor_locations.end(), actor_location.begin(), actor_location.end());
-    }
-    return actor_locations;
-}
-
-std::vector<uint8_t> Scene::getActorRotations(std::vector<std::string> actor_names)
-{
-    std::vector<uint8_t> object_rotations;
-    for(auto& actor_name: actor_names){
-        SP_ASSERT(actors_name_ref_map_.count(actor_name));
-        FQuat rotation = actors_name_ref_map_.at(actor_name)->GetActorQuat();
-        std::vector<uint8_t> object_rotation = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.X, rotation.Y, rotation.Z, rotation.W});
-        object_rotations.insert(object_rotations.end(), object_rotation.begin(), object_rotation.end());
-    }
-    return object_rotations;
 }
 
 std::vector<bool> Scene::isUsingAbsoluteLocation(std::vector<std::string> component_names) {
@@ -163,7 +217,9 @@ std::vector<bool> Scene::isUsingAbsoluteScale(std::vector<std::string> component
 
 void Scene::SetAbolute(std::vector<std::string> component_names, std::vector<bool> blocations, std::vector<bool> brotations, std::vector<bool> bscales) {
 
-    SP_ASSERT(component_names.size() == blocations.size() == brotations.size() == bscales.size()); //assert all array sizes are equal
+    SP_ASSERT(component_names.size() == blocations.size());
+    SP_ASSERT(blocations.size() == brotations.size());
+    SP_ASSERT(brotations.size() == bscales.size());
 
     for (int i = 0; i < component_names.size(); i++) {
         SP_ASSERT(scene_components_name_ref_map_.count(component_names.at(i)));

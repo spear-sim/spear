@@ -6,8 +6,8 @@
 SPEAR:
   LAUNCH_MODE: "standalone_executable"
 
-  STANDALONE_EXECUTABLE: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/Windows/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe"
-  # STANDALONE_EXECUTABLE: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+  # STANDALONE_EXECUTABLE: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Shipping/Windows/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe"
+  STANDALONE_EXECUTABLE: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
 
   CUSTOM_COMMAND_LINE_ARGUMENTS: []
   RENDER_OFFSCREEN: False
@@ -18,6 +18,9 @@ CORE_UTILS:
   WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION: False
 
 SIMULATION_CONTROLLER:
+
+  INTERACTION_MODE: "programmatic" # "interactive", "programmatic"
+
   AGENT: "SphereAgent"
   TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
@@ -43,6 +46,11 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
 
   VISUALIZER:
-    ACTOR_NAME: "camera_actor"
-    SPAWN_CAMERA: False
-
+    ACTOR_NAME: "debug_camera"
+    SPAWN_CAMERA: True
+    SPAWN_LOCATION_X: -450.0 # -70.0
+    SPAWN_LOCATION_Y: -50.0 # 360.0
+    SPAWN_LOCATION_Z: 150.0 # 170.0
+    SPAWN_ROTATION_PITCH: -20.0 # -9.391286
+    SPAWN_ROTATION_YAW: 80.0 # 110.283559
+    SPAWN_ROTATION_ROLL: 0.0

@@ -13,6 +13,7 @@
 #include <CoreMinimal.h>
 #include <EngineUtils.h>
 #include <GameFramework/Actor.h>
+#include <Kismet/KismetSystemLibrary.h>
 #include <UObject/NameTypes.h>
 
 #include "CoreUtils/Assert.h"
@@ -339,7 +340,8 @@ public:
         std::map<std::string, TActor*> actor_map;
         for (auto& a : actors) {
             SP_ASSERT(a);
-            std::string name = toStdString(a->GetName());
+            //std::string name = toStdString(a->GetName());
+            std::string name = toStdString(UKismetSystemLibrary::GetDisplayName(a));
             SP_ASSERT(!Std::containsKey(actor_map, name)); // There shouldn't be two actors with the same name
             actor_map[name] = a;
         }

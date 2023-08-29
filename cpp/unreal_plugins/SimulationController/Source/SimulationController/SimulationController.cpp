@@ -172,6 +172,7 @@ void SimulationController::worldBeginPlayEventHandler()
     physics_settings->bSubstepping = Config::get<bool>("SIMULATION_CONTROLLER.PHYSICS.ENABLE_SUBSTEPPING");
     physics_settings->MaxSubstepDeltaTime = Config::get<float>("SIMULATION_CONTROLLER.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
     physics_settings->MaxSubsteps = Config::get<int32>("SIMULATION_CONTROLLER.PHYSICS.MAX_SUBSTEPS");
+    //physics_settings->bDisableActiveActors = true;
 
     // Check that the physics substepping parameters match our deired simulation step time.
     // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep for more details.
@@ -504,6 +505,12 @@ void SimulationController::bindFunctionsToRpcServer()
         SP_ASSERT(scene_);
         return scene_->getAllActorNames();
     });
+
+    rpc_server_->bindSync("scene.get_all_scene_component_names", [this]() -> std::vector<std::string> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getAllSceneComponentNames();
+    });
     
     rpc_server_->bindSync("scene.get_all_actor_locations", [this]() -> std::map<std::string, std::vector<uint8_t>> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
@@ -517,6 +524,18 @@ void SimulationController::bindFunctionsToRpcServer()
         return scene_->getAllActorRotations();
     });
 
+    rpc_server_->bindSync("scene.get_all_component_world_locations", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getAllComponentWorldLocations();
+    });
+
+    rpc_server_->bindSync("scene.get_all_component_world_rotations", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getAllComponentWorldRotations();
+    });
+
     rpc_server_->bindSync("scene.get_actor_locations", [this](std::vector<std::string> actor_names) -> std::vector<std::uint8_t> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(scene_);
@@ -527,6 +546,18 @@ void SimulationController::bindFunctionsToRpcServer()
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(scene_);
         return scene_->getActorRotations(actor_names);
+    });
+
+    rpc_server_->bindSync("scene.get_component_world_locations", [this](std::vector<std::string> component_names) -> std::vector<std::uint8_t> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getComponentWorldLocations(component_names);
+    });
+
+    rpc_server_->bindSync("scene.get_component_world_rotations", [this](std::vector<std::string> component_names) -> std::vector<std::uint8_t> {
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(scene_);
+        return scene_->getComponentWorldRotations(component_names);
     });
 
     rpc_server_->bindSync("scene.get_static_mesh_components_for_actors", [this](std::vector<std::string> actor_names) -> std::map<std::string, std::vector<std::string>> {

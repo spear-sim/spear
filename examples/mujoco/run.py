@@ -16,6 +16,12 @@ import time
 
 NUM_STEPS = 100
 
+def muj_2_ue_position(position):
+    position[1]*=-1         # mujoco_y = -ue_y
+    return position * 100   # m to cms
+
+def muj_2_ue_quat(quaternion):
+    return np.array([quaternion[3], quaternion[0], quaternion[1], quaternion[2]])
 
 if __name__ == "__main__":
 
@@ -33,19 +39,35 @@ if __name__ == "__main__":
     mujoco_model = mujoco.MjModel.from_xml_path(args.xml_path)
     mujoco_data = mujoco.MjData(mujoco_model)
 
+    # perform this step once to load all information
     mujoco.mj_forward(mujoco_model, mujoco_data)
 
-    body_ids = []
-    for jnt_id in range(mujoco_model.njnt):
-        joint = mujoco_model.joint(jnt_id)
-        body_ids.append(joint.bodyid[0])
+    # get all body ids that needs to be updated in every step
+    # these body ids are the first child of all joints
+    # first child is only to ensure that in case of free joints wherein there are 6 of the same children, we need only one
+    # and in every other joint case, there will only be 1 child
+    body_ids = [ mujoco_model.joint(jnt_id).bodyid[0] for jnt_id in range(mujoco_model.njnt) ]
+    # body_names = [ mujoco_model.body(body_id).name.replace('/', '.') for body_id in body_ids ]
 
+    actor_names = []
+    actor_ids = []
+    component_names = []
+    component_ids = []
+    for body_id in body_ids:
+        body = mujoco_model.body(body_id)
+        body_name = body.name.replace('/', '.')
+        if body.parentid == 0:  # if parent id world, then body is an actor (in UE terms)
+            actor_names.append(body_name)
+            actor_ids.append(body_id)
+        else:
+            if "Kitchen_Sink.Drawer_02" in body_name:
+                component_names.append(body_name)
+                component_ids.append(body_id)
 
     # get all mujoco bodies and corresponding xpos, xquat
-    xpos_dict  = {mujoco_model.body(body_id).name.replace('/', '.'): mujoco_data.body(body_id).xpos  for body_id in body_ids}
+    xpos_dict  = {mujoco_model.body(body_id).name.replace('/', '.'): mujoco_data.body(body_id).xpos  for body_id in body_ids} # replace '/' by '.' until @Samarth updates the mujoco export pipeline to use '.' instead of '/'
     xquat_dict = {mujoco_model.body(body_id).name.replace('/', '.'): mujoco_data.body(body_id).xquat for body_id in body_ids}
 
-    # send this info
     print("xpos dict.......................")
     print(xpos_dict)
     print("xquat dict......................")
@@ -59,22 +81,70 @@ if __name__ == "__main__":
 
     spear.log()
     spear.log("All actor names:")
-    actor_names = scene.get_all_actor_names()
-    spear.log("printing all actor names\n", actor_names)
+    spear_actor_names = scene.get_all_actor_names()
+    spear.log("printing all actor names\n", spear_actor_names)
 
-    
-    
-    # data = mujoco.reset() # xpos, xquat
+    spear.log()
+    spear.log("All scene_component names:")
+    scene_component_names = scene.get_all_scene_component_names()
+    spear.log("printing all scene_component names\n", scene_component_names)
 
-    #### step
-    # user sends actions to mujoco
-    # mujoco_data.ctrl({actuator_id:ctrl_value}) # cabinet->door->revolute_joint->actuator
-    # mujoco.step(mujoco_model, mujoco_data)
-    # get_xpos_xquat()
-    # scene.set_pose(xpos, xquat)
-    # scene.tick()
+    spear.log()
+    spear.log("All actor body names from mujoco:")
+    spear.log(actor_names)
 
+    spear.log()
+    spear.log("All component body names from mujoco:")
+    spear.log(component_names)
 
+    spear.log()
+    spear.log("printing is_using_absolute_location for components")
+    absolute_locations = scene.is_using_absolute_location(component_names)
+    spear.log(absolute_locations)
+
+    spear.log()
+    spear.log("printing is_using_absolute_rotation for components")
+    absolute_rotations = scene.is_using_absolute_rotation(component_names)
+    spear.log(absolute_rotations)
+
+    spear.log()
+    spear.log("printing is_using_absolute_scale for components")
+    absolute_scales = scene.is_using_absolute_scale(component_names)
+    spear.log(absolute_scales)
+
+    spear.log(len(component_names), len(absolute_locations), len(absolute_rotations), len(absolute_scales))
+    scene.set_absolute(component_names, [True for _ in absolute_locations], [True for _ in absolute_rotations], absolute_scales)
+
+    ##############################################
+    ####### mujoco and spear communication #######
+    viewer = mujoco.viewer.launch_passive(mujoco_model, mujoco_data)
+
+    for _ in range(100):
+        # send actutations to mujoco
+        # mujoco_data.actuator("Cabinet/PhysicsConstraint_door_01_x_revolute_actuator").ctrl[0] = 1 # body/component_name Cabinet.Door_01
+        mujoco.mj_step(mujoco_model, mujoco_data)
+        viewer.sync()
+
+        # get updated xpos, xquat
+        xpos_dict  = {mujoco_model.body(body_id).name.replace('/', '.'): muj_2_ue_position(mujoco_data.body(body_id).xpos)  for body_id in component_ids} # replace '/' by '.' until mujoco export pipeline to use '.' instead of '/'
+        # xquat_dict = {mujoco_model.body(body_id).name.replace('/', '.'): muj_2_ue_quat(mujoco_data.body(body_id).xquat) for body_id in component_ids}
+
+        spear.log("mujoco xpos:  ", xpos_dict)
+        spear.log()
+        # spear.log("mujoco xquat: ", xquat_dict)
+
+        # send these updated poses to SPEAR
+
+        scene.set_component_world_locations(xpos_dict)
+        locs = scene.get_component_world_locations(component_names)
+        spear.log("UE loc:       ", {x:y for x,y in zip(component_names, locs)})
+        spear.log()
+        # scene.set_component_world_rotations(xquat_dict)
+        # rots = scene.get_component_world_rotations(component_names)
+        # spear.log()
+        # spear.log("UE rot:   ", {x:y for x,y in zip(component_names, rots)})
+
+    viewer.close()
     simulation_controller.close()
     quit()
     
