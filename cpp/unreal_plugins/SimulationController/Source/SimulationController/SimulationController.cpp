@@ -247,6 +247,18 @@ void SimulationController::worldBeginPlayEventHandler()
     int num_worker_threads = 1;
     rpc_server_->runAsync(num_worker_threads);
 
+    // find all PrimitiveComponents and disable physics on them
+    std::map<std::string, AActor*> actors_name_ref_map_ = Unreal::findActorsByTagAllAsMap(world_, {});
+    SP_ASSERT(!actors_name_ref_map_.empty());
+
+    for (auto& element : actors_name_ref_map_) {
+        TArray<UPrimitiveComponent*> primitive_components;
+        element.second->GetComponents<UPrimitiveComponent*>(primitive_components);
+        for (auto& primitive_component : primitive_components) {
+            primitive_component->SetSimulatePhysics(false);
+        }
+    }
+
     has_world_begin_play_executed_ = true;
 }
 
@@ -591,43 +603,43 @@ void SimulationController::bindFunctionsToRpcServer()
     });
 
     rpc_server_->bindSync("scene.set_absolute", [this](std::vector<std::string> object_names, std::vector<bool> blocations, std::vector<bool> brotations, std::vector<bool> bscales) -> void {
-        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(scene_);
         scene_->SetAbolute(object_names, blocations, brotations, bscales);
     });
 
     rpc_server_->bindSync("scene.set_actor_locations", [this](std::map<std::string, std::vector<uint8_t>> actor_locations) -> void {
-        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(scene_);
         scene_->setActorLocations(actor_locations);
     });
 
     rpc_server_->bindSync("scene.set_actor_rotations", [this](std::map<std::string, std::vector<uint8_t>> actor_rotations) -> void {
-        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(scene_);
         scene_->setActorRotations(actor_rotations);
     });
 
     rpc_server_->bindSync("scene.set_component_world_locations", [this](std::map<std::string, std::vector<uint8_t>> component_locations) -> void {
-        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(scene_);
         scene_->setComponentWorldLocations(component_locations);
     });
     
     rpc_server_->bindSync("scene.set_component_world_rotations", [this](std::map<std::string, std::vector<uint8_t>> component_rotations) -> void {
-        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(scene_);
         scene_->setComponentWorldRotations(component_rotations);
     });
 
     rpc_server_->bindSync("scene.set_component_relative_locations", [this](std::map<std::string, std::vector<uint8_t>> component_locations) -> void {
-        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(scene_);
         scene_->setComponentRelativeLocations(component_locations);
     });
 
     rpc_server_->bindSync("scene.set_component_relative_rotations", [this](std::map<std::string, std::vector<uint8_t>> component_rotations) -> void {
-        SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(scene_);
         scene_->setComponentRelativeRotations(component_rotations);
     });

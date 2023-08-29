@@ -21,7 +21,7 @@ def muj_2_ue_position(position):
     return position * 100   # m to cms
 
 def muj_2_ue_quat(quaternion):
-    return np.array([quaternion[3], quaternion[0], quaternion[1], quaternion[2]])
+    return np.array([-quaternion[0], quaternion[1], -quaternion[2], quaternion[3]])
 
 if __name__ == "__main__":
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
             actor_names.append(body_name)
             actor_ids.append(body_id)
         else:
-            if "Kitchen_Sink.Drawer_02" in body_name:
+            if "Kitchen_Sink.Drawer_01" in body_name:
                 component_names.append(body_name)
                 component_ids.append(body_id)
 
@@ -115,11 +115,15 @@ if __name__ == "__main__":
     spear.log(len(component_names), len(absolute_locations), len(absolute_rotations), len(absolute_scales))
     scene.set_absolute(component_names, [True for _ in absolute_locations], [True for _ in absolute_rotations], absolute_scales)
 
+    rots = scene.get_component_world_rotations(component_names)
+    spear.log()
+    spear.log("UE rot:   ", {x:y for x,y in zip(component_names, rots)})
+
     ##############################################
     ####### mujoco and spear communication #######
     viewer = mujoco.viewer.launch_passive(mujoco_model, mujoco_data)
 
-    for _ in range(100):
+    for _ in range(500):
         # send actutations to mujoco
         # mujoco_data.actuator("Cabinet/PhysicsConstraint_door_01_x_revolute_actuator").ctrl[0] = 1 # body/component_name Cabinet.Door_01
         mujoco.mj_step(mujoco_model, mujoco_data)
@@ -134,6 +138,10 @@ if __name__ == "__main__":
         # spear.log("mujoco xquat: ", xquat_dict)
 
         # send these updated poses to SPEAR
+        
+        # simulation_controller.begin_tick()
+        # simulation_controller.tick()
+        # simulation_controller.end_tick()
 
         scene.set_component_world_locations(xpos_dict)
         locs = scene.get_component_world_locations(component_names)

@@ -146,46 +146,46 @@ class Scene():
 
     def set_absolute(self, component_names, locations, rotations, scales):
         self._simulation_controller.begin_tick()
-        self._simulation_controller.tick()
         self._set_absolute(component_names, locations, rotations, scales)
+        self._simulation_controller.tick()
         self._simulation_controller.end_tick()
 
     def set_actor_locations(self, actor_locations):
 
         self._simulation_controller.begin_tick()
-        self._simulation_controller.tick()
         self._set_actor_locations(actor_locations)
+        self._simulation_controller.tick()
         self._simulation_controller.end_tick()
 
     def set_actor_rotations(self, actor_rotations):
 
         self._simulation_controller.begin_tick()
+        self._set_actor_rotations(actor_rotations)        
         self._simulation_controller.tick()
-        self._set_actor_rotations(actor_rotations)
         self._simulation_controller.end_tick()
 
     def set_component_world_locations(self, component_locations):
         self._simulation_controller.begin_tick()
-        self._simulation_controller.tick()
         self._set_component_world_locations(component_locations)
+        self._simulation_controller.tick()
         self._simulation_controller.end_tick()
 
     def set_component_world_rotations(self, component_rotations):
         self._simulation_controller.begin_tick()
-        self._simulation_controller.tick()
         self._set_component_world_rotations(component_rotations)
+        self._simulation_controller.tick()
         self._simulation_controller.end_tick()
 
     def set_component_relative_locations(self, component_locations):
         self._simulation_controller.begin_tick()
-        self._simulation_controller.tick()
         self._set_component_relative_locations(component_locations)
+        self._simulation_controller.tick()
         self._simulation_controller.end_tick()
 
     def set_component_relative_rotations(self, component_rotations):
         self._simulation_controller.begin_tick()
-        self._simulation_controller.tick()
         self._set_component_relative_rotations(component_rotations)
+        self._simulation_controller.tick()
         self._simulation_controller.end_tick()
 
     def _get_all_actor_names(self):

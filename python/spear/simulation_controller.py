@@ -27,6 +27,12 @@ class SimulationController():
         self._request_close_unreal_instance()
         self._close_rpc_client()
 
+    def n_ticks(self, num_of_ticks=1):
+        for _ in range(num_of_ticks):
+            self.begin_tick()
+            self.tick()
+            self.end_tick()
+
     def begin_tick(self):
         self.rpc_client.call("begin_tick")
 
