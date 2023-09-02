@@ -161,7 +161,7 @@ CameraSensor::CameraSensor(
 
 CameraSensor::~CameraSensor()
 {
-    // Objects created with LoadObject and NewObject don't need to be cleaned up explicitly.
+    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
 
     for (auto& render_pass_desc : render_pass_descs_) {
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {

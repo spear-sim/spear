@@ -26,6 +26,9 @@ ADebugWidget::ADebugWidget()
 ADebugWidget::~ADebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    DummyString = Unreal::toFString("");
+    UrdfFile = Unreal::toFString("");
 }
 
 void ADebugWidget::LoadConfig()

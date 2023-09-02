@@ -41,7 +41,7 @@ UUrdfRobotComponent::~UUrdfRobotComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    // Objects created with LoadObject and NewObject don't need to be cleaned up explicitly.
+    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
 
     LinkComponents.Empty();
     JointComponents.Empty();
@@ -49,6 +49,7 @@ UUrdfRobotComponent::~UUrdfRobotComponent()
     link_components_.clear();
     joint_components_.clear();
 
+    SP_ASSERT(player_input_component_);
     player_input_component_ = nullptr;
 }
 

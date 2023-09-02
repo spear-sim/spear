@@ -44,6 +44,8 @@ UUrdfJointComponent::~UUrdfJointComponent()
 
     parent_static_mesh_component_ = nullptr;
     child_static_mesh_component_ = nullptr;
+
+    SP_ASSERT(player_input_component_);
     player_input_component_ = nullptr;
 }
 

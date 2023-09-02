@@ -90,7 +90,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
 
 ImitationLearningTask::~ImitationLearningTask()
 {
-    // Objects created with LoadObject and NewObject don't need to be cleaned up explicitly.
+    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
 
     agent_initial_locations_.clear();
     agent_goal_locations_.clear();

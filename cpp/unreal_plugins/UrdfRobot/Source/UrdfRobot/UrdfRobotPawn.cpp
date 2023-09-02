@@ -37,13 +37,11 @@ AUrdfRobotPawn::~AUrdfRobotPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    // Objects created with LoadObject and NewObject don't need to be cleaned up explicitly.
+    // Pawns don't need to be cleaned up explicitly.
 
     UrdfFile = Unreal::toFString("");
     UrdfRobotComponent = nullptr;
     CameraComponent = nullptr;
-
-    RootComponent = nullptr;
 }
 
 void AUrdfRobotPawn::Initialize()
@@ -68,7 +66,7 @@ void AUrdfRobotPawn::Initialize()
     UrdfRobotComponent->initialize(&robot_desc);
     UrdfRobotComponent->RegisterComponent();
 
-    RootComponent = UrdfRobotComponent;
+    SetRootComponent(UrdfRobotComponent);
 
     // UCameraComponent
     FVector camera_location;

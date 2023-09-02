@@ -33,6 +33,7 @@ struct RenderPassDesc
 class CameraSensor
 {
 public:
+    CameraSensor() = delete;
     CameraSensor(UCameraComponent* camera_component, const std::vector<std::string>& render_pass_names, unsigned int width, unsigned int height, float fov);
     ~CameraSensor();
 

@@ -24,6 +24,7 @@ class UTickEventComponent;
 class ImuSensor 
 {
 public:
+    ImuSensor() = delete;
     ImuSensor(UPrimitiveComponent* component);
     ~ImuSensor();
 

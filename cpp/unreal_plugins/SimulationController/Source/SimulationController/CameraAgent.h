@@ -21,6 +21,7 @@ class CameraSensor;
 class CameraAgent : public Agent
 {
 public:
+    CameraAgent() = delete;
     CameraAgent(UWorld* world);
     ~CameraAgent();
     

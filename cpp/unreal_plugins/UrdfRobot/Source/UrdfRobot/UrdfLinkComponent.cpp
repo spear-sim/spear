@@ -33,7 +33,7 @@ UUrdfLinkComponent::~UUrdfLinkComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    // Objects created with LoadObject and NewObject don't need to be cleaned up explicitly.
+    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
 
     StaticMeshComponents.Empty();
 }

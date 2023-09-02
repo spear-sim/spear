@@ -28,7 +28,7 @@ public:
 
     ~Component()
     {
-        // Objects created with LoadObject and NewObject don't need to be cleaned up explicitly.
+        // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
 
         SP_ASSERT(component_);
         component_ = nullptr;
