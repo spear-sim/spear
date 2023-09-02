@@ -16,16 +16,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/base_link.base_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/base_link.base_link'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/base_link.base_link"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/base_link.base_link"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/base_link.base_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/base_link.base_link'"/>
             </geometry>
         </collision>
     </link>
@@ -39,16 +39,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/wheel_link_l.wheel_link_l'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/wheel_link_l.wheel_link_l'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/wheel_link_l.wheel_link_l'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/wheel_link_l.wheel_link_l'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/wheel_link_l.wheel_link_l'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/wheel_link_l.wheel_link_l'"/>
             </geometry>
         </collision>
     </link>
@@ -73,16 +73,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/wheel_link_r.wheel_link_r'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/wheel_link_r.wheel_link_r'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/wheel_link_r.wheel_link_r'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/wheel_link_r.wheel_link_r'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/wheel_link_r.wheel_link_r'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/wheel_link_r.wheel_link_r'"/>
             </geometry>
         </collision>
     </link>
@@ -107,16 +107,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link'"/>
             </geometry>
         </collision>
     </link>
@@ -137,16 +137,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link'"/>
             </geometry>
         </collision>
     </link>
@@ -274,16 +274,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/estop_link.estop_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/estop_link.estop_link'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/estop_link.estop_link'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/estop_link.estop_link'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/estop_link.estop_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/estop_link.estop_link'"/>
             </geometry>
         </collision>
     </link>
@@ -303,16 +303,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/laser_link.laser_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/laser_link.laser_link'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/laser_link.laser_link'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/laser_link.laser_link'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/laser_link.laser_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/laser_link.laser_link'"/>
             </geometry>
         </collision>
     </link>
@@ -332,16 +332,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_0.arm_link_0'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_0.arm_link_0'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_0.arm_link_0'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/arm_link_0.arm_link_0'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_0.arm_link_0'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_0.arm_link_0'"/>
             </geometry>
         </collision>
     </link>
@@ -367,16 +367,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_1.arm_link_1'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_1.arm_link_1'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_1.arm_link_1'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/arm_link_1.arm_link_1'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_1.arm_link_1'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_1.arm_link_1'"/>
             </geometry>
         </collision>
     </link>
@@ -402,16 +402,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_2.arm_link_2'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_2.arm_link_2'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_2.arm_link_2'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/arm_link_2.arm_link_2'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_2.arm_link_2'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_2.arm_link_2'"/>
             </geometry>
         </collision>
     </link>
@@ -436,16 +436,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_3.arm_link_3'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_3.arm_link_3'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_3.arm_link_3'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/arm_link_3.arm_link_3'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_3.arm_link_3'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_3.arm_link_3'"/>
             </geometry>
         </collision>
     </link>
@@ -470,16 +470,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_4.arm_link_4'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_4.arm_link_4'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_4.arm_link_4'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/arm_link_4.arm_link_4'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_4.arm_link_4'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_4.arm_link_4'"/>
             </geometry>
         </collision>
     </link>
@@ -504,16 +504,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_5.arm_link_5'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_5.arm_link_5'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_5.arm_link_5'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/arm_link_5.arm_link_5'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_5.arm_link_5'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_5.arm_link_5'"/>
             </geometry>
         </collision>
     </link>
@@ -538,16 +538,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_6.arm_link_6'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_6.arm_link_6'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_6.arm_link_6'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/arm_link_6.arm_link_6'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/arm_link_6.arm_link_6'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/arm_link_6.arm_link_6'"/>
             </geometry>
         </collision>
     </link>
@@ -572,16 +572,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/gripper_link.gripper_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/gripper_link.gripper_link'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/gripper_link.gripper_link'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/gripper_link.gripper_link'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/gripper_link.gripper_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/gripper_link.gripper_link'"/>
             </geometry>
         </collision>
     </link>
@@ -601,16 +601,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 -0.101425 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_l.gripper_finger_link_l'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_l.gripper_finger_link_l'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_l.gripper_finger_link_l'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_l.gripper_finger_link_l'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 -0.101425 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_l.gripper_finger_link_l'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_l.gripper_finger_link_l'"/>
             </geometry>
         </collision>
     </link>
@@ -636,16 +636,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0.101425 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_r.gripper_finger_link_r'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_r.gripper_finger_link_r'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_r.gripper_finger_link_r'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_r.gripper_finger_link_r'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0.101425 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_r.gripper_finger_link_r'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/gripper_finger_link_r.gripper_finger_link_r'"/>
             </geometry>
         </collision>
     </link>
@@ -671,16 +671,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/head_pan_link.head_pan_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/head_pan_link.head_pan_link'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/head_pan_link.head_pan_link'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/head_pan_link.head_pan_link'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/head_pan_link_collision.head_pan_link_collision'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/head_pan_link_collision.head_pan_link_collision'"/>
             </geometry>
         </collision>
     </link>
@@ -706,16 +706,16 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/head_tilt_link.head_tilt_link'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/head_tilt_link.head_tilt_link'"/>
                 <spear>
-                    <unreal_static_mesh path="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/head_tilt_link.head_tilt_link'"/>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/head_tilt_link.head_tilt_link'"/>
                 </spear>
             </geometry>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="StaticMesh'/UrdfRobot/Fetch_V1/Meshes/head_tilt_link_collision.head_tilt_link_collision'"/>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/head_tilt_link_collision.head_tilt_link_collision'"/>
             </geometry>
         </collision>
     </link>

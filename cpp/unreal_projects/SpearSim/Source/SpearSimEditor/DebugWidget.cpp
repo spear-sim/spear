@@ -63,6 +63,9 @@ void ADebugWidget::SpawnVehiclePawn()
 
 void ADebugWidget::SpawnUrdfRobotPawn()
 {
+    auto static_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString("/UrdfRobot/Fetch_V1/Meshes/base_link.base_link"));
+    SP_LOG(static_mesh);
+
     UWorld* world = GetWorld();
     SP_ASSERT(world);
 

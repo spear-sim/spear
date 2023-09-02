@@ -136,7 +136,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
 
             if (material_desc->unreal_material_ != "") {
                 UMaterialInterface* material_interface = LoadObject<UMaterialInterface>(
-                    nullptr, *Unreal::toFString(material_desc->unreal_material_));
+                    nullptr, *Unreal::toFString("Material'" + material_desc->unreal_material_));
                 SP_ASSERT(material_interface);
                 static_mesh_component->SetMaterial(0, material_interface);
             } else {
