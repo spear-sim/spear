@@ -22,10 +22,10 @@
 
 
 const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_PLAYER_INPUT_ACTIONS = {
-    {"One",   {{"joint.joint_0.add_torque_in_radians",             { 1000000.0, 0.0,  0.0}}}},
-    {"Two",   {{"joint.joint_0.add_torque_in_radians",             {-1000000.0, 0.0,  0.0}}}},
-    {"Three", {{"joint.joint_1.add_to_angular_velocity_target",    { 0.1,       0.0,  0.0}}}},
-    {"Four",  {{"joint.joint_1.add_to_angular_velocity_target",    {-0.1,       0.0,  0.0}}}}
+    {"One",   {{"joint.joint_0.add_torque_in_radians",          { 1000000.0, 0.0, 0.0}}}},
+    {"Two",   {{"joint.joint_0.add_torque_in_radians",          {-1000000.0, 0.0, 0.0}}}},
+    {"Three", {{"joint.joint_1.add_to_angular_velocity_target", { 0.1,       0.0, 0.0}}}},
+    {"Four",  {{"joint.joint_1.add_to_angular_velocity_target", {-0.1,       0.0, 0.0}}}}
 };
 
 UUrdfRobotComponent::UUrdfRobotComponent()

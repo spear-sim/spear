@@ -127,7 +127,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         // assign material
         if (visual_desc.has_material_) {
 
-            // if the material desc is a reference, then follow the pointer to obtain the reference
+            // if the material desc is a reference, then follow the pointer to obtain the underlying material desc
             const UrdfMaterialDesc* material_desc = &(visual_desc.material_desc_); // needs to be const because spear_link_desc is const
             if (material_desc->is_reference_) {
                 material_desc = material_desc->material_desc_;

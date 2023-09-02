@@ -10,7 +10,7 @@
 
 #include "CoreUtils/Rpclib.h"
 
-// enum values must match python/spear/env.py, which is why we write them out explicitly
+// enum integer values must match python/spear/env.py, which is why we write them out explicitly
 enum class DataType
 {
     Invalid    = -1,
