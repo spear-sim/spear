@@ -196,7 +196,14 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
         case UrdfJointControlType::Torque:
             break;
         default:
-            SP_ASSERT(false);
+            switch (joint_desc->type_) {
+                case UrdfJointType::Fixed:
+                    break;
+                default:
+                    SP_ASSERT(false);
+                    break;
+            }
+            break;
     }
 
     // Set drive params
@@ -232,7 +239,14 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
         case UrdfJointControlType::Torque:
             break;
         default:
-            SP_ASSERT(false);
+            switch (joint_desc->type_) {
+                case UrdfJointType::Fixed:
+                    break;
+                default:
+                    SP_ASSERT(false);
+                    break;
+            }
+            break;
     }
 }
 

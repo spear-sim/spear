@@ -69,7 +69,8 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
     SetStaticMesh(link_static_mesh);
 
     // set physical properties
-    SetSimulatePhysics(link_desc->simulate_physics_);
+    SetSimulatePhysics(false); // TODO (MR): re-enable physics
+    //SetSimulatePhysics(link_desc->simulate_physics_);
     SetNotifyRigidBodyCollision(true);
     bUseDefaultCollision = true;
 
@@ -136,12 +137,12 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
 
             if (material_desc->unreal_material_ != "") {
                 UMaterialInterface* material_interface = LoadObject<UMaterialInterface>(
-                    nullptr, *Unreal::toFString("Material'" + material_desc->unreal_material_));
+                    nullptr, *Unreal::toFString(material_desc->unreal_material_));
                 SP_ASSERT(material_interface);
                 static_mesh_component->SetMaterial(0, material_interface);
             } else {
                 UMaterialInterface* material_interface = LoadObject<UMaterialInterface>(
-                    nullptr, *Unreal::toFString("Material'/UrdfRobot/Common/Materials/M_PureColor.M_PureColor'"));
+                    nullptr, *Unreal::toFString("/UrdfRobot/Common/Materials/M_PureColor.M_PureColor"));
                 UMaterialInstanceDynamic* material_instance_dynamic = UMaterialInstanceDynamic::Create(material_interface, static_mesh_component);
                 FLinearColor color = {
                     static_cast<float>(material_desc->color_.at(0)),
