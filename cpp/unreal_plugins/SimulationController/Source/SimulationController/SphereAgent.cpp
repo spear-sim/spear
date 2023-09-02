@@ -29,11 +29,12 @@
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
+#include "SimulationController/Component.h"
 #include "SimulationController/TickEventComponent.h"
 
 SphereAgent::SphereAgent(UWorld* world)
 {
-    // spawn main actor
+    // Spawn static mesh actor
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
     std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPAWN_MODE");
@@ -69,15 +70,13 @@ SphereAgent::SphereAgent(UWorld* world)
             Config::get<double>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MESH_SCALE_Z"));
     static_mesh_actor_->SetActorScale3D(scale);
 
-    // load mesh and material
-    UStaticMesh* sphere_mesh = LoadObject<UStaticMesh>(
-        nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.STATIC_MESH")));
+    // Load mesh and material
+    auto sphere_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.STATIC_MESH")));
     SP_ASSERT(sphere_mesh);
-    UMaterial* sphere_material = LoadObject<UMaterial>(
-        nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MATERIAL")));
+    auto sphere_material = LoadObject<UMaterial>(nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE.MATERIAL")));
     SP_ASSERT(sphere_material);
 
-    // configure static mesh component
+    // Configure static mesh component
     static_mesh_component_ = static_mesh_actor_->GetStaticMeshComponent();
     SP_ASSERT(static_mesh_component_);
     
@@ -88,7 +87,7 @@ SphereAgent::SphereAgent(UWorld* world)
     static_mesh_component_->SetSimulatePhysics(true);
     static_mesh_component_->SetNotifyRigidBodyCollision(true);
 
-    // set up camera
+    // Spawn camera actor
     FActorSpawnParameters camera_spawn_params;
     camera_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA_ACTOR_NAME"));
     camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -101,15 +100,11 @@ SphereAgent::SphereAgent(UWorld* world)
         Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_WIDTH") /
         Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT");
 
-    // set up tick handler
-    parent_actor_ = world->SpawnActor<AActor>();
-    SP_ASSERT(parent_actor_);
-
-    tick_event_component_ = NewObject<UTickEventComponent>(parent_actor_);
+    // Create UTickEventComponent
+    tick_event_component_ = std::make_unique<Component<UTickEventComponent>>(world);
     SP_ASSERT(tick_event_component_);
-    tick_event_component_->RegisterComponent();
-    tick_event_component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
-    tick_event_handle_ = tick_event_component_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
+    SP_ASSERT(tick_event_component_->component_);
+    tick_event_delegate_handle_ = tick_event_component_->component_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
@@ -134,14 +129,10 @@ SphereAgent::~SphereAgent()
     }
 
     SP_ASSERT(tick_event_component_);
-    tick_event_component_->delegate_.Remove(tick_event_handle_);
-    tick_event_handle_.Reset();
-    tick_event_component_->DestroyComponent();
+    SP_ASSERT(tick_event_component_->component_);
+    tick_event_component_->component_->delegate_.Remove(tick_event_delegate_handle_);
+    tick_event_delegate_handle_.Reset();
     tick_event_component_ = nullptr;
-
-    SP_ASSERT(parent_actor_);
-    parent_actor_->Destroy();
-    parent_actor_ = nullptr;
 
     SP_ASSERT(camera_actor_);
     camera_actor_->Destroy();
@@ -155,15 +146,8 @@ SphereAgent::~SphereAgent()
     static_mesh_actor_ = nullptr;
 }
 
-void SphereAgent::findObjectReferences(UWorld* world)
-{
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
-}
-
-void SphereAgent::cleanUpObjectReferences()
-{
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
-}
+void SphereAgent::findObjectReferences(UWorld* world) {}
+void SphereAgent::cleanUpObjectReferences() {}
 
 std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
 {
@@ -214,7 +198,9 @@ std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
         observation_space["rotation"] = std::move(array_desc);
     }
 
-    observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
+    if (Std::contains(observation_components, "camera")) {
+        observation_space.merge(camera_sensor_->getObservationSpace());
+    }
 
     return observation_space;
 }
@@ -266,7 +252,9 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
         observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation_.Pitch, rotation_.Yaw, rotation_.Roll}); 
     }
 
-    observation.merge(camera_sensor_->getObservation(observation_components));
+    if (Std::contains(observation_components, "camera")) {
+        observation.merge(camera_sensor_->getObservation());
+    }
 
     return observation;
 }
@@ -285,8 +273,8 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getStepInfo() const
 
 void SphereAgent::reset()
 {
-    static_mesh_component_->SetPhysicsLinearVelocity(FVector::ZeroVector, false);
-    static_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector, false);
+    static_mesh_component_->SetPhysicsLinearVelocity(FVector::ZeroVector);
+    static_mesh_component_->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
     static_mesh_component_->GetBodyInstance()->ClearTorques();
     static_mesh_component_->GetBodyInstance()->ClearForces();
 
@@ -300,10 +288,5 @@ bool SphereAgent::isReady() const
 
 void SphereAgent::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
 {
-    std::map<std::string, std::vector<uint8_t>> observation;
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
-
-    if (Std::contains(observation_components, "camera")) {
-        camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);
-    }
+    camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);
 }

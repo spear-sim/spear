@@ -17,6 +17,7 @@ void Config::initialize()
 
     // if a config file is provided via the command-line, then load it
     if (FParse::Value(FCommandLine::Get(), *Unreal::toFString("config_file="), config_file)) {
+        SP_LOG("Found config file via the -config_file command-line argument: ", Unreal::toStdString(config_file));
         s_config_ = YAML::LoadFile(Unreal::toStdString(config_file));
         s_initialized_ = true;
     } else {
@@ -27,4 +28,5 @@ void Config::initialize()
 void Config::terminate()
 {
     s_config_.reset();
+    s_initialized_ = false;
 }

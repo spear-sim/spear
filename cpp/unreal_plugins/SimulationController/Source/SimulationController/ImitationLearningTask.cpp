@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,7 @@
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/ActorHitEventComponent.h"
+#include "SimulationController/Component.h"
 
 ImitationLearningTask::ImitationLearningTask(UWorld* world)
 {
@@ -32,20 +34,17 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     goal_actor_ = world->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
     SP_ASSERT(goal_actor_);
 
-    auto scene_component = NewObject<USceneComponent>(goal_actor_);
+    auto scene_component = NewObject<USceneComponent>(goal_actor_, "scene_component");
     SP_ASSERT(scene_component);
     scene_component->SetMobility(EComponentMobility::Movable);
     scene_component->RegisterComponent();
     goal_actor_->SetRootComponent(scene_component);
 
-    parent_actor_ = world->SpawnActor<AActor>();
-    SP_ASSERT(parent_actor_);
-
-    // Create UActorHitEvent but don't subscribe to any actors yet
-    actor_hit_event_component_ = NewObject<UActorHitEventComponent>(parent_actor_);
+    // Create UActorHitEventComponent but don't subscribe to any actors yet
+    actor_hit_event_component_ = std::make_unique<Component<UActorHitEventComponent>>(world);
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->RegisterComponent();
-    actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
+    SP_ASSERT(actor_hit_event_component_->component_);
+    actor_hit_event_delegate_handle_ = actor_hit_event_component_->component_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
     // Get initial and goal locations of all episodes in the following format:
     //    scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
@@ -53,12 +52,10 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     agent_goal_locations_.clear();
     episode_index_ = -1;
 
-    // Create an input filestream
-    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE"));
-    SP_ASSERT(fs.is_open());
-
     // Read file data, line-by-line in the format:
     // scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
+    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE"));
+    SP_ASSERT(fs.is_open());
     std::string line;
     std::getline(fs, line); // read header
     std::vector<std::string> tokens = Std::tokenize(line, ",");
@@ -69,8 +66,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     SP_ASSERT(tokens.at(3) == "initial_location_z");
     SP_ASSERT(tokens.at(4) == "goal_location_x");
     SP_ASSERT(tokens.at(5) == "goal_location_y");
-    SP_ASSERT(tokens.at(6) == "goal_location_z");
-    
+    SP_ASSERT(tokens.at(6) == "goal_location_z");    
     while (std::getline(fs, line)) {
         tokens = Std::tokenize(line, ",");
         SP_ASSERT(tokens.size() == 7);
@@ -94,19 +90,17 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
 
 ImitationLearningTask::~ImitationLearningTask()
 {
+    // Objects created with LoadObject and NewObject don't need to be cleaned up explicitly.
+
     agent_initial_locations_.clear();
     agent_goal_locations_.clear();
     episode_index_ = -1;
 
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->delegate_.Remove(actor_hit_event_handle_);
-    actor_hit_event_handle_.Reset();
-    actor_hit_event_component_->DestroyComponent();
+    SP_ASSERT(actor_hit_event_component_->component_);
+    actor_hit_event_component_->component_->delegate_.Remove(actor_hit_event_delegate_handle_);
+    actor_hit_event_delegate_handle_.Reset();
     actor_hit_event_component_ = nullptr;
-
-    SP_ASSERT(parent_actor_);
-    parent_actor_->Destroy();
-    parent_actor_ = nullptr;
 
     SP_ASSERT(goal_actor_);
     goal_actor_->Destroy();
@@ -122,13 +116,12 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     obstacle_ignore_actors_ = Unreal::findActorsByName(
         world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
-    actor_hit_event_component_->subscribeToActor(agent_actor_);
+    actor_hit_event_component_->component_->subscribeToActor(agent_actor_);
 }
 
 void ImitationLearningTask::cleanUpObjectReferences()
 {
-    SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->unsubscribeFromActor(agent_actor_);
+    actor_hit_event_component_->component_->unsubscribeFromActor(agent_actor_);
 
     obstacle_ignore_actors_.clear();
 

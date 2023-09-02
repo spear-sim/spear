@@ -4,12 +4,18 @@
 
 #pragma once
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include <CoreMinimal.h>
 #include <GameFramework/SpectatorPawn.h>
 
 #include "SpearSimSpectatorPawn.generated.h"
 
 class UInputComponent;
+
+class AUrdfRobotPawn;
 
 UCLASS()
 class ASpearSimSpectatorPawn : public ASpectatorPawn
@@ -20,7 +26,5 @@ public:
     ~ASpearSimSpectatorPawn();
 
     void SetupPlayerInputComponent(UInputComponent* input_component) override;
-
-private:
-    void exit(float value);
+    void Tick(float delta_time) override;
 };

@@ -19,20 +19,23 @@ public:
     ~ADebugWidget();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void spawnUrdfRobotPawn();
+    void LoadConfig();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void loadConfig();
+    void SaveConfig();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void saveConfig();
+    void PrintDummyString();
+
+    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Dummy string")
+    FString DummyString;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void printDummyString();
+    void SpawnVehiclePawn();
 
-    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="URDF File")
-    FString urdf_file_;
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void SpawnUrdfRobotPawn();
 
-    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Dummy String")
-    FString dummy_string_;
+    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="URDF file")
+    FString UrdfFile;
 };

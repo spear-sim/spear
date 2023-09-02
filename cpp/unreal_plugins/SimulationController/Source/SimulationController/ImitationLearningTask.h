@@ -5,6 +5,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -12,6 +13,7 @@
 #include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
+#include "SimulationController/Component.h"
 #include "SimulationController/Task.h"
 
 class AActor;
@@ -43,12 +45,10 @@ private:
 
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
-    AActor* parent_actor_ = nullptr;
-
     std::vector<AActor*> obstacle_ignore_actors_;
 
-    UActorHitEventComponent* actor_hit_event_component_ = nullptr;
-    FDelegateHandle actor_hit_event_handle_;
+    std::unique_ptr<Component<UActorHitEventComponent>> actor_hit_event_component_ = nullptr;
+    FDelegateHandle actor_hit_event_delegate_handle_;
 
     // Task state
     std::vector<FVector> agent_initial_locations_;

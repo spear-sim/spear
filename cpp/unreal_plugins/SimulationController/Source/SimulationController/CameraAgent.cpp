@@ -121,10 +121,11 @@ std::map<std::string, ArrayDesc> CameraAgent::getActionSpace() const
 std::map<std::string, ArrayDesc> CameraAgent::getObservationSpace() const
 {
     std::map<std::string, ArrayDesc> observation_space;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
+    if (Std::contains(observation_components, "camera")) {
+        observation_space.merge(camera_sensor_->getObservationSpace());
+    }
 
     return observation_space;
 }
@@ -155,10 +156,11 @@ void CameraAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
 std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    observation.merge(camera_sensor_->getObservation(observation_components));
+    if (Std::contains(observation_components, "camera")) {
+        observation.merge(camera_sensor_->getObservation());
+    }
 
     return observation;
 }

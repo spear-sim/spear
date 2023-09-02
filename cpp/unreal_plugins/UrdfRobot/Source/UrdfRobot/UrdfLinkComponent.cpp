@@ -16,6 +16,7 @@
 #include <Math/Rotator.h>
 #include <Math/UnrealMathUtility.h>
 #include <Math/Vector.h>
+#include <PhysicalMaterials/PhysicalMaterial.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
@@ -31,9 +32,28 @@ UUrdfLinkComponent::UUrdfLinkComponent()
 UUrdfLinkComponent::~UUrdfLinkComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    // Objects created with LoadObject and NewObject don't need to be cleaned up explicitly.
+
+    StaticMeshComponents.Empty();
 }
 
-void UUrdfLinkComponent::initialize(const UrdfLinkDesc* const link_desc)
+void UUrdfLinkComponent::BeginPlay()
+{
+    UStaticMeshComponent::BeginPlay();
+
+    // Prevent the link from sleeping, otherwise it won't wake up when we apply position-or-velocity-based control actions on joints
+    FBodyInstance* body_instance = GetBodyInstance();
+    SP_ASSERT(body_instance);
+    UPhysicalMaterial* physical_material = body_instance->GetSimplePhysicalMaterial();
+    SP_ASSERT(physical_material);
+    UPhysicalMaterial* physical_material_override = DuplicateObject<UPhysicalMaterial>(physical_material, this, "physical_material_override");
+    physical_material_override->SleepAngularVelocityThreshold = 0.0f;
+    physical_material_override->SleepLinearVelocityThreshold = 0.0f;
+    body_instance->SetPhysMaterialOverride(physical_material_override);
+}
+
+void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
 {
     double m_to_cm = 100.0;
 
@@ -49,11 +69,11 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* const link_desc)
     SetStaticMesh(link_static_mesh);
 
     // set physical properties
-    SetSimulatePhysics(true);
+    SetSimulatePhysics(link_desc->simulate_physics_);
     SetNotifyRigidBodyCollision(true);
     bUseDefaultCollision = true;
 
-    // inertial, ignore inertia matrix because it is defined by each Unreal asset, ignore origin
+    // inertial
     SetMassOverrideInKg(NAME_None, link_desc->inertial_desc_.mass_, true);
 
     // visual
@@ -136,9 +156,6 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* const link_desc)
         // connect static mesh component to the top-level link
         static_mesh_component->SetupAttachment(this);
         static_mesh_component->RegisterComponent();
-
-        // add static mesh component to persistent data structures
-        static_mesh_components_["link." + link_desc->name_ + ".static_mesh"] = static_mesh_component;
-        static_mesh_components_editor_.Add(static_mesh_component);
+        StaticMeshComponents.Add(static_mesh_component);
     }
 }

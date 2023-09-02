@@ -16,8 +16,8 @@
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 
-bool REQUIRED = true;
-bool OPTIONAL = false;
+const bool REQUIRED = true;
+const bool OPTIONAL = false;
 
 UrdfRobotDesc UrdfParser::parse(const std::string& filename)
 {
@@ -140,6 +140,16 @@ UrdfLinkDesc UrdfParser::parseLinkNode(FXmlNode* link_node)
         }
     }
 
+    // optional
+    FXmlNode* spear_link_node = link_node->FindChildNode(Unreal::toFString("spear"));
+    if (spear_link_node) {
+        // optional
+        FXmlNode* simulate_physics_node = spear_link_node->FindChildNode(Unreal::toFString("simulate_physics"));
+        if (simulate_physics_node) {
+            link_desc.simulate_physics_ = parseBool(getAttribute(simulate_physics_node, "value", REQUIRED), true);
+        }
+    }
+
     return link_desc;
 }
 
@@ -244,19 +254,14 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
             std::string control_type = getAttribute(spear_dynamics_node, "control_type", OPTIONAL);
             if (control_type == "position") {
                 joint_desc.control_type_ = UrdfJointControlType::Position;
-
             } else if (control_type == "velocity") {
                 joint_desc.control_type_ = UrdfJointControlType::Velocity;
-                SP_ASSERT(joint_desc.spring_ == 0.0f);
-
+            } else if (control_type == "position_and_velocity") {
+                joint_desc.control_type_ = UrdfJointControlType::PositionAndVelocity;
             } else if (control_type == "torque") {
                 joint_desc.control_type_ = UrdfJointControlType::Torque;
-                SP_ASSERT(joint_desc.spring_ == 0.0);
-                SP_ASSERT(joint_desc.damping_ == 0.0);
-
             } else if (control_type == "") {
                 joint_desc.control_type_ = UrdfJointControlType::Invalid;
-
             } else {
                 SP_ASSERT(false);
             }
@@ -478,6 +483,23 @@ double UrdfParser::parseDouble(const std::string& str, double default_value)
         val = default_value;
     } else {
         val = std::stod(str);
+    }
+    return val;
+}
+
+bool UrdfParser::parseBool(const std::string& str, bool default_value)
+{
+    std::string str_lower = Std::toLower(str);
+    bool val;
+    if (str == "") {
+        val = default_value;
+    } else if (str_lower == "true") {
+        val = true;
+    } else if (str_lower == "false") {
+        val = false;
+    } else {
+        SP_ASSERT(false);
+        val = false;
     }
     return val;
 }

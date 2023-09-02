@@ -24,6 +24,7 @@ enum class UrdfGeometryType
     Mesh
 };
 
+// enum values must match EJointType in UrdfJointComponent.h
 enum class UrdfJointType
 {
     Invalid,
@@ -35,12 +36,13 @@ enum class UrdfJointType
     Planar
 };
 
-// custom SPEAR data
+// enum values must match EJointControlType in UrdfJointComponent.h
 enum class UrdfJointControlType
 {
     Invalid,
     Position,
     Velocity,
+    PositionAndVelocity,
     Torque
 };
 
@@ -119,8 +121,8 @@ struct UrdfLinkDesc
     std::vector<UrdfVisualDesc> visual_descs_;
     std::vector<UrdfCollisionDesc> collision_descs_;
 
-    //// custom SPEAR data
-    //std::vector<UrdfSpearLinkDesc> spear_link_descs_;
+    // custom SPEAR data
+    bool simulate_physics_ = true;
 
     // derived data
     bool has_parent_         = false;
@@ -207,4 +209,5 @@ private:
     // parse strings into numerical types
     static std::vector<double> parseVector(const std::string& str, const std::vector<double>& default_value = {});
     static double parseDouble(const std::string& str, double default_value = 0.0);
+    static bool parseBool(const std::string& str, bool default_value = false);
 };

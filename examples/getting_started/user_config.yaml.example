@@ -31,8 +31,8 @@ SPEAR:
 
 
 SIMULATION_CONTROLLER:
-  # AGENT: "SphereAgent" # uncomment when using our sphere agent
-  AGENT: "VehicleAgent" # uncomment when using OpenBot
+  # AGENT: "SphereAgent" # uncomment when using SphereAgent
+  AGENT: "VehicleAgent" # uncomment when using VehicleAgent
   TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
@@ -76,6 +76,6 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
 
   VISUALIZER:
-    # ACTOR_NAME: "camera_actor" # uncomment when using our sphere agent
-    ACTOR_NAME: "vehicle_actor" # uncomment when using OpenBot
+    # ACTOR_NAME: "camera_actor" # uncomment when using SphereAgent
+    ACTOR_NAME: "vehicle_actor" # uncomment when using VehicleAgent
     SPAWN_CAMERA: False

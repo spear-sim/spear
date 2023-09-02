@@ -4,6 +4,11 @@
 
 #include "SimulationController/ImuSensor.h"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <Components/PrimitiveComponent.h>
 #include <Delegates/IDelegateInstance.h>
 #include <DrawDebugHelpers.h>
@@ -14,8 +19,10 @@
 #include <Math/Vector.h>
 #include <PhysicsEngine/PhysicsSettings.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "SimulationController/Component.h"
 #include "SimulationController/TickEventComponent.h"
 
 ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
@@ -23,52 +30,62 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
     SP_ASSERT(primitive_component);
     primitive_component_ = primitive_component;
 
-    parent_actor_ = primitive_component->GetWorld()->SpawnActor<AActor>();
-    SP_ASSERT(parent_actor_);
-
-    tick_event_component_ = NewObject<UTickEventComponent>(parent_actor_);
+    tick_event_component_ = std::make_unique<Component<UTickEventComponent>>(primitive_component->GetWorld());
     SP_ASSERT(tick_event_component_);
-    tick_event_component_->RegisterComponent();
-    tick_event_component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
-    tick_event_handle_ = tick_event_component_->delegate_.AddRaw(this, &ImuSensor::postPhysicsPreRenderTickEventHandler);
+    SP_ASSERT(tick_event_component_->component_);
+    tick_event_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
+    tick_event_handle_ = tick_event_component_->component_->delegate_.AddRaw(this, &ImuSensor::postPhysicsPreRenderTickEventHandler);
 }
 
 ImuSensor::~ImuSensor()
 {
     SP_ASSERT(tick_event_component_);
-    tick_event_component_->delegate_.Remove(tick_event_handle_);
+    SP_ASSERT(tick_event_component_->component_);
+    tick_event_component_->component_->delegate_.Remove(tick_event_handle_);
     tick_event_handle_.Reset();
-    tick_event_component_->DestroyComponent();
     tick_event_component_ = nullptr;
-
-    SP_ASSERT(parent_actor_);
-    parent_actor_->Destroy();
-    parent_actor_ = nullptr;
 
     SP_ASSERT(primitive_component_);
     primitive_component_ = nullptr;
 }
 
-void ImuSensor::updateLinearAcceleration(float delta_time)
+std::map<std::string, ArrayDesc> ImuSensor::getObservationSpace() const
 {
-    FVector current_linear_velocity_world = primitive_component_->GetPhysicsLinearVelocity();
-    FVector linear_acceleration_world = (current_linear_velocity_world - previous_linear_velocity_world_) / delta_time;
+    std::map<std::string, ArrayDesc> observation_space;
+    ArrayDesc array_desc;
 
-    // Roughly speaking, an accelerometer measures deviation from freefall. Therefore, a stationary accelerometer will measure a positive
-    // acceleration of +9.81 m/s^2, even though it isn't moving. To account for this detail, we get gravitational acceleration from Unreal,
-    // which is negative, and subtract it from our linear acceleration vector to get our final linear acceleration vector.
-    float gravity_world = UPhysicsSettings::Get()->DefaultGravityZ;
-    FVector linear_acceleration_minus_gravity_world = linear_acceleration_world - gravity_world;
+    // a_x, a_y, a_z in [cm/s^2]
+    array_desc.low_ = std::numeric_limits<double>::lowest();
+    array_desc.high_ = std::numeric_limits<double>::max();
+    array_desc.datatype_ = DataType::Float64;
+    array_desc.shape_ = {3};
+    observation_space["imu.linear_acceleration_body"] = std::move(array_desc);
 
-    linear_acceleration_body_ = primitive_component_->GetComponentTransform().Rotator().UnrotateVector(linear_acceleration_minus_gravity_world);
+    // g_x, g_y, g_z in [rad/s]
+    array_desc.low_ = std::numeric_limits<double>::lowest();
+    array_desc.high_ = std::numeric_limits<double>::max();
+    array_desc.datatype_ = DataType::Float64;
+    array_desc.shape_ = {3};
+    observation_space["imu.angular_velocity_body"] = std::move(array_desc);
 
-    previous_linear_velocity_world_ = current_linear_velocity_world;
+    return observation_space;
 }
 
-void ImuSensor::updateAngularRate()
+std::map<std::string, std::vector<uint8_t>> ImuSensor::getObservation() const
 {
-    FVector component_angular_velocity_world = primitive_component_->GetPhysicsAngularVelocityInRadians();
-    angular_velocity_body_ = primitive_component_->GetComponentTransform().GetRotation().UnrotateVector(component_angular_velocity_world);
+    std::map<std::string, std::vector<uint8_t>> observation;
+
+    observation["imu.linear_acceleration_body"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+        linear_acceleration_body_.X,
+        linear_acceleration_body_.Y,
+        linear_acceleration_body_.Z});
+
+    observation["imu.angular_velocity_body"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+        angular_velocity_body_.X,
+        angular_velocity_body_.Y,
+        angular_velocity_body_.Z});
+
+    return observation;
 }
 
 void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
@@ -93,4 +110,25 @@ void ImuSensor::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTic
         // Plot angular rate vector
         DrawDebugDirectionalArrow(world, location, location + rotation.RotateVector(angular_velocity_body_), 0.5f, FColor(0, 200, 200), false, 0.033f, 0, 0.5f);
     }
+}
+
+void ImuSensor::updateLinearAcceleration(float delta_time)
+{
+    FVector current_linear_velocity_world = primitive_component_->GetPhysicsLinearVelocity();
+    FVector linear_acceleration_world = (current_linear_velocity_world - previous_linear_velocity_world_) / delta_time;
+
+    // Roughly speaking, an accelerometer measures deviation from freefall. Therefore, a stationary accelerometer will measure a positive
+    // acceleration of +9.81 m/s^2, even though it isn't moving. To account for this detail, we get gravitational acceleration from Unreal,
+    // which is negative, and subtract it from our linear acceleration vector to get our final linear acceleration vector.
+    float gravity_world = UPhysicsSettings::Get()->DefaultGravityZ;
+    FVector linear_acceleration_minus_gravity_world = linear_acceleration_world - gravity_world;
+
+    linear_acceleration_body_ = primitive_component_->GetComponentTransform().Rotator().UnrotateVector(linear_acceleration_minus_gravity_world);
+    previous_linear_velocity_world_ = current_linear_velocity_world;
+}
+
+void ImuSensor::updateAngularRate()
+{
+    FVector component_angular_velocity_world = primitive_component_->GetPhysicsAngularVelocityInRadians();
+    angular_velocity_body_ = primitive_component_->GetComponentTransform().GetRotation().UnrotateVector(component_angular_velocity_world);
 }

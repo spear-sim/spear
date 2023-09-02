@@ -11,6 +11,7 @@
 
 #include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
+#include "SimulationController/ClassRegistrationUtils.h"
 
 class ACameraActor;
 class UWorld;
@@ -41,4 +42,6 @@ private:
     ACameraActor* camera_actor_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
+
+    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<CameraAgent>(Agent::s_class_registrar_, "CameraAgent");
 };

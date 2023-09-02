@@ -5,6 +5,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <map>
 #include <string>
@@ -19,6 +20,8 @@
 class COREUTILS_API Std
 {
 public:
+    Std() = delete;
+    ~Std() = delete;
 
     //
     // String conversion functions
@@ -54,6 +57,14 @@ public:
     static bool containsSubstring(const std::string& string, const std::string& substring)
     {
         return string.find(substring) != std::string::npos;
+    }
+
+    static std::string toLower(const std::string& string) {
+        std::string lower_string = string;
+        for (auto& c : lower_string) {
+            c = tolower(c);
+        }
+        return lower_string;
     }
 
     //

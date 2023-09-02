@@ -4,6 +4,12 @@
 
 #include "SimulationController/PointGoalNavTask.h"
 
+#include <map>
+#include <memory>
+#include <random>
+#include <string>
+#include <vector>
+
 #include <Delegates/IDelegateInstance.h>
 #include <Engine/EngineTypes.h>
 #include <Engine/StaticMesh.h>
@@ -19,10 +25,11 @@
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/ActorHitEventComponent.h"
+#include "SimulationController/Component.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
-    // spawn actor
+    // Spawn actor
     FActorSpawnParameters actor_spawn_params;
     actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -38,27 +45,22 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
             Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_SCALE"));
     goal_actor_->SetActorScale3D(scale);
 
-    // load mesh and material
-    UStaticMesh* goal_mesh = LoadObject<UStaticMesh>(
-        nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MESH")));
+    // Load mesh and material
+    auto goal_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MESH")));
     SP_ASSERT(goal_mesh);
-    UMaterial* goal_material = LoadObject<UMaterial>(
-        nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MATERIAL")));
+    auto goal_material = LoadObject<UMaterial>(nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MATERIAL")));
     SP_ASSERT(goal_material);
 
-    // configure static mesh component
+    // Configure static mesh component
     UStaticMeshComponent* goal_mesh_component = goal_actor_->GetStaticMeshComponent();
     goal_mesh_component->SetStaticMesh(goal_mesh);
     goal_mesh_component->SetMaterial(0, goal_material);
 
-    // create UActorHitEvent but don't subscribe to any actors yet
-    parent_actor_ = world->SpawnActor<AActor>();
-    SP_ASSERT(parent_actor_);
-
-    actor_hit_event_component_ = NewObject<UActorHitEventComponent>(parent_actor_);
+    // Create UActorHitEventComponent but don't subscribe to any actors yet
+    actor_hit_event_component_ = std::make_unique<Component<UActorHitEventComponent>>(world);
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->RegisterComponent();
-    actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
+    SP_ASSERT(actor_hit_event_component_->component_);
+    actor_hit_event_delegate_handle_ = actor_hit_event_component_->component_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
 
     minstd_rand_ = std::minstd_rand(Config::get<int>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.RANDOM_SEED"));
 
@@ -74,14 +76,10 @@ PointGoalNavTask::~PointGoalNavTask()
     minstd_rand_ = std::minstd_rand();
 
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->delegate_.Remove(actor_hit_event_handle_);
-    actor_hit_event_handle_.Reset();
-    actor_hit_event_component_->DestroyComponent();
+    SP_ASSERT(actor_hit_event_component_->component_);
+    actor_hit_event_component_->component_->delegate_.Remove(actor_hit_event_delegate_handle_);
+    actor_hit_event_delegate_handle_.Reset();
     actor_hit_event_component_ = nullptr;
-
-    SP_ASSERT(parent_actor_);
-    parent_actor_->Destroy();
-    parent_actor_ = nullptr;
 
     SP_ASSERT(goal_actor_);
     goal_actor_->Destroy();
@@ -98,13 +96,12 @@ void PointGoalNavTask::findObjectReferences(UWorld* world)
         world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
-    actor_hit_event_component_->subscribeToActor(agent_actor_);
+    actor_hit_event_component_->component_->subscribeToActor(agent_actor_);
 }
 
 void PointGoalNavTask::cleanUpObjectReferences()
 {
-    SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->unsubscribeFromActor(agent_actor_);
+    actor_hit_event_component_->component_->unsubscribeFromActor(agent_actor_);
 
     obstacle_ignore_actors_.clear();
 

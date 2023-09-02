@@ -15,6 +15,8 @@
 
 #include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
+#include "SimulationController/ClassRegistrationUtils.h"
+#include "SimulationController/Component.h"
 
 class AActor;
 class ACameraActor;
@@ -28,6 +30,7 @@ class UTickEventComponent;
 class SphereAgent : public Agent
 {
 public:
+    SphereAgent() = delete;
     SphereAgent(UWorld* world);
     ~SphereAgent();
  
@@ -50,14 +53,14 @@ public:
 private:
     AStaticMeshActor* static_mesh_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
-    AActor* parent_actor_ = nullptr;
-
     UStaticMeshComponent* static_mesh_component_ = nullptr;
+
+    std::unique_ptr<Component<UTickEventComponent>> tick_event_component_ = nullptr;
+    FDelegateHandle tick_event_delegate_handle_;
+
+    std::unique_ptr<CameraSensor> camera_sensor_;
 
     FRotator rotation_ = FRotator::ZeroRotator;
 
-    UTickEventComponent* tick_event_component_ = nullptr;
-    FDelegateHandle tick_event_handle_;
-
-    std::unique_ptr<CameraSensor> camera_sensor_;
+    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<SphereAgent>(Agent::s_class_registrar_, "SphereAgent");
 };

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "CoreUtils/ArrayDesc.h"
+#include "SimulationController/ClassRegistrationUtils.h"
 
 class UWorld;
 
@@ -35,4 +36,6 @@ public:
     
     virtual void reset() = 0;
     virtual bool isReady() const = 0;
+
+    inline static auto s_class_registrar_ = ClassRegistrationUtils::getClassRegistrar<Agent, UWorld*>();
 };

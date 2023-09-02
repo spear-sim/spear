@@ -5,6 +5,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <random>
 #include <string>
 #include <vector>
@@ -13,6 +14,7 @@
 #include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
+#include "SimulationController/Component.h"
 #include "SimulationController/Task.h"
 
 class AActor;
@@ -47,15 +49,13 @@ public:
 private:
     AStaticMeshActor* goal_actor_ = nullptr;
     AActor* agent_actor_ = nullptr;
-    AActor* parent_actor_ = nullptr;
-
     std::vector<AActor*> obstacle_ignore_actors_;
 
-    UActorHitEventComponent* actor_hit_event_component_ = nullptr;
-    FDelegateHandle actor_hit_event_handle_;
+    std::unique_ptr<Component<UActorHitEventComponent>> actor_hit_event_component_ = nullptr;
+    FDelegateHandle actor_hit_event_delegate_handle_;
 
+    // Task state
     std::minstd_rand minstd_rand_;
-
     bool hit_goal_ = false;
     bool hit_obstacle_ = false;
 };

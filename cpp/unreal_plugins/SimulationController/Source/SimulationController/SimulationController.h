@@ -43,19 +43,21 @@ private:
     FDelegateHandle world_begin_play_handle_;
     FDelegateHandle world_cleanup_handle_;
 
-    // store a local reference to a game world
+    // store a local reference to the game world
     UWorld* world_ = nullptr;
     
-    std::unique_ptr<Agent> agent_;
-    std::unique_ptr<Task> task_;
-    std::unique_ptr<NavMesh> nav_mesh_;
-    std::unique_ptr<Visualizer> visualizer_;
-    std::unique_ptr<RpcServer> rpc_server_;
+    // top-level helper objects
+    std::unique_ptr<Agent> agent_ = nullptr;
+    std::unique_ptr<Task> task_ = nullptr;
+    std::unique_ptr<NavMesh> nav_mesh_ = nullptr;
+    std::unique_ptr<Visualizer> visualizer_ = nullptr;
+    std::unique_ptr<RpcServer> rpc_server_ = nullptr;
 
+    // Unreal lifecycle state
     bool has_world_begin_play_executed_ = false;
     bool open_level_pending_ = false;
 
-    // thread sychronization
+    // thread sychronization state
     std::atomic<FrameState> frame_state_;
 
     std::promise<void> frame_state_idle_promise_;

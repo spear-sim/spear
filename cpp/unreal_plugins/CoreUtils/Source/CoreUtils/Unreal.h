@@ -21,6 +21,8 @@
 class COREUTILS_API Unreal
 {
 public:
+    Unreal() = delete;
+    ~Unreal() = delete;
 
     //
     // String functions
@@ -104,8 +106,13 @@ public:
     }
 
     //
-    // Find actors by name or tag, non-templated, return std::vector
+    // Find actors unconditionally or by name or tag, non-templated, return std::vector
     //
+
+    static std::vector<AActor*> findActors(UWorld* world)
+    {
+        return findActorsByType<AActor>(world);
+    }
 
     static std::vector<AActor*> findActorsByName(UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
@@ -128,8 +135,13 @@ public:
     }
 
     //
-    // Find actors by name or tag, non-templated, return std::map
+    // Find actors unconditionally or by name or tag, non-templated, return std::map
     //
+
+    static std::map<std::string, AActor*> findActorsAsMap(UWorld* world)
+    {
+        return findActorsByTypeAsMap<AActor>(world);
+    }
 
     static std::map<std::string, AActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
     {

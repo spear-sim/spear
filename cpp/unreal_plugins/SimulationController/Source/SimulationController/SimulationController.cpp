@@ -27,6 +27,7 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/CameraAgent.h"
+#include "SimulationController/ClassRegistrationUtils.h"
 #include "SimulationController/ImitationLearningTask.h"
 #include "SimulationController/NavMesh.h"
 #include "SimulationController/NullTask.h"
@@ -154,12 +155,6 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     }
 }
 
-#include <Math/Rotator.h>
-#include <Math/Vector.h>
-
-#include "UrdfRobot/UrdfRobotPawn.h"
-#include "UrdfRobot/UrdfRobotComponent.h"
-
 void SimulationController::worldBeginPlayEventHandler()
 {
     SP_LOG_CURRENT_FUNCTION();
@@ -192,18 +187,7 @@ void SimulationController::worldBeginPlayEventHandler()
     UGameplayStatics::SetGamePaused(world_, true);
 
     // create Agent
-    if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "CameraAgent") {
-        agent_ = std::make_unique<CameraAgent>(world_);
-    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
-        agent_ = std::make_unique<SphereAgent>(world_);
-    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "VehicleAgent") {
-        agent_ = std::make_unique<VehicleAgent>(world_);
-    // TODO: uncomment when we're ready to re-enable UrdfBot
-    // } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
-    //     agent_ = std::make_unique<SphereAgent>(world_);
-    } else {
-        SP_ASSERT(false);
-    }
+    agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, Config::get<std::string>("SIMULATION_CONTROLLER.AGENT"), world_));
     SP_ASSERT(agent_);
 
     // create Task

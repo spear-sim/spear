@@ -39,6 +39,9 @@
 class COREUTILS_API Log
 {
 public:
+    Log() = delete;
+    ~Log() = delete;
+
     template <class... TArgs>
     static void log(const std::filesystem::path& current_file, TArgs&&... args)
     {

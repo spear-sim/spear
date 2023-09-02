@@ -15,13 +15,21 @@
 class COREUTILS_API Config
 {
 public:
+    Config() = delete;
+    ~Config() = delete;
+
+    // If the -config_file= command-line argument is passed in to the executable, calling initialize() will
+    // successfully initialize the config system. Otherwise, calling initialize() will fail to initialize
+    // the config system. Systems that want to use the config system must check if it has been successfully
+    // initialized by checking the public static bool Config::s_initialized_ variable. Calling terminate() 
+    // will completely reset the state of the config system, regardless of whether or not it was successfully
+    // initialized.
     static void initialize();
     static void terminate();
 
-    //
-    // This function is used to extract a value from the Config system. This function takes as input
-    // the fully qualified key that leads to the required config value. For example, if you have a
-    // config.yaml such as...
+    // The get(...) function is used to extract a value from the config system. This function takes as input
+    // the fully qualified key that leads to the required config value. For example, if you have a config.yaml
+    // such as...
     //
     // SIMULATOR:
     //   TIME_DELTA_SECONDS: 0.1
@@ -30,7 +38,6 @@ public:
     // would need to call this function as follows...
     //
     // float time_delta_seconds = Config::get<float>("SIMULATOR.TIME_DELTA_SECONDS");
-    //
 
     template <typename TValue>
     static TValue get(const std::string& key)
@@ -73,8 +80,5 @@ public:
     inline static bool s_initialized_ = false;
 
 private:
-    Config() = default;
-    ~Config() = default;
-
     inline static YAML::Node s_config_;
 };

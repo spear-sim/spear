@@ -61,7 +61,7 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
 
     std::vector<std::string> coarse_tokens = Std::tokenize(current_function, " ");
     for (auto& coarse_token : coarse_tokens) {
-        if (Std::containsSubstring(coarse_token, "(")) {
+        if (Std::containsSubstring(coarse_token, "(") || Std::containsSubstring(coarse_token, "<")) {
             std::vector<std::string> fine_tokens = Std::tokenize(coarse_token, " ()<>");
             SP_ASSERT(fine_tokens.size() > 0);
             return fine_tokens.at(0);

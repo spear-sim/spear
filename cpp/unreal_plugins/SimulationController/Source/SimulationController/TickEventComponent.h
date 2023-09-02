@@ -37,6 +37,8 @@ public:
     // UActorComponent interface
     void TickComponent(float delta_time, enum ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
+        UActorComponent::TickComponent(delta_time, level_tick, this_tick_function);
+
         delegate_.Broadcast(delta_time, level_tick);
     }
 

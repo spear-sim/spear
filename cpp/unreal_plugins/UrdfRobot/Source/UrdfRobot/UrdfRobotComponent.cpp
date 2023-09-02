@@ -12,6 +12,7 @@
 
 //#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
@@ -19,14 +20,77 @@
 #include "UrdfRobot/UrdfLinkComponent.h"
 #include "UrdfRobot/UrdfParser.h"
 
+
+const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_PLAYER_INPUT_ACTIONS = {
+    {"One",   {{"joint.joint_0.add_torque_in_radians",             { 1000000.0, 0.0,  0.0}}}},
+    {"Two",   {{"joint.joint_0.add_torque_in_radians",             {-1000000.0, 0.0,  0.0}}}},
+    {"Three", {{"joint.joint_1.add_to_angular_velocity_target",    { 0.1,       0.0,  0.0}}}},
+    {"Four",  {{"joint.joint_1.add_to_angular_velocity_target",    {-0.1,       0.0,  0.0}}}}
+};
+
 UUrdfRobotComponent::UUrdfRobotComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    // UPlayerInputComponent
+    player_input_component_ = CreateDefaultSubobject<UPlayerInputComponent>(Unreal::toFName("player_input_component"));
+    SP_ASSERT(player_input_component_);
 }
 
 UUrdfRobotComponent::~UUrdfRobotComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    // Objects created with LoadObject and NewObject don't need to be cleaned up explicitly.
+
+    LinkComponents.Empty();
+    JointComponents.Empty();
+
+    link_components_.clear();
+    joint_components_.clear();
+
+    player_input_component_ = nullptr;
+}
+
+void UUrdfRobotComponent::BeginPlay()
+{
+    UActorComponent::BeginPlay();
+
+    // Cache components in maps so we can refer to them by name. We need to do this in BeginPlay because after pressing play
+    // in the editor, the Unreal Engine creates a new replica object for each object in the World Outliner. For any object
+    // that we spawned in the editor, we need to re-compute any local state that isn't visible to the Unreal reflection system.
+    // We can't re-compute this local state in the constructor because LinkComponents and JointComponents have not been updated
+    // by the the Unreal reflection system yet. So we need to do it in BeginPlay.
+
+    for (auto link_component : LinkComponents) {
+        link_components_[Unreal::toStdString(link_component->GetName())] = link_component;
+    }
+
+    for (auto joint_component : JointComponents) {
+        joint_components_[Unreal::toStdString(joint_component->GetName())] = joint_component;
+    }
+
+    // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
+    // can be useful for debugging.
+    std::map<std::string, std::map<std::string, std::vector<double>>> player_input_actions;
+    if (Config::s_initialized_) {
+        player_input_actions =
+            Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.PLAYER_INPUT_ACTIONS");
+    } else {
+        player_input_actions =
+            DEFAULT_PLAYER_INPUT_ACTIONS;
+    }
+
+    player_input_component_->setPlayerInputActions(player_input_actions);
+    player_input_component_->addAxisMappingsAndBindAxes();
+    player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
+        if (EnableKeyboardControl) {
+            // only assert if we're not in the editor
+            bool assert_if_action_is_inconsistent = !WITH_EDITOR;
+            bool assert_if_joint_not_found        = !WITH_EDITOR;
+            applyAction(player_input_actions.at(player_input_action_desc.key_), assert_if_joint_not_found, assert_if_action_is_inconsistent);
+        }
+    };
 }
 
 //std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace(const std::vector<std::string>& action_components) const
@@ -97,7 +161,7 @@ UUrdfRobotComponent::~UUrdfRobotComponent()
 //    return observation;
 //}
 
-void UUrdfRobotComponent::initialize(const UrdfRobotDesc* const robot_desc)
+void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
 {
     SP_ASSERT(robot_desc);
 
@@ -109,14 +173,12 @@ void UUrdfRobotComponent::initialize(const UrdfRobotDesc* const robot_desc)
     root_link_component->initialize(root_link_desc);
     root_link_component->SetupAttachment(this);
     root_link_component->RegisterComponent();
-
-    link_components_["link." + root_link_desc->name_] = root_link_component;
-    link_components_editor_.Add(root_link_component);
+    LinkComponents.Add(root_link_component);
 
     initialize(root_link_desc, root_link_component);
 }
 
-void UUrdfRobotComponent::initialize(const UrdfLinkDesc* const parent_link_desc, UUrdfLinkComponent* parent_link_component)
+void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link_component)
 {
     SP_ASSERT(parent_link_desc);
     SP_ASSERT(parent_link_component);
@@ -135,37 +197,43 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* const parent_link_desc,
         child_link_component->initialize(child_link_desc);
         child_link_component->SetupAttachment(parent_link_component);
         child_link_component->RegisterComponent();
-
-        link_components_["link." + child_link_desc->name_] = child_link_component;
-        link_components_editor_.Add(child_link_component);
+        LinkComponents.Add(child_link_component);
 
         // We create joints here, rather than inside UUrdfLinkComponent::initialize(...), because it only makes sense to create
         // a joint once the parent link and child link have already been created. But the UUrdfLinkComponent::initialize(...)
         // method is designed to be called as soon as a parent link has been created, and before a child link has been created.
-        // There are several alternative approaches that would also work here, but this approach is the cleanest as measured by
-        // the simplicity of our URDF parsing code, the simplicity of our UrdfRobotDesc data structure, and the simplicity of
-        // our recursive code for creating the Unreal component hierarchy.
+        // There are several alternative approaches that would also work here, but we think this approach is the cleanest as
+        // measured by the simplicity of our URDF parsing code, the simplicity of our UrdfRobotDesc data structure, and the
+        // simplicity of our recursive code for creating the Unreal component hierarchy.
+
         auto child_joint_component = NewObject<UUrdfJointComponent>(this, Unreal::toFName("joint." + child_joint_desc->name_));
         SP_ASSERT(child_joint_component);
         child_joint_component->initialize(child_joint_desc, parent_link_component, child_link_component);
         child_joint_component->SetupAttachment(parent_link_component);
         child_joint_component->RegisterComponent();
-
-        joint_components_["joint." + child_joint_desc->name_] = child_joint_component;
-        joint_components_editor_.Add(child_joint_component);
+        JointComponents.Add(child_joint_component);
 
         initialize(child_link_desc, child_link_component);
     }
 }
 
-void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<double>>& action)
+void UUrdfRobotComponent::applyAction(
+    const std::map<std::string,
+    std::vector<double>>& action,
+    bool assert_if_joint_not_found,
+    bool assert_if_action_is_inconsistent)
 {
     for (auto& action_component : action) {
         std::vector<std::string> tokens = Std::tokenize(action_component.first, ".");
         SP_ASSERT(tokens.size() == 3);
         SP_ASSERT(tokens.at(0) == "joint");
-        UUrdfJointComponent* joint_component = joint_components_.at("joint." + tokens.at(1));
-        SP_ASSERT(joint_component);
-        joint_component->applyAction(tokens.at(2), action_component.second);
+
+        bool found = Std::containsKey(joint_components_, "joint." + tokens.at(1));
+        SP_ASSERT(found || !assert_if_joint_not_found);
+        if (found) {
+            UUrdfJointComponent* joint_component = joint_components_.at("joint." + tokens.at(1));
+            SP_ASSERT(joint_component);
+            joint_component->applyAction(tokens.at(2), action_component.second, assert_if_action_is_inconsistent);
+        }
     }
 }

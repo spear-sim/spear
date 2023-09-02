@@ -14,16 +14,12 @@ UVehicleMovementComponent::UVehicleMovementComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    if (!Config::s_initialized_) {
-        return;
-    }
-
     // In Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosVehicleMovementComponent.cpp:1200,
     // Chaos doesn't take into consideration the torque inputs to wheels for determining the sleep state of the body. Since we
     // are providing direct torque inputs to wheels, these torque inputs are not used to determine the sleep state of the body
     // and the body is set to sleep every Tick. This prohibits us from being able to control the vehicle. Setting SleepThreshold=0.0
     // ensures that Chaos doesn't put this body to sleep.
-    SleepThreshold = 0.0;
+    SleepThreshold = 0.0f;
 
     // We only support vehicles with 4 wheels.
     WheelSetups.SetNum(4);
@@ -46,13 +42,24 @@ UVehicleMovementComponent::UVehicleMovementComponent()
     WheelSetups[3].BoneName = FName("RR");
     WheelSetups[3].AdditionalOffset = FVector::ZeroVector; // Offset the wheel from the bone's location
 
-    Mass                         = Config::get<float>("VEHICLE.VEHICLE_COMPONENT.MASS");
-    ChassisWidth                 = Config::get<float>("VEHICLE.VEHICLE_COMPONENT.CHASSIS_WIDTH");
-    ChassisHeight                = Config::get<float>("VEHICLE.VEHICLE_COMPONENT.CHASSIS_HEIGHT");
-    DragCoefficient              = Config::get<float>("VEHICLE.VEHICLE_COMPONENT.DRAG_COEFFICIENT");
-    bSuspensionEnabled           = Config::get<bool>("VEHICLE.VEHICLE_COMPONENT.SUSPENSION_ENABLED");
-    bWheelFrictionEnabled        = Config::get<bool>("VEHICLE.VEHICLE_COMPONENT.WHEEL_FRICTION_ENABLED");
-    bLegacyWheelFrictionPosition = Config::get<bool>("VEHICLE.VEHICLE_COMPONENT.LEGACY_WHEEL_FRICTION_POSITION_ENABLED");
+    if (Config::s_initialized_) {
+        Mass                         = Config::get<float>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.MASS");
+        ChassisWidth                 = Config::get<float>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.CHASSIS_WIDTH");
+        ChassisHeight                = Config::get<float>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.CHASSIS_HEIGHT");
+        DragCoefficient              = Config::get<float>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.DRAG_COEFFICIENT");
+        bSuspensionEnabled           = Config::get<bool>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.SUSPENSION_ENABLED");
+        bWheelFrictionEnabled        = Config::get<bool>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.WHEEL_FRICTION_ENABLED");
+        bLegacyWheelFrictionPosition = Config::get<bool>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.LEGACY_WHEEL_FRICTION_POSITION_ENABLED");
+    } else {
+        // OpenBot defaults, see python/spear/config/default_config.vehicle.yaml
+        Mass                         = 11.2f;
+        ChassisWidth                 = 15.0f;
+        ChassisHeight                = 15.0f;
+        DragCoefficient              = 1.0f;
+        bSuspensionEnabled           = true;
+        bWheelFrictionEnabled        = true;
+        bLegacyWheelFrictionPosition = false;
+    }
 }
 
 UVehicleMovementComponent::~UVehicleMovementComponent()
