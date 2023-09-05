@@ -1,9 +1,0 @@
-<mujoco model="Picture_01">
-	<mesh file="output/Unknown/Picture_01/cvx/Picture_01002.obj" name="Picture_01/Picture_01002" />
-	<mesh file="output/Unknown/Picture_01/cvx/Picture_01003.obj" name="Picture_01/Picture_01003" />
-	<mesh file="output/Unknown/Picture_01/cvx/Picture_01001.obj" name="Picture_01/Picture_01001" />
-	<mesh file="output/Unknown/Picture_01/cvx/Picture_01000.obj" name="Picture_01/Picture_01000" />
-	<mesh file="output/Unknown/Picture_01/cvx/Picture_01004.obj" name="Picture_01/Picture_01004" />
-	<mesh file="output/Unknown/Picture_01/cvx/Picture_01005.obj" name="Picture_01/Picture_01005" />
-	<mesh file="output/Unknown/Picture_01/cvx/Picture_01007.obj" name="Picture_01/Picture_01007" />
-</mujoco>

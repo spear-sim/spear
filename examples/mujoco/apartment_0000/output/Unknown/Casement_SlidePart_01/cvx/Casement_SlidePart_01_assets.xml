@@ -1,9 +1,0 @@
-<mujoco model="Casement_SlidePart_01">
-	<mesh file="output/Unknown/Casement_SlidePart_01/cvx/Casement_SlidePart_01003.obj" name="Casement_SlidePart_01/Casement_SlidePart_01003" />
-	<mesh file="output/Unknown/Casement_SlidePart_01/cvx/Casement_SlidePart_01002.obj" name="Casement_SlidePart_01/Casement_SlidePart_01002" />
-	<mesh file="output/Unknown/Casement_SlidePart_01/cvx/Casement_SlidePart_01000.obj" name="Casement_SlidePart_01/Casement_SlidePart_01000" />
-	<mesh file="output/Unknown/Casement_SlidePart_01/cvx/Casement_SlidePart_01001.obj" name="Casement_SlidePart_01/Casement_SlidePart_01001" />
-	<mesh file="output/Unknown/Casement_SlidePart_01/cvx/Casement_SlidePart_01005.obj" name="Casement_SlidePart_01/Casement_SlidePart_01005" />
-	<mesh file="output/Unknown/Casement_SlidePart_01/cvx/Casement_SlidePart_01004.obj" name="Casement_SlidePart_01/Casement_SlidePart_01004" />
-	<mesh file="output/Unknown/Casement_SlidePart_01/cvx/Casement_SlidePart_01006.obj" name="Casement_SlidePart_01/Casement_SlidePart_01006" />
-</mujoco>
