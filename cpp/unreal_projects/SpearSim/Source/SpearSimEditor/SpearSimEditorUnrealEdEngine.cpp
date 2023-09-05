@@ -39,7 +39,7 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
     if (cmd_list.at(0) == "print") {
         SP_LOG(cmd_list.at(1));
         return true;
-    } 
+    }
     else if (cmd_list.at(0) == "printAllStaticMeshComponents") {
         
         std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
@@ -76,6 +76,20 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
             for (auto& comp : sc_comps) {
                 SP_LOG("    ", Unreal::toStdString(comp->GetName()));
             }
+        }
+        return true;
+    }
+    else if (cmd_list.at(0) == "printAllRootComponents") {
+
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+        for (auto& element : all_actors_name_ref_map) {
+            USceneComponent* rc = element.second->GetRootComponent();
+            if (rc == nullptr) {
+                SP_LOG(element.first);
+                SP_LOG("Root component is not valid??");
+            }/* else {
+                SP_LOG("    ...... ", Unreal::toStdString(rc->GetName()));
+            }*/
         }
         return true;
     }

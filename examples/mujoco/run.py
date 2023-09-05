@@ -12,22 +12,29 @@ import numpy as np
 import os
 import spear
 import time
+# from scipy.spatial.transform import Rotation as R
 
 
 NUM_STEPS = 100
 
+
 def muj_2_ue_position(position):
-    position[1]*=-1         # mujoco_y = -ue_y
-    return position * 100   # m to cms
+    R = np.array(
+        [
+            [1, 0, 0],
+            [0, -1, 0],
+            [0, 0, 1]
+        ])
+    return R@position * 100  # rotate and convert meters to centimeters
 
 def muj_2_ue_quat(quaternion):
-    return np.array([-quaternion[0], quaternion[1], -quaternion[2], quaternion[3]])
+    return np.asarray([-quaternion[1], quaternion[2], -quaternion[3], quaternion[0]], like=quaternion)
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark", action="store_true")
-    parser.add_argument("--xml_path", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "apartment_0000", "scene.xml")))
+    parser.add_argument("--xml_path", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "apartment_0000_coacd", "scene.xml")))
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
@@ -47,7 +54,7 @@ if __name__ == "__main__":
     # first child is only to ensure that in case of free joints wherein there are 6 of the same children, we need only one
     # and in every other joint case, there will only be 1 child
     body_ids = [ mujoco_model.joint(jnt_id).bodyid[0] for jnt_id in range(mujoco_model.njnt) ]
-    # body_names = [ mujoco_model.body(body_id).name.replace('/', '.') for body_id in body_ids ]
+    # body_names = [ mujoco_model.body(body_id).name for body_id in body_ids ]
 
     actor_names = []
     actor_ids = []
@@ -55,18 +62,18 @@ if __name__ == "__main__":
     component_ids = []
     for body_id in body_ids:
         body = mujoco_model.body(body_id)
-        body_name = body.name.replace('/', '.')
+        body_name = body.name
         if body.parentid == 0:  # if parent id world, then body is an actor (in UE terms)
             actor_names.append(body_name)
             actor_ids.append(body_id)
         else:
-            if "Kitchen_Sink.Drawer_01" in body_name:
-                component_names.append(body_name)
-                component_ids.append(body_id)
+            # if "Kitchen_Sink.Door_01" in body_name or "Cabinet.Door_01" in body_name or "Kitchen_Sink.Drawer_01" in body_name:        # uncomment to just send data to actuators
+            component_names.append(body_name)
+            component_ids.append(body_id)
 
     # get all mujoco bodies and corresponding xpos, xquat
-    xpos_dict  = {mujoco_model.body(body_id).name.replace('/', '.'): mujoco_data.body(body_id).xpos  for body_id in body_ids} # replace '/' by '.' until @Samarth updates the mujoco export pipeline to use '.' instead of '/'
-    xquat_dict = {mujoco_model.body(body_id).name.replace('/', '.'): mujoco_data.body(body_id).xquat for body_id in body_ids}
+    xpos_dict  = {mujoco_model.body(body_id).name: mujoco_data.body(body_id).xpos  for body_id in body_ids}
+    xquat_dict = {mujoco_model.body(body_id).name: mujoco_data.body(body_id).xquat for body_id in body_ids}
 
     print("xpos dict.......................")
     print(xpos_dict)
@@ -123,31 +130,45 @@ if __name__ == "__main__":
     ####### mujoco and spear communication #######
     viewer = mujoco.viewer.launch_passive(mujoco_model, mujoco_data)
 
-    for _ in range(500):
+    act_mids = [np.mean(mujoco_model.actuator(i).ctrlrange) for i in range(mujoco_model.nu)]
+    act_mags = [0.5*(mujoco_model.actuator(i).ctrlrange[1]-mujoco_model.actuator(i).ctrlrange[0]) for i in range(mujoco_model.nu)]
+    period = 1000
+
+    start = time.time()
+    t = 0
+    muj_update_steps = 100
+
+    while viewer.is_running() and time.time() - start < 30:
         # send actutations to mujoco
         # mujoco_data.actuator("Cabinet/PhysicsConstraint_door_01_x_revolute_actuator").ctrl[0] = 1 # body/component_name Cabinet.Door_01
-        mujoco.mj_step(mujoco_model, mujoco_data)
+
+        for _ in range(muj_update_steps):
+            l = np.sign(np.sin(2*np.pi*t/period))
+
+            for i in range(mujoco_model.nu):
+                mujoco_data.ctrl[i] = act_mids[i] + l*act_mags[i]
+
+            mujoco.mj_step(mujoco_model, mujoco_data)
+            
+            # increament time
+            t += 1
+
         viewer.sync()
 
         # get updated xpos, xquat
-        xpos_dict  = {mujoco_model.body(body_id).name.replace('/', '.'): muj_2_ue_position(mujoco_data.body(body_id).xpos)  for body_id in component_ids} # replace '/' by '.' until mujoco export pipeline to use '.' instead of '/'
-        # xquat_dict = {mujoco_model.body(body_id).name.replace('/', '.'): muj_2_ue_quat(mujoco_data.body(body_id).xquat) for body_id in component_ids}
+        xpos_dict  = {mujoco_model.body(body_id).name: muj_2_ue_position(mujoco_data.body(body_id).xpos)  for body_id in component_ids}
+        xquat_dict = {mujoco_model.body(body_id).name: muj_2_ue_quat(mujoco_data.body(body_id).xquat) for body_id in component_ids}
 
-        spear.log("mujoco xpos:  ", xpos_dict)
-        spear.log()
-        # spear.log("mujoco xquat: ", xquat_dict)
-
-        # send these updated poses to SPEAR
-        
-        # simulation_controller.begin_tick()
-        # simulation_controller.tick()
-        # simulation_controller.end_tick()
+        # spear.log("mujoco xpos:  ", xpos_dict)
+        # spear.log()
+        # spear.log("mujoco xquat: ", xquat_dict)    
+        # spear.log()
 
         scene.set_component_world_locations(xpos_dict)
-        locs = scene.get_component_world_locations(component_names)
-        spear.log("UE loc:       ", {x:y for x,y in zip(component_names, locs)})
-        spear.log()
-        # scene.set_component_world_rotations(xquat_dict)
+        # locs = scene.get_component_world_locations(component_names)
+        # spear.log("UE loc:       ", {x:y for x,y in zip(component_names, locs)})
+        # spear.log()
+        scene.set_component_world_rotations(xquat_dict)
         # rots = scene.get_component_world_rotations(component_names)
         # spear.log()
         # spear.log("UE rot:   ", {x:y for x,y in zip(component_names, rots)})

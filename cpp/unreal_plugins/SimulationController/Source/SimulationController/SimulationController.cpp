@@ -172,7 +172,6 @@ void SimulationController::worldBeginPlayEventHandler()
     physics_settings->bSubstepping = Config::get<bool>("SIMULATION_CONTROLLER.PHYSICS.ENABLE_SUBSTEPPING");
     physics_settings->MaxSubstepDeltaTime = Config::get<float>("SIMULATION_CONTROLLER.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
     physics_settings->MaxSubsteps = Config::get<int32>("SIMULATION_CONTROLLER.PHYSICS.MAX_SUBSTEPS");
-    //physics_settings->bDisableActiveActors = true;
 
     // Check that the physics substepping parameters match our deired simulation step time.
     // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep for more details.
