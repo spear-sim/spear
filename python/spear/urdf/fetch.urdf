@@ -98,65 +98,6 @@
         </spear>
     </joint>
 
-    <link name="torso_link">
-        <inertial>
-            <origin rpy="0 0 0" xyz="-0.0362678 5.31779e-05 0.315626"/>
-            <mass value="19.2258"/>
-            <inertia ixx="0.621202" ixy="-1.13186e-06" ixz="-0.0178264" iyy="0.620842" iyz="-4.80704e-05" izz="0.291295"/>
-        </inertial>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-            <geometry>
-                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link"/>
-                <spear>
-                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link"/>
-                </spear>
-            </geometry>
-        </visual>
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-            <geometry>
-                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link"/>
-            </geometry>
-        </collision>
-    </link>
-    <joint name="torso_joint" type="fixed">
-        <origin rpy="0 0 0" xyz="-0.086875 0 0.37743"/>
-        <parent link="base_link"/>
-        <child link="torso_link"/>
-        <axis xyz="0 0 1"/>
-        <limit effort="450" lower="0" upper="0.38615" velocity="0.1"/>
-    </joint>
-
-    <link name="torso_fixed_link">
-        <inertial>
-            <origin rpy="0 0 0" xyz="-0.0976438 -0.0010593 0.213547"/>
-            <mass value="8.66108"/>
-            <inertia ixx="0.209815" ixy="-3.10358e-05" ixz="8.38587e-06" iyy="0.159935" iyz="5.94949e-05" izz="0.0749922"/>
-        </inertial>
-        <visual>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-            <geometry>
-                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link"/>
-                <spear>
-                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link"/>
-                </spear>
-            </geometry>
-        </visual>
-        <collision>
-            <origin rpy="0 0 0" xyz="0 0 0"/>
-            <geometry>
-                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link"/>
-            </geometry>
-        </collision>
-    </link>
-    <joint name="torso_fixed_joint" type="fixed">
-        <origin rpy="0 0 0" xyz="-0.086875 0 0.377425"/>
-        <parent link="base_link"/>
-        <child link="torso_fixed_link"/>
-        <axis xyz="0 1 0"/>
-    </joint>
-
     <link name="caster_link_fl">
         <inertial>
             <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -292,6 +233,9 @@
         <parent link="base_link"/>
         <child link="estop_link"/>
         <axis xyz="0 0 0"/>
+        <spear>
+            <dynamics parent_dominates="true"/>
+        </spear>
     </joint>
 
     <link name="laser_link">
@@ -321,6 +265,77 @@
         <parent link="base_link"/>
         <child link="laser_link"/>
         <axis xyz="0 0 0"/>
+        <spear>
+            <dynamics parent_dominates="true"/>
+        </spear>
+    </joint>
+
+
+    <link name="torso_link">
+        <inertial>
+            <origin rpy="0 0 0" xyz="-0.0362678 5.31779e-05 0.315626"/>
+            <mass value="19.2258"/>
+            <inertia ixx="0.621202" ixy="-1.13186e-06" ixz="-0.0178264" iyy="0.620842" iyz="-4.80704e-05" izz="0.291295"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link"/>
+                <spear>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link"/>
+                </spear>
+            </geometry>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_link.torso_link"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="torso_joint" type="fixed">
+        <origin rpy="0 0 0" xyz="-0.086875 0 0.37743"/>
+        <parent link="base_link"/>
+        <child link="torso_link"/>
+        <axis xyz="0 0 1"/>
+        <spear>
+            <dynamics parent_dominates="true"/>
+        </spear>
+    </joint>
+
+    <link name="torso_fixed_link">
+        <inertial>
+            <origin rpy="0 0 0" xyz="-0.0976438 -0.0010593 0.213547"/>
+            <mass value="8.66108"/>
+            <inertia ixx="0.209815" ixy="-3.10358e-05" ixz="8.38587e-06" iyy="0.159935" iyz="5.94949e-05" izz="0.0749922"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link"/>
+                <spear>
+                    <unreal_static_mesh path="/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link"/>
+                </spear>
+            </geometry>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="/UrdfRobot/Fetch_V1/Meshes/torso_fixed_link.torso_fixed_link"/>
+            </geometry>
+        </collision>
+        <spear>
+            <ignore_collisions value="true"/>
+        </spear>
+    </link>
+    <joint name="torso_fixed_joint" type="fixed">
+        <origin rpy="0 0 0" xyz="-0.086875 0 0.377425"/>
+        <parent link="base_link"/>
+        <child link="torso_fixed_link"/>
+        <axis xyz="0 1 0"/>
+        <spear>
+            <dynamics parent_dominates="true"/>
+        </spear>
     </joint>
 
     <link name="arm_link_0">
@@ -350,10 +365,10 @@
         <parent link="torso_link"/>
         <child link="arm_link_0"/>
         <axis xyz="0 0 1"/>
-        <limit effort="33.82" lower="-1.6056" upper="1.6056" velocity="1.256"/>
-        <dynamics damping="10"/>
+        <limit effort="0" lower="-1.6056" upper="1.6056" velocity="1.256"/>
+        <dynamics damping="0.2"/>
         <spear>
-            <dynamics control_type="position" spring="100"/>
+            <dynamics control_type="position_and_velocity" spring="0.2" parent_dominates="true"/>
         </spear>
     </joint>
 
@@ -385,12 +400,12 @@
         <parent link="arm_link_0"/>
         <child link="arm_link_1"/>
         <axis xyz="0 1 0"/>
-        <dynamics damping="10"/>
+        <!-- <limit effort="0" lower="-1.221" upper="1.518" velocity="1.454"/> TODO (MR): support asymmetric limits -->
+        <limit effort="0" lower="-1.518" upper="1.518" velocity="1.454"/>
+        <dynamics damping="0.2"/>
         <spear>
-            <dynamics control_type="position" spring="100"/>
+            <dynamics control_type="position_and_velocity" spring="0.2" parent_dominates="true"/>
         </spear>
-        <!-- <limit effort="131.76" lower="-1.221" upper="1.518" velocity="1.454"/> -->
-        <limit effort="131.76" lower="-1.518" upper="1.518" velocity="1.454"/>
     </joint>
 
     <link name="arm_link_2">
@@ -420,10 +435,10 @@
         <parent link="arm_link_1"/>
         <child link="arm_link_2"/>
         <axis xyz="1 0 0"/>
-        <limit effort="76.94" velocity="1.571"/>
-        <dynamics damping="10"/>
+        <limit effort="0" velocity="1.571"/>
+        <dynamics damping="0.2"/>
         <spear>
-            <dynamics control_type="position" spring="100"/>
+            <dynamics control_type="position_and_velocity" spring="0.2" parent_dominates="true"/>
         </spear>
     </joint>
 
@@ -454,10 +469,10 @@
         <parent link="arm_link_2"/>
         <child link="arm_link_3"/>
         <axis xyz="0 1 0"/>
-        <limit effort="66.18" lower="-2.251" upper="2.251" velocity="1.521"/>
-        <dynamics damping="1"/>
+        <limit effort="0" lower="-2.251" upper="2.251" velocity="1.521"/>
+        <dynamics damping="0.2"/>
         <spear>
-            <dynamics control_type="position" spring="100"/>
+            <dynamics control_type="position_and_velocity" spring="0.2" parent_dominates="true"/>
         </spear>
     </joint>
 
@@ -488,10 +503,10 @@
         <parent link="arm_link_3"/>
         <child link="arm_link_4"/>
         <axis xyz="1 0 0"/>
-        <limit effort="29.35" velocity="1.571"/>
-        <dynamics damping="10"/>
+        <limit effort="0" velocity="1.571"/>
+        <dynamics damping="0.2"/>
         <spear>
-            <dynamics control_type="position" spring="100"/>
+            <dynamics control_type="position_and_velocity" spring="0.2" parent_dominates="true"/>
         </spear>
     </joint>
 
@@ -522,10 +537,10 @@
         <parent link="arm_link_4"/>
         <child link="arm_link_5"/>
         <axis xyz="0 1 0"/>
-        <limit effort="25.7" lower="-2.16" upper="2.16" velocity="2.268"/>
-        <dynamics damping="10"/>
+        <limit effort="0" lower="-2.16" upper="2.16" velocity="2.268"/>
+        <dynamics damping="0.2"/>
         <spear>
-            <dynamics control_type="position" spring="100"/>
+            <dynamics control_type="position_and_velocity" spring="0.2" parent_dominates="true"/>
         </spear>
     </joint>
 
@@ -556,17 +571,17 @@
         <parent link="arm_link_5"/>
         <child link="arm_link_6"/>
         <axis xyz="1 0 0"/>
-        <limit effort="7.36" velocity="2.268"/>
-        <dynamics damping="10"/>
+        <limit effort="0" velocity="2.268"/>
+        <dynamics damping="0.2"/>
         <spear>
-            <dynamics control_type="position" spring="100"/>
+            <dynamics control_type="position_and_velocity" spring="0.2" parent_dominates="true"/>
         </spear>
     </joint>
 
     <link name="gripper_link">
         <inertial>
             <origin rpy="0 0 0" xyz="-0.0935447 1.82109e-07 0.000188893"/>
-            <mass value="1.12951"/>
+            <mass value="0.012951"/>
             <inertia ixx="0.00191702" ixy="1.73381e-08" ixz="3.79994e-08" iyy="0.00202664" iyz="-4.4247e-09" izz="0.00282007"/>
         </inertial>
         <visual>
@@ -590,12 +605,15 @@
         <parent link="arm_link_6"/>
         <child link="gripper_link"/>
         <axis xyz="0 1 0"/>
+        <spear>
+            <dynamics parent_dominates="true"/>
+        </spear>
     </joint>
 
     <link name="gripper_finger_link_l">
         <inertial>
             <origin rpy="0 0 0" xyz="4.38073e-05 0.108626 0.000716377"/>
-            <mass value="0.0785086"/>
+            <mass value="0.00785086"/>
             <inertia ixx="6.98014e-06" ixy="-2.62572e-08" ixz="-1.58206e-08" iyy="4.12665e-05" iyz="-1.57909e-09" izz="3.75763e-05"/>
         </inertial>
         <visual>
@@ -619,18 +637,17 @@
         <parent link="gripper_link"/>
         <child link="gripper_finger_link_l"/>
         <axis xyz="0 -1 0"/>
-        <!-- <limit effort="60" lower="0.0" upper="0.05" velocity="0.05"/> -->
-        <limit effort="60" lower="-0.05" upper="0.05" velocity="0.05"/>
-        <dynamics damping="0"/>
+        <!-- <limit effort="60" lower="0.0" upper="0.05" velocity="0.05"/> TODO (MR): support asymmetric limits -->
+        <limit effort="0" lower="-0.025" upper="0.025" velocity="0.05"/>
         <spear>
-            <dynamics control_type="torque" spring="0"/>
+            <dynamics control_type="torque" parent_dominates="true"/>
         </spear>
     </joint>
 
     <link name="gripper_finger_link_r">
         <inertial>
             <origin rpy="0 0 0" xyz="0 -0.108614 -4.88408e-06"/>
-            <mass value="0.0744093"/>
+            <mass value="0.00744093"/>
             <inertia ixx="6.15416e-06" ixy="-1.5025e-09" ixz="0" iyy="3.87474e-05" iyz="0" izz="3.55162e-05"/>
         </inertial>
         <visual>
@@ -654,11 +671,10 @@
         <parent link="gripper_link"/>
         <child link="gripper_finger_link_r"/>
         <axis xyz="0 1 0"/>
-        <!-- <limit effort="60" lower="0.0" upper="0.05" velocity="0.05"/> -->
-        <limit effort="60" lower="-0.05" upper="0.05" velocity="0.05"/>
-        <dynamics damping="0"/>
+        <!-- <limit effort="60" lower="0.0" upper="0.05" velocity="0.05"/> TODO (MR): support asymmetric limits -->
+        <limit effort="0" lower="-0.025" upper="0.025" velocity="0.05"/>
         <spear>
-            <dynamics control_type="torque" spring="0"/>
+            <dynamics control_type="torque" parent_dominates="true"/>
         </spear>
     </joint>
 
@@ -690,9 +706,9 @@
         <child link="head_pan_link"/>
         <axis xyz="0 0 1"/>
         <limit effort="0.32" lower="-1.57" upper="1.57" velocity="1.57"/>
-        <dynamics damping="1"/>
+        <dynamics damping="0.2"/>
         <spear>
-            <dynamics control_type="position" spring="10"/>
+            <dynamics control_type="position_and_velocity" spring="0.2" parent_dominates="true"/>
         </spear>
     </joint>
 
@@ -724,11 +740,11 @@
         <parent link="head_pan_link"/>
         <child link="head_tilt_link"/>
         <axis xyz="0 1 0"/>
-        <!-- <limit effort="0.68" lower="-0.76" upper="1.45" velocity="1.57"/> -->
+        <!-- <limit effort="0.68" lower="-0.76" upper="1.45" velocity="1.57"/> TODO (MR): support asymmetric limits -->
         <limit effort="0.68" lower="-1.45" upper="1.45" velocity="1.57"/>
-        <dynamics damping="1"/>
+        <dynamics damping="0.2"/>
         <spear>
-            <dynamics control_type="position" spring="10"/>
+            <dynamics control_type="position_and_velocity" spring="0.2" parent_dominates="true"/>
         </spear>
     </joint>
 

@@ -39,7 +39,7 @@ enum class UrdfJointType
 // enum values must match EJointControlType in UrdfJointComponent.h
 enum class UrdfJointControlType
 {
-    Invalid,
+    NotActuated,
     Position,
     Velocity,
     PositionAndVelocity,
@@ -123,9 +123,11 @@ struct UrdfLinkDesc
 
     // custom SPEAR data
     bool simulate_physics_ = true;
+    bool ignore_collisions_ = false;
 
     // derived data
-    bool has_parent_         = false;
+    bool has_parent_              = false;
+    bool parent_simulate_physics_ = false;
     std::vector<UrdfLinkDesc*> child_link_descs_;
     std::vector<UrdfJointDesc*> child_joint_descs_;
     std::vector<double> xyz_ = {0.0, 0.0, 0.0};
@@ -171,8 +173,9 @@ struct UrdfJointDesc
     double k_velocity_       = 0.0;
 
     // custom SPEAR data
-    UrdfJointControlType control_type_ = UrdfJointControlType::Invalid;
-    double spring_ = 0.0;
+    UrdfJointControlType control_type_ = UrdfJointControlType::NotActuated;
+    double spring_                     = 0.0;
+    bool parent_dominates_             = false;
 };
 
 struct UrdfRobotDesc

@@ -83,6 +83,7 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
 
         SP_ASSERT(!child_link_desc->has_parent_); // each link must have at most one parent
         child_link_desc->has_parent_ = true;
+        child_link_desc->parent_simulate_physics_ = parent_link_desc->simulate_physics_;
 
         // a child link's reference frame is defined as the parent joint's reference frame
         child_link_desc->xyz_ = joint_desc->xyz_;
@@ -147,6 +148,12 @@ UrdfLinkDesc UrdfParser::parseLinkNode(FXmlNode* link_node)
         FXmlNode* simulate_physics_node = spear_link_node->FindChildNode(Unreal::toFString("simulate_physics"));
         if (simulate_physics_node) {
             link_desc.simulate_physics_ = parseBool(getAttribute(simulate_physics_node, "value", REQUIRED), true);
+        }
+
+        // optional
+        FXmlNode* ignore_collisions_node = spear_link_node->FindChildNode(Unreal::toFString("ignore_collisions"));
+        if (ignore_collisions_node) {
+            link_desc.ignore_collisions_ = parseBool(getAttribute(ignore_collisions_node, "value", REQUIRED), false);
         }
     }
 
@@ -249,8 +256,6 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
         // optional
         FXmlNode* spear_dynamics_node = spear_joint_node->FindChildNode(Unreal::toFString("dynamics"));
         if (spear_dynamics_node) {
-            joint_desc.spring_ = parseDouble(getAttribute(spear_dynamics_node, "spring", OPTIONAL), 0.0);
-
             std::string control_type = getAttribute(spear_dynamics_node, "control_type", OPTIONAL);
             if (control_type == "position") {
                 joint_desc.control_type_ = UrdfJointControlType::Position;
@@ -261,10 +266,14 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
             } else if (control_type == "torque") {
                 joint_desc.control_type_ = UrdfJointControlType::Torque;
             } else if (control_type == "") {
-                joint_desc.control_type_ = UrdfJointControlType::Invalid;
+                joint_desc.control_type_ = UrdfJointControlType::NotActuated;
             } else {
                 SP_ASSERT(false);
             }
+
+            joint_desc.spring_ = parseDouble(getAttribute(spear_dynamics_node, "spring", OPTIONAL), 0.0);
+
+            joint_desc.parent_dominates_ = parseBool(getAttribute(spear_dynamics_node, "parent_dominates", OPTIONAL), false);
         }
     }
 

@@ -18,10 +18,20 @@
 #include "UrdfRobot/UrdfLinkComponent.h"
 #include "UrdfRobot/UrdfParser.h"
 
-// TODO (MR): extend to support all possible action types
+// useful for debugging fetch.urdf
 const std::map<std::string, std::pair<std::string, std::vector<double>>> PLAYER_INPUT_ACTIONS = {
-    {"One", {"add_torque_in_radians", { 1000000.0, 0.0, 0.0}}},
-    {"Two", {"add_torque_in_radians", {-1000000.0, 0.0, 0.0}}},
+    {"One",        {"add_torque_in_radians",             { 1000.0,  0.0,  0.0}}},
+    {"Two",        {"add_torque_in_radians",             {-1000.0,  0.0,  0.0}}},
+    {"Three",      {"add_force",                         {   50.0,  0.0,  0.0}}},
+    {"Four",       {"add_force",                         {  -50.0,  0.0,  0.0}}},
+    {"Five",       {"add_to_angular_velocity_target",    {    0.1,  0.0,  0.0}}},
+    {"Six",        {"add_to_angular_velocity_target",    {   -0.1,  0.0,  0.0}}},
+    {"Seven",      {"add_to_linear_velocity_target",     {    0.1,  0.0,  0.0}}},
+    {"Eight",      {"add_to_linear_velocity_target",     {   -0.1,  0.0,  0.0}}},
+    {"Nine",       {"add_to_angular_orientation_target", {    0.0,  0.0,  2.0}}},
+    {"Zero",       {"add_to_angular_orientation_target", {    0.0,  0.0, -2.0}}},
+    {"Underscore", {"add_to_linear_position_target",     {    2.0,  0.0,  0.0}}},
+    {"Equals",     {"add_to_linear_position_target",     {    2.0,  0.0,  0.0}}}
 };
 
 UUrdfJointComponent::UUrdfJointComponent()
@@ -38,7 +48,7 @@ UUrdfJointComponent::~UUrdfJointComponent()
     SP_LOG_CURRENT_FUNCTION();
 
     JointType = EJointType::Invalid;
-    JointControlType = EJointControlType::Invalid;
+    JointControlType = EJointControlType::NotActuated;
     EnableKeyboardControl = false;
     //LinearTranslationOffset = FVector::ZeroVector; // TODO (MR): support linear translation offsets
 
@@ -52,9 +62,10 @@ UUrdfJointComponent::~UUrdfJointComponent()
 void UUrdfJointComponent::BeginPlay()
 {
     UActorComponent::BeginPlay();
-
-    parent_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame1));
-    child_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame2));
+   
+    // The convention in Unreal is that component 1 is the child and component 2 is the parent.
+    child_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame1));
+    parent_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame2));
 
     const std::map<std::string, std::pair<std::string, std::vector<double>>> player_input_actions = PLAYER_INPUT_ACTIONS;
     player_input_component_->setPlayerInputActions(player_input_actions);
@@ -108,8 +119,14 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
     SetRelativeRotation(rotation_matrix.Rotator());
     SetDisableCollision(true);
 
-    // component 1, bone name 1, component 2, bone name 2
-    SetConstrainedComponents(parent_static_mesh_component_, NAME_None, child_static_mesh_component_, NAME_None);
+    // The convention in Unreal is that component 1 is the child and component 2 is the parent, which is relevant when setting the "Parent Dominates" flag.
+    SetConstrainedComponents(child_static_mesh_component_, NAME_None, parent_static_mesh_component_, NAME_None);
+
+    // Optionally enable the "parent dominates" flag to reduce jittering. This flag is recommended for long kinematic chains (e.g., a multi-link robot arm),
+    // but should not be used for joints whose child is expected to be in contact most of the time (e.g., a joint connecting a wheel to a body).
+    if (joint_desc->parent_dominates_) {
+        ConstraintInstance.EnableParentDominates();
+    }
 
     // Set limits
     ConstraintInstance.SetAngularSwing1Limit(EAngularConstraintMotion::ACM_Locked, 0.0f);
@@ -193,17 +210,6 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
                     break;
             }
             break;
-        case UrdfJointControlType::Torque:
-            break;
-        default:
-            switch (joint_desc->type_) {
-                case UrdfJointType::Fixed:
-                    break;
-                default:
-                    SP_ASSERT(false);
-                    break;
-            }
-            break;
     }
 
     // Set drive params
@@ -236,17 +242,6 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
                     break;
             }
             break;
-        case UrdfJointControlType::Torque:
-            break;
-        default:
-            switch (joint_desc->type_) {
-                case UrdfJointType::Fixed:
-                    break;
-                default:
-                    SP_ASSERT(false);
-                    break;
-            }
-            break;
     }
 }
 
@@ -256,7 +251,16 @@ void UUrdfJointComponent::applyAction(
     bool assert_if_action_is_inconsistent)
 {
     switch (JointControlType) {
+        case EJointControlType::NotActuated:
+            if (assert_if_action_is_inconsistent) {
+                SP_ASSERT(false);
+            }
+            break;
+
+        // PositionAndVelocity joints are usually used to implement reasonable "position-based" control without excessive jittering. We assume in this function
+        // that the only reasonable control actions for PositionAndVelocity joints are the same as for Position joints.
         case EJointControlType::Position:
+        case EJointControlType::PositionAndVelocity:
             switch (JointType) {
                 case EJointType::Continuous:
                 case EJointType::Revolute:
@@ -331,57 +335,6 @@ void UUrdfJointComponent::applyAction(
             }
             break;
 
-        case EJointControlType::PositionAndVelocity:
-            switch (JointType) {
-            case EJointType::Continuous:
-            case EJointType::Revolute:
-                if (action_component_name == "set_angular_orientation_target") {
-                    SetAngularOrientationTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                } else if (action_component_name == "add_to_angular_orientation_target") {
-                    SetAngularOrientationTarget(
-                        ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Add(
-                            action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)));
-                } else if (action_component_name == "set_angular_velocity_target") {
-                    SetAngularVelocityTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                } else if (action_component_name == "add_to_angular_velocity_target") {
-                    SetAngularVelocityTarget({
-                        action_component_data.at(0) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X,
-                        action_component_data.at(1) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.Y,
-                        action_component_data.at(2) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.Z});
-                } else if (assert_if_action_is_inconsistent) {
-                    SP_ASSERT(false);
-                }
-                break;
-
-            case EJointType::Prismatic:
-                if (action_component_name == "set_linear_position_target") {
-                    SetLinearPositionTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                } else if (action_component_name == "add_to_linear_position_target") {
-                    SetLinearPositionTarget({
-                        action_component_data.at(0) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X,
-                        action_component_data.at(1) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.Y,
-                        action_component_data.at(2) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.Z});
-                } else if (action_component_name == "set_linear_velocity_target") {
-                    SetLinearVelocityTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                } else if (action_component_name == "add_to_linear_velocity_target") {
-                    SetLinearVelocityTarget({
-                        action_component_data.at(0) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X,
-                        action_component_data.at(1) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.Y,
-                        action_component_data.at(2) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.Z});
-                } else if (assert_if_action_is_inconsistent) {
-                    SP_ASSERT(false);
-                }
-                break;
-
-            case EJointType::Fixed:
-                break;
-
-            default:
-                SP_ASSERT(false); // TODO (MR): support planar joints
-                break;
-            }
-            break;
-
         case EJointControlType::Torque:
             switch (JointType) {
                 case EJointType::Continuous:
@@ -420,10 +373,6 @@ void UUrdfJointComponent::applyAction(
                     SP_ASSERT(false); // TODO (MR): support planar joints
                     break;
             }
-            break;
-
-        default:
-            SP_ASSERT(false);
             break;
     }
 }

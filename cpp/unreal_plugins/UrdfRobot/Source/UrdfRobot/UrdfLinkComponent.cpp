@@ -69,9 +69,8 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
     SetStaticMesh(link_static_mesh);
 
     // set physical properties
-    SetSimulatePhysics(false); // TODO (MR): re-enable physics
-    //SetSimulatePhysics(link_desc->simulate_physics_);
     SetNotifyRigidBodyCollision(true);
+    SetSimulatePhysics(link_desc->simulate_physics_);
     bUseDefaultCollision = true;
 
     // inertial
@@ -124,6 +123,29 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         static_mesh_component->SetStaticMesh(static_mesh);
         static_mesh_component->SetNotifyRigidBodyCollision(true);
         static_mesh_component->bUseDefaultCollision = true;
+
+        // HACK(MR): When two sibling links are in collision, the physics engine will generate restitution forces to push the links out of collision.
+        // Most of this time, this is the correct behavior. But if the two siblings are connected to their common parent via fixed joints, then
+        // arguably the correct behavior would be to ignore the collision entirely, because the user has expressed that each sibling should be rigidly
+        // attached to its parent. Despite this intuition, Chaos will generate restitution forces for the siblings, which will cause excessive
+        // jittering. We include a custom flag to completely disable collisions for a link as a lightweight workaround in these situations.
+        if (link_desc->ignore_collisions_) {
+            static_mesh_component->bUseDefaultCollision = false;
+            static_mesh_component->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+        }
+
+        // HACK (MR): Under normal circumstances, neighboring links won't collide with each other because the "Disable Collision" flag is enabled
+        // by default on joints. But this flag has no effect when the "Simulate Physics" option is disabled for a particular link. So, when
+        // "Simulate Physics" is disabled, we need to set the object type to be a special type (e.g., ECollisionChannel::ECC_Vehicle), and then set
+        // all child links to ignore collisions for that type.
+        if (!link_desc->simulate_physics_) {
+            static_mesh_component->bUseDefaultCollision = false;
+            static_mesh_component->SetCollisionObjectType(ECollisionChannel::ECC_Vehicle);
+        }
+        if (link_desc->has_parent_ && !link_desc->parent_simulate_physics_) {
+            static_mesh_component->bUseDefaultCollision = false;
+            static_mesh_component->SetCollisionResponseToChannel(ECollisionChannel::ECC_Vehicle, ECollisionResponse::ECR_Ignore);
+        }
 
         // assign material
         if (visual_desc.has_material_) {

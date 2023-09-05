@@ -35,7 +35,7 @@ enum class EJointType
 UENUM()
 enum class EJointControlType
 {
-    Invalid             UMETA(DisplayName = "Invalid"),
+    NotActuated         UMETA(DisplayName = "Not Actuated"),
     Position            UMETA(DisplayName = "Position"),
     Velocity            UMETA(DisplayName = "Velocity"),
     PositionAndVelocity UMETA(DisplayName = "Position and Velocity"),
@@ -57,7 +57,7 @@ public:
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Joint Type")
     EJointType JointType = EJointType::Invalid;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Control Type")
-    EJointControlType JointControlType = EJointControlType::Invalid;
+    EJointControlType JointControlType = EJointControlType::NotActuated;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Enable Keyboard Control")
     bool EnableKeyboardControl = false;
 
