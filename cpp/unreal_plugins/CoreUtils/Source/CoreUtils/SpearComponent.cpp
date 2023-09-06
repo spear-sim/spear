@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SimulationController/SpearComponent.h"
+#include "CoreUtils/SpearComponent.h"
 
 #include "CoreUtils/Log.h"
 
@@ -11,7 +11,7 @@ USpearComponent::USpearComponent(const FObjectInitializer& object_initializer) :
 	SP_LOG_CURRENT_FUNCTION();
 }
 
-~USpearComponent::USpearComponent()
+USpearComponent::~USpearComponent()
 {
 	SP_LOG_CURRENT_FUNCTION();
 }

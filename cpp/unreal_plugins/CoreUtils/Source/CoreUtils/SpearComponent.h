@@ -8,12 +8,17 @@
 
 #include "SpearComponent.generated.h"
 
-UCLASS()
-class USpearComponent : public UActorComponent
+class FObjectInitializer;
+
+UCLASS(ClassGroup = (SPEAR), meta = (BlueprintSpawnableComponent))
+class COREUTILS_API USpearComponent : public UActorComponent
 {
-	GENERATED_BODY();
+	GENERATED_BODY()
 
 public:
 	USpearComponent(const FObjectInitializer& object_initializer);
 	~USpearComponent();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SPEAR", DisplayName = "Parent Actor Label Name")
+	FString parent_actor_label_name_;
 };
