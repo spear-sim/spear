@@ -19,6 +19,10 @@ public:
 	USpearComponent(const FObjectInitializer& object_initializer);
 	~USpearComponent();
 
+#if WITH_EDITOR
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif //WITH_EDITOR
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SPEAR", DisplayName = "Parent Actor Label Name")
 	FString parent_actor_label_name_;
 };
