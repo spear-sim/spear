@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark", action="store_true")
-    parser.add_argument("--xml_path", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "apartment_0000_coacd", "scene.xml")))
+    parser.add_argument("--xml_path", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "apartment_0000_fine_coacd", "scene.xml")))
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
@@ -63,13 +63,15 @@ if __name__ == "__main__":
     for body_id in body_ids:
         body = mujoco_model.body(body_id)
         body_name = body.name
-        if body.parentid == 0:  # if parent id world, then body is an actor (in UE terms)
-            actor_names.append(body_name)
-            actor_ids.append(body_id)
-        else:
-            # if "Kitchen_Sink.Door_01" in body_name or "Cabinet.Door_01" in body_name or "Kitchen_Sink.Drawer_01" in body_name:        # uncomment to just send data to actuators
-            component_names.append(body_name)
-            component_ids.append(body_id)
+        component_names.append(body_name)
+        component_ids.append(body_id)
+        # if body.parentid == 0:  # if parent id world, then body is an actor (in UE terms)
+        #     actor_names.append(body_name)
+        #     actor_ids.append(body_id)
+        # else:
+        #     # if "Kitchen_Sink.Door_01" in body_name or "Cabinet.Door_01" in body_name or "Kitchen_Sink.Drawer_01" in body_name:        # uncomment to just send data to actuators
+        #     component_names.append(body_name)
+        #     component_ids.append(body_id)
 
     # get all mujoco bodies and corresponding xpos, xquat
     xpos_dict  = {mujoco_model.body(body_id).name: mujoco_data.body(body_id).xpos  for body_id in body_ids}
@@ -159,15 +161,15 @@ if __name__ == "__main__":
         xpos_dict  = {mujoco_model.body(body_id).name: muj_2_ue_position(mujoco_data.body(body_id).xpos)  for body_id in component_ids}
         xquat_dict = {mujoco_model.body(body_id).name: muj_2_ue_quat(mujoco_data.body(body_id).xquat) for body_id in component_ids}
 
-        # spear.log("mujoco xpos:  ", xpos_dict)
-        # spear.log()
+        spear.log("mujoco xpos:  ", xpos_dict)
+        spear.log()
         # spear.log("mujoco xquat: ", xquat_dict)    
         # spear.log()
 
         scene.set_component_world_locations(xpos_dict)
-        # locs = scene.get_component_world_locations(component_names)
-        # spear.log("UE loc:       ", {x:y for x,y in zip(component_names, locs)})
-        # spear.log()
+        locs = scene.get_component_world_locations(component_names)
+        spear.log("UE loc:       ", {x:y for x,y in zip(component_names, locs)})
+        spear.log()
         scene.set_component_world_rotations(xquat_dict)
         # rots = scene.get_component_world_rotations(component_names)
         # spear.log()

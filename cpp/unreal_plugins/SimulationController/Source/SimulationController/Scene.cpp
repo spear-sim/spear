@@ -26,13 +26,26 @@ void Scene::findObjectReferences(UWorld* world)
     actors_name_ref_map_ = Unreal::findActorsByTagAllAsMap(world_, {});
     SP_ASSERT(!actors_name_ref_map_.empty());
 
-    // find all USceneComponents in the world
+    // assign names to all components
+    // This naming method should match the method used in MuJoCo export pipeline
+    // todo: ensure this is true
     for (auto& element : actors_name_ref_map_) {
+        // find all USceneComponents in the world
         TArray<USceneComponent*> scene_components;
         element.second->GetComponents<USceneComponent*>(scene_components);
+
+        USceneComponent* root_component = element.second->GetRootComponent();
+
+        std::string name = element.first;
+
+        // some actors do not have root component
+        if (root_component) {
+            name += "." + Unreal::toStdString(root_component->GetName());
+        }
+
         for (auto& scene_component : scene_components) {
-            std::string name = element.first + "." + Unreal::toStdString(scene_component->GetName());
-            SP_ASSERT(!Std::containsKey(scene_components_name_ref_map_, name)); // There shouldn't be two actor.component with the same name
+            name += "." + Unreal::toStdString(scene_component->GetName());
+            SP_ASSERT(!Std::containsKey(scene_components_name_ref_map_, name)); // There shouldn't be two components with the same name
             scene_components_name_ref_map_[name] = scene_component;
         }
     }
