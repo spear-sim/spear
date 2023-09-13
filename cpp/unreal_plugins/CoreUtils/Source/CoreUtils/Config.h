@@ -43,11 +43,11 @@ public:
     static TValue get(const std::string& key)
     {
         SP_ASSERT(key != "");
-        return getFromKeys<TValue>(Std::tokenize(key, "."));
+        return get<TValue>(Std::tokenize(key, "."));
     }
 
     template <typename TValue>
-    static TValue getFromKeys(const std::vector<std::string>& keys)
+    static TValue get(const std::vector<std::string>& keys)
     {
         // at least one key should be present when this function is called
         SP_ASSERT(keys.size() > 0);

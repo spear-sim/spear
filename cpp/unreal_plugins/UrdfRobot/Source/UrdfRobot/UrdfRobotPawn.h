@@ -20,10 +20,8 @@
 #include "UrdfRobotPawn.generated.h"
 
 class UCameraComponent;
-class UInputComponent;
 
 class UUrdfRobotComponent;
-class UUrdfRobotPlayerInputComponent;
 
 UCLASS()
 class URDFROBOT_API AUrdfRobotPawn : public APawn

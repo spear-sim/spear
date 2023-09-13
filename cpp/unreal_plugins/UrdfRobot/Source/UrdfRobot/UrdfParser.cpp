@@ -477,8 +477,7 @@ std::vector<double> UrdfParser::parseVector(const std::string& str, const std::v
     if (str == "") {
         val = default_value;
     } else {
-        std::vector<std::string> tokens = Std::tokenize(str, " ");
-        for (auto& token : tokens) {
+        for (auto& token : Std::tokenize(str, " ")) {
             val.push_back(std::stod(token));
         }
     }

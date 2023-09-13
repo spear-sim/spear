@@ -61,6 +61,7 @@ void AUrdfRobotPawn::Initialize()
     SP_ASSERT(std::filesystem::exists(urdf_file));
 
     UrdfRobotDesc robot_desc = UrdfParser::parse(urdf_file.string());
+    SP_ASSERT(!Std::containsSubstring(robot_desc.name_, "."));
     UrdfRobotComponent = NewObject<UUrdfRobotComponent>(this, Unreal::toFName(robot_desc.name_));
     SP_ASSERT(UrdfRobotComponent);
     UrdfRobotComponent->initialize(&robot_desc);

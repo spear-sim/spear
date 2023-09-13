@@ -31,7 +31,7 @@ const std::map<std::string, std::pair<std::string, std::vector<double>>> PLAYER_
     {"Nine",       {"add_to_angular_orientation_target", {    0.0,  0.0,  2.0}}},
     {"Zero",       {"add_to_angular_orientation_target", {    0.0,  0.0, -2.0}}},
     {"Underscore", {"add_to_linear_position_target",     {    2.0,  0.0,  0.0}}},
-    {"Equals",     {"add_to_linear_position_target",     {    2.0,  0.0,  0.0}}}
+    {"Equals",     {"add_to_linear_position_target",     {   -2.0,  0.0,  0.0}}}
 };
 
 UUrdfJointComponent::UUrdfJointComponent()
@@ -73,8 +73,9 @@ void UUrdfJointComponent::BeginPlay()
     player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
         if (EnableKeyboardControl) {
             std::pair<std::string, std::vector<double>> action_component = player_input_actions.at(player_input_action_desc.key_);
-            bool assert_if_action_is_inconsistent = !WITH_EDITOR; // if we're in the editor, then don't assert if the action is inconsistent with the joint definition
-            applyAction(action_component.first, action_component.second, assert_if_action_is_inconsistent);
+            // only assert if we're not in the editor
+            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
+            applyAction(action_component.first, action_component.second, assert_if_action_is_inconsistent_with_joint);
         }
     };
 
@@ -122,8 +123,7 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
     // The convention in Unreal is that component 1 is the child and component 2 is the parent, which is relevant when setting the "Parent Dominates" flag.
     SetConstrainedComponents(child_static_mesh_component_, NAME_None, parent_static_mesh_component_, NAME_None);
 
-    // Optionally enable the "parent dominates" flag to reduce jittering. This flag is recommended for long kinematic chains (e.g., a multi-link robot arm),
-    // but should not be used for joints whose child is expected to be in contact most of the time (e.g., a joint connecting a wheel to a body).
+    // Optionally enable the "parent dominates" flag to reduce jittering.
     if (joint_desc->parent_dominates_) {
         ConstraintInstance.EnableParentDominates();
     }

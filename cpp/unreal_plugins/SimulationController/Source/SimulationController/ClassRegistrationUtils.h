@@ -55,12 +55,12 @@ class ClassRegistrar
 public:
     ClassRegistrar()
     {
-        SP_LOG("ClassRegistrar::ClassRegistrar()");
+        SP_LOG_CURRENT_FUNCTION();
     }
 
     ~ClassRegistrar()
     {
-        SP_LOG("ClassRegistrar::~ClassRegistrar()");
+        SP_LOG_CURRENT_FUNCTION();
 
         create_funcs_.clear();
     }
@@ -76,7 +76,8 @@ public:
         // wants the inner code to modify.
         ClassRegistrationHandle(std::shared_ptr<ClassRegistrar<TBase, TArgs...>>& class_registrar, const std::string& class_name)
         {
-            SP_LOG("ClassRegistrationHandle::ClassRegistrationHandle(", class_registrar.get(), ", \"", class_name, "\")");
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("Creating ClassRegistrationHandle: ", class_registrar.get(), ", \"", class_name, "\"");
 
             // We usually avoid this type of lazy initialization. But we make an exception in this case because the construction
             // order of a static ClassRegistrar object, relative to the static ClassRegistrationHandle objects that need it, is not
@@ -100,7 +101,7 @@ public:
 
         ~ClassRegistrationHandle()
         {
-            SP_LOG("ClassRegistrationHandle::~ClassRegistrationHandle()");
+            SP_LOG_CURRENT_FUNCTION();
 
             class_registrar_ = nullptr;
         }

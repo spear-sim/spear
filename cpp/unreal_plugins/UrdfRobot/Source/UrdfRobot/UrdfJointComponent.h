@@ -53,7 +53,7 @@ public:
 
     // UActorComponent interface
     void BeginPlay() override;
-
+     
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Joint Type")
     EJointType JointType = EJointType::Invalid;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Control Type")

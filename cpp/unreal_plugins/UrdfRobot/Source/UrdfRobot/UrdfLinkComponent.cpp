@@ -83,7 +83,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         const UrdfGeometryDesc& geometry_desc = visual_desc.geometry_desc_;
 
         // create child static mesh component for each UrdfSpearLinkDesc
-        auto static_mesh_component = NewObject<UStaticMeshComponent>(this, Unreal::toFName("link." + link_desc->name_ + ".static_mesh"));
+        auto static_mesh_component = NewObject<UStaticMeshComponent>(this, Unreal::toFName("static_mesh_component"));
         SP_ASSERT(static_mesh_component);
 
         // each UrdfSpearLinkDesc has its own reference frame
@@ -126,9 +126,10 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
 
         // HACK(MR): When two sibling links are in collision, the physics engine will generate restitution forces to push the links out of collision.
         // Most of this time, this is the correct behavior. But if the two siblings are connected to their common parent via fixed joints, then
-        // arguably the correct behavior would be to ignore the collision entirely, because the user has expressed that each sibling should be rigidly
-        // attached to its parent. Despite this intuition, Chaos will generate restitution forces for the siblings, which will cause excessive
-        // jittering. We include a custom flag to completely disable collisions for a link as a lightweight workaround in these situations.
+        // arguably the correct behavior would be to ignore the collision entirely, because the user has expressed their intent that each sibling
+        // should be rigidly attached to the parent. However, in this case, Chaos will generate large restitution forces for the siblings, which will
+        // cause excessive jittering. We include a custom flag to completely disable collisions for a link as a lightweight workaround in these
+        // situations.
         if (link_desc->ignore_collisions_) {
             static_mesh_component->bUseDefaultCollision = false;
             static_mesh_component->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -142,6 +143,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
             static_mesh_component->bUseDefaultCollision = false;
             static_mesh_component->SetCollisionObjectType(ECollisionChannel::ECC_Vehicle);
         }
+
         if (link_desc->has_parent_ && !link_desc->parent_simulate_physics_) {
             static_mesh_component->bUseDefaultCollision = false;
             static_mesh_component->SetCollisionResponseToChannel(ECollisionChannel::ECC_Vehicle, ECollisionResponse::ECR_Ignore);

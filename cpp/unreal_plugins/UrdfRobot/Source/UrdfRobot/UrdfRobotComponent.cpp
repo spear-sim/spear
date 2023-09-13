@@ -22,10 +22,10 @@
 
 // useful for debugging pendulum.urdf
 const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_PLAYER_INPUT_ACTIONS = {
-    {"One",   {{"joint.joint_0.add_torque_in_radians",          { 1000000.0, 0.0, 0.0}}}},
-    {"Two",   {{"joint.joint_0.add_torque_in_radians",          {-1000000.0, 0.0, 0.0}}}},
-    {"Three", {{"joint.joint_1.add_to_angular_velocity_target", { 0.1,       0.0, 0.0}}}},
-    {"Four",  {{"joint.joint_1.add_to_angular_velocity_target", {-0.1,       0.0, 0.0}}}}
+    {"One",   {{"joint_0.add_torque_in_radians",          { 1000000.0, 0.0, 0.0}}}},
+    {"Two",   {{"joint_0.add_torque_in_radians",          {-1000000.0, 0.0, 0.0}}}},
+    {"Three", {{"joint_1.add_to_angular_velocity_target", { 0.1,       0.0, 0.0}}}},
+    {"Four",  {{"joint_1.add_to_angular_velocity_target", {-0.1,       0.0, 0.0}}}}
 };
 
 UUrdfRobotComponent::UUrdfRobotComponent()
@@ -87,9 +87,9 @@ void UUrdfRobotComponent::BeginPlay()
     player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
         if (EnableKeyboardControl) {
             // only assert if we're not in the editor
-            bool assert_if_action_is_inconsistent = !WITH_EDITOR;
-            bool assert_if_joint_not_found        = !WITH_EDITOR;
-            applyAction(player_input_actions.at(player_input_action_desc.key_), assert_if_joint_not_found, assert_if_action_is_inconsistent);
+            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
+            bool assert_if_joint_not_found                   = !WITH_EDITOR;
+            applyAction(player_input_actions.at(player_input_action_desc.key_), assert_if_joint_not_found, assert_if_action_is_inconsistent_with_joint);
         }
     };
 }
@@ -169,7 +169,8 @@ void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
     UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
     SP_ASSERT(root_link_desc);
 
-    auto root_link_component = NewObject<UUrdfLinkComponent>(this, Unreal::toFName("link." + root_link_desc->name_));
+    SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
+    auto root_link_component = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
     SP_ASSERT(root_link_component);
     root_link_component->initialize(root_link_desc);
     root_link_component->SetupAttachment(this);
@@ -193,7 +194,8 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         SP_ASSERT(child_link_desc);
         SP_ASSERT(child_joint_desc);
 
-        auto child_link_component = NewObject<UUrdfLinkComponent>(this, Unreal::toFName("link." + child_link_desc->name_));
+        SP_ASSERT(!Std::containsSubstring(child_link_desc->name_, "."));
+        auto child_link_component = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(child_link_desc->name_));
         SP_ASSERT(child_link_component);
         child_link_component->initialize(child_link_desc);
         child_link_component->SetupAttachment(parent_link_component);
@@ -207,7 +209,8 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         // measured by the simplicity of our URDF parsing code, the simplicity of our UrdfRobotDesc data structure, and the
         // simplicity of our recursive code for creating the Unreal component hierarchy.
 
-        auto child_joint_component = NewObject<UUrdfJointComponent>(this, Unreal::toFName("joint." + child_joint_desc->name_));
+        SP_ASSERT(!Std::containsSubstring(child_joint_desc->name_, "."));
+        auto child_joint_component = NewObject<UUrdfJointComponent>(this, Unreal::toFName(child_joint_desc->name_));
         SP_ASSERT(child_joint_component);
         child_joint_component->initialize(child_joint_desc, parent_link_component, child_link_component);
         child_joint_component->SetupAttachment(parent_link_component);
@@ -222,19 +225,17 @@ void UUrdfRobotComponent::applyAction(
     const std::map<std::string,
     std::vector<double>>& action,
     bool assert_if_joint_not_found,
-    bool assert_if_action_is_inconsistent)
+    bool assert_if_action_is_inconsistent_with_joint)
 {
     for (auto& action_component : action) {
         std::vector<std::string> tokens = Std::tokenize(action_component.first, ".");
-        SP_ASSERT(tokens.size() == 3);
-        SP_ASSERT(tokens.at(0) == "joint");
-
-        bool found = Std::containsKey(joint_components_, "joint." + tokens.at(1));
+        SP_ASSERT(tokens.size() == 2);
+        bool found = Std::containsKey(joint_components_, tokens.at(0));
         SP_ASSERT(found || !assert_if_joint_not_found);
         if (found) {
-            UUrdfJointComponent* joint_component = joint_components_.at("joint." + tokens.at(1));
+            UUrdfJointComponent* joint_component = joint_components_.at(tokens.at(0));
             SP_ASSERT(joint_component);
-            joint_component->applyAction(tokens.at(2), action_component.second, assert_if_action_is_inconsistent);
+            joint_component->applyAction(tokens.at(1), action_component.second, assert_if_action_is_inconsistent_with_joint);
         }
     }
 }
