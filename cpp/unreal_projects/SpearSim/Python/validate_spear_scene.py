@@ -2,6 +2,7 @@ import unreal
 
 
 def validate_component(component):
+    warning_count = 0
     component_name = component.get_name()
     parent_components = component.get_parent_components()
     is_root_component = len(parent_components) == 0
@@ -15,6 +16,7 @@ def validate_component(component):
                 pass
             else:
                 unreal.log_warning(f'bad component naming : {component_name}')
+                warning_count += 1
 
         static_mesh = component.get_editor_property("static_mesh")
         if static_mesh is None:
@@ -23,25 +25,32 @@ def validate_component(component):
             collision_profile_name = body_instance.get_editor_property("collision_profile_name")
             if collision_profile_name != "BlockAllDynamic":
                 unreal.log_warning(f"invalid collision_profile_name: {collision_profile_name} for {component.get_name()}")
+                warning_count += 1
         else:
             # check collision preset
             use_default_collision = component.get_editor_property("use_default_collision")
+            component.set_editor_property("use_default_collision", True)
             if not use_default_collision:
                 unreal.log_warning(f"invalid use_default_collision=False: {component.get_name()}")
+                warning_count += 1
 
         # check material
     elif isinstance(component, unreal.LightComponent):
         if not is_root_component:
             if not component_name.startswith("light_"):
                 unreal.log_warning(f'bad component naming : {component_name}')
+                warning_count += 1
             elif not component_name[len("light_"):].isdigit():
                 unreal.log_warning(f'bad component naming : {component_name}')
+                warning_count += 1
     elif isinstance(component, unreal.PhysicsConstraintComponent):
         if not is_root_component:
-            if not component_name.startswith("physical_constraint_"):
+            if not component_name.startswith("physics_constraint"):
                 unreal.log_warning(f'bad component naming : {component_name}')
+                warning_count += 1
             elif not component_name[len("physical_constraint_"):].isdigit():
                 unreal.log_warning(f'bad component naming : {component_name}')
+                warning_count += 1
 
         # check if constraint component are properly setup
         component_name1 = component.get_editor_property("component_name1").get_editor_property("component_name")
@@ -49,6 +58,7 @@ def validate_component(component):
 
         if (component_name1 is None or component_name1 == "None") and (component_name2 is None or component_name2 == "None"):
             unreal.log_warning(f"invalid component for pcc {component_name}")
+            warning_count += 1
         else:
             actor1 = component.get_editor_property("constraint_actor1")
             if actor1 is None:
@@ -62,6 +72,7 @@ def validate_component(component):
                         break
                 if not valid:
                     unreal.log_warning(f"invalid pcc component1 {component_name}: {component_name1}")
+                    warning_count += 1
             actor2 = component.get_editor_property("constraint_actor2")
             if actor2 is None:
                 actor2 = component.get_owner()
@@ -74,11 +85,13 @@ def validate_component(component):
                         break
                 if not valid:
                     unreal.log_warning(f"invalid pcc component2 {component_name}: {component_name2}")
+                    warning_count += 1
 
     # validate child components
     for i in range(0, component.get_num_children_components()):
         child_component = component.get_child_component(i)
-        validate_component(child_component)
+        warning_count += validate_component(child_component)
+    return warning_count
 
 
 def validate_actor(actor):
@@ -88,7 +101,7 @@ def validate_actor(actor):
         actor_label = str(actor.get_actor_label())
         actor_label_name = actor_label[:actor_label.rfind("_")]
         actor_label_index = actor_label[actor_label.find("_") + 1:]
-        unreal.log(f"actor_label_name = {actor_label_name}, actor_label_index = {actor_label_index}")
+        # unreal.log(f"actor_label_name = {actor_label_name}, actor_label_index = {actor_label_index}")
         # - check folder
         actor_folder_path = str(actor.get_folder_path())
         actor_folder = actor_folder_path[actor_folder_path.rfind("/") + 1:]
@@ -114,7 +127,9 @@ def validate_actor(actor):
             unreal.log_warning(f"label mismatch: spear_semantic_tag = {spear_semantic_tag} actor_label_name = {actor_label_name}")
 
         # recursively validate components
-        validate_component(actor.root_component)
+        warning_count = validate_component(actor.root_component)
+        if warning_count > 0:
+            unreal.log_warning(f"warning for {actor.get_actor_label()} : {warning_count}")
 
 
 if __name__ == '__main__':

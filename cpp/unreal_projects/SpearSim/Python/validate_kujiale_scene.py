@@ -2,6 +2,7 @@ import unreal
 
 
 def validate_material(material):
+    warning_count = 0
     base_material = material.get_base_material()
 
     if base_material.get_name() == "M_BaseMaterial" or base_material.get_name() == "M_TranslucentMaterial":
@@ -11,6 +12,7 @@ def validate_material(material):
             valid_name = False
         if not valid_name:
             unreal.log_warning(f"invalid material naming : {material_name}")
+            warning_count += 1
 
         material_path = str(material.get_path_name())
         valid_folder = True
@@ -28,6 +30,8 @@ def validate_material(material):
 
         if not valid_folder:
             unreal.log_warning(f"invalid material path : {material_path}")
+            warning_count += 1
+    return warning_count
 
 
 def valid_static_mesh_kujiale(static_mesh):
@@ -69,6 +73,7 @@ def valid_static_mesh_kujiale(static_mesh):
 
 
 def validate_component_kujiale(component):
+    warning_count = 0
     component_name = component.get_name()
     parent_components = component.get_parent_components()
     is_root_component = len(parent_components) == 0
@@ -82,22 +87,32 @@ def validate_component_kujiale(component):
                 pass
             else:
                 unreal.log_warning(f'bad component naming : {component_name}')
+                warning_count += 1
 
         static_mesh = component.get_editor_property("static_mesh")
         valid_static_mesh_kujiale(static_mesh)
         for material in component.get_editor_property("override_materials"):
-            validate_material(material)
+            if static_mesh.get_name() != "SM_Dummy":
+                if material is None:
+                    unreal.log_warning(f"empty material?  {component.get_name()}")
+                    warning_count += 1
+                else:
+                    warning_count += validate_material(material)
 
     # validate child components
     for i in range(0, component.get_num_children_components()):
         child_component = component.get_child_component(i)
-        validate_component_kujiale(child_component)
+        warning_count += validate_component_kujiale(child_component)
+    return warning_count
 
 
 def validate_actor_kujiale(actor):
     if isinstance(actor, unreal.Actor):
         # recursively validate components
-        validate_component_kujiale(actor.root_component)
+        warning_count = validate_component_kujiale(actor.root_component)
+
+        if warning_count > 0:
+            unreal.log_warning(f"warning for {actor.get_actor_label()} : {warning_count}")
 
 
 # validate actor basic info
