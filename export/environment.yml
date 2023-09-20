@@ -1,0 +1,13 @@
+name: mujoco_export_pipeline
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    - bpy==3.5.0
+    - ipython
+    - numpy
+    - transforms3d
+    - trimesh
+    - gymnasium
+    - mujoco==2.3.5
+    - coacd

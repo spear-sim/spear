@@ -1,0 +1,35 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "processing",
+      "type": "python",
+      "request": "launch",
+      "program": "Python_Export_Pipeline/processing.py",
+      "console": "integratedTerminal",
+      "args": [
+        "-n", "6",
+        "--rerun",
+        "--scene_path", "${input:scene_path}",
+      ]
+    },
+    {
+      "name": "sim",
+      "type": "python",
+      "request": "launch",
+      "program": "sim.py",
+      "console": "integratedTerminal",
+    }
+  ],
+  "inputs": [
+    {
+      "id": "scene_path",
+      "default": "scenes/apartment_0000_fine_coacd",
+      "description": "Scene Path",
+      "type": "promptString",
+    }
+  ]
+}
