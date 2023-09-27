@@ -6,7 +6,9 @@
 #include "SpearSimEditor/SpearSimEditorUnrealEdEngine.h"
 
 #include <map>
+#include <stack>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
@@ -284,6 +286,51 @@ bool USpearSimEditorUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutpu
             }
         }
         return true;
+    }
+    else if (cmd_list.at(0) == "getAttachChildren") {
+
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+        
+        if (all_actors_name_ref_map.count(cmd_list.at(1))) {
+
+            TArray<USceneComponent*> scene_components = all_actors_name_ref_map.at(cmd_list.at(1))->GetRootComponent()->GetAttachChildren();
+
+            for (auto& comp : scene_components) {
+                SP_LOG("    ", Unreal::toStdString(comp->GetName()));
+            }
+        }
+    }
+    else if (cmd_list.at(0) == "printTreeStructure") {
+        
+        std::map<std::string, AActor*> all_actors_name_ref_map = Unreal::findActorsByTagAllAsMap(world, {});
+
+        for (auto& element : all_actors_name_ref_map) {
+
+            // some actors do not have a root component, skip them
+            USceneComponent* root_component = element.second->GetRootComponent();
+            if (!root_component) {
+                continue;
+            }
+
+            std::stack<USceneComponent*> components_stack;
+            components_stack.emplace(root_component);
+            
+            SP_LOG("Actor is ", element.first);
+            SP_LOG("    Root component is ", Unreal::toStdString(root_component->GetName()));
+
+            while (!components_stack.empty()) {
+
+                USceneComponent* top = components_stack.top();
+                components_stack.pop();
+
+                SP_LOG("        Component being traversed is ", Unreal::toStdString(top->GetName()));
+                TArray<USceneComponent*> scene_components = top->GetAttachChildren();
+                for (auto& sm_comp : scene_components) {
+                    SP_LOG("                Child is ", Unreal::toStdString(sm_comp->GetName()));
+                    components_stack.emplace(sm_comp);
+                }
+            }
+        }
     }
 
     return UUnrealEdEngine::Exec(world, cmd, output_device);
