@@ -5,7 +5,9 @@
 #include "SimulationController/Scene.h"
 
 #include <map>
+#include <stack>
 #include <string>
+#include <utility>  //std::pair, std::make_pair
 #include <vector>
 
 #include <Components/SceneComponent.h>  // USceneComponent
@@ -26,27 +28,33 @@ void Scene::findObjectReferences(UWorld* world)
     actors_name_ref_map_ = Unreal::findActorsByTagAllAsMap(world_, {});
     SP_ASSERT(!actors_name_ref_map_.empty());
 
-    // assign names to all components
-    // This naming method should match the method used in MuJoCo export pipeline
-    // todo: ensure this is true
+    // create a mapping between component names and it's reference.
+    // The names should match the names defined in MuJoCo export pipeline
     for (auto& element : actors_name_ref_map_) {
-        // find all USceneComponents in the world
-        TArray<USceneComponent*> scene_components;
-        element.second->GetComponents<USceneComponent*>(scene_components);
 
+        // some actors do not have a root component, skip them
         USceneComponent* root_component = element.second->GetRootComponent();
-
-        std::string name = element.first;
-
-        // some actors do not have root component
-        if (root_component) {
-            name += "." + Unreal::toStdString(root_component->GetName());
+        if (!root_component) {
+            continue;
         }
+        std::string root_name = element.first + "." + Unreal::toStdString(root_component->GetName());
 
-        for (auto& scene_component : scene_components) {
-            name += "." + Unreal::toStdString(scene_component->GetName());
-            SP_ASSERT(!Std::containsKey(scene_components_name_ref_map_, name)); // There shouldn't be two components with the same name
-            scene_components_name_ref_map_[name] = scene_component;
+        std::stack<std::pair<USceneComponent*, std::string>> components_stack;
+        components_stack.emplace(std::make_pair(root_component, root_name));
+        
+        while (!components_stack.empty()) {
+
+            std::pair<USceneComponent*, std::string> top = components_stack.top();
+            components_stack.pop();
+
+            SP_ASSERT(!Std::containsKey(scene_components_name_ref_map_, top.second)); // There shouldn't be two components with the same name
+            scene_components_name_ref_map_[top.second] = top.first;
+
+            TArray<USceneComponent*> scene_components = top.first->GetAttachChildren();
+            for (auto& sm_comp : scene_components) {
+                std::string name = top.second + "." + Unreal::toStdString(sm_comp->GetName());
+                components_stack.emplace(std::make_pair(sm_comp, name));
+            }
         }
     }
 }

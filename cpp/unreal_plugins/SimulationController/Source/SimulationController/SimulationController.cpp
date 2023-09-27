@@ -152,6 +152,34 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
             // code.
             if (Config::get<std::string>("SIMULATION_CONTROLLER.INTERACTION_MODE") == "programmatic") {
                 world_begin_play_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
+
+                // The component hierarchy that is setup in Unreal Editor (as displayed in the outliner window),
+                // is modified when the game begins. Hence, this may cause issues in using GetAttachChildren()
+                // on components because, some components will no longer be attached to their parents as seen in
+                // the outliner. Instead, they would be moved to the same level/depth as the RootComponent.
+                // We see this behavior on components whose SimulatePhysics=True. These components and their
+                // children are moved to the same level/depth as the RootComponent. The reason could be that
+                // when simulate_physics is true, these components no longer have to follow the parent, instead
+                // they can move independently.
+                //
+                // Since we need to disable physics on all components anyway (physics is handled by MuJoCo), we will
+                // disable it during PostWorldInitialization and not in WorldBeginPlay because the component hierarchy
+                // would already be updated when the WorldBeginPlay is called. This way, the component hierarchy is
+                // maintained.
+                //
+                // Also, we do this only in programmatic mode because we do not want to alter the SimulatePhysics
+                // state while in Unreal Editor as our MuJoCo export code relies on this.
+
+                std::map<std::string, AActor*> actors_name_ref_map_ = Unreal::findActorsByTagAllAsMap(world_, {});
+                SP_ASSERT(!actors_name_ref_map_.empty());
+
+                for (auto& element : actors_name_ref_map_) {
+                    TArray<UPrimitiveComponent*> primitive_components;
+                    element.second->GetComponents<UPrimitiveComponent*>(primitive_components);
+                    for (auto& primitive_component : primitive_components) {
+                        primitive_component->SetSimulatePhysics(false);
+                    }
+                }
             }
         }
     }
@@ -245,18 +273,6 @@ void SimulationController::worldBeginPlayEventHandler()
 
     int num_worker_threads = 1;
     rpc_server_->runAsync(num_worker_threads);
-
-    // find all PrimitiveComponents and disable physics on them
-    std::map<std::string, AActor*> actors_name_ref_map_ = Unreal::findActorsByTagAllAsMap(world_, {});
-    SP_ASSERT(!actors_name_ref_map_.empty());
-
-    for (auto& element : actors_name_ref_map_) {
-        TArray<UPrimitiveComponent*> primitive_components;
-        element.second->GetComponents<UPrimitiveComponent*>(primitive_components);
-        for (auto& primitive_component : primitive_components) {
-            primitive_component->SetSimulatePhysics(false);
-        }
-    }
 
     has_world_begin_play_executed_ = true;
 }
