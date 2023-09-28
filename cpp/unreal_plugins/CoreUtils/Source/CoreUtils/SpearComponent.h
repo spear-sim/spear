@@ -8,6 +8,7 @@
 
 #include "SpearComponent.generated.h"
 
+class AActor;
 class FObjectInitializer;
 
 UCLASS(ClassGroup = (SPEAR), meta = (BlueprintSpawnableComponent))
@@ -19,10 +20,16 @@ public:
 	USpearComponent(const FObjectInitializer& object_initializer);
 	~USpearComponent();
 
-#if WITH_EDITOR
-	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif //WITH_EDITOR
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SPEAR", DisplayName = "Parent Actor Label Name")
 	FString parent_actor_label_name_;
+
+#if WITH_EDITOR
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
+private:
+#if WITH_EDITOR
+	void onActorLabelChangedEventHandler(AActor*);
+	FDelegateHandle on_actor_label_changed_handle_;
+#endif //WITH_EDITOR
 };
