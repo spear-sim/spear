@@ -5,10 +5,10 @@
 #include "CoreUtils/SpearComponent.h"
 
 #include "Components/ActorComponent.h"
-#include "Delegates/IDelegateInstance.h"	//FDelegateHandle
+#include "Delegates/IDelegateInstance.h" //FDelegateHandle
 #include "GameFramework/Actor.h"
-#include "Misc/CoreDelegates.h" //FCoreDelegates
-#include "UObject/UnrealType.h"	//FPropertyChangedEvent
+#include "Misc/CoreDelegates.h"          //FCoreDelegates
+#include "UObject/UnrealType.h"          //FPropertyChangedEvent
 
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
