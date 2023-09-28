@@ -4,6 +4,12 @@
 
 #include "CoreUtils/SpearComponent.h"
 
+#include "Components/ActorComponent.h"
+#include "Delegates/IDelegateInstance.h"	//FDelegateHandle
+#include "GameFramework/Actor.h"
+#include "Misc/CoreDelegates.h" //FCoreDelegates
+#include "UObject/UnrealType.h"	//FPropertyChangedEvent
+
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
 
@@ -35,7 +41,7 @@ void USpearComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChan
 		AActor* owner = this->GetOwner();
 		owner->SetActorLabel(parent_actor_label_name_);
 	}
-	Super::PostEditChangeProperty(PropertyChangedEvent);
+	UActorComponent::PostEditChangeProperty(PropertyChangedEvent);
 }
 
 void USpearComponent::onActorLabelChangedEventHandler(AActor* actor)
@@ -44,4 +50,4 @@ void USpearComponent::onActorLabelChangedEventHandler(AActor* actor)
 		parent_actor_label_name_ = actor->GetActorLabel();
 	}
 }
-#endif //WITH_EDITOR
+#endif
