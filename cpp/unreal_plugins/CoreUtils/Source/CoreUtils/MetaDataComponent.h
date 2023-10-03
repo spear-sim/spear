@@ -6,7 +6,7 @@
 
 #include "Components/ActorComponent.h"
 
-#include "SpearComponent.generated.h"
+#include "MetaDataComponent.generated.h"
 
 class AActor;
 class FDelegateHandle;
@@ -14,16 +14,17 @@ class FObjectInitializer;
 
 struct FPropertyChangedEvent;
 
-UCLASS(ClassGroup = (SPEAR), meta = (BlueprintSpawnableComponent))
-class COREUTILS_API USpearComponent : public UActorComponent
+UCLASS(ClassGroup = (SPEAR), meta = (BlueprintSpawnableComponent), HideCategories = (Activation, Actor, 
+	AssetUserData, Collision, Cooking, HLOD, Input, Networking, PhysicsRendering, Replication, Tags))
+class COREUTILS_API UMetaDataComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	USpearComponent(const FObjectInitializer& object_initializer);
-	~USpearComponent();
+	UMetaDataComponent(const FObjectInitializer& object_initializer);
+	~UMetaDataComponent();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SPEAR", DisplayName = "Parent Actor Label Name")
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "SPEAR", DisplayName = "Parent Actor Label Name")
 	FString parent_actor_label_name_;
 
 #if WITH_EDITOR
