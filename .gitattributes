@@ -3,7 +3,7 @@
 # Set the default behavior, in case people don't have core.autocrlf set.
 * text=auto
 
-# Declare files that will always have LF line endings on checkout.
+# Files that always have LF line endings on checkout
 .gitattributes text eol=lf
 .gitignore text eol=lf
 .gitmodules text eol=lf
@@ -21,7 +21,7 @@
 *.yaml text eol=lf
 *.yaml.example text eol=lf
 
-# Denote all files that are truly binary and should not be modified.
+# Files that are binary and should not be modified
 *.jpg binary
 *.tflite binary
 *.uasset binary

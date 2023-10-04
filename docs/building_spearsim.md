@@ -6,11 +6,11 @@ We will assume that you are developing on a version of Windows, macOS, or Linux 
 
 ## Install the Unreal Engine
 
-We recommend installing the Unreal Engine version 5.2 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure you select _Editor symbols for debugging_ from the list of optional components.
+We recommend installing the Unreal Engine version 5.2 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure to select _Editor symbols for debugging_ from the list of optional components.
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
-## Install the appropriate compiler for your platform
+## Install an appropriate compiler
 
 For each platform, you will need to install a specific compiler that is compatible with Unreal Engine 5.2. We have verified that the following compilers behave as expected.
 
@@ -20,11 +20,35 @@ macOS:   XCode 14.3
 Linux:   clang and libc++
 ```
 
+If you're developing on Windows, make sure to select _Desktop development with C++_ from the _Workloads_ menu when installing Visual Studio.
+
 If you're developing on Linux, you can install `clang` and `libc++` as follows.
 
 ```console
 sudo apt install libc++-dev libc++abi-dev clang
 ```
+
+## Configure your terminal
+
+If you're developing on Windows, you will need to run our build steps in a terminal that meets the following requirements.
+
+- Your terminal must be able to access Anaconda Python, `cmake`, and the Visual Studio command-line tools.
+- You will need to run our build steps from within the Anaconda environment where the `spear` package is installed.
+- You will need to one of run our build steps with administrator privileges (noted below), because we need to create various symbolic links within your local copy of this repository to work around limitations of the Unreal build system.
+
+There are multiple possible ways to satisfy these requirements. One possibility is to use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application to run our build steps. This profile will be installed to the Terminal application when you install Visual Studio. You can configure this profile to run with administrator privileges in the profile settings. Additionally, you can configure PowerShell to access your Anaconda environment by opening an Anaconda PowerShell prompt with administrator privileges (located in your Start menu after you install Anaconda) and executing the following commands.
+
+```console
+# This step will add a block of PowerShell code to C:\Users\username\Documents\WindowsPowerShell\profile.ps1
+# to make your Anaconda installation visible to PowerShell.
+conda init powershell
+
+# When running as administrator, PowerShell will automatically load C:\Users\username\Documents\WindowsPowerShell\profile.ps1,
+# but this step will allow it to load profile.ps1 even when running as a normal user, so Anaconda will always be visible.
+Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy Bypass
+```
+
+After executing these commands, you can use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application, and it will be able to access Anaconda Python and the Visual Studio command-line tools.
 
 ## Build third-party C++ libraries
 
@@ -41,7 +65,7 @@ This command-line tool accepts an optional `--num_parallel_jobs` argument. This 
 
 Our `SpearSim` project requires you to create several symbolic links. We provide a command-line tool for this purpose.
 
-If you're developing on Windows, you will need to run this tool with administrator privileges.
+If you're developing on Windows, you will need to run this command with administrator privileges.
 
 ```console
 cd tools
@@ -50,7 +74,7 @@ python create_symlinks.py
 
 ## Copy starter content
 
-Our `SpearSim` project requires you to explicitly copy some starter content from your Unreal Engine installation to the project directory.
+Our `SpearSim` project requires you to explicitly copy some starter content from your Unreal Engine installation to the project directory. We provide a command-line tool for this purpose.
 
 ```console
 cd tools
@@ -67,19 +91,19 @@ Linux:   path/to/Linux_Unreal_Engine_5.2.0
 
 ## Build the `SpearSim` executable
 
-We build the `SpearSim` executable as follows.
+We are now ready to build the `SpearSim` executable as follows.
 
 ```console
 # build, cook, stage, package, archive
 path/to/UE_5.2/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -iterativecooking -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
 ```
 
-Depending on your platform, you will need to specify `-targetPlatform` as `Win64`, `Mac`, or `Linux`. If you're developing on Windows, you will need to execute this command in an terminal with access to the Visual Studio command-line tools. You will obtain an executable at one of the following locations.
+On Windows, you will need to replace `RunUAT.sh` with `RunUAT.bat`. Depending on your platform, you will need to specify `-targetPlatform` as `Win64`, `Mac`, or `Linux`. This step will generate an executable at the following locations.
 
 ```
-Windows: cpp/unreal_projects/SpearSim/Standalone-Development/WindowsNoEditor/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
-macOS:   cpp/unreal_projects/SpearSim/Standalone-Development/MacNoEditor/SpearSim.app
-Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/LinuxNoEditor/SpearSim.sh
+Windows: cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
+macOS:   cpp/unreal_projects/SpearSim/Standalone-Development/Mac/SpearSim.app
+Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/Linux/SpearSim.sh
 ```
 
 ### Helpful command-line options

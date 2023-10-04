@@ -12,6 +12,7 @@ public class CommonModuleRules : ModuleRules
     public CommonModuleRules(ReadOnlyTargetRules target) : base(target)
     {
         SP_LOG_CURRENT_FUNCTION();
+        SP_LOG("Target platform:                     " + target.Platform.ToString());
 
         // Disable precompiled headers (in our code but not Unreal code) for faster builds,
         // easier debugging of compile errors, and strict enforcement of include-what-you-use.
@@ -46,7 +47,7 @@ public class CommonModuleRules : ModuleRules
         string thirdPartyDir = Path.GetFullPath(Path.Combine(topLevelModuleDir, "ThirdParty"));
         FileSystemInfo thirdPartyDirInfo = Directory.ResolveLinkTarget(thirdPartyDir, true);
         thirdPartyDir = (thirdPartyDirInfo != null) ? thirdPartyDirInfo.FullName : thirdPartyDir;
-        SP_LOG("Resolved third-party directory: " + thirdPartyDir);
+        SP_LOG("Resolved third-party directory:      " + thirdPartyDir);
 
         //
         // Boost

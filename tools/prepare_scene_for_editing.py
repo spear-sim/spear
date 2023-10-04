@@ -32,7 +32,6 @@ if __name__ == '__main__':
     # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
     # version inside the user's Unreal project directory.
     perforce_dirs_to_unreal_dirs = {
-        os.path.realpath(os.path.join(perforce_content_dir, "Kujiale")) : os.path.join(unreal_project_content_dir, "Kujiale"),
         os.path.realpath(os.path.join(perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
         os.path.realpath(os.path.join(perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets"),
         os.path.realpath(os.path.join(perforce_content_dir, "Scenes", args.scene_id)) : os.path.join(unreal_project_content_dir, "Scenes", args.scene_id)
