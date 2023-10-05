@@ -4,6 +4,7 @@
 - The floor geometry must have the floor spread across the X-Y plane, and Z axis pointing upwards.
 - XY plane must be at the level of the top surface of the floor.
 - Within each top-level Actor, no two StaticMeshComponents can have the same name, and no two PhysicsConstraintComponents can have the same name.
+- Dummy mesh is called `SM_Dummy`
 
 ## TODO
 - Multiple joints with the same parent and child are not permitted

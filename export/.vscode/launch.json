@@ -14,6 +14,17 @@
         "-n", "6",
         "--rerun",
         "--scene_path", "${input:scene_path}",
+        // "--objects", "cabinet_02",
+      ]
+    },
+    {
+      "name": "report",
+      "type": "python",
+      "request": "launch",
+      "program": "Python_Export_Pipeline/report.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--scene_path", "${input:scene_path}",
       ]
     },
     {
@@ -22,12 +33,17 @@
       "request": "launch",
       "program": "sim.py",
       "console": "integratedTerminal",
+      "python": "/opt/miniconda3/envs/fetch_sim/bin/mjpython",
+      "args": [
+        "--filename", "${input:scene_path}/scene.mjb",
+        // "--norender"
+      ]
     }
   ],
   "inputs": [
     {
       "id": "scene_path",
-      "default": "scenes/apartment_0000_fine_coacd",
+      "default": "scenes/kujiale_0000_new",
       "description": "Scene Path",
       "type": "promptString",
     }

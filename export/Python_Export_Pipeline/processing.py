@@ -19,7 +19,7 @@ from itertools import combinations
 
 osp = os.path
 
-use_CoACD = False
+use_CoACD = True
 if use_CoACD:
     import coacd
 
@@ -72,7 +72,7 @@ class VhacdArgs:
 
 @dataclass
 class CoacdArgs:
-    threshold: float = 0.05
+    threshold: float = 0.02
     """Termination criteria in [0.01, 1] (0.01: most fine-grained; 1: most coarse)"""
     max_convex_hull: int = -1
     """Maximum number of convex hulls in the result, -1 for no limit, works only when merge is enabled."""
@@ -222,15 +222,17 @@ def decompose_convex(args):
     fullpath, output_folder, scene_path, cvx_dir, acd_args, xyz, quat, decompose_in_bodies, rerun = args
     obj_dir, obj_file = os.path.split(fullpath)
 
-    if not rerun: 
-        # Copy the obj file to the temporary directory.
-        cvx_path = os.path.join(obj_dir, cvx_dir)
-        obj_name = os.path.splitext(obj_file)[0]
-            
+    # Copy the obj file to the temporary directory.
+    decomposed = False
+    cvx_path = os.path.join(obj_dir, cvx_dir)
+    if rerun and osp.isdir(cvx_path):
+        decomposed = True
+    else:
         os.makedirs(cvx_path, exist_ok=True)
         shutil.copy(fullpath, cvx_path)
 
         obj_filename = osp.join(cvx_path, obj_file)
+        obj_name = os.path.splitext(obj_file)[0]
         
         if acd_args.use_coacd:    
             # Call CoACD.
@@ -279,7 +281,9 @@ def decompose_convex(args):
                 object_part.add_geometry(p)
                 object_part.export(osp.join(cvx_path, f'{obj_name}_{str(i)}.obj'))
                 i+=1
-            object_assembled.export(osp.join(obj_dir, f'{obj_name}_cvx.obj'))
+            if not object_assembled.is_empty:
+                object_assembled.export(osp.join(obj_dir, f'{obj_name}_cvx.obj'))
+                decomposed = True
         
         else:
             
@@ -331,6 +335,7 @@ def decompose_convex(args):
                 print(f"V-HACD failed on {fullpath}")
                 return False
             
+            decomposed = True
             # VHACD not being able to generate a convex hull decoposition (while not throwing any error) is a
             # good indicator of the level of fucked-upness of an asset. For now, we simply discard the asset.
             os.rename(osp.join(obj_dir, _VHACD_OUTPUTS[0]), osp.join(obj_dir, f'{obj_name}_{cvx_dir}.obj'))
@@ -339,7 +344,10 @@ def decompose_convex(args):
         print(f"Removing {obj_filename}")
         os.remove(obj_filename)
         
-    mujoco_xml_populate_objects(obj_dir, output_folder, scene_path, cvx_dir, xyz, quat, decompose_in_bodies)
+    if decomposed:
+        mujoco_xml_populate_objects(obj_dir, output_folder, scene_path, cvx_dir, xyz, quat, decompose_in_bodies)
+    else:  # delete whole directory
+        shutil.rmtree(obj_dir)
     return True
 
 
@@ -408,7 +416,7 @@ def assemble_articulated_object_files(args):
         
         # explore children
         _, child_dirs, _ = next(os.walk(dir))
-        child_dirs = [osp.join(dir, child_dir) for child_dir in child_dirs if child_dir != 'cvx']
+        child_dirs = [osp.join(dir, child_dir) for child_dir in sorted(child_dirs) if child_dir != 'cvx']
         q.extendleft([(child_dir, geom_parent, name_prefix) for child_dir in child_dirs])
         if len(child_dirs):
             sibling_dir_groups.append(child_dirs)
@@ -430,13 +438,15 @@ def assemble_articulated_object_files(args):
 
 
 class AssetProcessor:
-    def __init__(self, scene_path: str, n_workers: int, rerun: bool) -> None:
+    def __init__(self, scene_path: str, n_workers: int, rerun: bool, include_objects: str) -> None:
         self.n_workers = min(max(1, n_workers), mp.cpu_count()-1)
         self.rerun = rerun
         ue_export_path = osp.join(scene_path, 'ue_export')
         self.input_gltf_filenames = {}
         for filename in next(os.walk(ue_export_path))[2]:
             if not filename.endswith('.gltf'):
+                continue
+            if include_objects and not any([i in filename for i in include_objects.split(',')]):
                 continue
             joint_filename = filename.replace('.gltf', '_joints.json')
             self.input_gltf_filenames[os.path.join(ue_export_path, filename)] = os.path.isfile(os.path.join(ue_export_path, joint_filename))
@@ -529,77 +539,6 @@ class AssetProcessor:
         else:
             return 0.001
     
-    
-    def _process_default_assets(self):
-        objects = [
-            obj for obj in bpy.context.scene.collection.all_objects if
-            (obj.parent is None) and (not self.object_has_joint.get(obj.name.split('.')[0], False)) and (obj.type == 'MESH')
-        ]
-        
-        decompose_convex_args = []
-        assemble_args = []
-        for obj in objects:
-            # Select object
-            obj.select_set(True)
-            
-            # Store object pose
-            xyz, quat = self._get_pose_and_center(obj)
-            
-            # Select object
-            obj.select_set(True)
-            object_name = obj.name.split('.')[0]
-            
-            obj_type = self.get_object_type(obj.name)
-            obj_dir = osp.join(self.output_folder, obj_type, object_name)
-            os.makedirs(obj_dir, exist_ok=True)
-
-            # Set the active object as the first object in the list
-            bpy.context.view_layer.objects.active = obj
-            
-            fused_mesh = bpy.context.active_object
-            fused_mesh.name = obj.name
-            bpy.ops.object.select_all(action='DESELECT')
-            fused_mesh.select_set(True)
-
-            # Exporting in stl.
-            print("Exporting obj file...")
-            part_filepath = os.path.join(obj_dir, f"{object_name}.stl")
-            bpy.ops.export_mesh.stl(
-                filepath=part_filepath,
-                check_existing=True,
-                use_selection=True,
-                use_mesh_modifiers=True,
-                batch_mode='OFF',
-                global_scale=1.0,
-                axis_forward='Y',
-                axis_up='Z',
-                ascii=False,
-            )
-            bpy.ops.object.select_all(action='DESELECT')
-            
-            print("Convex solid decomposition...")
-            cvx_args = ACD_Args(use_CoACD, CoacdArgs(), VhacdArgs())
-            decompose_convex_args.append(
-                (part_filepath, self.output_folder, self.scene_path, "cvx", cvx_args, (0.0, 0.0, 0.0),
-                 (1.0, 0.0, 0.0, 0.0), False, self.rerun)
-            )
-            nodes_info = {object_name: {'pos': xyz, 'quat': quat}}
-            assemble_args.append(
-                (object_name, obj_dir, self.scene_path, nodes_info, {}, self.actors_information[object_name]['moving'],
-                 f'.{self.actors_information[object_name]["root_component_name"]}')
-            )
-        i = 0
-        while True:
-            start_idx = i * self.n_workers
-            end_idx   = (i+1) * self.n_workers
-            with mp.Pool(self.n_workers, maxtasksperchild=1) as p:
-                p.map(decompose_convex, decompose_convex_args[start_idx : end_idx])
-            with mp.Pool(self.n_workers, maxtasksperchild=1) as p:
-                p.map(assemble_articulated_object_files, assemble_args[start_idx : end_idx])
-            i = i + 1
-            if end_idx >= len(decompose_convex_args):
-                break
-    
     @staticmethod
     def _get_pose(obj):
         obj.select_set(True)
@@ -620,13 +559,12 @@ class AssetProcessor:
         obj.select_set(False)
         return xyz.tolist(), quat        
 
-    def _process_articulated_assets(self):
+    def _process_assets(self):
         # Select relevant objects in the scene (i.e. discard collision meshes, animations and so on...)
-        objects = [
-            obj for obj in bpy.context.scene.collection.all_objects if
-            (obj.parent is None) and self.object_has_joint.get(obj.name.split('.')[0], False)
-        ]
+        objects = [obj for obj in bpy.context.scene.collection.all_objects if (obj.parent is None)]
         
+        decompose_convex_args = []
+        assemble_args = []
         for obj in objects:
             object_name = obj.name.split('.')[0]
             # Articulated furniture
@@ -634,21 +572,23 @@ class AssetProcessor:
             obj_dir = os.path.join(self.output_folder, obj_type, object_name)
 
             # read joints info to augment it
-            filename = os.path.join(self.output_folder, '..', 'ue_export', f'{object_name}_joints.json')
-            with open(filename, 'r') as f:
-                joints_info = json.load(f)
-            joints_info = {j['name']: j for j in joints_info}
+            joints_info = {}
+            if self.object_has_joint[obj.name.split('.')[0]]:
+                filename = os.path.join(self.output_folder, '..', 'ue_export', f'{object_name}_joints.json')
+                with open(filename, 'r') as f:
+                    joints_info = json.load(f)
+                joints_info = {j['name']: j for j in joints_info}
 
-            # each element is (directory_path, bpy object, xyz, quat)
             children = []
             nodes_info = {}
+            # each element is (bpy object, directory_path, scale factor)
             q = deque([(obj, obj_dir, np.ones(3)), ])
             while len(q):
                 o, dir, scale_factor = q.popleft()
                 name = o.name.split('.')[0]
                 xyz, quat = self._get_pose_and_center(o, scale_factor)
                 if o.children == ():
-                    if o.type == 'MESH':
+                    if (o.type == 'MESH') and (o.data.name != 'SM_Dummy'):
                         if name in nodes_info:
                             raise AssertionError(f'repeated mesh {name}')
                         nodes_info[name] = {'pos': xyz, 'quat': quat}
@@ -681,7 +621,6 @@ class AssetProcessor:
                 joint_info['quat'] = txq.mat2quat(cTj[:3, :3]).tolist()
             
             joint_children = [j['child'] for j in joints_info.values()]
-            decompose_convex_args = []
             for (child_dir, child, xyz, quat) in children:
                 child_name = child.name.split('.')[0]
                 child.select_set(True)
@@ -723,20 +662,33 @@ class AssetProcessor:
                 decompose_convex_args.append(
                     (part_filepath, self.output_folder, self.scene_path, "cvx", cvx_args, xyz, quat, False, self.rerun)
                 )
-            i = 0
-            while True:
-                start_idx = i * self.n_workers
-                end_idx   = (i+1) * self.n_workers
-                with mp.Pool(self.n_workers, maxtasksperchild=1) as p:
-                    p.map(decompose_convex, decompose_convex_args[start_idx : end_idx])
-                i = i + 1
-                if end_idx >= len(decompose_convex_args):
-                    break
-            assemble_articulated_object_files(
+            assemble_args.append(
                 (object_name, obj_dir, self.scene_path, nodes_info, joints_info,
                  self.actors_information[object_name]['moving'],
                  f'.{self.actors_information[object_name]["root_component_name"]}'),
             )
+        # with mp.Pool(self.n_workers) as p:
+        #     p.map(decompose_convex, decompose_convex_args)
+        # with mp.Pool(self.n_workers) as p:
+        #     p.map(assemble_articulated_object_files, assemble_args)
+        i = 0
+        while True:
+            start_idx = i * self.n_workers
+            end_idx   = (i+1) * self.n_workers
+            with mp.Pool(self.n_workers) as p:
+                p.map(decompose_convex, decompose_convex_args[start_idx : end_idx])
+            i = i + 1
+            if end_idx >= len(decompose_convex_args):
+                break
+        i = 0
+        while True:
+            start_idx = i * self.n_workers
+            end_idx   = (i+1) * self.n_workers
+            with mp.Pool(self.n_workers) as p:
+                p.map(assemble_articulated_object_files, assemble_args[start_idx : end_idx])
+            i = i + 1
+            if end_idx >= len(assemble_args):
+                break
     
     def process(self):
         # Deselect all objects
@@ -747,8 +699,7 @@ class AssetProcessor:
         
         # Asset convex decomposition
         # articulated objects should be processed first
-        self._process_articulated_assets()
-        self._process_default_assets()
+        self._process_assets()
 
         # Generate a MuJoCo xml file
         self.generate_mujoco_scene()
@@ -758,7 +709,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--scene_path', required=True, help='relative path to the scene folder')
     parser.add_argument('--rerun', action='store_true', help='re-run the export without running decomposition')
+    parser.add_argument('--objects', help='comma separated', default=None)
     parser.add_argument('-n', type=int, help='number of parallel workers to use', default=mp.cpu_count()-1)
     args = parser.parse_args()
-    proc = AssetProcessor(osp.expanduser(args.scene_path), args.n, args.rerun)
+    proc = AssetProcessor(osp.expanduser(args.scene_path), args.n, args.rerun, args.objects)
     proc.process()
