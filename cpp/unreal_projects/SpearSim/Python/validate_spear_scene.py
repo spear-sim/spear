@@ -60,26 +60,17 @@ def validate_component(component):
             unreal.log_warning(f"invalid component for pcc {component_name}")
             warning_count += 1
         else:
-            actor1 = component.get_editor_property("constraint_actor1")
-            if actor1 is None:
-                actor1 = component.get_owner()
+            parent_component = component.get_attach_parent()
             if component_name1 is not None and component_name1 != "None":
-                other_components = actor1.get_components_by_class(unreal.StaticMeshComponent)
-                valid = False
-                for other_component in other_components:
-                    if other_component.get_name() == component_name1:
-                        valid = True
-                        break
+                # check if component1 is its parent component
+                valid = parent_component.get_name() == component_name1
                 if not valid:
                     unreal.log_warning(f"invalid pcc component1 {component_name}: {component_name1}")
                     warning_count += 1
-            actor2 = component.get_editor_property("constraint_actor2")
-            if actor2 is None:
-                actor2 = component.get_owner()
             if component_name2 is not None and component_name2 != "None":
-                other_components = actor2.get_components_by_class(unreal.StaticMeshComponent)
+                # check if component2 is its sibling
                 valid = False
-                for other_component in other_components:
+                for other_component in parent_component.get_children_components(False):
                     if other_component.get_name() == component_name2:
                         valid = True
                         break
@@ -125,6 +116,13 @@ def validate_actor(actor):
             unreal.log_warning(f"actor not semantic labeled {actor.get_actor_label()}")
         elif spear_semantic_tag != actor_label_name:
             unreal.log_warning(f"label mismatch: spear_semantic_tag = {spear_semantic_tag} actor_label_name = {actor_label_name}")
+
+        # - check type valid for articulated actor
+        if isinstance(actor, unreal.StaticMeshActor):
+            # no articulated asset allowed
+            physics_constraint_components = actor.get_components_by_class(unreal.PhysicsConstraintComponent)
+            if len(physics_constraint_components) > 0:
+                unreal.log_warning(f"articulated actor should be unreal.Actor: {actor.get_actor_label()}")
 
         # recursively validate components
         warning_count = validate_component(actor.root_component)
