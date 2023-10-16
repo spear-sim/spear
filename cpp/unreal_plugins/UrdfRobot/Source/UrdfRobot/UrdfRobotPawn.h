@@ -19,6 +19,7 @@
 
 #include "UrdfRobotPawn.generated.h"
 
+class FObjectInitializer;
 class UCameraComponent;
 
 class UUrdfRobotComponent;
@@ -28,8 +29,11 @@ class URDFROBOT_API AUrdfRobotPawn : public APawn
 {
     GENERATED_BODY()
 public:
-    AUrdfRobotPawn();
+    AUrdfRobotPawn(const FObjectInitializer& object_initializer);
     ~AUrdfRobotPawn();
+
+    // APawn interface
+    void BeginPlay() override;
 
     // This function recursively creates and configures the component hierarchy for an entire URDF robot. This
     // initialization needs to happen outside of the constructor because we need to be able to pass in additional

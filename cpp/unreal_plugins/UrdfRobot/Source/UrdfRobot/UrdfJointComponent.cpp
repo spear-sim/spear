@@ -5,12 +5,14 @@
 #include "UrdfRobot/UrdfJointComponent.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <PhysicalMaterials/PhysicalMaterial.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 #include <Math/Vector.h>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Log.h"
 #include "CoreUtils/PlayerInputComponent.h"
@@ -59,43 +61,84 @@ UUrdfJointComponent::~UUrdfJointComponent()
     player_input_component_ = nullptr;
 }
 
-void UUrdfJointComponent::BeginPlay()
+std::pair<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
 {
-    UActorComponent::BeginPlay();
-   
-    // The convention in Unreal is that component 1 is the child and component 2 is the parent.
-    child_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame1));
-    parent_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame2));
+    // Arguably, setting the ArrayDesc's low, high, shape, and dtype could be part of UrdfRobotComponent.
+    // But, we do it here, because if they need to be modified based on joint types, etc, then it's easier
+    // to do those changes here.
+    ArrayDesc array_desc;
+    array_desc.low_ = std::numeric_limits<double>::lowest();
+    array_desc.high_ = std::numeric_limits<double>::max();
+    array_desc.shape_ = { 3 };
+    array_desc.datatype_ = DataType::Float64;
 
-    const std::map<std::string, std::pair<std::string, std::vector<double>>> player_input_actions = PLAYER_INPUT_ACTIONS;
-    player_input_component_->setPlayerInputActions(player_input_actions);
-    player_input_component_->addAxisMappingsAndBindAxes();
-    player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
-        if (EnableKeyboardControl) {
-            std::pair<std::string, std::vector<double>> action_component = player_input_actions.at(player_input_action_desc.key_);
-            // only assert if we're not in the editor
-            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
-            applyAction(action_component.first, action_component.second, assert_if_action_is_inconsistent_with_joint);
-        }
-    };
+    std::string action_name = "";
 
-    // TODO (MR): generalize this code, which currently applies a hard-coded linear translation offset
+    switch (JointControlType) {
+        case EJointControlType::Position:
+        case EJointControlType::PositionAndVelocity:
+            switch (JointType) {
+                case EJointType::Continuous:
+                case EJointType::Revolute:
+                    //action_name = "set_angular_orientation_target";
+                    action_name = "add_to_angular_orientation_target";
+                    break;
 
-    //if (Unreal::toStdString(GetName()) == "joint.joint_1") {
-    //    FTransform A1Transform = GetBodyTransform(EConstraintFrame::Frame1);
-    //    A1Transform.RemoveScaling();
+                case EJointType::Prismatic:
+                    //action_name = "set_linear_position_target";
+                    action_name = "add_to_linear_position_target";
+                    break;
 
-    //    FTransform A2Transform = GetBodyTransform(EConstraintFrame::Frame2);
-    //    A2Transform.RemoveScaling();
+                case EJointType::Fixed:
+                    break;
 
-    //    // World ref frame
-    //    const FVector WPos = GetComponentLocation();
-    //    const FVector Pos1 = A1Transform.InverseTransformPosition(WPos) - FVector(0.0, 0.0, 0.0);
-    //    const FVector Pos2 = A2Transform.InverseTransformPosition(WPos) - FVector(0.0, 25.0, 0.0);
+                default:
+                    break;
+            }
+            break;
 
-    //    ConstraintInstance.SetRefPosition(EConstraintFrame::Frame1, Pos1);
-    //    ConstraintInstance.SetRefPosition(EConstraintFrame::Frame2, Pos2);
-    //}
+        case EJointControlType::Velocity:
+            switch (JointType) {
+                case EJointType::Continuous:
+                case EJointType::Revolute:
+                    //action_name = "set_angular_velocity_target";
+                    action_name = "add_to_angular_velocity_target";
+                    break;
+
+                case EJointType::Prismatic:
+                    //action_name = "set_linear_velocity_target";
+                    action_name = "add_to_linear_velocity_target";
+                    break;
+
+                case EJointType::Fixed:
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+
+        case EJointControlType::Torque:
+            switch (JointType) {
+                case EJointType::Continuous:
+                case EJointType::Revolute:
+                    action_name = "add_torque_in_radians";
+                    break;
+
+                case EJointType::Prismatic:
+                    action_name = "add_force";
+                    break;
+
+                case EJointType::Fixed:
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+    }
+
+    return std::make_pair(action_name, array_desc);
 }
 
 void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
@@ -243,6 +286,44 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
             }
             break;
     }
+}
+
+void UUrdfJointComponent::initializeDeferred()
+{
+    // The convention in Unreal is that component 1 is the child and component 2 is the parent.
+    child_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame1));
+    parent_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame2));
+
+    SP_ASSERT(player_input_component_->input_component_);
+    const std::map<std::string, std::pair<std::string, std::vector<double>>> player_input_actions = PLAYER_INPUT_ACTIONS;
+    player_input_component_->setPlayerInputActions(player_input_actions);
+    player_input_component_->addAxisMappingsAndBindAxes();
+    player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
+        if (EnableKeyboardControl) {
+            std::pair<std::string, std::vector<double>> action_component = player_input_actions.at(player_input_action_desc.key_);
+            // only assert if we're not in the editor
+            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
+            applyAction(action_component.first, action_component.second, assert_if_action_is_inconsistent_with_joint);
+        }
+    };
+
+    // TODO (MR): generalize this code, which currently applies a hard-coded linear translation offset
+
+    //if (Unreal::toStdString(GetName()) == "joint.joint_1") {
+    //    FTransform A1Transform = GetBodyTransform(EConstraintFrame::Frame1);
+    //    A1Transform.RemoveScaling();
+
+    //    FTransform A2Transform = GetBodyTransform(EConstraintFrame::Frame2);
+    //    A2Transform.RemoveScaling();
+
+    //    // World ref frame
+    //    const FVector WPos = GetComponentLocation();
+    //    const FVector Pos1 = A1Transform.InverseTransformPosition(WPos) - FVector(0.0, 0.0, 0.0);
+    //    const FVector Pos2 = A2Transform.InverseTransformPosition(WPos) - FVector(0.0, 25.0, 0.0);
+
+    //    ConstraintInstance.SetRefPosition(EConstraintFrame::Frame1, Pos1);
+    //    ConstraintInstance.SetRefPosition(EConstraintFrame::Frame2, Pos2);
+    //}
 }
 
 void UUrdfJointComponent::applyAction(

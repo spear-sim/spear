@@ -28,9 +28,19 @@
 
 const auto DEFAULT_URDF_FILE = std::filesystem::path() / ".." / ".." / ".." / "python" / "spear" / "urdf" / "pendulum.urdf";
 
-AUrdfRobotPawn::AUrdfRobotPawn()
+AUrdfRobotPawn::AUrdfRobotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    // UUrdfRobotComponent
+    UrdfRobotComponent = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("urdf_robot_component"));
+    SP_ASSERT(UrdfRobotComponent);
+    SetRootComponent(UrdfRobotComponent);
+
+    // UCameraComponent
+    CameraComponent = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("camera_component"));
+    SP_ASSERT(CameraComponent);
+    CameraComponent->SetupAttachment(UrdfRobotComponent);
 }
 
 AUrdfRobotPawn::~AUrdfRobotPawn()
@@ -39,14 +49,26 @@ AUrdfRobotPawn::~AUrdfRobotPawn()
 
     // Pawns don't need to be cleaned up explicitly.
 
-    UrdfFile = Unreal::toFString("");
-    UrdfRobotComponent = nullptr;
     CameraComponent = nullptr;
+    UrdfRobotComponent = nullptr;
+    UrdfFile = Unreal::toFString("");
+}
+
+void AUrdfRobotPawn::BeginPlay()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    APawn::BeginPlay();
+
+    // Forward input_component to UUrdfRobotComponent, so that it can add its own input bindings.
+    UInputComponent* input_component = GetWorld()->GetFirstPlayerController()->InputComponent;
+    SP_ASSERT(input_component);
+    UrdfRobotComponent->player_input_component_->input_component_ = input_component;
 }
 
 void AUrdfRobotPawn::Initialize()
 {
-    // UUrdfRobotComponent
+    // parse URDF file
     std::filesystem::path urdf_file;
     if (Config::s_initialized_) {
         urdf_file =
@@ -62,12 +84,10 @@ void AUrdfRobotPawn::Initialize()
 
     UrdfRobotDesc robot_desc = UrdfParser::parse(urdf_file.string());
     SP_ASSERT(!Std::containsSubstring(robot_desc.name_, "."));
-    UrdfRobotComponent = NewObject<UUrdfRobotComponent>(this, Unreal::toFName(robot_desc.name_));
-    SP_ASSERT(UrdfRobotComponent);
+
+    // UrdfRobotComponent
     UrdfRobotComponent->initialize(&robot_desc);
     UrdfRobotComponent->RegisterComponent();
-
-    SetRootComponent(UrdfRobotComponent);
 
     // UCameraComponent
     FVector camera_location;
@@ -85,17 +105,15 @@ void AUrdfRobotPawn::Initialize()
             Config::get<double>("URDF_ROBOT.URDF_ROBOT_PAWN.CAMERA_COMPONENT.ROTATION_ROLL")};
         field_of_view = Config::get<float>("URDF_ROBOT.URDF_ROBOT_PAWN.CAMERA_COMPONENT.FOV");
         aspect_ratio = Config::get<float>("URDF_ROBOT.URDF_ROBOT_PAWN.CAMERA_COMPONENT.ASPECT_RATIO");
-    } else {
-        camera_location = FVector::ZeroVector;
+    } else {// Fetch defaults, see python/spear/config/default_config.urdf_robot.yaml
+        camera_location = {0.0, 0.0, 50.0};
         camera_rotation = FRotator::ZeroRotator;
         field_of_view = 90.0;
         aspect_ratio = 1.0;
     }
 
-    CameraComponent = NewObject<UCameraComponent>(this, Unreal::toFName("camera_component"));
-    SP_ASSERT(CameraComponent);
     CameraComponent->SetRelativeLocationAndRotation(camera_location, camera_rotation);
-    CameraComponent->SetupAttachment(UrdfRobotComponent);
+    CameraComponent->AttachToComponent(UrdfRobotComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
     CameraComponent->bUsePawnControlRotation = false;
     CameraComponent->FieldOfView = field_of_view;
     CameraComponent->AspectRatio = aspect_ratio;

@@ -11,13 +11,12 @@
 #include <CoreMinimal.h>
 #include <Components/SceneComponent.h>
 
-#include "CoreUtils/PlayerInputComponent.h"
-
 #include "UrdfRobotComponent.generated.h"
 
+class UPlayerInputComponent;
 class UUrdfJointComponent;
 class UUrdfLinkComponent;
-//struct ArrayDesc;
+struct ArrayDesc;
 struct UrdfLinkDesc;
 struct UrdfRobotDesc;
 
@@ -30,7 +29,7 @@ public:
     ~UUrdfRobotComponent();
 
     // UActorComponent interface
-    void BeginPlay() override;
+    void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Enable Keyboard Control")
     bool EnableKeyboardControl = false;
@@ -50,14 +49,19 @@ public:
     // This function recursively creates and configures the component hierarchy for an entire URDF robot.
     void initialize(const UrdfRobotDesc* robot_desc);
 
-    //// Used by UrdfRobotAgent.
-    //std::map<std::string, ArrayDesc> getActionSpace() const;
-    //std::map<std::string, ArrayDesc> getObservationSpace() const;
-    //void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
-    //std::map<std::string, std::vector<uint8_t>> getObservation() const;
+    // Used by UrdfRobotAgent. Note that UrdfRobotAgent must set action_components_ and observation_components_ before using this interface.
+    std::map<std::string, ArrayDesc> getActionSpace() const;
+    std::map<std::string, ArrayDesc> getObservationSpace() const;
+    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
+    std::map<std::string, std::vector<uint8_t>> getObservation() const;
+    std::vector<std::string> action_components_;
+    std::vector<std::string> observation_components_;
+
+    UPlayerInputComponent* player_input_component_ = nullptr;
 
 private:
     void initialize(const UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link_component);
+    void initializeDeferred();
 
     void applyAction(
         const std::map<std::string,
@@ -68,5 +72,5 @@ private:
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
-    UPlayerInputComponent* player_input_component_ = nullptr;
+    UUrdfLinkComponent* root_link_component_ = nullptr;
 };

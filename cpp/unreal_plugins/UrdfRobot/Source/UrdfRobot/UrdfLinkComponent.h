@@ -22,8 +22,6 @@ public:
     UUrdfLinkComponent();
     ~UUrdfLinkComponent();
 
-    void BeginPlay() override;
-
     // We make this TArray VisibleAnywhere rather than EditAnywhere to avoid counter-intuitive editor behavior.
     // More specifically, depending on how a user removes an entry from these lists (the leftmost dropdown, the
     // rightmost Insert/Delete/Duplicate dropdown, or the reset button), the editor will either: (1) delete the
@@ -44,4 +42,5 @@ public:
     // joints here. Recursively creating the hierarchy of child links and child joints must be handled in
     // higher-level code.
     void initialize(const UrdfLinkDesc* link_desc);
+    void initializeDeferred();
 };

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <CoreMinimal.h>
@@ -16,6 +17,7 @@
 
 class UUrdfLinkComponent;
 class UUrdfJointPlayerInputComponent;
+struct ArrayDesc;
 struct UrdfJointDesc;
 
 // enum values must match UrdfJointType in UrdfParser.h
@@ -31,7 +33,7 @@ enum class EJointType
     Planar     UMETA(DisplayName = "Planar")
 };
 
-// enum values must match UrdfJointType in UrdfParser.h
+// enum values must match UrdfJointControlType in UrdfParser.h
 UENUM()
 enum class EJointControlType
 {
@@ -50,9 +52,6 @@ class URDFROBOT_API UUrdfJointComponent : public UPhysicsConstraintComponent
 public:
     UUrdfJointComponent();
     ~UUrdfJointComponent();
-
-    // UActorComponent interface
-    void BeginPlay() override;
      
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Joint Type")
     EJointType JointType = EJointType::Invalid;
@@ -68,11 +67,18 @@ public:
     // This function configures all of the joint's properties, including configuring the joint to operate on the input parent link and child link.
     void initialize(const UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
 
+    // Used by UrdfRobotComponent.
+    void initializeDeferred();
+
     // Apply a named action (e.g., "add_torque_in_radians") to the joint using a given vector of input data. Used by UUrdfRobotComponent.
     void applyAction(const std::string& action_component_name, const std::vector<double>& action_component_data, bool assert_if_action_is_inconsistent = true);
+
+    // Used by UrdfRobotComponent.
+    std::pair<std::string, ArrayDesc> getActionSpace() const;
+
+    UPlayerInputComponent* player_input_component_ = nullptr;
 
 private:
     UStaticMeshComponent* parent_static_mesh_component_ = nullptr;
     UStaticMeshComponent* child_static_mesh_component_ = nullptr;
-    UPlayerInputComponent* player_input_component_ = nullptr;
 };

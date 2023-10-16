@@ -6,14 +6,16 @@
 
 #include <map>
 #include <string>
-//#include <vector>
+#include <utility>
+#include <vector>
 
 #include <Components/SceneComponent.h>
 
-//#include "CoreUtils/ArrayDesc.h"
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
+#include "CoreUtils/PlayerInputComponent.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfRobot/UrdfJointComponent.h"
@@ -31,6 +33,13 @@ const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_
 UUrdfRobotComponent::UUrdfRobotComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    // In the current setup, the UrdfRobotComponent and the UrdfBotPawn (UrdfRobotComponent is the RootComponent of this Pawn) 
+    // do not move along with the movement of child LinkComponents. However, we want the UrdfBotPawn's pose to update/follow 
+    // the pose of child LinkComponents. Hence, we enable this component to tick and in every tick we update it's pose to 
+    // follow the root link's pose.
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
     // UPlayerInputComponent
     player_input_component_ = CreateDefaultSubobject<UPlayerInputComponent>(Unreal::toFName("player_input_component"));
@@ -53,114 +62,23 @@ UUrdfRobotComponent::~UUrdfRobotComponent()
     player_input_component_ = nullptr;
 }
 
-void UUrdfRobotComponent::BeginPlay()
+void UUrdfRobotComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-    UActorComponent::BeginPlay();
+    USceneComponent::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    // Cache components in maps so we can refer to them by name. We need to do this in BeginPlay because after pressing play
-    // in the editor, the Unreal Engine creates a new replica object for each object in the World Outliner. For any object
-    // that we spawned in the editor, we need to re-compute any local state that isn't visible to the Unreal reflection system.
-    // We can't re-compute this local state in the constructor because LinkComponents and JointComponents have not been updated
-    // by the the Unreal reflection system yet. So we need to do it in BeginPlay.
-
-    for (auto link_component : LinkComponents) {
-        link_components_[Unreal::toStdString(link_component->GetName())] = link_component;
+    static bool once = false;
+    if (!once) {
+        SP_LOG_CURRENT_FUNCTION();
+        initializeDeferred();
+        once = true;
     }
 
-    for (auto joint_component : JointComponents) {
-        joint_components_[Unreal::toStdString(joint_component->GetName())] = joint_component;
-    }
-
-    // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
-    // can be useful for debugging.
-    std::map<std::string, std::map<std::string, std::vector<double>>> player_input_actions;
-    if (Config::s_initialized_) {
-        player_input_actions =
-            Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.PLAYER_INPUT_ACTIONS");
-    } else {
-        player_input_actions =
-            DEFAULT_PLAYER_INPUT_ACTIONS;
-    }
-
-    player_input_component_->setPlayerInputActions(player_input_actions);
-    player_input_component_->addAxisMappingsAndBindAxes();
-    player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
-        if (EnableKeyboardControl) {
-            // only assert if we're not in the editor
-            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
-            bool assert_if_joint_not_found                   = !WITH_EDITOR;
-            applyAction(player_input_actions.at(player_input_action_desc.key_), assert_if_joint_not_found, assert_if_action_is_inconsistent_with_joint);
-        }
-    };
+    // Update this component's pose to match root link component
+    SP_ASSERT(root_link_component_);
+    bool sweep = false;
+    FHitResult* hit_result = nullptr;
+    SetWorldLocationAndRotation(root_link_component_->GetComponentLocation(), root_link_component_->GetComponentRotation(), sweep, hit_result, ETeleportType::None);
 }
-
-//std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace(const std::vector<std::string>& action_components) const
-//{
-//    std::map<std::string, ArrayDesc> action_space;
-//
-//    if (Std::contains(action_components, "control_joints")) {
-//        for (auto& joint_component : joint_components_) {
-//            if (joint_component.second->control_type_ != UrdfJointControlType::Invalid) {
-//                ArrayDesc array_desc;
-//                array_desc.low_ = std::numeric_limits<float>::lowest();
-//                array_desc.high_ = std::numeric_limits<float>::max();
-//                array_desc.shape_ = {1};
-//                array_desc.datatype_ = DataType::Float32;
-//                action_space[joint_component.first] = std::move(array_desc);
-//            }
-//        }
-//    }
-//
-//    return action_space;
-//}
-
-//std::map<std::string, ArrayDesc> UUrdfRobotComponent::getObservationSpace(const std::vector<std::string>& observation_components) const
-//{
-//    std::map<std::string, ArrayDesc> observation_space;
-//
-//    if (Std::contains(observation_components, "link_state")) {
-//        for (auto& link_component : link_components_) {
-//            ArrayDesc array_desc;
-//            array_desc.low_ = std::numeric_limits<float>::lowest();
-//            array_desc.high_ = std::numeric_limits<float>::max();
-//            array_desc.shape_ = {6};
-//            array_desc.datatype_ = DataType::Float32;
-//            observation_space[link_component.first] = std::move(array_desc);
-//        }
-//    }
-//
-//    return observation_space;
-//}
-
-//void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<uint8_t>>& actions)
-//{
-//    std::map<std::string, float> joint_actions;
-//
-//    for (auto& action : actions) {
-//        if (Std::containsKey(joint_components_, action.first)) {
-//            std::vector<float> action_data = Std::reinterpret_as<float>(action.second);
-//            joint_actions[action.first] = action_data.at(0);
-//        }
-//    }
-//
-//    applyAction(joint_actions);
-//}
-
-//std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation(const std::vector<std::string>& observation_components) const
-//{
-//    std::map<std::string, std::vector<uint8_t>> observation;
-//
-//    if (Std::contains(observation_components, "link_state")) {
-//        for (auto& link_component : link_components_) {
-//            FVector position = link_component.second->GetRelativeLocation();
-//            FRotator rotation = link_component.second->GetRelativeRotation();
-//            observation[link_component.first] =
-//                Std::reinterpret_as<uint8_t>(std::vector<float>{position.X, position.Y, position.Z, rotation.Roll, rotation.Yaw, rotation.Pitch});
-//        }
-//    }
-//
-//    return observation;
-//}
 
 void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
 {
@@ -170,14 +88,81 @@ void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
     SP_ASSERT(root_link_desc);
 
     SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
-    auto root_link_component = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
-    SP_ASSERT(root_link_component);
-    root_link_component->initialize(root_link_desc);
-    root_link_component->SetupAttachment(this);
-    root_link_component->RegisterComponent();
-    LinkComponents.Add(root_link_component);
+    root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
+    SP_ASSERT(root_link_component_);
+    root_link_component_->initialize(root_link_desc);
+    root_link_component_->SetupAttachment(this);
+    root_link_component_->RegisterComponent();
+    LinkComponents.Add(root_link_component_);
 
-    initialize(root_link_desc, root_link_component);
+    initialize(root_link_desc, root_link_component_);
+}
+
+std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace() const
+{
+    std::map<std::string, ArrayDesc> action_space;
+
+    if (Std::contains(action_components_, "control_joints")) {
+        for (auto& joint_component : joint_components_) {
+            if (joint_component.second->JointType != EJointType::Invalid) {
+                std::pair<std::string, ArrayDesc> joint_action_space = joint_component.second->getActionSpace();
+                std::string joint_name = joint_component.first + "." + joint_action_space.first;
+                action_space[joint_name] = std::move(joint_action_space.second);
+            }
+        }
+    }
+
+    return action_space;
+}
+
+std::map<std::string, ArrayDesc> UUrdfRobotComponent::getObservationSpace() const
+{
+    std::map<std::string, ArrayDesc> observation_space;
+
+    if (Std::contains(observation_components_, "link_state")) {
+        for (auto& link_component : link_components_) {
+            ArrayDesc array_desc;
+            array_desc.low_ = std::numeric_limits<double>::lowest();
+            array_desc.high_ = std::numeric_limits<double>::max();
+            array_desc.shape_ = {6}; // x, y, z in [cm] and pitch, yaw, roll in [deg] of each link relative to it's parent
+            array_desc.datatype_ = DataType::Float64;
+            observation_space[link_component.first] = std::move(array_desc);
+        }
+    }
+
+    return observation_space;
+}
+
+void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<uint8_t>>& actions)
+{
+    std::map < std::string, std::vector<double>> joint_actions;
+
+    for (auto& action : actions) {
+        if (Std::containsKey(joint_components_, action.first)) {
+            std::vector<double> action_data = Std::reinterpretAs<double>(action.second);
+            joint_actions[action.first] = action_data;
+        }
+    }
+
+    bool assert_if_action_is_inconsistent_with_joint = true;
+    bool assert_if_joint_not_found = true;
+    applyAction(joint_actions, assert_if_joint_not_found, assert_if_action_is_inconsistent_with_joint);
+}
+
+std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation() const
+{
+    std::map<std::string, std::vector<uint8_t>> observation;
+
+    if (Std::contains(observation_components_, "link_state")) {
+        for (auto& link_component : link_components_) {
+            FVector location = link_component.second->GetRelativeLocation();
+            FRotator rotation = link_component.second->GetRelativeRotation();
+            observation[link_component.first] =
+                Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z, rotation.Pitch, rotation.Yaw, rotation.Roll});
+        }
+    }
+
+    return observation;
 }
 
 void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link_component)
@@ -218,6 +203,56 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         JointComponents.Add(child_joint_component);
 
         initialize(child_link_desc, child_link_component);
+    }
+}
+
+void UUrdfRobotComponent::initializeDeferred()
+{
+    // Cache components in maps so we can refer to them by name. We need to do this in BeginPlay because after pressing play
+    // in the editor, the Unreal Engine creates a new replica object for each object in the World Outliner. For any object
+    // that we spawned in the editor, we need to re-compute any local state that isn't visible to the Unreal reflection system.
+    // We can't re-compute this local state in the constructor because LinkComponents and JointComponents have not been updated
+    // by the the Unreal reflection system yet. So we need to do it in BeginPlay.
+
+    for (auto link_component : LinkComponents) {
+        link_components_[Unreal::toStdString(link_component->GetName())] = link_component;
+    }
+
+    for (auto joint_component : JointComponents) {
+        joint_components_[Unreal::toStdString(joint_component->GetName())] = joint_component;
+    }
+
+    // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
+    // can be useful for debugging.
+    SP_ASSERT(player_input_component_->input_component_);
+
+    std::map<std::string, std::map<std::string, std::vector<double>>> player_input_actions;
+    if (Config::s_initialized_) {
+        player_input_actions =
+            Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.PLAYER_INPUT_ACTIONS");
+    } else {
+        player_input_actions =
+            DEFAULT_PLAYER_INPUT_ACTIONS;
+    }
+
+    player_input_component_->setPlayerInputActions(player_input_actions);
+    player_input_component_->addAxisMappingsAndBindAxes();
+    player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
+        if (EnableKeyboardControl) {
+            // only assert if we're not in the editor
+            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
+            bool assert_if_joint_not_found = !WITH_EDITOR;
+            applyAction(player_input_actions.at(player_input_action_desc.key_), assert_if_joint_not_found, assert_if_action_is_inconsistent_with_joint);
+        }
+    };
+
+    for (auto link_component : LinkComponents) {
+        link_component->initializeDeferred();
+    }
+
+    for (auto joint_component : JointComponents) {
+        joint_component->player_input_component_->input_component_ = player_input_component_->input_component_;
+        joint_component->initializeDeferred();
     }
 }
 
