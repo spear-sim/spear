@@ -70,28 +70,25 @@ SIMULATION_CONTROLLER:
       IMAGE_WIDTH: 512
       FOV: 90.0
 
-  URDFBOT_AGENT:
-    URDFBOT_ACTOR_NAME: ""
+  URDF_ROBOT_AGENT:
+    URDF_ROBOT_ACTOR_NAME: ""
     ACTION_COMPONENTS: ["control_joints"]
     OBSERVATION_COMPONENTS: ["link_state", "camera"]
     STEP_INFO_COMPONENTS: []
     SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
     SPAWN_ACTOR_NAME: ""
-    SPAWN_POSITION_X: 0.0
-    SPAWN_POSITION_Y: 0.0
-    SPAWN_POSITION_Z: 0.0
-    SPAWN_PITCH: 0.0
-    SPAWN_YAW: 0.0
-    SPAWN_ROLL: 0.0
+    SPAWN_LOCATION_X: 0.0
+    SPAWN_LOCATION_Y: 0.0
+    SPAWN_LOCATION_Z: 0.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0  
+    SPAWN_ROTATION_ROLL: 0.0
     IS_READY_VELOCITY_THRESHOLD: 0.001
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
-      POSITION_OFFSET_X: 0.0
-      POSITION_OFFSET_Y: 0.0
-      POSITION_OFFSET_Z: 0.0
 
   VEHICLE_AGENT:
     VEHICLE_ACTOR_NAME: ""

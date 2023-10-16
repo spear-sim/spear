@@ -18,6 +18,5 @@ URDF_ROBOT:
 
     PLAYER_INPUT_ACTIONS: {} # Useful for forwarding keyboard input
 
-  URDF_LINK_COMPONENT:
-    POSITION_SOLVER_ITERATION_COUNT: 16
-    VELOCITY_SOLVER_ITERATION_COUNT: 16
+  URDF_ROBOT_COMPONENT:
+    PLAYER_INPUT_ACTIONS: {} # Useful for forwarding keyboard input

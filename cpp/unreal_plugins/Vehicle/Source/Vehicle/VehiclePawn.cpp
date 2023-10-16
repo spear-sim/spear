@@ -136,11 +136,11 @@ AVehiclePawn::~AVehiclePawn()
 
     // Pawns don't need to be cleaned up explicitly.
 
-    CameraComponent = nullptr;
-    ImuComponent = nullptr;
-    MovementComponent = nullptr;
-
     player_input_component_ = nullptr;
+
+    MovementComponent = nullptr;
+    ImuComponent = nullptr;
+    CameraComponent = nullptr;
 }
 
 void AVehiclePawn::BeginPlay()
@@ -228,6 +228,7 @@ void AVehiclePawn::applyAction(const std::map<std::string, std::vector<uint8_t>>
     // the torque will remain in effect until you call SetDriveTorque again.
 
     if (Std::contains(action_components_, "set_brake_torques")) {
+        SP_ASSERT(Std::containsKey(action, "set_brake_torques"));
         std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_brake_torques"));
         MovementComponent->SetBrakeTorque(action_component_data.at(0), 0);
         MovementComponent->SetBrakeTorque(action_component_data.at(1), 1);
@@ -236,6 +237,7 @@ void AVehiclePawn::applyAction(const std::map<std::string, std::vector<uint8_t>>
     }
 
     if (Std::contains(action_components_, "set_drive_torques")) {
+        SP_ASSERT(Std::containsKey(action, "set_drive_torques"));
         std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_drive_torques"));
         MovementComponent->SetDriveTorque(action_component_data.at(0), 0);
         MovementComponent->SetDriveTorque(action_component_data.at(1), 1);
