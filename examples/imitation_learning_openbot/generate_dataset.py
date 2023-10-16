@@ -177,11 +177,8 @@ if __name__ == "__main__":
                     show_obs(obs)
     
                 if not args.benchmark:
-                    obs_final_color = obs["camera.final_color"]
-                    assert len(obs_final_color.shape) == 3
-                    assert obs_final_color.shape[2] == 4
-                    obs_final_color = obs_final_color[:,:,[2,1,0,3]].copy() # note that spear.Env returns BGRA by default
-    
+                    obs_final_color = spear.get_image_data("final_color", obs)
+
                     # save the collected rgb observations
                     plt.imsave(os.path.realpath(os.path.join(images_dir, "%d.jpeg"%i)), obs_final_color)
     

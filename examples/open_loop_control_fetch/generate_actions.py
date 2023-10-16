@@ -8,7 +8,7 @@ import argparse
 import os
 import numpy as np
 import pandas as pd
-
+import spear
 
 # fetch arm poses come from https://github.com/StanfordVL/iGibson/blob/master/igibson/robots/fetch.py#L100
 arm_poses = {
