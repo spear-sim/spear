@@ -34,7 +34,7 @@
 #include "SimulationController/RpcServer.h"
 #include "SimulationController/SphereAgent.h"
 #include "SimulationController/Task.h"
-#include "SimulationController/UrdfBotAgent.h"
+#include "SimulationController/UrdfRobotAgent.h"
 #include "SimulationController/Visualizer.h"
 #include "SimulationController/VehicleAgent.h"
 
