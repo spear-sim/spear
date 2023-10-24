@@ -4,23 +4,14 @@
 
 #include "UrdfRobot/UrdfRobotPawn.h"
 
-#include <map>
-#include <string>
-#include <vector>
-
 #include <Camera/CameraComponent.h>
-#include <Components/InputComponent.h>
-#include <CoreMinimal.h>
-#include <GameFramework/Pawn.h>
-#include <GameFramework/PlayerController.h>
-#include <GameFramework/PlayerInput.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <UObject/UObjectGlobals.h> // NewObject
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
-#include "CoreUtils/PlayerInputComponent.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfRobot/UrdfParser.h"
@@ -55,7 +46,7 @@ void AUrdfRobotPawn::Initialize()
             Config::get<std::string>("URDF_ROBOT.URDF_ROBOT_PAWN.URDF_FILE");
     } else if (std::filesystem::exists(Unreal::toStdString(UrdfFile))) {
         urdf_file = Unreal::toStdString(UrdfFile);
-    } else if (WITH_EDITOR) {
+    } else if (WITH_EDITOR) { // defined in an auto-generated header
         urdf_file = std::filesystem::canonical(Unreal::toStdString(FPaths::ProjectDir()) / DEFAULT_URDF_FILE);
     }
     SP_ASSERT(std::filesystem::exists(urdf_file));

@@ -4,15 +4,9 @@
 
 #pragma once
 
-#include <map>
-#include <string>
-#include <vector>
-
-#include <Components/InputComponent.h>
-#include <CoreMinimal.h>
+#include <Containers/UnrealString.h> // FString
 #include <GameFramework/Pawn.h>
-#include <GameFramework/PlayerController.h>
-#include <GameFramework/PlayerInput.h>
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"

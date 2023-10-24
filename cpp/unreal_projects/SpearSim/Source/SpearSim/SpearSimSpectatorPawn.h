@@ -8,14 +8,12 @@
 #include <string>
 #include <vector>
 
-#include <CoreMinimal.h>
 #include <GameFramework/SpectatorPawn.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 
 #include "SpearSimSpectatorPawn.generated.h"
 
 class UInputComponent;
-
-class AUrdfRobotPawn;
 
 UCLASS()
 class ASpearSimSpectatorPawn : public ASpectatorPawn

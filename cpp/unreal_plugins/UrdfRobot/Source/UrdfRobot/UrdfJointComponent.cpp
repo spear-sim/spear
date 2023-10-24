@@ -4,12 +4,17 @@
 
 #include "UrdfRobot/UrdfJointComponent.h"
 
+#include <map>
 #include <string>
 #include <vector>
 
 #include <PhysicalMaterials/PhysicalMaterial.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
+#include <Math/Matrix.h>
+#include <Math/RotationMatrix.h>
+#include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <UObject/Object.h> // CreateDefaultSubobject
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Log.h"
@@ -74,7 +79,7 @@ void UUrdfJointComponent::BeginPlay()
         if (EnableKeyboardControl) {
             std::pair<std::string, std::vector<double>> action_component = player_input_actions.at(player_input_action_desc.key_);
             // only assert if we're not in the editor
-            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
+            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR; // defined in an auto-generated header
             applyAction(action_component.first, action_component.second, assert_if_action_is_inconsistent_with_joint);
         }
     };

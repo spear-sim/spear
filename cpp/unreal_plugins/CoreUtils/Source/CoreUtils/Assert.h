@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <boost/predef.h>
+#include <boost/predef.h> // BOOST_OS_MACOS
 
 #define PPK_ASSERT_ENABLED 1
 

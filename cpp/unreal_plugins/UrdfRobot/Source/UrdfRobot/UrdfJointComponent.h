@@ -7,12 +7,14 @@
 #include <string>
 #include <vector>
 
-#include <CoreMinimal.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UENUM, UMETA, UPROPERTY
 
 #include "CoreUtils/PlayerInputComponent.h"
 
 #include "UrdfJointComponent.generated.h"
+
+class UStaticMeshComponent;
 
 class UUrdfLinkComponent;
 class UUrdfJointPlayerInputComponent;

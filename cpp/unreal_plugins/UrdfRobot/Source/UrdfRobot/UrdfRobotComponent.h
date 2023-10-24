@@ -8,8 +8,9 @@
 #include <string>
 #include <vector>
 
-#include <CoreMinimal.h>
 #include <Components/SceneComponent.h>
+#include <Containers/Array.h>     // TArray
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "CoreUtils/PlayerInputComponent.h"
 

@@ -9,7 +9,6 @@
 #include <GameFramework/SpectatorPawn.h>
 #include <GenericPlatform/GenericPlatformMisc.h>
 
-#include "CoreUtils/Config.h"
 #include "CoreUtils/PlayerInputComponent.h"
 #include "CoreUtils/Unreal.h"
 

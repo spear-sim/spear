@@ -4,19 +4,20 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <map>
-#include <memory>
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineBaseTypes.h>
 #include <Math/Rotator.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/ClassRegistrationUtils.h"
-#include "SimulationController/Component.h"
+#include "SimulationController/StandaloneComponent.h"
+#include "SimulationController/TickEventComponent.h"
 
 class AActor;
 class ACameraActor;
@@ -25,7 +26,6 @@ class UStaticMeshComponent;
 class UWorld;
 
 class CameraSensor;
-class UTickEventComponent;
 
 class SphereAgent : public Agent
 {
@@ -48,15 +48,12 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
-
 private:
     AStaticMeshActor* static_mesh_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
-    UStaticMeshComponent* static_mesh_component_ = nullptr;
 
-    std::unique_ptr<Component<UTickEventComponent>> tick_event_component_ = nullptr;
-    FDelegateHandle tick_event_delegate_handle_;
+    UStaticMeshComponent* static_mesh_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UTickEventComponent>> tick_event_component_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
 

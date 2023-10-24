@@ -4,6 +4,8 @@
 
 #include "Vehicle/VehicleWheel.h"
 
+#include <ChaosVehicleWheel.h>
+
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
 

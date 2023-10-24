@@ -5,12 +5,12 @@
 #pragma once
 
 #include <atomic>
-#include <future>
-#include <memory>
+#include <future> // std::promise
+#include <memory> // std::unique_ptr
 
-#include <CoreMinimal.h>
-#include <Engine/World.h>
-#include <Modules/ModuleManager.h>
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/World.h>                // UWorld::InitializationValues
+#include <Modules/ModuleInterface.h>
 
 class Agent;
 class NavMesh;

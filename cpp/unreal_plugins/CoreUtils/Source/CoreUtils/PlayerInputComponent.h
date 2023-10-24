@@ -10,14 +10,17 @@
 #include <vector>
 
 #include <Components/InputComponent.h>
-#include <CoreMinimal.h>
+#include <Engine/EngineBaseTypes.h> // ELevelTick
 #include <GameFramework/PlayerController.h>
 #include <GameFramework/PlayerInput.h>
+#include <UObject/ObjectMacros.h>   // GENERATED_BODY, UCLASS
 
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
 
 #include "PlayerInputComponent.generated.h"
+
+struct FActorComponentTickFunction;
 
 struct PlayerInputActionDesc
 {
@@ -49,7 +52,7 @@ public:
     }
 
     // UActorComponent interface
-    void TickComponent(float delta_time, enum ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
+    void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
         UActorComponent::TickComponent(delta_time, level_tick, this_tick_function);
 
@@ -102,5 +105,5 @@ public:
     UInputComponent* input_component_ = nullptr;
 
     // Set by user code to specify what happens when an action is triggered, e.g., UUrdfRobotComponent and UUrdfJointComponent.
-    std::function<void(const PlayerInputActionDesc& player_input_action_desc, float axis_value)> apply_action_func_;
+    std::function<void(const PlayerInputActionDesc&, float)> apply_action_func_;
 };

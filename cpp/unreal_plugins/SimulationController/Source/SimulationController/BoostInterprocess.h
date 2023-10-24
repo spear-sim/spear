@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <boost/predef.h>
+#include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
 #include "CoreUtils/SuppressCompilerWarnings.h"
 

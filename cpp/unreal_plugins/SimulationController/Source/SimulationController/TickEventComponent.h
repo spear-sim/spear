@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include <CoreMinimal.h>
+#include <functional> // std::function
+
 #include <Components/ActorComponent.h>
-#include <Engine/EngineBaseTypes.h>
+#include <Engine/EngineBaseTypes.h> // ELevelTick
+#include <UObject/ObjectMacros.h>   // GENERATED_BODY, UCLASS
 
 #include "CoreUtils/Log.h"
 
 #include "TickEventComponent.generated.h"
 
 struct FActorComponentTickFunction;
-
-DECLARE_MULTICAST_DELEGATE_TwoParams(FTickDelegate, float, enum ELevelTick);
 
 UCLASS()
 class UTickEventComponent : public UActorComponent
@@ -33,14 +33,16 @@ public:
     {
         SP_LOG_CURRENT_FUNCTION();
     }
-    
+
     // UActorComponent interface
-    void TickComponent(float delta_time, enum ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
+    void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
         UActorComponent::TickComponent(delta_time, level_tick, this_tick_function);
 
-        delegate_.Broadcast(delta_time, level_tick);
+        if (tick_func_) {
+            tick_func_(delta_time, level_tick, this_tick_function);
+        }
     }
 
-    FTickDelegate delegate_;
+    std::function<void(float, ELevelTick, FActorComponentTickFunction*)> tick_func_;
 };

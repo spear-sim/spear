@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <boost/predef.h>
+#include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC
 
 #if BOOST_COMP_MSVC
     // keep these warnings sorted

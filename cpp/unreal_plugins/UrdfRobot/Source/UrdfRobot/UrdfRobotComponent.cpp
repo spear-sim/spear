@@ -6,9 +6,11 @@
 
 #include <map>
 #include <string>
-//#include <vector>
+#include <vector>
 
-#include <Components/SceneComponent.h>
+#include <Containers/Array.h>       // TArray
+#include <UObject/Object.h>         // CreateDefaultSubobject
+#include <UObject/UObjectGlobals.h> // NewObject
 
 //#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -87,8 +89,8 @@ void UUrdfRobotComponent::BeginPlay()
     player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
         if (EnableKeyboardControl) {
             // only assert if we're not in the editor
-            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
-            bool assert_if_joint_not_found                   = !WITH_EDITOR;
+            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR; // defined in an auto-generated header
+            bool assert_if_joint_not_found                   = !WITH_EDITOR; // defined in an auto-generated header
             applyAction(player_input_actions.at(player_input_action_desc.key_), assert_if_joint_not_found, assert_if_action_is_inconsistent_with_joint);
         }
     };

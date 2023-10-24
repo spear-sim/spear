@@ -4,19 +4,17 @@
 
 #include "UrdfRobot/UrdfLinkComponent.h"
 
-#include <map>
-#include <string>
-
-#include <CoreMinimal.h>
 #include <Components/StaticMeshComponent.h>
+#include <Containers/Array.h> // TArray
 #include <Engine/StaticMesh.h>
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Color.h>
 #include <Math/Rotator.h>
-#include <Math/UnrealMathUtility.h>
+#include <Math/UnrealMathUtility.h> // FMath::RadiansToDegrees
 #include <Math/Vector.h>
 #include <PhysicalMaterials/PhysicalMaterial.h>
+#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
