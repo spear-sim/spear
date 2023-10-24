@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include <CoreMinimal.h>            // DECLARE_MULTICAST_DELEGATE_TwoParams
+#include <functional> // std::function
+
 #include <Components/ActorComponent.h>
 #include <Engine/EngineBaseTypes.h> // ELevelTick
+#include <UObject/ObjectMacros.h>   // GENERATED_BODY, UCLASS
 
 #include "CoreUtils/Log.h"
 
@@ -14,8 +16,6 @@
 
 class FObjectInitializer;
 struct FActorComponentTickFunction;
-
-DECLARE_MULTICAST_DELEGATE_TwoParams(FTickDelegate, float, enum ELevelTick);
 
 UCLASS()
 class UTickEventComponent : public UActorComponent
@@ -34,12 +34,14 @@ public:
     {
         SP_LOG_CURRENT_FUNCTION();
     }
-    
+
     // UActorComponent interface
     void TickComponent(float delta_time, enum ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
-        delegate_.Broadcast(delta_time, level_tick);
+        if (tick_func_) {
+            tick_func_(delta_time, level_tick, this_tick_function);
+        }
     }
 
-    FTickDelegate delegate_;
+    std::function<void(float, ELevelTick, FActorComponentTickFunction*)> tick_func_;
 };

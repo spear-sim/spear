@@ -4,11 +4,14 @@
 
 #include "CoreUtils/Log.h"
 
+#include <filesystem>
 #include <iostream> // std::cout
 #include <string>   // std::string::operator<<
 #include <vector>
 
-#include <CoreMinimal.h> // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, FString::operator*, TEXT, UE_LOG
+#include <Containers/UnrealString.h> // FString::operator*
+#include <HAL/Platform.h>            // TEXT
+#include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
 
 #include "CoreUtils/Unreal.h"
 #include "CoreUtils/Std.h"

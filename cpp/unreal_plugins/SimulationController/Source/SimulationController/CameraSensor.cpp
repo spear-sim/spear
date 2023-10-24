@@ -4,6 +4,8 @@
 
 #include "SimulationController/CameraSensor.h"
 
+#include <stdint.h> // uint8_t
+
 #include <limits>  // std::numeric_limits
 #include <map>
 #include <string>
@@ -17,6 +19,7 @@
 #include <Engine/TextureRenderTarget2D.h>
 #include <GameFramework/Actor.h>
 #include <Materials/MaterialInstanceDynamic.h>
+#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"

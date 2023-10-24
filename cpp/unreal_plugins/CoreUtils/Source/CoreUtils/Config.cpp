@@ -4,7 +4,8 @@
 
 #include "CoreUtils/Config.h"
 
-#include <CoreMinimal.h> // TEXT
+#include <Containers/UnrealString.h> // FString
+#include <HAL/Platform.h>            // TEXT
 #include <Misc/CommandLine.h>
 #include <Misc/Parse.h>
 

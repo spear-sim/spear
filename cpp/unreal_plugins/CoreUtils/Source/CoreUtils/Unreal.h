@@ -9,9 +9,13 @@
 #include <string>
 #include <vector>
 
-#include <CoreMinimal.h> // FName, FString::operator*, TArray, TCHAR, TCHAR_TO_UTF8, UTF8_TO_TCHAR
+#include <Containers/Array.h>        // TArray
+#include <Containers/StringConv.h>   // TCHAR_TO_UTF8, UTF8_TO_TCHAR
+#include <Containers/UnrealString.h> // FString::operator*
+#include <EngineUtils.h>             // TActorIterator
 #include <GameFramework/Actor.h>
-#include <EngineUtils.h> // TActorIterator
+#include <HAL/Platform.h>            // TCHAR, TEXT
+#include <UObject/NameTypes.h>       // FName
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Std.h"

@@ -4,8 +4,8 @@
 
 #include "SpearSim/SpearSimGameMode.h"
 
-#include <CoreMinimal.h>   // FString
-#include <Engine/Engine.h> // GEngine
+#include <Containers/UnrealString.h> // FString
+#include <Engine/Engine.h>           // GEngine
 #include <GameFramework/GameModeBase.h>
 #include <Math/Color.h>
 
@@ -35,5 +35,5 @@ void ASpearSimGameMode::spearAddOnScreenDebugMessage(float display_time, FString
     uint64 key              = -1;
     FColor color            = FColor::Yellow;
     std::string message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(message);
-    GEngine->AddOnScreenDebugMessage(key, display_time, color, *Unreal::toFString(message_str));
+    GEngine->AddOnScreenDebugMessage(key, display_time, color, Unreal::toFString(message_str));
 }

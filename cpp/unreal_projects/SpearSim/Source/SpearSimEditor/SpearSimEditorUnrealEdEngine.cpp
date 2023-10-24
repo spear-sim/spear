@@ -6,8 +6,8 @@
 
 #include <string>
 
-#include <CoreMinimal.h> // TCHAR
 #include <Editor/UnrealEdEngine.h>
+#include <HAL/Platform.h> // TCHAR
 
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"

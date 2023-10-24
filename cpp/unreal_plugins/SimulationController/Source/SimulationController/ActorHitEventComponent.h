@@ -4,10 +4,12 @@
 
 #pragma once
 
-#include <CoreMinimal.h> // DECLARE_MULTICAST_DELEGATE_FourParams, GENERATED_BODY, UCLASS, UFUNCTION
+#include <functional> // std::function
+
 #include <Components/ActorComponent.h>
 #include <GameFramework/Actor.h>
 #include <Math/Vector.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "CoreUtils/Log.h"
 
@@ -15,8 +17,6 @@
 
 class FObjectInitializer;
 struct FHitResult;
-
-DECLARE_MULTICAST_DELEGATE_FourParams(FActorHitDelegate, AActor*, AActor*, FVector, const FHitResult&);
 
 UCLASS()
 class UActorHitEventComponent : public UActorComponent
@@ -33,22 +33,24 @@ public:
         SP_LOG_CURRENT_FUNCTION();
     }
 
-    void subscribeToActor(AActor* actor)
+    void subscribe(AActor* actor)
     {
         actor->OnActorHit.AddDynamic(this, &UActorHitEventComponent::actorHitEventHandler);
     }
 
-    void unsubscribeFromActor(AActor* actor)
+    void unsubscribe(AActor* actor)
     {
         actor->OnActorHit.RemoveDynamic(this, &UActorHitEventComponent::actorHitEventHandler);
     }
 
-    FActorHitDelegate delegate_;
+    std::function<void(AActor*, AActor*, FVector, const FHitResult&)> actor_hit_func_;
 
 private:
     UFUNCTION()
     void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
     {
-        delegate_.Broadcast(self_actor, other_actor, normal_impulse, hit_result);
+        if (actor_hit_func_) {
+            actor_hit_func_(self_actor, other_actor, normal_impulse, hit_result);
+        }
     }
 };

@@ -4,6 +4,8 @@
 
 #include "SimulationController/PointGoalNavTask.h"
 
+#include <stdint.h> // uint8_t
+
 #include <random>  // std::minstd_rand
 #include <utility> // std::move
 
@@ -13,6 +15,7 @@
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -59,7 +62,6 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     actor_hit_event_component_ = NewObject<UActorHitEventComponent>(parent_actor_);
     SP_ASSERT(actor_hit_event_component_);
     actor_hit_event_component_->RegisterComponent();
-    actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
 
     minstd_rand_ = std::minstd_rand(Config::get<int>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.RANDOM_SEED"));
 
@@ -75,8 +77,6 @@ PointGoalNavTask::~PointGoalNavTask()
     minstd_rand_ = std::minstd_rand();
 
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->delegate_.Remove(actor_hit_event_handle_);
-    actor_hit_event_handle_.Reset();
     actor_hit_event_component_->DestroyComponent();
     actor_hit_event_component_ = nullptr;
 
@@ -99,13 +99,23 @@ void PointGoalNavTask::findObjectReferences(UWorld* world)
         world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
-    actor_hit_event_component_->subscribeToActor(agent_actor_);
+    actor_hit_event_component_->subscribe(agent_actor_);
+    actor_hit_event_component_->actor_hit_func_ =
+        [this](AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result) -> void {
+            SP_ASSERT(self_actor == agent_actor_);
+            if (other_actor == goal_actor_) {
+                hit_goal_ = true;
+            } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
+                hit_obstacle_ = true;
+            }
+        };
 }
 
 void PointGoalNavTask::cleanUpObjectReferences()
 {
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->unsubscribeFromActor(agent_actor_);
+    actor_hit_event_component_->actor_hit_func_ = nullptr;
+    actor_hit_event_component_->unsubscribe(agent_actor_);
 
     obstacle_ignore_actors_.clear();
 
@@ -212,14 +222,3 @@ bool PointGoalNavTask::isReady() const
 {
     return true;
 }
-
-void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
-{
-    SP_ASSERT(self_actor == agent_actor_);
-
-    if (other_actor == goal_actor_) {
-        hit_goal_ = true;
-    } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
-        hit_obstacle_ = true;
-    }
-};

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <stddef.h> // size_t
+
 #include <algorithm> // std::find
 #include <cstring>   // std::memcpy
 #include <iterator>  // std::distance

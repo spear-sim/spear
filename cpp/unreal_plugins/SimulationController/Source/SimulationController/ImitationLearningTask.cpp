@@ -4,6 +4,8 @@
 
 #include "SimulationController/ImitationLearningTask.h"
 
+#include <stdint.h> // uint8_t
+
 #include <fstream> // std::ifstream
 #include <limits>  // std::numeric_limits
 #include <map>
@@ -12,10 +14,11 @@
 #include <vector>
 
 #include <Components/SceneComponent.h>
-#include <Engine/World.h> // FActorSpawnParameters
+#include <Engine/World.h>           // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <UObject/UObjectGlobals.h> // NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -45,7 +48,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     actor_hit_event_component_ = NewObject<UActorHitEventComponent>(parent_actor_);
     SP_ASSERT(actor_hit_event_component_);
     actor_hit_event_component_->RegisterComponent();
-    actor_hit_event_handle_ = actor_hit_event_component_->delegate_.AddRaw(this, &ImitationLearningTask::actorHitEventHandler);
 
     // Get initial and goal locations of all episodes in the following format:
     //    scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
@@ -99,8 +101,6 @@ ImitationLearningTask::~ImitationLearningTask()
     episode_index_ = -1;
 
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->delegate_.Remove(actor_hit_event_handle_);
-    actor_hit_event_handle_.Reset();
     actor_hit_event_component_->DestroyComponent();
     actor_hit_event_component_ = nullptr;
 
@@ -122,13 +122,23 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     obstacle_ignore_actors_ = Unreal::findActorsByName(
         world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
-    actor_hit_event_component_->subscribeToActor(agent_actor_);
+    actor_hit_event_component_->subscribe(agent_actor_);
+    actor_hit_event_component_->actor_hit_func_ =
+        [this](AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result) -> void {
+            SP_ASSERT(self_actor == agent_actor_);
+            if (other_actor == goal_actor_) {
+                hit_goal_ = true;
+            } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
+                hit_obstacle_ = true;
+            }
+        };
 }
 
 void ImitationLearningTask::cleanUpObjectReferences()
 {
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->unsubscribeFromActor(agent_actor_);
+    actor_hit_event_component_->actor_hit_func_ = nullptr;
+    actor_hit_event_component_->unsubscribe(agent_actor_);
 
     obstacle_ignore_actors_.clear();
 
@@ -210,15 +220,4 @@ void ImitationLearningTask::reset()
 bool ImitationLearningTask::isReady() const
 {
     return true;
-}
-
-void ImitationLearningTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
-{
-    SP_ASSERT(self_actor == agent_actor_);
-
-    if (other_actor == goal_actor_) {
-        hit_goal_ = true;
-    } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
-        hit_obstacle_ = true;
-    }
 }

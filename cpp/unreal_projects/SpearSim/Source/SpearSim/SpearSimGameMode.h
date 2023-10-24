@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <CoreMinimal.h> // FString, GENERATED_BODY, UCLASS, UFUNCTION
 #include <GameFramework/GameModeBase.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpearSimGameMode.generated.h"
 

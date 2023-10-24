@@ -4,6 +4,8 @@
 
 #include "SimulationController/CameraAgent.h"
 
+#include <stdint.h> // uint8_t
+
 #include <limits>  // std::numeric_limits
 #include <map>
 #include <memory>  // std::make_unique

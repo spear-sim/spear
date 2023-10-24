@@ -4,6 +4,8 @@
 
 #include "SimulationController/SimulationController.h"
 
+#include <stdint.h> // uint8_t, uint32_t
+
 #include <atomic>
 #include <future> // std::promise
 #include <map>
@@ -11,7 +13,6 @@
 #include <string>
 #include <vector>
 
-#include <CoreMinimal.h>           // TEXT
 #include <Engine/Engine.h>         // GEngine
 #include <Engine/World.h>          // UWorld
 #include <Kismet/GameplayStatics.h>
@@ -51,11 +52,11 @@ enum class FrameState
 void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("CoreUtils")));
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("Vehicle")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("CoreUtils")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("Vehicle")));
 
     // TODO: uncomment when we're ready to re-enable UrdfBot
-    // SP_ASSERT(FModuleManager::Get().IsModuleLoaded(TEXT("UrdfBot")));
+    // SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfBot")));
 
     if (!Config::s_initialized_) {
         return;

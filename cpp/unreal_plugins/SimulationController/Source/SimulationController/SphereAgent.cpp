@@ -4,6 +4,8 @@
 
 #include "SimulationController/SphereAgent.h"
 
+#include <stdint.h> // uint8_t
+
 #include <map>
 #include <memory> // std::make_unique, std::unique_ptr
 #include <string>
@@ -21,6 +23,7 @@
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -29,6 +32,8 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/TickEventComponent.h"
+
+struct FActorComponentTickFunction;
 
 SphereAgent::SphereAgent(UWorld* world)
 {
@@ -110,7 +115,9 @@ SphereAgent::SphereAgent(UWorld* world)
     SP_ASSERT(tick_event_component_);
     tick_event_component_->RegisterComponent();
     tick_event_component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
-    tick_event_handle_ = tick_event_component_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
+    tick_event_component_->tick_func_ = [this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
+        camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);
+    };
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
@@ -135,8 +142,7 @@ SphereAgent::~SphereAgent()
     }
 
     SP_ASSERT(tick_event_component_);
-    tick_event_component_->delegate_.Remove(tick_event_handle_);
-    tick_event_handle_.Reset();
+    tick_event_component_->tick_func_ = nullptr;
     tick_event_component_->DestroyComponent();
     tick_event_component_ = nullptr;
 
@@ -157,7 +163,6 @@ SphereAgent::~SphereAgent()
 }
 
 void SphereAgent::findObjectReferences(UWorld* world) {}
-
 void SphereAgent::cleanUpObjectReferences() {}
 
 std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
@@ -291,9 +296,4 @@ void SphereAgent::reset()
 bool SphereAgent::isReady() const
 {
     return true;
-}
-
-void SphereAgent::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
-{
-    camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);
 }

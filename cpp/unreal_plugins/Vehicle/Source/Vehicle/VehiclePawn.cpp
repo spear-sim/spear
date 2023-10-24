@@ -10,9 +10,9 @@
 #include <Animation/AnimInstance.h>
 #include <Camera/CameraComponent.h>
 #include <Components/BoxComponent.h>
-#include <CoreMinimal.h>            // TEXT
 #include <Engine/SkeletalMesh.h>
 #include <UObject/ConstructorHelpers.h>
+#include <UObject/Object.h>         // CreateDefaultSubobject
 #include <UObject/UObjectGlobals.h> // FObjectInitializer
 #include <WheeledVehiclePawn.h>
 
@@ -54,7 +54,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     GetMesh()->BodyInstance.bSimulatePhysics = true;
 
     // Setup camera
-    camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("camera_component"));
+    camera_component_ = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("camera_component"));
     SP_ASSERT(camera_component_);
 
     FVector camera_location(
@@ -74,7 +74,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     camera_component_->AspectRatio = Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ASPECT_RATIO");
 
     // Setup IMU sensor
-    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("imu_component"));
+    imu_component_ = CreateDefaultSubobject<UBoxComponent>(Unreal::toFName("imu_component"));
     SP_ASSERT(imu_component_);
 
     FVector imu_location(

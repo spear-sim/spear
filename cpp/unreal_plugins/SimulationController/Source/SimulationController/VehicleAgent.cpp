@@ -4,6 +4,8 @@
 
 #include "SimulationController/VehicleAgent.h"
 
+#include <stdint.h> // uint8_t
+
 #include <limits>  // std::numeric_limits
 #include <map>
 #include <memory>  // std::make_unique
@@ -103,7 +105,6 @@ VehicleAgent::~VehicleAgent()
 }
 
 void VehicleAgent::findObjectReferences(UWorld* world) {}
-
 void VehicleAgent::cleanUpObjectReferences() {}
 
 std::map<std::string, ArrayDesc> VehicleAgent::getActionSpace() const

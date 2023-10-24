@@ -8,7 +8,8 @@
 
 #include <AI/NavDataGenerator.h>           // FNavDataGenerator::ExportNavigationData
 #include <AI/Navigation/NavigationTypes.h> // FNavAgentProperties, FNavLocation
-#include <CoreMinimal.h>                   // TArray, UE_BUILD_SHIPPING, UE_BUILD_TEST
+#include <Containers/Array.h>              // TArray
+#include <Misc/Build.h>                    // UE_BUILD_SHIPPING, UE_BUILD_TEST
 #include <NavigationData.h>                // FPathFindingResult
 #include <NavigationSystem.h>
 #include <NavigationSystemTypes.h>         // FPathFindingQuery

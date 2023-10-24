@@ -4,12 +4,13 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <map>
 #include <random> // std::minstd_rand
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
@@ -42,20 +43,15 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
-
 private:
     AStaticMeshActor* goal_actor_ = nullptr;
     AActor* agent_actor_ = nullptr;
     AActor* parent_actor_ = nullptr;
-
     std::vector<AActor*> obstacle_ignore_actors_;
 
     UActorHitEventComponent* actor_hit_event_component_ = nullptr;
-    FDelegateHandle actor_hit_event_handle_;
 
     std::minstd_rand minstd_rand_;
-
     bool hit_goal_ = false;
     bool hit_obstacle_ = false;
 };

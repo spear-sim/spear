@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include <CoreMinimal.h> // FString, GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <Containers/UnrealString.h> // FString
 #include <GameFramework/Actor.h>
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNTION, UPROPERTY
 
 #include "DebugWidget.generated.h"
 

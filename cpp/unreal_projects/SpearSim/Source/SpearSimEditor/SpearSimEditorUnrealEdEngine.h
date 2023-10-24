@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <CoreMinimal.h> // TCHAR
 #include <Editor/UnrealEdEngine.h>
+#include <HAL/Platform.h> // TCHAR
 
 #include "SpearSimEditorUnrealEdEngine.generated.h"
 

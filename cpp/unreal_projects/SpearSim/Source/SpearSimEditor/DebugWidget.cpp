@@ -4,7 +4,7 @@
 
 #include "SpearSimEditor/DebugWidget.h"
 
-#include <CoreMinimal.h> // FString
+#include <Containers/UnrealString.h> // FString
 #include <GameFramework/Actor.h>
 
 #include "CoreUtils/Log.h"

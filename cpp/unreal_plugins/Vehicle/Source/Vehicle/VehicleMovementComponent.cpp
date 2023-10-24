@@ -22,8 +22,8 @@ UVehicleMovementComponent::UVehicleMovementComponent()
 
     // In Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosVehicleMovementComponent.cpp:1200,
     // Chaos doesn't take into consideration the torque inputs to wheels for determining the sleep state of the body. Since we
-    // are providing direct torque inputs to wheels, these torque inputs are not used to determine the sleep state of the body
-    // and the body is set to sleep every Tick. This prohibits us from being able to control the vehicle. Setting SleepThreshold=0.0
+    // are providing direct torque inputs to wheels, and these torque inputs are not used to determine the sleep state of the
+    // body, the body will be set to sleep every Tick. This prohibits us from being able to control the vehicle. Setting SleepThreshold=0.0
     // ensures that Chaos doesn't put this body to sleep.
     SleepThreshold = 0.0;
 

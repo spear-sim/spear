@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <CoreMinimal.h> // TCHAR
 #include <Engine/GameEngine.h>
+#include <HAL/Platform.h> // TCHAR
 
 #include "SpearSimGameEngine.generated.h"
 
