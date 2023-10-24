@@ -4,11 +4,14 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <map>
-#include <memory>
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 
 class UWorld;
@@ -39,7 +42,6 @@ public:
     bool isReady() const override;
 
 private:
-
     AVehiclePawn* vehicle_pawn_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;

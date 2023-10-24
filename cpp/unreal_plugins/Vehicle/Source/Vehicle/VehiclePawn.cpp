@@ -10,9 +10,11 @@
 #include <Animation/AnimInstance.h>
 #include <Camera/CameraComponent.h>
 #include <Components/BoxComponent.h>
-#include <Components/SkeletalMeshComponent.h>
-#include <Engine/CollisionProfile.h>
+#include <Engine/SkeletalMesh.h>
 #include <UObject/ConstructorHelpers.h>
+#include <UObject/Object.h>         // CreateDefaultSubobject
+#include <UObject/UObjectGlobals.h> // FObjectInitializer
+#include <WheeledVehiclePawn.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
@@ -32,6 +34,10 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         return;
     }
 
+    // We need a dynamic cast here because of the indirect way that our UVehicleMovementComponent class is specified.
+    vehicle_movement_component_ = dynamic_cast<UVehicleMovementComponent*>(GetVehicleMovementComponent());
+    SP_ASSERT(vehicle_movement_component_);
+
     ConstructorHelpers::FObjectFinder<USkeletalMesh> skeletal_mesh(*Unreal::toFString(Config::get<std::string>("VEHICLE.VEHICLE_PAWN.SKELETAL_MESH")));
     SP_ASSERT(skeletal_mesh.Succeeded());
 
@@ -48,7 +54,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     GetMesh()->BodyInstance.bSimulatePhysics = true;
 
     // Setup camera
-    camera_component_ = CreateDefaultSubobject<UCameraComponent>(TEXT("camera_component"));
+    camera_component_ = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("camera_component"));
     SP_ASSERT(camera_component_);
 
     FVector camera_location(
@@ -68,8 +74,8 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     camera_component_->AspectRatio = Config::get<float>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.ASPECT_RATIO");
 
     // Setup IMU sensor
-    imu_component_ = CreateDefaultSubobject<UBoxComponent>(TEXT("imu_component"));
-    ASSERT(imu_component_);
+    imu_component_ = CreateDefaultSubobject<UBoxComponent>(Unreal::toFName("imu_component"));
+    SP_ASSERT(imu_component_);
 
     FVector imu_location(
         Config::get<float>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.LOCATION_X"),

@@ -1,6 +1,5 @@
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright Epic Games, Inc. All Rights Reserved.
 //
 
 #include "SpearSim/SpearSimGameEngine.h"
@@ -8,9 +7,13 @@
 #include <string>
 
 #include <Engine/GameEngine.h>
+#include <HAL/Platform.h> // TCHAR
 
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
+
+class FOutputDevice;
+class UWorld;
 
 USpearSimGameEngine::USpearSimGameEngine()
 {

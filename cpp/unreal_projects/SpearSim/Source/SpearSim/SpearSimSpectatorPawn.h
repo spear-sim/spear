@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <CoreMinimal.h>
 #include <GameFramework/SpectatorPawn.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 
 #include "SpearSimSpectatorPawn.generated.h"
 

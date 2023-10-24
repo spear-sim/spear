@@ -4,13 +4,13 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <map>
-#include <memory>
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineBaseTypes.h>
 #include <Math/Rotator.h>
 
 #include "CoreUtils/ArrayDesc.h"
@@ -45,19 +45,15 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
-
 private:
     AStaticMeshActor* static_mesh_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
     AActor* parent_actor_ = nullptr;
 
     UStaticMeshComponent* static_mesh_component_ = nullptr;
-
-    FRotator rotation_ = FRotator::ZeroRotator;
-
     UTickEventComponent* tick_event_component_ = nullptr;
-    FDelegateHandle tick_event_handle_;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
+
+    FRotator rotation_ = FRotator::ZeroRotator;
 };
