@@ -4,20 +4,22 @@
 
 #include "SimulationController/PointGoalNavTask.h"
 
+#include <stdint.h> // uint8_t
+
 #include <map>
-#include <memory>
-#include <random>
+#include <memory>  // std::make_unique
+#include <random>  // std::minstd_rand
 #include <string>
+#include <utility> // std::move
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineTypes.h>
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
-#include <Engine/World.h>
+#include <Engine/World.h> // FActorSpawnParameters
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -25,15 +27,15 @@
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/ActorHitEventComponent.h"
-#include "SimulationController/Component.h"
+#include "SimulationController/StandaloneComponent.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
     // Spawn actor
-    FActorSpawnParameters actor_spawn_params;
-    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_ACTOR_NAME"));
-    actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    goal_actor_ = world->SpawnActor<AStaticMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_params);
+    FActorSpawnParameters actor_spawn_parameters;
+    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_ACTOR_NAME"));
+    actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    goal_actor_ = world->SpawnActor<AStaticMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_parameters);
     SP_ASSERT(goal_actor_);
 
     goal_actor_->SetMobility(EComponentMobility::Movable);
@@ -57,13 +59,11 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     goal_mesh_component->SetMaterial(0, goal_material);
 
     // Create UActorHitEventComponent but don't subscribe to any actors yet
-    actor_hit_event_component_ = std::make_unique<Component<UActorHitEventComponent>>(world);
+    actor_hit_event_component_ = std::make_unique<StandaloneComponent<UActorHitEventComponent>>(world);
     SP_ASSERT(actor_hit_event_component_);
     SP_ASSERT(actor_hit_event_component_->component_);
-    actor_hit_event_delegate_handle_ = actor_hit_event_component_->component_->delegate_.AddRaw(this, &PointGoalNavTask::actorHitEventHandler);
 
     minstd_rand_ = std::minstd_rand(Config::get<int>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.RANDOM_SEED"));
-
     hit_goal_ = false;
     hit_obstacle_ = false;
 }
@@ -72,13 +72,10 @@ PointGoalNavTask::~PointGoalNavTask()
 {
     hit_obstacle_ = false;
     hit_goal_ = false;
-
     minstd_rand_ = std::minstd_rand();
 
     SP_ASSERT(actor_hit_event_component_);
     SP_ASSERT(actor_hit_event_component_->component_);
-    actor_hit_event_component_->component_->delegate_.Remove(actor_hit_event_delegate_handle_);
-    actor_hit_event_delegate_handle_.Reset();
     actor_hit_event_component_ = nullptr;
 
     SP_ASSERT(goal_actor_);
@@ -96,12 +93,26 @@ void PointGoalNavTask::findObjectReferences(UWorld* world)
         world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
-    actor_hit_event_component_->component_->subscribeToActor(agent_actor_);
+    SP_ASSERT(actor_hit_event_component_);
+    SP_ASSERT(actor_hit_event_component_->component_);
+    actor_hit_event_component_->component_->subscribe(agent_actor_);
+    actor_hit_event_component_->component_->actor_hit_func_ =
+        [this](AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result) -> void {
+            SP_ASSERT(self_actor == agent_actor_);
+            if (other_actor == goal_actor_) {
+                hit_goal_ = true;
+            } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
+                hit_obstacle_ = true;
+            }
+        };
 }
 
 void PointGoalNavTask::cleanUpObjectReferences()
 {
-    actor_hit_event_component_->component_->unsubscribeFromActor(agent_actor_);
+    SP_ASSERT(actor_hit_event_component_);
+    SP_ASSERT(actor_hit_event_component_->component_);
+    actor_hit_event_component_->component_->actor_hit_func_ = nullptr;
+    actor_hit_event_component_->component_->unsubscribe(agent_actor_);
 
     obstacle_ignore_actors_.clear();
 
@@ -208,14 +219,3 @@ bool PointGoalNavTask::isReady() const
 {
     return true;
 }
-
-void PointGoalNavTask::actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
-{
-    SP_ASSERT(self_actor == agent_actor_);
-
-    if (other_actor == goal_actor_) {
-        hit_goal_ = true;
-    } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
-        hit_obstacle_ = true;
-    }
-};

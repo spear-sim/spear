@@ -4,6 +4,8 @@
 
 #include "Vehicle/Vehicle.h"
 
+#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
+
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"

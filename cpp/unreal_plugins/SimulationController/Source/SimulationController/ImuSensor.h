@@ -5,21 +5,18 @@
 #pragma once
 
 #include <map>
-#include <memory>
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineBaseTypes.h>
 #include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
-#include "SimulationController/Component.h"
+#include "SimulationController/StandaloneComponent.h"
+#include "SimulationController/TickEventComponent.h"
 
 class AActor;
 class UPrimitiveComponent;
-
-class UTickEventComponent;
 
 class ImuSensor 
 {
@@ -39,14 +36,8 @@ public:
     FVector angular_velocity_body_ = FVector::ZeroVector;
 
 private:
-    void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
-    void updateLinearAcceleration(float delta_time);
-    void updateAngularRate();
-
     UPrimitiveComponent* primitive_component_ = nullptr;
-
-    std::unique_ptr<Component<UTickEventComponent>> tick_event_component_ = nullptr;
-    FDelegateHandle tick_event_handle_;
+    std::unique_ptr<StandaloneComponent<UTickEventComponent>> tick_event_component_ = nullptr;
 
     FVector previous_linear_velocity_world_ = FVector::ZeroVector;
 };

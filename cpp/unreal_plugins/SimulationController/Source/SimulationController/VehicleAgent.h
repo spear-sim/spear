@@ -4,11 +4,14 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <map>
-#include <memory>
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
+#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/ClassRegistrationUtils.h"
 

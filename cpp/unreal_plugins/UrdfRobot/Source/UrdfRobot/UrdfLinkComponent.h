@@ -4,11 +4,9 @@
 
 #pragma once
 
-#include <map>
-#include <string>
-
-#include <CoreMinimal.h>
 #include <Components/StaticMeshComponent.h>
+#include <Containers/Array.h>     // TArray
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "UrdfLinkComponent.generated.h"
 

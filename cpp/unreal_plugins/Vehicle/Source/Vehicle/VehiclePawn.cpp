@@ -13,8 +13,12 @@
 #include <Components/BoxComponent.h>
 #include <Components/SkeletalMeshComponent.h>
 #include <Engine/CollisionProfile.h>
+#include <Engine/SkeletalMesh.h>
 #include <GameFramework/PlayerInput.h>
 #include <UObject/ConstructorHelpers.h>
+#include <UObject/Object.h>         // CreateDefaultSubobject
+#include <UObject/UObjectGlobals.h> // FObjectInitializer
+#include <WheeledVehiclePawn.h>
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"

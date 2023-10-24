@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <CoreMinimal.h>
 #include <ChaosVehicleWheel.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 
 #include "VehicleWheel.generated.h"
 

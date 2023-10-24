@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <Containers/UnrealString.h>
-#include <CoreMinimal.h>
+#include <Containers/UnrealString.h> // FString
 #include <GameFramework/Actor.h>
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "DebugWidget.generated.h"
 
@@ -25,10 +25,10 @@ public:
     void SaveConfig();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void PrintDummyString();
+    void PrintDebugString();
 
-    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Dummy string")
-    FString DummyString;
+    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Debug string")
+    FString DebugString;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SpawnVehiclePawn();

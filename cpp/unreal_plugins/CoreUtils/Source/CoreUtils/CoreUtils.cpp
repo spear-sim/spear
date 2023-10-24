@@ -4,9 +4,9 @@
 
 #include "CoreUtils/CoreUtils.h"
 
-#include <iostream>
+#include <iostream> // std::cin
 
-#include <Modules/ModuleManager.h>
+#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"

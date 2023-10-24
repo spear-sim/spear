@@ -4,13 +4,18 @@
 
 #include "UrdfRobot/UrdfJointComponent.h"
 
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include <PhysicalMaterials/PhysicalMaterial.h>
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
+#include <Math/Matrix.h>
+#include <Math/RotationMatrix.h>
+#include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <UObject/Object.h> // CreateDefaultSubobject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"

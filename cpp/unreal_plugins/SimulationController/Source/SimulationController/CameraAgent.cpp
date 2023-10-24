@@ -4,17 +4,18 @@
 
 #include "SimulationController/CameraAgent.h"
 
-#include <limits>
+#include <stdint.h> // uint8_t
+
+#include <limits>  // std::numeric_limits
 #include <map>
-#include <memory>
+#include <memory>  // std::make_unique
 #include <string>
-#include <utility>
+#include <utility> // std::move
 #include <vector>
 
 #include <Camera/CameraActor.h>
-#include <Camera/CameraComponent.h>
-#include <Engine/EngineTypes.h>
-#include <Engine/World.h>
+#include <Camera/CameraComponent.h> // UCameraComponent::AspectRatio, UCameraComponent::FieldOfView
+#include <Engine/World.h>           // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
@@ -50,10 +51,10 @@ CameraAgent::CameraAgent(UWorld* world)
     } else {
         SP_ASSERT(false);
     }
-    FActorSpawnParameters actor_spawn_params;
-    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA_ACTOR_NAME"));
-    actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    camera_actor_ = world->SpawnActor<ACameraActor>(spawn_location, spawn_rotation, actor_spawn_params);
+    FActorSpawnParameters actor_spawn_parameters;
+    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA_ACTOR_NAME"));
+    actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    camera_actor_ = world->SpawnActor<ACameraActor>(spawn_location, spawn_rotation, actor_spawn_parameters);
     SP_ASSERT(camera_actor_);
 
     camera_actor_->GetCameraComponent()->FieldOfView =

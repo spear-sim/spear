@@ -4,8 +4,7 @@
 
 #include "SpearSimEditor/DebugWidget.h"
 
-#include <Containers/UnrealString.h>
-#include <CoreMinimal.h>
+#include <Containers/UnrealString.h> // FString
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
@@ -27,7 +26,7 @@ ADebugWidget::~ADebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    DummyString = Unreal::toFString("");
+    DebugString = Unreal::toFString("");
     UrdfFile = Unreal::toFString("");
 }
 
@@ -41,9 +40,9 @@ void ADebugWidget::SaveConfig()
     AActor::SaveConfig();
 }
 
-void ADebugWidget::PrintDummyString()
+void ADebugWidget::PrintDebugString()
 {
-    SP_LOG("DummyString: ", Unreal::toStdString(DummyString));
+    SP_LOG("DebugString: ", Unreal::toStdString(DebugString));
 }
 
 void ADebugWidget::SpawnVehiclePawn()

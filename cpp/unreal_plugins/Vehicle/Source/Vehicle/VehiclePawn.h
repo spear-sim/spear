@@ -8,12 +8,10 @@
 #include <string>
 #include <vector>
 
-#include <CoreMinimal.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 #include <WheeledVehiclePawn.h>
 
 #include "CoreUtils/ArrayDesc.h"
-
-#include <functional>
 
 #include "VehiclePawn.generated.h"
 

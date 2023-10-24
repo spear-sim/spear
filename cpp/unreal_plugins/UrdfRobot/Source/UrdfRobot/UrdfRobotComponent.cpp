@@ -9,7 +9,9 @@
 #include <utility>
 #include <vector>
 
-#include <Components/SceneComponent.h>
+#include <Containers/Array.h>       // TArray
+#include <UObject/Object.h>         // CreateDefaultSubobject
+#include <UObject/UObjectGlobals.h> // NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"

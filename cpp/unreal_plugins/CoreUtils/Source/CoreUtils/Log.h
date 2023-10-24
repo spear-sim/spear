@@ -6,11 +6,12 @@
 
 #include <filesystem>
 #include <string>
-#include <utility>
+#include <utility> // std::forward
 
-#include <CoreGlobals.h>
+#include <boost/predef.h>             // BOOST_COMP_CLANG, BOOST_COMP_MSVC
+#include <boost/current_function.hpp> // BOOST_CURRENT_FUNCTION
 
-#include <boost/current_function.hpp>
+#include <CoreGlobals.h> // IsRunningCommandlet
 
 #include "CoreUtils/Std.h"
 
@@ -47,7 +48,7 @@ public:
     {
         std::string str = getPrefix(current_file) + Std::toString(std::forward<TArgs>(args)...);
         
-        #if WITH_EDITOR
+        #if WITH_EDITOR // defined in an auto-generated header
             if (IsRunningCommandlet()) {
                 logStdout(str); // editor mode via command-line (e.g., during cooking)
             } else {

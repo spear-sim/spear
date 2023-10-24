@@ -4,15 +4,17 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cctype>
-#include <cstring>
-#include <map>
+#include <stddef.h> // size_t
+
+#include <algorithm> // std::find
+#include <cctype>    // std::tolower
+#include <cstring>   // std::memcpy
+#include <iterator>  // std::distance
 #include <string>
-#include <utility>
+#include <utility>   // std::forward
 #include <vector>
 
-#include <boost/tokenizer.hpp>
+#include <boost/tokenizer.hpp> // boost::char_separator
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/BoostLexicalCast.h"
@@ -62,7 +64,7 @@ public:
     static std::string toLower(const std::string& string) {
         std::string lower_string = string;
         for (auto& c : lower_string) {
-            c = tolower(c);
+            c = std::tolower(c);
         }
         return lower_string;
     }

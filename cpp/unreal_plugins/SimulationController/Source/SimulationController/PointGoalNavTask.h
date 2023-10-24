@@ -4,17 +4,19 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <map>
-#include <memory>
-#include <random>
+#include <memory> // std::unique_ptr
+#include <random> // std::minstd_rand
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h>
 #include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
-#include "SimulationController/Component.h"
+#include "SimulationController/ActorHitEventComponent.h"
+#include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/Task.h"
 
 class AActor;
@@ -22,7 +24,6 @@ class AStaticMeshActor;
 class UWorld;
 struct FHitResult;
 
-class UActorHitEventComponent;
 struct ArrayDesc;
 
 class PointGoalNavTask: public Task
@@ -44,17 +45,13 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
-
 private:
     AStaticMeshActor* goal_actor_ = nullptr;
     AActor* agent_actor_ = nullptr;
     std::vector<AActor*> obstacle_ignore_actors_;
 
-    std::unique_ptr<Component<UActorHitEventComponent>> actor_hit_event_component_ = nullptr;
-    FDelegateHandle actor_hit_event_delegate_handle_;
+    std::unique_ptr<StandaloneComponent<UActorHitEventComponent>> actor_hit_event_component_ = nullptr;
 
-    // Task state
     std::minstd_rand minstd_rand_;
     bool hit_goal_ = false;
     bool hit_obstacle_ = false;

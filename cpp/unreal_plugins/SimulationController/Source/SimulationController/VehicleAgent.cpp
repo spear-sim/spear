@@ -4,20 +4,21 @@
 
 #include "SimulationController/VehicleAgent.h"
 
-#include <limits>
+#include <stdint.h> // uint8_t
+
+#include <limits>  // std::numeric_limits
 #include <map>
-#include <memory>
+#include <memory>  // std::make_unique
 #include <string>
+#include <utility> // std::move
 #include <vector>
 
-#include <Camera/CameraComponent.h>
-#include <Components/BoxComponent.h>
-#include <Components/PrimitiveComponent.h>
-#include <Components/SceneCaptureComponent2D.h>
-#include <Components/StaticMeshComponent.h>
-#include <Engine/World.h>
-#include <EngineUtils.h>
+#include <Camera/CameraComponent.h>  // UCameraComponent::AspectRatio, UCameraComponent::FieldOfView
+#include <Components/BoxComponent.h> // UBoxComponent, UPrimitiveComponent
+#include <Engine/World.h>            // FActorSpawnParameters
 #include <GameFramework/Actor.h>
+#include <Math/Rotator.h>
+#include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -32,8 +33,6 @@
 
 VehicleAgent::VehicleAgent(UWorld* world)
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
     auto spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_MODE");
@@ -54,10 +53,10 @@ VehicleAgent::VehicleAgent(UWorld* world)
     } else {
         SP_ASSERT(false);
     }
-    FActorSpawnParameters actor_spawn_params;
-    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
-    actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    vehicle_pawn_ = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_params);
+    FActorSpawnParameters actor_spawn_parameters;
+    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
+    actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    vehicle_pawn_ = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_parameters);
     SP_ASSERT(vehicle_pawn_);
 
     vehicle_pawn_->CameraComponent->FieldOfView =
@@ -129,6 +128,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
     if (Std::contains(observation_components, "camera")) {
         observation_space.merge(camera_sensor_->getObservationSpace());
     }
+
     if (Std::contains(observation_components, "imu")) {
         observation_space.merge(imu_sensor_->getObservationSpace());
     }
@@ -156,6 +156,7 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
     if (Std::contains(observation_components, "camera")) {
         observation.merge(camera_sensor_->getObservation());
     }
+
     if (Std::contains(observation_components, "imu")) {
         observation.merge(imu_sensor_->getObservation());
     }

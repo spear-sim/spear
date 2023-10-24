@@ -4,11 +4,9 @@
 
 #include "UrdfRobot/UrdfParser.h"
 
-#include <map>
 #include <string>
 #include <vector>
 
-#include <CoreMinimal.h> // TArray, TEXT
 #include <XmlFile.h>
 #include <XmlNode.h>
 

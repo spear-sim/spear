@@ -154,7 +154,6 @@ void UrdfRobotAgent::reset() {}
 
 bool UrdfRobotAgent::isReady() const
 {
-    return true;
-    //return urdf_robot_pawn_->UrdfRobotComponent->GetComponentVelocity().Size() <=
-    //    Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
+    return urdf_robot_pawn_->UrdfRobotComponent->GetComponentVelocity().Size() <=
+        Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }

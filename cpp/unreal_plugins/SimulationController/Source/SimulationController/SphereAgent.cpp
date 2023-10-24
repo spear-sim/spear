@@ -4,24 +4,26 @@
 
 #include "SimulationController/SphereAgent.h"
 
+#include <stdint.h> // uint8_t
+
 #include <map>
-#include <memory>
+#include <memory> // std::make_unique
 #include <string>
 #include <vector>
 
 #include <Camera/CameraActor.h>
-#include <Camera/CameraComponent.h>
+#include <Camera/CameraComponent.h> // UCameraComponent::AspectRatio, UCameraComponent::FieldOfView
 #include <Components/StaticMeshComponent.h>
-#include <Delegates/IDelegateInstance.h>
 #include <Engine/CollisionProfile.h>
-#include <Engine/EngineBaseTypes.h>
+#include <Engine/EngineBaseTypes.h> // ELevelTick
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
-#include <Engine/World.h>
+#include <Engine/World.h>           // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -29,8 +31,10 @@
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
-#include "SimulationController/Component.h"
+#include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
+
+struct FActorComponentTickFunction;
 
 SphereAgent::SphereAgent(UWorld* world)
 {
@@ -55,10 +59,10 @@ SphereAgent::SphereAgent(UWorld* world)
     } else {
         SP_ASSERT(false);
     }
-    FActorSpawnParameters actor_spawn_params;
-    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE_ACTOR_NAME"));
-    actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    static_mesh_actor_ = world->SpawnActor<AStaticMeshActor>(spawn_location, spawn_rotation, actor_spawn_params);
+    FActorSpawnParameters static_mesh_actor_spawn_parameters;
+    static_mesh_actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.SPHERE_ACTOR_NAME"));
+    static_mesh_actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    static_mesh_actor_ = world->SpawnActor<AStaticMeshActor>(spawn_location, spawn_rotation, static_mesh_actor_spawn_parameters);
     SP_ASSERT(static_mesh_actor_);
 
     static_mesh_actor_->SetMobility(EComponentMobility::Type::Movable);
@@ -88,10 +92,10 @@ SphereAgent::SphereAgent(UWorld* world)
     static_mesh_component_->SetNotifyRigidBodyCollision(true);
 
     // Spawn camera actor
-    FActorSpawnParameters camera_spawn_params;
-    camera_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA_ACTOR_NAME"));
-    camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, camera_spawn_params);
+    FActorSpawnParameters camera_actor_spawn_parameters;
+    camera_actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA_ACTOR_NAME"));
+    camera_actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    camera_actor_ = world->SpawnActor<ACameraActor>(FVector::ZeroVector, FRotator::ZeroRotator, camera_actor_spawn_parameters);
     SP_ASSERT(camera_actor_);
 
     camera_actor_->GetCameraComponent()->FieldOfView =
@@ -101,10 +105,13 @@ SphereAgent::SphereAgent(UWorld* world)
         Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT");
 
     // Create UTickEventComponent
-    tick_event_component_ = std::make_unique<Component<UTickEventComponent>>(world);
+    tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(world);
     SP_ASSERT(tick_event_component_);
     SP_ASSERT(tick_event_component_->component_);
-    tick_event_delegate_handle_ = tick_event_component_->component_->delegate_.AddRaw(this, &SphereAgent::postPhysicsPreRenderTickEventHandler);
+    tick_event_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
+    tick_event_component_->component_->tick_func_ = [this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
+        camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);
+    };
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
@@ -130,8 +137,7 @@ SphereAgent::~SphereAgent()
 
     SP_ASSERT(tick_event_component_);
     SP_ASSERT(tick_event_component_->component_);
-    tick_event_component_->component_->delegate_.Remove(tick_event_delegate_handle_);
-    tick_event_delegate_handle_.Reset();
+    tick_event_component_->component_->tick_func_ = nullptr;
     tick_event_component_ = nullptr;
 
     SP_ASSERT(camera_actor_);
@@ -284,9 +290,4 @@ void SphereAgent::reset()
 bool SphereAgent::isReady() const
 {
     return true;
-}
-
-void SphereAgent::postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick)
-{
-    camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);
 }

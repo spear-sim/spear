@@ -11,12 +11,12 @@
 #include "CoreUtils/Assert.h"
 
 template <typename TComponent>
-class Component
+class StandaloneComponent
 {
 public:
-    Component() = delete;
+    StandaloneComponent() = delete;
 
-    Component(UWorld* world)
+    StandaloneComponent(UWorld* world)
     {
         actor_ = world->SpawnActor<AActor>();
         SP_ASSERT(actor_);
@@ -26,7 +26,7 @@ public:
         component_->RegisterComponent();
     }
 
-    ~Component()
+    ~StandaloneComponent()
     {
         // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
 
