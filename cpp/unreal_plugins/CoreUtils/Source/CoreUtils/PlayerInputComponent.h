@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <Components/InputComponent.h>
+#include <Components/SceneComponent.h>
 #include <Engine/EngineBaseTypes.h> // ELevelTick
 #include <GameFramework/PlayerController.h>
 #include <GameFramework/PlayerInput.h>
@@ -31,7 +32,7 @@ struct PlayerInputActionDesc
 };
 
 UCLASS()
-class COREUTILS_API UPlayerInputComponent : public UActorComponent
+class COREUTILS_API UPlayerInputComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
@@ -51,10 +52,10 @@ public:
         player_input_action_descs_.clear();
     }
 
-    // UActorComponent interface
+    // USceneComponent interface
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
-        UActorComponent::TickComponent(delta_time, level_tick, this_tick_function);
+        USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);
 
         if (input_component_ && apply_action_func_) {
             for (auto& player_input_action_desc : player_input_action_descs_) {
@@ -87,7 +88,7 @@ public:
 
         for (auto& player_input_action_desc : player_input_action_descs_) {
             player_input_action_desc.axis_ =
-                Unreal::toStdString(GetOwner()->GetName()) + "." + Unreal::toStdString(GetName()) + "." + player_input_action_desc.key_;
+                Unreal::getTopDownHierarchicalName(this, true) + "." + player_input_action_desc.key_;
             player_input->AddAxisMapping(FInputAxisKeyMapping(
                 Unreal::toFName(player_input_action_desc.axis_),
                 FKey(Unreal::toFName(player_input_action_desc.key_)),

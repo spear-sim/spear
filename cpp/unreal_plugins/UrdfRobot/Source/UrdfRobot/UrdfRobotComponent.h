@@ -74,4 +74,5 @@ private:
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
     UUrdfLinkComponent* root_link_component_ = nullptr;
+    bool ticked_once_ = false;
 };

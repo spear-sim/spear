@@ -5,8 +5,10 @@
 #pragma once
 
 #include <cstring> // std::memcpy
+#include <queue>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <Containers/Array.h>        // TArray
@@ -376,5 +378,31 @@ public:
             }
             return vec.at(0);
         }
+    }
+
+    //
+    // Helper functions for building names in a hierarchical fashion
+    //
+
+    static std::string getTopDownHierarchicalName(USceneComponent* component, bool include_parent_actor = false)
+    {
+        SP_ASSERT(component);
+        SP_ASSERT(component->GetOwner());
+
+        FString hierarchical_name = component->GetName();
+
+        TArray<USceneComponent*> parents;
+        component->GetParentComponents(parents);
+
+        for (auto& parent : parents) {
+            hierarchical_name.InsertAt(0, parent->GetName().AppendChar('.'));
+        }
+
+        // TODO: use actor's label from metadatacomponent instead of GetName()
+        if (include_parent_actor) {
+            hierarchical_name.InsertAt(0, component->GetOwner()->GetName().AppendChar('.'));
+        }
+
+        return toStdString(hierarchical_name);
     }
 };

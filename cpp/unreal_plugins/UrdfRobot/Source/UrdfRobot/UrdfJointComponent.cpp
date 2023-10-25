@@ -48,6 +48,8 @@ UUrdfJointComponent::UUrdfJointComponent()
     // UPlayerInputComponent
     player_input_component_ = CreateDefaultSubobject<UPlayerInputComponent>(Unreal::toFName("player_input_component"));
     SP_ASSERT(player_input_component_);
+    // Need to explicitly set this up so that the component hierarchy is well-defined.
+    player_input_component_->SetupAttachment(this);
 }
 
 UUrdfJointComponent::~UUrdfJointComponent()

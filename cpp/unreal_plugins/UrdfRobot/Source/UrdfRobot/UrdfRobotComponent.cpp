@@ -46,6 +46,8 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     // UPlayerInputComponent
     player_input_component_ = CreateDefaultSubobject<UPlayerInputComponent>(Unreal::toFName("player_input_component"));
     SP_ASSERT(player_input_component_);
+    // Need to explicitly set this up so that the component hierarchy is well-defined.
+    player_input_component_->SetupAttachment(this);
 }
 
 UUrdfRobotComponent::~UUrdfRobotComponent()
@@ -68,11 +70,10 @@ void UUrdfRobotComponent::TickComponent(float DeltaTime, enum ELevelTick TickTyp
 {
     USceneComponent::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    static bool once = false;
-    if (!once) {
+    if (!ticked_once_) {
         SP_LOG_CURRENT_FUNCTION();
         initializeDeferred();
-        once = true;
+        ticked_once_ = true;
     }
 
     // Update this component's pose to match root link component
@@ -222,6 +223,13 @@ void UUrdfRobotComponent::initializeDeferred()
 
     for (auto joint_component : JointComponents) {
         joint_components_[Unreal::toStdString(joint_component->GetName())] = joint_component;
+    }
+
+    // We cache root link component's reference to a local variable root_link_component_ in initalize().
+    // In Editor mode, this root_link_component_ gets broken for the same reason mentioned above, hence
+    // we need to cache it again here.
+    if (!root_link_component_) {
+        root_link_component_ = LinkComponents[0];
     }
 
     // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
