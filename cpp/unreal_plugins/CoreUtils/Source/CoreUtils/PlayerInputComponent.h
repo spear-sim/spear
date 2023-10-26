@@ -67,7 +67,7 @@ public:
         }
     }
 
-    // Must be called in BeginPlay or later so GetWorld() is valid.
+    // Must be called in BeginPlay() or later as GetWorld() needs to be valid.
     template <typename T>
     void bindInputActions(const std::map<std::string, T>& player_input_actions)
     {
