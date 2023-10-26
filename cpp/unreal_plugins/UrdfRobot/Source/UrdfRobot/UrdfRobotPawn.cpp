@@ -46,18 +46,6 @@ AUrdfRobotPawn::~AUrdfRobotPawn()
     UrdfFile = Unreal::toFString("");
 }
 
-void AUrdfRobotPawn::BeginPlay()
-{
-    SP_LOG_CURRENT_FUNCTION();
-
-    APawn::BeginPlay();
-
-    // Forward input_component to UUrdfRobotComponent, so that it can add its own input bindings.
-    UInputComponent* input_component = GetWorld()->GetFirstPlayerController()->InputComponent;
-    SP_ASSERT(input_component);
-    UrdfRobotComponent->player_input_component_->input_component_ = input_component;
-}
-
 void AUrdfRobotPawn::Initialize()
 {
     // parse URDF file

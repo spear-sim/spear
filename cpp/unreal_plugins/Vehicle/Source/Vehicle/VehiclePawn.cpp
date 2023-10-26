@@ -160,8 +160,7 @@ void AVehiclePawn::BeginPlay()
         player_input_actions = DEFAULT_PLAYER_INPUT_ACTIONS;
     }
 
-    player_input_component_->setPlayerInputActions(player_input_actions);
-    player_input_component_->addAxisMappingsAndBindAxes();
+    player_input_component_->bindInputActions(player_input_actions);
     player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
         applyAction(player_input_actions.at(player_input_action_desc.key_));
     };

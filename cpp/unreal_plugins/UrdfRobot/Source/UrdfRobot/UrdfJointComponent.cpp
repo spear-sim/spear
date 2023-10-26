@@ -301,10 +301,8 @@ void UUrdfJointComponent::initializeDeferred()
     child_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame1));
     parent_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame2));
 
-    SP_ASSERT(player_input_component_->input_component_);
     const std::map<std::string, std::pair<std::string, std::vector<double>>> player_input_actions = PLAYER_INPUT_ACTIONS;
-    player_input_component_->setPlayerInputActions(player_input_actions);
-    player_input_component_->addAxisMappingsAndBindAxes();
+    player_input_component_->bindInputActions(player_input_actions);
     player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
         if (EnableKeyboardControl) {
             std::pair<std::string, std::vector<double>> action_component = player_input_actions.at(player_input_action_desc.key_);

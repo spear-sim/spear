@@ -4,16 +4,12 @@
 
 #pragma once
 
-#include <map>
-#include <string>
-#include <vector>
-
 #include <GameFramework/SpectatorPawn.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 
 #include "SpearSimSpectatorPawn.generated.h"
 
-class UInputComponent;
+class UPlayerInputComponent;
 
 UCLASS()
 class ASpearSimSpectatorPawn : public ASpectatorPawn
@@ -23,6 +19,8 @@ public:
     ASpearSimSpectatorPawn();
     ~ASpearSimSpectatorPawn();
 
-    void SetupPlayerInputComponent(UInputComponent* input_component) override;
-    void Tick(float delta_time) override;
+    // ASpectatorPawn interface
+    void BeginPlay() override;
+private:
+    UPlayerInputComponent* player_input_component_ = nullptr;
 };

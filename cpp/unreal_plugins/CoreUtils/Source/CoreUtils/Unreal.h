@@ -384,7 +384,7 @@ public:
     // Helper functions for building names in a hierarchical fashion
     //
 
-    static std::string getTopDownHierarchicalName(USceneComponent* component, bool include_parent_actor = false)
+    static std::string getTopDownHierarchicalName(USceneComponent* component, const char& separator, bool include_parent_actor = false)
     {
         SP_ASSERT(component);
         SP_ASSERT(component->GetOwner());
@@ -395,12 +395,12 @@ public:
         component->GetParentComponents(parents);
 
         for (auto& parent : parents) {
-            hierarchical_name.InsertAt(0, parent->GetName().AppendChar('.'));
+            hierarchical_name.InsertAt(0, parent->GetName().AppendChar(separator));
         }
 
         // TODO: use actor's label from metadatacomponent instead of GetName()
         if (include_parent_actor) {
-            hierarchical_name.InsertAt(0, component->GetOwner()->GetName().AppendChar('.'));
+            hierarchical_name.InsertAt(0, component->GetOwner()->GetName().AppendChar(separator));
         }
 
         return toStdString(hierarchical_name);

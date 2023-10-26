@@ -4,8 +4,6 @@
 
 #include "SpearSim/SpearSimSpectatorPawn.h"
 
-#include <Components/InputComponent.h>
-#include <GameFramework/PlayerInput.h>
 #include <GameFramework/SpectatorPawn.h>
 #include <GenericPlatform/GenericPlatformMisc.h>
 
@@ -15,35 +13,34 @@
 ASpearSimSpectatorPawn::ASpearSimSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    // UPlayerInputComponent
+    player_input_component_ = CreateDefaultSubobject<UPlayerInputComponent>(Unreal::toFName("player_input_component"));
+    SP_ASSERT(player_input_component_);
+    // Need to explicitly set this up so that the component hierarchy is well-defined.
+    player_input_component_->SetupAttachment(GetRootComponent());
 }
 
 ASpearSimSpectatorPawn::~ASpearSimSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    SP_ASSERT(player_input_component_);
+    player_input_component_ = nullptr;
 }
 
-void ASpearSimSpectatorPawn::SetupPlayerInputComponent(UInputComponent* input_component)
+void ASpearSimSpectatorPawn::BeginPlay()
 {
-    ASpectatorPawn::SetupPlayerInputComponent(input_component);
+    ASpectatorPawn::BeginPlay();
 
     SP_LOG_CURRENT_FUNCTION();
 
-    SP_ASSERT(input_component);
-    UPlayerInput* player_input = GetWorld()->GetFirstPlayerController()->PlayerInput;
-    SP_ASSERT(player_input);
-    player_input->AddAxisMapping(FInputAxisKeyMapping(Unreal::toFName("Exit"), FKey(Unreal::toFName("Escape")), 1.0f));
-    input_component->BindAxis(Unreal::toFName("Exit"));
-}
-
-void ASpearSimSpectatorPawn::Tick(float delta_time)
-{
-    ASpectatorPawn::Tick(delta_time);
-
-    SP_ASSERT(InputComponent);
-
-    float axis_value = InputComponent->GetAxisValue(Unreal::toFName("Exit"));
-    if (axis_value == 1.0f) {
-        bool force = false;
-        FGenericPlatformMisc::RequestExit(force);
-    }
+    std::map<std::string, float> input_actions{ {"Escape", 1.0f} };
+    player_input_component_->bindInputActions(input_actions);
+    player_input_component_->apply_action_func_ = [](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
+        if (axis_value == 1.0f) {
+            bool force = false;
+            FGenericPlatformMisc::RequestExit(force);
+        }
+    };
 }

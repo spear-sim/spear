@@ -83,24 +83,6 @@ void UUrdfRobotComponent::TickComponent(float DeltaTime, enum ELevelTick TickTyp
     SetWorldLocationAndRotation(root_link_component_->GetComponentLocation(), root_link_component_->GetComponentRotation(), sweep, hit_result, ETeleportType::None);
 }
 
-void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
-{
-    SP_ASSERT(robot_desc);
-
-    UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
-    SP_ASSERT(root_link_desc);
-
-    SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
-    root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
-    SP_ASSERT(root_link_component_);
-    root_link_component_->initialize(root_link_desc);
-    root_link_component_->SetupAttachment(this);
-    root_link_component_->RegisterComponent();
-    LinkComponents.Add(root_link_component_);
-
-    initialize(root_link_desc, root_link_component_);
-}
-
 std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace() const
 {
     std::map<std::string, ArrayDesc> action_space;
@@ -168,6 +150,26 @@ std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation(
     return observation;
 }
 
+void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    SP_ASSERT(robot_desc);
+
+    UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
+    SP_ASSERT(root_link_desc);
+
+    SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
+    root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
+    SP_ASSERT(root_link_component_);
+    root_link_component_->initialize(root_link_desc);
+    root_link_component_->SetupAttachment(this);
+    root_link_component_->RegisterComponent();
+    LinkComponents.Add(root_link_component_);
+
+    initialize(root_link_desc, root_link_component_);
+}
+
 void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link_component)
 {
     SP_ASSERT(parent_link_desc);
@@ -228,14 +230,13 @@ void UUrdfRobotComponent::initializeDeferred()
     // We cache root link component's reference to a local variable root_link_component_ in initalize().
     // In Editor mode, this root_link_component_ gets broken for the same reason mentioned above, hence
     // we need to cache it again here.
-    if (!root_link_component_) {
+    if (!root_link_component_ && LinkComponents.Num()) {
         root_link_component_ = LinkComponents[0];
     }
+    SP_ASSERT(root_link_component_);
 
     // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
     // can be useful for debugging.
-    SP_ASSERT(player_input_component_->input_component_);
-
     std::map<std::string, std::map<std::string, std::vector<double>>> player_input_actions;
     if (Config::s_initialized_) {
         player_input_actions =
@@ -245,8 +246,7 @@ void UUrdfRobotComponent::initializeDeferred()
             DEFAULT_PLAYER_INPUT_ACTIONS;
     }
 
-    player_input_component_->setPlayerInputActions(player_input_actions);
-    player_input_component_->addAxisMappingsAndBindAxes();
+    player_input_component_->bindInputActions(player_input_actions);
     player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
         if (EnableKeyboardControl) {
             // only assert if we're not in the editor
@@ -261,7 +261,6 @@ void UUrdfRobotComponent::initializeDeferred()
     }
 
     for (auto joint_component : JointComponents) {
-        joint_component->player_input_component_->input_component_ = player_input_component_->input_component_;
         joint_component->initializeDeferred();
     }
 }

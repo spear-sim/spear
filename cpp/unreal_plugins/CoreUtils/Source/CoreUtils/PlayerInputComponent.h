@@ -67,28 +67,29 @@ public:
         }
     }
 
+    // Must be called in BeginPlay or later so GetWorld() is valid.
     template <typename T>
-    void setPlayerInputActions(const std::map<std::string, T>& player_input_actions)
+    void bindInputActions(const std::map<std::string, T>& player_input_actions)
     {
+        SP_ASSERT(GetWorld());
+        SP_ASSERT(GetWorld()->GetFirstPlayerController());
+        SP_ASSERT(GetOwner());
+
         for (auto& player_input_action : player_input_actions) {
             PlayerInputActionDesc player_input_action_desc;
             player_input_action_desc.key_ = player_input_action.first;
             player_input_action_descs_.push_back(player_input_action_desc);
         }
-    }
 
-    void addAxisMappingsAndBindAxes()
-    {
-        SP_ASSERT(GetWorld());
-        SP_ASSERT(GetWorld()->GetFirstPlayerController());
-        SP_ASSERT(GetOwner());
+        input_component_ = GetWorld()->GetFirstPlayerController()->InputComponent;
+        SP_ASSERT(input_component_);
 
         UPlayerInput* player_input = GetWorld()->GetFirstPlayerController()->PlayerInput;
         SP_ASSERT(player_input);
 
         for (auto& player_input_action_desc : player_input_action_descs_) {
             player_input_action_desc.axis_ =
-                Unreal::getTopDownHierarchicalName(this, true) + "." + player_input_action_desc.key_;
+                Unreal::getTopDownHierarchicalName(this, '.', true) + "." + player_input_action_desc.key_;
             player_input->AddAxisMapping(FInputAxisKeyMapping(
                 Unreal::toFName(player_input_action_desc.axis_),
                 FKey(Unreal::toFName(player_input_action_desc.key_)),
@@ -99,12 +100,13 @@ public:
         }
     }
 
+    // Set by user code to specify what happens when an action is triggered, e.g., UUrdfRobotComponent and UUrdfJointComponent.
+    std::function<void(const PlayerInputActionDesc&, float)> apply_action_func_;
+
+private:
     // Set in setPlayerInputActions(...), but we expose the underlying variable as public in case user code has an alternative way of setting it.
     std::vector<PlayerInputActionDesc> player_input_action_descs_;
 
     // Set by any system that will receive player input, e.g., SpearSimSpectatorPawn::SetupPlayerInputComponent(...).
     UInputComponent* input_component_ = nullptr;
-
-    // Set by user code to specify what happens when an action is triggered, e.g., UUrdfRobotComponent and UUrdfJointComponent.
-    std::function<void(const PlayerInputActionDesc&, float)> apply_action_func_;
 };
