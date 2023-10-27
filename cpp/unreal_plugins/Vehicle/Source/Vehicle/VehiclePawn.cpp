@@ -22,13 +22,13 @@
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/InputActionComponent.h"
 #include "CoreUtils/Log.h"
-#include "CoreUtils/PlayerInputComponent.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "Vehicle/VehicleMovementComponent.h"
 
-const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_PLAYER_INPUT_ACTIONS = {
+const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_INPUT_ACTIONS = {
     {"One",   {{"set_drive_torques", { 0.1f,  0.1f,  0.1f,  0.1f}}}},
     {"Two",   {{"set_drive_torques", { 0.1f, -0.1f,  0.1f, -0.1f}}}},
     {"Three", {{"set_drive_torques", {-0.1f,  0.1f, -0.1f,  0.1f}}}},
@@ -129,9 +129,9 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     MovementComponent = dynamic_cast<UVehicleMovementComponent*>(GetVehicleMovementComponent());
     SP_ASSERT(MovementComponent);
 
-    // UPlayerInputComponent
-    player_input_component_ = CreateDefaultSubobject<UPlayerInputComponent>(Unreal::toFName("player_input_component"));
-    SP_ASSERT(player_input_component_);
+    // UInputActionComponent
+    input_action_component_ = CreateDefaultSubobject<UInputActionComponent>(Unreal::toFName("input_action_component"));
+    SP_ASSERT(input_action_component_);
 }
 
 AVehiclePawn::~AVehiclePawn()
@@ -140,10 +140,16 @@ AVehiclePawn::~AVehiclePawn()
 
     // Pawns don't need to be cleaned up explicitly.
 
-    player_input_component_ = nullptr;
+    SP_ASSERT(input_action_component_);
+    input_action_component_ = nullptr;
 
+    SP_ASSERT(MovementComponent);
     MovementComponent = nullptr;
+
+    SP_ASSERT(ImuComponent);
     ImuComponent = nullptr;
+
+    SP_ASSERT(CameraComponent);
     CameraComponent = nullptr;
 }
 
@@ -153,16 +159,16 @@ void AVehiclePawn::BeginPlay()
 
     // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
     // can be useful for debugging.
-    std::map<std::string, std::map<std::string, std::vector<double>>> player_input_actions;
+    std::map<std::string, std::map<std::string, std::vector<double>>> input_actions;
     if (Config::s_initialized_) {
-        player_input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("VEHICLE.VEHICLE_PAWN.PLAYER_INPUT_ACTIONS");
+        input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("VEHICLE.VEHICLE_PAWN.INPUT_ACTIONS");
     } else {
-        player_input_actions = DEFAULT_PLAYER_INPUT_ACTIONS;
+        input_actions = DEFAULT_INPUT_ACTIONS;
     }
 
-    player_input_component_->bindInputActions(player_input_actions);
-    player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
-        applyAction(player_input_actions.at(player_input_action_desc.key_));
+    input_action_component_->bindInputActions(input_actions);
+    input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
+        applyAction(input_actions.at(key));
     };
 }
 

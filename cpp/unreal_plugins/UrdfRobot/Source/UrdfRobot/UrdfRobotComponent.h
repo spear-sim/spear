@@ -14,7 +14,7 @@
 
 #include "UrdfRobotComponent.generated.h"
 
-class UPlayerInputComponent;
+class UInputActionComponent;
 class UUrdfJointComponent;
 class UUrdfLinkComponent;
 struct ArrayDesc;
@@ -30,6 +30,7 @@ public:
     ~UUrdfRobotComponent();
 
     // UActorComponent interface
+    void BeginPlay() override;
     void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Enable Keyboard Control")
@@ -58,8 +59,6 @@ public:
     std::vector<std::string> action_components_;
     std::vector<std::string> observation_components_;
 
-    UPlayerInputComponent* player_input_component_ = nullptr;
-
 private:
     void initialize(const UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link_component);
     void initializeDeferred();
@@ -73,6 +72,7 @@ private:
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
+    UInputActionComponent* input_action_component_ = nullptr;
     UUrdfLinkComponent* root_link_component_ = nullptr;
     bool ticked_once_ = false;
 };

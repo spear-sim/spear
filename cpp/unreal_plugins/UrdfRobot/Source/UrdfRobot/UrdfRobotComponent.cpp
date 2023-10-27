@@ -16,8 +16,8 @@
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/InputActionComponent.h"
 #include "CoreUtils/Log.h"
-#include "CoreUtils/PlayerInputComponent.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfRobot/UrdfJointComponent.h"
@@ -25,7 +25,7 @@
 #include "UrdfRobot/UrdfParser.h"
 
 // useful for debugging pendulum.urdf
-const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_PLAYER_INPUT_ACTIONS = {
+const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_INPUT_ACTIONS = {
     {"One",   {{"joint_0.add_torque_in_radians",          { 1000000.0, 0.0, 0.0}}}},
     {"Two",   {{"joint_0.add_torque_in_radians",          {-1000000.0, 0.0, 0.0}}}},
     {"Three", {{"joint_1.add_to_angular_velocity_target", { 0.1,       0.0, 0.0}}}},
@@ -43,11 +43,11 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
-    // UPlayerInputComponent
-    player_input_component_ = CreateDefaultSubobject<UPlayerInputComponent>(Unreal::toFName("player_input_component"));
-    SP_ASSERT(player_input_component_);
+    // UInputActionComponent
+    input_action_component_ = CreateDefaultSubobject<UInputActionComponent>(Unreal::toFName("input_action_component"));
+    SP_ASSERT(input_action_component_);
     // Need to explicitly set this up so that the component hierarchy is well-defined.
-    player_input_component_->SetupAttachment(this);
+    input_action_component_->SetupAttachment(this);
 }
 
 UUrdfRobotComponent::~UUrdfRobotComponent()
@@ -62,8 +62,32 @@ UUrdfRobotComponent::~UUrdfRobotComponent()
     link_components_.clear();
     joint_components_.clear();
 
-    SP_ASSERT(player_input_component_);
-    player_input_component_ = nullptr;
+    SP_ASSERT(input_action_component_);
+    input_action_component_ = nullptr;
+}
+
+void UUrdfRobotComponent::BeginPlay()
+{
+    USceneComponent::BeginPlay();
+
+    // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
+    // can be useful for debugging.
+    std::map<std::string, std::map<std::string, std::vector<double>>> input_actions;
+    if (Config::s_initialized_) {
+        input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.INPUT_ACTIONS");
+    } else {
+        input_actions = DEFAULT_INPUT_ACTIONS;
+    }
+
+    input_action_component_->bindInputActions(input_actions);
+    input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
+        if (EnableKeyboardControl) {
+            // only assert if we're not in the editor
+            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
+            bool assert_if_joint_not_found = !WITH_EDITOR;
+            applyAction(input_actions.at(key), assert_if_joint_not_found, assert_if_action_is_inconsistent_with_joint);
+        }
+    };
 }
 
 void UUrdfRobotComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -91,8 +115,10 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace() const
         for (auto& joint_component : joint_components_) {
             if (joint_component.second->JointType != EJointType::Invalid) {
                 std::pair<std::string, ArrayDesc> joint_action_space = joint_component.second->getActionSpace();
-                std::string joint_name = joint_component.first + "." + joint_action_space.first;
-                action_space[joint_name] = std::move(joint_action_space.second);
+                if (joint_action_space.first.size()) {
+                    std::string joint_name = joint_component.first + "." + joint_action_space.first;
+                    action_space[joint_name] = std::move(joint_action_space.second);
+                }
             }
         }
     }
@@ -234,27 +260,6 @@ void UUrdfRobotComponent::initializeDeferred()
         root_link_component_ = LinkComponents[0];
     }
     SP_ASSERT(root_link_component_);
-
-    // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
-    // can be useful for debugging.
-    std::map<std::string, std::map<std::string, std::vector<double>>> player_input_actions;
-    if (Config::s_initialized_) {
-        player_input_actions =
-            Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.PLAYER_INPUT_ACTIONS");
-    } else {
-        player_input_actions =
-            DEFAULT_PLAYER_INPUT_ACTIONS;
-    }
-
-    player_input_component_->bindInputActions(player_input_actions);
-    player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
-        if (EnableKeyboardControl) {
-            // only assert if we're not in the editor
-            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
-            bool assert_if_joint_not_found = !WITH_EDITOR;
-            applyAction(player_input_actions.at(player_input_action_desc.key_), assert_if_joint_not_found, assert_if_action_is_inconsistent_with_joint);
-        }
-    };
 
     for (auto link_component : LinkComponents) {
         link_component->initializeDeferred();

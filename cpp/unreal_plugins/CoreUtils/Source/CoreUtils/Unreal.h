@@ -381,28 +381,27 @@ public:
     }
 
     //
-    // Helper functions for building names in a hierarchical fashion
+    // Helper function to get fully qualified component names.
     //
 
-    static std::string getTopDownHierarchicalName(USceneComponent* component, const char& separator, bool include_parent_actor = false)
+    static std::string getFullyQualifiedComponentName(USceneComponent* component, const std::string& separator, bool include_actor_name = false)
     {
         SP_ASSERT(component);
         SP_ASSERT(component->GetOwner());
 
-        FString hierarchical_name = component->GetName();
+        std::string name = toStdString(component->GetName());
 
         TArray<USceneComponent*> parents;
         component->GetParentComponents(parents);
-
         for (auto& parent : parents) {
-            hierarchical_name.InsertAt(0, parent->GetName().AppendChar(separator));
+            name = toStdString(parent->GetName()) + separator + name;
         }
 
         // TODO: use actor's label from metadatacomponent instead of GetName()
-        if (include_parent_actor) {
-            hierarchical_name.InsertAt(0, component->GetOwner()->GetName().AppendChar(separator));
+        if (include_actor_name) {
+            name = toStdString(component->GetOwner()->GetName()) + separator + name;
         }
 
-        return toStdString(hierarchical_name);
+        return name;
     }
 };

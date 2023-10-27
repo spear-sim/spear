@@ -19,14 +19,14 @@
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/InputActionComponent.h"
 #include "CoreUtils/Log.h"
-#include "CoreUtils/PlayerInputComponent.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
 #include "UrdfRobot/UrdfParser.h"
 
 // useful for debugging fetch.urdf
-const std::map<std::string, std::pair<std::string, std::vector<double>>> PLAYER_INPUT_ACTIONS = {
+const std::map<std::string, std::pair<std::string, std::vector<double>>> INPUT_ACTIONS = {
     {"One",        {"add_torque_in_radians",             { 1000.0,  0.0,  0.0}}},
     {"Two",        {"add_torque_in_radians",             {-1000.0,  0.0,  0.0}}},
     {"Three",      {"add_force",                         {   50.0,  0.0,  0.0}}},
@@ -45,11 +45,11 @@ UUrdfJointComponent::UUrdfJointComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    // UPlayerInputComponent
-    player_input_component_ = CreateDefaultSubobject<UPlayerInputComponent>(Unreal::toFName("player_input_component"));
-    SP_ASSERT(player_input_component_);
+    // UInputActionComponent
+    input_action_component_ = CreateDefaultSubobject<UInputActionComponent>(Unreal::toFName("input_action_component"));
+    SP_ASSERT(input_action_component_);
     // Need to explicitly set this up so that the component hierarchy is well-defined.
-    player_input_component_->SetupAttachment(this);
+    input_action_component_->SetupAttachment(this);
 }
 
 UUrdfJointComponent::~UUrdfJointComponent()
@@ -64,8 +64,24 @@ UUrdfJointComponent::~UUrdfJointComponent()
     parent_static_mesh_component_ = nullptr;
     child_static_mesh_component_ = nullptr;
 
-    SP_ASSERT(player_input_component_);
-    player_input_component_ = nullptr;
+    SP_ASSERT(input_action_component_);
+    input_action_component_ = nullptr;
+}
+
+void UUrdfJointComponent::BeginPlay()
+{
+    UPhysicsConstraintComponent::BeginPlay();
+
+    const std::map<std::string, std::pair<std::string, std::vector<double>>> input_actions = INPUT_ACTIONS;
+    input_action_component_->bindInputActions(input_actions);
+    input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
+        if (EnableKeyboardControl) {
+            std::pair<std::string, std::vector<double>> action_component = input_actions.at(key);
+            // only assert if we're not in the editor
+            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
+            applyAction(action_component.first, action_component.second, assert_if_action_is_inconsistent_with_joint);
+        }
+    };
 }
 
 std::pair<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
@@ -301,16 +317,8 @@ void UUrdfJointComponent::initializeDeferred()
     child_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame1));
     parent_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame2));
 
-    const std::map<std::string, std::pair<std::string, std::vector<double>>> player_input_actions = PLAYER_INPUT_ACTIONS;
-    player_input_component_->bindInputActions(player_input_actions);
-    player_input_component_->apply_action_func_ = [this, player_input_actions](const PlayerInputActionDesc& player_input_action_desc, float axis_value) -> void {
-        if (EnableKeyboardControl) {
-            std::pair<std::string, std::vector<double>> action_component = player_input_actions.at(player_input_action_desc.key_);
-            // only assert if we're not in the editor
-            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
-            applyAction(action_component.first, action_component.second, assert_if_action_is_inconsistent_with_joint);
-        }
-    };
+    SP_ASSERT(child_static_mesh_component_);
+    SP_ASSERT(parent_static_mesh_component_);
 
     // TODO (MR): generalize this code, which currently applies a hard-coded linear translation offset
 

@@ -20,7 +20,7 @@ class UBoxComponent;
 class UCameraComponent;
 class UInputComponent;
 
-class UPlayerInputComponent;
+class UInputActionComponent;
 class UVehicleMovementComponent;
 
 UCLASS()
@@ -52,5 +52,5 @@ public:
 private:
     void applyAction(const std::map<std::string, std::vector<double>>& action);
 
-    UPlayerInputComponent* player_input_component_ = nullptr;
+    UInputActionComponent* input_action_component_ = nullptr;
 };

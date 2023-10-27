@@ -5,7 +5,7 @@
 #include "UrdfRobot/UrdfLinkComponent.h"
 
 #include <Components/StaticMeshComponent.h>
-#include <Containers/Array.h> // TArray
+#include <Containers/Array.h>       // TArray
 #include <Engine/StaticMesh.h>
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
@@ -13,8 +13,9 @@
 #include <Math/Rotator.h>
 #include <Math/UnrealMathUtility.h> // FMath::RadiansToDegrees
 #include <Math/Vector.h>
+#include <PhysicsEngine/BodyInstance.h>
 #include <PhysicalMaterials/PhysicalMaterial.h>
-#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
+#include <UObject/UObjectGlobals.h> // DuplicateObject, LoadObject, NewObject
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Log.h"

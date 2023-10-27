@@ -12,7 +12,6 @@
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
-#include "CoreUtils/PlayerInputComponent.h"
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "UrdfRobot/UrdfParser.h"
@@ -41,8 +40,12 @@ AUrdfRobotPawn::~AUrdfRobotPawn()
 
     // Pawns don't need to be cleaned up explicitly.
 
+    SP_ASSERT(CameraComponent);
     CameraComponent = nullptr;
+
+    SP_ASSERT(UrdfRobotComponent);
     UrdfRobotComponent = nullptr;
+
     UrdfFile = Unreal::toFString("");
 }
 

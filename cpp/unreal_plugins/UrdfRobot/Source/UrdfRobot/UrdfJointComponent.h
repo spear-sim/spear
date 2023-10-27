@@ -11,12 +11,11 @@
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UENUM, UMETA, UPROPERTY
 
-#include "CoreUtils/PlayerInputComponent.h"
-
 #include "UrdfJointComponent.generated.h"
 
 class UStaticMeshComponent;
 
+class UInputActionComponent;
 class UUrdfLinkComponent;
 class UUrdfJointPlayerInputComponent;
 struct ArrayDesc;
@@ -54,7 +53,10 @@ class URDFROBOT_API UUrdfJointComponent : public UPhysicsConstraintComponent
 public:
     UUrdfJointComponent();
     ~UUrdfJointComponent();
-     
+
+    // UPhysicsConstraintComponent interface
+    void BeginPlay() override;
+
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Joint Type")
     EJointType JointType = EJointType::Invalid;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Control Type")
@@ -78,9 +80,8 @@ public:
     // Used by UrdfRobotComponent.
     std::pair<std::string, ArrayDesc> getActionSpace() const;
 
-    UPlayerInputComponent* player_input_component_ = nullptr;
-
 private:
+    UInputActionComponent* input_action_component_ = nullptr;
     UStaticMeshComponent* parent_static_mesh_component_ = nullptr;
     UStaticMeshComponent* child_static_mesh_component_ = nullptr;
 };

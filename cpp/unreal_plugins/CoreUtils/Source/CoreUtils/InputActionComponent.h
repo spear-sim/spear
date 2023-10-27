@@ -19,24 +19,16 @@
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
 
-#include "PlayerInputComponent.generated.h"
+#include "InputActionComponent.generated.h"
 
 struct FActorComponentTickFunction;
 
-struct PlayerInputActionDesc
-{
-    std::string key_;
-    std::string axis_;
-    float value_ = 1.0f;
-    float threshold_ = 1.0f;
-};
-
 UCLASS()
-class COREUTILS_API UPlayerInputComponent : public USceneComponent
+class COREUTILS_API UInputActionComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
-    UPlayerInputComponent()
+    UInputActionComponent()
     {
         SP_LOG_CURRENT_FUNCTION();
 
@@ -44,12 +36,12 @@ public:
         PrimaryComponentTick.bTickEvenWhenPaused = false;
     }
 
-    virtual ~UPlayerInputComponent()
+    virtual ~UInputActionComponent()
     {
         SP_LOG_CURRENT_FUNCTION();
 
         input_component_ = nullptr;
-        player_input_action_descs_.clear();
+        input_action_descs_.clear();
     }
 
     // USceneComponent interface
@@ -57,11 +49,11 @@ public:
     {
         USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);
 
-        if (input_component_ && apply_action_func_) {
-            for (auto& player_input_action_desc : player_input_action_descs_) {
-                float axis_value = input_component_->GetAxisValue(Unreal::toFName(player_input_action_desc.axis_));
-                if (axis_value >= player_input_action_desc.threshold_) {
-                    apply_action_func_(player_input_action_desc, axis_value);
+        if (input_component_ && apply_input_action_func_) {
+            for (auto& input_action_desc : input_action_descs_) {
+                float axis_value = input_component_->GetAxisValue(Unreal::toFName(input_action_desc.axis_));
+                if (axis_value >= input_action_desc.threshold_) {
+                    apply_input_action_func_(input_action_desc.key_);
                 }   
             }
         }
@@ -69,16 +61,15 @@ public:
 
     // Must be called in BeginPlay() or later as GetWorld() needs to be valid.
     template <typename T>
-    void bindInputActions(const std::map<std::string, T>& player_input_actions)
+    void bindInputActions(const std::map<std::string, T>& input_actions)
     {
         SP_ASSERT(GetWorld());
         SP_ASSERT(GetWorld()->GetFirstPlayerController());
-        SP_ASSERT(GetOwner());
 
-        for (auto& player_input_action : player_input_actions) {
-            PlayerInputActionDesc player_input_action_desc;
-            player_input_action_desc.key_ = player_input_action.first;
-            player_input_action_descs_.push_back(player_input_action_desc);
+        for (auto& input_action : input_actions) {
+            InputActionDesc input_action_desc;
+            input_action_desc.key_ = input_action.first;
+            input_action_descs_.push_back(input_action_desc);
         }
 
         input_component_ = GetWorld()->GetFirstPlayerController()->InputComponent;
@@ -87,25 +78,35 @@ public:
         UPlayerInput* player_input = GetWorld()->GetFirstPlayerController()->PlayerInput;
         SP_ASSERT(player_input);
 
-        for (auto& player_input_action_desc : player_input_action_descs_) {
-            player_input_action_desc.axis_ =
-                Unreal::getTopDownHierarchicalName(this, '.', true) + "." + player_input_action_desc.key_;
+        for (auto& input_action_desc : input_action_descs_) {
+            bool include_actor_name = true;
+            std::string separator = ".";
+            input_action_desc.axis_ =
+                Unreal::getFullyQualifiedComponentName(this, separator, include_actor_name) + "." + input_action_desc.key_;
             player_input->AddAxisMapping(FInputAxisKeyMapping(
-                Unreal::toFName(player_input_action_desc.axis_),
-                FKey(Unreal::toFName(player_input_action_desc.key_)),
-                player_input_action_desc.value_));
+                Unreal::toFName(input_action_desc.axis_),
+                FKey(Unreal::toFName(input_action_desc.key_)),
+                input_action_desc.scale_));
             if (input_component_) {
-                input_component_->BindAxis(Unreal::toFName(player_input_action_desc.axis_));
+                input_component_->BindAxis(Unreal::toFName(input_action_desc.axis_));
             }
         }
     }
 
     // Set by user code to specify what happens when an action is triggered, e.g., UUrdfRobotComponent and UUrdfJointComponent.
-    std::function<void(const PlayerInputActionDesc&, float)> apply_action_func_;
+    std::function<void(const std::string&)> apply_input_action_func_;
 
 private:
+    struct InputActionDesc
+    {
+        std::string key_;
+        std::string axis_;
+        float scale_ = 1.0f;
+        float threshold_ = 1.0f;
+    };
+
     // Set in setPlayerInputActions(...), but we expose the underlying variable as public in case user code has an alternative way of setting it.
-    std::vector<PlayerInputActionDesc> player_input_action_descs_;
+    std::vector<InputActionDesc> input_action_descs_;
 
     // Set by any system that will receive player input, e.g., SpearSimSpectatorPawn::SetupPlayerInputComponent(...).
     UInputComponent* input_component_ = nullptr;

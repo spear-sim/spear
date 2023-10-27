@@ -9,7 +9,7 @@
 
 #include "SpearSimSpectatorPawn.generated.h"
 
-class UPlayerInputComponent;
+class UInputActionComponent;
 
 UCLASS()
 class ASpearSimSpectatorPawn : public ASpectatorPawn
@@ -21,6 +21,7 @@ public:
 
     // ASpectatorPawn interface
     void BeginPlay() override;
+
 private:
-    UPlayerInputComponent* player_input_component_ = nullptr;
+    UInputActionComponent* input_action_component_ = nullptr;
 };
