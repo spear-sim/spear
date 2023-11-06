@@ -92,7 +92,7 @@ std::pair<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
     ArrayDesc array_desc;
     array_desc.low_ = std::numeric_limits<double>::lowest();
     array_desc.high_ = std::numeric_limits<double>::max();
-    array_desc.shape_ = { 3 };
+    array_desc.shape_ = {3};
     array_desc.datatype_ = DataType::Float64;
 
     std::string action_name = "";

@@ -70,7 +70,6 @@ void AUrdfRobotPawn::Initialize()
 
     // UrdfRobotComponent
     UrdfRobotComponent->initialize(&robot_desc);
-    UrdfRobotComponent->RegisterComponent();
 
     // UCameraComponent
     FVector camera_location;
@@ -96,9 +95,9 @@ void AUrdfRobotPawn::Initialize()
     }
 
     CameraComponent->SetRelativeLocationAndRotation(camera_location, camera_rotation);
-    CameraComponent->AttachToComponent(UrdfRobotComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
     CameraComponent->bUsePawnControlRotation = false;
     CameraComponent->FieldOfView = field_of_view;
     CameraComponent->AspectRatio = aspect_ratio;
+    CameraComponent->AttachToComponent(UrdfRobotComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
     CameraComponent->RegisterComponent();
 }
