@@ -38,24 +38,34 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 │   ├── 02_my_semantic_category       #
 │   └── ...                           #
 │                                     #  
-├── Navigation                        # All navigation-related Actors are kept here.
+├── Navigation                        # All navigation-related Actors are kept here. We allow content here to to deviate
+|   |                                 # from our usual naming convention.
 │   |                                 #
-│   ├── nav_mesh_bounds_volume_0000   #
-│   ├── mav_mesh_modifier_volume_0000 #
-│   ├── mav_mesh_modifier_volume_0001 #
+│   ├── NavMeshBoundsVolume_00        #
+│   ├── NavMeshModifierVolume_00      #
+│   ├── NavMeshModifierVolume_01      #
 │   ├── ...                           #
-│   └── RecastNavMesh-Default         # RecastNavMesh actors are created automatically, and therefore we do not expect them to
-|                                     # adhere to our naming conventions.
+│   └── RecastNavMesh-Default         # RecastNavMesh actors are created automatically, and therefore we do not expect
+|                                     # them to adhere to our naming conventions.
 │                                     #
-├── Rendering                         #
-│   └── HDRI                          # All HDRI-related Actors are kept here.
-│       |                             #
-│       └── hdri_backdrop_0000        #
+├── Rendering                         # All rendering-related Actors are kept here. We allow content here to to deviate
+|   |                                 # from our usual naming conventions.
+│   ├── Fog                           #
+│   |   └── ExponentialHeightFog      #
+│   ├── HDRI                          #
+│   |   └── HDRIBackdrop              #
+│   ├── Lights                        #
+│   |   ├── DirectionalLight          #
+│   |   └── SkyLight                  #
+│   └── Sky                           #
+│       ├── SkyAtmosphere             #
+│       └── VolumetricCloud           #
 │                                     #
-└── Settings                          # All settings-related Actors are kept here.
+└── Settings                          # All settings-related Actors are kept here. We allow content here to to deviate
+    |                                 # from our usual naming conventions.
     |                                 #
-    ├── player_start_0000             #
-    └── post_process_volume_0000      #
+    ├── PlayerStart                   #
+    └── PostProcessVolume             #
 ```
 
 - The _Outliner_ view should be as consistent and human-readable as possible (e.g., consistent names, consistent numbers of digits, etc).
