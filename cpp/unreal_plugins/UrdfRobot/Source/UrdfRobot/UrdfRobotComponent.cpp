@@ -179,9 +179,7 @@ void UUrdfRobotComponent::reset()
     for (auto& link_component : LinkComponents) {
         FBodyInstance* body_instance = link_component->GetBodyInstance();
         SP_ASSERT(body_instance);
-        // Borrowed and modified this code from Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosVehicleMovementComponent.cpp
-        // if start awake is false then setting the velocity (even to zero) causes particle to wake up.
-        if (body_instance->ShouldInstanceSimulatingPhysics() && body_instance->IsInstanceAwake()) {
+        if (body_instance->ShouldInstanceSimulatingPhysics()) {
             body_instance->SetLinearVelocity(FVector::ZeroVector, false);
             body_instance->SetAngularVelocityInRadians(FVector::ZeroVector, false);
             body_instance->ClearForces();
