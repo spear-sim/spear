@@ -4,10 +4,11 @@ dependencies:
   - pip
   - pip:
     - bpy==3.5.0
-    - ipython
-    - numpy
-    - transforms3d
-    - trimesh
+    - coacd==1.0.0
     - gymnasium
+    - ipython
     - mujoco==2.3.5
-    - coacd
+    - numpy
+    - scipy
+    - transforms3d
+    - trimesh[easy]==3.23.5

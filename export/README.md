@@ -13,6 +13,11 @@
 - Assert actor labels and labels of component names within actors are unique
 
 ## Miscellaneous
+Scales:
+- UE: cm
+- GLTF files exported from UE: m (can check in Blender, remember to check the parent's scale factor)
+- MuJoCo: m
+
 ```python
 import unreal
 

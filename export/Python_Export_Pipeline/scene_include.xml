@@ -1,5 +1,5 @@
 <mujoco model="spear scene">
-   <compiler angle="radian" balanceinertia="true" boundmass="0.1" autolimits="true" fusestatic="true" convexhull="false"/>
+   <compiler angle="radian" balanceinertia="true" boundmass="0.1" autolimits="true" fusestatic="true"/>
    <option timestep="0.001" integrator="implicitfast" solver="Newton" collision="all" cone="pyramidal"/>
    <size memory="1G"/>
    <statistic center="0 0 .3" extent="1.2"/>

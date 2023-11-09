@@ -15,13 +15,12 @@ import numpy as np
 import transforms3d.quaternions as txq
 import trimesh
 from itertools import combinations
+import coacd
+import mujoco
 
 
 osp = os.path
 
-use_CoACD = True
-if use_CoACD:
-    import coacd
 
 # Find the v4.0 executable in the system path.
 # Note trimesh has not updated their code to work with v4.0 which is why we do not use
@@ -72,8 +71,12 @@ class VhacdArgs:
 
 @dataclass
 class CoacdArgs:
+    auto_threshold: bool = True
+    """Whether threshold regression is used"""
     threshold: float = 0.02
-    """Termination criteria in [0.01, 1] (0.01: most fine-grained; 1: most coarse)"""
+    """Termination criteria in [0.01, 1] (0.01: most fine-grained; 1: most coarse), used only if auto_threshold == False"""
+    threshold_model: tuple = (-0.24555493, 0.23217532)
+    """model for regressing threshold, used only if auto_threshold == True"""
     max_convex_hull: int = -1
     """Maximum number of convex hulls in the result, -1 for no limit, works only when merge is enabled."""
     preprocess_mode: str = "auto"
@@ -97,9 +100,10 @@ class CoacdArgs:
 
 @dataclass
 class ACD_Args:
-    use_coacd : bool
+    decompose_method : str
     coacd_args: CoacdArgs
     vhacd_args: VhacdArgs
+    min_volume: float = 1e-3
 
 def name_in_names(name, names):
   for n in names:
@@ -133,7 +137,7 @@ def mujoco_xml_populate_objects(object_folder, output_folder, scene_path, cvx_fo
     for mesh_object in sorted(mesh_objects):
         split_file_name = osp.basename(mesh_object)
         split_name, ext = osp.splitext(split_file_name)
-        if ext != '.obj':
+        if (ext != '.stl') and (ext != '.obj'):
             continue
         ET.SubElement(root, 'mesh',
                       {'file': osp.join(object_path, cvx_folder, split_file_name), 'name': f'{prefix}.{split_name}'}
@@ -154,7 +158,7 @@ def mujoco_xml_populate_objects(object_folder, output_folder, scene_path, cvx_fo
         _, _, mesh_objects = next(os.walk(osp.join(object_folder, cvx_folder)))
         for mesh_object in sorted(mesh_objects):
             file_name = os.path.splitext(osp.basename(mesh_object))
-            if file_name[1] != '.obj':
+            if (file_name[1] != '.stl') and (file_name[1] != '.obj'):
                 continue
             if not file_name[0].startswith("VolumeError"):
                 body_attributes = {
@@ -190,7 +194,7 @@ def mujoco_xml_populate_objects(object_folder, output_folder, scene_path, cvx_fo
         _, _, mesh_objects = next(os.walk(osp.join(object_folder, cvx_folder)))
         for mesh_object in sorted(mesh_objects):
             file_name = os.path.splitext(osp.basename(mesh_object))
-            if 'obj' not in file_name[1]:
+            if ('.stl' not in file_name[1]) and ('.obj' not in file_name[1]):
                 continue
             if not file_name[0].startswith("VolumeError"):
                 geom_attributes = {
@@ -218,6 +222,25 @@ def mujoco_xml_populate_objects(object_folder, output_folder, scene_path, cvx_fo
     print(f"----------------------------------------------------------------------------")
 
 
+def check_mesh_validity(filename: str) -> bool:
+    """
+    filename: STL file name
+    """
+    root = ET.Element('mujoco')
+    asset = ET.SubElement(root, 'asset')
+    ET.SubElement(asset, 'mesh', {'file': filename, 'name': 'test_mesh_asset'})
+    wbody = ET.SubElement(root, 'worldbody')
+    body = ET.SubElement(wbody, 'body', {'name': 'test_body'})
+    ET.SubElement(body, 'geom', {'name': 'test_mesh', 'mesh': 'test_mesh_asset'})
+    try:
+        m = mujoco.MjModel.from_xml_string(ET.tostring(root, encoding='unicode'))
+        d = mujoco.MjData(m)
+    except:
+        print(f'!!!!!!!! invalid mesh {filename} !!!!!!!!')
+        return False
+    return True
+
+
 def decompose_convex(args):
     fullpath, output_folder, scene_path, cvx_dir, acd_args, xyz, quat, decompose_in_bodies, rerun = args
     obj_dir, obj_file = os.path.split(fullpath)
@@ -234,112 +257,145 @@ def decompose_convex(args):
         obj_filename = osp.join(cvx_path, obj_file)
         obj_name = os.path.splitext(obj_file)[0]
         
-        if acd_args.use_coacd:    
-            # Call CoACD.
-            mesh = trimesh.load(obj_filename, force="mesh")
-            mesh = coacd.Mesh(mesh.vertices, mesh.faces)
-            result = coacd.run_coacd(
-                mesh,
-                threshold=acd_args.coacd_args.threshold,
-                max_convex_hull=acd_args.coacd_args.max_convex_hull,
-                preprocess_mode=acd_args.coacd_args.preprocess_mode,
-                preprocess_resolution=acd_args.coacd_args.preprocess_resolution,
-                resolution=acd_args.coacd_args.resolution,
-                mcts_nodes=acd_args.coacd_args.mcts_nodes,
-                mcts_iterations=acd_args.coacd_args.mcts_iterations,
-                mcts_max_depth=acd_args.coacd_args.mcts_max_depth,
-                pca=acd_args.coacd_args.pca,
-                merge=acd_args.coacd_args.merge,
-                seed=acd_args.coacd_args.seed,
+        if check_mesh_validity(obj_filename):
+            mesh: trimesh.Trimesh = trimesh.load(obj_filename, force='mesh')
+            if mesh.is_empty:
+                volume = 0.0
+            else:
+                try:
+                    volume = mesh.bounding_box_oriented.volume
+                except ValueError:
+                    volume = 0.0
+            if volume < 1e-6:
+                acd_args.decompose_method = 'skip'
+                print(f'{obj_name} is too small, volume = {volume:.5f}, will skip')
+            elif volume < acd_args.min_volume:
+                acd_args.decompose_method = 'none'
+                print(f'{obj_name} is small, volume = {volume:.5f}, will not decompose')
+            
+            if acd_args.decompose_method == 'coacd':
+                # Call CoACD.
+                if acd_args.coacd_args.auto_threshold:
+                    model = acd_args.coacd_args.threshold_model
+                    threshold = max(0.02, volume*model[0] + model[1])
+                else:
+                    threshold = acd_args.coacd_args.threshold
+                mesh = coacd.Mesh(mesh.vertices, mesh.faces)
+                result = coacd.run_coacd(
+                    mesh,
+                    threshold=threshold,
+                    max_convex_hull=acd_args.coacd_args.max_convex_hull,
+                    preprocess_mode=acd_args.coacd_args.preprocess_mode,
+                    preprocess_resolution=acd_args.coacd_args.preprocess_resolution,
+                    resolution=acd_args.coacd_args.resolution,
+                    mcts_nodes=acd_args.coacd_args.mcts_nodes,
+                    mcts_iterations=acd_args.coacd_args.mcts_iterations,
+                    mcts_max_depth=acd_args.coacd_args.mcts_max_depth,
+                    pca=acd_args.coacd_args.pca,
+                    merge=acd_args.coacd_args.merge,
+                    seed=acd_args.coacd_args.seed,
+                    )
+
+                mesh_parts = []
+                for vs, fs in result:
+                    # remove faces with duplicate vertices
+                    fs = [f for f in fs if len(set(f)) == 3]
+                    # remove duplicate faces
+                    fs_set = set()
+                    final_fs = []
+                    for f in fs:
+                        ff = frozenset(f)  # frozenset() also sorts
+                        if ff in fs_set:
+                            fs_set.remove(ff)
+                        else:
+                            fs_set.add(ff)
+                            final_fs.append(f)
+                    mesh = trimesh.Trimesh(vs, final_fs)
+                    if mesh.is_volume:
+                        mesh_parts.append(mesh)
+
+                object_assembled = trimesh.Scene()
+                np.random.seed(0)
+                i = 0
+                for p in mesh_parts:
+                    p.visual.vertex_colors[:, :3] = (np.random.rand(3) * 255).astype(np.uint8)
+                    object_part = trimesh.Scene()
+                    object_part.add_geometry(p)
+                    filename = osp.join(cvx_path, f'{obj_name}{i:03d}.stl')
+                    object_part.export(filename)
+                    if check_mesh_validity(filename):
+                        object_assembled.add_geometry(p)
+                        i+=1
+                if not object_assembled.is_empty:
+                    object_assembled.export(osp.join(obj_dir, f'{obj_name}_{cvx_dir}.obj'))
+                    decomposed = True
+            elif acd_args.decompose_method == 'vhacd':
+                if not acd_args.vhacd_args.enable:
+                    return False
+
+                if _VHACD_EXECUTABLE is None:
+                    print(
+                        "V-HACD was enabled but not found in the system path. Either install it "
+                        "manually or run `bash install_vhacd.sh`. Skipping decomposition"
+                    )
+                    return False
+
+                # Call V-HACD, suppressing output.
+                ret = subprocess.run(
+                    [
+                        f"{_VHACD_EXECUTABLE}",
+                        osp.join(cvx_dir, obj_file),
+                        "-i",
+                        "stl",
+                        "-o",
+                        "stl",
+                        "-h",
+                        f"{acd_args.vhacd_args.max_output_convex_hulls}",
+                        "-r",
+                        f"{acd_args.vhacd_args.voxel_resolution}",
+                        "-e",
+                        f"{acd_args.vhacd_args.volume_error_percent}",
+                        "-d",
+                        f"{acd_args.vhacd_args.max_recursion_depth}",
+                        "-s",
+                        f"{int(not acd_args.vhacd_args.disable_shrink_wrap)}",
+                        "-f",
+                        f"{acd_args.vhacd_args.fill_mode.name.lower()}",
+                        "-v",
+                        f"{acd_args.vhacd_args.max_hull_vert_count}",
+                        "-a",
+                        f"{int(not acd_args.vhacd_args.disable_async)}",
+                        "-l",
+                        f"{acd_args.vhacd_args.min_edge_length}",
+                        "-p",
+                        f"{int(acd_args.vhacd_args.split_hull)}",
+                    ],
+                    check=True,
+                    cwd=obj_dir,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
                 )
-
-            mesh_parts = []
-            for vs, fs in result:
-                # remove faces with duplicate vertices
-                fs = [f for f in fs if len(set(f)) == 3]
-                # remove duplicate faces
-                fs_set = set()
-                final_fs = []
-                for f in fs:
-                    ff = frozenset(f)  # frozenset() also sorts
-                    if ff in fs_set:
-                        fs_set.remove(ff)
-                    else:
-                        fs_set.add(ff)
-                        final_fs.append(f)
-                mesh = trimesh.Trimesh(vs, final_fs)
-                if mesh.is_watertight:
-                  mesh_parts.append(mesh)
-
-            object_assembled = trimesh.Scene()
-            np.random.seed(0)
-            i = 0
-            for p in mesh_parts:
-                p.visual.vertex_colors[:, :3] = (np.random.rand(3) * 255).astype(np.uint8)
-                object_assembled.add_geometry(p)
-                object_part = trimesh.Scene()
-                object_part.add_geometry(p)
-                object_part.export(osp.join(cvx_path, f'{obj_name}_{str(i)}.obj'))
-                i+=1
-            if not object_assembled.is_empty:
-                object_assembled.export(osp.join(obj_dir, f'{obj_name}_cvx.obj'))
+                output_str = ret.stdout.decode()
+                print(output_str)
+                        
+                if (ret.returncode != 0) or ('VolumeError' in output_str):
+                    print(f"V-HACD failed on {fullpath}")
+                else: 
+                    decomposed = True
+                # VHACD not being able to generate a convex hull decoposition (while not throwing any error) is a
+                # good indicator of the level of fucked-upness of an asset. For now, we simply discard the asset.
+                os.rename(osp.join(obj_dir, _VHACD_OUTPUTS[0]), osp.join(obj_dir, f'{obj_name}_{cvx_dir}.obj'))
+                os.remove(osp.join(obj_dir, _VHACD_OUTPUTS[1]))
+            elif acd_args.decompose_method == 'none':
+                # simply copy the STL
+                out_filename = osp.join(obj_dir, f'{obj_name}_{cvx_dir}.obj')
+                mesh.export(out_filename)
+                shutil.copy(obj_filename, osp.join(cvx_path, f'{obj_name}000.stl'))
                 decomposed = True
-        
-        else:
-            
-            if not acd_args.vhacd_args.enable:
-                return False
-
-            if _VHACD_EXECUTABLE is None:
-                print(
-                    "V-HACD was enabled but not found in the system path. Either install it "
-                    "manually or run `bash install_vhacd.sh`. Skipping decomposition"
-                )
-                return False
-
-            # Call V-HACD, suppressing output.
-            ret = subprocess.run(
-                [
-                    f"{_VHACD_EXECUTABLE}",
-                    osp.join(cvx_dir, obj_file),
-                    "-i",
-                    "stl",
-                    "-o",
-                    "obj",
-                    "-h",
-                    f"{acd_args.vhacd_args.max_output_convex_hulls}",
-                    "-r",
-                    f"{acd_args.vhacd_args.voxel_resolution}",
-                    "-e",
-                    f"{acd_args.vhacd_args.volume_error_percent}",
-                    "-d",
-                    f"{acd_args.vhacd_args.max_recursion_depth}",
-                    "-s",
-                    f"{int(not acd_args.vhacd_args.disable_shrink_wrap)}",
-                    "-f",
-                    f"{acd_args.vhacd_args.fill_mode.name.lower()}",
-                    "-v",
-                    f"{acd_args.vhacd_args.max_hull_vert_count}",
-                    "-a",
-                    f"{int(not acd_args.vhacd_args.disable_async)}",
-                    "-l",
-                    f"{acd_args.vhacd_args.min_edge_length}",
-                    "-p",
-                    f"{int(acd_args.vhacd_args.split_hull)}",
-                ],
-                check=True,
-                cwd=obj_dir,
-            )
-                    
-            if ret.returncode != 0:
-                print(f"V-HACD failed on {fullpath}")
-                return False
-            
-            decomposed = True
-            # VHACD not being able to generate a convex hull decoposition (while not throwing any error) is a
-            # good indicator of the level of fucked-upness of an asset. For now, we simply discard the asset.
-            os.rename(osp.join(obj_dir, _VHACD_OUTPUTS[0]), osp.join(obj_dir, f'{obj_name}_{cvx_dir}.obj'))
-            os.remove(osp.join(obj_dir, _VHACD_OUTPUTS[1]))
+            elif acd_args.decompose_method == 'skip':
+                decomposed = False
+            else:
+                raise ValueError(f'{obj_dir} decompose method {acd_args.decompose_method} is invalid')
         
         print(f"Removing {obj_filename}")
         os.remove(obj_filename)
@@ -390,7 +446,8 @@ def assemble_articulated_object_files(args):
                     'type': joint[0]['type'],
                     'pos': '{:.5f} {:.5f} {:.5f}'.format(*joint[0]['pos']),
                     'axis': '{:.5f} {:.5f} {:.5f}'.format(*joint[0]['axis']),
-                    'range': '{:.5f} {:.5f}'.format(*joint[0]['range'])
+                    'range': '{:.5f} {:.5f}'.format(*joint[0]['range']),
+                    'ref': '{:.5f}'.format(joint[0]['ref'])
                 }
                 ET.SubElement(body, 'joint', joint_attributes)
             elif moving:
@@ -570,6 +627,7 @@ class AssetProcessor:
             # Articulated furniture
             obj_type = self.get_object_type(object_name)
             obj_dir = os.path.join(self.output_folder, obj_type, object_name)
+            obj_info = self.actors_information[object_name]
 
             # read joints info to augment it
             joints_info = {}
@@ -581,7 +639,7 @@ class AssetProcessor:
 
             children = []
             nodes_info = {}
-            # each element is (bpy object, directory_path, scale factor)
+            # each element is (bpy object, directory_path, scale_factor)
             q = deque([(obj, obj_dir, np.ones(3)), ])
             while len(q):
                 o, dir, scale_factor = q.popleft()
@@ -593,7 +651,8 @@ class AssetProcessor:
                             raise AssertionError(f'repeated mesh {name}')
                         nodes_info[name] = {'pos': xyz, 'quat': quat}
                         os.makedirs(dir, exist_ok=True)
-                        children.append((dir, o, xyz, quat))
+                        decompose_method = obj_info['geoms'][name]['decompose_method']
+                        children.append((dir, o, xyz, quat, decompose_method))
                     elif o.type == 'EMPTY':
                         joint_name = name_in_names(name, joints_info.keys())
                         if joint_name is not None:
@@ -605,7 +664,7 @@ class AssetProcessor:
                     os.makedirs(dir, exist_ok=True)
                     for child in o.children:
                         child_name = child.name.split('.')[0]
-                        q.append((child, os.path.join(dir, child_name), np.array(o.scale)))
+                        q.append((child, os.path.join(dir, child_name), scale_factor*np.array(o.scale)))
 
             # convert parent_T_joint to child_T_joint (which is what MuJoCo understands)
             for joint_info in joints_info.values():
@@ -621,7 +680,7 @@ class AssetProcessor:
                 joint_info['quat'] = txq.mat2quat(cTj[:3, :3]).tolist()
             
             joint_children = [j['child'] for j in joints_info.values()]
-            for (child_dir, child, xyz, quat) in children:
+            for (child_dir, child, xyz, quat, decompose_method) in children:
                 child_name = child.name.split('.')[0]
                 child.select_set(True)
                 
@@ -642,35 +701,36 @@ class AssetProcessor:
                 decimate_modifier.ratio = decimation_ratio
 
                 # Exporting in stl.
-                print("Exporting obj file...")
-                part_filepath = os.path.join(child_dir, f"{child_name}.stl")
-                bpy.ops.export_mesh.stl(
-                    filepath=part_filepath,
-                    check_existing=True,
-                    use_selection=True,
-                    use_mesh_modifiers=True,
-                    batch_mode='OFF',
-                    global_scale=1.0,
-                    axis_forward='Y',
-                    axis_up='Z',
-                    ascii=False,
-                )
+                part_filepath = osp.join(child_dir, f"{child_name}.stl")
+                if (not self.rerun) or (not osp.isfile(part_filepath)):
+                    print("Exporting STL file...")
+                    bpy.ops.export_mesh.stl(
+                        filepath=part_filepath,
+                        check_existing=True,
+                        use_selection=True,
+                        use_mesh_modifiers=True,
+                        batch_mode='OFF',
+                        global_scale=1.0,
+                        axis_forward='Y',
+                        axis_up='Z',
+                        ascii=False,
+                    )
                 bpy.ops.object.select_all(action='DESELECT')
 
-                print("Convex solid decomposition...")
-                cvx_args = ACD_Args(use_CoACD, CoacdArgs(), VhacdArgs())
+                cvx_args = ACD_Args(decompose_method, CoacdArgs(), VhacdArgs())
                 decompose_convex_args.append(
                     (part_filepath, self.output_folder, self.scene_path, "cvx", cvx_args, xyz, quat, False, self.rerun)
                 )
             assemble_args.append(
                 (object_name, obj_dir, self.scene_path, nodes_info, joints_info,
-                 self.actors_information[object_name]['moving'],
-                 f'.{self.actors_information[object_name]["root_component_name"]}'),
+                 obj_info['moving'],
+                 f'.{obj_info["root_component_name"]}'),
             )
         # with mp.Pool(self.n_workers) as p:
         #     p.map(decompose_convex, decompose_convex_args)
         # with mp.Pool(self.n_workers) as p:
         #     p.map(assemble_articulated_object_files, assemble_args)
+        print("Convex solid decomposition...")
         i = 0
         while True:
             start_idx = i * self.n_workers
@@ -680,6 +740,7 @@ class AssetProcessor:
             i = i + 1
             if end_idx >= len(decompose_convex_args):
                 break
+        print("Assembly...")
         i = 0
         while True:
             start_idx = i * self.n_workers
