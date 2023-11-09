@@ -42,7 +42,7 @@ my_scene_name_0000                    # We name each scene (or "map" or "level" 
 │   ├── 02_my_semantic_category       #
 │   └── ...                           #
 │                                     #  
-├── Navigation                        # All navigation-mesh-related Actors are kept here.
+├── Navigation                        # All navigation-related Actors are kept here.
 │   |                                 #
 │   ├── nav_mesh_bounds_volume_0000   #
 │   ├── mav_mesh_modifier_volume_0000 #
@@ -61,3 +61,4 @@ my_scene_name_0000                    # We name each scene (or "map" or "level" 
     ├── player_start_0000             #
     └── post_process_volume_0000      #
 ```
+
