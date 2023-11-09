@@ -4,14 +4,10 @@ These guidelines roughly follow the conventions established in the `StarterConte
 
 ## Outliner
 
-- The _Outliner_ view should be consistent and human-readable so it is as easy as possible to browse
-- Each actor should have a meaningful name using a consistent naming convention with a consistent number of digits
-- Naming conventions should be consistent across scenes
-
-The _Outliner_ view in the Unreal Editor is organized as follows for each scene.
+For each scene, the _Outliner_ pane in the Unreal Editor is organized as follows.
 
 ```
-my_scene_name_0000                    # We name each scene (or "map" or "level" in Unreal parlance) using a
+my_scene_0000                         # We name each scene (or "map" or "level" in Unreal parlance) using a
 |                                     # lower_case_with_underscore naming convention and a four digit suffix
 |                                     # (e.g., apartment_0000, apartment_0001, etc).
 │                                     #
@@ -62,3 +58,29 @@ my_scene_name_0000                    # We name each scene (or "map" or "level" 
     └── post_process_volume_0000      #
 ```
 
+- The _Outliner_ view should be as consistent and human-readable as possible (e.g., consistent names, consistent numbers of digits, etc).
+- Naming conventions should be consistent across scenes.
+- The type of each actor in `my_scene_0000/Meshes` should be `StaticMeshActor` if it is not articulated, and `Actor` if it is articulated.
+
+## StaticMeshActors
+
+The _Components_ pane within the _Details_ pane for each `StaticMeshActor` is organized as follows.
+
+```
+my_actor_0000
+└── StaticMeshComponent               # Each StaticMeshActor has an immutable root component named
+    |                                 # "StaticMeshComponent". If the StaticMeshActor is composed of multiple  
+    |                                 # StaticMeshComponents, the StaticMeshComponents can be added as children
+    |                                 # of the top-level StaticMeshComponent, using the names mesh_0000,
+    |                                 # mesh_0001, etc. This approach enables the StaticMeshComponents to be 
+    |                                 # moved together in the editor, and enables them to move together during a
+    |                                 # a physics simulation, without needing to explicitly merge all the 
+    |                                 # actor's geometry together into a single StaticMeshComponent.
+    |                                 #
+    ├── mesh_0000                     #
+    ├── mesh_0001                     #
+    └── ...                           #
+```
+
+- If a `StaticMeshComponent` exists only to group other `StaticMeshComponents` together, then the mesh assigned to it should be `/Plugins/CoreUtils/Meshes/SM_Dummy`. This step is necessary for the group to be simulated correctly.
+- The pivot location of each `StaticMeshActor` should be set according to the following rules. The xy-coordinates of the actor's pivot should equal the xy-coordinates of the actor's axis-aligned bounding box center, and the z-coordinate of the pivot should equal the minimum z-coordinate of itS axis-aligned bounding box.
