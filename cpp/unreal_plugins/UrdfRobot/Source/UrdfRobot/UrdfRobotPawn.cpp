@@ -99,5 +99,4 @@ void AUrdfRobotPawn::Initialize()
     CameraComponent->FieldOfView = field_of_view;
     CameraComponent->AspectRatio = aspect_ratio;
     CameraComponent->AttachToComponent(UrdfRobotComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-    CameraComponent->RegisterComponent();
 }
