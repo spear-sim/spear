@@ -25,9 +25,9 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 |   |   |                             # semantic category by placing the Actor in a subdirectory. Note that it is
 |   |   |                             # possible for an individual StaticMeshComponent on an Actor to override the
 |   |   |                             # Actor's semantic category.
-|   |   |                             # 
+|   |   |                             #
 |   |   |                             # We choose to encode semantic annotations via this folder structure, because it
-|   |   |                             # makes it especially easy to  browse each scene in the Unreal Editor. For example,
+|   |   |                             # makes it especially easy to browse each scene in the Unreal Editor. For example,
 |   |   |                             # using this folder structure, a user can easily select all objects in a particular
 |   |   |                             # semantic category and make them invisible, thereby making it easy to browse the
 |   |   |                             # rest of the scene.
@@ -44,8 +44,8 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 │   ├── mav_mesh_modifier_volume_0000 #
 │   ├── mav_mesh_modifier_volume_0001 #
 │   ├── ...                           #
-│   └── RecastNavMesh-Default         # RecastNavMesh actors are created automatically, and therefore they do not adhere to our
-|                                     # naming conventions.
+│   └── RecastNavMesh-Default         # RecastNavMesh actors are created automatically, and therefore we do not expect them to
+|                                     # adhere to our naming conventions.
 │                                     #
 ├── Rendering                         #
 │   └── HDRI                          # All HDRI-related Actors are kept here.
@@ -60,11 +60,11 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 
 - The _Outliner_ view should be as consistent and human-readable as possible (e.g., consistent names, consistent numbers of digits, etc).
 - Naming conventions should be consistent across scenes.
-- The type of each actor in `my_scene_0000/Meshes` should be `StaticMeshActor` if it is not articulated, and `Actor` if it is articulated.
+- The type of each actor in `my_scene_0000/Meshes` should be `StaticMeshActor` if it is not articulated, and `Actor` if it is articulated. It is necessary to use the `Actor` type for articulated actors so they can be simulated correctly. But it is not strictly necessary to use the `StaticMeshActor` type for non-articulated actors. That being said, `StaticMeshActors` have a different icon than `Actors` in the _Outliner_ pane, so we use `StaticMeshActor` for non-articulated actors to make it easy to distinguish between articulated and non-articulated actors in the _Outliner_ pane.
 
 ## StaticMeshActors
 
-The _Components_ pane within the _Details_ pane for each `StaticMeshActor` is organized as follows.
+For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Components_ pane within the _Details_ pane is organized as follows.
 
 ```
 my_actor_0000
@@ -82,5 +82,46 @@ my_actor_0000
     └── ...                           #
 ```
 
-- If a `StaticMeshComponent` exists only to group other `StaticMeshComponents` together, then the mesh assigned to it should be `/Plugins/CoreUtils/Meshes/SM_Dummy`. This step is necessary for the group to be simulated correctly.
+- If a parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, then the mesh assigned to the parent should be `/Plugins/CoreUtils/Meshes/SM_Dummy`. The "Simulate Phyiscs" option should be enabled for the parent but not for the children. This is necessary for the `StaticMeshComponents` to be simulated correctly.
 - The pivot location of each `StaticMeshActor` should be set according to the following rules. The xy-coordinates of the actor's pivot should equal the xy-coordinates of the actor's axis-aligned bounding box center, and the z-coordinate of the pivot should equal the minimum z-coordinate of its axis-aligned bounding box.
+
+## Actors
+
+For each `Actor` in `my_scene_0000/Meshes`, the _Components_ pane within the _Details_ pane is organized as follows.
+
+```
+my_actor_0000
+└── DefaultSceneRoot                  # Each Actor has an immutable root component named "DefaultSceneRoot".
+    |                                 # If the StaticMeshActor is composed of multiple StaticMeshComponents,  
+    |                                 # the additional StaticMeshComponents can be added as children of the
+    |                                 # top-level StaticMeshComponent, using the names "mesh_0000", "mesh_0001",
+    |                                 # etc. This approach enables the child StaticMeshComponents to be easily 
+    |                                 # selected and moved together in the editor, and enables them to move
+    |                                 # together during a physics simulation, without needing to explicitly
+    |                                 # merge all the actor's geometry together into a single StaticMeshComponent. 
+    |                                 #
+    ├── urdf_joint_0000               # A UrdfJointComponent is a PhysicsConstraintComponent with additional state
+    |                                 # and functionality. Each joint connects a parent and a child component, and
+    |                                 # the joint component itself should be a sibling of the child component it is
+    |                                 # connecting. We do not allow joints to connect sibling components, even
+    |                                 # though this is permitted in Unreal, because this type of joint is not always
+    |                                 # easy to simulate in other physics engines.
+    |                                 #
+    ├── urdf_joint_0001               #
+    ├── ...                           #
+    |                                 #
+    ├── group_0000                    # A StaticMeshComponent that is only used to group other StaticMeshComponents
+    |   |                             # together.
+    |   |                             #
+    |   ├── mesh_0000                 # A StaticMeshComponent that contains non-trivial geometry.
+    |   ├── mesh_0001                 #
+    |   └── ...                       #
+    ├── group_0001                    #
+    |   ├── mesh_0002                 #
+    |   ├── mesh_0003                 #
+    |   └── ...                       #
+    └── ...                           #
+```
+
+- All rules for `StaticMeshActors` described above also apply to `Actors`.
+- When configuring a joint, the convention in Unreal is for _Component 1_ to be the child and _Component 2_ to be the parent. This convention is relevant when the "Parent Dominates" flag is enabled on the joint.
