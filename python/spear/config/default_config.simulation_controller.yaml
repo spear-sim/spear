@@ -83,7 +83,7 @@ SIMULATION_CONTROLLER:
     SPAWN_ROTATION_PITCH: 0.0
     SPAWN_ROTATION_YAW: 0.0  
     SPAWN_ROTATION_ROLL: 0.0
-    IS_READY_VELOCITY_THRESHOLD: 0.001
+    IS_READY_VELOCITY_THRESHOLD: 1.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
       IMAGE_HEIGHT: 512

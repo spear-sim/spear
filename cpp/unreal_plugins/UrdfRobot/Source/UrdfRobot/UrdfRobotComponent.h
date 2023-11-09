@@ -56,6 +56,7 @@ public:
     std::map<std::string, ArrayDesc> getObservationSpace() const;
     void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
     std::map<std::string, std::vector<uint8_t>> getObservation() const;
+    void reset();
     std::vector<std::string> action_components_;
     std::vector<std::string> observation_components_;
 
@@ -72,7 +73,7 @@ private:
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
-    UInputActionComponent* input_action_component_ = nullptr;
     UUrdfLinkComponent* root_link_component_ = nullptr;
+    UInputActionComponent* input_action_component_ = nullptr;
     bool ticked_once_ = false;
 };

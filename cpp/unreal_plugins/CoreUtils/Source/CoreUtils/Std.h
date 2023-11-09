@@ -61,7 +61,8 @@ public:
         return string.find(substring) != std::string::npos;
     }
 
-    static std::string toLower(const std::string& string) {
+    static std::string toLower(const std::string& string)
+    {
         std::string lower_string = string;
         for (auto& c : lower_string) {
             c = std::tolower(c);

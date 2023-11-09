@@ -146,13 +146,11 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getObservationSpace() cons
 
 void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<uint8_t>>& actions)
 {
-    std::map < std::string, std::vector<double>> joint_actions;
+    std::map <std::string, std::vector<double>> joint_actions;
 
     for (auto& action : actions) {
-        if (Std::containsKey(joint_components_, action.first)) {
-            std::vector<double> action_data = Std::reinterpretAs<double>(action.second);
-            joint_actions[action.first] = action_data;
-        }
+        std::vector<double> action_data = Std::reinterpretAs<double>(action.second);
+        joint_actions[action.first] = action_data;
     }
 
     bool assert_if_action_is_inconsistent_with_joint = true;
@@ -176,21 +174,44 @@ std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation(
     return observation;
 }
 
+void UUrdfRobotComponent::reset()
+{
+    for (auto& link_component : LinkComponents) {
+        FBodyInstance* body_instance = link_component->GetBodyInstance();
+        SP_ASSERT(body_instance);
+        // Borrowed and modified this code from Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosVehicleMovementComponent.cpp
+        // if start awake is false then setting the velocity (even to zero) causes particle to wake up.
+        if (body_instance->ShouldInstanceSimulatingPhysics() && body_instance->IsInstanceAwake()) {
+            body_instance->SetLinearVelocity(FVector::ZeroVector, false);
+            body_instance->SetAngularVelocityInRadians(FVector::ZeroVector, false);
+            body_instance->ClearForces();
+            body_instance->ClearTorques();
+        }
+    }
+}
+
 void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     SP_ASSERT(robot_desc);
 
     UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
     SP_ASSERT(root_link_desc);
 
+    LinkComponents.Empty();
+    JointComponents.Empty();
+
+    SP_ASSERT(link_components_.empty());
+    SP_ASSERT(joint_components_.empty());
+
     SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
     root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
     SP_ASSERT(root_link_component_);
-    root_link_component_->initialize(root_link_desc);
     root_link_component_->SetupAttachment(this);
     root_link_component_->RegisterComponent();
+    // It is very important to setup attachments, and register components before we create more child components.
+    // If this order is reversed and we end up creating more child components before registering the parent component,
+    // the physics simulation will be unstable.
+    root_link_component_->initialize(root_link_desc);
     LinkComponents.Add(root_link_component_);
 
     initialize(root_link_desc, root_link_component_);
@@ -213,9 +234,12 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         SP_ASSERT(!Std::containsSubstring(child_link_desc->name_, "."));
         auto child_link_component = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(child_link_desc->name_));
         SP_ASSERT(child_link_component);
-        child_link_component->initialize(child_link_desc);
         child_link_component->SetupAttachment(parent_link_component);
         child_link_component->RegisterComponent();
+        // It is very important to setup attachments, and register components before we create more child components.
+        // If this order is reversed and we end up creating more child components before registering the parent component,
+        // the physics simulation will be unstable.
+        child_link_component->initialize(child_link_desc);
         LinkComponents.Add(child_link_component);
 
         // We create joints here, rather than inside UUrdfLinkComponent::initialize(...), because it only makes sense to create
@@ -228,9 +252,12 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         SP_ASSERT(!Std::containsSubstring(child_joint_desc->name_, "."));
         auto child_joint_component = NewObject<UUrdfJointComponent>(this, Unreal::toFName(child_joint_desc->name_));
         SP_ASSERT(child_joint_component);
-        child_joint_component->initialize(child_joint_desc, parent_link_component, child_link_component);
         child_joint_component->SetupAttachment(parent_link_component);
         child_joint_component->RegisterComponent();
+        // It is very important to setup attachments, and register components before we create more child components.
+        // If this order is reversed and we end up creating more child components before registering the parent component,
+        // the physics simulation will be unstable.
+        child_joint_component->initialize(child_joint_desc, parent_link_component, child_link_component);
         JointComponents.Add(child_joint_component);
 
         initialize(child_link_desc, child_link_component);
@@ -276,6 +303,8 @@ void UUrdfRobotComponent::applyAction(
     bool assert_if_joint_not_found,
     bool assert_if_action_is_inconsistent_with_joint)
 {
+    SP_ASSERT(action.size());
+
     for (auto& action_component : action) {
         std::vector<std::string> tokens = Std::tokenize(action_component.first, ".");
         SP_ASSERT(tokens.size() == 2);

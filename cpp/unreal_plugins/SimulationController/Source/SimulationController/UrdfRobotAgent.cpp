@@ -22,6 +22,7 @@
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
+#include "UrdfRobot/UrdfLinkComponent.h"
 #include "UrdfRobot/UrdfRobotComponent.h"
 #include "UrdfRobot/UrdfRobotPawn.h"
 
@@ -104,6 +105,7 @@ void UrdfRobotAgent::cleanUpObjectReferences() {}
 
 std::map<std::string, ArrayDesc> UrdfRobotAgent::getActionSpace() const
 {
+    SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
     return urdf_robot_pawn_->UrdfRobotComponent->getActionSpace();
 }
 
@@ -112,6 +114,7 @@ std::map<std::string, ArrayDesc> UrdfRobotAgent::getObservationSpace() const
     std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
+    SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
     observation_space.merge(urdf_robot_pawn_->UrdfRobotComponent->getObservationSpace());
 
     if (Std::contains(observation_components, "camera")) {
@@ -128,6 +131,7 @@ std::map<std::string, ArrayDesc> UrdfRobotAgent::getStepInfoSpace() const
 
 void UrdfRobotAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
+    SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
     urdf_robot_pawn_->UrdfRobotComponent->applyAction(action);
 }
 
@@ -136,6 +140,7 @@ std::map<std::string, std::vector<uint8_t>> UrdfRobotAgent::getObservation() con
     std::map<std::string, std::vector<uint8_t>> observation;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
+    SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
     observation.merge(urdf_robot_pawn_->UrdfRobotComponent->getObservation());
 
     if (Std::contains(observation_components, "camera")) {
@@ -150,10 +155,21 @@ std::map<std::string, std::vector<uint8_t>> UrdfRobotAgent::getStepInfo() const
     return {};
 }
 
-void UrdfRobotAgent::reset() {}
+void UrdfRobotAgent::reset()
+{
+    SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
+    urdf_robot_pawn_->UrdfRobotComponent->reset();
+}
 
 bool UrdfRobotAgent::isReady() const
 {
-    return urdf_robot_pawn_->UrdfRobotComponent->GetComponentVelocity().Size() <=
-        Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
+    SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
+    // consider both linear and angular velocities of all components to determine if the robot is ready or not
+    float sum_vel = 0.0;
+    for (auto& link_component : urdf_robot_pawn_->UrdfRobotComponent->LinkComponents) {
+        sum_vel += link_component->GetPhysicsAngularVelocityInRadians().Size();
+        sum_vel += link_component->GetPhysicsLinearVelocity().Size();
+    }
+
+    return sum_vel <= Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }

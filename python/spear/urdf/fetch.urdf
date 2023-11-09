@@ -368,7 +368,7 @@
         <limit effort="0" lower="-1.6056" upper="1.6056" velocity="1.256"/>
         <dynamics damping="0.4"/>
         <spear>
-            <dynamics control_type="position_and_velocity" spring="0.4" parent_dominates="true"/>
+            <dynamics control_type="position_and_velocity" spring="2.0" parent_dominates="false"/>
         </spear>
     </joint>
 
@@ -404,7 +404,7 @@
         <limit effort="0" lower="-1.518" upper="1.518" velocity="1.454"/>
         <dynamics damping="0.4"/>
         <spear>
-            <dynamics control_type="position_and_velocity" spring="0.4" parent_dominates="true"/>
+            <dynamics control_type="position_and_velocity" spring="2.0" parent_dominates="false"/>
         </spear>
     </joint>
 
@@ -438,7 +438,7 @@
         <limit effort="0" velocity="1.571"/>
         <dynamics damping="0.4"/>
         <spear>
-            <dynamics control_type="position_and_velocity" spring="0.4" parent_dominates="true"/>
+            <dynamics control_type="position_and_velocity" spring="2.0" parent_dominates="false"/>
         </spear>
     </joint>
 
@@ -472,7 +472,7 @@
         <limit effort="0" lower="-2.251" upper="2.251" velocity="1.521"/>
         <dynamics damping="0.4"/>
         <spear>
-            <dynamics control_type="position_and_velocity" spring="0.4" parent_dominates="true"/>
+            <dynamics control_type="position_and_velocity" spring="2.0" parent_dominates="false"/>
         </spear>
     </joint>
 
@@ -506,7 +506,7 @@
         <limit effort="0" velocity="1.571"/>
         <dynamics damping="0.4"/>
         <spear>
-            <dynamics control_type="position_and_velocity" spring="0.4" parent_dominates="true"/>
+            <dynamics control_type="position_and_velocity" spring="2.0" parent_dominates="false"/>
         </spear>
     </joint>
 
@@ -540,7 +540,7 @@
         <limit effort="0" lower="-2.16" upper="2.16" velocity="2.268"/>
         <dynamics damping="0.4"/>
         <spear>
-            <dynamics control_type="position_and_velocity" spring="0.4" parent_dominates="true"/>
+            <dynamics control_type="position_and_velocity" spring="2.0" parent_dominates="false"/>
         </spear>
     </joint>
 
@@ -574,7 +574,7 @@
         <limit effort="0" velocity="2.268"/>
         <dynamics damping="0.4"/>
         <spear>
-            <dynamics control_type="position_and_velocity" spring="0.4" parent_dominates="true"/>
+            <dynamics control_type="position_and_velocity" spring="2.0" parent_dominates="false"/>
         </spear>
     </joint>
 
@@ -708,7 +708,7 @@
         <limit effort="0.32" lower="-1.57" upper="1.57" velocity="1.57"/>
         <dynamics damping="0.4"/>
         <spear>
-            <dynamics control_type="position_and_velocity" spring="0.4" parent_dominates="true"/>
+            <dynamics control_type="position_and_velocity" spring="2.0" parent_dominates="true"/>
         </spear>
     </joint>
 
@@ -744,7 +744,7 @@
         <limit effort="0.68" lower="-1.45" upper="1.45" velocity="1.57"/>
         <dynamics damping="0.4"/>
         <spear>
-            <dynamics control_type="position_and_velocity" spring="0.4" parent_dominates="true"/>
+            <dynamics control_type="position_and_velocity" spring="2.0" parent_dominates="true"/>
         </spear>
     </joint>
 
