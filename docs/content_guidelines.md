@@ -21,9 +21,9 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 |   |                                 #
 │   ├── 01_my_semantic_category       # We create a subdirectory for each semantic category using a lower_case_with_underscore
 |   |   |                             # naming convention and a two digit prefix. We assign each actor to a particular
-|   |   |                             # semantic category by placing the Actor in a subdirectory. Note that it is
-|   |   |                             # possible for an individual StaticMeshComponent on an Actor to override the
-|   |   |                             # Actor's semantic category.
+|   |   |                             # semantic category by placing the Actor in that category's subdirectory. Note
+|   |   |                             # that it is possible for an individual StaticMeshComponent on an Actor to override
+|   |   |                             # the actor's semantic category.
 |   |   |                             #
 |   |   |                             # We choose to encode semantic annotations via this folder structure, because it
 |   |   |                             # makes it especially easy to browse each scene in the Unreal Editor. For example,
