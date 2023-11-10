@@ -23,7 +23,7 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 |   |   |                             # naming convention and a two digit prefix. We assign each actor to a particular
 |   |   |                             # semantic category by placing the Actor in that category's subdirectory. Note
 |   |   |                             # that it is possible for an individual StaticMeshComponent on an Actor to override
-|   |   |                             # the actor's semantic category.
+|   |   |                             # the actor's assigned semantic category.
 |   |   |                             #
 |   |   |                             # We choose to encode semantic annotations via this folder structure, because it
 |   |   |                             # makes it especially easy to browse each scene in the Unreal Editor. For example,
