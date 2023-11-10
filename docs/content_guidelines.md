@@ -41,9 +41,11 @@ SpearSim                               # Our top-level Unreal project folder: sp
 
 ## Unreal Editor
 
+A scene can be loaded in the Unreal Editor by opening `spear/cpp/unreal_projects/SpearSim/SpearSim.uproject`, and then double-clicking on `/Game/Scenes/my_scene_0000/Maps/my_scene_0000.umap` in the _Content Browser_.
+
 ### Outliner pane
 
-A scene can be loaded in the Unreal Editor by opening `spear/cpp/unreal_projects/SpearSim/SpearSim.uproject`, and then double-clicking on `/Game/Scenes/my_scene_0000/Maps/my_scene_0000.umap` in the _Content Browser_. Once the scene is loaded, we can examine the logical layout of the scene in the _Outliner_ pane, which we expect to be organized as follows.
+For each scene, the _Outliner_ pane is organized as follows.
 
 ```
 my_scene_0000                          # We name each scene (using a lower_case_with_underscore naming convention and a four digit
