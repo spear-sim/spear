@@ -37,8 +37,8 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 │   ├── 02_my_semantic_category       #
 │   └── ...                           #
 │                                     #  
-├── Navigation                        # All navigation-related Actors are kept here. We allow content here to to deviate
-|   |                                 # from our usual naming convention.
+├── Navigation                        # All navigation-related Actors are kept here. We allow content here to deviate
+|   |                                 # from our usual naming conventions.
 │   |                                 #
 │   ├── NavMeshBoundsVolume_00        #
 │   ├── NavMeshModifierVolume_00      #
@@ -47,7 +47,7 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 │   └── RecastNavMesh-Default         # RecastNavMesh actors are created automatically, and therefore we do not expect
 |                                     # them to adhere to our naming conventions.
 │                                     #
-├── Rendering                         # All rendering-related Actors are kept here. We allow content here to to deviate
+├── Rendering                         # All rendering-related Actors are kept here. We allow content here to deviate
 |   |                                 # from our usual naming conventions.
 │   ├── Fog                           #
 │   |   └── ExponentialHeightFog      #
@@ -60,7 +60,7 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 │       ├── SkyAtmosphere             #
 │       └── VolumetricCloud           #
 │                                     #
-└── Settings                          # All settings-related Actors are kept here. We allow content here to to deviate
+└── Settings                          # All settings-related Actors are kept here. We allow content here to deviate
     |                                 # from our usual naming conventions.
     |                                 #
     ├── PlayerStart                   #
