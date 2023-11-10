@@ -4,7 +4,7 @@ We represent each SPEAR scene as a distinct Unreal _map_. The Unreal documentati
 
 ## Filesystem
 
-For each scene, we expect it to be organized on the filesystem as follows. If a scene is organized in this way, then our tools will be able to do everything they need to do, i.e., export the scene for use in a third-party physics simulator, and generate a `pak` file that wil enable our `spear` Python module to load the scene.
+For each scene, we expect it to be organized on the filesystem as follows. If a scene is organized in this way, then our tools will be able to do everything they need to do, i.e., export the scene for use in a third-party physics simulator, and generate a `pak` file that will enable our `spear` Python module to load the scene.
 
 ```
 SpearSim                               # Our top-level Unreal project folder: spear/cpp/unreal_projects/SpearSim
