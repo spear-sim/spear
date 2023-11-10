@@ -11,29 +11,29 @@ SpearSim                               # Our top-level Unreal project folder: sp
 |   ├── Common                         # Common assets are kept in the {Common, Kujiale, StarterContent} directories.
 |   |                                  #
 |   ├── Kujiale                        #
-|   └── Scenes                         # Each scene inside the Scenes directory is allowed to refer to assets in the {Common,
-|       |                              # Kujiale, StarterContent} directories, but is not allowed to refer to assets in other 
-|       |                              # scene directories, e.g., my_scene_0000 is not allowed to refer to assets in the
-|       |                              # my_scene_0001 directory below. This restriction makes it easier to support an editing 
-|       |                              # workflow where developers only need to download a single subdirectory in order to obtain 
-|       |                              # a self-contained copy of a scene.
-|       |                              #
-|       ├── ...                        #
-|       ├── my_scene_0000              #
-|       |   ├── ...                    #
-|       |   ├── Maps                   #
-|       |   |   └── my_scene_0000.umap # There must be a umap file with the same name as the scene in the Maps directory. Our 
-|       |   |                          # code makes this assumption to support loading scenes by name.
-|       |   |                          #
-|       |   └── ...                    #
-|       |                              #
-|       ├── my_scene_0001              #
-|       |   ├── ...                    #
-|       |   ├── Maps                   #
-|       |   |   └── my_scene_0001.umap #
-|       |   └── ...                    #
-|       └── ...                        #
-├── StarterContent                     #
+|   ├── Scenes                         # Each scene inside the Scenes directory is allowed to refer to assets in the {Common,
+|   |   |                              # Kujiale, StarterContent} directories, but is not allowed to refer to assets in other 
+|   |   |                              # scene directories, e.g., my_scene_0000 is not allowed to refer to assets in the
+|   |   |                              # my_scene_0001 directory below. This restriction makes it easier to support an editing 
+|   |   |                              # workflow where developers only need to download a single subdirectory in order to obtain 
+|   |   |                              # a self-contained copy of a scene.
+|   |   |                              #
+|   |   ├── ...                        #
+|   |   ├── my_scene_0000              #
+|   |   |   ├── ...                    #
+|   |   |   ├── Maps                   #
+|   |   |   |   └── my_scene_0000.umap # There must be a umap file with the same name as the scene in the Maps directory. Our 
+|   |   |   |                          # code makes this assumption to support loading scenes by name.
+|   |   |   |                          #
+|   |   |   └── ...                    #
+|   |   |                              #
+|   |   ├── my_scene_0001              #
+|   |   |   ├── ...                    #
+|   |   |   ├── Maps                   #
+|   |   |   |   └── my_scene_0001.umap #
+|   |   |   └── ...                    #
+|   |   └── ...                        #
+|   └── StarterContent                 #
 └── ...                                #
 ```
 
