@@ -92,7 +92,7 @@ my_actor_0000
     └── ...                           #
 ```
 
-- If a parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, then the mesh assigned to the parent should be `/Plugins/CoreUtils/Meshes/SM_Dummy`. The "Simulate Phyiscs" option should be enabled for the parent but not for the children. This is necessary for the `StaticMeshComponents` to be simulated correctly.
+- If a parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, then the mesh assigned to the parent should be `/Game/Common/Meshes/SM_Dummy`. The "Simulate Phyiscs" option should be enabled for the parent but not for the children. This is necessary for the `StaticMeshComponents` to be simulated correctly.
 - The pivot location of each `StaticMeshActor` should be set according to the following rules. The xy-coordinates of the actor's pivot should equal the xy-coordinates of the actor's axis-aligned bounding box center, and the z-coordinate of the pivot should equal the minimum z-coordinate of its axis-aligned bounding box.
 
 ## Actors
