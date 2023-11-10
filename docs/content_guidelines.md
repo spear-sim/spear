@@ -25,10 +25,10 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 |   |   |                             # that it is possible for an individual StaticMeshComponent on an Actor to override
 |   |   |                             # the actor's assigned semantic category.
 |   |   |                             #
-|   |   |                             # We choose to encode semantic annotations via this folder structure, because it
+|   |   |                             # We choose to encode semantic annotations via this directory structure, because it
 |   |   |                             # makes it especially easy to browse each scene in the Unreal Editor. For example,
-|   |   |                             # using this folder structure, a user can easily select all objects in a particular
-|   |   |                             # semantic category and make them invisible, thereby making it easy to browse the
+|   |   |                             # using this directory structure, a user can easily select all objects in a particular
+|   |   |                             # semantic category and make them invisible, thereby making it easier to browse the
 |   |   |                             # rest of the scene.
 |   |   |                             #
 │   │   ├── my_actor_0000             #
