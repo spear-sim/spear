@@ -17,8 +17,8 @@ SpearSim                               # Our top-level Unreal project folder: sp
 |   |   |                              # Kujiale, StarterContent} directories, but is not allowed to refer to assets in other 
 |   |   |                              # scene directories, e.g., my_scene_0000 is not allowed to refer to assets in the
 |   |   |                              # my_scene_0001 directory below. This restriction makes it easier to support an editing 
-|   |   |                              # workflow where developers only need to download a single subdirectory in order to obtain 
-|   |   |                              # a self-contained copy of a scene.
+|   |   |                              # workflow where a developer only needs to download a single subdirectory in order to 
+|   |   |                              # obtain a self-contained copy of a scene.
 |   |   |                              #
 |   |   ├── ...                        #
 |   |   ├── my_scene_0000              #
