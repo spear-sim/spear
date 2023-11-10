@@ -2,6 +2,8 @@
 
 We represent each SPEAR scene as a distinct Unreal _map_. The Unreal documentation sometimes refers to a _map_ as a _level_. However, we prefer the term _scene_ in this document because we think it is more familiar to the embodied AI community.
 
+## Filesystem
+
 For each scene, we expect it to be organized on the filesystem as follows. If a scene is organized in this way, then our tools will be able to do everything they need to do, i.e., export the scene for use in a third-party physics simulator, and generate a `pak` file that wil enable our `spear` Python module to load the scene.
 
 ```
@@ -37,7 +39,9 @@ SpearSim                               # Our top-level Unreal project folder: sp
 └── ...                                #
 ```
 
-## Outliner
+## Unreal Editor
+
+### Outliner pane
 
 A scene can be loaded in the Unreal Editor by opening `spear/cpp/unreal_projects/SpearSim/SpearSim.uproject`, and then double-clicking on `/Game/Scenes/my_scene_0000/Maps/my_scene_0000.umap` in the _Content Browser_. Once the scene is loaded, we can examine the logical layout of the scene in the _Outliner_ pane, which we expect to be organized as follows.
 
@@ -106,7 +110,9 @@ my_scene_0000                          # We name each scene (using a lower_case_
 - Naming conventions should be consistent across scenes.
 - The type of each actor in `my_scene_0000/Meshes` should be `StaticMeshActor` if it is not articulated, and `Actor` if it is articulated. It is necessary to use the `Actor` type for articulated actors so they can be simulated correctly. Although it is not strictly necessary to use the `StaticMeshActor` type for non-articulated actors, they have a different icon than `Actors` in the _Outliner_ pane, so we use `StaticMeshActor` for non-articulated actors to visually distinguish them from articulated actors.
 
-## StaticMeshActors
+### Details pane
+
+#### `StaticMeshActor`
 
 For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Components_ pane within the _Details_ pane is organized as follows.
 
@@ -131,7 +137,7 @@ my_actor_0000
 - Extra layers of grouping hierarchy can be achieved by creating a tree of `StaticMeshComponents`. See the `Actors` section below for a sensible naming convention.
 - The pivot location of each `StaticMeshActor` should be set according to the following rules. The xy-coordinates of the actor's pivot should equal the xy-coordinates of the actor's axis-aligned bounding box center, and the z-coordinate of the pivot should equal the minimum z-coordinate of its axis-aligned bounding box. This is the convention for various props that ship with the Unreal Engine (e.g., the props in our `debug_0000` scene for examples).
 
-## Actors
+#### `Actor`
 
 For each `Actor` in `my_scene_0000/Meshes`, the _Components_ pane within the _Details_ pane is organized as follows.
 
@@ -142,8 +148,8 @@ my_actor_0000
     |                                  # If the Actor is composed of multiple StaticMeshComponents, the
     |                                  # additional StaticMeshComponents can be added as children of a parent
     |                                  # StaticMeshComponent. Each parent StaticMeshComponent should be named
-    |                                  # "group_0000", "group_0001", etc and each child StaticMeshComponent
-    |                                  # should be named "mesh_0000", "mesh_0001", etc.
+    |                                  # group_0000, group_0001, etc and each child StaticMeshComponent
+    |                                  # should be named mesh_0000, mesh_0001, etc.
     |                                  #
     ├── urdf_joint_0000                # A UrdfJointComponent is a PhysicsConstraintComponent with additional state
     |                                  # and functionality. Each joint connects a parent and a child component, and
@@ -171,4 +177,4 @@ my_actor_0000
 ```
 
 - All rules for `StaticMeshActors` described above also apply to `Actors`.
-- When configuring a joint, the convention in Unreal is for _Component 1_ to be the child and _Component 2_ to be the parent. This convention is relevant, e.g., when the "Parent Dominates" flag is enabled on the joint.
+- When configuring a joint, the convention in Unreal is for _Component 1_ to be the child and _Component 2_ to be the parent. This convention is relevant, e.g., when the _Parent Dominates_ flag is enabled on the joint.
