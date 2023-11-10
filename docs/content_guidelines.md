@@ -11,8 +11,7 @@ my_scene_0000                         # We name each scene (or "map" or "level" 
 |                                     # lower_case_with_underscore naming convention and a four digit suffix
 |                                     # (e.g., "apartment_0000", "apartment_0001", etc).
 │                                     #
-├── Debug                             # Actors that are useful for debugging are cleanly separated from the rest of the
-|   |                                 # scene here.
+├── Debug                             # Actors that are useful for debugging are kept here.
 │   │                                 #
 │   ├── my_debug_actor_0000           #
 │   ├── my_debug_actor_0001           #
