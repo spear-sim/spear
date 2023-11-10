@@ -77,14 +77,15 @@ For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Compone
 
 ```
 my_actor_0000
-└── StaticMeshComponent               # Each StaticMeshActor has an immutable root component named
-    |                                 # "StaticMeshComponent". If the StaticMeshActor is composed of multiple  
-    |                                 # StaticMeshComponents, the StaticMeshComponents can be added as children
-    |                                 # of the top-level StaticMeshComponent, using the names "mesh_0000",
-    |                                 # "mesh_0001", etc. This approach enables the StaticMeshComponents to be 
-    |                                 # moved together in the editor, and enables them to move together during a
-    |                                 # a physics simulation, without needing to explicitly merge all the 
-    |                                 # actor's geometry together into a single StaticMeshComponent.
+└── StaticMeshComponent               # Each StaticMeshActor has an immutable root component named "StaticMeshComponent".
+    |
+    |                                 # If the StaticMeshActor is composed of multiple StaticMeshComponents,  
+    |                                 # the additional StaticMeshComponents can be added as children of the
+    |                                 # top-level StaticMeshComponent, using the names "mesh_0000", "mesh_0001",
+    |                                 # etc. This approach enables the child StaticMeshComponents to be easily 
+    |                                 # selected and moved together in the editor, and enables them to move
+    |                                 # together during a physics simulation, without needing to explicitly
+    |                                 # merge all the actor's geometry together into a single StaticMeshComponent. 
     |                                 #
     ├── mesh_0000                     #
     ├── mesh_0001                     #
@@ -101,28 +102,29 @@ For each `Actor` in `my_scene_0000/Meshes`, the _Components_ pane within the _De
 ```
 my_actor_0000
 └── DefaultSceneRoot                  # Each Actor has an immutable root component named "DefaultSceneRoot".
-    |                                 # If the StaticMeshActor is composed of multiple StaticMeshComponents,  
-    |                                 # the additional StaticMeshComponents can be added as children of the
-    |                                 # top-level StaticMeshComponent, using the names "mesh_0000", "mesh_0001",
-    |                                 # etc. This approach enables the child StaticMeshComponents to be easily 
-    |                                 # selected and moved together in the editor, and enables them to move
-    |                                 # together during a physics simulation, without needing to explicitly
-    |                                 # merge all the actor's geometry together into a single StaticMeshComponent. 
+    |
+    |                                 # If the Actor is composed of multiple StaticMeshComponents, the
+    |                                 # additional StaticMeshComponents can be added as children of a parent
+    |                                 # StaticMeshComponent. Each parent StaticMeshComponent should be named
+    |                                 # "group_0000", "group_0001", etc and each child StaticMeshComponent
+    |                                 # should be named "mesh_0000", "mesh_0001", etc.
     |                                 #
     ├── urdf_joint_0000               # A UrdfJointComponent is a PhysicsConstraintComponent with additional state
     |                                 # and functionality. Each joint connects a parent and a child component, and
     |                                 # the joint component itself should be a sibling of the child component it is
-    |                                 # connecting. We do not allow joints to connect sibling components, even
-    |                                 # though this is permitted in Unreal, because this type of joint is not always
-    |                                 # easy to simulate in other physics engines.
+    |                                 # connecting. We do not allow joints to connect sibling components, or grandparents
+    |                                 # and grandchildren, even though this is permitted in Unreal, because this
+    |                                 # type of joint is not always easy to simulate in other physics engines.
     |                                 #
     ├── urdf_joint_0001               #
     ├── ...                           #
     |                                 #
     ├── group_0000                    # A StaticMeshComponent that is only used to group other StaticMeshComponents
-    |   |                             # together.
+    |   |                             # together should be named "group_0000", "group_0001", etc.
     |   |                             #
-    |   ├── mesh_0000                 # A StaticMeshComponent that contains non-trivial geometry.
+    |   ├── mesh_0000                 # A StaticMeshComponent that contains non-trivial geometry should be named
+    |   |                             # "mesh_0000", "mesh_0001", etc.
+    |   |                             #
     |   ├── mesh_0001                 #
     |   └── ...                       #
     ├── group_0001                    #
