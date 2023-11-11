@@ -122,18 +122,18 @@ For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Compone
 my_actor_0000
 └── StaticMeshComponent                # Each StaticMeshActor has a root component named "StaticMeshComponent".
     |                                  #
-    ├── metadata_0000                  # Each StaticMeshActor must have a MetadataComponent that is a child of the
-    |                                  # top-level StaticMeshComponent in order to show up in semantic segmentation
-    |                                  # images, to be referred to by name in our spear Python module, and to be
-    |                                  # exported to other physics simulators correctly.
-    |                                  #
-    ├── mesh_0000                      # If the StaticMeshActor is composed of multiple StaticMeshComponents,  
+    |                                  # If the StaticMeshActor is composed of multiple StaticMeshComponents,  
     |                                  # the additional StaticMeshComponents can be added as children of the
     |                                  # top-level StaticMeshComponent, using the names "mesh_0000", "mesh_0001",
     |                                  # etc. This approach enables the child StaticMeshComponents to be easily 
     |                                  # selected and moved together in the editor, and enables them to move
     |                                  # together during a physics simulation, without needing to explicitly
     |                                  # merge all the actor's geometry together into a single StaticMeshComponent. 
+    |                                  #
+    ├── metadata_0000                  # Each StaticMeshActor must have a MetadataComponent that is a child of the
+    |                                  # top-level StaticMeshComponent in order to show up in semantic segmentation
+    |                                  # images, to be referred to by name in our spear Python module, and to be
+    |                                  # exported to other physics simulators correctly.
     |                                  #
     ├── mesh_0000                      #
     ├── mesh_0001                      #
@@ -158,12 +158,18 @@ my_actor_0000
     |                                  # group_0000, group_0001, etc and each child StaticMeshComponent
     |                                  # should be named mesh_0000, mesh_0001, etc.
     |                                  #
+    ├── metadata_0000                  # Each Actor must have a MetadataComponent that is a child of the top-level
+    |                                  # Component in order to show up in semantic segmentation images, to be
+    |                                  # referred to by name in our spear Python module, and to be exported to
+    |                                  # other physics simulators correctly.
+    |                                  #
     ├── urdf_joint_0000                # A UrdfJointComponent is a PhysicsConstraintComponent with additional state
     |                                  # and functionality. Each joint connects a parent and a child component, and
     |                                  # the joint component itself should be a sibling of the child component it is
-    |                                  # connecting. We do not allow joints to connect sibling components, or grandparents
-    |                                  # and grandchildren, even though this is permitted in Unreal, because this
-    |                                  # type of joint is not always easy to simulate in other physics engines.
+    |                                  # connecting. We do not allow joints to connect sibling components, or
+    |                                  # grandparents and grandchildren, even though this is permitted in Unreal, 
+    |                                  # because this type of joint is not always easy to simulate in other physics
+    |                                  # engines.
     |                                  #
     ├── urdf_joint_0001                #
     ├── ...                            #
