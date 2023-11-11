@@ -120,7 +120,7 @@ For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Compone
 
 ```
 my_actor_0000
-└── StaticMeshComponent                # Each StaticMeshActor has an immutable root component named "StaticMeshComponent".
+└── StaticMeshComponent                # Each StaticMeshActor has a root component named "StaticMeshComponent".
     |                                  #
     |                                  # If the StaticMeshActor is composed of multiple StaticMeshComponents,  
     |                                  # the additional StaticMeshComponents can be added as children of the
@@ -145,7 +145,7 @@ For each `Actor` in `my_scene_0000/Meshes`, the _Components_ pane within the _De
 
 ```
 my_actor_0000
-└── DefaultSceneRoot                   # Each Actor has an immutable root component named "DefaultSceneRoot".
+└── DefaultSceneRoot                   # Each Actor has a root component named "DefaultSceneRoot".
     |                                  #
     |                                  # If the Actor is composed of multiple StaticMeshComponents, the
     |                                  # additional StaticMeshComponents can be added as children of a parent
