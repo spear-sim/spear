@@ -174,10 +174,10 @@ my_actor_0000
     ├── urdf_joint_0001                #
     ├── ...                            #
     |                                  #
-    ├── group_0000                     # A StaticMeshComponent that is only used to group other StaticMeshComponents
+    ├── group_0000                     # StaticMeshComponents that are only used to group other StaticMeshComponents
     |   |                              # together should be named "group_0000", "group_0001", etc.
     |   |                              #
-    |   ├── mesh_0000                  # A StaticMeshComponent that contains non-trivial geometry should be named
+    |   ├── mesh_0000                  # StaticMeshComponents that contain non-trivial geometry should be named
     |   |                              # "mesh_0000", "mesh_0001", etc.
     |   |                              #
     |   ├── mesh_0001                  #
