@@ -122,7 +122,12 @@ For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Compone
 my_actor_0000
 └── StaticMeshComponent                # Each StaticMeshActor has a root component named "StaticMeshComponent".
     |                                  #
-    |                                  # If the StaticMeshActor is composed of multiple StaticMeshComponents,  
+    ├── metadata_0000                  # Each StaticMeshActor must have a MetadataComponent that is a child of the
+    |                                  # top-level StaticMeshComponent in order to show up in semantic segmentation
+    |                                  # images, to be referred to by name in our spear Python module, and to be
+    |                                  # exported to other physics simulators correctly.
+    |                                  #
+    ├── mesh_0000                      # If the StaticMeshActor is composed of multiple StaticMeshComponents,  
     |                                  # the additional StaticMeshComponents can be added as children of the
     |                                  # top-level StaticMeshComponent, using the names "mesh_0000", "mesh_0001",
     |                                  # etc. This approach enables the child StaticMeshComponents to be easily 
