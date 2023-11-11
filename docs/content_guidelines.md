@@ -122,22 +122,20 @@ For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Compone
 my_actor_0000
 └── StaticMeshComponent                # Each StaticMeshActor has a root component named "StaticMeshComponent".
     |                                  #
-    |                                  # If the StaticMeshActor is composed of multiple StaticMeshComponents,  
-    |                                  # the additional StaticMeshComponents can be added as children of the
-    |                                  # top-level StaticMeshComponent, using the names "mesh_0000", "mesh_0001",
-    |                                  # etc. This approach enables the child StaticMeshComponents to be easily 
-    |                                  # selected and moved together in the editor, and enables them to move
-    |                                  # together during a physics simulation, without needing to explicitly
-    |                                  # merge all the actor's geometry together into a single StaticMeshComponent. 
-    |                                  #
-    ├── metadata_0000                  # Each StaticMeshActor must have a MetadataComponent that is a child of the
-    |                                  # top-level StaticMeshComponent in order to show up in semantic segmentation
-    |                                  # images, to be referred to by name in our spear Python module, and to be
-    |                                  # exported to other physics simulators correctly.
+    |                                  # If the StaticMeshActor is composed of multiple StaticMeshComponents, the additional
+    |                                  # StaticMeshComponents can be added as children of the top-level StaticMeshComponent,
+    |                                  # using the names "mesh_0000", "mesh_0001", etc. This approach enables the child
+    |                                  # StaticMeshComponents to be easily selected and moved together in the editor, and
+    |                                  # enables them to move together during a physics simulation, without needing to
+    |                                  # explicitly merge all the actor's geometry together into a single StaticMeshComponent. 
     |                                  #
     ├── mesh_0000                      #
     ├── mesh_0001                      #
-    └── ...                            #
+    ├── ...                            #
+    └── metadata_0000                  # Each StaticMeshActor must have a MetadataComponent that is a child of the top-level
+                                       # StaticMeshComponent in order to show up in semantic segmentation images, to be
+                                       # referred to by name in our spear Python module, and to control the behavior of our
+                                       # tools when exporting to other physics simulators.
 ```
 
 - If the parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, then the mesh assigned to the parent should be `/Game/Common/Meshes/SM_Dummy`. If it is desired for the group to participate in a physics simulation, the _Simulate Phyiscs_ flag should be enabled for the parent but not for the children. This is necessary for the `StaticMeshComponents` to be simulated correctly.
@@ -152,33 +150,16 @@ For each `Actor` in `my_scene_0000/Meshes`, the _Components_ pane within the _De
 my_actor_0000
 └── DefaultSceneRoot                   # Each Actor has a root component named "DefaultSceneRoot".
     |                                  #
-    |                                  # If the Actor is composed of multiple StaticMeshComponents, the
-    |                                  # additional StaticMeshComponents can be added as children of a parent
-    |                                  # StaticMeshComponent. Each parent StaticMeshComponent should be named
-    |                                  # group_0000, group_0001, etc and each child StaticMeshComponent
-    |                                  # should be named mesh_0000, mesh_0001, etc.
+    |                                  # If the Actor is composed of multiple StaticMeshComponents, the additional
+    |                                  # StaticMeshComponents can be added as children of a parent StaticMeshComponent.
+    |                                  # Each parent StaticMeshComponent should be named group_0000, group_0001, etc and
+    |                                  # each child StaticMeshComponent should be named mesh_0000, mesh_0001, etc.
     |                                  #
-    ├── metadata_0000                  # Each Actor must have a MetadataComponent that is a child of the top-level
-    |                                  # Component in order to show up in semantic segmentation images, to be
-    |                                  # referred to by name in our spear Python module, and to be exported to
-    |                                  # other physics simulators correctly.
-    |                                  #
-    ├── urdf_joint_0000                # A UrdfJointComponent is a PhysicsConstraintComponent with additional state
-    |                                  # and functionality. Each joint connects a parent and a child component, and
-    |                                  # the joint component itself should be a sibling of the child component it is
-    |                                  # connecting. We do not allow joints to connect sibling components, or
-    |                                  # grandparents and grandchildren, even though this is permitted in Unreal, 
-    |                                  # because this type of joint is not always easy to simulate in other physics
-    |                                  # engines.
-    |                                  #
-    ├── urdf_joint_0001                #
-    ├── ...                            #
-    |                                  #
-    ├── group_0000                     # StaticMeshComponents that are only used to group other StaticMeshComponents
-    |   |                              # together should be named "group_0000", "group_0001", etc.
+    ├── group_0000                     # StaticMeshComponents that are only used to group other StaticMeshComponents together
+    |   |                              # should be named "group_0000", "group_0001", etc.
     |   |                              #
-    |   ├── mesh_0000                  # StaticMeshComponents that contain non-trivial geometry should be named
-    |   |                              # "mesh_0000", "mesh_0001", etc.
+    |   ├── mesh_0000                  # StaticMeshComponents that contain non-trivial geometry should be named "mesh_0000",
+    |   |                              # "mesh_0001", etc.
     |   |                              #
     |   ├── mesh_0001                  #
     |   └── ...                        #
@@ -186,6 +167,19 @@ my_actor_0000
     |   ├── mesh_0002                  #
     |   ├── mesh_0003                  #
     |   └── ...                        #
+    ├── metadata_0000                  # Each Actor must have a MetadataComponent that is a child of the top-level Component
+    |                                  # in order to show up in semantic segmentation images, to be referred to by name in
+    |                                  # our spear Python module, and to control the behavior of our tools when exporting to
+    |                                  # other physics simulators.
+    |                                  #
+    ├── urdf_joint_0000                # A UrdfJointComponent is a PhysicsConstraintComponent with additional state and
+    |                                  # functionality. Each joint connects a parent and a child component, and the joint
+    |                                  # component itself should be a sibling of the child component it is connecting. We do
+    |                                  # not allow joints to connect sibling components, or grandparents and grandchildren,
+    |                                  # even though this is permitted in Unreal, because this type of joint is not always
+    |                                  # easy to simulate in other physics engines.
+    |                                  #
+    ├── urdf_joint_0001                #
     └── ...                            #
 ```
 
