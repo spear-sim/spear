@@ -152,10 +152,10 @@ my_actor_0000
     |                                  #
     |                                  # We expect Actors to be articulated, and therefore they will be composed of multiple
     |                                  # StaticMeshComponents. The additional StaticMeshComponents should be added as children
-    |                                  # of a parent StaticMeshComponent. Each StaticMeshComponent that is used to group other
-    |                                  # StaticMeshComponents together should be should be named "group_0000", "group_0001",
-    |                                  # etc. Each StaticMeshComponent that is not used for grouping and contains non-trivial
-    |                                  # scene geometry should be named "mesh_0000", "mesh_0001", etc.
+    |                                  # of a parent StaticMeshComponent. Each StaticMeshComponent that is only used to group
+    |                                  # other StaticMeshComponents together should be should be named "group_0000",
+    |                                  # "group_0001", etc. Each StaticMeshComponent that contains non-trivial scene geometry 
+    |                                  # should be named "mesh_0000", "mesh_0001", etc.
     |                                  #
     ├── group_0000                     #
     |   |                              #
