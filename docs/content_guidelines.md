@@ -172,12 +172,12 @@ my_actor_0000
     |                                  # our spear Python module, and to control the behavior of our tools when exporting to
     |                                  # other physics simulators.
     |                                  #
-    ├── urdf_joint_0000                # A UrdfJointComponent is a PhysicsConstraintComponent with additional state and
-    |                                  # functionality. Each joint connects a parent and a child component, and the joint
-    |                                  # component itself should be a sibling of the child component it is connecting. We do
-    |                                  # not allow joints to connect sibling components, or grandparents and grandchildren,
-    |                                  # even though this is permitted in Unreal, because this type of joint is not always
-    |                                  # easy to simulate in other physics engines.
+    ├── urdf_joint_0000                # A UrdfJointComponent represents a joint, and is a PhysicsConstraintComponent with
+    |                                  # additional state and functionality. Each joint connects a parent and a child
+    |                                  # component, and the joint component itself should be a sibling of the child component
+    |                                  # it is connecting. We do not allow joints to connect sibling components, or
+    |                                  # grandparents and grandchildren, even though this is permitted in Unreal, because
+    |                                  # this type of joint cannot always be simulated efficiently in other physics engines.
     |                                  #
     ├── urdf_joint_0001                #
     └── ...                            #
