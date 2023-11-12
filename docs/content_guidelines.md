@@ -24,8 +24,8 @@ SpearSim                               # Our top-level Unreal project folder: sp
 |   |   ├── my_scene_0000              #
 |   |   |   ├── ...                    #
 |   |   |   ├── Maps                   #
-|   |   |   |   └── my_scene_0000.umap # There must be a umap file with the same name as the scene in the Maps directory. Our 
-|   |   |   |                          # code makes this assumption to support loading scenes by name.
+|   |   |   |   └── my_scene_0000.umap # There must be exactly one umap file with the same name as the scene in the scene's
+|   |   |   |                          # Maps directory. Our code imposes this requirement to support loading scenes by name.
 |   |   |   |                          #
 |   |   |   └── ...                    #
 |   |   |                              #
