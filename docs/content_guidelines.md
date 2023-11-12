@@ -170,9 +170,9 @@ my_actor_0000
     |   ├── mesh_0003                  #
     |   └── ...                        #
     ├── metadata_0000                  # Each Actor must have a MetadataComponent that is a child of the top-level Component
-    |                                  # in order to show up in semantic segmentation images, to be referred to by name in
-    |                                  # our spear Python module, and to control the behavior of our tools when exporting to
-    |                                  # other physics simulators.
+    |                                  # in order to show up in the spear Python module's semantic segmentation images, to be 
+    |                                  # referred to by name in the spear Python module, and to precisely control how our export
+    |                                  # tools should export this Actor to other physics simulators.
     |                                  #
     ├── urdf_joint_0000                # A UrdfJointComponent represents a joint, and is implemented as a derived class of
     |                                  # PhysicsConstraintComponent with additional state and functionality. Each joint connects
