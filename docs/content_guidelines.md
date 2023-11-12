@@ -132,10 +132,11 @@ my_actor_0000
     ├── mesh_0000                      #
     ├── mesh_0001                      #
     ├── ...                            #
+    |                                  #
     └── metadata_0000                  # Each StaticMeshActor must have a MetadataComponent that is a child of the top-level
                                        # StaticMeshComponent in order to show up in semantic segmentation images, to be referred
-                                       # to by name in our spear Python module, and to control the behavior of our tools when
-    |                                  # exporting to other physics simulators.
+                                       # to by name in our spear Python module, and to precisely control how our export tools
+                                       # should export this StaticMeshActor to other physics simulators.
 ```
 
 - If the parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, then the mesh assigned to the parent should be `/Game/Common/Meshes/SM_Dummy`. If it is desired for the group to participate in a physics simulation, the _Simulate Phyiscs_ flag should be enabled for the parent but not for the children. This is necessary for the `StaticMeshComponents` to be simulated correctly.
@@ -158,17 +159,14 @@ my_actor_0000
     |                                  # should be named "mesh_0000", "mesh_0001", etc.
     |                                  #
     ├── group_0000                     #
-    |   |                              #
-    |   |                              #
     |   ├── mesh_0000                  #
-    |   |                              #
-    |   |                              #
     |   ├── mesh_0001                  #
     |   └── ...                        #
     ├── group_0001                     #
     |   ├── mesh_0002                  #
     |   ├── mesh_0003                  #
     |   └── ...                        #
+    |                                  #
     ├── metadata_0000                  # Each Actor must have a MetadataComponent that is a child of the top-level Component
     |                                  # in order to show up in the spear Python module's semantic segmentation images, to be 
     |                                  # referred to by name in the spear Python module, and to precisely control how our export
