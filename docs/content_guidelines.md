@@ -150,16 +150,18 @@ For each `Actor` in `my_scene_0000/Meshes`, the _Components_ pane within the _De
 my_actor_0000
 └── DefaultSceneRoot                   # Each Actor has a root component named "DefaultSceneRoot".
     |                                  #
-    |                                  # If the Actor is composed of multiple StaticMeshComponents, the additional
-    |                                  # StaticMeshComponents can be added as children of a parent StaticMeshComponent.
-    |                                  # Each parent StaticMeshComponent should be named group_0000, group_0001, etc and
-    |                                  # each child StaticMeshComponent should be named mesh_0000, mesh_0001, etc.
+    |                                  # We expect Actors to be articulated, and therefore they will be composed of multiple
+    |                                  # StaticMeshComponents. The additional StaticMeshComponents should be added as children
+    |                                  # of a parent StaticMeshComponent. Each StaticMeshComponent that is used to group other
+    |                                  # StaticMeshComponents together should be should be named "group_0000", "group_0001",
+    |                                  # etc. Each StaticMeshComponent that is not used for grouping and contains non-trivial
+    |                                  # scene geometry should be named "mesh_0000", "mesh_0001", etc.
     |                                  #
-    ├── group_0000                     # StaticMeshComponents that are only used to group other StaticMeshComponents together
-    |   |                              # should be named "group_0000", "group_0001", etc.
+    ├── group_0000                     #
     |   |                              #
-    |   ├── mesh_0000                  # StaticMeshComponents that contain non-trivial geometry should be named "mesh_0000",
-    |   |                              # "mesh_0001", etc.
+    |   |                              #
+    |   ├── mesh_0000                  #
+    |   |                              #
     |   |                              #
     |   ├── mesh_0001                  #
     |   └── ...                        #
@@ -172,12 +174,13 @@ my_actor_0000
     |                                  # our spear Python module, and to control the behavior of our tools when exporting to
     |                                  # other physics simulators.
     |                                  #
-    ├── urdf_joint_0000                # A UrdfJointComponent represents a joint, and is a PhysicsConstraintComponent with
-    |                                  # additional state and functionality. Each joint connects a parent and a child
-    |                                  # component, and the joint component itself should be a sibling of the child component
-    |                                  # it is connecting. We do not allow joints to connect sibling components, or
-    |                                  # grandparents and grandchildren, even though this is permitted in Unreal, because
-    |                                  # this type of joint cannot always be simulated efficiently in other physics engines.
+    ├── urdf_joint_0000                # A UrdfJointComponent represents a joint, and is implemented as a derived class of
+    |                                  # PhysicsConstraintComponent with additional state and functionality. Each joint connects
+    |                                  # a parent and a child component, and the joint component itself should be a sibling of
+    |                                  # the child component it is connecting. In our guidelines, we do not allow joints to
+    |                                  # connect sibling components, or grandparents and grandchildren, even though this would
+    |                                  # be permitted in Unreal, because this type of joint cannot always be simulated
+    |                                  # efficiently in other physics engines.
     |                                  #
     ├── urdf_joint_0001                #
     └── ...                            #
