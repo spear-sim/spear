@@ -28,7 +28,6 @@ SpearSim                               # Our top-level Unreal project folder: sp
 |   |   |   |                          # Maps directory. Our code imposes this requirement to support loading scenes by name.
 |   |   |   |                          #
 |   |   |   └── ...                    #
-|   |   |                              #
 |   |   ├── my_scene_0001              #
 |   |   |   ├── ...                    #
 |   |   |   ├── Maps                   #
@@ -56,7 +55,6 @@ my_scene_0000                          # We name each scene (using a lower_case_
 │   ├── my_debug_actor_0000            #
 │   ├── my_debug_actor_0001            #
 │   └── ...                            #
-│                                      #
 ├── Meshes                             # All Actors that represent scene geometry are kept here.
 |   |                                  #
 │   ├── 01_my_semantic_category        # We create a subdirectory for each semantic category using a lower_case_with_underscore
@@ -76,7 +74,6 @@ my_scene_0000                          # We name each scene (using a lower_case_
 │   │   └── ...                        #
 │   ├── 02_my_semantic_category        #
 │   └── ...                            #
-│                                      #
 ├── Navigation                         # All navigation-related Actors are kept here. For convenience, we allow content here to 
 |   |                                  # deviate from our usual naming conventions.
 │   |                                  #
@@ -100,7 +97,6 @@ my_scene_0000                          # We name each scene (using a lower_case_
 │   └── Sky                            #
 │       ├── SkyAtmosphere              #
 │       └── VolumetricCloud            #
-│                                      #
 └── Settings                           # All settings-related Actors are kept here.  For convenience, we allow content here to 
     |                                  # deviate from our usual naming conventions.
     |                                  #
@@ -132,7 +128,6 @@ my_actor_0000
     ├── mesh_0000                      #
     ├── mesh_0001                      #
     ├── ...                            #
-    |                                  #
     └── metadata_0000                  # Each StaticMeshActor must have a MetadataComponent that is a child of the top-level
                                        # StaticMeshComponent in order to show up in semantic segmentation images, to be referred
                                        # to by name in our spear Python module, and to precisely control how our export tools
@@ -166,7 +161,6 @@ my_actor_0000
     |   ├── mesh_0002                  #
     |   ├── mesh_0003                  #
     |   └── ...                        #
-    |                                  #
     ├── metadata_0000                  # Each Actor must have a MetadataComponent that is a child of the top-level Component
     |                                  # in order to show up in the spear Python module's semantic segmentation images, to be 
     |                                  # referred to by name in the spear Python module, and to precisely control how our export
