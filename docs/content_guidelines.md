@@ -13,7 +13,7 @@ SpearSim                               # Our top-level Unreal project folder: sp
 |   ├── Common                         # Common assets are kept in the {Common, Kujiale, StarterContent} directories.
 |   |                                  #
 |   ├── Kujiale                        #
-|   ├── Scenes                         # We name each scene (using a lower_case_with_underscore naming convention and a four
+|   ├── Scenes                         # We name each scene using a lower_case_with_underscore naming convention and a four
 |   |   |                              # digit suffix (e.g., "apartment_0000", "apartment_0001", etc).
 |   |   |                              #
 |   |   |                              # Each scene inside the Scenes directory is allowed to refer to assets in the {Common,
