@@ -116,7 +116,7 @@ my_scene_0000                          #
 For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Components_ pane within the _Details_ pane is organized as follows.
 
 ```
-my_actor_0000
+my_actor_0000                          #
 └── StaticMeshComponent                # Each StaticMeshActor has a root component named "StaticMeshComponent".
     |                                  #
     |                                  # If the StaticMeshActor is composed of multiple StaticMeshComponents, the additional
@@ -144,7 +144,7 @@ my_actor_0000
 For each `Actor` in `my_scene_0000/Meshes`, the _Components_ pane within the _Details_ pane is organized as follows.
 
 ```
-my_actor_0000
+my_actor_0000                          #
 └── DefaultSceneRoot                   # Each Actor has a root component named "DefaultSceneRoot".
     |                                  #
     |                                  # We expect Actors to be articulated, and therefore they will be composed of multiple
