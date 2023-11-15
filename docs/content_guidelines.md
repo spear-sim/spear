@@ -13,7 +13,10 @@ SpearSim                               # Our top-level Unreal project folder: sp
 |   ├── Common                         # Common assets are kept in the {Common, Kujiale, StarterContent} directories.
 |   |                                  #
 |   ├── Kujiale                        #
-|   ├── Scenes                         # Each scene inside the Scenes directory is allowed to refer to assets in the {Common,
+|   ├── Scenes                         # We name each scene (using a lower_case_with_underscore naming convention and a four
+|   |   |                              # digit suffix (e.g., "apartment_0000", "apartment_0001", etc).
+|   |   |                              #
+|   |   |                              # Each scene inside the Scenes directory is allowed to refer to assets in the {Common,
 |   |   |                              # Kujiale, StarterContent} directories, but is not allowed to refer to assets in other 
 |   |   |                              # scene directories, e.g., my_scene_0000 is not allowed to refer to assets in the
 |   |   |                              # my_scene_0001 directory below. This restriction makes it easier to support an editing 
@@ -47,9 +50,7 @@ A scene can be loaded in the Unreal Editor by opening `spear/cpp/unreal_projects
 For each scene, the _Outliner_ pane is organized as follows.
 
 ```
-my_scene_0000                          # We name each scene (using a lower_case_with_underscore naming convention and a four digit
-|                                      # suffix (e.g., "apartment_0000", "apartment_0001", etc).
-│                                      #
+my_scene_0000                          #
 ├── Debug                              # Actors that are useful for debugging are kept here.
 │   │                                  #
 │   ├── my_debug_actor_0000            #
