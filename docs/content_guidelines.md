@@ -57,11 +57,11 @@ my_scene_0000                          # We name each scene (using a lower_case_
 │   └── ...                            #
 ├── Meshes                             # All Actors that represent scene geometry are kept here.
 |   |                                  #
-│   ├── 01_my_semantic_category        # We create a subdirectory for each semantic category using a lower_case_with_underscore
-|   |   |                              # naming convention and a two digit prefix. We assign each actor to a particular
-|   |   |                              # semantic category by placing the Actor in that category's subdirectory. Note
-|   |   |                              # that it is possible for an individual StaticMeshComponent on an Actor to override
-|   |   |                              # the actor's assigned semantic category.
+│   ├── 0001_my_semantic_category      # We create a subdirectory for each semantic category using a lower_case_with_underscore
+|   |   |                              # naming convention and a four digit prefix. We assign each actor to a particular
+|   |   |                              # semantic category by placing the Actor in that category's subdirectory. Semantic ID 0
+|   |   |                              # is reserved and should not be used here. Note that it is possible for an individual
+|   |   |                              # StaticMeshComponent on an Actor to override the actor's assigned semantic category.
 |   |   |                              #
 |   |   |                              # We choose to encode semantic annotations via this directory structure, because it
 |   |   |                              # makes it especially easy to browse each scene in the Unreal Editor. For example,
@@ -72,7 +72,7 @@ my_scene_0000                          # We name each scene (using a lower_case_
 │   │   ├── my_actor_0000              #
 │   │   ├── my_actor_0001              #
 │   │   └── ...                        #
-│   ├── 02_my_semantic_category        #
+│   ├── 0002_my_semantic_category      #
 │   └── ...                            #
 ├── Navigation                         # All navigation-related Actors are kept here. For convenience, we allow content here to 
 |   |                                  # deviate from our usual naming conventions.
