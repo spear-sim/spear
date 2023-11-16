@@ -22,7 +22,7 @@ The next step is to install the `spear` Python package as follows.
 
 ```console
 # create environment
-conda create --name spear-env python=3.8
+conda create --name spear-env python=3.10
 conda activate spear-env
 
 # install pip
