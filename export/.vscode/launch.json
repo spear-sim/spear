@@ -8,20 +8,30 @@
       "name": "processing",
       "type": "python",
       "request": "launch",
-      "program": "Python_Export_Pipeline/processing.py",
+      "program": "mujoco_export_pipeline/export_scene.py",
       "console": "integratedTerminal",
       "args": [
-        "-n", "6",
+        "-n", "2",
         "--rerun",
         "--scene_path", "${input:scene_path}",
-        // "--objects", "cabinet_02",
+        "--objects", "plate_02",
       ]
     },
     {
       "name": "report",
       "type": "python",
       "request": "launch",
-      "program": "Python_Export_Pipeline/report.py",
+      "program": "mujoco_export_pipeline/report.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--scene_path", "${input:scene_path}",
+      ]
+    },
+    {
+      "name": "repair",
+      "type": "python",
+      "request": "launch",
+      "program": "mujoco_export_pipeline/repair.py",
       "console": "integratedTerminal",
       "args": [
         "--scene_path", "${input:scene_path}",
@@ -43,7 +53,7 @@
   "inputs": [
     {
       "id": "scene_path",
-      "default": "scenes/kujiale_0000_new",
+      "default": "scenes/kujiale_0000",
       "description": "Scene Path",
       "type": "promptString",
     }

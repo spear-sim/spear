@@ -1,3 +1,4 @@
+import argparse
 from collections import namedtuple
 import json
 import math
@@ -9,10 +10,9 @@ import time
 osp = os.path
 ss = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 world = ss.get_editor_world()
-export_dir = osp.expanduser(osp.join('~', 'research', 'MuJoCo_Export_Pipeline', 'scenes', 'kujiale_0000', 'ue_export')) 
 
 
-def export_meshes(actor):
+def export_meshes(actor, export_dir):
   unreal.EditorLevelLibrary.set_selected_level_actors([actor, ])
   name = actor.get_actor_label()
   filename = osp.join(export_dir, f'{name}.gltf')
@@ -41,10 +41,20 @@ PhysicsConstraint = namedtuple(
 )
 MeshComponent = namedtuple('MeshComponent', ['decompose_method', 'decompose_group'])
 
+
 if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--scene_path', required=True)
+  args = parser.parse_args()
+  export_dir = osp.expanduser(osp.join(args.scene_path, 'ue_export'))
+  os.makedirs(export_dir, exist_ok=True)
+  
   # Iterate through the actors
   body_properties = {}
   for actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.Actor):
+    if isinstance(actor, unreal.CameraActor) or isinstance(actor, unreal.SceneCapture2D) or \
+      isinstance(actor, unreal.PointLight):
+      continue
     actor_name = actor.get_actor_label()
     if 'HDRIBackdrop' in actor_name:
       continue
@@ -54,7 +64,10 @@ if __name__ == '__main__':
     has_geometry = False
     i = 0
     for c in actor.get_components_by_class(unreal.StaticMeshComponent):
-      if c.get_editor_property('static_mesh').get_name() != 'SM_Dummy':
+      static_mesh = c.get_editor_property('static_mesh')
+      if static_mesh is None:
+        print(f'actor {actor_name} component {c.get_name()} does not have a static mesh')
+      elif static_mesh.get_name() != 'SM_Dummy':
         # TODO(samarth) get MeshComponent elements from UE component
         c_name = c.get_name()
         if c_name == 'StaticMeshComponent0':
@@ -64,7 +77,7 @@ if __name__ == '__main__':
         i += 1
 
     if has_geometry:
-      export_meshes(actor)
+      export_meshes(actor, export_dir)
     else:
       print(f'Actor {actor_name}, does not have geometry')
       continue
