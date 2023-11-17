@@ -8,6 +8,7 @@ For each scene, we expect it to be organized on the filesystem as follows. If a 
 
 ```
 SpearSim                               # Our top-level Unreal project folder: spear/cpp/unreal_projects/SpearSim
+|                                      #
 └── Content                            #
     ├── Common                         # Assets that are referenced in multiple scenes are kept in the Common directory.
     |                                  # If a collection of scenes needs to refer to additional common assets, those assets
@@ -180,3 +181,31 @@ my_actor_0000                          #
 
 - All rules for `StaticMeshActors` described above also apply to `Actors`.
 - When configuring a joint, the convention in Unreal is for _Component 1_ to be the child and _Component 2_ to be the parent. This convention is relevant, e.g., when the _Parent Dominates_ flag is enabled on the joint.
+
+### Content Browser pane
+
+For each scene, the _Content Browser_ pane is organized as follows.
+
+```
+All                                    # Our top-level Unreal project folder: spear/cpp/unreal_projects/SpearSim
+└── Content                            #
+    └── Scenes                         # We name each scene using a lower_case_with_underscore naming convention and a four
+        |                              # digit suffix (e.g., "apartment_0000", "apartment_0001", etc).
+        |                              #
+        |                              # Each scene inside the Scenes directory is allowed to refer to assets in common
+        |                              # directories, but is not allowed to refer to assets in other scene directories,
+        |                              # e.g., my_scene_0000 is not allowed to refer to assets in the my_scene_0001 directory
+        |                              # below. This restriction makes it easier to support an editing workflow where a
+        |                              # developer only needs to download a single subdirectory in order to obtain a
+        |                              # self-contained copy of a scene.
+        |                              #
+        ├── my_scene_0000              #
+        |   ├── Debug                  #
+        |   ├── Maps                   #
+        |   ├── Materials              #
+        |   └── Meshes                 #
+        ├── my_scene_0001              #
+        └── ...                        #
+```
+
+- In each collection of scenes, the `Debug`, `Maps`, `Materials`, `Meshes` directories can be organized using whatever naming conventions make sense for that collection. But whatever conventions are chosen, they should be consistent across the collection. For example, the `kujiale` scenes attempt to preserve the structure of the original raw Kujiale data in the _Content Browser_ pane, even though this structure is not easy to browse due to its use of long hexadecimal string names. In other words, we prioritize human-readability in the _Outliner_ and _Details_ panes, but we prioritize convenience and adherance to the structure of raw source data in the _Content Browser_.
