@@ -8,37 +8,36 @@ For each scene, we expect it to be organized on the filesystem as follows. If a 
 
 ```
 SpearSim                               # Our top-level Unreal project folder: spear/cpp/unreal_projects/SpearSim
-├── ...                                #
-├── Content                            #
-|   ├── Common                         # Common assets are kept in the {Common, Kujiale, StarterContent} directories.
-|   |                                  #
-|   ├── Kujiale                        #
-|   ├── Scenes                         # We name each scene using a lower_case_with_underscore naming convention and a four
-|   |   |                              # digit suffix (e.g., "apartment_0000", "apartment_0001", etc).
-|   |   |                              #
-|   |   |                              # Each scene inside the Scenes directory is allowed to refer to assets in the {Common,
-|   |   |                              # Kujiale, StarterContent} directories, but is not allowed to refer to assets in other 
-|   |   |                              # scene directories, e.g., my_scene_0000 is not allowed to refer to assets in the
-|   |   |                              # my_scene_0001 directory below. This restriction makes it easier to support an editing 
-|   |   |                              # workflow where a developer only needs to download a single subdirectory in order to 
-|   |   |                              # obtain a self-contained copy of a scene.
-|   |   |                              #
-|   |   ├── ...                        #
-|   |   ├── my_scene_0000              #
-|   |   |   ├── ...                    #
-|   |   |   ├── Maps                   #
-|   |   |   |   └── my_scene_0000.umap # There must be exactly one umap file with the same name as the scene in the scene's
-|   |   |   |                          # Maps directory. Our code imposes this requirement to support loading scenes by name.
-|   |   |   |                          #
-|   |   |   └── ...                    #
-|   |   ├── my_scene_0001              #
-|   |   |   ├── ...                    #
-|   |   |   ├── Maps                   #
-|   |   |   |   └── my_scene_0001.umap #
-|   |   |   └── ...                    #
-|   |   └── ...                        #
-|   └── StarterContent                 #
-└── ...                                #
+└── Content                            #
+    ├── Common                         # Assets that are referenced in multiple scenes are kept in the Common directory.
+    |                                  # If a collection of scenes needs to refer to additional common assets, those assets
+    |                                  # should be kept in sibling directories to Common (e.g., the kujiale scenes refer to
+    |                                  # assets in a Kujiale directory and a Megascans directory, the debug scenes refer to
+    |                                  # assets in a StarterContent directory, etc).
+    |                                  #
+    └── Scenes                         # We name each scene using a lower_case_with_underscore naming convention and a four
+        |                              # digit suffix (e.g., "apartment_0000", "apartment_0001", etc).
+        |                              #
+        |                              # Each scene inside the Scenes directory is allowed to refer to assets in common
+        |                              # directories, but is not allowed to refer to assets in other scene directories,
+        |                              # e.g., my_scene_0000 is not allowed to refer to assets in the my_scene_0001 directory
+        |                              # below. This restriction makes it easier to support an editing workflow where a
+        |                              # developer only needs to download a single subdirectory in order to obtain a
+        |                              # self-contained copy of a scene.
+        |                              #
+        ├── my_scene_0000              #
+        |   ├── ...                    #
+        |   ├── Maps                   #
+        |   |   └── my_scene_0000.umap # There must be exactly one umap file with the same name as the scene in the scene's
+        |   |                          # Maps directory. Our code imposes this requirement to support loading scenes by name.
+        |   |                          #
+        |   └── ...                    #
+        ├── my_scene_0001              #
+        |   ├── ...                    #
+        |   ├── Maps                   #
+        |   |   └── my_scene_0001.umap #
+        |   └── ...                    #
+        └── ...                        #
 ```
 
 ## Unreal Editor
