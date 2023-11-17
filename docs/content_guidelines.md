@@ -92,7 +92,11 @@ my_scene_0000                          #
 │   |   └── ExponentialHeightFog       #
 │   ├── HDRI                           #
 │   |   └── HDRIBackdrop               #
-│   ├── Lights                         #
+│   ├── Lights                         # Only indoor lights are allowed here. All indoor lights should be represented as a
+│   |   |                              # LightComponent attached to a StaticMeshActor or Actor in the Meshes directory. This
+│   |   |                              # convention is convenient because it will force the LightComponent to move together
+│   |   |                              # with the StaticMeshComponents that represent the light.
+│   |   |                              #
 │   |   ├── DirectionalLight           #
 │   |   └── SkyLight                   #
 │   └── Sky                            #
