@@ -139,9 +139,10 @@ my_actor_0000                          #
                                        # should export this StaticMeshActor to other physics simulators.
 ```
 
-- If the parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, and it is desired for the group to participate in a physics simulation, then the mesh assigned to the parent component should be `/Game/Common/Meshes/SM_Dummy`, and the _Simulate Phyiscs_ option should be enabled for the parent but not for the children. This is necessary for the group to be simulated correctly.
+- All options should be set to their default values unless noted here, or unless there is an good reason to deviate from the default values.
 - Extra layers of grouping hierarchy can be implemented by creating a tree of `StaticMeshComponents`. See the `Actor` section below for a sensible naming convention.
 - The pivot location of each `StaticMeshActor` should be set according to the following rules. The xy-coordinates of the actor's pivot should equal the xy-coordinates of the actor's axis-aligned bounding box center, and the z-coordinate of the pivot should equal the minimum z-coordinate of its axis-aligned bounding box. This is the convention for various props that ship with the Unreal Engine (e.g., the props in our `debug_0000` scene).
+- If the parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, and it is desired for the group to participate in a physics simulation, then the mesh assigned to the parent component should be `/Game/Common/Meshes/SM_Dummy`, and the _Simulate Phyiscs_ option should be enabled for the parent but not for the children. This is necessary for the group to be simulated correctly.
 - For each `StaticMeshComponent`, the _Collision Presets_ option should be set to _Default_. This configures the collision behavior of the component to be determined by the underlying mesh, rather than the component itself.
 
 #### `Actor`
@@ -207,6 +208,12 @@ All                                    #
 - The `Debug`, `Maps`, `Materials`, `Meshes` directories can be organized using whatever naming conventions make sense for a particular scene, but whatever convention is chosen, it should be as consistent as possible across scenes. For example, in the `kujiale` scenes, we name each asset in the _Content Browser_ according to the asset's globally unique ID in our internal systems. In general, it is acceptable if the _Content Browser_ sacrifices some human-readability in exchange for convenience. In contrast, the _Outliner_ should be completely human-readable.
 - Individual assets should be named using a prefix that indicates the asset type (e.g., `M_` for materials, `MI_` for material instances, `SM_` for static meshes, `T_` for textures, etc). See [here](https://docs.unrealengine.com/5.2/en-US/recommended-asset-naming-conventions-in-unreal-engine-projects) for more specific guidelines.
 - The _Content Browser_ should not contain unreferenced assets, except for in the `Debug` directory.
+
+### Static Mesh editor
+
+- All options should be set to their default values unless noted here, or unless there is an good reason to deviate from the default values.
+- The _Collision Presets_ option should be set to _BlockAll_.
+- The _Customized Collision_ option should be enabled.
 
 ## Guidelines for Kujiale scenes
 
