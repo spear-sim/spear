@@ -1,4 +1,4 @@
-<robot name="pendulum">
+<robot name="horizontal_pendulum">
 
     <link name="base_link">
         <inertial>
@@ -9,7 +9,7 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <box size="0.5 0.5 0.5"/>
+                <box size="1 1 1"/>
             </geometry>
             <material>
                 <color rgba="1 1 1 1"/>
@@ -18,7 +18,7 @@
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <box size="0.5 0.5 0.5"/>
+                <box size="1 1 1"/>
             </geometry>
         </collision>
         <spear>
@@ -28,7 +28,7 @@
 
     <link name="link_0">
         <inertial>
-            <origin rpy="0 0 0" xyz="1.0 0 0"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
             <mass value="0.1"/>
             <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
         </inertial>
@@ -47,24 +47,21 @@
                 <box size="1 0.40 0.40"/>
             </geometry>
         </collision>
-        <spear>
-            <simulate_physics value="true"/>
-        </spear>
     </link>
     <joint name="joint_0" type="revolute">
-        <origin rpy="0 -1.57 0" xyz="0 0 -0.8"/>
+        <origin rpy="0 0 0" xyz="0.5 0 0"/>
         <parent link="base_link"/>
         <child link="link_0"/>
-        <axis xyz="0 0 1"/>
+        <axis xyz="1 0 0"/>
         <limit lower="-0.78" upper="0.78" effort="0.0" velocity="0.0"/>
         <spear>
-            <dynamics control_type="torque" parent_dominates="true"/>
+            <dynamics control_type="torque"/>
         </spear>
     </joint>
 
     <link name="link_1">
         <inertial>
-            <origin rpy="0 0 0" xyz="0.3 0 0"/>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
             <mass value="0.1"/>
             <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
         </inertial>
@@ -83,14 +80,73 @@
                 <box size="1 0.41 0.41"/>
             </geometry>
         </collision>
-        <spear>
-            <simulate_physics value="true"/>
-        </spear>        
     </link>
     <joint name="joint_1" type="fixed">
-        <origin rpy="0 0 0" xyz="0.8 0 0"/>
+        <origin rpy="0 0 0" xyz="1 0 0"/>
         <parent link="link_0"/>
         <child link="link_1"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="-0.78" upper="0.78" effort="0.0" velocity="0.0"/>
+        <dynamics damping="0.001"/>
+    </joint>
+
+    <link name="link_2">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <mass value="0.1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.41 0.41"/>
+            </geometry>
+            <material>
+                <color rgba="0 1 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.41 0.41"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="joint_2" type="fixed">
+        <origin rpy="0 0 0" xyz="1 0 0"/>
+        <parent link="link_1"/>
+        <child link="link_2"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="-0.78" upper="0.78" effort="0.0" velocity="0.0"/>
+        <dynamics damping="0.001"/>
+    </joint>
+
+    <link name="link_3">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <mass value="0.1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.41 0.41"/>
+            </geometry>
+            <material>
+                <color rgba="0 1 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.41 0.41"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="joint_3" type="fixed">
+        <origin rpy="0 0 0" xyz="1 0 0"/>
+        <parent link="link_2"/>
+        <child link="link_3"/>
         <axis xyz="0 1 0"/>
         <limit lower="-0.78" upper="0.78" effort="0.0" velocity="0.0"/>
         <dynamics damping="0.001"/>

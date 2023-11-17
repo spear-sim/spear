@@ -17,7 +17,7 @@
 #include "UrdfRobot/UrdfParser.h"
 #include "UrdfRobot/UrdfRobotComponent.h"
 
-const auto DEFAULT_URDF_FILE = std::filesystem::path() / ".." / ".." / ".." / "python" / "spear" / "urdf" / "pendulum.urdf";
+const auto DEFAULT_URDF_FILE = std::filesystem::path() / ".." / ".." / ".." / "python" / "spear" / "urdf" / "horizontal_pendulum.urdf";
 
 AUrdfRobotPawn::AUrdfRobotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
