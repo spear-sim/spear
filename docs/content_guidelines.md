@@ -4,7 +4,7 @@ We represent each SPEAR scene as a distinct Unreal _map_. The Unreal documentati
 
 ## Filesystem
 
-For each scene, we expect it to be organized on the filesystem as follows. If a scene is organized in this way, then our tools will be able to do everything they need to do, i.e., export the scene for use in third-party physics simulators, and generate data files that will enable our `spear` Python module to load the scene.
+Each scene should be organized on the filesystem as follows. If a scene is organized in this way, then our tools will be able to do everything they need to do, i.e., export the scene for use in third-party physics simulators, and generate data files that will enable our `spear` Python module to load the scene.
 
 ```
 SpearSim                               # Our top-level Unreal project folder: spear/cpp/unreal_projects/SpearSim
@@ -13,8 +13,8 @@ SpearSim                               # Our top-level Unreal project folder: sp
     ├── Common                         # Assets that are referenced in multiple scenes are kept in the Common directory.
     |                                  # If a collection of scenes needs to refer to additional common assets, those assets
     |                                  # should be kept in sibling directories to Common (e.g., the kujiale scenes refer to
-    |                                  # assets in a Kujiale directory and a Megascans directory, the debug scenes refer to
-    |                                  # assets in a StarterContent directory, etc).
+    |                                  # assets in {Kujiale, Megascans, MSPresets}, the debug scenes refer to assets in 
+    |                                  # {StarterContent}, etc).
     |                                  #
     └── Scenes                         # We name each scene using a lower_case_with_underscore naming convention and a four
         |                              # digit suffix (e.g., "apartment_0000", "apartment_0001", etc).
@@ -24,30 +24,26 @@ SpearSim                               # Our top-level Unreal project folder: sp
         |                              # e.g., my_scene_0000 is not allowed to refer to assets in the my_scene_0001 directory
         |                              # below. This restriction makes it easier to support an editing workflow where a
         |                              # developer only needs to download a single subdirectory in order to obtain a
-        |                              # self-contained copy of a scene.
+        |                              # complete self-contained copy of a scene.
         |                              #
         ├── my_scene_0000              #
         |   ├── ...                    #
         |   ├── Maps                   #
-        |   |   └── my_scene_0000.umap # There must be exactly one umap file with the same name as the scene in the scene's
+        |   |   └── my_scene_0000.umap # There should be exactly one umap file with the same name as the scene in the scene's
         |   |                          # Maps directory. Our code imposes this requirement to support loading scenes by name.
         |   |                          #
         |   └── ...                    #
         ├── my_scene_0001              #
-        |   ├── ...                    #
-        |   ├── Maps                   #
-        |   |   └── my_scene_0001.umap #
-        |   └── ...                    #
         └── ...                        #
 ```
 
 ## Unreal Editor
 
-A scene can be loaded in the Unreal Editor by opening `spear/cpp/unreal_projects/SpearSim/SpearSim.uproject`, and then double-clicking on `/Game/Scenes/my_scene_0000/Maps/my_scene_0000` in the _Content Browser_.
+All options should be set to their default values unless noted below, or unless there is an obvious reason to deviate.
 
 ### Outliner pane
 
-For each scene, the _Outliner_ pane is organized as follows.
+For each scene, the _Outliner_ pane should be organized as follows.
 
 ```
 my_scene_0000                          #
@@ -56,13 +52,16 @@ my_scene_0000                          #
 │   ├── my_debug_actor_0000            #
 │   ├── my_debug_actor_0001            #
 │   └── ...                            #
-├── Meshes                             # All Actors that represent scene geometry are kept here.
+├── Meshes                             # All Actors that represent non-trivial scene geometry are kept here.
 |   |                                  #
 │   ├── 0001_my_semantic_category      # We create a subdirectory for each semantic category using a lower_case_with_underscore
-|   |   |                              # naming convention and a four digit prefix. We assign each actor to a particular
-|   |   |                              # semantic category by placing the Actor in that category's subdirectory. Semantic ID 0
-|   |   |                              # is reserved and should not be used here. Note that it is possible for an individual
-|   |   |                              # StaticMeshComponent on an Actor to override the actor's assigned semantic category.
+|   |   |                              # naming convention and a four digit prefix that represents the category's integer ID.
+|   |   |                              # We assign each Actor to a particular semantic category by placing the Actor in that
+|   |   |                              # category's subdirectory. Semantic ID 0 is reserved and should not be used here. If an
+|   |   |                              # Actor has multiple StaticMeshComponents that should have different categories, the
+|   |   |                              # category of individual StaticMeshComponents can be overridden. In this case, the Actor
+|   |   |                              # should be assigned to whatever subdirectory is most convenient, i.e., requires the least
+|   |   |                              # number of per-component overrides.
 |   |   |                              #
 |   |   |                              # We choose to encode semantic annotations via this directory structure, because it
 |   |   |                              # makes it especially easy to browse each scene in the Unreal Editor. For example,
@@ -76,14 +75,14 @@ my_scene_0000                          #
 │   ├── 0002_my_semantic_category      #
 │   └── ...                            #
 ├── Navigation                         # All navigation-related Actors are kept here. There must be at least one RecastNavMesh 
-|   |                                  # actor in the scene in order to use the navmesh functionality in our Python API.
+|   |                                  # Actor in the scene in order to use the navmesh functionality in our Python API.
 │   |                                  #
 │   ├── NavMeshBoundsVolume_00         #
 │   ├── NavMeshModifierVolume_00       #
 │   ├── NavMeshModifierVolume_01       #
 │   ├── ...                            #
-│   └── RecastNavMesh-Default          # RecastNavMesh actors are created automatically, and therefore we do not expect
-|                                      # them to adhere to our naming conventions.
+│   └── RecastNavMesh-Default          # RecastNavMesh Actors are created automatically, and therefore we do not expect
+|                                      # them to adhere to our usual naming conventions.
 │                                      #
 ├── Rendering                          # All rendering-related Actors are kept here. For convenience, we allow content here to 
 |   |                                  # deviate from our usual naming conventions.
@@ -92,9 +91,9 @@ my_scene_0000                          #
 │   |   └── ExponentialHeightFog       #
 │   ├── HDRI                           #
 │   |   └── HDRIBackdrop               #
-│   ├── Lights                         # Only indoor lights are allowed here. All indoor lights should be represented as a
+│   ├── Lights                         # Only outdoor lights are allowed here. All indoor lights should be represented as a
 │   |   |                              # LightComponent attached to a StaticMeshActor or Actor in the Meshes directory. This
-│   |   |                              # convention is convenient because it will force the LightComponent to move together
+│   |   |                              # convention is advantageous because it will force the LightComponent to move together
 │   |   |                              # with the StaticMeshComponents that represent the light.
 │   |   |                              #
 │   |   ├── DirectionalLight           #
@@ -109,17 +108,14 @@ my_scene_0000                          #
     └── PostProcessVolume              #
 ```
 
-- The _Outliner_ view should be as consistent and human-readable as possible (e.g., consistent names, consistent numbers of digits, etc).
-- Naming conventions should be as consistent as possible across scenes.
-- The type of each actor in `my_scene_0000/Meshes` should be `StaticMeshActor` if it is not articulated, and `Actor` if it is articulated. It is necessary to use the `Actor` type for articulated actors so they can be simulated correctly. Although it is not strictly necessary to use the `StaticMeshActor` type for non-articulated actors, they have a different icon than `Actors` in the _Outliner_ pane, so we use `StaticMeshActor` for non-articulated actors to visually distinguish them from articulated actors.
+- The _Outliner_ pane should be organized as consistently as possible across scenes, and should be as human-readable as possible (e.g., consistent names, consistent numbers of digits, etc).
+- The type of each actor in `my_scene_0000/Meshes` should be `StaticMeshActor` if it is not articulated, and `Actor` if it is articulated. It is necessary to use the `Actor` type for articulated actors so they can be correctly physically simulated. Although it is not strictly necessary to use the `StaticMeshActor` type for non-articulated actors, `StaticMeshActors` and `Actors` have different icons in the _Outliner_ pane, so we use different types to visually differentiate them.
 
 ### Details pane
 
-All options in the _Details_ pane should be set to their default values unless noted below, or unless there is an good reason to deviate.
-
 #### `StaticMeshActor`
 
-For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Components_ pane within the _Details_ pane is organized as follows.
+For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Components_ pane within the _Details_ pane should be organized as follows.
 
 ```
 my_actor_0000                          #
@@ -136,19 +132,17 @@ my_actor_0000                          #
     ├── mesh_0001                      #
     ├── ...                            #
     └── metadata_0000                  # Each StaticMeshActor must have a MetadataComponent that is a child of the top-level
-                                       # StaticMeshComponent in order to show up in semantic segmentation images, to be referred
-                                       # to by name in our spear Python module, and to precisely control how our export tools
-                                       # should export this StaticMeshActor to other physics simulators.
+                                       # StaticMeshComponent in order to enable various SPEAR functionality.
 ```
 
 - Extra layers of grouping hierarchy can be implemented by creating a tree of `StaticMeshComponents`. See the `Actor` section below for a sensible naming convention.
-- The pivot location of each `StaticMeshActor` should be set according to the following rules. The xy-coordinates of the actor's pivot should equal the xy-coordinates of the actor's axis-aligned bounding box center, and the z-coordinate of the pivot should equal the minimum z-coordinate of its axis-aligned bounding box. This is the convention for various props that ship with the Unreal Engine (e.g., the props in our `debug_0000` scene).
-- If the parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, and it is desired for the group to participate in a physics simulation, then the mesh assigned to the parent component should be `/Game/Common/Meshes/SM_Dummy`, and the _Simulate Phyiscs_ option should be enabled for the parent but not for the children. This is necessary for the group to be simulated correctly.
-- For each `StaticMeshComponent`, the _Collision Presets_ option should be set to _Default_. This configures the collision behavior of the component to be determined by the underlying mesh, rather than the component itself.
+- The pivot location of each `StaticMeshActor` should be set according to the following rules. The xy-coordinates of the actor's pivot should equal the xy-coordinates of the actor's axis-aligned bounding box center, and the z-coordinate of the pivot should equal the minimum z-coordinate of its axis-aligned bounding box. Having a consistent convention here makes it easier to programmatically spawn objects, and this is the convention for various props that ship with the Unreal Engine (e.g., the props in our `debug_0000` scene).
+- If the parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, and it is desired for the group to be physically simulated, then the mesh assigned to the parent component should be `/Game/Common/Meshes/SM_Dummy`, and the _Simulate Phyiscs_ option should be enabled for the parent but not for the children. This is necessary for the group to be correctly physically simulated.
+- For each `StaticMeshComponent`, the _Collision Presets_ option should be set to _Default_. This configures the collision behavior of the component to be determined by the options on the underlying mesh, rather than the options on the component itself.
 
 #### `Actor`
 
-For each `Actor` in `my_scene_0000/Meshes`, the _Components_ pane within the _Details_ pane is organized as follows.
+For each `Actor` in `my_scene_0000/Meshes`, the _Components_ pane within the _Details_ pane should be organized as follows.
 
 ```
 my_actor_0000                          #
@@ -169,11 +163,7 @@ my_actor_0000                          #
     |   ├── mesh_0002                  #
     |   ├── mesh_0003                  #
     |   └── ...                        #
-    ├── metadata_0000                  # Each Actor must have a MetadataComponent that is a child of the top-level Component
-    |                                  # in order to show up in the spear Python module's semantic segmentation images, to be 
-    |                                  # referred to by name in the spear Python module, and to precisely control how our export
-    |                                  # tools should export this Actor to other physics simulators.
-    |                                  #
+    ├── metadata_0000                  #
     ├── urdf_joint_0000                # A UrdfJointComponent represents a joint, and is implemented as a derived class of
     |                                  # PhysicsConstraintComponent with additional state and functionality. Each joint connects
     |                                  # a parent and a child component, and the joint component itself should be a sibling of
@@ -187,11 +177,11 @@ my_actor_0000                          #
 ```
 
 - All rules for `StaticMeshActors` described above also apply to `Actors`.
-- When configuring a joint, the convention in Unreal is for _Component 1_ to be the child and _Component 2_ to be the parent. This convention is relevant, e.g., when the _Parent Dominates_ flag is enabled on the joint.
+- When configuring a joint, the convention in Unreal is for _Component 1_ to be the child and _Component 2_ to be the parent. This convention is relevant, e.g., when the _Parent Dominates_ option is enabled on the joint.
 
 ### Content Browser pane
 
-For each scene, the _Content Browser_ pane is organized as follows.
+For each scene, the _Content Browser_ pane should be organized as follows.
 
 ```
 All                                    #
@@ -212,7 +202,6 @@ All                                    #
 
 ### Static Mesh editor
 
-- All options should be set to their default values unless noted here, or unless there is an good reason to deviate from the default values.
 - The _Collision Presets_ option should be set to _BlockAll_.
 - The _Customized Collision_ option should be enabled.
 
@@ -227,15 +216,18 @@ For each scene, the _Content Browser_ pane is organized as follows.
 ```
 All                                    #
 └── Content                            #
-    ├── Kujiale                        # kujiale scenes are allowed to refer to assets in the Kujiale, Megascans, and 
-    ├── Megascans                      # MSPresets directories.
+    ├── Kujiale                        # kujiale scenes are allowed to refer to assets in {Kujiale, Megascans, MSPresets}.
+    |                                  #
+    ├── Megascans                      #
     ├── MSPresets                      #
     |                                  #
     └── Scenes                         #
         ├── kujiale_0000               #
         |   ├── Maps                   #
         |   |   └── kujiale_0000.umap  #
-        |   ├── Materials              # Each material is kept here in a folder according to it's globally unique ID.
+        |   ├── Materials              # Each material is kept here in a directory named according to the material's
+        |   |   |                      # globally unique ID in our internal systems.
+        |   |   |                      #
         |   |   ├── 54213fb3254e415... #
         |   |   └── ...                #
         |   └── Meshes                 #
