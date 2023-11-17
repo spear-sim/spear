@@ -190,16 +190,25 @@ void UUrdfRobotComponent::reset()
 
 void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
 {
-    SP_ASSERT(robot_desc);
+    bool promote_to_children = true;
+    for (auto link_component : LinkComponents) {
+        link_component->DestroyComponent(promote_to_children);
+    }
 
-    UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
-    SP_ASSERT(root_link_desc);
+    for (auto joint_component : JointComponents) {
+        joint_component->DestroyComponent(promote_to_children);
+    }
 
     LinkComponents.Empty();
     JointComponents.Empty();
 
     SP_ASSERT(link_components_.empty());
     SP_ASSERT(joint_components_.empty());
+
+    SP_ASSERT(robot_desc);
+
+    UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
+    SP_ASSERT(root_link_desc);
 
     SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
     root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
