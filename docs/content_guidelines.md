@@ -75,8 +75,8 @@ my_scene_0000                          #
 │   │   └── ...                        #
 │   ├── 0002_my_semantic_category      #
 │   └── ...                            #
-├── Navigation                         # All navigation-related Actors are kept here. For convenience, we allow content here to 
-|   |                                  # deviate from our usual naming conventions.
+├── Navigation                         # All navigation-related Actors are kept here. There must be at least one RecastNavMesh 
+|   |                                  # actor in the scene in order to use the navmesh functionality in our Python API.
 │   |                                  #
 │   ├── NavMeshBoundsVolume_00         #
 │   ├── NavMeshModifierVolume_00       #
@@ -214,6 +214,10 @@ For each scene, the _Content Browser_ pane is organized as follows.
 ```
 All                                    #
 └── Content                            #
+    ├── Kujiale                        # kujiale scenes are allowed to refer to assets in the Kujiale, Megascans, and 
+    ├── Megascans                      # MSPresets directories.
+    ├── MSPresets                      #
+    |                                  #
     └── Scenes                         #
         ├── kujiale_0000               #
         |   ├── Maps                   #
