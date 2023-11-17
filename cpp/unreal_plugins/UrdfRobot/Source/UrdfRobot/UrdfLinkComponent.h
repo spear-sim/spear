@@ -40,5 +40,4 @@ public:
     // joints here. Recursively creating the hierarchy of child links and child joints must be handled in
     // higher-level code.
     void initialize(const UrdfLinkDesc* link_desc);
-    void initializeDeferred();
 };
