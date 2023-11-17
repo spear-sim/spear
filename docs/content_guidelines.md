@@ -106,7 +106,7 @@ my_scene_0000                          #
 ```
 
 - The _Outliner_ view should be as consistent and human-readable as possible (e.g., consistent names, consistent numbers of digits, etc).
-- Naming conventions should be consistent across scenes.
+- Naming conventions should be as consistent as possible across scenes.
 - The type of each actor in `my_scene_0000/Meshes` should be `StaticMeshActor` if it is not articulated, and `Actor` if it is articulated. It is necessary to use the `Actor` type for articulated actors so they can be simulated correctly. Although it is not strictly necessary to use the `StaticMeshActor` type for non-articulated actors, they have a different icon than `Actors` in the _Outliner_ pane, so we use `StaticMeshActor` for non-articulated actors to visually distinguish them from articulated actors.
 
 ### Details pane
@@ -187,18 +187,9 @@ my_actor_0000                          #
 For each scene, the _Content Browser_ pane is organized as follows.
 
 ```
-All                                    # Our top-level Unreal project folder: spear/cpp/unreal_projects/SpearSim
+All                                    #
 └── Content                            #
-    └── Scenes                         # We name each scene using a lower_case_with_underscore naming convention and a four
-        |                              # digit suffix (e.g., "apartment_0000", "apartment_0001", etc).
-        |                              #
-        |                              # Each scene inside the Scenes directory is allowed to refer to assets in common
-        |                              # directories, but is not allowed to refer to assets in other scene directories,
-        |                              # e.g., my_scene_0000 is not allowed to refer to assets in the my_scene_0001 directory
-        |                              # below. This restriction makes it easier to support an editing workflow where a
-        |                              # developer only needs to download a single subdirectory in order to obtain a
-        |                              # self-contained copy of a scene.
-        |                              #
+    └── Scenes                         #
         ├── my_scene_0000              #
         |   ├── Debug                  #
         |   ├── Maps                   #
@@ -208,4 +199,41 @@ All                                    # Our top-level Unreal project folder: sp
         └── ...                        #
 ```
 
-- In each collection of scenes, the `Debug`, `Maps`, `Materials`, `Meshes` directories can be organized using whatever naming conventions make sense for that collection. But whatever conventions are chosen, they should be consistent across the collection. For example, the `kujiale` scenes attempt to preserve the structure of the original raw Kujiale data in the _Content Browser_ pane, even though this structure is not easy to browse due to its use of long hexadecimal string names. In other words, we prioritize human-readability in the _Outliner_ and _Details_ panes, but we prioritize convenience and adherance to the structure of raw source data in the _Content Browser_.
+- The `Debug`, `Maps`, `Materials`, `Meshes` directories can be organized using whatever naming conventions make sense for a particular scene, but whatever convention is chosen, it should be as consistent as possible across scenes. For example, in the `kujiale` scenes, we name each asset in the _Content Browser_ according to the asset's globally unique ID in our internal systems. In general, it is acceptable if the _Content Browser_ sacrifices some human-readability in exchange for convenience. In contrast, the _Outliner_ should be completely human-readable.
+- Individual assets should be named using a prefix that indicates the asset type (e.g., `M_` for materials, `MI_` for material instances, `SM_` for static meshes, `T_` for textures, etc).
+- The _Content Browser_ should not contain unreferenced assets, except for in the `Debug` directory.
+- 
+## Guidelines for Kujiale scenes
+
+The following guidelines are specific to the `kujiale` scenes.
+
+### Content Browser pane
+
+For each scene, the _Content Browser_ pane is organized as follows.
+
+```
+All                                    #
+└── Content                            #
+    └── Scenes                         #
+        ├── kujiale_0000               #
+        |   ├── Maps                   #
+        |   |   └── kujiale_0000.umap  #
+        |   ├── Materials              # Each material is kept here in a folder according to it's globally unique ID.
+        |   |   ├── 54213fb3254e415... #
+        |   |   └── ...                #
+        |   └── Meshes                 #
+        |       ├── Base               # We organize some meshes according to their semantic category. This 
+        |       |   |                  # human-readable convention is possible for these "base" meshes because of how
+        |       |   |                  # they are generated and stored in our internal systems.
+        |       |   |                  #
+        |       |   ├── Cabinet        #
+        |       |   ├── Ceiling        #
+        |       |   ├── Door           #
+        |       |   └── ...            #
+        |       └── Clutter            # For other "clutter" meshes, it would not be straightforward to organize them by
+        |           |                  # semantic category, so we organize them according to their globally unique ID.
+        |           |                  #
+        |           ├── 6AMHYPETD5T... #
+        |           └── ...            #
+        └── ...                        #
+```
