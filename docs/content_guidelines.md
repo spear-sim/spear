@@ -204,7 +204,7 @@ All                                    #
 ```
 
 - The `Debug`, `Maps`, `Materials`, `Meshes` directories can be organized using whatever naming conventions make sense for a particular scene, but whatever convention is chosen, it should be as consistent as possible across scenes. For example, in the `kujiale` scenes, we name each asset in the _Content Browser_ according to the asset's globally unique ID in our internal systems. In general, it is acceptable if the _Content Browser_ sacrifices some human-readability in exchange for convenience. In contrast, the _Outliner_ should be completely human-readable.
-- Individual assets should be named using a prefix that indicates the asset type (e.g., `M_` for materials, `MI_` for material instances, `SM_` for static meshes, `T_` for textures, etc).
+- Individual assets should be named using a prefix that indicates the asset type (e.g., `M_` for materials, `MI_` for material instances, `SM_` for static meshes, `T_` for textures, etc). See [here](https://docs.unrealengine.com/5.2/en-US/recommended-asset-naming-conventions-in-unreal-engine-projects) for more specific guidelines.
 - The _Content Browser_ should not contain unreferenced assets, except for in the `Debug` directory.
 
 ## Guidelines for Kujiale scenes
