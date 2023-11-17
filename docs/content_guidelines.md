@@ -226,16 +226,16 @@ All                                    #
         |   |   ├── 54213fb3254e415... #
         |   |   └── ...                #
         |   └── Meshes                 #
-        |       ├── Base               # We organize some meshes according to their semantic category. This 
-        |       |   |                  # human-readable convention is possible for these "base" meshes because of how
-        |       |   |                  # they are generated and stored in our internal systems.
+        |       ├── Base               # We organize "base" meshes according to their semantic category. This human-
+        |       |   |                  # readable convention is possible because of how these meshes are generated and
+        |       |   |                  # stored in our internal systems.
         |       |   |                  #
         |       |   ├── Cabinet        #
         |       |   ├── Ceiling        #
         |       |   ├── Door           #
         |       |   └── ...            #
-        |       └── Clutter            # For other "clutter" meshes, it would not be straightforward to organize them by
-        |           |                  # semantic category, so we organize them according to their globally unique ID.
+        |       └── Clutter            # For "clutter" meshes, it is not straightforward to organize them by semantic
+        |           |                  # category, so instead we organize them according to their globally unique ID.
         |           |                  #
         |           ├── 6AMHYPETD5T... #
         |           └── ...            #
