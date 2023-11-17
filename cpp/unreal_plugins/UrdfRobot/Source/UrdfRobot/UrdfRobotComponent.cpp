@@ -286,10 +286,6 @@ void UUrdfRobotComponent::initializeDeferred()
     }
     SP_ASSERT(root_link_component_);
 
-    for (auto link_component : LinkComponents) {
-        link_component->initializeDeferred();
-    }
-
     for (auto joint_component : JointComponents) {
         joint_component->initializeDeferred();
     }
