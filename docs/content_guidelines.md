@@ -115,6 +115,8 @@ my_scene_0000                          #
 
 ### Details pane
 
+All options in the _Details_ pane should be set to their default values unless noted below, or unless there is an good reason to deviate.
+
 #### `StaticMeshActor`
 
 For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Components_ pane within the _Details_ pane is organized as follows.
@@ -139,7 +141,6 @@ my_actor_0000                          #
                                        # should export this StaticMeshActor to other physics simulators.
 ```
 
-- All options should be set to their default values unless noted here, or unless there is an good reason to deviate from the default values.
 - Extra layers of grouping hierarchy can be implemented by creating a tree of `StaticMeshComponents`. See the `Actor` section below for a sensible naming convention.
 - The pivot location of each `StaticMeshActor` should be set according to the following rules. The xy-coordinates of the actor's pivot should equal the xy-coordinates of the actor's axis-aligned bounding box center, and the z-coordinate of the pivot should equal the minimum z-coordinate of its axis-aligned bounding box. This is the convention for various props that ship with the Unreal Engine (e.g., the props in our `debug_0000` scene).
 - If the parent `StaticMeshComponent` exists only to group other child `StaticMeshComponents` together, and it is desired for the group to participate in a physics simulation, then the mesh assigned to the parent component should be `/Game/Common/Meshes/SM_Dummy`, and the _Simulate Phyiscs_ option should be enabled for the parent but not for the children. This is necessary for the group to be simulated correctly.
