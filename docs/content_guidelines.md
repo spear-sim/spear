@@ -106,7 +106,7 @@ my_scene_0000                          #
 |   |                                  #
 |   ├── PlayerStart                    #
 |   └── PostProcessVolume              #
-└── Widgets                            # All of our Widgets are kept here.
+└── Widgets                            # All of our custom Widgets are kept here.
     |                                  #
     └── DebugWidget                    #
 ```
