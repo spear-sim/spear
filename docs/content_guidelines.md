@@ -101,11 +101,14 @@ my_scene_0000                          #
 │   └── Sky                            #
 │       ├── SkyAtmosphere              #
 │       └── VolumetricCloud            #
-└── Settings                           # All settings-related Actors are kept here.  For convenience, we allow content here to 
-    |                                  # deviate from our usual naming conventions.
+├── Settings                           # All settings-related Actors are kept here.  For convenience, we allow content here to 
+|   |                                  # deviate from our usual naming conventions.
+|   |                                  #
+|   ├── PlayerStart                    #
+|   └── PostProcessVolume              #
+└── Widgets                            # All of our Widgets are kept here.
     |                                  #
-    ├── PlayerStart                    #
-    └── PostProcessVolume              #
+    └── DebugWidget                    #
 ```
 
 - The _Outliner_ pane should be organized as consistently as possible across scenes, and should be as human-readable as possible (e.g., consistent names, consistent numbers of digits, etc).
