@@ -38,6 +38,12 @@ UUrdfLinkComponent::~UUrdfLinkComponent()
 
 void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
 {
+    bool promote_to_children = true;
+    for (auto static_mesh_component : StaticMeshComponents) {
+        static_mesh_component->DestroyComponent(promote_to_children);
+    }
+    StaticMeshComponents.Empty();
+
     double m_to_cm = 100.0;
 
     // set our own reference frame using the top-level UrdfLinkDesc
