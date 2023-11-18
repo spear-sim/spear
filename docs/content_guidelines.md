@@ -226,7 +226,7 @@ All                                    #
         |   ├── Maps                   #
         |   |   └── kujiale_0000.umap  #
         |   ├── Materials              # Each material is kept here in a directory named according to the material's
-        |   |   |                      # globally unique ID in our internal systems.
+        |   |   |                      # globally unique ID.
         |   |   |                      #
         |   |   ├── 54213fb3254e415... #
         |   |   └── ...                #
