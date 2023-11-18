@@ -179,7 +179,7 @@ my_actor_0000                          #
     └── ...                            #
 ```
 
-- All rules for `StaticMeshActors` described above also apply to `Actors`.
+- All the rules for `StaticMeshActors` described above also apply to `Actors`.
 - When configuring a joint, the convention in Unreal is for _Component 1_ to be the child and _Component 2_ to be the parent. This convention is relevant, e.g., when the _Parent Dominates_ option is enabled on the joint.
 
 ### Content Browser pane
