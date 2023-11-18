@@ -39,7 +39,7 @@ SpearSim                               # Our top-level Unreal project folder: sp
 
 ## Unreal Editor
 
-All options should be set to their default values unless noted below, or unless there is an obvious reason to deviate.
+All options in the Unreal Editor should be set to their default values unless noted below, or unless there is an obvious reason to deviate.
 
 ### Outliner pane
 
