@@ -216,7 +216,7 @@ For each scene, the _Content Browser_ pane is organized as follows.
 ```
 All                                    #
 └── Content                            #
-    ├── Kujiale                        # kujiale scenes are allowed to refer to assets in {Kujiale, Megascans, MSPresets}.
+    ├── Kujiale                        # Kujiale scenes are allowed to refer to assets in {Kujiale, Megascans, MSPresets}.
     |                                  #
     ├── Megascans                      #
     ├── MSPresets                      #
