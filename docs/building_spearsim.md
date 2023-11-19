@@ -108,8 +108,8 @@ Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/Linux/SpearSim.sh
 
 ### Helpful command-line options
 
-- You can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`. After doing a complete `-build -cook -stage -package -archive`, you only need to `-cook` if you have edited the project in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`
-- If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a special executable that is only required when cooking.
+- After you have done a complete `-build -cook -stage -package -archive` once, you can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`, depending on what you're doing. You only need to `-cook` if you have edited the project in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`.
+- If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a second executable that is only required when cooking.
 - If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`.
 - If you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to the executable in `-archivedirectory`, you can specify `-skipbuild -skipcook`.
 - You can replace `Development` with `Shipping` to build a more optimized executable.
