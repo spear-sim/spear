@@ -4,6 +4,6 @@
 
 #include "CommonModuleRules/CommonModuleRules.h"
 
-#include <Modules/ModuleManager.h>
+#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
 IMPLEMENT_MODULE(CommonModuleRules, CommonModuleRules)

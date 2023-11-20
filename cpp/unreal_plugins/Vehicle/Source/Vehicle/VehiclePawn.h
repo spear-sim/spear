@@ -4,15 +4,16 @@
 
 #pragma once
 
-#include <vector>
-
-#include <CoreMinimal.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 #include <WheeledVehiclePawn.h>
 
 #include "VehiclePawn.generated.h"
 
+class FObjectInitializer;
 class UBoxComponent;
 class UCameraComponent;
+
+class UVehicleMovementComponent;
 
 UCLASS()
 class VEHICLE_API AVehiclePawn : public AWheeledVehiclePawn
@@ -22,6 +23,7 @@ public:
     AVehiclePawn(const FObjectInitializer& object_initializer);
     ~AVehiclePawn();
 
+    UVehicleMovementComponent* vehicle_movement_component_ = nullptr;
     UCameraComponent* camera_component_ = nullptr;
     UBoxComponent* imu_component_ = nullptr;
 };

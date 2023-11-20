@@ -4,11 +4,12 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <map>
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h>
 #include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
@@ -39,18 +40,13 @@ public:
     bool isReady() const override;
 
 private:
-    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
-
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
     AActor* parent_actor_ = nullptr;
-
     std::vector<AActor*> obstacle_ignore_actors_;
 
     UActorHitEventComponent* actor_hit_event_component_ = nullptr;
-    FDelegateHandle actor_hit_event_handle_;
 
-    // Task state
     std::vector<FVector> agent_initial_locations_;
     std::vector<FVector> agent_goal_locations_;
     int episode_index_ = -1;

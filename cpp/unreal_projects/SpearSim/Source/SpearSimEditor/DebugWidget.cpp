@@ -4,8 +4,7 @@
 
 #include "SpearSimEditor/DebugWidget.h"
 
-#include <Containers/UnrealString.h>
-#include <CoreMinimal.h>
+#include <Containers/UnrealString.h> // FString
 #include <GameFramework/Actor.h>
 
 #include "CoreUtils/Log.h"
@@ -33,7 +32,7 @@ void ADebugWidget::saveConfig()
     SaveConfig();
 }
 
-void ADebugWidget::printDummyString()
+void ADebugWidget::printDebugString()
 {
-    SP_LOG("dummy_string_: ", Unreal::toStdString(dummy_string_));
+    SP_LOG("debug_string_: ", Unreal::toStdString(debug_string_));
 }

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <boost/predef.h>
+#include <boost/predef.h> // BOOST_OS_MACOS
 
 #define PPK_ASSERT_ENABLED 1
 
@@ -665,6 +665,3 @@
 // ------------------------------------------------------------------------------
 
 #define SP_ASSERT PPK_ASSERT
-
-// TODO: remove this #define when we're ready to completely switch to SP_ASSERT
-#define ASSERT SP_ASSERT
