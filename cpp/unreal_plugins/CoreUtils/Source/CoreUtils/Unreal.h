@@ -5,10 +5,8 @@
 #pragma once
 
 #include <cstring> // std::memcpy
-#include <queue>
 #include <map>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <Containers/Array.h>        // TArray
