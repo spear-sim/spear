@@ -80,14 +80,14 @@ public:
             std::string separator = ".";
             input_action_desc.axis_ =
                 Unreal::getFullyQualifiedComponentName(this, separator, include_actor_name) + "." + input_action_desc.key_;
+
             player_input->AddAxisMapping(FInputAxisKeyMapping(
                 Unreal::toFName(input_action_desc.axis_),
                 FKey(Unreal::toFName(input_action_desc.key_)),
                 input_action_desc.scale_));
-            if (input_component_) {
-                input_component_->BindAxis(Unreal::toFName(input_action_desc.axis_));
-            }
 
+            input_component_->BindAxis(Unreal::toFName(input_action_desc.axis_));
+            
             input_action_descs_.push_back(input_action_desc);
         }
     }
