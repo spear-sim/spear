@@ -66,19 +66,16 @@ public:
         SP_ASSERT(GetWorld());
         SP_ASSERT(GetWorld()->GetFirstPlayerController());
 
-        for (auto& input_action : input_actions) {
-            InputActionDesc input_action_desc;
-            input_action_desc.key_ = input_action.first;
-            input_action_descs_.push_back(input_action_desc);
-        }
-
         input_component_ = GetWorld()->GetFirstPlayerController()->InputComponent;
         SP_ASSERT(input_component_);
 
         UPlayerInput* player_input = GetWorld()->GetFirstPlayerController()->PlayerInput;
         SP_ASSERT(player_input);
 
-        for (auto& input_action_desc : input_action_descs_) {
+        for (auto& input_action : input_actions) {
+            InputActionDesc input_action_desc;
+            input_action_desc.key_ = input_action.first;
+
             bool include_actor_name = true;
             std::string separator = ".";
             input_action_desc.axis_ =
@@ -90,6 +87,8 @@ public:
             if (input_component_) {
                 input_component_->BindAxis(Unreal::toFName(input_action_desc.axis_));
             }
+
+            input_action_descs_.push_back(input_action_desc);
         }
     }
 
