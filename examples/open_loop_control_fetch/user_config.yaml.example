@@ -25,7 +25,7 @@ SIMULATION_CONTROLLER:
   URDF_ROBOT_AGENT:
     URDF_ROBOT_ACTOR_NAME: "UrdfRobotActor"
     ACTION_COMPONENTS: ["control_joints"]
-    OBSERVATION_COMPONENTS: ["link_state", "camera"]
+    OBSERVATION_COMPONENTS: ["links_location", "links_rotation", "camera"]
     STEP_INFO_COMPONENTS: []
     SPAWN_LOCATION_X: -20.0
     SPAWN_LOCATION_Y: 200.0
