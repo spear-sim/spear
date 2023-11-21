@@ -127,12 +127,23 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getObservationSpace() cons
 {
     std::map<std::string, ArrayDesc> observation_space;
 
-    if (Std::contains(observation_components_, "link_state")) {
+    if (Std::contains(observation_components_, "links_location")) {
         for (auto& link_component : link_components_) {
             ArrayDesc array_desc;
             array_desc.low_ = std::numeric_limits<double>::lowest();
             array_desc.high_ = std::numeric_limits<double>::max();
-            array_desc.shape_ = {6}; // x, y, z in [cm] and pitch, yaw, roll in [deg] of each link relative to it's parent
+            array_desc.shape_ = {3}; // x, y, z in [cm] of each link relative to it's parent
+            array_desc.datatype_ = DataType::Float64;
+            observation_space[link_component.first] = std::move(array_desc);
+        }
+    }
+
+    if (Std::contains(observation_components_, "links_rotation")) {
+        for (auto& link_component : link_components_) {
+            ArrayDesc array_desc;
+            array_desc.low_ = std::numeric_limits<double>::lowest();
+            array_desc.high_ = std::numeric_limits<double>::max();
+            array_desc.shape_ = {3}; // pitch, yaw, roll in [deg] of each link relative to it's parent
             array_desc.datatype_ = DataType::Float64;
             observation_space[link_component.first] = std::move(array_desc);
         }
@@ -159,12 +170,17 @@ std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation(
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    if (Std::contains(observation_components_, "link_state")) {
+    if (Std::contains(observation_components_, "links_location")) {
         for (auto& link_component : link_components_) {
             FVector location = link_component.second->GetRelativeLocation();
+            observation[link_component.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+        }
+    }
+
+    if (Std::contains(observation_components_, "links_rotation")) {
+        for (auto& link_component : link_components_) {
             FRotator rotation = link_component.second->GetRelativeRotation();
-            observation[link_component.first] =
-                Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z, rotation.Pitch, rotation.Yaw, rotation.Roll});
+            observation[link_component.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.Pitch, rotation.Yaw, rotation.Roll});
         }
     }
 
