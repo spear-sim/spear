@@ -29,6 +29,7 @@ any component other than the `DefaultSceneRoot` and children of `PhysicsContstra
 - [ ] Implement numerical parity between UE and MuJoCo representations i.e. in the joint positions, object poses, etc.
 Currently UE uses cm and degrees. Exporting to GLTF converts it to m and radians, which is also the unit system used in
 MuJoCo. 
+- [ ] Check if MuJoCo can operate in degrees.
 
 ## Miscellaneous
 UE Editor REPL code for frequently used debugging operations:

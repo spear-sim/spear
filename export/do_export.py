@@ -12,6 +12,10 @@ ss = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 world = ss.get_editor_world()
 
 
+TRANS_UE_TO_MUJOCO_SCALE = 1.0
+ROT_UE_TO_MUJOCO_SCALE = math.pi / 180.0
+
+
 def export_meshes(actor, export_dir):
   unreal.EditorLevelLibrary.set_selected_level_actors([actor, ])
   name = actor.get_actor_label()
@@ -22,10 +26,20 @@ def export_meshes(actor, export_dir):
   task.set_editor_property('prompt', False)
   task.set_editor_property('object', world)
   task.set_editor_property('filename', filename)
+  # unreal.GLTFExporter.set_editor_property('export_task', task)
+  options = unreal.GLTFExportOptions()
+  options.set_editor_property('export_cameras', False)
+  options.set_editor_property('export_lights', False)
+  options.set_editor_property('export_uniform_scale', TRANS_UE_TO_MUJOCO_SCALE)
+  options.set_editor_property('export_unlit_materials', False)
+  options.set_editor_property('export_vertex_colors', False)
+  selected_actors = unreal.Set(unreal.Actor)
+  selected_actors.add(actor)
   print(f'Writing actor {name} to {filename}...')
   count = 0
   N = 10
-  while not unreal.Exporter.run_asset_export_task(task):
+  while not unreal.GLTFExporter.export_to_gltf(None, filename, options, selected_actors):
+  # while not unreal.Exporter.run_asset_export_task(task):
     print(f'Retry {count+1} / {N}')
     time.sleep(0.5)
     if count == 10:
@@ -57,6 +71,8 @@ if __name__ == '__main__':
       continue
     actor_name = actor.get_actor_label()
     if 'HDRIBackdrop' in actor_name:
+      continue
+    if actor_name != 'door_00':
       continue
     
     this_body_properties = {'geoms': {}, }
@@ -110,7 +126,7 @@ if __name__ == '__main__':
       offset = 0.0
       
       linear_limit = constraint_profile.get_editor_property('linear_limit')
-      limit = linear_limit.get_editor_property('limit') / 100.0
+      limit = linear_limit.get_editor_property('limit') * TRANS_UE_TO_MUJOCO_SCALE
       
       # prismatic joints
       n_prismatic_dofs = 0
@@ -167,8 +183,8 @@ if __name__ == '__main__':
         n_revolute_dofs += 1
         if n_prismatic_dofs > 1:
           raise Warning(f'{actor_name} already has {n_prismatic_dofs} prismatic joints')
-        limit = math.pi * cone_limit.get_editor_property('swing1_limit_degrees') / 180.0
-        offset = math.pi * angular_offset.yaw / 180.0
+        limit = cone_limit.get_editor_property('swing1_limit_degrees') * ROT_UE_TO_MUJOCO_SCALE
+        offset = angular_offset.yaw * ROT_UE_TO_MUJOCO_SCALE
         axis = unreal.Vector.UP
         axis = axis.rotate(rot).normal()
         pc_args.extend([
@@ -185,8 +201,8 @@ if __name__ == '__main__':
         n_revolute_dofs += 1
         if n_prismatic_dofs > 1:
           raise ValueError(f'{actor_name} already has {n_prismatic_dofs} prismatic joints')
-        limit = math.pi * cone_limit.get_editor_property('swing2_limit_degrees') / 180.0
-        offset = math.pi * angular_offset.pitch / 180.0
+        limit = cone_limit.get_editor_property('swing2_limit_degrees') * ROT_UE_TO_MUJOCO_SCALE
+        offset = angular_offset.pitch * ROT_UE_TO_MUJOCO_SCALE
         axis = unreal.Vector.RIGHT
         axis = axis.rotate(rot).normal()
         pc_args.extend([
@@ -204,8 +220,8 @@ if __name__ == '__main__':
         n_revolute_dofs += 1
         if n_prismatic_dofs > 1:
           raise ValueError(f'{actor_name} already has {n_prismatic_dofs} prismatic joints')
-        limit = math.pi * twist_limit.get_editor_property('twist_limit_degrees') / 180.0
-        offset = math.pi * angular_offset.roll / 180.0
+        limit = twist_limit.get_editor_property('twist_limit_degrees') * ROT_UE_TO_MUJOCO_SCALE
+        offset = angular_offset.roll * ROT_UE_TO_MUJOCO_SCALE
         axis = unreal.Vector.FORWARD
         axis = axis.rotate(rot).normal()
         pc_args.extend([
