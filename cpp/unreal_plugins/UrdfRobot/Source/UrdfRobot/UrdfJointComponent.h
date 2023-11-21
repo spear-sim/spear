@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include <map>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
@@ -78,7 +78,7 @@ public:
     void applyAction(const std::string& action_component_name, const std::vector<double>& action_component_data, bool assert_if_action_is_inconsistent = true);
 
     // Used by UrdfRobotComponent.
-    std::pair<std::string, ArrayDesc> getActionSpace() const;
+    std::map<std::string, ArrayDesc> getActionSpace() const;
 
 private:
     UInputActionComponent* input_action_component_ = nullptr;

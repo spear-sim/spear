@@ -112,16 +112,13 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace() const
     std::map<std::string, ArrayDesc> action_space;
 
     if (Std::contains(action_components_, "control_joints")) {
-        for (auto& joint_component : joint_components_) {
-            if (joint_component.second->JointType != EJointType::Invalid) {
-                std::pair<std::string, ArrayDesc> joint_action_space = joint_component.second->getActionSpace();
-                if (joint_action_space.first.size()) {
-                    std::string joint_name = joint_component.first + "." + joint_action_space.first;
-                    action_space[joint_name] = std::move(joint_action_space.second);
-                }
-            }
+        for (auto joint_component : joint_components_) {
+            action_space.merge(joint_component.second->getActionSpace());
         }
     }
+
+    // remove empty map entry
+    action_space.erase("");
 
     return action_space;
 }

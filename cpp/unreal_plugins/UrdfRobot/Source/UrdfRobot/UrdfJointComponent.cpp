@@ -84,8 +84,12 @@ void UUrdfJointComponent::BeginPlay()
     };
 }
 
-std::pair<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
+std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
 {
+    if (JointType == EJointType::Invalid || JointType == EJointType::Fixed) {
+        return {{}};
+    }
+
     // Arguably, setting the ArrayDesc's low, high, shape, and dtype could be part of UrdfRobotComponent.
     // But, we do it here, because if they need to be modified based on joint types, etc, then it's easier
     // to do those changes here.
@@ -95,7 +99,8 @@ std::pair<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
     array_desc.shape_ = {3};
     array_desc.datatype_ = DataType::Float64;
 
-    std::string action_name = "";
+    std::string separator = ".";
+    std::string action_name = Unreal::toStdString(GetName()) + separator;
 
     switch (JointControlType) {
         case EJointControlType::Position:
@@ -103,19 +108,15 @@ std::pair<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
             switch (JointType) {
                 case EJointType::Continuous:
                 case EJointType::Revolute:
-                    //action_name = "set_angular_orientation_target";
-                    action_name = "add_to_angular_orientation_target";
+                    action_name += "add_to_angular_orientation_target";
                     break;
 
                 case EJointType::Prismatic:
-                    //action_name = "set_linear_position_target";
-                    action_name = "add_to_linear_position_target";
-                    break;
-
-                case EJointType::Fixed:
+                    action_name += "add_to_linear_position_target";
                     break;
 
                 default:
+                    SP_ASSERT(false); // TODO (MR): support planar joints
                     break;
             }
             break;
@@ -124,19 +125,15 @@ std::pair<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
             switch (JointType) {
                 case EJointType::Continuous:
                 case EJointType::Revolute:
-                    //action_name = "set_angular_velocity_target";
-                    action_name = "add_to_angular_velocity_target";
+                    action_name += "add_to_angular_velocity_target";
                     break;
 
                 case EJointType::Prismatic:
-                    //action_name = "set_linear_velocity_target";
-                    action_name = "add_to_linear_velocity_target";
-                    break;
-
-                case EJointType::Fixed:
+                    action_name += "add_to_linear_velocity_target";
                     break;
 
                 default:
+                    SP_ASSERT(false); // TODO (MR): support planar joints
                     break;
             }
             break;
@@ -145,23 +142,21 @@ std::pair<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
             switch (JointType) {
                 case EJointType::Continuous:
                 case EJointType::Revolute:
-                    action_name = "add_torque_in_radians";
+                    action_name += "add_torque_in_radians";
                     break;
 
                 case EJointType::Prismatic:
-                    action_name = "add_force";
-                    break;
-
-                case EJointType::Fixed:
+                    action_name += "add_force";
                     break;
 
                 default:
+                    SP_ASSERT(false); // TODO (MR): support planar joints
                     break;
             }
             break;
     }
 
-    return std::make_pair(action_name, array_desc);
+    return {{action_name, array_desc}};
 }
 
 void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
