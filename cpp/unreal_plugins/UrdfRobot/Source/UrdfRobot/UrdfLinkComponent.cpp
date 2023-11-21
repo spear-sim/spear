@@ -68,12 +68,14 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
     // visual
     for (auto& visual_desc : link_desc->visual_descs_) {
 
-        // needs to be const because spear_link_desc is const
+        // needs to be const because link_desc is const
         const UrdfGeometryDesc& geometry_desc = visual_desc.geometry_desc_;
 
         // create child static mesh component for each UrdfSpearLinkDesc
         auto static_mesh_component = NewObject<UStaticMeshComponent>(this, Unreal::toFName("static_mesh_component"));
         SP_ASSERT(static_mesh_component);
+        static_mesh_component->SetupAttachment(this);
+        static_mesh_component->RegisterComponent();
 
         // each UrdfSpearLinkDesc has its own reference frame
         FVector static_mesh_location = FVector(
@@ -142,7 +144,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         if (visual_desc.has_material_) {
 
             // if the material desc is a reference, then follow the pointer to obtain the underlying material desc
-            const UrdfMaterialDesc* material_desc = &(visual_desc.material_desc_); // needs to be const because spear_link_desc is const
+            const UrdfMaterialDesc* material_desc = &(visual_desc.material_desc_); // needs to be const because link_desc is const
             if (material_desc->is_reference_) {
                 material_desc = material_desc->material_desc_;
             }
@@ -167,9 +169,6 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
             }
         }
 
-        // connect static mesh component to the top-level link
-        static_mesh_component->SetupAttachment(this);
-        static_mesh_component->RegisterComponent();
         StaticMeshComponents.Add(static_mesh_component);
     }
 }

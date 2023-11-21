@@ -12,7 +12,7 @@
 
 #include "CoreUtils/Rpclib.h" // MSGPACK_ADD_ENUM, MSGPACK_DEFINE_MAP
 
-// enum integer values must match python/spear/env.py, which is why we write them out explicitly
+// enum values must match python/spear/env.py, which is why we write them out explicitly
 enum class DataType
 {
     Invalid    = -1,

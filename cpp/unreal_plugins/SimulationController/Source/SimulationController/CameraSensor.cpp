@@ -102,10 +102,12 @@ CameraSensor::CameraSensor(
         // create SceneCaptureComponent2D
         render_pass_desc.scene_capture_component_2d_ = NewObject<USceneCaptureComponent2D>(actor_, Unreal::toFName("scene_capture_component_2d"));
         SP_ASSERT(render_pass_desc.scene_capture_component_2d_);
-
+        render_pass_desc.scene_capture_component_2d_->SetupAttachment(camera_component);
+        render_pass_desc.scene_capture_component_2d_->RegisterComponent();
         render_pass_desc.scene_capture_component_2d_->TextureTarget = texture_render_target_2d;
         render_pass_desc.scene_capture_component_2d_->FOVAngle = fov;
         render_pass_desc.scene_capture_component_2d_->CaptureSource = ESceneCaptureSource::SCS_FinalToneCurveHDR;
+        render_pass_desc.scene_capture_component_2d_->SetVisibility(true);
 
         if (render_pass_name == "final_color") {
             // need to override these settings to obtain the same rendering quality as in a default game viewport
@@ -121,10 +123,6 @@ CameraSensor::CameraSensor(
             SP_ASSERT(material);
             render_pass_desc.scene_capture_component_2d_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, actor_), 1.0f);
         }
-
-        render_pass_desc.scene_capture_component_2d_->SetupAttachment(camera_component);
-        render_pass_desc.scene_capture_component_2d_->SetVisibility(true);
-        render_pass_desc.scene_capture_component_2d_->RegisterComponent();
 
         // create shared_memory_object
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {

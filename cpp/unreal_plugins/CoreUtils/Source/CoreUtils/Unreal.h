@@ -391,7 +391,7 @@ public:
 
         TArray<USceneComponent*> parents;
         component->GetParentComponents(parents);
-        for (auto& parent : parents) {
+        for (auto parent : parents) {
             name = toStdString(parent->GetName()) + separator + name;
         }
 

@@ -41,8 +41,8 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
 
     auto scene_component = NewObject<USceneComponent>(goal_actor_, "scene_component");
     SP_ASSERT(scene_component);
-    scene_component->SetMobility(EComponentMobility::Movable);
     scene_component->RegisterComponent();
+    scene_component->SetMobility(EComponentMobility::Movable);
     goal_actor_->SetRootComponent(scene_component);
 
     // Create UActorHitEventComponent but don't subscribe to any actors yet

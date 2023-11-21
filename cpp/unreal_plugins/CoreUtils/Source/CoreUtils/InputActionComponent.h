@@ -79,15 +79,14 @@ public:
             bool include_actor_name = true;
             std::string separator = ".";
             input_action_desc.axis_ =
-                Unreal::getFullyQualifiedComponentName(this, separator, include_actor_name) + "." + input_action_desc.key_;
+                Unreal::getFullyQualifiedComponentName(this, separator, include_actor_name) + separator + input_action_desc.key_;
 
             player_input->AddAxisMapping(FInputAxisKeyMapping(
                 Unreal::toFName(input_action_desc.axis_),
                 FKey(Unreal::toFName(input_action_desc.key_)),
                 input_action_desc.scale_));
-
             input_component_->BindAxis(Unreal::toFName(input_action_desc.axis_));
-            
+
             input_action_descs_.push_back(input_action_desc);
         }
     }
@@ -104,9 +103,6 @@ private:
         float threshold_ = 1.0f;
     };
 
-    // Set in setPlayerInputActions(...), but we expose the underlying variable as public in case user code has an alternative way of setting it.
     std::vector<InputActionDesc> input_action_descs_;
-
-    // Set by any system that will receive player input, e.g., SpearSimSpectatorPawn::SetupPlayerInputComponent(...).
     UInputComponent* input_component_ = nullptr;
 };
