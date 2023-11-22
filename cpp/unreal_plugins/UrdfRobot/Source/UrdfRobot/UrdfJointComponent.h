@@ -79,6 +79,9 @@ public:
 
     // Used by UrdfRobotComponent.
     std::map<std::string, ArrayDesc> getActionSpace() const;
+    std::map<std::string, ArrayDesc> getObservationSpace() const;
+    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
+    std::map<std::string, std::vector<uint8_t>> getObservation() const;
 
 private:
     UInputActionComponent* input_action_component_ = nullptr;

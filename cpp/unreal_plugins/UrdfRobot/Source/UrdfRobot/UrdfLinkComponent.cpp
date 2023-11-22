@@ -4,6 +4,10 @@
 
 #include "UrdfRobot/UrdfLinkComponent.h"
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include <Components/StaticMeshComponent.h>
 #include <Containers/Array.h>       // TArray
 #include <Engine/StaticMesh.h>
@@ -17,6 +21,7 @@
 #include <PhysicalMaterials/PhysicalMaterial.h>
 #include <UObject/UObjectGlobals.h> // DuplicateObject, LoadObject, NewObject
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
@@ -170,5 +175,54 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         }
 
         StaticMeshComponents.Add(static_mesh_component);
+    }
+}
+
+std::map<std::string, ArrayDesc> UUrdfLinkComponent::getObservationSpace() const
+{
+    std::map<std::string, ArrayDesc> observation_space;
+
+    std::string name = Unreal::toStdString(GetName()) + ".location";
+    ArrayDesc array_desc;
+    array_desc.low_ = std::numeric_limits<double>::lowest();
+    array_desc.high_ = std::numeric_limits<double>::max();
+    array_desc.shape_ = {3}; // x, y, z in [cm] of each link relative to it's parent
+    array_desc.datatype_ = DataType::Float64;
+    observation_space[name] = std::move(array_desc);
+
+    name = Unreal::toStdString(GetName()) + ".rotation";
+    array_desc.low_ = std::numeric_limits<double>::lowest();
+    array_desc.high_ = std::numeric_limits<double>::max();
+    array_desc.shape_ = {3}; // pitch, yaw, roll in [deg] of each link relative to it's parent
+    array_desc.datatype_ = DataType::Float64;
+    observation_space[name] = std::move(array_desc);
+
+    return observation_space;
+}
+
+std::map<std::string, std::vector<uint8_t>> UUrdfLinkComponent::getObservation() const
+{
+    std::map<std::string, std::vector<uint8_t>> observation;
+
+    FVector location = GetRelativeLocation();
+    std::string name = Unreal::toStdString(GetName()) + ".location";
+    observation[name] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+
+    FRotator rotation = GetRelativeRotation();
+    name = Unreal::toStdString(GetName()) + ".rotation";
+    observation[name] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.Pitch, rotation.Yaw, rotation.Roll});
+
+    return observation;
+}
+
+void UUrdfLinkComponent::reset()
+{
+    FBodyInstance* body_instance = GetBodyInstance();
+    SP_ASSERT(body_instance);
+    if (body_instance->ShouldInstanceSimulatingPhysics()) {
+        body_instance->SetLinearVelocity(FVector::ZeroVector, false);
+        body_instance->SetAngularVelocityInRadians(FVector::ZeroVector, false);
+        body_instance->ClearForces();
+        body_instance->ClearTorques();
     }
 }

@@ -86,13 +86,12 @@ void UUrdfJointComponent::BeginPlay()
 
 std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
 {
+    std::map<std::string, ArrayDesc> action_space;
+
     if (JointType == EJointType::Invalid || JointType == EJointType::Fixed) {
-        return {{}};
+        return action_space;
     }
 
-    // Arguably, setting the ArrayDesc's low, high, shape, and dtype could be part of UrdfRobotComponent.
-    // But, we do it here, because if they need to be modified based on joint types, etc, then it's easier
-    // to do those changes here.
     ArrayDesc array_desc;
     array_desc.low_ = std::numeric_limits<double>::lowest();
     array_desc.high_ = std::numeric_limits<double>::max();
@@ -156,7 +155,28 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
             break;
     }
 
-    return {{action_name, array_desc}};
+    action_space[action_name] = std::move(array_desc);
+
+    return action_space;
+}
+
+std::map<std::string, ArrayDesc> UUrdfJointComponent::getObservationSpace() const
+{
+    std::map<std::string, ArrayDesc> observation_space;
+
+    return observation_space;
+}
+
+void UUrdfJointComponent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
+{
+
+}
+
+std::map<std::string, std::vector<uint8_t>> UUrdfJointComponent::getObservation() const
+{
+    std::map<std::string, std::vector<uint8_t>> observation;
+
+    return observation;
 }
 
 void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)

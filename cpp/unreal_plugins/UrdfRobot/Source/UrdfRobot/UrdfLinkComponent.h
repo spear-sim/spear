@@ -4,12 +4,17 @@
 
 #pragma once
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include <Components/StaticMeshComponent.h>
 #include <Containers/Array.h>     // TArray
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "UrdfLinkComponent.generated.h"
 
+struct ArrayDesc;
 struct UrdfLinkDesc;
 
 UCLASS()
@@ -40,4 +45,9 @@ public:
     // joints here. Recursively creating the hierarchy of child links and child joints must be handled in
     // higher-level code.
     void initialize(const UrdfLinkDesc* link_desc);
+
+    // Used by UrdfRobotComponent.
+    std::map<std::string, ArrayDesc> getObservationSpace() const;
+    std::map<std::string, std::vector<uint8_t>> getObservation() const;
+    void reset();
 };

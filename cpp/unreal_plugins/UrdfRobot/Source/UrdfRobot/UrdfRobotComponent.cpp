@@ -117,9 +117,6 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace() const
         }
     }
 
-    // remove empty map entry
-    action_space.erase("");
-
     return action_space;
 }
 
@@ -127,25 +124,15 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getObservationSpace() cons
 {
     std::map<std::string, ArrayDesc> observation_space;
 
-    if (Std::contains(observation_components_, "links_location")) {
-        for (auto& link_component : link_components_) {
-            ArrayDesc array_desc;
-            array_desc.low_ = std::numeric_limits<double>::lowest();
-            array_desc.high_ = std::numeric_limits<double>::max();
-            array_desc.shape_ = {3}; // x, y, z in [cm] of each link relative to it's parent
-            array_desc.datatype_ = DataType::Float64;
-            observation_space[link_component.first] = std::move(array_desc);
+    if (Std::contains(observation_components_, "link_configurations")) {
+        for (auto link_component : LinkComponents) {
+            observation_space.merge(link_component->getObservationSpace());
         }
     }
 
-    if (Std::contains(observation_components_, "links_rotation")) {
-        for (auto& link_component : link_components_) {
-            ArrayDesc array_desc;
-            array_desc.low_ = std::numeric_limits<double>::lowest();
-            array_desc.high_ = std::numeric_limits<double>::max();
-            array_desc.shape_ = {3}; // pitch, yaw, roll in [deg] of each link relative to it's parent
-            array_desc.datatype_ = DataType::Float64;
-            observation_space[link_component.first] = std::move(array_desc);
+    if (Std::contains(observation_components_, "joint_configurations")) {
+        for (auto joint_component : JointComponents) {
+            observation_space.merge(joint_component->getObservationSpace());
         }
     }
 
@@ -170,17 +157,15 @@ std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation(
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    if (Std::contains(observation_components_, "links_location")) {
-        for (auto& link_component : link_components_) {
-            FVector location = link_component.second->GetRelativeLocation();
-            observation[link_component.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+    if (Std::contains(observation_components_, "link_configurations")) {
+        for (auto link_component : LinkComponents) {
+            observation.merge(link_component->getObservation());
         }
     }
 
-    if (Std::contains(observation_components_, "links_rotation")) {
-        for (auto& link_component : link_components_) {
-            FRotator rotation = link_component.second->GetRelativeRotation();
-            observation[link_component.first] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.Pitch, rotation.Yaw, rotation.Roll});
+    if (Std::contains(observation_components_, "joint_configurations")) {
+        for (auto joint_component : JointComponents) {
+            observation.merge(joint_component->getObservation());
         }
     }
 
@@ -189,15 +174,8 @@ std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation(
 
 void UUrdfRobotComponent::reset()
 {
-    for (auto& link_component : LinkComponents) {
-        FBodyInstance* body_instance = link_component->GetBodyInstance();
-        SP_ASSERT(body_instance);
-        if (body_instance->ShouldInstanceSimulatingPhysics()) {
-            body_instance->SetLinearVelocity(FVector::ZeroVector, false);
-            body_instance->SetAngularVelocityInRadians(FVector::ZeroVector, false);
-            body_instance->ClearForces();
-            body_instance->ClearTorques();
-        }
+    for (auto link_component : LinkComponents) {
+        link_component->reset();
     }
 }
 
