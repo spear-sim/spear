@@ -112,8 +112,8 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace() const
     std::map<std::string, ArrayDesc> action_space;
 
     if (Std::contains(action_components_, "control_joints")) {
-        for (auto joint_component : joint_components_) {
-            action_space.merge(joint_component.second->getActionSpace());
+        for (auto joint_component : JointComponents) {
+            action_space.merge(joint_component->getActionSpace());
         }
     }
 
