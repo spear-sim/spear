@@ -29,7 +29,7 @@ class MujocoExporter:
             if include_objects and not any([(osp.splitext(filename)[0] == i) for i in include_objects.split(',')]):
                 continue
             joint_filename = filename.replace('.gltf', '_joints.json')
-            self.input_gltf_filenames[os.path.join(ue_export_path, filename)] = os.path.isfile(os.path.join(ue_export_path, joint_filename))
+            self.input_gltf_filenames[osp.join(ue_export_path, filename)] = osp.isfile(osp.join(ue_export_path, joint_filename))
         self.scene_path = osp.normpath(scene_path)
         self.scene_xml_file = osp.join(self.scene_path, "scene.xml") 
         self.output_folder = osp.join(self.scene_path, "output") 

@@ -26,10 +26,11 @@ the same name.
 - [ ] Articulated objects are currently assumed to be static w.r.t. world i.e. `"moving": false` in their entry in
 `<scene_path>/ue_export/actors_information.json`. This needs to be derived by checking if `simulate_physics` is set for
 any component other than the `DefaultSceneRoot` and children of `PhysicsContstraintComponents`.
-- [ ] Implement numerical parity between UE and MuJoCo representations i.e. in the joint positions, object poses, etc.
+- [x] Implement numerical parity between UE and MuJoCo representations i.e. in the joint positions, object poses, etc.
 Currently UE uses cm and degrees. Exporting to GLTF converts it to m and radians, which is also the unit system used in
 MuJoCo. 
-- [ ] Check if MuJoCo can operate in degrees.
+- [x] Check if MuJoCo can operate in degrees.
+- [ ] More accurate gravity value in scene_include.xml.
 
 ## Miscellaneous
 UE Editor REPL code for frequently used debugging operations:

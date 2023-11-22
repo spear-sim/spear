@@ -29,6 +29,10 @@ def xyzquat_to_T(xyz, quat):
     return T
 
 
+def pose_rh_to_lh(xyz, quat):
+    return (xyz[0], -xyz[1], xyz[2]), (quat[0], quat[1], -quat[2], quat[3])
+
+
 def T_to_xyzquat(T):
     return T[:3, 3].tolist(), txq.mat2quat(T[:3, :3]).tolist()
 
@@ -316,6 +320,7 @@ def decompose_convex(args):
         os.remove(obj_filename)
         
     if decomposed:
+        xyz, quat = pose_rh_to_lh(xyz, quat)
         mujoco_xml_populate_objects(obj_dir, output_folder, scene_path, cvx_dir, xyz, quat, decompose_in_bodies)
     else:  # delete whole directory
         shutil.rmtree(obj_dir)
@@ -346,19 +351,22 @@ def assemble_articulated_object_files(args):
         
         if (len(joint) == 1) or (parent_name is None):
             body_name = f'{name_prefix}{name}{parent_name_suffix}'
+            pos, quat = pose_rh_to_lh(nodes_info[name]['pos'], nodes_info[name]['quat'])
             body_attributes = {
                 'name': body_name,
-                'pos': '{:f} {:f} {:f}'.format(*nodes_info[name]['pos']),
-                'quat': '{:f} {:f} {:f} {:f}'.format(*nodes_info[name]['quat'])
+                'pos': '{:f} {:f} {:f}'.format(*pos),
+                'quat': '{:f} {:f} {:f} {:f}'.format(*quat)
             }
             body = ET.SubElement(parent, 'body', body_attributes)
             if len(joint) == 1:
                 joint_name = f'{name_prefix}{joint[0]["name"]}{parent_name_suffix}'
+                pos, _ = pose_rh_to_lh(joint[0]['pos'], (1, 0, 0, 0))
+                axis, _ = pose_rh_to_lh(joint[0]['axis'], (1, 0, 0, 0))
                 joint_attributes = {
                     'name': joint_name,
                     'type': joint[0]['type'],
-                    'pos': '{:.5f} {:.5f} {:.5f}'.format(*joint[0]['pos']),
-                    'axis': '{:.5f} {:.5f} {:.5f}'.format(*joint[0]['axis']),
+                    'pos': '{:.5f} {:.5f} {:.5f}'.format(*pos),
+                    'axis': '{:.5f} {:.5f} {:.5f}'.format(*axis),
                     'range': '{:.5f} {:.5f}'.format(*joint[0]['range']),
                     'ref': '{:.5f}'.format(joint[0]['ref'])
                 }

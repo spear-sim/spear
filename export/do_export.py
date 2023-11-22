@@ -1,7 +1,14 @@
+"""
+Even though we eventually would like to run physics in a left-handed coordinate system to match UE, this script
+exports everything in the right-handed coordinate system. This is done to maintain script-level consistency, because
+GLTF export (implemented by UE) always exports objects in a right-handed coordinate system. The unit of translation 
+can be set, however. It affects both the offsets and the geometry. So we set that to cm, overriding the default
+GLTF exporter behaviour of expressing translation in m. Unit of rotation (joint limits and references) is degrees.
+"""
+
 import argparse
 from collections import namedtuple
 import json
-import math
 import os
 import unreal
 import time
@@ -12,8 +19,8 @@ ss = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 world = ss.get_editor_world()
 
 
-TRANS_UE_TO_MUJOCO_SCALE = 1.0
-ROT_UE_TO_MUJOCO_SCALE = math.pi / 180.0
+TRANS_UE_TO_MUJOCO_SCALE = 1.0  # keep cm
+ROT_UE_TO_MUJOCO_SCALE = 1.0  # keep degrees
 
 
 def export_meshes(actor, export_dir):
