@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import pathlib
 import posixpath
@@ -6,7 +7,6 @@ import spear
 
 
 def validate_level(level):
-
     #
     # TODO:
     # We name each scene using a lower_case_with_underscore naming convention and a four
@@ -17,7 +17,6 @@ def validate_level(level):
 
 
 def validate_content_browser(level):
-
     #
     # TODO:
     # There should be exactly one umap file with the same name as the scene in the scene's
@@ -34,7 +33,6 @@ def validate_content_browser(level):
 
 
 def validate_outliner(level):
-
     editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 
     #
@@ -53,7 +51,6 @@ def validate_outliner(level):
 
 
 def validate_actor(level, actor):
-
     #
     # Actors that are useful for debugging are kept here.
     #
@@ -179,7 +176,6 @@ def validate_actor(level, actor):
 
 
 def validate_meshes_actor(level, actor):
-
     if len(actor.get_components_by_class(unreal.PhysicsConstraintComponent)) == 0:
         spear.log("WARNING: Expected physics constraint: ", get_debug_string_actor(actor))
         return
@@ -197,7 +193,6 @@ def validate_meshes_actor(level, actor):
 
 
 def validate_meshes_static_mesh_actor(level, actor):
-
     if len(actor.get_components_by_class(unreal.PhysicsConstraintComponent)) != 0:
         spear.log("WARNING: Unexpected physics constraint: ", get_debug_string_actor(actor))
         return
@@ -211,7 +206,6 @@ def validate_meshes_static_mesh_actor(level, actor):
 
 
 def validate_light_component(level, actor, component):
-
     if len(component.get_parent_components()) == 0:
         spear.log("WARNING: Unexpected component: ", get_debug_string_actor(actor), ".", component)
         return
@@ -232,7 +226,6 @@ def validate_light_component(level, actor, component):
 
 
 def validate_physics_constraint_component(level, actor, component):
-
     if len(component.get_parent_components()) == 0:
         spear.log("WARNING: Unexpected component: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
         return
@@ -285,7 +278,7 @@ def validate_physics_constraint_component(level, actor, component):
 
     parent = component.get_attach_parent()
 
-    if component_name1_name not in [ c.get_name() for c in parent.get_children_components(include_all_descendants=False) ]:
+    if component_name1_name not in [c.get_name() for c in parent.get_children_components(include_all_descendants=False)]:
         spear.log(
             "WARNING: Unexpected physics constraint name 1, ",
             get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", component_name1_name, ")")
@@ -299,7 +292,6 @@ def validate_physics_constraint_component(level, actor, component):
 
 
 def validate_scene_component(level, actor, component):
-
     #
     # Each Actor has a root component named "DefaultSceneRoot".
     #
@@ -314,7 +306,6 @@ def validate_scene_component(level, actor, component):
 
 
 def validate_static_mesh_component(level, actor, component):
-
     #
     # For each StaticMeshComponent, the "Collision Presets" option should be set to
     # "Default". This configures the collision behavior of the component to be
@@ -488,8 +479,8 @@ def validate_static_mesh_component(level, actor, component):
                 return
 
             if material_path[0:5] != ("/", "Game", "Scenes", level, "Materials") and \
-               material_path[0:3] != ("/", "Game", "Megascans") and \
-               material_path[0:4] != ("/", "Game", "Kujiale", "Materials"):
+                    material_path[0:3] != ("/", "Game", "Megascans") and \
+                    material_path[0:4] != ("/", "Game", "Kujiale", "Materials"):
                 spear.log(
                     "WARNING: Unexpected material path: ",
                     get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_material(material), ")")
@@ -514,6 +505,7 @@ def validate_static_mesh_component(level, actor, component):
 def vector_to_numpy(vector):
     return np.array([vector.x, vector.y, vector.z])
 
+
 # Unlike the default ActorComponent.get_parent_components() function, this function returns parent components in root-to-leaf order.
 def get_parent_components(component):
     c = component
@@ -523,29 +515,44 @@ def get_parent_components(component):
         parents = [c] + parents
     return parents
 
+
 def get_debug_string_static_mesh(static_mesh):
     return static_mesh.get_path_name()
+
 
 def get_debug_string_material(material):
     return material.get_path_name()
 
+
 def get_debug_string_component(component):
-    return ".".join([ c.get_name() for c in get_parent_components(component) ]) + "." + component.get_name()
+    return ".".join([c.get_name() for c in get_parent_components(component)]) + "." + component.get_name()
+
 
 def get_debug_string_type(type):
     return type.__name__
+
 
 def get_debug_string_actor(actor):
     return str(actor.get_folder_path()) + posixpath.sep + actor.get_actor_label()
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--level", default="")
+    args = parser.parse_args()
 
-    # TODO: parse command-line args
+    LevelEditorSubsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    if args.level != "":
+        # open new world
+        level_path = f"/Game/Scenes/{args.level}/Maps/{args.level}"
+        spear.log("load_level", level_path)
+        LevelEditorSubsystem.load_level(level_path)
 
-    # TODO: get level name programmatically
-    level = "kujiale_0000"
+    level = LevelEditorSubsystem.get_current_level()
+    level_name = level.get_name()
 
-    validate_level(level)
-    validate_content_browser(level)
-    validate_outliner(level)
+    validate_level(level_name)
+    validate_content_browser(level_name)
+    validate_outliner(level_name)
+
+    spear.log("validation complete")
