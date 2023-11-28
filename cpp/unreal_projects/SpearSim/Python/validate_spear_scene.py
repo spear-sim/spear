@@ -35,17 +35,12 @@ def validate_content_browser(level):
 def validate_outliner(level):
     editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 
-    #
-    # TODO: use args to decide whether or not to use selected actors
-    #
-    # if args.validate_selected_actors:
-    #     actors = editor_actor_subsystem.get_selected_level_actors()
-    # else:
-    #     actors = editor_actor_subsystem.get_all_level_actors()
-    #
+    actors = editor_actor_subsystem.get_selected_level_actors()
+    if len(actors) == 0:
+        actors = editor_actor_subsystem.get_all_level_actors()
 
-    actors = sorted(editor_actor_subsystem.get_all_level_actors(), key=(lambda actor: get_debug_string_actor(actor)))
-
+    actors = sorted(actors, key=(lambda actor: get_debug_string_actor(actor)))
+    print(len(actors))
     for actor in actors:
         validate_actor(level, actor)
 
@@ -151,8 +146,33 @@ def validate_actor(level, actor):
         # All the rules for StaticMeshActors described above also apply to Actors.
         #
 
+        # ignore components from bounds computation if they don't have a mesh assigned, or if their assigned mesh is SM_Dummy
+        ignore_components = [
+            c for c in actor.get_components_by_class(unreal.StaticMeshComponent) if
+            c.get_editor_property("static_mesh") is None or
+            c.get_editor_property("static_mesh").get_path_name() == "/Game/Kujiale/Meshes/SM_Dummy.SM_Dummy"]
+
+        # for each ignored component, cache "use_default_collision" and "collision_enabled" properties
+        ignore_use_default_collision = {
+            c.get_name(): c.get_editor_property("use_default_collision") for c in ignore_components}
+        ignore_collision_enabled = {
+            c.get_name(): c.get_editor_property("body_instance").get_editor_property("collision_enabled") for c in ignore_components}
+
+        # disable collision on each ignored component
+        for c in ignore_components:
+            c.set_editor_property("use_default_collision", False)
+            c.get_editor_property("body_instance").set_editor_property("collision_enabled", unreal.CollisionEnabled.NO_COLLISION)
+
+        # compute bounds
+        bounds_origin, bounds_half_extent = actor.get_actor_bounds(only_colliding_components=True, include_from_child_actors=False)
+
+        # for each ignored component, restore "use_default_collision" and "collision_enabled" properties
+        for c in ignore_components:
+            c.set_editor_property("use_default_collision", ignore_use_default_collision[c.get_name()])
+            c.get_editor_property("body_instance").set_editor_property("collision_enabled", ignore_collision_enabled[c.get_name()])
+
+        # check pivot location against computed bounds
         eps = 0.000001
-        bounds_origin, bounds_half_extent = actor.get_actor_bounds(only_colliding_components=False, include_from_child_actors=False)
         bounds_origin = vector_to_numpy(bounds_origin)
         bounds_half_extent = vector_to_numpy(bounds_half_extent)
         pivot_desired = np.array([bounds_origin[0], bounds_origin[1], bounds_origin[2] - bounds_half_extent[2]])
@@ -392,7 +412,7 @@ def validate_static_mesh_component(level, actor, component):
 
         materials = component.get_editor_property("override_materials")
         for material in materials:
-            if material is not None:
+            if material is not None and material.get_name() != "WorldGridMaterial":
                 spear.log(
                     "WARNING: Unexpected material: ",
                     get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_material(material), ")")
@@ -541,14 +561,15 @@ if __name__ == "__main__":
     parser.add_argument("--level", default="")
     args = parser.parse_args()
 
-    LevelEditorSubsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     if args.level != "":
         # open new world
         level_path = f"/Game/Scenes/{args.level}/Maps/{args.level}"
         spear.log("load_level", level_path)
-        LevelEditorSubsystem.load_level(level_path)
+        level_editor_subsystem.load_level(level_path)
 
-    level = LevelEditorSubsystem.get_current_level()
+    unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+    level = unreal_editor_subsystem.get_editor_world()
     level_name = level.get_name()
 
     validate_level(level_name)
