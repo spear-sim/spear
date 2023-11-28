@@ -30,7 +30,7 @@ any component other than the `DefaultSceneRoot` and children of `PhysicsContstra
 Currently UE uses cm and degrees. Exporting to GLTF converts it to m and radians, which is also the unit system used in
 MuJoCo. 
 - [x] Check if MuJoCo can operate in degrees.
-- [ ] More accurate gravity value in scene_include.xml.
+- [x] More accurate gravity value in scene_include.xml.
 
 ## Miscellaneous
 UE Editor REPL code for frequently used debugging operations:
