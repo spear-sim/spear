@@ -141,16 +141,14 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getObservationSpace() cons
 
 void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<uint8_t>>& actions)
 {
-    std::map <std::string, std::vector<double>> joint_actions;
-
-    for (auto& action : actions) {
-        std::vector<double> action_data = Std::reinterpretAs<double>(action.second);
-        joint_actions[action.first] = action_data;
+    if (Std::contains(action_components_, "control_joints")) {
+        std::map <std::string, std::vector<double>> actions_reinterpreted;
+        for (auto& action_component : actions) {
+            std::vector<double> action_component_data_reinterpreted = Std::reinterpretAs<double>(action_component.second);
+            actions_reinterpreted[action_component.first] = action_component_data_reinterpreted;
+        }
+        applyAction(actions_reinterpreted);
     }
-
-    bool assert_if_action_is_inconsistent_with_joint = true;
-    bool assert_if_joint_not_found = true;
-    applyAction(joint_actions, assert_if_joint_not_found, assert_if_action_is_inconsistent_with_joint);
 }
 
 std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation() const
