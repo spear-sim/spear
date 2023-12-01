@@ -64,11 +64,7 @@ private:
     void initialize(const UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link_component);
     void initializeDeferred();
 
-    void applyAction(
-        const std::map<std::string,
-        std::vector<double>>& action,
-        bool assert_if_joint_not_found = true,
-        bool assert_if_action_is_inconsistent = true);
+    void applyAction(const std::map<std::string, std::vector<double>>& action);
 
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;

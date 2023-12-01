@@ -82,10 +82,7 @@ void UUrdfRobotComponent::BeginPlay()
     input_action_component_->bindInputActions(input_actions);
     input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
         if (EnableKeyboardControl) {
-            // only assert if we're not in the editor
-            bool assert_if_action_is_inconsistent_with_joint = !WITH_EDITOR;
-            bool assert_if_joint_not_found = !WITH_EDITOR;
-            applyAction(input_actions.at(key), assert_if_joint_not_found, assert_if_action_is_inconsistent_with_joint);
+            applyAction(input_actions.at(key));
         }
     };
 }
@@ -289,23 +286,30 @@ void UUrdfRobotComponent::initializeDeferred()
     }
 }
 
-void UUrdfRobotComponent::applyAction(
-    const std::map<std::string,
-    std::vector<double>>& action,
-    bool assert_if_joint_not_found,
-    bool assert_if_action_is_inconsistent_with_joint)
+void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<double>>& action)
 {
+    // Since this method is private, we assume that there is no need to check action_components_, either because we're
+    // being called directly due to keyboard input, or because we've already checked it in the public applyAction method.
+
     SP_ASSERT(action.size());
 
     for (auto& action_component : action) {
         std::vector<std::string> tokens = Std::tokenize(action_component.first, ".");
-        SP_ASSERT(tokens.size() == 2);
-        bool found = Std::containsKey(joint_components_, tokens.at(0));
-        SP_ASSERT(found || !assert_if_joint_not_found);
-        if (found) {
-            UUrdfJointComponent* joint_component = joint_components_.at(tokens.at(0));
-            SP_ASSERT(joint_component);
-            joint_component->applyAction(tokens.at(1), action_component.second, assert_if_action_is_inconsistent_with_joint);
+        SP_ASSERT(tokens.size() == 2 || WITH_EDITOR); // defined in an auto-generated header
+        if (tokens.size() != 2) {
+            SP_LOG("ERROR: Can't parse action component name:", action_component.first);
+            continue;
         }
+
+        bool found = Std::containsKey(joint_components_, tokens.at(0));
+        SP_ASSERT(found || WITH_EDITOR); // defined in an auto-generated header
+        if (!found) {
+            SP_LOG("ERROR: Can't find joint: ", tokens.at(0));
+            continue;
+        }
+
+        UUrdfJointComponent* joint_component = joint_components_.at(tokens.at(0));
+        SP_ASSERT(joint_component);
+        joint_component->applyActionComponent(action_component);
     }
 }

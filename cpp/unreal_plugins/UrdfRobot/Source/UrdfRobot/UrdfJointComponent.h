@@ -74,13 +74,10 @@ public:
     // Used by UrdfRobotComponent.
     void initializeDeferred();
 
-    // Apply a named action (e.g., "add_torque_in_radians") to the joint using a given vector of input data. Used by UUrdfRobotComponent.
-    void applyAction(const std::string& action_component_name, const std::vector<double>& action_component_data, bool assert_if_action_is_inconsistent = true);
-
     // Used by UrdfRobotComponent.
     std::map<std::string, ArrayDesc> getActionSpace() const;
     std::map<std::string, ArrayDesc> getObservationSpace() const;
-    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
+    void applyActionComponent(const std::pair<std::string, std::vector<double>>& action_component);
     std::map<std::string, std::vector<uint8_t>> getObservation() const;
 
 private:

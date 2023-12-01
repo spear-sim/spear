@@ -166,7 +166,7 @@ bool UrdfRobotAgent::isReady() const
     SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
     // consider both linear and angular velocities of all components to determine if the robot is ready or not
     float sum_vel = 0.0;
-    for (auto& link_component : urdf_robot_pawn_->UrdfRobotComponent->LinkComponents) {
+    for (auto link_component : urdf_robot_pawn_->UrdfRobotComponent->LinkComponents) {
         sum_vel += link_component->GetPhysicsAngularVelocityInRadians().Size();
         sum_vel += link_component->GetPhysicsLinearVelocity().Size();
     }
