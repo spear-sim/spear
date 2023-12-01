@@ -262,7 +262,9 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
     std::map<std::string, ArrayDesc> action_space;
 
     // We need this special case here because, we want to return an emtpy action_space for joint types
-    // that are not functional, i.e., those joints that cannot be controlled/moved like Fixed, Invalid, etc.
+    // that are not functional, but still valid, i.e., those joints that cannot be controlled/moved like Fixed.
+    // If we do not return an empty map, the action space information corresponding to this joint type,
+    // will be propogated to python client, which is not desirable.
     if (JointType == EJointType::Fixed) {
         return action_space;
     }
@@ -348,7 +350,7 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
     std::vector<double> action_component_data = action_component.second;
 
     std::vector<std::string> tokens = Std::tokenize(action_component_name, ".");
-    std::string action_name = tokens.at(1);
+    std::string& action_name = tokens.at(1);
 
     switch (JointControlType) {
         case EJointControlType::NotActuated:
