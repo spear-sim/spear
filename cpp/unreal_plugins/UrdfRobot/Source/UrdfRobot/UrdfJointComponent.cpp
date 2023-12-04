@@ -62,9 +62,6 @@ UUrdfJointComponent::~UUrdfJointComponent()
     EnableKeyboardControl = false;
     //LinearTranslationOffset = FVector::ZeroVector; // TODO (MR): support linear translation offsets
 
-    parent_static_mesh_component_ = nullptr;
-    child_static_mesh_component_ = nullptr;
-
     SP_ASSERT(input_action_component_);
     input_action_component_ = nullptr;
 }
@@ -80,6 +77,24 @@ void UUrdfJointComponent::BeginPlay()
             applyActionComponent(input_actions.at(key));
         }
     };
+
+    // TODO (MR): generalize this code, which currently applies a hard-coded linear translation offset
+
+    //if (Unreal::toStdString(GetName()) == "joint.joint_1") {
+    //    FTransform A1Transform = GetBodyTransform(EConstraintFrame::Frame1);
+    //    A1Transform.RemoveScaling();
+
+    //    FTransform A2Transform = GetBodyTransform(EConstraintFrame::Frame2);
+    //    A2Transform.RemoveScaling();
+
+    //    // World ref frame
+    //    const FVector WPos = GetComponentLocation();
+    //    const FVector Pos1 = A1Transform.InverseTransformPosition(WPos) - FVector(0.0, 0.0, 0.0);
+    //    const FVector Pos2 = A2Transform.InverseTransformPosition(WPos) - FVector(0.0, 25.0, 0.0);
+
+    //    ConstraintInstance.SetRefPosition(EConstraintFrame::Frame1, Pos1);
+    //    ConstraintInstance.SetRefPosition(EConstraintFrame::Frame2, Pos2);
+    //}
 }
 
 void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link_component, UUrdfLinkComponent* child_link_component)
@@ -92,8 +107,8 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
 
     JointType = static_cast<EJointType>(joint_desc->type_);
     JointControlType = static_cast<EJointControlType>(joint_desc->control_type_);
-    parent_static_mesh_component_ = parent_link_component;
-    child_static_mesh_component_ = child_link_component;
+    ParentStaticMeshComponent = parent_link_component;
+    ChildStaticMeshComponent = child_link_component;
 
     FVector location = FVector({ joint_desc->xyz_.at(0), joint_desc->xyz_.at(1), joint_desc->xyz_.at(2) }) * m_to_cm;                  // m to cm
     FRotator rotation = FMath::RadiansToDegrees(FRotator({ joint_desc->rpy_.at(1), joint_desc->rpy_.at(2), joint_desc->rpy_.at(0) })); // rpy to pyr, rad to deg
@@ -105,7 +120,7 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
     SetDisableCollision(true);
 
     // The convention in Unreal is that component 1 is the child and component 2 is the parent, which is relevant when setting the "Parent Dominates" flag.
-    SetConstrainedComponents(child_static_mesh_component_, NAME_None, parent_static_mesh_component_, NAME_None);
+    SetConstrainedComponents(ChildStaticMeshComponent, NAME_None, ParentStaticMeshComponent, NAME_None);
 
     // Optionally enable the "parent dominates" flag to reduce jittering.
     if (joint_desc->parent_dominates_) {
@@ -229,34 +244,6 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
     }
 }
 
-void UUrdfJointComponent::initializeDeferred()
-{
-    // The convention in Unreal is that component 1 is the child and component 2 is the parent.
-    child_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame1));
-    parent_static_mesh_component_ = dynamic_cast<UStaticMeshComponent*>(GetComponentInternal(EConstraintFrame::Frame2));
-
-    SP_ASSERT(child_static_mesh_component_);
-    SP_ASSERT(parent_static_mesh_component_);
-
-    // TODO (MR): generalize this code, which currently applies a hard-coded linear translation offset
-
-    //if (Unreal::toStdString(GetName()) == "joint.joint_1") {
-    //    FTransform A1Transform = GetBodyTransform(EConstraintFrame::Frame1);
-    //    A1Transform.RemoveScaling();
-
-    //    FTransform A2Transform = GetBodyTransform(EConstraintFrame::Frame2);
-    //    A2Transform.RemoveScaling();
-
-    //    // World ref frame
-    //    const FVector WPos = GetComponentLocation();
-    //    const FVector Pos1 = A1Transform.InverseTransformPosition(WPos) - FVector(0.0, 0.0, 0.0);
-    //    const FVector Pos2 = A2Transform.InverseTransformPosition(WPos) - FVector(0.0, 25.0, 0.0);
-
-    //    ConstraintInstance.SetRefPosition(EConstraintFrame::Frame1, Pos1);
-    //    ConstraintInstance.SetRefPosition(EConstraintFrame::Frame2, Pos2);
-    //}
-}
-
 std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
 {
     std::map<std::string, ArrayDesc> action_space;
@@ -366,13 +353,11 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
                 case EJointType::Revolute:
                     if (action_name == "set_angular_orientation_target") {
                         SetAngularOrientationTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                    }
-                    else if (action_name == "add_to_angular_orientation_target") {
+                    } else if (action_name == "add_to_angular_orientation_target") {
                         SetAngularOrientationTarget(
                             ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Add(
                                 action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)));
-                    }
-                    else {
+                    } else {
                         SP_ASSERT(WITH_EDITOR); // defined in an auto-generated header
                     }
                     break;
@@ -380,14 +365,12 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
                 case EJointType::Prismatic:
                     if (action_name == "set_linear_position_target") {
                         SetLinearPositionTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                    }
-                    else if (action_name == "add_to_linear_position_target") {
+                    } else if (action_name == "add_to_linear_position_target") {
                         SetLinearPositionTarget({
                             action_component_data.at(0) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X,
                             action_component_data.at(1) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.Y,
                             action_component_data.at(2) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.Z });
-                    }
-                    else {
+                    } else {
                         SP_ASSERT(WITH_EDITOR); // defined in an auto-generated header
                     }
                     break;
@@ -403,72 +386,67 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
 
         case EJointControlType::Velocity:
             switch (JointType) {
-            case EJointType::Continuous:
-            case EJointType::Revolute:
-                if (action_name == "set_angular_velocity_target") {
-                    SetAngularVelocityTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                }
-                else if (action_name == "add_to_angular_velocity_target") {
-                    SetAngularVelocityTarget({
-                        action_component_data.at(0) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X,
-                        action_component_data.at(1) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.Y,
-                        action_component_data.at(2) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.Z });
-                }
-                else {
-                    SP_ASSERT(WITH_EDITOR); // defined in an auto-generated header
-                }
-                break;
+                case EJointType::Continuous:
+                case EJointType::Revolute:
+                    if (action_name == "set_angular_velocity_target") {
+                        SetAngularVelocityTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
+                    } else if (action_name == "add_to_angular_velocity_target") {
+                        SetAngularVelocityTarget({
+                            action_component_data.at(0) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X,
+                            action_component_data.at(1) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.Y,
+                            action_component_data.at(2) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.Z });
+                    } else {
+                        SP_ASSERT(WITH_EDITOR); // defined in an auto-generated header
+                    }
+                    break;
 
-            case EJointType::Prismatic:
-                if (action_name == "set_linear_velocity_target") {
-                    SetLinearVelocityTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                }
-                else if (action_name == "add_to_linear_velocity_target") {
-                    SetLinearVelocityTarget({
-                        action_component_data.at(0) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X,
-                        action_component_data.at(1) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.Y,
-                        action_component_data.at(2) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.Z });
-                }
-                else {
-                    SP_ASSERT(WITH_EDITOR); // defined in an auto-generated header
-                }
-                break;
+                case EJointType::Prismatic:
+                    if (action_name == "set_linear_velocity_target") {
+                        SetLinearVelocityTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
+                    } else if (action_name == "add_to_linear_velocity_target") {
+                        SetLinearVelocityTarget({
+                            action_component_data.at(0) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X,
+                            action_component_data.at(1) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.Y,
+                            action_component_data.at(2) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.Z });
+                    } else {
+                        SP_ASSERT(WITH_EDITOR); // defined in an auto-generated header
+                    }
+                    break;
 
-            case EJointType::Fixed:
-                break;
+                case EJointType::Fixed:
+                    break;
 
-            default:
-                SP_ASSERT(false); // TODO (MR): support planar joints
-                break;
+                default:
+                    SP_ASSERT(false); // TODO (MR): support planar joints
+                    break;
             }
             break;
 
         case EJointControlType::Torque:
             switch (JointType) {
-            case EJointType::Continuous:
-            case EJointType::Revolute:
-                if (action_name == "add_torque_in_radians") {
-                    FVector torque = GetComponentTransform().GetRotation().RotateVector({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                    if (child_static_mesh_component_ && child_static_mesh_component_->BodyInstance.ShouldInstanceSimulatingPhysics()) {
-                        child_static_mesh_component_->AddTorqueInRadians(torque);
-                    }
-                    if (parent_static_mesh_component_ && parent_static_mesh_component_->BodyInstance.ShouldInstanceSimulatingPhysics()) {
-                        parent_static_mesh_component_->AddTorqueInRadians(-torque);
-                    }
-                }
-                else {
-                    SP_ASSERT(WITH_EDITOR); // defined in an auto-generated header
-                }
-                break;
-
-            case EJointType::Prismatic:
-                if (action_name == "add_force") {
-                        FVector force = GetComponentTransform().GetRotation().RotateVector({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                        if (child_static_mesh_component_ && child_static_mesh_component_->BodyInstance.ShouldInstanceSimulatingPhysics()) {
-                            child_static_mesh_component_->AddForce(force);
+                case EJointType::Continuous:
+                case EJointType::Revolute:
+                    if (action_name == "add_torque_in_radians") {
+                        FVector torque = GetComponentTransform().GetRotation().RotateVector({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
+                        if (ChildStaticMeshComponent && ChildStaticMeshComponent->BodyInstance.ShouldInstanceSimulatingPhysics()) {
+                            ChildStaticMeshComponent->AddTorqueInRadians(torque);
                         }
-                        if (parent_static_mesh_component_ && parent_static_mesh_component_->BodyInstance.ShouldInstanceSimulatingPhysics()) {
-                            parent_static_mesh_component_->AddForce(-force);
+                        if (ParentStaticMeshComponent && ParentStaticMeshComponent->BodyInstance.ShouldInstanceSimulatingPhysics()) {
+                            ParentStaticMeshComponent->AddTorqueInRadians(-torque);
+                        }
+                    } else {
+                        SP_ASSERT(WITH_EDITOR); // defined in an auto-generated header
+                    }
+                    break;
+
+                case EJointType::Prismatic:
+                    if (action_name == "add_force") {
+                        FVector force = GetComponentTransform().GetRotation().RotateVector({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
+                        if (ChildStaticMeshComponent && ChildStaticMeshComponent->BodyInstance.ShouldInstanceSimulatingPhysics()) {
+                            ChildStaticMeshComponent->AddForce(force);
+                        }
+                        if (ParentStaticMeshComponent && ParentStaticMeshComponent->BodyInstance.ShouldInstanceSimulatingPhysics()) {
+                            ParentStaticMeshComponent->AddForce(-force);
                         }
                     } else {
                         SP_ASSERT(WITH_EDITOR); // defined in an auto-generated header
@@ -483,7 +461,7 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
                     break;
             }
             break;
-    }
+        }
 }
 
 std::map<std::string, std::vector<uint8_t>> UUrdfJointComponent::getObservation() const

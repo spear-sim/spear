@@ -63,6 +63,10 @@ public:
     EJointControlType JointControlType = EJointControlType::NotActuated;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Enable Keyboard Control")
     bool EnableKeyboardControl = false;
+    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Child StaticMeshComponent")
+    UStaticMeshComponent* ChildStaticMeshComponent;
+    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Parent StaticMeshComponent")
+    UStaticMeshComponent* ParentStaticMeshComponent;
 
     // TODO (MR): support linear translation offsets
     //UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Linear Translation Offset")
@@ -72,9 +76,6 @@ public:
     void initialize(const UrdfJointDesc* joint_desc, UUrdfLinkComponent* parent_link, UUrdfLinkComponent* child_link);
 
     // Used by UrdfRobotComponent.
-    void initializeDeferred();
-
-    // Used by UrdfRobotComponent.
     std::map<std::string, ArrayDesc> getActionSpace() const;
     std::map<std::string, ArrayDesc> getObservationSpace() const;
     void applyActionComponent(const std::pair<std::string, std::vector<double>>& action_component);
@@ -82,6 +83,4 @@ public:
 
 private:
     UInputActionComponent* input_action_component_ = nullptr;
-    UStaticMeshComponent* parent_static_mesh_component_ = nullptr;
-    UStaticMeshComponent* child_static_mesh_component_ = nullptr;
 };

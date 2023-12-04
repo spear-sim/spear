@@ -282,10 +282,6 @@ void UUrdfRobotComponent::initializeDeferred()
     for (auto joint_component : JointComponents) {
         joint_components_[Unreal::toStdString(joint_component->GetName())] = joint_component;
     }
-
-    for (auto joint_component : JointComponents) {
-        joint_component->initializeDeferred();
-    }
 }
 
 void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<double>>& action)
