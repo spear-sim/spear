@@ -289,8 +289,6 @@ void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<do
     // Since this method is private, we assume that there is no need to check action_components_, either because we're
     // being called directly due to keyboard input, or because we've already checked it in the public applyAction method.
 
-    SP_ASSERT(action.size());
-
     for (auto& action_component : action) {
         std::vector<std::string> tokens = Std::tokenize(action_component.first, ".");
         SP_ASSERT(tokens.size() == 2 || WITH_EDITOR); // defined in an auto-generated header
