@@ -98,10 +98,10 @@ void UUrdfRobotComponent::TickComponent(float DeltaTime, enum ELevelTick TickTyp
     }
 
     // Update this component's pose to match root link component
-    SP_ASSERT(root_link_component_);
+    SP_ASSERT(RootLinkComponent);
     bool sweep = false;
     FHitResult* hit_result = nullptr;
-    SetWorldLocationAndRotation(root_link_component_->GetComponentLocation(), root_link_component_->GetComponentRotation(), sweep, hit_result, ETeleportType::None);
+    SetWorldLocationAndRotation(RootLinkComponent->GetComponentLocation(), RootLinkComponent->GetComponentRotation(), sweep, hit_result, ETeleportType::None);
 }
 
 void UUrdfRobotComponent::setActionComponents(const std::vector<std::string>& action_components)
@@ -210,14 +210,14 @@ void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
     // If this order is reversed and we end up creating more child components before registering the parent component,
     // the physics simulation will be unstable.
     SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
-    root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
-    SP_ASSERT(root_link_component_);
-    root_link_component_->SetupAttachment(this);
-    root_link_component_->RegisterComponent();
-    root_link_component_->initialize(root_link_desc);
-    LinkComponents.Add(root_link_component_);
+    RootLinkComponent = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
+    SP_ASSERT(RootLinkComponent);
+    RootLinkComponent->SetupAttachment(this);
+    RootLinkComponent->RegisterComponent();
+    RootLinkComponent->initialize(root_link_desc);
+    LinkComponents.Add(RootLinkComponent);
 
-    initialize(root_link_desc, root_link_component_);
+    initialize(root_link_desc, RootLinkComponent);
 }
 
 void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link_component)
@@ -282,14 +282,6 @@ void UUrdfRobotComponent::initializeDeferred()
     for (auto joint_component : JointComponents) {
         joint_components_[Unreal::toStdString(joint_component->GetName())] = joint_component;
     }
-
-    // We cache root link component's reference to a local variable root_link_component_ in initalize().
-    // In Editor mode, this root_link_component_ gets broken for the same reason mentioned above, hence
-    // we need to cache it again here.
-    if (!root_link_component_ && LinkComponents.Num()) {
-        root_link_component_ = LinkComponents[0];
-    }
-    SP_ASSERT(root_link_component_);
 
     for (auto joint_component : JointComponents) {
         joint_component->initializeDeferred();

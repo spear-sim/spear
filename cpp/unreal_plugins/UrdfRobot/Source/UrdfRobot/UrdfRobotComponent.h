@@ -36,6 +36,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Enable Keyboard Control")
     bool EnableKeyboardControl = false;
 
+    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Root LinkComponent")
+    UUrdfLinkComponent* RootLinkComponent;
+
     // We make these TArrays VisibleAnywhere rather than EditAnywhere to avoid counter-intuitive editor behavior.
     // More specifically, depending on how a user removes an entry from these lists (the leftmost dropdown, the
     // rightmost Insert/Delete/Duplicate dropdown, or the reset button), the editor will either: (1) delete the
@@ -72,7 +75,6 @@ private:
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
-    UUrdfLinkComponent* root_link_component_ = nullptr;
     UInputActionComponent* input_action_component_ = nullptr;
     bool ticked_once_ = false;
 };
