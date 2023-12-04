@@ -87,7 +87,8 @@ void AUrdfRobotPawn::Initialize()
             Config::get<double>("URDF_ROBOT.URDF_ROBOT_PAWN.CAMERA_COMPONENT.ROTATION_ROLL")};
         field_of_view = Config::get<float>("URDF_ROBOT.URDF_ROBOT_PAWN.CAMERA_COMPONENT.FOV");
         aspect_ratio = Config::get<float>("URDF_ROBOT.URDF_ROBOT_PAWN.CAMERA_COMPONENT.ASPECT_RATIO");
-    } else {// Fetch defaults, see python/spear/config/default_config.urdf_robot.yaml
+    } else {
+        // Fetch defaults, see python/spear/config/default_config.urdf_robot.yaml
         camera_location = {0.0, 0.0, 50.0};
         camera_rotation = FRotator::ZeroRotator;
         field_of_view = 90.0;
