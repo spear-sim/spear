@@ -206,14 +206,14 @@ void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
     UrdfLinkDesc* root_link_desc = robot_desc->root_link_desc_;
     SP_ASSERT(root_link_desc);
 
+    // It is very important to setup attachments, and register components before we create more child components.
+    // If this order is reversed and we end up creating more child components before registering the parent component,
+    // the physics simulation will be unstable.
     SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
     root_link_component_ = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
     SP_ASSERT(root_link_component_);
     root_link_component_->SetupAttachment(this);
     root_link_component_->RegisterComponent();
-    // It is very important to setup attachments, and register components before we create more child components.
-    // If this order is reversed and we end up creating more child components before registering the parent component,
-    // the physics simulation will be unstable.
     root_link_component_->initialize(root_link_desc);
     LinkComponents.Add(root_link_component_);
 
