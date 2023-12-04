@@ -53,7 +53,6 @@ enum class FrameState
 void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("CommonModuleRules")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("CoreUtils")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfRobot")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("Vehicle")));

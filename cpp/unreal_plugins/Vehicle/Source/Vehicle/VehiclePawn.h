@@ -41,16 +41,19 @@ public:
     UPROPERTY(EditAnywhere, DisplayName = "IMU Component")
     UBoxComponent* ImuComponent = nullptr;
 
-    // Used by VehicleAgent. Note that VehicleAgent must set action_components_ and observation_components_ before using this interface.
+    // Used by VehicleAgent. Note that VehicleAgent must call setActionComponents(...) and setObservationComponents(...) before using the rest of this interface.
+    void setActionComponents(const std::vector<std::string>& action_components);
+    void setObservationComponents(const std::vector<std::string>& observation_components);
     std::map<std::string, ArrayDesc> getActionSpace() const;
     std::map<std::string, ArrayDesc> getObservationSpace() const;
     void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
     std::map<std::string, std::vector<uint8_t>> getObservation() const;
-    std::vector<std::string> action_components_;
-    std::vector<std::string> observation_components_;
 
 private:
     void applyAction(const std::map<std::string, std::vector<double>>& action);
+
+    std::vector<std::string> action_components_;
+    std::vector<std::string> observation_components_;
 
     UInputActionComponent* input_action_component_ = nullptr;
 };

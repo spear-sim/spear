@@ -68,8 +68,8 @@ VehicleAgent::VehicleAgent(UWorld* world)
     // We don't normally cache config values in member variables, but we make an exception in this case
     // because we want ACTION_COMPONENTS and OBSERVATION_COMPONENTS to be defined in VEHICLE_AGENT, but
     // we don't want to pass these arrays around every time we need to apply an action or get an observation.
-    vehicle_pawn_->action_components_ = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS");
-    vehicle_pawn_->observation_components_ = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
+    vehicle_pawn_->setActionComponents(Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS"));
+    vehicle_pawn_->setObservationComponents(Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS"));
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 

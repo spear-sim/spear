@@ -51,20 +51,23 @@ public:
     // This function recursively creates and configures the component hierarchy for an entire URDF robot.
     void initialize(const UrdfRobotDesc* robot_desc);
 
-    // Used by UrdfRobotAgent. Note that UrdfRobotAgent must set action_components_ and observation_components_ before using this interface.
+    // Used by UrdfRobotAgent. Note that UrdfRobotAgent must call setActionComponents(...) and setObservationComponents(...) before using the rest of this interface.
+    void setActionComponents(const std::vector<std::string>& action_components);
+    void setObservationComponents(const std::vector<std::string>& observation_components);
     std::map<std::string, ArrayDesc> getActionSpace() const;
     std::map<std::string, ArrayDesc> getObservationSpace() const;
     void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
     std::map<std::string, std::vector<uint8_t>> getObservation() const;
     void reset();
-    std::vector<std::string> action_components_;
-    std::vector<std::string> observation_components_;
 
 private:
     void initialize(const UrdfLinkDesc* parent_link_desc, UUrdfLinkComponent* parent_link_component);
     void initializeDeferred();
 
     void applyAction(const std::map<std::string, std::vector<double>>& action);
+
+    std::vector<std::string> action_components_;
+    std::vector<std::string> observation_components_;
 
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;

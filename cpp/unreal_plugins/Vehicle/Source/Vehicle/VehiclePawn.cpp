@@ -172,6 +172,16 @@ void AVehiclePawn::BeginPlay()
     };
 }
 
+void AVehiclePawn::setActionComponents(const std::vector<std::string>& action_components)
+{
+    action_components_ = action_components;
+}
+
+void AVehiclePawn::setObservationComponents(const std::vector<std::string>& observation_components)
+{
+    observation_components_ = observation_components;
+}
+
 std::map<std::string, ArrayDesc> AVehiclePawn::getActionSpace() const
 {
     std::map<std::string, ArrayDesc> action_space;

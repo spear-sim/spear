@@ -28,8 +28,6 @@
 
 UrdfRobotAgent::UrdfRobotAgent(UWorld* world)
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
     std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.SPAWN_MODE");
@@ -68,8 +66,8 @@ UrdfRobotAgent::UrdfRobotAgent(UWorld* world)
     // We don't normally cache config values in member variables, but we make an exception in this case
     // because we want ACTION_COMPONENTS and OBSERVATION_COMPONENTS to be defined in URDF_ROBOT_AGENT, but
     // we don't want to pass these arrays around every time we need to apply an action or get an observation.
-    urdf_robot_pawn_->UrdfRobotComponent->action_components_ = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.ACTION_COMPONENTS");
-    urdf_robot_pawn_->UrdfRobotComponent->observation_components_ = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
+    urdf_robot_pawn_->UrdfRobotComponent->setActionComponents(Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.ACTION_COMPONENTS"));
+    urdf_robot_pawn_->UrdfRobotComponent->setObservationComponents(Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS"));
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
@@ -86,8 +84,6 @@ UrdfRobotAgent::UrdfRobotAgent(UWorld* world)
 
 UrdfRobotAgent::~UrdfRobotAgent()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {

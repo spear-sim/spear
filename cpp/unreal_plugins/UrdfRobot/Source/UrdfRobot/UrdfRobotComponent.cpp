@@ -104,6 +104,16 @@ void UUrdfRobotComponent::TickComponent(float DeltaTime, enum ELevelTick TickTyp
     SetWorldLocationAndRotation(root_link_component_->GetComponentLocation(), root_link_component_->GetComponentRotation(), sweep, hit_result, ETeleportType::None);
 }
 
+void UUrdfRobotComponent::setActionComponents(const std::vector<std::string>& action_components)
+{
+    action_components_ = action_components;
+}
+
+void UUrdfRobotComponent::setObservationComponents(const std::vector<std::string>& observation_components)
+{
+    observation_components_ = observation_components;
+}
+
 std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace() const
 {
     std::map<std::string, ArrayDesc> action_space;
