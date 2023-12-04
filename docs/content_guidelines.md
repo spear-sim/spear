@@ -39,7 +39,7 @@ SpearSim                               # Our top-level Unreal project folder: sp
 
 ## Unreal Editor
 
-All options should be set to their default values unless noted below, or unless there is an obvious reason to deviate.
+All options in the Unreal Editor should be set to their default values unless noted below, or unless there is an obvious reason to deviate.
 
 ### Outliner pane
 
@@ -122,7 +122,7 @@ For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Compone
 
 ```
 my_actor_0000                          #
-└── StaticMeshComponent                # Each StaticMeshActor has a root component named "StaticMeshComponent".
+└── StaticMeshComponent0               # Each StaticMeshActor has a root component named "StaticMeshComponent0".
     |                                  #
     |                                  # If the StaticMeshActor is composed of multiple StaticMeshComponents, the additional
     |                                  # StaticMeshComponents can be added as children of the top-level StaticMeshComponent,
@@ -179,7 +179,7 @@ my_actor_0000                          #
     └── ...                            #
 ```
 
-- All rules for `StaticMeshActors` described above also apply to `Actors`.
+- All the rules for `StaticMeshActors` described above also apply to `Actors`.
 - When configuring a joint, the convention in Unreal is for _Component 1_ to be the child and _Component 2_ to be the parent. This convention is relevant, e.g., when the _Parent Dominates_ option is enabled on the joint.
 
 ### Content Browser pane
