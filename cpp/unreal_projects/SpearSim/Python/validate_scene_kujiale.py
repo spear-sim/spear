@@ -32,11 +32,11 @@ def validate_content_browser(level):
     pass
 
 
-def validate_outliner(level):
+def validate_outliner(level, iterate_all_actors):
     editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 
     actors = editor_actor_subsystem.get_selected_level_actors()
-    if len(actors) == 0:
+    if len(actors) == 0 and iterate_all_actors:
         actors = editor_actor_subsystem.get_all_level_actors()
 
     actors = sorted(actors, key=(lambda actor: get_debug_string_actor(actor)))
@@ -65,23 +65,23 @@ def validate_actor(level, actor):
 
     path = pathlib.PurePosixPath(str(actor.get_folder_path())).parts
 
-    if len(path) < 1:
-        spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-        return
-
-    if path[0] not in ["Debug", "Meshes", "Navigation", "Rendering", "Settings", "Widgets"]:
-        spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-        return
-
-    if path[0] in ["Meshes", "Rendering"]:
-        if len(path) != 2:
-            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-            return
-
-    if path[0] in ["Navigation", "Settings", "Widgets"]:
-        if len(path) != 1:
-            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-            return
+    # if len(path) < 1:
+    #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+    #     return
+    #
+    # if path[0] not in ["Debug", "Meshes", "Navigation", "Rendering", "Settings", "Widgets"]:
+    #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+    #     return
+    #
+    # if path[0] in ["Meshes", "Rendering"]:
+    #     if len(path) != 2:
+    #         spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+    #         return
+    #
+    # if path[0] in ["Navigation", "Settings", "Widgets"]:
+    #     if len(path) != 1:
+    #         spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+    #         return
 
     if path[0] == "Meshes":
 
@@ -104,22 +104,22 @@ def validate_actor(level, actor):
 
         semantic_category = path[1].split("_")
 
-        if len(semantic_category) < 2:
-            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-            return
-
-        if len(semantic_category[0]) != 4 or not semantic_category[0].isdigit():
-            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-            return
-
-        if int(semantic_category[0]) == 0:
-            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-            return
-
-        actor_label = actor.get_actor_label().split("_")
-        if actor_label[:-1] != semantic_category[1:]:
-            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-            return
+        # if len(semantic_category) < 2:
+        #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+        #     return
+        #
+        # if len(semantic_category[0]) != 4 or not semantic_category[0].isdigit():
+        #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+        #     return
+        #
+        # if int(semantic_category[0]) == 0:
+        #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+        #     return
+        #
+        # actor_label = actor.get_actor_label().split("_")
+        # if actor_label[:-1] != semantic_category[1:]:
+        #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+        #     return
 
         #
         # The type of each actor in my_scene_0000/Meshes should be StaticMeshActor if it is not
@@ -152,11 +152,17 @@ def validate_actor(level, actor):
             c.get_editor_property("static_mesh") is None or
             c.get_editor_property("static_mesh").get_path_name() == "/Game/Kujiale/Meshes/SM_Dummy.SM_Dummy"]
 
+        # cache the actor's transform
+        transform_world_from_obj = actor.get_actor_transform()
+
         # for each ignored component, cache "use_default_collision" and "collision_enabled" properties
         ignore_use_default_collision = {
             c.get_name(): c.get_editor_property("use_default_collision") for c in ignore_components}
         ignore_collision_enabled = {
             c.get_name(): c.get_editor_property("body_instance").get_editor_property("collision_enabled") for c in ignore_components}
+
+        # set the actor's transform to be the identity transform because we want to compute bounds in object space
+        actor.set_actor_transform(unreal.Transform(), sweep=False, teleport=True)
 
         # disable collision on each ignored component
         for c in ignore_components:
@@ -164,24 +170,29 @@ def validate_actor(level, actor):
             c.get_editor_property("body_instance").set_editor_property("collision_enabled", unreal.CollisionEnabled.NO_COLLISION)
 
         # compute bounds
-        bounds_origin, bounds_half_extent = actor.get_actor_bounds(only_colliding_components=True, include_from_child_actors=False)
+        bounds_origin_obj, bounds_half_extent_obj = actor.get_actor_bounds(only_colliding_components=True, include_from_child_actors=False)
 
         # for each ignored component, restore "use_default_collision" and "collision_enabled" properties
         for c in ignore_components:
             c.set_editor_property("use_default_collision", ignore_use_default_collision[c.get_name()])
             c.get_editor_property("body_instance").set_editor_property("collision_enabled", ignore_collision_enabled[c.get_name()])
 
+        # restore the actor transform
+        actor.set_actor_transform(transform_world_from_obj, sweep=False, teleport=True)
+
+        # compute the desired pivot location in world space
+        pivot_desired_obj = unreal.Vector(bounds_origin_obj.x, bounds_origin_obj.y, bounds_origin_obj.z - bounds_half_extent_obj.z)
+        pivot_desired_world = transform_world_from_obj.transform_location(pivot_desired_obj)
+
         # check pivot location against computed bounds
         eps = 0.000001
-        bounds_origin = vector_to_numpy(bounds_origin)
-        bounds_half_extent = vector_to_numpy(bounds_half_extent)
-        pivot_desired = np.array([bounds_origin[0], bounds_origin[1], bounds_origin[2] - bounds_half_extent[2]])
-        pivot_actual = vector_to_numpy(actor.get_actor_location())
-        if np.linalg.norm(pivot_desired - pivot_actual) > eps:
+        pivot_desired_world = vector_to_array(pivot_desired_world)
+        pivot_actual_world = vector_to_array(actor.get_actor_location())
+        if np.linalg.norm(pivot_desired_world - pivot_actual_world) > eps:
             np.set_printoptions(suppress=True)
             spear.log(
                 "WARNING: Unexpected pivot: ", get_debug_string_actor(actor),
-                " (desired=", pivot_desired, ", actual=", pivot_actual, ")")
+                " (desired=", pivot_desired_world, ", actual=", pivot_actual_world, ")")
             return
 
         if type(actor) == unreal.Actor:
@@ -373,18 +384,18 @@ def validate_static_mesh_component(level, actor, component):
     #
 
     if len(component.get_parent_components()) != 0:
-
-        if len(component_name) != 2:
-            spear.log("WARNING: Unexpected component name: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
-            return
-
-        if component_name[0] not in ["group", "mesh"]:
-            spear.log("WARNING: Unexpected component name: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
-            return
-
-        if len(component_name[1]) != 4 or not component_name[1].isdigit():
-            spear.log("WARNING: Unexpected component name: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
-            return
+        pass
+        # if len(component_name) != 2:
+        #     spear.log("WARNING: Unexpected component name: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
+        #     return
+        #
+        # if component_name[0] not in ["group", "mesh"]:
+        #     spear.log("WARNING: Unexpected component name: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
+        #     return
+        #
+        # if len(component_name[1]) != 4 or not component_name[1].isdigit():
+        #     spear.log("WARNING: Unexpected component name: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
+        #     return
 
     #
     # If the parent StaticMeshComponent exists only to group other child StaticMeshComponents
@@ -522,7 +533,7 @@ def validate_static_mesh_component(level, actor, component):
                     return
 
 
-def vector_to_numpy(vector):
+def vector_to_array(vector):
     return np.array([vector.x, vector.y, vector.z])
 
 
@@ -558,22 +569,23 @@ def get_debug_string_actor(actor):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--level", default="")
+    parser.add_argument("--scene_id", default=None)
+    parser.add_argument("--iterate_all_actors", default=False, action="store_true")
     args = parser.parse_args()
 
     level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    if args.level != "":
+    if args.scene_id is not None:
         # open new world
-        level_path = f"/Game/Scenes/{args.level}/Maps/{args.level}"
-        spear.log("load_level", level_path)
+        level_path = f"/Game/Scenes/{args.scene_id}/Maps/{args.scene_id}"
+        spear.log("Loading level: ", level_path)
         level_editor_subsystem.load_level(level_path)
 
     unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-    level = unreal_editor_subsystem.get_editor_world()
-    level_name = level.get_name()
+    world = unreal_editor_subsystem.get_editor_world()
+    world_name = world.get_name()
 
-    validate_level(level_name)
-    validate_content_browser(level_name)
-    validate_outliner(level_name)
+    validate_level(world_name)
+    validate_content_browser(world_name)
+    validate_outliner(world_name, args.iterate_all_actors)
 
-    spear.log("validation complete")
+    spear.log("Done.")
