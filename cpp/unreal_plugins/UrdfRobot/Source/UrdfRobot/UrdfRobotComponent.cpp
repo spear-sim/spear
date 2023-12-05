@@ -91,10 +91,10 @@ void UUrdfRobotComponent::TickComponent(float DeltaTime, enum ELevelTick TickTyp
 {
     USceneComponent::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    if (!ticked_once_) {
+    if (request_initialize_deferred_) {
         SP_LOG_CURRENT_FUNCTION();
         initializeDeferred();
-        ticked_once_ = true;
+        request_initialize_deferred_ = false;
     }
 
     // Update this component's pose to match root link component
@@ -265,16 +265,22 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
 
         initialize(child_link_desc, child_link_component);
     }
+
+    request_initialize_deferred_ = true;
 }
 
 void UUrdfRobotComponent::initializeDeferred()
 {
-    // Cache components in maps so we can refer to them by name. We need to do this in BeginPlay because after pressing play
+    // Cache components in maps so we can refer to them by name. We need to do this in BeginPlay() because after pressing play
     // in the editor, the Unreal Engine creates a new replica object for each object in the World Outliner. For any object
     // that we spawned in the editor, we need to re-compute any local state that isn't visible to the Unreal reflection system.
     // We can't re-compute this local state in the constructor because LinkComponents and JointComponents have not been updated
-    // by the the Unreal reflection system yet. So we need to do it in BeginPlay.
+    // by the the Unreal reflection system yet. So we need to do it in/after BeginPlay().
 
+    // We need to execute the below functionality only after Initialize() is called. In some scenarios, BeginPlay() gets executed
+    // before Initialize(). Thus, having the below functionality in BeginPlay() is not desirable. Hence, this functionality 
+    // is executed during the first tick event, which is guaranteed to execute after BeginPlay() and after initialize() method is called.
+    // To ensure that this is called after Initialize(), we set the request_initialize_deferred_ variable at the end of Initialize().
     for (auto link_component : LinkComponents) {
         link_components_[Unreal::toStdString(link_component->GetName())] = link_component;
     }

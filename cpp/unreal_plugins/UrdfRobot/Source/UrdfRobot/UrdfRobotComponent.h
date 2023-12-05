@@ -76,5 +76,5 @@ private:
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
     UInputActionComponent* input_action_component_ = nullptr;
-    bool ticked_once_ = false;
+    bool request_initialize_deferred_ = false;
 };
