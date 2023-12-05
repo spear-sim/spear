@@ -47,7 +47,6 @@ if __name__ == "__main__":
         start_time_seconds = time.time()
     else:
         if args.save_images:
-            index = 0
             for render_pass in config.SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 shutil.rmtree(render_pass_dir, ignore_errors=True)
@@ -55,6 +54,7 @@ if __name__ == "__main__":
 
     spear.log("Executing sequence of actions as provided in the actions file...")
 
+    index = 0
     for _, row in df.iterrows():
         action = {k: np.array(v, dtype=np.float64) for k, v in row.to_dict().items()}
         obs, reward, done, info = env.step(action=action)
