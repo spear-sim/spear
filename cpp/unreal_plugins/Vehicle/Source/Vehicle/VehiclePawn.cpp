@@ -14,7 +14,6 @@
 #include <Components/SkeletalMeshComponent.h>
 #include <Engine/CollisionProfile.h>
 #include <Engine/SkeletalMesh.h>
-#include <GameFramework/PlayerInput.h>
 #include <UObject/ConstructorHelpers.h>
 #include <UObject/Object.h>         // CreateDefaultSubobject
 #include <UObject/UObjectGlobals.h> // FObjectInitializer
@@ -132,6 +131,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     // UInputActionComponent
     input_action_component_ = CreateDefaultSubobject<UInputActionComponent>(Unreal::toFName("input_action_component"));
     SP_ASSERT(input_action_component_);
+    input_action_component_->SetupAttachment(GetMesh());
 }
 
 AVehiclePawn::~AVehiclePawn()
