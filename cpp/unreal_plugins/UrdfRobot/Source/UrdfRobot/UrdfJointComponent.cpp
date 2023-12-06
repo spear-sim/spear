@@ -248,14 +248,6 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
 {
     std::map<std::string, ArrayDesc> action_space;
 
-    // We need this special case here because, we want to return an emtpy action_space for joint types
-    // that are not functional, but still valid, i.e., those joints that cannot be controlled/moved like Fixed.
-    // If we do not return an empty map, the action space information corresponding to this joint type,
-    // will be propogated to python client, which is not desirable.
-    if (JointType == EJointType::Fixed) {
-        return action_space;
-    }
-
     ArrayDesc array_desc;
     array_desc.low_ = std::numeric_limits<double>::lowest();
     array_desc.high_ = std::numeric_limits<double>::max();
@@ -272,10 +264,15 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                 case EJointType::Continuous:
                 case EJointType::Revolute:
                     action_name += "add_to_angular_orientation_target";
+                    action_space[action_name] = std::move(array_desc);
                     break;
 
                 case EJointType::Prismatic:
                     action_name += "add_to_linear_position_target";
+                    action_space[action_name] = std::move(array_desc);
+                    break;
+
+                case EJointType::Fixed:
                     break;
 
                 default:
@@ -289,10 +286,15 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                 case EJointType::Continuous:
                 case EJointType::Revolute:
                     action_name += "add_to_angular_velocity_target";
+                    action_space[action_name] = std::move(array_desc);
                     break;
 
                 case EJointType::Prismatic:
                     action_name += "add_to_linear_velocity_target";
+                    action_space[action_name] = std::move(array_desc);
+                    break;
+
+                case EJointType::Fixed:
                     break;
 
                 default:
@@ -306,10 +308,15 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                 case EJointType::Continuous:
                 case EJointType::Revolute:
                     action_name += "add_torque_in_radians";
+                    action_space[action_name] = std::move(array_desc);
                     break;
 
                 case EJointType::Prismatic:
                     action_name += "add_force";
+                    action_space[action_name] = std::move(array_desc);
+                    break;
+
+                case EJointType::Fixed:
                     break;
 
                 default:
@@ -318,8 +325,6 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
             }
             break;
     }
-
-    action_space[action_name] = std::move(array_desc);
 
     return action_space;
 }
