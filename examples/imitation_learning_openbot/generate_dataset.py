@@ -16,11 +16,12 @@ import time
 from policies import *
 from utils import *
 
-# import OpenBotEnv from common folder
+# import OpenBotEnv, observation_utils from common folder
 COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(COMMON_DIR)
 from common.openbot_env import OpenBotEnv
+import common.observation_utils as observation_utils
 
 
 if __name__ == "__main__":
@@ -166,7 +167,10 @@ if __name__ == "__main__":
     
                 # send control action to the agent and collect observations
                 obs, _, _, env_step_info = env.step(action={"set_duty_cycles": action})
-    
+
+                observation_components_to_modify = { "final_color": ["camera.final_color"] }
+                modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
+
                 num_iterations_executed += 1
 
                 # check if we've reached the goal
@@ -174,10 +178,10 @@ if __name__ == "__main__":
                 goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
 
                 if args.debug:
-                    show_obs(obs)
+                    show_obs(modified_obs)
     
                 if not args.benchmark:
-                    obs_final_color = spear.get_image_data("final_color", obs)
+                    obs_final_color = modified_obs["camera.final_color"]
 
                     # save the collected rgb observations
                     plt.imsave(os.path.realpath(os.path.join(images_dir, "%d.jpeg"%i)), obs_final_color)

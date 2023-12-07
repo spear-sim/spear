@@ -13,6 +13,11 @@ import shutil
 import spear
 import time
 
+# import observation_utils from common folder
+COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+import sys
+sys.path.append(COMMON_DIR)
+import common.observation_utils as observation_utils
 
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
 # However, in this example, we are teleporting the camera in an incoherent way. Hence, we implement a 
@@ -108,14 +113,16 @@ if __name__ == "__main__":
                 "set_location": np.array([pose["location_x"], pose["location_y"], pose["location_z"]], np.float64),
                 "set_rotation": np.array([pose["rotation_pitch"], pose["rotation_yaw"], pose["rotation_roll"]], np.float64)})
 
+        observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES }
+        modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
+
         # save images for each render pass
         if not args.benchmark:
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 assert os.path.exists(render_pass_dir)
 
-                obs_render_pass_vis = spear.get_image_data(render_pass, obs)
-
+                obs_render_pass_vis = modified_obs["camera." + render_pass]
                 plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%pose["index"])), obs_render_pass_vis)
 
         # useful for comparing the game window to the image that has been saved to disk
