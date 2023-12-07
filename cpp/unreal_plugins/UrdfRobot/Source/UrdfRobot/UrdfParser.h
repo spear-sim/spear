@@ -46,6 +46,14 @@ enum class UrdfJointControlType
     Torque
 };
 
+// enum values must match EJointInterfaceType in UrdfJointComponent.h
+enum class UrdfJointInterfaceType
+{
+    None,
+    Set,
+    AddTo
+};
+
 struct UrdfGeometryDesc
 {
     UrdfGeometryType type_    = UrdfGeometryType::Invalid;
@@ -173,9 +181,10 @@ struct UrdfJointDesc
     double k_velocity_       = 0.0;
 
     // custom SPEAR data
-    UrdfJointControlType control_type_ = UrdfJointControlType::NotActuated;
-    double spring_                     = 0.0;
-    bool parent_dominates_             = false;
+    UrdfJointInterfaceType interface_type_ = UrdfJointInterfaceType::None;
+    UrdfJointControlType control_type_     = UrdfJointControlType::NotActuated;
+    double spring_                         = 0.0;
+    bool parent_dominates_                 = false;
 };
 
 struct UrdfRobotDesc

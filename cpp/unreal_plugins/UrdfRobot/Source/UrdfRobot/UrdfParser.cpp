@@ -269,6 +269,17 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
                 SP_ASSERT(false);
             }
 
+            std::string interface_type = getAttribute(spear_dynamics_node, "interface_type", OPTIONAL);
+            if (interface_type == "set") {
+                joint_desc.interface_type_ = UrdfJointInterfaceType::Set;
+            } else if (interface_type == "add_to") {
+                joint_desc.interface_type_ = UrdfJointInterfaceType::AddTo;
+            } else if (interface_type == "") {
+                joint_desc.interface_type_ = UrdfJointInterfaceType::None;
+            } else {
+                SP_ASSERT(false);
+            }
+
             joint_desc.spring_ = parseDouble(getAttribute(spear_dynamics_node, "spring", OPTIONAL), 0.0);
 
             joint_desc.parent_dominates_ = parseBool(getAttribute(spear_dynamics_node, "parent_dominates", OPTIONAL), false);

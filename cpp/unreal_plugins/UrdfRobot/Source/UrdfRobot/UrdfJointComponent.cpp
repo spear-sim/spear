@@ -107,6 +107,7 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
 
     JointType = static_cast<EJointType>(joint_desc->type_);
     JointControlType = static_cast<EJointControlType>(joint_desc->control_type_);
+    JointInterfaceType = static_cast<EJointInterfaceType>(joint_desc->interface_type_);
     ParentStaticMeshComponent = parent_link_component;
     ChildStaticMeshComponent = child_link_component;
 
@@ -263,12 +264,42 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
             switch (JointType) {
                 case EJointType::Continuous:
                 case EJointType::Revolute:
-                    action_name += "add_to_angular_orientation_target";
+                    switch(JointInterfaceType) {
+                        case EJointInterfaceType::Set:
+                            action_name += "set_angular_orientation_target";
+                            break;
+
+                        case EJointInterfaceType::AddTo:
+                            action_name += "add_to_angular_orientation_target";
+                            break;
+
+                        case EJointInterfaceType::None:
+                            break;
+
+                        default:
+                            SP_ASSERT(false);
+                            break;
+                    }
                     action_space[action_name] = std::move(array_desc);
                     break;
 
                 case EJointType::Prismatic:
-                    action_name += "add_to_linear_position_target";
+                    switch (JointInterfaceType) {
+                        case EJointInterfaceType::Set:
+                            action_name += "set_linear_position_target";
+                            break;
+
+                        case EJointInterfaceType::AddTo:
+                            action_name += "add_to_linear_position_target";
+                            break;
+
+                        case EJointInterfaceType::None:
+                            break;
+
+                        default:
+                            SP_ASSERT(false);
+                            break;
+                    }
                     action_space[action_name] = std::move(array_desc);
                     break;
 
@@ -285,12 +316,42 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
             switch (JointType) {
                 case EJointType::Continuous:
                 case EJointType::Revolute:
-                    action_name += "add_to_angular_velocity_target";
+                    switch (JointInterfaceType) {
+                        case EJointInterfaceType::Set:
+                            action_name += "set_angular_velocity_target";
+                            break;
+
+                        case EJointInterfaceType::AddTo:
+                            action_name += "add_to_angular_velocity_target";
+                            break;
+
+                        case EJointInterfaceType::None:
+                            break;
+
+                        default:
+                            SP_ASSERT(false);
+                            break;
+                    }
                     action_space[action_name] = std::move(array_desc);
                     break;
 
                 case EJointType::Prismatic:
-                    action_name += "add_to_linear_velocity_target";
+                    switch (JointInterfaceType) {
+                        case EJointInterfaceType::Set:
+                            action_name += "set_linear_velocity_target";
+                            break;
+
+                        case EJointInterfaceType::AddTo:
+                            action_name += "add_to_linear_velocity_target";
+                            break;
+
+                        case EJointInterfaceType::None:
+                            break;
+
+                        default:
+                            SP_ASSERT(false);
+                            break;
+                    }
                     action_space[action_name] = std::move(array_desc);
                     break;
 

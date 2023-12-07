@@ -45,6 +45,16 @@ enum class EJointControlType
     Torque              UMETA(DisplayName = "Torque"),
 };
 
+// enum values must match UrdfJointInterfaceType in UrdfParser.h
+
+UENUM()
+enum class EJointInterfaceType
+{
+    None  UMETA(DisplayName = "None"),
+    Set   UMETA(DisplayName = "Set"),
+    AddTo UMETA(DisplayName = "Add To"),
+};
+
 // We need to use UCLASS(ClassGroup = "SPEAR", meta=(BlueprintSpawnableComponent)) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup = "SPEAR", meta=(BlueprintSpawnableComponent))
 class URDFROBOT_API UUrdfJointComponent : public UPhysicsConstraintComponent
@@ -61,6 +71,8 @@ public:
     EJointType JointType = EJointType::Invalid;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Control Type")
     EJointControlType JointControlType = EJointControlType::NotActuated;
+    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Interface Type")
+    EJointInterfaceType JointInterfaceType = EJointInterfaceType::None;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Enable Keyboard Control")
     bool EnableKeyboardControl = false;
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Child StaticMeshComponent")
