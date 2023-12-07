@@ -273,7 +273,7 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                             action_name += "add_to_angular_orientation_target";
                             break;
 
-                        case EJointInterfaceType::None:
+                        case EJointInterfaceType::NoInterface:
                             break;
 
                         default:
@@ -293,7 +293,7 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                             action_name += "add_to_linear_position_target";
                             break;
 
-                        case EJointInterfaceType::None:
+                        case EJointInterfaceType::NoInterface:
                             break;
 
                         default:
@@ -325,7 +325,7 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                             action_name += "add_to_angular_velocity_target";
                             break;
 
-                        case EJointInterfaceType::None:
+                        case EJointInterfaceType::NoInterface:
                             break;
 
                         default:
@@ -345,7 +345,7 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                             action_name += "add_to_linear_velocity_target";
                             break;
 
-                        case EJointInterfaceType::None:
+                        case EJointInterfaceType::NoInterface:
                             break;
 
                         default:

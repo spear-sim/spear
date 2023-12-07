@@ -50,9 +50,9 @@ enum class EJointControlType
 UENUM()
 enum class EJointInterfaceType
 {
-    None  UMETA(DisplayName = "None"),
-    Set   UMETA(DisplayName = "Set"),
-    AddTo UMETA(DisplayName = "Add To"),
+    NoInterface UMETA(DisplayName = "No Interface"),
+    Set         UMETA(DisplayName = "Set"),
+    AddTo       UMETA(DisplayName = "Add To"),
 };
 
 // We need to use UCLASS(ClassGroup = "SPEAR", meta=(BlueprintSpawnableComponent)) for the component to show up when using the "+Add" button in the editor.
@@ -72,7 +72,7 @@ public:
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Control Type")
     EJointControlType JointControlType = EJointControlType::NotActuated;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Interface Type")
-    EJointInterfaceType JointInterfaceType = EJointInterfaceType::None;
+    EJointInterfaceType JointInterfaceType = EJointInterfaceType::NoInterface;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Enable Keyboard Control")
     bool EnableKeyboardControl = false;
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Child StaticMeshComponent")

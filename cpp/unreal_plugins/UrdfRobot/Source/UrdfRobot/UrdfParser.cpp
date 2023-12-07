@@ -275,7 +275,7 @@ UrdfJointDesc UrdfParser::parseJointNode(FXmlNode* joint_node)
             } else if (interface_type == "add_to") {
                 joint_desc.interface_type_ = UrdfJointInterfaceType::AddTo;
             } else if (interface_type == "") {
-                joint_desc.interface_type_ = UrdfJointInterfaceType::None;
+                joint_desc.interface_type_ = UrdfJointInterfaceType::NoInterface;
             } else {
                 SP_ASSERT(false);
             }

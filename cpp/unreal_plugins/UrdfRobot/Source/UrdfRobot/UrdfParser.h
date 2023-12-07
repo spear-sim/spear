@@ -49,7 +49,7 @@ enum class UrdfJointControlType
 // enum values must match EJointInterfaceType in UrdfJointComponent.h
 enum class UrdfJointInterfaceType
 {
-    None,
+    NoInterface,
     Set,
     AddTo
 };
@@ -181,7 +181,7 @@ struct UrdfJointDesc
     double k_velocity_       = 0.0;
 
     // custom SPEAR data
-    UrdfJointInterfaceType interface_type_ = UrdfJointInterfaceType::None;
+    UrdfJointInterfaceType interface_type_ = UrdfJointInterfaceType::NoInterface;
     UrdfJointControlType control_type_     = UrdfJointControlType::NotActuated;
     double spring_                         = 0.0;
     bool parent_dominates_                 = false;
