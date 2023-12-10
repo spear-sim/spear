@@ -29,6 +29,10 @@
             "Enabled": true
         },
         {
+            "Name": "ModelingToolsEditorMode",
+            "Enabled": true
+        },
+        {
             "Name": "SimulationController",
             "Enabled": true
         },
@@ -39,6 +43,6 @@
         {
             "Name": "Vehicle",
             "Enabled": true
-        }
+        },
     ]
 }
