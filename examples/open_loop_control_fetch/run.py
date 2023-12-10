@@ -72,7 +72,7 @@ if __name__ == "__main__":
     spear.log("Executing sequence of actions as provided in the actions file...")
 
     for row in df.to_records():
-        action = get_action(df.column.values, row)
+        action = get_action(df.columns.values, row)
         obs, reward, done, info = env.step(action=action)
 
         observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES }
