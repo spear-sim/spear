@@ -5,13 +5,14 @@
    <statistic center="0 0 30.0" extent="120.0"/>
 
    <default>
-       <material specular="0" shininess="0.25"/>
-       <default class="visual">
-           <geom group="2" type="mesh" contype="0" conaffinity="0"/>
-       </default>
        <default class="collision">
            <geom group="3" type="mesh" priority="1" solimp="0.015 0.09 0.01" condim="6"/>
        </default>
+       <default class="visual">
+           <geom group="2" type="mesh" contype="0" conaffinity="0"/>
+       </default>
+       <mesh scale="1.0 -1.0 1.0" />
+       <material specular="0" shininess="0.25"/>
    </default>
 
    <visual>

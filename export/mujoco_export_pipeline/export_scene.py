@@ -266,7 +266,7 @@ class MujocoExporter:
                     print("Exporting STL file...")
                     bpy.ops.export_mesh.stl(
                         filepath=stl_filepath,
-                        check_existing=True,
+                        check_existing=False,
                         use_selection=True,
                         use_mesh_modifiers=True,
                         batch_mode='OFF',

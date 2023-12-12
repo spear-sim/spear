@@ -79,8 +79,6 @@ if __name__ == '__main__':
     actor_name = actor.get_actor_label()
     if 'HDRIBackdrop' in actor_name:
       continue
-    if actor_name != 'door_00':
-      continue
     
     this_body_properties = {'geoms': {}, }
     # check if actor has geometry
@@ -146,7 +144,7 @@ if __name__ == '__main__':
           f'{component.get_name()}_x_prismatic',
           [-limit, limit],
           offset,
-          [axis.x, -axis.y, axis.z],  # left handed -> right handed
+          [axis.x, axis.y, axis.z],
           'slide'
         ])
         pc = PhysicsConstraint(*pc_args)
@@ -160,7 +158,7 @@ if __name__ == '__main__':
           f'{component.get_name()}_y_prismatic',
           [-limit, limit],
           offset,
-          [axis.x, -axis.y, axis.z],  # left handed -> right handed
+          [axis.x, axis.y, axis.z],
           'slide'
         ])
         pc = PhysicsConstraint(*pc_args)
@@ -174,7 +172,7 @@ if __name__ == '__main__':
           f'{component.get_name()}_z_prismatic',
           [-limit, limit],
           offset,
-          [axis.x, -axis.y, axis.z],  # left handed -> right handed
+          [axis.x, axis.y, axis.z],
           'slide'
         ])
         pc = PhysicsConstraint(*pc_args)
@@ -198,7 +196,7 @@ if __name__ == '__main__':
           f'{component.get_name()}_z_revolute',
           [-limit, limit],
           offset,
-          [axis.x, -axis.y, axis.z],  # left handed -> right handed
+          [axis.x, axis.y, axis.z],
           'hinge'
         ])
         pc = PhysicsConstraint(*pc_args)
@@ -216,7 +214,7 @@ if __name__ == '__main__':
           f'{component.get_name()}_y_revolute',
           [-limit, limit],
           offset,
-          [axis.x, -axis.y, axis.z],  # left handed -> right handed
+          [axis.x, axis.y, axis.z],
           'hinge'
         ])
         pc = PhysicsConstraint(*pc_args)
@@ -229,13 +227,15 @@ if __name__ == '__main__':
           raise ValueError(f'{actor_name} already has {n_prismatic_dofs} prismatic joints')
         limit = twist_limit.get_editor_property('twist_limit_degrees') * ROT_UE_TO_MUJOCO_SCALE
         offset = angular_offset.roll * ROT_UE_TO_MUJOCO_SCALE
-        axis = unreal.Vector.FORWARD
+        # UE applied X rotations are right handed
+        # https://github.com/ethz-asl/unreal_airsim/blob/master/docs/coordinate_systems.md
+        axis = unreal.Vector.BACKWARD
         axis = axis.rotate(rot).normal()
         pc_args.extend([
           f'{component.get_name()}_x_revolute',
           [-limit, limit],
           offset,
-          [axis.x, -axis.y, axis.z],  # left handed -> right handed
+          [axis.x, axis.y, axis.z],
           'hinge'
         ])
         pc = PhysicsConstraint(*pc_args)
