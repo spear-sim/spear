@@ -19,7 +19,6 @@
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
 #include <PhysicalMaterials/PhysicalMaterial.h>
-#include <UObject/UObjectGlobals.h> // DuplicateObject, LoadObject, NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -77,10 +76,8 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         const UrdfGeometryDesc& geometry_desc = visual_desc.geometry_desc_;
 
         // create child static mesh component for each UrdfSpearLinkDesc
-        auto static_mesh_component = NewObject<UStaticMeshComponent>(this, Unreal::toFName("static_mesh_component"));
+        auto static_mesh_component = Unreal::createComponentOutsideOwnerConstructor<UStaticMeshComponent>(this, "static_mesh_component", this);
         SP_ASSERT(static_mesh_component);
-        static_mesh_component->SetupAttachment(this);
-        static_mesh_component->RegisterComponent();
 
         // each UrdfSpearLinkDesc has its own reference frame
         FVector static_mesh_location = FVector(

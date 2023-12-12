@@ -100,10 +100,9 @@ CameraSensor::CameraSensor(
         texture_render_target_2d->UpdateResourceImmediate(clear_render_target);
 
         // create SceneCaptureComponent2D
-        render_pass_desc.scene_capture_component_2d_ = NewObject<USceneCaptureComponent2D>(actor_, Unreal::toFName("scene_capture_component_2d"));
+        render_pass_desc.scene_capture_component_2d_ = 
+            Unreal::createComponentOutsideOwnerConstructor<USceneCaptureComponent2D>(actor_, "scene_capture_component_2d", camera_component);
         SP_ASSERT(render_pass_desc.scene_capture_component_2d_);
-        render_pass_desc.scene_capture_component_2d_->SetupAttachment(camera_component);
-        render_pass_desc.scene_capture_component_2d_->RegisterComponent();
         render_pass_desc.scene_capture_component_2d_->TextureTarget = texture_render_target_2d;
         render_pass_desc.scene_capture_component_2d_->FOVAngle = fov;
         render_pass_desc.scene_capture_component_2d_->CaptureSource = ESceneCaptureSource::SCS_FinalToneCurveHDR;

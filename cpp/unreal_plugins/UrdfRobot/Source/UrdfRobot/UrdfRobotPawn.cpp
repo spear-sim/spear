@@ -7,7 +7,6 @@
 #include <Camera/CameraComponent.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <UObject/UObjectGlobals.h> // NewObject
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
@@ -24,14 +23,12 @@ AUrdfRobotPawn::AUrdfRobotPawn(const FObjectInitializer& object_initializer) : A
     SP_LOG_CURRENT_FUNCTION();
 
     // UUrdfRobotComponent
-    UrdfRobotComponent = CreateDefaultSubobject<UUrdfRobotComponent>(Unreal::toFName("urdf_robot_component"));
+    UrdfRobotComponent = Unreal::createComponentInsideOwnerConstructor<UUrdfRobotComponent>(this, "urdf_robot_component", this);
     SP_ASSERT(UrdfRobotComponent);
-    SetRootComponent(UrdfRobotComponent);
 
     // UCameraComponent
-    CameraComponent = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("camera_component"));
+    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, "camera_component", UrdfRobotComponent);
     SP_ASSERT(CameraComponent);
-    CameraComponent->SetupAttachment(UrdfRobotComponent);
 }
 
 AUrdfRobotPawn::~AUrdfRobotPawn()

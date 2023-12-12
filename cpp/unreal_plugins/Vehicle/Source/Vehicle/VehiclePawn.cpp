@@ -93,10 +93,9 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         aspect_ratio = 1.333333f;
     }
 
-    CameraComponent = CreateDefaultSubobject<UCameraComponent>(Unreal::toFName("camera_component"));
+    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, "camera_component", GetMesh());
     SP_ASSERT(CameraComponent);
     CameraComponent->SetRelativeLocationAndRotation(camera_location, camera_rotation);
-    CameraComponent->SetupAttachment(GetMesh());
     CameraComponent->bUsePawnControlRotation = false;
     CameraComponent->FieldOfView = field_of_view;
     CameraComponent->AspectRatio = aspect_ratio;
@@ -119,19 +118,17 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         imu_rotation = FRotator::ZeroRotator;
     }
 
-    ImuComponent = CreateDefaultSubobject<UBoxComponent>(Unreal::toFName("imu_component"));
+    ImuComponent = Unreal::createComponentInsideOwnerConstructor<UBoxComponent>(this, "imu_component", GetMesh());
     SP_ASSERT(ImuComponent);
     ImuComponent->SetRelativeLocationAndRotation(imu_location, imu_rotation);
-    ImuComponent->SetupAttachment(GetMesh());
 
     // UVehicleMovementComponent
     MovementComponent = dynamic_cast<UVehicleMovementComponent*>(GetVehicleMovementComponent());
     SP_ASSERT(MovementComponent);
 
     // UInputActionComponent
-    input_action_component_ = CreateDefaultSubobject<UInputActionComponent>(Unreal::toFName("input_action_component"));
+    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, "input_action_component", GetMesh());
     SP_ASSERT(input_action_component_);
-    input_action_component_->SetupAttachment(GetMesh());
 }
 
 AVehiclePawn::~AVehiclePawn()

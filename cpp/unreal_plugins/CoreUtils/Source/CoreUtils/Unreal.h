@@ -402,4 +402,64 @@ public:
 
         return name;
     }
+
+    //
+    // Helper functions to create components.
+    //
+
+    template <typename TComponent>
+    static TComponent* createComponentInsideOwnerConstructor(UObject* owner, const std::string& name, AActor* parent)
+    {
+        // CreateDefaultSubobject is required when inside the constructor of the owner AActor (either directly or indirectly via
+        // the constructor of a child component). SetRootComponent is required to attach the newly created root component to its
+        // parent AActor.
+        SP_ASSERT(parent);
+        TComponent* component = owner->CreateDefaultSubobject<TComponent>(toFName(name));
+        SP_ASSERT(component);
+        parent->SetRootComponent(component);
+        return component;
+    }
+
+    template <typename TComponent>
+    static TComponent* createComponentInsideOwnerConstructor(UObject* owner, const std::string& name, USceneComponent* parent)
+    {
+        // CreateDefaultSubobject is required when inside the constructor of the owner AActor (either directly or indirectly via
+        // the constructor of a child component). SetupAttachment is required to connect the newly created component to its
+        // parent component.
+        SP_ASSERT(parent);
+        TComponent* component = owner->CreateDefaultSubobject<TComponent>(toFName(name));
+        SP_ASSERT(component);
+        component->SetupAttachment(parent);
+        return component;
+    }
+
+    template <typename TComponent>
+    static TComponent* createComponentOutsideOwnerConstructor(UObject* owner, const std::string& name, AActor* parent)
+    {
+        // NewObject and RegisterComponent are required when outside the constructor of the owner AActor (either directly or
+        // indirectly via the constructor of a child component). SetRootComponent is required to attach the newly created root
+        // component to its parent AActor. The Unreal codebase usually calls SetRootComponent before calling RegisterComponent
+        // so we follow the same convention convention here.
+        SP_ASSERT(parent);
+        TComponent* component = NewObject<TComponent>(owner, toFName(name));
+        SP_ASSERT(component);
+        parent->SetRootComponent(component);
+        component->RegisterComponent();
+        return component;
+    }
+
+    template <typename TComponent>
+    static TComponent* createComponentOutsideOwnerConstructor(UObject* owner, const std::string& name, USceneComponent* parent)
+    {
+        // NewObject and RegisterComponent are required when outside the constructor of the owner AActor (either directly or
+        // indirectly via the constructor of a child component). SetupAttachment is required to attach the newly created
+        // component to its parent USceneComponent. The Unreal codebase usually calls SetupAttachment before calling
+        // RegisterComponent so we follow the same convention convention here.
+        SP_ASSERT(parent);
+        TComponent* component = NewObject<TComponent>(owner, toFName(name));
+        SP_ASSERT(component);
+        component->SetupAttachment(parent);
+        component->RegisterComponent();
+        return component;
+    }
 };

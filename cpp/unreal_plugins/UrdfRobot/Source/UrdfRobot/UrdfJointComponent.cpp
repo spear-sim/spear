@@ -15,7 +15,6 @@
 #include <Math/RotationMatrix.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <UObject/Object.h> // CreateDefaultSubobject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -47,10 +46,8 @@ UUrdfJointComponent::UUrdfJointComponent()
     SP_LOG_CURRENT_FUNCTION();
 
     // UInputActionComponent
-    input_action_component_ = CreateDefaultSubobject<UInputActionComponent>(Unreal::toFName("input_action_component"));
+    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, "input_action_component", this);
     SP_ASSERT(input_action_component_);
-    // Need to explicitly set this up so that the component hierarchy is well-defined.
-    input_action_component_->SetupAttachment(this);
 }
 
 UUrdfJointComponent::~UUrdfJointComponent()

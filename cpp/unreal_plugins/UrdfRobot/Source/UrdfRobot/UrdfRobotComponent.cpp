@@ -10,8 +10,6 @@
 #include <vector>
 
 #include <Containers/Array.h>       // TArray
-#include <UObject/Object.h>         // CreateDefaultSubobject
-#include <UObject/UObjectGlobals.h> // NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -44,10 +42,8 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
     // UInputActionComponent
-    input_action_component_ = CreateDefaultSubobject<UInputActionComponent>(Unreal::toFName("input_action_component"));
+    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, "input_action_component", this);
     SP_ASSERT(input_action_component_);
-    // Need to explicitly set this up so that the component hierarchy is well-defined.
-    input_action_component_->SetupAttachment(this);
 }
 
 UUrdfRobotComponent::~UUrdfRobotComponent()
@@ -210,10 +206,8 @@ void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
     // If this order is reversed and we end up creating more child components before registering the parent component,
     // the physics simulation will be unstable.
     SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
-    RootLinkComponent = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(root_link_desc->name_));
+    RootLinkComponent = Unreal::createComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, root_link_desc->name_, this);
     SP_ASSERT(RootLinkComponent);
-    RootLinkComponent->SetupAttachment(this);
-    RootLinkComponent->RegisterComponent();
     RootLinkComponent->initialize(root_link_desc);
     LinkComponents.Add(RootLinkComponent);
 
@@ -235,10 +229,8 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         SP_ASSERT(child_joint_desc);
 
         SP_ASSERT(!Std::containsSubstring(child_link_desc->name_, "."));
-        auto child_link_component = NewObject<UUrdfLinkComponent>(this, Unreal::toFName(child_link_desc->name_));
+        auto child_link_component = Unreal::createComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, child_link_desc->name_, parent_link_component);
         SP_ASSERT(child_link_component);
-        child_link_component->SetupAttachment(parent_link_component);
-        child_link_component->RegisterComponent();
         // It is very important to setup attachments, and register components before we create more child components.
         // If this order is reversed and we end up creating more child components before registering the parent component,
         // the physics simulation will be unstable.
@@ -253,10 +245,8 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         // simplicity of our recursive code for creating the Unreal component hierarchy.
 
         SP_ASSERT(!Std::containsSubstring(child_joint_desc->name_, "."));
-        auto child_joint_component = NewObject<UUrdfJointComponent>(this, Unreal::toFName(child_joint_desc->name_));
+        auto child_joint_component = Unreal::createComponentOutsideOwnerConstructor<UUrdfJointComponent>(this, child_joint_desc->name_, parent_link_component);
         SP_ASSERT(child_joint_component);
-        child_joint_component->SetupAttachment(parent_link_component);
-        child_joint_component->RegisterComponent();
         // It is very important to setup attachments, and register components before we create more child components.
         // If this order is reversed and we end up creating more child components before registering the parent component,
         // the physics simulation will be unstable.

@@ -19,7 +19,6 @@
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <UObject/UObjectGlobals.h> // NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -39,11 +38,9 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     goal_actor_ = world->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_parameters);
     SP_ASSERT(goal_actor_);
 
-    auto scene_component = NewObject<USceneComponent>(goal_actor_, "scene_component");
+    auto scene_component = Unreal::createComponentOutsideOwnerConstructor<USceneComponent>(goal_actor_, "scene_component", goal_actor_);
     SP_ASSERT(scene_component);
-    scene_component->RegisterComponent();
     scene_component->SetMobility(EComponentMobility::Movable);
-    goal_actor_->SetRootComponent(scene_component);
 
     // Create UActorHitEventComponent but don't subscribe to any actors yet
     actor_hit_event_component_ = std::make_unique<StandaloneComponent<UActorHitEventComponent>>(world);
