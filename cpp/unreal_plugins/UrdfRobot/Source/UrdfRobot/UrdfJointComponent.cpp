@@ -59,6 +59,7 @@ UUrdfJointComponent::~UUrdfJointComponent()
 
     JointType = EJointType::Invalid;
     JointControlType = EJointControlType::NotActuated;
+    JointInterfaceType = EJointInterfaceType::NoInterface;
     EnableKeyboardControl = false;
     //LinearTranslationOffset = FVector::ZeroVector; // TODO (MR): support linear translation offsets
 
