@@ -22,6 +22,7 @@
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Unreal.h"
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
 
@@ -32,7 +33,7 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
     SP_ASSERT(primitive_component);
     primitive_component_ = primitive_component;
 
-    tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(primitive_component->GetWorld());
+    tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(primitive_component->GetWorld(), "tick_event_component");
     SP_ASSERT(tick_event_component_);
     SP_ASSERT(tick_event_component_->component_);
     tick_event_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;

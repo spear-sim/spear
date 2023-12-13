@@ -23,11 +23,11 @@ AUrdfRobotPawn::AUrdfRobotPawn(const FObjectInitializer& object_initializer) : A
     SP_LOG_CURRENT_FUNCTION();
 
     // UUrdfRobotComponent
-    UrdfRobotComponent = Unreal::createComponentInsideOwnerConstructor<UUrdfRobotComponent>(this, "urdf_robot_component", this);
+    UrdfRobotComponent = Unreal::createSceneComponentInsideOwnerConstructor<UUrdfRobotComponent>(this, this, "urdf_robot_component");
     SP_ASSERT(UrdfRobotComponent);
 
     // UCameraComponent
-    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, "camera_component", UrdfRobotComponent);
+    CameraComponent = Unreal::createSceneComponentInsideOwnerConstructor<UCameraComponent>(this, UrdfRobotComponent, "camera_component");
     SP_ASSERT(CameraComponent);
 }
 

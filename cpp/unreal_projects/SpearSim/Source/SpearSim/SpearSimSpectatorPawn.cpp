@@ -17,7 +17,7 @@ ASpearSimSpectatorPawn::ASpearSimSpectatorPawn()
     SP_LOG_CURRENT_FUNCTION();
 
     // UInputActionComponent
-    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, "input_action_component", GetRootComponent());
+    input_action_component_ = Unreal::createSceneComponentInsideOwnerConstructor<UInputActionComponent>(this, GetRootComponent(), "input_action_component");
     SP_ASSERT(input_action_component_);
 }
 

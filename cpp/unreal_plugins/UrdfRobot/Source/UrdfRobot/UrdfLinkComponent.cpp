@@ -76,7 +76,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         const UrdfGeometryDesc& geometry_desc = visual_desc.geometry_desc_;
 
         // create child static mesh component for each UrdfSpearLinkDesc
-        auto static_mesh_component = Unreal::createComponentOutsideOwnerConstructor<UStaticMeshComponent>(this, "static_mesh_component", this);
+        auto static_mesh_component = Unreal::createSceneComponentOutsideOwnerConstructor<UStaticMeshComponent>(this, this, "static_mesh_component");
         SP_ASSERT(static_mesh_component);
 
         // each UrdfSpearLinkDesc has its own reference frame

@@ -101,7 +101,7 @@ CameraSensor::CameraSensor(
 
         // create SceneCaptureComponent2D
         render_pass_desc.scene_capture_component_2d_ = 
-            Unreal::createComponentOutsideOwnerConstructor<USceneCaptureComponent2D>(actor_, "scene_capture_component_2d", camera_component);
+            Unreal::createSceneComponentOutsideOwnerConstructor<USceneCaptureComponent2D>(actor_, camera_component, "scene_capture_component_2d");
         SP_ASSERT(render_pass_desc.scene_capture_component_2d_);
         render_pass_desc.scene_capture_component_2d_->TextureTarget = texture_render_target_2d;
         render_pass_desc.scene_capture_component_2d_->FOVAngle = fov;

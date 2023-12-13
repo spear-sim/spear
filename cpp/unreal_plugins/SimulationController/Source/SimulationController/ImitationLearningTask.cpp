@@ -38,12 +38,13 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     goal_actor_ = world->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_parameters);
     SP_ASSERT(goal_actor_);
 
-    auto scene_component = Unreal::createComponentOutsideOwnerConstructor<USceneComponent>(goal_actor_, "scene_component", goal_actor_);
+    // Although scene_component appears to not being used anywhere, it is required here to make goal_actor_ movable.
+    auto scene_component = Unreal::createSceneComponentOutsideOwnerConstructor<USceneComponent>(goal_actor_, goal_actor_, "scene_component");
     SP_ASSERT(scene_component);
     scene_component->SetMobility(EComponentMobility::Movable);
 
     // Create UActorHitEventComponent but don't subscribe to any actors yet
-    actor_hit_event_component_ = std::make_unique<StandaloneComponent<UActorHitEventComponent>>(world);
+    actor_hit_event_component_ = std::make_unique<StandaloneComponent<UActorHitEventComponent>>(world, "actor_hit_event_component");
     SP_ASSERT(actor_hit_event_component_);
     SP_ASSERT(actor_hit_event_component_->component_);
 

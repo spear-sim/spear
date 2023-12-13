@@ -42,7 +42,7 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
     // UInputActionComponent
-    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, "input_action_component", this);
+    input_action_component_ = Unreal::createSceneComponentInsideOwnerConstructor<UInputActionComponent>(this, this, "input_action_component");
     SP_ASSERT(input_action_component_);
 }
 
@@ -206,7 +206,7 @@ void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
     // If this order is reversed and we end up creating more child components before registering the parent component,
     // the physics simulation will be unstable.
     SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
-    RootLinkComponent = Unreal::createComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, root_link_desc->name_, this);
+    RootLinkComponent = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, this, root_link_desc->name_);
     SP_ASSERT(RootLinkComponent);
     RootLinkComponent->initialize(root_link_desc);
     LinkComponents.Add(RootLinkComponent);
@@ -229,7 +229,7 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         SP_ASSERT(child_joint_desc);
 
         SP_ASSERT(!Std::containsSubstring(child_link_desc->name_, "."));
-        auto child_link_component = Unreal::createComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, child_link_desc->name_, parent_link_component);
+        auto child_link_component = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, parent_link_component, child_link_desc->name_);
         SP_ASSERT(child_link_component);
         // It is very important to setup attachments, and register components before we create more child components.
         // If this order is reversed and we end up creating more child components before registering the parent component,
@@ -245,7 +245,7 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         // simplicity of our recursive code for creating the Unreal component hierarchy.
 
         SP_ASSERT(!Std::containsSubstring(child_joint_desc->name_, "."));
-        auto child_joint_component = Unreal::createComponentOutsideOwnerConstructor<UUrdfJointComponent>(this, child_joint_desc->name_, parent_link_component);
+        auto child_joint_component = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfJointComponent>(this, parent_link_component, child_joint_desc->name_);
         SP_ASSERT(child_joint_component);
         // It is very important to setup attachments, and register components before we create more child components.
         // If this order is reversed and we end up creating more child components before registering the parent component,

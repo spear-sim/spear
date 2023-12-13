@@ -105,7 +105,7 @@ SphereAgent::SphereAgent(UWorld* world)
         Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT");
 
     // Create UTickEventComponent
-    tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(world);
+    tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(world, "tick_event_component");
     SP_ASSERT(tick_event_component_);
     SP_ASSERT(tick_event_component_->component_);
     tick_event_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;

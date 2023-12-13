@@ -59,7 +59,7 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     goal_mesh_component->SetMaterial(0, goal_material);
 
     // Create UActorHitEventComponent but don't subscribe to any actors yet
-    actor_hit_event_component_ = std::make_unique<StandaloneComponent<UActorHitEventComponent>>(world);
+    actor_hit_event_component_ = std::make_unique<StandaloneComponent<UActorHitEventComponent>>(world, "actor_hit_event_component");
     SP_ASSERT(actor_hit_event_component_);
     SP_ASSERT(actor_hit_event_component_->component_);
 
