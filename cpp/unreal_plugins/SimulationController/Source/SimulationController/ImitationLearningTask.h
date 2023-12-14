@@ -7,19 +7,20 @@
 #include <stdint.h> // uint8_t
 
 #include <map>
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
 #include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
+#include "SimulationController/ActorHitEventComponent.h"
+#include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/Task.h"
 
 class AActor;
 class UWorld;
 struct FHitResult;
-
-class UActorHitEventComponent;
 
 class ImitationLearningTask : public Task {
 public:
@@ -42,10 +43,9 @@ public:
 private:
     AActor* agent_actor_ = nullptr;
     AActor* goal_actor_ = nullptr;
-    AActor* parent_actor_ = nullptr;
     std::vector<AActor*> obstacle_ignore_actors_;
 
-    UActorHitEventComponent* actor_hit_event_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UActorHitEventComponent>> actor_hit_event_component_ = nullptr;
 
     std::vector<FVector> agent_initial_locations_;
     std::vector<FVector> agent_goal_locations_;

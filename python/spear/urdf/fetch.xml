@@ -1,6 +1,9 @@
 <robot name="fetch">
     <material name="caster_link_material">
         <texture filename="/UrdfBot/Common/M_Slippery.M_Slippery"/>
+        <spear>
+            <unreal_material path="/UrdfBot/Common/M_Slippery.M_Slippery"/>
+        </spear>
     </material>
 
     <link name="base_link">
@@ -13,6 +16,9 @@
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
                 <mesh filename="StaticMesh'/UrdfBot/Fetch_V1/Meshes/base_link.base_link'"/>
+                <spear>
+                    <unreal_static_mesh path="StaticMesh'/UrdfBot/Fetch_V1/Meshes/base_link.base_link"/>
+                </spear>
             </geometry>
         </visual>
         <collision>
@@ -49,6 +55,9 @@
         <axis xyz="0 1 0"/>
         <limit effort="8.85" velocity="17.4"/>
         <dynamics type="velocity" damping="100.0"/>
+        <spear>
+            <dynamics type="torque" spring="1.23"/>
+        </spear>
     </joint>
 
    <link name="wheel_link_r">

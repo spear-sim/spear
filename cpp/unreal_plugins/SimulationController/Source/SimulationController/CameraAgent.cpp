@@ -124,7 +124,9 @@ std::map<std::string, ArrayDesc> CameraAgent::getObservationSpace() const
     std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    observation_space.merge(camera_sensor_->getObservationSpace(observation_components));
+    if (Std::contains(observation_components, "camera")) {
+        observation_space.merge(camera_sensor_->getObservationSpace());
+    }
 
     return observation_space;
 }
@@ -139,17 +141,16 @@ void CameraAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_location")) {
-        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("set_location"));
-        FVector agent_location(component_data.at(0), component_data.at(1), component_data.at(2));
+        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_location"));
         bool sweep = false;
         FHitResult* hit_result = nullptr;
-        camera_actor_->SetActorLocation(agent_location, sweep, hit_result, ETeleportType::ResetPhysics);
+        camera_actor_->SetActorLocation(
+            {action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)}, sweep, hit_result, ETeleportType::ResetPhysics);
     }
 
     if (Std::contains(action_components, "set_rotation")) {
-        std::vector<double> component_data = Std::reinterpretAs<double>(action.at("set_rotation"));
-        FRotator agent_rotation(component_data.at(0), component_data.at(1), component_data.at(2));
-        camera_actor_->SetActorRotation(agent_rotation, ETeleportType::ResetPhysics);
+        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_rotation"));
+        camera_actor_->SetActorRotation({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)}, ETeleportType::ResetPhysics);
     }
 }
 
@@ -158,7 +159,9 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
     std::map<std::string, std::vector<uint8_t>> observation;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
-    observation.merge(camera_sensor_->getObservation(observation_components));
+    if (Std::contains(observation_components, "camera")) {
+        observation.merge(camera_sensor_->getObservation());
+    }
 
     return observation;
 }

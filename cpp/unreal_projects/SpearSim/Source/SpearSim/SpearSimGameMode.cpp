@@ -13,9 +13,7 @@
 #include "CoreUtils/Unreal.h"
 #include "SpearSim/SpearSimSpectatorPawn.h"
 
-class FObjectInitializer;
-
-ASpearSimGameMode::ASpearSimGameMode(const FObjectInitializer& object_initializer) : AGameModeBase(object_initializer)
+ASpearSimGameMode::ASpearSimGameMode()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -27,7 +25,7 @@ ASpearSimGameMode::~ASpearSimGameMode()
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void ASpearSimGameMode::spearAddOnScreenDebugMessage(float display_time, FString message)
+void ASpearSimGameMode::SpearAddOnScreenDebugMessage(float display_time, FString message)
 {
     // Note that GEngine->AddOnScreenDebugMessage(...) is only available when the game is running, either in standalone mode or
     // in play-in-editor mode. But in pracice this is not an issue, because UFUNTION(Exec) methods only execute when the game

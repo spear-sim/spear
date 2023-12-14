@@ -15,7 +15,6 @@
 
 #include "ActorHitEventComponent.generated.h"
 
-class FObjectInitializer;
 struct FHitResult;
 
 UCLASS()
@@ -23,7 +22,7 @@ class UActorHitEventComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    UActorHitEventComponent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
+    UActorHitEventComponent()
     {
         SP_LOG_CURRENT_FUNCTION();
     }

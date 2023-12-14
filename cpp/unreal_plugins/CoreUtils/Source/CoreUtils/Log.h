@@ -12,7 +12,6 @@
 #include <boost/current_function.hpp> // BOOST_CURRENT_FUNCTION
 
 #include <CoreGlobals.h> // IsRunningCommandlet
-#include <CoreMinimal.h> // WITH_EDITOR
 
 #include "CoreUtils/Std.h"
 
@@ -41,12 +40,15 @@
 class COREUTILS_API Log
 {
 public:
+    Log() = delete;
+    ~Log() = delete;
+
     template <class... TArgs>
     static void log(const std::filesystem::path& current_file, TArgs&&... args)
     {
         std::string str = getPrefix(current_file) + Std::toString(std::forward<TArgs>(args)...);
         
-        #if WITH_EDITOR
+        #if WITH_EDITOR // defined in an auto-generated header
             if (IsRunningCommandlet()) {
                 logStdout(str); // editor mode via command-line (e.g., during cooking)
             } else {

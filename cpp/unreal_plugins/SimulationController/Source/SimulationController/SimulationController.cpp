@@ -29,13 +29,14 @@
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/CameraAgent.h"
+#include "SimulationController/ClassRegistrationUtils.h"
 #include "SimulationController/ImitationLearningTask.h"
 #include "SimulationController/NavMesh.h"
 #include "SimulationController/NullTask.h"
 #include "SimulationController/RpcServer.h"
 #include "SimulationController/SphereAgent.h"
 #include "SimulationController/Task.h"
-#include "SimulationController/UrdfBotAgent.h"
+#include "SimulationController/UrdfRobotAgent.h"
 #include "SimulationController/Visualizer.h"
 #include "SimulationController/VehicleAgent.h"
 
@@ -53,10 +54,8 @@ void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("CoreUtils")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfRobot")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("Vehicle")));
-
-    // TODO: uncomment when we're ready to re-enable UrdfBot
-    // SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfBot")));
 
     if (!Config::s_initialized_) {
         return;
@@ -96,7 +95,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
     SP_LOG_CURRENT_FUNCTION();
     SP_ASSERT(world);
 
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         bool world_is_ready = world->IsGameWorld();
     #else
         bool world_is_ready = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
@@ -104,8 +103,8 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
 
     if (world_is_ready) {
 
-        std::string scene_id = Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID");
-        std::string map_id = Config::get<std::string>("SIMULATION_CONTROLLER.MAP_ID");
+        auto scene_id = Config::get<std::string>("SIMULATION_CONTROLLER.SCENE_ID");
+        auto map_id = Config::get<std::string>("SIMULATION_CONTROLLER.MAP_ID");
 
         std::string desired_world_path_name;
         std::string desired_level_name;
@@ -173,7 +172,7 @@ void SimulationController::worldBeginPlayEventHandler()
     physics_settings->MaxSubstepDeltaTime = Config::get<float>("SIMULATION_CONTROLLER.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
     physics_settings->MaxSubsteps = Config::get<int32>("SIMULATION_CONTROLLER.PHYSICS.MAX_SUBSTEPS");
 
-    // Check that the physics substepping parameters match our deired simulation step time.
+    // Check that the physics substepping parameters match our desired simulation step time.
     // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep for more details.
     float step_time = Config::get<float>("SIMULATION_CONTROLLER.PHYSICS.SIMULATION_STEP_TIME");
     if (physics_settings->bSubstepping) {
@@ -189,18 +188,7 @@ void SimulationController::worldBeginPlayEventHandler()
     UGameplayStatics::SetGamePaused(world_, true);
 
     // create Agent
-    if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "CameraAgent") {
-        agent_ = std::make_unique<CameraAgent>(world_);
-    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "SphereAgent") {
-        agent_ = std::make_unique<SphereAgent>(world_);
-    } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "VehicleAgent") {
-        agent_ = std::make_unique<VehicleAgent>(world_);
-    // TODO: uncomment when we're ready to re-enable UrdfBot
-    // } else if (Config::get<std::string>("SIMULATION_CONTROLLER.AGENT") == "UrdfBotAgent") {
-    //     agent_ = std::make_unique<SphereAgent>(world_);
-    } else {
-        SP_ASSERT(false);
-    }
+    agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, Config::get<std::string>("SIMULATION_CONTROLLER.AGENT"), world_));
     SP_ASSERT(agent_);
 
     // create Task

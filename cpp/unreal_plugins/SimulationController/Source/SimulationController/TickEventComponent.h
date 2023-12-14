@@ -14,7 +14,6 @@
 
 #include "TickEventComponent.generated.h"
 
-class FObjectInitializer;
 struct FActorComponentTickFunction;
 
 UCLASS()
@@ -22,7 +21,7 @@ class UTickEventComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    UTickEventComponent(const FObjectInitializer& object_initializer) : UActorComponent(object_initializer)
+    UTickEventComponent()
     {
         SP_LOG_CURRENT_FUNCTION();
 
@@ -36,8 +35,10 @@ public:
     }
 
     // UActorComponent interface
-    void TickComponent(float delta_time, enum ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
+    void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
+        UActorComponent::TickComponent(delta_time, level_tick, this_tick_function);
+
         if (tick_func_) {
             tick_func_(delta_time, level_tick, this_tick_function);
         }
