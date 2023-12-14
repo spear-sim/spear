@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include <Containers/Array.h>       // TArray
+#include <Containers/Array.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -231,9 +231,6 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         SP_ASSERT(!Std::containsSubstring(child_link_desc->name_, "."));
         auto child_link_component = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, parent_link_component, child_link_desc->name_);
         SP_ASSERT(child_link_component);
-        // It is very important to setup attachments, and register components before we create more child components.
-        // If this order is reversed and we end up creating more child components before registering the parent component,
-        // the physics simulation will be unstable.
         child_link_component->initialize(child_link_desc);
         LinkComponents.Add(child_link_component);
 
@@ -247,9 +244,6 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         SP_ASSERT(!Std::containsSubstring(child_joint_desc->name_, "."));
         auto child_joint_component = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfJointComponent>(this, parent_link_component, child_joint_desc->name_);
         SP_ASSERT(child_joint_component);
-        // It is very important to setup attachments, and register components before we create more child components.
-        // If this order is reversed and we end up creating more child components before registering the parent component,
-        // the physics simulation will be unstable.
         child_joint_component->initialize(child_joint_desc, parent_link_component, child_link_component);
         JointComponents.Add(child_joint_component);
 

@@ -9,7 +9,7 @@
 #include <vector>
 
 #include <Components/StaticMeshComponent.h>
-#include <Containers/Array.h>       // TArray
+#include <Containers/Array.h>
 #include <Engine/StaticMesh.h>
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>

@@ -9,7 +9,7 @@
 #include <vector>
 
 #include <Components/SceneComponent.h>
-#include <Containers/Array.h>     // TArray
+#include <Containers/Array.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "UrdfRobotComponent.generated.h"
