@@ -155,9 +155,6 @@ if __name__ == "__main__":
                 # send control action to the agent and collect observations
                 obs, _, _, env_step_info = env.step(action={"set_duty_cycles": action})
 
-                observation_components_to_modify = { "final_color": ["camera.final_color"] }
-                modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
-
                 num_iterations_executed += 1
     
                 # check if we've reached the goal
@@ -165,9 +162,13 @@ if __name__ == "__main__":
                 goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
     
                 if args.debug:
+                    observation_components_to_modify = { "final_color": ["camera.final_color"] }
+                    modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
                     show_obs(modified_obs)
     
                 if not args.benchmark:
+                    observation_components_to_modify = { "final_color": ["camera.final_color"] }
+                    modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
                     obs_final_color = modified_obs["camera.final_color"]
     
                     # save the collected rgb observations

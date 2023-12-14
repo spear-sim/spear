@@ -4,6 +4,7 @@
 
 # generate series of actions for fetch agent on different parts such as moving, arm and gripper.
 
+import argparse
 import os
 import numpy as np
 import pandas as pd
@@ -26,17 +27,16 @@ DEFAULT_ACTION = {
 }
 
 def get_data_frame(action):
-
-    modified_action = {}
-    for action_name, action_value in action.items():
-        modified_action[action_name+".x"] = [action_value[0]]
-        modified_action[action_name+".y"] = [action_value[1]]
-        modified_action[action_name+".z"] = [action_value[2]]
-
-    return pd.DataFrame.from_dict(modified_action)
+    columns = np.array([ [ name + ".x", name + ".y", name + ".z" ] for name, data in action.items() ]).ravel()  # append each name with .x, .y, .z
+    data = [ np.array([ [ data[0], data[1], data[2] ] for name, data in action.items() ]).ravel() ]  # get data as list of unraveled N*3 array
+    return pd.DataFrame(columns=columns, data=data)
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.csv")))
+    args = parser.parse_args()
 
     df = pd.DataFrame()
 
@@ -204,7 +204,6 @@ if __name__ == '__main__':
         df = pd.concat([df, get_data_frame(action)])
 
     # save to csv
-    actions_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.csv"))
-    df.to_csv(actions_file, float_format="%.5f", mode="w", index=False)
+    df.to_csv(args.actions_file, float_format="%.5f", mode="w", index=False)
 
     spear.log("Done.")

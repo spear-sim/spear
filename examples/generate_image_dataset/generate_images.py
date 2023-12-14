@@ -113,11 +113,11 @@ if __name__ == "__main__":
                 "set_location": np.array([pose["location_x"], pose["location_y"], pose["location_z"]], np.float64),
                 "set_rotation": np.array([pose["rotation_pitch"], pose["rotation_yaw"], pose["rotation_roll"]], np.float64)})
 
-        observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES }
-        modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
-
         # save images for each render pass
         if not args.benchmark:
+            observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES }
+            modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
+
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 assert os.path.exists(render_pass_dir)

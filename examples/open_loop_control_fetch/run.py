@@ -19,16 +19,10 @@ import sys
 sys.path.append(COMMON_DIR)
 import common.observation_utils as observation_utils
 
-def get_action(action_names, action_values):
-    # len(action_values) - 1 as action_values contains an additional 'index' column
-    assert len(action_values) - 1 == len(action_names)
-    action = {}
-    for i in range(2, len(action_names), 3):
-        action_name = action_names[i][:-2]  # exclude the .x, .y, .z in the action names
-        action_value = np.array([action_values[i-1], action_values[i], action_values[i+1]], dtype=np.float64)
-        action[action_name] = action_value
-
-    return action
+def get_action(row):
+    names = [ name[:-2] for name in row.dtype.names ][::3] # strip .x .y .z from each name, select every third entry
+    data = np.array([ row[name] for name in row.dtype.names ], dtype=np.float64).reshape(-1,3) # get data as Nx3 array
+    return dict(zip(names, data))
 
 
 if __name__ == "__main__":
@@ -71,21 +65,24 @@ if __name__ == "__main__":
 
     spear.log("Executing sequence of actions as provided in the actions file...")
 
-    for row in df.to_records():
-        action = get_action(df.columns.values, row)
-        obs, reward, done, info = env.step(action=action)
+    if not args.benchmark and args.save_images:
+        index = 0
 
-        observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES }
-        modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
+    for row in df.to_records(index=False):
+        action = get_action(row)
+        obs, reward, done, info = env.step(action=action)
 
         # save images for each render pass
         if not args.benchmark and args.save_images:
+            observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES }
+            modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 assert os.path.exists(render_pass_dir)
 
                 obs_render_pass_vis = modified_obs["camera." + render_pass]
-                plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%row["index"])), obs_render_pass_vis)
+                plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%index)), obs_render_pass_vis)
+            index += 1
 
         if done:
             env.reset()
