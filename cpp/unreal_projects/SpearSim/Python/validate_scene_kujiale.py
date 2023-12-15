@@ -65,23 +65,23 @@ def validate_actor(level, actor):
 
     path = pathlib.PurePosixPath(str(actor.get_folder_path())).parts
 
-    # if len(path) < 1:
-    #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-    #     return
-    #
-    # if path[0] not in ["Debug", "Meshes", "Navigation", "Rendering", "Settings", "Widgets"]:
-    #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-    #     return
-    #
-    # if path[0] in ["Meshes", "Rendering"]:
-    #     if len(path) != 2:
-    #         spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-    #         return
-    #
-    # if path[0] in ["Navigation", "Settings", "Widgets"]:
-    #     if len(path) != 1:
-    #         spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-    #         return
+    if len(path) < 1:
+        spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+        return
+
+    if path[0] not in ["Debug", "Meshes", "Navigation", "Rendering", "Settings", "Widgets"]:
+        spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+        return
+
+    if path[0] in ["Meshes", "Rendering"]:
+        if len(path) != 2:
+            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+            return
+
+    if path[0] in ["Navigation", "Settings", "Widgets"]:
+        if len(path) != 1:
+            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+            return
 
     if path[0] == "Meshes":
 
@@ -104,22 +104,22 @@ def validate_actor(level, actor):
 
         semantic_category = path[1].split("_")
 
-        # if len(semantic_category) < 2:
-        #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-        #     return
-        #
-        # if len(semantic_category[0]) != 4 or not semantic_category[0].isdigit():
-        #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-        #     return
-        #
-        # if int(semantic_category[0]) == 0:
-        #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-        #     return
-        #
-        # actor_label = actor.get_actor_label().split("_")
-        # if actor_label[:-1] != semantic_category[1:]:
-        #     spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
-        #     return
+        if len(semantic_category) < 2:
+            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+            return
+
+        if len(semantic_category[0]) != 4 or not semantic_category[0].isdigit():
+            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+            return
+
+        if int(semantic_category[0]) == 0:
+            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+            return
+
+        actor_label = actor.get_actor_label().split("_")
+        if actor_label[:-1] != semantic_category[1:]:
+            spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
+            return
 
         #
         # The type of each actor in my_scene_0000/Meshes should be StaticMeshActor if it is not
@@ -185,14 +185,15 @@ def validate_actor(level, actor):
         pivot_desired_world = transform_world_from_obj.transform_location(pivot_desired_obj)
 
         # check pivot location against computed bounds
-        eps = 0.000001
+        eps = 0.0001
         pivot_desired_world = vector_to_array(pivot_desired_world)
         pivot_actual_world = vector_to_array(actor.get_actor_location())
-        if np.linalg.norm(pivot_desired_world - pivot_actual_world) > eps:
+        diff = np.linalg.norm(pivot_desired_world - pivot_actual_world)
+        if diff > eps:
             np.set_printoptions(suppress=True)
             spear.log(
                 "WARNING: Unexpected pivot: ", get_debug_string_actor(actor),
-                " (desired=", pivot_desired_world, ", actual=", pivot_actual_world, ")")
+                " (desired=", pivot_desired_world, ", actual=", pivot_actual_world, "diff=", diff, ")")
             return
 
         if type(actor) == unreal.Actor:
@@ -269,6 +270,9 @@ def validate_physics_constraint_component(level, actor, component):
 
     if component_name[0:2] != ["physics", "constraint"]:
         spear.log("WARNING: Unexpected component name: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
+        component_index = component_name[2]
+        component_name_raw_new = f"physics_constraint_{component_index}"
+        component.rename(component_name_raw_new)
         return
 
     if len(component_name[2]) != 4 or not component_name[2].isdigit():
@@ -346,6 +350,7 @@ def validate_static_mesh_component(level, actor, component):
 
     if not component.get_editor_property("use_default_collision"):
         spear.log("WARNING: Unexpected collision presets: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
+        component.set_editor_property("use_default_collision",True)
         return
 
     component_name = component.get_name().split("_")
@@ -427,6 +432,8 @@ def validate_static_mesh_component(level, actor, component):
                 spear.log(
                     "WARNING: Unexpected material: ",
                     get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_material(material), ")")
+
+                component.set_material(0, None)
                 return
 
     #
@@ -548,11 +555,17 @@ def get_parent_components(component):
 
 
 def get_debug_string_static_mesh(static_mesh):
-    return static_mesh.get_path_name()
+    if static_mesh:
+        return static_mesh.get_path_name()
+    else:
+        return None
 
 
 def get_debug_string_material(material):
-    return material.get_path_name()
+    if material:
+        return material.get_path_name()
+    else:
+        return None
 
 
 def get_debug_string_component(component):
