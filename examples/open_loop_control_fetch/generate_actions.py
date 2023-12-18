@@ -27,8 +27,8 @@ DEFAULT_ACTION = {
 }
 
 def get_data_frame(action):
-    columns = np.array([ [ name + ".x", name + ".y", name + ".z" ] for name, data in action.items() ]).ravel()  # append each name with .x, .y, .z
-    data = [ np.array([ [ data[0], data[1], data[2] ] for name, data in action.items() ]).ravel() ]  # get data as list of unraveled N*3 array
+    columns = np.array([ [name + ".x", name + ".y", name + ".z"] for name, _ in action.items() ]).ravel() # append .x .y .z to each action name
+    data = np.array([ vec for _, vec in action.items() ]).reshape(1, -1)
     return pd.DataFrame(columns=columns, data=data)
 
 
