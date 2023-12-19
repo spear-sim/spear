@@ -22,7 +22,6 @@
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
-#include "CoreUtils/Unreal.h"
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
 

@@ -51,7 +51,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
     double m_to_cm = 100.0;
 
     // set our own reference frame using the top-level UrdfLinkDesc
-    FVector location = FVector({link_desc->xyz_.at(0), link_desc->xyz_.at(1), link_desc->xyz_.at(2)}) * m_to_cm; // m to cm
+    FVector location = FVector(link_desc->xyz_.at(0), link_desc->xyz_.at(1), link_desc->xyz_.at(2)) * m_to_cm; // m to cm
     FRotator rotation = FMath::RadiansToDegrees(FRotator({link_desc->rpy_.at(1), link_desc->rpy_.at(2), link_desc->rpy_.at(0)})); // rpy to pyr, rad to deg
 
     // assign location, rotation, scale, for the top-level static mesh
@@ -81,9 +81,9 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
 
         // each UrdfSpearLinkDesc has its own reference frame
         FVector static_mesh_location = FVector(
-            {visual_desc.xyz_.at(0), visual_desc.xyz_.at(1), visual_desc.xyz_.at(2)}) * m_to_cm; // m to cm
+            visual_desc.xyz_.at(0), visual_desc.xyz_.at(1), visual_desc.xyz_.at(2)) * m_to_cm; // m to cm
         FRotator static_mesh_rotation = FMath::RadiansToDegrees(FRotator(
-            {visual_desc.rpy_.at(1), visual_desc.rpy_.at(2), visual_desc.rpy_.at(0) })); // rpy to pyr, rad to deg
+            visual_desc.rpy_.at(1), visual_desc.rpy_.at(2), visual_desc.rpy_.at(0))); // rpy to pyr, rad to deg
         FVector static_mesh_scale = FVector::OneVector;
 
         UStaticMesh* static_mesh = nullptr;
