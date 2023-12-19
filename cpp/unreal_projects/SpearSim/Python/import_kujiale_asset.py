@@ -35,7 +35,7 @@ def import_material_asset(material_id, material_json, scene_dir):
 
     mtl = material_json["materials"][material_id]
 
-    if mtl['alpha'] != 1.0:
+    if 'alpha' in mtl and mtl['alpha'] != 1.0:
         base_mtl = unreal.EditorAssetLibrary.find_asset_data("/Game/Kujiale/Materials/M_TranslucentMaterial")
     else:
         base_mtl = unreal.EditorAssetLibrary.find_asset_data("/Game/Kujiale/Materials/M_BaseMaterial")
@@ -54,7 +54,7 @@ def import_material_asset(material_id, material_json, scene_dir):
                 unreal.MaterialEditingLibrary.set_material_instance_texture_parameter_value(mi_asset, f"{ue_field}_Tex", new_texture)
     if "emissionIntensity" in mtl:
         unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(mi_asset, "EmissiveIntensity", mtl["emissionIntensity"])
-    if mtl['alpha'] != 1.0:
+    if 'alpha' in mtl and mtl['alpha'] != 1.0:
         unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(mi_asset, "Opacity", mtl["alpha"])
 
 
@@ -72,6 +72,7 @@ def create_component(parent_handle, actor_type):
 def spawn_actor(mesh_id, material_references, scene_dir):
     new_actor = unreal.EditorLevelLibrary.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0), unreal.Rotator(0, 0, 0))
 
+    new_actor.set_actor_label("unknown_0000")
     new_actor.set_folder_path("Meshes/0000_unknown")
 
     SM_Dummy = unreal.EditorAssetLibrary.load_asset("/Game/Kujiale/Meshes/SM_Dummy")
