@@ -20,9 +20,9 @@
 DECLARE_LOG_CATEGORY_EXTERN(LogSpear, Log, All);
 DEFINE_LOG_CATEGORY(LogSpear);
 
-void Log::logCurrentFunction(const std::filesystem::path& current_file, const std::string& current_function)
+void Log::logCurrentFunction(const std::filesystem::path& current_file, int current_line, const std::string& current_function)
 {
-    log(current_file, getCurrentFunctionAbbreviated(current_function));
+    log(current_file, current_line, getCurrentFunctionAbbreviated(current_function));
 }
 
 void Log::logStdout(const std::string& str)
@@ -36,9 +36,9 @@ void Log::logUnreal(const std::string& str)
     UE_LOG(LogSpear, Log, TEXT("%s"), *Unreal::toFString(str));
 }
 
-std::string Log::getPrefix(const std::filesystem::path& current_file)
+std::string Log::getPrefix(const std::filesystem::path& current_file, int current_line)
 {
-    return "[SPEAR | " + getCurrentFileAbbreviated(current_file) + "] ";
+    return "[SPEAR | " + getCurrentFileAbbreviated(current_file) + ":" + Std::toString(current_line) + "] ";
 }
 
 std::string Log::getCurrentFileAbbreviated(const std::filesystem::path& current_file)
@@ -66,15 +66,20 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
 
     // Iteratively simplify template expressions with "<...>". We do this iteratively, because regular expressions are not intended to handle
     // arbitrarily nested brackets.
-    std::regex template_expression_regex("<(([a-zA-Z_:*&, ])|(<\\.\\.\\.>))+>");
-    while (std::regex_search(current_function_simplified, template_expression_regex)) {
+    std::regex template_expression_regex("<(([a-zA-Z_:*&,. ])|(<\\.\\.\\.>))+>");
+
+    // Keep iterating until the string doesn't change.
+    std::string current_function_more_simplified;
+    while (current_function_more_simplified != current_function_simplified) {
+        current_function_more_simplified = current_function_simplified;
         current_function_simplified = std::regex_replace(current_function_simplified, template_expression_regex, "<...>");
     }
 
     // Simplify function arguments, either with "()" or "(...)".
     std::regex function_void_arguments_regex("\\(void\\)");
-    std::regex function_non_void_arguments_regex("\\((([a-zA-Z_:*&, ])|(<\\.\\.\\.>))+\\)");
     current_function_simplified = std::regex_replace(current_function_simplified, function_void_arguments_regex, "()");
+
+    std::regex function_non_void_arguments_regex("\\((([a-zA-Z_:*&,. ])|(<\\.\\.\\.>))+\\)");
     current_function_simplified = std::regex_replace(current_function_simplified, function_non_void_arguments_regex, "(...)");
 
     // Return the token containing "(" and ")".
