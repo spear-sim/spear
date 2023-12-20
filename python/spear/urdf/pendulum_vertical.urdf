@@ -1,0 +1,99 @@
+<robot name="pendulum_veritcal">
+
+    <link name="base_link">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <mass value="100.0"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size="0.5 0.5 0.5"/>
+            </geometry>
+            <material>
+                <color rgba="1 1 1 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <box size="0.5 0.5 0.5"/>
+            </geometry>
+        </collision>
+        <spear>
+            <simulate_physics value="false"/>
+        </spear>
+    </link>
+
+    <link name="link_0">
+        <inertial>
+            <origin rpy="0 0 0" xyz="1.0 0 0"/>
+            <mass value="0.1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.0 0 0"/>
+            <geometry>
+                <box size="1 0.40 0.40"/>
+            </geometry>
+            <material>
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.0 0 0"/>
+            <geometry>
+                <box size="1 0.40 0.40"/>
+            </geometry>
+        </collision>
+        <spear>
+            <simulate_physics value="true"/>
+        </spear>
+    </link>
+    <joint name="joint_0" type="revolute">
+        <origin rpy="0 -1.57 0" xyz="0 0 -0.8"/>
+        <parent link="base_link"/>
+        <child link="link_0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-0.78" upper="0.78" effort="0.0" velocity="0.0"/>
+        <spear>
+            <dynamics control_type="torque" parent_dominates="true"/>
+        </spear>
+    </joint>
+
+    <link name="link_1">
+        <inertial>
+            <origin rpy="0 0 0" xyz="0.3 0 0"/>
+            <mass value="0.1"/>
+            <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+        </inertial>
+        <visual>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.41 0.41"/>
+            </geometry>
+            <material>
+                <color rgba="0 1 0 1"/>
+            </material>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0.5 0 0"/>
+            <geometry>
+                <box size="1 0.41 0.41"/>
+            </geometry>
+        </collision>
+        <spear>
+            <simulate_physics value="true"/>
+        </spear>        
+    </link>
+    <joint name="joint_1" type="fixed">
+        <origin rpy="0 0 0" xyz="0.8 0 0"/>
+        <parent link="link_0"/>
+        <child link="link_1"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="-0.78" upper="0.78" effort="0.0" velocity="0.0"/>
+        <dynamics damping="0.001"/>
+    </joint>
+
+</robot>

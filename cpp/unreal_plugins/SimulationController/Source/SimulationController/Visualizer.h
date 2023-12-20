@@ -10,6 +10,7 @@ class UWorld;
 class Visualizer
 {
 public:
+    Visualizer() = delete;
     Visualizer(UWorld* world);
     ~Visualizer();
 

@@ -33,7 +33,9 @@ public class CommonModuleRules : ModuleRules
         //     ... > CoreUtils/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
         bEnableUndefinedIdentifierWarnings = false;
 
-        PublicDependencyModuleNames.AddRange(new string[] {"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", "RenderCore", "RHI"});
+        PublicDependencyModuleNames.AddRange(new string[] {
+            "ChaosVehiclesCore", "Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities", "NavigationSystem", "PhysicsCore", "RenderCore", "RHI",
+            "XmlParser"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.
@@ -90,24 +92,24 @@ public class CommonModuleRules : ModuleRules
         }
     }
 
-    protected void SP_LOG(string message, [CallerFilePath] string filePath="")
+    protected void SP_LOG(string message, [CallerFilePath] string filePath="", [CallerLineNumber] int lineNumber=0)
     {
-        Console.WriteLine(GetPrefix(filePath) + message);
+        Console.WriteLine(GetPrefix(filePath, lineNumber) + message);
     }
 
-    protected void SP_LOG_CURRENT_FUNCTION([CallerFilePath] string filePath="", [CallerMemberName] string memberName="")
+    protected void SP_LOG_CURRENT_FUNCTION([CallerFilePath] string filePath="", [CallerLineNumber] int lineNumber=0, [CallerMemberName] string memberName="")
     {
-        Console.WriteLine(GetPrefix(filePath) + GetCurrentFunctionExpanded(memberName));
+        Console.WriteLine(GetPrefix(filePath, lineNumber) + GetCurrentFunctionExpanded(memberName));
     }
 
-    protected string SP_LOG_GET_PREFIX([CallerFilePath] string filePath="")
+    protected string SP_LOG_GET_PREFIX([CallerFilePath] string filePath="", [CallerLineNumber] int lineNumber=0)
     {
-        return GetPrefix(filePath);
+        return GetPrefix(filePath, lineNumber);
     }
 
-    private string GetPrefix(string filePath)
+    private string GetPrefix(string filePath, int lineNumber)
     {
-        return "[SPEAR | " + GetCurrentFileAbbreviated(filePath) + "] ";
+        return "[SPEAR | " + GetCurrentFileAbbreviated(filePath) + ":" + lineNumber + "] ";
     }
 
     private string GetCurrentFileAbbreviated(string filePath)

@@ -14,16 +14,25 @@ SPEAR:
   WINDOW_RESOLUTION_X: 512
   WINDOW_RESOLUTION_Y: 512
 
+  NUM_EXTRA_WARMUP_TICKS: 10
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0
+
 SIMULATION_CONTROLLER:
-  AGENT: "UrdfBotAgent"
+  AGENT: "UrdfRobotAgent"
   TASK: "NullTask"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  URDFBOT_AGENT:
-    URDFBOT_ACTOR_NAME: "UrdfBotActor"
+  URDF_ROBOT_AGENT:
+    URDF_ROBOT_ACTOR_NAME: "UrdfRobotActor"
     ACTION_COMPONENTS: ["control_joints"]
-    OBSERVATION_COMPONENTS: ["link_state", "camera"]
+    OBSERVATION_COMPONENTS: ["links_location", "links_rotation", "camera"]
     STEP_INFO_COMPONENTS: []
+    SPAWN_LOCATION_X: -20.0
+    SPAWN_LOCATION_Y: 200.0
+    SPAWN_LOCATION_Z: 40.0
+    SPAWN_ROTATION_PITCH: 0.0
+    SPAWN_ROTATION_YAW: 0.0
+    SPAWN_ROTATION_ROLL: 0.0
     CAMERA:
       RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
       IMAGE_HEIGHT: 512
@@ -31,16 +40,16 @@ SIMULATION_CONTROLLER:
       FOV: 90.0
 
   VISUALIZER:
-    ACTOR_NAME: "UrdfBotActor"
+    ACTOR_NAME: "UrdfRobotActor"
     SPAWN_CAMERA: False
 
-URDFBOT:
-  URDFBOT_PAWN:
-    URDF_FILE: "fetch.xml"
+URDF_ROBOT:
+  URDF_ROBOT_PAWN:
+    URDF_FILE: "fetch.urdf"
     CAMERA_COMPONENT:
-      POSITION_X: 50.0
-      POSITION_Y: -200.0
-      POSITION_Z: 80.0
-      PITCH: 0.0
-      YAW: 90.0
-      ROLL: 0.0
+      LOCATION_X: -70.0
+      LOCATION_Y: 70.0
+      LOCATION_Z: 140.0
+      ROTATION_PITCH: 0.0
+      ROTATION_YAW: -30.0
+      ROTATION_ROLL: 0.0

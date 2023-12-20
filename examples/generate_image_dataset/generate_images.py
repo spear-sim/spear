@@ -13,6 +13,11 @@ import shutil
 import spear
 import time
 
+# import observation_utils from common folder
+COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+import sys
+sys.path.append(COMMON_DIR)
+import common.observation_utils as observation_utils
 
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
 # However, in this example, we are teleporting the camera in an incoherent way. Hence, we implement a 
@@ -110,39 +115,14 @@ if __name__ == "__main__":
 
         # save images for each render pass
         if not args.benchmark:
+            observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES }
+            modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
+
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 assert os.path.exists(render_pass_dir)
 
-                obs_render_pass = obs["camera." + render_pass]
-                assert len(obs_render_pass.shape) == 3
-                assert obs_render_pass.shape[2] == 4
-
-                if render_pass == "depth":
-                    obs_render_pass_vis = obs_render_pass[:,:,[0,1,2]].copy() # depth is returned as RGBA
-
-                    # discard very large depth values
-                    max_depth_meters = 20.0
-                    obs_render_pass_vis = obs_render_pass_vis[:,:,0]
-                    obs_render_pass_vis = np.clip(obs_render_pass_vis, 0.0, max_depth_meters)
-
-                elif render_pass == "final_color":
-                    obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # final_color is returned as BGRA
-
-                elif render_pass == "normal":
-                    obs_render_pass_vis = obs_render_pass[:,:,[0,1,2]].copy() # normal is returned as RGBA
-
-                    # discard normals that aren't properly normalized, i.e., length of 1.0
-                    discard_mask = np.logical_not(np.isclose(np.linalg.norm(obs_render_pass_vis, axis=2), 1.0, rtol=0.001, atol=0.001))
-                    obs_render_pass_vis = np.clip((obs_render_pass_vis + 1.0) / 2.0, 0.0, 1.0)
-                    obs_render_pass_vis[discard_mask] = np.nan
-
-                elif render_pass == "segmentation":
-                    obs_render_pass_vis = obs_render_pass[:,:,[2,1,0]].copy() # segmentation is returned as BGRA
-
-                else:
-                    assert False
-
+                obs_render_pass_vis = modified_obs["camera." + render_pass]
                 plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%pose["index"])), obs_render_pass_vis)
 
         # useful for comparing the game window to the image that has been saved to disk

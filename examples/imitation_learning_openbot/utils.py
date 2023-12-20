@@ -19,17 +19,18 @@ def show_obs(obs):
             spear.log(f"rotation_data: xyz [{obs['rotation'][0]:.2f}, {obs['rotation'][1]:.2f}, {obs['rotation'][2]:.2f}]")
         elif obs_component == "wheel_rotation_speeds":
             spear.log(f"wheel_rotation_speeds: fl fr rl rr [{obs['wheel_rotation_speeds'][0]:.2f}, {obs['wheel_rotation_speeds'][1]:.2f}, {obs['wheel_rotation_speeds'][2]:.2f}, {obs['wheel_rotation_speeds'][3]:.2f}]")
-        elif obs_component == "imu":
-            spear.log(f"imu: linear_acceleration [{obs['imu'][0]:.2f}, {obs['imu'][1]:.2f},{obs['imu'][2]:.2f}]")
-            spear.log(f"imu: angular_rate [{obs['imu'][3]:.2f}, {obs['imu'][4]:.2f}, {obs['imu'][5]:.2f}]")
+        elif obs_component == "imu.linear_acceleration_body":
+            spear.log(f"imu.linear_acceleration_body [{obs['imu.linear_acceleration_body'][0]:.2f}, {obs['imu.linear_acceleration_body'][1]:.2f},{obs['imu.linear_acceleration_body'][2]:.2f}]")
+        elif obs_component == "imu.angular_velocity_body":
+            spear.log(f"imu.angular_velocity_body [{obs['imu.angular_velocity_body'][0]:.2f}, {obs['imu.angular_velocity_body'][1]:.2f},{obs['imu.angular_velocity_body'][2]:.2f}]")
         elif obs_component in ["camera.final_color", "camera.normal", "camera.segmentation"]:
-            cv2.imshow(render_pass, obs[obs_component]) # note that spear.Env returns BGRA by default
+            cv2.imshow(obs_component, obs[obs_component]) # note that spear.Env returns BGRA by default
         elif obs_component in ["camera.depth"]:
             depth = obs[obs_component]
             depth_min = np.min(depth)
             depth_max = np.max(depth)
             depth_normalized = (depth-depth_min) / (depth_max-depth_min)
-            cv2.imshow(render_pass, depth_normalized)
+            cv2.imshow(obs_component, depth_normalized)
         else:
             assert False
 

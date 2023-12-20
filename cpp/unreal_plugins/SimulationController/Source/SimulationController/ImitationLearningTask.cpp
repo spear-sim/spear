@@ -9,6 +9,7 @@
 #include <fstream> // std::ifstream
 #include <limits>  // std::numeric_limits
 #include <map>
+#include <memory>  // std::make_unique
 #include <string>  // std::getline, std::stod
 #include <utility> // std::move
 #include <vector>
@@ -18,7 +19,6 @@
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <UObject/UObjectGlobals.h> // NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -26,6 +26,7 @@
 #include "CoreUtils/Std.h"
 #include "CoreUtils/Unreal.h"
 #include "SimulationController/ActorHitEventComponent.h"
+#include "SimulationController/StandaloneComponent.h"
 
 struct FHitResult;
 
@@ -37,17 +38,15 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     goal_actor_ = world->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_parameters);
     SP_ASSERT(goal_actor_);
 
-    auto scene_component = NewObject<USceneComponent>(goal_actor_);
+    // Although scene_component appears to not being used anywhere, it is required here to make goal_actor_ movable.
+    auto scene_component = Unreal::createSceneComponentOutsideOwnerConstructor<USceneComponent>(goal_actor_, goal_actor_, "scene_component");
+    SP_ASSERT(scene_component);
     scene_component->SetMobility(EComponentMobility::Movable);
-    goal_actor_->SetRootComponent(scene_component);
-
-    parent_actor_ = world->SpawnActor<AActor>();
-    SP_ASSERT(parent_actor_);
 
     // Create UActorHitEventComponent but don't subscribe to any actors yet
-    actor_hit_event_component_ = NewObject<UActorHitEventComponent>(parent_actor_);
+    actor_hit_event_component_ = std::make_unique<StandaloneComponent<UActorHitEventComponent>>(world, "actor_hit_event_component");
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->RegisterComponent();
+    SP_ASSERT(actor_hit_event_component_->component_);
 
     // Get initial and goal locations of all episodes in the following format:
     //    scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
@@ -55,12 +54,10 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     agent_goal_locations_.clear();
     episode_index_ = -1;
 
-    // Create an input filestream
-    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE"));
-    SP_ASSERT(fs.is_open());
-
     // Read file data, line-by-line in the format:
     // scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
+    std::ifstream fs(Config::get<std::string>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE"));
+    SP_ASSERT(fs.is_open());
     std::string line;
     std::getline(fs, line); // read header
     std::vector<std::string> tokens = Std::tokenize(line, ",");
@@ -71,8 +68,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     SP_ASSERT(tokens.at(3) == "initial_location_z");
     SP_ASSERT(tokens.at(4) == "goal_location_x");
     SP_ASSERT(tokens.at(5) == "goal_location_y");
-    SP_ASSERT(tokens.at(6) == "goal_location_z");
-    
+    SP_ASSERT(tokens.at(6) == "goal_location_z");    
     while (std::getline(fs, line)) {
         tokens = Std::tokenize(line, ",");
         SP_ASSERT(tokens.size() == 7);
@@ -96,17 +92,14 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
 
 ImitationLearningTask::~ImitationLearningTask()
 {
+    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
+
     agent_initial_locations_.clear();
     agent_goal_locations_.clear();
     episode_index_ = -1;
 
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->DestroyComponent();
     actor_hit_event_component_ = nullptr;
-
-    SP_ASSERT(parent_actor_);
-    parent_actor_->Destroy();
-    parent_actor_ = nullptr;
 
     SP_ASSERT(goal_actor_);
     goal_actor_->Destroy();
@@ -122,8 +115,8 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
     obstacle_ignore_actors_ = Unreal::findActorsByName(
         world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
-    actor_hit_event_component_->subscribe(agent_actor_);
-    actor_hit_event_component_->actor_hit_func_ =
+    actor_hit_event_component_->component_->subscribe(agent_actor_);
+    actor_hit_event_component_->component_->actor_hit_func_ =
         [this](AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result) -> void {
             SP_ASSERT(self_actor == agent_actor_);
             if (other_actor == goal_actor_) {
@@ -137,8 +130,8 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
 void ImitationLearningTask::cleanUpObjectReferences()
 {
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->actor_hit_func_ = nullptr;
-    actor_hit_event_component_->unsubscribe(agent_actor_);
+    actor_hit_event_component_->component_->actor_hit_func_ = nullptr;
+    actor_hit_event_component_->component_->unsubscribe(agent_actor_);
 
     obstacle_ignore_actors_.clear();
 
@@ -197,9 +190,9 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 void ImitationLearningTask::reset()
 {
     FVector offset_location = {
-        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_X"),
-        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Y"),
-        Config::get<float>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Z")
+        Config::get<double>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_X"),
+        Config::get<double>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Y"),
+        Config::get<double>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Z")
     };
     FVector agent_initial_location = agent_initial_locations_.at(episode_index_) + offset_location;
 

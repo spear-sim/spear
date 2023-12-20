@@ -16,12 +16,10 @@
 class AActor;
 class UCameraComponent;
 class USceneCaptureComponent2D;
-class UTextureRenderTarget2D;
 
 struct RenderPassDesc
 {
-    USceneCaptureComponent2D* scene_capture_component_ = nullptr;
-    UTextureRenderTarget2D* texture_render_target_ = nullptr;
+    USceneCaptureComponent2D* scene_capture_component_2d_ = nullptr;
 
     // strictly speaking, we could store width and height once for all render passes, but we store them here for simplicity
     int width_ = -1;
@@ -37,16 +35,17 @@ struct RenderPassDesc
 class CameraSensor
 {
 public:
+    CameraSensor() = delete;
     CameraSensor(UCameraComponent* camera_component, const std::vector<std::string>& render_pass_names, unsigned int width, unsigned int height, float fov);
     ~CameraSensor();
 
-    // high-level interface for getting render data as an observation that conforms to our Agent interface
-    std::map<std::string, ArrayDesc> getObservationSpace(const std::vector<std::string>& observation_components) const;
-    std::map<std::string, std::vector<uint8_t>> getObservation(const std::vector<std::string>& observation_components) const;
+    // Used by Agents.
+    std::map<std::string, ArrayDesc> getObservationSpace() const;
+    std::map<std::string, std::vector<uint8_t>> getObservation() const;
 
-    // Unreal resources for each render pass are public in case they need to be modified by user code
+    // Unreal resources for each render pass are public in case they need to be modified by user code.
     std::map<std::string, RenderPassDesc> render_pass_descs_;
 
 private:
-    AActor* parent_actor_ = nullptr;
+    AActor* actor_ = nullptr;
 };

@@ -29,16 +29,20 @@
             "Enabled": true
         },
         {
+            "Name": "ModelingToolsEditorMode",
+            "Enabled": true
+        },
+        {
             "Name": "SimulationController",
             "Enabled": true
         },
         {
-            "Name": "UrdfBot",
-            "Enabled": false
+            "Name": "UrdfRobot",
+            "Enabled": true
         },
         {
             "Name": "Vehicle",
             "Enabled": true
-        }
+        },
     ]
 }

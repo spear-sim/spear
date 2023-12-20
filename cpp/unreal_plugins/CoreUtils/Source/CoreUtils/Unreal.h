@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include <cstring> // std::memcpy
+#include <cstring>                   // std::memcpy
 #include <map>
 #include <string>
+#include <type_traits>               // is_base_of
 #include <vector>
 
 #include <Containers/Array.h>        // TArray
@@ -23,6 +24,8 @@
 class COREUTILS_API Unreal
 {
 public:
+    Unreal() = delete;
+    ~Unreal() = delete;
 
     //
     // String functions
@@ -106,8 +109,13 @@ public:
     }
 
     //
-    // Find actors by name or tag, non-templated, return std::vector
+    // Find actors unconditionally or by name or tag, non-templated, return std::vector
     //
+
+    static std::vector<AActor*> findActors(UWorld* world)
+    {
+        return findActorsByType<AActor>(world);
+    }
 
     static std::vector<AActor*> findActorsByName(UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
@@ -130,8 +138,13 @@ public:
     }
 
     //
-    // Find actors by name or tag, non-templated, return std::map
+    // Find actors unconditionally or by name or tag, non-templated, return std::map
     //
+
+    static std::map<std::string, AActor*> findActorsAsMap(UWorld* world)
+    {
+        return findActorsByTypeAsMap<AActor>(world);
+    }
 
     static std::map<std::string, AActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
     {
@@ -339,7 +352,7 @@ public:
     static std::map<std::string, TActor*> getActorsAsMap(const std::vector<TActor*>& actors)
     {
         std::map<std::string, TActor*> actor_map;
-        for (auto& a : actors) {
+        for (auto a : actors) {
             SP_ASSERT(a);
             std::string name = toStdString(a->GetName());
             SP_ASSERT(!Std::containsKey(actor_map, name)); // There shouldn't be two actors with the same name
@@ -364,5 +377,115 @@ public:
             }
             return vec.at(0);
         }
+    }
+
+    //
+    // Helper function to get fully qualified component names.
+    //
+
+    static std::string getFullyQualifiedComponentName(USceneComponent* component, const std::string& separator, bool include_actor_name = false)
+    {
+        SP_ASSERT(component);
+        SP_ASSERT(component->GetOwner());
+
+        std::string name = toStdString(component->GetName());
+
+        TArray<USceneComponent*> parents;
+        component->GetParentComponents(parents);
+        for (auto parent : parents) {
+            name = toStdString(parent->GetName()) + separator + name;
+        }
+
+        // TODO: use actor's label from metadatacomponent instead of GetName()
+        if (include_actor_name) {
+            name = toStdString(component->GetOwner()->GetName()) + separator + name;
+        }
+
+        return name;
+    }
+
+    //
+    // Helper functions to create components.
+    //
+
+    template <typename TComponent>
+    static TComponent* createComponentInsideOwnerConstructor(UObject* owner, const std::string& name)
+    {
+        // CreateDefaultSubobject is required when inside the constructor of the owner AActor (either directly or indirectly via
+        // the constructor of a child component).
+        SP_ASSERT((!std::is_base_of<USceneComponent, TComponent>::value)); // Using this function to create USceneComponents is an error.
+        SP_ASSERT(owner);
+        TComponent* component = owner->CreateDefaultSubobject<TComponent>(toFName(name));
+        SP_ASSERT(component);
+        return component;
+    }
+
+    template <typename TComponent>
+    static TComponent* createSceneComponentInsideOwnerConstructor(UObject* owner, AActor* parent, const std::string& name)
+    {
+        // If we are creating a USceneComponent,then SetRootComponent is required to attach the newly created component to its parent AActor.
+        SP_ASSERT((std::is_base_of<USceneComponent, TComponent>::value)); // Use this function to create USceneComponents only.
+        SP_ASSERT(owner);
+        SP_ASSERT(parent);
+        TComponent* component = owner->CreateDefaultSubobject<TComponent>(toFName(name));
+        SP_ASSERT(component);
+        parent->SetRootComponent(component);
+        return component;
+    }
+
+    template <typename TComponent>
+    static TComponent* createSceneComponentInsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& name)
+    {
+        // If we are creating a USceneComponent, then its parent must also be a USceneComponent, and we must call SetupAttachment.
+        SP_ASSERT((std::is_base_of<USceneComponent, TComponent>::value)); // Use this function to create USceneComponents only.
+        SP_ASSERT(owner);
+        SP_ASSERT(parent);
+        TComponent* component = owner->CreateDefaultSubobject<TComponent>(toFName(name));
+        SP_ASSERT(component);
+        component->SetupAttachment(parent);
+        return component;
+    }
+
+    template <typename TComponent>
+    static TComponent* createComponentOutsideOwnerConstructor(UObject* owner, const std::string& name)
+    {
+        // NewObject and RegisterComponent are required when outside the constructor of the owner AActor (either directly or
+        // indirectly via the constructor of a child component).
+        SP_ASSERT((!std::is_base_of<USceneComponent, TComponent>::value)); // Using this function to create USceneComponents is an error.
+        SP_ASSERT(owner);
+        TComponent* component = NewObject<TComponent>(owner, toFName(name));
+        SP_ASSERT(component);
+        component->RegisterComponent();
+        return component;
+    }
+
+    template <typename TComponent>
+    static TComponent* createSceneComponentOutsideOwnerConstructor(UObject* owner, AActor* parent, const std::string& name)
+    {
+        // If we are creating a USceneComponent, then SetRootComponent is required to attach the newly created component to its parent AActor.
+        // SetRootComponent must be called before RegisterComponent.
+        SP_ASSERT((std::is_base_of<USceneComponent, TComponent>::value)); // Use this function to create USceneComponents only.
+        SP_ASSERT(owner);
+        SP_ASSERT(parent);
+        TComponent* component = NewObject<TComponent>(owner, toFName(name));
+        SP_ASSERT(component);
+        parent->SetRootComponent(component);
+        component->RegisterComponent();
+        return component;
+    }
+
+    template <typename TComponent>
+    static TComponent* createSceneComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& name)
+    {
+        // If we are creating a USceneComponent, then its parent must also be a USceneComponent, and we must call SetupAttachment.
+        // SetupAttachment must be called before RegisterComponent.
+        SP_ASSERT((std::is_base_of<USceneComponent, TComponent>::value)); // Use this function to create USceneComponents only.
+        SP_ASSERT(owner);
+        SP_ASSERT(parent);
+        TComponent* component = NewObject<TComponent>(owner, toFName(name));
+        SP_ASSERT(component);
+        component->SetupAttachment(parent);
+        component->RegisterComponent();
+        return component;
     }
 };

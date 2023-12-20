@@ -7,6 +7,7 @@
 #include <stdint.h> // uint8_t
 
 #include <map>
+#include <memory> // std::unique_ptr
 #include <random> // std::minstd_rand
 #include <string>
 #include <vector>
@@ -14,6 +15,8 @@
 #include <Math/Vector.h>
 
 #include "CoreUtils/ArrayDesc.h"
+#include "SimulationController/ActorHitEventComponent.h"
+#include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/Task.h"
 
 class AActor;
@@ -21,7 +24,6 @@ class AStaticMeshActor;
 class UWorld;
 struct FHitResult;
 
-class UActorHitEventComponent;
 struct ArrayDesc;
 
 class PointGoalNavTask: public Task
@@ -46,10 +48,9 @@ public:
 private:
     AStaticMeshActor* goal_actor_ = nullptr;
     AActor* agent_actor_ = nullptr;
-    AActor* parent_actor_ = nullptr;
     std::vector<AActor*> obstacle_ignore_actors_;
 
-    UActorHitEventComponent* actor_hit_event_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UActorHitEventComponent>> actor_hit_event_component_ = nullptr;
 
     std::minstd_rand minstd_rand_;
     bool hit_goal_ = false;

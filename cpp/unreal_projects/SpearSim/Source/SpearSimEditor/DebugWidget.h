@@ -6,29 +6,36 @@
 
 #include <Containers/UnrealString.h> // FString
 #include <GameFramework/Actor.h>
-#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNTION, UPROPERTY
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "DebugWidget.generated.h"
-
-class FObjectInitializer;
 
 UCLASS(Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
 class ADebugWidget : public AActor
 {
     GENERATED_BODY()
 public: 
-    ADebugWidget(const FObjectInitializer& object_initializer);
+    ADebugWidget();
     ~ADebugWidget();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void loadConfig();
+    void LoadConfig();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void saveConfig();
+    void SaveConfig();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void printDebugString();
+    void PrintDebugString();
 
     UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Debug string")
-    FString debug_string_;
+    FString DebugString;
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void SpawnVehiclePawn();
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void SpawnUrdfRobotPawn();
+
+    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="URDF file")
+    FString UrdfFile;
 };

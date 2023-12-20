@@ -13,6 +13,7 @@
 
 #include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
+#include "SimulationController/ClassRegistrationUtils.h"
 
 class UWorld;
 
@@ -24,6 +25,7 @@ struct ArrayDesc;
 class VehicleAgent : public Agent
 {
 public:
+    VehicleAgent() = delete;
     VehicleAgent(UWorld* world);
     ~VehicleAgent();
 
@@ -46,4 +48,6 @@ private:
 
     std::unique_ptr<CameraSensor> camera_sensor_;
     std::unique_ptr<ImuSensor> imu_sensor_;
+
+    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<VehicleAgent>(Agent::s_class_registrar_, "VehicleAgent");
 };

@@ -122,7 +122,7 @@ For each `StaticMeshActor` in the `my_scene_0000/Meshes` directory, the _Compone
 
 ```
 my_actor_0000                          #
-└── StaticMeshComponent                # Each StaticMeshActor has a root component named "StaticMeshComponent".
+└── StaticMeshComponent0               # Each StaticMeshActor has a root component named "StaticMeshComponent0".
     |                                  #
     |                                  # If the StaticMeshActor is composed of multiple StaticMeshComponents, the additional
     |                                  # StaticMeshComponents can be added as children of the top-level StaticMeshComponent,

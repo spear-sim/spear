@@ -4,6 +4,11 @@
 
 #include "SimulationController/ImuSensor.h"
 
+#include <map>
+#include <memory> // std::make_unique
+#include <string>
+#include <vector>
+
 #include <Components/PrimitiveComponent.h>
 #include <DrawDebugHelpers.h>       // DrawDebugDirectionalArrow
 #include <Engine/EngineBaseTypes.h> // ELevelTick
@@ -14,8 +19,11 @@
 #include <PhysicsEngine/PhysicsSettings.h>
 #include <UObject/UObjectGlobals.h> // NewObject
 
+#include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
+#include "CoreUtils/Unreal.h"
+#include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
 
 struct FActorComponentTickFunction;
@@ -25,14 +33,11 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
     SP_ASSERT(primitive_component);
     primitive_component_ = primitive_component;
 
-    parent_actor_ = primitive_component->GetWorld()->SpawnActor<AActor>();
-    SP_ASSERT(parent_actor_);
-
-    tick_event_component_ = NewObject<UTickEventComponent>(parent_actor_);
+    tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(primitive_component->GetWorld(), "tick_event_component");
     SP_ASSERT(tick_event_component_);
-    tick_event_component_->RegisterComponent();
-    tick_event_component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
-    tick_event_component_->tick_func_ = [this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
+    SP_ASSERT(tick_event_component_->component_);
+    tick_event_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
+    tick_event_component_->component_->tick_func_ = [this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
 
         // Update linear acceleration
         FVector current_linear_velocity_world = primitive_component_->GetPhysicsLinearVelocity();
@@ -75,14 +80,48 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
 ImuSensor::~ImuSensor()
 {
     SP_ASSERT(tick_event_component_);
-    tick_event_component_->tick_func_ = nullptr;
-    tick_event_component_->DestroyComponent();
+    tick_event_component_->component_->tick_func_ = nullptr;
     tick_event_component_ = nullptr;
-
-    SP_ASSERT(parent_actor_);
-    parent_actor_->Destroy();
-    parent_actor_ = nullptr;
 
     SP_ASSERT(primitive_component_);
     primitive_component_ = nullptr;
+}
+
+std::map<std::string, ArrayDesc> ImuSensor::getObservationSpace() const
+{
+    std::map<std::string, ArrayDesc> observation_space;
+    ArrayDesc array_desc;
+
+    // a_x, a_y, a_z in [cm/s^2]
+    array_desc.low_ = std::numeric_limits<double>::lowest();
+    array_desc.high_ = std::numeric_limits<double>::max();
+    array_desc.datatype_ = DataType::Float64;
+    array_desc.shape_ = {3};
+    observation_space["imu.linear_acceleration_body"] = std::move(array_desc);
+
+    // g_x, g_y, g_z in [rad/s]
+    array_desc.low_ = std::numeric_limits<double>::lowest();
+    array_desc.high_ = std::numeric_limits<double>::max();
+    array_desc.datatype_ = DataType::Float64;
+    array_desc.shape_ = {3};
+    observation_space["imu.angular_velocity_body"] = std::move(array_desc);
+
+    return observation_space;
+}
+
+std::map<std::string, std::vector<uint8_t>> ImuSensor::getObservation() const
+{
+    std::map<std::string, std::vector<uint8_t>> observation;
+
+    observation["imu.linear_acceleration_body"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+        linear_acceleration_body_.X,
+        linear_acceleration_body_.Y,
+        linear_acceleration_body_.Z});
+
+    observation["imu.angular_velocity_body"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+        angular_velocity_body_.X,
+        angular_velocity_body_.Y,
+        angular_velocity_body_.Z});
+
+    return observation;
 }

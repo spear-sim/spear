@@ -10,7 +10,7 @@ public class SpearSim : CommonModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils"});
+        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils", "UrdfRobot", "Vehicle"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }
