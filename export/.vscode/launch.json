@@ -43,9 +43,9 @@
       "request": "launch",
       "program": "sim.py",
       "console": "integratedTerminal",
-      "python": "/opt/miniconda3/envs/fetch_sim/bin/mjpython",
+      "python": "/opt/miniconda3/envs/mujoco_export_pipeline/bin/mjpython",
       "args": [
-        "--filename", "${input:scene_path}/scene.mjb",
+        "--filename", "${input:scene_path}/scene.xml",
         // "--norender"
       ]
     }
@@ -53,7 +53,7 @@
   "inputs": [
     {
       "id": "scene_path",
-      "default": "scenes/kujiale_0000",
+      "default": "scenes/apartment_0000",
       "description": "Scene Path",
       "type": "promptString",
     }

@@ -1,4 +1,5 @@
 """
+Run this script from UE
 Even though we eventually would like to run physics in a left-handed coordinate system to match UE, this script
 exports everything in the right-handed coordinate system. This is done to maintain script-level consistency, because
 GLTF export (implemented by UE) always exports objects in a right-handed coordinate system. The unit of translation 
