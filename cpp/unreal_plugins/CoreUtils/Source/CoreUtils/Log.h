@@ -6,11 +6,12 @@
 
 #include <filesystem>
 #include <string>
-#include <utility>
+#include <utility> // std::forward
 
-#include <CoreGlobals.h>
+#include <boost/predef.h>             // BOOST_COMP_CLANG, BOOST_COMP_MSVC
+#include <boost/current_function.hpp> // BOOST_CURRENT_FUNCTION
 
-#include <boost/current_function.hpp>
+#include <CoreGlobals.h> // IsRunningCommandlet
 
 #include "CoreUtils/Std.h"
 
@@ -26,25 +27,28 @@
 // In some situations, the output from UE_LOG is not available, e.g., running on a cluster through an RL framework like RLLib.
 // In other situations, the output from std::cout is not available, e.g., running in the editor or debugging in Visual Studio.
 // It is therefore desirable to have a logging system that writes to both locations. We provide the following SP_LOG macros
-// for this purpose. These need to be macros rather than functions, because they interact with __FILE__ and BOOST_CURRENT_FUNCTION,
-// similar to our assert implementation. In future, we could make the logging targets more configurable, but for now, we simply
-// write to UE_LOG if we're in the editor (i.e., if WITH_EDITOR evaluates to true and IsRunningCommandlet() returns false) and
-// std::cout otherwise.
-#define SP_LOG(...)               Log::log(__FILE__ SP_VA_ARGS_WITH_LEADING_COMMA(__VA_ARGS__))
-#define SP_LOG_CURRENT_FUNCTION() Log::logCurrentFunction(__FILE__, BOOST_CURRENT_FUNCTION)
+// for this purpose. These need to be macros rather than functions, because they interact with __FILE__ and __LINE__ and
+// BOOST_CURRENT_FUNCTION, similar to our assert implementation. In future, we could make the logging targets more configurable,
+// but for now, we simply write to UE_LOG if we're in the editor (i.e., if WITH_EDITOR evaluates to true and IsRunningCommandlet()
+// returns false) and std::cout otherwise.
+#define SP_LOG(...)               Log::log(__FILE__, __LINE__ SP_VA_ARGS_WITH_LEADING_COMMA(__VA_ARGS__))
+#define SP_LOG_CURRENT_FUNCTION() Log::logCurrentFunction(__FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
 
 // Helper macro that can be useful when printing to the game viewport or some other target.
-#define SP_LOG_GET_PREFIX() Log::getPrefix(__FILE__)
+#define SP_LOG_GET_PREFIX() Log::getPrefix(__FILE__, __LINE__)
 
 class COREUTILS_API Log
 {
 public:
+    Log() = delete;
+    ~Log() = delete;
+
     template <class... TArgs>
-    static void log(const std::filesystem::path& current_file, TArgs&&... args)
+    static void log(const std::filesystem::path& current_file, int current_line, TArgs&&... args)
     {
-        std::string str = getPrefix(current_file) + Std::toString(std::forward<TArgs>(args)...);
+        std::string str = getPrefix(current_file, current_line) + Std::toString(std::forward<TArgs>(args)...);
         
-        #if WITH_EDITOR
+        #if WITH_EDITOR // defined in an auto-generated header
             if (IsRunningCommandlet()) {
                 logStdout(str); // editor mode via command-line (e.g., during cooking)
             } else {
@@ -55,9 +59,9 @@ public:
         #endif
     }
 
-    static void logCurrentFunction(const std::filesystem::path& current_file, const std::string& current_function);
+    static void logCurrentFunction(const std::filesystem::path& current_file, int current_line, const std::string& current_function);
 
-    static std::string getPrefix(const std::filesystem::path& current_file);
+    static std::string getPrefix(const std::filesystem::path& current_file, int current_line);
 
 private:
     static void logStdout(const std::string& str);

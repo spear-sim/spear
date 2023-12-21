@@ -4,14 +4,17 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cstring>
-#include <map>
+#include <stddef.h> // size_t
+
+#include <algorithm> // std::find
+#include <cctype>    // std::tolower
+#include <cstring>   // std::memcpy
+#include <iterator>  // std::distance
 #include <string>
-#include <utility>
+#include <utility>   // std::forward
 #include <vector>
 
-#include <boost/tokenizer.hpp>
+#include <boost/tokenizer.hpp> // boost::char_separator
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/BoostLexicalCast.h"
@@ -19,6 +22,8 @@
 class COREUTILS_API Std
 {
 public:
+    Std() = delete;
+    ~Std() = delete;
 
     //
     // String conversion functions
@@ -38,7 +43,7 @@ public:
     template <typename TArg, class... TArgs>
     static std::string toString(const TArg& front, TArgs&&... back)
     {
-        return boost::lexical_cast<std::string>(front) + toString(std::forward<TArgs>(back)...);
+        return toString(front) + toString(std::forward<TArgs>(back)...);
     }
 
     static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)
@@ -54,6 +59,15 @@ public:
     static bool containsSubstring(const std::string& string, const std::string& substring)
     {
         return string.find(substring) != std::string::npos;
+    }
+
+    static std::string toLower(const std::string& string)
+    {
+        std::string lower_string = string;
+        for (auto& c : lower_string) {
+            c = std::tolower(c);
+        }
+        return lower_string;
     }
 
     //
@@ -79,14 +93,13 @@ public:
 
         if (index < container.size()) {
             return index;
-        }
-        else {
+        } else {
             return -1;
         }
     }
 
     //
-    // Reinterpet a vector as a vector of a different type
+    // Reinterpet a vector of a given type as a vector of a different type
     //
 
     template <typename TDest, typename TSrc>

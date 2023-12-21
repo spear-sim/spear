@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <boost/predef.h>
+#include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC
 
 #if BOOST_COMP_MSVC
     // keep these warnings sorted
@@ -49,7 +49,3 @@
 #else
     #error
 #endif
-
-// TODO: remove these #defines when we're ready to completely switch to SP_BEGIN_SUPPRESS_COMPILER_WARNINGS and SP_END_SUPPRESS_COMPILER_WARNINGS
-#define BEGIN_SUPPRESS_COMPILER_WARNINGS SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
-#define END_SUPPRESS_COMPILER_WARNINGS SP_END_SUPPRESS_COMPILER_WARNINGS

@@ -4,24 +4,22 @@
 
 #include "SimulationController/CameraSensor.h"
 
-#include <limits>
+#include <stdint.h> // uint8_t
+
+#include <limits>  // std::numeric_limits
 #include <map>
 #include <string>
-#include <utility>
+#include <utility> // std::move
 #include <vector>
 
-#include <boost/predef.h>
+#include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
-#include <Containers/Array.h>
-#include <Engine/EngineTypes.h>
 #include <Engine/TextureRenderTarget2D.h>
-#include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Materials/MaterialInstanceDynamic.h>
-#include <TextureResource.h>
-#include <UObject/UObjectGlobals.h>
+#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
 #include "CoreUtils/ArrayDesc.h"
 #include "CoreUtils/Assert.h"
@@ -59,17 +57,17 @@ const std::map<std::string, std::string> RENDER_PASS_MATERIAL = {
     {"normal",       "/SimulationController/Materials/PPM_Normal.PPM_Normal"},
     {"segmentation", "/SimulationController/Materials/PPM_Segmentation.PPM_Segmentation"}};
 
-const std::map<std::string, float> RENDER_PASS_LOW = {
-    {"depth",        0.0f},
-    {"final_color",  0.0f},
-    {"normal",       std::numeric_limits<float>::lowest()}, // Unreal can return normals that are not unit length
-    {"segmentation", 0.0f}};
+const std::map<std::string, double> RENDER_PASS_LOW = {
+    {"depth",        0.0},
+    {"final_color",  0.0},
+    {"normal",       std::numeric_limits<double>::lowest()}, // Unreal can return normals that are not unit length
+    {"segmentation", 0.0}};
 
-const std::map<std::string, float> RENDER_PASS_HIGH = {
-    {"depth",        std::numeric_limits<float>::max()},
-    {"final_color",  255.0f},
-    {"normal",       std::numeric_limits<float>::max()}, // Unreal can return normals that are not unit length
-    {"segmentation", 255.0f}};
+const std::map<std::string, double> RENDER_PASS_HIGH = {
+    {"depth",        std::numeric_limits<double>::max()},
+    {"final_color",  255.0},
+    {"normal",       std::numeric_limits<double>::max()}, // Unreal can return normals that are not unit length
+    {"segmentation", 255.0}};
 
 const std::map<std::string, DataType> RENDER_PASS_CHANNEL_DATATYPE = {
     {"depth",        DataType::Float32},
@@ -82,8 +80,8 @@ CameraSensor::CameraSensor(
 {
     SP_ASSERT(camera_component);
 
-    parent_actor_ = camera_component->GetWorld()->SpawnActor<AActor>();
-    SP_ASSERT(parent_actor_);
+    actor_ = camera_component->GetWorld()->SpawnActor<AActor>();
+    SP_ASSERT(actor_);
     
     for (auto& render_pass_name : render_pass_names) {
         RenderPassDesc render_pass_desc;
@@ -93,41 +91,37 @@ CameraSensor::CameraSensor(
         render_pass_desc.num_bytes_ = height * width * RENDER_PASS_NUM_CHANNELS.at(render_pass_name) * RENDER_PASS_NUM_BYTES_PER_CHANNEL.at(render_pass_name);
 
         // create TextureRenderTarget2D
-        render_pass_desc.texture_render_target_ = NewObject<UTextureRenderTarget2D>(parent_actor_);
-        SP_ASSERT(render_pass_desc.texture_render_target_);
+        auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(actor_, Unreal::toFName("texture_render_target_2d"));
+        SP_ASSERT(texture_render_target_2d);
 
         bool clear_render_target = true;
-        render_pass_desc.texture_render_target_->RenderTargetFormat = RENDER_PASS_TEXTURE_RENDER_TARGET_FORMAT.at(render_pass_name);
-        render_pass_desc.texture_render_target_->InitAutoFormat(width, height);
-        render_pass_desc.texture_render_target_->UpdateResourceImmediate(clear_render_target);
-        SP_ASSERT(render_pass_desc.texture_render_target_->GameThread_GetRenderTargetResource());
+        texture_render_target_2d->RenderTargetFormat = RENDER_PASS_TEXTURE_RENDER_TARGET_FORMAT.at(render_pass_name);
+        texture_render_target_2d->InitAutoFormat(width, height);
+        texture_render_target_2d->UpdateResourceImmediate(clear_render_target);
 
         // create SceneCaptureComponent2D
-        render_pass_desc.scene_capture_component_ = NewObject<USceneCaptureComponent2D>(parent_actor_);
-        SP_ASSERT(render_pass_desc.scene_capture_component_);
-
-        render_pass_desc.scene_capture_component_->TextureTarget = render_pass_desc.texture_render_target_;
-        render_pass_desc.scene_capture_component_->FOVAngle = fov;
-        render_pass_desc.scene_capture_component_->CaptureSource = ESceneCaptureSource::SCS_FinalToneCurveHDR;
+        render_pass_desc.scene_capture_component_2d_ = 
+            Unreal::createSceneComponentOutsideOwnerConstructor<USceneCaptureComponent2D>(actor_, camera_component, "scene_capture_component_2d");
+        SP_ASSERT(render_pass_desc.scene_capture_component_2d_);
+        render_pass_desc.scene_capture_component_2d_->TextureTarget = texture_render_target_2d;
+        render_pass_desc.scene_capture_component_2d_->FOVAngle = fov;
+        render_pass_desc.scene_capture_component_2d_->CaptureSource = ESceneCaptureSource::SCS_FinalToneCurveHDR;
+        render_pass_desc.scene_capture_component_2d_->SetVisibility(true);
 
         if (render_pass_name == "final_color") {
             // need to override these settings to obtain the same rendering quality as in a default game viewport
-            render_pass_desc.scene_capture_component_->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
-            render_pass_desc.scene_capture_component_->PostProcessSettings.DynamicGlobalIlluminationMethod           = EDynamicGlobalIlluminationMethod::Lumen;
-            render_pass_desc.scene_capture_component_->PostProcessSettings.bOverride_ReflectionMethod = true;
-            render_pass_desc.scene_capture_component_->PostProcessSettings.ReflectionMethod           = EReflectionMethod::Lumen;
-            render_pass_desc.scene_capture_component_->PostProcessSettings.bOverride_LumenSurfaceCacheResolution = true;
-            render_pass_desc.scene_capture_component_->PostProcessSettings.LumenSurfaceCacheResolution           = 1.0f;
+            render_pass_desc.scene_capture_component_2d_->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
+            render_pass_desc.scene_capture_component_2d_->PostProcessSettings.DynamicGlobalIlluminationMethod           = EDynamicGlobalIlluminationMethod::Lumen;
+            render_pass_desc.scene_capture_component_2d_->PostProcessSettings.bOverride_ReflectionMethod = true;
+            render_pass_desc.scene_capture_component_2d_->PostProcessSettings.ReflectionMethod           = EReflectionMethod::Lumen;
+            render_pass_desc.scene_capture_component_2d_->PostProcessSettings.bOverride_LumenSurfaceCacheResolution = true;
+            render_pass_desc.scene_capture_component_2d_->PostProcessSettings.LumenSurfaceCacheResolution           = 1.0f;
         } else {
-            // TODO: turn off as many rendering features as possible for efficiency
-            UMaterial* material = LoadObject<UMaterial>(nullptr, *Unreal::toFString(RENDER_PASS_MATERIAL.at(render_pass_name)));
+            // TODO (MR): turn off as many rendering features as possible for efficiency
+            auto material = LoadObject<UMaterial>(nullptr, *Unreal::toFString(RENDER_PASS_MATERIAL.at(render_pass_name)));
             SP_ASSERT(material);
-            render_pass_desc.scene_capture_component_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, parent_actor_), 1.0f);
+            render_pass_desc.scene_capture_component_2d_->PostProcessSettings.AddBlendable(UMaterialInstanceDynamic::Create(material, actor_), 1.0f);
         }
-
-        render_pass_desc.scene_capture_component_->AttachToComponent(camera_component, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-        render_pass_desc.scene_capture_component_->SetVisibility(true);
-        render_pass_desc.scene_capture_component_->RegisterComponent();
 
         // create shared_memory_object
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
@@ -162,85 +156,75 @@ CameraSensor::CameraSensor(
 
 CameraSensor::~CameraSensor()
 {
+    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
+
     for (auto& render_pass_desc : render_pass_descs_) {
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
             #if BOOST_OS_MACOS || BOOST_OS_LINUX
                 boost::interprocess::shared_memory_object::remove(render_pass_desc.second.shared_memory_id_.c_str());
             #endif
         }
-
-        SP_ASSERT(render_pass_desc.second.scene_capture_component_);
-        render_pass_desc.second.scene_capture_component_->MarkAsGarbage();
-        render_pass_desc.second.scene_capture_component_ = nullptr;
-
-        SP_ASSERT(render_pass_desc.second.texture_render_target_);
-        render_pass_desc.second.texture_render_target_->MarkAsGarbage();
-        render_pass_desc.second.texture_render_target_ = nullptr;
     }
     render_pass_descs_.clear();
 
-    SP_ASSERT(parent_actor_);
-    parent_actor_->Destroy();
-    parent_actor_ = nullptr;
+    SP_ASSERT(actor_);
+    actor_->Destroy();
+    actor_ = nullptr;
 }
 
-std::map<std::string, ArrayDesc> CameraSensor::getObservationSpace(const std::vector<std::string>& observation_components) const
+std::map<std::string, ArrayDesc> CameraSensor::getObservationSpace() const
 {
     std::map<std::string, ArrayDesc> observation_space;
 
-    if (Std::contains(observation_components, "camera")) {
-        for (auto& render_pass_desc : render_pass_descs_) {
-            ArrayDesc array_desc;
-            array_desc.low_ = RENDER_PASS_LOW.at(render_pass_desc.first);
-            array_desc.high_ = RENDER_PASS_HIGH.at(render_pass_desc.first);
-            array_desc.shape_ = {render_pass_desc.second.height_, render_pass_desc.second.width_, RENDER_PASS_NUM_CHANNELS.at(render_pass_desc.first)};
-            array_desc.datatype_ = RENDER_PASS_CHANNEL_DATATYPE.at(render_pass_desc.first);
-            array_desc.use_shared_memory_ = Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY");
-            array_desc.shared_memory_name_ = render_pass_desc.second.shared_memory_name_;
-            observation_space["camera." + render_pass_desc.first] = std::move(array_desc);
-        }
+    for (auto& render_pass_desc : render_pass_descs_) {
+        ArrayDesc array_desc;
+        array_desc.low_ = RENDER_PASS_LOW.at(render_pass_desc.first);
+        array_desc.high_ = RENDER_PASS_HIGH.at(render_pass_desc.first);
+        array_desc.shape_ = {render_pass_desc.second.height_, render_pass_desc.second.width_, RENDER_PASS_NUM_CHANNELS.at(render_pass_desc.first)};
+        array_desc.datatype_ = RENDER_PASS_CHANNEL_DATATYPE.at(render_pass_desc.first);
+        array_desc.use_shared_memory_ = Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY");
+        array_desc.shared_memory_name_ = render_pass_desc.second.shared_memory_name_;
+        observation_space["camera." + render_pass_desc.first] = std::move(array_desc);
     }
 
     return observation_space;
 }
 
-std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation(const std::vector<std::string>& observation_components) const
+std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    if (Std::contains(observation_components, "camera")) {
-        for (auto& render_pass_desc : render_pass_descs_) {
+    for (auto& render_pass_desc : render_pass_descs_) {
 
-            void* dest_ptr = nullptr;
-            if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
-                dest_ptr = render_pass_desc.second.shared_memory_mapped_region_.get_address();
+        void* dest_ptr = nullptr;
+        if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
+            dest_ptr = render_pass_desc.second.shared_memory_mapped_region_.get_address();
+        } else {
+            observation["camera." + render_pass_desc.first] = {};
+            observation.at("camera." + render_pass_desc.first).resize(render_pass_desc.second.num_bytes_);
+            dest_ptr = observation.at("camera." + render_pass_desc.first).data();
+        }
+        SP_ASSERT(dest_ptr);
+
+        if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.READ_SURFACE_DATA")) {
+            FTextureRenderTargetResource* texture_render_target_resource =
+                render_pass_desc.second.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
+            SP_ASSERT(texture_render_target_resource);
+
+            if (render_pass_desc.first == "final_color" || render_pass_desc.first == "segmentation") {
+                // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel, so it can be used to read
+                // the following ETextureRenderTargetFormat formats:
+                //     final_color:  RTF_RGBA8
+                //     segmentation: RTF_RGBA8_SRGB
+                texture_render_target_resource->ReadPixelsPtr(static_cast<FColor*>(dest_ptr));
+            } else if (render_pass_desc.first == "depth" || render_pass_desc.first == "normal") {
+                // ReadLinearColorPixelsPtr assumes 4 channels per pixel, 4 bytes per channel, so it can be used
+                // to read the following ETextureRenderTargetFormat formats:
+                //     depth:  RTF_RGBA32f
+                //     normal: RTF_RGBA32f
+                texture_render_target_resource->ReadLinearColorPixelsPtr(static_cast<FLinearColor*>(dest_ptr));
             } else {
-                observation["camera." + render_pass_desc.first] = {};
-                observation.at("camera." + render_pass_desc.first).resize(render_pass_desc.second.num_bytes_);
-                dest_ptr = observation.at("camera." + render_pass_desc.first).data();
-            }
-            SP_ASSERT(dest_ptr);
-
-            if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.READ_SURFACE_DATA")) {
-                FTextureRenderTargetResource* texture_render_target_resource =
-                    render_pass_desc.second.scene_capture_component_->TextureTarget->GameThread_GetRenderTargetResource();
-                SP_ASSERT(texture_render_target_resource);
-
-                if (render_pass_desc.first == "final_color" || render_pass_desc.first == "segmentation") {
-                    // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel, so it can be used to read
-                    // the following ETextureRenderTargetFormat formats:
-                    //     final_color:  RTF_RGBA8
-                    //     segmentation: RTF_RGBA8_SRGB
-                    texture_render_target_resource->ReadPixelsPtr(static_cast<FColor*>(dest_ptr));
-                } else if (render_pass_desc.first == "depth" || render_pass_desc.first == "normal") {
-                    // ReadLinearColorPixelsPtr assumes 4 channels per pixel, 4 bytes per channel, so it can be used
-                    // to read the following ETextureRenderTargetFormat formats:
-                    //     depth:  RTF_RGBA32f
-                    //     normal: RTF_RGBA32f
-                    texture_render_target_resource->ReadLinearColorPixelsPtr(static_cast<FLinearColor*>(dest_ptr));
-                } else {
-                    SP_ASSERT(false);
-                }
+                SP_ASSERT(false);
             }
         }
     }

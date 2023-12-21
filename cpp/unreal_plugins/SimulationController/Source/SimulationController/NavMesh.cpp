@@ -6,10 +6,13 @@
 
 #include <vector>
 
-#include <AI/NavDataGenerator.h>
-#include <AI/Navigation/NavigationTypes.h>
-#include <NavigationData.h>
+#include <AI/NavDataGenerator.h>           // FNavDataGenerator::ExportNavigationData
+#include <AI/Navigation/NavigationTypes.h> // FNavAgentProperties, FNavLocation
+#include <Containers/Array.h>              // TArray
+#include <Misc/Build.h>                    // UE_BUILD_SHIPPING, UE_BUILD_TEST
+#include <NavigationData.h>                // FPathFindingResult
 #include <NavigationSystem.h>
+#include <NavigationSystemTypes.h>         // FPathFindingQuery
 #include <NavMesh/RecastNavMesh.h>
 
 #include "CoreUtils/Assert.h"

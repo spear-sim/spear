@@ -1,13 +1,11 @@
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright Epic Games, Inc. All Rights Reserved.
 //
 
 #pragma once
 
-#include <Containers/UnrealString.h>
-#include <CoreMinimal.h>
 #include <GameFramework/GameModeBase.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpearSimGameMode.generated.h"
 
@@ -19,17 +17,15 @@
 // the game is running, either in standalone mode or in play-in-editor mode. To respond to console commands when only the editor is running, we
 // need to use SpearSimEditorUnrealEdEngine::Exec(...).
 
-class FObjectInitializer;
-
 UCLASS()
 class ASpearSimGameMode : public AGameModeBase
 {
     GENERATED_BODY()
 public:
-    ASpearSimGameMode(const FObjectInitializer& object_initializer);
+    ASpearSimGameMode();
     ~ASpearSimGameMode();
 
-    // Call this function by typing the following into the Unreal console: spearAddOnScreenDebugMessage 10.0 Hello World
+    // Call this function by typing the following into the Unreal console: SpearAddOnScreenDebugMessage 10.0 Hello World
     UFUNCTION(Exec)
-    void spearAddOnScreenDebugMessage(float display_time, FString message);
+    void SpearAddOnScreenDebugMessage(float display_time, FString message);
 };

@@ -9,7 +9,7 @@
 #include <future>
 #include <mutex>
 #include <string>
-#include <utility>
+#include <utility> // std::forward, std::move
 
 #include "CoreUtils/Rpclib.h"
 #include "SimulationController/BoostAsio.h"
@@ -99,13 +99,13 @@ auto moveHandler(TFunctor&& functor)
 }
 
 template <typename TClass>
-struct FunctionWrapper : FunctionWrapper<decltype(&TClass::operator())> {};
+struct FunctionWrapper : public FunctionWrapper<decltype(&TClass::operator())> {};
 
 template <typename TClass, typename TReturn, typename... TArgs>
-struct FunctionWrapper<TReturn (TClass::*)(TArgs...)> : FunctionWrapper<TReturn (*)(TArgs...)> {};
+struct FunctionWrapper<TReturn (TClass::*)(TArgs...)> : public FunctionWrapper<TReturn (*)(TArgs...)> {};
 
 template <typename TClass, typename TReturn, typename... TArgs>
-struct FunctionWrapper<TReturn (TClass::*)(TArgs...) const> : FunctionWrapper<TReturn (*)(TArgs...)> {};
+struct FunctionWrapper<TReturn (TClass::*)(TArgs...) const> : public FunctionWrapper<TReturn (*)(TArgs...)> {};
 
 template <class T>
 struct FunctionWrapper<T&> : public FunctionWrapper<T> {};

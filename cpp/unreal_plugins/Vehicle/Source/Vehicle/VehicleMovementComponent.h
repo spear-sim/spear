@@ -6,8 +6,8 @@
 
 #include <vector>
 
-#include <CoreMinimal.h>
 #include <ChaosWheeledVehicleMovementComponent.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 
 #include "VehicleMovementComponent.generated.h"
 
@@ -19,6 +19,6 @@ public:
     UVehicleMovementComponent();
     ~UVehicleMovementComponent();
 
-    // Provides access to wheel rotation speeds in rad/s
+    // provides access to wheel rotation speeds in rad/s
     std::vector<double> getWheelRotationSpeeds() const;
 };

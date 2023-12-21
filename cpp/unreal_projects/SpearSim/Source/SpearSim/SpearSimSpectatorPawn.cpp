@@ -4,43 +4,39 @@
 
 #include "SpearSim/SpearSimSpectatorPawn.h"
 
-#include <Components/InputComponent.h>
-#include <GameFramework/PlayerInput.h>
+#include <string>
+
 #include <GameFramework/SpectatorPawn.h>
 #include <GenericPlatform/GenericPlatformMisc.h>
 
-#include "CoreUtils/Config.h"
+#include "CoreUtils/InputActionComponent.h"
 #include "CoreUtils/Unreal.h"
 
-class FObjectInitializer;
-
-ASpearSimSpectatorPawn::ASpearSimSpectatorPawn(const FObjectInitializer& object_initializer) : ASpectatorPawn(object_initializer)
+ASpearSimSpectatorPawn::ASpearSimSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    if (!Config::s_initialized_) {
-        return;
-    }
+    // UInputActionComponent
+    input_action_component_ = Unreal::createSceneComponentInsideOwnerConstructor<UInputActionComponent>(this, GetRootComponent(), "input_action_component");
+    SP_ASSERT(input_action_component_);
 }
 
 ASpearSimSpectatorPawn::~ASpearSimSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    SP_ASSERT(input_action_component_);
+    input_action_component_ = nullptr;
 }
 
-void ASpearSimSpectatorPawn::SetupPlayerInputComponent(UInputComponent* input_component)
+void ASpearSimSpectatorPawn::BeginPlay()
 {
-    ASpectatorPawn::SetupPlayerInputComponent(input_component);
+    ASpectatorPawn::BeginPlay();
 
-    UPlayerInput* player_input = GetWorld()->GetFirstPlayerController()->PlayerInput;
-    player_input->AddAxisMapping(FInputAxisKeyMapping(Unreal::toFName("Exit"), FKey(Unreal::toFName("Escape")), 1.0f));
-    input_component->BindAxis("Exit", this, &ASpearSimSpectatorPawn::exit);
-}
-
-void ASpearSimSpectatorPawn::exit(float value)
-{
-    if (value == 1.0f) {
+    std::map<std::string, float> input_actions{{"Escape", 1.0f}};
+    input_action_component_->bindInputActions(input_actions);
+    input_action_component_->apply_input_action_func_ = [](const std::string& key) -> void {
         bool force = false;
         FGenericPlatformMisc::RequestExit(force);
-    }
+    };
 }

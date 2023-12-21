@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <boost/predef.h>
+#include <boost/predef.h> // BOOST_OS_WINDOWS
 
 // Unreal and Windows have different definitions for the TEXT macro, so we save it, include Windows.h, and
 // then restore it. Windows also defines a Yield macro, which can interfere with various Unreal functions

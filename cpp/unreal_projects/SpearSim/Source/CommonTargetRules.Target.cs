@@ -84,24 +84,24 @@ public class CommonTargetRulesTarget : TargetRules
         }
     }
 
-    protected void SP_LOG(string message, [CallerFilePath] string filePath="")
+    protected void SP_LOG(string message, [CallerFilePath] string filePath="", [CallerLineNumber] int lineNumber=0)
     {
-        Console.WriteLine(GetPrefix(filePath) + message);
+        Console.WriteLine(GetPrefix(filePath, lineNumber) + message);
     }
 
-    protected void SP_LOG_CURRENT_FUNCTION([CallerFilePath] string filePath="", [CallerMemberName] string memberName="")
+    protected void SP_LOG_CURRENT_FUNCTION([CallerFilePath] string filePath="", [CallerLineNumber] int lineNumber=0, [CallerMemberName] string memberName="")
     {
-        Console.WriteLine(GetPrefix(filePath) + GetCurrentFunctionExpanded(memberName));
+        Console.WriteLine(GetPrefix(filePath, lineNumber) + GetCurrentFunctionExpanded(memberName));
     }
 
-    protected string SP_LOG_GET_PREFIX([CallerFilePath] string filePath="")
+    protected string SP_LOG_GET_PREFIX([CallerFilePath] string filePath="", [CallerLineNumber] int lineNumber=0)
     {
-        return GetPrefix(filePath);
+        return GetPrefix(filePath, lineNumber);
     }
 
-    private string GetPrefix(string filePath)
+    private string GetPrefix(string filePath, int lineNumber)
     {
-        return "[SPEAR | " + GetCurrentFileAbbreviated(filePath) + "] ";
+        return "[SPEAR | " + GetCurrentFileAbbreviated(filePath) + ":" + lineNumber + "] ";
     }
 
     private string GetCurrentFileAbbreviated(string filePath)

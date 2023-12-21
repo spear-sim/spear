@@ -1,6 +1,5 @@
 //
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright Epic Games, Inc. All Rights Reserved.
 //
 
 #include "SpearSimEditor/SpearSimEditorUnrealEdEngine.h"
@@ -15,6 +14,7 @@
 #include <Components/StaticMeshComponent.h>
 #include <Editor/UnrealEdEngine.h>
 #include <GameFramework/Actor.h>
+#include <HAL/Platform.h> // TCHAR
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Log.h"

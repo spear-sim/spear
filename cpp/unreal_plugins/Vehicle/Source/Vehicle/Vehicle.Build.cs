@@ -10,13 +10,20 @@ public class Vehicle : CommonModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        // As a matter of convenience, most Unreal module dependencies can be placed in CommonModuleRules, regardless
-        // of whether or not the module is listed in our uplugin files. These Chaos dependencies are different. If we
-        // place these Chaos module dependencies in CommonModuleRules, then we must also place ChaosVehiclesPlugin in
-        // our uplugin files. So we only list these Chaos module dependencies in the Build.cs where they are needed.
-        // ChaosVehiclePlugin is treated differently by the Unreal Engine build system because it is a plugin (i.e.,
-        // it is stored in the Engine/Plugins directory, rather than the Engine/Source directory.
-        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "ChaosVehiclesCore", "CoreUtils"});
+        // As a matter of convenience, it is possible to place most Unreal module dependencies in CommonModuleRules without
+        // needing to make any changes to our uplugin files. The ChaosVehicles module is different. If we list ChaosVehicles
+        // in CommonModuleRules, then we must also list ChaosVehiclesPlugin in all of our uplugin files. To avoid this
+        // unnecessary clutter, we only list ChaosVehicles in this Build.cs file, where it is actually needed. The
+        // ChaosVehicles module is defined here:
+        //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles
+        //
+        // Our Vehicle module also depends on the ChaosVehiclesCore module, which is defined here:
+        //     Engine/Source/Runtime/Experimental/ChaosVehicles/ChaosVehiclesCore
+        //
+        // But since ChaosVehiclesCore is defined in Engine/Source, rather than Engine/Plugins, we can list it in
+        // CommonModuleRules without needing to add clutter to our uplugin files.
+
+        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "CoreUtils"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

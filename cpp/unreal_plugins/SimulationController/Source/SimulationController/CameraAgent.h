@@ -4,13 +4,16 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <map>
-#include <memory>
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
+#include "SimulationController/ClassRegistrationUtils.h"
 
 class ACameraActor;
 class UWorld;
@@ -20,6 +23,7 @@ class CameraSensor;
 class CameraAgent : public Agent
 {
 public:
+    CameraAgent() = delete;
     CameraAgent(UWorld* world);
     ~CameraAgent();
     
@@ -41,4 +45,6 @@ private:
     ACameraActor* camera_actor_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
+
+    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<CameraAgent>(Agent::s_class_registrar_, "CameraAgent");
 };

@@ -4,24 +4,24 @@
 
 #pragma once
 
-#include <CoreMinimal.h>
 #include <GameFramework/SpectatorPawn.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 
 #include "SpearSimSpectatorPawn.generated.h"
 
-class FObjectInitializer;
-class UInputComponent;
+class UInputActionComponent;
 
 UCLASS()
 class ASpearSimSpectatorPawn : public ASpectatorPawn
 {
     GENERATED_BODY()
 public:
-    ASpearSimSpectatorPawn(const FObjectInitializer& object_initializer);
+    ASpearSimSpectatorPawn();
     ~ASpearSimSpectatorPawn();
 
-    void SetupPlayerInputComponent(UInputComponent* input_component) override;
+    // ASpectatorPawn interface
+    void BeginPlay() override;
 
 private:
-    void exit(float value);
+    UInputActionComponent* input_action_component_ = nullptr;
 };

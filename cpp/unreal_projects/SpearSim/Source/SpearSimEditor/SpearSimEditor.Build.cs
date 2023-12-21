@@ -10,7 +10,7 @@ public class SpearSimEditor : CommonModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
         
-        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils", "UnrealEd"});
+        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils", "UnrealEd", "UrdfRobot", "Vehicle"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

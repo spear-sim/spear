@@ -1,0 +1,20 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+URDF_ROBOT:
+  URDF_ROBOT_PAWN:
+    URDF_DIR: ""              # Directory to look for URDF_FILE. This will be set automatically to a default location by spear.get_config().
+    URDF_FILE: ""
+    CAMERA_COMPONENT:
+      LOCATION_X: 0.0
+      LOCATION_Y: 0.0
+      LOCATION_Z: 50.0
+      ROTATION_ROLL: 0.0
+      ROTATION_YAW: 0.0
+      ROTATION_PITCH: 0.0
+      FOV: 90.0               # Camera field of view in [deg], typically overwritten by UrdfRobotAgent
+      ASPECT_RATIO: 1.0       # Camera aspect ratio, width/height, typically overwritten by UrdfRobotAgent
+
+  URDF_ROBOT_COMPONENT:
+    INPUT_ACTIONS: {}         # Useful for forwarding keyboard input

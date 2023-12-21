@@ -4,17 +4,20 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <map>
-#include <memory>
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h>
-#include <Engine/EngineBaseTypes.h>
 #include <Math/Rotator.h>
 
 #include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
+#include "SimulationController/ClassRegistrationUtils.h"
+#include "SimulationController/StandaloneComponent.h"
+#include "SimulationController/TickEventComponent.h"
 
 class AActor;
 class ACameraActor;
@@ -23,11 +26,11 @@ class UStaticMeshComponent;
 class UWorld;
 
 class CameraSensor;
-class UTickEventComponent;
 
 class SphereAgent : public Agent
 {
 public:
+    SphereAgent() = delete;
     SphereAgent(UWorld* world);
     ~SphereAgent();
  
@@ -45,19 +48,16 @@ public:
     void reset() override;
     bool isReady() const override;
 
-    void postPhysicsPreRenderTickEventHandler(float delta_time, ELevelTick level_tick);
-
 private:
     AStaticMeshActor* static_mesh_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
-    AActor* parent_actor_ = nullptr;
 
     UStaticMeshComponent* static_mesh_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UTickEventComponent>> tick_event_component_ = nullptr;
+
+    std::unique_ptr<CameraSensor> camera_sensor_;
 
     FRotator rotation_ = FRotator::ZeroRotator;
 
-    UTickEventComponent* tick_event_component_ = nullptr;
-    FDelegateHandle tick_event_handle_;
-
-    std::unique_ptr<CameraSensor> camera_sensor_;
+    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<SphereAgent>(Agent::s_class_registrar_, "SphereAgent");
 };
