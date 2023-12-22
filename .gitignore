@@ -32,6 +32,7 @@ cpp/unreal_projects/SpearSim/SpearSimSource.pri
 cpp/unreal_projects/SpearSim/Saved
 cpp/unreal_projects/SpearSim/Standalone-Development
 cpp/unreal_projects/SpearSim/Standalone-Shipping
+cpp/unreal_projects/SpearSim/Temp
 cpp/unreal_projects/SpearSim/ThirdParty
 cpp/unreal_projects/SpearSim/user_config.yaml
 cpp/unreal_projects/SpearSim/.vs
@@ -54,10 +55,17 @@ examples/imitation_learning_openbot/tmp
 examples/imitation_learning_openbot/user_config.yaml
 examples/imitation_learning_openbot/videos
 
+examples/mujoco/tmp
+examples/mujoco/MUJOCO_LOG.TXT
+
 examples/open_loop_control_fetch/images
 examples/open_loop_control_fetch/tmp
 examples/open_loop_control_fetch/user_config.yaml
 
 python/spear_sim.egg-info
 
+tmp/config.yaml
+
 tools/tmp
+
+.DS_Store
