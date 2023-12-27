@@ -229,7 +229,8 @@ class MujocoExporter:
             for leaf in leaves:
                 geom_groups[leaf[-1]].append(leaf[:-1])
             
-            joint_children = [j['child'] for j in joints_info.values()]
+            joint_children = [object_name, ]
+            joint_children.extend([j['child'] for j in joints_info.values()])
             for geom_group in geom_groups.values():
                 leaf_dir, leaf, xyz, quat, decompose_method = geom_group[0]
                 leaf_name = leaf.name.split('.')[0]

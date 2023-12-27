@@ -14,7 +14,7 @@
         "-n", "2",
         "--rerun",
         "--scene_path", "${input:scene_path}",
-        "--objects", "plate_02",
+        // "--objects", "Kitchen_Chair_01",
       ]
     },
     {

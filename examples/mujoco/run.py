@@ -18,23 +18,11 @@ import time
 NUM_STEPS = 100
 
 
-def muj_2_ue_position(position):
-    R = np.array(
-        [
-            [1, 0, 0],
-            [0, -1, 0],
-            [0, 0, 1]
-        ])
-    return R@position * 100  # rotate and convert meters to centimeters
-
-def muj_2_ue_quat(quaternion):
-    return np.asarray([-quaternion[1], quaternion[2], -quaternion[3], quaternion[0]], like=quaternion)
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark", action="store_true")
-    parser.add_argument("--xml_path", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "apartment_0000_fine_coacd", "scene.xml")))
+    parser.add_argument("--xml_path", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "scenes", "apartment_0000", "scene.xml")))
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
@@ -138,7 +126,7 @@ if __name__ == "__main__":
 
     start = time.time()
     t = 0
-    muj_update_steps = 100
+    muj_update_steps = 20
 
     while viewer.is_running() and time.time() - start < 30:
         # send actutations to mujoco
@@ -158,8 +146,8 @@ if __name__ == "__main__":
         viewer.sync()
 
         # get updated xpos, xquat
-        xpos_dict  = {mujoco_model.body(body_id).name: muj_2_ue_position(mujoco_data.body(body_id).xpos)  for body_id in component_ids}
-        xquat_dict = {mujoco_model.body(body_id).name: muj_2_ue_quat(mujoco_data.body(body_id).xquat) for body_id in component_ids}
+        xpos_dict  = {mujoco_model.body(body_id).name: mujoco_data.body(body_id).xpos  for body_id in component_ids}
+        xquat_dict = {mujoco_model.body(body_id).name: mujoco_data.body(body_id).xquat for body_id in component_ids}
 
         spear.log("mujoco xpos:  ", xpos_dict)
         spear.log()
