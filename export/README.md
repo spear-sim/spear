@@ -9,7 +9,7 @@ will result in the `spear-env` conda environment.
 - Build V-HACD using the [readme instructions](v-hacd/README.md).
 - Create the scene directory: `mkdir -p scenes/${SCENE_NAME}`.
 - Open the scene map in Unreal Editor (UE).
-- From the UE Python console, run the script `path/to/spear/export/do_export.py --scene_path ${SCENE_NAME}`.
+- From the UE Python console, run the script `path/to/spear/export/export_meshes_and_joints_from_ue.py --scene_path ${SCENE_NAME}`.
 - Activate the SPEAR Conda environment, and run the processing script.
 ```bash
 (base) $ conda activate spear-env
