@@ -11,6 +11,7 @@
 #include <GameFramework/Actor.h>
 
 #include "CoreUtils/Assert.h"
+#include "CoreUtils/Unreal.h"
 
 template <typename TComponent>
 class StandaloneComponent
