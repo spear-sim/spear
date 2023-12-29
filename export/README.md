@@ -31,8 +31,8 @@ Currently UE uses cm and degrees. Exporting to GLTF converts it to m and radians
 MuJoCo. 
 - [x] Check if MuJoCo can operate in degrees.
 - [x] More accurate gravity value in scene_include.xml.
-- [ ] Check parity of mesh vertices.
-- [ ] Check matching behaviour of UE and MuJoCo given same joint targets.
+- [x] Check parity of mesh vertices.
+- [x] Check matching behaviour of UE and MuJoCo given same joint targets.
 
 ## Miscellaneous
 UE Editor REPL code for frequently used debugging operations:

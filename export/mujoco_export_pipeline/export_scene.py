@@ -63,10 +63,6 @@ class MujocoExporter:
             self.actors_information = json.load(f)
     
     
-    def get_object_type(self, name):
-        return "Unknown"
-    
-    
     def generate_mujoco_scene(self):
         template_root = ET.parse(osp.join('mujoco_export_pipeline', 'scene_include.xml')).getroot()
         root = ET.Element('mujoco', {'model': osp.split(self.scene_path)[1]})
@@ -159,9 +155,7 @@ class MujocoExporter:
         assemble_args = []
         for obj in objects:
             object_name = obj.name.split('.')[0]
-            # Articulated furniture
-            obj_type = self.get_object_type(object_name)
-            obj_dir = os.path.join(self.output_folder, obj_type, object_name)
+            obj_dir = osp.join(self.output_folder, object_name)
             obj_info = self.actors_information[object_name]
 
             # read joints info to augment it
