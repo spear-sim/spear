@@ -31,32 +31,22 @@ Minimum and recommended system specifications for the Unreal Engine are given [h
 
 See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.4.0) for download links. The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
 
-### Working with multiple scenes
+### Documentation
 
-See our [Getting Started](docs/getting_started.md) tutorial.
-
-### Programmatically interacting with multiple scenes via Python
-
-See our [Getting Started](docs/getting_started.md) tutorial.
-
-### Building from source
-
-See our [Building SpearSim](docs/building_spearsim.md) tutorial. Note that building from source is optional because we provide links to precompiled binaries.
-
-### Contributing
-
-See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
+- Our [Getting Started](docs/getting_started.md) tutorial explains how to work with multiple scenes, and programmatically interact with them via Python.
+- Our [Building SpearSim](docs/building_spearsim.md) tutorial explains how to build from source.
+- Our [Contribution Guidelines](CONTRIBUTING.md) document contains information on how to contribute effectively.
 
 ## Licenses
 
 #### Code
 
-- The code in this repository is licensed under an [MIT License](LICENSE.txt)
-- The licenses for all of our third-party code dependencies are given [here](ACKNOWLEDGMENTS.txt)
+- The code in this repository is licensed under an [MIT License](LICENSE.txt).
+- The licenses for all of our third-party code dependencies are given [here](ACKNOWLEDGMENTS.txt).
 
 #### Assets
 
-- The OpenBot and Fetch assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
-- The `apartment`, `debug`, `warehouse` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
-- The license for the `StarterContent` assets referenced in the `debug` scenes is given [here](https://www.unrealengine.com/en-US/eula/unreal)
-- The license for the `kujiale` scenes is given [here](LICENSE_KUJIALE.txt)
+- The OpenBot and Fetch assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0).
+- The `apartment`, `debug`, `warehouse` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0).
+- The license for the `StarterContent` assets referenced in the `debug` scenes is given [here](https://www.unrealengine.com/en-US/eula/unreal).
+- The license for the `kujiale` scenes is given [here](LICENSE_KUJIALE.txt).
