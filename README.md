@@ -29,7 +29,7 @@ Minimum and recommended system specifications for the Unreal Engine are given [h
 
 ### Precompiled binaries
 
-See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.3.0) for download links. The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
+See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.4.0) for download links. The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
 
 ### Working with multiple scenes
 
@@ -57,6 +57,6 @@ See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
 #### Assets
 
 - The OpenBot and Fetch assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
-- The `apartment_0000`, `debug_0000`, and `debug_0001` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
-- The license for the `StarterContent` assets found in `debug_0000` and `debug_0001` is given [here](https://www.unrealengine.com/en-US/eula/unreal)
-- The license for `kujiale_0000` scene is given [here](LICENSE_KUJIALE.txt)
+- The `apartment`, `debug`, `warehouse` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
+- The license for the `StarterContent` assets found in the `debug` scenes is given [here](https://www.unrealengine.com/en-US/eula/unreal)
+- The license for the `kujiale` scenes is given [here](LICENSE_KUJIALE.txt)
