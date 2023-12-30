@@ -1,4 +1,4 @@
-![teaser](https://github.com/isl-org/spear/assets/2341965/1d59e386-64fd-436e-923d-d89b9beb2f8e)
+![teaser](https://github.com/isl-org/spear/assets/2341965/6db5ff27-4d12-4097-8f7e-e31bd479844e)
 
 # SPEAR: A Simulator for Photorealistic Embodied AI Research
 
@@ -58,5 +58,5 @@ See our [Contribution Guidelines](CONTRIBUTING.md) tutorial.
 
 - The OpenBot and Fetch assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
 - The `apartment`, `debug`, `warehouse` scenes are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0)
-- The license for the `StarterContent` assets found in the `debug` scenes is given [here](https://www.unrealengine.com/en-US/eula/unreal)
+- The license for the `StarterContent` assets referenced in the `debug` scenes is given [here](https://www.unrealengine.com/en-US/eula/unreal)
 - The license for the `kujiale` scenes is given [here](LICENSE_KUJIALE.txt)
