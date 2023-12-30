@@ -33,7 +33,7 @@ See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.
 
 ### Documentation
 
-- Our [Getting Started](docs/getting_started.md) tutorial explains how to work with multiple scenes, and programmatically interact with them via Python.
+- Our [Getting Started](docs/getting_started.md) tutorial explains how to interact with multiple scenes and our Python interface.
 - Our [Building SpearSim](docs/building_spearsim.md) tutorial explains how to build from source.
 - Our [Contribution Guidelines](CONTRIBUTING.md) document contains information on how to contribute effectively.
 
