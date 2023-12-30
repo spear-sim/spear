@@ -16,9 +16,7 @@ python generate_actions.py
 python run.py
 ```
 
-Running `generate_actions.py` will generate an `actions.csv` file consisting of actions that will be used in the following step. This tool accepts the following optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
-
-  - `--actions_file` can be used to specify the file that will be generated.
+Running `generate_actions.py` will generate an `actions.csv` file consisting of actions that will be used in the following step. This tool accepts an optional `--actions_file` command-line argument that can be used to specify the file that will be generated.
 
 Running `run.py` will execute the previously generated actions in an open-loop fashion on the Fetch agent. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
 
