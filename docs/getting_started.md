@@ -2,7 +2,7 @@
 
 ## Working with multiple scenes
 
-If you'd like to work with multiple scenes, you will need to download them separately. See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.3.0) for download links. You'll also need to use our command-line tools, which means you'll need to follow the steps below.
+If you'd like to work with multiple scenes, you will need to download them separately. See our [latest release notes](https://github.com/isl-org/spear/releases/tag/v0.4.0) for download links. You'll also need to use our command-line tools, which means you'll need to follow the steps below.
 
 ### Clone this repository including submodules
 
@@ -13,7 +13,7 @@ git clone --recurse-submodules https://github.com/isl-org/spear path/to/spear
 
 # checkout the code corresponding to a specific release
 cd path/to/spear
-git checkout v0.3.0
+git checkout v0.4.0
 ```
 
 ### Install the `spear` Python package
@@ -48,14 +48,14 @@ python tools/run_executable.py --executable path/to/executable --scene_id debug_
 Depending on your platform, you will need to specify the following path to your `--executable`.
 
 ```
-Windows: path/to/SpearSim-v0.3.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
+Windows: path/to/SpearSim-v0.4.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
 macOS:   path/to/SpearSim-Mac-Shipping.app
-Linux:   path/to/SpearSim-v0.3.0-Linux-Shipping/SpearSim.sh
+Linux:   path/to/SpearSim-v0.4.0-Linux-Shipping/SpearSim.sh
 ```
 
 You will also need to specify the following command-line arguments.
 
-  - `--scene_id` is the name of the scene you want to navigate around. It must be set to one of `debug_0000`, `apartment_0000`, or `kujiale_0000`. If you specify `kujiale_0000`, then you also need to specify `--paks_dir` as the directory containing the pak file for that scene. We provide links to pak files in our [release notes](https://github.com/isl-org/spear/releases/tag/v0.3.0).
+  - `--scene_id` is the name of the scene you want to navigate around (e.g., `apartment_0000`, `debug_0000`, `kujiale_0000`, `kujiale_0001`, `...`, `warehouse_0000`). If you specify a `kujiale` or `warehouse` scene, then you also need to specify `--paks_dir` as the directory containing the pak file for that scene. We provide links to pak files in our [release notes](https://github.com/isl-org/spear/releases/tag/v0.4.0).
 
 The following command-line arguments are optional.
 
@@ -80,6 +80,7 @@ python examples/getting_started/run.py
 ```
 
 We recommend browsing through each of our example applications to get a sense of what is currently possible with SPEAR.
-  - [`examples/getting_started`](../examples/getting_started) demonstrates how to control a simple sphere agent or an OpenBot agent and obtain egocentric visual observations.
+  - [`examples/getting_started`](../examples/getting_started) demonstrates how to control a simple agent and obtain egocentric visual observations.
   - [`examples/generate_image_dataset`](../examples/generate_image_dataset) demonstrates how to generate a dataset of images using our freeform camera agent.
-  - [`examples/imitation_learning_openbot`](../examples/imitation_learning_openbot) demonstrates how to collect training data that can be plugged directly into the OpenBot framework and used to train a navigation policy.
+  - [`examples/imitation_learning_openbot`](../examples/imitation_learning_openbot) demonstrates how to collect navigation training data for an OpenBot.
+  - [`examples/open_loop_control_fetch`](../examples/open_loop_control_fetch) demonstrates how to control a Fetch robot agent.
