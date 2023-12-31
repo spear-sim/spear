@@ -81,6 +81,6 @@ python examples/getting_started/run.py
 
 We recommend browsing through each of our example applications to get a sense of what is currently possible with SPEAR.
   - [`examples/getting_started`](../examples/getting_started) demonstrates how to control a simple agent and obtain egocentric visual observations.
-  - [`examples/generate_image_dataset`](../examples/generate_image_dataset) demonstrates how to generate a dataset of images using our freeform camera agent.
+  - [`examples/generate_image_dataset`](../examples/generate_image_dataset) demonstrates how to generate a dataset of images using our camera agent.
   - [`examples/imitation_learning_openbot`](../examples/imitation_learning_openbot) demonstrates how to collect navigation training data for an OpenBot.
   - [`examples/open_loop_control_fetch`](../examples/open_loop_control_fetch) demonstrates how to control a Fetch robot agent.
