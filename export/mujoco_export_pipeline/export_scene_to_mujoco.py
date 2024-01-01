@@ -15,17 +15,17 @@ osp = os.path
 class MujocoExporter(ExporterBase):
     def __init__(self, scene_path: str, n_workers: int, rerun: bool, include_objects: str) -> None:
         super(MujocoExporter, self).__init__(scene_path, n_workers, rerun, include_objects)
-        self.output_dir = osp.join(self.scene_path, "mujoco_scene") 
-        self.scene_xml_file = osp.join(self.output_dir, "scene.xml") 
+        self.output_dir = osp.join(self.scene_path, "mujoco_scene")
+        self.scene_xml_file = osp.join(self.output_dir, "scene.xml")
 
     
     @classmethod
     def assemble_mesh(cls, args):
-        object_folder, output_folder, scene_path, cvx_folder, xyz, quat, decompose_in_bodies = args
+        object_dir, output_dir, scene_path, cvx_folder, xyz, quat, decompose_in_bodies = args
         print("populating xml file")
-        _, body_name = os.path.split(object_folder)
+        _, body_name = os.path.split(object_dir)
         
-        prefix = object_folder.replace(output_folder, '')
+        prefix = object_dir.replace(output_dir, '')
         if prefix[0] == osp.sep:
             prefix = prefix[1:]
         prefix = prefix.split(osp.sep)[1:]
@@ -33,11 +33,11 @@ class MujocoExporter(ExporterBase):
 
         # write assets file
         root = ET.Element('mujoco', {'model': body_name})
-        object_path = object_folder.replace(scene_path, '')
+        object_path = object_dir.replace(scene_path, '')
         if object_path[0] == osp.sep:
             object_path = object_path[1:]
         
-        _, _, mesh_objects = next(os.walk(osp.join(object_folder, cvx_folder)))
+        _, _, mesh_objects = next(os.walk(osp.join(object_dir, cvx_folder)))
         for mesh_object in sorted(mesh_objects):
             split_file_name = osp.basename(mesh_object)
             split_name, ext = osp.splitext(split_file_name)
@@ -47,7 +47,7 @@ class MujocoExporter(ExporterBase):
                         {'file': osp.join(object_path, cvx_folder, split_file_name), 'name': f'{prefix}.{split_name}'}
             )
         
-        filename = osp.join(object_folder, cvx_folder, f'{body_name}_assets.xml')
+        filename = osp.join(object_dir, cvx_folder, f'{body_name}_assets.xml')
         tree = ET.ElementTree(root)
         ET.indent(tree, space="\t", level=0)
         tree.write(filename)
@@ -55,10 +55,10 @@ class MujocoExporter(ExporterBase):
 
         # write body file
         root = ET.Element('mujoco', {'model': body_name})
-        file_name = osp.splitext(object_folder)
+        file_name = osp.splitext(object_dir)
         # TODO(samarth) check if both cases are same
         if decompose_in_bodies:
-            _, _, mesh_objects = next(os.walk(osp.join(object_folder, cvx_folder)))
+            _, _, mesh_objects = next(os.walk(osp.join(object_dir, cvx_folder)))
             for mesh_object in sorted(mesh_objects):
                 file_name = os.path.splitext(osp.basename(mesh_object))
                 if (file_name[1] != '.stl') and (file_name[1] != '.obj'):
@@ -94,7 +94,7 @@ class MujocoExporter(ExporterBase):
             }
             # body = ET.SubElement(root, 'body', body_attributes)
             # ET.SubElement(body, 'geom', {'name': f'{body_name}_vis', 'mesh': f'{body_name}_cvx', 'class': 'visual'})
-            _, _, mesh_objects = next(os.walk(osp.join(object_folder, cvx_folder)))
+            _, _, mesh_objects = next(os.walk(osp.join(object_dir, cvx_folder)))
             for mesh_object in sorted(mesh_objects):
                 file_name = os.path.splitext(osp.basename(mesh_object))
                 if ('.stl' not in file_name[1]) and ('.obj' not in file_name[1]):
@@ -116,7 +116,7 @@ class MujocoExporter(ExporterBase):
                         'quat': f'{quat[0]:.5f} {quat[1]:.5f} {quat[2]:.5f} {quat[3]:.5f}',
                     }
                     ET.SubElement(root, 'geom', geom_attributes)
-        filename = osp.join(object_folder, cvx_folder, f'{body_name}_body.xml')
+        filename = osp.join(object_dir, cvx_folder, f'{body_name}_body.xml')
         tree = ET.ElementTree(root)
         ET.indent(tree, space="\t", level=0)
         tree.write(filename)
@@ -246,8 +246,8 @@ class MujocoExporter(ExporterBase):
         print(f'{self.scene_xml_file} written')
 
         root = ET.Element('mujoco')
-        for object_cat in sorted(os.listdir(self.output_folder)):
-            cat_dir = osp.join(self.output_folder, object_cat)
+        for object_cat in sorted(os.listdir(self.output_dir)):
+            cat_dir = osp.join(self.output_dir, object_cat)
             if not osp.isdir(cat_dir):
               continue
             for mesh_object in sorted(os.listdir(cat_dir)):

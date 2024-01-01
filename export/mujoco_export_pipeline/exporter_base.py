@@ -341,7 +341,7 @@ class ExporterBase(ABC):
             while len(q):
                 o, dir, T_parent, scale_factor, group_id, is_root = q.popleft()
                 name = o.name.split('.')[0]
-                xyz, quat = self._get_relative_pose_and_center(o, scale_factor)
+                xyz, quat = get_relative_pose_and_center(o, scale_factor)
                 T_o = T_parent @ utils.xyzquat_to_T(xyz, quat)
                 xyz, quat = utils.T_to_xyzquat(T_o)
                 if o.children == ():  # StaticMeshComponent with geometry, or PhysicsConstraintComponent (i.e. joint)
@@ -389,7 +389,8 @@ class ExporterBase(ABC):
             for leaf in leaves:
                 geom_groups[leaf[-1]].append(leaf[:-1])
             
-            joint_children = [j['child'] for j in joints_info.values()]
+            joint_children = [object_name, ]
+            joint_children.extend([j['child'] for j in joints_info.values()])
             for geom_group in geom_groups.values():
                 leaf_dir, leaf, xyz, quat, decompose_method = geom_group[0]
                 leaf_name = leaf.name.split('.')[0]
@@ -466,7 +467,7 @@ class ExporterBase(ABC):
             start_idx = i * self.n_workers
             end_idx   = (i+1) * self.n_workers
             with mp.Pool(self.n_workers) as p:
-                p.map(utils.assemble_articulated_object_files, assemble_args[start_idx : end_idx])
+                p.map(self.assemble_object_with_joints, assemble_args[start_idx : end_idx])
             i = i + 1
             if end_idx >= len(assemble_args):
                 break
