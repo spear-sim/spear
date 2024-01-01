@@ -119,10 +119,10 @@ if __name__ == '__main__':
       r = component.get_editor_property('relative_rotation')
       rot = unreal.Rotator(r.roll, r.pitch, r.yaw)
       
-      parent = str(component.get_editor_property('component_name1').get_editor_property('component_name'))
+      parent = str(component.get_editor_property('component_name2').get_editor_property('component_name'))
       if (parent == 'DefaultSceneRoot') or (parent == 'StaticMeshComponent0'):
         parent = actor_name
-      child = str(component.get_editor_property('component_name2').get_editor_property('component_name'))
+      child = str(component.get_editor_property('component_name1').get_editor_property('component_name'))
       
       constraint_instance = component.get_editor_property('constraint_instance')
       angular_offset = constraint_instance.get_editor_property('angular_rotation_offset')
