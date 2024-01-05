@@ -41,6 +41,8 @@ cpp/unreal_projects/SpearSim/.vsconfig
 cpp/unreal_projects/SpearSim/.ignore
 cpp/unreal_projects/SpearSim/.kdev4
 
+.DS_Store
+
 examples/generate_image_dataset/images
 examples/generate_image_dataset/tmp
 examples/generate_image_dataset/user_config.yaml
@@ -64,8 +66,9 @@ examples/open_loop_control_fetch/user_config.yaml
 
 python/spear_sim.egg-info
 
-tmp/config.yaml
-
+tmp
+tools/build
+tools/paks
 tools/tmp
 
-.DS_Store
+.vscode

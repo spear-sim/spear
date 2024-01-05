@@ -43,6 +43,6 @@
         {
             "Name": "Vehicle",
             "Enabled": true
-        },
+        }
     ]
 }
