@@ -67,18 +67,29 @@ MeshComponent = namedtuple('MeshComponent', ['decompose_method', 'decompose_grou
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--scene_path', required=True)
+  parser.add_argument('--actors', default=None,
+                      help='Comma separate list of actor names - all others will be excluded if this option is used')
   args = parser.parse_args()
   export_dir = osp.expanduser(osp.join(args.scene_path, 'ue_export'))
   os.makedirs(export_dir, exist_ok=True)
+  include_actors = args.actors.split(',') if args.actors else None
+  
+  filename = osp.join(export_dir, 'actors_information.json')
+  if osp.isfile(filename):
+    with open(filename, 'r') as f:
+      body_properties = json.load(f)
+  else:
+    body_properties = {}
   
   # Iterate through the actors
-  body_properties = {}
   for actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.Actor):
     if isinstance(actor, unreal.CameraActor) or isinstance(actor, unreal.SceneCapture2D) or \
       isinstance(actor, unreal.PointLight):
       continue
     actor_name = actor.get_actor_label()
     if 'HDRIBackdrop' in actor_name:
+      continue
+    if include_actors and (actor_name not in include_actors):
       continue
     
     this_body_properties = {'geoms': {}, }
@@ -119,10 +130,10 @@ if __name__ == '__main__':
       r = component.get_editor_property('relative_rotation')
       rot = unreal.Rotator(r.roll, r.pitch, r.yaw)
       
-      parent = str(component.get_editor_property('component_name1').get_editor_property('component_name'))
+      parent = str(component.get_editor_property('component_name2').get_editor_property('component_name'))
       if (parent == 'DefaultSceneRoot') or (parent == 'StaticMeshComponent0'):
         parent = actor_name
-      child = str(component.get_editor_property('component_name2').get_editor_property('component_name'))
+      child = str(component.get_editor_property('component_name1').get_editor_property('component_name'))
       
       constraint_instance = component.get_editor_property('constraint_instance')
       angular_offset = constraint_instance.get_editor_property('angular_rotation_offset')

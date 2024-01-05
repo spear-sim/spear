@@ -9,7 +9,7 @@ will result in the `spear-env` conda environment.
 - Build V-HACD using the [readme instructions](v-hacd/README.md).
 - Create the scene directory: `mkdir -p scenes/${SCENE_NAME}`.
 - Open the scene map in Unreal Editor (UE).
-- From the UE Python console, run the script `path/to/spear/export/do_export.py --scene_path ${SCENE_NAME}`.
+- From the UE Python console, run the script `path/to/spear/export/export_meshes_and_joints_from_ue.py --scene_path ${SCENE_NAME}`.
 - Activate the SPEAR Conda environment, and run the processing script.
 ```bash
 (base) $ conda activate spear-env
@@ -31,8 +31,8 @@ Currently UE uses cm and degrees. Exporting to GLTF converts it to m and radians
 MuJoCo. 
 - [x] Check if MuJoCo can operate in degrees.
 - [x] More accurate gravity value in scene_include.xml.
-- [ ] Check parity of mesh vertices.
-- [ ] Check matching behaviour of UE and MuJoCo given same joint targets.
+- [x] Check parity of mesh vertices.
+- [x] Check matching behaviour of UE and MuJoCo given same joint targets.
 
 ## Miscellaneous
 UE Editor REPL code for frequently used debugging operations:
