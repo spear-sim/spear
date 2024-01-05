@@ -16,24 +16,22 @@ class MujocoExporter(ExporterBase):
     def __init__(self, scene_path: str, n_workers: int, rerun: bool, include_objects: str) -> None:
         super(MujocoExporter, self).__init__(scene_path, n_workers, rerun, include_objects)
         self.output_dir = osp.join(self.scene_path, "mujoco_scene")
-        self.scene_xml_file = osp.join(self.output_dir, "scene.xml")
 
     
     @classmethod
     def assemble_mesh(cls, args):
-        object_dir, output_dir, scene_path, cvx_folder, xyz, quat, decompose_in_bodies = args
+        object_dir, output_dir, cvx_folder, xyz, quat, decompose_in_bodies = args
         print("populating xml file")
         _, body_name = os.path.split(object_dir)
         
         prefix = object_dir.replace(output_dir, '')
         if prefix[0] == osp.sep:
             prefix = prefix[1:]
-        prefix = prefix.split(osp.sep)[1:]
-        prefix = '.'.join(prefix)
+        prefix = prefix.replace(osp.sep, '.')
 
         # write assets file
         root = ET.Element('mujoco', {'model': body_name})
-        object_path = object_dir.replace(scene_path, '')
+        object_path = object_dir.replace(output_dir, '')
         if object_path[0] == osp.sep:
             object_path = object_path[1:]
         
@@ -127,7 +125,7 @@ class MujocoExporter(ExporterBase):
 
     @classmethod
     def assemble_object_with_joints(cls, args):
-        obj_name, obj_dir, scene_path, nodes_info, joints_info, moving, parent_name_suffix = args
+        obj_name, obj_dir, output_dir, nodes_info, joints_info, moving, parent_name_suffix = args
         full_obj_name = f'{obj_name}{parent_name_suffix}'
         root = ET.Element('mujoco')
         asset = ET.SubElement(root, 'asset')
@@ -184,8 +182,8 @@ class MujocoExporter(ExporterBase):
             
             # check if body has its geom(s)
             cvx_dir = osp.join(dir, 'cvx')
-            if os.path.isdir(cvx_dir):
-                include_dir = cvx_dir.replace(scene_path, '')
+            if osp.isdir(cvx_dir):
+                include_dir = cvx_dir.replace(output_dir, '')
                 if include_dir[0] == '/':
                     include_dir = include_dir[1:]
                 ET.SubElement(geom_parent, 'include', {'file': osp.join(include_dir, f'{name}_body.xml')})
@@ -242,21 +240,18 @@ class MujocoExporter(ExporterBase):
             root.insert(-1, t)
         tree = ET.ElementTree(root)
         ET.indent(tree, space='\t', level=0)
-        tree.write(self.scene_xml_file)
-        print(f'{self.scene_xml_file} written')
+        filename = osp.join(self.output_dir, "scene.xml")
+        tree.write(filename)
+        print(f'{filename} written')
 
         root = ET.Element('mujoco')
-        for object_cat in sorted(os.listdir(self.output_dir)):
-            cat_dir = osp.join(self.output_dir, object_cat)
-            if not osp.isdir(cat_dir):
-              continue
-            for mesh_object in sorted(os.listdir(cat_dir)):
-                if mesh_object == ".DS_Store":
-                    continue
-                ET.SubElement(root, 'include', {'file': osp.join('output', object_cat, mesh_object, f'{mesh_object}.xml')})
+        for body_name in sorted(next(os.walk(self.output_dir))[1]):
+            if body_name == ".DS_Store":
+                continue
+            ET.SubElement(root, 'include', {'file': osp.join(body_name, f'{body_name}.xml')})
         tree = ET.ElementTree(root)
         ET.indent(tree, space='\t', level=0)
-        filename = osp.join(self.scene_path, 'objects.xml')
+        filename = osp.join(self.output_dir, 'objects.xml')
         tree.write(filename)
         print(f'{filename} written')
     

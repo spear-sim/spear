@@ -99,7 +99,6 @@ class ExporterBase(ABC):
             joint_filename = filename.replace('.gltf', '_joints.json')
             self.input_gltf_filenames[osp.join(ue_export_path, filename)] = osp.isfile(osp.join(ue_export_path, joint_filename))
         self.scene_path = osp.normpath(scene_path)
-        self.scene_xml_file = osp.join(self.scene_path, "scene.xml") 
         self.output_dir = None 
         
         # Clear scene
@@ -149,7 +148,7 @@ class ExporterBase(ABC):
 
         # Copy the obj file to the temporary directory.
         decomposed = False
-        cvx_path = os.path.join(obj_dir, cvx_dir)
+        cvx_path = osp.join(obj_dir, cvx_dir)
         if rerun and osp.isdir(cvx_path):
             decomposed = True
         else:
@@ -304,7 +303,7 @@ class ExporterBase(ABC):
             
         if decomposed:
             xyz, quat = utils.pose_rh_to_lh(xyz, quat)
-            cls.assemble_mesh((obj_dir, output_folder, scene_path, cvx_dir, xyz, quat, decompose_in_bodies))
+            cls.assemble_mesh((obj_dir, output_folder, cvx_dir, xyz, quat, decompose_in_bodies))
         else:  # delete whole directory
             shutil.rmtree(obj_dir)
         return True
@@ -443,8 +442,7 @@ class ExporterBase(ABC):
                     (stl_filepath, self.output_dir, self.scene_path, "cvx", cvx_args, xyz, quat, False, self.rerun)
                 )
             assemble_args.append(
-                (object_name, obj_dir, self.scene_path, nodes_info, joints_info,
-                 obj_info['moving'],
+                (object_name, obj_dir, self.output_dir, nodes_info, joints_info, obj_info['moving'],
                  f'.{obj_info["root_component_name"]}'),
             )
         # with mp.Pool(self.n_workers) as p:
