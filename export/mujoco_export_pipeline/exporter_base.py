@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod, abstractclassmethod
-import coacd
 from collections import deque, defaultdict
 import copy
 import json
 import multiprocessing as mp
 if mp.current_process().name == 'MainProcess':
     import bpy
+import coacd  # needs to be imported after bpy, otherwise terminate called after throwing an instance of 'std::bad_cast'
 import numpy as np
 import os
 import params
