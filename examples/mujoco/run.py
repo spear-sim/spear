@@ -3,6 +3,8 @@
 #
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
+# this script should be run with [mjpython](https://mujoco.readthedocs.io/en/stable/python.html#passive-viewer), not python.
+# mjpython is required for the passive mujoco viewer.
 
 import argparse
 import cv2
@@ -15,6 +17,9 @@ import time
 # from scipy.spatial.transform import Rotation as R
 
 
+osp = os.path
+
+
 NUM_STEPS = 100
 
 
@@ -22,16 +27,16 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark", action="store_true")
-    parser.add_argument("--xml_path", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "scenes", "apartment_0000", "scene.xml")))
+    parser.add_argument("--mjcf_path", required=True, help="path to scene MJCF file")
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
 
     # load config
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[os.path.realpath(osp.join(osp.dirname(__file__), "user_config.yaml"))])
 
     # create mujoco objects
-    mujoco_model = mujoco.MjModel.from_xml_path(args.xml_path)
+    mujoco_model = mujoco.MjModel.from_xml_path(osp.expanduser(args.mjcf_path))
     mujoco_data = mujoco.MjData(mujoco_model)
 
     # perform this step once to load all information
