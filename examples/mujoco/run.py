@@ -133,7 +133,7 @@ if __name__ == "__main__":
     t = 0
     muj_update_steps = 20
 
-    while viewer.is_running() and time.time() - start < 30:
+    while viewer.is_running() and time.time() - start < 300:
         # send actutations to mujoco
         # mujoco_data.actuator("Cabinet/PhysicsConstraint_door_01_x_revolute_actuator").ctrl[0] = 1 # body/component_name Cabinet.Door_01
 
@@ -156,17 +156,17 @@ if __name__ == "__main__":
 
         spear.log("mujoco xpos:  ", xpos_dict)
         spear.log()
-        # spear.log("mujoco xquat: ", xquat_dict)    
-        # spear.log()
+        spear.log("mujoco xquat: ", xquat_dict)    
+        spear.log()
 
         scene.set_component_world_locations(xpos_dict)
         locs = scene.get_component_world_locations(component_names)
         spear.log("UE loc:       ", {x:y for x,y in zip(component_names, locs)})
         spear.log()
         scene.set_component_world_rotations(xquat_dict)
-        # rots = scene.get_component_world_rotations(component_names)
-        # spear.log()
-        # spear.log("UE rot:   ", {x:y for x,y in zip(component_names, rots)})
+        rots = scene.get_component_world_rotations(component_names)
+        spear.log()
+        spear.log("UE rot:   ", {x:y for x,y in zip(component_names, rots)})
 
     viewer.close()
     simulation_controller.close()
