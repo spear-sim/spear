@@ -4,9 +4,11 @@ from exporter_base import ExporterBase
 from itertools import combinations
 import mujoco
 import multiprocessing as mp
+import numpy as np
 import os
 import utils
 import xml.etree.ElementTree as ET
+import yaml
 
 
 osp = os.path
@@ -16,6 +18,9 @@ class MujocoExporter(ExporterBase):
     def __init__(self, scene_path: str, n_workers: int, rerun: bool, include_objects: str) -> None:
         super(MujocoExporter, self).__init__(scene_path, n_workers, rerun, include_objects)
         self.output_dir = osp.join(self.scene_path, "mujoco_scene")
+        filename = osp.join(scene_path, 'mujoco_params.yaml')
+        with open(filename, 'r') as f:
+            self.mujoco_params = yaml.safe_load(f)
 
     
     @classmethod
@@ -131,6 +136,7 @@ class MujocoExporter(ExporterBase):
         asset = ET.SubElement(root, 'asset')
         worldbody = ET.SubElement(root, 'worldbody')
         contact = ET.SubElement(root, 'contact')
+        actuator = ET.SubElement(root, 'actuator')
 
         # elements are (directory, parent directoy, parent body tag, name prefix)
         q = deque([(obj_dir, None, worldbody, ''), ])
@@ -165,9 +171,18 @@ class MujocoExporter(ExporterBase):
                         'pos': '{:.5f} {:.5f} {:.5f}'.format(*pos),
                         'axis': '{:.5f} {:.5f} {:.5f}'.format(*axis),
                         'range': '{:.5f} {:.5f}'.format(*joint[0]['range']),
-                        'ref': '{:.5f}'.format(joint[0]['ref'])
+                        'ref': '{:.5f}'.format(joint[0]['ref']),
+                        'damping': '1e10',  # TODO(samarth)
                     }
                     ET.SubElement(body, 'joint', joint_attributes)
+                    actuator_attributes = {
+                        'kp': '1e10',  # TODO(samarth)
+                        'ctrllimited': 'true',
+                        'ctrlrange': '{:.5f} {:.5f}'.format(*np.deg2rad(joint[0]['range'])),
+                        'joint': joint_name,
+                        'name': f'act:{joint_name}',
+                    }
+                    ET.SubElement(actuator, 'position', actuator_attributes)
                 elif moving:
                     ET.SubElement(body, 'freejoint', {'name': f'{obj_name}.freejoint'})
                 js = list(filter(lambda j: j['parent'] == name, joints_info.values()))
