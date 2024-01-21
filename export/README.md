@@ -21,6 +21,7 @@ will result in the `spear-env` conda environment.
 - Dummy meshes in UE are called `SM_Dummy`
 - Within each `Actor`, no two `StaticMeshComponent`s have the same name, and no two `PhysicsConstraintComponent`s have
 the same name.
+- All joints have only one DoF.
 
 ## TODO (maybe in future PRs)
 - [ ] Articulated objects are currently assumed to be static w.r.t. world i.e. `"moving": false` in their entry in

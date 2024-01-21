@@ -1,3 +1,7 @@
+"""
+TODO(samarth) convert to yaml
+"""
+
 from dataclasses import dataclass
 import enum
 import shutil
@@ -11,7 +15,11 @@ VHACD_EXECUTABLE = shutil.which("TestVHACD")
 
 # Names of the V-HACD output files.
 VHACD_OUTPUTS = ["decomp.obj", "decomp.stl", "decomp.mtl"]
-
+UE_EXPORT_DIR_NAME = 'ue_export'  # TODO(samarth) rename. from_unreal? gltf_scene?
+COLLISION_DIR_NAME = 'collision_representation'
+CONVEX_DECOMPOSITION_DIR = 'convex_decomposition'
+CONVEX_DECOMPOSITION_EXT = '.stl'
+PHYSICS_DIR_NAME = '{:s}_scene'
 
 class FillMode(enum.Enum):
     FLOOD = enum.auto()

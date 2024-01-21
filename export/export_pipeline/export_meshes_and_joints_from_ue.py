@@ -11,6 +11,7 @@ import argparse
 from collections import namedtuple
 import json
 import os
+import params
 import unreal
 import time
 
@@ -57,6 +58,7 @@ def export_meshes(actor, export_dir):
   return False
 
 
+#TODO(samarth): joint type from UE details pane
 PhysicsConstraint = namedtuple(
   'PhysicsConstraint',
   ['parent', 'child', 'name', 'range', 'ref', 'axis', 'type']
@@ -70,7 +72,7 @@ if __name__ == '__main__':
   parser.add_argument('--actors', default=None,
                       help='Comma separate list of actor names - all others will be excluded if this option is used')
   args = parser.parse_args()
-  export_dir = osp.expanduser(osp.join(args.scene_path, 'ue_export'))
+  export_dir = osp.expanduser(osp.join(args.scene_path, params.UE_EXPORT_DIR_NAME))
   os.makedirs(export_dir, exist_ok=True)
   include_actors = args.actors.split(',') if args.actors else None
   
