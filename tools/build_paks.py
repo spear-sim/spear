@@ -165,7 +165,7 @@ if __name__ == '__main__':
             "-create=" + txt_file,
             "-platform=" + platform,
             "-multiprocess",
-            "-compress"
+            "-compressed"
         ]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)

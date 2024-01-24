@@ -18,10 +18,9 @@ public class CommonTargetRulesTarget : TargetRules
         // Needs to be overridden in derived classes.
         Type = TargetType.Client;
 
-        // Added to projects by default in UE 5.2. Note that the default value in UE 5.2 preview 2 for IncludeOrderVersion is
-        // EngineIncludeOrderVersion.Unreal5_1, but that triggers a build warning.
-        DefaultBuildSettings = BuildSettingsVersion.V2;
-        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
+        // Added to projects by default in UE 5.2 and above.
+        DefaultBuildSettings = BuildSettingsVersion.V4;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_3;
 
         if (target.Platform == UnrealTargetPlatform.Win64) {
 
@@ -29,8 +28,8 @@ public class CommonTargetRulesTarget : TargetRules
             bBuildAdditionalConsoleApp = true;
 
             // Sometimes useful for debugging
-            // bOverrideBuildEnvironment = true;
-            // AdditionalCompilerArguments = "/showIncludes";
+             //bOverrideBuildEnvironment = true;
+             //AdditionalCompilerArguments = "/showIncludes";
 
         } else if (target.Platform == UnrealTargetPlatform.Mac || target.Platform == UnrealTargetPlatform.Linux) {
 

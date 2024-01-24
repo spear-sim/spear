@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     if args.c_compiler is None:
         if sys.platform == "win32":
-            c_compiler = "cl"
+            c_compiler = '"cl -std:c++20"'
         elif sys.platform in ["darwin", "linux"]:
             c_compiler = "clang"
         else:
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     if args.cxx_compiler is None:
         if sys.platform == "win32":
-            cxx_compiler = "cl"
+            cxx_compiler = '"cl -std:c++20"'
         elif sys.platform in ["darwin", "linux"]:
             cxx_compiler = "clang++"
         else:
