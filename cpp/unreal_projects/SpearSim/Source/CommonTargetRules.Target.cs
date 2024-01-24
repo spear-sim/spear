@@ -18,9 +18,13 @@ public class CommonTargetRulesTarget : TargetRules
         // Needs to be overridden in derived classes.
         Type = TargetType.Client;
 
-        // Added to projects by default in UE 5.2 and above.
-        DefaultBuildSettings = BuildSettingsVersion.V4;
-        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_3;
+        // Change cpp version to C++20
+        bOverrideBuildEnvironment = true;
+        CppStandard = CppStandardVersion.Cpp20;
+
+        // Added to projects by default in UE 5.2.
+        DefaultBuildSettings = BuildSettingsVersion.V3;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
 
         if (target.Platform == UnrealTargetPlatform.Win64) {
 
@@ -28,8 +32,8 @@ public class CommonTargetRulesTarget : TargetRules
             bBuildAdditionalConsoleApp = true;
 
             // Sometimes useful for debugging
-             //bOverrideBuildEnvironment = true;
-             //AdditionalCompilerArguments = "/showIncludes";
+            // bOverrideBuildEnvironment = true;
+            // AdditionalCompilerArguments = "/showIncludes";
 
         } else if (target.Platform == UnrealTargetPlatform.Mac || target.Platform == UnrealTargetPlatform.Linux) {
 
