@@ -6,6 +6,7 @@ import mujoco
 import numpy as np
 import os
 import params
+import transforms3d.quaternions as txq
 import utils
 import xml.etree.ElementTree as ET
 import yaml
@@ -51,26 +52,62 @@ class MuJoCoSceneAssembler(object):
 
     def run(self):
         filename = osp.join(self.input_dir, '..', params.UE_EXPORT_DIR_NAME, 'actors_information.json')
-        #TODO(samarth) BFS
         with open(filename, 'r') as f:
             actors_information = json.load(f)
+        ue_export_dir = self.input_dir.replace(params.COLLISION_DIR_NAME, params.UE_EXPORT_DIR_NAME)
         for object_name in sorted(next(os.walk(self.input_dir))[1]):
-            obj_dir = osp.join(self.input_dir, object_name)
-            filename = osp.join(obj_dir, 'nodes.json')
+            object_dir = osp.join(self.input_dir, object_name)
+            filename = osp.join(object_dir, 'components.json')
             with open(filename, 'r') as f:
-                nodes_info = json.load(f)
-            for mesh_dir in sorted(next(os.walk(obj_dir))[1]):
-                xyz  = nodes_info[mesh_dir]['pos']
-                quat = nodes_info[mesh_dir]['quat']
-                mesh_dir = osp.join(obj_dir, mesh_dir)
-                self.assemble_mesh(mesh_dir, xyz, quat)
-            filename = osp.join(obj_dir, 'joints.json')
+                components_info = json.load(f)
+            static_components_info = components_info['static']
+            
             try:
-                with open(filename, 'r') as f:
-                    joints_info = json.load(f)
-                self.assemble_object_with_joints(obj_dir, nodes_info, joints_info, actors_information[object_name])
+               filename = osp.join(ue_export_dir, f'{object_name}_joints.json')
+               with open(filename, 'r') as f:
+                   joints_info = json.load(f)
             except FileNotFoundError:
-                continue
+                joints_info = []
+            
+            # convert parent_T_joint to child_T_joint (which is what MuJoCo understands)
+            for joint_info in joints_info:
+                joint_name = joint_info['name']
+                pTj = utils.xyzquat_to_T(
+                    components_info['joints'][joint_name]['pos'],
+                    components_info['joints'][joint_name]['quat']
+                )
+                child_xyz  = static_components_info[joint_info['child']]['pos']
+                child_quat = static_components_info[joint_info['child']]['quat']
+                pTc = utils.xyzquat_to_T(child_xyz, child_quat)
+                cTj = np.linalg.inv(pTc) @ pTj
+                joint_info['pos']  = cTj[:3, 3].tolist()
+                joint_info['quat'] = txq.mat2quat(cTj[:3, :3]).tolist()
+            joint_children = [object_name, ]
+            joint_children.extend([j['child'] for j in joints_info])
+            
+            # Traverse directory tree, and assemble the convex regions of meshes at leaves
+            q = deque([(object_name, object_dir, np.eye(4)), ])
+            while len(q):
+                name, dir, T_parent = q.popleft()
+                xyz, quat = static_components_info[name]['pos'], static_components_info[name]['quat']
+                T_o = T_parent @ utils.xyzquat_to_T(xyz, quat)
+                xyz, quat = utils.T_to_xyzquat(T_o)
+                static_components_info[name]['pos'], static_components_info[name]['quat'] = xyz, quat
+                if osp.isdir(osp.join(dir, params.CONVEX_DECOMPOSITION_DIR)):
+                    if name in joint_children:
+                        # zero out the transform w.r.t. parent, because this mesh's include file will be placed under
+                        # an appropriately transformed body
+                        xyz = [0.0, 0.0, 0.0]
+                        quat = [1.0, 0.0, 0.0, 0.0]
+                    self.assemble_mesh(dir, xyz, quat)
+                else:
+                    T_parent = np.eye(4) if name in joint_children else np.copy(T_o)
+                    for child_name in next(os.walk(dir))[1]:
+                        child_dir = osp.join(dir, child_name)
+                        q.append((child_name, child_dir, T_parent))
+            
+            self.assemble_object_with_joints(object_dir, static_components_info, joints_info,
+                                             actors_information[object_name])
         self.generate_scene()
     
     
@@ -155,7 +192,7 @@ class MuJoCoSceneAssembler(object):
             geom_parent = parent
             
             # check if body has a joint with parent
-            joint = list(filter(lambda j: (j['parent'] == parent_name) and (j['child'] == name), joints_info.values()))
+            joint = list(filter(lambda j: (j['parent'] == parent_name) and (j['child'] == name), joints_info))
             
             if (len(joint) == 1) or (parent_name is None):
                 body_name = f'{name_prefix}{name}{parent_name_suffix}'
@@ -190,7 +227,7 @@ class MuJoCoSceneAssembler(object):
                     ET.SubElement(actuator, 'position', actuator_attributes)
                 elif obj_info['moving']:
                     ET.SubElement(body, 'freejoint', {'name': f'{obj_name}.freejoint'})
-                js = list(filter(lambda j: j['parent'] == name, joints_info.values()))
+                js = list(filter(lambda j: j['parent'] == name, joints_info))
                 if len(js) == 0:
                     leaf_dirs.add(dir)
                 dir2bodyname[dir] = body_name

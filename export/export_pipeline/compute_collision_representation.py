@@ -93,6 +93,7 @@ def process_mesh(args: tuple) -> bool:
     decompose_dir = osp.join(mesh_dir, params.CONVEX_DECOMPOSITION_DIR)
     if rerun and osp.isdir(decompose_dir):
         decomposed = True
+        os.remove(mesh_path)
     else:
         os.makedirs(decompose_dir, exist_ok=True)
         mesh_path = shutil.move(mesh_path, decompose_dir)
@@ -307,60 +308,52 @@ class CollisionRepresentationComputer(object):
             
             # traverse the tree, whose leaves will be meshes. Collect leaves and their info for decomposition.
             leaves = []
-            static_components_info = {}
-            # each element is (bpy object, directory_path, parent_transform, scale_factor, group_id, is_root)
+            components_info = {'static': {}, 'joints': {}}
+            # each element is (bpy object, directory_path, scale_factor, group_id)
             # we apply the scale factor to the transforms here and save the resulting transforms in components.json.
             # geometry scaling is already applied by UE when exporting geometries to GLTF.
-            q = deque([(obj, obj_dir, np.eye(4), np.ones(3), object_name, True), ])
+            q = deque([(obj, obj_dir, np.ones(3), object_name), ])
             while len(q):
-                o, dir, T_parent, scale_factor, group_id, is_root = q.popleft()
+                o, dir, scale_factor, group_id = q.popleft()
                 name = o.name.split('.')[0]
-                
-                if (o.type != 'MESH') or (o.data.name == 'SM_Dummy'):
-                    continue
-                if name in static_components_info:
-                    raise AssertionError(f'repeated mesh {name}')
-                os.makedirs(dir, exist_ok=True)
-                
                 xyz, quat = get_relative_pose_and_center(o, scale_factor)
-                T_o = T_parent @ utils.xyzquat_to_T(xyz, quat)
-                xyz, quat = utils.T_to_xyzquat(T_o)
-                static_components_info[name] = {'pos': xyz, 'quat': quat}
-                
-                # StaticMeshComponent with geometry
-                if o.children == ():
-                    decompose_method = obj_info['geoms'][name]['decompose_method']
-                    leaves.append((dir, o, xyz, quat, decompose_method, group_id))
-                # StaticMeshComponent without any geometry (meant for grouping)
-                else:
-                    if is_root or any([j['child'] == name for j in joints_info.values()]):
-                        T_parent = np.eye(4)
-                    else:
-                        T_parent = np.copy(T_o)
-                    for child in o.children:
-                        child_name = child.name.split('.')[0]
-                        if child_name in obj_info['geoms']:
-                            group_id = obj_info['geoms'][child_name]['decompose_group']
-                            group_id = f'{name}_{group_id}'
-                        else:
-                            group_id = None
-                        q.append(
-                            (child, osp.join(dir, child_name), T_parent, scale_factor*np.array(o.scale), group_id, False)
-                        )
 
-            filename = osp.join(obj_dir, 'static_components.json')
+                if o.children or ((o.type == 'MESH') and (o.data.name != 'SM_Dummy')):
+                    if name in components_info['static']:
+                        raise AssertionError(f'repeated static mesh {name}')
+                    components_info['static'][name] = {'pos': xyz, 'quat': quat}
+                    os.makedirs(dir, exist_ok=True)
+                    if o.children:  # StaticMeshComponent without any geometry (meant for grouping)
+                        for child in o.children:
+                            child_name = child.name.split('.')[0]
+                            if child_name in obj_info['geoms']:
+                                group_id = obj_info['geoms'][child_name]['decompose_group']
+                                group_id = f'{name}_{group_id}'
+                            else:
+                                group_id = None
+                            child_dir = osp.join(dir, child_name)
+                            q.append((child, child_dir, scale_factor*np.array(o.scale), group_id))
+                    else:  # StaticMeshComponent with geometry
+                        decompose_method = obj_info['geoms'][name]['decompose_method']
+                        leaves.append((dir, o, decompose_method, group_id))
+                elif (o.type == 'EMPTY') and not o.children:  # PhysicsConstraintComponent (i.e. joint)
+                    joint_name = utils.name_in_names(name, joints_info.keys())
+                    components_info['joints'][joint_name] = {
+                        'pos': xyz,
+                        'quat': quat,
+                    }
+
+            filename = osp.join(obj_dir, 'components.json')
             with open(filename, 'w') as f:
-                json.dump(static_components_info, f, indent=4)
+                json.dump(components_info, f, indent=4)
 
             # group the leaves by group_id
             geom_groups = defaultdict(list)
             for leaf in leaves:
                 geom_groups[leaf[-1]].append(leaf[:-1])
             
-            joint_children = [object_name, ]
-            joint_children.extend([j['child'] for j in joints_info.values()])
             for geom_group in geom_groups.values():
-                leaf_dir, leaf, xyz, quat, decompose_method = geom_group[0]
+                leaf_dir, leaf, decompose_method = geom_group[0]
                 leaf_name = leaf.name.split('.')[0]
                 
                 # merge the geoms
@@ -370,12 +363,6 @@ class CollisionRepresentationComputer(object):
                 leaf.select_set(True)
                 bpy.context.view_layer.objects.active = leaf
                 bpy.ops.object.join()
-                
-                if leaf_name in joint_children:
-                    # zero out the transform w.r.t. parent, because this mesh's include file will be placed under
-                    # an appropriately transformed body
-                    xyz = [0.0, 0.0, 0.0, 0.0]
-                    quat = [1.0, 0.0, 0.0, 0.0]
                 
                 # Calculate the number of faces in the mesh
                 poly_count = len(leaf.data.polygons)
