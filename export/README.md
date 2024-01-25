@@ -6,10 +6,11 @@ All commands to be run from the `export` directory. Assume that the name of the 
 environment variable.
 - If you have not done so already, follow the SPEAR [Getting Started](../docs/getting_started.md) instructions, which
 will result in the `spear-env` conda environment.
+- Install PyYAML for UE Python: `/path/to/ue/python3 -m pip install -r /path/to/spear/export/ue_requirements.txt`. Here, `/path/to/ue/python3` is the full path to UE's Python interpreter. You can get it by running `import os; print(os.__file__)` in UE's Python REPL console and removing the `os.py` at the end of the print output.
 - Build V-HACD using the [readme instructions](v-hacd/README.md).
 - Create the scene directory: `mkdir -p scenes/${SCENE_NAME}`.
 - Open the scene map in Unreal Editor (UE).
-- From the UE Python console, run the script `path/to/spear/export/export_meshes_and_joints_from_ue.py --scene_path ${SCENE_NAME}`.
+- From the UE Python console, run the script `/path/to/spear/export/export_meshes_and_joints_from_ue.py --scene_path ${SCENE_NAME}`.
 - Activate the SPEAR Conda environment, and run the processing script.
 ```bash
 (base) $ conda activate spear-env

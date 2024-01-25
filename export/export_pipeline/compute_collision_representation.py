@@ -1,7 +1,7 @@
 """
 This script decomposes all static meshes into sets of convex regions.
 Decomposition method and parameters are based on the parameters chosen in UE, which are captured in 
-ue_export/actors_information.json.
+gltf_scene/actors_information.json.
 """
 import argparse
 from collections import deque, defaultdict
@@ -13,12 +13,11 @@ if mp.current_process().name == 'MainProcess':
 import coacd  # needs to be imported after bpy, otherwise terminate called after throwing an instance of 'std::bad_cast'
 import numpy as np
 import os
-import params
 import shutil
 import subprocess
-import transforms3d.quaternions as txq
 import trimesh
 import utils
+import yaml
 
 
 osp = os.path
@@ -85,12 +84,15 @@ def process_mesh(args: tuple) -> bool:
     args: a tuple containing (path to mesh, hyperparameters, rerun flag).
     Returns a bool indicating success of the operation.
     """
-    mesh_path, acd_args, rerun = args
+    mesh_path, params, rerun = args
     mesh_dir, mesh_filename = osp.split(mesh_path)
+    vhacd_args = params['collision_representation']['vhacd']
+    coacd_args = params['collision_representation']['coacd']
+    acd_args   = params['collision_representation']['acd']
 
     # Copy the obj file to the temporary directory.
     decomposed = False
-    decompose_dir = osp.join(mesh_dir, params.CONVEX_DECOMPOSITION_DIR)
+    decompose_dir = osp.join(mesh_dir, params['common']['CONVEX_DECOMPOSITION_DIR'])
     if rerun and osp.isdir(decompose_dir):
         decomposed = True
         os.remove(mesh_path)
@@ -109,10 +111,10 @@ def process_mesh(args: tuple) -> bool:
             except ValueError:
                 volume = 0.0
         if volume < 1e-6:
-            acd_args.decompose_method = 'skip'
+            acd_args['decompose_method'] = 'skip'
             print(f'{obj_name} is too small, volume = {volume:.5f}, will skip')
-        elif volume < acd_args.min_volume:
-            acd_args.decompose_method = 'none'
+        elif volume < acd_args['min_volume']:
+            acd_args['decompose_method'] = 'none'
             print(f'{obj_name} is small, volume = {volume:.5f}, will not decompose')
 
         # save convex hull
@@ -121,27 +123,27 @@ def process_mesh(args: tuple) -> bool:
         hull_mesh.export(hull_filename)
         print(f'Convex hull {hull_filename} saved.')
         
-        if acd_args.decompose_method == 'coacd':
+        if acd_args['decompose_method'] == 'coacd':
             # Call CoACD.
-            if acd_args.coacd_args.auto_threshold:
-                model = acd_args.coacd_args.threshold_model
+            if coacd_args['auto_threshold']:
+                model = coacd_args['threshold_model']
                 threshold = max(0.02, volume*model[0] + model[1])
             else:
-                threshold = acd_args.coacd_args.threshold
+                threshold = coacd_args['threshold']
             mesh = coacd.Mesh(mesh.vertices, mesh.faces)
             result = coacd.run_coacd(
                 mesh,
                 threshold=threshold,
-                max_convex_hull=acd_args.coacd_args.max_convex_hull,
-                preprocess_mode=acd_args.coacd_args.preprocess_mode,
-                preprocess_resolution=acd_args.coacd_args.preprocess_resolution,
-                resolution=acd_args.coacd_args.resolution,
-                mcts_nodes=acd_args.coacd_args.mcts_nodes,
-                mcts_iterations=acd_args.coacd_args.mcts_iterations,
-                mcts_max_depth=acd_args.coacd_args.mcts_max_depth,
-                pca=acd_args.coacd_args.pca,
-                merge=acd_args.coacd_args.merge,
-                seed=acd_args.coacd_args.seed,
+                max_convex_hull=coacd_args['max_convex_hull'],
+                preprocess_mode=coacd_args['preprocess_mode'],
+                preprocess_resolution=coacd_args['preprocess_resolution'],
+                resolution=coacd_args['resolution'],
+                mcts_nodes=coacd_args['mcts_nodes'],
+                mcts_iterations=coacd_args['mcts_iterations'],
+                mcts_max_depth=coacd_args['mcts_max_depth'],
+                pca=coacd_args['pca'],
+                merge=coacd_args['merge'],
+                seed=coacd_args['seed'],
                 )
 
             mesh_parts = []
@@ -169,18 +171,18 @@ def process_mesh(args: tuple) -> bool:
                 p.visual.vertex_colors[:, :3] = (np.random.rand(3) * 255).astype(np.uint8)
                 object_part = trimesh.Scene()
                 object_part.add_geometry(p)
-                filename = osp.join(decompose_dir, f'{i:03d}{params.CONVEX_DECOMPOSITION_EXT}')
+                filename = osp.join(decompose_dir, f"{i:03d}{params['common']['CONVEX_DECOMPOSITION_EXT']}")
                 object_part.export(filename)
                 object_assembled.add_geometry(p)
                 i+=1
             if not object_assembled.is_empty:
                 object_assembled.export(osp.join(decompose_dir, 'assembled.obj'))
                 decomposed = True
-        elif acd_args.decompose_method == 'vhacd':
-            if not acd_args.vhacd_args.enable:
+        elif acd_args['decompose_method'] == 'vhacd':
+            if not vhacd_args['enable']:
                 return False
 
-            if params.VHACD_EXECUTABLE is None:
+            if shutil.which('TestVHACD') is None:
                 print(
                     "V-HACD was enabled but not found in the system path. Either install it "
                     "manually or run `bash install_vhacd.sh`. Skipping decomposition"
@@ -188,34 +190,35 @@ def process_mesh(args: tuple) -> bool:
                 return False
 
             # Call V-HACD, suppressing output.
+            fill_mode = {0: 'floor', 1: 'surface', 2: 'raycast'}
             ret = subprocess.run(
                 [
-                    f"{params.VHACD_EXECUTABLE}",
+                    shutil.which('TestVHACD'),
                     osp.join('convex_decomposition', mesh_filename),
                     "-i",
                     "stl",
                     "-o",
-                    params.CONVEX_DECOMPOSITION_EXT[1:],
+                    params['common']['CONVEX_DECOMPOSITION_EXT'][1:],
                     "-h",
-                    f"{acd_args.vhacd_args.max_output_convex_hulls}",
+                    f"{vhacd_args['max_output_convex_hulls']}",
                     "-r",
-                    f"{acd_args.vhacd_args.voxel_resolution}",
+                    f"{vhacd_args['voxel_resolution']}",
                     "-e",
-                    f"{acd_args.vhacd_args.volume_error_percent}",
+                    f"{vhacd_args['volume_error_percent']}",
                     "-d",
-                    f"{acd_args.vhacd_args.max_recursion_depth}",
+                    f"{vhacd_args['max_recursion_depth']}",
                     "-s",
-                    f"{int(not acd_args.vhacd_args.disable_shrink_wrap)}",
+                    f"{int(not vhacd_args['disable_shrink_wrap'])}",
                     "-f",
-                    f"{acd_args.vhacd_args.fill_mode.name.lower()}",
+                    f"{vhacd_args['fill_mode'].name.lower()}",
                     "-v",
-                    f"{acd_args.vhacd_args.max_hull_vert_count}",
+                    f"{vhacd_args['max_hull_vert_count']}",
                     "-a",
-                    f"{int(not acd_args.vhacd_args.disable_async)}",
+                    f"{int(not vhacd_args['disable_asyn'])}",
                     "-l",
-                    f"{acd_args.vhacd_args.min_edge_length}",
+                    f"{vhacd_args['min_edge_length']}",
                     "-p",
-                    f"{int(acd_args.vhacd_args.split_hull)}",
+                    f"{int(vhacd_args['split_hull'])}",
                 ],
                 check=True,
                 cwd=mesh_dir,
@@ -229,27 +232,27 @@ def process_mesh(args: tuple) -> bool:
                 print(f"V-HACD failed on {mesh_path}")
             else: 
                 decomposed = True
-            shutil.move(osp.join(mesh_dir, params.VHACD_OUTPUTS[1]), osp.join(decompose_dir, 'assembled.stl'))
-            os.remove(osp.join(mesh_dir, params.VHACD_OUTPUTS[0]))
-            os.remove(osp.join(mesh_dir, params.VHACD_OUTPUTS[2]))
+            shutil.move(osp.join(mesh_dir, vhacd_args['outputs'][1]), osp.join(decompose_dir, 'assembled.stl'))
+            os.remove(osp.join(mesh_dir, vhacd_args['outputs'][0]))
+            os.remove(osp.join(mesh_dir, vhacd_args['outputs'][2]))
             for src_filename in next(os.walk(decompose_dir))[-1]:
                 dst_filename = src_filename.replace(obj_name, '')
                 if dst_filename == '.stl':
                     continue
                 shutil.move(osp.join(decompose_dir, src_filename), osp.join(decompose_dir, dst_filename))
-        elif acd_args.decompose_method == 'none':
+        elif acd_args['decompose_method'] == 'none':
             out_filename = osp.join(decompose_dir, 'assembled.stl')
             mesh.export(out_filename)
             out_filename = osp.join(decompose_dir, '000.stl')
-            if params.CONVEX_DECOMPOSITION_EXT in mesh_path:
+            if params['common']['CONVEX_DECOMPOSITION_EXT'] in mesh_path:
                 shutil.copy(mesh_path, out_filename)
             else:
                 mesh.export(out_filename)
             decomposed = True
-        elif acd_args.decompose_method == 'skip':
+        elif acd_args['decompose_method'] == 'skip':
             decomposed = False
         else:
-            raise ValueError(f'{mesh_dir} decompose method {acd_args.decompose_method} is invalid')
+            raise ValueError(f'{mesh_dir} decompose method {acd_args["decompose_method"]} is invalid')
         
         print(f"Removing {mesh_path}")
         os.remove(mesh_path)
@@ -267,8 +270,10 @@ class CollisionRepresentationComputer(object):
         if include_objects is not None:
             include_objects = include_objects.split(',')
         self.input_gltf_filenames = []
-        self.input_dir = osp.join(scene_path, params.UE_EXPORT_DIR_NAME)
-        self.output_dir = osp.join(scene_path, params.COLLISION_DIR_NAME)
+        with open('params.yaml', 'r') as f:
+            self.p = yaml.safe_load(f)
+        self.input_dir = osp.join(scene_path, self.p['common']['UE_EXPORT_DIR_NAME'])
+        self.output_dir = osp.join(scene_path, self.p['common']['COLLISION_DIR_NAME'])
         for filename in next(os.walk(self.input_dir))[2]:
             if not filename.endswith('.gltf'):
                 continue
@@ -393,8 +398,9 @@ class CollisionRepresentationComputer(object):
                     )
                 bpy.ops.object.select_all(action='DESELECT')
 
-                cvx_args = params.ACD_Args(decompose_method, params.CoacdArgs(), params.VhacdArgs())
-                process_mesh_args.append((stl_filepath, cvx_args, self.rerun))
+                params = copy.deepcopy(self.p)
+                params['collision_representation']['acd']['decompose_method'] = decompose_method
+                process_mesh_args.append((stl_filepath, params, self.rerun))
 
         print("Convex solid decomposition...")
         i = 0

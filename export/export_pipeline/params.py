@@ -21,21 +21,6 @@ CONVEX_DECOMPOSITION_DIR = 'convex_decomposition'
 CONVEX_DECOMPOSITION_EXT = '.stl'
 PHYSICS_DIR_NAME = '{:s}_scene'
 
-class FillMode(enum.Enum):
-    FLOOD = enum.auto()
-    SURFACE = enum.auto()
-    RAYCAST = enum.auto()
-
-
-@dataclass
-class AssetProperties:
-    name: str = ""
-    id: int = 0
-    moving: bool = False
-    max_hulls: int = 0
-    voxel_res: int = 0
-    hull_vert_count: int = 0
-
 
 @dataclass
 class VhacdArgs:
@@ -51,8 +36,8 @@ class VhacdArgs:
     """maximum recursion depth"""
     disable_shrink_wrap: bool = False
     """do not shrink wrap output to source mesh to better match the original mesh"""
-    fill_mode: FillMode = FillMode.FLOOD
-    """fill mode"""
+    fill_mode: FillMode = 0
+    """fill mode, 0 = floor, 1 = surface, 2 = raycast"""
     max_hull_vert_count: int = 512
     """maximum number of vertices in the output convex hull (the higher the greater the computation effort on the physics engine side)"""
     disable_async: bool = False

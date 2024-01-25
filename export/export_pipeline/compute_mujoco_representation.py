@@ -5,7 +5,6 @@ import json
 import mujoco
 import numpy as np
 import os
-import params
 import transforms3d.quaternions as txq
 import utils
 import xml.etree.ElementTree as ET
@@ -13,6 +12,12 @@ import yaml
 
 
 osp = os.path
+
+
+joint_type_mapping = {
+    'prismatic': 'slide',
+    'revolute' : 'hinge',
+}
 
 
 def check_mesh_validity(filename: str) -> bool:
@@ -36,25 +41,23 @@ def check_mesh_validity(filename: str) -> bool:
 
 class MuJoCoSceneAssembler(object):
     def __init__(self, scene_path: str, include_objects: str) -> None:
+        with open('params.yaml', 'r') as f:
+            self.p: dict = yaml.safe_load(f)
         self.scene_name = osp.split(scene_path)[1]
-        self.input_dir = osp.join(scene_path, params.COLLISION_DIR_NAME)
-        self.output_dir = osp.join(scene_path, params.PHYSICS_DIR_NAME.format('mujoco'))
+        self.input_dir = osp.join(scene_path, self.p['common']['COLLISION_DIR_NAME'])
+        self.output_dir = osp.join(scene_path, self.p['common']['PHYSICS_DIR_NAME'].format('mujoco'))
         if include_objects is not None:
             include_objects = include_objects.split(',')
         self.include_objects = include_objects
         if not osp.isdir(self.input_dir):
             raise FileNotFoundError(f'Missing collision representation at {self.input_dir}')
-        # TODO(samarth): 1 yaml file per pipeline stage, which are in the export_pipeline dir
-        filename = osp.join(scene_path, 'mujoco_params.yaml')
-        with open(filename, 'r') as f:
-            self.mujoco_params = yaml.safe_load(f)
 
 
     def run(self):
-        filename = osp.join(self.input_dir, '..', params.UE_EXPORT_DIR_NAME, 'actors_information.json')
+        filename = osp.join(self.input_dir, '..', self.p['UE_EXPORT_DIR_NAME'], 'actors_information.json')
         with open(filename, 'r') as f:
             actors_information = json.load(f)
-        ue_export_dir = self.input_dir.replace(params.COLLISION_DIR_NAME, params.UE_EXPORT_DIR_NAME)
+        gltf_scene_dir = self.input_dir.replace(self.p['COLLISION_DIR_NAME'], self.p['GLTF_SCENE_DIR_NAME'])
         for object_name in sorted(next(os.walk(self.input_dir))[1]):
             object_dir = osp.join(self.input_dir, object_name)
             filename = osp.join(object_dir, 'components.json')
@@ -63,7 +66,7 @@ class MuJoCoSceneAssembler(object):
             static_components_info = components_info['static']
             
             try:
-               filename = osp.join(ue_export_dir, f'{object_name}_joints.json')
+               filename = osp.join(gltf_scene_dir, f'{object_name}_joints.json')
                with open(filename, 'r') as f:
                    joints_info = json.load(f)
             except FileNotFoundError:
@@ -93,7 +96,7 @@ class MuJoCoSceneAssembler(object):
                 T_o = T_parent @ utils.xyzquat_to_T(xyz, quat)
                 xyz, quat = utils.T_to_xyzquat(T_o)
                 static_components_info[name]['pos'], static_components_info[name]['quat'] = xyz, quat
-                if osp.isdir(osp.join(dir, params.CONVEX_DECOMPOSITION_DIR)):
+                if osp.isdir(osp.join(dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'])):
                     if name in joint_children:
                         # zero out the transform w.r.t. parent, because this mesh's include file will be placed under
                         # an appropriately transformed body
@@ -125,11 +128,11 @@ class MuJoCoSceneAssembler(object):
         # write assets file
         root = ET.Element('mujocoinclude', {'model': mesh_name})
         asset_name_prefix = path_prefix.replace(osp.sep, '.')
-        asset_path_prefix = osp.join('..', params.COLLISION_DIR_NAME, path_prefix, params.CONVEX_DECOMPOSITION_DIR)
+        asset_path_prefix = osp.join('..', self.p['common']['COLLISION_DIR_NAME'], path_prefix, self.p['common']['CONVEX_DECOMPOSITION_DIR'])
         asset_names = []
-        for mesh_filename in sorted(next(os.walk(osp.join(mesh_dir, params.CONVEX_DECOMPOSITION_DIR)))[2]):
+        for mesh_filename in sorted(next(os.walk(osp.join(mesh_dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'])))[2]):
             region_name, ext = osp.splitext(osp.basename(mesh_filename))
-            if (ext != params.CONVEX_DECOMPOSITION_EXT) or (region_name == 'assembled'):
+            if (ext != self.p['common']['CONVEX_DECOMPOSITION_EXT']) or (region_name == 'assembled'):
                 continue
             asset_name = f'{asset_name_prefix}.{region_name}'
             asset_names.append(asset_name)
@@ -209,16 +212,16 @@ class MuJoCoSceneAssembler(object):
                     axis, _ = utils.pose_rh_to_lh(joint[0]['axis'], (1, 0, 0, 0))
                     joint_attributes = {
                         'name': joint_name,
-                        'type': joint[0]['type'],
+                        'type': joint_type_mapping[joint[0]['type']],
                         'pos': '{:.5f} {:.5f} {:.5f}'.format(*pos),
                         'axis': '{:.5f} {:.5f} {:.5f}'.format(*axis),
                         'range': '{:.5f} {:.5f}'.format(*joint[0]['range']),
                         'ref': '{:.5f}'.format(joint[0]['ref']),
-                        'damping': f'{self.mujoco_params["joint_kd"]:.5f}',
+                        'damping': f'{self.p["mujoco"]["joint_kd"]:.5f}',
                     }
                     ET.SubElement(body, 'joint', joint_attributes)
                     actuator_attributes = {
-                        'kp': f'{self.mujoco_params["joint_kp"]:.5f}',
+                        'kp': f'{self.p["mujoco"]["joint_kp"]:.5f}',
                         'ctrllimited': 'true',
                         'ctrlrange': '{:.5f} {:.5f}'.format(*np.deg2rad(joint[0]['range'])),
                         'joint': joint_name,
@@ -238,17 +241,20 @@ class MuJoCoSceneAssembler(object):
                 raise AssertionError(f'More than one joint found with parent {parent_name} and child {name}')
             
             # check if body has its geom(s)
-            if osp.isdir(osp.join(dir, params.CONVEX_DECOMPOSITION_DIR)):
+            if osp.isdir(osp.join(dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'])):
                 path_prefix = dir.replace(self.input_dir, '')
                 if path_prefix[0] == osp.sep:
                     path_prefix = path_prefix[1:]
-                # path_prefix = osp.join('..', params.COLLISION_DIR_NAME, path_prefix)
+                # path_prefix = osp.join('..', self.p['COLLISION_DIR_NAME'], path_prefix)
                 ET.SubElement(geom_parent, 'include', {'file': osp.join(path_prefix, 'body.xml')})
                 ET.SubElement(asset, 'include', {'file': osp.join(path_prefix, 'assets.xml')})
             
             # explore children
             _, child_dirs, _ = next(os.walk(dir))
-            child_dirs = [osp.join(dir, child_dir) for child_dir in sorted(child_dirs) if child_dir != params.CONVEX_DECOMPOSITION_DIR]
+            child_dirs = [
+                osp.join(dir, child_dir) for child_dir in sorted(child_dirs)
+                if child_dir != self.p['common']['CONVEX_DECOMPOSITION_DIR']
+            ]
             q.extendleft([(child_dir, dir, geom_parent, name_prefix) for child_dir in child_dirs])
             if len(child_dirs):
                 sibling_dir_groups.append(child_dirs)
