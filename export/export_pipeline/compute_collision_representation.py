@@ -270,9 +270,9 @@ class CollisionRepresentationComputer(object):
         if include_objects is not None:
             include_objects = include_objects.split(',')
         self.input_gltf_filenames = []
-        with open('params.yaml', 'r') as f:
+        with open(osp.join('export_pipeline', 'params.yaml'), 'r') as f:
             self.p = yaml.safe_load(f)
-        self.input_dir = osp.join(scene_path, self.p['common']['UE_EXPORT_DIR_NAME'])
+        self.input_dir = osp.join(scene_path, self.p['common']['GLTF_SCENE_DIR_NAME'])
         self.output_dir = osp.join(scene_path, self.p['common']['COLLISION_DIR_NAME'])
         for filename in next(os.walk(self.input_dir))[2]:
             if not filename.endswith('.gltf'):
@@ -311,8 +311,8 @@ class CollisionRepresentationComputer(object):
             except FileNotFoundError:
                 joints_info = {}
             
-            # traverse the tree, whose leaves will be meshes. Collect leaves and their info for decomposition.
-            leaves = []
+            # traverse the tree, collect components info
+            geoms = []
             components_info = {'static': {}, 'joints': {}}
             # each element is (bpy object, directory_path, scale_factor, group_id)
             # we apply the scale factor to the transforms here and save the resulting transforms in components.json.
@@ -340,7 +340,7 @@ class CollisionRepresentationComputer(object):
                             q.append((child, child_dir, scale_factor*np.array(o.scale), group_id))
                     else:  # StaticMeshComponent with geometry
                         decompose_method = obj_info['geoms'][name]['decompose_method']
-                        leaves.append((dir, o, decompose_method, group_id))
+                        geoms.append((dir, o, decompose_method, group_id))
                 elif (o.type == 'EMPTY') and not o.children:  # PhysicsConstraintComponent (i.e. joint)
                     joint_name = utils.name_in_names(name, joints_info.keys())
                     components_info['joints'][joint_name] = {
@@ -353,24 +353,25 @@ class CollisionRepresentationComputer(object):
                 json.dump(components_info, f, indent=4)
 
             # group the leaves by group_id
+            # TODO(samarth) group name 
             geom_groups = defaultdict(list)
-            for leaf in leaves:
-                geom_groups[leaf[-1]].append(leaf[:-1])
+            for geom in geoms:
+                geom_groups[geom[-1]].append(geom[:-1])
             
             for geom_group in geom_groups.values():
-                leaf_dir, leaf, decompose_method = geom_group[0]
-                leaf_name = leaf.name.split('.')[0]
+                geom_dir, geom, decompose_method = geom_group[0]
+                leaf_name = geom.name.split('.')[0]
                 
                 # merge the geoms
                 for l in geom_group[1:]:
                     l[1].select_set(True)
                     shutil.rmtree(l[0])
-                leaf.select_set(True)
-                bpy.context.view_layer.objects.active = leaf
+                geom.select_set(True)
+                bpy.context.view_layer.objects.active = geom
                 bpy.ops.object.join()
                 
                 # Calculate the number of faces in the mesh
-                poly_count = len(leaf.data.polygons)
+                poly_count = len(geom.data.polygons)
                 print("Polygon count: ", poly_count)
                 
                 # Get the adaptive decimation ratio
@@ -378,11 +379,11 @@ class CollisionRepresentationComputer(object):
                     
                 # Add the Decimate modifier to the selected object
                 print("Applying decimation with a ratio: ", decimation_ratio)
-                decimate_modifier = leaf.modifiers.new(name='Decimate', type='DECIMATE')
+                decimate_modifier = geom.modifiers.new(name='Decimate', type='DECIMATE')
                 decimate_modifier.ratio = decimation_ratio
 
                 # Exporting in stl.
-                stl_filepath = osp.join(leaf_dir, f"{leaf_name}.stl")
+                stl_filepath = osp.join(geom_dir, f"{leaf_name}.stl")
                 if (not self.rerun) or (not osp.isfile(stl_filepath)):
                     print("Exporting STL file...")
                     bpy.ops.export_mesh.stl(

@@ -74,7 +74,8 @@ if __name__ == '__main__':
   filename = osp.join(osp.dirname(osp.abspath(__file__)), 'params.yaml')
   with open(filename, 'r') as f:
     params = yaml.safe_load(f)
-  export_dir = osp.expanduser(osp.join(args.scene_path, params['common']['UE_EXPORT_DIR_NAME']))
+  # TODO(samarth): access params stuff by attributes
+  export_dir = osp.expanduser(osp.join(args.scene_path, params['common']['GLTF_SCENE_DIR_NAME']))
   os.makedirs(export_dir, exist_ok=True)
   include_actors = args.actors.split(',') if args.actors else None
   

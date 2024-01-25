@@ -41,7 +41,7 @@ def check_mesh_validity(filename: str) -> bool:
 
 class MuJoCoSceneAssembler(object):
     def __init__(self, scene_path: str, include_objects: str) -> None:
-        with open('params.yaml', 'r') as f:
+        with open(osp.join('export_pipeline', 'params.yaml'), 'r') as f:
             self.p: dict = yaml.safe_load(f)
         self.scene_name = osp.split(scene_path)[1]
         self.input_dir = osp.join(scene_path, self.p['common']['COLLISION_DIR_NAME'])
@@ -54,10 +54,10 @@ class MuJoCoSceneAssembler(object):
 
 
     def run(self):
-        filename = osp.join(self.input_dir, '..', self.p['UE_EXPORT_DIR_NAME'], 'actors_information.json')
+        filename = osp.join(self.input_dir, '..', self.p['common']['GLTF_SCENE_DIR_NAME'], 'actors_information.json')
         with open(filename, 'r') as f:
             actors_information = json.load(f)
-        gltf_scene_dir = self.input_dir.replace(self.p['COLLISION_DIR_NAME'], self.p['GLTF_SCENE_DIR_NAME'])
+        gltf_scene_dir = self.input_dir.replace(self.p['common']['COLLISION_DIR_NAME'], self.p['common']['GLTF_SCENE_DIR_NAME'])
         for object_name in sorted(next(os.walk(self.input_dir))[1]):
             object_dir = osp.join(self.input_dir, object_name)
             filename = osp.join(object_dir, 'components.json')

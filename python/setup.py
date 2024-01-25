@@ -12,7 +12,6 @@ setuptools.setup(
     description="",
     packages=["spear"],
     install_requires=[
-      "bpy==3.5.0",
       "coacd==1.0.0",
       "ffmpeg-python==0.2.0",
       "gym==0.21.0",

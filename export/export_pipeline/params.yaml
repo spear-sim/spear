@@ -1,4 +1,5 @@
 ---
+# TODO(samarth) use yacs if possible, remove "scene" and "representation" from dir names
 common:
   GLTF_SCENE_DIR_NAME: "gltf_scene"
   COLLISION_DIR_NAME: "collision_representation"

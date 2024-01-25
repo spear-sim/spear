@@ -38,6 +38,10 @@ python -m pip install -U wheel==0.38.4 setuptools==65.5.0
 
 # install the spear Python package
 python -m pip install -e python
+
+# install Blender
+# required only for creating physics representations of new scenes
+python -m pip install bpy
 ```
 
 ### Navigate around a specific scene
