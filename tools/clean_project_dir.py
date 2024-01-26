@@ -5,6 +5,7 @@
 import argparse
 import os 
 import shutil
+import spear
 import sys
 
 
@@ -52,10 +53,14 @@ if __name__ == "__main__":
     
     # remove dirs
     for dir in dirs:
-        print(dir)
-        shutil.rmtree(dir, ignore_errors=True)
+        if os.path.exists(dir):
+            spear.log("Removing ", dir)
+            shutil.rmtree(dir, ignore_errors=True)
 
     # remove files
     for file in files:
-        print(file)
-        os.remove(file)
+        if os.path.exists(file):
+            spear.log("Removing ", file)
+            os.remove(file)
+
+    spear.log("Done.")
