@@ -59,6 +59,8 @@ class MuJoCoSceneAssembler(object):
             actors_information = json.load(f)
         gltf_scene_dir = self.input_dir.replace(self.p['common']['COLLISION_DIR_NAME'], self.p['common']['GLTF_SCENE_DIR_NAME'])
         for object_name in sorted(next(os.walk(self.input_dir))[1]):
+            if self.include_objects and (object_name not in self.include_objects):
+                continue
             object_dir = osp.join(self.input_dir, object_name)
             filename = osp.join(object_dir, 'components.json')
             with open(filename, 'r') as f:
@@ -96,28 +98,27 @@ class MuJoCoSceneAssembler(object):
                 T_o = T_parent @ utils.xyzquat_to_T(xyz, quat)
                 xyz, quat = utils.T_to_xyzquat(T_o)
                 static_components_info[name]['pos'], static_components_info[name]['quat'] = xyz, quat
-                if osp.isdir(osp.join(dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'])):
-                    if name in joint_children:
-                        # zero out the transform w.r.t. parent, because this mesh's include file will be placed under
-                        # an appropriately transformed body
-                        xyz = [0.0, 0.0, 0.0]
-                        quat = [1.0, 0.0, 0.0, 0.0]
-                    self.assemble_mesh(dir, xyz, quat)
-                else:
-                    T_parent = np.eye(4) if name in joint_children else np.copy(T_o)
-                    for child_name in next(os.walk(dir))[1]:
+
+                for child_name in next(os.walk(dir))[1]:
+                    if child_name == self.p['common']['CONVEX_DECOMPOSITION_DIR']:
                         child_dir = osp.join(dir, child_name)
-                        q.append((child_name, child_dir, T_parent))
-            
+                        for mesh_name in next(os.walk(child_dir))[1]:
+                            mesh_dir = osp.join(child_dir, mesh_name)
+                            i = static_components_info[name]['meshes'][mesh_name]
+                            self.assemble_mesh(mesh_dir, i['pos'], i['quat'], i['decompose_method'])
+                    else:
+                        T_parent = np.eye(4) if child_name in joint_children else np.copy(T_o)
+                        q.append((child_name, osp.join(dir, child_name), T_parent))
             self.assemble_object_with_joints(object_dir, static_components_info, joints_info,
                                              actors_information[object_name])
         self.generate_scene()
     
     
-    def assemble_mesh(self, mesh_dir, xyz, quat):
+    def assemble_mesh(self, mesh_dir, xyz, quat, decompose_method):
         """
         Assembles the convex regions of a mesh
         """
+        xyz, quat = utils.pose_rh_to_lh(xyz, quat)
         mesh_name = osp.split(mesh_dir)[1]
         path_prefix = mesh_dir.replace(self.input_dir, '')
         if path_prefix[0] == osp.sep:
@@ -128,9 +129,9 @@ class MuJoCoSceneAssembler(object):
         # write assets file
         root = ET.Element('mujocoinclude', {'model': mesh_name})
         asset_name_prefix = path_prefix.replace(osp.sep, '.')
-        asset_path_prefix = osp.join('..', self.p['common']['COLLISION_DIR_NAME'], path_prefix, self.p['common']['CONVEX_DECOMPOSITION_DIR'])
+        asset_path_prefix = osp.join('..', self.p['common']['COLLISION_DIR_NAME'], path_prefix, decompose_method)
         asset_names = []
-        for mesh_filename in sorted(next(os.walk(osp.join(mesh_dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'])))[2]):
+        for mesh_filename in sorted(next(os.walk(osp.join(mesh_dir, decompose_method)))[2]):
             region_name, ext = osp.splitext(osp.basename(mesh_filename))
             if (ext != self.p['common']['CONVEX_DECOMPOSITION_EXT']) or (region_name == 'assembled'):
                 continue
@@ -195,7 +196,7 @@ class MuJoCoSceneAssembler(object):
             geom_parent = parent
             
             # check if body has a joint with parent
-            joint = list(filter(lambda j: (j['parent'] == parent_name) and (j['child'] == name), joints_info))
+            joint = list(filter(lambda j: j['child'] == name, joints_info))
             
             if (len(joint) == 1) or (parent_name is None):
                 body_name = f'{name_prefix}{name}{parent_name_suffix}'
@@ -240,24 +241,41 @@ class MuJoCoSceneAssembler(object):
             elif len(joint) >= 2:
                 raise AssertionError(f'More than one joint found with parent {parent_name} and child {name}')
             
-            # check if body has its geom(s)
-            if osp.isdir(osp.join(dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'])):
-                path_prefix = dir.replace(self.input_dir, '')
-                if path_prefix[0] == osp.sep:
-                    path_prefix = path_prefix[1:]
-                # path_prefix = osp.join('..', self.p['COLLISION_DIR_NAME'], path_prefix)
-                ET.SubElement(geom_parent, 'include', {'file': osp.join(path_prefix, 'body.xml')})
-                ET.SubElement(asset, 'include', {'file': osp.join(path_prefix, 'assets.xml')})
+            this_sibling_dir_group = []
+            for child_name in sorted(next(os.walk(dir))[1]):
+                child_dir = osp.join(dir, child_name)
+                if child_name == self.p['common']['CONVEX_DECOMPOSITION_DIR']:
+                    for mesh_name in sorted(next(os.walk(child_dir))[1]):
+                        mesh_dir = osp.join(child_dir, mesh_name)
+                        path_prefix = mesh_dir.replace(self.input_dir, '')
+                        if path_prefix[0] == osp.sep:
+                            path_prefix = path_prefix[1:]
+                        ET.SubElement(geom_parent, 'include', {'file': osp.join(path_prefix, 'body.xml')})
+                        ET.SubElement(asset, 'include', {'file': osp.join(path_prefix, 'assets.xml')})
+                else:
+                    q.append((child_dir, dir, geom_parent, name_prefix))
+                    this_sibling_dir_group.append(child_dir)
+            if len(this_sibling_dir_group):
+                sibling_dir_groups.append(this_sibling_dir_group)
+
+            # # check if body has its geom(s)
+            # if osp.isdir(osp.join(dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'])):
+            #     path_prefix = dir.replace(self.input_dir, '')
+            #     if path_prefix[0] == osp.sep:
+            #         path_prefix = path_prefix[1:]
+            #     # path_prefix = osp.join('..', self.p['COLLISION_DIR_NAME'], path_prefix)
+            #     ET.SubElement(geom_parent, 'include', {'file': osp.join(path_prefix, 'body.xml')})
+            #     ET.SubElement(asset, 'include', {'file': osp.join(path_prefix, 'assets.xml')})
             
-            # explore children
-            _, child_dirs, _ = next(os.walk(dir))
-            child_dirs = [
-                osp.join(dir, child_dir) for child_dir in sorted(child_dirs)
-                if child_dir != self.p['common']['CONVEX_DECOMPOSITION_DIR']
-            ]
-            q.extendleft([(child_dir, dir, geom_parent, name_prefix) for child_dir in child_dirs])
-            if len(child_dirs):
-                sibling_dir_groups.append(child_dirs)
+            # # explore children
+            # _, child_dirs, _ = next(os.walk(dir))
+            # child_dirs = [
+            #     osp.join(dir, child_dir) for child_dir in sorted(child_dirs)
+            #     if child_dir != self.p['common']['CONVEX_DECOMPOSITION_DIR']
+            # ]
+            # q.extendleft([(child_dir, dir, geom_parent, name_prefix) for child_dir in child_dirs])
+            # if len(child_dirs):
+            #     sibling_dir_groups.append(child_dirs)
 
         # contact exclude tags for leaf sibling bodies
         for sibling_dir_group in sibling_dir_groups:

@@ -62,7 +62,7 @@ PhysicsConstraint = namedtuple(
   'PhysicsConstraint',
   ['parent', 'child', 'name', 'range', 'ref', 'axis', 'type']
 )
-MeshComponent = namedtuple('MeshComponent', ['decompose_method', 'decompose_group'])
+MeshComponent = namedtuple('MeshComponent', ['decompose_method', 'merge_id'])
 
 
 if __name__ == '__main__':
@@ -110,7 +110,7 @@ if __name__ == '__main__':
         c_name = c.get_name()
         if c_name == 'StaticMeshComponent0':
           c_name = actor_name
-        this_body_properties['geoms'][c_name] = MeshComponent('coacd', i)._asdict()
+        this_body_properties['geoms'][c_name] = MeshComponent('coacd', f'{i:04d}')._asdict()
         has_geometry = True
         i += 1
 

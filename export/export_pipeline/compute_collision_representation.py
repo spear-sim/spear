@@ -92,7 +92,7 @@ def process_mesh(args: tuple) -> bool:
 
     # Copy the obj file to the temporary directory.
     decomposed = False
-    decompose_dir = osp.join(mesh_dir, params['common']['CONVEX_DECOMPOSITION_DIR'])
+    decompose_dir = osp.join(mesh_dir, acd_args['decompose_method'])
     if rerun and osp.isdir(decompose_dir):
         decomposed = True
         os.remove(mesh_path)
@@ -251,6 +251,7 @@ def process_mesh(args: tuple) -> bool:
             decomposed = True
         elif acd_args['decompose_method'] == 'skip':
             decomposed = False
+            shutil.rmtree(decompose_dir)
         else:
             raise ValueError(f'{mesh_dir} decompose method {acd_args["decompose_method"]} is invalid')
         
@@ -310,69 +311,76 @@ class CollisionRepresentationComputer(object):
                 joints_info = {j['name']: j for j in joints_info}
             except FileNotFoundError:
                 joints_info = {}
-            
-            # traverse the tree, collect components info
-            geoms = []
+            KT_node_names = [object_name, ]
+            KT_node_names.extend([j['child'] for j in joints_info.values()])
+
+            # BFS tree traversal
+            # (bpy object, parent_dir, scale_factor, node_T_parent)
+            q = deque([(obj, self.output_dir, np.ones(3), np.eye(4))])
+            geom_groups = defaultdict(list)
+            decompose_methods = {}
             components_info = {'static': {}, 'joints': {}}
-            # each element is (bpy object, directory_path, scale_factor, group_id)
-            # we apply the scale factor to the transforms here and save the resulting transforms in components.json.
-            # geometry scaling is already applied by UE when exporting geometries to GLTF.
-            q = deque([(obj, obj_dir, np.ones(3), object_name), ])
             while len(q):
-                o, dir, scale_factor, group_id = q.popleft()
+                o, parent_dir, scale_factor, node_T_parent = q.popleft()
+                parent_name = osp.split(parent_dir)[1]
                 name = o.name.split('.')[0]
                 xyz, quat = get_relative_pose_and_center(o, scale_factor)
+                node_T_o = node_T_parent @ utils.xyzquat_to_T(xyz, quat)
+                xyz, quat = utils.T_to_xyzquat(node_T_o)
 
-                if o.children or ((o.type == 'MESH') and (o.data.name != 'SM_Dummy')):
-                    if name in components_info['static']:
-                        raise AssertionError(f'repeated static mesh {name}')
-                    components_info['static'][name] = {'pos': xyz, 'quat': quat}
-                    os.makedirs(dir, exist_ok=True)
-                    if o.children:  # StaticMeshComponent without any geometry (meant for grouping)
-                        for child in o.children:
-                            child_name = child.name.split('.')[0]
-                            if child_name in obj_info['geoms']:
-                                group_id = obj_info['geoms'][child_name]['decompose_group']
-                                group_id = f'{name}_{group_id}'
-                            else:
-                                group_id = None
-                            child_dir = osp.join(dir, child_name)
-                            q.append((child, child_dir, scale_factor*np.array(o.scale), group_id))
-                    else:  # StaticMeshComponent with geometry
-                        decompose_method = obj_info['geoms'][name]['decompose_method']
-                        geoms.append((dir, o, decompose_method, group_id))
-                elif (o.type == 'EMPTY') and not o.children:  # PhysicsConstraintComponent (i.e. joint)
+                if name in KT_node_names:
+                    parent_dir = osp.join(parent_dir, name)
+                    parent_name = name
+                    os.makedirs(parent_dir, exist_ok=True)
+                    components_info['static'][name] = {'pos': xyz, 'quat': quat, 'meshes': {}}
+                    node_T_o = np.eye(4)
+                    xyz = [0.0, 0.0, 0.0]
+                    quat = [1.0, 0.0, 0.0, 0.0]
+
+                is_geom = (o.type == 'MESH') and (o.data.name != 'SM_Dummy')
+                is_joint = (o.type == 'EMPTY') and (len(o.children) == 0)
+
+                if is_geom:
+                    merge_id = obj_info['geoms'][name]['merge_id']
+                    decompose_dir = osp.join(parent_dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'], merge_id)
+                    decompose_method = obj_info['geoms'][name]['decompose_method']
+                    if decompose_dir not in decompose_methods:
+                        decompose_methods[decompose_dir] = decompose_method
+                        components_info['static'][parent_name]['meshes'][merge_id] = {
+                            'pos': xyz,
+                            'quat': quat,
+                            'decompose_method': decompose_method,
+                        }
+                    elif decompose_methods[decompose_dir] != decompose_method:
+                        raise ValueError(f'{decompose_dir} is marked to be decomposed by {decompose_methods},'
+                                         'which does not match with other meshes to be merged with it.')
+                    geom_groups[decompose_dir].append((o, xyz, quat))
+
+                if is_joint:
                     joint_name = utils.name_in_names(name, joints_info.keys())
-                    components_info['joints'][joint_name] = {
-                        'pos': xyz,
-                        'quat': quat,
-                    }
+                    components_info['joints'][joint_name] = {'pos':  xyz, 'quat': quat}
 
+                for child in o.children:
+                    q.append((child, parent_dir, scale_factor*o.scale, node_T_o))
+            
             filename = osp.join(obj_dir, 'components.json')
             with open(filename, 'w') as f:
                 json.dump(components_info, f, indent=4)
 
-            # group the leaves by group_id
-            # TODO(samarth) group name 
-            geom_groups = defaultdict(list)
-            for geom in geoms:
-                geom_groups[geom[-1]].append(geom[:-1])
-            
-            for geom_group in geom_groups.values():
-                geom_dir, geom, decompose_method = geom_group[0]
-                leaf_name = geom.name.split('.')[0]
-                
-                # merge the geoms
-                for l in geom_group[1:]:
-                    l[1].select_set(True)
-                    shutil.rmtree(l[0])
-                geom.select_set(True)
+            for decompose_dir, geom_group in geom_groups.items():
+                # merge all geoms in the geom group, after transforming them into the node's coordinate frame
+                for (o, node_T_o_xyz, node_T_o_quat) in geom_group:
+                    o.location = node_T_o_xyz
+                    o.rotation_quaternion = node_T_o_quat
+                    o.select_set(True)
+                geom = geom_group[0][0]
                 bpy.context.view_layer.objects.active = geom
                 bpy.ops.object.join()
-                
+                geom.location = (0.0, 0.0, 0.0)
+                geom.rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
+
                 # Calculate the number of faces in the mesh
                 poly_count = len(geom.data.polygons)
-                print("Polygon count: ", poly_count)
                 
                 # Get the adaptive decimation ratio
                 decimation_ratio = decimation_lookup(poly_count)
@@ -383,7 +391,8 @@ class CollisionRepresentationComputer(object):
                 decimate_modifier.ratio = decimation_ratio
 
                 # Exporting in stl.
-                stl_filepath = osp.join(geom_dir, f"{leaf_name}.stl")
+                os.makedirs(decompose_dir, exist_ok=True)
+                stl_filepath = osp.join(decompose_dir, "geom.stl")
                 if (not self.rerun) or (not osp.isfile(stl_filepath)):
                     print("Exporting STL file...")
                     bpy.ops.export_mesh.stl(
@@ -400,7 +409,7 @@ class CollisionRepresentationComputer(object):
                 bpy.ops.object.select_all(action='DESELECT')
 
                 params = copy.deepcopy(self.p)
-                params['collision_representation']['acd']['decompose_method'] = decompose_method
+                params['collision_representation']['acd']['decompose_method'] = decompose_methods[decompose_dir]
                 process_mesh_args.append((stl_filepath, params, self.rerun))
 
         print("Convex solid decomposition...")

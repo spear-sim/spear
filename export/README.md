@@ -23,6 +23,8 @@ will result in the `spear-env` conda environment.
 - Within each `Actor`, no two `StaticMeshComponent`s have the same name, and no two `PhysicsConstraintComponent`s have
 the same name.
 - All joints have only one DoF.
+- A Component cannot be the child of two PhysicsConstraintComponents.
+- No component is named `convex_decomposition`.
 
 ## TODO (maybe in future PRs)
 - [ ] Articulated objects are currently assumed to be static w.r.t. world i.e. `"moving": false` in their entry in
