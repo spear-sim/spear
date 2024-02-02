@@ -1,0 +1,74 @@
+//
+// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+//
+
+#include "SpEngine/SpEngine.h"
+
+#include <memory> // std::make_unique, std::unique_ptr
+
+#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
+
+#include "CoreUtils/Assert.h"
+#include "CoreUtils/Config.h"
+#include "CoreUtils/Log.h"
+#include "SpEngine/EngineService.h"
+#include "SpEngine/GameWorldService.h"
+
+// TODO (Rachith): Remove dependency on SimulationController plugin
+#include "SimulationController/RpcServer.h"
+
+// We would like to decouple the following entities as much as possible: the RPC server, the
+// EngineService and its various work queues, and all other services whose entry points are
+// intended to run on those work queues. We achieve this design goal through compile-time
+// polymorphism. Our EngineService takes as input any class that defines a public templated
+// bind(func_name, func) method, as represented by the CBasicServiceEntryPointBinder concept.
+// All other services take as input any class that defines a public templated
+// bind(service_name, func_name, func) method, as represented by the CServiceEntryPointBinder
+// concept.
+
+// This design makes it so the RPC server doesn't need any direct knowledge of our services (it
+// just provides a public bind method), our EngineService doesn't need any direct knowledge of
+// the RPC server (EngineService just binds to whatever CBasicEntryPointBinder is passed in), and
+// our other services don't need any direct knowledge of the EngineService (our other services
+// just bind to whatever CEntryPointBinder is passed in). We need compile-time polymorphism
+// because templated member functions cannot be virtual, so it is not practical to, e.g., define
+// a base class with a virtual bind(...) method.
+
+void SpEngine::StartupModule()
+{
+    SP_LOG_CURRENT_FUNCTION();
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("CoreUtils")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("SimulationController")));
+
+    if (!Config::s_initialized_) {
+        return;
+    }
+
+    // initialize RPC server
+    rpc_server_ = std::make_unique<RpcServer>(
+        Config::get<std::string>("SIMULATION_CONTROLLER.IP"),
+        Config::get<int>("SIMULATION_CONTROLLER.PORT"));
+    SP_ASSERT(rpc_server_);
+
+    // EngineService needs its own custom logic for binding its entry points, because they are
+    // intended to run directly on the RPC server worker thread, whereas all other entry points
+    // are intended to run on work queues maintained by EngineService. So we pass in the server
+    // when constructing EngineService, and we pass in EngineService when constructing all other
+    // services.
+    engine_service_ = EngineService(&rpc_server_);
+    game_world_service_ = GameWorldService(&engine_service_);
+
+    int num_worker_threads = 1;
+    rpc_server_->runAsync(num_worker_threads);
+}
+
+void SpEngine::ShutdownModule()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    if (!Config::s_initialized_) {
+        return;
+    }
+}
+
+IMPLEMENT_MODULE(SpEngine, SpEngine)

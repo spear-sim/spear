@@ -1,0 +1,34 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0",
+    "FriendlyName": "SpEngine",
+    "Description": "WARNING: The loading phases for {CoreUtils, SpEngine, SimulationController} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(SimulationController) < LoadingPhase(SpEngine)",
+    "Category": "Other",
+    "CreatedBy": "",
+    "CreatedByURL": "",
+    "DocsURL": "",
+    "MarketplaceURL": "",
+    "SupportURL": "",
+    "CanContainContent": true,
+    "IsBetaVersion": true,
+    "IsExperimentalVersion": true,
+    "Installed": false,
+    "Modules": [
+        {
+            "Name": "SpEngine",
+            "Type": "Runtime",
+            "LoadingPhase": "PostEngineInit"
+        }
+    ],
+    "Plugins": [
+        {
+            "Name": "CoreUtils",
+            "Enabled": true
+        },
+        {
+            "Name": "SimulationController",
+            "Enabled": true
+        }
+    ]
+}

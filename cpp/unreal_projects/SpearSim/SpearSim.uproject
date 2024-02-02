@@ -33,6 +33,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "SpEngine",
+			"Enabled": true
+		},
+		{
 			"Name": "SimulationController",
 			"Enabled": true
 		},
