@@ -51,29 +51,29 @@ def decimation_lookup(poly_count):
         return 0.001
 
 
-def get_relative_pose(obj):
+def get_relative_pose(component):
     """
     gets pose relative to parent
     """
-    obj.select_set(True)
-    xyz = copy.deepcopy(obj.location)
+    component.select_set(True)
+    xyz = copy.deepcopy(component.location)
     xyz = [xyz.x, xyz.y, xyz.z]
-    quat = copy.deepcopy(obj.rotation_quaternion)
+    quat = copy.deepcopy(component.rotation_quaternion)
     quat = [quat.w, quat.x, quat.y, quat.z]
-    obj.select_set(False)
+    component.select_set(False)
     return xyz, quat
 
 
-def get_relative_pose_and_center(obj, scale_factor=np.ones(3)):
+def get_relative_pose_and_center(component, scale_factor=np.ones(3)):
     """
     gets pose relative to parent, and centers obj w.r.t. parent
     """
-    xyz, quat = get_relative_pose(obj)
+    xyz, quat = get_relative_pose(component)
     xyz = np.asarray(xyz) * scale_factor
-    obj.select_set(True)
-    obj.location = (0.0, 0.0, 0.0)
-    obj.rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
-    obj.select_set(False)
+    component.select_set(True)
+    component.location = (0.0, 0.0, 0.0)
+    component.rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
+    component.select_set(False)
     return xyz.tolist(), quat
 
 
@@ -90,7 +90,6 @@ def process_mesh(args: tuple) -> bool:
     coacd_args = params['collision_representation']['coacd']
     acd_args   = params['collision_representation']['acd']
 
-    # Copy the obj file to the temporary directory.
     decomposed = False
     decompose_dir = osp.join(mesh_dir, acd_args['decompose_method'])
     if rerun and osp.isdir(decompose_dir):
@@ -99,7 +98,7 @@ def process_mesh(args: tuple) -> bool:
     else:
         os.makedirs(decompose_dir, exist_ok=True)
         mesh_path = shutil.move(mesh_path, decompose_dir)
-        obj_name = os.path.splitext(mesh_filename)[0]
+        mesh_name = os.path.splitext(mesh_filename)[0]
         
         # load mesh and check that it is valid
         mesh: trimesh.Trimesh = trimesh.load(mesh_path, force='mesh')
@@ -112,10 +111,10 @@ def process_mesh(args: tuple) -> bool:
                 volume = 0.0
         if volume < 1e-6:
             acd_args['decompose_method'] = 'skip'
-            print(f'{obj_name} is too small, volume = {volume:.5f}, will skip')
+            print(f'{mesh_name} is too small, volume = {volume:.5f}, will skip')
         elif volume < acd_args['min_volume']:
             acd_args['decompose_method'] = 'none'
-            print(f'{obj_name} is small, volume = {volume:.5f}, will not decompose')
+            print(f'{mesh_name} is small, volume = {volume:.5f}, will not decompose')
 
         # save convex hull
         hull_mesh: trimesh.Trimesh = trimesh.convex.convex_hull(mesh)
@@ -236,7 +235,7 @@ def process_mesh(args: tuple) -> bool:
             os.remove(osp.join(mesh_dir, vhacd_args['outputs'][0]))
             os.remove(osp.join(mesh_dir, vhacd_args['outputs'][2]))
             for src_filename in next(os.walk(decompose_dir))[-1]:
-                dst_filename = src_filename.replace(obj_name, '')
+                dst_filename = src_filename.replace(mesh_name, '')
                 if dst_filename == '.stl':
                     continue
                 shutil.move(osp.join(decompose_dir, src_filename), osp.join(decompose_dir, dst_filename))
@@ -296,13 +295,11 @@ class CollisionRepresentationComputer(object):
         process_mesh_args = []
         for input_gltf_filename in self.input_gltf_filenames:
             bpy.ops.import_scene.gltf(filepath=input_gltf_filename)
-            obj = bpy.context.object
-            if obj.parent is not None:
-                continue
+            actor = bpy.context.object  # recently imported object
             
-            object_name = obj.name.split('.')[0]
-            obj_dir = os.path.join(self.output_dir, object_name)
-            obj_info = actors_information[object_name]
+            actor_name = actor.name.split('.')[0]
+            actor_dir = os.path.join(self.output_dir, actor_name)
+            actor_info = actors_information[actor_name]
 
             joint_filename = input_gltf_filename.replace('.gltf', '_joints.json')
             try:
@@ -311,39 +308,39 @@ class CollisionRepresentationComputer(object):
                 joints_info = {j['name']: j for j in joints_info}
             except FileNotFoundError:
                 joints_info = {}
-            KT_node_names = [object_name, ]
+            KT_node_names = [actor_name, ]
             KT_node_names.extend([j['child'] for j in joints_info.values()])
 
-            # BFS tree traversal
-            # (bpy object, parent_dir, scale_factor, node_T_parent)
-            q = deque([(obj, self.output_dir, np.ones(3), np.eye(4))])
+            # BFS tree traversal and collecting component information
             geom_groups = defaultdict(list)
             decompose_methods = {}
             components_info = {'static': {}, 'joints': {}}
+            # (component, component_parent_dir, component_scale_factor, node_T_parent)
+            q = deque([(actor, self.output_dir, np.ones(3), np.eye(4))])
             while len(q):
-                o, parent_dir, scale_factor, node_T_parent = q.popleft()
-                parent_name = osp.split(parent_dir)[1]
-                name = o.name.split('.')[0]
-                xyz, quat = get_relative_pose_and_center(o, scale_factor)
-                node_T_o = node_T_parent @ utils.xyzquat_to_T(xyz, quat)
-                xyz, quat = utils.T_to_xyzquat(node_T_o)
+                component, component_parent_dir, component_scale_factor, node_T_parent = q.popleft()
+                parent_name = osp.split(component_parent_dir)[1]
+                name = component.name.split('.')[0]
+                xyz, quat = get_relative_pose_and_center(component, component_scale_factor)
+                node_T_component = node_T_parent @ utils.xyzquat_to_T(xyz, quat)
+                xyz, quat = utils.T_to_xyzquat(node_T_component)
 
                 if name in KT_node_names:
-                    parent_dir = osp.join(parent_dir, name)
+                    component_parent_dir = osp.join(component_parent_dir, name)
                     parent_name = name
-                    os.makedirs(parent_dir, exist_ok=True)
+                    os.makedirs(component_parent_dir, exist_ok=True)
                     components_info['static'][name] = {'pos': xyz, 'quat': quat, 'meshes': {}}
                     node_T_o = np.eye(4)
                     xyz = [0.0, 0.0, 0.0]
                     quat = [1.0, 0.0, 0.0, 0.0]
 
-                is_geom = (o.type == 'MESH') and (o.data.name != 'SM_Dummy')
-                is_joint = (o.type == 'EMPTY') and (len(o.children) == 0)
+                is_geom = (component.type == 'MESH') and (component.data.name != 'SM_Dummy')
+                is_joint = (component.type == 'EMPTY') and (len(component.children) == 0)
 
                 if is_geom:
-                    merge_id = obj_info['geoms'][name]['merge_id']
-                    decompose_dir = osp.join(parent_dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'], merge_id)
-                    decompose_method = obj_info['geoms'][name]['decompose_method']
+                    merge_id = actor_info['geoms'][name]['merge_id']
+                    decompose_dir = osp.join(component_parent_dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'], merge_id)
+                    decompose_method = actor_info['geoms'][name]['decompose_method']
                     if decompose_dir not in decompose_methods:
                         decompose_methods[decompose_dir] = decompose_method
                         components_info['static'][parent_name]['meshes'][merge_id] = {
@@ -354,25 +351,25 @@ class CollisionRepresentationComputer(object):
                     elif decompose_methods[decompose_dir] != decompose_method:
                         raise ValueError(f'{decompose_dir} is marked to be decomposed by {decompose_methods},'
                                          'which does not match with other meshes to be merged with it.')
-                    geom_groups[decompose_dir].append((o, xyz, quat))
+                    geom_groups[decompose_dir].append((component, xyz, quat))
 
                 if is_joint:
                     joint_name = utils.name_in_names(name, joints_info.keys())
                     components_info['joints'][joint_name] = {'pos':  xyz, 'quat': quat}
 
-                for child in o.children:
-                    q.append((child, parent_dir, scale_factor*o.scale, node_T_o))
+                for child_component in component.children:
+                    q.append((child_component, component_parent_dir, component_scale_factor*component.scale, node_T_o))
             
-            filename = osp.join(obj_dir, 'components.json')
+            filename = osp.join(actor_dir, 'components.json')
             with open(filename, 'w') as f:
                 json.dump(components_info, f, indent=4)
 
             for decompose_dir, geom_group in geom_groups.items():
                 # merge all geoms in the geom group, after transforming them into the node's coordinate frame
-                for (o, node_T_o_xyz, node_T_o_quat) in geom_group:
-                    o.location = node_T_o_xyz
-                    o.rotation_quaternion = node_T_o_quat
-                    o.select_set(True)
+                for (component, node_T_component_xyz, node_T_component_quat) in geom_group:
+                    component.location = node_T_component_xyz
+                    component.rotation_quaternion = node_T_component_quat
+                    component.select_set(True)
                 geom = geom_group[0][0]
                 bpy.context.view_layer.objects.active = geom
                 bpy.ops.object.join()
