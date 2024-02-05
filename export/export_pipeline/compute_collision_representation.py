@@ -189,7 +189,6 @@ def process_mesh(args: tuple) -> bool:
                 return False
 
             # Call V-HACD, suppressing output.
-            fill_mode = {0: 'floor', 1: 'surface', 2: 'raycast'}
             ret = subprocess.run(
                 [
                     shutil.which('TestVHACD'),
@@ -209,7 +208,7 @@ def process_mesh(args: tuple) -> bool:
                     "-s",
                     f"{int(not vhacd_args['disable_shrink_wrap'])}",
                     "-f",
-                    f"{vhacd_args['fill_mode'].name.lower()}",
+                    vhacd_args['fill_mode'],
                     "-v",
                     f"{vhacd_args['max_hull_vert_count']}",
                     "-a",
@@ -263,21 +262,19 @@ def process_mesh(args: tuple) -> bool:
 
 
 class CollisionRepresentationComputer(object):
-    def __init__(self, scene_path: str, n_workers: int, rerun: bool, include_objects: str) -> None:
+    def __init__(self, scene_path: str, n_workers: int, rerun: bool, include_actors: tuple):
         self.n_workers = min(max(1, n_workers), mp.cpu_count()-1)
         self.rerun = rerun
         self.scene_path = osp.normpath(scene_path)
-        if include_objects is not None:
-            include_objects = include_objects.split(',')
-        self.input_gltf_filenames = []
         with open(osp.join('export_pipeline', 'params.yaml'), 'r') as f:
             self.p = yaml.safe_load(f)
         self.input_dir = osp.join(scene_path, self.p['common']['GLTF_SCENE_DIR_NAME'])
         self.output_dir = osp.join(scene_path, self.p['common']['COLLISION_DIR_NAME'])
+        self.input_gltf_filenames = []
         for filename in next(os.walk(self.input_dir))[2]:
             if not filename.endswith('.gltf'):
                 continue
-            if include_objects and not any([osp.splitext(filename)[0] == i for i in include_objects]):
+            if include_actors and not any([osp.splitext(filename)[0] == i for i in include_actors]):
                 continue
             self.input_gltf_filenames.append(osp.join(self.input_dir, filename))
 
@@ -431,11 +428,20 @@ class CollisionRepresentationComputer(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scene_path', required=True, help='relative path to the scene folder')
-    parser.add_argument('--rerun', action='store_true', help='re-run the export without running decomposition')
-    parser.add_argument('--objects', help='comma separated', default=None)
-    parser.add_argument('-n', type=int, help='number of parallel workers to use', default=mp.cpu_count()-1)
+    parser.add_argument('--pipeline_dir', required=True)
+    parser.add_argument('--rerun', action='store_true')
+    parser.add_argument('--actors', default=None)
+    parser.add_argument('--scene_id', default=None)
+    parser.add_argument('--num_parallel_workers', type=int, default=mp.cpu_count()-1)
     args = parser.parse_args()
     
-    crc = CollisionRepresentationComputer(osp.expanduser(args.scene_path), args.n, args.rerun, args.objects)
-    crc.run()
+    include_actors = tuple(args.actors.split(',')) if args.actors else ()
+    
+    pipeline_dir = osp.expanduser(args.pipeline_dir)
+    for scene_name in sorted(next(os.walk(pipeline_dir))[1]):
+        if (args.scene_id is not None) and (scene_name != args.scene_id):
+            continue
+        print(f'############# Scene {scene_name} ############')
+        crc = CollisionRepresentationComputer(osp.join(pipeline_dir, scene_name), args.num_parallel_workers, args.rerun,
+                                              include_actors)
+        crc.run()

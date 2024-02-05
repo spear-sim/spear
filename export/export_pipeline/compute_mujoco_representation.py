@@ -40,15 +40,13 @@ def check_mesh_validity(filename: str) -> bool:
 
 
 class MuJoCoSceneAssembler(object):
-    def __init__(self, scene_path: str, include_objects: str) -> None:
+    def __init__(self, scene_path: str, include_actors: tuple) -> None:
         with open(osp.join('export_pipeline', 'params.yaml'), 'r') as f:
             self.p: dict = yaml.safe_load(f)
         self.scene_name = osp.split(scene_path)[1]
         self.input_dir = osp.join(scene_path, self.p['common']['COLLISION_DIR_NAME'])
         self.output_dir = osp.join(scene_path, self.p['common']['PHYSICS_DIR_NAME'].format('mujoco'))
-        if include_objects is not None:
-            include_objects = include_objects.split(',')
-        self.include_objects = include_objects
+        self.include_objects = include_actors
         if not osp.isdir(self.input_dir):
             raise FileNotFoundError(f'Missing collision representation at {self.input_dir}')
 
@@ -90,6 +88,7 @@ class MuJoCoSceneAssembler(object):
             joint_children = [object_name, ]
             joint_children.extend([j['child'] for j in joints_info])
             
+            # TODO(samarth): remove the transform compositions, because they are not needed here
             # Traverse directory tree, and assemble the convex regions of meshes at leaves
             q = deque([(object_name, object_dir, np.eye(4)), ])
             while len(q):
@@ -258,25 +257,6 @@ class MuJoCoSceneAssembler(object):
             if len(this_sibling_dir_group):
                 sibling_dir_groups.append(this_sibling_dir_group)
 
-            # # check if body has its geom(s)
-            # if osp.isdir(osp.join(dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'])):
-            #     path_prefix = dir.replace(self.input_dir, '')
-            #     if path_prefix[0] == osp.sep:
-            #         path_prefix = path_prefix[1:]
-            #     # path_prefix = osp.join('..', self.p['COLLISION_DIR_NAME'], path_prefix)
-            #     ET.SubElement(geom_parent, 'include', {'file': osp.join(path_prefix, 'body.xml')})
-            #     ET.SubElement(asset, 'include', {'file': osp.join(path_prefix, 'assets.xml')})
-            
-            # # explore children
-            # _, child_dirs, _ = next(os.walk(dir))
-            # child_dirs = [
-            #     osp.join(dir, child_dir) for child_dir in sorted(child_dirs)
-            #     if child_dir != self.p['common']['CONVEX_DECOMPOSITION_DIR']
-            # ]
-            # q.extendleft([(child_dir, dir, geom_parent, name_prefix) for child_dir in child_dirs])
-            # if len(child_dirs):
-            #     sibling_dir_groups.append(child_dirs)
-
         # contact exclude tags for leaf sibling bodies
         for sibling_dir_group in sibling_dir_groups:
             sdg = [s for s in sibling_dir_group if s in leaf_dirs]
@@ -320,9 +300,17 @@ class MuJoCoSceneAssembler(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scene_path', required=True, help='relative path to the scene folder')
-    parser.add_argument('--objects', help='comma separated', default=None)
+    parser.add_argument('--pipeline_dir', required=True)
+    parser.add_argument('--actors', default=None)
+    parser.add_argument('--scene_id', default=None)
     args = parser.parse_args()
     
-    mse = MuJoCoSceneAssembler(osp.expanduser(args.scene_path), args.objects)
-    mse.run()
+    include_actors = tuple(args.actors.split(',')) if args.actors else ()
+
+    pipeline_dir = osp.expanduser(args.pipeline_dir)
+    for scene_name in sorted(next(os.walk(pipeline_dir))[1]):
+        if (args.scene_id is not None) and (scene_name != args.scene_id):
+            continue
+        print(f'############# Scene {scene_name} ############')
+        mse = MuJoCoSceneAssembler(osp.join(pipeline_dir, scene_name), include_actors)
+        mse.run()
