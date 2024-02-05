@@ -23,6 +23,11 @@ import yaml
 osp = os.path
 
 
+StaticMeshComponent = namedtuple('StaticMeshComponent', ['component', 'pos', 'quat'])
+MergedStaticMeshComponents = namedtuple('MergedStaticMeshComponents', ['decompose_method', 'components'],
+                                        defaults=['', []])
+
+
 def decimation_lookup(poly_count):
     # Get the adaptive decimation ratio
     if poly_count < 10000:
@@ -279,6 +284,125 @@ class CollisionRepresentationComputer(object):
             self.input_gltf_filenames.append(osp.join(self.input_dir, filename))
 
 
+    def _compute_component_descs(self, actor, actor_info: dict, joints_info: dict):
+        actor_name = actor.name.split('.')[0]
+        KT_node_names = [actor_name, ]
+        KT_node_names.extend([j['child'] for j in joints_info.values()])
+
+        # BFS tree traversal and collecting component information
+        all_merged_smcs = {}  # maps decompose_dir to MergedStaticMeshComponents 
+        components_info = {'static': {}, 'joints': {}}
+        # (component, component_parent_dir, component_scale_factor, node_T_parent)
+        q = deque([(actor, self.output_dir, np.ones(3), np.eye(4))])
+        while len(q):
+            component, component_parent_dir, component_scale_factor, node_T_parent = q.popleft()
+            parent_name = osp.split(component_parent_dir)[1]
+            name = component.name.split('.')[0]
+            pos, quat = get_relative_pose_and_center(component, component_scale_factor)
+            node_T_component = node_T_parent @ utils.xyzquat_to_T(pos, quat)
+            pos, quat = utils.T_to_xyzquat(node_T_component)
+
+            if name in KT_node_names:
+                component_parent_dir = osp.join(component_parent_dir, name)
+                parent_name = name
+                os.makedirs(component_parent_dir, exist_ok=True)
+                components_info['static'][name] = {'pos': pos, 'quat': quat, 'meshes': {}}
+                node_T_o = np.eye(4)
+                pos = [0.0, 0.0, 0.0]
+                quat = [1.0, 0.0, 0.0, 0.0]
+
+            is_geom = (component.type == 'MESH') and (component.data.name != 'SM_Dummy')
+            is_joint = (component.type == 'EMPTY') and (len(component.children) == 0)
+
+            if is_geom:
+                merge_id = actor_info['geoms'][name]['merge_id']
+                decompose_dir = osp.join(component_parent_dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'],
+                                            merge_id)
+                decompose_method = actor_info['geoms'][name]['decompose_method']
+                if decompose_dir not in all_merged_smcs:
+                    # New merge_id encountered, so save the transform of its first component w.r.t. nearest 
+                    # kinematic tree node. This is necessary, because Convex decomposition will be done in the
+                    # object space of this first component and all other components in this merge_id will be merged
+                    # into this first component.
+                    components_info['static'][parent_name]['meshes'][merge_id] = {
+                        'pos': pos,
+                        'quat': quat,
+                        'decompose_method': decompose_method,
+                    }
+                    all_merged_smcs[decompose_dir] = \
+                        MergedStaticMeshComponents(decompose_method, [StaticMeshComponent(component, pos, quat), ])
+                else:
+                    if all_merged_smcs[decompose_dir].decompose_method != decompose_method:
+                        raise ValueError(f'{decompose_dir} is marked to be decomposed by {decompose_method},'
+                                        'which does not match with other meshes to be merged with it.')
+                    all_merged_smcs[decompose_dir].components.append(StaticMeshComponent(component, pos, quat))
+
+            if is_joint:
+                joint_name = utils.name_in_names(name, joints_info.keys())
+                components_info['joints'][joint_name] = {'pos':  pos, 'quat': quat}
+
+            for child_component in component.children:
+                q.append((child_component, component_parent_dir, component_scale_factor*component.scale, node_T_o))
+        return components_info, all_merged_smcs
+
+
+    def _export_component_descs(self, actor_name, components_info: dict, all_merged_smcs: dict):
+        actor_dir = osp.join(self.output_dir, actor_name)
+        filename = osp.join(actor_dir, 'components.json')
+        with open(filename, 'w') as f:
+            json.dump(components_info, f, indent=4)
+
+
+    def _merge_decimate_export_smcs(self, all_merged_smcs: dict):
+        process_mesh_args = []
+        for item in all_merged_smcs.items():
+            decompose_dir: str = item[0]
+            merged_smcs: MergedStaticMeshComponents = item[1]
+            
+            # transform all components into the nearest KT node's coordinate frame
+            smc: StaticMeshComponent
+            for smc in merged_smcs.components:
+                smc.component.location = smc.pos
+                smc.component.rotation_quaternion = smc.quat
+                smc.component.select_set(True)
+
+            # merge them into the first component
+            first_component = merged_smcs.components[0].component
+            bpy.context.view_layer.objects.active = first_component
+            bpy.ops.object.join()
+
+            # merged geometry convex decomposition will happen in the coordinate system of the first component
+            first_component.location = (0.0, 0.0, 0.0)
+            first_component.rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
+
+            # decimate merged geometry
+            decimate_modifier = first_component.modifiers.new(name='Decimate', type='DECIMATE')
+            decimate_modifier.ratio = decimation_lookup(len(first_component.data.polygons))
+
+            # export merged geometry in STL format, for convex decomposition libraries
+            os.makedirs(decompose_dir, exist_ok=True)
+            stl_filepath = osp.join(decompose_dir, "geom.stl")
+            if (not self.rerun) or (not osp.isfile(stl_filepath)):
+                bpy.ops.export_mesh.stl(
+                    filepath=stl_filepath,
+                    check_existing=False,
+                    use_selection=True,
+                    use_mesh_modifiers=True,
+                    batch_mode='OFF',
+                    global_scale=1.0,
+                    axis_forward='Y',
+                    axis_up='Z',
+                    ascii=False,
+                )
+                print(f'{stl_filepath} written')
+            bpy.ops.object.select_all(action='DESELECT')
+
+            params = copy.deepcopy(self.p)
+            params['collision_representation']['acd']['decompose_method'] = merged_smcs.decompose_method
+            process_mesh_args.append((stl_filepath, params, self.rerun))
+        return process_mesh_args
+
+
     def run(self):
         if not self.rerun:
             shutil.rmtree(self.output_dir, ignore_errors=True)
@@ -291,131 +415,36 @@ class CollisionRepresentationComputer(object):
         
         process_mesh_args = []
         for input_gltf_filename in self.input_gltf_filenames:
+            # import actor GLTF
             bpy.ops.import_scene.gltf(filepath=input_gltf_filename)
             actor = bpy.context.object  # recently imported object
-            
             actor_name = actor.name.split('.')[0]
-            actor_dir = os.path.join(self.output_dir, actor_name)
-            actor_info = actors_information[actor_name]
-
+            
+            # load joints info for this actor
             joint_filename = input_gltf_filename.replace('.gltf', '_joints.json')
             try:
                 with open(joint_filename, 'r') as f:
                     joints_info = json.load(f)
-                joints_info = {j['name']: j for j in joints_info}
             except FileNotFoundError:
                 joints_info = {}
-            KT_node_names = [actor_name, ]
-            KT_node_names.extend([j['child'] for j in joints_info.values()])
+            joints_info = {j['name']: j for j in joints_info}
 
-            # BFS tree traversal and collecting component information
-            StaticMeshComponent = namedtuple('StaticMeshComponent', ['component', 'pos', 'quat'])
-            MergedStaticMeshComponents = namedtuple('MergedStaticMeshComponents', ['decompose_method', 'components'],
-                                                    defaults=['', []])
-            all_merged_smcs = {}  # maps decompose_dir to MergedStaticMeshComponents 
-            components_info = {'static': {}, 'joints': {}}
-            # (component, component_parent_dir, component_scale_factor, node_T_parent)
-            q = deque([(actor, self.output_dir, np.ones(3), np.eye(4))])
-            while len(q):
-                component, component_parent_dir, component_scale_factor, node_T_parent = q.popleft()
-                parent_name = osp.split(component_parent_dir)[1]
-                name = component.name.split('.')[0]
-                pos, quat = get_relative_pose_and_center(component, component_scale_factor)
-                node_T_component = node_T_parent @ utils.xyzquat_to_T(pos, quat)
-                pos, quat = utils.T_to_xyzquat(node_T_component)
-
-                if name in KT_node_names:
-                    component_parent_dir = osp.join(component_parent_dir, name)
-                    parent_name = name
-                    os.makedirs(component_parent_dir, exist_ok=True)
-                    components_info['static'][name] = {'pos': pos, 'quat': quat, 'meshes': {}}
-                    node_T_o = np.eye(4)
-                    pos = [0.0, 0.0, 0.0]
-                    quat = [1.0, 0.0, 0.0, 0.0]
-
-                is_geom = (component.type == 'MESH') and (component.data.name != 'SM_Dummy')
-                is_joint = (component.type == 'EMPTY') and (len(component.children) == 0)
-
-                if is_geom:
-                    merge_id = actor_info['geoms'][name]['merge_id']
-                    decompose_dir = osp.join(component_parent_dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'],
-                                             merge_id)
-                    decompose_method = actor_info['geoms'][name]['decompose_method']
-                    if decompose_dir not in all_merged_smcs:
-                        # New merge_id encountered, so save the transform of its first component w.r.t. nearest 
-                        # kinematic tree node. This is necessary, because Convex decomposition will be done in the
-                        # object space of this first component and all other components in this merge_id will be merged
-                        # into this first component.
-                        components_info['static'][parent_name]['meshes'][merge_id] = {
-                            'pos': pos,
-                            'quat': quat,
-                            'decompose_method': decompose_method,
-                        }
-                        all_merged_smcs[decompose_dir] = \
-                            MergedStaticMeshComponents(decompose_method, [StaticMeshComponent(component, pos, quat), ])
-                    else:
-                        if all_merged_smcs[decompose_dir].decompose_method != decompose_method:
-                            raise ValueError(f'{decompose_dir} is marked to be decomposed by {decompose_method},'
-                                            'which does not match with other meshes to be merged with it.')
-                        all_merged_smcs[decompose_dir].components.append(StaticMeshComponent(component, pos, quat))
-
-                if is_joint:
-                    joint_name = utils.name_in_names(name, joints_info.keys())
-                    components_info['joints'][joint_name] = {'pos':  pos, 'quat': quat}
-
-                for child_component in component.children:
-                    q.append((child_component, component_parent_dir, component_scale_factor*component.scale, node_T_o))
+            # reason by kinematic tree to decide which StaticMeshComponents (SMCs) will be merged, collect info for
+            # components
+            components_info, all_merged_smcs = self._compute_component_descs(actor, actors_information[actor_name],
+                                                                             joints_info)
             
-            filename = osp.join(actor_dir, 'components.json')
-            with open(filename, 'w') as f:
-                json.dump(components_info, f, indent=4)
+            # save the component infos
+            self._export_component_descs(actor_name, components_info, all_merged_smcs)
 
-            for item in all_merged_smcs.items():
-                decompose_dir: str = item[0]
-                merged_smcs: MergedStaticMeshComponents = item[1]
-                
-                # transform all components into the nearest KT node's coordinate frame
-                smc: StaticMeshComponent
-                for smc in merged_smcs.components:
-                    smc.component.location = smc.pos
-                    smc.component.rotation_quaternion = smc.quat
-                    smc.component.select_set(True)
-
-                # merge them into the first component
-                first_component = merged_smcs.components[0].component
-                bpy.context.view_layer.objects.active = first_component
-                bpy.ops.object.join()
-
-                # merged geometry convex decomposition will happen in the coordinate system of the first component
-                first_component.location = (0.0, 0.0, 0.0)
-                first_component.rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
-
-                # decimate merged geometry
-                decimate_modifier = first_component.modifiers.new(name='Decimate', type='DECIMATE')
-                decimate_modifier.ratio = decimation_lookup(len(first_component.data.polygons))
-
-                # export merged geometry in STL format, for convex decomposition libraries
-                os.makedirs(decompose_dir, exist_ok=True)
-                stl_filepath = osp.join(decompose_dir, "geom.stl")
-                if (not self.rerun) or (not osp.isfile(stl_filepath)):
-                    bpy.ops.export_mesh.stl(
-                        filepath=stl_filepath,
-                        check_existing=False,
-                        use_selection=True,
-                        use_mesh_modifiers=True,
-                        batch_mode='OFF',
-                        global_scale=1.0,
-                        axis_forward='Y',
-                        axis_up='Z',
-                        ascii=False,
-                    )
-                    print(f'{stl_filepath} written')
-                bpy.ops.object.select_all(action='DESELECT')
-
-                params = copy.deepcopy(self.p)
-                params['collision_representation']['acd']['decompose_method'] = merged_smcs.decompose_method
-                process_mesh_args.append((stl_filepath, params, self.rerun))
-
+            # merge SMCs, decimate the merged geometry, export it for convex decomposition
+            process_mesh_args.extend(self._merge_decimate_export_smcs(all_merged_smcs))
+            
+            # delete actor GLTF
+            bpy.ops.object.select_all(action='SELECT')
+            bpy.ops.object.delete()
+        
+        # do the convex decomposition
         print("Convex decomposition...")
         # This for loop is needed to ensure memory is freed after each batch if size self.n_workers
         # If the entire process_mesh_args is given to a mp.Pool(self.n_workers), the parallel workers are re-used when
