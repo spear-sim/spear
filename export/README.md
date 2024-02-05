@@ -10,12 +10,16 @@ will result in the `spear-env` conda environment.
 - Build V-HACD using the [readme instructions](v-hacd/README.md).
 - Create the scene directory: `mkdir -p scenes/${SCENE_NAME}`.
 - Open the scene map in Unreal Editor (UE).
-- From the UE Python console, run the script `/path/to/spear/export/export_meshes_and_joints_from_ue.py --scene_path ${SCENE_NAME}`.
+- From the UE Python console, run the script `/path/to/spear/export/export_pipeline/compute_gltf_representation.py --scene_path /path/to/spear/export/scenes/${SCENE_NAME}`.
 - Activate the SPEAR Conda environment, and run the processing script.
 ```bash
+(base) $ cd /path/to/spear/export
 (base) $ conda activate spear-env
-(spear-env) $ python mujoco_export_pipeline/export_scene.py -n <num parallel workers> --scene_path ${SCENE_NAME}
+(spear-env) $ python export_pipeline/compute_collision_representation.py --pipeline_dir scenes --scene_id ${SCENE_NAME}
+(spear-env) $ python export_pipeline/compute_mujoco_representation.py --pipeline_dir scenes --scene_id ${SCENE_NAME}
+(spear-env) $ python -m mujoco.viewer --mjcf scenes/${SCENE_NAME}/mujoco_scene/scene.xml
 ```
+**NOTE**: The `--pipeline_dir` argument must be relative to `/path/to/spear/export`. 
 
 ## Assumptions
 - The floor geometry must have the floor spread across the X-Y plane, and Z axis pointing upwards.

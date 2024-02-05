@@ -307,10 +307,9 @@ if __name__ == "__main__":
     
     include_actors = tuple(args.actors.split(',')) if args.actors else ()
 
-    pipeline_dir = osp.expanduser(args.pipeline_dir)
-    for scene_name in sorted(next(os.walk(pipeline_dir))[1]):
+    for scene_name in sorted(next(os.walk(args.pipeline_dir))[1]):
         if (args.scene_id is not None) and (scene_name != args.scene_id):
             continue
         print(f'############# Scene {scene_name} ############')
-        mse = MuJoCoSceneAssembler(osp.join(pipeline_dir, scene_name), include_actors)
+        mse = MuJoCoSceneAssembler(osp.join(args.pipeline_dir, scene_name), include_actors)
         mse.run()

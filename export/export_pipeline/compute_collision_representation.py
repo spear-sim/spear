@@ -315,10 +315,10 @@ class CollisionRepresentationComputer(object):
             is_joint = (component.type == 'EMPTY') and (len(component.children) == 0)
 
             if is_geom:
-                merge_id = actor_info['geoms'][name]['merge_id']
+                merge_id = actor_info['static_meshes'][name]['merge_id']
                 decompose_dir = osp.join(component_parent_dir, self.p['common']['CONVEX_DECOMPOSITION_DIR'],
                                             merge_id)
-                decompose_method = actor_info['geoms'][name]['decompose_method']
+                decompose_method = actor_info['static_meshes'][name]['decompose_method']
                 if decompose_dir not in all_merged_smcs:
                     # New merge_id encountered, so save the transform of its first component w.r.t. nearest 
                     # kinematic tree node. This is necessary, because Convex decomposition will be done in the
@@ -466,11 +466,9 @@ if __name__ == "__main__":
     
     include_actors = tuple(args.actors.split(',')) if args.actors else ()
     
-    pipeline_dir = osp.expanduser(args.pipeline_dir)
-    for scene_name in sorted(next(os.walk(pipeline_dir))[1]):
+    for scene_name in sorted(next(os.walk(args.pipeline_dir))[1]):
         if (args.scene_id is not None) and (scene_name != args.scene_id):
             continue
         print(f'############# Scene {scene_name} ############')
-        crc = CollisionRepresentationComputer(osp.join(pipeline_dir, scene_name), args.num_parallel_workers, args.rerun,
-                                              include_actors)
+        crc = CollisionRepresentationComputer(osp.join(args.pipeline_dir, scene_name), args.num_parallel_workers, args.rerun, include_actors)
         crc.run()

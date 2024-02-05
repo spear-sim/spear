@@ -11,18 +11,17 @@ import argparse
 from collections import namedtuple
 import json
 import os
-import time
 import unreal
 import yaml
 
 
 osp = os.path
-ss = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-world = ss.get_editor_world()
+editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+editor_world = editor_subsystem.get_editor_world()
 
-
-TRANS_UE_TO_MUJOCO_SCALE = 1.0  # keep cm
-ROT_UE_TO_MUJOCO_SCALE = 1.0  # keep degrees
+ActorInformation = namedtuple('ActorInformation', ['static_meshes', 'moving', 'root_component_name', 'has_nontrivial_geometry'])
+MeshComponent = namedtuple('MeshComponent', ['decompose_method', 'merge_id'])
+PhysicsConstraint = namedtuple('PhysicsConstraint', ['parent', 'child', 'name', 'range', 'ref', 'axis', 'type'])
 
 
 def export_meshes(actor, export_dir):
@@ -33,36 +32,19 @@ def export_meshes(actor, export_dir):
   task.set_editor_property('selected', True)
   task.set_editor_property('automated', True)
   task.set_editor_property('prompt', False)
-  task.set_editor_property('object', world)
+  task.set_editor_property('object', editor_world)
   task.set_editor_property('filename', filename)
   # unreal.GLTFExporter.set_editor_property('export_task', task)
   options = unreal.GLTFExportOptions()
   options.set_editor_property('export_cameras', False)
   options.set_editor_property('export_lights', False)
-  options.set_editor_property('export_uniform_scale', TRANS_UE_TO_MUJOCO_SCALE)
+  options.set_editor_property('export_uniform_scale', 1.0)
   options.set_editor_property('export_unlit_materials', False)
   options.set_editor_property('export_vertex_colors', False)
   selected_actors = unreal.Set(unreal.Actor)
   selected_actors.add(actor)
   print(f'Writing actor {name} to {filename}...')
-  count = 0
-  N = 10
-  while not unreal.GLTFExporter.export_to_gltf(None, filename, options, selected_actors):
-  # while not unreal.Exporter.run_asset_export_task(task):
-    print(f'Retry {count+1} / {N}')
-    time.sleep(0.5)
-    if count == 10:
-      break
-  else:
-    return True
-  return False
-
-
-PhysicsConstraint = namedtuple(
-  'PhysicsConstraint',
-  ['parent', 'child', 'name', 'range', 'ref', 'axis', 'type']
-)
-MeshComponent = namedtuple('MeshComponent', ['decompose_method', 'merge_id'])
+  assert unreal.GLTFExporter.export_to_gltf(None, filename, options, selected_actors), f'Could not export {name}'
 
 
 if __name__ == '__main__':
@@ -74,20 +56,20 @@ if __name__ == '__main__':
   filename = osp.join(osp.dirname(osp.abspath(__file__)), 'params.yaml')
   with open(filename, 'r') as f:
     params = yaml.safe_load(f)
-  # TODO(samarth): access params stuff by attributes
-  export_dir = osp.expanduser(osp.join(args.scene_path, params['common']['GLTF_SCENE_DIR_NAME']))
+  # TODO(samarth): use YACS and then access params stuff by attributes
+  export_dir = osp.realpath(osp.join(args.scene_path, params['common']['GLTF_SCENE_DIR_NAME']))
   os.makedirs(export_dir, exist_ok=True)
   include_actors = args.actors.split(',') if args.actors else None
   
   filename = osp.join(export_dir, 'actors_information.json')
   if osp.isfile(filename):
     with open(filename, 'r') as f:
-      body_properties = json.load(f)
+      actors_information = json.load(f)
   else:
-    body_properties = {}
+    actors_information = {}
   
   # Iterate through the actors
-  for actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.Actor):
+  for actor in unreal.GameplayStatics.get_all_actors_of_class(editor_world, unreal.Actor):
     if isinstance(actor, unreal.CameraActor) or isinstance(actor, unreal.SceneCapture2D) or \
       isinstance(actor, unreal.PointLight):
       continue
@@ -97,35 +79,31 @@ if __name__ == '__main__':
     if include_actors and (actor_name not in include_actors):
       continue
     
-    this_body_properties = {'geoms': {}, }
+    if isinstance(actor, unreal.StaticMeshActor):
+      moving = actor.get_editor_property('static_mesh_component').get_editor_property('body_instance').get_editor_property('simulate_physics')
+    else: # TODO(samarth) get the actual flag for the actuated body
+      moving = False
+    this_actor_information = ActorInformation({}, moving, actor.get_editor_property('root_component').get_name(), False)
+    
     # check if actor has geometry
-    has_geometry = False
     i = 0
     for c in actor.get_components_by_class(unreal.StaticMeshComponent):
+      c_name = c.get_name()
       static_mesh = c.get_editor_property('static_mesh')
-      if static_mesh is None:
-        print(f'actor {actor_name} component {c.get_name()} does not have a static mesh')
-      elif static_mesh.get_name() != 'SM_Dummy':
+      if static_mesh and (static_mesh.get_name() != 'SM_Dummy'):
         # TODO(samarth) get MeshComponent elements from UE component
-        c_name = c.get_name()
         if c_name == 'StaticMeshComponent0':
           c_name = actor_name
-        this_body_properties['geoms'][c_name] = MeshComponent('coacd', f'{i:04d}')._asdict()
-        has_geometry = True
+        merge_id = f'{i:04d}'
+        this_actor_information.static_meshes[c_name] = MeshComponent('coacd', merge_id)._asdict()
+        this_actor_information.has_nontrivial_geometry = True
         i += 1
 
-    if has_geometry:
-      export_meshes(actor, export_dir)
-    else:
+    export_meshes(actor, export_dir)
+    actors_information[actor_name] = this_actor_information._asdict()
+    if not this_actor_information.has_nontrivial_geometry:
       print(f'Actor {actor_name}, does not have geometry')
       continue
-    
-    if isinstance(actor, unreal.StaticMeshActor):
-      this_body_properties['moving'] = actor.get_editor_property('static_mesh_component').get_editor_property('body_instance').get_editor_property('simulate_physics')
-    else: # TODO(samarth) get the actual flag for the actuated body
-      this_body_properties['moving'] = False
-    this_body_properties['root_component_name'] = actor.get_editor_property('root_component').get_name()
-    body_properties[actor_name] = this_body_properties
     
     constraint_dicts = []
     for component in actor.get_components_by_class(unreal.ActorComponent):
@@ -148,7 +126,7 @@ if __name__ == '__main__':
       offset = 0.0
       
       linear_limit = constraint_profile.get_editor_property('linear_limit')
-      limit = linear_limit.get_editor_property('limit') * TRANS_UE_TO_MUJOCO_SCALE
+      limit = linear_limit.get_editor_property('limit')
       
       # prismatic joints
       n_prismatic_dofs = 0
@@ -205,8 +183,8 @@ if __name__ == '__main__':
         n_revolute_dofs += 1
         if n_prismatic_dofs > 1:
           raise Warning(f'{actor_name} already has {n_prismatic_dofs} prismatic joints')
-        limit = cone_limit.get_editor_property('swing1_limit_degrees') * ROT_UE_TO_MUJOCO_SCALE
-        offset = angular_offset.yaw * ROT_UE_TO_MUJOCO_SCALE
+        limit = cone_limit.get_editor_property('swing1_limit_degrees')
+        offset = angular_offset.yaw
         axis = unreal.Vector.UP
         axis = axis.rotate(rot).normal()
         pc_args.extend([
@@ -223,8 +201,8 @@ if __name__ == '__main__':
         n_revolute_dofs += 1
         if n_prismatic_dofs > 1:
           raise ValueError(f'{actor_name} already has {n_prismatic_dofs} prismatic joints')
-        limit = cone_limit.get_editor_property('swing2_limit_degrees') * ROT_UE_TO_MUJOCO_SCALE
-        offset = angular_offset.pitch * ROT_UE_TO_MUJOCO_SCALE
+        limit = cone_limit.get_editor_property('swing2_limit_degrees')
+        offset = angular_offset.pitch
         axis = unreal.Vector.RIGHT
         axis = axis.rotate(rot).normal()
         pc_args.extend([
@@ -242,8 +220,8 @@ if __name__ == '__main__':
         n_revolute_dofs += 1
         if n_prismatic_dofs > 1:
           raise ValueError(f'{actor_name} already has {n_prismatic_dofs} prismatic joints')
-        limit = twist_limit.get_editor_property('twist_limit_degrees') * ROT_UE_TO_MUJOCO_SCALE
-        offset = angular_offset.roll * ROT_UE_TO_MUJOCO_SCALE
+        limit = twist_limit.get_editor_property('twist_limit_degrees')
+        offset = angular_offset.roll
         # UE applied X rotations are right handed
         # https://github.com/ethz-asl/unreal_airsim/blob/master/docs/coordinate_systems.md
         axis = unreal.Vector.BACKWARD
@@ -266,5 +244,5 @@ if __name__ == '__main__':
     
   filename = osp.join(export_dir, 'actors_information.json')
   with open(filename, 'w') as f:
-      json.dump(body_properties, f, indent=4)
+      json.dump(actors_information, f, indent=4)
   print(f'{filename} written')
