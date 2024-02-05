@@ -170,15 +170,13 @@ def process_mesh(args: tuple) -> bool:
 
             object_assembled = trimesh.Scene()
             np.random.seed(0)
-            i = 0
-            for p in mesh_parts:
+            for i,p in enumerate(mesh_parts):
                 p.visual.vertex_colors[:, :3] = (np.random.rand(3) * 255).astype(np.uint8)
                 object_part = trimesh.Scene()
                 object_part.add_geometry(p)
                 filename = osp.join(decompose_dir, f"{i:03d}{params['common']['CONVEX_DECOMPOSITION_EXT']}")
                 object_part.export(filename)
                 object_assembled.add_geometry(p)
-                i+=1
             if not object_assembled.is_empty:
                 object_assembled.export(osp.join(decompose_dir, 'assembled.obj'))
                 decomposed = True

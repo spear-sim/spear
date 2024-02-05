@@ -228,7 +228,7 @@ class MuJoCoSceneAssembler(object):
                         'name': f'act:{joint_name}',
                     }
                     ET.SubElement(actuator, 'position', actuator_attributes)
-                elif obj_info['moving']:
+                elif obj_info['simulate_physics']:
                     ET.SubElement(body, 'freejoint', {'name': f'{obj_name}.freejoint'})
                 js = list(filter(lambda j: j['parent'] == name, joints_info))
                 if len(js) == 0:

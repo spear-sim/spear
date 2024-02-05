@@ -31,9 +31,10 @@ the same name.
 - No component is named `convex_decomposition`.
 
 ## TODO (maybe in future PRs)
-- [ ] Articulated objects are currently assumed to be static w.r.t. world i.e. `"moving": false` in their entry in
-`<scene_path>/ue_export/actors_information.json`. This needs to be derived by checking if `simulate_physics` is set for
-any component other than the `DefaultSceneRoot` and children of `PhysicsContstraintComponents`.
+- [ ] Articulated objects are currently assumed to be static w.r.t. world i.e. `"simulate_physics": false` in their
+entry in `<scene_path>/gltf_scene/actors_information.json`. This needs to be derived by checking if
+`simulate_physics` is set for any component other than the `DefaultSceneRoot` and children of
+`PhysicsContstraintComponents`.
 - [x] Implement numerical parity between UE and MuJoCo representations i.e. in the joint positions, object poses, etc.
 Currently UE uses cm and degrees. Exporting to GLTF converts it to m and radians, which is also the unit system used in
 MuJoCo. 
@@ -56,3 +57,71 @@ components = [c for c in actor.get_components_by_class(unreal.PhysicsConstraintC
 c = components[0]
 profile = c.get_editor_property('constraint_instance').get_editor_property('profile_instance')
 ```
+
+## Coordinate Systems
+Unreal Engine uses a left-handed coordinate system, but its GLTF exporter exports actors (geometry, poses) in a right-handed system.
+So [`export_pipeline/compute_gltf_representation.py`](export_pipeline/compute_gltf_representation.py) exports joint
+information in a right-handed coordinate system, to maintain consistency with the UE GLTF exporter. This is done through
+the choice of axes of rotation for revolute joints. Logic:
+```python
+def get_rotation_matrix_from_unreal_pyr(unreal_pyr):
+    #
+    # Unreal's FRotator constructor takes 3 Euler angles specified in degrees and in pitch-yaw-roll order,
+    # so we assume that our input array unreal_pyr is also specified in degrees and in pitch-yaw-roll order.
+    # However, scipy assumes that Euler angles are given in radians by default, so we need to convert
+    # degrees to radians.
+    #
+    # Unreal defines pitch-yaw-roll angles according to the following conventions, which can be verified by
+    # manual inspection in the editor.
+    #     A positive pitch is a rotation around Y, starting from +X and rotating towards +Z
+    #     A positive yaw   is a rotation around Z, starting from +X and rotating towards +Y
+    #     A positive roll  is a rotation around X, starting from +Z and rotating towards +Y
+    #
+    # On the other hand, scipy defines a rotation around each axis according to the following conventions,
+    # which can be verified by manually inspecting the output of
+    # scipy.spatial.transform.Rotation.from_euler(...).as_matrix().
+    #     A rotation around X by theta radians is defined by the following matrix,
+    #         [[1 0 0  ]
+    #          [0 c -s ] 
+    #          [0 s c  ]], where c=cos(theta) and s=sin(theta)
+    #     A rotation around Y by theta radians is defined by the following matrix,
+    #         [[c  0 s ]
+    #          [0  1 0 ] 
+    #          [-s 0 c ]], where c=cos(theta) and s=sin(theta)
+    #     A rotation around Z by theta radians is defined by the following matrix,
+    #         [[c -s 0 ]
+    #          [s c  0 ] 
+    #          [0 0  1 ]], where c=cos(theta) and s=sin(theta)
+    #
+    # These conventions conflict. We therefore need to negate Unreal's pitch (rotation around Y) and roll
+    # (rotation around X) but not yaw (rotation around Z).
+    #
+    
+    pitch = np.deg2rad(-unreal_pyr[0])
+    yaw   = np.deg2rad(unreal_pyr[1])
+    roll  = np.deg2rad(-unreal_pyr[2])
+
+    #
+    # Unreal applies pitch-yaw-roll Euler angles in world-space in the following order, which can be
+    # verified by manual inspection the editor.
+    #     1. rotate around world-space X by roll degrees
+    #     2. rotate around world-space Y by pitch degrees
+    #     3. rotate around world-space Z by yaw degrees.
+    # 
+    # So we define our rotation matrix as follows,
+    #     R_x = np.matrix(scipy.spatial.transform.Rotation.from_euler("x", roll).as_matrix())
+    #     R_y = np.matrix(scipy.spatial.transform.Rotation.from_euler("y", pitch).as_matrix())
+    #     R_z = np.matrix(scipy.spatial.transform.Rotation.from_euler("z", yaw).as_matrix())
+    #     R   = R_z*R_y*R_x
+    # which is equivalent to the following expression,
+    #     R   = np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
+    #
+    
+    R = np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
+```
+
+Later,
+[`export_pipeline/compute_mujoco_representation.py`](export_pipeline/compute_mujoco_representation.py) converts it 
+back to the left-handed coordinate system (see the usage of `pose_rl_to_lh()`
+from [`export_pipeline/utils.py`](utils.py)). So finally, the scene appears flipped around one axis in the MuJoCo
+viewer because MuJoCo assumes a right-handed coordinate system.

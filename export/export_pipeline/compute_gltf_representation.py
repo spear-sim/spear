@@ -19,7 +19,7 @@ osp = os.path
 editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 editor_world = editor_subsystem.get_editor_world()
 
-ActorInformation = namedtuple('ActorInformation', ['static_meshes', 'moving', 'root_component_name', 'has_nontrivial_geometry'])
+ActorInformation = namedtuple('ActorInformation', ['static_meshes', 'simulate_physics', 'root_component_name', 'has_nontrivial_geometry'])
 MeshComponent = namedtuple('MeshComponent', ['decompose_method', 'merge_id'])
 PhysicsConstraint = namedtuple('PhysicsConstraint', ['parent', 'child', 'name', 'range', 'ref', 'axis', 'type'])
 
@@ -80,13 +80,13 @@ if __name__ == '__main__':
       continue
     
     if isinstance(actor, unreal.StaticMeshActor):
-      moving = actor.get_editor_property('static_mesh_component').get_editor_property('body_instance').get_editor_property('simulate_physics')
+      simulate_physics = actor.get_editor_property('static_mesh_component').get_editor_property('body_instance').get_editor_property('simulate_physics')
     else: # TODO(samarth) get the actual flag for the actuated body
-      moving = False
-    this_actor_information = ActorInformation({}, moving, actor.get_editor_property('root_component').get_name(), False)
+      simulate_physics = False
+    this_actor_information = ActorInformation({}, simulate_physics, actor.get_editor_property('root_component').get_name(), False)
     
     # check if actor has geometry
-    i = 0
+    i = 0  # can't use enumerate() because we conditionally increment
     for c in actor.get_components_by_class(unreal.StaticMeshComponent):
       c_name = c.get_name()
       static_mesh = c.get_editor_property('static_mesh')
@@ -99,17 +99,15 @@ if __name__ == '__main__':
         this_actor_information.has_nontrivial_geometry = True
         i += 1
 
-    export_meshes(actor, export_dir)
     actors_information[actor_name] = this_actor_information._asdict()
-    if not this_actor_information.has_nontrivial_geometry:
+    if this_actor_information.has_nontrivial_geometry:
+      export_meshes(actor, export_dir)
+    else:
       print(f'Actor {actor_name}, does not have geometry')
       continue
     
     constraint_dicts = []
-    for component in actor.get_components_by_class(unreal.ActorComponent):
-      if not isinstance(component, unreal.PhysicsConstraintComponent):
-        continue
-      
+    for component in actor.get_components_by_class(unreal.PhysicsConstraintComponent):
       r = component.get_editor_property('relative_rotation')
       rot = unreal.Rotator(r.roll, r.pitch, r.yaw)
       
@@ -175,7 +173,7 @@ if __name__ == '__main__':
       if n_prismatic_dofs > 1:
         raise Warning(f'{actor_name} has a multi-axis prismatic constraint')
       
-      # revolute joints
+      # revolute joints. The reason for choosing the axis is mentioned in README.md#coordinate-system
       n_revolute_dofs = 0
       cone_limit = constraint_profile.get_editor_property('cone_limit')
       pc_args = [parent, child, ]
@@ -203,7 +201,7 @@ if __name__ == '__main__':
           raise ValueError(f'{actor_name} already has {n_prismatic_dofs} prismatic joints')
         limit = cone_limit.get_editor_property('swing2_limit_degrees')
         offset = angular_offset.pitch
-        axis = unreal.Vector.RIGHT
+        axis = unreal.Vector.LEFT
         axis = axis.rotate(rot).normal()
         pc_args.extend([
           f'{component.get_name()}_y_revolute',
@@ -222,8 +220,6 @@ if __name__ == '__main__':
           raise ValueError(f'{actor_name} already has {n_prismatic_dofs} prismatic joints')
         limit = twist_limit.get_editor_property('twist_limit_degrees')
         offset = angular_offset.roll
-        # UE applied X rotations are right handed
-        # https://github.com/ethz-asl/unreal_airsim/blob/master/docs/coordinate_systems.md
         axis = unreal.Vector.BACKWARD
         axis = axis.rotate(rot).normal()
         pc_args.extend([
