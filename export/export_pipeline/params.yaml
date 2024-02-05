@@ -23,8 +23,8 @@ collision_representation:
     max_recursion_depth: 64
     # do not shrink wrap output to source mesh to better match the original mesh
     disable_shrink_wrap: False
-    # fill mode, 0 = floor, 1 = surface, 2 = raycast
-    fill_mode: 0
+    # fill mode, floor/surface/raycast
+    fill_mode: "floor"
     # maximum number of vertices in the output convex hull (the higher the greater the computation effort on the physics engine side)
     max_hull_vert_count: 512
     # do not run asynchronously
