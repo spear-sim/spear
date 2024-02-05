@@ -9,10 +9,10 @@ def name_in_names(name, names):
   return None
 
 
-def xyzquat_to_T(xyz, quat):
+def xyzquat_to_T(pos, quat):
     T = np.eye(4)
     T[:3, :3] = txq.quat2mat(quat)
-    T[:3,  3] = xyz
+    T[:3,  3] = pos
     return T
 
 
