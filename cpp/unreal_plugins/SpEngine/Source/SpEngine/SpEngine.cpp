@@ -12,8 +12,8 @@
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
 #include "CoreUtils/Unreal.h"
-//#include "SpEngine/EngineService.h"
-//#include "SpEngine/GameWorldService.h"
+#include "SpEngine/EngineService.h"
+#include "SpEngine/GameWorldService.h"
 
 // We would like to decouple the following entities as much as possible: the RPC server, the
 // EngineService and its various work queues, and all other services whose entry points are
@@ -45,8 +45,7 @@ void SpEngine::StartupModule()
     // We use a shared_ptr and not unique_ptr because we do not want the ownership of the rpc::server object to move to the EngineService class.
     // By not moving ownership to EngineService class, lifecycle of the rpc::server object depends on both EngineService class and SpEngine class.
     // (as both these classes would refer to the same object), and not on the EngineService class alone.
-    // Another reason is that we want to use the rpc::server object after creating EngineService class, and this would not be possbile if we use a
-    // unique_ptr.
+    // This is required as we want to use the rpc::server object (we call it's various member functions) after creating EngineService class.
     rpc_server_ = std::make_shared<rpc::server>(Config::get<std::string>("SIMULATION_CONTROLLER.IP"), Config::get<int>("SIMULATION_CONTROLLER.PORT"));
     SP_ASSERT(rpc_server_);
 
