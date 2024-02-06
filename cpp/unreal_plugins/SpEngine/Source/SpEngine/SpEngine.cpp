@@ -11,11 +11,9 @@
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
-#include "SpEngine/EngineService.h"
-#include "SpEngine/GameWorldService.h"
-
-// TODO (Rachith): Remove dependency on SimulationController plugin
-#include "SimulationController/RpcServer.h"
+#include "CoreUtils/Unreal.h"
+//#include "SpEngine/EngineService.h"
+//#include "SpEngine/GameWorldService.h"
 
 // We would like to decouple the following entities as much as possible: the RPC server, the
 // EngineService and its various work queues, and all other services whose entry points are
@@ -44,10 +42,12 @@ void SpEngine::StartupModule()
         return;
     }
 
-    // initialize RPC server
-    rpc_server_ = std::make_unique<RpcServer>(
-        Config::get<std::string>("SIMULATION_CONTROLLER.IP"),
-        Config::get<int>("SIMULATION_CONTROLLER.PORT"));
+    // We use a shared_ptr and not unique_ptr because we do not want the ownership of the rpc::server object to move to the EngineService class.
+    // By not moving ownership to EngineService class, lifecycle of the rpc::server object depends on both EngineService class and SpEngine class.
+    // (as both these classes would refer to the same object), and not on the EngineService class alone.
+    // Another reason is that we want to use the rpc::server object after creating EngineService class, and this would not be possbile if we use a
+    // unique_ptr.
+    rpc_server_ = std::make_shared<rpc::server>(Config::get<std::string>("SIMULATION_CONTROLLER.IP"), Config::get<int>("SIMULATION_CONTROLLER.PORT"));
     SP_ASSERT(rpc_server_);
 
     // EngineService needs its own custom logic for binding its entry points, because they are
@@ -55,11 +55,11 @@ void SpEngine::StartupModule()
     // are intended to run on work queues maintained by EngineService. So we pass in the server
     // when constructing EngineService, and we pass in EngineService when constructing all other
     // services.
-    engine_service_ = EngineService(&rpc_server_);
-    game_world_service_ = GameWorldService(&engine_service_);
+    engine_service_ = EngineService<rpc::server>(rpc_server_);
+    game_world_service_ = GameWorldService<EngineService<rpc::server>>(&engine_service_);
 
-    int num_worker_threads = 1;
-    rpc_server_->runAsync(num_worker_threads);
+    //int num_worker_threads = 1;
+    //rpc_server_->async_run(num_worker_threads);
 }
 
 void SpEngine::ShutdownModule()
@@ -69,6 +69,9 @@ void SpEngine::ShutdownModule()
     if (!Config::s_initialized_) {
         return;
     }
+
+    //rpc_server_->close_sessions();
+    //rpc_server_->stop();
 }
 
 IMPLEMENT_MODULE(SpEngine, SpEngine)

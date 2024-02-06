@@ -8,13 +8,13 @@
 
 template <typename T>
 concept CEntryPointBinder = requires(T engine_service){
-	engine_service.bind();
+	engine_service.bind("", "", []() {});
 };
 
 template<CEntryPointBinder TEntryPointBinder>
 class GameWorldService {
-	
-	GameWorldService() == delete;
+public:
+	GameWorldService() = default;
 	GameWorldService(TEntryPointBinder* entry_point_binder)
 	{
 		entry_point_binder_ = entry_point_binder;
@@ -22,5 +22,6 @@ class GameWorldService {
 		//entry_point_binder_->bind(...);
 	}
 
+private:
 	TEntryPointBinder* entry_point_binder_ = nullptr;
 };
