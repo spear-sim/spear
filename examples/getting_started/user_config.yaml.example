@@ -74,8 +74,3 @@ SIMULATION_CONTROLLER:
       IMAGE_HEIGHT: 512
       IMAGE_WIDTH: 512
       FOV: 90.0
-
-  VISUALIZER:
-    # ACTOR_NAME: "camera_actor" # uncomment when using SphereAgent
-    ACTOR_NAME: "vehicle_actor" # uncomment when using VehicleAgent
-    SPAWN_CAMERA: False

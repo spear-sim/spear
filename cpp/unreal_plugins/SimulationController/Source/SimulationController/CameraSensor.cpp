@@ -21,12 +21,12 @@
 #include <Materials/MaterialInstanceDynamic.h>
 #include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
 #include "SimulationController/BoostInterprocess.h"
+#include "SpCore/ArrayDesc.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 struct FColor;
 struct FLinearColor;
@@ -101,7 +101,7 @@ CameraSensor::CameraSensor(
 
         // create SceneCaptureComponent2D
         render_pass_desc.scene_capture_component_2d_ = 
-            Unreal::createSceneComponentOutsideOwnerConstructor<USceneCaptureComponent2D>(actor_, camera_component, "scene_capture_component_2d");
+            Unreal::createComponentOutsideOwnerConstructor<USceneCaptureComponent2D>(actor_, camera_component, "scene_capture_component_2d");
         SP_ASSERT(render_pass_desc.scene_capture_component_2d_);
         render_pass_desc.scene_capture_component_2d_->TextureTarget = texture_render_target_2d;
         render_pass_desc.scene_capture_component_2d_->FOVAngle = fov;
@@ -150,14 +150,12 @@ CameraSensor::CameraSensor(
         }
 
         // update render_pass_descs_
-        render_pass_descs_[render_pass_name] = std::move(render_pass_desc);
+        Std::insert(render_pass_descs_, render_pass_name, std::move(render_pass_desc));
     }
 }
 
 CameraSensor::~CameraSensor()
 {
-    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
-
     for (auto& render_pass_desc : render_pass_descs_) {
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
             #if BOOST_OS_MACOS || BOOST_OS_LINUX
@@ -176,15 +174,15 @@ std::map<std::string, ArrayDesc> CameraSensor::getObservationSpace() const
 {
     std::map<std::string, ArrayDesc> observation_space;
 
-    for (auto& render_pass_desc : render_pass_descs_) {
+    for (auto& [render_pass_name, render_pass_desc] : render_pass_descs_) {
         ArrayDesc array_desc;
-        array_desc.low_ = RENDER_PASS_LOW.at(render_pass_desc.first);
-        array_desc.high_ = RENDER_PASS_HIGH.at(render_pass_desc.first);
-        array_desc.shape_ = {render_pass_desc.second.height_, render_pass_desc.second.width_, RENDER_PASS_NUM_CHANNELS.at(render_pass_desc.first)};
-        array_desc.datatype_ = RENDER_PASS_CHANNEL_DATATYPE.at(render_pass_desc.first);
+        array_desc.low_ = RENDER_PASS_LOW.at(render_pass_name);
+        array_desc.high_ = RENDER_PASS_HIGH.at(render_pass_name);
+        array_desc.shape_ = {render_pass_desc.height_, render_pass_desc.width_, RENDER_PASS_NUM_CHANNELS.at(render_pass_name)};
+        array_desc.datatype_ = RENDER_PASS_CHANNEL_DATATYPE.at(render_pass_name);
         array_desc.use_shared_memory_ = Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY");
-        array_desc.shared_memory_name_ = render_pass_desc.second.shared_memory_name_;
-        observation_space["camera." + render_pass_desc.first] = std::move(array_desc);
+        array_desc.shared_memory_name_ = render_pass_desc.shared_memory_name_;
+        Std::insert(observation_space, "camera." + render_pass_name, std::move(array_desc));
     }
 
     return observation_space;
@@ -194,30 +192,30 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    for (auto& render_pass_desc : render_pass_descs_) {
+    for (auto& [render_pass_name, render_pass_desc] : render_pass_descs_) {
 
         void* dest_ptr = nullptr;
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
-            dest_ptr = render_pass_desc.second.shared_memory_mapped_region_.get_address();
+            dest_ptr = render_pass_desc.shared_memory_mapped_region_.get_address();
         } else {
-            observation["camera." + render_pass_desc.first] = {};
-            observation.at("camera." + render_pass_desc.first).resize(render_pass_desc.second.num_bytes_);
-            dest_ptr = observation.at("camera." + render_pass_desc.first).data();
+            Std::insert(observation, "camera." + render_pass_name, {});
+            observation.at("camera." + render_pass_name).resize(render_pass_desc.num_bytes_);
+            dest_ptr = observation.at("camera." + render_pass_name).data();
         }
         SP_ASSERT(dest_ptr);
 
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.READ_SURFACE_DATA")) {
             FTextureRenderTargetResource* texture_render_target_resource =
-                render_pass_desc.second.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
+                render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
             SP_ASSERT(texture_render_target_resource);
 
-            if (render_pass_desc.first == "final_color" || render_pass_desc.first == "segmentation") {
+            if (render_pass_name == "final_color" || render_pass_name == "segmentation") {
                 // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel, so it can be used to read
                 // the following ETextureRenderTargetFormat formats:
                 //     final_color:  RTF_RGBA8
                 //     segmentation: RTF_RGBA8_SRGB
                 texture_render_target_resource->ReadPixelsPtr(static_cast<FColor*>(dest_ptr));
-            } else if (render_pass_desc.first == "depth" || render_pass_desc.first == "normal") {
+            } else if (render_pass_name == "depth" || render_pass_name == "normal") {
                 // ReadLinearColorPixelsPtr assumes 4 channels per pixel, 4 bytes per channel, so it can be used
                 // to read the following ETextureRenderTargetFormat formats:
                 //     depth:  RTF_RGBA32f

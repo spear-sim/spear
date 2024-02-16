@@ -19,11 +19,11 @@
 #include <PhysicsEngine/PhysicsSettings.h>
 #include <UObject/UObjectGlobals.h> // NewObject
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
+#include "SpCore/ArrayDesc.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
 
 struct FActorComponentTickFunction;
 
@@ -96,14 +96,14 @@ std::map<std::string, ArrayDesc> ImuSensor::getObservationSpace() const
     array_desc.high_ = std::numeric_limits<double>::max();
     array_desc.datatype_ = DataType::Float64;
     array_desc.shape_ = {3};
-    observation_space["imu.linear_acceleration_body"] = std::move(array_desc);
+    Std::insert(observation_space, "imu.linear_acceleration_body", std::move(array_desc));
 
     // g_x, g_y, g_z in [rad/s]
     array_desc.low_ = std::numeric_limits<double>::lowest();
     array_desc.high_ = std::numeric_limits<double>::max();
     array_desc.datatype_ = DataType::Float64;
     array_desc.shape_ = {3};
-    observation_space["imu.angular_velocity_body"] = std::move(array_desc);
+    Std::insert(observation_space, "imu.angular_velocity_body", std::move(array_desc));
 
     return observation_space;
 }
@@ -112,15 +112,15 @@ std::map<std::string, std::vector<uint8_t>> ImuSensor::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
 
-    observation["imu.linear_acceleration_body"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+    Std::insert(observation, "imu.linear_acceleration_body", Std::reinterpretAsVector<uint8_t, double>({
         linear_acceleration_body_.X,
         linear_acceleration_body_.Y,
-        linear_acceleration_body_.Z});
+        linear_acceleration_body_.Z}));
 
-    observation["imu.angular_velocity_body"] = Std::reinterpretAs<uint8_t>(std::vector<double>{
+    Std::insert(observation, "imu.angular_velocity_body", Std::reinterpretAsVector<uint8_t, double>({
         angular_velocity_body_.X,
         angular_velocity_body_.Y,
-        angular_velocity_body_.Z});
+        angular_velocity_body_.Z}));
 
     return observation;
 }

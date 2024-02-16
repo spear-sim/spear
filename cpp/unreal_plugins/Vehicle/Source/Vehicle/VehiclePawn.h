@@ -11,7 +11,7 @@
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 #include <WheeledVehiclePawn.h>
 
-#include "CoreUtils/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h"
 
 #include "VehiclePawn.generated.h"
 
@@ -46,7 +46,7 @@ public:
     void setObservationComponents(const std::vector<std::string>& observation_components);
     std::map<std::string, ArrayDesc> getActionSpace() const;
     std::map<std::string, ArrayDesc> getObservationSpace() const;
-    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action);
+    void applyAction(std::map<std::string, std::vector<uint8_t>>& action);
     std::map<std::string, std::vector<uint8_t>> getObservation() const;
 
 private:

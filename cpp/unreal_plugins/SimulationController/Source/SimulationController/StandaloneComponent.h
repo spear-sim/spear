@@ -4,16 +4,17 @@
 
 #pragma once
 
-#include <type_traits> // is_base_of
+#include <concepts> // std::derived_from
 
+#include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Unreal.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Unreal.h"
 
-template <typename TComponent>
+template <CActorComponent TComponent>
 class StandaloneComponent
 {
 public:
@@ -24,14 +25,12 @@ public:
         actor_ = world->SpawnActor<AActor>();
         SP_ASSERT(actor_);
 
-        component_ = createComponent<std::is_base_of<USceneComponent, TComponent>::value>(actor_, actor_, name);
+        component_ = Unreal::createComponentOutsideOwnerConstructor<TComponent>(actor_, name);
         SP_ASSERT(component_);
     }
 
     ~StandaloneComponent()
     {
-        // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
-
         SP_ASSERT(component_);
         component_ = nullptr;
 
@@ -41,26 +40,5 @@ public:
     }
 
     TComponent* component_ = nullptr;
-
-private:
-    template <bool is_scene_component>
-    TComponent* createComponent(UObject* owner, AActor* parent, const std::string& name)
-    {
-        SP_ASSERT(false);
-        return nullptr;
-    }
-
-    template <>
-    TComponent* createComponent<true>(UObject* owner, AActor* parent, const std::string& name)
-    {
-        return Unreal::createSceneComponentOutsideOwnerConstructor<TComponent>(actor_, actor_, name);
-    }
-
-    template <>
-    TComponent* createComponent<false>(UObject* owner, AActor* parent, const std::string& name)
-    {
-        return Unreal::createComponentOutsideOwnerConstructor<TComponent>(actor_, name);
-    }
-
     AActor* actor_ = nullptr;
 };

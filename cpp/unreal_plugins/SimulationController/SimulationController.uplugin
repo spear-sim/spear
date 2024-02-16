@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "SimulationController",
-    "Description": "WARNING: The loading phases for {CoreUtils, SimulationController, UrdfRobot, Vehicle} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(UrdfRobot, Vehicle) < LoadingPhase(SimulationController)",
+    "Description": "WARNING: The loading phases for {SimulationController, SpCore, UrdfRobot, Vehicle} need to be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(UrdfRobot, Vehicle) < LoadingPhase(SimulationController)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -27,7 +27,7 @@
             "Enabled":  true
         },
         {
-            "Name": "CoreUtils",
+            "Name": "SpCore",
             "Enabled": true
         },
         {

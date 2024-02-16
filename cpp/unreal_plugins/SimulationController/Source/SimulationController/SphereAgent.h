@@ -13,11 +13,11 @@
 
 #include <Math/Rotator.h>
 
-#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/ClassRegistrationUtils.h"
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
+#include "SpCore/ArrayDesc.h"
 
 class AActor;
 class ACameraActor;
@@ -41,7 +41,7 @@ public:
     std::map<std::string, ArrayDesc> getObservationSpace() const override;
     std::map<std::string, ArrayDesc> getStepInfoSpace() const override;
 
-    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) override;
+    void applyAction(std::map<std::string, std::vector<uint8_t>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
 

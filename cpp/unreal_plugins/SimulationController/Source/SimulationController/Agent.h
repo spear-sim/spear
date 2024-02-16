@@ -10,8 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/ClassRegistrationUtils.h"
+#include "SpCore/ArrayDesc.h"
 
 class UWorld;
 
@@ -32,7 +32,7 @@ public:
     virtual std::map<std::string, ArrayDesc> getObservationSpace() const = 0;
     virtual std::map<std::string, ArrayDesc> getStepInfoSpace() const = 0;   
  
-    virtual void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) = 0;
+    virtual void applyAction(std::map<std::string, std::vector<uint8_t>>& action) = 0;
     virtual std::map<std::string, std::vector<uint8_t>> getObservation() const = 0;
     virtual std::map<std::string, std::vector<uint8_t>> getStepInfo() const = 0;
     

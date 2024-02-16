@@ -4,15 +4,15 @@
 
 using UnrealBuildTool;
 
-public class Vehicle : CommonModuleRules
+public class Vehicle : SpModuleRules
 {
     public Vehicle(ReadOnlyTargetRules target) : base(target)
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        // As a matter of convenience, it is possible to place most Unreal module dependencies in CommonModuleRules without
+        // As a matter of convenience, it is possible to place most Unreal module dependencies in SpModuleRules without
         // needing to make any changes to our uplugin files. The ChaosVehicles module is different. If we list ChaosVehicles
-        // in CommonModuleRules, then we must also list ChaosVehiclesPlugin in all of our uplugin files. To avoid this
+        // in SpModuleRules, then we must also list ChaosVehiclesPlugin in all of our uplugin files. To avoid this
         // unnecessary clutter, we only list ChaosVehicles in this Build.cs file, where it is actually needed. The
         // ChaosVehicles module is defined here:
         //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles
@@ -21,9 +21,9 @@ public class Vehicle : CommonModuleRules
         //     Engine/Source/Runtime/Experimental/ChaosVehicles/ChaosVehiclesCore
         //
         // But since ChaosVehiclesCore is defined in Engine/Source, rather than Engine/Plugins, we can list it in
-        // CommonModuleRules without needing to add clutter to our uplugin files.
+        // SpModuleRules without needing to add clutter to our uplugin files.
 
-        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "CoreUtils"});
+        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

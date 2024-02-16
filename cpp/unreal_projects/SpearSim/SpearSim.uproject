@@ -17,14 +17,6 @@
     ],
     "Plugins": [
         {
-            "Name": "CommonModuleRules",
-            "Enabled": true
-        },
-        {
-            "Name": "CoreUtils",
-            "Enabled": true
-        },
-        {
             "Name": "HDRIBackdrop",
             "Enabled": true
         },
@@ -34,6 +26,14 @@
         },
         {
             "Name": "SimulationController",
+            "Enabled": true
+        },
+        {
+            "Name": "SpCore",
+            "Enabled": true
+        },
+        {
+            "Name": "SpModuleRules",
             "Enabled": true
         },
         {

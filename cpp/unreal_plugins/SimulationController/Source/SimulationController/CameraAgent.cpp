@@ -20,12 +20,12 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
+#include "SpCore/ArrayDesc.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 struct FHitResult;
 
@@ -104,7 +104,7 @@ std::map<std::string, ArrayDesc> CameraAgent::getActionSpace() const
         array_desc.high_ = std::numeric_limits<float>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
-        action_space["set_location"] = std::move(array_desc);
+        Std::insert(action_space, "set_location", std::move(array_desc));
     }
 
     if (Std::contains(action_components, "set_rotation")) {
@@ -113,7 +113,7 @@ std::map<std::string, ArrayDesc> CameraAgent::getActionSpace() const
         array_desc.high_ = std::numeric_limits<float>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
-        action_space["set_rotation"] = std::move(array_desc);
+        Std::insert(action_space, "set_rotation", std::move(array_desc));
     }
 
     return action_space;
@@ -125,7 +125,7 @@ std::map<std::string, ArrayDesc> CameraAgent::getObservationSpace() const
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
-        observation_space.merge(camera_sensor_->getObservationSpace());
+        Std::insert(observation_space, camera_sensor_->getObservationSpace());
     }
 
     return observation_space;
@@ -136,21 +136,21 @@ std::map<std::string, ArrayDesc> CameraAgent::getStepInfoSpace() const
     return {};
 }
 
-void CameraAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
+void CameraAgent::applyAction(std::map<std::string, std::vector<uint8_t>>& action)
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_location")) {
-        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_location"));
+        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("set_location"));
         bool sweep = false;
         FHitResult* hit_result = nullptr;
         camera_actor_->SetActorLocation(
-            {action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)}, sweep, hit_result, ETeleportType::ResetPhysics);
+            {Std::at(action_component_data, 0), Std::at(action_component_data, 1), Std::at(action_component_data, 2)}, sweep, hit_result, ETeleportType::ResetPhysics);
     }
 
     if (Std::contains(action_components, "set_rotation")) {
-        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_rotation"));
-        camera_actor_->SetActorRotation({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)}, ETeleportType::ResetPhysics);
+        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("set_rotation"));
+        camera_actor_->SetActorRotation({Std::at(action_component_data, 0), Std::at(action_component_data, 1), Std::at(action_component_data, 2)}, ETeleportType::ResetPhysics);
     }
 }
 
@@ -160,7 +160,7 @@ std::map<std::string, std::vector<uint8_t>> CameraAgent::getObservation() const
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
-        observation.merge(camera_sensor_->getObservation());
+        Std::insert(observation, camera_sensor_->getObservation());
     }
 
     return observation;

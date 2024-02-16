@@ -19,12 +19,12 @@
 #include <UObject/UObjectGlobals.h> // FObjectInitializer
 #include <WheeledVehiclePawn.h>
 
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/InputActionComponent.h"
-#include "CoreUtils/Log.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/InputActionComponent.h"
+#include "SpCore/Log.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 #include "Vehicle/VehicleMovementComponent.h"
 
 const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_INPUT_ACTIONS = {
@@ -93,7 +93,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         aspect_ratio = 1.333333f;
     }
 
-    CameraComponent = Unreal::createSceneComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera_component");
+    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera_component");
     SP_ASSERT(CameraComponent);
     CameraComponent->SetRelativeLocationAndRotation(camera_location, camera_rotation);
     CameraComponent->bUsePawnControlRotation = false;
@@ -118,7 +118,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         imu_rotation = FRotator::ZeroRotator;
     }
 
-    ImuComponent = Unreal::createSceneComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu_component");
+    ImuComponent = Unreal::createComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu_component");
     SP_ASSERT(ImuComponent);
     ImuComponent->SetRelativeLocationAndRotation(imu_location, imu_rotation);
 
@@ -127,7 +127,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     SP_ASSERT(MovementComponent);
 
     // UInputActionComponent
-    input_action_component_ = Unreal::createSceneComponentInsideOwnerConstructor<UInputActionComponent>(this, GetMesh(), "input_action_component");
+    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, GetMesh(), "input_action_component");
     SP_ASSERT(input_action_component_);
 }
 
@@ -163,7 +163,7 @@ void AVehiclePawn::BeginPlay()
         input_actions = DEFAULT_INPUT_ACTIONS;
     }
 
-    input_action_component_->bindInputActions(input_actions);
+    input_action_component_->bindInputActions(Std::keys(input_actions));
     input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
         applyAction(input_actions.at(key));
     };
@@ -189,7 +189,7 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getActionSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {4};
         array_desc.datatype_ = DataType::Float64;
-        action_space["set_brake_torques"] = std::move(array_desc);
+        Std::insert(action_space, "set_brake_torques", std::move(array_desc));
     }
 
     if (Std::contains(action_components_, "set_drive_torques")) {
@@ -198,7 +198,7 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getActionSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {4};
         array_desc.datatype_ = DataType::Float64;
-        action_space["set_drive_torques"] = std::move(array_desc);
+        Std::insert(action_space, "set_drive_torques", std::move(array_desc));
     }
 
     return action_space;
@@ -214,7 +214,7 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {3};
-        observation_space["location"] = std::move(array_desc); // x, y, z in [cm] of the agent relative to the world frame
+        Std::insert(observation_space, "location", std::move(array_desc)); // x, y, z in [cm] of the agent relative to the world frame
     }
 
     if (Std::contains(observation_components_, "rotation")) {
@@ -223,7 +223,7 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {3};
-        observation_space["rotation"] = std::move(array_desc); // pitch, yaw, roll in [deg] of the agent relative to the world frame
+        Std::insert(observation_space, "rotation", std::move(array_desc)); // pitch, yaw, roll in [deg] of the agent relative to the world frame
     }
 
     if (Std::contains(observation_components_, "wheel_rotation_speeds")) {
@@ -232,33 +232,33 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
         array_desc.shape_ = {4};
-        observation_space["wheel_rotation_speeds"] = std::move(array_desc); // FL, FR, RL, RR in [rad/s]
+        Std::insert(observation_space, "wheel_rotation_speeds", std::move(array_desc)); // FL, FR, RL, RR in [rad/s]
     }
 
     return observation_space;
 }
 
-void AVehiclePawn::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
+void AVehiclePawn::applyAction(std::map<std::string, std::vector<uint8_t>>& action)
 {
     // Apply torques in [N.m] to the vehicle wheels. The torques are persistent, i.e., if you call SetDriveTorque,
     // the torque will remain in effect until you call SetDriveTorque again.
 
     if (Std::contains(action_components_, "set_brake_torques")) {
         SP_ASSERT(Std::containsKey(action, "set_brake_torques"));
-        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_brake_torques"));
-        MovementComponent->SetBrakeTorque(action_component_data.at(0), 0);
-        MovementComponent->SetBrakeTorque(action_component_data.at(1), 1);
-        MovementComponent->SetBrakeTorque(action_component_data.at(2), 2);
-        MovementComponent->SetBrakeTorque(action_component_data.at(3), 3);
+        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("set_brake_torques"));
+        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 0), 0);
+        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 1), 1);
+        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 2), 2);
+        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 3), 3);
     }
 
     if (Std::contains(action_components_, "set_drive_torques")) {
         SP_ASSERT(Std::containsKey(action, "set_drive_torques"));
-        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("set_drive_torques"));
-        MovementComponent->SetDriveTorque(action_component_data.at(0), 0);
-        MovementComponent->SetDriveTorque(action_component_data.at(1), 1);
-        MovementComponent->SetDriveTorque(action_component_data.at(2), 2);
-        MovementComponent->SetDriveTorque(action_component_data.at(3), 3);
+        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("set_drive_torques"));
+        MovementComponent->SetDriveTorque(Std::at(action_component_data, 0), 0);
+        MovementComponent->SetDriveTorque(Std::at(action_component_data, 1), 1);
+        MovementComponent->SetDriveTorque(Std::at(action_component_data, 2), 2);
+        MovementComponent->SetDriveTorque(Std::at(action_component_data, 3), 3);
     }
 }
 
@@ -268,16 +268,16 @@ std::map<std::string, std::vector<uint8_t>> AVehiclePawn::getObservation() const
 
     if (Std::contains(observation_components_, "location")) {
         FVector location = GetActorLocation();
-        observation["location"] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+        Std::insert(observation, "location", Std::reinterpretAsVector<uint8_t, double>({location.X, location.Y, location.Z}));
     }
 
     if (Std::contains(observation_components_, "rotation")) {
         FRotator rotation = GetActorRotation();
-        observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.Pitch, rotation.Yaw, rotation.Roll});
+        Std::insert(observation, "rotation", Std::reinterpretAsVector<uint8_t, double>({rotation.Pitch, rotation.Yaw, rotation.Roll}));
     }
 
     if (Std::contains(observation_components_, "wheel_rotation_speeds")) {
-        observation["wheel_rotation_speeds"] = Std::reinterpretAs<uint8_t>(MovementComponent->getWheelRotationSpeeds());
+        Std::insert(observation, "wheel_rotation_speeds", Std::reinterpretAsVectorOf<uint8_t>(MovementComponent->getWheelRotationSpeeds()));
     }
 
     return observation;
