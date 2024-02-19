@@ -91,8 +91,9 @@ def get_editor_property_descs(uobject, ignore=[]):
         if is_editor_property:
             editor_property_descs[candidate_editor_property_name] = get_editor_property_desc(editor_property)
 
-    # Get all editor properties in our CSV file that match the uobjects's class and base classes.
-    uobject_classes = [uobject.__class__.__name__] + [ base_class.__name__ for base_class in uobject.__class__.__bases__ ][::-1]
+    # Get all editor properties in our CSV file that match the uobjects's class and base classes. We reverse
+    # uobject.__class__.__bases__ to get it in base-to-derived order.
+    uobject_classes = [uobject.__class__.__name__] + [ base_class.__name__ for base_class in uobject.__class__.__bases__[::-1] ]
     editor_property_names = set()
     for uobject_class in uobject_classes:
         editor_property_names = editor_property_names | set(df_editor_properties.loc[df_editor_properties["class"] == uobject_class]["editor_property"])
@@ -169,7 +170,7 @@ def get_debug_string_actor(actor):
 
 
 def get_debug_string_component(component):
-    parent_components = list(component.get_parent_components())[::-1]
+    parent_components = list(component.get_parent_components())[::-1] # reverse to get parent_components in root-to-leaf order
     if len(parent_components) == 0:
         return component.get_name()
     else:
