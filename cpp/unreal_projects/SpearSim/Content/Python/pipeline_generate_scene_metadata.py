@@ -112,6 +112,13 @@ def get_editor_property_desc(editor_property):
 
     editor_property_class = editor_property.__class__.__name__
 
+    # Occasionally an editor property will refer to an Unreal class (e.g., the NavArea_Null class). But
+    # in this case, the class name will be "Class", which is uninformative. So in this case, we fall back
+    # to Python's default string representation for the object, which will be something like:
+    #     <Object '/Script/NavigationSystem.NavArea_Null' (0x00000B01AE68BB80) Class 'Class'>
+    if editor_property_class == "Class":
+        editor_property_class = str(editor_property)
+
     # If the editor property is an Actor, then do not return any editor properties to avoid an infinite
     # recursion. If users want to obtain the editor properties for an Actor, they must call
     # get_editor_property_descs(...).
