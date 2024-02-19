@@ -11,28 +11,29 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
 args = parser.parse_args()
 
-unreal_paths = unreal.Paths()
-editor_properties_csv_file = os.path.realpath(os.path.join(unreal_paths.project_content_dir(), "Python", "editor_properties.csv"))
+editor_properties_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "editor_properties.csv"))
 df_editor_properties = pd.read_csv(editor_properties_csv_file)
 
 
 def process_scene():
-    global args
 
     editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-
     editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
+
+    spear.log("Exporting Unreal scene to JSON: " + editor_world_name)
 
     actors = editor_actor_subsystem.get_all_level_actors()
     actors = sorted(actors, key=lambda actor: get_debug_string_actor(actor))
     actor_descs = { get_debug_string_actor(actor): get_actor_desc(actor) for actor in actors }
 
-    metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "scene_metadata"))
-    metadata_json_file = os.path.realpath(os.path.join(metadata_dir, "outliner.json"))
+    unreal_scene_json_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_scene_json"))
+    unreal_scene_json_file = os.path.realpath(os.path.join(unreal_scene_json_dir, "unreal_scene.json"))
 
-    os.makedirs(metadata_dir, exist_ok=True)
-    with open(metadata_json_file, "w") as f:
+    spear.log("Generating JSON file: " + unreal_scene_json_file)
+
+    os.makedirs(unreal_scene_json_dir, exist_ok=True)
+    with open(unreal_scene_json_file, "w") as f:
         json.dump(actor_descs, f, indent=4, sort_keys=True)
 
     spear.log("Done.")
@@ -43,7 +44,7 @@ def get_actor_desc(actor):
     actor_class = actor.__class__.__name__
 
     # Ignore root_component when getting all of the editor properties for this actor, because we will
-    # get the actor's component hierarchy separately.
+    # retrieve the actor's component hierarchy separately.
     editor_property_descs = get_editor_property_descs(actor, ignore=["root_component"])
 
     # It is possible for an actor not to have a root component.
@@ -79,7 +80,7 @@ def get_editor_property_descs(uobject, ignore=[]):
 
     editor_property_descs = {}
 
-    # Guess-and-check all Python attributes.
+    # Guess-and-check all Python attributes, get corresponding editor property descs.
     candidate_editor_property_names = set(dir(uobject))
     for candidate_editor_property_name in candidate_editor_property_names:
         is_editor_property = False
