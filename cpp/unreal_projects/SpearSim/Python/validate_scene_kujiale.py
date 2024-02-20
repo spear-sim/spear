@@ -7,6 +7,7 @@ import spear
 
 
 def validate_level(level):
+
     #
     # TODO:
     # We name each scene using a lower_case_with_underscore naming convention and a four
@@ -17,6 +18,7 @@ def validate_level(level):
 
 
 def validate_content_browser(level):
+
     #
     # TODO:
     # There should be exactly one umap file with the same name as the scene in the scene's
@@ -33,6 +35,7 @@ def validate_content_browser(level):
 
 
 def validate_outliner(level, iterate_all_actors):
+
     editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 
     actors = editor_actor_subsystem.get_selected_level_actors()
@@ -46,6 +49,7 @@ def validate_outliner(level, iterate_all_actors):
 
 
 def validate_actor(level, actor):
+
     #
     # Actors that are useful for debugging are kept here.
     #
@@ -207,6 +211,7 @@ def validate_actor(level, actor):
 
 
 def validate_meshes_actor(level, actor):
+
     if len(actor.get_components_by_class(unreal.PhysicsConstraintComponent)) == 0:
         spear.log("WARNING: Expected physics constraint: ", get_debug_string_actor(actor))
         return
@@ -224,6 +229,7 @@ def validate_meshes_actor(level, actor):
 
 
 def validate_meshes_static_mesh_actor(level, actor):
+
     if len(actor.get_components_by_class(unreal.PhysicsConstraintComponent)) != 0:
         spear.log("WARNING: Unexpected physics constraint: ", get_debug_string_actor(actor))
         return
@@ -237,6 +243,7 @@ def validate_meshes_static_mesh_actor(level, actor):
 
 
 def validate_light_component(level, actor, component):
+
     if len(component.get_parent_components()) == 0:
         spear.log("WARNING: Unexpected component: ", get_debug_string_actor(actor), ".", component)
         return
@@ -257,6 +264,7 @@ def validate_light_component(level, actor, component):
 
 
 def validate_physics_constraint_component(level, actor, component):
+
     if len(component.get_parent_components()) == 0:
         spear.log("WARNING: Unexpected component: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
         return
@@ -323,6 +331,7 @@ def validate_physics_constraint_component(level, actor, component):
 
 
 def validate_scene_component(level, actor, component):
+
     #
     # Each Actor has a root component named "DefaultSceneRoot".
     #
@@ -337,6 +346,7 @@ def validate_scene_component(level, actor, component):
 
 
 def validate_static_mesh_component(level, actor, component):
+    
     #
     # For each StaticMeshComponent, the "Collision Presets" option should be set to
     # "Default". This configures the collision behavior of the component to be
@@ -415,7 +425,7 @@ def validate_static_mesh_component(level, actor, component):
                     get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_static_mesh(static_mesh), ")")
                 return
             static_mesh_path = pathlib.PurePosixPath(static_mesh.get_path_name()).parts
-            if static_mesh_path != ("Game", "Common", "Meshes", "SM_Dummy.SM_Dummy"):
+            if static_mesh_path != ("/", "Game", "Common", "Meshes", "SM_Dummy.SM_Dummy"):
                 spear.log(
                     "WARNING: Unexpected static mesh: ",
                     get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_static_mesh(static_mesh), ")")
@@ -502,16 +512,15 @@ def validate_static_mesh_component(level, actor, component):
                     get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_material(material), ")")
                 return
 
-            material_path = pathlib.PurePosixPath(material.get_path_name()).parts
-            if len(material_path) < 4:
+            mp = pathlib.PurePosixPath(material.get_path_name()).parts
+
+            if len(mp) < 4:
                 spear.log(
                     "WARNING: Unexpected material path: ",
                     get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_material(material), ")")
                 return
 
-            if material_path[0:5] != ("/", "Game", "Scenes", level, "Materials") and \
-                    material_path[0:3] != ("/", "Game", "Megascans") and \
-                    material_path[0:4] != ("/", "Game", "Kujiale", "Materials"):
+            if mp[0:5] != ("/", "Game", "Scenes", level, "Materials") and mp[0:3] != ("/", "Game", "Megascans") and mp[0:4] != ("/", "Game", "Kujiale", "Materials"):
                 spear.log(
                     "WARNING: Unexpected material path: ",
                     get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_material(material), ")")
@@ -519,14 +528,14 @@ def validate_static_mesh_component(level, actor, component):
 
             base_material = material.get_base_material()
             if base_material.get_name() == "M_BaseMaterial":
-                if material_path[-1] != "M_BaseMaterial.M_BaseMaterial" and not material_path[-1].startswith("MI_"):
+                if mp[-1] != "M_BaseMaterial.M_BaseMaterial" and not mp[-1].startswith("MI_"):
                     spear.log(
                         "WARNING: Unexpected material path: ",
                         get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_material(material), ")")
                     return
 
             if base_material.get_name() == "M_TranslucentMaterial":
-                if material_path[-1] != "M_TranslucentMaterial.M_TranslucentMaterial" and not material_path[-1].startswith("MI_"):
+                if mp[-1] != "M_TranslucentMaterial.M_TranslucentMaterial" and not mp[-1].startswith("MI_"):
                     spear.log(
                         "WARNING: Unexpected material path: ",
                         get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_material(material), ")")

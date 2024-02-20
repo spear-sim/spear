@@ -11,14 +11,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
 args = parser.parse_args()
 
-editor_properties_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "editor_properties.csv"))
-df_editor_properties = pd.read_csv(editor_properties_csv_file)
+editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 
 
 def process_scene():
 
-    editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
     editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
 
     spear.log("Exporting Unreal scene to JSON: " + editor_world_name)
@@ -42,6 +40,7 @@ def process_scene():
 def get_actor_desc(actor):
 
     actor_class = actor.__class__.__name__
+    debug_string = str(actor)
 
     # Ignore root_component when getting all of the editor properties for this actor, because we will
     # retrieve the actor's component hierarchy separately.
@@ -54,19 +53,23 @@ def get_actor_desc(actor):
     else:
         root_component_desc = {get_debug_string_component(root_component): get_component_desc(root_component)}
 
-    return {"class": actor_class, "editor_properties": editor_property_descs, "root_component": root_component_desc}
+    return {"class": actor_class, "debug_string": debug_string, "editor_properties": editor_property_descs, "root_component": root_component_desc}
 
 
 def get_component_desc(component):
     component_class = component.__class__.__name__
+    debug_string = str(component)
     editor_property_descs = get_editor_property_descs(component)
     children_component_descs = { get_debug_string_component(c): get_component_desc(c) for c in component.get_children_components(include_all_descendants=False) }
-    return {"class": component_class, "editor_properties": editor_property_descs, "children_components": children_component_descs}
+    return {"class": component_class, "debug_string": debug_string, "editor_properties": editor_property_descs, "children_components": children_component_descs}
 
 
 def get_editor_property_descs(uobject, ignore=[]):
 
     assert "get_editor_property" in dir(uobject)
+
+    uobject_attributes = dir(uobject)
+    uobject_class_names = [uobject.__class__.__name__] + [ base_class.__name__ for base_class in uobject.__class__.__bases__[::-1] ] # base-to-derived order
 
     # The Unreal Python interface does not provide a mechanism to iterate over editor properties directly,
     # so we use the fact that most editor properties are exposed as Python attributes, and iterate over
@@ -78,32 +81,27 @@ def get_editor_property_descs(uobject, ignore=[]):
     # maintain a CSV file with a list of editor properties for various classes of interest. We populate
     # the CSV file by manually copying and pasting from the Unreal documentation.
 
-    editor_property_descs = {}
+    editor_property_names = set()
 
-    # Guess-and-check all Python attributes, get corresponding editor property descs.
-    candidate_editor_property_names = set(dir(uobject))
-    for candidate_editor_property_name in candidate_editor_property_names:
+    # Guess-and-check all Python attributes.
+    for uobject_attribute in dir(uobject_attributes):
         is_editor_property = False
         try:
-            editor_property = uobject.get_editor_property(candidate_editor_property_name)
+            editor_property = uobject.get_editor_property(uobject_attribute)
             is_editor_property = True
         except:
             pass
         if is_editor_property:
-            editor_property_descs[candidate_editor_property_name] = get_editor_property_desc(editor_property)
+            editor_property_names = editor_property_names | {uobject_attribute}
 
-    # Get all editor properties in our CSV file that match the uobjects's class and base classes. We reverse
-    # uobject.__class__.__bases__ to get it in base-to-derived order.
-    uobject_classes = [uobject.__class__.__name__] + [ base_class.__name__ for base_class in uobject.__class__.__bases__[::-1] ]
-    editor_property_names = set()
-    for uobject_class in uobject_classes:
-        editor_property_names = editor_property_names | set(df_editor_properties.loc[df_editor_properties["class"] == uobject_class]["editor_property"])
-
-    # Remove Python attributes because we checked them already.
-    editor_property_names = editor_property_names.difference(candidate_editor_property_names)
+    # Get all editor properties in our CSV file that match the uobjects's class and its base classes.
+    for uobject_class_name in uobject_class_names:
+        editor_property_names = editor_property_names | set(df_editor_properties.loc[df_editor_properties["class"] == uobject_class_name]["editor_property"])
 
     # Get editor property descs.
+    editor_property_descs = dict()
     for editor_property_name in editor_property_names:
+        print(uobject, editor_property_name)
         editor_property = uobject.get_editor_property(editor_property_name)
         editor_property_descs[editor_property_name] = get_editor_property_desc(editor_property)
 
@@ -113,39 +111,33 @@ def get_editor_property_descs(uobject, ignore=[]):
 def get_editor_property_desc(editor_property):
 
     editor_property_class = editor_property.__class__.__name__
-
-    # Occasionally an editor property will refer to an Unreal class (e.g., the NavArea_Null class). But
-    # in this case, the class name will be "Class", which is uninformative. So in this case, we fall back
-    # to Python's default string representation for the object, which will be something like:
-    #     <Object '/Script/NavigationSystem.NavArea_Null' (0x00000B01AE68BB80) Class 'Class'>
-    if editor_property_class == "Class":
-        editor_property_class = str(editor_property)
+    debug_string = str(editor_property)
 
     # If the editor property is an Actor, then do not return any editor properties to avoid an infinite
     # recursion. If users want to obtain the editor properties for an Actor, they must call
     # get_editor_property_descs(...).
     if isinstance(editor_property, unreal.Actor):
-        actor_name = get_debug_string_actor(editor_property)
-        return {"class": editor_property_class, "editor_properties": "...", "name": actor_name}
+        name = get_debug_string_actor(editor_property)
+        return {"class": editor_property_class, "debug_string": debug_string, "editor_properties": "...", "name": name}
 
     # Otherwise, if the editor property is an ActorComponent, then do not return any editor properties
     # to avoid an infinite recursion. If users want to obtain the editor properties for an Actor, they
     # must call get_editor_property_descs(...).
     elif isinstance(editor_property, unreal.ActorComponent):
-        component_name = get_debug_string_component(editor_property)        
-        return {"class": editor_property_class, "editor_properties": "...", "name": component_name}
+        name = get_debug_string_component(editor_property)
+        return {"class": editor_property_class, "debug_string": debug_string, "editor_properties": "...", "name": name}
 
     # Otherwise, if the editor property is an Unreal object, then recurse via get_editor_property_descs(...)
     # and return a dict of the form {"class": ..., "editor_properties": ...}.
     elif isinstance(editor_property, unreal.Object):
         editor_property_descs = get_editor_property_descs(editor_property)
-        return {"class": editor_property_class, "editor_properties": editor_property_descs}
+        return {"class": editor_property_class, "debug_string": debug_string, "editor_properties": editor_property_descs}
 
     # Otherwise, if the editor property is an Unreal struct, then recurse via get_editor_property_descs(...)
     # and return a dict of the form {"class": ..., "editor_properties": ...}.
     elif isinstance(editor_property, unreal.StructBase):
         editor_property_descs = get_editor_property_descs(editor_property)
-        return {"class": editor_property_class, "editor_properties": editor_property_descs}
+        return {"class": editor_property_class, "debug_string": debug_string, "editor_properties": editor_property_descs}
 
     # Otherwise, if the editor property is an Unreal object, then recurse via get_editor_property_desc(...)
     # and return a list.
@@ -157,9 +149,9 @@ def get_editor_property_desc(editor_property):
     else:
         try:
             json.dumps(editor_property)
-            return editor_property # if the value if serializable as JSON, then return the object
+            return editor_property
         except:
-            return str(editor_property) # otherwise return the string representation of the object
+            return str(editor_property)
 
 
 def get_debug_string_actor(actor):
