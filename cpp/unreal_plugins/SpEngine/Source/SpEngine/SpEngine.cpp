@@ -4,13 +4,14 @@
 
 #include "SpEngine/SpEngine.h"
 
-#include <memory> // std::make_unique, std::unique_ptr
+#include <memory>                  // std::make_unique, std::unique_ptr
 
 #include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
 #include "CoreUtils/Assert.h"
 #include "CoreUtils/Config.h"
 #include "CoreUtils/Log.h"
+#include "CoreUtils/Rpclib.h"
 #include "CoreUtils/Unreal.h"
 #include "SpEngine/EngineService.h"
 #include "SpEngine/GameWorldService.h"
@@ -42,11 +43,7 @@ void SpEngine::StartupModule()
         return;
     }
 
-    // We use a shared_ptr and not unique_ptr because we do not want the ownership of the rpc::server object to move to the EngineService class.
-    // By not moving ownership to EngineService class, lifecycle of the rpc::server object depends on both EngineService class and SpEngine class.
-    // (as both these classes would refer to the same object), and not on the EngineService class alone.
-    // This is required as we want to use the rpc::server object (we call it's various member functions) after creating EngineService class.
-    rpc_server_ = std::make_shared<rpc::server>(Config::get<std::string>("SIMULATION_CONTROLLER.IP"), Config::get<int>("SIMULATION_CONTROLLER.PORT"));
+    rpc_server_ = std::make_unique<rpc::server>(Config::get<int>("SIMULATION_CONTROLLER.PORT"));
     SP_ASSERT(rpc_server_);
 
     // EngineService needs its own custom logic for binding its entry points, because they are
@@ -54,8 +51,8 @@ void SpEngine::StartupModule()
     // are intended to run on work queues maintained by EngineService. So we pass in the server
     // when constructing EngineService, and we pass in EngineService when constructing all other
     // services.
-    engine_service_ = EngineService<rpc::server>(rpc_server_);
-    game_world_service_ = GameWorldService<EngineService<rpc::server>>(&engine_service_);
+    engine_service_ = EngineService<rpc::server>(rpc_server_.get());
+    game_world_service_ = GameWorldService(&engine_service_);
 
     //int num_worker_threads = 1;
     //rpc_server_->async_run(num_worker_threads);

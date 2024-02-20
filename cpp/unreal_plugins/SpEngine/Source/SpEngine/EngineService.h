@@ -4,18 +4,18 @@
 
 #pragma once
 
-#include "CoreUtils/Rpclib.h"
+//#include "SpEngine/WorkQueue.h"
 
-template <typename T>
-concept CBasicEntryPointBinder = requires(T rpc_server) {
-    rpc_server.bind("dummy", []() {});
+template <typename TBasicEntryPointBinder>
+concept CBasicEntryPointBinder = requires(TBasicEntryPointBinder basic_entry_point_binder) {
+    basic_entry_point_binder.bind("", []() -> void {});
 };
 
 template <CBasicEntryPointBinder TBasicEntryPointBinder>
 class EngineService {
 public:
     EngineService() = default;
-    EngineService(std::shared_ptr<TBasicEntryPointBinder> basic_entry_point_binder)
+    EngineService(TBasicEntryPointBinder* basic_entry_point_binder)
     {
         basic_entry_point_binder_ = basic_entry_point_binder;
     }
@@ -37,6 +37,11 @@ public:
         //        &current_work_queue_));
     }
 
+    ~EngineService()
+    {
+        basic_entry_point_binder_ = nullptr;
+    }
+
 private:
-    std::shared_ptr<TBasicEntryPointBinder> basic_entry_point_binder_ = nullptr;
+    TBasicEntryPointBinder* basic_entry_point_binder_ = nullptr;
 };

@@ -4,24 +4,17 @@
 
 #pragma once
 
-#include "SpEngine/EngineService.h"
 
-template <typename T>
-concept CEntryPointBinder = requires(T engine_service){
-	engine_service.bind("", "", []() {});
+template <typename TEntryPointBinder>
+concept CEntryPointBinder = requires(TEntryPointBinder entry_point_binder){
+	{ entry_point_binder.bind("", "", []() -> void {}) } -> std::same_as<void>;
 };
 
-template<CEntryPointBinder TEntryPointBinder>
 class GameWorldService {
 public:
 	GameWorldService() = default;
-	GameWorldService(TEntryPointBinder* entry_point_binder)
+	GameWorldService(CEntryPointBinder auto* entry_point_binder)
 	{
-		entry_point_binder_ = entry_point_binder;
-
 		//entry_point_binder_->bind(...);
 	}
-
-private:
-	TEntryPointBinder* entry_point_binder_ = nullptr;
 };

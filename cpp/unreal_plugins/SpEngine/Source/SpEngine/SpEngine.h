@@ -8,6 +8,7 @@
 
 #include <Modules/ModuleInterface.h>
 
+#include "CoreUtils/Rpclib.h"
 #include "SpEngine/EngineService.h"
 #include "SpEngine/GameWorldService.h"
 
@@ -18,7 +19,7 @@ public:
     void ShutdownModule() override;
 
 private:
-    std::shared_ptr<rpc::server> rpc_server_ = nullptr;
+    std::unique_ptr<rpc::server> rpc_server_ = nullptr;
     EngineService<rpc::server> engine_service_;
-    GameWorldService<EngineService<rpc::server>> game_world_service_;
+    GameWorldService game_world_service_;
 };
