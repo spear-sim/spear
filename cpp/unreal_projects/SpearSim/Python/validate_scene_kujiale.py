@@ -4,6 +4,7 @@ import pathlib
 import posixpath
 import unreal
 import spear
+import spear.unreal
 
 
 def validate_level(level):
@@ -546,34 +547,20 @@ def vector_to_array(vector):
     return np.array([vector.x, vector.y, vector.z])
 
 
-# Unlike the default ActorComponent.get_parent_components() function, this function returns parent components in root-to-leaf order.
-def get_parent_components(component):
-    c = component
-    parents = []
-    while c.get_attach_parent() is not None:
-        c = c.get_attach_parent()
-        parents = [c] + parents
-    return parents
-
+def get_debug_string_type(type):
+    return type.__name__
 
 def get_debug_string_static_mesh(static_mesh):
     return static_mesh.get_path_name()
 
-
 def get_debug_string_material(material):
     return material.get_path_name()
 
-
 def get_debug_string_component(component):
-    return ".".join([c.get_name() for c in get_parent_components(component)]) + "." + component.get_name()
-
-
-def get_debug_string_type(type):
-    return type.__name__
-
+    return spear.unreal.get_stable_name_component(component, include_actor=False)
 
 def get_debug_string_actor(actor):
-    return str(actor.get_folder_path()) + posixpath.sep + actor.get_actor_label()
+    return spear.unreal.get_stable_name_actor(actor)
 
 
 if __name__ == "__main__":

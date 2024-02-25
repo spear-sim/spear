@@ -44,7 +44,6 @@ z_axis_world = np.array([[0.0,   0.0,   100.0]])
 
 # Swap y and z coordinates to match the visual appearance of the Unreal editor.
 if args.visual_parity_with_unreal:
-    # x_axis_world, y_axis_world, z_axis_world = x_axis_world, z_axis_world, y_axis_world
     origin_world = origin_world[:,[0,2,1]]
     x_axis_world = x_axis_world[:,[0,2,1]]
     y_axis_world = y_axis_world[:,[0,2,1]]
