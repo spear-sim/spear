@@ -20,7 +20,8 @@ def process_scene():
     editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
     spear.log("Exporting Unreal scene geometry: ", editor_world_name)
 
-    actors = [ actor for actor in spear.unreal.find_actors() if actor.get_editor_property("root_component") is not None ]
+    actors = spear.unreal.find_actors()
+    actors = [ actor for actor in actors if actor.get_editor_property("root_component") is not None ]
 
     # For each actor, export all static mesh components
     for actor in actors:

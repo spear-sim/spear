@@ -51,7 +51,7 @@ def get_actor_desc(actor):
     # It is possible for an actor not to have a root component.
     root_component = actor.get_editor_property("root_component")
     if root_component is not None:
-        actor_desc["root_component"] = {spear.unreal.get_stable_name_component(root_component): get_component_desc(root_component)}
+        actor_desc["root_component"] = get_component_desc(root_component)
 
     return actor_desc
 

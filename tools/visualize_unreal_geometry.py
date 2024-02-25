@@ -72,8 +72,7 @@ def process_scene():
     for actor_name, actor_desc in list(unreal_scene_json.items()):
         if actor_name not in args.ignore_actors and "root_component" in actor_desc.keys():
             spear.log("Processing actor: ", actor_name)
-            root_component_desc = actor_desc["root_component"]
-            component_desc = list(root_component_desc.values())[0]
+            component_desc = actor_desc["root_component"]
 
             draw_components(
                 component_desc,
@@ -105,8 +104,8 @@ def draw_components(component_desc, world_from_component_transform_func, world_f
 
             # ...that refer to non-null StaticMesh assets...
             if static_mesh_desc is not None:
-                spear.log(log_prefix_str, "    Component has a valid StaticMesh.")
                 static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_desc["path"])
+                spear.log(log_prefix_str, "    StaticMesh asset path: ", static_mesh_asset_path)
     
                 # ...that are in the /Game/Scenes/<scene_id> directory.
                 if static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id):
@@ -115,7 +114,6 @@ def draw_components(component_desc, world_from_component_transform_func, world_f
                     numerical_parity_obj_path = \
                         os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
 
-                    spear.log(log_prefix_str, "    StaticMesh asset path: ", static_mesh_asset_path)
                     spear.log(log_prefix_str, "    OBJ file:              ", numerical_parity_obj_path)
 
                     mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
@@ -261,7 +259,7 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     assert np.allclose(M_world_from_component, M_world_from_component_)
 
     world_from_component_transform_data = {"location": l_world_from_component, "rotation": R_world_from_component, "scale": s_world_from_component}
-    
+
     return M_world_from_component, world_from_component_transform_data
 
 
