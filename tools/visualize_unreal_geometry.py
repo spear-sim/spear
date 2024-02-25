@@ -179,7 +179,10 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     #          [0 0  1 ]], where c=cos(theta) and s=sin(theta)
     #
     # But these conventions conflict. We therefore need to negate Unreal's roll (rotation around X) and pitch
-    # (rotation around Y) but not yaw (rotation around Z).
+    # (rotation around Y) but not yaw (rotation around Z) when constructing a scipy.spatial.transform.Rotation
+    # object from Unreal roll-pitch-yaw angles. Unreal editor properties also specify roll-pitch-yaw angles in
+    # degrees, scipy.spatial.transform.Rotation.from_euler(...) expects radians by default. So we also need to
+    # convert from degrees to radians.
     #
 
     roll  = np.deg2rad(-relative_rotation_roll)
@@ -193,9 +196,9 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     eps = 0.000001
     assert np.all(s_parent_from_component > eps)
 
-    # This formulation for accumulating {location, rotation, scale} from the root of the component
-    # hierarchy to the leaf components is not immediately obvious to me, but it matches the behavior
-    # of USceneComponent and FTransform, see:
+    # This formulation for accumulating {location, rotation, scale} through the component hierarchy
+    # is not immediately obvious to me, but it matches the behavior of USceneComponent and FTransform,
+    # see:
     #     Engine/Source/Runtime/Engine/Private/Components/SceneComponent.cpp
     #     Engine/Source/Runtime/Core/Public/Math/TransformNonVectorized.h
 
@@ -207,6 +210,7 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     R_world_from_component = R_world_from_parent*R_parent_from_component
     s_world_from_component = s_parent_from_component*s_world_from_parent
 
+    # If we're in absolute mode for {location, rotation, scale}, then don't accumulate.
     if absolute_location:
         l_world_from_component = l_parent_from_component
 
@@ -216,17 +220,21 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     if absolute_scale:
         s_world_from_component = s_parent_from_component
 
+    # Construct the 4x4 matrix for {location, rotation, scale}.
     M_l_world_from_component = np.block([[np.identity(3),                     np.matrix(l_world_from_component).T], [np.zeros(3), 1.0]])
     M_R_world_from_component = np.block([[R_world_from_component.as_matrix(), np.matrix(np.zeros(3)).T],            [np.zeros(3), 1.0]])
     M_s_world_from_component = np.block([[np.diag(s_world_from_component),    np.matrix(np.zeros(3)).T],            [np.zeros(3), 1.0]])
 
+    # Construct the 4x4 world-from-component transform matrix by applying scale, then
+    # rotation, then translation, as described here:
+    #     https://docs.unrealengine.com/5.2/en-US/API/Runtime/Core/Math/FTransform
     M_world_from_component = M_l_world_from_component*M_R_world_from_component*M_s_world_from_component
 
     # Check the M_world_from_component matrix that we calculated above against the native
     # SceneComponent.get_world_transform() function. We store the result of this function in
-    # our exported JSON file for each SceneComponent, so we can simply compare our result
-    # above against the stored result. Note that each "plane" below refers to a column, so
-    # in this sense, editor properies store matrices in column-major order.
+    # our exported JSON file for each SceneComponent, so we can simply compare the result we
+    # calculated above against the stored result. Note that each "plane" below refers to a
+    # column, so in this sense, editor properies store matrices in column-major order.
 
     M_world_from_component_00_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["x"]
     M_world_from_component_10_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["y"]
@@ -252,7 +260,9 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
         [M_world_from_component_30_, M_world_from_component_31_, M_world_from_component_32_, M_world_from_component_33_]])
     assert np.allclose(M_world_from_component, M_world_from_component_)
 
-    return M_world_from_component, {"location": l_world_from_component, "rotation": R_world_from_component, "scale": s_world_from_component}
+    world_from_component_transform_data = {"location": l_world_from_component, "rotation": R_world_from_component, "scale": s_world_from_component}
+    
+    return M_world_from_component, world_from_component_transform_data
 
 
 if __name__ == '__main__':

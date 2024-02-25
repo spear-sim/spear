@@ -20,16 +20,18 @@ def process_scene():
     editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
     spear.log("Exporting Unreal scene geometry: ", editor_world_name)
 
-    actors = [ actor for actor in spear.unreal.find_actors() if actor.root_component is not None ]
+    actors = [ actor for actor in spear.unreal.find_actors() if actor.get_editor_property("root_component") is not None ]
 
     # For each actor, export all static mesh components
     for actor in actors:
 
         spear.log("    Processing actor: ", spear.unreal.get_stable_name_actor(actor))
 
-        static_meshes           = [ smc.static_mesh for smc in spear.unreal.find_components(actor, "StaticMeshComponent") if smc.static_mesh is not None ]
-        static_mesh_asset_paths = [ pathlib.PurePosixPath(sm.get_path_name()) for sm in static_meshes ]
-        static_mesh_asset_paths = [ smap for smap in static_mesh_asset_paths if smap.parts[:4] == ("/", "Game", "Scenes", editor_world_name) ]
+        static_mesh_components  = spear.unreal.find_components(actor, "StaticMeshComponent")
+        static_meshes           = [ static_mesh_component.get_editor_property("static_mesh") for static_mesh_component in static_mesh_components ]
+        static_meshes           = [ static_mesh for static_mesh in static_meshes if static_mesh is not None ]
+        static_mesh_asset_paths = [ pathlib.PurePosixPath(static_mesh.get_path_name()) for static_mesh in static_meshes ]
+        static_mesh_asset_paths = [ path for path in static_mesh_asset_paths if path.parts[:4] == ("/", "Game", "Scenes", editor_world_name) ]
 
         for static_mesh_asset_path in static_mesh_asset_paths:
             spear.log("        Exporting asset: ", static_mesh_asset_path)

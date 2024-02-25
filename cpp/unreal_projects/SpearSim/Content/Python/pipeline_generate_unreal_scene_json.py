@@ -49,8 +49,9 @@ def get_actor_desc(actor):
     }
 
     # It is possible for an actor not to have a root component.
-    if actor.root_component is not None:
-        actor_desc["root_component"] = {spear.unreal.get_stable_name_component(actor.root_component): get_component_desc(actor.root_component)}
+    root_component = actor.get_editor_property("root_component")
+    if root_component is not None:
+        actor_desc["root_component"] = {spear.unreal.get_stable_name_component(root_component): get_component_desc(root_component)}
 
     return actor_desc
 
@@ -67,7 +68,7 @@ def get_component_desc(component):
     }
 
     # useful for debugging
-    if isinstance(component, unreal.SceneComponent):
+    if isinstance(component, unreal.SceneComponent):        
         component_desc["world_transform_matrix"] = get_editor_property_desc(component.get_world_transform().to_matrix())
 
     return component_desc
@@ -107,15 +108,14 @@ def get_editor_property_descs(uobject, ignore=[]):
 
 def get_editor_property_desc(editor_property):
 
-    # If the editor property is an Actor or an ActorComponent, then do not return any editor properties
-    # to avoid an infinite recursion. If users want to obtain the editor properties for an Actor, they
-    # must call get_editor_property_descs(...).
+    # If the editor property is an Actor or ActorComponent, then do not return any editor properties
+    # to avoid an infinite recursion. If users want to obtain the editor properties for an Actor or
+    # ActorComponent, they must call get_editor_property_descs(...).
 
     if isinstance(editor_property, unreal.Actor):
         return {
             "class": editor_property.__class__.__name__,
             "debug_string": str(editor_property),
-            "editor_properties": "...",
             "name": spear.unreal.get_stable_name_actor(editor_property)
         }
 
@@ -123,7 +123,6 @@ def get_editor_property_desc(editor_property):
         return {
             "class": editor_property.__class__.__name__,
             "debug_string": str(editor_property),
-            "editor_properties": "...",
             "name": spear.unreal.get_stable_name_component(editor_property)
         }
 
