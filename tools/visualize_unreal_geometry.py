@@ -69,7 +69,7 @@ def process_scene():
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
     # It is possible for an actor not to have a root component.
-    for actor_name, actor_desc in list(unreal_scene_json.items()):
+    for actor_name, actor_desc in unreal_scene_json.items():
         if actor_name not in args.ignore_actors and "root_component" in actor_desc.keys():
             spear.log("Processing actor: ", actor_name)
             component_desc = actor_desc["root_component"]
