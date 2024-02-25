@@ -27,9 +27,9 @@ def process_scene():
 
         spear.log("    Processing actor: ", spear.unreal.get_stable_name_actor(actor))
 
-        static_meshes            = [ smc.static_mesh for smc in spear.unreal.find_components(actor, "StaticMeshComponent") if smc.static_mesh is not None ]
-        static_mesh_asset_paths  = [ pathlib.PurePosixPath(sm.get_path_name()) for sm in static_meshes ]
-        static_mesh_asset_paths  = [ smap for smap in static_mesh_asset_paths if smap.parts[:4] == ("/", "Game", "Scenes", editor_world_name) ]
+        static_meshes           = [ smc.static_mesh for smc in spear.unreal.find_components(actor, "StaticMeshComponent") if smc.static_mesh is not None ]
+        static_mesh_asset_paths = [ pathlib.PurePosixPath(sm.get_path_name()) for sm in static_meshes ]
+        static_mesh_asset_paths = [ smap for smap in static_mesh_asset_paths if smap.parts[:4] == ("/", "Game", "Scenes", editor_world_name) ]
 
         for static_mesh_asset_path in static_mesh_asset_paths:
             spear.log("        Exporting asset: ", static_mesh_asset_path)
