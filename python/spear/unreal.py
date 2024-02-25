@@ -34,13 +34,11 @@ def find_components(actor, component_class=None):
 
 
 def find_component(stable_name, actor=None):
-
     if actor is None:
         actor_stable_name, component_stable_name = stable_name.split(":")
         actor = find_actor(actor_stable_name)
     else:
         component_stable_name = stable_name
-
     components = [ component for component in find_components(actor) if get_stable_name_component(component) == component_stable_name ]
     assert len(components) == 1
     return components[0]

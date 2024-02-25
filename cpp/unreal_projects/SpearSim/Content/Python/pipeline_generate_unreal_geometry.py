@@ -94,21 +94,5 @@ def process_scene():
     spear.log("Done.")
 
 
-def get_debug_string_actor(actor):
-    folder_path = actor.get_folder_path()
-    if folder_path.is_none():
-        return actor.get_actor_label()
-    else:
-        return str(folder_path) + posixpath.sep + actor.get_actor_label()
-
-
-def get_debug_string_component(component):
-    parent_components = list(component.get_parent_components())[::-1] # reverse to get parent_components in root-to-leaf order
-    if len(parent_components) == 0:
-        return component.get_name()
-    else:
-        return ".".join([ parent_component.get_name() for parent_component in parent_components ]) + "." + component.get_name()
-
-
 if __name__ == "__main__":
     process_scene()

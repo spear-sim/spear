@@ -90,6 +90,7 @@ def process_scene():
 
 def draw_components(component_desc, world_from_component_transform_func, world_from_component_transform_data, log_prefix_str=""):
 
+    # Only process SceneComponents...
     component_class = component_desc["class"]
     if component_class in scene_component_classes:
 
@@ -97,14 +98,17 @@ def draw_components(component_desc, world_from_component_transform_func, world_f
         M_world_from_component, world_from_component_transform_data = \
             world_from_component_transform_func(component_desc, world_from_component_transform_data)
 
+        # ...and only attempt to draw StaticMeshComponents...
         if component_class in static_mesh_component_classes:
             spear.log(log_prefix_str, "    Component is a StaticMeshComponent.")
             static_mesh_desc = component_desc["editor_properties"]["static_mesh"]
 
+            # ...that refer to non-null StaticMesh assets...
             if static_mesh_desc is not None:
                 spear.log(log_prefix_str, "    Component has a valid StaticMesh.")
                 static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_desc["path"])
     
+                # ...that are in the /Game/Scenes/<scene_id> directory.
                 if static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id):
 
                     obj_path_suffix = posixpath.join(*static_mesh_asset_path.parts[4:]) + ".obj"
@@ -129,6 +133,7 @@ def draw_components(component_desc, world_from_component_transform_func, world_f
                     mayavi.mlab.triangular_mesh(
                         mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=c_face, opacity=mesh_opacity)
 
+        # Recurse for each child component.
         for child_component_desc in component_desc["children_components"].values():
             draw_components(
                 child_component_desc, world_from_component_transform_func, world_from_component_transform_data, log_prefix_str=log_prefix_str + "    ")
@@ -139,6 +144,7 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     absolute_location = component_desc["editor_properties"]["absolute_location"]
     absolute_rotation = component_desc["editor_properties"]["absolute_rotation"]
     absolute_scale = component_desc["editor_properties"]["absolute_scale"]
+
     relative_location_x = component_desc["editor_properties"]["relative_location"]["editor_properties"]["x"]
     relative_location_y = component_desc["editor_properties"]["relative_location"]["editor_properties"]["y"]
     relative_location_z = component_desc["editor_properties"]["relative_location"]["editor_properties"]["z"]
@@ -148,6 +154,33 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     relative_scale3d_x = component_desc["editor_properties"]["relative_scale3d"]["editor_properties"]["x"]
     relative_scale3d_y = component_desc["editor_properties"]["relative_scale3d"]["editor_properties"]["y"]
     relative_scale3d_z = component_desc["editor_properties"]["relative_scale3d"]["editor_properties"]["z"]
+
+    #
+    # Unreal defines roll-pitch-yaw angles according to the following conventions, which can be verified by
+    # manual inspection in the editor.
+    #     A positive roll  is a rotation around X, starting from +Z and rotating towards +Y
+    #     A positive pitch is a rotation around Y, starting from +X and rotating towards +Z
+    #     A positive yaw   is a rotation around Z, starting from +X and rotating towards +Y
+    #
+    # On the other hand, the scipy.spatial.transform.Rotation class defines a rotation around each axis
+    # according to the following conventions, which can be verified by manually inspecting the output of
+    # scipy.spatial.transform.Rotation.from_euler(...).as_matrix().
+    #     A rotation around X by theta radians is defined by the following matrix,
+    #         [[1 0 0  ]
+    #          [0 c -s ] 
+    #          [0 s c  ]], where c=cos(theta) and s=sin(theta)
+    #     A rotation around Y by theta radians is defined by the following matrix,
+    #         [[c  0 s ]
+    #          [0  1 0 ] 
+    #          [-s 0 c ]], where c=cos(theta) and s=sin(theta)
+    #     A rotation around Z by theta radians is defined by the following matrix,
+    #         [[c -s 0 ]
+    #          [s c  0 ] 
+    #          [0 0  1 ]], where c=cos(theta) and s=sin(theta)
+    #
+    # But these conventions conflict. We therefore need to negate Unreal's roll (rotation around X) and pitch
+    # (rotation around Y) but not yaw (rotation around Z).
+    #
 
     roll  = np.deg2rad(-relative_rotation_roll)
     pitch = np.deg2rad(-relative_rotation_pitch)
@@ -160,36 +193,11 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     eps = 0.000001
     assert np.all(s_parent_from_component > eps)
 
-    #
-    # See Engine\Source\Runtime\Engine\Private\Components\SceneComponent.cpp for details:
-    #
-    #     FORCEINLINE FTransform CalcNewComponentToWorld(const FTransform& NewRelativeTransform, const USceneComponent* Parent = nullptr, FName SocketName = NAME_None) const
-    #     {
-    #         // ...
-    #         return NewRelativeTransform * Parent->GetSocketTransform(SocketName);
-    #         // ...
-    #     }
-    #
-    # See Engine\Source\Runtime\Core\Public\Math\TransformNonVectorized.h for details:
-    #
-    #     template<typename T>
-    #     FORCEINLINE TTransform<T> TTransform<T>::operator*(const TTransform<T>& Other) const
-    #     {
-    #         // ...
-    #         Multiply(&Output, this, &Other);
-    #         // ...    
-    #     }
-    #
-    #     template<typename T>
-    #     FORCEINLINE void TTransform<T>::Multiply(TTransform<T>* OutTransform, const TTransform<T>* A, const TTransform<T>* B)
-    #     {
-    #         // ...
-    #         OutTransform->Rotation = B->Rotation*A->Rotation;
-    #         OutTransform->Scale3D = A->Scale3D*B->Scale3D;
-    #         OutTransform->Translation = B->Rotation*(B->Scale3D*A->Translation) + B->Translation;
-    #         // ...
-    #     }
-    #
+    # This formulation for accumulating {location, rotation, scale} from the root of the component
+    # hierarchy to the leaf components is not immediately obvious to me, but it matches the behavior
+    # of USceneComponent and FTransform, see:
+    #     Engine/Source/Runtime/Engine/Private/Components/SceneComponent.cpp
+    #     Engine/Source/Runtime/Core/Public/Math/TransformNonVectorized.h
 
     l_world_from_parent = world_from_component_transform_data["location"]
     R_world_from_parent = world_from_component_transform_data["rotation"]
@@ -214,10 +222,12 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
 
     M_world_from_component = M_l_world_from_component*M_R_world_from_component*M_s_world_from_component
 
-    # Check the M_world_from_component matrix that we compute here against the native unreal.SceneComponent.get_world_transform()
-    # function. We store the result of this function in our exported JSON file, so we simply compare our computed matrix against
-    # the stored result. Note that each "plane" below refers to a column, so in this sense, Unreal editor properies store matrices
-    # in column-major order.
+    # Check the M_world_from_component matrix that we calculated above against the native
+    # SceneComponent.get_world_transform() function. We store the result of this function in
+    # our exported JSON file for each SceneComponent, so we can simply compare our result
+    # above against the stored result. Note that each "plane" below refers to a column, so
+    # in this sense, editor properies store matrices in column-major order.
+
     M_world_from_component_00_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["x"]
     M_world_from_component_10_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["y"]
     M_world_from_component_20_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["z"]

@@ -66,8 +66,9 @@ def get_component_desc(component):
         "name": spear.unreal.get_stable_name_component(component)
     }
 
+    # useful for debugging
     if isinstance(component, unreal.SceneComponent):
-        component_desc["world_transform_matrix"] = get_editor_property_desc(component.get_world_transform().to_matrix()) # sometimes useful for debugging
+        component_desc["world_transform_matrix"] = get_editor_property_desc(component.get_world_transform().to_matrix())
 
     return component_desc
 
@@ -79,11 +80,11 @@ def get_editor_property_descs(uobject, ignore=[]):
     # The Unreal Python interface does not provide a mechanism to iterate over editor properties directly,
     # so we use the fact that most editor properties are exposed as Python attributes, and iterate over
     # attributes instead. For each attribute, we use a guess-and-check strategy to see if it is an editor
-    # property. We call obj.get_editor_property(...) and if doing so doesn't throw an exception, we assume
-    # that the attribute is a valid editor property. For each editor property that we find, if the value
-    # of the editor property is itself a uobject, then we recurse, otherwise we store its value in our
-    # output dict. To obtain the remaining editor properties that are not exposed as Python attributes, we
-    # maintain a CSV file with a list of editor properties for various classes of interest. We populate
+    # property. We call uobject.get_editor_property(...) and if doing so doesn't throw an exception, we
+    # assume that the attribute is a valid editor property. For each editor property that we find, if the
+    # value of the editor property is itself a uobject, then we recurse, otherwise we store its value in
+    # our output dict. To obtain any remaining editor properties that are not exposed as Python attributes,
+    # we maintain a CSV file with a list of editor properties for various classes of interest. We populate
     # the CSV file by manually copying and pasting from the Unreal documentation.
 
     # Get all Python attributes, and all editor properties from our CSV file.
