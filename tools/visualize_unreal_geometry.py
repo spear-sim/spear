@@ -226,17 +226,16 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     S_world_from_component = S_parent_from_component*S_world_from_parent
 
     # If we're in absolute mode for {location, rotation, scale}, then don't accumulate.
+
     if absolute_location:
         l_world_from_component = l_parent_from_component
-
     if absolute_rotation:
         R_world_from_component = R_parent_from_component
-
     if absolute_scale:
         S_world_from_component = S_parent_from_component
 
-    # Construct the 4x4 world-from-component transformation matrix by applying transformation
-    # in the following order,
+    # Construct the 4x4 world-from-component transformation matrix by applying transformation in the
+    # following order,
     #     1. Scale
     #     2. Rotation
     #     3. Location 
