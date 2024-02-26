@@ -235,11 +235,7 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
         S_world_from_component = S_parent_from_component
 
     # Construct the 4x4 world-from-component transformation matrix by applying transformation in the
-    # following order,
-    #     1. Scale
-    #     2. Rotation
-    #     3. Location 
-    # as discussed here:
+    # following order: (1) scale; (2) rotation; (3) translation. See the following link for more details:
     #     https://docs.unrealengine.com/5.2/en-US/API/Runtime/Core/Math/FTransform
 
     M_l_world_from_component = np.matrix(np.block([[np.identity(3),         l_world_from_component], [np.zeros([1,3]), 1.0]]))
