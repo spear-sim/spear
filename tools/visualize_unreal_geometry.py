@@ -78,9 +78,9 @@ def process_scene():
                 component_desc,
                 world_from_component_transform_func=world_from_component_transform_using_relative_lrs,
                 world_from_component_transform_data={
-                    "location": np.zeros(3),
-                    "rotation": scipy.spatial.transform.Rotation.from_euler("xyz", [0.0, 0.0, 0.0]),
-                    "scale":    np.ones(3)
+                    "location": np.matrix(np.zeros(3)).T,
+                    "rotation": np.matrix(np.identity(3)),
+                    "scale": np.matrix(np.identity(3))
                 },
                 log_prefix_str="    ")
 
@@ -154,8 +154,8 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     relative_scale3d_z = component_desc["editor_properties"]["relative_scale3d"]["editor_properties"]["z"]
 
     #
-    # Unreal defines roll-pitch-yaw angles according to the following conventions, which can be verified by
-    # manual inspection in the editor.
+    # Unreal defines roll-pitch-yaw Euler angles according to the following conventions, which can be
+    # verified by manual inspection in the editor.
     #     A positive roll  is a rotation around X, starting from +Z and rotating towards +Y
     #     A positive pitch is a rotation around Y, starting from +X and rotating towards +Z
     #     A positive yaw   is a rotation around Z, starting from +X and rotating towards +Y
@@ -178,35 +178,52 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     #
     # But these conventions conflict. We therefore need to negate Unreal's roll (rotation around X) and pitch
     # (rotation around Y) but not yaw (rotation around Z) when constructing a scipy.spatial.transform.Rotation
-    # object from Unreal roll-pitch-yaw angles. Unreal editor properties also specify roll-pitch-yaw angles in
-    # degrees, scipy.spatial.transform.Rotation.from_euler(...) expects radians by default. So we also need to
-    # convert from degrees to radians.
+    # object from Unreal roll-pitch-yaw angles. Unreal editor properties also specify roll-pitch-yaw Euler
+    # angles in degrees, scipy.spatial.transform.Rotation.from_euler(...) expects radians by default. So we
+    # also need to convert from degrees to radians.
     #
 
     roll  = np.deg2rad(-relative_rotation_roll)
     pitch = np.deg2rad(-relative_rotation_pitch)
     yaw   = np.deg2rad(relative_rotation_yaw)
 
-    l_parent_from_component = np.array([relative_location_x, relative_location_y, relative_location_z])
-    R_parent_from_component = scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw])
-    s_parent_from_component = np.array([relative_scale3d_x, relative_scale3d_y, relative_scale3d_z])
+    # 
+    # Unreal applies roll-pitch-yaw Euler angles in world-space in the following order, which can be verified
+    # by manual inspection the editor.
+    #     1. Rotate around world-space X by roll degrees
+    #     2. Rotate around world-space Y by pitch degrees
+    #     3. Rotate around world-space Z by yaw degrees
+    # 
+    # So, given a triplet of roll-pitch-yaw values that has been negated appropriately and converted to radians
+    # as described above, we define the rotation matrix that corresponds to the roll-pitch-yaw values as
+    # follows,
+    #     R_x = np.matrix(scipy.spatial.transform.Rotation.from_euler("x", roll).as_matrix())
+    #     R_y = np.matrix(scipy.spatial.transform.Rotation.from_euler("y", pitch).as_matrix())
+    #     R_z = np.matrix(scipy.spatial.transform.Rotation.from_euler("z", yaw).as_matrix())
+    #     R   = R_z*R_y*R_x
+    # which is equivalent to the following expression,
+    #     R   = np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
+    #
+
+    l_parent_from_component = np.matrix([relative_location_x, relative_location_y, relative_location_z]).T
+    R_parent_from_component = np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
+    S_parent_from_component = np.matrix(np.diag([relative_scale3d_x, relative_scale3d_y, relative_scale3d_z]))
 
     eps = 0.000001
-    assert np.all(s_parent_from_component > eps)
+    assert np.all(np.diag(S_parent_from_component) > eps)
 
-    # This formulation for accumulating {location, rotation, scale} through the component hierarchy
-    # is not immediately obvious to me, but it matches the behavior of USceneComponent and FTransform,
-    # see:
+    # This formulation for accumulating {location, rotation, scale} through the component hierarchy is not
+    # immediately obvious to me, but it matches the behavior of USceneComponent and FTransform, see:
     #     Engine/Source/Runtime/Engine/Private/Components/SceneComponent.cpp
     #     Engine/Source/Runtime/Core/Public/Math/TransformNonVectorized.h
 
     l_world_from_parent = world_from_component_transform_data["location"]
     R_world_from_parent = world_from_component_transform_data["rotation"]
-    s_world_from_parent = world_from_component_transform_data["scale"]
+    S_world_from_parent = world_from_component_transform_data["scale"]
 
-    l_world_from_component = R_world_from_parent.apply(s_world_from_parent*l_parent_from_component) + l_world_from_parent
+    l_world_from_component = R_world_from_parent*S_world_from_parent*l_parent_from_component + l_world_from_parent
     R_world_from_component = R_world_from_parent*R_parent_from_component
-    s_world_from_component = s_parent_from_component*s_world_from_parent
+    S_world_from_component = S_parent_from_component*S_world_from_parent
 
     # If we're in absolute mode for {location, rotation, scale}, then don't accumulate.
     if absolute_location:
@@ -216,23 +233,27 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
         R_world_from_component = R_parent_from_component
 
     if absolute_scale:
-        s_world_from_component = s_parent_from_component
+        S_world_from_component = S_parent_from_component
 
-    # Construct the 4x4 matrix for {location, rotation, scale}.
-    M_l_world_from_component = np.block([[np.identity(3),                     np.matrix(l_world_from_component).T], [np.zeros(3), 1.0]])
-    M_R_world_from_component = np.block([[R_world_from_component.as_matrix(), np.matrix(np.zeros(3)).T],            [np.zeros(3), 1.0]])
-    M_s_world_from_component = np.block([[np.diag(s_world_from_component),    np.matrix(np.zeros(3)).T],            [np.zeros(3), 1.0]])
-
-    # Construct the 4x4 world-from-component transform matrix by applying scale, then
-    # rotation, then translation, as described here:
+    # Construct the 4x4 world-from-component transformation matrix by applying transformation
+    # in the following order,
+    #     1. Scale
+    #     2. Rotation
+    #     3. Location 
+    # as discussed here:
     #     https://docs.unrealengine.com/5.2/en-US/API/Runtime/Core/Math/FTransform
-    M_world_from_component = M_l_world_from_component*M_R_world_from_component*M_s_world_from_component
 
-    # Check the M_world_from_component matrix that we calculated above against the native
-    # SceneComponent.get_world_transform() function. We store the result of this function in
-    # our exported JSON file for each SceneComponent, so we can simply compare the result we
-    # calculated above against the stored result. Note that each "plane" below refers to a
-    # column, so in this sense, editor properies store matrices in column-major order.
+    M_l_world_from_component = np.matrix(np.block([[np.identity(3),         l_world_from_component], [np.zeros([1,3]), 1.0]]))
+    M_R_world_from_component = np.matrix(np.block([[R_world_from_component, np.zeros([3,1])],        [np.zeros([1,3]), 1.0]]))
+    M_S_world_from_component = np.matrix(np.block([[S_world_from_component, np.zeros([3,1])],        [np.zeros([1,3]), 1.0]]))
+
+    M_world_from_component = M_l_world_from_component*M_R_world_from_component*M_S_world_from_component
+
+    # Check the M_world_from_component matrix that we computed above against the default
+    # SceneComponent.get_world_transform() function. We store the output from this function
+    # in our exported JSON file for each SceneComponent, so we can simply compare the matrix
+    # we computed above against the stored matrix. Note that each "plane" below refers to a
+    # column, so in this sense, editor properties represent matrices in column-major order.
 
     M_world_from_component_00_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["x"]
     M_world_from_component_10_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["y"]
@@ -258,7 +279,7 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
         [M_world_from_component_30_, M_world_from_component_31_, M_world_from_component_32_, M_world_from_component_33_]])
     assert np.allclose(M_world_from_component, M_world_from_component_)
 
-    world_from_component_transform_data = {"location": l_world_from_component, "rotation": R_world_from_component, "scale": s_world_from_component}
+    world_from_component_transform_data = {"location": l_world_from_component, "rotation": R_world_from_component, "scale": S_world_from_component}
 
     return M_world_from_component, world_from_component_transform_data
 

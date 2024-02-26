@@ -44,7 +44,7 @@ def get_actor_desc(actor):
     actor_desc = {
         "class": actor.__class__.__name__,
         "debug_string": str(actor),
-        "editor_properties": get_editor_property_descs(actor, ignore=["root_component"]),
+        "editor_properties": get_editor_property_descs(actor),
         "name": spear.unreal.get_stable_name_actor(actor)
     }
 
@@ -74,7 +74,7 @@ def get_component_desc(component):
     return component_desc
 
 
-def get_editor_property_descs(uobject, ignore=[]):
+def get_editor_property_descs(uobject):
 
     assert "get_editor_property" in dir(uobject)
 
