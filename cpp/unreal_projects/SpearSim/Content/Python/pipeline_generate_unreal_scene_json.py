@@ -43,7 +43,7 @@ def get_actor_desc(actor):
 
     actor_desc = {
         "class": actor.__class__.__name__,
-        "debug_string": str(actor),
+        "debug_info": {"str": str(actor)},
         "editor_properties": get_editor_property_descs(actor),
         "name": spear.unreal.get_stable_name_actor(actor)
     }
@@ -62,14 +62,13 @@ def get_component_desc(component):
         "children_components":
             { spear.unreal.get_stable_name_component(c): get_component_desc(c) for c in component.get_children_components(include_all_descendants=False) },
         "class": component.__class__.__name__,
-        "debug_string": str(component),
+        "debug_info": {"str": str(component)},
         "editor_properties": get_editor_property_descs(component),
         "name": spear.unreal.get_stable_name_component(component)
     }
 
-    # useful for debugging
-    if isinstance(component, unreal.SceneComponent):        
-        component_desc["world_transform_matrix"] = get_editor_property_desc(component.get_world_transform().to_matrix())
+    if isinstance(component, unreal.SceneComponent):
+        component_desc["debug_info"]["world_transform"] = get_editor_property_desc(component.get_world_transform().to_matrix())
 
     return component_desc
 
@@ -115,14 +114,14 @@ def get_editor_property_desc(editor_property):
     if isinstance(editor_property, unreal.Actor):
         return {
             "class": editor_property.__class__.__name__,
-            "debug_string": str(editor_property),
+            "debug_info": {"str": str(editor_property)},
             "name": spear.unreal.get_stable_name_actor(editor_property)
         }
 
     elif isinstance(editor_property, unreal.ActorComponent):
         return {
             "class": editor_property.__class__.__name__,
-            "debug_string": str(editor_property),
+            "debug_info": {"str": str(editor_property)},
             "name": spear.unreal.get_stable_name_component(editor_property)
         }
 
@@ -130,7 +129,7 @@ def get_editor_property_desc(editor_property):
     elif isinstance(editor_property, unreal.StaticMesh):
         return {
             "class": editor_property.__class__.__name__,
-            "debug_string": str(editor_property),
+            "debug_info": {"str": str(editor_property)},
             "editor_properties": get_editor_property_descs(editor_property),
             "path": editor_property.get_path_name()
         }
@@ -139,7 +138,7 @@ def get_editor_property_desc(editor_property):
     elif isinstance(editor_property, unreal.Object) or isinstance(editor_property, unreal.StructBase):
         return {
             "class": editor_property.__class__.__name__,
-            "debug_string": str(editor_property),
+            "debug_info": {"str": str(editor_property)},
             "editor_properties": get_editor_property_descs(editor_property)
         }
 

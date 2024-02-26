@@ -113,15 +113,12 @@ def draw_components(component_desc, world_from_component_transform_func, world_f
                     obj_path_suffix = posixpath.join(*static_mesh_asset_path.parts[4:]) + ".obj"
                     numerical_parity_obj_path = \
                         os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
-
                     spear.log(log_prefix_str, "    OBJ file:              ", numerical_parity_obj_path)
 
                     mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
-
                     V_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T
                     V_world = M_world_from_component*V_component
                     assert np.allclose(V_world[3,:], 1.0)
-
                     mesh.vertices = V_world.T.A[:,0:3]
 
                     # Swap y and z coordinates to match the visual appearance of the Unreal editor.
@@ -226,13 +223,15 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     S_world_from_component = S_parent_from_component*S_world_from_parent
 
     # If we're in absolute mode for {location, rotation, scale}, then don't accumulate.
-
     if absolute_location:
         l_world_from_component = l_parent_from_component
     if absolute_rotation:
         R_world_from_component = R_parent_from_component
     if absolute_scale:
         S_world_from_component = S_parent_from_component
+
+    # Pack all accumulated data.
+    world_from_component_transform_data = {"location": l_world_from_component, "rotation": R_world_from_component, "scale": S_world_from_component}
 
     # Construct the 4x4 world-from-component transformation matrix by applying transformations in the
     # following order: (1) scale; (2) rotation; (3) translation. See the following link for more details:
@@ -250,31 +249,29 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     # stored matrix. Note that each "plane" below refers to a column, so in this sense, editor properties
     # represent matrices in column-major order.
 
-    M_world_from_component_00_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["x"]
-    M_world_from_component_10_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["y"]
-    M_world_from_component_20_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["z"]
-    M_world_from_component_30_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["w"]
-    M_world_from_component_01_ = component_desc["world_transform_matrix"]["editor_properties"]["y_plane"]["editor_properties"]["x"]
-    M_world_from_component_11_ = component_desc["world_transform_matrix"]["editor_properties"]["y_plane"]["editor_properties"]["y"]
-    M_world_from_component_21_ = component_desc["world_transform_matrix"]["editor_properties"]["y_plane"]["editor_properties"]["z"]
-    M_world_from_component_31_ = component_desc["world_transform_matrix"]["editor_properties"]["y_plane"]["editor_properties"]["w"]
-    M_world_from_component_02_ = component_desc["world_transform_matrix"]["editor_properties"]["z_plane"]["editor_properties"]["x"]
-    M_world_from_component_12_ = component_desc["world_transform_matrix"]["editor_properties"]["z_plane"]["editor_properties"]["y"]
-    M_world_from_component_22_ = component_desc["world_transform_matrix"]["editor_properties"]["z_plane"]["editor_properties"]["z"]
-    M_world_from_component_32_ = component_desc["world_transform_matrix"]["editor_properties"]["z_plane"]["editor_properties"]["w"]
-    M_world_from_component_03_ = component_desc["world_transform_matrix"]["editor_properties"]["w_plane"]["editor_properties"]["x"]
-    M_world_from_component_13_ = component_desc["world_transform_matrix"]["editor_properties"]["w_plane"]["editor_properties"]["y"]
-    M_world_from_component_23_ = component_desc["world_transform_matrix"]["editor_properties"]["w_plane"]["editor_properties"]["z"]
-    M_world_from_component_33_ = component_desc["world_transform_matrix"]["editor_properties"]["w_plane"]["editor_properties"]["w"]
+    debug_info_M_world_from_component_00 = component_desc["debug_info"]["world_transform"]["editor_properties"]["x_plane"]["editor_properties"]["x"]
+    debug_info_M_world_from_component_10 = component_desc["debug_info"]["world_transform"]["editor_properties"]["x_plane"]["editor_properties"]["y"]
+    debug_info_M_world_from_component_20 = component_desc["debug_info"]["world_transform"]["editor_properties"]["x_plane"]["editor_properties"]["z"]
+    debug_info_M_world_from_component_30 = component_desc["debug_info"]["world_transform"]["editor_properties"]["x_plane"]["editor_properties"]["w"]
+    debug_info_M_world_from_component_01 = component_desc["debug_info"]["world_transform"]["editor_properties"]["y_plane"]["editor_properties"]["x"]
+    debug_info_M_world_from_component_11 = component_desc["debug_info"]["world_transform"]["editor_properties"]["y_plane"]["editor_properties"]["y"]
+    debug_info_M_world_from_component_21 = component_desc["debug_info"]["world_transform"]["editor_properties"]["y_plane"]["editor_properties"]["z"]
+    debug_info_M_world_from_component_31 = component_desc["debug_info"]["world_transform"]["editor_properties"]["y_plane"]["editor_properties"]["w"]
+    debug_info_M_world_from_component_02 = component_desc["debug_info"]["world_transform"]["editor_properties"]["z_plane"]["editor_properties"]["x"]
+    debug_info_M_world_from_component_12 = component_desc["debug_info"]["world_transform"]["editor_properties"]["z_plane"]["editor_properties"]["y"]
+    debug_info_M_world_from_component_22 = component_desc["debug_info"]["world_transform"]["editor_properties"]["z_plane"]["editor_properties"]["z"]
+    debug_info_M_world_from_component_32 = component_desc["debug_info"]["world_transform"]["editor_properties"]["z_plane"]["editor_properties"]["w"]
+    debug_info_M_world_from_component_03 = component_desc["debug_info"]["world_transform"]["editor_properties"]["w_plane"]["editor_properties"]["x"]
+    debug_info_M_world_from_component_13 = component_desc["debug_info"]["world_transform"]["editor_properties"]["w_plane"]["editor_properties"]["y"]
+    debug_info_M_world_from_component_23 = component_desc["debug_info"]["world_transform"]["editor_properties"]["w_plane"]["editor_properties"]["z"]
+    debug_info_M_world_from_component_33 = component_desc["debug_info"]["world_transform"]["editor_properties"]["w_plane"]["editor_properties"]["w"]
 
-    M_world_from_component_ = np.matrix([
-        [M_world_from_component_00_, M_world_from_component_01_, M_world_from_component_02_, M_world_from_component_03_],
-        [M_world_from_component_10_, M_world_from_component_11_, M_world_from_component_12_, M_world_from_component_13_],
-        [M_world_from_component_20_, M_world_from_component_21_, M_world_from_component_22_, M_world_from_component_23_],
-        [M_world_from_component_30_, M_world_from_component_31_, M_world_from_component_32_, M_world_from_component_33_]])
-    assert np.allclose(M_world_from_component, M_world_from_component_)
-
-    world_from_component_transform_data = {"location": l_world_from_component, "rotation": R_world_from_component, "scale": S_world_from_component}
+    debug_info_M_world_from_component = np.matrix([
+        [debug_info_M_world_from_component_00, debug_info_M_world_from_component_01, debug_info_M_world_from_component_02, debug_info_M_world_from_component_03],
+        [debug_info_M_world_from_component_10, debug_info_M_world_from_component_11, debug_info_M_world_from_component_12, debug_info_M_world_from_component_13],
+        [debug_info_M_world_from_component_20, debug_info_M_world_from_component_21, debug_info_M_world_from_component_22, debug_info_M_world_from_component_23],
+        [debug_info_M_world_from_component_30, debug_info_M_world_from_component_31, debug_info_M_world_from_component_32, debug_info_M_world_from_component_33]])
+    assert np.allclose(M_world_from_component, debug_info_M_world_from_component)
 
     return M_world_from_component, world_from_component_transform_data
 
