@@ -32,10 +32,10 @@ static_mesh_component_classes = ["StaticMeshComponent"]
 origin_scale_factor = 1.0
 mesh_opacity = 1.0
 
-c_x_axis = (1.0, 0.0, 0.0)
-c_y_axis = (0.0, 1.0, 0.0)
-c_z_axis = (0.0, 0.0, 1.0)
-c_face   = (0.75,0.75,0.75)
+c_x_axis = (1.0,  0.0,  0.0)
+c_y_axis = (0.0,  1.0,  0.0)
+c_z_axis = (0.0,  0.0,  1.0)
+c_face   = (0.75, 0.75, 0.75)
 
 origin_world = np.array([[0.0,   0.0,   0.0]])
 x_axis_world = np.array([[100.0, 0.0,   0.0]])
