@@ -234,7 +234,7 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     if absolute_scale:
         S_world_from_component = S_parent_from_component
 
-    # Construct the 4x4 world-from-component transformation matrix by applying transformation in the
+    # Construct the 4x4 world-from-component transformation matrix by applying transformations in the
     # following order: (1) scale; (2) rotation; (3) translation. See the following link for more details:
     #     https://docs.unrealengine.com/5.2/en-US/API/Runtime/Core/Math/FTransform
 
@@ -244,11 +244,11 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
 
     M_world_from_component = M_l_world_from_component*M_R_world_from_component*M_S_world_from_component
 
-    # Check the M_world_from_component matrix that we computed above against the default
-    # SceneComponent.get_world_transform() function. We store the output from this function
-    # in our exported JSON file for each SceneComponent, so we can simply compare the matrix
-    # we computed above against the stored matrix. Note that each "plane" below refers to a
-    # column, so in this sense, editor properties represent matrices in column-major order.
+    # Check the M_world_from_component matrix that we computed above against Unreal's 
+    # SceneComponent.get_world_transform() function. We store the output from this function in our exported
+    # JSON file for each SceneComponent, so we can simply compare the matrix we computed above against the
+    # stored matrix. Note that each "plane" below refers to a column, so in this sense, editor properties
+    # represent matrices in column-major order.
 
     M_world_from_component_00_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["x"]
     M_world_from_component_10_ = component_desc["world_transform_matrix"]["editor_properties"]["x_plane"]["editor_properties"]["y"]
