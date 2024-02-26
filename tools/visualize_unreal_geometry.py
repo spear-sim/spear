@@ -176,11 +176,11 @@ def world_from_component_transform_using_relative_lrs(component_desc, world_from
     #          [s c  0 ] 
     #          [0 0  1 ]], where c=cos(theta) and s=sin(theta)
     #
-    # But these conventions conflict. We therefore need to negate Unreal's roll (rotation around X) and pitch
+    # These conventions conflict. We therefore need to negate Unreal's roll (rotation around X) and pitch
     # (rotation around Y) but not yaw (rotation around Z) when constructing a scipy.spatial.transform.Rotation
     # object from Unreal roll-pitch-yaw angles. Unreal editor properties also specify roll-pitch-yaw Euler
-    # angles in degrees, scipy.spatial.transform.Rotation.from_euler(...) expects radians by default. So we
-    # also need to convert from degrees to radians.
+    # angles in degrees, whereas the scipy.spatial.transform.Rotation.from_euler(...) expects radians by
+    # default. So we also need to convert from degrees to radians.
     #
 
     roll  = np.deg2rad(-relative_rotation_roll)
