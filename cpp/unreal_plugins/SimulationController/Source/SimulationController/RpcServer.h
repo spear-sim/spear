@@ -175,7 +175,7 @@ concept CCallable =
 template <typename TBasicEntryPointBinder>
 concept CBasicEntryPointBinder =
     requires(TBasicEntryPointBinder basic_entry_point_binder) {
-        { basic_entry_point_binder.template bind("", []() -> void {}) } -> std::same_as<void>;
+        { basic_entry_point_binder.bind("", []() -> void {}) } -> std::same_as<void>;
     };
 
 template <typename TClass>

@@ -42,8 +42,8 @@ template <typename TValueContainer>
 concept CContiguousValueContainer =
     CValueContainer<TValueContainer> &&
     requires(TValueContainer contiguous_value_container) {
-        contiguous_value_container.data();
-        contiguous_value_container.size();
+        { contiguous_value_container.data() } -> std::same_as<typename TValueContainer::value_type*>;
+        { contiguous_value_container.size() } -> std::same_as<typename TValueContainer::size_type>;
     };
 
 class SPCORE_API Std
