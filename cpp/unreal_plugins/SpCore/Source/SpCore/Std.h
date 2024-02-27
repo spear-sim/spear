@@ -199,7 +199,7 @@ public:
     template <typename TDest, CContiguousValueContainer TContiguousValueContainer>
     static std::span<TDest> reinterpretAsSpanOf(TContiguousValueContainer& src)
     {
-        size_t src_num_bytes = src.size() * sizeof(TContiguousValueContainer::value_type);
+        size_t src_num_bytes = src.size() * sizeof(typename TContiguousValueContainer::value_type);
         SP_ASSERT(src_num_bytes % sizeof(TDest) == 0);
         size_t dest_num_elements = src_num_bytes / sizeof(TDest);
         return std::span<TDest>(reinterpret_cast<TDest*>(src.data()), dest_num_elements);
