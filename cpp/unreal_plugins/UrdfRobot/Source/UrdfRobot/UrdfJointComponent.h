@@ -11,14 +11,14 @@
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UENUM, UMETA, UPROPERTY
 
+#include "SpCore/ArrayDesc.h"
+
 #include "UrdfJointComponent.generated.h"
 
 class UStaticMeshComponent;
 
 class UInputActionComponent;
 class UUrdfLinkComponent;
-class UUrdfJointPlayerInputComponent;
-struct ArrayDesc;
 struct UrdfJointDesc;
 
 // enum values must match UrdfJointType in UrdfParser.h
@@ -46,7 +46,6 @@ enum class EJointControlType
 };
 
 // enum values must match UrdfJointInterfaceType in UrdfParser.h
-
 UENUM()
 enum class EJointInterfaceType
 {

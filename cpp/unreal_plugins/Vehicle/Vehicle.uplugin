@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "Vehicle",
-    "Description": "WARNING: The loading phases for {CoreUtils, Vehicle} must be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(Vehicle)",
+    "Description": "WARNING: The loading phases for {SpCore, Vehicle} must be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(Vehicle)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -27,7 +27,7 @@
             "Enabled": true
         },
         {
-            "Name": "CoreUtils",
+            "Name": "SpCore",
             "Enabled": true
         }
     ]

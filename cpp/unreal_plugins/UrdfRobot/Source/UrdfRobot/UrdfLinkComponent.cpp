@@ -20,11 +20,12 @@
 #include <PhysicsEngine/BodyInstance.h>
 #include <PhysicalMaterials/PhysicalMaterial.h>
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Log.h"
-#include "CoreUtils/Unreal.h"
-#include "UrdfRobot/UrdfParser.h"
+#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/Assert.h"
+#include "SpCore/Log.h"
+#include "SpCore/Unreal.h"
+#include "SpCore/Std.h"
+#include "UrdfRobot/UrdfParser.h" // UrdfGeometryDesc, UrdfGeometryType, UrdfLinkDesc, UrdfMaterialDesc
 
 UUrdfLinkComponent::UUrdfLinkComponent()
 {
@@ -76,7 +77,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         const UrdfGeometryDesc& geometry_desc = visual_desc.geometry_desc_;
 
         // create child static mesh component for each UrdfSpearLinkDesc
-        auto static_mesh_component = Unreal::createSceneComponentOutsideOwnerConstructor<UStaticMeshComponent>(this, this, "static_mesh_component");
+        auto static_mesh_component = Unreal::createComponentOutsideOwnerConstructor<UStaticMeshComponent>(this, "static_mesh_component");
         SP_ASSERT(static_mesh_component);
 
         // each UrdfSpearLinkDesc has its own reference frame
@@ -185,14 +186,14 @@ std::map<std::string, ArrayDesc> UUrdfLinkComponent::getObservationSpace() const
     array_desc.high_ = std::numeric_limits<double>::max();
     array_desc.shape_ = {3}; // x, y, z in [cm] of each link relative to it's parent
     array_desc.datatype_ = DataType::Float64;
-    observation_space[name] = std::move(array_desc);
+    Std::insert(observation_space, name, std::move(array_desc));
 
     name = Unreal::toStdString(GetName()) + ".rotation";
     array_desc.low_ = std::numeric_limits<double>::lowest();
     array_desc.high_ = std::numeric_limits<double>::max();
     array_desc.shape_ = {3}; // pitch, yaw, roll in [deg] of each link relative to it's parent
     array_desc.datatype_ = DataType::Float64;
-    observation_space[name] = std::move(array_desc);
+    Std::insert(observation_space, name, std::move(array_desc));
 
     return observation_space;
 }
@@ -203,11 +204,11 @@ std::map<std::string, std::vector<uint8_t>> UUrdfLinkComponent::getObservation()
 
     FVector location = GetRelativeLocation();
     std::string name = Unreal::toStdString(GetName()) + ".location";
-    observation[name] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+    Std::insert(observation, name, Std::reinterpretAsVector<uint8_t, double>({location.X, location.Y, location.Z}));
 
     FRotator rotation = GetRelativeRotation();
     name = Unreal::toStdString(GetName()) + ".rotation";
-    observation[name] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation.Pitch, rotation.Yaw, rotation.Roll});
+    Std::insert(observation, name, Std::reinterpretAsVector<uint8_t, double>({rotation.Pitch, rotation.Yaw, rotation.Roll}));
 
     return observation;
 }

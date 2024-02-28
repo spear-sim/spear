@@ -21,12 +21,6 @@
 #include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 #include <PhysicsEngine/PhysicsSettings.h>
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Log.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/CameraAgent.h"
 #include "SimulationController/ClassRegistrationUtils.h"
@@ -37,8 +31,13 @@
 #include "SimulationController/SphereAgent.h"
 #include "SimulationController/Task.h"
 #include "SimulationController/UrdfRobotAgent.h"
-#include "SimulationController/Visualizer.h"
 #include "SimulationController/VehicleAgent.h"
+#include "SpCore/ArrayDesc.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Log.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 // Different possible frame states for thread synchronization
 enum class FrameState
@@ -53,7 +52,7 @@ enum class FrameState
 void SimulationController::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("CoreUtils")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("SpCore")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfRobot")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("Vehicle")));
 
@@ -205,15 +204,10 @@ void SimulationController::worldBeginPlayEventHandler()
     nav_mesh_ = std::make_unique<NavMesh>();
     SP_ASSERT(nav_mesh_);
 
-    // create Visualizer
-    visualizer_ = std::make_unique<Visualizer>(world_);
-    SP_ASSERT(visualizer_);
-
-    // deferred initialization for Agent, Task, and Visualizer
+    // deferred initialization
     agent_->findObjectReferences(world_);
     task_->findObjectReferences(world_);
     nav_mesh_->findObjectReferences(world_);
-    visualizer_->findObjectReferences(world_);
 
     // initialize frame state used for thread synchronization
     frame_state_ = FrameState::Idle;
@@ -249,10 +243,6 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
             SP_ASSERT(rpc_server_);
             rpc_server_->stopRunAsync();
             rpc_server_ = nullptr;
-
-            SP_ASSERT(visualizer_);
-            visualizer_->cleanUpObjectReferences();
-            visualizer_ = nullptr;
 
             SP_ASSERT(nav_mesh_);
             nav_mesh_->cleanUpObjectReferences();
@@ -400,7 +390,7 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->getStepInfoSpace();
     });
 
-    rpc_server_->bindSync("apply_action", [this](std::map<std::string, std::vector<uint8_t>> action) -> void {
+    rpc_server_->bindSync("apply_action", [this](const std::map<std::string, std::vector<uint8_t>>& action) -> void {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         SP_ASSERT(agent_);
         agent_->applyAction(action);
@@ -460,13 +450,13 @@ void SimulationController::bindFunctionsToRpcServer()
         return task_->isReady();
     });
 
-    rpc_server_->bindSync("get_random_points", [this](int num_points) -> std::vector<double> {
+    rpc_server_->bindSync("get_random_points", [this](const int& num_points) -> std::vector<double> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
         return nav_mesh_->getRandomPoints(num_points);
     });
 
-    rpc_server_->bindSync("get_random_reachable_points_in_radius", [this](const std::vector<double>& initial_points, float radius) -> std::vector<double> {
+    rpc_server_->bindSync("get_random_reachable_points_in_radius", [this](const std::vector<double>& initial_points, const float& radius) -> std::vector<double> {
         SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         SP_ASSERT(nav_mesh_);
         return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);

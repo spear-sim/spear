@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <functional>
+#include <functional> // std::function
 #include <map>
 #include <memory>
 #include <string>
 
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Log.h"
-#include "CoreUtils/Std.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Log.h"
+#include "SpCore/Std.h"
 
 class ClassRegistrationUtils;
 
@@ -94,9 +94,9 @@ public:
             // Add a lambda that creates an instance of the derived type to a map of string-lambda pairs, so we can call it later
             // based on the string.
             SP_ASSERT(!Std::containsKey(class_registrar_->create_funcs_, class_name));
-            class_registrar_->create_funcs_[class_name] = [](TArgs... args) -> TBase* {
+            Std::insert(class_registrar_->create_funcs_, class_name, [](TArgs... args) -> TBase* {
                 return new TDerived(args...);
-            };
+            });
         }
 
         ~ClassRegistrationHandle()

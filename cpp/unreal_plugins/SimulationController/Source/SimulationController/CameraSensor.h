@@ -10,8 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/BoostInterprocess.h"
+#include "SpCore/ArrayDesc.h"
 
 class AActor;
 class UCameraComponent;
