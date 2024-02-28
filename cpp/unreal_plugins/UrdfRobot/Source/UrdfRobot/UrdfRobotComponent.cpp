@@ -142,7 +142,7 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getObservationSpace() cons
     return observation_space;
 }
 
-void UUrdfRobotComponent::applyAction(std::map<std::string, std::vector<uint8_t>>& actions)
+void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<uint8_t>>& actions)
 {
     if (Std::contains(action_components_, "control_joints")) {
         std::map <std::string, std::vector<double>> actions_reinterpreted;

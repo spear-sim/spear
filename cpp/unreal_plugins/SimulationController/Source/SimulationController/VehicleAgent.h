@@ -35,7 +35,7 @@ public:
     std::map<std::string, ArrayDesc> getObservationSpace() const override;
     std::map<std::string, ArrayDesc> getStepInfoSpace() const override;
 
-    void applyAction(std::map<std::string, std::vector<uint8_t>>& action) override;
+    void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) override;
     std::map<std::string, std::vector<uint8_t>> getObservation() const override;
     std::map<std::string, std::vector<uint8_t>> getStepInfo() const override;
 

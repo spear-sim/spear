@@ -136,12 +136,12 @@ std::map<std::string, ArrayDesc> CameraAgent::getStepInfoSpace() const
     return {};
 }
 
-void CameraAgent::applyAction(std::map<std::string, std::vector<uint8_t>>& action)
+void CameraAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.CAMERA_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "set_location")) {
-        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("set_location"));
+        std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("set_location"));
         bool sweep = false;
         FHitResult* hit_result = nullptr;
         camera_actor_->SetActorLocation(
@@ -149,7 +149,7 @@ void CameraAgent::applyAction(std::map<std::string, std::vector<uint8_t>>& actio
     }
 
     if (Std::contains(action_components, "set_rotation")) {
-        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("set_rotation"));
+        std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("set_rotation"));
         camera_actor_->SetActorRotation({Std::at(action_component_data, 0), Std::at(action_component_data, 1), Std::at(action_component_data, 2)}, ETeleportType::ResetPhysics);
     }
 }

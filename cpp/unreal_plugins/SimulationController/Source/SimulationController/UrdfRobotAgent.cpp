@@ -125,7 +125,7 @@ std::map<std::string, ArrayDesc> UrdfRobotAgent::getStepInfoSpace() const
     return {};
 }
 
-void UrdfRobotAgent::applyAction(std::map<std::string, std::vector<uint8_t>>& action)
+void UrdfRobotAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
     SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
     urdf_robot_pawn_->UrdfRobotComponent->applyAction(action);

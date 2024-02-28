@@ -141,7 +141,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getStepInfoSpace() const
     return {};
 }
 
-void VehicleAgent::applyAction(std::map<std::string, std::vector<uint8_t>>& action)
+void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
     vehicle_pawn_->applyAction(action);
 }

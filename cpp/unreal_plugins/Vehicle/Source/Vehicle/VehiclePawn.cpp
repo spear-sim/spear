@@ -239,14 +239,14 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getObservationSpace() const
     return observation_space;
 }
 
-void AVehiclePawn::applyAction(std::map<std::string, std::vector<uint8_t>>& action)
+void AVehiclePawn::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
     // Apply torques in [N.m] to the vehicle wheels. The torques are persistent, i.e., if you call SetDriveTorque,
     // the torque will remain in effect until you call SetDriveTorque again.
 
     if (Std::contains(action_components_, "set_brake_torques")) {
         SP_ASSERT(Std::containsKey(action, "set_brake_torques"));
-        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("set_brake_torques"));
+        std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("set_brake_torques"));
         MovementComponent->SetBrakeTorque(Std::at(action_component_data, 0), 0);
         MovementComponent->SetBrakeTorque(Std::at(action_component_data, 1), 1);
         MovementComponent->SetBrakeTorque(Std::at(action_component_data, 2), 2);
@@ -255,7 +255,7 @@ void AVehiclePawn::applyAction(std::map<std::string, std::vector<uint8_t>>& acti
 
     if (Std::contains(action_components_, "set_drive_torques")) {
         SP_ASSERT(Std::containsKey(action, "set_drive_torques"));
-        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("set_drive_torques"));
+        std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("set_drive_torques"));
         MovementComponent->SetDriveTorque(Std::at(action_component_data, 0), 0);
         MovementComponent->SetDriveTorque(Std::at(action_component_data, 1), 1);
         MovementComponent->SetDriveTorque(Std::at(action_component_data, 2), 2);

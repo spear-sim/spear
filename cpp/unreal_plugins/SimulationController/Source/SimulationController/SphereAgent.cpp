@@ -228,18 +228,18 @@ std::map<std::string, ArrayDesc> SphereAgent::getStepInfoSpace() const
     return step_info_space;
 }
 
-void SphereAgent::applyAction(std::map<std::string, std::vector<uint8_t>>& action)
+void SphereAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>& action)
 {
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "add_force")) {
-        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("add_force"));
+        std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("add_force"));
         FVector force = rotation_.RotateVector({Std::at(action_component_data, 0), Std::at(action_component_data, 1), Std::at(action_component_data, 2)});
         static_mesh_component_->AddForce(force);
     }
 
     if (Std::contains(action_components, "add_to_rotation")) {
-        std::span<double> action_component_data = Std::reinterpretAsSpanOf<double>(action.at("add_to_rotation"));
+        std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("add_to_rotation"));
         rotation_.Add(Std::at(action_component_data, 0), Std::at(action_component_data, 1), Std::at(action_component_data, 2));
     }
 }

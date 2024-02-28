@@ -197,7 +197,7 @@ public:
     //
 
     template <typename TDest, CContiguousValueContainer TContiguousValueContainer>
-    static std::span<TDest> reinterpretAsSpanOf(TContiguousValueContainer& src)
+    static std::span<TDest> reinterpretAsSpanOf(const TContiguousValueContainer& src)
     {
         size_t src_num_bytes = src.size() * sizeof(typename TContiguousValueContainer::value_type);
         SP_ASSERT(src_num_bytes % sizeof(TDest) == 0);
@@ -212,7 +212,7 @@ public:
     }
 
     template <typename TDest, typename TSrc, typename TSrcData> requires std::same_as<TSrc, TSrcData>
-    static std::vector<TDest> reinterpretAsVector(std::initializer_list<TSrcData> src)
+    static std::vector<TDest> reinterpretAsVector(const std::initializer_list<TSrcData>& src)
     {
         return reinterpretAsVectorImpl<TDest, TSrc>(std::data(src), src.size());
     }

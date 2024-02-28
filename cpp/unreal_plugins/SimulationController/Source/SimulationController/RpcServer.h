@@ -142,7 +142,7 @@ struct FunctionWrapper<TReturn (*)(TArgs...)>
     {
         return [&io_context, functor = std::forward<TFunctor>(functor)](TArgs... args) -> TReturn {
 
-            auto task = std::packaged_task<TReturn()>([functor = std::move(functor), args...]() mutable -> TReturn {
+            auto task = std::packaged_task<TReturn()>([functor = std::move(functor), args...]() -> TReturn {
                 return functor(args...);
             });
 
