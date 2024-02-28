@@ -12,12 +12,13 @@
 #include <Containers/Array.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
+#include "SpCore/ArrayDesc.h"
+
 #include "UrdfRobotComponent.generated.h"
 
 class UInputActionComponent;
 class UUrdfJointComponent;
 class UUrdfLinkComponent;
-struct ArrayDesc;
 struct UrdfLinkDesc;
 struct UrdfRobotDesc;
 

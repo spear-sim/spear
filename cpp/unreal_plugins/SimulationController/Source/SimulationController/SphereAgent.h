@@ -19,7 +19,6 @@
 #include "SimulationController/TickEventComponent.h"
 #include "SpCore/ArrayDesc.h"
 
-class AActor;
 class ACameraActor;
 class AStaticMeshActor;
 class UStaticMeshComponent;

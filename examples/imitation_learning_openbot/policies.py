@@ -6,6 +6,7 @@ import numpy as np
 import spear
 import tensorflow as tf
 
+
 class OpenBotPathFollowingPolicy():
 
     def __init__(self, config): 

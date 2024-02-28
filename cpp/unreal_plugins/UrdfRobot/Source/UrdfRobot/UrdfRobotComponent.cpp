@@ -20,7 +20,9 @@
 #include "SpCore/Unreal.h"
 #include "UrdfRobot/UrdfJointComponent.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
-#include "UrdfRobot/UrdfParser.h"
+#include "UrdfRobot/UrdfParser.h" // UrdfRobotDesc
+
+struct FHitResult;
 
 // useful for debugging pendulum_horizontal.urdf
 const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_INPUT_ACTIONS = {

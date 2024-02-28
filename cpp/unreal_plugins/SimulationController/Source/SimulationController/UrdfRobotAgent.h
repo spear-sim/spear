@@ -11,12 +11,12 @@
 
 #include "SimulationController/Agent.h"
 #include "SimulationController/ClassRegistrationUtils.h"
+#include "SpCore/ArrayDesc.h"
 
 class UWorld;
 
 class AUrdfRobotPawn;
 class CameraSensor;
-struct ArrayDesc;
 
 class UrdfRobotAgent : public Agent
 {

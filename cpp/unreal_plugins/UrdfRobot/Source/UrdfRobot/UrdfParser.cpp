@@ -2,7 +2,8 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfRobot/UrdfParser.h"
+#include "UrdfRobot/UrdfParser.h" // UrdfCollisionDesc, UrdfGeometryDesc, UrdfGeometryType, UrdfInertialDesc, UrdfJointControlType, UrdfJointDesc
+                                  // UrdfJointInterfaceType, UrdfJointType, UrdfLinkDesc, UrdfMaterialDesc, UrdfRobotDesc, UrdfVisualDesc
 
 #include <string>
 #include <vector>

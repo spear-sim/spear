@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfRobot/UrdfJointComponent.h"
+#include "UrdfRobot/UrdfJointComponent.h" // EJointControlType, EJointInterfaceType, EJointType
 
 #include <map>
 #include <string>
@@ -16,14 +16,14 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/InputActionComponent.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
-#include "UrdfRobot/UrdfParser.h"
+#include "UrdfRobot/UrdfParser.h" // UrdfJointControlType, UrdfJointDesc, UrdfJointType
 
 // useful for debugging fetch.urdf
 const std::map<std::string, std::pair<std::string, std::vector<double>>> INPUT_ACTIONS = {

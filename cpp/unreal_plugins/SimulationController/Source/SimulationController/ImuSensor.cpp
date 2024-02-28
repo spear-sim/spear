@@ -21,7 +21,7 @@
 
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 

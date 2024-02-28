@@ -16,13 +16,13 @@
 
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
-#include <Engine/TextureRenderTarget2D.h>
+#include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <GameFramework/Actor.h>
 #include <Materials/MaterialInstanceDynamic.h>
-#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
+#include <UObject/UObjectGlobals.h>       // LoadObject, NewObject
 
 #include "SimulationController/BoostInterprocess.h"
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"

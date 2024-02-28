@@ -2,9 +2,8 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-from yacs.config import CfgNode
-
 import os
+from yacs.config import CfgNode
 
 
 SPEAR_ROOT_DIR = os.path.dirname(os.path.realpath(__file__))

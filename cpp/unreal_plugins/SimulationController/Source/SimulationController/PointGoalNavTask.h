@@ -22,9 +22,6 @@
 class AActor;
 class AStaticMeshActor;
 class UWorld;
-struct FHitResult;
-
-struct ArrayDesc;
 
 class PointGoalNavTask: public Task
 {

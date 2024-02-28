@@ -20,7 +20,6 @@ class UWorld;
 class AVehiclePawn;
 class CameraSensor;
 class ImuSensor;
-struct ArrayDesc;
 
 class VehicleAgent : public Agent
 {

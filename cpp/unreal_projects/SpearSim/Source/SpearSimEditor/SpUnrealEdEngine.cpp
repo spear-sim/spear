@@ -12,6 +12,9 @@
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 
+class FOutputDevice;
+class UWorld;
+
 USpUnrealEdEngine::USpUnrealEdEngine()
 {
     SP_LOG_CURRENT_FUNCTION();

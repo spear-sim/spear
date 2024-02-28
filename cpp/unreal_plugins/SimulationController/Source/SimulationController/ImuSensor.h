@@ -15,7 +15,6 @@
 #include "SimulationController/TickEventComponent.h"
 #include "SpCore/ArrayDesc.h"
 
-class AActor;
 class UPrimitiveComponent;
 
 class ImuSensor 

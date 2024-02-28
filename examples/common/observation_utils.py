@@ -4,7 +4,9 @@
 
 import numpy as np
 
+
 def modify_observation_for_visualization(obs, observation_comoponents_to_modify):
+    
     modified_obs = {}
     for render_pass, camera_names in observation_comoponents_to_modify.items():
         for camera_name in camera_names:

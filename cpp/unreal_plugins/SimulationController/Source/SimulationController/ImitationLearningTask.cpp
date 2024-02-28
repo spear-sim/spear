@@ -15,14 +15,14 @@
 #include <vector>
 
 #include <Components/SceneComponent.h>
-#include <Engine/World.h>           // FActorSpawnParameters
+#include <Engine/World.h> // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
 #include "SimulationController/ActorHitEventComponent.h"
 #include "SimulationController/StandaloneComponent.h"
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"

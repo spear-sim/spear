@@ -18,7 +18,6 @@
 class FObjectInitializer;
 class UBoxComponent;
 class UCameraComponent;
-class UInputComponent;
 
 class UInputActionComponent;
 class UVehicleMovementComponent;

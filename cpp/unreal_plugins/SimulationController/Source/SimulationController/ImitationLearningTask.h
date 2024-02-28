@@ -20,7 +20,6 @@
 
 class AActor;
 class UWorld;
-struct FHitResult;
 
 class ImitationLearningTask : public Task {
 public:
