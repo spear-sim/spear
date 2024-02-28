@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfRobot/UrdfJointComponent.h"
+#include "UrdfRobot/UrdfJointComponent.h" // EJointControlType, EJointInterfaceType, EJointType
 
 #include <map>
 #include <string>
@@ -16,14 +16,14 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/InputActionComponent.h"
-#include "CoreUtils/Log.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
+#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/Assert.h"
+#include "SpCore/InputActionComponent.h"
+#include "SpCore/Log.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
-#include "UrdfRobot/UrdfParser.h"
+#include "UrdfRobot/UrdfParser.h" // UrdfJointControlType, UrdfJointDesc, UrdfJointType
 
 // useful for debugging fetch.urdf
 const std::map<std::string, std::pair<std::string, std::vector<double>>> INPUT_ACTIONS = {
@@ -46,7 +46,7 @@ UUrdfJointComponent::UUrdfJointComponent()
     SP_LOG_CURRENT_FUNCTION();
 
     // UInputActionComponent
-    input_action_component_ = Unreal::createSceneComponentInsideOwnerConstructor<UInputActionComponent>(this, this, "input_action_component");
+    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, "input_action_component");
     SP_ASSERT(input_action_component_);
 }
 
@@ -69,7 +69,7 @@ void UUrdfJointComponent::BeginPlay()
     UPhysicsConstraintComponent::BeginPlay();
 
     const std::map<std::string, std::pair<std::string, std::vector<double>>> input_actions = INPUT_ACTIONS;
-    input_action_component_->bindInputActions(input_actions);
+    input_action_component_->bindInputActions(Std::keys(input_actions));
     input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
         if (EnableKeyboardControl) {
             applyActionComponent(input_actions.at(key));
@@ -278,7 +278,7 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                             SP_ASSERT(false);
                             break;
                     }
-                    action_space[action_name] = std::move(array_desc);
+                    Std::insert(action_space, action_name, std::move(array_desc));
                     break;
 
                 case EJointType::Prismatic:
@@ -298,7 +298,7 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                             SP_ASSERT(false);
                             break;
                     }
-                    action_space[action_name] = std::move(array_desc);
+                    Std::insert(action_space, action_name, std::move(array_desc));
                     break;
 
                 case EJointType::Fixed:
@@ -330,7 +330,7 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                             SP_ASSERT(false);
                             break;
                     }
-                    action_space[action_name] = std::move(array_desc);
+                    Std::insert(action_space, action_name, std::move(array_desc));
                     break;
 
                 case EJointType::Prismatic:
@@ -350,7 +350,7 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                             SP_ASSERT(false);
                             break;
                     }
-                    action_space[action_name] = std::move(array_desc);
+                    Std::insert(action_space, action_name, std::move(array_desc));
                     break;
 
                 case EJointType::Fixed:
@@ -367,12 +367,12 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getActionSpace() const
                 case EJointType::Continuous:
                 case EJointType::Revolute:
                     action_name += "add_torque_in_radians";
-                    action_space[action_name] = std::move(array_desc);
+                    Std::insert(action_space, action_name, std::move(array_desc));
                     break;
 
                 case EJointType::Prismatic:
                     action_name += "add_force";
-                    action_space[action_name] = std::move(array_desc);
+                    Std::insert(action_space, action_name, std::move(array_desc));
                     break;
 
                 case EJointType::Fixed:
@@ -397,11 +397,11 @@ std::map<std::string, ArrayDesc> UUrdfJointComponent::getObservationSpace() cons
 
 void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std::vector<double>>& action_component)
 {
-    std::string action_component_name = action_component.first;
-    std::vector<double> action_component_data = action_component.second;
+    auto& [action_component_name_qualified, action_component_data] = action_component;
 
-    std::vector<std::string> tokens = Std::tokenize(action_component_name, ".");
-    std::string& action_name = tokens.at(1);
+    std::vector<std::string> tokens = Std::tokenize(action_component_name_qualified, ".");
+    SP_ASSERT(tokens.size() > 1);
+    std::string& action_component_name = tokens.at(1);
 
     switch (JointControlType) {
         case EJointControlType::NotActuated:
@@ -415,9 +415,9 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
             switch (JointType) {
                 case EJointType::Continuous:
                 case EJointType::Revolute:
-                    if (action_name == "set_angular_orientation_target") {
+                    if (action_component_name == "set_angular_orientation_target") {
                         SetAngularOrientationTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                    } else if (action_name == "add_to_angular_orientation_target") {
+                    } else if (action_component_name == "add_to_angular_orientation_target") {
                         SetAngularOrientationTarget(
                             ConstraintInstance.ProfileInstance.AngularDrive.OrientationTarget.Add(
                                 action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)));
@@ -427,9 +427,9 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
                     break;
 
                 case EJointType::Prismatic:
-                    if (action_name == "set_linear_position_target") {
+                    if (action_component_name == "set_linear_position_target") {
                         SetLinearPositionTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                    } else if (action_name == "add_to_linear_position_target") {
+                    } else if (action_component_name == "add_to_linear_position_target") {
                         SetLinearPositionTarget({
                             action_component_data.at(0) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.X,
                             action_component_data.at(1) + ConstraintInstance.ProfileInstance.LinearDrive.PositionTarget.Y,
@@ -452,9 +452,9 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
             switch (JointType) {
                 case EJointType::Continuous:
                 case EJointType::Revolute:
-                    if (action_name == "set_angular_velocity_target") {
+                    if (action_component_name == "set_angular_velocity_target") {
                         SetAngularVelocityTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                    } else if (action_name == "add_to_angular_velocity_target") {
+                    } else if (action_component_name == "add_to_angular_velocity_target") {
                         SetAngularVelocityTarget({
                             action_component_data.at(0) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.X,
                             action_component_data.at(1) + ConstraintInstance.ProfileInstance.AngularDrive.AngularVelocityTarget.Y,
@@ -465,9 +465,9 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
                     break;
 
                 case EJointType::Prismatic:
-                    if (action_name == "set_linear_velocity_target") {
+                    if (action_component_name == "set_linear_velocity_target") {
                         SetLinearVelocityTarget({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
-                    } else if (action_name == "add_to_linear_velocity_target") {
+                    } else if (action_component_name == "add_to_linear_velocity_target") {
                         SetLinearVelocityTarget({
                             action_component_data.at(0) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.X,
                             action_component_data.at(1) + ConstraintInstance.ProfileInstance.LinearDrive.VelocityTarget.Y,
@@ -490,7 +490,7 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
             switch (JointType) {
                 case EJointType::Continuous:
                 case EJointType::Revolute:
-                    if (action_name == "add_torque_in_radians") {
+                    if (action_component_name == "add_torque_in_radians") {
                         FVector torque = GetComponentTransform().GetRotation().RotateVector({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
                         if (ChildStaticMeshComponent && ChildStaticMeshComponent->BodyInstance.ShouldInstanceSimulatingPhysics()) {
                             ChildStaticMeshComponent->AddTorqueInRadians(torque);
@@ -504,7 +504,7 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
                     break;
 
                 case EJointType::Prismatic:
-                    if (action_name == "add_force") {
+                    if (action_component_name == "add_force") {
                         FVector force = GetComponentTransform().GetRotation().RotateVector({ action_component_data.at(0), action_component_data.at(1), action_component_data.at(2) });
                         if (ChildStaticMeshComponent && ChildStaticMeshComponent->BodyInstance.ShouldInstanceSimulatingPhysics()) {
                             ChildStaticMeshComponent->AddForce(force);
@@ -531,6 +531,5 @@ void UUrdfJointComponent::applyActionComponent(const std::pair<std::string, std:
 std::map<std::string, std::vector<uint8_t>> UUrdfJointComponent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-
     return observation;
 }

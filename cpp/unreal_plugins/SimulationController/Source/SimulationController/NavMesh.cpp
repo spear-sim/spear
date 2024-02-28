@@ -15,11 +15,10 @@
 #include <NavigationSystemTypes.h>         // FPathFindingQuery
 #include <NavMesh/RecastNavMesh.h>
 
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Unreal.h"
-
-#include "CoreUtils/Log.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Log.h"
+#include "SpCore/Unreal.h"
 
 void NavMesh::findObjectReferences(UWorld* world)
 {

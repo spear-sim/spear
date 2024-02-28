@@ -11,14 +11,13 @@
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 #include <WheeledVehiclePawn.h>
 
-#include "CoreUtils/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h"
 
 #include "VehiclePawn.generated.h"
 
 class FObjectInitializer;
 class UBoxComponent;
 class UCameraComponent;
-class UInputComponent;
 
 class UInputActionComponent;
 class UVehicleMovementComponent;

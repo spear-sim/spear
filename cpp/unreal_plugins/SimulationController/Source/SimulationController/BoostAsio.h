@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "CoreUtils/SuppressCompilerWarnings.h"
+#include "SpCore/SuppressCompilerWarnings.h"
 
 SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
 #include <boost/asio.hpp>

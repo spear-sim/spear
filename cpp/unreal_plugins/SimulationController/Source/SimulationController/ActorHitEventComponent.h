@@ -11,7 +11,7 @@
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
-#include "CoreUtils/Log.h"
+#include "SpCore/Log.h"
 
 #include "ActorHitEventComponent.generated.h"
 

@@ -20,14 +20,14 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Log.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/ImuSensor.h"
+#include "SpCore/ArrayDesc.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Log.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 #include "Vehicle/VehicleMovementComponent.h"
 #include "Vehicle/VehiclePawn.h"
 
@@ -123,14 +123,14 @@ std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
     std::map<std::string, ArrayDesc> observation_space;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
-    observation_space.merge(vehicle_pawn_->getObservationSpace());
+    Std::insert(observation_space, vehicle_pawn_->getObservationSpace());
 
     if (Std::contains(observation_components, "camera")) {
-        observation_space.merge(camera_sensor_->getObservationSpace());
+        Std::insert(observation_space, camera_sensor_->getObservationSpace());
     }
 
     if (Std::contains(observation_components, "imu")) {
-        observation_space.merge(imu_sensor_->getObservationSpace());
+        Std::insert(observation_space, imu_sensor_->getObservationSpace());
     }
 
     return observation_space;
@@ -151,14 +151,14 @@ std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
     std::map<std::string, std::vector<uint8_t>> observation;
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
-    observation.merge(vehicle_pawn_->getObservation());
+    Std::insert(observation, vehicle_pawn_->getObservation());
 
     if (Std::contains(observation_components, "camera")) {
-        observation.merge(camera_sensor_->getObservation());
+        Std::insert(observation, camera_sensor_->getObservation());
     }
 
     if (Std::contains(observation_components, "imu")) {
-        observation.merge(imu_sensor_->getObservation());
+        Std::insert(observation, imu_sensor_->getObservation());
     }
 
     return observation;

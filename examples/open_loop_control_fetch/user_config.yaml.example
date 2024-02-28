@@ -39,10 +39,6 @@ SIMULATION_CONTROLLER:
       IMAGE_WIDTH: 512
       FOV: 90.0
 
-  VISUALIZER:
-    ACTOR_NAME: "UrdfRobotActor"
-    SPAWN_CAMERA: False
-
 URDF_ROBOT:
   URDF_ROBOT_PAWN:
     URDF_FILE: "fetch.urdf"

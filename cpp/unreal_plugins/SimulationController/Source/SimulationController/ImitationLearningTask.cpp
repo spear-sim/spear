@@ -15,18 +15,18 @@
 #include <vector>
 
 #include <Components/SceneComponent.h>
-#include <Engine/World.h>           // FActorSpawnParameters
+#include <Engine/World.h> // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
 #include "SimulationController/ActorHitEventComponent.h"
 #include "SimulationController/StandaloneComponent.h"
+#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 struct FHitResult;
 
@@ -39,7 +39,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     SP_ASSERT(goal_actor_);
 
     // Although scene_component appears to not being used anywhere, it is required here to make goal_actor_ movable.
-    auto scene_component = Unreal::createSceneComponentOutsideOwnerConstructor<USceneComponent>(goal_actor_, goal_actor_, "scene_component");
+    auto scene_component = Unreal::createComponentOutsideOwnerConstructor<USceneComponent>(goal_actor_, "scene_component");
     SP_ASSERT(scene_component);
     scene_component->SetMobility(EComponentMobility::Movable);
 
@@ -92,8 +92,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
 
 ImitationLearningTask::~ImitationLearningTask()
 {
-    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
-
     agent_initial_locations_.clear();
     agent_goal_locations_.clear();
     episode_index_ = -1;
@@ -166,13 +164,13 @@ std::map<std::string, ArrayDesc> ImitationLearningTask::getStepInfoSpace() const
     array_desc.high_ = 1.0;
     array_desc.shape_ = {1};
     array_desc.datatype_ = DataType::UInteger8;
-    step_info_space["hit_goal"] = std::move(array_desc);
+    Std::insert(step_info_space, "hit_goal", std::move(array_desc));
 
     array_desc.low_ = 0.0;
     array_desc.high_ = 1.0;
     array_desc.shape_ = {1};
     array_desc.datatype_ = DataType::UInteger8;
-    step_info_space["hit_obstacle"] = std::move(array_desc);
+    Std::insert(step_info_space, "hit_obstacle", std::move(array_desc));
 
     return step_info_space;
 }
@@ -181,8 +179,8 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 {
     std::map<std::string, std::vector<uint8_t>> step_info;
 
-    step_info["hit_goal"] = std::vector<uint8_t>{hit_goal_};
-    step_info["hit_obstacle"] = std::vector<uint8_t>{hit_obstacle_};
+    Std::insert(step_info, "hit_goal", {hit_goal_});
+    Std::insert(step_info, "hit_obstacle", {hit_obstacle_});
 
     return step_info;
 }

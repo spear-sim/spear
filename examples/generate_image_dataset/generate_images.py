@@ -19,6 +19,7 @@ import sys
 sys.path.append(COMMON_DIR)
 import common.observation_utils as observation_utils
 
+
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
 # However, in this example, we are teleporting the camera in an incoherent way. Hence, we implement a 
 # CustomEnv that can render multiple internal frames per step(), so that Unreal Engine's rendering

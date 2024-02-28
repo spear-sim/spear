@@ -17,6 +17,7 @@ def path_exists(path):
     else:
         return tail in os.listdir(head)
 
+
 def remove_path(path):
     if not path_exists(path):
         return

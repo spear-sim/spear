@@ -7,7 +7,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using UnrealBuildTool;
 
-public class SpearSimTarget : CommonTargetRulesTarget
+public class SpearSimTarget : SpTargetRulesTarget
 {
     public SpearSimTarget(TargetInfo target) : base(target)
     {
