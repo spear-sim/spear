@@ -51,8 +51,11 @@ if args.visual_parity_with_unreal:
 
 
 def process_scene():
-    json_file = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_scene_json", "unreal_scene.json"))
 
+    unreal_scene_json_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_scene_json"))
+    assert os.path.exists(unreal_scene_json_dir)
+
+    json_file = os.path.realpath(os.path.join(unreal_scene_json_dir, "unreal_scene.json"))
     with open(json_file, "r") as f:
         unreal_scene_json = json.load(f)
 
@@ -70,7 +73,7 @@ def process_scene():
 
     # It is possible for an actor not to have a root component.
     for actor_name, actor_desc in unreal_scene_json.items():
-        if actor_name not in args.ignore_actors and "root_component" in actor_desc.keys():
+        if actor_name not in ignore_actors and "root_component" in actor_desc.keys():
             spear.log("Processing actor: ", actor_name)
             component_desc = actor_desc["root_component"]
 
@@ -131,7 +134,7 @@ def draw_components(component_desc, world_from_component_transform_func, world_f
         # Recurse for each child component.
         for child_component_desc in component_desc["children_components"].values():
             draw_components(
-                child_component_desc, world_from_component_transform_func, world_from_component_transform_data, log_prefix_str=log_prefix_str + "    ")
+                child_component_desc, world_from_component_transform_func, world_from_component_transform_data, log_prefix_str=log_prefix_str+"    ")
 
 
 def world_from_component_transform_using_relative_lrs(component_desc, world_from_component_transform_data):

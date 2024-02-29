@@ -5,6 +5,7 @@
 #include "SpCore/Log.h"
 
 #include <filesystem>
+#include <format>
 #include <iostream> // std::cout
 #include <regex>
 #include <string>   // std::string::operator<<
@@ -38,7 +39,8 @@ void Log::logUnreal(const std::string& str)
 
 std::string Log::getPrefix(const std::filesystem::path& current_file, int current_line)
 {
-    return "[SPEAR | " + getCurrentFileAbbreviated(current_file) + ":" + Std::toString(current_line) + "] ";
+    // We don't use Std::toString(current_line) because we want to pad with leading zeros.
+    return "[SPEAR | " + getCurrentFileAbbreviated(current_file) + ":" + std::format("{:04}", current_line) + "] ";
 }
 
 std::string Log::getCurrentFileAbbreviated(const std::filesystem::path& current_file)

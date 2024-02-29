@@ -109,7 +109,7 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
     ParentStaticMeshComponent = parent_link_component;
     ChildStaticMeshComponent = child_link_component;
 
-    FVector location = FVector(joint_desc->xyz_.at(0), joint_desc->xyz_.at(1), joint_desc->xyz_.at(2)) * m_to_cm;                  // m to cm
+    FVector location = FVector(joint_desc->xyz_.at(0), joint_desc->xyz_.at(1), joint_desc->xyz_.at(2)) * m_to_cm;                      // m to cm
     FRotator rotation = FMath::RadiansToDegrees(FRotator({ joint_desc->rpy_.at(1), joint_desc->rpy_.at(2), joint_desc->rpy_.at(0) })); // rpy to pyr, rad to deg
     FVector axis = FVector(joint_desc->axis_.at(0), joint_desc->axis_.at(1), joint_desc->axis_.at(2));
     FMatrix rotation_matrix = FRotationMatrix::MakeFromX(rotation.RotateVector(axis));
