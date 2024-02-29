@@ -53,8 +53,8 @@ class OpenBotPathFollowingPolicy():
         location_xy_prev  = self._location_xy_prev * cm_to_m
         rotation_yaw_prev = np.deg2rad(self._rotation_yaw_prev)
 
-        location_xy_speed  = np.linalg.norm(location_xy_current - location_xy_prev) / self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME
-        rotation_yaw_speed = np.linalg.norm(rotation_yaw_current - rotation_yaw_prev) / self._config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME
+        location_xy_speed  = np.linalg.norm(location_xy_current - location_xy_prev) / self._config.SIMULATION_CONTROLLER.PHYSICS.SIMULATION_STEP_TIME
+        rotation_yaw_speed = np.linalg.norm(rotation_yaw_current - rotation_yaw_prev) / self._config.SIMULATION_CONTROLLER.PHYSICS.SIMULATION_STEP_TIME
 
         # multiply by -1.0 because otherwise a positive rotation error would cause us to turn right, but it should cause us to turn left
         control_right = -1.0 * \
