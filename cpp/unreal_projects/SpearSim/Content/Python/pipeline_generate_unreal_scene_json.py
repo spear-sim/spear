@@ -7,7 +7,6 @@ import unreal
 import spear
 import spear.unreal
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
 args = parser.parse_args()

@@ -14,7 +14,6 @@ import scipy.spatial.transform
 import spear
 import spear.pipeline
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
 parser.add_argument("--scene_id", required=True)
@@ -89,27 +88,28 @@ def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, log_prefix
     spear.log(log_prefix_str, "Processing kinematic tree node: ", node["name"])
 
     transform_parent_node_from_current_node = \
-        spear.pipeline.get_transform_from_transform_data(node["transform_parent_node_from_current_node"])
+        spear.pipeline.get_transform_from_transform_data(
+            node["transform_parent_node_from_current_node"])
     transform_world_from_current_node = \
         spear.pipeline.compose_transforms([transform_world_from_parent_node, transform_parent_node_from_current_node])
 
     for static_mesh_component_name, static_mesh_component_desc in node["static_mesh_components"].items():
-        static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
 
-        assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id)
-
-        transform_current_node_from_current_component = spear.pipeline.get_transform_from_transform_data(
-            static_mesh_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"])
-
+        transform_current_node_from_current_component = \
+            spear.pipeline.get_transform_from_transform_data(
+                static_mesh_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"])
         transform_world_from_current_component = \
             spear.pipeline.compose_transforms([transform_world_from_current_node, transform_current_node_from_current_component])
 
         M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform_world_from_current_component)
 
+        static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
+        assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id)
+
         obj_path_suffix = posixpath.join(*static_mesh_asset_path.parts[4:]) + ".obj"
         numerical_parity_obj_path = \
             os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
-        spear.log(log_prefix_str, "    OBJ file:              ", numerical_parity_obj_path)
+        spear.log(log_prefix_str, "    OBJ file: ", numerical_parity_obj_path)
 
         mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
         V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T

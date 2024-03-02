@@ -5,7 +5,6 @@
 import posixpath
 import unreal
 
-
 editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 
 
