@@ -25,7 +25,6 @@ def process_scene():
 
     # For each actor, export all static mesh components
     for actor in actors:
-
         spear.log("    Processing actor: ", spear.unreal.get_stable_name_actor(actor))
 
         static_mesh_components  = spear.unreal.find_components(actor, "StaticMeshComponent")
@@ -45,14 +44,14 @@ def process_scene():
             # in Unreal. However in our setting, we would prefer numerical parity over visual parity, so we reload
             # the mesh as soon as we're finished exporting from Unreal, and we swap the y and z coordinates back to
             # what they were originally.
-            visual_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "visual_parity", obj_path_suffix))
+            raw_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "raw", obj_path_suffix))
 
             errors = []
             asset_export_task = unreal.AssetExportTask()
             asset_export_task.set_editor_property("automated", True)
             asset_export_task.set_editor_property("errors", errors)
             asset_export_task.set_editor_property("exporter", None)            
-            asset_export_task.set_editor_property("filename", visual_parity_obj_path)
+            asset_export_task.set_editor_property("filename", raw_obj_path)
             asset_export_task.set_editor_property("ignore_object_list", [])
             asset_export_task.set_editor_property("object", asset.get_asset())
             asset_export_task.set_editor_property("options", None)
@@ -86,7 +85,7 @@ def process_scene():
             numerical_parity_obj_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "numerical_parity", obj_dir_suffix))
             numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "numerical_parity", obj_path_suffix))
 
-            mesh = trimesh.load_mesh(visual_parity_obj_path, process=False, validate=False)
+            mesh = trimesh.load_mesh(raw_obj_path, process=False, validate=False)
             mesh.vertices = mesh.vertices[:,[0,2,1]]
             mesh.faces = mesh.faces[:,[0,2,1]]
 

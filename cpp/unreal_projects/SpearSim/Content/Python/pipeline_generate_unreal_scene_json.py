@@ -21,42 +21,36 @@ df_editor_properties = pd.read_csv(editor_properties_csv_file)
 def process_scene():
     
     editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
-
     spear.log("Exporting Unreal scene to JSON: " + editor_world_name)
 
     actors = spear.unreal.find_actors()
     actor_descs = { spear.unreal.get_stable_name_actor(actor): get_actor_desc(actor) for actor in actors }
 
     unreal_scene_json_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_scene_json"))
-    unreal_scene_json_file = os.path.realpath(os.path.join(unreal_scene_json_dir, "unreal_scene.json"))
-
-    spear.log("Generating JSON file: " + unreal_scene_json_file)
+    actors_json_file = os.path.realpath(os.path.join(unreal_scene_json_dir, "actors.json"))
+    spear.log("Generating JSON file: " + actors_json_file)
 
     os.makedirs(unreal_scene_json_dir, exist_ok=True)
-    with open(unreal_scene_json_file, "w") as f:
+    with open(actors_json_file, "w") as f:
         json.dump(actor_descs, f, indent=4, sort_keys=True)
 
     spear.log("Done.")
 
 
 def get_actor_desc(actor):
-
-    actor_desc = {
+    return {
         "class": actor.__class__.__name__,
         "debug_info": {"str": str(actor)},
         "editor_properties": get_editor_property_descs(actor),
-        "name": spear.unreal.get_stable_name_actor(actor)
+        "name": spear.unreal.get_stable_name_actor(actor),
+        "root_component": get_component_desc(actor.get_editor_property("root_component"))
     }
-
-    # It is possible for an actor not to have a root component.
-    root_component = actor.get_editor_property("root_component")
-    if root_component is not None:
-        actor_desc["root_component"] = get_component_desc(root_component)
-
-    return actor_desc
 
 
 def get_component_desc(component):
+
+    if component is None:
+        return None
 
     component_desc = {
         "children_components":
@@ -65,6 +59,7 @@ def get_component_desc(component):
         "debug_info": {"str": str(component)},
         "editor_properties": get_editor_property_descs(component),
         "name": spear.unreal.get_stable_name_component(component),
+        "pipeline_info": {},
         "unreal_name": component.get_name()
     }
 
@@ -108,11 +103,16 @@ def get_editor_property_descs(uobject):
 
 def get_editor_property_desc(editor_property):
 
-    # If the editor property is an Actor or ActorComponent, then do not return any editor properties
-    # to avoid an infinite recursion. If users want to obtain the editor properties for an Actor or
-    # ActorComponent, they must call get_editor_property_descs(...).
+    # If the editor property is None, then return None, because we want it to be serialized as null
+    # rather than "None"
+    if editor_property is None:
+        return None
 
-    if isinstance(editor_property, unreal.Actor):
+    # Otherwise, if the editor property is an Actor or ActorComponent, then do not return any editor
+    # properties to avoid an infinite recursion. If users want to obtain the editor properties for an
+    # Actor or ActorComponent, they must call get_editor_property_descs(...).
+
+    elif isinstance(editor_property, unreal.Actor):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
@@ -147,8 +147,8 @@ def get_editor_property_desc(editor_property):
     elif isinstance(editor_property, unreal.Array):
         return [ get_editor_property_desc(editor_property_array_entry) for editor_property_array_entry in editor_property ]
 
-    # Otherwise, if the editor property value if serializable as JSON, then return the object, otherwise
-    # return the string representation of the object.
+    # Otherwise, if the editor property value if serializable as JSON, then return the object,
+    # otherwise return the string representation of the object.
     else:
         try:
             json.dumps(editor_property)
