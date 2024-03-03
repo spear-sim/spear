@@ -230,3 +230,16 @@ def get_matrix_data_from_matrix(matrix):
             matrix_data[column_name][row_name] = matrix[row, column]
 
     return matrix_data
+
+
+#
+# Helper functions for components.
+#
+
+def any_component_transform_absolute(component_desc):
+
+    absolute_location = component_desc["editor_properties"]["absolute_location"] 
+    absolute_rotation = component_desc["editor_properties"]["absolute_rotation"] 
+    absolute_scale    = component_desc["editor_properties"]["absolute_scale"]   
+
+    return absolute_location or absolute_rotation or absolute_scale

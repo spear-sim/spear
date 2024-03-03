@@ -125,7 +125,7 @@ def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, log_prefix
     for child_node in node["children_nodes"].values():
         draw_kinematic_tree_nodes(
             transform_world_from_parent_node=transform_world_from_current_node,
-            node=child_node,
+            node=child_node["node"],
             log_prefix_str=log_prefix_str+"    ")
 
 
