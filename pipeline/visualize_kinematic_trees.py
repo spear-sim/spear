@@ -8,9 +8,7 @@ import mayavi.mlab
 import numpy as np
 import os
 import pathlib
-import posixpath
 import trimesh
-import scipy.spatial.transform
 import spear
 import spear.pipeline
 
@@ -50,11 +48,10 @@ if args.visual_parity_with_unreal:
 def process_scene():
 
     kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "kinematic_trees"))
-    actor_kinematic_trees_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actor_kinematic_trees.json"))
+    actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
     assert os.path.exists(kinematic_trees_dir)
-
-    with open(actor_kinematic_trees_json_file, "r") as f:
-        actor_kinematic_trees_json = json.load(f)
+    with open(actors_json_file, "r") as f:
+        actors_json = json.load(f)
 
     mayavi.mlab.quiver3d(origin_world[:,0], origin_world[:,1], origin_world[:,2],
                          x_axis_world[:,0], x_axis_world[:,1], x_axis_world[:,2],
@@ -68,11 +65,9 @@ def process_scene():
                          z_axis_world[:,0], z_axis_world[:,1], z_axis_world[:,2],
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
-    actor_kinematic_trees = actor_kinematic_trees_json.items()
-    actor_kinematic_trees = \
-        [ (actor_name, actor_kinematic_tree) for actor_name, actor_kinematic_tree in actor_kinematic_trees if actor_name not in ignore_actors ]
+    actors = [ (actor_name, kinematic_tree) for actor_name, kinematic_tree in actors_json.items() if actor_name not in ignore_actors ]
 
-    for actor_name, actor_kinematic_tree in actor_kinematic_trees:
+    for actor_name, actor_kinematic_tree in actors:
         spear.log("Processing actor: ", actor_name)
         root_node = actor_kinematic_tree["root_node"]
         draw_kinematic_tree_nodes(
@@ -81,6 +76,8 @@ def process_scene():
             log_prefix_str="    ")
 
     mayavi.mlab.show()
+
+    spear.log("Done.")
 
 
 def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, log_prefix_str=""):
@@ -106,7 +103,7 @@ def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, log_prefix
         static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
         assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id)
 
-        obj_path_suffix = posixpath.join(*static_mesh_asset_path.parts[4:]) + ".obj"
+        obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
         numerical_parity_obj_path = \
             os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
         spear.log(log_prefix_str, "    OBJ file: ", numerical_parity_obj_path)

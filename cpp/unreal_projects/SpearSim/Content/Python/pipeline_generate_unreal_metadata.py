@@ -1,8 +1,11 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
 import argparse
 import json
 import os
 import pandas as pd
-import posixpath
 import unreal
 import spear
 import spear.unreal
@@ -23,15 +26,14 @@ def process_scene():
     spear.log("Exporting Unreal scene to JSON: " + editor_world_name)
 
     actors = spear.unreal.find_actors()
-    actor_descs = { spear.unreal.get_stable_name_actor(actor): get_actor_desc(actor) for actor in actors }
+    actors = { spear.unreal.get_stable_name_actor(actor): get_actor_desc(actor) for actor in actors }
 
-    unreal_scene_json_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_scene_json"))
-    actors_json_file = os.path.realpath(os.path.join(unreal_scene_json_dir, "actors.json"))
+    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_metadata"))
+    actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
     spear.log("Generating JSON file: " + actors_json_file)
-
-    os.makedirs(unreal_scene_json_dir, exist_ok=True)
+    os.makedirs(unreal_metadata_dir, exist_ok=True)
     with open(actors_json_file, "w") as f:
-        json.dump(actor_descs, f, indent=4, sort_keys=True)
+        json.dump(actors, f, indent=4, sort_keys=True)
 
     spear.log("Done.")
 

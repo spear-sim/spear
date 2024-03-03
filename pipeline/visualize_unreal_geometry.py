@@ -8,9 +8,7 @@ import mayavi.mlab
 import numpy as np
 import os
 import pathlib
-import posixpath
 import trimesh
-import scipy.spatial.transform
 import spear
 import spear.pipeline
 
@@ -52,10 +50,9 @@ if args.visual_parity_with_unreal:
 
 def process_scene():
 
-    unreal_scene_json_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_scene_json"))
-    actors_json_file = os.path.realpath(os.path.join(unreal_scene_json_dir, "actors.json"))
-    assert os.path.exists(unreal_scene_json_dir)
-
+    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_metadata"))
+    actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
+    assert os.path.exists(unreal_metadata_dir)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -71,11 +68,11 @@ def process_scene():
                          z_axis_world[:,0], z_axis_world[:,1], z_axis_world[:,2],
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
-    actor_descs = actors_json.items()
-    actor_descs = [ (actor_name, actor_desc) for actor_name, actor_desc in actor_descs if actor_desc["root_component"] is not None ]
-    actor_descs = [ (actor_name, actor_desc) for actor_name, actor_desc in actor_descs if actor_name not in ignore_actors ]
+    actors = actors_json.items()
+    actors = [ (actor_name, actor_desc) for actor_name, actor_desc in actors if actor_desc["root_component"] is not None ]
+    actors = [ (actor_name, actor_desc) for actor_name, actor_desc in actors if actor_name not in ignore_actors ]
 
-    for actor_name, actor_desc in actor_descs:
+    for actor_name, actor_desc in actors:
         spear.log("Processing actor: ", actor_name)
         draw_components(
             transform_world_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
@@ -83,6 +80,8 @@ def process_scene():
             log_prefix_str="    ")
 
     mayavi.mlab.show()
+
+    spear.log("Done.")
 
 
 def draw_components(transform_world_from_parent_component, component_desc, log_prefix_str=""):
@@ -117,7 +116,7 @@ def draw_components(transform_world_from_parent_component, component_desc, log_p
                 # ...that are in the /Game/Scenes/<scene_id> directory.
                 if static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id):
 
-                    obj_path_suffix = posixpath.join(*static_mesh_asset_path.parts[4:]) + ".obj"
+                    obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
                     numerical_parity_obj_path = \
                         os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
                     spear.log(log_prefix_str, "    OBJ file:              ", numerical_parity_obj_path)

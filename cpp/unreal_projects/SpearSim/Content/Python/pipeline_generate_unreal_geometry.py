@@ -1,9 +1,13 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
 import argparse
 import os
 import pathlib
-import posixpath
 import unreal
 import spear
+import spear.unreal
 import trimesh
 
 parser = argparse.ArgumentParser()
@@ -35,14 +39,13 @@ def process_scene():
         for static_mesh_asset_path in static_mesh_asset_paths:
             spear.log("        Exporting asset: ", static_mesh_asset_path)
 
-            asset = asset_registry.get_asset_by_object_path(str(static_mesh_asset_path))
-            obj_path_suffix = posixpath.join(*static_mesh_asset_path.parts[4:]) + ".obj"
-
             # Export OBJ file. Note that Unreal swaps the y and z coordinates during export, so that the exported
             # mesh achieves visual parity with most third-party viewers, despite the unusual handedness conventions
             # in Unreal. However in our setting, we would prefer numerical parity over visual parity, so we reload
             # the mesh as soon as we're finished exporting from Unreal, and we swap the y and z coordinates back to
             # what they were originally.
+
+            obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
             raw_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "raw", obj_path_suffix))
 
             errors = []
@@ -52,7 +55,7 @@ def process_scene():
             asset_export_task.set_editor_property("exporter", None)            
             asset_export_task.set_editor_property("filename", raw_obj_path)
             asset_export_task.set_editor_property("ignore_object_list", [])
-            asset_export_task.set_editor_property("object", asset.get_asset())
+            asset_export_task.set_editor_property("object", asset_registry.get_asset_by_object_path(str(static_mesh_asset_path)).get_asset())
             asset_export_task.set_editor_property("options", None)
             asset_export_task.set_editor_property("prompt", False)
             asset_export_task.set_editor_property("replace_identical", True)
@@ -79,15 +82,16 @@ def process_scene():
                 assert False
 
             # Swap y and z coordinates in the mesh that was exported by Unreal. Note that we also need to swap
-            # the winding order of the triangle faces so the meshes still render nicely in MeshLab.
-            obj_dir_suffix = posixpath.join(*static_mesh_asset_path.parts[4:-1])
-            numerical_parity_obj_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "numerical_parity", obj_dir_suffix))
-            numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "numerical_parity", obj_path_suffix))
-
+            # the winding order of the triangle faces so the meshes still render nicely in MeshLab. We set the
+            # visual attribute to a default value to prevent exporting material info.
             mesh = trimesh.load_mesh(raw_obj_path, process=False, validate=False)
             mesh.vertices = mesh.vertices[:,[0,2,1]]
             mesh.faces = mesh.faces[:,[0,2,1]]
+            mesh.visual = trimesh.visual.ColorVisuals()
 
+            obj_dir_suffix = os.path.join(*static_mesh_asset_path.parts[4:-1])
+            numerical_parity_obj_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "numerical_parity", obj_dir_suffix))
+            numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "numerical_parity", obj_path_suffix))
             os.makedirs(numerical_parity_obj_dir, exist_ok=True)
             with open(numerical_parity_obj_path, "w"):
                 mesh.export(numerical_parity_obj_path, "obj")

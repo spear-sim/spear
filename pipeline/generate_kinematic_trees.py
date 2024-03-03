@@ -4,10 +4,8 @@
 
 import argparse
 import json
-import numpy as np
 import os
 import pathlib
-import scipy.spatial.transform
 import spear
 import spear.pipeline
 
@@ -23,24 +21,24 @@ physics_constraint_component_classes = ["PhysicsConstraintComponent"]
 
 def process_scene():
 
-    unreal_scene_json_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_scene_json"))
-    assert os.path.exists(unreal_scene_json_dir)
-
-    actors_json_file = os.path.realpath(os.path.join(unreal_scene_json_dir, "actors.json"))
+    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_metadata"))
+    actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
+    assert os.path.exists(unreal_metadata_dir)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
-    actor_descs = actors_json.items()
-    actor_descs = [ (actor_name, actor_desc) for actor_name, actor_desc in actor_descs if actor_desc["root_component"] is not None ]
-    actor_kinematic_trees = { actor_name: get_kinematic_tree(actor_desc) for actor_name, actor_desc in actor_descs }
+    actors = actors_json.items()
+    actors = [ (actor_name, actor_desc) for actor_name, actor_desc in actors if actor_desc["root_component"] is not None ]
+    actors = { actor_name: get_kinematic_tree(actor_desc) for actor_name, actor_desc in actors }
 
     kinematic_trees_json_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "kinematic_trees"))
-    kinematic_trees_json_file = os.path.realpath(os.path.join(kinematic_trees_json_dir, "actor_kinematic_trees.json"))
+    kinematic_trees_json_file = os.path.realpath(os.path.join(kinematic_trees_json_dir, "actors.json"))
     spear.log("Generating JSON file: " + kinematic_trees_json_file)
-
     os.makedirs(kinematic_trees_json_dir, exist_ok=True)
     with open(kinematic_trees_json_file, "w") as f:
-        json.dump(actor_kinematic_trees, f, indent=4, sort_keys=True)
+        json.dump(actors, f, indent=4, sort_keys=True)
+
+    spear.log("Done.")
 
 
 def get_kinematic_tree(actor_desc):
@@ -48,34 +46,46 @@ def get_kinematic_tree(actor_desc):
     spear.log("Processing actor: ", actor_name)
     return {"root_node": get_kinematic_tree_node(
         actor_name=actor_name,
-        transform_parent_node_from_current_node=spear.pipeline.TRANSFORM_IDENTITY,
-        transform_current_node_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
         component_desc=actor_desc["root_component"],
+        component_is_root_within_node=True,
+        transform_node_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
         log_prefix_str="    ")}
 
 
-def get_kinematic_tree_node(actor_name, transform_parent_node_from_current_node, transform_current_node_from_parent_component, component_desc, log_prefix_str=""):
+def get_kinematic_tree_node(
+    actor_name,
+    component_desc,
+    component_is_root_within_node,
+    transform_node_from_parent_component,
+    log_prefix_str=""):
 
     component_name = component_desc["name"]
     kinematic_tree_node = {
         "children_nodes": {},
         "name": component_name,
         "static_mesh_components": {},
-        "transform_parent_node_from_current_node": spear.pipeline.get_transform_data_from_transform(transform_parent_node_from_current_node)}
+        "transform_parent_node_from_current_node": spear.pipeline.get_transform_data_from_transform(spear.pipeline.TRANSFORM_IDENTITY)}
 
-    # Only process SceneComponents...
+    # Only process SceneComponents.
     if component_desc["class"] in scene_component_classes:
 
         spear.log(log_prefix_str, "Processing SceneComponent: ", component_name)
-        
-        transform_current_node_from_current_component = \
-            spear.pipeline.get_transform_ancestor_component_from_current_component(transform_current_node_from_parent_component, component_desc)
+
+        transform_node_from_current_component = \
+            spear.pipeline.get_transform_ancestor_component_from_current_component(transform_node_from_parent_component, component_desc)
+
+        # If the current component is the root component within its node, then the accumulated transform maps from the current node to
+        # the parent node, and only an identity transform is needed to map from the current component to the current node.
+        if component_is_root_within_node:
+            kinematic_tree_node["transform_parent_node_from_current_node"] = \
+                spear.pipeline.get_transform_data_from_transform(transform_node_from_current_component)
+            transform_node_from_current_component = spear.pipeline.TRANSFORM_IDENTITY
 
         component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
         component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
-            spear.pipeline.get_transform_data_from_transform(transform_current_node_from_current_component)
+            spear.pipeline.get_transform_data_from_transform(transform_node_from_current_component)
 
-        # ...and only attempt to add to the kinematic tree node's dict of StaticMeshComponents if the current component is a StaticMeshComponent...
+        # Only attempt to add to the kinematic tree node's dict of StaticMeshComponents if the current component is a StaticMeshComponent...
         if component_desc["class"] in static_mesh_component_classes:
             spear.log(log_prefix_str, "Component is a StaticMeshComponent.")
 
@@ -119,38 +129,31 @@ def get_kinematic_tree_node(actor_name, transform_parent_node_from_current_node,
                     spear.log(log_prefix_str, component_name, " constrained to ", child_component_name, " via ", physics_constraint_component_name)
                     break
 
-            # If the child component is constrained to the current component via a PhysicsConstraintComponent, then don't accumulate
-            # {location,rotation,scale}. In this case, we add the child component's kinematic tree node as a new child of the current node.
-            if child_component_constrained_via_physics_constraint_component:
-                spear.log(log_prefix_str, "Adding kinematic tree node for child component as a new node...")
-                child_component_kinematic_tree_node = get_kinematic_tree_node(
-                    actor_name=actor_name,
-                    transform_parent_node_from_current_node=transform_current_node_from_current_component,
-                    transform_current_node_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
-                    component_desc=child_component_desc,
-                    log_prefix_str=log_prefix_str+"    ")
+            spear.log(
+                log_prefix_str,
+                "Kinematic tree for component is the root component within its node: ", child_component_constrained_via_physics_constraint_component)
 
+            child_component_kinematic_tree_node = get_kinematic_tree_node(
+                actor_name=actor_name,
+                component_desc=child_component_desc,
+                component_is_root_within_node=child_component_constrained_via_physics_constraint_component,
+                transform_node_from_parent_component=transform_node_from_current_component,
+                log_prefix_str=log_prefix_str+"    ")
+
+            # If the child component is constrained to the current component via a PhysicsConstraintComponent, then we add the child
+            # component's kinematic tree node as a new child of the current node. Otherwise, there is no PhysicsConstraintComponent
+            # connecting the child component and the current component, so we absorb the child component's kinematic tree node into
+            # the current node, i.e., we merge their "static_mesh_components" and "children_nodes" dicts respectfully.
+
+            if child_component_constrained_via_physics_constraint_component:
                 assert child_component_name not in kinematic_tree_node["children_nodes"].keys()
                 kinematic_tree_node["children_nodes"][child_component_name] = child_component_kinematic_tree_node
 
-            # Otherwise, there is no PhysicsConstraintComponent connecting the child component and the current component, so we absorb the
-            # child component's kinematic tree node into the current node, i.e., we merge their "static_mesh_components" and "children_nodes"
-            # dicts respectfully.
             else:
-                spear.log(log_prefix_str, "Merging kinematic tree node for child component with existing node...")
-                child_component_kinematic_tree_node = get_kinematic_tree_node(
-                    actor_name=actor_name,
-                    transform_parent_node_from_current_node=None,
-                    transform_current_node_from_parent_component=transform_current_node_from_current_component,
-                    component_desc=child_component_desc,
-                    log_prefix_str=log_prefix_str+"    ")
-
                 ktn = kinematic_tree_node
                 child_component_ktn = child_component_kinematic_tree_node
-
                 assert set(ktn["static_mesh_components"].keys()) & set(child_component_ktn["static_mesh_components"].keys()) == set()
                 ktn["static_mesh_components"].update(child_component_ktn["static_mesh_components"])
-
                 assert set(ktn["children_nodes"].keys()) & set(child_component_ktn["children_nodes"].keys()) == set()
                 ktn["children_nodes"].update(child_component_ktn["children_nodes"])
 
