@@ -75,7 +75,8 @@ def get_kinematic_tree_node(
             spear.pipeline.get_transform_ancestor_component_from_current_component(transform_node_from_parent_component, component_desc)
 
         # If the current component is the root component within its node, then the accumulated transform maps from the current node to
-        # the parent node, and only an identity transform is needed to map from the current component to the current node.
+        # the parent node, and only an identity transform is needed to map from the current component to the current node. Otherwise,
+        # the accumulated transform maps from the current component to the current node.
         if component_is_root_within_node:
             kinematic_tree_node["transform_parent_node_from_current_node"] = \
                 spear.pipeline.get_transform_data_from_transform(transform_node_from_current_component)
@@ -85,7 +86,7 @@ def get_kinematic_tree_node(
         component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
             spear.pipeline.get_transform_data_from_transform(transform_node_from_current_component)
 
-        # Only attempt to add to the kinematic tree node's dict of StaticMeshComponents if the current component is a StaticMeshComponent...
+        # Only attempt to add to the kinematic tree node if the current component is a StaticMeshComponent...
         if component_desc["class"] in static_mesh_component_classes:
             spear.log(log_prefix_str, "Component is a StaticMeshComponent.")
 
