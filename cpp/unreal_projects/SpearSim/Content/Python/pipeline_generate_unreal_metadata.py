@@ -44,8 +44,7 @@ def get_actor_desc(actor):
         "debug_info": {"str": str(actor)},
         "editor_properties": get_editor_property_descs(actor),
         "name": spear.unreal.get_stable_name_actor(actor),
-        "root_component": get_component_desc(actor.get_editor_property("root_component"))
-    }
+        "root_component": get_component_desc(actor.get_editor_property("root_component"))}
 
 
 def get_component_desc(component):
@@ -61,8 +60,7 @@ def get_component_desc(component):
         "editor_properties": get_editor_property_descs(component),
         "name": spear.unreal.get_stable_name_component(component),
         "pipeline_info": {},
-        "unreal_name": component.get_name()
-    }
+        "unreal_name": component.get_name()}
 
     if isinstance(component, unreal.SceneComponent):
         component_desc["debug_info"]["world_transform"] = get_editor_property_desc(component.get_world_transform().to_matrix())
@@ -117,15 +115,13 @@ def get_editor_property_desc(editor_property):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
-            "name": spear.unreal.get_stable_name_actor(editor_property)
-        }
+            "name": spear.unreal.get_stable_name_actor(editor_property)}
 
     elif isinstance(editor_property, unreal.ActorComponent):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
-            "name": spear.unreal.get_stable_name_component(editor_property)
-        }
+            "name": spear.unreal.get_stable_name_component(editor_property)}
 
     # Otherwise, if the editor property is a StaticMesh, then recurse via get_editor_property_descs(...).
     elif isinstance(editor_property, unreal.StaticMesh):
@@ -133,16 +129,14 @@ def get_editor_property_desc(editor_property):
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
             "editor_properties": get_editor_property_descs(editor_property),
-            "path": editor_property.get_path_name()
-        }
+            "path": editor_property.get_path_name()}
 
     # Otherwise, if the editor property is an Unreal object or struct, then recurse via get_editor_property_descs(...).
     elif isinstance(editor_property, unreal.Object) or isinstance(editor_property, unreal.StructBase):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
-            "editor_properties": get_editor_property_descs(editor_property)
-        }
+            "editor_properties": get_editor_property_descs(editor_property)}
 
     # Otherwise, if the editor property is an Unreal array, then recurse via get_editor_property_desc(...).
     elif isinstance(editor_property, unreal.Array):

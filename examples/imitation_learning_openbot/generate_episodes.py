@@ -83,14 +83,14 @@ if __name__ == "__main__":
         # store initial and goal locations of the best paths
         df_ = pd.DataFrame(
             columns=df_columns, 
-            data={"scene_id"           : [scene_id] * args.num_episodes_per_scene,
-                  "initial_location_x" : candidate_initial_points[candidate_best_indices, 0],
-                  "initial_location_y" : candidate_initial_points[candidate_best_indices, 1],
-                  "initial_location_z" : candidate_initial_points[candidate_best_indices, 2],
-                  "goal_location_x"    : candidate_goal_points[candidate_best_indices, 0],
-                  "goal_location_y"    : candidate_goal_points[candidate_best_indices, 1],
-                  "goal_location_z"    : candidate_goal_points[candidate_best_indices, 2]
-        })
+            data={
+                "scene_id"           : [scene_id] * args.num_episodes_per_scene,
+                "initial_location_x" : candidate_initial_points[candidate_best_indices, 0],
+                "initial_location_y" : candidate_initial_points[candidate_best_indices, 1],
+                "initial_location_z" : candidate_initial_points[candidate_best_indices, 2],
+                "goal_location_x"    : candidate_goal_points[candidate_best_indices, 0],
+                "goal_location_y"    : candidate_goal_points[candidate_best_indices, 1],
+                "goal_location_z"    : candidate_goal_points[candidate_best_indices, 2]})
 
         df = pd.concat([df, df_])
 

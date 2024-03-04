@@ -76,23 +76,24 @@ def process_scene():
 
     for actor_name, actor_kinematic_tree in actors:
         spear.log("Processing actor: ", actor_name)
-        root_node = actor_kinematic_tree["root_node"]
-
-        if args.color_mode == "unique_color_per_actor":
-            color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
-
-        draw_kinematic_tree_nodes(
-            transform_world_from_parent_node=spear.pipeline.TRANSFORM_IDENTITY,
-            node=root_node,
-            color=color,
-            log_prefix_str="    ")
+        draw_kinematic_tree(actor_kinematic_tree, color)
 
     mayavi.mlab.show()
 
     spear.log("Done.")
 
 
-def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, color, log_prefix_str):
+def draw_kinematic_tree(kinematic_tree, color):
+    if args.color_mode == "unique_color_per_actor":
+        color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+    draw_kinematic_tree_node(
+        transform_world_from_parent_node=spear.pipeline.TRANSFORM_IDENTITY,
+        node=kinematic_tree["root_node"],
+        color=color,
+        log_prefix_str="    ")
+
+
+def draw_kinematic_tree_node(transform_world_from_parent_node, node, color, log_prefix_str):
 
     spear.log(log_prefix_str, "Processing kinematic tree node: ", node["name"])
 
@@ -141,7 +142,7 @@ def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, color, log
 
     # Recurse for each child node.
     for child_node in node["children_nodes"].values():
-        draw_kinematic_tree_nodes(
+        draw_kinematic_tree_node(
             transform_world_from_parent_node=transform_world_from_current_node,
             node=child_node["node"],
             color=color,

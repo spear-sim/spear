@@ -25,6 +25,4 @@ setuptools.setup(
         "tensorflow==2.13.0",
         "trimesh[easy]==4.1.4",
         "wxPython==4.2.1"
-        "yacs==0.1.8",
-    ]
-)
+        "yacs==0.1.8"])

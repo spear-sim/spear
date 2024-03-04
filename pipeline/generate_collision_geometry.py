@@ -36,13 +36,12 @@ def process_scene():
         if actor_name != "Meshes/03_cabinet/Cabinet":
             continue
         spear.log("Processing actor: ", actor_name)
-        root_node = actor_kinematic_tree["root_node"]
-        generate_kinematic_tree_geometry(actor_name, node=root_node, log_prefix_str="    ")
+        generate_collision_geometry(actor_name=actor_name, node=actor_kinematic_tree["root_node"], log_prefix_str="    ")
 
     spear.log("Done.")
 
 
-def generate_kinematic_tree_geometry(actor_name, node, log_prefix_str):
+def generate_collision_geometry(actor_name, node, log_prefix_str):
 
     spear.log(log_prefix_str, "Processing kinematic tree node: ", node["name"])
 
@@ -119,7 +118,7 @@ def generate_kinematic_tree_geometry(actor_name, node, log_prefix_str):
 
         # Recurse for each child node.
         for child_node in node["children_nodes"].values():
-            generate_kinematic_tree_geometry(actor_name=actor_name, node=child_node["node"], log_prefix_str=log_prefix_str+"    ")
+            generate_collision_geometry(actor_name=actor_name, node=child_node["node"], log_prefix_str=log_prefix_str+"    ")
 
 
 if __name__ == '__main__':

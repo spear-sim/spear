@@ -65,13 +65,14 @@ if __name__ == "__main__":
         # store poses in a csv file
         df_ = pd.DataFrame(
             columns=df_columns,
-            data={"scene_id"       : scene_id,
-                  "location_x"     : points[:,0],
-                  "location_y"     : points[:,1],
-                  "location_z"     : points[:,2] + CAMERA_LOCATION_Z_OFFSET,
-                  "rotation_pitch" : pitch_values,
-                  "rotation_yaw"   : yaw_values,
-                  "rotation_roll"  : roll_values})
+            data={
+                "scene_id"       : scene_id,
+                "location_x"     : points[:,0],
+                "location_y"     : points[:,1],
+                "location_z"     : points[:,2] + CAMERA_LOCATION_Z_OFFSET,
+                "rotation_pitch" : pitch_values,
+                "rotation_yaw"   : yaw_values,
+                "rotation_roll"  : roll_values})
 
         df = pd.concat([df, df_])
 

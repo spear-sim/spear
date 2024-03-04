@@ -81,22 +81,24 @@ def process_scene():
 
     for actor_name, actor_desc in actors:
         spear.log("Processing actor: ", actor_name)
-
-        if args.color_mode == "unique_color_per_actor":
-            color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
-
-        draw_components(
-            transform_world_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
-            component_desc=actor_desc["root_component"],
-            color=color,
-            log_prefix_str="    ")
+        draw_actor(actor_desc, color)
 
     mayavi.mlab.show()
 
     spear.log("Done.")
 
 
-def draw_components(transform_world_from_parent_component, component_desc, color, log_prefix_str):
+def draw_actor(actor_desc, color):
+    if args.color_mode == "unique_color_per_actor":
+        color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+    draw_component(
+        transform_world_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
+        component_desc=actor_desc["root_component"],
+        color=color,
+        log_prefix_str="    ")
+
+
+def draw_component(transform_world_from_parent_component, component_desc, color, log_prefix_str):
 
     # Only process SceneComponents...
     component_class = component_desc["class"]
@@ -150,7 +152,7 @@ def draw_components(transform_world_from_parent_component, component_desc, color
 
         # Recurse for each child component.
         for child_component_desc in component_desc["children_components"].values():
-            draw_components(
+            draw_component(
                 transform_world_from_parent_component=transform_world_from_current_component,
                 component_desc=child_component_desc,
                 color=color,
