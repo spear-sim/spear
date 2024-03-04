@@ -4,44 +4,176 @@
 
 #pragma once
 
-//#include "SpEngine/WorkQueue.h"
+#include <atomic>
+#include <concepts>
+#include <future>   // std::promise, std::future
+
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Kismet/GameplayStatics.h>
+#include <Misc/CoreDelegates.h>
+
+#include "SpCore/Assert.h"
+#include "SpCore/Log.h"
+#include "SpEngine/WorkQueue.h"
 
 template <typename TBasicEntryPointBinder>
 concept CBasicEntryPointBinder = requires(TBasicEntryPointBinder basic_entry_point_binder) {
-    basic_entry_point_binder.bind("", []() -> void {});
+    { basic_entry_point_binder.bind("", []() -> void {}) } -> std::same_as<void>;
+};
+
+// Different possible frame states for thread synchronization
+enum class FrameState
+{
+    Idle,
+    RequestPreTick,
+    ExecutingPreTick,
+    ExecutingTick,
+    ExecutingPostTick,
 };
 
 template <CBasicEntryPointBinder TBasicEntryPointBinder>
 class EngineService {
 public:
-    EngineService() = default;
     EngineService(TBasicEntryPointBinder* basic_entry_point_binder)
     {
         basic_entry_point_binder_ = basic_entry_point_binder;
+
+        begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameEventHandler);
+        end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameEventHandler);
+
+        frame_state_ = FrameState::Idle;
+
+        bind("engine_service", "begin_tick", [this]() -> void {
+            SP_ASSERT(frame_state_ == FrameState::Idle);
+            SP_LOG("0 - begin_tick");
+            // reset promises and futures
+            frame_state_idle_promise_ = std::promise<void>();
+            frame_state_executing_pre_tick_promise_ = std::promise<void>();
+            frame_state_executing_post_tick_promise_ = std::promise<void>();
+
+            frame_state_idle_future_ = frame_state_idle_promise_.get_future();
+            frame_state_executing_pre_tick_future_ = frame_state_executing_pre_tick_promise_.get_future();
+            frame_state_executing_post_tick_future_ = frame_state_executing_post_tick_promise_.get_future();
+
+            // indicate that we want the game thread to advance the simulation, wait here until frame_state == FrameState::ExecutingPreTick
+            frame_state_ = FrameState::RequestPreTick;
+            frame_state_executing_pre_tick_future_.wait();
+            SP_LOG("1 - begin_tick");
+            SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
+        });
+
+        bind("engine_service", "tick", [this]() -> void {
+            SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
+            SP_LOG("0 - tick");
+            // allow beginFrameEventHandler() to finish executing, wait here until frame_state == FrameState::ExecutingPostTick
+            work_queue_.returnIOContextRun();
+            SP_LOG("1 - tick");
+            frame_state_executing_post_tick_future_.wait();
+            SP_LOG("2 - tick");
+
+            SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        });
+
+        bind("engine_service", "end_tick", [this]() -> void {
+            SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+            SP_LOG("0 - end_tick");
+            // allow endFrameEventHandler() to finish executing, wait here until frame_state == FrameState::Idle
+            work_queue_.returnIOContextRun();
+            SP_LOG("1 - end_tick");
+            frame_state_idle_future_.wait();
+            SP_LOG("2 - end_tick");
+
+            SP_ASSERT(frame_state_ == FrameState::Idle);
+        });
+    }
+
+    ~EngineService()
+    {
+        frame_state_ = FrameState::Idle;
+
+        FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
+        FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
+
+        end_frame_handle_.Reset();
+        begin_frame_handle_.Reset();
+        
+        basic_entry_point_binder_ = nullptr;
     }
 
     void bind(const std::string& service_name, const std::string& func_name, auto&& func)
     {
-        //basic_entry_point_binder_->bind(
-        //    service_name + "." + func_name,
-        //    WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(
-        //        service_name + func_name,
-        //        std::forward<decltype(func)>(func),
-        //        &current_work_queue_));
+        basic_entry_point_binder_->bind(
+            service_name + "." + func_name,
+            WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, std::forward<decltype(func)>(func))
+        );
 
         //basic_entry_point_binder_->bind(
         //    service_name + ".async." + func_name,
         //    WorkQueue::wrapFuncToExecuteInWorkQueueNonBlocking(
         //        service_name + func_name,
         //        std::forward<decltype(func)>(func),
-        //        &current_work_queue_));
+        //        &work_queue_));
     }
 
-    ~EngineService()
+    void beginFrameEventHandler()
     {
-        basic_entry_point_binder_ = nullptr;
+        SP_LOG_CURRENT_FUNCTION();
+        // if begin_tick() has indicated that we should advance the simulation
+        if (frame_state_ == FrameState::RequestPreTick) {
+            SP_LOG("0 - BeginFrameEventHandler");
+            // update frame state, allow begin_tick() to finish executing
+            frame_state_ = FrameState::ExecutingPreTick;
+            frame_state_executing_pre_tick_promise_.set_value();
+
+            // unpause the game
+            //UGameplayStatics::SetGamePaused(world_, false);
+
+            // execute all pre-tick synchronous work, wait here for tick() to unblock us
+            work_queue_.runIOContext();
+            SP_LOG("1 - BeginFrameEventHandler");
+            // update local state
+            frame_state_ = FrameState::ExecutingTick;
+        }
+    }
+
+    void endFrameEventHandler()
+    {
+        SP_LOG_CURRENT_FUNCTION();
+        // if we are currently advancing the simulation
+        if (frame_state_ == FrameState::ExecutingTick) {
+            SP_LOG("0 - EndFrameEventHandler");
+            // update frame state, allow tick() to finish executing
+            frame_state_ = FrameState::ExecutingPostTick;
+            frame_state_executing_post_tick_promise_.set_value();
+
+            // execute all post-tick synchronous work, wait here for endTick() to unblock
+            work_queue_.runIOContext();
+            SP_LOG("1 - EndFrameEventHandler");
+            // pause the game
+            //UGameplayStatics::SetGamePaused(world_, true);
+
+            // update frame state, allow endTick() to finish executing
+            frame_state_ = FrameState::Idle;
+            frame_state_idle_promise_.set_value();
+        }
     }
 
 private:
     TBasicEntryPointBinder* basic_entry_point_binder_ = nullptr;
+    WorkQueue work_queue_;
+
+    // FDelegateHandle objects corresponding to each event handler defined in this class
+    FDelegateHandle begin_frame_handle_;
+    FDelegateHandle end_frame_handle_;
+
+    // thread sychronization state
+    std::atomic<FrameState> frame_state_;
+
+    std::promise<void> frame_state_idle_promise_;
+    std::promise<void> frame_state_executing_pre_tick_promise_;
+    std::promise<void> frame_state_executing_post_tick_promise_;
+
+    std::future<void> frame_state_idle_future_;
+    std::future<void> frame_state_executing_pre_tick_future_;
+    std::future<void> frame_state_executing_post_tick_future_;
 };

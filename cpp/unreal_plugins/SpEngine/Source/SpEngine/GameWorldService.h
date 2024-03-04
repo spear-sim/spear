@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <concepts>
 
 template <typename TEntryPointBinder>
 concept CEntryPointBinder = requires(TEntryPointBinder entry_point_binder){

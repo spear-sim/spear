@@ -8,7 +8,7 @@
 
 #include <Modules/ModuleInterface.h>
 
-#include "CoreUtils/Rpclib.h"
+#include "SpCore/Rpclib.h"
 #include "SpEngine/EngineService.h"
 #include "SpEngine/GameWorldService.h"
 
@@ -20,6 +20,6 @@ public:
 
 private:
     std::unique_ptr<rpc::server> rpc_server_ = nullptr;
-    EngineService<rpc::server> engine_service_;
-    GameWorldService game_world_service_;
+    std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;
+    std::unique_ptr<GameWorldService> game_world_service_ = nullptr;
 };

@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "SpEngine",
-    "Description": "WARNING: The loading phases for {CoreUtils, SpEngine, SimulationController} need to be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(SimulationController) < LoadingPhase(SpEngine)",
+    "Description": "WARNING: The loading phases for {SpCore, SpEngine} need to be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(SpEngine)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -23,11 +23,7 @@
     ],
     "Plugins": [
         {
-            "Name": "CoreUtils",
-            "Enabled": true
-        },
-        {
-            "Name": "SimulationController",
+            "Name": "SpCore",
             "Enabled": true
         }
     ]
