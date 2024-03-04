@@ -2,7 +2,8 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfRobot/UrdfParser.h"
+#include "UrdfRobot/UrdfParser.h" // UrdfCollisionDesc, UrdfGeometryDesc, UrdfGeometryType, UrdfInertialDesc, UrdfJointControlType, UrdfJointDesc
+                                  // UrdfJointInterfaceType, UrdfJointType, UrdfLinkDesc, UrdfMaterialDesc, UrdfRobotDesc, UrdfVisualDesc
 
 #include <string>
 #include <vector>
@@ -10,9 +11,9 @@
 #include <XmlFile.h>
 #include <XmlNode.h>
 
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 const bool REQUIRED = true;
 const bool OPTIONAL = false;
@@ -44,19 +45,19 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
         if (tag.Equals(Unreal::toFString("link"))) {
             UrdfLinkDesc link_desc = parseLinkNode(child_node);
             SP_ASSERT(!Std::containsKey(robot_desc.link_descs_, link_desc.name_)); // name must be unique
-            robot_desc.link_descs_[link_desc.name_] = std::move(link_desc);
+            Std::insert(robot_desc.link_descs_, link_desc.name_, std::move(link_desc));
 
         } else if (tag.Equals(Unreal::toFString("joint"))) {
             UrdfJointDesc joint_desc = parseJointNode(child_node);
             SP_ASSERT(!Std::containsKey(robot_desc.joint_descs_, joint_desc.name_)); // name must be unique
-            robot_desc.joint_descs_[joint_desc.name_] = std::move(joint_desc);
+            Std::insert(robot_desc.joint_descs_, joint_desc.name_, std::move(joint_desc));
 
         } else if (tag.Equals(Unreal::toFString("material"))) {
             UrdfMaterialDesc material_desc = parseMaterialNode(child_node);
             SP_ASSERT(material_desc.name_ != "");                                          // must have a name
             SP_ASSERT(!material_desc.is_reference_);                                       // must not be a reference
             SP_ASSERT(!Std::containsKey(robot_desc.material_descs_, material_desc.name_)); // name must be unique
-            robot_desc.material_descs_[material_desc.name_] = std::move(material_desc);
+            Std::insert(robot_desc.material_descs_, material_desc.name_, std::move(material_desc));
 
         } else {
             SP_ASSERT(false);

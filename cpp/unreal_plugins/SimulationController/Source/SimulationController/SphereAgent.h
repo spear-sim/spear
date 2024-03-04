@@ -13,13 +13,12 @@
 
 #include <Math/Rotator.h>
 
-#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/ClassRegistrationUtils.h"
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
+#include "SpCore/ArrayDesc.h"
 
-class AActor;
 class ACameraActor;
 class AStaticMeshActor;
 class UStaticMeshComponent;

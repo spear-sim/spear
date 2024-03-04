@@ -8,8 +8,8 @@
 
 #include <ChaosWheeledVehicleMovementComponent.h>
 
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Log.h"
+#include "SpCore/Config.h"
+#include "SpCore/Log.h"
 #include "Vehicle/VehicleWheel.h"
 
 UVehicleMovementComponent::UVehicleMovementComponent()

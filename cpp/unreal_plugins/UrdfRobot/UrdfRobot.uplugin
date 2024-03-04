@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "UrdfRobot",
-    "Description": "WARNING: The loading phases for {CoreUtils, UrdfRobot} must be ordered as follows: LoadingPhase(CoreUtils) < LoadingPhase(UrdfRobot)",
+    "Description": "WARNING: The loading phases for {SpCore, UrdfRobot} must be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(UrdfRobot)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -23,7 +23,7 @@
     ],
     "Plugins": [
         {
-            "Name": "CoreUtils",
+            "Name": "SpCore",
             "Enabled": true
         }
     ]

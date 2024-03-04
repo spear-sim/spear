@@ -11,16 +11,18 @@
 
 #include <Containers/Array.h>
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/InputActionComponent.h"
-#include "CoreUtils/Log.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
+#include "SpCore/ArrayDesc.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/InputActionComponent.h"
+#include "SpCore/Log.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 #include "UrdfRobot/UrdfJointComponent.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
-#include "UrdfRobot/UrdfParser.h"
+#include "UrdfRobot/UrdfParser.h" // UrdfRobotDesc
+
+struct FHitResult;
 
 // useful for debugging pendulum_horizontal.urdf
 const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_INPUT_ACTIONS = {
@@ -42,15 +44,13 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
     // UInputActionComponent
-    input_action_component_ = Unreal::createSceneComponentInsideOwnerConstructor<UInputActionComponent>(this, this, "input_action_component");
+    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, "input_action_component");
     SP_ASSERT(input_action_component_);
 }
 
 UUrdfRobotComponent::~UUrdfRobotComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
 
     LinkComponents.Empty();
     JointComponents.Empty();
@@ -75,7 +75,7 @@ void UUrdfRobotComponent::BeginPlay()
         input_actions = DEFAULT_INPUT_ACTIONS;
     }
 
-    input_action_component_->bindInputActions(input_actions);
+    input_action_component_->bindInputActions(Std::keys(input_actions));
     input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
         if (EnableKeyboardControl) {
             applyAction(input_actions.at(key));
@@ -116,7 +116,7 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getActionSpace() const
 
     if (Std::contains(action_components_, "control_joints")) {
         for (auto joint_component : JointComponents) {
-            action_space.merge(joint_component->getActionSpace());
+            Std::insert(action_space, joint_component->getActionSpace());
         }
     }
 
@@ -129,13 +129,13 @@ std::map<std::string, ArrayDesc> UUrdfRobotComponent::getObservationSpace() cons
 
     if (Std::contains(observation_components_, "link_configurations")) {
         for (auto link_component : LinkComponents) {
-            observation_space.merge(link_component->getObservationSpace());
+            Std::insert(observation_space, link_component->getObservationSpace());
         }
     }
 
     if (Std::contains(observation_components_, "joint_configurations")) {
         for (auto joint_component : JointComponents) {
-            observation_space.merge(joint_component->getObservationSpace());
+            Std::insert(observation_space, joint_component->getObservationSpace());
         }
     }
 
@@ -146,9 +146,8 @@ void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<ui
 {
     if (Std::contains(action_components_, "control_joints")) {
         std::map <std::string, std::vector<double>> actions_reinterpreted;
-        for (auto& action_component : actions) {
-            std::vector<double> action_component_data_reinterpreted = Std::reinterpretAs<double>(action_component.second);
-            actions_reinterpreted[action_component.first] = action_component_data_reinterpreted;
+        for (auto& [action_component_name, action_component_data] : actions) {
+            Std::insert(actions_reinterpreted, action_component_name, Std::reinterpretAsVectorOf<double>(action_component_data));
         }
         applyAction(actions_reinterpreted);
     }
@@ -160,13 +159,13 @@ std::map<std::string, std::vector<uint8_t>> UUrdfRobotComponent::getObservation(
 
     if (Std::contains(observation_components_, "link_configurations")) {
         for (auto link_component : LinkComponents) {
-            observation.merge(link_component->getObservation());
+            Std::insert(observation, link_component->getObservation());
         }
     }
 
     if (Std::contains(observation_components_, "joint_configurations")) {
         for (auto joint_component : JointComponents) {
-            observation.merge(joint_component->getObservation());
+            Std::insert(observation, joint_component->getObservation());
         }
     }
 
@@ -206,7 +205,7 @@ void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
     // If this order is reversed and we end up creating more child components before registering the parent component,
     // the physics simulation will be unstable.
     SP_ASSERT(!Std::containsSubstring(root_link_desc->name_, "."));
-    RootLinkComponent = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, this, root_link_desc->name_);
+    RootLinkComponent = Unreal::createComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, root_link_desc->name_);
     SP_ASSERT(RootLinkComponent);
     RootLinkComponent->initialize(root_link_desc);
     LinkComponents.Add(RootLinkComponent);
@@ -229,7 +228,7 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         SP_ASSERT(child_joint_desc);
 
         SP_ASSERT(!Std::containsSubstring(child_link_desc->name_, "."));
-        auto child_link_component = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, parent_link_component, child_link_desc->name_);
+        auto child_link_component = Unreal::createComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, parent_link_component, child_link_desc->name_);
         SP_ASSERT(child_link_component);
         child_link_component->initialize(child_link_desc);
         LinkComponents.Add(child_link_component);
@@ -242,7 +241,7 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         // simplicity of our recursive code for creating the Unreal component hierarchy.
 
         SP_ASSERT(!Std::containsSubstring(child_joint_desc->name_, "."));
-        auto child_joint_component = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfJointComponent>(this, parent_link_component, child_joint_desc->name_);
+        auto child_joint_component = Unreal::createComponentOutsideOwnerConstructor<UUrdfJointComponent>(this, parent_link_component, child_joint_desc->name_);
         SP_ASSERT(child_joint_component);
         child_joint_component->initialize(child_joint_desc, parent_link_component, child_link_component);
         JointComponents.Add(child_joint_component);
@@ -266,11 +265,11 @@ void UUrdfRobotComponent::initializeDeferred()
     // is executed during the first tick event, which is guaranteed to execute after BeginPlay() and after initialize() method is called.
     // To ensure that this is called after Initialize(), we set the request_initialize_deferred_ variable at the end of Initialize().
     for (auto link_component : LinkComponents) {
-        link_components_[Unreal::toStdString(link_component->GetName())] = link_component;
+        Std::insert(link_components_, Unreal::toStdString(link_component->GetName()), link_component);
     }
 
     for (auto joint_component : JointComponents) {
-        joint_components_[Unreal::toStdString(joint_component->GetName())] = joint_component;
+        Std::insert(joint_components_, Unreal::toStdString(joint_component->GetName()), joint_component);
     }
 }
 

@@ -300,7 +300,7 @@ if __name__ == "__main__":
                 if args.create_videos:
                     spear.log(f"    Generating video...")
                     video_file = os.path.realpath(os.path.join(args.dataset_dir, "videos", args.split + "_data", episode["scene_id"], "%04d.mp4" % episode["index"]))
-                    generate_video(images_dir, video_file, rate=int(1.0/config.SIMULATION_CONTROLLER.SIMULATION_STEP_TIME), compress=True)
+                    generate_video(images_dir, video_file, rate=int(1.0/config.SIMULATION_CONTROLLER.PHYSICS.SIMULATION_STEP_TIME), compress=True)
         
     # at this point, we're finished executing all episodes, so close the Env
     env.close()

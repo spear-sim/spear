@@ -25,14 +25,14 @@
 #include <Math/Vector.h>
 #include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
+#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 struct FActorComponentTickFunction;
 
@@ -166,7 +166,7 @@ std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
-        action_space["add_force"] = std::move(array_desc);
+        Std::insert(action_space, "add_force", std::move(array_desc));
     }
 
     if (Std::contains(action_components, "add_to_rotation")) {
@@ -175,7 +175,7 @@ std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
-        action_space["add_to_rotation"] = std::move(array_desc);
+        Std::insert(action_space, "add_to_rotation", std::move(array_desc));
     }
 
     return action_space;
@@ -192,7 +192,7 @@ std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
-        observation_space["location"] = std::move(array_desc);
+        Std::insert(observation_space, "location", std::move(array_desc));
     }
 
     if (Std::contains(observation_components, "rotation")) {
@@ -201,11 +201,11 @@ std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
-        observation_space["rotation"] = std::move(array_desc);
+        Std::insert(observation_space, "rotation", std::move(array_desc));
     }
 
     if (Std::contains(observation_components, "camera")) {
-        observation_space.merge(camera_sensor_->getObservationSpace());
+        Std::insert(observation_space, camera_sensor_->getObservationSpace());
     }
 
     return observation_space;
@@ -222,7 +222,7 @@ std::map<std::string, ArrayDesc> SphereAgent::getStepInfoSpace() const
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.shape_ = {-1, 3};
         array_desc.datatype_ = DataType::Float64;
-        step_info_space["debug"] = std::move(array_desc);
+        Std::insert(step_info_space, "debug", std::move(array_desc));
     }
 
     return step_info_space;
@@ -233,14 +233,14 @@ void SphereAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>&
     auto action_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.ACTION_COMPONENTS");
 
     if (Std::contains(action_components, "add_force")) {
-        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("add_force"));
-        FVector force = rotation_.RotateVector({action_component_data.at(0), action_component_data.at(1), action_component_data.at(2)});
+        std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("add_force"));
+        FVector force = rotation_.RotateVector({Std::at(action_component_data, 0), Std::at(action_component_data, 1), Std::at(action_component_data, 2)});
         static_mesh_component_->AddForce(force);
     }
 
     if (Std::contains(action_components, "add_to_rotation")) {
-        std::vector<double> action_component_data = Std::reinterpretAs<double>(action.at("add_to_rotation"));
-        rotation_.Add(action_component_data.at(0), action_component_data.at(1), action_component_data.at(2));
+        std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("add_to_rotation"));
+        rotation_.Add(Std::at(action_component_data, 0), Std::at(action_component_data, 1), Std::at(action_component_data, 2));
     }
 }
 
@@ -251,15 +251,15 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getObservation() const
 
     if (Std::contains(observation_components, "location")) {
         FVector location = static_mesh_actor_->GetActorLocation();
-        observation["location"] = Std::reinterpretAs<uint8_t>(std::vector<double>{location.X, location.Y, location.Z});
+        Std::insert(observation, "location", Std::reinterpretAsVector<uint8_t, double>({location.X, location.Y, location.Z}));
     }
 
     if (Std::contains(observation_components, "rotation")) {
-        observation["rotation"] = Std::reinterpretAs<uint8_t>(std::vector<double>{rotation_.Pitch, rotation_.Yaw, rotation_.Roll}); 
+        Std::insert(observation, "rotation", Std::reinterpretAsVector<uint8_t, double>({rotation_.Pitch, rotation_.Yaw, rotation_.Roll})); 
     }
 
     if (Std::contains(observation_components, "camera")) {
-        observation.merge(camera_sensor_->getObservation());
+        Std::insert(observation, camera_sensor_->getObservation());
     }
 
     return observation;
@@ -271,7 +271,7 @@ std::map<std::string, std::vector<uint8_t>> SphereAgent::getStepInfo() const
     auto step_info_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.STEP_INFO_COMPONENTS");
 
     if (Std::contains(step_info_components, "debug")) {
-        step_info["debug"] = Std::reinterpretAs<uint8_t>(std::vector<double>{0.0, 1.0, 2.0, 3.0, 4.0, 5.0});
+        Std::insert(step_info, "debug", Std::reinterpretAsVector<uint8_t, double>({0.0, 1.0, 2.0, 3.0, 4.0, 5.0}));
     }
 
     return step_info;

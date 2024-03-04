@@ -11,16 +11,15 @@
 #include <string>
 #include <vector>
 
-#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/ClassRegistrationUtils.h"
+#include "SpCore/ArrayDesc.h"
 
 class UWorld;
 
 class AVehiclePawn;
 class CameraSensor;
 class ImuSensor;
-struct ArrayDesc;
 
 class VehicleAgent : public Agent
 {

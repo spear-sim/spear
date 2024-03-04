@@ -2,16 +2,15 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-from yacs.config import CfgNode
-
 import os
+from yacs.config import CfgNode
 
 
 SPEAR_ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 # ordered from low-level to high-level
 DEFAULT_CONFIG_FILES = [
-    os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.core_utils.yaml")),
+    os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.sp_core.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.vehicle.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.urdf_robot.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.simulation_controller.yaml")),

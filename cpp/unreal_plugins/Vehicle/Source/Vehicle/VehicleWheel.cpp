@@ -6,8 +6,8 @@
 
 #include <ChaosVehicleWheel.h>
 
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Log.h"
+#include "SpCore/Config.h"
+#include "SpCore/Log.h"
 
 UVehicleWheel::UVehicleWheel()
 {

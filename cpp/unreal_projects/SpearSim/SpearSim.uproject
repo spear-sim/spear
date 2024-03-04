@@ -1,52 +1,52 @@
 {
-	"FileVersion": 3,
-	"EngineAssociation": "5.2",
-	"Category": "",
-	"Description": "",
-	"Modules": [
-		{
-			"Name": "SpearSim",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
-			"Name": "SpearSimEditor",
-			"Type": "Editor",
-			"LoadingPhase": "Default"
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "CommonModuleRules",
-			"Enabled": true
-		},
-		{
-			"Name": "CoreUtils",
-			"Enabled": true
-		},
-		{
-			"Name": "HDRIBackdrop",
-			"Enabled": true
-		},
-		{
-			"Name": "ModelingToolsEditorMode",
-			"Enabled": true
-		},
-		{
-			"Name": "SpEngine",
-			"Enabled": true
-		},
-		{
-			"Name": "SimulationController",
-			"Enabled": true
-		},
-		{
-			"Name": "UrdfRobot",
-			"Enabled": true
-		},
-		{
-			"Name": "Vehicle",
-			"Enabled": true
-		}
-	]
+    "FileVersion": 3,
+    "EngineAssociation": "5.2",
+    "Category": "",
+    "Description": "",
+    "Modules": [
+        {
+            "Name": "SpearSim",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "SpearSimEditor",
+            "Type": "Editor",
+            "LoadingPhase": "Default"
+        }
+    ],
+    "Plugins": [
+        {
+            "Name": "HDRIBackdrop",
+            "Enabled": true
+        },
+        {
+            "Name": "ModelingToolsEditorMode",
+            "Enabled": true
+        },
+        {
+            "Name": "SimulationController",
+            "Enabled": true
+        },
+        {
+            "Name": "SpCore",
+            "Enabled": true
+        },
+        {
+            "Name": "SpEngine",
+            "Enabled": true
+        },
+        {
+            "Name": "SpModuleRules",
+            "Enabled": true
+        },
+        {
+            "Name": "UrdfRobot",
+            "Enabled": true
+        },
+        {
+            "Name": "Vehicle",
+            "Enabled": true
+        }
+    ]
 }
