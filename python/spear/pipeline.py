@@ -12,10 +12,10 @@ matrix_row_names = ["x", "y", "z", "w"]
 
 
 #
-# Functions for getting transform and transform data objects. Transform data objects are serializable as JSON.
+# Functions for working with components.
 #
 
-def get_transform_ancestor_component_from_current_component(transform_ancestor_component_from_parent_component, component_desc):
+def compose_transform_with_component(transform_ancestor_from_parent_component, component_desc):
 
     absolute_location = component_desc["editor_properties"]["absolute_location"] 
     absolute_rotation = component_desc["editor_properties"]["absolute_rotation"] 
@@ -88,8 +88,7 @@ def get_transform_ancestor_component_from_current_component(transform_ancestor_c
     transform_parent_component_from_current_component["rotation"] = np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
     transform_parent_component_from_current_component["scale"] = np.matrix(np.diag([relative_scale3d_x, relative_scale3d_y, relative_scale3d_z]))
 
-    transform_ancestor_component_from_current_component = \
-        compose_transforms([transform_ancestor_component_from_parent_component, transform_parent_component_from_current_component])
+    transform_ancestor_from_current_component = compose_transforms([transform_ancestor_from_parent_component, transform_parent_component_from_current_component])
 
     # If we're in absolute mode for {location, rotation, scale}, then don't accumulate.
     if absolute_location:
@@ -100,6 +99,19 @@ def get_transform_ancestor_component_from_current_component(transform_ancestor_c
         transform_ancestor_component_from_current_component["scale"] = transform_parent_component_from_current_component["scale"]
 
     return transform_ancestor_component_from_current_component
+
+def any_component_transform_absolute(component_desc):
+
+    absolute_location = component_desc["editor_properties"]["absolute_location"] 
+    absolute_rotation = component_desc["editor_properties"]["absolute_rotation"] 
+    absolute_scale    = component_desc["editor_properties"]["absolute_scale"]   
+
+    return absolute_location or absolute_rotation or absolute_scale
+
+
+#
+# Functions for getting transform and transform data objects. Transform data objects are serializable as JSON.
+#
 
 def compose_transforms(transforms):
 
@@ -230,16 +242,3 @@ def get_matrix_data_from_matrix(matrix):
             matrix_data[column_name][row_name] = matrix[row, column]
 
     return matrix_data
-
-
-#
-# Helper functions for components.
-#
-
-def any_component_transform_absolute(component_desc):
-
-    absolute_location = component_desc["editor_properties"]["absolute_location"] 
-    absolute_rotation = component_desc["editor_properties"]["absolute_rotation"] 
-    absolute_scale    = component_desc["editor_properties"]["absolute_scale"]   
-
-    return absolute_location or absolute_rotation or absolute_scale

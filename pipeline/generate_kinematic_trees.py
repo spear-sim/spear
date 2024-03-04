@@ -71,8 +71,7 @@ def get_kinematic_tree_node(
 
         spear.log(log_prefix_str, "Processing SceneComponent: ", component_name)
 
-        transform_node_from_current_component = \
-            spear.pipeline.get_transform_ancestor_component_from_current_component(transform_node_from_parent_component, component_desc)
+        transform_node_from_current_component = spear.pipeline.compose_transform_with_component(transform_node_from_parent_component, component_desc)
 
         # If the current component is the root component within its node, then the accumulated transform maps from the current node to
         # the parent node, and only an identity transform is needed to map from the current component to the current node.
@@ -137,9 +136,7 @@ def get_kinematic_tree_node(
             # PhysicsConstraintComponent, then we ignore both.
             child_component_is_root_within_node = len(child_physics_constraint_component_descs) == 1
 
-            spear.log(
-                log_prefix_str,
-                "Child component is the root component within its node: ", component_is_root_within_node)
+            spear.log(log_prefix_str, "Child component is the root component within its node: ", component_is_root_within_node)
 
             child_component_kinematic_tree_node = get_kinematic_tree_node(
                 actor_name=actor_name,
@@ -160,8 +157,7 @@ def get_kinematic_tree_node(
                  # Compute the transform that maps to the current node from the PhysicsConstraintComponent, i.e., find the pose
                  # of the PhysicsConstraintComponent in the current node's frame.
                 transform_node_from_child_physics_constraint_component = \
-                    spear.pipeline.get_transform_ancestor_component_from_current_component(
-                        transform_node_from_current_component, child_physics_constraint_component_desc)
+                    spear.pipeline.compose_transform_with_component(transform_node_from_current_component, child_physics_constraint_component_desc)
 
                 child_physics_constraint_component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
                 child_physics_constraint_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \

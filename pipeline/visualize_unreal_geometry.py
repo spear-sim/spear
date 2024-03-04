@@ -103,8 +103,7 @@ def draw_components(transform_world_from_parent_component, component_desc, color
     if component_class in scene_component_classes:
 
         spear.log(log_prefix_str, "Processing SceneComponent: ", component_desc["name"])
-        transform_world_from_current_component = \
-            spear.pipeline.get_transform_ancestor_component_from_current_component(transform_world_from_parent_component, component_desc)
+        transform_world_from_current_component = spear.pipeline.compose_transform_with_component(transform_world_from_parent_component, component_desc)
         M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform_world_from_current_component)
 
         # Check the M_world_from_current_component matrix that we computed above against Unreal's 
