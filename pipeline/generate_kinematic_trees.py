@@ -57,7 +57,7 @@ def get_kinematic_tree_node(
     component_desc,
     component_is_root_within_node,
     transform_node_from_parent_component,
-    log_prefix_str=""):
+    log_prefix_str):
 
     component_name = component_desc["name"]
     kinematic_tree_node = {
@@ -184,5 +184,5 @@ def get_kinematic_tree_node(
     return kinematic_tree_node
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     process_scene()

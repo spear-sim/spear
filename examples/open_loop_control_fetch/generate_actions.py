@@ -32,7 +32,7 @@ def get_data_frame(action):
     return pd.DataFrame(columns=columns, data=data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.csv")))

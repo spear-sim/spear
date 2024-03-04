@@ -42,7 +42,7 @@ def process_scene():
     spear.log("Done.")
 
 
-def generate_kinematic_tree_geometry(actor_name, node, log_prefix_str=""):
+def generate_kinematic_tree_geometry(actor_name, node, log_prefix_str):
 
     spear.log(log_prefix_str, "Processing kinematic tree node: ", node["name"])
 

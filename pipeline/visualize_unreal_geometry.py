@@ -3,6 +3,7 @@
 #
 
 import argparse
+import colorsys
 import json
 import mayavi.mlab
 import numpy as np
@@ -17,7 +18,10 @@ parser.add_argument("--pipeline_dir", required=True)
 parser.add_argument("--scene_id", required=True)
 parser.add_argument("--visual_parity_with_unreal", action="store_true")
 parser.add_argument("--ignore_actors")
+parser.add_argument("--color_mode", default="unique_color_per_component")
 args = parser.parse_args()
+
+assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_component"]
 
 if args.ignore_actors is not None:
     ignore_actors = args.ignore_actors.split(",")
@@ -33,7 +37,6 @@ mesh_opacity = 1.0
 c_x_axis = (1.0,  0.0,  0.0)
 c_y_axis = (0.0,  1.0,  0.0)
 c_z_axis = (0.0,  0.0,  1.0)
-c_face   = (0.75, 0.75, 0.75)
 
 origin_world = np.array([[0.0,   0.0,   0.0]])
 x_axis_world = np.array([[100.0, 0.0,   0.0]])
@@ -46,6 +49,8 @@ if args.visual_parity_with_unreal:
     x_axis_world = x_axis_world[:,[0,2,1]]
     y_axis_world = y_axis_world[:,[0,2,1]]
     z_axis_world = z_axis_world[:,[0,2,1]]
+
+np.random.seed(0)
 
 
 def process_scene():
@@ -72,11 +77,18 @@ def process_scene():
     actors = [ (actor_name, actor_desc) for actor_name, actor_desc in actors if actor_desc["root_component"] is not None ]
     actors = [ (actor_name, actor_desc) for actor_name, actor_desc in actors if actor_name not in ignore_actors ]
 
+    color = (0.75, 0.75, 0.75)
+
     for actor_name, actor_desc in actors:
         spear.log("Processing actor: ", actor_name)
+
+        if args.color_mode == "unique_color_per_actor":
+            color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+
         draw_components(
             transform_world_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
             component_desc=actor_desc["root_component"],
+            color=color,
             log_prefix_str="    ")
 
     mayavi.mlab.show()
@@ -84,7 +96,7 @@ def process_scene():
     spear.log("Done.")
 
 
-def draw_components(transform_world_from_parent_component, component_desc, log_prefix_str=""):
+def draw_components(transform_world_from_parent_component, component_desc, color, log_prefix_str):
 
     # Only process SceneComponents...
     component_class = component_desc["class"]
@@ -131,16 +143,20 @@ def draw_components(transform_world_from_parent_component, component_desc, log_p
                     if args.visual_parity_with_unreal:
                         mesh.vertices = mesh.vertices[:,[0,2,1]]
 
+                    if args.color_mode == "unique_color_per_component":
+                        color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+
                     mayavi.mlab.triangular_mesh(
-                        mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=c_face, opacity=mesh_opacity)
+                        mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
 
         # Recurse for each child component.
         for child_component_desc in component_desc["children_components"].values():
             draw_components(
                 transform_world_from_parent_component=transform_world_from_current_component,
                 component_desc=child_component_desc,
+                color=color,
                 log_prefix_str=log_prefix_str+"    ")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     process_scene()

@@ -3,6 +3,7 @@
 #
 
 import argparse
+import colorsys
 import json
 import mayavi.mlab
 import numpy as np
@@ -17,7 +18,10 @@ parser.add_argument("--pipeline_dir", required=True)
 parser.add_argument("--scene_id", required=True)
 parser.add_argument("--visual_parity_with_unreal", action="store_true")
 parser.add_argument("--ignore_actors")
+parser.add_argument("--color_mode", default="unique_color_per_node")
 args = parser.parse_args()
+
+assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_node", "unique_color_per_component"]
 
 if args.ignore_actors is not None:
     ignore_actors = args.ignore_actors.split(",")
@@ -30,7 +34,6 @@ mesh_opacity = 1.0
 c_x_axis = (1.0,  0.0,  0.0)
 c_y_axis = (0.0,  1.0,  0.0)
 c_z_axis = (0.0,  0.0,  1.0)
-c_face   = (0.75, 0.75, 0.75)
 
 origin_world = np.array([[0.0,   0.0,   0.0]])
 x_axis_world = np.array([[100.0, 0.0,   0.0]])
@@ -43,6 +46,8 @@ if args.visual_parity_with_unreal:
     x_axis_world = x_axis_world[:,[0,2,1]]
     y_axis_world = y_axis_world[:,[0,2,1]]
     z_axis_world = z_axis_world[:,[0,2,1]]
+
+np.random.seed(0)
 
 
 def process_scene():
@@ -67,12 +72,19 @@ def process_scene():
 
     actors = [ (actor_name, kinematic_tree) for actor_name, kinematic_tree in actors_json.items() if actor_name not in ignore_actors ]
 
+    color = (0.75, 0.75, 0.75)
+
     for actor_name, actor_kinematic_tree in actors:
         spear.log("Processing actor: ", actor_name)
         root_node = actor_kinematic_tree["root_node"]
+
+        if args.color_mode == "unique_color_per_actor":
+            color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+
         draw_kinematic_tree_nodes(
             transform_world_from_parent_node=spear.pipeline.TRANSFORM_IDENTITY,
             node=root_node,
+            color=color,
             log_prefix_str="    ")
 
     mayavi.mlab.show()
@@ -80,7 +92,7 @@ def process_scene():
     spear.log("Done.")
 
 
-def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, log_prefix_str=""):
+def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, color, log_prefix_str):
 
     spear.log(log_prefix_str, "Processing kinematic tree node: ", node["name"])
 
@@ -89,6 +101,9 @@ def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, log_prefix
             node["transform_parent_node_from_current_node"])
     transform_world_from_current_node = \
         spear.pipeline.compose_transforms([transform_world_from_parent_node, transform_parent_node_from_current_node])
+
+    if args.color_mode == "unique_color_per_node":
+        color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
     for static_mesh_component_name, static_mesh_component_desc in node["static_mesh_components"].items():
 
@@ -118,14 +133,18 @@ def draw_kinematic_tree_nodes(transform_world_from_parent_node, node, log_prefix
         if args.visual_parity_with_unreal:
             mesh.vertices = mesh.vertices[:,[0,2,1]]
 
+        if args.color_mode == "unique_color_per_component":
+            color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+
         mayavi.mlab.triangular_mesh(
-            mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=c_face, opacity=mesh_opacity)
+            mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
 
     # Recurse for each child node.
     for child_node in node["children_nodes"].values():
         draw_kinematic_tree_nodes(
             transform_world_from_parent_node=transform_world_from_current_node,
             node=child_node["node"],
+            color=color,
             log_prefix_str=log_prefix_str+"    ")
 
 
