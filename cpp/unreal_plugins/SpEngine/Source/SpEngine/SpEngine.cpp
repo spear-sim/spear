@@ -39,7 +39,7 @@ void SpEngine::StartupModule()
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("SpCore")));
 
     if (Config::s_initialized_) {
-        rpc_server_ = std::make_unique<rpc::server>(Config::get<std::string>("SP_ENGINE.IP"), Config::get<int>("SP_ENGINE.PORT"));
+        rpc_server_ = std::make_unique<rpc::server>(Config::get<int>("SP_ENGINE.PORT"));
     } else {
         rpc_server_ = std::make_unique<rpc::server>(30000);
     }
