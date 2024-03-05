@@ -216,12 +216,14 @@ public:
         return reinterpretAsVectorImpl<TDest, typename TContiguousValueContainer::value_type>(src.data(), src.size());
     }
 
-    // Don't infer TSrc from the input initializer list. We do this because the type of an initializer list is
-    // inferred automatically from its declaration, but we want to force the user to explicitly specify the source
-    // type. We don't need to do this for reinterpretAsVectorOf(...), because the input to that function is, e.g.,
-    // an std::vector, where the user would have already explicitly specified its type.
-    template <typename TDest, typename TSrc, typename TSrcData> requires std::same_as<TSrc, TSrcData>
-    static std::vector<TDest> reinterpretAsVector(const std::initializer_list<TSrcData>& src)
+    // Don't infer TSrc from the input initializer list, because we want to force the user to explicitly specify the
+    // intended data type of the initializer list somewhere. If we allow TSrc to be inferred automatically, we create
+    // a situation where, e.g., the user wants to create an initializer list of floats, but accidentally creates an
+    // initializer list of doubles. We don't need this extra layer of safety for reinterpretAsVectorOf(...), because
+    // the input to that function is, e.g., an std::vector, where the user would have already specified its data type
+    // somewhere in their code.
+    template <typename TDest, typename TSrc, typename TInitializerList> requires std::same_as<TSrc, TInitializerList>
+    static std::vector<TDest> reinterpretAsVector(const std::initializer_list<TInitializerList>& src)
     {
         return reinterpretAsVectorImpl<TDest, TSrc>(std::data(src), src.size());
     }
