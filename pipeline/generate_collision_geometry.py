@@ -59,7 +59,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
 
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node["name"])
 
-    # TODO: group static_mesh_components by the merge_ids in the JSON data
+    # TODO: retrieve merge_ids from the JSON data, group static_mesh_components by merge_id
     static_mesh_components = kinematic_tree_node["static_mesh_components"]
     if len(static_mesh_components) > 0:
         merge_id = 0
@@ -83,7 +83,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"][merge_id]["static_mesh_components"] = \
             merge_id_static_mesh_components
 
-        # Concatenate multiple static meshes that have the same merge_id into a single mesh.
+        # Combine multiple static mesh components that have the same merge_id into a single mesh.
         raw_merge_id_meshes = trimesh.Scene()
         for static_mesh_component_name, static_mesh_component_desc in merge_id_static_mesh_components.items():
 
@@ -116,11 +116,11 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         spear.log(log_prefix_str, "Writing OBJ file: ", raw_merge_id_obj_path)
         raw_merge_id_mesh.export(raw_merge_id_obj_path, "obj")
 
-        # Run COACD.
+        # Run COACD. TODO: retrieve COACD parameters from the JSON data
         coacd_merge_id_mesh = coacd.Mesh(raw_merge_id_mesh.vertices, raw_merge_id_mesh.faces)
         coacd_merge_id_parts = coacd.run_coacd(coacd_merge_id_mesh)
 
-        # Save COACD result as individual parts and as a combined mesh.
+        # Save COACD result as individual parts, and as a combined mesh.
         coacd_obj_dir = os.path.realpath(os.path.join(
             args.pipeline_dir, args.scene_id, "collision_geometry", "coacd", actor_name.replace("/", "."), kinematic_tree_node["name"]))
         os.makedirs(coacd_obj_dir, exist_ok=True)
