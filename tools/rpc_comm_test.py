@@ -21,9 +21,6 @@ if __name__ == "__main__":
     
     sp_engine = spear.SpEngine(config)
 
-    # take a few steps
-    sp_engine.n_ticks(10)
-
     # close the sp_engineironment
     sp_engine.close()
 

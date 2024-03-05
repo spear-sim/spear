@@ -5,7 +5,7 @@
 #pragma once
 
 #include <atomic>
-#include <concepts>
+#include <concepts> // std::same_as
 #include <future>   // std::promise, std::future
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
@@ -43,9 +43,9 @@ public:
 
         frame_state_ = FrameState::Idle;
 
-        bind("engine_service", "begin_tick", [this]() -> void {
-            SP_ASSERT(frame_state_ == FrameState::Idle);
+        basic_entry_point_binder_->bind("engine_service.begin_tick", [this]() -> void {
             SP_LOG("0 - begin_tick");
+            SP_ASSERT(frame_state_ == FrameState::Idle);
             // reset promises and futures
             frame_state_idle_promise_ = std::promise<void>();
             frame_state_executing_pre_tick_promise_ = std::promise<void>();
@@ -62,35 +62,33 @@ public:
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         });
 
-        bind("engine_service", "tick", [this]() -> void {
-            SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
+        basic_entry_point_binder_->bind("engine_service.tick", [this]() -> void {
             SP_LOG("0 - tick");
+            SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
             // allow beginFrameEventHandler() to finish executing, wait here until frame_state == FrameState::ExecutingPostTick
-            sync_work_queue_.returnIOContextRun();
-            SP_LOG("1 - tick");
+            sync_work_queue_.resetWorkGuard();
             frame_state_executing_post_tick_future_.wait();
             SP_LOG("2 - tick");
 
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         });
 
-        bind("engine_service", "end_tick", [this]() -> void {
-            SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
+        basic_entry_point_binder_->bind("engine_service.end_tick", [this]() -> void {
             SP_LOG("0 - end_tick");
+            SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
             // allow endFrameEventHandler() to finish executing, wait here until frame_state == FrameState::Idle
-            sync_work_queue_.returnIOContextRun();
-            SP_LOG("1 - end_tick");
+            sync_work_queue_.resetWorkGuard();
             frame_state_idle_future_.wait();
             SP_LOG("2 - end_tick");
 
             SP_ASSERT(frame_state_ == FrameState::Idle);
         });
 
-        bind("engine_service", "ping", []() -> std::string {
+        basic_entry_point_binder_->bind("engine_service.ping", []() -> std::string {
             return "SpEngine received a call to ping()...";
         });
 
-        bind("engine_service", "request_close", []() -> void {
+        basic_entry_point_binder_->bind("engine_service.request_close", []() -> void {
             bool immediate_shutdown = false;
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });

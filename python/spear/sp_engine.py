@@ -91,7 +91,7 @@ class SpEngine():
             os.symlink(self._config.SPEAR.PAKS_DIR, spear_paks_dir)
 
         # provide additional control over which Vulkan devices are recognized by Unreal
-        if len(self._config.SPEAR.VK_ICD_FILENAMES) > 0:
+        if self._config.SPEAR.VK_ICD_FILENAMES != "":
             spear.log("Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.VK_ICD_FILENAMES)
             os.environ["VK_ICD_FILENAMES"] = self._config.SPEAR.VK_ICD_FILENAMES
 
@@ -189,7 +189,7 @@ class SpEngine():
             connected = False
             try:
                 self.rpc_client = msgpackrpc.Client(
-                    msgpackrpc.Address(self._config.SP_ENGINE.IP, self._config.SP_ENGINE.PORT),
+                    msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT),
                     timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                 self._ping()
@@ -215,7 +215,7 @@ class SpEngine():
                     assert False
                 try:
                     self.rpc_client = msgpackrpc.Client(
-                        msgpackrpc.Address(self._config.SP_ENGINE.IP, self._config.SP_ENGINE.PORT), 
+                        msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT), 
                         timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                     self._ping()

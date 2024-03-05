@@ -4,14 +4,10 @@
 
 #pragma once
 
-#include <cmath>       // std::nan
 #include <concepts>    // std::same_as
 #include <mutex>
 #include <string>
-#include <tuple>
-#include <type_traits> // std::is_function, std::is_same_v
-#include <typeindex>   // std::type_index
-#include <utility>     // std::forward, std:/:move
+#include <utility>     // std::forward, std::move
 
 #include <SpCore/BoostAsio.h>
 
@@ -118,7 +114,7 @@ public:
         mutex_.unlock();
     }
 
-    void returnIOContextRun()
+    void resetWorkGuard()
     {
         // request io_context_.run() to stop executing once all of its scheduled work is finished
         mutex_.lock();
