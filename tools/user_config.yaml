@@ -1,0 +1,15 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+SPEAR:
+  LAUNCH_MODE: "standalone_executable"
+
+  STANDALONE_EXECUTABLE: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+
+  CUSTOM_COMMAND_LINE_ARGUMENTS: []
+  RENDER_OFFSCREEN: False
+  WINDOW_RESOLUTION_X: 512
+  WINDOW_RESOLUTION_Y: 512
+
+  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0

@@ -66,7 +66,7 @@ public:
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
             SP_LOG("0 - tick");
             // allow beginFrameEventHandler() to finish executing, wait here until frame_state == FrameState::ExecutingPostTick
-            work_queue_.returnIOContextRun();
+            sync_work_queue_.returnIOContextRun();
             SP_LOG("1 - tick");
             frame_state_executing_post_tick_future_.wait();
             SP_LOG("2 - tick");
@@ -78,12 +78,21 @@ public:
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
             SP_LOG("0 - end_tick");
             // allow endFrameEventHandler() to finish executing, wait here until frame_state == FrameState::Idle
-            work_queue_.returnIOContextRun();
+            sync_work_queue_.returnIOContextRun();
             SP_LOG("1 - end_tick");
             frame_state_idle_future_.wait();
             SP_LOG("2 - end_tick");
 
             SP_ASSERT(frame_state_ == FrameState::Idle);
+        });
+
+        bind("engine_service", "ping", []() -> std::string {
+            return "SpEngine received a call to ping()...";
+        });
+
+        bind("engine_service", "request_close", []() -> void {
+            bool immediate_shutdown = false;
+            FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
     }
 
@@ -104,7 +113,7 @@ public:
     {
         basic_entry_point_binder_->bind(
             service_name + "." + func_name,
-            WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, std::forward<decltype(func)>(func))
+            WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(sync_work_queue_, std::forward<decltype(func)>(func))
         );
 
         //basic_entry_point_binder_->bind(
@@ -112,12 +121,11 @@ public:
         //    WorkQueue::wrapFuncToExecuteInWorkQueueNonBlocking(
         //        service_name + func_name,
         //        std::forward<decltype(func)>(func),
-        //        &work_queue_));
+        //        &sync_work_queue_));
     }
 
     void beginFrameEventHandler()
     {
-        SP_LOG_CURRENT_FUNCTION();
         // if begin_tick() has indicated that we should advance the simulation
         if (frame_state_ == FrameState::RequestPreTick) {
             SP_LOG("0 - BeginFrameEventHandler");
@@ -129,7 +137,7 @@ public:
             //UGameplayStatics::SetGamePaused(world_, false);
 
             // execute all pre-tick synchronous work, wait here for tick() to unblock us
-            work_queue_.runIOContext();
+            sync_work_queue_.runIOContext();
             SP_LOG("1 - BeginFrameEventHandler");
             // update local state
             frame_state_ = FrameState::ExecutingTick;
@@ -138,7 +146,6 @@ public:
 
     void endFrameEventHandler()
     {
-        SP_LOG_CURRENT_FUNCTION();
         // if we are currently advancing the simulation
         if (frame_state_ == FrameState::ExecutingTick) {
             SP_LOG("0 - EndFrameEventHandler");
@@ -147,7 +154,7 @@ public:
             frame_state_executing_post_tick_promise_.set_value();
 
             // execute all post-tick synchronous work, wait here for endTick() to unblock
-            work_queue_.runIOContext();
+            sync_work_queue_.runIOContext();
             SP_LOG("1 - EndFrameEventHandler");
             // pause the game
             //UGameplayStatics::SetGamePaused(world_, true);
@@ -160,7 +167,7 @@ public:
 
 private:
     TBasicEntryPointBinder* basic_entry_point_binder_ = nullptr;
-    WorkQueue work_queue_;
+    WorkQueue sync_work_queue_;
 
     // FDelegateHandle objects corresponding to each event handler defined in this class
     FDelegateHandle begin_frame_handle_;

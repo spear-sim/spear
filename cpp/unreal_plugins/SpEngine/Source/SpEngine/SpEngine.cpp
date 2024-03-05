@@ -39,7 +39,7 @@ void SpEngine::StartupModule()
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("SpCore")));
 
     if (Config::s_initialized_) {
-        rpc_server_ = std::make_unique<rpc::server>(Config::get<int>("SIMULATION_CONTROLLER.PORT"));
+        rpc_server_ = std::make_unique<rpc::server>(Config::get<std::string>("SP_ENGINE.IP"), Config::get<int>("SP_ENGINE.PORT"));
     } else {
         rpc_server_ = std::make_unique<rpc::server>(30000);
     }
@@ -51,19 +51,18 @@ void SpEngine::StartupModule()
     // when constructing EngineService, and we pass in EngineService when constructing all other
     // services.
     engine_service_ = std::make_unique<EngineService<rpc::server>>(rpc_server_.get());
-
     //game_world_service_ = std::make_unique<GameWorldService>(&engine_service_);
 
-    //int num_worker_threads = 1;
-    //rpc_server_->async_run(num_worker_threads);
+    int num_worker_threads = 1;
+    rpc_server_->async_run(num_worker_threads);
 }
 
 void SpEngine::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    //rpc_server_->close_sessions();
-    //rpc_server_->stop();
+    rpc_server_->close_sessions();
+    rpc_server_->stop();
 }
 
 IMPLEMENT_MODULE(SpEngine, SpEngine)

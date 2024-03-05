@@ -11,6 +11,7 @@ SPEAR_ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 # ordered from low-level to high-level
 DEFAULT_CONFIG_FILES = [
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.sp_core.yaml")),
+    os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.sp_engine.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.vehicle.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.urdf_robot.yaml")),
     os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "config", "default_config.simulation_controller.yaml")),
