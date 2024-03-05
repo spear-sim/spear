@@ -192,7 +192,7 @@ class SpEngine():
                     msgpackrpc.Address(self._config.SP_ENGINE.IP, self._config.SP_ENGINE.PORT),
                     timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                # self._ping()
+                self._ping()
                 connected = True
             except:
                 # Client may not clean up resources correctly in this case, so we clean things up explicitly.
@@ -218,7 +218,7 @@ class SpEngine():
                         msgpackrpc.Address(self._config.SP_ENGINE.IP, self._config.SP_ENGINE.PORT), 
                         timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                    # self._ping()
+                    self._ping()
                     connected = True
                 except Exception as e:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
