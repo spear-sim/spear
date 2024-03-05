@@ -60,10 +60,10 @@ void SimulationController::StartupModule()
         return;
     }
 
-    post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
-    world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
-    begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
-    end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
+    //post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
+    //world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
+    //begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
+    //end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
 }
 
 void SimulationController::ShutdownModule()
@@ -74,19 +74,19 @@ void SimulationController::ShutdownModule()
         return;
     }
 
-    // If this module is unloaded in the middle of simulation for some reason, raise an error.
-    // We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
-    SP_ASSERT(!world_begin_play_handle_.IsValid());
+    //// If this module is unloaded in the middle of simulation for some reason, raise an error.
+    //// We expect worldCleanUpEvenHandler(...) to be called before ShutdownModule().
+    //SP_ASSERT(!world_begin_play_handle_.IsValid());
 
-    FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
-    FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
-    FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_handle_);
-    FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_handle_);
+    //FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
+    //FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
+    //FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_handle_);
+    //FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_handle_);
 
-    end_frame_handle_.Reset();
-    begin_frame_handle_.Reset();
-    world_cleanup_handle_.Reset();
-    post_world_initialization_handle_.Reset();
+    //end_frame_handle_.Reset();
+    //begin_frame_handle_.Reset();
+    //world_cleanup_handle_.Reset();
+    //post_world_initialization_handle_.Reset();
 }
 
 void SimulationController::postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
