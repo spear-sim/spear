@@ -86,7 +86,7 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
 
     // Return the token containing "(" and ")".
     for (auto& token : Std::tokenize(current_function_simplified, " ")) {
-        if (Std::containsSubstring(token, "(") && Std::containsSubstring(token, ")")) {
+        if (Std::contains(token, "(") && Std::contains(token, ")")) {
             return token;
         }
     }

@@ -18,10 +18,10 @@ parser.add_argument("--pipeline_dir", required=True)
 parser.add_argument("--scene_id", required=True)
 parser.add_argument("--visual_parity_with_unreal", action="store_true")
 parser.add_argument("--ignore_actors")
-parser.add_argument("--color_mode", default="unique_color_per_node")
+parser.add_argument("--color_mode", default="unique_color_per_part_id")
 args = parser.parse_args()
 
-assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_node", "unique_color_per_component"]
+assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_node", "unique_color_per_merge_id", "unique_color_per_part_id"]
 
 if args.ignore_actors is not None:
     ignore_actors = args.ignore_actors.split(",")
@@ -52,9 +52,9 @@ np.random.seed(0)
 
 def process_scene():
 
-    kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "kinematic_trees"))
-    actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
-    assert os.path.exists(kinematic_trees_dir)
+    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "collision_geometry"))
+    actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "actors.json"))
+    assert os.path.exists(collision_geometry_dir)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -70,33 +70,31 @@ def process_scene():
                          z_axis_world[:,0], z_axis_world[:,1], z_axis_world[:,2],
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
-    actors = actors_json
-    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_name not in ignore_actors }
+    actors = [ (actor_name, actor_kinematic_tree) for actor_name, actor_kinematic_tree in actors_json.items() if actor_name not in ignore_actors ]
 
     color = (0.75, 0.75, 0.75)
 
-    for actor_name, actor_kinematic_tree in actors.items():
+    for actor_name, actor_kinematic_tree in actors:
         spear.log("Processing actor: ", actor_name)
-        draw_kinematic_tree(actor_kinematic_tree, color)
+        draw_collision_geometry(actor_name, actor_kinematic_tree, color)
 
     mayavi.mlab.show()
 
     spear.log("Done.")
 
 
-def draw_kinematic_tree(kinematic_tree, color):
+def draw_collision_geometry(actor_name, kinematic_tree, color):
     if args.color_mode == "unique_color_per_actor":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
-    draw_kinematic_tree_node(
+    draw_collision_geometry_for_kinematic_tree_node(
+        actor_name=actor_name,
         transform_world_from_parent_node=spear.pipeline.TRANSFORM_IDENTITY,
         kinematic_tree_node=kinematic_tree["root_node"],
         color=color,
         log_prefix_str="    ")
 
 
-def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_node, color, log_prefix_str):
-
-    assert kinematic_tree_node["has_valid_geometry"]
+def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_from_parent_node, kinematic_tree_node, color, log_prefix_str):
 
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node["name"])
 
@@ -106,46 +104,47 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
     transform_world_from_current_node = \
         spear.pipeline.compose_transforms([transform_world_from_parent_node, transform_parent_node_from_current_node])
 
+    M_world_from_current_node = spear.pipeline.get_matrix_from_transform(transform_world_from_current_node)
+
     if args.color_mode == "unique_color_per_node":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
-    for static_mesh_component_name, static_mesh_component_desc in kinematic_tree_node["static_mesh_components"].items():
+    static_mesh_components_merged = kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"]
+    for merge_id, merge_id_static_mesh_components in static_mesh_components_merged.items():
 
-        transform_current_node_from_current_component = \
-            spear.pipeline.get_transform_from_transform_data(
-                static_mesh_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"])
-        transform_world_from_current_component = \
-            spear.pipeline.compose_transforms([transform_world_from_current_node, transform_current_node_from_current_component])
-
-        M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform_world_from_current_component)
-
-        static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
-        assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id)
-
-        obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
-        numerical_parity_obj_path = \
-            os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
-        spear.log(log_prefix_str, "    OBJ file: ", numerical_parity_obj_path)
-
-        mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
-        V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T
-        V_world = M_world_from_current_component*V_current_component
-        assert np.allclose(V_world[3,:], 1.0)
-        mesh.vertices = V_world.T.A[:,0:3]
-
-        # Swap y and z coordinates to match the visual appearance of the Unreal editor.
-        if args.visual_parity_with_unreal:
-            mesh.vertices = mesh.vertices[:,[0,2,1]]
-
-        if args.color_mode == "unique_color_per_component":
+        if args.color_mode == "unique_color_per_merge_id":
             color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
-        mayavi.mlab.triangular_mesh(
-            mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
+        # JSON stores keys as strings, so we need to convert merge_id to an int
+        coacd_merge_id_obj_dir = os.path.realpath(os.path.join(
+            args.pipeline_dir, args.scene_id, "collision_geometry", "coacd", actor_name.replace("/", "."), kinematic_tree_node["name"], f"{int(merge_id):04}"))
+
+        coacd_part_ids = kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"][merge_id]["coacd_part_ids"]
+        for coacd_part_id in coacd_part_ids:
+
+            coacd_part_id_obj_path = os.path.realpath(os.path.join(coacd_merge_id_obj_dir, f"{coacd_part_id:04}.obj"))
+            spear.log(log_prefix_str, "Reading OBJ file: ", coacd_part_id_obj_path)
+
+            mesh = trimesh.load_mesh(coacd_part_id_obj_path, process=False, validate=False)
+            V_current_node = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T
+            V_world = M_world_from_current_node*V_current_node
+            assert np.allclose(V_world[3,:], 1.0)
+            mesh.vertices = V_world.T.A[:,0:3]
+
+            if args.color_mode == "unique_color_per_part_id":
+                color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+
+            # Swap y and z coordinates to match the visual appearance of the Unreal editor.
+            if args.visual_parity_with_unreal:
+                mesh.vertices = mesh.vertices[:,[0,2,1]]
+
+            mayavi.mlab.triangular_mesh(
+                mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
 
     # Recurse for each child node.
     for child_kinematic_tree_node in kinematic_tree_node["children_nodes"].values():
-        draw_kinematic_tree_node(
+        draw_collision_geometry_for_kinematic_tree_node(
+            actor_name=actor_name,
             transform_world_from_parent_node=transform_world_from_current_node,
             kinematic_tree_node=child_kinematic_tree_node["node"],
             color=color,

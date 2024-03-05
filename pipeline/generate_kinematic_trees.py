@@ -22,20 +22,21 @@ physics_constraint_component_classes = ["PhysicsConstraintComponent"]
 def process_scene():
 
     unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_metadata"))
-    actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
+    unreal_metadata_actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
     assert os.path.exists(unreal_metadata_dir)
-    with open(actors_json_file, "r") as f:
+    with open(unreal_metadata_actors_json_file, "r") as f:
         actors_json = json.load(f)
 
-    actors = actors_json.items()
-    actors = [ (actor_name, actor_desc) for actor_name, actor_desc in actors if actor_desc["root_component"] is not None ]
-    actors = { actor_name: get_kinematic_tree(actor_desc) for actor_name, actor_desc in actors }
+    actors = actors_json
+    actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["root_component"] is not None }
+    actors = { actor_name: get_kinematic_tree(actor_desc) for actor_name, actor_desc in actors.items() }
+    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_kinematic_tree["root_node"]["has_valid_geometry"] }
 
-    kinematic_trees_json_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "kinematic_trees"))
-    kinematic_trees_json_file = os.path.realpath(os.path.join(kinematic_trees_json_dir, "actors.json"))
-    spear.log("Generating JSON file: " + kinematic_trees_json_file)
-    os.makedirs(kinematic_trees_json_dir, exist_ok=True)
-    with open(kinematic_trees_json_file, "w") as f:
+    kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "kinematic_trees"))
+    kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
+    spear.log("Generating JSON file: " + kinematic_trees_actors_json_file)
+    os.makedirs(kinematic_trees_dir, exist_ok=True)
+    with open(kinematic_trees_actors_json_file, "w") as f:
         json.dump(actors, f, indent=4, sort_keys=True)
 
     spear.log("Done.")
@@ -58,6 +59,7 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
     component_name = component_desc["name"]
     kinematic_tree_node = {
         "children_nodes": {},
+        "has_valid_geometry": False,
         "name": component_name,
         "static_mesh_components": {},
         "transform_parent_node_from_current_node": spear.pipeline.get_transform_data_from_transform(spear.pipeline.TRANSFORM_IDENTITY)}
@@ -91,11 +93,13 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
                 if static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id):
 
                     # The accumulated transform maps from the current component to the current node.
+                    component_desc["pipeline_info"] = {}
                     component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
                     component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
                         spear.pipeline.get_transform_data_from_transform(transform_node_from_current_component)
 
                     spear.log(log_prefix_str, "Adding component to kinematic tree...")
+                    kinematic_tree_node["has_valid_geometry"] = True
                     kinematic_tree_node["static_mesh_components"][component_name] = component_desc
 
         # Recurse for each child component.
@@ -141,37 +145,40 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
                 transform_node_from_parent_component=transform_node_from_current_component,
                 log_prefix_str=log_prefix_str+"    ")
 
-            # If the child component is the root component within its node, i.e., if there is a PhysicsConstraintComponent
-            # constraining the current component and the child component, then we add the child component's node as a child of
-            # of the current node.
-            if child_component_is_root_within_node:
-                assert child_component_name not in kinematic_tree_node["children_nodes"].keys()
-                assert len(child_physics_constraint_component_descs) == 1
+            if child_component_kinematic_tree_node["has_valid_geometry"]:
+                kinematic_tree_node["has_valid_geometry"] = True
 
-                child_physics_constraint_component_desc = child_physics_constraint_component_descs[0]
+                # If the child component is the root component within its node, i.e., if there is a PhysicsConstraintComponent
+                # constraining the current component and the child component, then we add the child component's node as a child of
+                # of the current node.
+                if child_component_is_root_within_node:
+                    assert child_component_name not in kinematic_tree_node["children_nodes"].keys()
+                    assert len(child_physics_constraint_component_descs) == 1
 
-                 # Compute the transform that maps to the current node from the PhysicsConstraintComponent, i.e., find the pose
-                 # of the PhysicsConstraintComponent in the current node's frame.
-                transform_node_from_child_physics_constraint_component = \
-                    spear.pipeline.compose_transform_with_component(transform_node_from_current_component, child_physics_constraint_component_desc)
+                    child_physics_constraint_component_desc = child_physics_constraint_component_descs[0]
 
-                child_physics_constraint_component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
-                child_physics_constraint_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
-                    spear.pipeline.get_transform_data_from_transform(transform_node_from_child_physics_constraint_component)
+                     # Compute the transform that maps to the current node from the PhysicsConstraintComponent, i.e., find the pose
+                     # of the PhysicsConstraintComponent in the current node's frame.
+                    transform_node_from_child_physics_constraint_component = \
+                        spear.pipeline.compose_transform_with_component(transform_node_from_current_component, child_physics_constraint_component_desc)
 
-                kinematic_tree_node["children_nodes"][child_component_name] = {
-                    "node": child_component_kinematic_tree_node,
-                    "physics_constraint_component": child_physics_constraint_component_descs[0]}
+                    child_physics_constraint_component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
+                    child_physics_constraint_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
+                        spear.pipeline.get_transform_data_from_transform(transform_node_from_child_physics_constraint_component)
 
-            # Otherwise, we absorb the child component's node into the current node, i.e., we merge "static_mesh_components" and
-            # "children_nodes" respectfully.
-            else:
-                ktn = kinematic_tree_node
-                child_component_ktn = child_component_kinematic_tree_node
-                assert set(ktn["static_mesh_components"].keys()) & set(child_component_ktn["static_mesh_components"].keys()) == set()
-                ktn["static_mesh_components"].update(child_component_ktn["static_mesh_components"])
-                assert set(ktn["children_nodes"].keys()) & set(child_component_ktn["children_nodes"].keys()) == set()
-                ktn["children_nodes"].update(child_component_ktn["children_nodes"])
+                    kinematic_tree_node["children_nodes"][child_component_name] = {
+                        "node": child_component_kinematic_tree_node,
+                        "physics_constraint_component": child_physics_constraint_component_descs[0]}
+
+                # Otherwise, we absorb the child component's node into the current node, i.e., we merge "static_mesh_components" and
+                # "children_nodes" respectfully.
+                else:
+                    ktn = kinematic_tree_node
+                    child_component_ktn = child_component_kinematic_tree_node
+                    assert set(ktn["static_mesh_components"].keys()) & set(child_component_ktn["static_mesh_components"].keys()) == set()
+                    ktn["static_mesh_components"].update(child_component_ktn["static_mesh_components"])
+                    assert set(ktn["children_nodes"].keys()) & set(child_component_ktn["children_nodes"].keys()) == set()
+                    ktn["children_nodes"].update(child_component_ktn["children_nodes"])
 
     return kinematic_tree_node
 

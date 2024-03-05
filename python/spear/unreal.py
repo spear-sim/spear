@@ -18,8 +18,10 @@ def find_actors(actor_class=None):
 
 def find_actor(stable_name):
     actors = [ actor for actor in find_actors() if get_stable_name_actor(actor) == stable_name ]
-    assert len(actors) == 1
-    return actors[0]
+    if len(actors) == 1:
+        return actors[0]
+    else:
+        return None
 
 
 def find_components(actor, component_class=None):
@@ -39,8 +41,10 @@ def find_component(stable_name, actor=None):
     else:
         component_stable_name = stable_name
     components = [ component for component in find_components(actor) if get_stable_name_component(component) == component_stable_name ]
-    assert len(components) == 1
-    return components[0]
+    if len(components) == 1:
+        return components[0]
+    else:
+        return None
 
 
 def get_stable_name_actor(actor):
@@ -52,14 +56,10 @@ def get_stable_name_actor(actor):
 
 
 def get_stable_name_component(component, include_actor=False):
-
     if include_actor:
         actor_prefix_str = get_stable_name_actor(component.get_owner()) + ":"
     else:
         actor_prefix_str = ""
-
-    # reverse to get parent components in root-to-leaf order
     component_names = [ component.get_name() for component in list(component.get_parent_components())[::-1] ] + [component.get_name()]
     component_names_str = ".".join(component_names)
-
     return actor_prefix_str + component_names_str

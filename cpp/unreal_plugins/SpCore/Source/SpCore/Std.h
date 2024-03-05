@@ -56,9 +56,9 @@ public:
     // std::string functions
     //
 
-    static std::string toString(auto&&... args)
+    static bool contains(const std::string& string, const std::string& substring)
     {
-        return (... + boost::lexical_cast<std::string>(std::forward<decltype(args)>(args)));
+        return string.find(substring) != std::string::npos;
     }
 
     static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)
@@ -67,14 +67,14 @@ public:
         return std::vector<std::string>(tokenizer.begin(), tokenizer.end());
     }
 
-    static bool containsSubstring(const std::string& string, const std::string& substring)
-    {
-        return string.find(substring) != std::string::npos;
-    }
-
     static std::string toLower(const std::string& string)
     {
         return boost::algorithm::to_lower_copy(string);
+    }
+
+    static std::string toString(auto&&... args)
+    {
+        return (... + boost::lexical_cast<std::string>(std::forward<decltype(args)>(args)));
     }
 
     //
@@ -216,6 +216,10 @@ public:
         return reinterpretAsVectorImpl<TDest, typename TContiguousValueContainer::value_type>(src.data(), src.size());
     }
 
+    // Don't infer TSrc from the input initializer list. We do this because the type of an initializer list is
+    // inferred automatically from its declaration, but we want to force the user to explicitly specify the source
+    // type. We don't need to do this for reinterpretAsVectorOf(...), because the input to that function is, e.g.,
+    // an std::vector, where the user would have already explicitly specified its type.
     template <typename TDest, typename TSrc, typename TSrcData> requires std::same_as<TSrc, TSrcData>
     static std::vector<TDest> reinterpretAsVector(const std::initializer_list<TSrcData>& src)
     {

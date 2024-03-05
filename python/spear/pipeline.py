@@ -92,13 +92,13 @@ def compose_transform_with_component(transform_ancestor_from_parent_component, c
 
     # If we're in absolute mode for {location, rotation, scale}, then don't accumulate.
     if absolute_location:
-        transform_ancestor_component_from_current_component["location"] = transform_parent_component_from_current_component["location"]
+        transform_ancestor_from_current_component["location"] = transform_parent_component_from_current_component["location"]
     if absolute_rotation:
-        transform_ancestor_component_from_current_component["rotation"] = transform_parent_component_from_current_component["rotation"]
+        transform_ancestor_from_current_component["rotation"] = transform_parent_component_from_current_component["rotation"]
     if absolute_scale:
-        transform_ancestor_component_from_current_component["scale"] = transform_parent_component_from_current_component["scale"]
+        transform_ancestor_from_current_component["scale"] = transform_parent_component_from_current_component["scale"]
 
-    return transform_ancestor_component_from_current_component
+    return transform_ancestor_from_current_component
 
 def any_component_transform_absolute(component_desc):
 

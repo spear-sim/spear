@@ -73,13 +73,13 @@ def process_scene():
                          z_axis_world[:,0], z_axis_world[:,1], z_axis_world[:,2],
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
-    actors = actors_json.items()
-    actors = [ (actor_name, actor_desc) for actor_name, actor_desc in actors if actor_desc["root_component"] is not None ]
-    actors = [ (actor_name, actor_desc) for actor_name, actor_desc in actors if actor_name not in ignore_actors ]
+    actors = actors_json
+    actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["root_component"] is not None }
+    actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_name not in ignore_actors }
 
     color = (0.75, 0.75, 0.75)
 
-    for actor_name, actor_desc in actors:
+    for actor_name, actor_desc in actors.items():
         spear.log("Processing actor: ", actor_name)
         draw_actor(actor_desc, color)
 
@@ -118,13 +118,13 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
 
         # ...and only attempt to draw StaticMeshComponents...
         if component_class in static_mesh_component_classes:
-            spear.log(log_prefix_str, "    Component is a StaticMeshComponent.")
+            spear.log(log_prefix_str, "Component is a StaticMeshComponent.")
             static_mesh_desc = component_desc["editor_properties"]["static_mesh"]
 
             # ...that refer to non-null StaticMesh assets...
             if static_mesh_desc is not None:
                 static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_desc["path"])
-                spear.log(log_prefix_str, "    StaticMesh asset path: ", static_mesh_asset_path)
+                spear.log(log_prefix_str, "StaticMesh asset path: ", static_mesh_asset_path)
     
                 # ...that are in the /Game/Scenes/<scene_id> directory.
                 if static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id):
@@ -132,7 +132,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                     obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
                     numerical_parity_obj_path = \
                         os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
-                    spear.log(log_prefix_str, "    OBJ file:              ", numerical_parity_obj_path)
+                    spear.log(log_prefix_str, "OBJ file:              ", numerical_parity_obj_path)
 
                     mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
                     V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T

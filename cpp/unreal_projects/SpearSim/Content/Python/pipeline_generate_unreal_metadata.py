@@ -59,7 +59,6 @@ def get_component_desc(component):
         "debug_info": {"str": str(component)},
         "editor_properties": get_editor_property_descs(component),
         "name": spear.unreal.get_stable_name_component(component),
-        "pipeline_info": {},
         "unreal_name": component.get_name()}
 
     if isinstance(component, unreal.SceneComponent):
