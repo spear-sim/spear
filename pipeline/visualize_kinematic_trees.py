@@ -28,6 +28,8 @@ if args.ignore_actors is not None:
 else:
     ignore_actors = []
 
+np.random.seed(0)
+
 origin_scale_factor = 1.0
 mesh_opacity = 1.0
 
@@ -46,8 +48,6 @@ if args.visual_parity_with_unreal:
     x_axis_world = x_axis_world[:,[0,2,1]]
     y_axis_world = y_axis_world[:,[0,2,1]]
     z_axis_world = z_axis_world[:,[0,2,1]]
-
-np.random.seed(0)
 
 
 def process_scene():
@@ -125,7 +125,7 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
         obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
         numerical_parity_obj_path = \
             os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
-        spear.log(log_prefix_str, "    OBJ file: ", numerical_parity_obj_path)
+        spear.log(log_prefix_str, "OBJ file: ", numerical_parity_obj_path)
 
         mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
         V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T
@@ -133,12 +133,12 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
         assert np.allclose(V_world[3,:], 1.0)
         mesh.vertices = V_world.T.A[:,0:3]
 
+        if args.color_mode == "unique_color_per_component":
+            color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+
         # Swap y and z coordinates to match the visual appearance of the Unreal editor.
         if args.visual_parity_with_unreal:
             mesh.vertices = mesh.vertices[:,[0,2,1]]
-
-        if args.color_mode == "unique_color_per_component":
-            color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
         mayavi.mlab.triangular_mesh(
             mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)

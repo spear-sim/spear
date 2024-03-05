@@ -28,6 +28,8 @@ if args.ignore_actors is not None:
 else:
     ignore_actors = []
 
+np.random.seed(0)
+
 origin_scale_factor = 1.0
 mesh_opacity = 1.0
 
@@ -46,8 +48,6 @@ if args.visual_parity_with_unreal:
     x_axis_world = x_axis_world[:,[0,2,1]]
     y_axis_world = y_axis_world[:,[0,2,1]]
     z_axis_world = z_axis_world[:,[0,2,1]]
-
-np.random.seed(0)
 
 
 def process_scene():

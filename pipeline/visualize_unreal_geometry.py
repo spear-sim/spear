@@ -31,6 +31,8 @@ else:
 scene_component_classes = ["SceneComponent", "StaticMeshComponent"]
 static_mesh_component_classes = ["StaticMeshComponent"]
 
+np.random.seed(0)
+
 origin_scale_factor = 1.0
 mesh_opacity = 1.0
 
@@ -49,8 +51,6 @@ if args.visual_parity_with_unreal:
     x_axis_world = x_axis_world[:,[0,2,1]]
     y_axis_world = y_axis_world[:,[0,2,1]]
     z_axis_world = z_axis_world[:,[0,2,1]]
-
-np.random.seed(0)
 
 
 def process_scene():
@@ -140,12 +140,12 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                     assert np.allclose(V_world[3,:], 1.0)
                     mesh.vertices = V_world.T.A[:,0:3]
 
+                    if args.color_mode == "unique_color_per_component":
+                        color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+
                     # Swap y and z coordinates to match the visual appearance of the Unreal editor.
                     if args.visual_parity_with_unreal:
                         mesh.vertices = mesh.vertices[:,[0,2,1]]
-
-                    if args.color_mode == "unique_color_per_component":
-                        color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
                     mayavi.mlab.triangular_mesh(
                         mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)

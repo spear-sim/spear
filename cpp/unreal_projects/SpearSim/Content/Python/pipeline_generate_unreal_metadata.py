@@ -88,7 +88,7 @@ def get_editor_property_descs(uobject):
         editor_property_names = editor_property_names | set(df_editor_properties.loc[df_editor_properties["class"] == uobject_class_name]["editor_property"])
 
     # Guess-and-check all editor properties.
-    editor_property_descs = dict()
+    editor_property_descs = {}
     for editor_property_name in editor_property_names:
         try:
             editor_property = uobject.get_editor_property(editor_property_name)
@@ -141,7 +141,7 @@ def get_editor_property_desc(editor_property):
     elif isinstance(editor_property, unreal.Array):
         return [ get_editor_property_desc(editor_property_array_entry) for editor_property_array_entry in editor_property ]
 
-    # Otherwise, if the editor property value if serializable as JSON, then return the object,
+    # Otherwise, if the editor property value is serializable as JSON, then return the object,
     # otherwise return the string representation of the object.
     else:
         try:
