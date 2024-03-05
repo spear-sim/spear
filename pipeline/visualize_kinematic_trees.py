@@ -97,8 +97,6 @@ def draw_kinematic_tree(kinematic_tree, color):
 
 def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_node, color, log_prefix_str):
 
-    assert kinematic_tree_node["has_valid_geometry"]
-
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node["name"])
 
     transform_parent_node_from_current_node = \
@@ -126,7 +124,7 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
         obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
         numerical_parity_obj_path = \
             os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
-        spear.log(log_prefix_str, "OBJ file: ", numerical_parity_obj_path)
+        spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
 
         mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
         V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T

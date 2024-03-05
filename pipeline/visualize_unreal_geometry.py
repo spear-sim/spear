@@ -133,7 +133,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                     obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
                     numerical_parity_obj_path = \
                         os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
-                    spear.log(log_prefix_str, "OBJ file:              ", numerical_parity_obj_path)
+                    spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
 
                     mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
                     V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T

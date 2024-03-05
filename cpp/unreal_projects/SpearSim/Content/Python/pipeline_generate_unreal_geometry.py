@@ -20,7 +20,7 @@ editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
 
 
 def process_scene():
-    spear.log("Exporting Unreal scene geometry: ", editor_world_name)
+    spear.log("Processing scene: ", editor_world_name)
 
     actors = spear.unreal.find_actors()
     actors = [ actor for actor in actors if actor.get_editor_property("root_component") is not None ]

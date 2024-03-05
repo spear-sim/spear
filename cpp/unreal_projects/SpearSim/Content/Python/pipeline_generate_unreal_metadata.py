@@ -23,14 +23,14 @@ df_editor_properties = pd.read_csv(editor_properties_csv_file)
 def process_scene():
     
     editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
-    spear.log("Exporting Unreal scene to JSON: " + editor_world_name)
+    spear.log("Processing scene: " + editor_world_name)
 
     actors = spear.unreal.find_actors()
     actors = { spear.unreal.get_stable_name_actor(actor): get_actor_desc(actor) for actor in actors }
 
     unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_metadata"))
     actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
-    spear.log("Generating JSON file: " + actors_json_file)
+    spear.log("Writing JSON file: " + actors_json_file)
     os.makedirs(unreal_metadata_dir, exist_ok=True)
     with open(actors_json_file, "w") as f:
         json.dump(actors, f, indent=4, sort_keys=True)
@@ -39,11 +39,13 @@ def process_scene():
 
 
 def get_actor_desc(actor):
+    actor_name = spear.unreal.get_stable_name_actor(actor)
+    spear.log("Processing actor: ", actor_name)
     return {
         "class": actor.__class__.__name__,
         "debug_info": {"str": str(actor)},
         "editor_properties": get_editor_property_descs(actor),
-        "name": spear.unreal.get_stable_name_actor(actor),
+        "name": actor_name,
         "root_component": get_component_desc(actor.get_editor_property("root_component"))}
 
 
