@@ -27,6 +27,7 @@ def process_scene():
     kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "kinematic_trees"))
     kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
     assert os.path.exists(kinematic_trees_dir)
+    spear.log("Reading JSON file: " + kinematic_trees_actors_json_file)
     with open(kinematic_trees_actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -71,7 +72,6 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         args.pipeline_dir, args.scene_id, "collision_geometry", "raw", actor_name.replace("/", "."), kinematic_tree_node["name"]))
     os.makedirs(raw_obj_dir, exist_ok=True)
 
-    kinematic_tree_node["pipeline_info"] = {}
     kinematic_tree_node["pipeline_info"]["generate_collision_geometry"] = {}
     kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"] = {}
 

@@ -54,6 +54,7 @@ def process_scene():
 
     collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "actors.json"))
+    spear.log("Reading JSON file: " + actors_json_file)
     assert os.path.exists(collision_geometry_dir)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)

@@ -24,6 +24,7 @@ def process_scene():
     unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_metadata"))
     unreal_metadata_actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
     assert os.path.exists(unreal_metadata_dir)
+    spear.log("Reading JSON file: " + unreal_metadata_actors_json_file)
     with open(unreal_metadata_actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -61,6 +62,7 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
         "children_nodes": {},
         "has_valid_geometry": False,
         "name": component_name,
+        "pipeline_info": {},
         "static_mesh_components": {},
         "transform_parent_node_from_current_node": spear.pipeline.get_transform_data_from_transform(spear.pipeline.TRANSFORM_IDENTITY)}
 
@@ -93,7 +95,6 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
                 if static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id):
 
                     # The accumulated transform maps from the current component to the current node.
-                    component_desc["pipeline_info"] = {}
                     component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
                     component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
                         spear.pipeline.get_transform_data_from_transform(transform_node_from_current_component)

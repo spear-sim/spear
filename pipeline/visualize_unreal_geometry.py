@@ -58,6 +58,7 @@ def process_scene():
     unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_metadata"))
     actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
     assert os.path.exists(unreal_metadata_dir)
+    spear.log("Reading JSON file: " + actors_json_file)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 

@@ -16,11 +16,10 @@ args = parser.parse_args()
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
 
 
 def process_scene():
-
-    editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
     spear.log("Exporting Unreal scene geometry: ", editor_world_name)
 
     actors = spear.unreal.find_actors()
