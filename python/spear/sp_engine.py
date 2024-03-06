@@ -42,6 +42,18 @@ class SpEngine():
     def end_tick(self):
         self.rpc_client.call("engine_service.end_tick")
 
+    def get_byte_order(self):
+        unreal_instance_byte_order = self.rpc_client.call("engine_service.get_byte_order")
+        rpc_client_byte_order = sys.byteorder
+        if unreal_instance_byte_order == rpc_client_byte_order:
+            return None
+        elif unreal_instance_byte_order == "little":
+            return "<"
+        elif unreal_instance_byte_order == "big":
+            return ">"
+        else:
+            assert False
+
     def _request_launch_unreal_instance(self):
 
         if self._config.SPEAR.LAUNCH_MODE == "running_instance":

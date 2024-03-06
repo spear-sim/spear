@@ -66,7 +66,7 @@ public:
             SP_LOG("0 - tick");
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
             // allow beginFrameEventHandler() to finish executing, wait here until frame_state == FrameState::ExecutingPostTick
-            sync_work_queue_.resetWorkGuard();
+            work_queue_.resetWorkGuard();
             frame_state_executing_post_tick_future_.wait();
             SP_LOG("2 - tick");
 
@@ -77,7 +77,7 @@ public:
             SP_LOG("0 - end_tick");
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
             // allow endFrameEventHandler() to finish executing, wait here until frame_state == FrameState::Idle
-            sync_work_queue_.resetWorkGuard();
+            work_queue_.resetWorkGuard();
             frame_state_idle_future_.wait();
             SP_LOG("2 - end_tick");
 
@@ -86,6 +86,11 @@ public:
 
         basic_entry_point_binder_->bind("engine_service.ping", []() -> std::string {
             return "SpEngine received a call to ping()...";
+        });
+
+        basic_entry_point_binder_->bind("engine_service.get_byte_order", []() -> std::string {
+            uint32_t dummy = 0x01020304;
+            return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
         });
 
         basic_entry_point_binder_->bind("engine_service.request_close", []() -> void {
@@ -111,15 +116,12 @@ public:
     {
         basic_entry_point_binder_->bind(
             service_name + "." + func_name,
-            WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(sync_work_queue_, std::forward<decltype(func)>(func))
+            WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, std::forward<decltype(func)>(func))
         );
 
-        //basic_entry_point_binder_->bind(
-        //    service_name + ".async." + func_name,
-        //    WorkQueue::wrapFuncToExecuteInWorkQueueNonBlocking(
-        //        service_name + func_name,
-        //        std::forward<decltype(func)>(func),
-        //        &sync_work_queue_));
+        basic_entry_point_binder_->bind(
+            service_name + ".async." + func_name,
+            WorkQueue::wrapFuncToExecuteInWorkQueueNonBlocking(work_queue_, std::forward<decltype(func)>(func)));
     }
 
     void beginFrameEventHandler()
@@ -135,7 +137,7 @@ public:
             //UGameplayStatics::SetGamePaused(world_, false);
 
             // execute all pre-tick synchronous work, wait here for tick() to unblock us
-            sync_work_queue_.runIOContext();
+            work_queue_.runIOContext();
             SP_LOG("1 - BeginFrameEventHandler");
             // update local state
             frame_state_ = FrameState::ExecutingTick;
@@ -152,7 +154,7 @@ public:
             frame_state_executing_post_tick_promise_.set_value();
 
             // execute all post-tick synchronous work, wait here for endTick() to unblock
-            sync_work_queue_.runIOContext();
+            work_queue_.runIOContext();
             SP_LOG("1 - EndFrameEventHandler");
             // pause the game
             //UGameplayStatics::SetGamePaused(world_, true);
@@ -165,7 +167,7 @@ public:
 
 private:
     TBasicEntryPointBinder* basic_entry_point_binder_ = nullptr;
-    WorkQueue sync_work_queue_;
+    WorkQueue work_queue_;
 
     // FDelegateHandle objects corresponding to each event handler defined in this class
     FDelegateHandle begin_frame_handle_;

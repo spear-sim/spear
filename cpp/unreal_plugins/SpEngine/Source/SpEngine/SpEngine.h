@@ -19,7 +19,7 @@ public:
     void ShutdownModule() override;
 
 private:
-    std::unique_ptr<rpc::server> rpc_server_ = nullptr;
+    rpc::server rpc_server_ = rpc::server(30000);
     std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;
     std::unique_ptr<GameWorldService> game_world_service_ = nullptr;
 };

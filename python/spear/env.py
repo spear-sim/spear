@@ -19,7 +19,7 @@ class Env(gym.Env):
         self._config = config
         self._sp_engine = sp_engine
 
-        self._byte_order = self._get_byte_order()
+        self._byte_order = self._sp_engine.get_byte_order()
 
         self._action_space_desc = SpaceDesc(self._get_action_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
         self._observation_space_desc = SpaceDesc(self._get_observation_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
@@ -76,18 +76,6 @@ class Env(gym.Env):
         self._observation_space_desc.terminate()
         self._task_step_info_space_desc.terminate()
         self._agent_step_info_space_desc.terminate()
-
-    def _get_byte_order(self):
-        unreal_instance_byte_order = self.rpc_client.call("get_byte_order")
-        rpc_client_byte_order = sys.byteorder
-        if unreal_instance_byte_order == rpc_client_byte_order:
-            return None
-        elif unreal_instance_byte_order == "little":
-            return "<"
-        elif unreal_instance_byte_order == "big":
-            return ">"
-        else:
-            assert False
 
     def _get_action_space(self):
         array_desc = self._sp_engine.rpc_client.call("get_action_space")
