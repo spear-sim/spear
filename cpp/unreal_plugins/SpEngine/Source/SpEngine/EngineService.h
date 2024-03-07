@@ -9,7 +9,6 @@
 #include <future>   // std::promise, std::future
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Kismet/GameplayStatics.h>
 #include <Misc/CoreDelegates.h>
 
 #include "SpCore/Assert.h"
@@ -19,6 +18,11 @@
 template <typename TBasicEntryPointBinder>
 concept CBasicEntryPointBinder = requires(TBasicEntryPointBinder basic_entry_point_binder) {
     { basic_entry_point_binder.bind("", []() -> void {}) } -> std::same_as<void>;
+};
+
+template <typename TEntryPointBinder>
+concept CEntryPointBinder = requires(TEntryPointBinder entry_point_binder) {
+    { entry_point_binder.bind("", "", []() -> void {}) } -> std::same_as<void>;
 };
 
 // Different possible frame states for thread synchronization
@@ -85,7 +89,7 @@ public:
         });
 
         basic_entry_point_binder_->bind("engine_service.ping", []() -> std::string {
-            return "SpEngine received a call to ping()...";
+            return "EngineService received a call to ping()...";
         });
 
         basic_entry_point_binder_->bind("engine_service.get_byte_order", []() -> std::string {
@@ -119,9 +123,9 @@ public:
             WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, std::forward<decltype(func)>(func))
         );
 
-        basic_entry_point_binder_->bind(
-            service_name + ".async." + func_name,
-            WorkQueue::wrapFuncToExecuteInWorkQueueNonBlocking(work_queue_, std::forward<decltype(func)>(func)));
+        //basic_entry_point_binder_->bind(
+        //    service_name + ".async." + func_name,
+        //    WorkQueue::wrapFuncToExecuteInWorkQueueNonBlocking(work_queue_, std::forward<decltype(func)>(func)));
     }
 
     void beginFrameEventHandler()
@@ -132,9 +136,6 @@ public:
             // update frame state, allow begin_tick() to finish executing
             frame_state_ = FrameState::ExecutingPreTick;
             frame_state_executing_pre_tick_promise_.set_value();
-
-            // unpause the game
-            //UGameplayStatics::SetGamePaused(world_, false);
 
             // execute all pre-tick synchronous work, wait here for tick() to unblock us
             work_queue_.runIOContext();
@@ -156,8 +157,6 @@ public:
             // execute all post-tick synchronous work, wait here for endTick() to unblock
             work_queue_.runIOContext();
             SP_LOG("1 - EndFrameEventHandler");
-            // pause the game
-            //UGameplayStatics::SetGamePaused(world_, true);
 
             // update frame state, allow endTick() to finish executing
             frame_state_ = FrameState::Idle;

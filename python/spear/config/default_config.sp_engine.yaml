@@ -4,13 +4,24 @@
 
 SP_ENGINE:
 
-  # INTERACTION_MODE: "programmatic" # "interactive", "programmatic"
+  INTERACTION_MODE: "programmatic" # "interactive", "programmatic"
 
-  # # Setting SCENE_ID and MAP_ID will load the following map: /Game/Scenes/SCENE_ID/Maps/MAP_ID.MAP_ID
-  # # If SCENE_ID is not set, the default map will be loaded. If MAP_ID is not set, it will be set to SCENE_ID.
-  # SCENE_ID: ""
-  # MAP_ID: ""
+  # Setting SCENE_ID and MAP_ID will load the following map: /Game/Scenes/SCENE_ID/Maps/MAP_ID.MAP_ID
+  # If SCENE_ID is not set, the default map will be loaded. If MAP_ID is not set, it will be set to SCENE_ID.
+  SCENE_ID: ""
+  MAP_ID: ""
 
   PORT: 30000
 
-  # CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+
+  #
+  # Unreal systems
+  #
+
+  PHYSICS:
+    SIMULATION_STEP_TIME: 0.05
+    ENABLE_ENHANCED_DETERMINISM: True
+    ENABLE_SUBSTEPPING: True
+    MAX_SUBSTEP_DELTA_TIME: 0.01
+    MAX_SUBSTEPS: 100

@@ -37,7 +37,9 @@ class SpEngine():
         self.rpc_client.call("engine_service.begin_tick")
 
     def tick(self):
+        self.rpc_client.call("game_world_service.unpause_game")
         self.rpc_client.call("engine_service.tick")
+        self.rpc_client.call("game_world_service.pause_game")
 
     def end_tick(self):
         self.rpc_client.call("engine_service.end_tick")
