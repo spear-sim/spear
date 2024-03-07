@@ -38,6 +38,7 @@ enum class FrameState
 template <CBasicEntryPointBinder TBasicEntryPointBinder>
 class EngineService {
 public:
+    EngineService() = delete;
     EngineService(TBasicEntryPointBinder* basic_entry_point_binder)
     {
         basic_entry_point_binder_ = basic_entry_point_binder;

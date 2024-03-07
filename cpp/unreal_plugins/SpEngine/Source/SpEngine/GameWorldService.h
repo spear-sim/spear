@@ -21,6 +21,7 @@
 
 class GameWorldService {
 public:
+    GameWorldService() = delete;
 	GameWorldService(CEntryPointBinder auto* entry_point_binder)
 	{
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &GameWorldService::postWorldInitializationEventHandler);

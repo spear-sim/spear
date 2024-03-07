@@ -10,6 +10,7 @@
 
 class EnvService {
 public:
+	EnvService() = delete;
 	EnvService(CEntryPointBinder auto* entry_point_binder)
 	{
 		//entry_point_binder->bind(...);
