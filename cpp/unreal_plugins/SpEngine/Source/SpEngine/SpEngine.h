@@ -10,9 +10,8 @@
 
 #include "SpCore/Rpclib.h"
 #include "SpEngine/EngineService.h"
-#include "SpEngine/EnvService.h"
 #include "SpEngine/GameWorldService.h"
-#include "SpEngine/NavMeshService.h"
+#include "SpEngine/LegacyService.h"
 
 class SpEngine : public IModuleInterface
 {
@@ -23,7 +22,6 @@ public:
 private:
     std::unique_ptr<rpc::server> rpc_server_ = nullptr;
     std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;
-    std::unique_ptr<EnvService> env_service_ = nullptr;
     std::unique_ptr<GameWorldService> game_world_service_ = nullptr;
-    std::unique_ptr<NavMeshService> navmesh_service_ = nullptr;
+    std::unique_ptr<LegacyService> legacy_service_ = nullptr;
 };

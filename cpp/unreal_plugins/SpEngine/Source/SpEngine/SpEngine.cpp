@@ -14,9 +14,8 @@
 #include "SpCore/Rpclib.h"
 #include "SpCore/Unreal.h"
 #include "SpEngine/EngineService.h"
-#include "SpEngine/EnvService.h"
 #include "SpEngine/GameWorldService.h"
-#include "SpEngine/NavMeshService.h"
+#include "SpEngine/LegacyService.h"
 
 // We would like to decouple the following entities as much as possible: the RPC server, the
 // EngineService and its various work queues, and all other services whose entry points are
@@ -54,8 +53,7 @@ void SpEngine::StartupModule()
     // services.
     engine_service_ = std::make_unique<EngineService<rpc::server>>(rpc_server_.get());
     game_world_service_ = std::make_unique<GameWorldService>(engine_service_.get());
-    //env_service_ = std::make_unique<EnvService>(engine_service_.get());
-    navmesh_service_ = std::make_unique<NavMeshService>(engine_service_.get());
+    legacy_service_ = std::make_unique<LegacyService>(engine_service_.get());
 
     int num_worker_threads = 1;
     rpc_server_->async_run(num_worker_threads);

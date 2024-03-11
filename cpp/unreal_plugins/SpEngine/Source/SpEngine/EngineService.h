@@ -7,6 +7,7 @@
 #include <atomic>
 #include <concepts> // std::same_as
 #include <future>   // std::promise, std::future
+#include <string>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Misc/CoreDelegates.h>
