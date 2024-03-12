@@ -71,11 +71,11 @@ def process_scene():
                          z_axis_world[:,0], z_axis_world[:,1], z_axis_world[:,2],
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
-    actors = [ (actor_name, actor_kinematic_tree) for actor_name, actor_kinematic_tree in actors_json.items() if actor_name not in ignore_actors ]
+    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_name not in ignore_actors }
 
     color = (0.75, 0.75, 0.75)
 
-    for actor_name, actor_kinematic_tree in actors:
+    for actor_name, actor_kinematic_tree in actors.items():
         spear.log("Processing actor: ", actor_name)
         draw_collision_geometry(actor_name, actor_kinematic_tree, color)
 
@@ -99,34 +99,38 @@ def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_
 
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node["name"])
 
-    transform_parent_node_from_current_node = \
-        spear.pipeline.get_transform_from_transform_data(
-            kinematic_tree_node["transform_parent_node_from_current_node"])
-    transform_world_from_current_node = \
-        spear.pipeline.compose_transforms([transform_world_from_parent_node, transform_parent_node_from_current_node])
-
+    transform_parent_node_from_current_node = spear.pipeline.get_transform_from_transform_data(kinematic_tree_node["transform_parent_node_from_current_node"])
+    transform_world_from_current_node = spear.pipeline.compose_transforms([transform_world_from_parent_node, transform_parent_node_from_current_node])
     M_world_from_current_node = spear.pipeline.get_matrix_from_transform(transform_world_from_current_node)
 
     if args.color_mode == "unique_color_per_node":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
-    static_mesh_components_merged = kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"]
-    for merge_id, merge_id_static_mesh_components in static_mesh_components_merged.items():
+    merge_ids = kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"]
+    for merge_id in merge_ids.keys():
 
         if args.color_mode == "unique_color_per_merge_id":
             color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
-        # JSON stores keys as strings, so we need to convert merge_id to an int
-        coacd_merge_id_obj_dir = os.path.realpath(os.path.join(
-            args.pipeline_dir, args.scene_id, "collision_geometry", "coacd", actor_name.replace("/", "."), kinematic_tree_node["name"], f"{int(merge_id):04}"))
+        # TODO: retrieve desired decomposition strategy from the JSON data
+        convex_decomposition_strategy = "coacd"
 
-        coacd_part_ids = kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"][merge_id]["coacd_part_ids"]
-        for coacd_part_id in coacd_part_ids:
+        merge_id_obj_dir = os.path.realpath(os.path.join(
+            args.pipeline_dir,
+            args.scene_id,
+            "collision_geometry",
+            convex_decomposition_strategy,
+            actor_name.replace("/", "."),
+            kinematic_tree_node["name"],
+            f"merge_id_{int(merge_id):04}")) # JSON stores keys as strings, so we need to convert merge_id to an int
 
-            coacd_part_id_obj_path = os.path.realpath(os.path.join(coacd_merge_id_obj_dir, f"{coacd_part_id:04}.obj"))
-            spear.log(log_prefix_str, "Reading OBJ file: ", coacd_part_id_obj_path)
+        part_ids = kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id][convex_decomposition_strategy]["part_ids"]
+        for part_id in part_ids:
 
-            mesh = trimesh.load_mesh(coacd_part_id_obj_path, process=False, validate=False)
+            part_id_obj_path = os.path.realpath(os.path.join(merge_id_obj_dir, f"part_id_{part_id:04}.obj"))
+            spear.log(log_prefix_str, "Reading OBJ file: ", part_id_obj_path)
+
+            mesh = trimesh.load_mesh(part_id_obj_path, process=False, validate=False)
             V_current_node = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T
             V_world = M_world_from_current_node*V_current_node
             assert np.allclose(V_world[3,:], 1.0)

@@ -104,8 +104,8 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
     # Only process SceneComponents...
     component_class = component_desc["class"]
     if component_class in scene_component_classes:
-
         spear.log(log_prefix_str, "Processing SceneComponent: ", component_desc["name"])
+        
         transform_world_from_current_component = spear.pipeline.compose_transform_with_component(transform_world_from_parent_component, component_desc)
         M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform_world_from_current_component)
 

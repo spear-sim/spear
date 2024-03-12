@@ -61,28 +61,28 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
     static_mesh_components = kinematic_tree_node["static_mesh_components"]
     if len(static_mesh_components) > 0:
         merge_id = 0
-        static_mesh_components_merged = {merge_id: kinematic_tree_node["static_mesh_components"]}
+        static_mesh_components_grouped_by_merge_id = {merge_id: static_mesh_components}
     else:
-        static_mesh_components_merged = {}
+        static_mesh_components_grouped_by_merge_id = {}
 
     raw_obj_dir = os.path.realpath(os.path.join(
         args.pipeline_dir, args.scene_id, "collision_geometry", "raw", actor_name.replace("/", "."), kinematic_tree_node["name"]))
     os.makedirs(raw_obj_dir, exist_ok=True)
 
     kinematic_tree_node["pipeline_info"]["generate_collision_geometry"] = {}
-    kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"] = {}
+    kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"] = {}
 
-    for merge_id, merge_id_static_mesh_components in static_mesh_components_merged.items():
+    for merge_id, static_mesh_components_for_merge_id in static_mesh_components_grouped_by_merge_id.items():
 
-        assert len(merge_id_static_mesh_components) > 0
+        assert len(static_mesh_components_for_merge_id) > 0
 
-        kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"][merge_id] = {}
-        kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"][merge_id]["static_mesh_components"] = \
-            merge_id_static_mesh_components
+        kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id] = {}
+        kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id]["static_mesh_components"] = \
+            static_mesh_components_for_merge_id
 
         # Combine multiple static mesh components that have the same merge_id into a single mesh.
-        raw_merge_id_meshes = trimesh.Scene()
-        for static_mesh_component_name, static_mesh_component_desc in merge_id_static_mesh_components.items():
+        raw_mesh_scene = trimesh.Scene()
+        for static_mesh_component_name, static_mesh_component_desc in static_mesh_components_for_merge_id.items():
 
             transform_current_node_from_current_component = \
                 spear.pipeline.get_transform_from_transform_data(
@@ -104,44 +104,44 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
             assert np.allclose(V_current_node[3,:], 1.0)
             mesh.vertices = V_current_node.T.A[:,0:3]
 
-            raw_merge_id_meshes.add_geometry(mesh)
+            raw_mesh_scene.add_geometry(mesh)
 
-        raw_merge_id_mesh = raw_merge_id_meshes.dump(concatenate=True)
+        raw_mesh = raw_mesh_scene.dump(concatenate=True)
 
         # Save merged mesh.
-        raw_merge_id_obj_path = os.path.realpath(os.path.join(raw_obj_dir, f"{merge_id:04}.obj"))
-        spear.log(log_prefix_str, "Writing OBJ file: ", raw_merge_id_obj_path)
-        raw_merge_id_mesh.export(raw_merge_id_obj_path, "obj")
+        raw_obj_path = os.path.realpath(os.path.join(raw_obj_dir, f"merge_id_{merge_id:04}.obj"))
+        spear.log(log_prefix_str, "Writing OBJ file: ", raw_obj_path)
+        raw_mesh.export(raw_obj_path, "obj")
 
         # Run COACD. TODO: retrieve COACD parameters from the JSON data
-        coacd_merge_id_mesh = coacd.Mesh(raw_merge_id_mesh.vertices, raw_merge_id_mesh.faces)
-        coacd_merge_id_parts = coacd.run_coacd(coacd_merge_id_mesh)
+        coacd_mesh = coacd.Mesh(raw_mesh.vertices, raw_mesh.faces)
+        coacd_parts_data = coacd.run_coacd(coacd_mesh)
 
-        # Save COACD result as individual parts, and as a combined mesh.
+        # Save COACD result as individual parts, and as a combined mesh for debugging.
         coacd_obj_dir = os.path.realpath(os.path.join(
             args.pipeline_dir, args.scene_id, "collision_geometry", "coacd", actor_name.replace("/", "."), kinematic_tree_node["name"]))
         os.makedirs(coacd_obj_dir, exist_ok=True)
 
-        coacd_merge_id_obj_dir = os.path.realpath(os.path.join(
-            args.pipeline_dir, args.scene_id, "collision_geometry", "coacd", actor_name.replace("/", "."), kinematic_tree_node["name"], f"{merge_id:04}"))
-        os.makedirs(coacd_merge_id_obj_dir, exist_ok=True)
+        coacd_part_obj_dir = os.path.realpath(os.path.join(coacd_obj_dir, f"merge_id_{merge_id:04}"))
+        os.makedirs(coacd_part_obj_dir, exist_ok=True)
 
-        coacd_merge_id_meshes = trimesh.Scene()
-        kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"][merge_id]["coacd_part_ids"] = []
-        for coacd_part_id, (coacd_part_vertices, coacd_part_faces) in enumerate(coacd_merge_id_parts):
+        coacd_parts_scene = trimesh.Scene()
+        kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id]["coacd"] = {}
+        kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id]["coacd"]["part_ids"] = []
+        for coacd_part_id, (coacd_part_vertices, coacd_part_faces) in enumerate(coacd_parts_data):
 
             coacd_part_mesh = trimesh.Trimesh(vertices=coacd_part_vertices, faces=coacd_part_faces)
-            coacd_merge_id_meshes.add_geometry(coacd_part_mesh)
+            coacd_parts_scene.add_geometry(coacd_part_mesh)
 
-            coacd_part_id_obj_path = os.path.realpath(os.path.join(coacd_merge_id_obj_dir, f"{coacd_part_id:04}.obj"))
-            spear.log(log_prefix_str, "Writing OBJ file: ", coacd_part_id_obj_path)
-            coacd_part_mesh.export(coacd_part_id_obj_path, "obj")
+            coacd_part_obj_path = os.path.realpath(os.path.join(coacd_part_obj_dir, f"part_id_{coacd_part_id:04}.obj"))
+            spear.log(log_prefix_str, "Writing OBJ file: ", coacd_part_obj_path)
+            coacd_part_mesh.export(coacd_part_obj_path, "obj")
 
-            kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["static_mesh_components"][merge_id]["coacd_part_ids"].append(coacd_part_id)
+            kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id]["coacd"]["part_ids"].append(coacd_part_id)
 
-        coacd_merge_id_obj_path = os.path.realpath(os.path.join(coacd_obj_dir, f"{merge_id:04}.obj"))
-        spear.log(log_prefix_str, "Writing OBJ file: ", coacd_merge_id_obj_path)
-        coacd_merge_id_meshes.export(coacd_merge_id_obj_path, "obj")
+        coacd_obj_path = os.path.realpath(os.path.join(coacd_obj_dir, f"merge_id_{merge_id:04}.obj"))
+        spear.log(log_prefix_str, "Writing OBJ file: ", coacd_obj_path)
+        coacd_parts_scene.export(coacd_obj_path, "obj")
 
     # Recurse for each child node. We need to copy() so we're not modifying the dict as we're iterating over it.
     for child_kinematic_tree_node_name, child_kinematic_tree_node in kinematic_tree_node["children_nodes"].copy().items():
