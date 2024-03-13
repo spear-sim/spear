@@ -69,6 +69,10 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         args.pipeline_dir, args.scene_id, "collision_geometry", "raw", actor_name.replace("/", "."), kinematic_tree_node["name"]))
     os.makedirs(raw_obj_dir, exist_ok=True)
 
+    # TODO: Break this group-by-merge-id step into a different pipeline stage, so we can generate the
+    # grouped-by-merge-id meshes once, and then run different convex decomposition strategies on them
+    # in different pipeline stages without duplicating effort or overwriting JSON data.
+
     kinematic_tree_node["pipeline_info"]["generate_collision_geometry"] = {}
     kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"] = {}
 
@@ -81,7 +85,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
             static_mesh_components_for_merge_id
 
         # Combine multiple static mesh components that have the same merge_id into a single mesh.
-        raw_mesh_scene = trimesh.Scene()
+        raw_merge_id_mesh_scene = trimesh.Scene()
         for static_mesh_component_name, static_mesh_component_desc in static_mesh_components_for_merge_id.items():
 
             transform_current_node_from_current_component = \
@@ -104,17 +108,17 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
             assert np.allclose(V_current_node[3,:], 1.0)
             mesh.vertices = V_current_node.T.A[:,0:3]
 
-            raw_mesh_scene.add_geometry(mesh)
+            raw_merge_id_mesh_scene.add_geometry(mesh)
 
-        raw_mesh = raw_mesh_scene.dump(concatenate=True)
+        raw_merge_id_mesh = raw_merge_id_mesh_scene.dump(concatenate=True)
 
         # Save merged mesh.
-        raw_obj_path = os.path.realpath(os.path.join(raw_obj_dir, f"merge_id_{merge_id:04}.obj"))
-        spear.log(log_prefix_str, "Writing OBJ file: ", raw_obj_path)
-        raw_mesh.export(raw_obj_path, "obj")
+        raw_merge_id_obj_path = os.path.realpath(os.path.join(raw_obj_dir, f"merge_id_{merge_id:04}.obj"))
+        spear.log(log_prefix_str, "Writing OBJ file: ", raw_merge_id_obj_path)
+        raw_merge_id_mesh.export(raw_merge_id_obj_path, "obj")
 
         # Run COACD. TODO: retrieve COACD parameters from the JSON data
-        coacd_mesh = coacd.Mesh(raw_mesh.vertices, raw_mesh.faces)
+        coacd_mesh = coacd.Mesh(raw_merge_id_mesh.vertices, raw_merge_id_mesh.faces)
         coacd_parts_data = coacd.run_coacd(coacd_mesh)
 
         # Save COACD result as individual parts, and as a combined mesh for debugging.

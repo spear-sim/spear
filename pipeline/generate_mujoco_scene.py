@@ -46,7 +46,8 @@ main_mjcf_str = \
   </worldbody>
 
 </mujoco>
-""".format(args.scene_id)
+""" \
+.format(args.scene_id)
 
 
 def process_scene():
