@@ -35,15 +35,33 @@ class SpEngine():
 
     def begin_tick(self):
         self.rpc_client.call("engine_service.begin_tick")
+        self.rpc_client.call("game_world_service.unpause_game")
 
     def tick(self):
-        self.rpc_client.call("game_world_service.unpause_game")
         self.rpc_client.call("engine_service.tick")
-        self.rpc_client.call("game_world_service.pause_game")
 
     def end_tick(self):
+        self.rpc_client.call("game_world_service.pause_game")
         self.rpc_client.call("engine_service.end_tick")
 
+    def open_level(self, scene_id, map_id):                
+        std::string desired_world_path_name
+        std::string desired_level_name
+        if (scene_id != "") {
+            std::string new_map_id;
+            if (map_id == "") {
+                new_map_id = scene_id;
+            } else {
+                new_map_id = map_id;
+            }
+            desired_world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + new_map_id + "." + new_map_id;
+            desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + new_map_id;
+        }
+        self.begin_tick()
+        self.rpc_client.call("game_world_service.open_level", scene_id)
+        self.tick()
+        self.end_tick()
+        
     def get_byte_order(self):
         unreal_instance_byte_order = self.rpc_client.call("engine_service.get_byte_order")
         rpc_client_byte_order = sys.byteorder
