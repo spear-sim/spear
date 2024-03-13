@@ -134,7 +134,7 @@ def compose_transforms(transforms):
 
         l_composed = R_current*S_current*l_composed + l_current
         R_composed = R_current*R_composed
-        S_composed = S_composed*S_current
+        S_composed = S_composed*S_current  
 
     transform_composed = {"location": l_composed, "rotation": R_composed, "scale": S_composed}
 
