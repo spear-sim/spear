@@ -118,7 +118,7 @@ public:
     template <typename TFunc, typename TReturn, typename... TArgs> requires CCallable<TFunc, TReturn, TArgs...>
     static CopyConstructibleTask<TReturn> createCopyConstructibleTaskImpl(TFunc&& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
     {
-        return CopyConstructibleTask<TReturn>(std::forward<decltype(func)>(func));
+        return CopyConstructibleTask<TReturn>(std::forward<TFunc>(func));
     }
 
     template <typename TFunc>

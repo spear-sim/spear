@@ -25,10 +25,6 @@
             "Enabled": true
         },
         {
-            "Name": "SimulationController",
-            "Enabled": true
-        },
-        {
             "Name": "SpCore",
             "Enabled": true
         },

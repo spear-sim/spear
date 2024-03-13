@@ -10,7 +10,7 @@ class ARecastNavMesh;
 class UNavigationSystemV1;
 class UWorld;
 
-class NavMeshV2
+class NavMesh
 {
 public:    
     void findObjectReferences(UWorld* world);

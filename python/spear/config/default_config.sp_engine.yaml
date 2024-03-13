@@ -4,13 +4,10 @@
 
 SP_ENGINE:
 
-  # Setting SCENE_ID and MAP_ID will load the following map: /Game/Scenes/SCENE_ID/Maps/MAP_ID.MAP_ID
-  # If SCENE_ID is not set, the default map will be loaded. If MAP_ID is not set, it will be set to SCENE_ID.
-  SCENE_ID: ""
-  MAP_ID: ""
-
   PORT: 30000
 
+  TASK: ""
+  AGENT: ""
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   #

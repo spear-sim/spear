@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpEngine/NavMesh.h"
+#include "SpEngine/Legacy/NavMesh.h"
 
 #include <string>
 #include <vector>
@@ -21,7 +21,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 
-void NavMeshV2::findObjectReferences(UWorld* world)
+void NavMesh::findObjectReferences(UWorld* world)
 {
     SP_ASSERT(world);
     world_ = world;
@@ -76,14 +76,14 @@ void NavMeshV2::findObjectReferences(UWorld* world)
 #endif
 }
 
-void NavMeshV2::cleanUpObjectReferences()
+void NavMesh::cleanUpObjectReferences()
 {
     recast_nav_mesh_ = nullptr;
     navigation_system_v1_ = nullptr;
     world_ = nullptr;
 }
 
-std::vector<double> NavMeshV2::getRandomPoints(int num_points)
+std::vector<double> NavMesh::getRandomPoints(int num_points)
 {
     std::vector<double> points;
 
@@ -97,7 +97,7 @@ std::vector<double> NavMeshV2::getRandomPoints(int num_points)
     return points;
 }
 
-std::vector<double> NavMeshV2::getRandomReachablePointsInRadius(const std::vector<double>& reference_points, float radius)
+std::vector<double> NavMesh::getRandomReachablePointsInRadius(const std::vector<double>& reference_points, float radius)
 {
     SP_ASSERT(reference_points.size() % 3 == 0);
 
@@ -119,7 +119,7 @@ std::vector<double> NavMeshV2::getRandomReachablePointsInRadius(const std::vecto
     return reachable_points;
 }
 
-std::vector<std::vector<double>> NavMeshV2::getPaths(const std::vector<double>& initial_points, const std::vector<double>& goal_points)
+std::vector<std::vector<double>> NavMesh::getPaths(const std::vector<double>& initial_points, const std::vector<double>& goal_points)
 {
     SP_ASSERT(initial_points.size() == goal_points.size());
     SP_ASSERT(initial_points.size() % 3 == 0);

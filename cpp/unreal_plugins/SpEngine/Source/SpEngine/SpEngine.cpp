@@ -38,6 +38,8 @@ void SpEngine::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("SpCore")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfRobot")));
+    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("Vehicle")));
 
     if (Config::s_initialized_) {
         rpc_server_ = std::make_unique<rpc::server>(Config::get<int>("SP_ENGINE.PORT"));

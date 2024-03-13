@@ -33,48 +33,51 @@ public:
             UGameplayStatics::SetGamePaused(world_, true);
 	    });
 
-        entry_point_binder->bind("game_world_service", "unpause_game", [this](int a, int b) -> void {
+        entry_point_binder->bind("game_world_service", "unpause_game", [this]() -> void {
             SP_ASSERT(world_);
             SP_LOG("Unpausing the game...");
             UGameplayStatics::SetGamePaused(world_, false);
         });
 
-        //entry_point_binder->bind("game_world_service", "open_level", [this](std::string scene_id="", std::string map_id="") -> void {
-        //    SP_ASSERT(world_);
-        //    std::string desired_world_path_name;
-        //    std::string desired_level_name;
-        //    if (scene_id != "") {
-        //        if (map_id == "") {
-        //            map_id = scene_id;
-        //        }
-        //        desired_world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id + "." + map_id;
-        //        desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id;
-        //    }
+        entry_point_binder->bind("game_world_service", "open_level", [this](const std::string& scene_id) -> void {
+            SP_ASSERT(world_);
+            std::string desired_world_path_name;
+            std::string desired_level_name;
+            if (scene_id != "") {
+                std::string new_map_id;
+                if (map_id == "") {
+                    new_map_id = scene_id;
+                } else {
+                    new_map_id = map_id;
+                }
+                desired_world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + new_map_id + "." + new_map_id;
+                desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + new_map_id;
+            }
 
-        //    // if the current world is not the desired one, open the desired one
-        //    bool open_level = desired_world_path_name != "" && desired_world_path_name != Unreal::toStdString(world_->GetPathName());
+            // if the current world is not the desired one, open the desired one
+            bool open_level = desired_world_path_name != "" && desired_world_path_name != Unreal::toStdString(world_->GetPathName());
 
-        //    SP_LOG("scene_id:                ", scene_id);
-        //    SP_LOG("map_id:                  ", map_id);
-        //    SP_LOG("desired_world_path_name: ", desired_world_path_name);
-        //    SP_LOG("desired_level_name:      ", desired_level_name);
-        //    SP_LOG("world_->GetPathName():   ", Unreal::toStdString(world_->GetPathName()));
-        //    SP_LOG("open_level:              ", open_level);
+            SP_LOG("scene_id:                ", scene_id);
+            SP_LOG("map_id:                  ", map_id);
+            SP_LOG("desired_world_path_name: ", desired_world_path_name);
+            SP_LOG("desired_level_name:      ", desired_level_name);
+            SP_LOG("world_->GetPathName():   ", Unreal::toStdString(world_->GetPathName()));
+            SP_LOG("open_level:              ", open_level);
 
-        //    if (open_level) {
-        //        SP_LOG("Opening level: ", desired_level_name);
+            if (open_level) {
+                SP_LOG("Opening level: ", desired_level_name);
 
-        //        // if we're at this line of code and OpenLevel is already pending, it means we failed
-        //        SP_ASSERT(!open_level_pending_);
+                // if we're at this line of code and OpenLevel is already pending, it means we failed
+                SP_ASSERT(!open_level_pending_);
 
-        //        UGameplayStatics::OpenLevel(world_, Unreal::toFName(desired_level_name));
+                UGameplayStatics::OpenLevel(world_, Unreal::toFName(desired_level_name));
 
-        //        open_level_pending_ = true;
-        //    } else {
-        //        SP_LOG("Level:", desired_level_name, "is currently open, so will not try to open it again.");
-        //        open_level_pending_ = false;
-        //    }
-        //});
+                open_level_pending_ = true;
+            } else {
+                SP_LOG("Level:", desired_level_name, "is currently open, so will not try to open it again.");
+                open_level_pending_ = false;
+            }
+        });
 	}
 
     ~GameWorldService()

@@ -118,6 +118,11 @@ public:
         basic_entry_point_binder_ = nullptr;
     }
 
+    void bind(const std::string& func_name, auto&& func)
+    {
+
+    }
+
     void bind(const std::string& service_name, const std::string& func_name, auto&& func)
     {
         basic_entry_point_binder_->bind(

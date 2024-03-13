@@ -20,7 +20,16 @@
 #include <SpCore/Log.h>
 #include <SpCore/Unreal.h>
 #include <SpEngine/EngineService.h> // CEntryPointBinder
-#include <SpEngine/NavMesh.h>
+#include <SpEngine/Legacy/Agent.h>
+#include "SpEngine/Legacy/CameraAgent.h"
+#include "SpEngine/Legacy/ClassRegistrationUtils.h"
+#include "SpEngine/Legacy/ImitationLearningTask.h"
+#include "SpEngine/Legacy/NavMesh.h"
+#include "SpEngine/Legacy/NullTask.h"
+#include "SpEngine/Legacy/SphereAgent.h"
+#include "SpEngine/Legacy/Task.h"
+#include "SpEngine/Legacy/UrdfRobotAgent.h"
+#include "SpEngine/Legacy/VehicleAgent.h"
 
 class LegacyService {
 public:
@@ -30,19 +39,89 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &LegacyService::postWorldInitializationEventHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &LegacyService::worldCleanupEventHandler);
 
+        entry_point_binder->bind("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
+            SP_ASSERT(agent_);
+            return agent_->getActionSpace();
+        });
+
+        entry_point_binder->bind("legacy_service", "get_observation_space", [this]() -> std::map<std::string, ArrayDesc> {
+            SP_ASSERT(agent_);
+            return agent_->getObservationSpace();
+        });
+
+        entry_point_binder->bind("legacy_service", "get_agent_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
+            SP_ASSERT(agent_);
+            return agent_->getStepInfoSpace();
+        });
+
+        entry_point_binder->bind("legacy_service", "get_task_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
+            SP_ASSERT(task_);
+            return task_->getStepInfoSpace();
+        });
+
+        entry_point_binder->bind("legacy_service", "apply_action", [this](const std::map<std::string, std::vector<uint8_t>>& action) -> void {
+            SP_ASSERT(agent_);
+            agent_->applyAction(action);
+        });
+
+        entry_point_binder->bind("legacy_service", "get_observation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+            SP_ASSERT(agent_);
+            return agent_->getObservation();
+        });
+
+        entry_point_binder->bind("legacy_service", "get_reward", [this]() -> float {
+            SP_ASSERT(task_);
+            return task_->getReward();
+        });
+
+        entry_point_binder->bind("legacy_service", "is_episode_done", [this]() -> bool {
+            SP_ASSERT(task_);
+            return task_->isEpisodeDone();
+        });
+
+        entry_point_binder->bind("legacy_service", "get_agent_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+            SP_ASSERT(agent_);
+            return agent_->getStepInfo();
+        });
+
+        entry_point_binder->bind("legacy_service", "get_task_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+            SP_ASSERT(task_);
+            return task_->getStepInfo();
+        });
+
+        entry_point_binder->bind("legacy_service", "reset_agent", [this]() -> void {
+            SP_ASSERT(agent_);
+            agent_->reset();
+        });
+
+        entry_point_binder->bind("legacy_service", "reset_task", [this]() -> void {
+            SP_ASSERT(task_);
+            task_->reset();
+        });
+
+        entry_point_binder->bind("legacy_service", "is_agent_ready", [this]() -> bool {
+            SP_ASSERT(agent_);
+            return agent_->isReady();
+        });
+
+        entry_point_binder->bind("legacy_service", "is_task_ready", [this]() -> bool {
+            SP_ASSERT(task_);
+            return task_->isReady();
+        });
+
         entry_point_binder->bind("legacy_service", "get_random_points",
             [this](const int& num_points) -> std::vector<double> {
-                return nav_mesh_.getRandomPoints(num_points);
+                return nav_mesh_->getRandomPoints(num_points);
         });
 
         entry_point_binder->bind("legacy_service", "get_random_reachable_points_in_radius",
             [this](const std::vector<double>& initial_points, const float& radius) -> std::vector<double> {
-                return nav_mesh_.getRandomReachablePointsInRadius(initial_points, radius);
+                return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
         });
 
         entry_point_binder->bind("legacy_service", "get_paths",
             [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
-                return nav_mesh_.getPaths(initial_points, goal_points);
+                return nav_mesh_->getPaths(initial_points, goal_points);
         });
 	}
 
@@ -102,7 +181,17 @@ public:
             if (has_world_begin_play_executed_) {
                 has_world_begin_play_executed_ = false;
 
-                nav_mesh_.cleanUpObjectReferences();
+                SP_ASSERT(nav_mesh_);
+                nav_mesh_->cleanUpObjectReferences();
+                nav_mesh_ = nullptr;
+
+                SP_ASSERT(task_);
+                task_->cleanUpObjectReferences();
+                task_ = nullptr;
+
+                SP_ASSERT(agent_);
+                agent_->cleanUpObjectReferences();
+                agent_ = nullptr;
             }
 
             // remove event handlers bound to this world before world gets cleaned up
@@ -135,8 +224,7 @@ public:
             physics_settings->bSubstepping = Config::get<bool>("SP_ENGINE.PHYSICS.ENABLE_SUBSTEPPING");
             physics_settings->MaxSubstepDeltaTime = Config::get<float>("SP_ENGINE.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
             physics_settings->MaxSubsteps = Config::get<int32>("SP_ENGINE.PHYSICS.MAX_SUBSTEPS");
-        }
-        else {
+        } else {
             physics_settings->bEnableEnhancedDeterminism = true;
             physics_settings->bSubstepping = true;
             physics_settings->MaxSubstepDeltaTime = 0.01;
@@ -162,10 +250,31 @@ public:
         // pause the game
         UGameplayStatics::SetGamePaused(world_, true);
 
+        // create Agent, Task
+        if (Config::s_initialized_) {
+            agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, Config::get<std::string>("SP_ENGINE.AGENT"), world_));
+            if (Config::get<std::string>("SP_ENGINE.TASK") == "NullTask") {
+                task_ = std::make_unique<NullTask>();
+            } else if (Config::get<std::string>("SP_ENGINE.TASK") == "ImitationLearningTask") {
+                task_ = std::make_unique<ImitationLearningTask>(world_);
+            } else {
+                SP_ASSERT(false);
+            }
+        } else {
+            agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, "NullAgent", world_));
+            task_  = std::make_unique<NullTask>();
+        }
+        SP_ASSERT(agent_);
+        SP_ASSERT(task_);
+
+        // create NavMesh
+        nav_mesh_ = std::make_unique<NavMesh>();
+        SP_ASSERT(nav_mesh_);
+
         // deferred initialization
-        //agent_->findObjectReferences(world_);
-        //task_->findObjectReferences(world_);
-        nav_mesh_.findObjectReferences(world_);
+        agent_->findObjectReferences(world_);
+        task_->findObjectReferences(world_);
+        nav_mesh_->findObjectReferences(world_);
 
         has_world_begin_play_executed_ = true;
     }
@@ -184,5 +293,7 @@ private:
     bool has_world_begin_play_executed_ = false;
     bool open_level_pending_ = false;
 
-    NavMeshV2 nav_mesh_;
+    std::unique_ptr<Agent> agent_ = nullptr;
+    std::unique_ptr<Task> task_ = nullptr;
+    std::unique_ptr<NavMesh> nav_mesh_ = nullptr;
 };
