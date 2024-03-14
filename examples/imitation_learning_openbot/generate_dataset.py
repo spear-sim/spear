@@ -176,12 +176,12 @@ if __name__ == "__main__":
 
                 if args.debug:
                     observation_components_to_modify = { "final_color": ["camera.final_color"] }
-                    modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
+                    modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
                     show_obs(modified_obs)
     
                 if not args.benchmark:
                     observation_components_to_modify = { "final_color": ["camera.final_color"] }
-                    modified_obs = observation_utils.modify_observation_for_visualization(obs, observation_components_to_modify)
+                    modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
                     obs_final_color = modified_obs["camera.final_color"]
 
                     # save the collected rgb observations
