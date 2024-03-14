@@ -104,17 +104,18 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 
 
 #
-# MuJoCo only allows scale transformations at leaf nodes in its kinematic tree representation (via the "scale"
-# attribute on each mesh asset). But our native kinematic tree representation may have scale transformations
-# throughout. So we need to adjust the position of each MuJoCo body to account for our scale transformations,
-# which are not directly representable in a MuJoCo kinematic tree.
+# MuJoCo allows scale transformations at leaf nodes in its kinematic tree representation via the "scale"
+# attribute on each mesh asset. But the input kinematic tree representation here (that we compute directly
+# from Unreal's component hierarchy) may have scale transformations throughout. So we need to adjust the
+# position of each MuJoCo body to account for our scale transformations, which are not directly representable
+# in a MuJoCo kinematic tree.
 #
-# To derive adjusted body positions in the MuJoCo kinematic tree, we must first choose a particular "target"
+# To derive adjusted body positions in the MuJoCo kinematic tree, we must first choose a particular target
 # reference frame, where we want projected mesh vertices to match in both trees. This is necessary because
 # projected mesh vertices will generally not match in multiple reference frames, as the vertices are
-# projected through tree's various reference frames proceeding in leaf-to-root order (i.e., from object space
-# to world space). But, as we will see here, the projected vertices can be made to match at a particular
-# reference frame. In this derivation, we choose the world frame as our "target" reference frame.
+# projected through tree's various reference frames. But, as we will see here, the projected vertices can be
+# made to match at a particular reference frame. In this derivation, we choose the world frame as our target
+# reference frame.
 # 
 # Let v be a mesh vertex in object space, and let u_w be its corresponding location in world space, as computed
 # by Unreal. Given a hierarchy of transforms that map to world space from object space, Unreal computes u_w as
