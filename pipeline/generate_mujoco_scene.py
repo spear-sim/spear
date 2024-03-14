@@ -10,8 +10,8 @@ import os
 import pathlib
 import spear
 import spear.pipeline
-import xml.etree.ElementTree
 import xml.dom.minidom
+import xml.etree.ElementTree
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
@@ -100,6 +100,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
         meshes_element=meshes_element,
         parent_element=bodies_element,
         transform_world_from_parent_node=spear.pipeline.TRANSFORM_IDENTITY,
+        root_node=True,
         color=color,
         log_prefix_str="    ")
 
@@ -190,7 +191,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 #
 
 def add_mujoco_elements_for_kinematic_tree_node(
-    actor_name, kinematic_tree_node, meshes_element, parent_element, transform_world_from_parent_node, color, log_prefix_str):
+    actor_name, kinematic_tree_node, meshes_element, parent_element, transform_world_from_parent_node, root_node, color, log_prefix_str):
 
     kinematic_tree_node_name = kinematic_tree_node["name"]
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node_name)
@@ -208,6 +209,10 @@ def add_mujoco_elements_for_kinematic_tree_node(
         "name": body_name,
         "pos": get_mujoco_pos_str(transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"]),
         "xyaxes": get_mujoco_xyaxes_str(transform_parent_node_from_current_node["rotation"])})
+
+    # TODO: add "freejoint" elements for freely moving bodies
+    # if root_node:
+    #     xml.etree.ElementTree.SubElement(body_element, "freejoint")
 
     if args.color_mode == "unique_color_per_body":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
@@ -260,6 +265,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
             meshes_element=meshes_element,
             parent_element=body_element,
             transform_world_from_parent_node=transform_world_from_current_node,
+            root_node=False,
             color=color,
             log_prefix_str=log_prefix_str+"    ")
 
