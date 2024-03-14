@@ -10,11 +10,11 @@ def get_observation_components_modified_for_visualization(observation, observati
     for modification_mode, observation_component_names in observation_components_to_modify.items():
         for observation_component_name in observation_component_names:
 
+            observation_component = observation[observation_component_name].copy()
+
             if modification_mode in ["depth", "final_color", "normal", "segmentation"]:
                 assert len(observation_component.shape) == 3  # width, height, #channels
                 assert observation_component.shape[2] == 4    # 4 channels (RGBA)
-
-            observation_component = observation[observation_component_name].copy()
 
             if modification_mode == "depth":
                 modified_observation_component = observation_component[:,:,[0,1,2]] # depth is returned as RGBA
