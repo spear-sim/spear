@@ -17,6 +17,7 @@ setuptools.setup(
         "gym==0.21.0",
         "matplotlib==3.6.2",
         "mayavi==4.8.1",
+        "mujoco==3.1.3",
         "numpy==1.22.3",
         "opencv-python==4.5.5.64",
         "pandas==1.5.1",
