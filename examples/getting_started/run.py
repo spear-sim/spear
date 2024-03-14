@@ -17,6 +17,7 @@ import sys
 sys.path.append(COMMON_DIR)
 from common.openbot_env import OpenBotEnv
 
+
 NUM_STEPS = 100
 
 

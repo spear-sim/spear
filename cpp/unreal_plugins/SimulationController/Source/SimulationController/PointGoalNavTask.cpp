@@ -21,13 +21,13 @@
 #include <Math/Vector.h>
 #include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
 #include "SimulationController/ActorHitEventComponent.h"
 #include "SimulationController/StandaloneComponent.h"
+#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
@@ -158,13 +158,13 @@ std::map<std::string, ArrayDesc> PointGoalNavTask::getStepInfoSpace() const
     array_desc.high_ = 1.0f;
     array_desc.shape_ = {1};
     array_desc.datatype_ = DataType::UInteger8;
-    step_info_space["hit_goal"] = std::move(array_desc);
+    Std::insert(step_info_space, "hit_goal", std::move(array_desc));
 
     array_desc.low_ = 0.0f;
     array_desc.high_ = 1.0f;
     array_desc.shape_ = {1};
     array_desc.datatype_ = DataType::UInteger8;
-    step_info_space["hit_obstacle"] = std::move(array_desc);
+    Std::insert(step_info_space, "hit_obstacle", std::move(array_desc));
 
     return step_info_space;
 }
@@ -173,8 +173,8 @@ std::map<std::string, std::vector<uint8_t>> PointGoalNavTask::getStepInfo() cons
 {
     std::map<std::string, std::vector<uint8_t>> step_info;
 
-    step_info["hit_goal"] = std::vector<uint8_t>{hit_goal_};
-    step_info["hit_obstacle"] = std::vector<uint8_t>{hit_obstacle_};
+    Std::insert(step_info, "hit_goal", {hit_goal_});
+    Std::insert(step_info, "hit_obstacle", {hit_obstacle_});
 
     return step_info;
 }

@@ -15,13 +15,13 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "CoreUtils/ArrayDesc.h"
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Log.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
 #include "SimulationController/CameraSensor.h"
+#include "SpCore/ArrayDesc.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Log.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
 #include "UrdfRobot/UrdfRobotComponent.h"
 #include "UrdfRobot/UrdfRobotPawn.h"
@@ -111,10 +111,10 @@ std::map<std::string, ArrayDesc> UrdfRobotAgent::getObservationSpace() const
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
     SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
-    observation_space.merge(urdf_robot_pawn_->UrdfRobotComponent->getObservationSpace());
+    Std::insert(observation_space, urdf_robot_pawn_->UrdfRobotComponent->getObservationSpace());
 
     if (Std::contains(observation_components, "camera")) {
-        observation_space.merge(camera_sensor_->getObservationSpace());
+        Std::insert(observation_space, camera_sensor_->getObservationSpace());
     }
 
     return observation_space;
@@ -137,10 +137,10 @@ std::map<std::string, std::vector<uint8_t>> UrdfRobotAgent::getObservation() con
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
     SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
-    observation.merge(urdf_robot_pawn_->UrdfRobotComponent->getObservation());
+    Std::insert(observation, urdf_robot_pawn_->UrdfRobotComponent->getObservation());
 
     if (Std::contains(observation_components, "camera")) {
-        observation.merge(camera_sensor_->getObservation());
+        Std::insert(observation, camera_sensor_->getObservation());
     }
 
     return observation;

@@ -10,7 +10,7 @@
 #include <Engine/EngineBaseTypes.h> // ELevelTick
 #include <UObject/ObjectMacros.h>   // GENERATED_BODY, UCLASS
 
-#include "CoreUtils/Log.h"
+#include "SpCore/Log.h"
 
 #include "TickEventComponent.generated.h"
 

@@ -4,13 +4,13 @@
 
 using UnrealBuildTool;
 
-public class UrdfRobot : CommonModuleRules
+public class UrdfRobot : SpModuleRules
 {
     public UrdfRobot(ReadOnlyTargetRules target) : base(target)
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils"});
+        PublicDependencyModuleNames.AddRange(new string[] {"SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

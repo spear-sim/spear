@@ -12,9 +12,10 @@
 #include <Containers/Array.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
+#include "SpCore/ArrayDesc.h"
+
 #include "UrdfLinkComponent.generated.h"
 
-struct ArrayDesc;
 struct UrdfLinkDesc;
 
 UCLASS()

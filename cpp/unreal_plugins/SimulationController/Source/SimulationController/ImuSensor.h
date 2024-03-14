@@ -11,11 +11,10 @@
 
 #include <Math/Vector.h>
 
-#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"
+#include "SpCore/ArrayDesc.h"
 
-class AActor;
 class UPrimitiveComponent;
 
 class ImuSensor 

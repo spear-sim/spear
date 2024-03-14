@@ -11,9 +11,9 @@
 #include <string>
 #include <vector>
 
-#include "CoreUtils/ArrayDesc.h"
 #include "SimulationController/Agent.h"
 #include "SimulationController/ClassRegistrationUtils.h"
+#include "SpCore/ArrayDesc.h"
 
 class ACameraActor;
 class UWorld;

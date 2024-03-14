@@ -4,13 +4,13 @@
 
 using UnrealBuildTool;
 
-public class SpearSimEditor : CommonModuleRules
+public class SpearSimEditor : SpModuleRules
 {
     public SpearSimEditor(ReadOnlyTargetRules target) : base(target)
     {
         SP_LOG_CURRENT_FUNCTION();
         
-        PublicDependencyModuleNames.AddRange(new string[] {"CoreUtils", "UnrealEd", "UrdfRobot", "Vehicle"});
+        PublicDependencyModuleNames.AddRange(new string[] {"SpCore", "UnrealEd", "UrdfRobot", "Vehicle"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

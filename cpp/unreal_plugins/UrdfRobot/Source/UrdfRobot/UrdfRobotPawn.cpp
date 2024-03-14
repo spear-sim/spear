@@ -4,16 +4,18 @@
 
 #include "UrdfRobot/UrdfRobotPawn.h"
 
+#include <filesystem>
+
 #include <Camera/CameraComponent.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "CoreUtils/Assert.h"
-#include "CoreUtils/Config.h"
-#include "CoreUtils/Log.h"
-#include "CoreUtils/Std.h"
-#include "CoreUtils/Unreal.h"
-#include "UrdfRobot/UrdfParser.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Log.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
+#include "UrdfRobot/UrdfParser.h" // UrdfRobotDesc
 #include "UrdfRobot/UrdfRobotComponent.h"
 
 const auto DEFAULT_URDF_FILE = std::filesystem::path() / ".." / ".." / ".." / "python" / "spear" / "urdf" / "pendulum_horizontal.urdf";
@@ -23,11 +25,11 @@ AUrdfRobotPawn::AUrdfRobotPawn(const FObjectInitializer& object_initializer) : A
     SP_LOG_CURRENT_FUNCTION();
 
     // UUrdfRobotComponent
-    UrdfRobotComponent = Unreal::createSceneComponentInsideOwnerConstructor<UUrdfRobotComponent>(this, this, "urdf_robot_component");
+    UrdfRobotComponent = Unreal::createComponentInsideOwnerConstructor<UUrdfRobotComponent>(this, "urdf_robot_component");
     SP_ASSERT(UrdfRobotComponent);
 
     // UCameraComponent
-    CameraComponent = Unreal::createSceneComponentInsideOwnerConstructor<UCameraComponent>(this, UrdfRobotComponent, "camera_component");
+    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, UrdfRobotComponent, "camera_component");
     SP_ASSERT(CameraComponent);
 }
 

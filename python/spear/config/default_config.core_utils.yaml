@@ -1,8 +1,0 @@
-#
-# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-#
-
-CORE_UTILS:
-
-  # Wait for keyboard input during initialization, which can be useful when attempting to attach a debugger to the running executable.
-  WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION: False
