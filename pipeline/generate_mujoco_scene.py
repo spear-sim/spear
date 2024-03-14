@@ -59,13 +59,11 @@ def process_scene():
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
-    meshes_element = xml.etree.ElementTree.Element("meshes")
-    bodies_element = xml.etree.ElementTree.Element("bodies")
-
-    color = (0.75, 0.75, 0.75)
-
     actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_name not in ignore_actors }
 
+    meshes_element = xml.etree.ElementTree.Element("meshes")
+    bodies_element = xml.etree.ElementTree.Element("bodies")
+    color = (0.75, 0.75, 0.75)
     for actor_name, actor_kinematic_tree in actors.items():
         add_mujoco_elements(actor_name, actor_kinematic_tree, meshes_element, bodies_element, color)
 
@@ -106,22 +104,23 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 
 
 #
-# MuJoCo only allows scale transformations at leaf nodes of its kinematic tree representation via the "scale"
-# attribute on each mesh asset. But our native kinematic tree representation may have scale transformations
+# MuJoCo only allows scale transformations at leaf nodes in its kinematic tree representation (via the "scale"
+# attribute on each mesh asset). But our native kinematic tree representation may have scale transformations
 # throughout. So we need to adjust the position of each MuJoCo body to account for our scale transformations,
 # which are not directly representable in a MuJoCo kinematic tree.
 #
 # To derive adjusted body positions in the MuJoCo kinematic tree, we must first choose a particular "target"
 # reference frame, where we want projected mesh vertices to match in both trees. This is necessary because
-# projected mesh vertices points will generally not match in multiple reference frames, as the vertices are
-# projected through tree's various reference frames proceeding in leaf-to-root order. But, as we will see
-# here, the projected vertices can be made to match at a particular reference frame. In this derivation, we
-# choose the world frame as our "target" reference frame.
+# projected mesh vertices will generally not match in multiple reference frames, as the vertices are
+# projected through tree's various reference frames proceeding in leaf-to-root order (i.e., from object space
+# to world space). But, as we will see here, the projected vertices can be made to match at a particular
+# reference frame. In this derivation, we choose the world frame as our "target" reference frame.
 # 
-# Let v be a mesh vertex in object space, and let u_w be its corresponding point in world space, as computed
-# by Unreal. Given a hierarchy of transforms, Unreal computes u_w as follows.
+# Let v be a mesh vertex in object space, and let u_w be its corresponding location in world space, as computed
+# by Unreal. Given a hierarchy of transforms that map to world space from object space, Unreal computes u_w as
+# follows.
 #
-#     u_w = R_wo*S_wo*v_o + l_wo                          (1)
+#     u_w = R_wo*S_wo*v + l_wo                            (1)
 #
 # where R_wo and S_wo are the accumulated rotation and scale matrices that map points to world space from
 # object space, and l_wo is the accumulated location vector that maps points to world space from object
@@ -148,7 +147,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 # where R_wp and S_wp are the rotation and scale matrices that map points to world space from the parent
 # reference frame (i.e., the immediate parent of the current reference frame), l_pc is the location vector
 # that maps points to the parent reference frame from the current reference frame, and l_wp is the
-# accumulated location vector that maps to world space from the "parent" reference frame.
+# accumulated location vector that maps to world space from the parent reference frame.
 #
 # If we substitute equation (3) into equation (2) and expand for a tree of depth 3, we get the following
 # expression for u_w.
@@ -159,13 +158,14 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 #           I                               * l_w3        (4)
 #
 # Now let m_c be the position of v in some current reference frame, and let m_p be its corresponding
-# position in the "parent" reference frame, as computed by MuJoCo, according to the following expression.
+# position in the parent reference frame, as computed by MuJoCo. Given a transform that maps to the parent
+# reference frame from the current reference frame, MuJoCo computes m_p as follows.
 #
-#     m_c = R_pc*m_p + t_pc                               (5)
+#     m_p = R_pc*m_c + t_pc                               (5)
 #
 # where R_pc is the rotation matrix that maps points to the parent reference frame from the current reference
-# frame, m_p is the position of v in the "parent" reference frame, and t_pc is the translation vector that
-# maps points to the parent reference frame from the current reference frame.
+# frame, m_p is the position of v in the parent reference frame, and t_pc is the translation vector that maps
+# points to the parent reference frame from the current reference frame.
 #
 # Let m_w be the world-space position of v, as computed by MuJoCo. If we expand equation (5) for a tree of
 # depth 3, we get the following expression for m_w.
@@ -175,19 +175,22 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 #           R_w3                            * t_32 +
 #           I                               * t_w3        (6)
 #
-# Our goal is to choose the vectors t_ij and the scale matrix S such that m_w == u_w for all mesh vertices v.
-# If we set equation (4) equal to equation (6), we arrive at the following expressions.
+# Note that in equation (6), we have included an S matrix because MuJoCo allows us to scale mesh vertices by
+# a scale matrix before applying any other transformations. Our goal is therefore to choose the vectors t_ij
+# and the diagonal scale matrix S such that m_w == u_w for all mesh vertices v. If we set equation (4)
+# equal to equation (6), we arrive at the following expressions.
 #
 #        S := S_w3*S_32*S_21        = S_w1
 #     t_21 := S_w3*S_32      * l_21 = S_w2*l_21
 #     t_32 := S_w3           * l_32 = S_w3*l_32
 #     t_w3 := I              * l_w3 = I   *l_w3           (7)
 #
-# From these expressions, we see that we can always compute t_pc and S as follows. We store these values in
-# the "pos" and "scale" attributes below.
+# Noting the recursive structure in equation (7), we arrive at the following general expressions for t_pc and S.
 #
-#        S := transform_world_from_current_node["scale"]
 #     t_pc := transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"] 
+#        S := transform_world_from_current_node["scale"]
+#
+# We store these values in the "pos" and "scale" attributes below.
 #
 
 def add_mujoco_elements_for_kinematic_tree_node(
