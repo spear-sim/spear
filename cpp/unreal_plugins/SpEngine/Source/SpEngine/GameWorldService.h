@@ -27,56 +27,27 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &GameWorldService::postWorldInitializationEventHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &GameWorldService::worldCleanupEventHandler);
 
-		entry_point_binder->bind("game_world_service", "pause_game", [this]() -> void {
+		entry_point_binder->bind_func_wrapped("game_world_service", "pause_game", [this]() -> void {
             SP_ASSERT(world_);
             SP_LOG("Pausing the game...");
             UGameplayStatics::SetGamePaused(world_, true);
 	    });
 
-        entry_point_binder->bind("game_world_service", "unpause_game", [this]() -> void {
+        entry_point_binder->bind_func_wrapped("game_world_service", "unpause_game", [this]() -> void {
             SP_ASSERT(world_);
             SP_LOG("Unpausing the game...");
             UGameplayStatics::SetGamePaused(world_, false);
         });
 
-        entry_point_binder->bind("game_world_service", "open_level", [this](const std::string& scene_id) -> void {
+        entry_point_binder->bind_func_direct("game_world_service", "open_level", [this](const std::string& desired_level_path_name) -> void {
             SP_ASSERT(world_);
-            std::string desired_world_path_name;
-            std::string desired_level_name;
-            if (scene_id != "") {
-                std::string new_map_id;
-                if (map_id == "") {
-                    new_map_id = scene_id;
-                } else {
-                    new_map_id = map_id;
-                }
-                desired_world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + new_map_id + "." + new_map_id;
-                desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + new_map_id;
-            }
+            SP_LOG("Opening level: ", desired_level_path_name);
+            UGameplayStatics::OpenLevel(world_, Unreal::toFName(desired_level_path_name));
+        });
 
-            // if the current world is not the desired one, open the desired one
-            bool open_level = desired_world_path_name != "" && desired_world_path_name != Unreal::toStdString(world_->GetPathName());
-
-            SP_LOG("scene_id:                ", scene_id);
-            SP_LOG("map_id:                  ", map_id);
-            SP_LOG("desired_world_path_name: ", desired_world_path_name);
-            SP_LOG("desired_level_name:      ", desired_level_name);
-            SP_LOG("world_->GetPathName():   ", Unreal::toStdString(world_->GetPathName()));
-            SP_LOG("open_level:              ", open_level);
-
-            if (open_level) {
-                SP_LOG("Opening level: ", desired_level_name);
-
-                // if we're at this line of code and OpenLevel is already pending, it means we failed
-                SP_ASSERT(!open_level_pending_);
-
-                UGameplayStatics::OpenLevel(world_, Unreal::toFName(desired_level_name));
-
-                open_level_pending_ = true;
-            } else {
-                SP_LOG("Level:", desired_level_name, "is currently open, so will not try to open it again.");
-                open_level_pending_ = false;
-            }
+        entry_point_binder->bind_func_direct("game_world_service", "get_current_level_path_name", [this]() -> std::string {
+            SP_ASSERT(world_);
+            return Unreal::toStdString(world_->GetPathName());
         });
 	}
 
@@ -129,7 +100,4 @@ private:
 
     // store a local reference to the game world
     UWorld* world_ = nullptr;
-
-    // Unreal lifecycle state
-    bool open_level_pending_ = false;
 };

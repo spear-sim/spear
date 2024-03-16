@@ -44,23 +44,29 @@ class SpEngine():
         self.rpc_client.call("game_world_service.pause_game")
         self.rpc_client.call("engine_service.end_tick")
 
-    def open_level(self, scene_id, map_id):                
-        std::string desired_world_path_name
-        std::string desired_level_name
-        if (scene_id != "") {
-            std::string new_map_id;
-            if (map_id == "") {
-                new_map_id = scene_id;
-            } else {
-                new_map_id = map_id;
-            }
-            desired_world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + new_map_id + "." + new_map_id;
-            desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + new_map_id;
-        }
-        self.begin_tick()
-        self.rpc_client.call("game_world_service.open_level", scene_id)
-        self.tick()
-        self.end_tick()
+    def open_level(self, scene_id, map_id=""):
+        desired_level_path_name = ""
+        desired_level_name = ""
+        if scene_id != "":
+            if map_id == "":
+                map_id = scene_id
+            else:
+                map_id = map_id
+            desired_level_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id + "." + map_id
+            desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id
+
+        current_level_path_name = self.rpc_client.call("game_world_service.get_current_level_path_name")
+
+        # if the current world is not the desired one, open the desired one
+        open_level = desired_level_path_name != "" and desired_level_path_name != current_level_path_name
+
+        spear.log("scene_id:                ", scene_id)
+        spear.log("desired_level_path_name: ", desired_level_path_name)
+        spear.log("desired_level_name:      ", desired_level_name)
+        spear.log("current_level_path_name: ", current_level_path_name)
+        spear.log("open_level:              ", open_level)
+
+        self.rpc_client.call("game_world_service.open_level", desired_level_path_name)
         
     def get_byte_order(self):
         unreal_instance_byte_order = self.rpc_client.call("engine_service.get_byte_order")
