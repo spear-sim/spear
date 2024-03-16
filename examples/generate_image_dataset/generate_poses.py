@@ -38,24 +38,20 @@ if __name__ == "__main__":
     df_columns = ["scene_id", "location_x", "location_y", "location_z", "rotation_pitch", "rotation_yaw", "rotation_roll"]
     df = pd.DataFrame(columns=df_columns)
 
+    # create SpEngine object
+    sp_engine = spear.SpEngine(config)
+
+    navmesh = spear.NavMesh(config, sp_engine)
+    
     # iterate over all scenes
     for scene_id in scene_ids:
 
         spear.log("Processing scene: " + scene_id)
 
-        # update scene_id
-        config.defrost()
-        config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
-        config.freeze()
-
-        # create Env object
-        env = spear.Env(config)
-
-        # reset the simulation
-        _ = env.reset()
+        sp_engine.open_level(scene_id)
 
         # get a few random points
-        points = env.get_random_points(args.num_poses_per_scene)
+        points = navmesh.get_random_points(args.num_poses_per_scene)
 
         # generate random pitch, yaw, roll values
         pitch_values = np.random.uniform(low=0.0, high=0.0, size=args.num_poses_per_scene)
@@ -80,8 +76,8 @@ if __name__ == "__main__":
         plt.gca().invert_yaxis() # invert the y-axis so the plot matches a top-down view of the scene in Unreal
         plt.show()
 
-        # close the current scene
-        env.close()
+    # close the unreal instance
+    sp_engine.close()
 
     # write to a csv file
     df.to_csv(args.poses_file, index=False)

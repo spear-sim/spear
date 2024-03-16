@@ -7,7 +7,6 @@ import gym.spaces
 import mmap
 import multiprocessing.shared_memory
 import numpy as np
-import spear
 import sys
 
 
