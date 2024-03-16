@@ -17,7 +17,6 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <PhysicsEngine/PhysicsSettings.h>
-#include <UObject/UObjectGlobals.h> // NewObject
 
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/TickEventComponent.h"

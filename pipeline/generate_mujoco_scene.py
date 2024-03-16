@@ -30,24 +30,24 @@ else:
 np.random.seed(0)
 
 main_mjcf_str = \
-"""
-<mujoco model="{0}">
+"""<mujoco model="{0}">
 
-  <asset>
-    <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3" rgb2=".2 .3 .4" width="300" height="300"/>
-    <material name="grid" texture="grid" texrepeat="8 8" reflectance=".2"/>
-    <include file="meshes.mjcf"/>
-  </asset>
+    <option gravity="0 0 -981"/>
 
-  <worldbody>
-    <geom size="1000 1000 1" type="plane" material="grid"/>
-    <light pos="0 0 1000"/>
-    <include file="bodies.mjcf"/>
-  </worldbody>
+    <asset>
+        <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3" rgb2=".2 .3 .4" width="300" height="300"/>
+        <material name="grid" texture="grid" texrepeat="8 8" reflectance=".2"/>
+        <include file="meshes.mjcf"/>
+    </asset>
+
+    <worldbody>
+        <geom size="1000 1000 1" type="plane" material="grid"/>
+        <light pos="0 0 1000"/>
+        <include file="bodies.mjcf"/>
+    </worldbody>
 
 </mujoco>
-""" \
-.format(args.scene_id)
+""".format(args.scene_id)
 
 
 def process_scene():
@@ -211,15 +211,27 @@ def add_mujoco_elements_for_kinematic_tree_node(
     rotation_z_axis = transform_parent_node_from_current_node["rotation"][:,2].A1
     assert np.allclose(np.cross(rotation_x_axis, rotation_y_axis), rotation_z_axis)
 
+    # TODO: get static-vs-dynamic flag from the JSON data, use better heuristic for avoiding interpenetrations
+    if "Meshes/05_chair" not in actor_name:
+        body_type = "static"
+    else:
+        body_type = "dynamic"
+
+    if body_type == "static":
+        pos_offset = np.matrix([0.0, 0.0, 0.0]).T
+    elif body_type == "dynamic":
+        pos_offset = np.matrix([0.0, 0.0, 20.0]).T
+    else:
+        assert False
+
     body_name = actor_name + ":" + kinematic_tree_node_name
     body_element = xml.etree.ElementTree.SubElement(parent_element, "body", attrib={
         "name": body_name,
-        "pos": get_mujoco_pos_str(transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"]),
+        "pos": get_mujoco_pos_str(transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"] + pos_offset),
         "xyaxes": get_mujoco_xyaxes_str(transform_parent_node_from_current_node["rotation"])})
 
-    # TODO: add "freejoint" elements for freely moving bodies
-    # if root_node:
-    #     xml.etree.ElementTree.SubElement(body_element, "freejoint")
+    if body_type == "dynamic" and root_node:
+        xml.etree.ElementTree.SubElement(body_element, "freejoint")
 
     if args.color_mode == "unique_color_per_body":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
