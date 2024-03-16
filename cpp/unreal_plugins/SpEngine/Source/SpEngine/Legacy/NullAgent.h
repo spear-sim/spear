@@ -11,14 +11,14 @@
 #include <vector>
 
 #include "SpCore/ArrayDesc.h"
-#include "SpEngine/ClassRegistrationUtils.h"
+#include "SpEngine/Legacy/ClassRegistrationUtils.h"
 
 class UWorld;
 
 class NullAgent: public Agent
 {
 public:
-    NullAgent() = delete;
+    NullAgent() = default;
     NullAgent(UWorld*) {}
     ~NullAgent() = default;
 
@@ -42,12 +42,12 @@ public:
  
     void applyAction(const std::map<std::string, std::vector<uint8_t>>& action) override {};
 
-    std::map<std::string, std::vector<uint8_t>> getObservation() override
+    std::map<std::string, std::vector<uint8_t>> getObservation() const override
     {
         return {};
     };
 
-    std::map<std::string, std::vector<uint8_t>> getStepInfo() override
+    std::map<std::string, std::vector<uint8_t>> getStepInfo() const override
     {
         return {};
     };

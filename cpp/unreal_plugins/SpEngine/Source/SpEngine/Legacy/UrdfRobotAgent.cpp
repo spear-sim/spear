@@ -30,26 +30,26 @@ UrdfRobotAgent::UrdfRobotAgent(UWorld* world)
 {
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
-    std::string spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.SPAWN_MODE");
+    std::string spawn_mode = Config::get<std::string>("SP_ENGINE.URDF_ROBOT_AGENT.SPAWN_MODE");
     if (spawn_mode == "specify_existing_actor") {
-        AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.SPAWN_ACTOR_NAME"));
+        AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SP_ENGINE.URDF_ROBOT_AGENT.SPAWN_ACTOR_NAME"));
         SP_ASSERT(spawn_actor);
         spawn_location = spawn_actor->GetActorLocation();
         spawn_rotation = spawn_actor->GetActorRotation();
     } else if (spawn_mode == "specify_pose") {
         spawn_location = FVector(
-            Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.SPAWN_LOCATION_X"),
-            Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.SPAWN_LOCATION_Y"),
-            Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.SPAWN_LOCATION_Z"));
+            Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.SPAWN_LOCATION_X"),
+            Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.SPAWN_LOCATION_Y"),
+            Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.SPAWN_LOCATION_Z"));
         spawn_rotation = FRotator(
-            Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.SPAWN_ROTATION_PITCH"),
-            Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.SPAWN_ROTATION_YAW"),
-            Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.SPAWN_ROTATION_ROLL"));
+            Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.SPAWN_ROTATION_PITCH"),
+            Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.SPAWN_ROTATION_YAW"),
+            Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.SPAWN_ROTATION_ROLL"));
     } else {
         SP_ASSERT(false);
     }
     FActorSpawnParameters actor_spawn_params;
-    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.URDF_ROBOT_ACTOR_NAME"));
+    actor_spawn_params.Name = Unreal::toFName(Config::get<std::string>("SP_ENGINE.URDF_ROBOT_AGENT.URDF_ROBOT_ACTOR_NAME"));
     actor_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     urdf_robot_pawn_ = world->SpawnActor<AUrdfRobotPawn>(spawn_location, spawn_rotation, actor_spawn_params);
     SP_ASSERT(urdf_robot_pawn_);
@@ -58,33 +58,33 @@ UrdfRobotAgent::UrdfRobotAgent(UWorld* world)
     urdf_robot_pawn_->Initialize();
 
     urdf_robot_pawn_->CameraComponent->FieldOfView =
-        Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.FOV");
+        Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.CAMERA.FOV");
     urdf_robot_pawn_->CameraComponent->AspectRatio =
-        Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.IMAGE_WIDTH") /
-        Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.IMAGE_HEIGHT");
+        Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.CAMERA.IMAGE_WIDTH") /
+        Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.CAMERA.IMAGE_HEIGHT");
 
     // We don't normally cache config values in member variables, but we make an exception in this case
     // because we want ACTION_COMPONENTS and OBSERVATION_COMPONENTS to be defined in URDF_ROBOT_AGENT, but
     // we don't want to pass these arrays around every time we need to apply an action or get an observation.
-    urdf_robot_pawn_->UrdfRobotComponent->setActionComponents(Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.ACTION_COMPONENTS"));
-    urdf_robot_pawn_->UrdfRobotComponent->setObservationComponents(Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS"));
+    urdf_robot_pawn_->UrdfRobotComponent->setActionComponents(Config::get<std::vector<std::string>>("SP_ENGINE.URDF_ROBOT_AGENT.ACTION_COMPONENTS"));
+    urdf_robot_pawn_->UrdfRobotComponent->setObservationComponents(Config::get<std::vector<std::string>>("SP_ENGINE.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS"));
 
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
+    auto observation_components = Config::get<std::vector<std::string>>("SP_ENGINE.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
         camera_sensor_ = std::make_unique<CameraSensor>(
             urdf_robot_pawn_->CameraComponent,
-            Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES"),
-            Config::get<unsigned int>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.IMAGE_WIDTH"),
-            Config::get<unsigned int>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.IMAGE_HEIGHT"),
-            Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.FOV"));
+            Config::get<std::vector<std::string>>("SP_ENGINE.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES"),
+            Config::get<unsigned int>("SP_ENGINE.URDF_ROBOT_AGENT.CAMERA.IMAGE_WIDTH"),
+            Config::get<unsigned int>("SP_ENGINE.URDF_ROBOT_AGENT.CAMERA.IMAGE_HEIGHT"),
+            Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.CAMERA.FOV"));
         SP_ASSERT(camera_sensor_);
     }
 }
 
 UrdfRobotAgent::~UrdfRobotAgent()
 {
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
+    auto observation_components = Config::get<std::vector<std::string>>("SP_ENGINE.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
         SP_ASSERT(camera_sensor_);
@@ -108,7 +108,7 @@ std::map<std::string, ArrayDesc> UrdfRobotAgent::getActionSpace() const
 std::map<std::string, ArrayDesc> UrdfRobotAgent::getObservationSpace() const
 {
     std::map<std::string, ArrayDesc> observation_space;
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
+    auto observation_components = Config::get<std::vector<std::string>>("SP_ENGINE.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
     SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
     Std::insert(observation_space, urdf_robot_pawn_->UrdfRobotComponent->getObservationSpace());
@@ -134,7 +134,7 @@ void UrdfRobotAgent::applyAction(const std::map<std::string, std::vector<uint8_t
 std::map<std::string, std::vector<uint8_t>> UrdfRobotAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
+    auto observation_components = Config::get<std::vector<std::string>>("SP_ENGINE.URDF_ROBOT_AGENT.OBSERVATION_COMPONENTS");
 
     SP_ASSERT(urdf_robot_pawn_->UrdfRobotComponent);
     Std::insert(observation, urdf_robot_pawn_->UrdfRobotComponent->getObservation());
@@ -167,5 +167,5 @@ bool UrdfRobotAgent::isReady() const
         sum_vel += link_component->GetPhysicsLinearVelocity().Size();
     }
 
-    return sum_vel <= Config::get<float>("SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
+    return sum_vel <= Config::get<float>("SP_ENGINE.URDF_ROBOT_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }

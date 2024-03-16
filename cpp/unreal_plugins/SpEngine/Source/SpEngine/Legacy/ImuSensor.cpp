@@ -56,7 +56,7 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
         angular_velocity_body_ = primitive_component_->GetComponentTransform().GetRotation().UnrotateVector(component_angular_velocity_world);
 
         // Debug render
-        if (Config::get<bool>("SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER")) {
+        if (Config::get<bool>("SP_ENGINE.IMU_SENSOR.DEBUG_RENDER")) {
             UWorld* world = primitive_component_->GetWorld();
             FTransform transform = primitive_component_->GetComponentTransform();
             FRotator rotation = transform.Rotator();

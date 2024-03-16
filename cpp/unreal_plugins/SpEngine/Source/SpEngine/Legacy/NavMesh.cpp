@@ -30,9 +30,9 @@ void NavMesh::findObjectReferences(UWorld* world)
     SP_ASSERT(navigation_system_v1_);
 
     FNavAgentProperties agent_properties;
-    agent_properties.AgentHeight = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.AGENT_HEIGHT");
-    agent_properties.AgentRadius = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.AGENT_RADIUS");
-    agent_properties.AgentStepHeight = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.AGENT_MAX_STEP_HEIGHT");
+    agent_properties.AgentHeight = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_HEIGHT");
+    agent_properties.AgentRadius = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_RADIUS");
+    agent_properties.AgentStepHeight = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_MAX_STEP_HEIGHT");
 
     ANavigationData* navigation_data = navigation_system_v1_->GetNavDataForProps(agent_properties);
     SP_ASSERT(navigation_data);
@@ -40,18 +40,18 @@ void NavMesh::findObjectReferences(UWorld* world)
     recast_nav_mesh_ = dynamic_cast<ARecastNavMesh*>(navigation_data);
     SP_ASSERT(recast_nav_mesh_);
 
-    recast_nav_mesh_->TilePoolSize = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.TILE_POOL_SIZE");
-    recast_nav_mesh_->TileSizeUU = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.TILE_SIZE_UU");
-    recast_nav_mesh_->AgentRadius = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.AGENT_RADIUS");
-    recast_nav_mesh_->AgentHeight = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.AGENT_HEIGHT");
-    recast_nav_mesh_->AgentMaxSlope = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.AGENT_MAX_SLOPE");
-    recast_nav_mesh_->AgentMaxStepHeight = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.AGENT_MAX_STEP_HEIGHT");
-    recast_nav_mesh_->MinRegionArea = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.MIN_REGION_AREA");
-    recast_nav_mesh_->MergeRegionSize = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.MERGE_REGION_SIZE");
-    recast_nav_mesh_->MaxSimplificationError = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.MAX_SIMPLIFICATION_ERROR");
+    recast_nav_mesh_->TilePoolSize = Config::get<float>("SP_ENGINE.NAVMESH.TILE_POOL_SIZE");
+    recast_nav_mesh_->TileSizeUU = Config::get<float>("SP_ENGINE.NAVMESH.TILE_SIZE_UU");
+    recast_nav_mesh_->AgentRadius = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_RADIUS");
+    recast_nav_mesh_->AgentHeight = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_HEIGHT");
+    recast_nav_mesh_->AgentMaxSlope = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_MAX_SLOPE");
+    recast_nav_mesh_->AgentMaxStepHeight = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_MAX_STEP_HEIGHT");
+    recast_nav_mesh_->MinRegionArea = Config::get<float>("SP_ENGINE.NAVMESH.MIN_REGION_AREA");
+    recast_nav_mesh_->MergeRegionSize = Config::get<float>("SP_ENGINE.NAVMESH.MERGE_REGION_SIZE");
+    recast_nav_mesh_->MaxSimplificationError = Config::get<float>("SP_ENGINE.NAVMESH.MAX_SIMPLIFICATION_ERROR");
 
-    auto cell_size = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.CELL_SIZE");
-    auto cell_height = Config::get<float>("SIMULATION_CONTROLLER.NAVMESH.CELL_HEIGHT");
+    auto cell_size = Config::get<float>("SP_ENGINE.NAVMESH.CELL_SIZE");
+    auto cell_height = Config::get<float>("SP_ENGINE.NAVMESH.CELL_HEIGHT");
 
     recast_nav_mesh_->NavMeshResolutionParams[static_cast<uint8>(ENavigationDataResolution::Low)].CellSize = cell_size;
     recast_nav_mesh_->NavMeshResolutionParams[static_cast<uint8>(ENavigationDataResolution::Low)].CellHeight = cell_height;
@@ -69,7 +69,7 @@ void NavMesh::findObjectReferences(UWorld* world)
     //     Engine/Source/Runtime/NavigationSystem/Public/NavMesh/RecastNavMeshGenerator.h
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
-    auto debug_navigation_data_file = Config::get<std::string>("SIMULATION_CONTROLLER.NAVMESH.DEBUG_NAVIGATION_DATA_FILE");
+    auto debug_navigation_data_file = Config::get<std::string>("SP_ENGINE.NAVMESH.DEBUG_NAVIGATION_DATA_FILE");
     if (debug_navigation_data_file != "") {
         recast_nav_mesh_->GetGenerator()->ExportNavigationData(Unreal::toFString(debug_navigation_data_file));
     }
