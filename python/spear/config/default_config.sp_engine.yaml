@@ -4,7 +4,7 @@
 
 SP_ENGINE:
 
-  INTERACTION_MODE: "programming" # "interactive", "programmatic"
+  INTERACTION_MODE: "programmatic" # "interactive", "programmatic"
 
   IP: "127.0.0.1"
   PORT: 30000
