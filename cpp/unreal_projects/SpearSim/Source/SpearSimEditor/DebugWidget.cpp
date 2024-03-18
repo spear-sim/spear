@@ -4,7 +4,8 @@
 
 #include "SpearSimEditor/DebugWidget.h"
 
-#include <Containers/UnrealString.h> // FString
+#include <vector>
+
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Kismet/GameplayStatics.h>
@@ -13,6 +14,7 @@
 #include <Misc/Paths.h>
 
 #include "SpCore/Log.h"
+#include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "UrdfRobot/UrdfRobotPawn.h"
@@ -30,6 +32,28 @@ ADebugWidget::~ADebugWidget()
     DebugString = Unreal::toFString("");
     UrdfFile = Unreal::toFString("");
 }
+
+#if WITH_EDITOR
+    void ADebugWidget::PostLoad()
+    {
+        AActor::PostLoad();
+
+        SP_ASSERT(GEngine);
+        level_actor_folder_changed_handle_ = GEngine->OnLevelActorFolderChanged().AddUObject(this, &ADebugWidget::levelActorFolderChangedEventHandler);
+    }
+
+    void ADebugWidget::BeginDestroy()
+    {
+        AActor::BeginDestroy();
+
+        // Need to check IsValid() because PostLoad() is not called for default objects, but BeginDestroy() is.
+        if (level_actor_folder_changed_handle_.IsValid()) {
+            SP_ASSERT(GEngine);
+            GEngine->OnLevelActorFolderChanged().Remove(level_actor_folder_changed_handle_);
+            level_actor_folder_changed_handle_.Reset();
+        }
+    }
+#endif
 
 void ADebugWidget::LoadConfig()
 {
@@ -80,3 +104,17 @@ void ADebugWidget::SpawnUrdfRobotPawn()
     urdf_robot_pawn->UrdfFile = UrdfFile;
     urdf_robot_pawn->Initialize();
 }
+
+#if WITH_EDITOR
+    void ADebugWidget::levelActorFolderChangedEventHandler(const AActor* in_actor, FName old_path)
+    {
+        SP_ASSERT(in_actor);
+
+        std::vector<UStableNameComponent*> stable_name_components = Unreal::getComponentsByType<UStableNameComponent>(in_actor);
+        SP_ASSERT(stable_name_components.size() < 2);
+        if (stable_name_components.size() == 1) {
+            UStableNameComponent* stable_name_component = stable_name_components.at(0);
+            stable_name_component->update();
+        }
+    }
+#endif

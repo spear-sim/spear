@@ -9,8 +9,8 @@
 
 #include "SpSpectatorPawn.generated.h"
 
-class UInputActionComponent;
 class USpectatorPawnMovement;
+class UUserInputComponent;
 
 UCLASS()
 class ASpSpectatorPawn : public ASpectatorPawn
@@ -25,7 +25,7 @@ public:
     void Tick(float delta_time) override;
 
 private:
-    UInputActionComponent* input_action_component_ = nullptr;
+    UUserInputComponent* user_input_component_ = nullptr;
     USpectatorPawnMovement* spectator_pawn_movement_ = nullptr;
 
     float spectator_pawn_movement_max_speed_ = 0.0f;

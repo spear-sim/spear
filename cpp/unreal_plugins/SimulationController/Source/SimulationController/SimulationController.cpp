@@ -14,7 +14,7 @@
 #include <vector>
 
 #include <Engine/Engine.h>         // GEngine
-#include <Engine/World.h>          // UWorld
+#include <Engine/World.h>          // FWorldDelegates, UWorld
 #include <Kismet/GameplayStatics.h>
 #include <Misc/App.h>
 #include <Misc/CoreDelegates.h>

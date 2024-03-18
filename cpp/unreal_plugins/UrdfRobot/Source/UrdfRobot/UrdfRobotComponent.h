@@ -16,9 +16,9 @@
 
 #include "UrdfRobotComponent.generated.h"
 
-class UInputActionComponent;
 class UUrdfJointComponent;
 class UUrdfLinkComponent;
+class UUserInputComponent;
 struct UrdfLinkDesc;
 struct UrdfRobotDesc;
 
@@ -33,9 +33,6 @@ public:
     // UActorComponent interface
     void BeginPlay() override;
     void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Enable Keyboard Control")
-    bool EnableKeyboardControl = false;
 
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Root LinkComponent")
     UUrdfLinkComponent* RootLinkComponent;
@@ -76,6 +73,6 @@ private:
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
-    UInputActionComponent* input_action_component_ = nullptr;
+    UUserInputComponent* user_input_component_ = nullptr;
     bool request_initialize_deferred_ = false;
 };

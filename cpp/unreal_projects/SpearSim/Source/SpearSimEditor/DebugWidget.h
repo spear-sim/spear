@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include <Containers/UnrealString.h> // FString
+#include <Containers/UnrealString.h>     // FString
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <GameFramework/Actor.h>
-#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/NameTypes.h>           // FName
+#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "DebugWidget.generated.h"
 
@@ -17,6 +19,15 @@ class ADebugWidget : public AActor
 public: 
     ADebugWidget();
     ~ADebugWidget();
+
+    // TODO: We override these functions to subscribe/unsubscribe to/from GEngine->OnLevelActorFolderChanged(), but
+    // we should do this in a more central location. In principle, SimulationController might be a better place to
+    // do this, but most functionality in SimulationController doesn't execute in the editor, but OnLevelActorFolderChanged()
+    // is only called in the editor.
+    #if WITH_EDITOR // defined in an auto-generated header
+        void PostLoad() override;
+        void BeginDestroy() override;
+    #endif
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void LoadConfig();
@@ -38,4 +49,11 @@ public:
 
     UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="URDF file")
     FString UrdfFile;
+
+private:
+    // TODO: This function and corresponding state is only necessary to support subscribing to OnLevelActorFolderChanged().
+    #if WITH_EDITOR // defined in an auto-generated header
+        void levelActorFolderChangedEventHandler(const AActor* in_actor, FName old_path);
+        FDelegateHandle level_actor_folder_changed_handle_;
+    #endif
 };

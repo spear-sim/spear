@@ -11,16 +11,16 @@
 #include <GenericPlatform/GenericPlatformMisc.h>
 #include <Kismet/GameplayStatics.h>
 
-#include "SpCore/InputActionComponent.h"
-#include "SpCore/Std.h"
+#include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UserInputComponent.h"
 
 ASpSpectatorPawn::ASpSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, GetRootComponent(), "input_action_component");
-    SP_ASSERT(input_action_component_);
+    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetRootComponent(), "user_input_component");
+    SP_ASSERT(user_input_component_);
 
     spectator_pawn_movement_ = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
     SP_ASSERT(spectator_pawn_movement_);
@@ -38,19 +38,19 @@ ASpSpectatorPawn::~ASpSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    SP_ASSERT(input_action_component_);
-    input_action_component_ = nullptr;
+    SP_ASSERT(user_input_component_);
+    user_input_component_ = nullptr;
 }
 
 void ASpSpectatorPawn::BeginPlay()
 {
     ASpectatorPawn::BeginPlay();
 
-    input_action_component_->bindInputActions({"Escape"});
-    input_action_component_->apply_input_action_func_ = [](const std::string& key) -> void {
+    user_input_component_->subscribeToUserInputs({"Escape"});
+    user_input_component_->setHandleUserInputFunc([](const std::string& key, float axis_value) -> void {
         bool force = false;
         FGenericPlatformMisc::RequestExit(force);
-    };
+    });
 }
 
 void ASpSpectatorPawn::Tick(float delta_time)

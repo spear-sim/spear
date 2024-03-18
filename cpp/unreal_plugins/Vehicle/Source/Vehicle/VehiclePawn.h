@@ -19,7 +19,7 @@ class FObjectInitializer;
 class UBoxComponent;
 class UCameraComponent;
 
-class UInputActionComponent;
+class UUserInputComponent;
 class UVehicleMovementComponent;
 
 UCLASS()
@@ -54,5 +54,5 @@ private:
     std::vector<std::string> action_components_;
     std::vector<std::string> observation_components_;
 
-    UInputActionComponent* input_action_component_ = nullptr;
+    UUserInputComponent* user_input_component_ = nullptr;
 };

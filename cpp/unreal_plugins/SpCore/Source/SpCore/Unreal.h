@@ -23,6 +23,7 @@
 #include <UObject/NameTypes.h>       // FName
 
 #include "SpCore/Assert.h"
+#include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
 
 template <typename TActorComponent>
@@ -89,7 +90,7 @@ public:
     // Find actors unconditionally and return an std::vector
     //
 
-    static std::vector<AActor*> findActors(UWorld* world)
+    static std::vector<AActor*> findActors(const UWorld* world)
     {
         return findActorsByType(world);
     }
@@ -98,7 +99,7 @@ public:
     // Find actors unconditionally and return an std::map
     //
 
-    static std::map<std::string, AActor*> findActorsAsMap(UWorld* world)
+    static std::map<std::string, AActor*> findActorsAsMap(const UWorld* world)
     {
         return findActorsByTypeAsMap(world);
     }
@@ -108,7 +109,7 @@ public:
     //
 
     template <CActor TActor = AActor>
-    static TActor* findActorByName(UWorld* world, const std::string& name, bool assert_if_not_found = true)
+    static TActor* findActorByName(const UWorld* world, const std::string& name, bool assert_if_not_found = true)
     {
         TActor* default_val                     = nullptr;
         bool return_null_if_not_found           = true;
@@ -118,7 +119,7 @@ public:
     }
 
     template <CActor TActor = AActor>
-    static TActor* findActorByTag(UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TActor* findActorByTag(const UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
         TActor* default_val                     = nullptr;
         bool assert_if_size_is_zero             = assert_if_not_found;
@@ -127,7 +128,7 @@ public:
     }
 
     template <CActor TActor = AActor>
-    static TActor* findActorByTagAny(UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TActor* findActorByTagAny(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
         TActor* default_val                     = nullptr;
         bool assert_if_size_is_zero             = assert_if_not_found;
@@ -136,7 +137,7 @@ public:
     }
 
     template <CActor TActor = AActor>
-    static TActor* findActorByTagAll(UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TActor* findActorByTagAll(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
         TActor* default_val                     = nullptr;
         bool assert_if_size_is_zero             = assert_if_not_found;
@@ -145,7 +146,7 @@ public:
     }
 
     template <CActor TActor = AActor>
-    static TActor* findActorByType(UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TActor* findActorByType(const UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
         TActor* default_val                     = nullptr;
         bool assert_if_size_is_zero             = assert_if_not_found;
@@ -158,7 +159,7 @@ public:
     //
 
     template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByName(UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
+    static std::vector<TActor*> findActorsByName(const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
         // This function is different because we need to return TActor* pointers in a particular order.
         std::map<std::string, TActor*> actor_map = findActorsByNameAsMap<TActor>(world, names);
@@ -179,13 +180,13 @@ public:
     }
 
     template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByTag(UWorld* world, const std::string& tag)
+    static std::vector<TActor*> findActorsByTag(const UWorld* world, const std::string& tag)
     {
         return findActorsByTagAny<TActor>(world, {tag});
     }
 
     template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByTagAny(UWorld* world, const std::vector<std::string>& tags)
+    static std::vector<TActor*> findActorsByTagAny(const UWorld* world, const std::vector<std::string>& tags)
     {
         auto actors = Std::toVector<TActor*>(
             findActorsByType<TActor>(world) |
@@ -197,7 +198,7 @@ public:
     }
 
     template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByTagAll(UWorld* world, const std::vector<std::string>& tags)
+    static std::vector<TActor*> findActorsByTagAll(const UWorld* world, const std::vector<std::string>& tags)
     {
         auto actors = Std::toVector<TActor*>(
             findActorsByType<TActor>(world) |
@@ -209,7 +210,7 @@ public:
     }
 
     template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByType(UWorld* world)
+    static std::vector<TActor*> findActorsByType(const UWorld* world)
     {
         // This function is different because we need need to interact with TActorIterator directly.
         SP_ASSERT(world);
@@ -227,7 +228,7 @@ public:
     //
 
     template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByNameAsMap(UWorld* world, const std::vector<std::string>& names)
+    static std::map<std::string, TActor*> findActorsByNameAsMap(const UWorld* world, const std::vector<std::string>& names)
     {
         auto actors = Std::toMap<std::string, TActor*>(
             findActorsByType<TActor>(world) |
@@ -238,13 +239,13 @@ public:
     }
 
     template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByTagAsMap(UWorld* world, const std::string& tag)
+    static std::map<std::string, TActor*> findActorsByTagAsMap(const UWorld* world, const std::string& tag)
     {
         return findActorsByTagAnyAsMap(world, {tag});
     }
     
     template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByTagAnyAsMap(UWorld* world, const std::vector<std::string>& tags)
+    static std::map<std::string, TActor*> findActorsByTagAnyAsMap(const UWorld* world, const std::vector<std::string>& tags)
     {
         auto actors = Std::toMap<std::string, TActor*>(
             findActorsByType<TActor>(world) |
@@ -256,7 +257,7 @@ public:
     }
 
     template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByTagAllAsMap(UWorld* world, const std::vector<std::string>& tags)
+    static std::map<std::string, TActor*> findActorsByTagAllAsMap(const UWorld* world, const std::vector<std::string>& tags)
     {
         auto actors = Std::toMap<std::string, TActor*>(
             findActorsByType<TActor>(world) |
@@ -268,7 +269,7 @@ public:
     }
     
     template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByTypeAsMap(UWorld* world)
+    static std::map<std::string, TActor*> findActorsByTypeAsMap(const UWorld* world)
     {
         auto actors = Std::toMap<std::string, TActor*>(
             findActorsByType<TActor>(world) |
@@ -281,7 +282,7 @@ public:
     // Helper functions for finding actors
     //
 
-    static std::vector<bool> getActorHasTags(AActor* actor, const std::vector<std::string>& tags)
+    static std::vector<bool> getActorHasTags(const AActor* actor, const std::vector<std::string>& tags)
     {
         return Std::toVector<bool>(tags | std::views::transform([actor](const auto& tag) { return actor->ActorHasTag(toFName(tag)); }));
     }
@@ -305,28 +306,71 @@ public:
     }
 
     //
-    // Helper function to get fully qualified component names.
+    // Helper functions to get components.
     //
 
-    static std::string getFullyQualifiedComponentName(USceneComponent* scene_component, const std::string& separator, bool include_actor_name = false)
+    template <CActorComponent TActorComponent>
+    static std::vector<TActorComponent*> getComponentsByType(const AActor* actor)
+    {
+        TArray<TActorComponent*> components_tarray;
+        actor->GetComponents<TActorComponent>(components_tarray);
+
+        std::vector<TActorComponent*> components;
+        for (auto component : components_tarray) {
+            components.push_back(component);
+        }
+
+        return components;
+    }
+
+    //
+    // Helper functions to get actor and component names.
+    //
+
+    static std::string getStableActorName(const AActor* actor)
+    {
+        SP_ASSERT(actor);
+
+        std::vector<UStableNameComponent*> stable_name_components = Unreal::getComponentsByType<UStableNameComponent>(actor);
+        SP_ASSERT(stable_name_components.size() == 1);
+
+        UStableNameComponent* stable_name_component = stable_name_components.at(0);
+        SP_ASSERT(stable_name_component);
+        return toStdString(stable_name_component->StableName);
+    }
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        static void updateStableActorName(AActor* actor)
+        {
+            SP_ASSERT(actor);
+
+            std::vector<UStableNameComponent*> stable_name_components = Unreal::getComponentsByType<UStableNameComponent>(actor);
+            SP_ASSERT(stable_name_components.size() == 1);
+
+            UStableNameComponent* stable_name_component = stable_name_components.at(0);
+            SP_ASSERT(stable_name_component);
+            stable_name_component->update();
+        }
+    #endif
+
+    static std::string getStableComponentName(const USceneComponent* scene_component, bool include_actor_name = false)
     {
         SP_ASSERT(scene_component);
-        SP_ASSERT(scene_component->GetOwner());
 
-        std::string name = toStdString(scene_component->GetName());
-
+        std::string component_name = toStdString(scene_component->GetName());
         TArray<USceneComponent*> parents;
         scene_component->GetParentComponents(parents);
         for (auto parent : parents) {
-            name = toStdString(parent->GetName()) + separator + name;
+            component_name = toStdString(parent->GetName()) + "." + component_name;
         }
 
-        // TODO: use a custom stable name instead of GetName()
         if (include_actor_name) {
-            name = toStdString(scene_component->GetOwner()->GetName()) + separator + name;
+            AActor* actor = scene_component->GetOwner();
+            SP_ASSERT(actor);
+            component_name = getStableActorName(actor) + ":" + component_name;
         }
 
-        return name;
+        return component_name;
     }
 
     //
