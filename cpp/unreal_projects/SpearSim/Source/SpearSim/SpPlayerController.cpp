@@ -12,9 +12,6 @@ ASpPlayerController::ASpPlayerController()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetRootComponent(), "user_input");
-    SP_ASSERT(user_input_component_);
-
     // Need to set this to true to enable moving the camera when the game is paused.
     bShouldPerformFullTickWhenPaused = true;
 
@@ -22,6 +19,10 @@ ASpPlayerController::ASpPlayerController()
     // However, setting this to true makes rendering ever-so-slightly choppier during click-and-drag events, but we think it
     // is worth it.
     bShowMouseCursor = true;
+
+    // UUserInputComponent
+    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetRootComponent(), "user_input");
+    SP_ASSERT(user_input_component_);
 
     // We want to enable handling custom user input so pressing escape always exits the application.
     user_input_component_->bEnableHandleUserInput = true;

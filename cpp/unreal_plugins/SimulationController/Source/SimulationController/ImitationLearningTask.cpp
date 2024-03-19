@@ -119,9 +119,13 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
             SP_ASSERT(self_actor == agent_actor_);
             if (other_actor == goal_actor_) {
                 hit_goal_ = true;
-            } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
-                hit_obstacle_ = true;
             }
+            
+            // TODO: Re-enable obstacle check when we have added UStableNameComponents to the objects
+            // in our scenes, so we can find the obstacles we want to ignore:
+            //     else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
+            //         hit_obstacle_ = true;
+            //     }
         });
 }
 

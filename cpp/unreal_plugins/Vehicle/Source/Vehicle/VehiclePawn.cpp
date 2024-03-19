@@ -25,6 +25,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/StableNameComponent.h"
 #include "SpCore/UserInputComponent.h"
 #include "Vehicle/VehicleMovementComponent.h"
 
@@ -44,6 +45,11 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
 {
     SP_LOG_CURRENT_FUNCTION();
 
+    // UStableNameComponent
+    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, GetRootComponent(), "stable_name");
+    SP_ASSERT(StableNameComponent);
+
+    // USkeletalMeshComponent
     std::string skeletal_mesh_str;
     std::string anim_instance_str;
     if (Config::s_initialized_) {

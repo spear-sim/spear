@@ -19,6 +19,7 @@ class FObjectInitializer;
 class UBoxComponent;
 class UCameraComponent;
 
+class UStableNameComponent;
 class UUserInputComponent;
 class UVehicleMovementComponent;
 
@@ -33,12 +34,14 @@ public:
     // APawn interface
     void BeginPlay() override;
 
-    UPROPERTY(EditAnywhere, DisplayName = "Vehicle Movement Component")
-    UVehicleMovementComponent* MovementComponent = nullptr;
+    UPROPERTY(VisibleAnywhere, DisplayName = "Stable Name Component")
+    UStableNameComponent* StableNameComponent = nullptr;
     UPROPERTY(EditAnywhere, DisplayName = "Camera Component")
     UCameraComponent* CameraComponent = nullptr;
     UPROPERTY(EditAnywhere, DisplayName = "IMU Component")
     UBoxComponent* ImuComponent = nullptr;
+    UPROPERTY(EditAnywhere, DisplayName = "Vehicle Movement Component")
+    UVehicleMovementComponent* MovementComponent = nullptr;
 
     // Used by VehicleAgent. Note that VehicleAgent must call setActionComponents(...) and setObservationComponents(...) before using the rest of this interface.
     void setActionComponents(const std::vector<std::string>& action_components);

@@ -19,17 +19,19 @@ ASpSpectatorPawn::ASpSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, GetRootComponent(), "stable_name");
-    SP_ASSERT(StableNameComponent);
-
-    spectator_pawn_movement_ = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
-    SP_ASSERT(spectator_pawn_movement_);
-
     // Disable collision so the user can fly through walls by default.
     SetActorEnableCollision(false);
 
     // Need to set this to be true because the logic in our Tick(...) function depends on being called even when the game is paused.
     PrimaryActorTick.bTickEvenWhenPaused = true;
+
+    // UStableNameComponent
+    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, GetRootComponent(), "stable_name");
+    SP_ASSERT(StableNameComponent);
+
+    // USpectatorPawnMovement
+    spectator_pawn_movement_ = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
+    SP_ASSERT(spectator_pawn_movement_);
 
     // Need to set this to true, otherwise keyboard input will not be processed when attempting to move the camera when the game is paused.
     spectator_pawn_movement_->PrimaryComponentTick.bTickEvenWhenPaused = true;
