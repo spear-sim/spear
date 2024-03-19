@@ -11,13 +11,16 @@
 #include <initializer_list>
 #include <iterator>  // std::back_inserter, std::distance
 #include <map>
-#include <ranges>    // std::ranges::range, std::views::keys, std::views::transform
+#include <ranges>    // std::ranges::range, std::views::transform
 #include <span>
 #include <string>
 #include <utility>   // std::forward
 #include <vector>
 
+
 #include <boost/algorithm/string/case_conv.hpp> // boost::algorithm::to_lower_copy
+#include <boost/range/adaptor/map.hpp>          // boost::adaptors::map_keys
+#include <boost/range/algorithm/copy.hpp>       // boost::copy
 #include <boost/tokenizer.hpp>                  // boost::char_separator
 
 #include "SpCore/Assert.h"
@@ -164,8 +167,12 @@ public:
     template <CKeyValueContainer TKeyValueContainer>
     static std::vector<typename TKeyValueContainer::key_type> keys(const TKeyValueContainer& key_value_container)
     {
-        auto view = std::views::keys(key_value_container);
-        return std::vector<typename TKeyValueContainer::key_type>(view.begin(), view.end());
+        // TODO: revert back to using std::views after migrating to UE 5.3:
+        //     auto view = std::views::keys(key_value_container);
+        //     return std::vector<typename TKeyValueContainer::key_type>(view.begin(), view.end());
+        std::vector<typename TKeyValueContainer::key_type> keys;
+        boost::copy(key_value_container | boost::adaptors::map_keys, std::back_inserter(keys));
+        return keys;
     }
 
 
@@ -187,7 +194,9 @@ public:
     static void insert(TKeyValueContainer& dest, const TKeyValueContainer& src)
     {
         std::vector<typename TKeyValueContainer::key_type> keys_intersection;
-        std::ranges::set_intersection(std::views::keys(dest), std::views::keys(src), std::back_inserter(keys_intersection));
+        // TODO: revert back to using std::views after migrating to UE 5.3:
+        //     std::ranges::set_intersection(std::views::keys(dest), std::views::keys(src), std::back_inserter(keys_intersection));
+        std::ranges::set_intersection(keys(dest), keys(src), std::back_inserter(keys_intersection));
         SP_ASSERT(keys_intersection.empty());
         dest.insert(src.begin(), src.end());
     }
