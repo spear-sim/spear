@@ -36,8 +36,10 @@ public class SpTargetRulesTarget : TargetRules
             // On macOS and Linux, we need to remap the paths of our symbolic links as we're compiling our executable, so the paths that get
             // written into the application's debug symbols aren't symbolic links. This is necessary to enable debugging in XCode and LLDB.
             bOverrideBuildEnvironment = true;
-            // The flag "-fexperimental-library" is required to enable support for ranges library. This is due to the clang-15.x compiler used in UE 5.2.
-            // This flag can be removed when future UE versions support clang-16.x+.
+
+            // The "-fexperimental-library" flag is required to enable support for std::ranges on Linux. This is because
+            // UE 5.2 builds using Clang 15 on Linux, but std::ranges are not fully supported in Clang 15 without this
+            // additional flag. The flag will not be necessary UE 5.3, which builds using Clang 16 on Linux.
             AdditionalCompilerArguments = "-fexperimental-library";
 
             string arg = "";
