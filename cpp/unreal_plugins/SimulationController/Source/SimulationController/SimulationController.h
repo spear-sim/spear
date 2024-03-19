@@ -29,11 +29,11 @@ private:
     void bindFunctionsToRpcServer();
 
     // event handlers
-    void beginFrameEventHandler();
-    void endFrameEventHandler();
-    void postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
-    void worldBeginPlayEventHandler();
-    void worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources);
+    void beginFrameHandler();
+    void endFrameHandler();
+    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
+    void worldBeginPlayHandler();
+    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
 
     // FDelegateHandle objects corresponding to each event handler defined in this class
     FDelegateHandle begin_frame_handle_;

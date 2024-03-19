@@ -7,6 +7,7 @@
 #include <Containers/UnrealString.h> // FString
 #include <Engine/Engine.h>           // GEngine
 #include <GameFramework/GameModeBase.h>
+#include <GameFramework/PlayerController.h>
 #include <Math/Color.h>
 
 #include "SpCore/Log.h"
@@ -25,6 +26,15 @@ ASpGameMode::ASpGameMode()
 ASpGameMode::~ASpGameMode()
 {
     SP_LOG_CURRENT_FUNCTION();
+}
+
+void ASpGameMode::PostLogin(APlayerController* new_player)
+{
+    AGameModeBase::PostLogin(new_player);
+
+    // Set the stable name for the DefaultPawnClass instance so we can find it later.
+    SP_ASSERT(new_player->GetPawn());
+    Unreal::setStableActorName(new_player->GetPawn(), "Default/" + Unreal::toStdString(DefaultPawnClass->GetName()));
 }
 
 void ASpGameMode::SpAddOnScreenDebugMessage(float display_time, FString message)

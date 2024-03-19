@@ -17,8 +17,8 @@
 
 class UStaticMeshComponent;
 
-class UInputActionComponent;
 class UUrdfLinkComponent;
+class UUserInputComponent;
 struct UrdfJointDesc;
 
 // enum values must match UrdfJointType in UrdfParser.h
@@ -54,8 +54,8 @@ enum class EJointInterfaceType
     AddTo       UMETA(DisplayName = "Add To"),
 };
 
-// We need to use UCLASS(ClassGroup = "SPEAR", meta=(BlueprintSpawnableComponent)) for the component to show up when using the "+Add" button in the editor.
-UCLASS(ClassGroup = "SPEAR", meta=(BlueprintSpawnableComponent))
+// We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
+UCLASS(ClassGroup="SPEAR", meta=(BlueprintSpawnableComponent))
 class URDFROBOT_API UUrdfJointComponent : public UPhysicsConstraintComponent
 {
     GENERATED_BODY()
@@ -72,8 +72,6 @@ public:
     EJointControlType JointControlType = EJointControlType::NotActuated;
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Interface Type")
     EJointInterfaceType JointInterfaceType = EJointInterfaceType::NoInterface;
-    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Enable Keyboard Control")
-    bool EnableKeyboardControl = false;
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Child StaticMeshComponent")
     UStaticMeshComponent* ChildStaticMeshComponent;
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Parent StaticMeshComponent")
@@ -93,5 +91,5 @@ public:
     std::map<std::string, std::vector<uint8_t>> getObservation() const;
 
 private:
-    UInputActionComponent* input_action_component_ = nullptr;
+    UUserInputComponent* user_input_component_ = nullptr;
 };
