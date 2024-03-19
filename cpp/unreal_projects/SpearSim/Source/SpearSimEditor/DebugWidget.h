@@ -20,10 +20,11 @@ public:
     ADebugWidget();
     ~ADebugWidget();
 
-    // TODO: We override these functions to subscribe/unsubscribe to/from GEngine->OnLevelActorFolderChanged(), but
-    // we should do this in a more central location. In principle, SimulationController might be a better place to
-    // do this, but most functionality in SimulationController doesn't execute in the editor, but OnLevelActorFolderChanged()
-    // is only called in the editor.
+    // TODO: We override these functions to subscribe/unsubscribe to/from events that would affect an actor's
+    // stable name, e.g., renaming it or moving it in the World Outliner. Going forward, we should do this in a
+    // more central location. In principle, SimulationController would be a better place to do this, but most
+    // functionality in SimulationController doesn't execute in the editor, whereas the events we're subscribing
+    // to only broadcast in the editor.
     #if WITH_EDITOR // defined in an auto-generated header
         void PostLoad() override;
         void BeginDestroy() override;
@@ -51,9 +52,11 @@ public:
     FString UrdfFile;
 
 private:
-    // TODO: This function and corresponding state is only necessary to support subscribing to OnLevelActorFolderChanged().
     #if WITH_EDITOR // defined in an auto-generated header
-        void levelActorFolderChangedHandler(const AActor* in_actor, FName old_path);
+        void objectPropertyChangedHandler(UObject* object, FPropertyChangedEvent& property_changed_event);
+        void levelActorFolderChangedHandler(const AActor* actor, FName name);
+
+        FDelegateHandle object_property_changed_handle_;
         FDelegateHandle level_actor_folder_changed_handle_;
     #endif
 };

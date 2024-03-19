@@ -22,6 +22,12 @@ UStableNameComponent::~UStableNameComponent()
 }
 
 #if WITH_EDITOR // defined in an auto-generated header
+    void UStableNameComponent::OnComponentCreated()
+    {
+        USceneComponent::OnComponentCreated();
+        update();
+    }
+
     void UStableNameComponent::PostLoad()
     {
         USceneComponent::PostLoad();
@@ -31,6 +37,7 @@ UStableNameComponent::~UStableNameComponent()
     void UStableNameComponent::update()
     {
         AActor* actor = GetOwner();
+        SP_ASSERT(actor);
         FName folder_path = actor->GetFolderPath();
         if (folder_path.IsNone()) {
             StableName = Unreal::toFString(Unreal::toStdString(actor->GetActorLabel()));
