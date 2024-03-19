@@ -11,9 +11,8 @@
 #include <Kismet/GameplayStatics.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <Misc/CoreDelegates.h>
 #include <Misc/Paths.h>
-#include <UObject/Object.h>     // UObject
-#include <UObject/UnrealType.h> // FPropertyChangedEvent
 
 #include "SpCore/Log.h"
 #include "SpCore/StableNameComponent.h"
@@ -40,7 +39,7 @@ ADebugWidget::~ADebugWidget()
     {
         AActor::PostLoad();
 
-        object_property_changed_handle_ = FCoreUObjectDelegates::OnObjectPropertyChanged.AddUObject(this, &ADebugWidget::objectPropertyChangedHandler);
+        actor_label_changed_handle_ = FCoreDelegates::OnActorLabelChanged.AddUObject(this, &ADebugWidget::actorLabelChangedHandler);
 
         SP_ASSERT(GEngine);
         level_actor_folder_changed_handle_ = GEngine->OnLevelActorFolderChanged().AddUObject(this, &ADebugWidget::levelActorFolderChangedHandler);
@@ -58,9 +57,9 @@ ADebugWidget::~ADebugWidget()
             level_actor_folder_changed_handle_.Reset();
         }
 
-        if (object_property_changed_handle_.IsValid()) {
-            FCoreUObjectDelegates::OnObjectPropertyChanged.Remove(object_property_changed_handle_);
-            object_property_changed_handle_.Reset();
+        if (actor_label_changed_handle_.IsValid()) {
+            FCoreDelegates::OnActorLabelChanged.Remove(actor_label_changed_handle_);
+            actor_label_changed_handle_.Reset();
         }
     }
 #endif
@@ -116,14 +115,10 @@ void ADebugWidget::SpawnUrdfRobotPawn()
 }
 
 #if WITH_EDITOR
-    void ADebugWidget::objectPropertyChangedHandler(UObject* object, FPropertyChangedEvent& property_changed_event)
+    void ADebugWidget::actorLabelChangedHandler(AActor* actor)
     {
-        if (Unreal::toStdString(property_changed_event.GetPropertyName()) == "ActorLabel") {
-            AActor* actor = dynamic_cast<AActor*>(object);
-            if (actor) {
-                Unreal::requestUpdateStableActorName(actor);
-            }
-        }
+        SP_ASSERT(actor);
+        Unreal::requestUpdateStableActorName(actor);
     }
 
     void ADebugWidget::levelActorFolderChangedHandler(const AActor* actor, FName name)

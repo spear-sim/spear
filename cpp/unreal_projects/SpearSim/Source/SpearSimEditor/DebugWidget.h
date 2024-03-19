@@ -53,10 +53,10 @@ public:
 
 private:
     #if WITH_EDITOR // defined in an auto-generated header
-        void objectPropertyChangedHandler(UObject* object, FPropertyChangedEvent& property_changed_event);
+        void actorLabelChangedHandler(AActor* actor);
         void levelActorFolderChangedHandler(const AActor* actor, FName name);
 
-        FDelegateHandle object_property_changed_handle_;
+        FDelegateHandle actor_label_changed_handle_;
         FDelegateHandle level_actor_folder_changed_handle_;
     #endif
 };
