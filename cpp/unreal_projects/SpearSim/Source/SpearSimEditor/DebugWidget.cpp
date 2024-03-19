@@ -39,7 +39,7 @@ ADebugWidget::~ADebugWidget()
         AActor::PostLoad();
 
         SP_ASSERT(GEngine);
-        level_actor_folder_changed_handle_ = GEngine->OnLevelActorFolderChanged().AddUObject(this, &ADebugWidget::levelActorFolderChangedEventHandler);
+        level_actor_folder_changed_handle_ = GEngine->OnLevelActorFolderChanged().AddUObject(this, &ADebugWidget::levelActorFolderChangedHandler);
     }
 
     void ADebugWidget::BeginDestroy()
@@ -106,15 +106,9 @@ void ADebugWidget::SpawnUrdfRobotPawn()
 }
 
 #if WITH_EDITOR
-    void ADebugWidget::levelActorFolderChangedEventHandler(const AActor* in_actor, FName old_path)
+    void ADebugWidget::levelActorFolderChangedHandler(const AActor* in_actor, FName old_path)
     {
         SP_ASSERT(in_actor);
-
-        std::vector<UStableNameComponent*> stable_name_components = Unreal::getComponentsByType<UStableNameComponent>(in_actor);
-        SP_ASSERT(stable_name_components.size() < 2);
-        if (stable_name_components.size() == 1) {
-            UStableNameComponent* stable_name_component = stable_name_components.at(0);
-            stable_name_component->update();
-        }
+        Unreal::requestUpdateStableActorName(in_actor);
     }
 #endif

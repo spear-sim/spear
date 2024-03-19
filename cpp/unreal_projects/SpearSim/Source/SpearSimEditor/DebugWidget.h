@@ -53,7 +53,7 @@ public:
 private:
     // TODO: This function and corresponding state is only necessary to support subscribing to OnLevelActorFolderChanged().
     #if WITH_EDITOR // defined in an auto-generated header
-        void levelActorFolderChangedEventHandler(const AActor* in_actor, FName old_path);
+        void levelActorFolderChangedHandler(const AActor* in_actor, FName old_path);
         FDelegateHandle level_actor_folder_changed_handle_;
     #endif
 };

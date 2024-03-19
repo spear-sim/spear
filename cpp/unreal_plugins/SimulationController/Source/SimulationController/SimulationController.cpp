@@ -60,10 +60,10 @@ void SimulationController::StartupModule()
         return;
     }
 
-    post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationEventHandler);
-    world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupEventHandler);
-    begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameEventHandler);
-    end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameEventHandler);
+    post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SimulationController::postWorldInitializationHandler);
+    world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SimulationController::worldCleanupHandler);
+    begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &SimulationController::beginFrameHandler);
+    end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &SimulationController::endFrameHandler);
 }
 
 void SimulationController::ShutdownModule()
@@ -89,7 +89,7 @@ void SimulationController::ShutdownModule()
     post_world_initialization_handle_.Reset();
 }
 
-void SimulationController::postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
+void SimulationController::postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
 {
     SP_LOG_CURRENT_FUNCTION();
     SP_ASSERT(world);
@@ -137,7 +137,7 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
         } else {
             open_level_pending_ = false;
 
-            // we expect worldCleanupEventHandler(...) to be called before a new world is created
+            // we expect worldCleanupHandler(...) to be called before a new world is created
             SP_ASSERT(!world_);
 
             // cache local reference to the UWorld
@@ -149,13 +149,13 @@ void SimulationController::postWorldInitializationEventHandler(UWorld* world, co
             // need to load a new map via the config system, but should not initialize the rest of our
             // code.
             if (Config::get<std::string>("SIMULATION_CONTROLLER.INTERACTION_MODE") == "programmatic") {
-                world_begin_play_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayEventHandler);
+                world_begin_play_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SimulationController::worldBeginPlayHandler);
             }
         }
     }
 }
 
-void SimulationController::worldBeginPlayEventHandler()
+void SimulationController::worldBeginPlayHandler()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -226,7 +226,7 @@ void SimulationController::worldBeginPlayEventHandler()
     has_world_begin_play_executed_ = true;
 }
 
-void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources)
+void SimulationController::worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
 {
     SP_LOG_CURRENT_FUNCTION();
     SP_ASSERT(world);
@@ -268,7 +268,7 @@ void SimulationController::worldCleanupEventHandler(UWorld* world, bool session_
     }
 }
 
-void SimulationController::beginFrameEventHandler()
+void SimulationController::beginFrameHandler()
 {
     // if begin_tick() has indicated that we should advance the simulation
     if (frame_state_ == FrameState::RequestPreTick) {
@@ -291,7 +291,7 @@ void SimulationController::beginFrameEventHandler()
     }
 }
 
-void SimulationController::endFrameEventHandler()
+void SimulationController::endFrameHandler()
 {
     // if we are currently advancing the simulation
     if (frame_state_ == FrameState::ExecutingTick) {

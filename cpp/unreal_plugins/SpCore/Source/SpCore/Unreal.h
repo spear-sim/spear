@@ -339,19 +339,17 @@ public:
         return toStdString(stable_name_component->StableName);
     }
 
-    #if WITH_EDITOR // defined in an auto-generated header
-        static void updateStableActorName(AActor* actor)
-        {
-            SP_ASSERT(actor);
+    static void requestUpdateStableActorName(const AActor* actor)
+    {
+        SP_ASSERT(actor);
 
-            std::vector<UStableNameComponent*> stable_name_components = Unreal::getComponentsByType<UStableNameComponent>(actor);
-            SP_ASSERT(stable_name_components.size() == 1);
+        std::vector<UStableNameComponent*> stable_name_components = Unreal::getComponentsByType<UStableNameComponent>(actor);
+        SP_ASSERT(stable_name_components.size() == 1);
 
-            UStableNameComponent* stable_name_component = stable_name_components.at(0);
-            SP_ASSERT(stable_name_component);
-            stable_name_component->update();
-        }
-    #endif
+        UStableNameComponent* stable_name_component = stable_name_components.at(0);
+        SP_ASSERT(stable_name_component);
+        stable_name_component->update();
+    }
 
     static std::string getStableComponentName(const USceneComponent* scene_component, bool include_actor_name = false)
     {

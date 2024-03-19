@@ -114,7 +114,7 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
         world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
     actor_hit_event_component_->component_->subscribe(agent_actor_);
-    actor_hit_event_component_->component_->actor_hit_func_ =
+    actor_hit_event_component_->component_->setHandleActorHitFunc(
         [this](AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result) -> void {
             SP_ASSERT(self_actor == agent_actor_);
             if (other_actor == goal_actor_) {
@@ -122,13 +122,13 @@ void ImitationLearningTask::findObjectReferences(UWorld* world)
             } else if (!Std::contains(obstacle_ignore_actors_, other_actor)) {
                 hit_obstacle_ = true;
             }
-        };
+        });
 }
 
 void ImitationLearningTask::cleanUpObjectReferences()
 {
     SP_ASSERT(actor_hit_event_component_);
-    actor_hit_event_component_->component_->actor_hit_func_ = nullptr;
+    actor_hit_event_component_->component_->setHandleActorHitFunc(nullptr);
     actor_hit_event_component_->component_->unsubscribe(agent_actor_);
 
     obstacle_ignore_actors_.clear();
