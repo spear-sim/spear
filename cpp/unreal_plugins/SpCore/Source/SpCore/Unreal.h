@@ -4,12 +4,10 @@
 
 #pragma once
 
-#include <concepts>    // std::derived_from
-#include <cstring>     // std::memcpy
+#include <concepts> // std::derived_from
 #include <map>
-#include <ranges>      // std::views::filter, std::views::transform
+#include <ranges>   // std::views::filter, std::views::transform
 #include <string>
-#include <type_traits> // std::is_base_of
 #include <vector>
 
 #include <Components/ActorComponent.h>
@@ -19,7 +17,7 @@
 #include <Containers/UnrealString.h> // FString::operator*
 #include <EngineUtils.h>             // TActorIterator
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>            // TCHAR, TEXT
+#include <HAL/Platform.h>            // TCHAR
 #include <UObject/NameTypes.h>       // FName
 
 #include "SpCore/Assert.h"
@@ -232,8 +230,9 @@ public:
     {
         auto actors = Std::toMap<std::string, TActor*>(
             findActorsByType<TActor>(world) |
-            std::views::filter([&names](auto actor) { return Std::contains(names, toStdString(actor->GetName())); }) |
-            std::views::transform([](auto actor)    { return std::make_pair(toStdString(actor->GetName()), actor); }));
+            std::views::filter([](auto actor)       { return getActorHasStableName(actor); }) |
+            std::views::filter([&names](auto actor) { return Std::contains(names, getStableActorName(actor)); }) |
+            std::views::transform([](auto actor)    { return std::make_pair(getStableActorName(actor), actor); }));
 
         return actors;
     }
@@ -249,9 +248,10 @@ public:
     {
         auto actors = Std::toMap<std::string, TActor*>(
             findActorsByType<TActor>(world) |
+            std::views::filter([](auto actor)          { return getActorHasStableName(actor); }) |
             std::views::transform([&tags](auto actor)  { return std::make_pair(actor, getActorHasTags(actor, tags)); }) |
             std::views::filter([](const auto& pair)    { const auto& [actor, has_tags] = pair; return Std::any(has_tags); }) |
-            std::views::transform([](const auto& pair) { const auto& [actor, has_tags] = pair; return std::make_pair(toStdString(actor->GetName()), actor); }));
+            std::views::transform([](const auto& pair) { const auto& [actor, has_tags] = pair; return std::make_pair(getStableActorName(actor), actor); }));
 
         return actors;
     }
@@ -261,9 +261,10 @@ public:
     {
         auto actors = Std::toMap<std::string, TActor*>(
             findActorsByType<TActor>(world) |
+            std::views::filter([](auto actor)          { return getActorHasStableName(actor); }) |
             std::views::transform([&tags](auto actor)  { return std::make_pair(actor, getActorHasTags(actor, tags)); }) |
             std::views::filter([](const auto& pair)    { const auto& [actor, has_tags] = pair; return Std::all(has_tags); }) |
-            std::views::transform([](const auto& pair) { const auto& [actor, has_tags] = pair; return std::make_pair(toStdString(actor->GetName()), actor); }));
+            std::views::transform([](const auto& pair) { const auto& [actor, has_tags] = pair; return std::make_pair(getStableActorName(actor), actor); }));
 
         return actors;
     }
@@ -273,7 +274,8 @@ public:
     {
         auto actors = Std::toMap<std::string, TActor*>(
             findActorsByType<TActor>(world) |
-            std::views::transform([](auto actor) { return std::make_pair(toStdString(actor->GetName()), actor); }));
+            std::views::filter([](auto actor)    { return getActorHasStableName(actor); }) |
+            std::views::transform([](auto actor) { return std::make_pair(getStableActorName(actor), actor); }));
 
         return actors;
     }
@@ -282,8 +284,17 @@ public:
     // Helper functions for finding actors
     //
 
+    static bool getActorHasStableName(const AActor* actor)
+    {
+        SP_ASSERT(actor);
+        std::vector<UStableNameComponent*> stable_name_components = Unreal::getComponentsByType<UStableNameComponent>(actor);
+        SP_ASSERT(stable_name_components.size() <= 1);
+        return stable_name_components.size() == 1;
+    }
+
     static std::vector<bool> getActorHasTags(const AActor* actor, const std::vector<std::string>& tags)
     {
+        SP_ASSERT(actor);
         return Std::toVector<bool>(tags | std::views::transform([actor](const auto& tag) { return actor->ActorHasTag(toFName(tag)); }));
     }
 
