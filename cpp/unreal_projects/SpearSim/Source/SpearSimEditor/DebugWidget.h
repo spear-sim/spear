@@ -26,6 +26,7 @@ public:
     // functionality in SimulationController doesn't execute in the editor, whereas the events we're subscribing
     // to only broadcast in the editor.
     #if WITH_EDITOR // defined in an auto-generated header
+        // AActor interface
         void PostLoad() override;
         void BeginDestroy() override;
     #endif

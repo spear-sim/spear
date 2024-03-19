@@ -19,8 +19,8 @@ public:
     UStableNameComponent();
     ~UStableNameComponent();
 
-    // If we're in the editor, then set StableName when the component is created or when the editor starts.
     #if WITH_EDITOR // defined in an auto-generated header
+        // USceneComponent interface
         void OnComponentCreated() override;
         void PostLoad() override;
     #endif
@@ -28,9 +28,7 @@ public:
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Stable Name");
     FString StableName;
 
-    // If we're in the editor, provide a public function to set StableName. This is useful, e.g., when the
-    // owning actor is renamed or moved in the World Outliner.
-#if WITH_EDITOR // defined in an auto-generated header
-        void update();
+    #if WITH_EDITOR // defined in an auto-generated header
+        void requestUpdate();
     #endif
 };

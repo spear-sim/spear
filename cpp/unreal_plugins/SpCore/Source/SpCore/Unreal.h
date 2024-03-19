@@ -339,6 +339,18 @@ public:
         return toStdString(stable_name_component->StableName);
     }
 
+    static void setStableActorName(const AActor* actor, std::string stable_name)
+    {
+        SP_ASSERT(actor);
+
+        std::vector<UStableNameComponent*> stable_name_components = Unreal::getComponentsByType<UStableNameComponent>(actor);
+        SP_ASSERT(stable_name_components.size() == 1);
+
+        UStableNameComponent* stable_name_component = stable_name_components.at(0);
+        SP_ASSERT(stable_name_component);
+        stable_name_component->StableName = Unreal::toFString(stable_name);
+    }
+
     #if WITH_EDITOR
         static void requestUpdateStableActorName(const AActor* actor)
         {
@@ -350,12 +362,12 @@ public:
             if (stable_name_components.size() == 1) {
                 UStableNameComponent* stable_name_component = stable_name_components.at(0);
                 SP_ASSERT(stable_name_component);
-                stable_name_component->update();
+                stable_name_component->requestUpdate();
             }
         }
     #endif
 
-    static std::string getStableComponentName(const USceneComponent* scene_component, bool include_actor_name = false)
+    static std::string getStableComponentName(const USceneComponent* scene_component, bool include_stable_actor_name = false)
     {
         SP_ASSERT(scene_component);
 
@@ -366,7 +378,7 @@ public:
             component_name = toStdString(parent->GetName()) + "." + component_name;
         }
 
-        if (include_actor_name) {
+        if (include_stable_actor_name) {
             AActor* actor = scene_component->GetOwner();
             SP_ASSERT(actor);
             component_name = getStableActorName(actor) + ":" + component_name;

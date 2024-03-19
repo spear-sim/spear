@@ -6,6 +6,7 @@
 
 #include "SpCore/StableNameComponent.h"
 
+#include <Components/SceneComponent.h>
 #include <GameFramework/Actor.h>
 
 #include "SpCore/Log.h"
@@ -25,25 +26,29 @@ UStableNameComponent::~UStableNameComponent()
     void UStableNameComponent::OnComponentCreated()
     {
         USceneComponent::OnComponentCreated();
-        update();
+        requestUpdate();
     }
 
     void UStableNameComponent::PostLoad()
     {
         USceneComponent::PostLoad();
-        update();
+        requestUpdate();
     }
 
-    void UStableNameComponent::update()
+    void UStableNameComponent::requestUpdate()
     {
         AActor* actor = GetOwner();
         SP_ASSERT(actor);
-        FName folder_path = actor->GetFolderPath();
-        if (folder_path.IsNone()) {
-            StableName = Unreal::toFString(Unreal::toStdString(actor->GetActorLabel()));
+
+        // This method will not update the stable name of any actor spawned at runtime. Any such actor
+        // needs to update its stable name via Unreal::setStableActorName(...).
+        if (!actor->HasAnyFlags(RF_Transient)) {
+            FName folder_path = actor->GetFolderPath();
+            if (folder_path.IsNone()) {
+                StableName = Unreal::toFString(Unreal::toStdString(actor->GetActorLabel()));
+            } else {
+                StableName = Unreal::toFString(Unreal::toStdString(folder_path) + "/" + Unreal::toStdString(actor->GetActorLabel()));
             }
-        else {
-            StableName = Unreal::toFString(Unreal::toStdString(folder_path) + "/" + Unreal::toStdString(actor->GetActorLabel()));
         }
     }
 #endif

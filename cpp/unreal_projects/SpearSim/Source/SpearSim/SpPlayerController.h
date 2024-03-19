@@ -9,6 +9,8 @@
 
 #include "SpPlayerController.generated.h"
 
+class UUserInputComponent;
+
 UCLASS()
 class ASpPlayerController : public APlayerController
 {
@@ -16,4 +18,10 @@ class ASpPlayerController : public APlayerController
 public:
     ASpPlayerController();
     ~ASpPlayerController();
+
+    // APlayerController interface
+    void BeginPlay() override;
+
+private:
+    UUserInputComponent* user_input_component_ = nullptr;
 };

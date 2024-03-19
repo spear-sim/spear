@@ -12,19 +12,20 @@
 #include <Kismet/GameplayStatics.h>
 
 #include "SpCore/Log.h"
+#include "SpCore/StableNameComponent.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UserInputComponent.h"
 
 ASpSpectatorPawn::ASpSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetRootComponent(), "user_input_component");
-    SP_ASSERT(user_input_component_);
+    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, GetRootComponent(), "stable_name");
+    SP_ASSERT(StableNameComponent);
 
     spectator_pawn_movement_ = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
     SP_ASSERT(spectator_pawn_movement_);
 
+    // Disable collision so the user can fly through walls by default.
     SetActorEnableCollision(false);
 
     // Need to set this to be true because the logic in our Tick(...) function depends on being called even when the game is paused.
@@ -38,19 +39,11 @@ ASpSpectatorPawn::~ASpSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    SP_ASSERT(user_input_component_);
-    user_input_component_ = nullptr;
-}
+    SP_ASSERT(spectator_pawn_movement_);
+    spectator_pawn_movement_ = nullptr;
 
-void ASpSpectatorPawn::BeginPlay()
-{
-    ASpectatorPawn::BeginPlay();
-
-    user_input_component_->subscribeToUserInputs({"Escape"});
-    user_input_component_->setHandleUserInputFunc([](const std::string& key, float axis_value) -> void {
-        bool force = false;
-        FGenericPlatformMisc::RequestExit(force);
-    });
+    SP_ASSERT(StableNameComponent);
+    StableNameComponent = nullptr;
 }
 
 void ASpSpectatorPawn::Tick(float delta_time)

@@ -10,7 +10,7 @@
 #include "SpSpectatorPawn.generated.h"
 
 class USpectatorPawnMovement;
-class UUserInputComponent;
+class UStableNameComponent;
 
 UCLASS()
 class ASpSpectatorPawn : public ASpectatorPawn
@@ -21,11 +21,12 @@ public:
     ~ASpSpectatorPawn();
 
     // ASpectatorPawn interface
-    void BeginPlay() override;
     void Tick(float delta_time) override;
 
+    UPROPERTY(VisibleAnywhere, DisplayName = "Stable Name Component")
+    UStableNameComponent* StableNameComponent = nullptr;
+
 private:
-    UUserInputComponent* user_input_component_ = nullptr;
     USpectatorPawnMovement* spectator_pawn_movement_ = nullptr;
 
     float spectator_pawn_movement_max_speed_ = 0.0f;

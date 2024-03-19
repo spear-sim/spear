@@ -54,6 +54,7 @@ void UUserInputComponent::subscribeToUserInputs(const std::vector<std::string>& 
 {
     SP_ASSERT(GetWorld());
     SP_ASSERT(GetWorld()->GetFirstPlayerController());
+    SP_ASSERT(GetOwner());
 
     input_component_ = GetWorld()->GetFirstPlayerController()->InputComponent;
     SP_ASSERT(input_component_);
@@ -64,8 +65,11 @@ void UUserInputComponent::subscribeToUserInputs(const std::vector<std::string>& 
     for (auto& user_input : user_inputs) {
         UserInputDesc user_input_desc;
 
+        // The only requirement when setting axis_ is that it is a globally unique string. We do not need to use the
+        // actor's stable name specifically. So we avoid using the actor's stable name here, because this will enable
+        // the use of UUserInputComponents on actors that don't have a UStableNameComponent.
         user_input_desc.key_ = user_input;
-        user_input_desc.axis_ = Unreal::getStableActorName(GetOwner()) + ":" + Unreal::getStableComponentName(this) + ":axis:" + user_input;
+        user_input_desc.axis_ = Unreal::toStdString(GetOwner()->GetFullName()) + ":" + Unreal::getStableComponentName(this) + ":axis:" + user_input;
         user_input_desc.threshold_ = 1.0f;
         user_input_desc.scale_ = 1.0f;
 
