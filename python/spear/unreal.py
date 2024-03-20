@@ -10,14 +10,14 @@ editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem
 
 def find_actors(actor_class=None):
     actors = editor_actor_subsystem.get_all_level_actors()
-    actors = sorted(actors, key=lambda actor: get_stable_name_actor(actor))
+    actors = sorted(actors, key=lambda actor: get_stable_actor_name(actor))
     if actor_class is not None:
         actors = [ actor for actor in actors if actor.__class__.__name__ == actor_class ]
     return actors
 
 
-def find_actor(stable_name):
-    actors = [ actor for actor in find_actors() if get_stable_name_actor(actor) == stable_name ]
+def find_actor(name):
+    actors = [ actor for actor in find_actors() if get_stable_actor_name(actor) == name ]
     if len(actors) == 1:
         return actors[0]
     else:
@@ -40,14 +40,14 @@ def find_component(stable_name, actor=None):
         actor = find_actor(actor_stable_name)
     else:
         component_stable_name = stable_name
-    components = [ component for component in find_components(actor) if get_stable_name_component(component) == component_stable_name ]
+    components = [ component for component in find_components(actor) if get_stable_component_name(component) == component_stable_name ]
     if len(components) == 1:
         return components[0]
     else:
         return None
 
 
-def get_stable_name_actor(actor):
+def get_stable_actor_name(actor):
     folder_path = actor.get_folder_path()
     if folder_path.is_none():
         return actor.get_actor_label()
@@ -55,9 +55,9 @@ def get_stable_name_actor(actor):
         return str(folder_path) + posixpath.sep + actor.get_actor_label()
 
 
-def get_stable_name_component(component, include_actor=False):
-    if include_actor:
-        actor_prefix_str = get_stable_name_actor(component.get_owner()) + ":"
+def get_stable_component_name(component, include_stable_actor_name=False):
+    if include_stable_actor_name:
+        actor_prefix_str = get_stable_actor_name(component.get_owner()) + ":"
     else:
         actor_prefix_str = ""
     component_names = [ component.get_name() for component in list(component.get_parent_components())[::-1] ] + [component.get_name()]
