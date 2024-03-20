@@ -34,13 +34,13 @@ public:
     // APawn interface
     void BeginPlay() override;
 
-    UPROPERTY(VisibleAnywhere, DisplayName = "Stable Name Component")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Stable Name Component")
     UStableNameComponent* StableNameComponent = nullptr;
-    UPROPERTY(EditAnywhere, DisplayName = "Camera Component")
+    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName="Camera Component")
     UCameraComponent* CameraComponent = nullptr;
-    UPROPERTY(EditAnywhere, DisplayName = "IMU Component")
+    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName="IMU Component")
     UBoxComponent* ImuComponent = nullptr;
-    UPROPERTY(EditAnywhere, DisplayName = "Vehicle Movement Component")
+    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName="Vehicle Movement Component")
     UVehicleMovementComponent* MovementComponent = nullptr;
 
     // Used by VehicleAgent. Note that VehicleAgent must call setActionComponents(...) and setObservationComponents(...) before using the rest of this interface.

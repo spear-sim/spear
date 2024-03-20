@@ -29,7 +29,7 @@ public:
     // USceneComponent interface
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
 
-    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Enable Handling of User Input");
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Enable Handling of User Input");
     bool bEnableHandleUserInput = false;
 
     // Must be called in BeginPlay() or later, because GetWorld() needs to be valid.
