@@ -24,23 +24,36 @@ def find_actor(name):
         return None
 
 
-def find_components(actor, component_class=None):
+def find_components(actor, component_class=unreal.ActorComponent):
+    components = []
+    component_names = []
+
+    # add main component hierarchy
     if actor.root_component is not None:
-        components = [actor.root_component] + list(actor.root_component.get_children_components(include_all_descendants=True))
-        if component_class is not None:
-            components = [ component for component in components if component.__class__.__name__ == component_class ]
-    else:
-        components = []
+        candidate_components = [actor.root_component] + list(actor.root_component.get_children_components(include_all_descendants=True))
+        candidate_components = [ c for c in candidate_components if get_stable_component_name(c) not in component_names ]
+        candidate_components = [ c for c in candidate_components if isinstance(c, component_class) ]
+        components = components + candidate_components
+        component_names = component_names + [ get_stable_component_name(c) for c in candidate_components ]
+
+    # add any components that are not in the main hierarchy, use component_names to make sure we're not
+    # adding any components redundantly
+    candidate_components = actor.get_components_by_class(component_class)
+    candidate_components = [ c for c in candidate_components if get_stable_component_name(c) not in component_names ]
+    candidate_components = [ c for c in candidate_components if isinstance(c, component_class) ]
+    components = components + candidate_components
+    component_names = component_names + [ get_stable_component_name(c) for c in candidate_components ]
+
     return components
 
 
 def find_component(stable_name, actor=None):
     if actor is None:
-        actor_stable_name, component_stable_name = stable_name.split(":")
-        actor = find_actor(actor_stable_name)
+        stable_actor_name, stable_component_name = stable_name.split(":")
+        actor = find_actor(stable_actor_name)
     else:
-        component_stable_name = stable_name
-    components = [ component for component in find_components(actor) if get_stable_component_name(component) == component_stable_name ]
+        stable_component_name = stable_name
+    components = [ c for c in find_components(actor) if get_stable_component_name(c) == stable_component_name ]
     if len(components) == 1:
         return components[0]
     else:
@@ -57,9 +70,12 @@ def get_stable_actor_name(actor):
 
 def get_stable_component_name(component, include_stable_actor_name=False):
     if include_stable_actor_name:
-        actor_prefix_str = get_stable_actor_name(component.get_owner()) + ":"
+        actor_name_str = get_stable_actor_name(component.get_owner()) + ":"
     else:
-        actor_prefix_str = ""
-    component_names = [ component.get_name() for component in list(component.get_parent_components())[::-1] ] + [component.get_name()]
-    component_names_str = ".".join(component_names)
-    return actor_prefix_str + component_names_str
+        actor_name_str = ""
+    if "get_parent_components" in dir(component):
+        component_name_str = ".".join([ c.get_name() for c in list(component.get_parent_components())[::-1] ] + [component.get_name()])
+    else:
+        component_name_str = component.get_name()
+
+    return actor_name_str + component_name_str

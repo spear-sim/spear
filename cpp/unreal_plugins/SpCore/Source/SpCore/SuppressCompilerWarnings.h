@@ -31,18 +31,6 @@
         _Pragma("clang diagnostic ignored \"-Wunused-variable\"")            \
         _Pragma("clang diagnostic ignored \"-Wunused-parameter\"")
 
-        //
-        // Need /**/ style comments below
-        //
-
-        /*
-        _Pragma("clang diagnostic ignored \"-Werror\"")                      \
-        _Pragma("clang diagnostic ignored \"-Werror=\"")                     \
-        _Pragma("clang diagnostic ignored \"-Wformat=\"")                    \
-        _Pragma("clang diagnostic ignored \"-Wpedantic\"")                   \
-        _Pragma("clang diagnostic ignored \"-Wunused-variable\"")            \
-        */
-
     #define SP_END_SUPPRESS_COMPILER_WARNINGS \
         _Pragma("clang diagnostic pop")
 

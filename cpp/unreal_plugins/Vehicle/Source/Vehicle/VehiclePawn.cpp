@@ -46,7 +46,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     SP_LOG_CURRENT_FUNCTION();
 
     // UStableNameComponent
-    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, GetRootComponent(), "stable_name");
+    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
     SP_ASSERT(StableNameComponent);
 
     // USkeletalMeshComponent
@@ -100,7 +100,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         aspect_ratio = 1.333333f;
     }
 
-    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera_component");
+    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera");
     SP_ASSERT(CameraComponent);
     CameraComponent->SetRelativeLocationAndRotation(camera_location, camera_rotation);
     CameraComponent->bUsePawnControlRotation = false;
@@ -125,7 +125,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         imu_rotation = FRotator::ZeroRotator;
     }
 
-    ImuComponent = Unreal::createComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu_component");
+    ImuComponent = Unreal::createComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu");
     SP_ASSERT(ImuComponent);
     ImuComponent->SetRelativeLocationAndRotation(imu_location, imu_rotation);
 
@@ -134,7 +134,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     SP_ASSERT(MovementComponent);
 
     // UUserInputComponent
-    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetMesh(), "user_input_component");
+    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetMesh(), "user_input");
     SP_ASSERT(user_input_component_);
 }
 
@@ -155,6 +155,9 @@ AVehiclePawn::~AVehiclePawn()
 
     SP_ASSERT(CameraComponent);
     CameraComponent = nullptr;
+
+    SP_ASSERT(StableNameComponent);
+    StableNameComponent = nullptr;
 }
 
 void AVehiclePawn::BeginPlay()

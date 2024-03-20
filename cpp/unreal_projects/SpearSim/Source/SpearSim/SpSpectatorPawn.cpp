@@ -26,7 +26,7 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     PrimaryActorTick.bTickEvenWhenPaused = true;
 
     // UStableNameComponent
-    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, GetRootComponent(), "stable_name");
+    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
     SP_ASSERT(StableNameComponent);
 
     // USpectatorPawnMovement

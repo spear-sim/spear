@@ -6,7 +6,7 @@
 
 #include "SpCore/StableNameComponent.h"
 
-#include <Components/SceneComponent.h>
+#include <Components/ActorComponent.h>
 #include <GameFramework/Actor.h>
 
 #include "SpCore/Log.h"
@@ -25,13 +25,13 @@ UStableNameComponent::~UStableNameComponent()
 #if WITH_EDITOR // defined in an auto-generated header
     void UStableNameComponent::OnComponentCreated()
     {
-        USceneComponent::OnComponentCreated();
+        UActorComponent::OnComponentCreated();
         requestUpdate();
     }
 
     void UStableNameComponent::PostLoad()
     {
-        USceneComponent::PostLoad();
+        UActorComponent::PostLoad();
         requestUpdate();
     }
 

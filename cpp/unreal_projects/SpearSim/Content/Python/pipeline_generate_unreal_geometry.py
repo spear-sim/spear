@@ -26,7 +26,7 @@ def process_scene():
     actors = [ actor for actor in actors if actor.get_editor_property("root_component") is not None ]
 
     for actor in actors:
-        spear.log("    Processing actor: ", spear.unreal.get_stable_name_actor(actor))
+        spear.log("    Processing actor: ", spear.unreal.get_stable_actor_name(actor))
         generate_unreal_geometry(actor)
 
     spear.log("Done.")
@@ -34,7 +34,7 @@ def process_scene():
 
 def generate_unreal_geometry(actor):
 
-    static_mesh_components  = spear.unreal.find_components(actor, "StaticMeshComponent")
+    static_mesh_components  = spear.unreal.find_components(actor, unreal.StaticMeshComponent)
     static_meshes           = [ static_mesh_component.get_editor_property("static_mesh") for static_mesh_component in static_mesh_components ]
     static_meshes           = [ static_mesh for static_mesh in static_meshes if static_mesh is not None ]
     static_mesh_asset_paths = [ pathlib.PurePosixPath(static_mesh.get_path_name()) for static_mesh in static_meshes ]
