@@ -14,10 +14,10 @@
 #include "SpCore/ArrayDesc.h"
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
-#include "SpCore/InputActionComponent.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UserInputComponent.h"
 #include "UrdfRobot/UrdfJointComponent.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
 #include "UrdfRobot/UrdfParser.h" // UrdfRobotDesc
@@ -25,7 +25,7 @@
 struct FHitResult;
 
 // useful for debugging pendulum_horizontal.urdf
-const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_INPUT_ACTIONS = {
+const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_USER_INPUT_ACTIONS = {
     {"One",   {{"joint_0.add_torque_in_radians",          { 1000000.0, 0.0, 0.0}}}},
     {"Two",   {{"joint_0.add_torque_in_radians",          {-1000000.0, 0.0, 0.0}}}},
     {"Three", {{"joint_1.add_to_angular_velocity_target", { 0.1,       0.0, 0.0}}}},
@@ -43,9 +43,9 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
-    // UInputActionComponent
-    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, "input_action_component");
-    SP_ASSERT(input_action_component_);
+    // UUserInputComponent
+    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, "user_input_component");
+    SP_ASSERT(user_input_component_);
 }
 
 UUrdfRobotComponent::~UUrdfRobotComponent()
@@ -58,8 +58,8 @@ UUrdfRobotComponent::~UUrdfRobotComponent()
     link_components_.clear();
     joint_components_.clear();
 
-    SP_ASSERT(input_action_component_);
-    input_action_component_ = nullptr;
+    SP_ASSERT(user_input_component_);
+    user_input_component_ = nullptr;
 }
 
 void UUrdfRobotComponent::BeginPlay()
@@ -68,19 +68,17 @@ void UUrdfRobotComponent::BeginPlay()
 
     // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
     // can be useful for debugging.
-    std::map<std::string, std::map<std::string, std::vector<double>>> input_actions;
+    std::map<std::string, std::map<std::string, std::vector<double>>> user_input_actions;
     if (Config::s_initialized_) {
-        input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.INPUT_ACTIONS");
+        user_input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.INPUT_ACTIONS");
     } else {
-        input_actions = DEFAULT_INPUT_ACTIONS;
+        user_input_actions = DEFAULT_USER_INPUT_ACTIONS;
     }
 
-    input_action_component_->bindInputActions(Std::keys(input_actions));
-    input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
-        if (EnableKeyboardControl) {
-            applyAction(input_actions.at(key));
-        }
-    };
+    user_input_component_->subscribeToUserInputs(Std::keys(user_input_actions));
+    user_input_component_->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
+        applyAction(user_input_actions.at(key));
+    });
 }
 
 void UUrdfRobotComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

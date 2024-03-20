@@ -34,22 +34,27 @@ public:
 
     void subscribe(AActor* actor)
     {
-        actor->OnActorHit.AddDynamic(this, &UActorHitEventComponent::actorHitEventHandler);
+        actor->OnActorHit.AddDynamic(this, &UActorHitEventComponent::actorHitHandler);
     }
 
     void unsubscribe(AActor* actor)
     {
-        actor->OnActorHit.RemoveDynamic(this, &UActorHitEventComponent::actorHitEventHandler);
+        actor->OnActorHit.RemoveDynamic(this, &UActorHitEventComponent::actorHitHandler);
     }
 
-    std::function<void(AActor*, AActor*, FVector, const FHitResult&)> actor_hit_func_;
+    void setHandleActorHitFunc(const std::function<void(AActor*, AActor*, FVector, const FHitResult&)>& handle_actor_hit_func)
+    {
+        handle_actor_hit_func_ = handle_actor_hit_func;
+    }
 
 private:
     UFUNCTION()
-    void actorHitEventHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
+    void actorHitHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
     {
-        if (actor_hit_func_) {
-            actor_hit_func_(self_actor, other_actor, normal_impulse, hit_result);
+        if (handle_actor_hit_func_) {
+            handle_actor_hit_func_(self_actor, other_actor, normal_impulse, hit_result);
         }
     }
+
+    std::function<void(AActor*, AActor*, FVector, const FHitResult&)> handle_actor_hit_func_;
 };

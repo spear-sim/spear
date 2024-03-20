@@ -22,13 +22,14 @@
 #include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
-#include "SpCore/InputActionComponent.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/StableNameComponent.h"
+#include "SpCore/UserInputComponent.h"
 #include "Vehicle/VehicleMovementComponent.h"
 
-const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_INPUT_ACTIONS = {
+const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_USER_INPUT_ACTIONS = {
     {"One",   {{"set_drive_torques", { 0.1f,  0.1f,  0.1f,  0.1f}}}},
     {"Two",   {{"set_drive_torques", { 0.1f, -0.1f,  0.1f, -0.1f}}}},
     {"Three", {{"set_drive_torques", {-0.1f,  0.1f, -0.1f,  0.1f}}}},
@@ -44,6 +45,11 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
 {
     SP_LOG_CURRENT_FUNCTION();
 
+    // UStableNameComponent
+    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, GetRootComponent(), "stable_name");
+    SP_ASSERT(StableNameComponent);
+
+    // USkeletalMeshComponent
     std::string skeletal_mesh_str;
     std::string anim_instance_str;
     if (Config::s_initialized_) {
@@ -127,9 +133,9 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     MovementComponent = dynamic_cast<UVehicleMovementComponent*>(GetVehicleMovementComponent());
     SP_ASSERT(MovementComponent);
 
-    // UInputActionComponent
-    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, GetMesh(), "input_action_component");
-    SP_ASSERT(input_action_component_);
+    // UUserInputComponent
+    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetMesh(), "user_input_component");
+    SP_ASSERT(user_input_component_);
 }
 
 AVehiclePawn::~AVehiclePawn()
@@ -138,8 +144,8 @@ AVehiclePawn::~AVehiclePawn()
 
     // Pawns don't need to be cleaned up explicitly.
 
-    SP_ASSERT(input_action_component_);
-    input_action_component_ = nullptr;
+    SP_ASSERT(user_input_component_);
+    user_input_component_ = nullptr;
 
     SP_ASSERT(MovementComponent);
     MovementComponent = nullptr;
@@ -157,17 +163,17 @@ void AVehiclePawn::BeginPlay()
 
     // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
     // can be useful for debugging.
-    std::map<std::string, std::map<std::string, std::vector<double>>> input_actions;
+    std::map<std::string, std::map<std::string, std::vector<double>>> user_input_actions;
     if (Config::s_initialized_) {
-        input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("VEHICLE.VEHICLE_PAWN.INPUT_ACTIONS");
+        user_input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("VEHICLE.VEHICLE_PAWN.USER_INPUT_ACTIONS");
     } else {
-        input_actions = DEFAULT_INPUT_ACTIONS;
+        user_input_actions = DEFAULT_USER_INPUT_ACTIONS;
     }
 
-    input_action_component_->bindInputActions(Std::keys(input_actions));
-    input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
-        applyAction(input_actions.at(key));
-    };
+    user_input_component_->subscribeToUserInputs(Std::keys(user_input_actions));
+    user_input_component_->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
+        applyAction(user_input_actions.at(key));
+    });
 }
 
 void AVehiclePawn::setActionComponents(const std::vector<std::string>& action_components)
