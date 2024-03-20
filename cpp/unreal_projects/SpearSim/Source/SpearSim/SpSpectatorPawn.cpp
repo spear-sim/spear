@@ -30,19 +30,19 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     SP_ASSERT(StableNameComponent);
 
     // USpectatorPawnMovement
-    spectator_pawn_movement_ = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
-    SP_ASSERT(spectator_pawn_movement_);
+    SpectatorPawnMovement = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
+    SP_ASSERT(SpectatorPawnMovement);
 
     // Need to set this to true, otherwise keyboard input will not be processed when attempting to move the camera when the game is paused.
-    spectator_pawn_movement_->PrimaryComponentTick.bTickEvenWhenPaused = true;
+    SpectatorPawnMovement->PrimaryComponentTick.bTickEvenWhenPaused = true;
 }
 
 ASpSpectatorPawn::~ASpSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    SP_ASSERT(spectator_pawn_movement_);
-    spectator_pawn_movement_ = nullptr;
+    SP_ASSERT(SpectatorPawnMovement);
+    SpectatorPawnMovement = nullptr;
 
     SP_ASSERT(StableNameComponent);
     StableNameComponent = nullptr;

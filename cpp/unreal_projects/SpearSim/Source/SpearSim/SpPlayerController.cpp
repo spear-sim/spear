@@ -21,26 +21,27 @@ ASpPlayerController::ASpPlayerController()
     bShowMouseCursor = true;
 
     // UUserInputComponent
-    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetRootComponent(), "user_input");
-    SP_ASSERT(user_input_component_);
+    UserInputComponent = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetRootComponent(), "user_input");
+    SP_ASSERT(UserInputComponent);
 
-    // We want to enable handling custom user input so pressing escape always exits the application.
-    user_input_component_->bEnableHandleUserInput = true;
+    // UserInputComponents need to be enabled explicitly.
+    UserInputComponent->bHandleUserInput = true;
 }
 
 ASpPlayerController::~ASpPlayerController()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    user_input_component_ = nullptr;
+    SP_ASSERT(UserInputComponent);
+    UserInputComponent = nullptr;
 }
 
 void ASpPlayerController::BeginPlay()
 {
     APlayerController::BeginPlay();
 
-    user_input_component_->subscribeToUserInputs({"Escape"});
-    user_input_component_->setHandleUserInputFunc([](const std::string& key, float axis_value) -> void {
+    UserInputComponent->subscribeToUserInputs({"Escape"});
+    UserInputComponent->setHandleUserInputFunc([](const std::string& key, float axis_value) -> void {
         bool force = false;
         FGenericPlatformMisc::RequestExit(force);
     });

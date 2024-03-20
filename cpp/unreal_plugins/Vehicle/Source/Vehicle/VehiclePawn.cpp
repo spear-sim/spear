@@ -49,6 +49,10 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
     SP_ASSERT(StableNameComponent);
 
+    // UUserInputComponent
+    UserInputComponent = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetMesh(), "user_input");
+    SP_ASSERT(UserInputComponent);
+
     // USkeletalMeshComponent
     std::string skeletal_mesh_str;
     std::string anim_instance_str;
@@ -132,10 +136,6 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     // UVehicleMovementComponent
     MovementComponent = dynamic_cast<UVehicleMovementComponent*>(GetVehicleMovementComponent());
     SP_ASSERT(MovementComponent);
-
-    // UUserInputComponent
-    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetMesh(), "user_input");
-    SP_ASSERT(user_input_component_);
 }
 
 AVehiclePawn::~AVehiclePawn()
@@ -143,9 +143,6 @@ AVehiclePawn::~AVehiclePawn()
     SP_LOG_CURRENT_FUNCTION();
 
     // Pawns don't need to be cleaned up explicitly.
-
-    SP_ASSERT(user_input_component_);
-    user_input_component_ = nullptr;
 
     SP_ASSERT(MovementComponent);
     MovementComponent = nullptr;
@@ -155,6 +152,9 @@ AVehiclePawn::~AVehiclePawn()
 
     SP_ASSERT(CameraComponent);
     CameraComponent = nullptr;
+
+    SP_ASSERT(UserInputComponent);
+    UserInputComponent = nullptr;
 
     SP_ASSERT(StableNameComponent);
     StableNameComponent = nullptr;
@@ -173,8 +173,8 @@ void AVehiclePawn::BeginPlay()
         user_input_actions = DEFAULT_USER_INPUT_ACTIONS;
     }
 
-    user_input_component_->subscribeToUserInputs(Std::keys(user_input_actions));
-    user_input_component_->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
+    UserInputComponent->subscribeToUserInputs(Std::keys(user_input_actions));
+    UserInputComponent->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
         applyAction(user_input_actions.at(key));
     });
 }

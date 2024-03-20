@@ -36,10 +36,16 @@ public:
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Stable Name Component")
     UStableNameComponent* StableNameComponent = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName="User Input Component")
+    UUserInputComponent* UserInputComponent = nullptr;
+    
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName="Camera Component")
     UCameraComponent* CameraComponent = nullptr;
+    
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName="IMU Component")
     UBoxComponent* ImuComponent = nullptr;
+    
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName="Vehicle Movement Component")
     UVehicleMovementComponent* MovementComponent = nullptr;
 
@@ -56,6 +62,4 @@ private:
 
     std::vector<std::string> action_components_;
     std::vector<std::string> observation_components_;
-
-    UUserInputComponent* user_input_component_ = nullptr;
 };

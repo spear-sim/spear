@@ -29,8 +29,8 @@ public:
     // USceneComponent interface
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Enable Handling of User Input");
-    bool bEnableHandleUserInput = false;
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Handle User Input");
+    bool bHandleUserInput = false;
 
     // Must be called in BeginPlay() or later, because GetWorld() needs to be valid.
     void subscribeToUserInputs(const std::vector<std::string>& user_inputs);
