@@ -12,7 +12,7 @@
 
 #include <Components/InputComponent.h>
 #include <Components/SceneComponent.h>
-#include <Engine/EngineBaseTypes.h> // ELevelTick
+#include <Engine/EngineBaseTypes.h> // ELevelTick, ETickingGroup
 #include <GameFramework/PlayerController.h>
 #include <GameFramework/PlayerInput.h>
 
@@ -23,6 +23,7 @@ UUserInputComponent::UUserInputComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
+    PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = false;
 }
