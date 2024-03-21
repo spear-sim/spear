@@ -24,7 +24,7 @@ UUserInputComponent::UUserInputComponent()
     SP_LOG_CURRENT_FUNCTION();
 
     PrimaryComponentTick.bCanEverTick = true;
-    PrimaryComponentTick.bTickEvenWhenPaused = false;
+    PrimaryComponentTick.bTickEvenWhenPaused = true;
 }
 
 UUserInputComponent::~UUserInputComponent()
