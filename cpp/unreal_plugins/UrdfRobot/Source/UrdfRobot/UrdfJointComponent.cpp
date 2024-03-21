@@ -18,15 +18,15 @@
 
 #include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
-#include "SpCore/InputActionComponent.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UserInputComponent.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
 #include "UrdfRobot/UrdfParser.h" // UrdfJointControlType, UrdfJointDesc, UrdfJointType
 
 // useful for debugging fetch.urdf
-const std::map<std::string, std::pair<std::string, std::vector<double>>> INPUT_ACTIONS = {
+const std::map<std::string, std::pair<std::string, std::vector<double>>> USER_INPUT_ACTIONS = {
     {"One",        {"add_torque_in_radians",             { 1000.0,  0.0,  0.0}}},
     {"Two",        {"add_torque_in_radians",             {-1000.0,  0.0,  0.0}}},
     {"Three",      {"add_force",                         {   50.0,  0.0,  0.0}}},
@@ -45,9 +45,9 @@ UUrdfJointComponent::UUrdfJointComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    // UInputActionComponent
-    input_action_component_ = Unreal::createComponentInsideOwnerConstructor<UInputActionComponent>(this, "input_action_component");
-    SP_ASSERT(input_action_component_);
+    // UUserInputComponent
+    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, "user_input_component");
+    SP_ASSERT(user_input_component_);
 }
 
 UUrdfJointComponent::~UUrdfJointComponent()
@@ -57,24 +57,21 @@ UUrdfJointComponent::~UUrdfJointComponent()
     JointType = EJointType::Invalid;
     JointControlType = EJointControlType::NotActuated;
     JointInterfaceType = EJointInterfaceType::NoInterface;
-    EnableKeyboardControl = false;
     //LinearTranslationOffset = FVector::ZeroVector; // TODO (MR): support linear translation offsets
 
-    SP_ASSERT(input_action_component_);
-    input_action_component_ = nullptr;
+    SP_ASSERT(user_input_component_);
+    user_input_component_ = nullptr;
 }
 
 void UUrdfJointComponent::BeginPlay()
 {
     UPhysicsConstraintComponent::BeginPlay();
 
-    const std::map<std::string, std::pair<std::string, std::vector<double>>> input_actions = INPUT_ACTIONS;
-    input_action_component_->bindInputActions(Std::keys(input_actions));
-    input_action_component_->apply_input_action_func_ = [this, input_actions](const std::string& key) -> void {
-        if (EnableKeyboardControl) {
-            applyActionComponent(input_actions.at(key));
-        }
-    };
+    const std::map<std::string, std::pair<std::string, std::vector<double>>> user_input_actions = USER_INPUT_ACTIONS;
+    user_input_component_->subscribeToUserInputs(Std::keys(user_input_actions));
+    user_input_component_->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
+        applyActionComponent(user_input_actions.at(key));
+    });
 
     // TODO (MR): generalize this code, which currently applies a hard-coded linear translation offset
 
