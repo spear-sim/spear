@@ -45,8 +45,8 @@ public:
     {
         basic_entry_point_binder_ = basic_entry_point_binder;
 
-        begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameEventHandler);
-        end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameEventHandler);
+        begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
+        end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
 
         frame_state_ = FrameState::Idle;
 
@@ -72,7 +72,7 @@ public:
         bind_func("engine_service", "tick", [this]() -> void {
             SP_LOG("0 - tick");
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
-            // allow beginFrameEventHandler() to finish executing, wait here until frame_state == FrameState::ExecutingPostTick
+            // allow beginFrameHandler() to finish executing, wait here until frame_state == FrameState::ExecutingPostTick
             work_queue_.resetWorkGuard();
             frame_state_executing_post_tick_future_.wait();
             SP_LOG("2 - tick");
@@ -83,7 +83,7 @@ public:
         bind_func("engine_service", "end_tick", [this]() -> void {
             SP_LOG("0 - end_tick");
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
-            // allow endFrameEventHandler() to finish executing, wait here until frame_state == FrameState::Idle
+            // allow endFrameHandler() to finish executing, wait here until frame_state == FrameState::Idle
             work_queue_.resetWorkGuard();
             frame_state_idle_future_.wait();
             SP_LOG("2 - end_tick");
@@ -136,7 +136,7 @@ public:
         //    WorkQueue::wrapFuncToExecuteInWorkQueueNonBlocking(work_queue_, std::forward<decltype(func)>(func)));
     }
 
-    void beginFrameEventHandler()
+    void beginFrameHandler()
     {
         // if begin_tick() has indicated that we should advance the simulation
         if (frame_state_ == FrameState::RequestPreTick) {
@@ -153,7 +153,7 @@ public:
         }
     }
 
-    void endFrameEventHandler()
+    void endFrameHandler()
     {
         // if we are currently advancing the simulation
         if (frame_state_ == FrameState::ExecutingTick) {

@@ -37,8 +37,8 @@ public:
 	LegacyService() = delete;
 	LegacyService(CEntryPointBinder auto* entry_point_binder)
 	{
-        post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &LegacyService::postWorldInitializationEventHandler);
-        world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &LegacyService::worldCleanupEventHandler);
+        post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &LegacyService::postWorldInitializationHandler);
+        world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &LegacyService::worldCleanupHandler);
 
         entry_point_binder->bind_func("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
@@ -142,7 +142,7 @@ public:
         post_world_initialization_handle_.Reset();
     }
 
-    void postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
+    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
     {
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(world);
@@ -194,7 +194,7 @@ public:
             } else {
                 open_level_pending_ = false;
 
-                // we expect worldCleanupEventHandler(...) to be called before a new world is created
+                // we expect worldCleanupHandler(...) to be called before a new world is created
                 SP_ASSERT(!world_);
 
                 // cache local reference to the UWorld
@@ -212,7 +212,7 @@ public:
         }
     }
 
-    void worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources)
+    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
     {
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(world);
@@ -220,7 +220,7 @@ public:
         // We only need to perform any additional steps if the world being cleaned up is the world we cached in our world_ member variable.
         if (world == world_) {
 
-            // The worldCleanupEventHandler(...) function is called for all worlds, but some local state (such as rpc_server_ and agent_)
+            // The worldCleanupHandler(...) function is called for all worlds, but some local state (such as rpc_server_ and agent_)
             // is initialized only when worldBeginPlayEventHandler(...) is called for a particular world. So we check if worldBeginPlayEventHandler(...)
             // has been executed.
             if (has_world_begin_play_executed_) {

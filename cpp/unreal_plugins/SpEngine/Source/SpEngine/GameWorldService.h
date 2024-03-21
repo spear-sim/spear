@@ -24,8 +24,8 @@ public:
     GameWorldService() = delete;
 	GameWorldService(CEntryPointBinder auto* entry_point_binder)
 	{
-        post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &GameWorldService::postWorldInitializationEventHandler);
-        world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &GameWorldService::worldCleanupEventHandler);
+        post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &GameWorldService::postWorldInitializationHandler);
+        world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &GameWorldService::worldCleanupHandler);
 
 		entry_point_binder->bind_func_wrapped("game_world_service", "pause_game", [this]() -> void {
             SP_ASSERT(world_);
@@ -60,7 +60,7 @@ public:
         post_world_initialization_handle_.Reset();
     }
 
-    void postWorldInitializationEventHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
+    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
     {
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(world);
@@ -72,7 +72,7 @@ public:
         #endif
 
         if (world_is_ready) {
-            // we expect worldCleanupEventHandler(...) to be called before a new world is created
+            // we expect worldCleanupHandler(...) to be called before a new world is created
             SP_ASSERT(!world_);
 
             // cache local reference to the UWorld
@@ -80,7 +80,7 @@ public:
         }
     }
 
-    void worldCleanupEventHandler(UWorld* world, bool session_ended, bool cleanup_resources)
+    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
     {
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(world);
