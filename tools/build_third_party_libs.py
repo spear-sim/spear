@@ -161,7 +161,7 @@ if __name__ == "__main__":
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_BUILD_TYPE=Release",
             "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
-            "-DCMAKE_CXX_FLAGS='-mmacosx-version-min=10.14'",
+            "-DCMAKE_CXX_FLAGS='-std=c++20 -mmacosx-version-min=10.14'",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -181,7 +181,7 @@ if __name__ == "__main__":
             "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_BUILD_TYPE=Release" ,
-            "-DCMAKE_CXX_FLAGS='-stdlib=libc++'",
+            "-DCMAKE_CXX_FLAGS='-std=c++20 -stdlib=libc++'",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             os.path.join("..", "..")]
 
@@ -247,7 +247,7 @@ if __name__ == "__main__":
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_BUILD_TYPE=Release",
             "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
-            "-DCMAKE_CXX_FLAGS='-mmacosx-version-min=10.14'",
+            "-DCMAKE_CXX_FLAGS='-std=c++20 -mmacosx-version-min=10.14'",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -267,7 +267,7 @@ if __name__ == "__main__":
             "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_BUILD_TYPE=Release" ,
-            "-DCMAKE_CXX_FLAGS='-stdlib=libc++'",
+            "-DCMAKE_CXX_FLAGS='-std=c++20 -stdlib=libc++'",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             os.path.join("..", "..")]
 

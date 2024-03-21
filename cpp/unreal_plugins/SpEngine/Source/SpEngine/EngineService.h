@@ -23,7 +23,7 @@ concept CBasicEntryPointBinder = requires(TBasicEntryPointBinder basic_entry_poi
 
 template <typename TEntryPointBinder>
 concept CEntryPointBinder = requires(TEntryPointBinder entry_point_binder) {
-    { entry_point_binder.bind_func_direct("", "", []() -> void {}) } -> std::same_as<void>;
+    { entry_point_binder.bind_func("", "", []() -> void {}) } -> std::same_as<void>;
     { entry_point_binder.bind_func_wrapped("", "", []() -> void {}) } -> std::same_as<void>;
 };
 
@@ -50,7 +50,7 @@ public:
 
         frame_state_ = FrameState::Idle;
 
-        bind_func_direct("engine_service", "begin_tick", [this]() -> void {
+        bind_func("engine_service", "begin_tick", [this]() -> void {
             SP_LOG("0 - begin_tick");
             SP_ASSERT(frame_state_ == FrameState::Idle);
             // reset promises and futures
@@ -69,7 +69,7 @@ public:
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         });
 
-        bind_func_direct("engine_service", "tick", [this]() -> void {
+        bind_func("engine_service", "tick", [this]() -> void {
             SP_LOG("0 - tick");
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
             // allow beginFrameEventHandler() to finish executing, wait here until frame_state == FrameState::ExecutingPostTick
@@ -80,7 +80,7 @@ public:
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         });
 
-        bind_func_direct("engine_service", "end_tick", [this]() -> void {
+        bind_func("engine_service", "end_tick", [this]() -> void {
             SP_LOG("0 - end_tick");
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
             // allow endFrameEventHandler() to finish executing, wait here until frame_state == FrameState::Idle
@@ -91,16 +91,16 @@ public:
             SP_ASSERT(frame_state_ == FrameState::Idle);
         });
 
-        bind_func_direct("engine_service", "ping", []() -> std::string {
+        bind_func("engine_service", "ping", []() -> std::string {
             return "EngineService received a call to ping()...";
         });
 
-        bind_func_direct("engine_service", "get_byte_order", []() -> std::string {
+        bind_func("engine_service", "get_byte_order", []() -> std::string {
             uint32_t dummy = 0x01020304;
             return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
         });
 
-        bind_func_direct("engine_service", "request_close", []() -> void {
+        bind_func("engine_service", "request_close", []() -> void {
             bool immediate_shutdown = false;
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
@@ -119,7 +119,7 @@ public:
         basic_entry_point_binder_ = nullptr;
     }
 
-    void bind_func_direct(const std::string& service_name, const std::string& func_name, auto&& func)
+    void bind_func(const std::string& service_name, const std::string& func_name, auto&& func)
     {
         basic_entry_point_binder_->bind(service_name + "." + func_name, std::forward<decltype(func)>(func));
     }

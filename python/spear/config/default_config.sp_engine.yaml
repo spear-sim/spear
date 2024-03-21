@@ -14,8 +14,8 @@ SP_ENGINE:
   SCENE_ID: ""
   MAP_ID: ""
 
-  TASK: ""
-  AGENT: ""
+  TASK: "NullTask"
+  AGENT: "NullAgent"
   CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
   #

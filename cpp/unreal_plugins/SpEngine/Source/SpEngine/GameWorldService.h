@@ -39,13 +39,13 @@ public:
             UGameplayStatics::SetGamePaused(world_, false);
         });
 
-        entry_point_binder->bind_func_direct("game_world_service", "open_level", [this](const std::string& desired_level_path_name) -> void {
+        entry_point_binder->bind_func("game_world_service", "open_level", [this](const std::string& desired_level_path_name) -> void {
             SP_ASSERT(world_);
             SP_LOG("Opening level: ", desired_level_path_name);
             UGameplayStatics::OpenLevel(world_, Unreal::toFName(desired_level_path_name));
         });
 
-        entry_point_binder->bind_func_direct("game_world_service", "get_current_level_path_name", [this]() -> std::string {
+        entry_point_binder->bind_func("game_world_service", "get_current_level_path_name", [this]() -> std::string {
             SP_ASSERT(world_);
             return Unreal::toStdString(world_->GetPathName());
         });
@@ -65,11 +65,11 @@ public:
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(world);
 
-#if WITH_EDITOR // defined in an auto-generated header
-        bool world_is_ready = world->IsGameWorld();
-#else
-        bool world_is_ready = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
-#endif
+        #if WITH_EDITOR // defined in an auto-generated header
+            bool world_is_ready = world->IsGameWorld();
+        #else
+            bool world_is_ready = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
+        #endif
 
         if (world_is_ready) {
             // we expect worldCleanupEventHandler(...) to be called before a new world is created

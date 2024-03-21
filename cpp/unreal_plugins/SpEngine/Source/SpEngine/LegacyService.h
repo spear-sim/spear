@@ -40,22 +40,22 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &LegacyService::postWorldInitializationEventHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &LegacyService::worldCleanupEventHandler);
 
-        entry_point_binder->bind_func_direct("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
+        entry_point_binder->bind_func("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getActionSpace();
         });
 
-        entry_point_binder->bind_func_direct("legacy_service", "get_observation_space", [this]() -> std::map<std::string, ArrayDesc> {
+        entry_point_binder->bind_func("legacy_service", "get_observation_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getObservationSpace();
         });
 
-        entry_point_binder->bind_func_direct("legacy_service", "get_agent_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
+        entry_point_binder->bind_func("legacy_service", "get_agent_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getStepInfoSpace();
         });
 
-        entry_point_binder->bind_func_direct("legacy_service", "get_task_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
+        entry_point_binder->bind_func("legacy_service", "get_task_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(task_);
             return task_->getStepInfoSpace();
         });
@@ -112,16 +112,19 @@ public:
 
         entry_point_binder->bind_func_wrapped("legacy_service", "get_random_points",
             [this](const int& num_points) -> std::vector<double> {
+                SP_ASSERT(nav_mesh_);
                 return nav_mesh_->getRandomPoints(num_points);
         });
 
         entry_point_binder->bind_func_wrapped("legacy_service", "get_random_reachable_points_in_radius",
             [this](const std::vector<double>& initial_points, const float& radius) -> std::vector<double> {
+                SP_ASSERT(nav_mesh_);
                 return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
         });
 
         entry_point_binder->bind_func_wrapped("legacy_service", "get_paths",
             [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
+                SP_ASSERT(nav_mesh_);
                 return nav_mesh_->getPaths(initial_points, goal_points);
         });
 	}
@@ -144,23 +147,23 @@ public:
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(world);
 
-#if WITH_EDITOR // defined in an auto-generated header
-        bool world_is_ready = world->IsGameWorld();
-#else
-        bool world_is_ready = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
-#endif
+        #if WITH_EDITOR // defined in an auto-generated header
+            bool world_is_ready = world->IsGameWorld();
+        #else
+            bool world_is_ready = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
+        #endif
 
         if (world_is_ready) {
 
             std::string scene_id = "apartment_0000";
-            std::string map_id = "";
+            std::string map_id = "apartment_0000";
             if (Config::s_initialized_) {
                 scene_id = Config::get<std::string>("SP_ENGINE.SCENE_ID");
                 map_id = Config::get<std::string>("SP_ENGINE.MAP_ID");
             }
 
-            std::string desired_world_path_name;
-            std::string desired_level_name;
+            std::string desired_world_path_name = "";
+            std::string desired_level_name = "";
             if (scene_id != "") {
                 if (map_id == "") {
                     map_id = scene_id;
@@ -202,9 +205,9 @@ public:
                 // wrap this code in an if block to enable interactive navigation mode, which will potentially
                 // need to load a new map via the config system, but should not initialize the rest of our
                 // code.
-                if (Config::s_initialized_ && Config::get<std::string>("SP_ENGINE.INTERACTION_MODE") == "programmatic") {
+                //if (Config::s_initialized_ && Config::get<std::string>("SP_ENGINE.INTERACTION_MODE") == "programmatic") {
                     world_begin_play_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &LegacyService::worldBeginPlayEventHandler);
-                }
+                //}
             }
         }
     }
@@ -237,10 +240,10 @@ public:
             }
 
             // remove event handlers bound to this world before world gets cleaned up
-            if (Config::s_initialized_ && Config::get<std::string>("SP_ENGINE.INTERACTION_MODE") == "programmatic") {
+            //if (Config::s_initialized_ && Config::get<std::string>("SP_ENGINE.INTERACTION_MODE") == "programmatic") {
                 world_->OnWorldBeginPlay.Remove(world_begin_play_handle_);
                 world_begin_play_handle_.Reset();
-            }
+            //}
 
             // clear cached world_ pointer
             world_ = nullptr;
