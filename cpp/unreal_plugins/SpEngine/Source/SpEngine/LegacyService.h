@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <concepts> // std::same_as
 #include <string>
 #include <vector>
 
@@ -20,17 +19,12 @@
 #include <SpCore/Log.h>
 #include <SpCore/Unreal.h>
 #include <SpEngine/EngineService.h> // CEntryPointBinder
-#include <SpEngine/Legacy/Agent.h>
-#include "SpEngine/Legacy/CameraAgent.h"
+#include "SpEngine/Legacy/Agent.h"
 #include "SpEngine/Legacy/ClassRegistrationUtils.h"
 #include "SpEngine/Legacy/ImitationLearningTask.h"
 #include "SpEngine/Legacy/NavMesh.h"
 #include "SpEngine/Legacy/NullAgent.h"
 #include "SpEngine/Legacy/NullTask.h"
-#include "SpEngine/Legacy/SphereAgent.h"
-#include "SpEngine/Legacy/Task.h"
-#include "SpEngine/Legacy/UrdfRobotAgent.h"
-#include "SpEngine/Legacy/VehicleAgent.h"
 
 class LegacyService {
 public:
@@ -266,14 +260,14 @@ public:
         UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
         if (Config::s_initialized_) {
             physics_settings->bEnableEnhancedDeterminism = Config::get<bool>("SP_ENGINE.PHYSICS.ENABLE_ENHANCED_DETERMINISM");
-            physics_settings->bSubstepping = Config::get<bool>("SP_ENGINE.PHYSICS.ENABLE_SUBSTEPPING");
-            physics_settings->MaxSubstepDeltaTime = Config::get<float>("SP_ENGINE.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
-            physics_settings->MaxSubsteps = Config::get<int32>("SP_ENGINE.PHYSICS.MAX_SUBSTEPS");
+            physics_settings->bSubstepping               = Config::get<bool>("SP_ENGINE.PHYSICS.ENABLE_SUBSTEPPING");
+            physics_settings->MaxSubstepDeltaTime        = Config::get<float>("SP_ENGINE.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
+            physics_settings->MaxSubsteps                = Config::get<int32>("SP_ENGINE.PHYSICS.MAX_SUBSTEPS");
         } else {
             physics_settings->bEnableEnhancedDeterminism = true;
-            physics_settings->bSubstepping = true;
-            physics_settings->MaxSubstepDeltaTime = 0.01;
-            physics_settings->MaxSubsteps = 100;
+            physics_settings->bSubstepping               = true;
+            physics_settings->MaxSubstepDeltaTime        = 0.01;
+            physics_settings->MaxSubsteps                = 100;
         }
 
         // Check that the physics substepping parameters match our desired simulation step time.
@@ -297,11 +291,8 @@ public:
 
         if (Config::s_initialized_) {
             // create Agent
-            if (Config::get<std::string>("SP_ENGINE.AGENT") != "") {
-                agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, Config::get<std::string>("SP_ENGINE.AGENT"), world_));
-            } else {
-                agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, "NullAgent", world_));
-            }
+            agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, Config::get<std::string>("SP_ENGINE.AGENT"), world_));
+
             // create Task
             if (Config::get<std::string>("SP_ENGINE.TASK") == "NullTask") {
                 task_ = std::make_unique<NullTask>();

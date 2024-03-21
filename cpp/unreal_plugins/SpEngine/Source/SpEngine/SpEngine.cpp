@@ -11,28 +11,11 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
-#include "SpCore/Rpclib.h"
+#include "SpCore/Rpclib.h" // rpc_server
 #include "SpCore/Unreal.h"
 #include "SpEngine/EngineService.h"
 #include "SpEngine/GameWorldService.h"
 #include "SpEngine/LegacyService.h"
-
-// We would like to decouple the following entities as much as possible: the RPC server, the
-// EngineService and its various work queues, and all other services whose entry points are
-// intended to run on those work queues. We achieve this design goal through compile-time
-// polymorphism. Our EngineService takes as input any class that defines a public templated
-// bind(func_name, func) method, as represented by the CBasicEntryPointBinder concept.
-// All other services take as input any class that defines a public templated
-// bind(service_name, func_name, func) method, as represented by the CEntryPointBinder
-// concept.
-
-// This design makes it so the RPC server doesn't need any direct knowledge of our services (it
-// just provides a public bind method), our EngineService doesn't need any direct knowledge of
-// the RPC server (EngineService just binds to whatever CBasicEntryPointBinder is passed in), and
-// our other services don't need any direct knowledge of the EngineService (our other services
-// just bind to whatever CEntryPointBinder is passed in). We need compile-time polymorphism
-// because templated member functions cannot be virtual, so it is not practical to, e.g., define
-// a base class with a virtual bind(...) method.
 
 void SpEngine::StartupModule()
 {

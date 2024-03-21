@@ -8,7 +8,7 @@
 
 #include <Modules/ModuleInterface.h>
 
-#include "SpCore/Rpclib.h"
+#include "SpCore/Rpclib.h" // rpc_server
 #include "SpEngine/EngineService.h"
 #include "SpEngine/GameWorldService.h"
 #include "SpEngine/LegacyService.h"
@@ -18,7 +18,6 @@ class SpEngine : public IModuleInterface
 public:
     void StartupModule() override;
     void ShutdownModule() override;
-
 private:
     std::unique_ptr<rpc::server> rpc_server_ = nullptr;
     std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;

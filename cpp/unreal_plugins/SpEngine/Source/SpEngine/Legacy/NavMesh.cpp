@@ -31,9 +31,9 @@ void NavMesh::findObjectReferences(UWorld* world)
 
     FNavAgentProperties agent_properties;
     if (Config::s_initialized_) {
-        agent_properties.AgentHeight = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_HEIGHT");
-        agent_properties.AgentRadius = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_RADIUS");
-        agent_properties.AgentStepHeight = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_MAX_STEP_HEIGHT");
+        agent_properties.AgentHeight = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_HEIGHT");
+        agent_properties.AgentRadius = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_RADIUS");
+        agent_properties.AgentStepHeight = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_MAX_STEP_HEIGHT");
     } else {
         agent_properties.AgentHeight = 200.0;
         agent_properties.AgentRadius = 50.0;
@@ -50,18 +50,18 @@ void NavMesh::findObjectReferences(UWorld* world)
     float cell_height = 1.0;
 
     if (Config::s_initialized_) {
-        recast_nav_mesh_->TilePoolSize = Config::get<float>("SP_ENGINE.NAVMESH.TILE_POOL_SIZE");
-        recast_nav_mesh_->TileSizeUU = Config::get<float>("SP_ENGINE.NAVMESH.TILE_SIZE_UU");
-        recast_nav_mesh_->AgentRadius = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_RADIUS");
-        recast_nav_mesh_->AgentHeight = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_HEIGHT");
-        recast_nav_mesh_->AgentMaxSlope = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_MAX_SLOPE");
-        recast_nav_mesh_->AgentMaxStepHeight = Config::get<float>("SP_ENGINE.NAVMESH.AGENT_MAX_STEP_HEIGHT");
-        recast_nav_mesh_->MinRegionArea = Config::get<float>("SP_ENGINE.NAVMESH.MIN_REGION_AREA");
-        recast_nav_mesh_->MergeRegionSize = Config::get<float>("SP_ENGINE.NAVMESH.MERGE_REGION_SIZE");
-        recast_nav_mesh_->MaxSimplificationError = Config::get<float>("SP_ENGINE.NAVMESH.MAX_SIMPLIFICATION_ERROR");
+        recast_nav_mesh_->TilePoolSize = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.TILE_POOL_SIZE");
+        recast_nav_mesh_->TileSizeUU = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.TILE_SIZE_UU");
+        recast_nav_mesh_->AgentRadius = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_RADIUS");
+        recast_nav_mesh_->AgentHeight = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_HEIGHT");
+        recast_nav_mesh_->AgentMaxSlope = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_MAX_SLOPE");
+        recast_nav_mesh_->AgentMaxStepHeight = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_MAX_STEP_HEIGHT");
+        recast_nav_mesh_->MinRegionArea = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.MIN_REGION_AREA");
+        recast_nav_mesh_->MergeRegionSize = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.MERGE_REGION_SIZE");
+        recast_nav_mesh_->MaxSimplificationError = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.MAX_SIMPLIFICATION_ERROR");
 
-        cell_size = Config::get<float>("SP_ENGINE.NAVMESH.CELL_SIZE");
-        cell_height = Config::get<float>("SP_ENGINE.NAVMESH.CELL_HEIGHT");
+        cell_size = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.CELL_SIZE");
+        cell_height = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.CELL_HEIGHT");
     } else {
         recast_nav_mesh_->TilePoolSize = 1024;
         recast_nav_mesh_->TileSizeUU = 1000.0;
@@ -94,7 +94,7 @@ void NavMesh::findObjectReferences(UWorld* world)
     std::string debug_navigation_data_file = "";
 
     if (Config::s_initialized_) {
-        debug_navigation_data_file = Config::get<std::string>("SP_ENGINE.NAVMESH.DEBUG_NAVIGATION_DATA_FILE");
+        debug_navigation_data_file = Config::get<std::string>("SP_ENGINE.LEGACY.NAVMESH.DEBUG_NAVIGATION_DATA_FILE");
     }
 
     if (debug_navigation_data_file != "") {

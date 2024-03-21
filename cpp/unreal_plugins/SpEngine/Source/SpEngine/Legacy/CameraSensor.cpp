@@ -124,7 +124,7 @@ CameraSensor::CameraSensor(
         }
 
         // create shared_memory_object
-        if (Config::get<bool>("SP_ENGINE.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
+        if (Config::get<bool>("SP_ENGINE.LEGACY.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
             render_pass_desc.shared_memory_name_ = "camera." + render_pass_name;
 
             #if BOOST_OS_WINDOWS
@@ -157,7 +157,7 @@ CameraSensor::CameraSensor(
 CameraSensor::~CameraSensor()
 {
     for (auto& render_pass_desc : render_pass_descs_) {
-        if (Config::get<bool>("SP_ENGINE.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
+        if (Config::get<bool>("SP_ENGINE.LEGACY.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
             #if BOOST_OS_MACOS || BOOST_OS_LINUX
                 boost::interprocess::shared_memory_object::remove(render_pass_desc.second.shared_memory_id_.c_str());
             #endif
@@ -180,7 +180,7 @@ std::map<std::string, ArrayDesc> CameraSensor::getObservationSpace() const
         array_desc.high_ = RENDER_PASS_HIGH.at(render_pass_name);
         array_desc.shape_ = {render_pass_desc.height_, render_pass_desc.width_, RENDER_PASS_NUM_CHANNELS.at(render_pass_name)};
         array_desc.datatype_ = RENDER_PASS_CHANNEL_DATATYPE.at(render_pass_name);
-        array_desc.use_shared_memory_ = Config::get<bool>("SP_ENGINE.CAMERA_SENSOR.USE_SHARED_MEMORY");
+        array_desc.use_shared_memory_ = Config::get<bool>("SP_ENGINE.LEGACY.CAMERA_SENSOR.USE_SHARED_MEMORY");
         array_desc.shared_memory_name_ = render_pass_desc.shared_memory_name_;
         Std::insert(observation_space, "camera." + render_pass_name, std::move(array_desc));
     }
@@ -195,7 +195,7 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
     for (auto& [render_pass_name, render_pass_desc] : render_pass_descs_) {
 
         void* dest_ptr = nullptr;
-        if (Config::get<bool>("SP_ENGINE.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
+        if (Config::get<bool>("SP_ENGINE.LEGACY.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
             dest_ptr = render_pass_desc.shared_memory_mapped_region_.get_address();
         } else {
             Std::insert(observation, "camera." + render_pass_name, {});
@@ -204,7 +204,7 @@ std::map<std::string, std::vector<uint8_t>> CameraSensor::getObservation() const
         }
         SP_ASSERT(dest_ptr);
 
-        if (Config::get<bool>("SP_ENGINE.CAMERA_SENSOR.READ_SURFACE_DATA")) {
+        if (Config::get<bool>("SP_ENGINE.LEGACY.CAMERA_SENSOR.READ_SURFACE_DATA")) {
             FTextureRenderTargetResource* texture_render_target_resource =
                 render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
             SP_ASSERT(texture_render_target_resource);

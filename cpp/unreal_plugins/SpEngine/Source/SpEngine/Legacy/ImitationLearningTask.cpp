@@ -33,7 +33,7 @@ struct FHitResult;
 ImitationLearningTask::ImitationLearningTask(UWorld* world)
 {
     FActorSpawnParameters actor_spawn_parameters;
-    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SP_ENGINE.IMITATION_LEARNING_TASK.GOAL_ACTOR_NAME"));
+    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.GOAL_ACTOR_NAME"));
     actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     goal_actor_ = world->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_parameters);
     SP_ASSERT(goal_actor_);
@@ -56,7 +56,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
 
     // Read file data, line-by-line in the format:
     // scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
-    std::ifstream fs(Config::get<std::string>("SP_ENGINE.IMITATION_LEARNING_TASK.EPISODES_FILE"));
+    std::ifstream fs(Config::get<std::string>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.EPISODES_FILE"));
     SP_ASSERT(fs.is_open());
     std::string line;
     std::getline(fs, line); // read header
@@ -80,7 +80,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
         // TODO (MR): Maybe scene_id should be passed in, because currently this lower-level code is
         // reading a config parameter that belongs to a higher-level system, which we usually avoid.
         // I think this is ok for now though, because we intend to migrate this code to Python soon.
-        if (scene_id == Config::get<std::string>("SP_ENGINE.SCENE_ID")) {
+        if (scene_id == Config::get<std::string>("SP_ENGINE.LEGACY.SCENE_ID")) {
             agent_initial_locations_.push_back(initial_location);
             agent_goal_locations_.push_back(goal_location);
         }
@@ -106,12 +106,12 @@ ImitationLearningTask::~ImitationLearningTask()
 
 void ImitationLearningTask::findObjectReferences(UWorld* world)
 {
-    agent_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SP_ENGINE.IMITATION_LEARNING_TASK.AGENT_ACTOR_NAME"));
+    agent_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.AGENT_ACTOR_NAME"));
     SP_ASSERT(agent_actor_);
 
     bool return_null_if_not_found = false;
     obstacle_ignore_actors_ = Unreal::findActorsByName(
-        world, Config::get<std::vector<std::string>>("SP_ENGINE.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
+        world, Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
     actor_hit_event_component_->component_->subscribe(agent_actor_);
     actor_hit_event_component_->component_->actor_hit_func_ =
@@ -188,9 +188,9 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 void ImitationLearningTask::reset()
 {
     FVector offset_location = {
-        Config::get<double>("SP_ENGINE.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_X"),
-        Config::get<double>("SP_ENGINE.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Y"),
-        Config::get<double>("SP_ENGINE.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Z")
+        Config::get<double>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_X"),
+        Config::get<double>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Y"),
+        Config::get<double>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Z")
     };
     FVector agent_initial_location = agent_initial_locations_.at(episode_index_) + offset_location;
 
