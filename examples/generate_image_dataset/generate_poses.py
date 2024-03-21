@@ -41,7 +41,9 @@ if __name__ == "__main__":
     # create SpEngine object
     sp_engine = spear.SpEngine(config)
 
-    navmesh = spear.NavMesh(config, sp_engine)
+    # navmesh = spear.NavMesh(config, sp_engine)
+    navmesh_service = sp_engine.get_navmesh_service()
+    # navmesh = sp_engine.get_service("navmesh")
     
     # iterate over all scenes
     for scene_id in scene_ids:
@@ -51,7 +53,7 @@ if __name__ == "__main__":
         sp_engine.open_level(scene_id)
 
         # get a few random points
-        points = navmesh.get_random_points(args.num_poses_per_scene)
+        points = navmesh_service.get_random_points(args.num_poses_per_scene)
 
         # generate random pitch, yaw, roll values
         pitch_values = np.random.uniform(low=0.0, high=0.0, size=args.num_poses_per_scene)

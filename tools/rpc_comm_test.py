@@ -25,16 +25,11 @@ if __name__ == "__main__":
     sp_engine.n_ticks(5)
 
     sp_engine.open_level("debug_0000")
+    sp_engine.n_ticks(10)
 
-    time.sleep(5)
-
-    # sp_engine.begin_tick()
-    # sp_engine.rpc_client.call("game_world_service.open_level", "debug_0001", "debug_0001")
-    # sp_engine.tick()
-    # sp_engine.end_tick()
-
-    # time.sleep(10)
-
+    sp_engine.open_level("debug_0001")
+    sp_engine.n_ticks(10)
+    
     # close the sp_engineironment
     sp_engine.close()
 
