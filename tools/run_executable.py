@@ -44,11 +44,10 @@ if __name__ == '__main__':
     # load config
     config = spear.get_config(user_config_files=[])
     config.defrost()
-    config.SP_ENGINE.INTERACTION_MODE = "interactive"
     if args.scene_id is not None:
-        config.SP_ENGINE.SCENE_ID = args.scene_id
+        config.SP_ENGINE.LEGACY_SERVICE.SCENE_ID = args.scene_id
     if args.map_id is not None:
-        config.SP_ENGINE.MAP_ID = args.map_id
+        config.SP_ENGINE.LEGACY_SERVICE.MAP_ID = args.map_id
     if args.vk_icd_filenames is not None:
         config.SPEAR.VK_ICD_FILENAMES = args.vk_icd_filenames
     if args.gpu_id is not None:

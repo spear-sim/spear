@@ -14,11 +14,21 @@ class SpEngine():
     def __init__(self, config):
         
         self._config = config
-        self.rpc_client: msgpackrpc.Client
+        self._rpc_client: msgpackrpc.Client
 
         self._request_launch_unreal_instance()
         self._initialize_rpc_client()
+
+        # Need to do these after we have a valid rpc_client
+        self.engine_service = spear.EngineService(self._rpc_client)
+
+        # Need to do this after we have a valid engine_service object to call begin_tick(), tick(), and end_tick().
         self._initialize_unreal_instance()
+
+        # Need to do these here because sometimes it'll take more time for the world to call BeginPlay, and we need the agent, and
+        # task to be valid before we create Env object.
+        self.env = spear.Env(config, self)
+        self.navmesh_service = spear.NavMeshService(self)
 
     def close(self):
         # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC client. Normally,
@@ -26,55 +36,6 @@ class SpEngine():
         # the Unreal instance to close it. So we close the Unreal instance first and then close the client.
         self._request_close_unreal_instance()
         self._close_rpc_client()
-
-    def n_ticks(self, num_of_ticks=1):
-        for _ in range(num_of_ticks):
-            self.begin_tick()
-            self.tick()
-            self.end_tick()
-
-    def begin_tick(self):
-        self.rpc_client.call("engine_service.begin_tick")
-        self.rpc_client.call("game_world_service.unpause_game")
-
-    def tick(self):
-        self.rpc_client.call("engine_service.tick")
-
-    def end_tick(self):
-        self.rpc_client.call("game_world_service.pause_game")
-        self.rpc_client.call("engine_service.end_tick")
-
-    def get_current_level(self):
-        return self.rpc_client.call("game_world_service.get_current_level_path_name")
-
-    def open_level(self, scene_id, map_id=""):
-        desired_level_path_name = ""
-        desired_level_name = ""
-        if scene_id != "":
-            if map_id == "":
-                map_id = scene_id
-            else:
-                map_id = map_id
-            desired_level_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id + "." + map_id
-            desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id
-
-        spear.log("scene_id:                ", scene_id)
-        spear.log("desired_level_path_name: ", desired_level_path_name)
-        spear.log("desired_level_name:      ", desired_level_name)
-
-        self.rpc_client.call("game_world_service.open_level", desired_level_path_name)
-        
-    def get_byte_order(self):
-        unreal_instance_byte_order = self.rpc_client.call("engine_service.get_byte_order")
-        rpc_client_byte_order = sys.byteorder
-        if unreal_instance_byte_order == rpc_client_byte_order:
-            return None
-        elif unreal_instance_byte_order == "little":
-            return "<"
-        elif unreal_instance_byte_order == "big":
-            return ">"
-        else:
-            assert False
 
     def _request_launch_unreal_instance(self):
 
@@ -209,7 +170,7 @@ class SpEngine():
 
         spear.log("Closing Unreal instance...")
 
-        self._request_close()
+        self._rpc_client.call("sp_engine.request_close")
         self._wait_until_unreal_instance_is_closed()
 
         spear.log("Finished closing Unreal instance.")
@@ -222,11 +183,11 @@ class SpEngine():
         if self._config.SPEAR.LAUNCH_MODE == "running_instance":
             connected = False
             try:
-                self.rpc_client = msgpackrpc.Client(
+                self._rpc_client = msgpackrpc.Client(
                     msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT),
                     timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                self._ping()
+                self._rpc_client.call("sp_engine.ping")
                 connected = True
             except:
                 # Client may not clean up resources correctly in this case, so we clean things up explicitly.
@@ -248,11 +209,11 @@ class SpEngine():
                     self._close_rpc_client()
                     assert False
                 try:
-                    self.rpc_client = msgpackrpc.Client(
+                    self._rpc_client = msgpackrpc.Client(
                         msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT), 
                         timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                    self._ping()
+                    self._rpc_client.call("sp_engine.ping")
                     connected = True
                 except Exception as e:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
@@ -284,9 +245,9 @@ class SpEngine():
         # generally also want to do more than one tick to warm up various caches and rendering features
         # that leverage temporal coherence between frames.
         for i in range(1 + self._config.SPEAR.NUM_EXTRA_WARMUP_TICKS):
-            self.begin_tick()
-            self.tick()
-            self.end_tick()
+            self.engine_service.begin_tick()
+            self.engine_service.tick()
+            self.engine_service.end_tick()
 
         spear.log("Finished initializing Unreal instance.")
 
@@ -310,11 +271,5 @@ class SpEngine():
 
     def _close_rpc_client(self):
         spear.log("Closing RPC client...")
-        self.rpc_client.close()
-        self.rpc_client._loop._ioloop.close()
-
-    def _ping(self):
-        return self.rpc_client.call("engine_service.ping")
-
-    def _request_close(self):
-        self.rpc_client.call("engine_service.request_close")
+        self._rpc_client.close()
+        self._rpc_client._loop._ioloop.close()

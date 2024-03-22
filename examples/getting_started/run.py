@@ -32,12 +32,13 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
+    # create SpEngine object
     sp_engine = spear.SpEngine(config)
 
-    # create Env object
-    if config.SP_ENGINE.AGENT == "SphereAgent":
-        env = spear.Env(config, sp_engine)
-    elif config.SP_ENGINE.AGENT == "VehicleAgent":
+    # create gym object
+    if config.SP_ENGINE.LEGACY_SERVICE.AGENT == "SphereAgent":
+        env = sp_engine.env
+    elif config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent":
         env = OpenBotEnv(config, sp_engine)
 
     # reset the simulation to get the first observation
@@ -51,7 +52,7 @@ if __name__ == "__main__":
 
     # take a few steps
     for i in range(NUM_STEPS):
-        if config.SP_ENGINE.AGENT == "SphereAgent":
+        if config.SP_ENGINE.LEGACY_SERVICE.AGENT == "SphereAgent":
             obs, reward, done, info = env.step(action={
                 "add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64),
                 "add_to_rotation": np.array([0.0, 1.0, 0.0])
@@ -64,7 +65,7 @@ if __name__ == "__main__":
                 spear.log("    reward:             ", reward)
                 spear.log("    done:               ", done)
                 spear.log("    info:               ", info.keys())
-        elif config.SP_ENGINE.AGENT == "VehicleAgent":
+        elif config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent":
             obs, reward, done, info = env.step(action={"set_duty_cycles": np.array([1.0, 0.715], dtype=np.float64)})
             if not args.benchmark:
                 spear.log("VehicleAgent:")

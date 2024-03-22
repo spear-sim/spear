@@ -89,18 +89,9 @@ public:
             SP_ASSERT(frame_state_ == FrameState::Idle);
         });
 
-        basic_entry_point_binder_->bind("engine_service.ping", []() -> std::string {
-            return "EngineService received a call to ping()...";
-        });
-
         basic_entry_point_binder_->bind("engine_service.get_byte_order", []() -> std::string {
             uint32_t dummy = 0x01020304;
             return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
-        });
-
-        basic_entry_point_binder_->bind("engine_service.request_close", []() -> void {
-            bool immediate_shutdown = false;
-            FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
     }
 

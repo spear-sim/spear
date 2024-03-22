@@ -31,6 +31,16 @@ void SpEngine::StartupModule()
     }
     SP_ASSERT(rpc_server_);
 
+    // bind functions here to be consistent with the usage of these functions on the python side
+    rpc_server_->bind("sp_engine.ping", []() -> std::string {
+        return "SpEngine received a call to ping()...";
+    });
+
+    rpc_server_->bind("sp_engine.request_close", []() -> void {
+        bool immediate_shutdown = false;
+        FGenericPlatformMisc::RequestExit(immediate_shutdown);
+    });
+
     // EngineService needs its own custom logic for binding its entry points, because they are
     // intended to run directly on the RPC server worker thread, whereas all other entry points
     // are intended to run on work queues maintained by EngineService. So we pass in the server

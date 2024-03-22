@@ -12,9 +12,9 @@ class OpenBotEnv(spear.Env):
 
     def __init__(self, config, sp_engine):
     
-        assert config.SP_ENGINE.AGENT == "VehicleAgent"
-        assert "set_drive_torques" in config.SP_ENGINE.VEHICLE_AGENT.ACTION_COMPONENTS
-        assert "wheel_rotation_speeds" in config.SP_ENGINE.VEHICLE_AGENT.OBSERVATION_COMPONENTS
+        assert config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent"
+        assert "set_drive_torques" in config.SP_ENGINE.LEGACY.VEHICLE_AGENT.ACTION_COMPONENTS
+        assert "wheel_rotation_speeds" in config.SP_ENGINE.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS
 
         self._wheel_rotation_speeds = None
 
