@@ -11,9 +11,9 @@
 
 #include <Math/Vector.h>
 
+#include "SpCore/ArrayDesc.h"
 #include "SpEngine/Legacy/StandaloneComponent.h"
 #include "SpEngine/Legacy/TickEventComponent.h"
-#include "SpCore/ArrayDesc.h"
 
 class UPrimitiveComponent;
 

@@ -13,11 +13,11 @@
 
 #include <Math/Rotator.h>
 
+#include "SpCore/ArrayDesc.h"
 #include "SpEngine/Legacy/Agent.h"
 #include "SpEngine/Legacy/ClassRegistrationUtils.h"
 #include "SpEngine/Legacy/StandaloneComponent.h"
 #include "SpEngine/Legacy/TickEventComponent.h"
-#include "SpCore/ArrayDesc.h"
 
 class ACameraActor;
 class AStaticMeshActor;

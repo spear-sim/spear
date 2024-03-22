@@ -19,11 +19,11 @@
 #include <PhysicsEngine/PhysicsSettings.h>
 #include <UObject/UObjectGlobals.h> // NewObject
 
-#include "SpEngine/Legacy/StandaloneComponent.h"
-#include "SpEngine/Legacy/TickEventComponent.h"
 #include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
+#include "SpEngine/Legacy/StandaloneComponent.h"
+#include "SpEngine/Legacy/TickEventComponent.h"
 
 struct FActorComponentTickFunction;
 

@@ -20,12 +20,12 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "SpEngine/Legacy/CameraSensor.h"
 #include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpEngine/Legacy/CameraSensor.h"
 
 struct FHitResult;
 

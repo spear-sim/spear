@@ -9,9 +9,9 @@
 #include <string>
 #include <vector>
 
+#include "SpCore/ArrayDesc.h"
 #include "SpEngine/Legacy/Agent.h"
 #include "SpEngine/Legacy/ClassRegistrationUtils.h"
-#include "SpCore/ArrayDesc.h"
 
 class UWorld;
 

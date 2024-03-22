@@ -21,13 +21,13 @@
 #include <Math/Vector.h>
 #include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
-#include "SpEngine/Legacy/ActorHitEventComponent.h"
-#include "SpEngine/Legacy/StandaloneComponent.h"
 #include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpEngine/Legacy/ActorHitEventComponent.h"
+#include "SpEngine/Legacy/StandaloneComponent.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {

@@ -21,12 +21,12 @@
 #include <Materials/MaterialInstanceDynamic.h>
 #include <UObject/UObjectGlobals.h>       // LoadObject, NewObject
 
-#include "SpEngine/Legacy/BoostInterprocess.h"
 #include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpEngine/Legacy/BoostInterprocess.h"
 
 struct FColor;
 struct FLinearColor;

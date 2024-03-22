@@ -25,14 +25,14 @@
 #include <Math/Vector.h>
 #include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
-#include "SpEngine/Legacy/CameraSensor.h"
-#include "SpEngine/Legacy/StandaloneComponent.h"
-#include "SpEngine/Legacy/TickEventComponent.h"
 #include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpEngine/Legacy/CameraSensor.h"
+#include "SpEngine/Legacy/StandaloneComponent.h"
+#include "SpEngine/Legacy/TickEventComponent.h"
 
 struct FActorComponentTickFunction;
 
