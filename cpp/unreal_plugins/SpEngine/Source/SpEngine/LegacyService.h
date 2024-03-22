@@ -194,13 +194,8 @@ public:
                 world_ = world;
 
                 // We need to defer initializing this handler until after we have a valid world_ pointer,
-                // and we defer the rest of our initialization code until the OnWorldBeginPlay event. We
-                // wrap this code in an if block to enable interactive navigation mode, which will potentially
-                // need to load a new map via the config system, but should not initialize the rest of our
-                // code.
-                //if (Config::s_initialized_ && Config::get<std::string>("SP_ENGINE.INTERACTION_MODE") == "programmatic") {
-                    world_begin_play_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &LegacyService::worldBeginPlayEventHandler);
-                //}
+                // and we defer the rest of our initialization code until the OnWorldBeginPlay event.
+                world_begin_play_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &LegacyService::worldBeginPlayEventHandler);
             }
         }
     }
@@ -233,10 +228,8 @@ public:
             }
 
             // remove event handlers bound to this world before world gets cleaned up
-            //if (Config::s_initialized_ && Config::get<std::string>("SP_ENGINE.INTERACTION_MODE") == "programmatic") {
-                world_->OnWorldBeginPlay.Remove(world_begin_play_handle_);
-                world_begin_play_handle_.Reset();
-            //}
+            world_->OnWorldBeginPlay.Remove(world_begin_play_handle_);
+            world_begin_play_handle_.Reset();
 
             // clear cached world_ pointer
             world_ = nullptr;
