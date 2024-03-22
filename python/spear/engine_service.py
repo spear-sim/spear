@@ -25,7 +25,11 @@ class EngineService():
         self._rpc_client.call("engine_service.end_tick")
 
     def get_current_level(self):
-        return self._rpc_client.call("game_world_service.get_current_level_name")
+        self.begin_tick()
+        level_name = self._rpc_client.call("game_world_service.get_current_level_name")
+        self.tick()
+        self.end_tick()
+        return level_name
 
     def open_level(self, scene_id, map_id=""):
         desired_level_name = ""
