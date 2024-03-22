@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # create SpEngine object
     sp_engine = spear.SpEngine(config)
 
-    # create gym object
+    # create or get gym object
     if config.SP_ENGINE.LEGACY_SERVICE.AGENT == "SphereAgent":
         env = sp_engine.env
     elif config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent":
