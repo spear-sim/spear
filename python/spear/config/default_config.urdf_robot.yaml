@@ -17,4 +17,4 @@ URDF_ROBOT:
       ASPECT_RATIO: 1.0       # Camera aspect ratio, width/height, typically overwritten by UrdfRobotAgent
 
   URDF_ROBOT_COMPONENT:
-    USER_INPUT_ACTIONS: {}         # Useful for forwarding keyboard input
+    USER_INPUT_ACTIONS: {}    # Useful for forwarding keyboard input

@@ -25,7 +25,7 @@ VEHICLE:
       ROTATION_YAW: 0.0               # IMU relative rotation in [deg]
       ROTATION_ROLL: 0.0              # IMU relative rotation in [deg]
 
-    USER_INPUT_ACTIONS: {}                 # Useful for forwarding keyboard input
+    USER_INPUT_ACTIONS: {}            # Useful for forwarding keyboard input
 
   VEHICLE_MOVEMENT_COMPONENT:
     MASS: 11.2                        # Mass of the vehicle chassis in [kg]
