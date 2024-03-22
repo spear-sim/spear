@@ -35,6 +35,11 @@ ASpSpectatorPawn::ASpSpectatorPawn()
 
     // Need to set this to true, otherwise keyboard input will not be processed when attempting to move the camera when the game is paused.
     spectator_pawn_movement_->PrimaryComponentTick.bTickEvenWhenPaused = true;
+
+    // Need to enable these, otherwise the mouse movements will not work when the game is paused.
+    bUseControllerRotationPitch = true;
+    bUseControllerRotationYaw   = true;
+    bUseControllerRotationRoll  = true;
 }
 
 ASpSpectatorPawn::~ASpSpectatorPawn()
