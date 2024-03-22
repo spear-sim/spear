@@ -17,12 +17,8 @@ public class SpTargetRulesTarget : TargetRules
         // Needs to be overridden in derived classes.
         Type = TargetType.Client;
 
-        // Change cpp version to C++20
-        bOverrideBuildEnvironment = true;
-        CppStandard = CppStandardVersion.Cpp20;
-
         // Added to projects by default in UE 5.2.
-        DefaultBuildSettings = BuildSettingsVersion.V3;
+        DefaultBuildSettings = BuildSettingsVersion.V2;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
 
         if (target.Platform == UnrealTargetPlatform.Win64) {
