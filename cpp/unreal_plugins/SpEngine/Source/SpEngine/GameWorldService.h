@@ -13,7 +13,6 @@
 #include <Kismet/GameplayStatics.h>
 
 #include <SpCore/Assert.h>
-#include <SpCore/Config.h>
 #include <SpCore/Log.h>
 #include <SpCore/Unreal.h>
 #include <SpEngine/EngineService.h> // CEntryPointBinder
@@ -28,25 +27,23 @@ public:
 
 		entry_point_binder->bind_func_wrapped("game_world_service", "pause_game", [this]() -> void {
             SP_ASSERT(world_);
-            SP_LOG("Pausing the game...");
             UGameplayStatics::SetGamePaused(world_, true);
 	    });
 
         entry_point_binder->bind_func_wrapped("game_world_service", "unpause_game", [this]() -> void {
             SP_ASSERT(world_);
-            SP_LOG("Unpausing the game...");
             UGameplayStatics::SetGamePaused(world_, false);
         });
 
-        entry_point_binder->bind_func("game_world_service", "open_level", [this](const std::string& desired_level_path_name) -> void {
+        entry_point_binder->bind_func_wrapped("game_world_service", "open_level", [this](const std::string& desired_level_name) -> void {
             SP_ASSERT(world_);
-            SP_LOG("Opening level: ", desired_level_path_name);
-            UGameplayStatics::OpenLevel(world_, Unreal::toFName(desired_level_path_name));
+            SP_LOG("Opening level: ", desired_level_name);
+            UGameplayStatics::OpenLevel(world_, Unreal::toFName(desired_level_name));
         });
 
-        entry_point_binder->bind_func("game_world_service", "get_current_level_path_name", [this]() -> std::string {
+        entry_point_binder->bind_func_wrapped("game_world_service", "get_current_level_name", [this]() -> std::string {
             SP_ASSERT(world_);
-            return Unreal::toStdString(world_->GetPathName());
+            return Unreal::toStdString(world_->GetName());
         });
 	}
 

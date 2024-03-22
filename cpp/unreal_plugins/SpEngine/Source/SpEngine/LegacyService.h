@@ -20,11 +20,16 @@
 #include <SpCore/Unreal.h>
 #include <SpEngine/EngineService.h> // CEntryPointBinder
 #include "SpEngine/Legacy/Agent.h"
+#include "SpEngine/Legacy/CameraAgent.h"
 #include "SpEngine/Legacy/ClassRegistrationUtils.h"
 #include "SpEngine/Legacy/ImitationLearningTask.h"
 #include "SpEngine/Legacy/NavMesh.h"
 #include "SpEngine/Legacy/NullAgent.h"
 #include "SpEngine/Legacy/NullTask.h"
+#include "SpEngine/Legacy/SphereAgent.h"
+#include "SpEngine/Legacy/UrdfRobotAgent.h"
+#include "SpEngine/Legacy/VehicleAgent.h"
+
 
 class LegacyService {
 public:
@@ -153,8 +158,8 @@ public:
             std::string map_id = "apartment_0000";
 
             if (Config::s_initialized_) {
-                scene_id = Config::get<std::string>("SP_ENGINE.SCENE_ID");
-                map_id = Config::get<std::string>("SP_ENGINE.MAP_ID");
+                scene_id = Config::get<std::string>("SP_ENGINE.LEGACY_SERVICE.SCENE_ID");
+                map_id = Config::get<std::string>("SP_ENGINE.LEGACY_SERVICE.MAP_ID");
             }
 
             std::string desired_world_path_name = "";
@@ -243,7 +248,7 @@ public:
 
         // execute optional console commands from python client
         if (Config::s_initialized_) {
-            for (auto& command : Config::get<std::vector<std::string>>("SP_ENGINE.CUSTOM_UNREAL_CONSOLE_COMMANDS")) {
+            for (auto& command : Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY_SERVICE.CUSTOM_UNREAL_CONSOLE_COMMANDS")) {
                 GEngine->Exec(world_, *Unreal::toFString(command));
             }
         }
@@ -251,10 +256,10 @@ public:
         // set physics parameters
         UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
         if (Config::s_initialized_) {
-            physics_settings->bEnableEnhancedDeterminism = Config::get<bool>("SP_ENGINE.PHYSICS.ENABLE_ENHANCED_DETERMINISM");
-            physics_settings->bSubstepping               = Config::get<bool>("SP_ENGINE.PHYSICS.ENABLE_SUBSTEPPING");
-            physics_settings->MaxSubstepDeltaTime        = Config::get<float>("SP_ENGINE.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
-            physics_settings->MaxSubsteps                = Config::get<int32>("SP_ENGINE.PHYSICS.MAX_SUBSTEPS");
+            physics_settings->bEnableEnhancedDeterminism = Config::get<bool>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.ENABLE_ENHANCED_DETERMINISM");
+            physics_settings->bSubstepping               = Config::get<bool>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.ENABLE_SUBSTEPPING");
+            physics_settings->MaxSubstepDeltaTime        = Config::get<float>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
+            physics_settings->MaxSubsteps                = Config::get<int32>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.MAX_SUBSTEPS");
         } else {
             physics_settings->bEnableEnhancedDeterminism = true;
             physics_settings->bSubstepping               = true;
@@ -266,7 +271,7 @@ public:
         // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep for more details.
         float step_time = 0.05;
         if (Config::s_initialized_) {
-            step_time = Config::get<float>("SP_ENGINE.PHYSICS.SIMULATION_STEP_TIME");
+            step_time = Config::get<float>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.SIMULATION_STEP_TIME");
         }
 
         if (physics_settings->bSubstepping) {
@@ -283,12 +288,12 @@ public:
 
         if (Config::s_initialized_) {
             // create Agent
-            agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, Config::get<std::string>("SP_ENGINE.AGENT"), world_));
+            agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, Config::get<std::string>("SP_ENGINE.LEGACY_SERVICE.AGENT"), world_));
 
             // create Task
-            if (Config::get<std::string>("SP_ENGINE.TASK") == "NullTask") {
+            if (Config::get<std::string>("SP_ENGINE.LEGACY_SERVICE.TASK") == "NullTask") {
                 task_ = std::make_unique<NullTask>();
-            } else if (Config::get<std::string>("SP_ENGINE.TASK") == "ImitationLearningTask") {
+            } else if (Config::get<std::string>("SP_ENGINE.LEGACY_SERVICE.TASK") == "ImitationLearningTask") {
                 task_ = std::make_unique<ImitationLearningTask>(world_);
             } else {
                 SP_ASSERT(false);
