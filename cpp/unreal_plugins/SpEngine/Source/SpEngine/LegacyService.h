@@ -151,6 +151,7 @@ public:
 
             std::string scene_id = "apartment_0000";
             std::string map_id = "apartment_0000";
+
             if (Config::s_initialized_) {
                 scene_id = Config::get<std::string>("SP_ENGINE.SCENE_ID");
                 map_id = Config::get<std::string>("SP_ENGINE.MAP_ID");
@@ -162,18 +163,16 @@ public:
                 if (map_id == "") {
                     map_id = scene_id;
                 }
-                desired_world_path_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id + "." + map_id;
                 desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id;
             }
 
             // if the current world is not the desired one, open the desired one
-            bool open_level = desired_world_path_name != "" && desired_world_path_name != Unreal::toStdString(world->GetPathName());
+            bool open_level = scene_id != "" && scene_id != Unreal::toStdString(world->GetName());
 
             SP_LOG("scene_id:                ", scene_id);
             SP_LOG("map_id:                  ", map_id);
-            SP_LOG("desired_world_path_name: ", desired_world_path_name);
             SP_LOG("desired_level_name:      ", desired_level_name);
-            SP_LOG("world->GetPathName():    ", Unreal::toStdString(world->GetPathName()));
+            SP_LOG("world->GetName():        ", Unreal::toStdString(world->GetName()));
             SP_LOG("open_level:              ", open_level);
 
             if (open_level) {
