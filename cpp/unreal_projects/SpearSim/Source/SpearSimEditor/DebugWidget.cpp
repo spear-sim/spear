@@ -105,7 +105,7 @@ void ADebugWidget::SetObjectProperties()
     Unreal::PropertyDesc com_nudge_property_desc_          = Unreal::findPropertyByName(static_mesh_component, "bodyinstance.comnudge"); // not case-sensitive
     Unreal::PropertyDesc simulate_physics_property_desc    = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.bSimulatePhysics");
 
-    // Get property value from PropertyDesc
+    // Get property value from PropertyDesc.
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_x_property_desc));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_y_property_desc));
@@ -118,12 +118,13 @@ void ADebugWidget::SetObjectProperties()
     SP_LOG(Unreal::getPropertyValueAsString(com_nudge_property_desc_));
     SP_LOG(Unreal::getPropertyValueAsString(simulate_physics_property_desc));
 
-    // Get property value from void* pointer and StaticStruct()
+    // Get property value from void* pointer and StaticStruct().
     void* body_instance = &(static_mesh_component->BodyInstance);
     SP_LOG(Unreal::getPropertyValueAsString(body_instance, FBodyInstance::StaticStruct()));
     SP_LOG();
 
-    // Get property value from void* pointer and findStaticStructByName(...), useful for when a class doesn't define a StaticStruct() method, e.g., FVector
+    // Get property value from void* pointer and findStaticStructByName(...), useful for when a class
+    // doesn't define a StaticStruct() method, e.g., FVector.
     AEngineActor* engine_actor = Unreal::findActorByType<AEngineActor>(world);
     SP_ASSERT(engine_actor);
     void* v1 = relative_location_property_desc.value_ptr_;
@@ -133,7 +134,8 @@ void ADebugWidget::SetObjectProperties()
     static int i = 0;
     std::string str;
 
-    // Set property value from void* and findStaticStructByName(...), useful for when a class doesn't define a StaticStruct() method, e.g., FVector
+    // Set property value from void* and findStaticStructByName(...), useful for when a class doesn't
+    // define a StaticStruct() method, e.g., FVector.
     FVector v2(1.23, 4.56, 7.89);
     str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}");
     SP_LOG(Unreal::getPropertyValueAsString(&v2, engine_actor->findStaticStructByName("FVector")));
@@ -141,19 +143,28 @@ void ADebugWidget::SetObjectProperties()
     SP_LOG(Unreal::getPropertyValueAsString(&v2, engine_actor->findStaticStructByName("FVector")));
     SP_LOG();
 
-    // Set property value from PropertyDesc
+    // Set property value from PropertyDesc.
     str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
     Unreal::setPropertyValueFromString(relative_location_property_desc, str);
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
     SP_LOG();
 
-    // Set property value from PropertyDesc
+    // Set property value from PropertyDesc.
     str = "1.2345";
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_z_property_desc));
     Unreal::setPropertyValueFromString(relative_location_z_property_desc, str);
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_z_property_desc));
     SP_LOG();
+
+    //
+    // We need to do this do see visual updates in the editor. But this interface is not ideal because
+    // it requires passing in a position and rotation delta, and it doesn't take the UPROPERTIES we set
+    // previously into account. Therefore, we must update the position of objects by calling UFUNCTIONS
+    // rather than setting UPROPERTIES.
+    // 
+    // static_mesh_component->MoveComponentImpl(FVector(5.0, 5.0, 5.0), FQuat::Identity, false);
+    //
 
     i++;
 }
