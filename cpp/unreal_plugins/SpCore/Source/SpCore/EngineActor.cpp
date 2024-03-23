@@ -24,6 +24,15 @@ AEngineActor::~AEngineActor()
     SP_LOG_CURRENT_FUNCTION();
 }
 
+UStruct* AEngineActor::findStaticStructByName(const std::string& struct_name)
+{
+    Unreal::PropertyDesc property_desc = Unreal::findPropertyByName(this, struct_name);
+    SP_ASSERT(property_desc.property_);
+    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
+    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
+    return struct_property->Struct;
+}
+
 #if WITH_EDITOR
     void AEngineActor::PostActorCreated()
     {
@@ -80,12 +89,3 @@ AEngineActor::~AEngineActor()
         Unreal::requestUpdateStableActorName(actor);
     }
 #endif
-
-UStruct* AEngineActor::findStaticStructByName(const std::string& struct_name)
-{
-    Unreal::PropertyDesc property_desc = Unreal::findPropertyByName(this, struct_name);
-    SP_ASSERT(property_desc.property_);
-    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
-    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-    return struct_property->Struct;
-}
