@@ -40,6 +40,9 @@ void ASpPlayerController::BeginPlay()
 {
     APlayerController::BeginPlay();
 
+    // Need to set this to true to avoid blurry visual artifacts in the editor when the game is paused.
+    GetWorld()->bIsCameraMoveableWhenPaused = true;
+
     UserInputComponent->subscribeToUserInputs({"Escape"});
     UserInputComponent->setHandleUserInputFunc([](const std::string& key, float axis_value) -> void {
         bool force = false;

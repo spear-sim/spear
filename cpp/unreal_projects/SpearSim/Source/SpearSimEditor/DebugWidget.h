@@ -37,4 +37,13 @@ public:
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SetObjectProperties();
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void CallFunctions();
+
+    UFUNCTION()
+    FString GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
+
+    UFUNCTION()
+    FVector GetVector(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
 };

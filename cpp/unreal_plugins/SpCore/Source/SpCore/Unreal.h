@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <stddef.h> // size_t
+
 #include <concepts> // std::derived_from
 #include <map>
 #include <ranges>   // std::views::filter, std::views::transform
@@ -16,14 +18,19 @@
 #include <Containers/Array.h>        // TArray
 #include <Containers/StringConv.h>   // TCHAR_TO_UTF8, UTF8_TO_TCHAR
 #include <Containers/UnrealString.h> // FString::operator*
+#include <Dom/JsonObject.h>
 #include <EngineUtils.h>             // TActorIterator
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>            // TCHAR
 #include <JsonObjectConverter.h>
-#include <JsonObjectWrapper.h>
-#include <UObject/Class.h>           // UStruct
+#include <Serialization/JsonReader.h>
+#include <Serialization/JsonSerializer.h>
+#include <Templates/SharedPointer.h> // TSharedPtr, TSharedRef
+#include <UObject/Class.h>           // EIncludeSuperFlag, UClass, UStruct
 #include <UObject/NameTypes.h>       // FName
-#include <UObject/UnrealType.h>      // FProperty, FStructProperty
+#include <UObject/Object.h>          // UObject
+#include <UObject/ObjectMacros.h>    // EPropertyFlags
+#include <UObject/UnrealType.h>      // FBoolProperty, FDoubleProperty, FFloatProperty, FIntProperty, FProperty, FStrProperty, FStructProperty, TFieldIterator
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -670,7 +677,7 @@ public:
         PropertyDesc property_desc;
         property_desc.value_ptr_ = value_ptr;
 
-        for (int i = 0; i < property_names.size(); i++) {
+        for (int i = 0; i < property_names.size() - 1; i++) {
             std::string& property_name = property_names.at(i);
 
             property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(property_name));
@@ -679,22 +686,37 @@ public:
             property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
             SP_ASSERT(property_desc.value_ptr_);
 
-            if (i < property_names.size() - 1) {
-                if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
-                    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-                    ustruct = struct_property->Struct;
-                } else {
-                    SP_LOG(property_name, " is an unsupported type:", toStdString(property_desc.property_->GetClass()->GetName()));
-                    SP_ASSERT(false);
-                }
+            if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
+                FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
+                ustruct = struct_property->Struct;
+            } else {
+                SP_LOG(property_name, " is an unsupported type:", toStdString(property_desc.property_->GetClass()->GetName()));
+                SP_ASSERT(false);
             }
         }
+
+        std::string& property_name = property_names.at(property_names.size() - 1);
+
+        property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(property_name));
+        SP_ASSERT(property_desc.property_);
+
+        property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
+        SP_ASSERT(property_desc.value_ptr_);
 
         return property_desc;
     }
 
     //
-    // Helper functions to access properties
+    // Find function by name and return a UFunction
+    //
+
+    static UFunction* findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper)
+    {
+        return uclass->FindFunctionByName(toFName(name), include_super_flag);
+    }
+
+    //
+    // Get property value
     //
 
     static std::string getPropertyValueAsString(UObject* uobject)
@@ -717,7 +739,8 @@ public:
         if (property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
             property_desc.property_->IsA(FIntProperty::StaticClass()) ||
             property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
-            property_desc.property_->IsA(FDoubleProperty::StaticClass())) {
+            property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
+            property_desc.property_->IsA(FStrProperty::StaticClass())) {
 
             TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
             SP_ASSERT(json_value.Get());
@@ -736,6 +759,10 @@ public:
             return "";
         }
     }
+
+    //
+    // Set property value
+    //
 
     static void setPropertyValueFromString(UObject* uobject, const std::string& string)
     {
@@ -765,7 +792,8 @@ public:
         if (property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
             property_desc.property_->IsA(FIntProperty::StaticClass()) ||
             property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
-            property_desc.property_->IsA(FDoubleProperty::StaticClass())) {
+            property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
+            property_desc.property_->IsA(FStrProperty::StaticClass())) {
 
             bool success = false;
             TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString("{ \"dummy\": " + string + "}"));
@@ -782,19 +810,58 @@ public:
 
             FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
             UStruct* ustruct = struct_property->Struct;
-
-            bool success = false;
-            TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString(string));
-            TSharedPtr<FJsonObject> json_object;
-            success = FJsonSerializer::Deserialize(json_reader, json_object);
-            SP_ASSERT(success);
-            SP_ASSERT(json_object.IsValid());
-            success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, property_desc.value_ptr_);
-            SP_ASSERT(success);
+            setPropertyValueFromString(property_desc.value_ptr_, ustruct, string);
 
         } else {
             SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
             SP_ASSERT(false);
         }
+    }
+
+    //
+    // Call function
+    //
+
+    static std::string callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args)
+    {
+        // Create buffer to store all args and the return value.
+        size_t num_bytes = ufunction->ParmsSize;
+        uint8_t initial_value = 0;
+        std::vector<uint8_t> args_vector(num_bytes, initial_value);
+
+        // Copy all properties to an std::vector because we want to treat the first N-1 properties
+        // differently from the last property.
+        std::vector<FProperty*> properties;
+        for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
+            properties.push_back(*itr);
+        }
+
+        // Initialize args from std::map of input strings.
+        for (int i = 0; i < properties.size() - 1; i++) {
+            PropertyDesc arg_property_desc;
+            arg_property_desc.property_ = properties.at(i);
+            SP_ASSERT(arg_property_desc.property_);
+            SP_ASSERT(arg_property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
+
+            arg_property_desc.value_ptr_ = arg_property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
+            SP_ASSERT(arg_property_desc.value_ptr_);
+
+            setPropertyValueFromString(arg_property_desc, args.at(toStdString(arg_property_desc.property_->GetName())));
+        }
+
+        // Call function.
+        uobject->ProcessEvent(ufunction, args_vector.data());
+
+        // Get return value as string.
+        PropertyDesc return_property_desc;
+        return_property_desc.property_ = properties.at(properties.size() - 1);
+        SP_ASSERT(return_property_desc.property_);
+
+        return_property_desc.value_ptr_ = return_property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
+        SP_ASSERT(return_property_desc.value_ptr_);
+
+        std::string return_value = getPropertyValueAsString(return_property_desc);
+
+        return return_value;
     }
 };

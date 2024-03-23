@@ -168,3 +168,33 @@ void ADebugWidget::SetObjectProperties()
 
     i++;
 }
+
+void ADebugWidget::CallFunctions()
+{
+    static int i = 0;
+    std::string return_value;
+    std::string vector_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
+    std::map<std::string, std::string> args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
+
+    UFunction* get_string_ufunction = Unreal::findFunctionByName(this->GetClass(), "GetString");
+    return_value = Unreal::callFunction(this, get_string_ufunction, args);
+    SP_LOG(return_value);
+
+    UFunction* get_vector_ufunction = Unreal::findFunctionByName(this->GetClass(), "GetVector");
+    return_value = Unreal::callFunction(this, get_vector_ufunction, args);
+    SP_LOG(return_value);
+
+    i++;
+}
+
+FString ADebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
+{
+    SP_LOG_CURRENT_FUNCTION();
+    return FString("Huzzuh!");
+}
+
+FVector ADebugWidget::GetVector(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
+{
+    SP_LOG_CURRENT_FUNCTION();
+    return FVector(9.87, 6.54, 3.21);
+}
