@@ -16,26 +16,20 @@
 #include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
 #include <Containers/Array.h>        // TArray
-#include <Containers/StringConv.h>   // TCHAR_TO_UTF8, UTF8_TO_TCHAR
 #include <Containers/UnrealString.h> // FString::operator*
-#include <Dom/JsonObject.h>
 #include <EngineUtils.h>             // TActorIterator
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>            // TCHAR
-#include <JsonObjectConverter.h>
-#include <Serialization/JsonReader.h>
-#include <Serialization/JsonSerializer.h>
-#include <Templates/SharedPointer.h> // TSharedPtr, TSharedRef
-#include <UObject/Class.h>           // EIncludeSuperFlag, UClass, UStruct
+#include <UObject/Class.h>           // EIncludeSuperFlag
 #include <UObject/NameTypes.h>       // FName
 #include <UObject/Object.h>          // UObject
-#include <UObject/ObjectMacros.h>    // EPropertyFlags
-#include <UObject/UnrealType.h>      // FBoolProperty, FDoubleProperty, FFloatProperty, FIntProperty, FProperty, FStrProperty, FStructProperty, TFieldIterator
+#include <UObject/UnrealType.h>      // FProperty
 
 #include "SpCore/Assert.h"
-#include "SpCore/Log.h"
-#include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
+
+class UClass;
+class UStruct;
 
 template <typename TActorComponent>
 concept CActorComponent = std::derived_from<TActorComponent, UActorComponent>;
@@ -56,32 +50,11 @@ public:
     // String functions
     //
 
-    static std::string toStdString(const FString& str)
-    {
-        // Note that the * operator for FString returns a pointer to the underlying string
-        return std::string(TCHAR_TO_UTF8(*str));
-    }
-
-    static std::string toStdString(const FName& str)
-    {
-        // Note that str.ToString() converts FName to FString
-        return toStdString(str.ToString());
-    }
-
-    static std::string toStdString(const TCHAR* str)
-    {
-        return std::string(TCHAR_TO_UTF8(str));
-    }
-
-    static FString toFString(const std::string& str)
-    {
-        return FString(UTF8_TO_TCHAR(str.c_str()));
-    }
-
-    static FName toFName(const std::string& str)
-    {
-        return FName(str.c_str());
-    }
+    static std::string toStdString(const FString& str);
+    static std::string toStdString(const FName& str);
+    static std::string toStdString(const TCHAR* str);
+    static FString toFString(const std::string& str);
+    static FName toFName(const std::string& str);
 
     //
     // Container functions
@@ -101,30 +74,11 @@ public:
     // Helper functions to get actor and component names.
     //
 
-    static std::string getStableActorName(const AActor* actor)
-    {
-        SP_ASSERT(actor);
-        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
-        return toStdString(stable_name_component->StableName);
-    }
-
-    static void setStableActorName(const AActor* actor, std::string stable_name)
-    {
-        SP_ASSERT(actor);
-        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
-        stable_name_component->StableName = toFString(stable_name);
-    }
+    static std::string getStableActorName(const AActor* actor);
+    static void setStableActorName(const AActor* actor, std::string stable_name);
 
     #if WITH_EDITOR
-        static void requestUpdateStableActorName(const AActor* actor)
-        {
-            SP_ASSERT(actor);
-            bool assert_if_not_found = false;
-            UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
-            if (stable_name_component) {
-                stable_name_component->requestUpdate();
-            }
-        }
+        static void requestUpdateStableActorName(const AActor* actor);
     #endif
 
     static std::string getStableComponentName(const CActorComponent auto* actor_component, bool include_stable_actor_name = false)
@@ -249,22 +203,11 @@ public:
     }
 
     // 
-    // Find actors unconditionally and return an std::vector
+    // Find actors unconditionally and return an std::vector or an std::map
     //
 
-    static std::vector<AActor*> findActors(const UWorld* world)
-    {
-        return findActorsByType(world);
-    }
-
-    //
-    // Find actors unconditionally and return an std::map
-    //
-
-    static std::map<std::string, AActor*> findActorsAsMap(const UWorld* world)
-    {
-        return findActorsByTypeAsMap(world);
-    }
+    static std::vector<AActor*> findActors(const UWorld* world);
+    static std::map<std::string, AActor*> findActorsAsMap(const UWorld* world);
 
     //
     // Find actors by name or tag or type and return an std::vector
@@ -435,22 +378,11 @@ public:
     }
 
     //
-    // Get components unconditionally and return an std::vector
+    // Get components unconditionally and return an std::vector or an std::map
     //
 
-    std::vector<UActorComponent*> getComponents(const AActor* actor)
-    {
-        return getComponentsByType(actor);
-    }
-
-    //
-    // Get components unconditionally and return an std::map
-    //
-
-    std::map<std::string, UActorComponent*> getComponentsAsMap(const AActor* actor)
-    {
-        return getComponentsByTypeAsMap(actor);
-    }
+    std::vector<UActorComponent*> getComponents(const AActor* actor);
+    std::map<std::string, UActorComponent*> getComponentsAsMap(const AActor* actor);
 
     //
     // Get components by name or tag or type and return an std::vector
@@ -548,8 +480,8 @@ public:
         auto components = Std::toMap<std::string, TActorComponent*>(
             getComponentsByType<TActorComponent>(actor) |
             std::views::transform([&tags](auto component) { return std::make_pair(component, getComponentHasTags(component, tags)); }) |
-            std::views::filter([](const auto& pair) { const auto& [component, has_tags] = pair; return Std::all(has_tags); }) |
-            std::views::transform([](const auto& pair) { const auto& [component, has_tags] = pair; return std::make_pair(getStableComponentName(component), component); }));
+            std::views::filter([](const auto& pair)       { const auto& [component, has_tags] = pair; return Std::all(has_tags); }) |
+            std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return std::make_pair(getStableComponentName(component), component); }));
         return components;
     }
 
@@ -616,25 +548,9 @@ public:
     // Helper functions for finding actors and getting components
     //
 
-    static bool getActorHasStableName(const AActor* actor)
-    {
-        SP_ASSERT(actor);
-        bool assert_if_not_found = false;
-        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
-        return stable_name_component != nullptr;
-    }
-
-    static std::vector<bool> getActorHasTags(const AActor* actor, const std::vector<std::string>& tags)
-    {
-        SP_ASSERT(actor);
-        return Std::toVector<bool>(tags | std::views::transform([actor](const auto& tag) { return actor->ActorHasTag(toFName(tag)); }));
-    }
-
-    static std::vector<bool> getComponentHasTags(const UActorComponent* component, const std::vector<std::string>& tags)
-    {
-        SP_ASSERT(component);
-        return Std::toVector<bool>(tags | std::views::transform([component](const auto& tag) { return component->ComponentHasTag(toFName(tag)); }));
-    }
+    static bool getActorHasStableName(const AActor* actor);
+    static std::vector<bool> getActorHasTags(const AActor* actor, const std::vector<std::string>& tags);
+    static std::vector<bool> getComponentHasTags(const UActorComponent* component, const std::vector<std::string>& tags);
 
     template <typename TData>
     static const TData& getItem(const std::vector<TData>& vec, const TData& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
@@ -662,206 +578,34 @@ public:
         FProperty* property_ = nullptr;
     };
 
-    static PropertyDesc findPropertyByName(UObject* uobject, const std::string& name)
-    {
-        return findPropertyByName(uobject, uobject->GetClass(), name);
-    }
-
-    static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name)
-    {
-        SP_ASSERT(value_ptr);
-        SP_ASSERT(ustruct);
-
-        std::vector<std::string> property_names = Std::tokenize(name, ".");
-
-        PropertyDesc property_desc;
-        property_desc.value_ptr_ = value_ptr;
-
-        for (int i = 0; i < property_names.size() - 1; i++) {
-            std::string& property_name = property_names.at(i);
-
-            property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(property_name));
-            SP_ASSERT(property_desc.property_);
-
-            property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
-            SP_ASSERT(property_desc.value_ptr_);
-
-            if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
-                FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-                ustruct = struct_property->Struct;
-            } else {
-                SP_LOG(property_name, " is an unsupported type:", toStdString(property_desc.property_->GetClass()->GetName()));
-                SP_ASSERT(false);
-            }
-        }
-
-        std::string& property_name = property_names.at(property_names.size() - 1);
-
-        property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(property_name));
-        SP_ASSERT(property_desc.property_);
-
-        property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
-        SP_ASSERT(property_desc.value_ptr_);
-
-        return property_desc;
-    }
+    static PropertyDesc findPropertyByName(UObject* uobject, const std::string& name);
+    static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name);
 
     //
     // Find function by name and return a UFunction
     //
 
-    static UFunction* findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper)
-    {
-        return uclass->FindFunctionByName(toFName(name), include_super_flag);
-    }
+    static UFunction* findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
 
     //
     // Get property value
     //
 
-    static std::string getPropertyValueAsString(UObject* uobject)
-    {
-        return getPropertyValueAsString(uobject, uobject->GetClass());
-    }
-
-    static std::string getPropertyValueAsString(void* value_ptr, const UStruct* ustruct)
-    {
-        FString string;
-        FJsonObjectConverter::UStructToJsonObjectString(ustruct, value_ptr, string);
-        return toStdString(string);
-    }
-
-    static std::string getPropertyValueAsString(const PropertyDesc& property_desc)
-    {
-        SP_ASSERT(property_desc.value_ptr_);
-        SP_ASSERT(property_desc.property_);
-
-        if (property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
-            property_desc.property_->IsA(FIntProperty::StaticClass()) ||
-            property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
-            property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
-            property_desc.property_->IsA(FStrProperty::StaticClass())) {
-
-            TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
-            SP_ASSERT(json_value.Get());
-            return toStdString(json_value.Get()->AsString());
-
-        } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
-            FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-            UStruct* ustruct = struct_property->Struct;
-            FString string;
-            FJsonObjectConverter::UStructToJsonObjectString(ustruct, property_desc.value_ptr_, string);
-            return toStdString(string);
-
-        } else {
-            SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
-            SP_ASSERT(false);
-            return "";
-        }
-    }
+    static std::string getPropertyValueAsString(UObject* uobject);
+    static std::string getPropertyValueAsString(void* value_ptr, const UStruct* ustruct);
+    static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
 
     //
     // Set property value
     //
 
-    static void setPropertyValueFromString(UObject* uobject, const std::string& string)
-    {
-        return setPropertyValueFromString(uobject, uobject->GetClass(), string);
-    }
-
-    static void setPropertyValueFromString(void* value_ptr, UStruct* ustruct, const std::string& string)
-    {
-        SP_ASSERT(value_ptr);
-        SP_ASSERT(ustruct);
-
-        bool success = false;
-        TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString(string));
-        TSharedPtr<FJsonObject> json_object;
-        success = FJsonSerializer::Deserialize(json_reader, json_object);
-        SP_ASSERT(success);
-        SP_ASSERT(json_object.IsValid());
-        success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
-        SP_ASSERT(success);
-    }
-
-    static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string)
-    {
-        SP_ASSERT(property_desc.value_ptr_);
-        SP_ASSERT(property_desc.property_);
-
-        if (property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
-            property_desc.property_->IsA(FIntProperty::StaticClass()) ||
-            property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
-            property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
-            property_desc.property_->IsA(FStrProperty::StaticClass())) {
-
-            bool success = false;
-            TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString("{ \"dummy\": " + string + "}"));
-            TSharedPtr<FJsonObject> json_object;
-            success = FJsonSerializer::Deserialize(json_reader, json_object);
-            SP_ASSERT(success);
-            SP_ASSERT(json_object.IsValid());
-            TSharedPtr<FJsonValue> json_value = json_object.Get()->TryGetField("dummy");
-            SP_ASSERT(json_value.Get());
-            success = FJsonObjectConverter::JsonValueToUProperty(json_value, property_desc.property_, property_desc.value_ptr_);
-            SP_ASSERT(success);
-
-        } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
-
-            FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-            UStruct* ustruct = struct_property->Struct;
-            setPropertyValueFromString(property_desc.value_ptr_, ustruct, string);
-
-        } else {
-            SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
-            SP_ASSERT(false);
-        }
-    }
+    static void setPropertyValueFromString(UObject* uobject, const std::string& string);
+    static void setPropertyValueFromString(void* value_ptr, UStruct* ustruct, const std::string& string);
+    static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
 
     //
     // Call function
     //
 
-    static std::string callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args)
-    {
-        // Create buffer to store all args and the return value.
-        size_t num_bytes = ufunction->ParmsSize;
-        uint8_t initial_value = 0;
-        std::vector<uint8_t> args_vector(num_bytes, initial_value);
-
-        // Copy all properties to an std::vector because we want to treat the first N-1 properties
-        // differently from the last property.
-        std::vector<FProperty*> properties;
-        for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
-            properties.push_back(*itr);
-        }
-
-        // Initialize args from std::map of input strings.
-        for (int i = 0; i < properties.size() - 1; i++) {
-            PropertyDesc arg_property_desc;
-            arg_property_desc.property_ = properties.at(i);
-            SP_ASSERT(arg_property_desc.property_);
-            SP_ASSERT(arg_property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
-
-            arg_property_desc.value_ptr_ = arg_property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
-            SP_ASSERT(arg_property_desc.value_ptr_);
-
-            setPropertyValueFromString(arg_property_desc, args.at(toStdString(arg_property_desc.property_->GetName())));
-        }
-
-        // Call function.
-        uobject->ProcessEvent(ufunction, args_vector.data());
-
-        // Get return value as string.
-        PropertyDesc return_property_desc;
-        return_property_desc.property_ = properties.at(properties.size() - 1);
-        SP_ASSERT(return_property_desc.property_);
-
-        return_property_desc.value_ptr_ = return_property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
-        SP_ASSERT(return_property_desc.value_ptr_);
-
-        std::string return_value = getPropertyValueAsString(return_property_desc);
-
-        return return_value;
-    }
+    static std::string callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
 };
