@@ -46,7 +46,7 @@ void UUserInputComponent::TickComponent(float delta_time, ELevelTick level_tick,
             float axis_value = input_component_->GetAxisValue(Unreal::toFName(user_input_desc.axis_));
             if (axis_value >= user_input_desc.threshold_) {
                 handle_user_input_func_(user_input_desc.key_, axis_value);
-            }   
+            }
         }
     }
 }

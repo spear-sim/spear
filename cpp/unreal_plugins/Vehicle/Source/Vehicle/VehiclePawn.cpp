@@ -197,7 +197,7 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getActionSpace() const
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
-        array_desc.shape_ = {4};
+        array_desc.shape_ = {MovementComponent->WheelSetups.Num()};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "set_brake_torques", std::move(array_desc));
     }
@@ -206,7 +206,7 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getActionSpace() const
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
-        array_desc.shape_ = {4};
+        array_desc.shape_ = {MovementComponent->WheelSetups.Num()};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "set_drive_torques", std::move(array_desc));
     }
@@ -241,8 +241,8 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getObservationSpace() const
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
-        array_desc.shape_ = {4};
-        Std::insert(observation_space, "wheel_rotation_speeds", std::move(array_desc)); // FL, FR, RL, RR in [rad/s]
+        array_desc.shape_ = {MovementComponent->WheelSetups.Num()};
+        Std::insert(observation_space, "wheel_rotation_speeds", std::move(array_desc)); // [rad/s]
     }
 
     return observation_space;
@@ -256,19 +256,17 @@ void AVehiclePawn::applyAction(const std::map<std::string, std::vector<uint8_t>>
     if (Std::contains(action_components_, "set_brake_torques")) {
         SP_ASSERT(Std::containsKey(action, "set_brake_torques"));
         std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("set_brake_torques"));
-        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 0), 0);
-        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 1), 1);
-        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 2), 2);
-        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 3), 3);
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            MovementComponent->SetBrakeTorque(Std::at(action_component_data, i), i);
+        }
     }
 
     if (Std::contains(action_components_, "set_drive_torques")) {
         SP_ASSERT(Std::containsKey(action, "set_drive_torques"));
         std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("set_drive_torques"));
-        MovementComponent->SetDriveTorque(Std::at(action_component_data, 0), 0);
-        MovementComponent->SetDriveTorque(Std::at(action_component_data, 1), 1);
-        MovementComponent->SetDriveTorque(Std::at(action_component_data, 2), 2);
-        MovementComponent->SetDriveTorque(Std::at(action_component_data, 3), 3);
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            MovementComponent->SetDriveTorque(Std::at(action_component_data, i), i);
+        }
     }
 }
 
@@ -287,7 +285,11 @@ std::map<std::string, std::vector<uint8_t>> AVehiclePawn::getObservation() const
     }
 
     if (Std::contains(observation_components_, "wheel_rotation_speeds")) {
-        Std::insert(observation, "wheel_rotation_speeds", Std::reinterpretAsVectorOf<uint8_t>(MovementComponent->getWheelRotationSpeeds()));
+        std::vector<double> wheel_rotation_speeds;        
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            wheel_rotation_speeds.push_back(MovementComponent->VehicleSimulationPT->PVehicle->GetWheel(i).GetAngularVelocity());
+        }
+        Std::insert(observation, "wheel_rotation_speeds", Std::reinterpretAsVectorOf<uint8_t>(wheel_rotation_speeds));
     }
 
     return observation;
@@ -297,17 +299,15 @@ void AVehiclePawn::applyAction(const std::map<std::string, std::vector<double>>&
 {
     if (Std::containsKey(action, "set_brake_torques")) {
         std::vector<double> action_component_data = action.at("set_brake_torques");
-        MovementComponent->SetBrakeTorque(action_component_data.at(0), 0);
-        MovementComponent->SetBrakeTorque(action_component_data.at(1), 1);
-        MovementComponent->SetBrakeTorque(action_component_data.at(2), 2);
-        MovementComponent->SetBrakeTorque(action_component_data.at(3), 3);
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            MovementComponent->SetBrakeTorque(action_component_data.at(i), i);
+        }
     }
 
     if (Std::containsKey(action, "set_drive_torques")) {
         std::vector<double> action_component_data = action.at("set_drive_torques");
-        MovementComponent->SetDriveTorque(action_component_data.at(0), 0);
-        MovementComponent->SetDriveTorque(action_component_data.at(1), 1);
-        MovementComponent->SetDriveTorque(action_component_data.at(2), 2);
-        MovementComponent->SetDriveTorque(action_component_data.at(3), 3);
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            MovementComponent->SetDriveTorque(action_component_data.at(i), i);
+        }
     }
 }

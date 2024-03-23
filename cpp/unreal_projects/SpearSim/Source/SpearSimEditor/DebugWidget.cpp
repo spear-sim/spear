@@ -4,18 +4,16 @@
 
 #include "SpearSimEditor/DebugWidget.h"
 
-#include <vector>
-
+#include <Components/StaticMeshComponent.h>
+#include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
-#include <Kismet/GameplayStatics.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <Misc/CoreDelegates.h>
-#include <Misc/Paths.h>
+#include <PhysicsEngine/BodyInstance.h>
 
+#include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
-#include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "UrdfRobot/UrdfRobotPawn.h"
@@ -33,36 +31,6 @@ ADebugWidget::~ADebugWidget()
     DebugString = Unreal::toFString("");
     UrdfFile = Unreal::toFString("");
 }
-
-#if WITH_EDITOR
-    void ADebugWidget::PostLoad()
-    {
-        AActor::PostLoad();
-
-        actor_label_changed_handle_ = FCoreDelegates::OnActorLabelChanged.AddUObject(this, &ADebugWidget::actorLabelChangedHandler);
-
-        SP_ASSERT(GEngine);
-        level_actor_folder_changed_handle_ = GEngine->OnLevelActorFolderChanged().AddUObject(this, &ADebugWidget::levelActorFolderChangedHandler);
-    }
-
-    void ADebugWidget::BeginDestroy()
-    {
-        AActor::BeginDestroy();
-
-        // Need to check IsValid() because PostLoad() is not called for default objects, but BeginDestroy() is.
-
-        if (level_actor_folder_changed_handle_.IsValid()) {
-            SP_ASSERT(GEngine);
-            GEngine->OnLevelActorFolderChanged().Remove(level_actor_folder_changed_handle_);
-            level_actor_folder_changed_handle_.Reset();
-        }
-
-        if (actor_label_changed_handle_.IsValid()) {
-            FCoreDelegates::OnActorLabelChanged.Remove(actor_label_changed_handle_);
-            actor_label_changed_handle_.Reset();
-        }
-    }
-#endif
 
 void ADebugWidget::LoadConfig()
 {
@@ -114,16 +82,78 @@ void ADebugWidget::SpawnUrdfRobotPawn()
     urdf_robot_pawn->Initialize();
 }
 
-#if WITH_EDITOR
-    void ADebugWidget::actorLabelChangedHandler(AActor* actor)
-    {
-        SP_ASSERT(actor);
-        Unreal::requestUpdateStableActorName(actor);
-    }
+void ADebugWidget::SetObjectProperties()
+{
+    UWorld* world = GetWorld();
+    SP_ASSERT(world);
 
-    void ADebugWidget::levelActorFolderChangedHandler(const AActor* actor, FName name)
-    {
-        SP_ASSERT(actor);
-        Unreal::requestUpdateStableActorName(actor);
-    }
-#endif
+    AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(world, "Debug/SM_Prop_04");
+    SP_ASSERT(static_mesh_actor);
+
+    UStaticMeshComponent* static_mesh_component = Unreal::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
+    SP_ASSERT(static_mesh_component);
+
+    Unreal::PropertyDesc relative_location_property_desc   = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation");
+    Unreal::PropertyDesc relative_location_x_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.X");
+    Unreal::PropertyDesc relative_location_y_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.Y");
+    Unreal::PropertyDesc relative_location_z_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.Z");
+    Unreal::PropertyDesc body_instance_property_desc       = Unreal::findPropertyByName(static_mesh_component, "BodyInstance");
+    Unreal::PropertyDesc com_nudge_property_desc           = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge");
+    Unreal::PropertyDesc com_nudge_x_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.X");
+    Unreal::PropertyDesc com_nudge_y_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.Y");
+    Unreal::PropertyDesc com_nudge_z_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.Z");
+    Unreal::PropertyDesc com_nudge_property_desc_          = Unreal::findPropertyByName(static_mesh_component, "bodyinstance.comnudge"); // not case-sensitive
+    Unreal::PropertyDesc simulate_physics_property_desc    = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.bSimulatePhysics");
+
+    // Get property value from PropertyDesc
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_x_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_y_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_z_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(body_instance_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(com_nudge_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(com_nudge_x_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(com_nudge_y_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(com_nudge_z_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(com_nudge_property_desc_));
+    SP_LOG(Unreal::getPropertyValueAsString(simulate_physics_property_desc));
+
+    // Get property value from void* pointer and StaticStruct()
+    void* body_instance = &(static_mesh_component->BodyInstance);
+    SP_LOG(Unreal::getPropertyValueAsString(body_instance, FBodyInstance::StaticStruct()));
+    SP_LOG();
+
+    // Get property value from void* pointer and findStaticStructByName(...), useful for when a class doesn't define a StaticStruct() method, e.g., FVector
+    AEngineActor* engine_actor = Unreal::findActorByType<AEngineActor>(world);
+    SP_ASSERT(engine_actor);
+    void* v1 = relative_location_property_desc.value_ptr_;
+    SP_LOG(Unreal::getPropertyValueAsString(v1, engine_actor->findStaticStructByName("FVector")));
+    SP_LOG();
+
+    static int i = 0;
+    std::string str;
+
+    // Set property value from void* and findStaticStructByName(...), useful for when a class doesn't define a StaticStruct() method, e.g., FVector
+    FVector v2(1.23, 4.56, 7.89);
+    str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}");
+    SP_LOG(Unreal::getPropertyValueAsString(&v2, engine_actor->findStaticStructByName("FVector")));
+    Unreal::setPropertyValueFromString(&v2, engine_actor->findStaticStructByName("FVector"), str);
+    SP_LOG(Unreal::getPropertyValueAsString(&v2, engine_actor->findStaticStructByName("FVector")));
+    SP_LOG();
+
+    // Set property value from PropertyDesc
+    str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
+    Unreal::setPropertyValueFromString(relative_location_property_desc, str);
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
+    SP_LOG();
+
+    // Set property value from PropertyDesc
+    str = "1.2345";
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_z_property_desc));
+    Unreal::setPropertyValueFromString(relative_location_z_property_desc, str);
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_z_property_desc));
+    SP_LOG();
+
+    i++;
+}

@@ -19,16 +19,15 @@ public:
     UStableNameComponent();
     ~UStableNameComponent();
 
-    #if WITH_EDITOR // defined in an auto-generated header
-        // UActorComponent interface
-        void OnComponentCreated() override;
-        void PostLoad() override;
-    #endif
-
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Stable Name");
     FString StableName;
 
     #if WITH_EDITOR // defined in an auto-generated header
+        // UActorComponent interface
+        void OnComponentCreated() override;
+        void PostLoad() override;
+
+        // Interface for updating StableName if the component isn't spawned at runtime.
         void requestUpdate();
     #endif
 };
