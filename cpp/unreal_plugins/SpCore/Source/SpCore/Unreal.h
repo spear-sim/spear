@@ -487,7 +487,7 @@ public:
             getComponentsByType<TActorComponent>(actor) |
             std::views::transform([&tags](auto component) { return std::make_pair(component, getComponentHasTags(component, tags)); }) |
             std::views::filter([](const auto& pair)       { const auto& [component, has_tags] = pair; return Std::any(has_tags); }) |
-            std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return actor; }));
+            std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return component; }));
         return components;
     }
 
@@ -496,9 +496,9 @@ public:
     {
         auto components = Std::toVector<TActorComponent*>(
             getComponentsByType<TActorComponent>(actor) |
-            std::views::transform([&tags](auto component) { return std::make_pair(actor, getActorHasTags(actor, tags)); }) |
+            std::views::transform([&tags](auto component) { return std::make_pair(component, getComponentHasTags(actor, tags)); }) |
             std::views::filter([](const auto& pair)       { const auto& [component, has_tags] = pair; return Std::all(has_tags); }) |
-            std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return actor; }));
+            std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return component; }));
         return components;
     }
 
