@@ -559,8 +559,7 @@ DATATYPE_TO_DTYPE = {
     DataType.Integer32.value:  np.dtype("i4"),
     DataType.Float16.value:    np.dtype("f2"),
     DataType.Float32.value:    np.dtype("f4"),
-    DataType.Float64.value:    np.dtype("f8"),
-}
+    DataType.Float64.value:    np.dtype("f8")}
 
 
 # functions for creating Python spaces from C++ array_descs

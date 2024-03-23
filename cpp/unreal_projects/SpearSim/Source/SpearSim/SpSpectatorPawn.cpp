@@ -26,23 +26,23 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     PrimaryActorTick.bTickEvenWhenPaused = true;
 
     // UStableNameComponent
-    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, GetRootComponent(), "stable_name");
+    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
     SP_ASSERT(StableNameComponent);
 
     // USpectatorPawnMovement
-    spectator_pawn_movement_ = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
-    SP_ASSERT(spectator_pawn_movement_);
+    SpectatorPawnMovement = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
+    SP_ASSERT(SpectatorPawnMovement);
 
     // Need to set this to true, otherwise keyboard input will not be processed when attempting to move the camera when the game is paused.
-    spectator_pawn_movement_->PrimaryComponentTick.bTickEvenWhenPaused = true;
+    SpectatorPawnMovement->PrimaryComponentTick.bTickEvenWhenPaused = true;
 }
 
 ASpSpectatorPawn::~ASpSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    SP_ASSERT(spectator_pawn_movement_);
-    spectator_pawn_movement_ = nullptr;
+    SP_ASSERT(SpectatorPawnMovement);
+    SpectatorPawnMovement = nullptr;
 
     SP_ASSERT(StableNameComponent);
     StableNameComponent = nullptr;
@@ -58,16 +58,16 @@ void ASpSpectatorPawn::Tick(float delta_time)
         if (is_paused_ != is_paused) {
             if (is_paused) {
                 // cache current values
-                spectator_pawn_movement_ignore_time_dilation_ = spectator_pawn_movement_->bIgnoreTimeDilation;
-                spectator_pawn_movement_max_speed_ = spectator_pawn_movement_->MaxSpeed;
+                spectator_pawn_movement_ignore_time_dilation_ = SpectatorPawnMovement->bIgnoreTimeDilation;
+                spectator_pawn_movement_max_speed_ = SpectatorPawnMovement->MaxSpeed;
 
                 // set new values
-                spectator_pawn_movement_->bIgnoreTimeDilation = true;
-                spectator_pawn_movement_->MaxSpeed = spectator_pawn_movement_max_speed_ * 0.1;
+                SpectatorPawnMovement->bIgnoreTimeDilation = true;
+                SpectatorPawnMovement->MaxSpeed = spectator_pawn_movement_max_speed_ * 0.1;
             } else {
                 // restore previous values
-                spectator_pawn_movement_->bIgnoreTimeDilation = spectator_pawn_movement_ignore_time_dilation_;
-                spectator_pawn_movement_->MaxSpeed = spectator_pawn_movement_max_speed_;
+                SpectatorPawnMovement->bIgnoreTimeDilation = spectator_pawn_movement_ignore_time_dilation_;
+                SpectatorPawnMovement->MaxSpeed = spectator_pawn_movement_max_speed_;
             }
             is_paused_ = is_paused;
         }

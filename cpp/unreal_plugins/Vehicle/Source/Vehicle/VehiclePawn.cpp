@@ -46,8 +46,12 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     SP_LOG_CURRENT_FUNCTION();
 
     // UStableNameComponent
-    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, GetRootComponent(), "stable_name");
+    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
     SP_ASSERT(StableNameComponent);
+
+    // UUserInputComponent
+    UserInputComponent = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetMesh(), "user_input");
+    SP_ASSERT(UserInputComponent);
 
     // USkeletalMeshComponent
     std::string skeletal_mesh_str;
@@ -100,7 +104,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         aspect_ratio = 1.333333f;
     }
 
-    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera_component");
+    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera");
     SP_ASSERT(CameraComponent);
     CameraComponent->SetRelativeLocationAndRotation(camera_location, camera_rotation);
     CameraComponent->bUsePawnControlRotation = false;
@@ -125,17 +129,13 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         imu_rotation = FRotator::ZeroRotator;
     }
 
-    ImuComponent = Unreal::createComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu_component");
+    ImuComponent = Unreal::createComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu");
     SP_ASSERT(ImuComponent);
     ImuComponent->SetRelativeLocationAndRotation(imu_location, imu_rotation);
 
     // UVehicleMovementComponent
     MovementComponent = dynamic_cast<UVehicleMovementComponent*>(GetVehicleMovementComponent());
     SP_ASSERT(MovementComponent);
-
-    // UUserInputComponent
-    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetMesh(), "user_input_component");
-    SP_ASSERT(user_input_component_);
 }
 
 AVehiclePawn::~AVehiclePawn()
@@ -143,9 +143,6 @@ AVehiclePawn::~AVehiclePawn()
     SP_LOG_CURRENT_FUNCTION();
 
     // Pawns don't need to be cleaned up explicitly.
-
-    SP_ASSERT(user_input_component_);
-    user_input_component_ = nullptr;
 
     SP_ASSERT(MovementComponent);
     MovementComponent = nullptr;
@@ -155,6 +152,12 @@ AVehiclePawn::~AVehiclePawn()
 
     SP_ASSERT(CameraComponent);
     CameraComponent = nullptr;
+
+    SP_ASSERT(UserInputComponent);
+    UserInputComponent = nullptr;
+
+    SP_ASSERT(StableNameComponent);
+    StableNameComponent = nullptr;
 }
 
 void AVehiclePawn::BeginPlay()
@@ -170,8 +173,8 @@ void AVehiclePawn::BeginPlay()
         user_input_actions = DEFAULT_USER_INPUT_ACTIONS;
     }
 
-    user_input_component_->subscribeToUserInputs(Std::keys(user_input_actions));
-    user_input_component_->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
+    UserInputComponent->subscribeToUserInputs(Std::keys(user_input_actions));
+    UserInputComponent->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
         applyAction(user_input_actions.at(key));
     });
 }
@@ -194,7 +197,7 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getActionSpace() const
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
-        array_desc.shape_ = {4};
+        array_desc.shape_ = {MovementComponent->WheelSetups.Num()};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "set_brake_torques", std::move(array_desc));
     }
@@ -203,7 +206,7 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getActionSpace() const
         ArrayDesc array_desc;
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
-        array_desc.shape_ = {4};
+        array_desc.shape_ = {MovementComponent->WheelSetups.Num()};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "set_drive_torques", std::move(array_desc));
     }
@@ -238,8 +241,8 @@ std::map<std::string, ArrayDesc> AVehiclePawn::getObservationSpace() const
         array_desc.low_ = std::numeric_limits<double>::lowest();
         array_desc.high_ = std::numeric_limits<double>::max();
         array_desc.datatype_ = DataType::Float64;
-        array_desc.shape_ = {4};
-        Std::insert(observation_space, "wheel_rotation_speeds", std::move(array_desc)); // FL, FR, RL, RR in [rad/s]
+        array_desc.shape_ = {MovementComponent->WheelSetups.Num()};
+        Std::insert(observation_space, "wheel_rotation_speeds", std::move(array_desc)); // [rad/s]
     }
 
     return observation_space;
@@ -253,19 +256,17 @@ void AVehiclePawn::applyAction(const std::map<std::string, std::vector<uint8_t>>
     if (Std::contains(action_components_, "set_brake_torques")) {
         SP_ASSERT(Std::containsKey(action, "set_brake_torques"));
         std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("set_brake_torques"));
-        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 0), 0);
-        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 1), 1);
-        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 2), 2);
-        MovementComponent->SetBrakeTorque(Std::at(action_component_data, 3), 3);
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            MovementComponent->SetBrakeTorque(Std::at(action_component_data, i), i);
+        }
     }
 
     if (Std::contains(action_components_, "set_drive_torques")) {
         SP_ASSERT(Std::containsKey(action, "set_drive_torques"));
         std::span<const double> action_component_data = Std::reinterpretAsSpanOf<const double>(action.at("set_drive_torques"));
-        MovementComponent->SetDriveTorque(Std::at(action_component_data, 0), 0);
-        MovementComponent->SetDriveTorque(Std::at(action_component_data, 1), 1);
-        MovementComponent->SetDriveTorque(Std::at(action_component_data, 2), 2);
-        MovementComponent->SetDriveTorque(Std::at(action_component_data, 3), 3);
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            MovementComponent->SetDriveTorque(Std::at(action_component_data, i), i);
+        }
     }
 }
 
@@ -284,7 +285,11 @@ std::map<std::string, std::vector<uint8_t>> AVehiclePawn::getObservation() const
     }
 
     if (Std::contains(observation_components_, "wheel_rotation_speeds")) {
-        Std::insert(observation, "wheel_rotation_speeds", Std::reinterpretAsVectorOf<uint8_t>(MovementComponent->getWheelRotationSpeeds()));
+        std::vector<double> wheel_rotation_speeds;        
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            wheel_rotation_speeds.push_back(MovementComponent->VehicleSimulationPT->PVehicle->GetWheel(i).GetAngularVelocity());
+        }
+        Std::insert(observation, "wheel_rotation_speeds", Std::reinterpretAsVectorOf<uint8_t>(wheel_rotation_speeds));
     }
 
     return observation;
@@ -294,17 +299,15 @@ void AVehiclePawn::applyAction(const std::map<std::string, std::vector<double>>&
 {
     if (Std::containsKey(action, "set_brake_torques")) {
         std::vector<double> action_component_data = action.at("set_brake_torques");
-        MovementComponent->SetBrakeTorque(action_component_data.at(0), 0);
-        MovementComponent->SetBrakeTorque(action_component_data.at(1), 1);
-        MovementComponent->SetBrakeTorque(action_component_data.at(2), 2);
-        MovementComponent->SetBrakeTorque(action_component_data.at(3), 3);
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            MovementComponent->SetBrakeTorque(action_component_data.at(i), i);
+        }
     }
 
     if (Std::containsKey(action, "set_drive_torques")) {
         std::vector<double> action_component_data = action.at("set_drive_torques");
-        MovementComponent->SetDriveTorque(action_component_data.at(0), 0);
-        MovementComponent->SetDriveTorque(action_component_data.at(1), 1);
-        MovementComponent->SetDriveTorque(action_component_data.at(2), 2);
-        MovementComponent->SetDriveTorque(action_component_data.at(3), 3);
+        for (int i = 0; i < MovementComponent->WheelSetups.Num(); i++) {
+            MovementComponent->SetDriveTorque(action_component_data.at(i), i);
+        }
     }
 }

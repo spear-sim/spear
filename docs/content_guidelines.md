@@ -101,7 +101,7 @@ my_scene_0000                          #
 │   └── Sky                            #
 │       ├── SkyAtmosphere              #
 │       └── VolumetricCloud            #
-├── Settings                           # All settings-related Actors are kept here.  For convenience, we allow content here to 
+├── Settings                           # All settings-related Actors are kept here. For convenience, we allow content here to 
 |   |                                  # deviate from our usual naming conventions.
 |   |                                  #
 |   ├── PlayerStart                    #

@@ -69,16 +69,3 @@ UVehicleMovementComponent::~UVehicleMovementComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
-
-std::vector<double> UVehicleMovementComponent::getWheelRotationSpeeds() const
-{
-    // We typically avoid trivial get() methods like this, but VehicleSimulationPT is protected, so we need
-    // to explicitly provide access to it through a public function. GetAngularVelocity() returns values in
-    // rad/s.
-    return std::vector<double>{
-        VehicleSimulationPT->PVehicle->GetWheel(0).GetAngularVelocity(),
-        VehicleSimulationPT->PVehicle->GetWheel(1).GetAngularVelocity(),
-        VehicleSimulationPT->PVehicle->GetWheel(2).GetAngularVelocity(),
-        VehicleSimulationPT->PVehicle->GetWheel(3).GetAngularVelocity(),
-    };
-}

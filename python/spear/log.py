@@ -30,7 +30,7 @@ def _get_current_file_abbreviated(current_frame):
 
 def _get_current_line(current_frame):
     outer_frames = inspect.getouterframes(current_frame)
-    return str(outer_frames[1].lineno)
+    return f"{outer_frames[1].lineno:04}"
 
 def _get_current_function_abbreviated(current_frame):
     outer_frames = inspect.getouterframes(current_frame)

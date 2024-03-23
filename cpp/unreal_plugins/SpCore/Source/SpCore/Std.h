@@ -59,9 +59,9 @@ public:
     // std::string functions
     //
 
-    static std::string toString(auto&&... args)
+    static bool contains(const std::string& string, const std::string& substring)
     {
-        return (... + boost::lexical_cast<std::string>(std::forward<decltype(args)>(args)));
+        return string.find(substring) != std::string::npos;
     }
 
     static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)
@@ -70,14 +70,14 @@ public:
         return std::vector<std::string>(tokenizer.begin(), tokenizer.end());
     }
 
-    static bool containsSubstring(const std::string& string, const std::string& substring)
-    {
-        return string.find(substring) != std::string::npos;
-    }
-
     static std::string toLower(const std::string& string)
     {
         return boost::algorithm::to_lower_copy(string);
+    }
+
+    static std::string toString(auto&&... args)
+    {
+        return (... + boost::lexical_cast<std::string>(std::forward<decltype(args)>(args)));
     }
 
     //
@@ -225,8 +225,14 @@ public:
         return reinterpretAsVectorImpl<TDest, typename TContiguousValueContainer::value_type>(src.data(), src.size());
     }
 
-    template <typename TDest, typename TSrc, typename TSrcData> requires std::same_as<TSrc, TSrcData>
-    static std::vector<TDest> reinterpretAsVector(const std::initializer_list<TSrcData>& src)
+    // Don't infer TSrc from the input initializer list, because we want to force the user to explicitly specify the
+    // intended data type of the initializer list somewhere. If we allow TSrc to be inferred automatically, we create
+    // a situation where, e.g., the user wants to create an initializer list of floats, but accidentally creates an
+    // initializer list of doubles. We don't need this extra layer of safety for reinterpretAsVectorOf(...), because
+    // the input to that function is, e.g., an std::vector, where the user would have already specified its data type
+    // somewhere in their code.
+    template <typename TDest, typename TSrc, typename TInitializerList> requires std::same_as<TSrc, TInitializerList>
+    static std::vector<TDest> reinterpretAsVector(const std::initializer_list<TInitializerList>& src)
     {
         return reinterpretAsVectorImpl<TDest, TSrc>(std::data(src), src.size());
     }

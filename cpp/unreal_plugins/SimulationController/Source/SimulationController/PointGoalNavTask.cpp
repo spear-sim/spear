@@ -19,7 +19,7 @@
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
+#include <UObject/UObjectGlobals.h> // LoadObject
 
 #include "SimulationController/ActorHitEventComponent.h"
 #include "SimulationController/StandaloneComponent.h"
