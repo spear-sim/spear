@@ -140,7 +140,7 @@ void ADebugWidget::SetObjectProperties()
 
     // Set property value from void* and UStruct*
     FVector vec(1.23, 4.56, 7.89);
-    str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}");
+    str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}"); // partial updates are allowed, only the members specified here are updated
     value_ptr = &vec;
     ustruct = Unreal::findStructByName(world, "FVector"); // useful for when a class or struct doesn't define a StaticStruct() method
     SP_LOG(Unreal::getPropertyValueAsString(value_ptr, ustruct));
@@ -204,6 +204,29 @@ void ADebugWidget::CallFunctions()
 
     UStaticMeshComponent* static_mesh_component = Unreal::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
     SP_ASSERT(static_mesh_component);
+
+    //
+    // Since partial updates are allowed throughout our setPropertyValueFromString(...) interface, we
+    // follow the same convention in our callFunction(...) interface. For each object that gets passed to
+    // a given target function, we attempt to initialize it as follows. First, we set its entire memory
+    // region to 0, then we initialize it using a reasonable default string based on its type (e.g.,
+    // "false" for a bool, "0" for an int, "{}" for a struct, etc), then we update it according to its
+    // corresponding string in the args std::map provided by the caller. This approach enables a caller
+    // to specify a sparse subset of data members that are relevant for a given function invocation, but
+    // always allows the caller to fully initialize an object if desired. We also allow entire arguments
+    // to be omitted from args, in which case the default-initialized object will be passed to the target
+    // function without further modification.
+    // 
+    // The signature for the target function below is as follows,
+    //
+    //     void SceneComponent::K2_AddRelativeLocation(FVector DeltaLocation, bool bSweep, FHitResult& SweepHitResult, bool bTeleport)
+    // 
+    // where SweepHitResult is an "out" parameter used to return additional data to the caller. Since
+    // SweepHitResult will be filled in by the target function anyway, we simply omit it from args.
+    // Regardless of whether or not it is included in args, SweepHitResult (and all other arguments), are
+    // always included in the values returned by callFunction(...). So the caller can always access data
+    // that was filled in by the target function, as well as the target function's formal return value.
+    //
 
     args = {{"DeltaLocation", vector_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
     ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");

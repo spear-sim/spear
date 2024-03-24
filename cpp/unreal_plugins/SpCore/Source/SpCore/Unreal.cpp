@@ -403,10 +403,9 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
     // Set property values.
     for (auto& property_desc : property_descs) {
         std::string property_name = toStdString(property_desc.property_->GetName());
+        initializePropertyValue(property_desc);
         if (Std::containsKey(args, property_name)) {
             setPropertyValueFromString(property_desc, args.at(property_name));
-        } else {
-            initializePropertyValue(property_desc);
         }
     }
 
