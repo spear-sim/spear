@@ -394,11 +394,11 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
     uobject->ProcessEvent(ufunction, args_vector.data());
 
     // Return all property values because they might have been modified by the function we called.
-    std::map<std::string, std::string> property_values;
+    std::map<std::string, std::string> return_values;
     for (auto& property_desc : property_descs) {
         std::string property_name = toStdString(property_desc.property_->GetName());
-        Std::insert(property_values, property_name, getPropertyValueAsString(property_desc));
+        Std::insert(return_values, property_name, getPropertyValueAsString(property_desc));
     }
 
-    return property_values;
+    return return_values;
 }

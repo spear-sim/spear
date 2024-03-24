@@ -177,21 +177,21 @@ void ADebugWidget::CallFunctions()
 
     UFunction* ufunction = nullptr;
     std::map<std::string, std::string> args;
-    std::map<std::string, std::string> property_values;
+    std::map<std::string, std::string> return_values;
     std::string vector_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
 
     args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetString");
     SP_ASSERT(ufunction);
-    property_values = Unreal::callFunction(this, ufunction, args);
-    SP_LOG(property_values.at("ReturnValue"));
+    return_values = Unreal::callFunction(this, ufunction, args);
+    SP_LOG(return_values.at("ReturnValue"));
 
     args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetVector");
     SP_ASSERT(ufunction);
-    property_values = Unreal::callFunction(this, ufunction, args);
-    SP_LOG(property_values.at("arg_3")); // arg_3 is modified by GetVector(...)
-    SP_LOG(property_values.at("ReturnValue"));
+    return_values = Unreal::callFunction(this, ufunction, args);
+    SP_LOG(return_values.at("arg_3")); // arg_3 is modified by GetVector(...)
+    SP_LOG(return_values.at("ReturnValue"));
 
     UWorld* world = GetWorld();
     SP_ASSERT(world);
@@ -205,8 +205,8 @@ void ADebugWidget::CallFunctions()
     args = {{"DeltaLocation", vector_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
     ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");
     SP_ASSERT(ufunction);
-    property_values = Unreal::callFunction(static_mesh_component, ufunction, args);
-    SP_LOG(property_values.at("SweepHitResult"));
+    return_values = Unreal::callFunction(static_mesh_component, ufunction, args);
+    SP_LOG(return_values.at("SweepHitResult"));
 
     i++;
 }
