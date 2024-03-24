@@ -45,5 +45,5 @@ public:
     FString GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
 
     UFUNCTION()
-    FVector GetVector(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
+    FVector GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3);
 };

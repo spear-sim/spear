@@ -174,20 +174,23 @@ void ADebugWidget::SetObjectProperties()
 void ADebugWidget::CallFunctions()
 {
     static int i = 0;
+
+    UFunction* ufunction = nullptr;
     std::map<std::string, std::string> args;
     std::map<std::string, std::string> property_values;
     std::string vector_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
 
     args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
-    UFunction* get_string_ufunction = Unreal::findFunctionByName(this->GetClass(), "GetString");
-    SP_ASSERT(get_string_ufunction);
-    property_values = Unreal::callFunction(this, get_string_ufunction, args);
+    ufunction = Unreal::findFunctionByName(this->GetClass(), "GetString");
+    SP_ASSERT(ufunction);
+    property_values = Unreal::callFunction(this, ufunction, args);
     SP_LOG(property_values.at("ReturnValue"));
 
     args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
-    UFunction* get_vector_ufunction = Unreal::findFunctionByName(this->GetClass(), "GetVector");
-    SP_ASSERT(get_vector_ufunction);
-    property_values = Unreal::callFunction(this, get_vector_ufunction, args);
+    ufunction = Unreal::findFunctionByName(this->GetClass(), "GetVector");
+    SP_ASSERT(ufunction);
+    property_values = Unreal::callFunction(this, ufunction, args);
+    SP_LOG(property_values.at("arg_3")); // arg_3 is modified by GetVector(...)
     SP_LOG(property_values.at("ReturnValue"));
 
     UWorld* world = GetWorld();
@@ -200,9 +203,9 @@ void ADebugWidget::CallFunctions()
     SP_ASSERT(static_mesh_component);
 
     args = {{"DeltaLocation", vector_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
-    UFunction* k2_add_relative_location_ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");
-    SP_ASSERT(k2_add_relative_location_ufunction);
-    property_values = Unreal::callFunction(static_mesh_component, k2_add_relative_location_ufunction, args);
+    ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");
+    SP_ASSERT(ufunction);
+    property_values = Unreal::callFunction(static_mesh_component, ufunction, args);
     SP_LOG(property_values.at("SweepHitResult"));
 
     i++;
@@ -214,8 +217,9 @@ FString ADebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector ar
     return FString("GetString return value.");
 }
 
-FVector ADebugWidget::GetVector(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
+FVector ADebugWidget::GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3)
 {
     SP_LOG_CURRENT_FUNCTION();
+    arg_3 = FVector(1.11, 2.22, 3.33);
     return FVector(9.87, 6.54, 3.21);
 }
