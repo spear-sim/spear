@@ -5,8 +5,9 @@
 #include "SimulationController/ImuSensor.h"
 
 #include <map>
-#include <memory> // std::make_unique
+#include <memory>  // std::make_unique
 #include <string>
+#include <utility> // std::move
 #include <vector>
 
 #include <Components/PrimitiveComponent.h>

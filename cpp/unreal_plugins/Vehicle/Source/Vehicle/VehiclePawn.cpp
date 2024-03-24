@@ -6,6 +6,7 @@
 
 #include <map>
 #include <string>
+#include <utility> // std::move
 #include <vector>
 
 #include <Animation/AnimInstance.h>

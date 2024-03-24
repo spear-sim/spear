@@ -603,9 +603,13 @@ public:
     static void setPropertyValueFromString(void* value_ptr, UStruct* ustruct, const std::string& string);
     static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
 
+    static void initializePropertyValue(UObject* uobject);
+    static void initializePropertyValue(void* value_ptr, UStruct* ustruct);
+    static void initializePropertyValue(const PropertyDesc& property_desc);
+
     //
     // Call function
     //
 
-    static std::string callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
+    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
 };

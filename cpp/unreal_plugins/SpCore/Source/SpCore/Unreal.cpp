@@ -9,6 +9,7 @@
 #include <map>
 #include <ranges> // std::views::transform
 #include <string>
+#include <utility> // std::move
 #include <vector>
 
 #include <Components/ActorComponent.h>
@@ -200,7 +201,9 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
 
 UFunction* Unreal::findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag)
 {
-    return uclass->FindFunctionByName(toFName(name), include_super_flag);
+    UFunction* function = uclass->FindFunctionByName(toFName(name), include_super_flag);
+    SP_ASSERT(function);
+    return function;
 }
 
 //
@@ -306,50 +309,96 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
     }
 }
 
+void Unreal::initializePropertyValue(UObject* uobject)
+{
+    return initializePropertyValue(uobject, uobject->GetClass());
+}
+
+void Unreal::initializePropertyValue(void* value_ptr, UStruct* ustruct)
+{
+    SP_ASSERT(value_ptr);
+    SP_ASSERT(ustruct);
+
+    bool success = false;
+    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString("{}"));
+    TSharedPtr<FJsonObject> json_object;
+    success = FJsonSerializer::Deserialize(json_reader, json_object);
+    SP_ASSERT(success);
+    SP_ASSERT(json_object.IsValid());
+    success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
+    SP_ASSERT(success);
+}
+
+void Unreal::initializePropertyValue(const Unreal::PropertyDesc& property_desc)
+{
+    SP_ASSERT(property_desc.value_ptr_);
+    SP_ASSERT(property_desc.property_);
+
+    if (property_desc.property_->IsA(FBoolProperty::StaticClass())) {
+        setPropertyValueFromString(property_desc, "false");
+
+    } else if (
+        property_desc.property_->IsA(FIntProperty::StaticClass()) ||
+        property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
+        property_desc.property_->IsA(FDoubleProperty::StaticClass())) {
+        setPropertyValueFromString(property_desc, "0");
+
+    } else if (property_desc.property_->IsA(FStrProperty::StaticClass())) {
+        setPropertyValueFromString(property_desc, "\"\"");
+    
+    } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
+        setPropertyValueFromString(property_desc, "{}");
+
+    } else {
+        SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
+        SP_ASSERT(false);
+    }
+}
+
 //
 // Call function
 //
 
-std::string Unreal::callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args)
+std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args)
 {
     // Create buffer to store all args and the return value.
     size_t num_bytes = ufunction->ParmsSize;
     uint8_t initial_value = 0;
     std::vector<uint8_t> args_vector(num_bytes, initial_value);
 
-    // Copy all properties to an std::vector because we want to treat the first N-1 properties
-    // differently from the last property.
-    std::vector<FProperty*> properties;
+    // Create PropertyDescs for the function's arguments and return value.
+    std::vector<PropertyDesc> property_descs;
     for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
-        properties.push_back(*itr);
+        PropertyDesc property_desc;
+        property_desc.property_ = *itr;
+        SP_ASSERT(property_desc.property_);
+        SP_ASSERT(property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
+
+        property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
+        SP_ASSERT(property_desc.value_ptr_);
+
+        property_descs.push_back(std::move(property_desc));
     }
 
-    // Initialize args from std::map of input strings.
-    for (int i = 0; i < properties.size() - 1; i++) {
-        PropertyDesc arg_property_desc;
-        arg_property_desc.property_ = properties.at(i);
-        SP_ASSERT(arg_property_desc.property_);
-        SP_ASSERT(arg_property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
-
-        arg_property_desc.value_ptr_ = arg_property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
-        SP_ASSERT(arg_property_desc.value_ptr_);
-
-        setPropertyValueFromString(arg_property_desc, args.at(toStdString(arg_property_desc.property_->GetName())));
+    // Set property values.
+    for (auto& property_desc : property_descs) {
+        std::string property_name = toStdString(property_desc.property_->GetName());
+        if (Std::containsKey(args, property_name)) {
+            setPropertyValueFromString(property_desc, args.at(property_name));
+        } else {
+            initializePropertyValue(property_desc);
+        }
     }
 
     // Call function.
     uobject->ProcessEvent(ufunction, args_vector.data());
 
-    // Get return value as string.
-    PropertyDesc return_property_desc;
-    return_property_desc.property_ = properties.at(properties.size() - 1);
-    SP_ASSERT(return_property_desc.property_);
-    SP_ASSERT(return_property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
+    // Return all property values because they might have been modified by the function we called.
+    std::map<std::string, std::string> property_values;
+    for (auto& property_desc : property_descs) {
+        std::string property_name = toStdString(property_desc.property_->GetName());
+        Std::insert(property_values, property_name, getPropertyValueAsString(property_desc));
+    }
 
-    return_property_desc.value_ptr_ = return_property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
-    SP_ASSERT(return_property_desc.value_ptr_);
-
-    std::string return_value = getPropertyValueAsString(return_property_desc);
-
-    return return_value;
+    return property_values;
 }

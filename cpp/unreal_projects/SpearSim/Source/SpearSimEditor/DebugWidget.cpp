@@ -104,6 +104,7 @@ void ADebugWidget::SetObjectProperties()
     Unreal::PropertyDesc com_nudge_z_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.Z");
     Unreal::PropertyDesc com_nudge_property_desc_          = Unreal::findPropertyByName(static_mesh_component, "bodyinstance.comnudge"); // not case-sensitive
     Unreal::PropertyDesc simulate_physics_property_desc    = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.bSimulatePhysics");
+    Unreal::PropertyDesc component_velocity_property_desc  = Unreal::findPropertyByName(static_mesh_component, "ComponentVelocity");     // defined in base class
 
     // Get property value from PropertyDesc.
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
@@ -117,6 +118,7 @@ void ADebugWidget::SetObjectProperties()
     SP_LOG(Unreal::getPropertyValueAsString(com_nudge_z_property_desc));
     SP_LOG(Unreal::getPropertyValueAsString(com_nudge_property_desc_));
     SP_LOG(Unreal::getPropertyValueAsString(simulate_physics_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(component_velocity_property_desc));
 
     // Get property value from void* pointer and StaticStruct().
     void* body_instance = &(static_mesh_component->BodyInstance);
@@ -172,17 +174,36 @@ void ADebugWidget::SetObjectProperties()
 void ADebugWidget::CallFunctions()
 {
     static int i = 0;
-    std::string return_value;
+    std::map<std::string, std::string> args;
+    std::map<std::string, std::string> property_values;
     std::string vector_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
-    std::map<std::string, std::string> args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
 
+    args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
     UFunction* get_string_ufunction = Unreal::findFunctionByName(this->GetClass(), "GetString");
-    return_value = Unreal::callFunction(this, get_string_ufunction, args);
-    SP_LOG(return_value);
+    SP_ASSERT(get_string_ufunction);
+    property_values = Unreal::callFunction(this, get_string_ufunction, args);
+    SP_LOG(property_values.at("ReturnValue"));
 
+    args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
     UFunction* get_vector_ufunction = Unreal::findFunctionByName(this->GetClass(), "GetVector");
-    return_value = Unreal::callFunction(this, get_vector_ufunction, args);
-    SP_LOG(return_value);
+    SP_ASSERT(get_vector_ufunction);
+    property_values = Unreal::callFunction(this, get_vector_ufunction, args);
+    SP_LOG(property_values.at("ReturnValue"));
+
+    UWorld* world = GetWorld();
+    SP_ASSERT(world);
+
+    AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(world, "Debug/SM_Prop_04");
+    SP_ASSERT(static_mesh_actor);
+
+    UStaticMeshComponent* static_mesh_component = Unreal::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
+    SP_ASSERT(static_mesh_component);
+
+    args = {{"DeltaLocation", vector_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
+    UFunction* k2_add_relative_location_ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");
+    SP_ASSERT(k2_add_relative_location_ufunction);
+    property_values = Unreal::callFunction(static_mesh_component, k2_add_relative_location_ufunction, args);
+    SP_LOG(property_values.at("SweepHitResult"));
 
     i++;
 }
@@ -190,7 +211,7 @@ void ADebugWidget::CallFunctions()
 FString ADebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
 {
     SP_LOG_CURRENT_FUNCTION();
-    return FString("Huzzuh!");
+    return FString("GetString return value.");
 }
 
 FVector ADebugWidget::GetVector(FString arg_0, bool arg_1, int arg_2, FVector arg_3)

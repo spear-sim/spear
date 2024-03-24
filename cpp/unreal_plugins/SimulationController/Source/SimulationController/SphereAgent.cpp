@@ -9,6 +9,7 @@
 #include <map>
 #include <memory> // std::make_unique
 #include <string>
+#include <utility> // std::move
 #include <vector>
 
 #include <Camera/CameraActor.h>
