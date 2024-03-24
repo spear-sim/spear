@@ -23,7 +23,7 @@ public:
     AEngineActor();
     ~AEngineActor();
 
-    // Interface required for keeping StableNameComponents up-to-date.
+    // Required for keeping StableNameComponents up-to-date.
     #if WITH_EDITOR // defined in an auto-generated header
         // AActor interface
         void PostActorCreated() override;
@@ -31,11 +31,8 @@ public:
         void BeginDestroy() override;
     #endif
 
-    // Public interface to obtain a UStruct for classes that don't define a StaticStruct() function, e.g., FVector.
-    UStruct* findStaticStructByName(const std::string& struct_name);
-
 private:
-    // Private functions and state required for keeping StableNameComponents up-to-date.
+    // Required for keeping StableNameComponents up-to-date.
     #if WITH_EDITOR // defined in an auto-generated header
         void initializeHandlers();
         void terminateHandlers();
@@ -47,7 +44,8 @@ private:
         FDelegateHandle level_actor_folder_changed_handle_;
     #endif
 
-    // Private UPROPERTIES for obtaining a UStruct in situations where a class doesn't define a StaticStruct() function, e.g., FVector.
+    // Used for obtaining a UStruct* in cases where a class or struct
+    // doesn't define a StaticStruct() function, e.g., FVector.
     UPROPERTY()
     FVector FVector;
 };

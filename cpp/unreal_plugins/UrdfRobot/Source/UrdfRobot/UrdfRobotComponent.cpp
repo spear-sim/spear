@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <Containers/Array.h>
+#include <Engine/EngineBaseTypes.h> // ETickingGroup
 
 #include "SpCore/ArrayDesc.h"
 #include "SpCore/Assert.h"
@@ -41,6 +42,7 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     // the pose of child LinkComponents. Hence, we enable this component to tick and in every tick we update it's pose to 
     // follow the root link's pose.
     PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bTickEvenWhenPaused = false;
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
     // UUserInputComponent

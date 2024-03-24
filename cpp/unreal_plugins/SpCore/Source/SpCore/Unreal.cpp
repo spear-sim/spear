@@ -30,6 +30,7 @@
 #include <UObject/UnrealType.h>      // FBoolProperty, FDoubleProperty, FFloatProperty, FIntProperty, FProperty, FStrProperty, FStructProperty, TFieldIterator
 
 #include "SpCore/Assert.h"
+#include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
@@ -83,7 +84,7 @@ void Unreal::setStableActorName(const AActor* actor, std::string stable_name)
     stable_name_component->StableName = toFString(stable_name);
 }
 
-#if WITH_EDITOR
+#if WITH_EDITOR // defined in an auto-generated header
     void Unreal::requestUpdateStableActorName(const AActor* actor)
     {
         SP_ASSERT(actor);
@@ -148,6 +149,21 @@ std::vector<bool> Unreal::getComponentHasTags(const UActorComponent* component, 
 }
 
 //
+// Find struct by name and return UStruct*
+//
+
+UStruct* Unreal::findStructByName(const UWorld* world, const std::string& name)
+{
+    AEngineActor* engine_actor = findActorByType<AEngineActor>(world);
+    SP_ASSERT(engine_actor);
+    PropertyDesc property_desc = findPropertyByName(engine_actor, name);
+    SP_ASSERT(property_desc.property_);
+    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
+    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
+    return struct_property->Struct;
+}
+
+//
 // Find property by name and return a PropertyDesc
 //
 
@@ -196,17 +212,6 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
 }
 
 //
-// Find function by name and return a UFunction
-//
-
-UFunction* Unreal::findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag)
-{
-    UFunction* function = uclass->FindFunctionByName(toFName(name), include_super_flag);
-    SP_ASSERT(function);
-    return function;
-}
-
-//
 // Get property value
 //
 
@@ -248,6 +253,56 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
         SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
         SP_ASSERT(false);
         return "";
+    }
+}
+
+//
+// Initialize property to a default value
+//
+
+void Unreal::initializePropertyValue(UObject* uobject)
+{
+    return initializePropertyValue(uobject, uobject->GetClass());
+}
+
+void Unreal::initializePropertyValue(void* value_ptr, UStruct* ustruct)
+{
+    SP_ASSERT(value_ptr);
+    SP_ASSERT(ustruct);
+
+    bool success = false;
+    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString("{}"));
+    TSharedPtr<FJsonObject> json_object;
+    success = FJsonSerializer::Deserialize(json_reader, json_object);
+    SP_ASSERT(success);
+    SP_ASSERT(json_object.IsValid());
+    success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
+    SP_ASSERT(success);
+}
+
+void Unreal::initializePropertyValue(const Unreal::PropertyDesc& property_desc)
+{
+    SP_ASSERT(property_desc.value_ptr_);
+    SP_ASSERT(property_desc.property_);
+
+    if (property_desc.property_->IsA(FBoolProperty::StaticClass())) {
+        setPropertyValueFromString(property_desc, "false");
+
+    } else if (
+        property_desc.property_->IsA(FIntProperty::StaticClass()) ||
+        property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
+        property_desc.property_->IsA(FDoubleProperty::StaticClass())) {
+        setPropertyValueFromString(property_desc, "0");
+
+    } else if (property_desc.property_->IsA(FStrProperty::StaticClass())) {
+        setPropertyValueFromString(property_desc, "\"\"");
+    
+    } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
+        setPropertyValueFromString(property_desc, "{}");
+
+    } else {
+        SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
+        SP_ASSERT(false);
     }
 }
 
@@ -309,50 +364,15 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
     }
 }
 
-void Unreal::initializePropertyValue(UObject* uobject)
+//
+// Find function by name and return a UFunction*
+//
+
+UFunction* Unreal::findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag)
 {
-    return initializePropertyValue(uobject, uobject->GetClass());
-}
-
-void Unreal::initializePropertyValue(void* value_ptr, UStruct* ustruct)
-{
-    SP_ASSERT(value_ptr);
-    SP_ASSERT(ustruct);
-
-    bool success = false;
-    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString("{}"));
-    TSharedPtr<FJsonObject> json_object;
-    success = FJsonSerializer::Deserialize(json_reader, json_object);
-    SP_ASSERT(success);
-    SP_ASSERT(json_object.IsValid());
-    success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
-    SP_ASSERT(success);
-}
-
-void Unreal::initializePropertyValue(const Unreal::PropertyDesc& property_desc)
-{
-    SP_ASSERT(property_desc.value_ptr_);
-    SP_ASSERT(property_desc.property_);
-
-    if (property_desc.property_->IsA(FBoolProperty::StaticClass())) {
-        setPropertyValueFromString(property_desc, "false");
-
-    } else if (
-        property_desc.property_->IsA(FIntProperty::StaticClass()) ||
-        property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
-        property_desc.property_->IsA(FDoubleProperty::StaticClass())) {
-        setPropertyValueFromString(property_desc, "0");
-
-    } else if (property_desc.property_->IsA(FStrProperty::StaticClass())) {
-        setPropertyValueFromString(property_desc, "\"\"");
-    
-    } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
-        setPropertyValueFromString(property_desc, "{}");
-
-    } else {
-        SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
-        SP_ASSERT(false);
-    }
+    UFunction* function = uclass->FindFunctionByName(toFName(name), include_super_flag);
+    SP_ASSERT(function);
+    return function;
 }
 
 //

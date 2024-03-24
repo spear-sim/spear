@@ -16,7 +16,7 @@
 #include <Camera/CameraComponent.h> // UCameraComponent::AspectRatio, UCameraComponent::FieldOfView
 #include <Components/StaticMeshComponent.h>
 #include <Engine/CollisionProfile.h>
-#include <Engine/EngineBaseTypes.h> // ELevelTick
+#include <Engine/EngineBaseTypes.h> // ELevelTick, ETickingGroup
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>           // FActorSpawnParameters
@@ -109,6 +109,8 @@ SphereAgent::SphereAgent(UWorld* world)
     tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(world, "tick_event_component");
     SP_ASSERT(tick_event_component_);
     SP_ASSERT(tick_event_component_->component_);
+    tick_event_component_->component_->PrimaryComponentTick.bCanEverTick = true;
+    tick_event_component_->component_->PrimaryComponentTick.bTickEvenWhenPaused = false;
     tick_event_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
     tick_event_component_->component_->tick_func_ = [this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
         camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);

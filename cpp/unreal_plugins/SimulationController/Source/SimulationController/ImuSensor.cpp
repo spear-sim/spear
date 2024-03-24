@@ -12,7 +12,7 @@
 
 #include <Components/PrimitiveComponent.h>
 #include <DrawDebugHelpers.h>       // DrawDebugDirectionalArrow
-#include <Engine/EngineBaseTypes.h> // ELevelTick
+#include <Engine/EngineBaseTypes.h> // ELevelTick, ETickingGroup
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
@@ -35,6 +35,8 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
     tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(primitive_component->GetWorld(), "tick_event_component");
     SP_ASSERT(tick_event_component_);
     SP_ASSERT(tick_event_component_->component_);
+    tick_event_component_->component_->PrimaryComponentTick.bCanEverTick = true;
+    tick_event_component_->component_->PrimaryComponentTick.bTickEvenWhenPaused = false;
     tick_event_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
     tick_event_component_->component_->tick_func_ = [this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
 

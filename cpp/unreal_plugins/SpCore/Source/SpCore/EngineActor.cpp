@@ -6,6 +6,7 @@
 
 #include <Engine/Engine.h>      // GEngine
 #include <GameFramework/Actor.h>
+#include <Kismet/GameplayStatics.h>
 #include <Misc/CoreDelegates.h>
 #include <UObject/Class.h>      // UStruct
 #include <UObject/NameTypes.h>  // FName
@@ -24,18 +25,9 @@ AEngineActor::~AEngineActor()
     SP_LOG_CURRENT_FUNCTION();
 }
 
-UStruct* AEngineActor::findStaticStructByName(const std::string& struct_name)
-{
-    Unreal::PropertyDesc property_desc = Unreal::findPropertyByName(this, struct_name);
-    SP_ASSERT(property_desc.property_);
-    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
-    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-    return struct_property->Struct;
-}
-
-#if WITH_EDITOR
+#if WITH_EDITOR // defined in an auto-generated header
     void AEngineActor::PostActorCreated()
-    {
+    { 
         AActor::PostActorCreated();
         initializeHandlers();
     }

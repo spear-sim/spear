@@ -77,7 +77,7 @@ public:
     static std::string getStableActorName(const AActor* actor);
     static void setStableActorName(const AActor* actor, std::string stable_name);
 
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         static void requestUpdateStableActorName(const AActor* actor);
     #endif
 
@@ -569,6 +569,12 @@ public:
     }
 
     //
+    // Find struct by name and return a UStruct*
+    //
+
+    static UStruct* findStructByName(const UWorld* world, const std::string& name);
+
+    //
     // Find property by name and return a PropertyDesc
     //
 
@@ -582,18 +588,20 @@ public:
     static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name);
 
     //
-    // Find function by name and return a UFunction
-    //
-
-    static UFunction* findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
-
-    //
     // Get property value
     //
 
     static std::string getPropertyValueAsString(UObject* uobject);
     static std::string getPropertyValueAsString(void* value_ptr, const UStruct* ustruct);
     static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
+
+    //
+    // Initialize property to a default value
+    //
+
+    static void initializePropertyValue(UObject* uobject);
+    static void initializePropertyValue(void* value_ptr, UStruct* ustruct);
+    static void initializePropertyValue(const PropertyDesc& property_desc);
 
     //
     // Set property value
@@ -603,9 +611,11 @@ public:
     static void setPropertyValueFromString(void* value_ptr, UStruct* ustruct, const std::string& string);
     static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
 
-    static void initializePropertyValue(UObject* uobject);
-    static void initializePropertyValue(void* value_ptr, UStruct* ustruct);
-    static void initializePropertyValue(const PropertyDesc& property_desc);
+    //
+    // Find function by name and return a UFunction
+    //
+
+    static UFunction* findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
 
     //
     // Call function

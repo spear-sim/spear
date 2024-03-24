@@ -23,9 +23,9 @@ UUserInputComponent::UUserInputComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = false;
+    PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 
 UUserInputComponent::~UUserInputComponent()

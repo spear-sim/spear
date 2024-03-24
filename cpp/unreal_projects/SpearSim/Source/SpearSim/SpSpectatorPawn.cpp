@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include <Engine/EngineBaseTypes.h> // ETickingGroup
 #include <GameFramework/SpectatorPawn.h>
 #include <GameFramework/SpectatorPawnMovement.h>
 #include <GenericPlatform/GenericPlatformMisc.h>
@@ -22,8 +23,15 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     // Disable collision so the user can fly through walls by default.
     SetActorEnableCollision(false);
 
+    // Need to enable these, otherwise the mouse movements will not work when the game is paused in the editor.
+    bUseControllerRotationPitch = true;
+    bUseControllerRotationYaw = true;
+    bUseControllerRotationRoll = true;
+
     // Need to set this to be true because the logic in our Tick(...) function depends on being called even when the game is paused.
+    PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bTickEvenWhenPaused = true;
+    PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 
     // UStableNameComponent
     StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
@@ -34,7 +42,9 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     SP_ASSERT(SpectatorPawnMovement);
 
     // Need to set this to true, otherwise keyboard input will not be processed when attempting to move the camera when the game is paused.
+    SpectatorPawnMovement->PrimaryComponentTick.bCanEverTick = true;
     SpectatorPawnMovement->PrimaryComponentTick.bTickEvenWhenPaused = true;
+    SpectatorPawnMovement->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 
 ASpSpectatorPawn::~ASpSpectatorPawn()
