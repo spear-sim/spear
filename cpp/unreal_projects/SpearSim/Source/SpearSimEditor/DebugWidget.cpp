@@ -101,7 +101,7 @@ void ADebugWidget::GetAndSetObjectProperties()
     Unreal::setObjectPropertiesFromString(static_mesh_actor, "{\"bHidden\": false }");
     SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
 
-    // Find properties by name, following pointers is allowed
+    // Find properties by fully qualified name (pointers like RootComponent are handled correctly)
     Unreal::PropertyDesc root_component_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent");
     Unreal::PropertyDesc relative_location_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent.RelativeLocation");
 
@@ -110,7 +110,7 @@ void ADebugWidget::GetAndSetObjectProperties()
     SP_LOG(Unreal::getPropertyValueAsString(root_component_property_desc));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
 
-    // Pointer properties can be set by converting the desired pointer value to a string.
+    // Pointer properties can be set by converting the desired pointer value to a string
     Unreal::setPropertyValueFromString(root_component_property_desc, Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()));
     SP_LOG(Unreal::getPropertyValueAsString(root_component_property_desc));
 
