@@ -14,6 +14,7 @@
 #include <GameFramework/PlayerController.h>
 #include <GameFramework/PlayerInput.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 

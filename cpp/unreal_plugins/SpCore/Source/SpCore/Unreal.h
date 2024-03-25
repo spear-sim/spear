@@ -562,8 +562,7 @@ public:
         }
         if (vec.size() == 0) {
             return default_val;
-        }
-        else {
+        } else {
             return vec.at(0);
         }
     }
