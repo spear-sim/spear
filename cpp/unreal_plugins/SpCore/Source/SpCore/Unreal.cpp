@@ -68,7 +68,7 @@ FName Unreal::toFName(const std::string& str)
 }
 
 //
-// Helper functions to get actor and component names.
+// Helper functions to get and set actor and component names.
 //
 
 std::string Unreal::getStableActorName(const AActor* actor)
