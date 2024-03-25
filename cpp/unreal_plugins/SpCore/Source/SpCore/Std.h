@@ -127,19 +127,26 @@ public:
     }
 
     template <CValueContainer TValueContainer>
+    static std::vector<bool> contains(const TValueContainer& value_container, const TValueContainer& values)
+    {
+        return Std::toVector<bool>(values | std::views::transform([&value_container](const auto& value) { return Std::contains(value_container, value); }));
+    }
+
+    template <CValueContainer TValueContainer>
     static int index(const TValueContainer& value_container, const typename TValueContainer::value_type& value)
     {
         int index = std::distance(value_container.begin(), std::ranges::find(value_container, value));
         return (index < value_container.size()) ? index : -1;
     }
 
-    static auto unique(const CValueContainer auto& value_container)
+    template <CValueContainer TValueContainer>
+    static std::vector<typename TValueContainer::value_type> unique(const TValueContainer& value_container)
     {
         auto value_container_sorted_unique = value_container;
         std::ranges::sort(value_container_sorted_unique);
         const auto [begin, end] = std::ranges::unique(value_container_sorted_unique.begin(), value_container_sorted_unique.end());
         value_container_sorted_unique.erase(begin, end);
-        return value_container_sorted_unique;
+        return Std::toVector<typename TValueContainer::value_type>(value_container_sorted_unique);
     }
 
     template <CValueContainer TValueContainer> requires std::convertible_to<typename TValueContainer::value_type, bool>

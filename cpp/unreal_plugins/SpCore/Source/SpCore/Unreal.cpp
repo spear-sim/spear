@@ -6,8 +6,10 @@
 
 #include <stddef.h> // size_t
 
+#include <cstdlib> // std::strtoull
+#include <format>
 #include <map>
-#include <ranges> // std::views::transform
+#include <ranges>  // std::views::transform
 #include <string>
 #include <utility> // std::move
 #include <vector>
@@ -30,6 +32,7 @@
 #include <UObject/UnrealType.h>      // FBoolProperty, FDoubleProperty, FFloatProperty, FIntProperty, FProperty, FStrProperty, FStructProperty, TFieldIterator
 
 #include "SpCore/Assert.h"
+#include "SpCore/BoostLexicalCast.h"
 #include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
 #include "SpCore/StableNameComponent.h"
@@ -191,9 +194,17 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
         property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
         SP_ASSERT(property_desc.value_ptr_);
 
-        if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
+        if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
+            FObjectProperty* object_ptr_property = static_cast<FObjectPtrProperty*>(property_desc.property_);
+            UObject* uobject = object_ptr_property->GetObjectPropertyValue(property_desc.value_ptr_);
+            SP_ASSERT(uobject);
+            property_desc.value_ptr_ = uobject;
+            ustruct = uobject->GetClass();
+
+        } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
             FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
             ustruct = struct_property->Struct;
+
         } else {
             SP_LOG(property_name, " is an unsupported type:", toStdString(property_desc.property_->GetClass()->GetName()));
             SP_ASSERT(false);
@@ -241,6 +252,11 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
         TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
         SP_ASSERT(json_value.Get());
         return toStdString(json_value.Get()->AsString());
+
+    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
+        FObjectProperty* object_ptr_property = static_cast<FObjectProperty*>(property_desc.property_);
+        UObject* uobject = object_ptr_property->GetObjectPropertyValue(property_desc.value_ptr_);
+        return std::format("{:#018x}", reinterpret_cast<uint64_t>(uobject));
 
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
         FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
@@ -296,7 +312,10 @@ void Unreal::initializePropertyValue(const Unreal::PropertyDesc& property_desc)
 
     } else if (property_desc.property_->IsA(FStrProperty::StaticClass())) {
         setPropertyValueFromString(property_desc, "\"\"");
-    
+
+    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
+        setPropertyValueFromString(property_desc, "0x0");
+
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
         setPropertyValueFromString(property_desc, "{}");
 
@@ -352,6 +371,12 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         success = FJsonObjectConverter::JsonValueToUProperty(json_value, property_desc.property_, property_desc.value_ptr_);
         SP_ASSERT(success);
 
+    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
+
+        FObjectProperty* object_ptr_property = static_cast<FObjectProperty*>(property_desc.property_);
+        UObject* uobject = reinterpret_cast<UObject*>(std::strtoull(string.c_str(), nullptr, 16));
+        object_ptr_property->SetObjectPropertyValue(property_desc.value_ptr_, uobject);
+
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
 
         FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
@@ -399,6 +424,10 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
 
         property_descs.push_back(std::move(property_desc));
     }
+
+    // Input args must be a subset of the function's args.
+    auto property_names = Std::toVector<std::string>(property_descs | std::views::transform([](const auto& desc) { return toStdString(desc.property_->GetName()); }));
+    SP_ASSERT(Std::all(Std::contains(property_names, Std::keys(args))));
 
     // Set property values.
     for (auto& property_desc : property_descs) {

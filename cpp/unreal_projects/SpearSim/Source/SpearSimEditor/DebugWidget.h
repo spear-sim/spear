@@ -46,4 +46,7 @@ public:
 
     UFUNCTION()
     FVector GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3);
+
+    UFUNCTION()
+    static UObject* GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1);
 };

@@ -4,6 +4,8 @@
 
 #include "SpearSimEditor/DebugWidget.h"
 
+#include <format>
+
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>
@@ -90,10 +92,22 @@ void ADebugWidget::SetObjectProperties()
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(world, "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
+    Unreal::PropertyDesc root_component_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent");
+    Unreal::PropertyDesc relative_location_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent.RelativeLocation"); // can follow pointers
+
+    // Get property value from PropertyDesc
+    SP_LOG(std::format("{:#018x}", reinterpret_cast<uint64_t>(static_mesh_actor->GetStaticMeshComponent())));
+    SP_LOG(Unreal::getPropertyValueAsString(root_component_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
+
+    // Set property value from PropertyDesc
+    Unreal::setPropertyValueFromString(root_component_property_desc, std::format("{:#018x}", reinterpret_cast<uint64_t>(static_mesh_actor->GetStaticMeshComponent())));
+    SP_LOG(Unreal::getPropertyValueAsString(root_component_property_desc));
+
     UStaticMeshComponent* static_mesh_component = Unreal::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
     SP_ASSERT(static_mesh_component);
 
-    Unreal::PropertyDesc relative_location_property_desc   = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation");
+    Unreal::PropertyDesc relative_location_property_desc_  = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation");
     Unreal::PropertyDesc relative_location_x_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.X");
     Unreal::PropertyDesc relative_location_y_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.Y");
     Unreal::PropertyDesc relative_location_z_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.Z");
@@ -107,7 +121,7 @@ void ADebugWidget::SetObjectProperties()
     Unreal::PropertyDesc component_velocity_property_desc  = Unreal::findPropertyByName(static_mesh_component, "ComponentVelocity"); // defined in base class
 
     // Get property value from PropertyDesc
-    SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
+    SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc_));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_x_property_desc));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_y_property_desc));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_z_property_desc));
@@ -196,6 +210,14 @@ void ADebugWidget::CallFunctions()
     SP_LOG(return_values.at("arg_3")); // arg_3 is modified by GetVector(...)
     SP_LOG(return_values.at("ReturnValue"));
 
+    // Pointers can be passed into functions by converting them to strings, and static functions can be
+    // called by passing in the class' default object when calling callFunction(...).
+    args = {{"world_context_object", Std::toString(GetWorld())}, {"arg_0", "\"Hello World\""}, {"arg_1", "true"}};
+    ufunction = Unreal::findFunctionByName(this->GetClass(), "GetWorldContextObject");
+    SP_ASSERT(ufunction);
+    return_values = Unreal::callFunction(this->GetClass()->GetDefaultObject(), ufunction, args);
+    SP_LOG(return_values.at("ReturnValue"));
+
     UWorld* world = GetWorld();
     SP_ASSERT(world);
 
@@ -248,4 +270,10 @@ FVector ADebugWidget::GetVector(FString arg_0, bool arg_1, int arg_2, FVector& a
     SP_LOG_CURRENT_FUNCTION();
     arg_3 = FVector(1.11, 2.22, 3.33);
     return FVector(9.87, 6.54, 3.21);
+}
+
+UObject* ADebugWidget::GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1)
+{
+    SP_LOG_CURRENT_FUNCTION();
+    return const_cast<UObject*>(world_context_object);
 }
