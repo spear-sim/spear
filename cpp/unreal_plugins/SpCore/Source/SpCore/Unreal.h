@@ -563,19 +563,30 @@ public:
         }
         if (vec.size() == 0) {
             return default_val;
-        } else {
+        }
+        else {
             return vec.at(0);
         }
     }
 
     //
-    // Find struct by name and return a UStruct*
+    // Find struct by name
     //
 
     static UStruct* findStructByName(const UWorld* world, const std::string& name);
 
     //
-    // Find property by name and return a PropertyDesc
+    // Get and set object properties
+    //
+
+    static std::string getObjectPropertiesAsString(UObject* uobject);
+    static std::string getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct);
+
+    static void setObjectPropertiesFromString(UObject* uobject, const std::string& string);
+    static void setObjectPropertiesFromString(void* value_ptr, UStruct* ustruct, const std::string& string);
+
+    //
+    // Find property by name, get and set property values
     //
 
     struct PropertyDesc
@@ -587,39 +598,13 @@ public:
     static PropertyDesc findPropertyByName(UObject* uobject, const std::string& name);
     static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name);
 
-    //
-    // Get property value
-    //
-
-    static std::string getPropertyValueAsString(UObject* uobject);
-    static std::string getPropertyValueAsString(void* value_ptr, const UStruct* ustruct);
     static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
-
-    //
-    // Initialize property to a default value
-    //
-
-    static void initializePropertyValue(UObject* uobject);
-    static void initializePropertyValue(void* value_ptr, UStruct* ustruct);
-    static void initializePropertyValue(const PropertyDesc& property_desc);
-
-    //
-    // Set property value
-    //
-
-    static void setPropertyValueFromString(UObject* uobject, const std::string& string);
-    static void setPropertyValueFromString(void* value_ptr, UStruct* ustruct, const std::string& string);
     static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
 
     //
-    // Find function by name and return a UFunction
+    // Find function by name, call function
     //
 
     static UFunction* findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
-
-    //
-    // Call function
-    //
-
     static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
 };

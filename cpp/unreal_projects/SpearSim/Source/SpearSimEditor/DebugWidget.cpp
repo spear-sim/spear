@@ -84,7 +84,7 @@ void ADebugWidget::SpawnUrdfRobotPawn()
     urdf_robot_pawn->Initialize();
 }
 
-void ADebugWidget::SetObjectProperties()
+void ADebugWidget::GetAndSetObjectProperties()
 {
     UWorld* world = GetWorld();
     SP_ASSERT(world);
@@ -92,16 +92,26 @@ void ADebugWidget::SetObjectProperties()
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(world, "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
+    // Get and set object properties from UObject*
+    SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
+
+    Unreal::setObjectPropertiesFromString(static_mesh_actor, "{\"bHidden\": true }"); // partial updates are allowed
+    SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
+
+    Unreal::setObjectPropertiesFromString(static_mesh_actor, "{\"bHidden\": false }");
+    SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
+
+    // Find properties by name, following pointers is allowed
     Unreal::PropertyDesc root_component_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent");
-    Unreal::PropertyDesc relative_location_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent.RelativeLocation"); // can follow pointers
+    Unreal::PropertyDesc relative_location_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent.RelativeLocation");
 
     // Get property value from PropertyDesc
-    SP_LOG(std::format("{:#018x}", reinterpret_cast<uint64_t>(static_mesh_actor->GetStaticMeshComponent())));
+    SP_LOG(Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()));
     SP_LOG(Unreal::getPropertyValueAsString(root_component_property_desc));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
 
-    // Set property value from PropertyDesc
-    Unreal::setPropertyValueFromString(root_component_property_desc, std::format("{:#018x}", reinterpret_cast<uint64_t>(static_mesh_actor->GetStaticMeshComponent())));
+    // Pointer properties can be set by converting the desired pointer value to a string.
+    Unreal::setPropertyValueFromString(root_component_property_desc, Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()));
     SP_LOG(Unreal::getPropertyValueAsString(root_component_property_desc));
 
     UStaticMeshComponent* static_mesh_component = Unreal::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
@@ -137,16 +147,16 @@ void ADebugWidget::SetObjectProperties()
     void* value_ptr = nullptr;
     UStruct* ustruct = nullptr;
 
-    // Get property value from void* and UStruct*
+    // Get property values from void* and UStruct*
     value_ptr = &(static_mesh_component->BodyInstance);
     ustruct = FBodyInstance::StaticStruct();
-    SP_LOG(Unreal::getPropertyValueAsString(value_ptr, ustruct));
+    SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
-    // Get property value from void* and UStruct*
+    // Get property values from void* and UStruct*
     value_ptr = relative_location_property_desc.value_ptr_;
     ustruct = Unreal::findStructByName(world, "FVector"); // useful for when a class or struct doesn't define a StaticStruct() method
-    SP_LOG(Unreal::getPropertyValueAsString(value_ptr, ustruct));
+    SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
     static int i = 0;
@@ -154,12 +164,12 @@ void ADebugWidget::SetObjectProperties()
 
     // Set property value from void* and UStruct*
     FVector vec(1.23, 4.56, 7.89);
-    str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}"); // partial updates are allowed, only the members specified here are updated
+    str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}");
     value_ptr = &vec;
-    ustruct = Unreal::findStructByName(world, "FVector"); // useful for when a class or struct doesn't define a StaticStruct() method
-    SP_LOG(Unreal::getPropertyValueAsString(value_ptr, ustruct));
-    Unreal::setPropertyValueFromString(value_ptr, ustruct, str);
-    SP_LOG(Unreal::getPropertyValueAsString(value_ptr, ustruct));
+    ustruct = Unreal::findStructByName(world, "FVector");
+    SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
+    Unreal::setObjectPropertiesFromString(value_ptr, ustruct, str);
+    SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
     // Set property value from PropertyDesc
@@ -195,15 +205,15 @@ void ADebugWidget::CallFunctions()
     UFunction* ufunction = nullptr;
     std::map<std::string, std::string> args;
     std::map<std::string, std::string> return_values;
-    std::string vector_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
+    std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
 
-    args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
+    args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetString");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(this, ufunction, args);
     SP_LOG(return_values.at("ReturnValue"));
 
-    args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vector_str}};
+    args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetVector");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(this, ufunction, args);
@@ -212,7 +222,7 @@ void ADebugWidget::CallFunctions()
 
     // Pointers can be passed into functions by converting them to strings, and static functions can be
     // called by passing in the class' default object when calling callFunction(...).
-    args = {{"world_context_object", Std::toString(GetWorld())}, {"arg_0", "\"Hello World\""}, {"arg_1", "true"}};
+    args = {{"world_context_object", Std::toStringFromPtr(GetWorld())}, {"arg_0", "\"Hello World\""}, {"arg_1", "true"}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetWorldContextObject");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(this->GetClass()->GetDefaultObject(), ufunction, args);
@@ -228,29 +238,30 @@ void ADebugWidget::CallFunctions()
     SP_ASSERT(static_mesh_component);
 
     //
-    // Since partial updates are allowed throughout our setPropertyValueFromString(...) interface, we
-    // follow the same convention in our callFunction(...) interface. For each object that gets passed to
-    // a given target function, we attempt to initialize it as follows. First, we set its entire memory
-    // region to 0, then we initialize it using a reasonable default string based on its type (e.g.,
-    // "false" for a bool, "0" for an int, "{}" for a struct, etc), then we update it according to its
-    // corresponding string in the args std::map provided by the caller. This approach enables a caller
-    // to specify a sparse subset of data members that are relevant for a given function invocation, but
-    // always allows the caller to fully initialize an object if desired. We also allow entire arguments
-    // to be omitted from args, in which case the default-initialized object will be passed to the target
-    // function without further modification.
+    // Since partial updates are allowed throughout our setObjectPropertiesFromString(...) and
+    // setPropertyValueFromString(...) interfaces, we follow the same convention in our callFunction(...)
+    // interface. For each object that gets passed to a given target function, we attempt to initialize
+    // it as follows. First, we set its entire memory region to 0, then we (partially) update it
+    // according to its corresponding string in the args std::map provided by the caller. This approach
+    // enables a caller to explicitly initialize a subset of data members when passing an object to a
+    // target function, but always allows the caller to fully initialize the object if necessary. We also
+    // allow entire arguments to be omitted from args, in which case the default-initialized (as
+    // described above) object will be passed to the target function without further modification.
     // 
     // The signature for the target function below is as follows,
     //
-    //     void SceneComponent::K2_AddRelativeLocation(FVector DeltaLocation, bool bSweep, FHitResult& SweepHitResult, bool bTeleport)
+    //     void SceneComponent::K2_AddRelativeLocation(
+    //         FVector DeltaLocation, bool bSweep, FHitResult& SweepHitResult, bool bTeleport);
     // 
     // where SweepHitResult is an "out" parameter used to return additional data to the caller. Since
     // SweepHitResult will be filled in by the target function anyway, we simply omit it from args.
     // Regardless of whether or not it is included in args, SweepHitResult (and all other arguments), are
-    // always included in the values returned by callFunction(...). So the caller can always access data
-    // that was filled in by the target function, as well as the target function's formal return value.
+    // always included in the values returned by callFunction(...). So the caller can always access any
+    // additional data that was filled in by the target function, as well as the target function's formal
+    // return value.
     //
 
-    args = {{"DeltaLocation", vector_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
+    args = {{"DeltaLocation", vec_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
     ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(static_mesh_component, ufunction, args);

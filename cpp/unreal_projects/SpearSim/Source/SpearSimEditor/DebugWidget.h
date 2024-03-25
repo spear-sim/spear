@@ -36,7 +36,7 @@ public:
     FString UrdfFile;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void SetObjectProperties();
+    void GetAndSetObjectProperties();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void CallFunctions();

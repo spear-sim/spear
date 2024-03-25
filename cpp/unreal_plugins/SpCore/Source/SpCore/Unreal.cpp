@@ -6,8 +6,6 @@
 
 #include <stddef.h> // size_t
 
-#include <cstdlib> // std::strtoull
-#include <format>
 #include <map>
 #include <ranges>  // std::views::transform
 #include <string>
@@ -152,7 +150,7 @@ std::vector<bool> Unreal::getComponentHasTags(const UActorComponent* component, 
 }
 
 //
-// Find struct by name and return UStruct*
+// Find struct by name
 //
 
 UStruct* Unreal::findStructByName(const UWorld* world, const std::string& name)
@@ -167,7 +165,43 @@ UStruct* Unreal::findStructByName(const UWorld* world, const std::string& name)
 }
 
 //
-// Find property by name and return a PropertyDesc
+// Get and set object properties
+//
+
+std::string Unreal::getObjectPropertiesAsString(UObject* uobject)
+{
+    return getObjectPropertiesAsString(uobject, uobject->GetClass());
+}
+
+std::string Unreal::getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct)
+{
+    FString string;
+    FJsonObjectConverter::UStructToJsonObjectString(ustruct, value_ptr, string);
+    return toStdString(string);
+}
+
+void Unreal::setObjectPropertiesFromString(UObject* uobject, const std::string& string)
+{
+    return setObjectPropertiesFromString(uobject, uobject->GetClass(), string);
+}
+
+void Unreal::setObjectPropertiesFromString(void* value_ptr, UStruct* ustruct, const std::string& string)
+{
+    SP_ASSERT(value_ptr);
+    SP_ASSERT(ustruct);
+
+    bool success = false;
+    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString(string));
+    TSharedPtr<FJsonObject> json_object;
+    success = FJsonSerializer::Deserialize(json_reader, json_object);
+    SP_ASSERT(success);
+    SP_ASSERT(json_object.IsValid());
+    success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
+    SP_ASSERT(success);
+}
+
+//
+// Find property by name, get and set property values
 //
 
 Unreal::PropertyDesc Unreal::findPropertyByName(UObject* uobject, const std::string& name)
@@ -222,22 +256,6 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
     return property_desc;
 }
 
-//
-// Get property value
-//
-
-std::string Unreal::getPropertyValueAsString(UObject* uobject)
-{
-    return getPropertyValueAsString(uobject, uobject->GetClass());
-}
-
-std::string Unreal::getPropertyValueAsString(void* value_ptr, const UStruct* ustruct)
-{
-    FString string;
-    FJsonObjectConverter::UStructToJsonObjectString(ustruct, value_ptr, string);
-    return toStdString(string);
-}
-
 std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& property_desc)
 {
     SP_ASSERT(property_desc.value_ptr_);
@@ -256,7 +274,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
     } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
         FObjectProperty* object_ptr_property = static_cast<FObjectProperty*>(property_desc.property_);
         UObject* uobject = object_ptr_property->GetObjectPropertyValue(property_desc.value_ptr_);
-        return std::format("{:#018x}", reinterpret_cast<uint64_t>(uobject));
+        return Std::toStringFromPtr(uobject);
 
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
         FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
@@ -270,83 +288,6 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
         SP_ASSERT(false);
         return "";
     }
-}
-
-//
-// Initialize property to a default value
-//
-
-void Unreal::initializePropertyValue(UObject* uobject)
-{
-    return initializePropertyValue(uobject, uobject->GetClass());
-}
-
-void Unreal::initializePropertyValue(void* value_ptr, UStruct* ustruct)
-{
-    SP_ASSERT(value_ptr);
-    SP_ASSERT(ustruct);
-
-    bool success = false;
-    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString("{}"));
-    TSharedPtr<FJsonObject> json_object;
-    success = FJsonSerializer::Deserialize(json_reader, json_object);
-    SP_ASSERT(success);
-    SP_ASSERT(json_object.IsValid());
-    success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
-    SP_ASSERT(success);
-}
-
-void Unreal::initializePropertyValue(const Unreal::PropertyDesc& property_desc)
-{
-    SP_ASSERT(property_desc.value_ptr_);
-    SP_ASSERT(property_desc.property_);
-
-    if (property_desc.property_->IsA(FBoolProperty::StaticClass())) {
-        setPropertyValueFromString(property_desc, "false");
-
-    } else if (
-        property_desc.property_->IsA(FIntProperty::StaticClass()) ||
-        property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
-        property_desc.property_->IsA(FDoubleProperty::StaticClass())) {
-        setPropertyValueFromString(property_desc, "0");
-
-    } else if (property_desc.property_->IsA(FStrProperty::StaticClass())) {
-        setPropertyValueFromString(property_desc, "\"\"");
-
-    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
-        setPropertyValueFromString(property_desc, "0x0");
-
-    } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
-        setPropertyValueFromString(property_desc, "{}");
-
-    } else {
-        SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
-        SP_ASSERT(false);
-    }
-}
-
-//
-// Set property value
-//
-
-void Unreal::setPropertyValueFromString(UObject* uobject, const std::string& string)
-{
-    return setPropertyValueFromString(uobject, uobject->GetClass(), string);
-}
-
-void Unreal::setPropertyValueFromString(void* value_ptr, UStruct* ustruct, const std::string& string)
-{
-    SP_ASSERT(value_ptr);
-    SP_ASSERT(ustruct);
-
-    bool success = false;
-    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString(string));
-    TSharedPtr<FJsonObject> json_object;
-    success = FJsonSerializer::Deserialize(json_reader, json_object);
-    SP_ASSERT(success);
-    SP_ASSERT(json_object.IsValid());
-    success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
-    SP_ASSERT(success);
 }
 
 void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_desc, const std::string& string)
@@ -374,14 +315,14 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
     } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
 
         FObjectProperty* object_ptr_property = static_cast<FObjectProperty*>(property_desc.property_);
-        UObject* uobject = reinterpret_cast<UObject*>(std::strtoull(string.c_str(), nullptr, 16));
+        UObject* uobject = Std::toPtrFromString<UObject>(string);
         object_ptr_property->SetObjectPropertyValue(property_desc.value_ptr_, uobject);
 
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
 
         FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
         UStruct* ustruct = struct_property->Struct;
-        setPropertyValueFromString(property_desc.value_ptr_, ustruct, string);
+        setObjectPropertiesFromString(property_desc.value_ptr_, ustruct, string);
 
     } else {
         SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
@@ -432,7 +373,6 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
     // Set property values.
     for (auto& property_desc : property_descs) {
         std::string property_name = toStdString(property_desc.property_->GetName());
-        initializePropertyValue(property_desc);
         if (Std::containsKey(args, property_name)) {
             setPropertyValueFromString(property_desc, args.at(property_name));
         }

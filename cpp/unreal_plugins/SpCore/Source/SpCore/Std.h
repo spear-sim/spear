@@ -7,7 +7,9 @@
 #include <stddef.h> // size_t
 
 #include <algorithm> // std::ranges::find, std::ranges::copy, std::ranges::equal, std::ranges::sort, std::ranges::set_intersection
+#include <cstdlib>   // std::strtoull
 #include <cstring>   // std::memcpy
+#include <format>
 #include <initializer_list>
 #include <iterator>  // std::back_inserter, std::distance
 #include <map>
@@ -78,6 +80,17 @@ public:
     static std::string toString(auto&&... args)
     {
         return (... + boost::lexical_cast<std::string>(std::forward<decltype(args)>(args)));
+    }
+
+    static std::string toStringFromPtr(void* ptr)
+    {
+        return std::format("{:#018x}", reinterpret_cast<uint64_t>(ptr));
+    }
+
+    template <typename TPtr>
+    static TPtr* toPtrFromString(const std::string& string)
+    {
+        return reinterpret_cast<TPtr*>(std::strtoull(string.c_str(), nullptr, 16));
     }
 
     //
