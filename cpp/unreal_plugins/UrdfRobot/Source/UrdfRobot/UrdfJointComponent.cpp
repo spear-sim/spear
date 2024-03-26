@@ -4,6 +4,8 @@
 
 #include "UrdfRobot/UrdfJointComponent.h" // EJointControlType, EJointInterfaceType, EJointType
 
+#include <stdint.h> // uint8_t
+
 #include <map>
 #include <string>
 #include <utility> // std::move

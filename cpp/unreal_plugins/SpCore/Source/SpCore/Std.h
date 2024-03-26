@@ -5,20 +5,23 @@
 #pragma once
 
 #include <stddef.h> // size_t
+#include <stdint.h> // uint64_t
 
-#include <algorithm> // std::ranges::find, std::ranges::copy, std::ranges::equal, std::ranges::sort, std::ranges::set_intersection
+#include <algorithm> // std::ranges::all_of, std::ranges::any_of, std::ranges::find, std::ranges::copy, std::ranges::equal, std::ranges::sort,
+                     // std::ranges::set_intersection, std::ranges::unique
+#include <concepts>  // std::convertible_to, std::same_as
 #include <cstdlib>   // std::strtoull
 #include <cstring>   // std::memcpy
 #include <format>
 #include <initializer_list>
-#include <iterator>  // std::back_inserter, std::distance
+#include <iterator>  // std::back_inserter, std::ranges::distance
 #include <map>
-#include <ranges>    // std::ranges::range, std::views::transform
+#include <ranges>    // std::ranges::begin, std::ranges::contiguous_range, std::ranges::data, std::ranges::end, std::ranges::range,
+                     // std::ranges::sized_range, std::ranges::size, std::views::transform
 #include <span>
 #include <string>
 #include <utility>   // std::forward
 #include <vector>
-
 
 #include <boost/algorithm/string/case_conv.hpp> // boost::algorithm::to_lower_copy
 #include <boost/range/adaptor/map.hpp>          // boost::adaptors::map_keys
@@ -28,28 +31,107 @@
 #include "SpCore/Assert.h"
 #include "SpCore/BoostLexicalCast.h"
 
+//
+// std::ranges concepts
+//
+
+template <typename TRange, typename TValue>
+concept CRangeHasValuesConvertibleTo =
+    std::ranges::range<TRange> &&
+    requires(TRange&& range) {
+        { *std::ranges::begin(range) } -> std::convertible_to<TValue>;
+    };
+
+//
+// Value container (e.g., std::vector) concepts
+//
+
+template <typename TDest, typename TSrc>
+concept CConvertibleFrom = std::convertible_to<TSrc, TDest>;
+
 template <typename TValueContainer>
 concept CValueContainer =
     std::ranges::range<TValueContainer> &&
-    requires {
+    requires(TValueContainer value_container) {
         typename TValueContainer::value_type;
+        { *std::ranges::begin(value_container) } -> std::convertible_to<typename TValueContainer::value_type>;
     };
 
+template <typename TValueContainer, typename TValue>
+concept CValueContainerHasValuesConvertibleFrom =
+    CValueContainer<TValueContainer> &&
+    CConvertibleFrom<typename TValueContainer::value_type, TValue>;
+
+template <typename TValueContainer, typename TValues>
+concept CValueContainerConvertibleFrom =
+    CValueContainer<TValueContainer> &&
+    CValueContainer<TValues> &&
+    CConvertibleFrom<typename TValueContainer::value_type, typename TValues::value_type>;
+
+//
+// Key-value container (e.g., std::map) concepts.
+//
+
+// Ideally we would constrain the type of (*std::ranges::begin(...)).second to be convertible to
+// TKeyValueContainer::mapped_type, but this prevents the constraint for being satisfied, even when
+// the input type is std::map. So we only constrain (*std::ranges::begin(...)).first to be convertible
+// to TKeyValueContainer::key_type.
 template <typename TKeyValueContainer>
 concept CKeyValueContainer =
     std::ranges::range<TKeyValueContainer> &&
-    requires {
+    requires(TKeyValueContainer key_value_container) {
         typename TKeyValueContainer::key_type;
         typename TKeyValueContainer::mapped_type;
+        { (*std::ranges::begin(key_value_container)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
+        { (*std::ranges::begin(key_value_container)).second };
     };
 
-template <typename TValueContainer>
-concept CContiguousValueContainer =
-    CValueContainer<TValueContainer> &&
-    requires(TValueContainer contiguous_value_container) {
-        { contiguous_value_container.data() } -> std::same_as<typename TValueContainer::value_type*>;
-        { contiguous_value_container.size() } -> std::same_as<typename TValueContainer::size_type>;
+template <typename TKeyValueContainer, typename TValue>
+concept CKeyValueContainerHasKeysConvertibleFrom =
+    CKeyValueContainer<TKeyValueContainer> &&
+    CConvertibleFrom<typename TKeyValueContainer::key_type, TValue>;
+
+template <typename TKeyValueContainer, typename TKey, typename TValue>
+concept CKeyValueContainerCanInsertValue =
+    CKeyValueContainer<TKeyValueContainer> &&
+    requires(TKeyValueContainer& key_value_range, const TKey& key, TValue&& value) {
+        { key_value_range.insert({key, std::forward<decltype(value)>(value)}).first };
+        { key_value_range.insert({key, std::forward<decltype(value)>(value)}).second };
     };
+
+template <typename TKeyValueContainer, typename TKey, typename TInitializerListValue>
+concept CKeyValueContainerCanInsertInitializerList =
+    CKeyValueContainer<TKeyValueContainer> &&
+    requires(TKeyValueContainer& key_value_range, const TKey& key, std::initializer_list<TInitializerListValue> initializer_list) {
+        { key_value_range.insert({key, initializer_list}).first };
+        { key_value_range.insert({key, initializer_list}).second };
+    };
+
+template <typename TKeyValueContainer, typename TKey>
+concept CKeyValueContainerCanInsertEmptyInitializerList =
+    CKeyValueContainer<TKeyValueContainer> &&
+    requires(TKeyValueContainer& key_value_range, const TKey& key) {
+        { key_value_range.insert({key, {}}).first };
+        { key_value_range.insert({key, {}}).second };
+    };
+
+template <typename TDestKeyValueContainer, typename TSrcKeyValueContainer>
+concept CKeyValueContainerCanInsertContainer =
+    CKeyValueContainer<TDestKeyValueContainer> &&
+    CKeyValueContainer<TSrcKeyValueContainer> &&
+    requires(TDestKeyValueContainer& dest_key_value_container, const TSrcKeyValueContainer& src_key_value_container) {
+        { dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container)) };
+    };
+
+//
+// Concepts for safely reinterpreting contiguous value containers (e.g., std::initializer_list and std::vector)
+//
+
+template <typename TContiguousValueContainer>
+concept CContiguousValueContainer =
+    CValueContainer<TContiguousValueContainer> &&
+    std::ranges::contiguous_range<TContiguousValueContainer> &&
+    std::ranges::sized_range<TContiguousValueContainer>;
 
 class SPCORE_API Std
 {
@@ -97,152 +179,172 @@ public:
     // std::span functions
     //
 
-    template <typename TData>
-    static const TData& at(const std::span<TData>& span, int index)
+    template <typename TValue>
+    static const TValue& at(const std::span<TValue>& span, int index)
     {
         SP_ASSERT(index < span.size());
         return span[index];
     }
 
     //
-    // std::ranges::range functions
+    // Range functions
     //
 
-    template <typename TData>
-    static std::vector<TData> toVector(std::ranges::range auto&& range)
+    template <typename TValue, typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TValue>
+    static std::vector<TValue> toVector(TRange&& range)
     {
-        std::vector<TData> vector;
+        std::vector<TValue> vector;
         std::ranges::copy(std::forward<decltype(range)>(range), std::back_inserter(vector));
         return vector;
     }
 
-    template <typename TKey, typename TValue>
-    static std::map<TKey, TValue> toMap(std::ranges::range auto&& range)
+    template <typename TKey, typename TValue, typename TRange> requires CRangeHasValuesConvertibleTo<TRange, std::pair<TKey, TValue>>
+    static std::map<TKey, TValue> toMap(TRange&& range)
     {
-        auto pairs = toVector<std::pair<TKey, TValue>>(std::forward<decltype(range)>(range));
+        std::vector<std::pair<TKey, TValue>> pairs = toVector<std::pair<TKey, TValue>>(std::forward<decltype(range)>(range));
 
         // Assert if there are duplicate keys.
-        auto keys = toVector<TKey>(pairs | std::views::transform([](const auto& pair) { const auto& [key, value] = pair; return key; }));
+        std::vector<TKey> keys = toVector<TKey>(pairs | std::views::transform([](const auto& pair) { const auto& [key, value] = pair; return key; }));
         std::ranges::sort(keys);
         SP_ASSERT(std::ranges::equal(keys, unique(keys)));
 
-        return std::map<TKey, TValue>(pairs.begin(), pairs.end());
+        return std::map<TKey, TValue>(std::ranges::begin(pairs), std::ranges::end(pairs));
+    }
+
+    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, bool>
+    static bool all(TRange&& range)
+    {
+        return std::ranges::all_of(range, [](auto val) { return val; });
+    }
+
+    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, bool>
+    static bool any(TRange&& range)
+    {
+        return std::ranges::any_of(range, [](auto val) { return val; });
     }
 
     //
     // Value container (e.g., std::vector) functions
     //
 
-    template <CValueContainer TValueContainer>
-    static bool contains(const TValueContainer& value_container, const typename TValueContainer::value_type& value)
+    template <typename TValueContainer, typename TValue> requires CValueContainerHasValuesConvertibleFrom<TValueContainer, TValue>
+    static bool contains(const TValueContainer& value_container, const TValue& value)
     {
         return std::ranges::find(value_container, value) != value_container.end();
     }
 
-    template <CValueContainer TValueContainer>
-    static std::vector<bool> contains(const TValueContainer& value_container, const TValueContainer& values)
+    template <typename TValueContainer, typename TValues> requires CValueContainerConvertibleFrom<TValueContainer, TValues>
+    static std::vector<bool> contains(const TValueContainer& value_container, const TValues& values)
     {
-        return Std::toVector<bool>(values | std::views::transform([&value_container](const auto& value) { return Std::contains(value_container, value); }));
+        return toVector<bool>(values | std::views::transform([&value_container](const auto& value) { return Std::contains(value_container, value); }));
     }
 
-    template <CValueContainer TValueContainer>
-    static int index(const TValueContainer& value_container, const typename TValueContainer::value_type& value)
+    template <typename TValueContainer, typename TValue> requires CValueContainerHasValuesConvertibleFrom<TValueContainer, TValue>
+    static int index(const TValueContainer& value_container, const TValue& value)
     {
-        int index = std::distance(value_container.begin(), std::ranges::find(value_container, value));
-        return (index < value_container.size()) ? index : -1;
+        int index = std::ranges::distance(std::ranges::begin(value_container), std::ranges::find(value_container, value));
+        return (index < std::ranges::size(value_container)) ? index : -1;
     }
 
-    template <CValueContainer TValueContainer>
+    template <typename TValueContainer> requires CValueContainer<TValueContainer>
     static std::vector<typename TValueContainer::value_type> unique(const TValueContainer& value_container)
     {
-        auto value_container_sorted_unique = value_container;
-        std::ranges::sort(value_container_sorted_unique);
-        const auto [begin, end] = std::ranges::unique(value_container_sorted_unique.begin(), value_container_sorted_unique.end());
-        value_container_sorted_unique.erase(begin, end);
-        return Std::toVector<typename TValueContainer::value_type>(value_container_sorted_unique);
-    }
+        using TValue = TValueContainer::value_type;
 
-    template <CValueContainer TValueContainer> requires std::convertible_to<typename TValueContainer::value_type, bool>
-    static bool all(const TValueContainer& value_container)
-    {
-        return std::ranges::all_of(value_container, [](auto val) { return val; });
-    }
-
-    template <CValueContainer TValueContainer> requires std::convertible_to<typename TValueContainer::value_type, bool>
-    static bool any(const TValueContainer& value_container)
-    {
-        return std::ranges::any_of(value_container, [](auto val) { return val; });
+        std::vector<TValue> value_container_unique = toVector<TValue>(value_container);
+        std::ranges::sort(value_container_unique);
+        auto [begin, end] = std::ranges::unique(std::ranges::begin(value_container_unique), std::ranges::end(value_container_unique));
+        value_container_unique.erase(begin, end);
+        return value_container_unique;
     }
 
     //
     // Key-value container (e.g., std::map) functions
     //
 
-    template <CKeyValueContainer TKeyValueContainer>
-    static bool containsKey(const TKeyValueContainer& key_value_container, const typename TKeyValueContainer::key_type& key)
+    template <typename TKeyValueContainer, typename TKey> requires CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
+    static bool containsKey(const TKeyValueContainer& key_value_container, const TKey& key)
     {
         return key_value_container.contains(key);
     }
 
-    template <CKeyValueContainer TKeyValueContainer>
+    template <typename TKeyValueContainer> requires CKeyValueContainer<TKeyValueContainer>
     static std::vector<typename TKeyValueContainer::key_type> keys(const TKeyValueContainer& key_value_container)
     {
+        using TKey = typename TKeyValueContainer::key_type;
+        using TValue = typename TKeyValueContainer::mapped_type;
+
         // TODO: revert back to using std::views after migrating to UE 5.3:
-        //     auto view = std::views::keys(key_value_container);
-        //     return std::vector<typename TKeyValueContainer::key_type>(view.begin(), view.end());
-        std::vector<typename TKeyValueContainer::key_type> keys;
+        //     return view = toVector(std::views::keys(key_value_range));
+
+        std::vector<TKey> keys;
         boost::copy(key_value_container | boost::adaptors::map_keys, std::back_inserter(keys));
         return keys;
     }
 
-
-    template <CKeyValueContainer TKeyValueContainer>
-    static void insert(TKeyValueContainer& key_value_container, const typename TKeyValueContainer::key_type& key, const typename TKeyValueContainer::mapped_type& value)
+    template <typename TKeyValueContainer, typename TKey, typename TValue> requires CKeyValueContainerCanInsertValue<TKeyValueContainer, TKey, TValue>
+    static void insert(TKeyValueContainer& key_value_container, const TKey& key, TValue&& value)
     {
-        auto [itr, success] = key_value_container.insert({key, value});
+        auto [itr, success] = key_value_container.insert({key, std::forward<decltype(value)>(value)});
         SP_ASSERT(success);
     }
 
-    template <CKeyValueContainer TKeyValueContainer>
-    static void insert(TKeyValueContainer& key_value_container, const typename TKeyValueContainer::key_type& key, typename TKeyValueContainer::mapped_type&& value)
+    template <typename TKeyValueContainer, typename TKey, typename TInitializerListValue> requires CKeyValueContainerCanInsertInitializerList<TKeyValueContainer, TKey, TInitializerListValue>
+    static void insert(TKeyValueContainer& key_value_container, const TKey& key, std::initializer_list<TInitializerListValue> initializer_list)
     {
-        auto [itr, success] = key_value_container.insert({key, std::forward<typename TKeyValueContainer::mapped_type>(value)});
+        auto [itr, success] = key_value_container.insert({key, initializer_list});
         SP_ASSERT(success);
     }
 
-    template <CKeyValueContainer TKeyValueContainer>
-    static void insert(TKeyValueContainer& dest, const TKeyValueContainer& src)
+private:
+    class EmptyInitializerList;
+public:
+    template <typename TKeyValueContainer, typename TKey> requires CKeyValueContainerCanInsertEmptyInitializerList<TKeyValueContainer, TKey>
+    static void insert(TKeyValueContainer& key_value_container, const TKey& key, std::initializer_list<EmptyInitializerList> initializer_list)
     {
-        std::vector<typename TKeyValueContainer::key_type> keys_intersection;
-        // TODO: revert back to using std::views after migrating to UE 5.3:
-        //     std::ranges::set_intersection(std::views::keys(dest), std::views::keys(src), std::back_inserter(keys_intersection));
-        std::ranges::set_intersection(keys(dest), keys(src), std::back_inserter(keys_intersection));
-        SP_ASSERT(keys_intersection.empty());
-        dest.insert(src.begin(), src.end());
+        auto [itr, success] = key_value_container.insert({key, {}});
+        SP_ASSERT(success);
+    }
+
+    template <typename TDestKeyValueContainer, typename TSrcKeyValueContainer> requires CKeyValueContainerCanInsertContainer<TDestKeyValueContainer, TSrcKeyValueContainer>
+    static void insert(TDestKeyValueContainer& dest_key_value_container, const TSrcKeyValueContainer& src_key_value_container)
+    {
+        using TKey = typename TDestKeyValueContainer::key_type;
+
+        // Assert if there are duplicate keys.
+        std::vector<TKey> keys_set_intersection;
+        std::ranges::set_intersection(keys(dest_key_value_container), keys(src_key_value_container), std::back_inserter(keys_set_intersection));
+        SP_ASSERT(keys_set_intersection.empty());
+
+        dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container));
     }
 
     //
     // Functions for safely reinterpreting contiguous value containers (e.g., std::initializer_list and std::vector)
     //
 
-    template <typename TDest, CContiguousValueContainer TContiguousValueContainer>
-    static std::span<TDest> reinterpretAsSpanOf(const TContiguousValueContainer& src)
+    template <typename TDestValue, typename TSrcValueContainer> requires CContiguousValueContainer<TSrcValueContainer>
+    static std::span<TDestValue> reinterpretAsSpanOf(const TSrcValueContainer& src)
     {
-        std::span<TDest> dest;
-        size_t src_num_elements = src.size();
+        using TSrcValue = typename TSrcValueContainer::value_type;
+
+        std::span<TDestValue> dest;
+        size_t src_num_elements = std::ranges::size(src);
         if (src_num_elements > 0) {
-            size_t src_num_bytes = src_num_elements * sizeof(typename TContiguousValueContainer::value_type);
-            SP_ASSERT(src_num_bytes % sizeof(TDest) == 0);
-            size_t dest_num_elements = src_num_bytes / sizeof(TDest);
-            dest = std::span<TDest>(reinterpret_cast<TDest*>(src.data()), dest_num_elements);
+            size_t src_num_bytes = src_num_elements * sizeof(TSrcValue);
+            SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
+            size_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
+            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(std::ranges::data(src)), dest_num_elements);
         }
         return dest;
     }
 
-    template <typename TDest, CContiguousValueContainer TContiguousValueContainer>
-    static std::vector<TDest> reinterpretAsVectorOf(const TContiguousValueContainer& src)
+    template <typename TDestValue, typename TSrcValueContainer> requires CContiguousValueContainer<TSrcValueContainer>
+    static std::vector<TDestValue> reinterpretAsVectorOf(const TSrcValueContainer& src)
     {
-        return reinterpretAsVectorImpl<TDest, typename TContiguousValueContainer::value_type>(src.data(), src.size());
+        using TSrcValue = typename TSrcValueContainer::value_type;
+
+        return reinterpretAsVectorImpl<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
     }
 
     // Don't infer TSrc from the input initializer list, because we want to force the user to explicitly specify the
@@ -251,22 +353,22 @@ public:
     // initializer list of doubles. We don't need this extra layer of safety for reinterpretAsVectorOf(...), because
     // the input to that function is, e.g., an std::vector, where the user would have already specified its data type
     // somewhere in their code.
-    template <typename TDest, typename TSrc, typename TInitializerList> requires std::same_as<TSrc, TInitializerList>
-    static std::vector<TDest> reinterpretAsVector(const std::initializer_list<TInitializerList>& src)
+    template <typename TDestValue, typename TSrcValue, typename TSrcInitializerListValue> requires std::same_as<TSrcValue, TSrcInitializerListValue>
+    static std::vector<TDestValue> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
     {
-        return reinterpretAsVectorImpl<TDest, TSrc>(std::data(src), src.size());
+        return reinterpretAsVectorImpl<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
     }
 
-    template <typename TDest, typename TSrc>
-    static std::vector<TDest> reinterpretAsVectorImpl(const TSrc* src_data, size_t src_num_elements)
+    template <typename TDestValue, typename TSrcValue>
+    static std::vector<TDestValue> reinterpretAsVectorImpl(const TSrcValue* src_data, size_t src_num_elements)
     {
-        std::vector<TDest> dest;
+        std::vector<TDestValue> dest;
         if (src_num_elements > 0) {
-            size_t src_num_bytes = src_num_elements * sizeof(TSrc);
-            SP_ASSERT(src_num_bytes % sizeof(TDest) == 0);
-            size_t dest_num_elements = src_num_bytes / sizeof(TDest);
+            size_t src_num_bytes = src_num_elements * sizeof(TSrcValue);
+            SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
+            size_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
             dest.resize(dest_num_elements);
-            std::memcpy(dest.data(), src_data, src_num_bytes);
+            std::memcpy(std::ranges::data(dest), src_data, src_num_bytes);
         }
         return dest;
     }

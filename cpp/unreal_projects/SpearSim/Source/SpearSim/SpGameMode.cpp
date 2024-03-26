@@ -8,6 +8,7 @@
 #include <Engine/Engine.h>           // GEngine
 #include <GameFramework/GameModeBase.h>
 #include <GameFramework/PlayerController.h>
+#include <HAL/Platform.h>            // uint64
 #include <Math/Color.h>
 
 #include "SpCore/Log.h"

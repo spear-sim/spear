@@ -4,6 +4,8 @@
 
 #include "SimulationController/NavMesh.h"
 
+#include <stdint.h> // uint8_t
+
 #include <vector>
 
 #include <AI/NavDataGenerator.h>           // FNavDataGenerator::ExportNavigationData
