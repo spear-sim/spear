@@ -22,6 +22,8 @@
     #define SP_VA_ARGS_WITH_LEADING_COMMA(...) , __VA_ARGS__
 #elif BOOST_COMP_CLANG
     #define SP_VA_ARGS_WITH_LEADING_COMMA(...) __VA_OPT__(,) __VA_ARGS__
+#else
+    #error
 #endif
 
 // In some situations, the output from UE_LOG is not available, e.g., running on a cluster through an RL framework like RLLib.

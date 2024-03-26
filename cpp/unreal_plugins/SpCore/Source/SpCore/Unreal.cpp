@@ -79,7 +79,7 @@ std::string Unreal::getStableActorName(const AActor* actor)
     return toStdString(stable_name_component->StableName);
 }
 
-void Unreal::setStableActorName(const AActor* actor, std::string stable_name)
+void Unreal::setStableActorName(const AActor* actor, const std::string& stable_name)
 {
     SP_ASSERT(actor);
     UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
@@ -127,30 +127,6 @@ std::map<std::string, UActorComponent*> Unreal::getComponentsAsMap(const AActor*
 }
 
 //
-// Helper functions for finding actors and getting components
-//
-
-bool Unreal::getActorHasStableName(const AActor* actor)
-{
-    SP_ASSERT(actor);
-    bool assert_if_not_found = false;
-    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
-    return stable_name_component != nullptr;
-}
-
-std::vector<bool> Unreal::getActorHasTags(const AActor* actor, const std::vector<std::string>& tags)
-{
-    SP_ASSERT(actor);
-    return Std::toVector<bool>(tags | std::views::transform([actor](const auto& tag) { return actor->ActorHasTag(toFName(tag)); }));
-}
-
-std::vector<bool> Unreal::getComponentHasTags(const UActorComponent* component, const std::vector<std::string>& tags)
-{
-    SP_ASSERT(component);
-    return Std::toVector<bool>(tags | std::views::transform([component](const auto& tag) { return component->ComponentHasTag(toFName(tag)); }));
-}
-
-//
 // Find struct by name
 //
 
@@ -166,7 +142,7 @@ UStruct* Unreal::findStructByName(const UWorld* world, const std::string& name)
 }
 
 //
-// Get and set object properties
+// Get and set object properties, uobject can't be const because we cast it to void*
 //
 
 std::string Unreal::getObjectPropertiesAsString(UObject* uobject)
@@ -186,7 +162,7 @@ void Unreal::setObjectPropertiesFromString(UObject* uobject, const std::string& 
     return setObjectPropertiesFromString(uobject, uobject->GetClass(), string);
 }
 
-void Unreal::setObjectPropertiesFromString(void* value_ptr, UStruct* ustruct, const std::string& string)
+void Unreal::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
@@ -332,19 +308,15 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
 }
 
 //
-// Find function by name and return a UFunction*
+// Find function by name, call function, ufunction can't be const because we pass it to uobject->ProcessEvent(...), which expects non-const
 //
 
-UFunction* Unreal::findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag)
+UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag)
 {
     UFunction* function = uclass->FindFunctionByName(toFName(name), include_super_flag);
     SP_ASSERT(function);
     return function;
 }
-
-//
-// Call function
-//
 
 std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args)
 {
@@ -390,4 +362,28 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
     }
 
     return return_values;
+}
+
+//
+// Helper functions for finding actors and getting components
+//
+
+bool Unreal::getActorHasStableName(const AActor* actor)
+{
+    SP_ASSERT(actor);
+    bool assert_if_not_found = false;
+    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
+    return stable_name_component != nullptr;
+}
+
+std::vector<bool> Unreal::getActorHasTags(const AActor* actor, const std::vector<std::string>& tags)
+{
+    SP_ASSERT(actor);
+    return Std::toVector<bool>(tags | std::views::transform([actor](const auto& tag) { return actor->ActorHasTag(toFName(tag)); }));
+}
+
+std::vector<bool> Unreal::getComponentHasTags(const UActorComponent* component, const std::vector<std::string>& tags)
+{
+    SP_ASSERT(component);
+    return Std::toVector<bool>(tags | std::views::transform([component](const auto& tag) { return component->ComponentHasTag(toFName(tag)); }));
 }

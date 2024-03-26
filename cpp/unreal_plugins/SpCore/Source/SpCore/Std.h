@@ -17,13 +17,14 @@
 #include <iterator>  // std::back_inserter, std::ranges::distance
 #include <map>
 #include <ranges>    // std::ranges::begin, std::ranges::contiguous_range, std::ranges::data, std::ranges::end, std::ranges::range,
-                     // std::ranges::sized_range, std::ranges::size, std::views::transform
+                     // std::ranges::sized_range, std::ranges::size, std::views::keys, std::views::transform
 #include <span>
 #include <string>
 #include <utility>   // std::forward
 #include <vector>
 
 #include <boost/algorithm/string/case_conv.hpp> // boost::algorithm::to_lower_copy
+#include <boost/predef.h>                       // BOOST_COMP_CLANG, BOOST_COMP_MSVC
 #include <boost/range/adaptor/map.hpp>          // boost::adaptors::map_keys
 #include <boost/range/algorithm/copy.hpp>       // boost::copy
 #include <boost/tokenizer.hpp>                  // boost::char_separator
@@ -32,7 +33,7 @@
 #include "SpCore/BoostLexicalCast.h"
 
 //
-// std::ranges concepts
+// std::ranges::range concepts
 //
 
 template <typename TRange, typename TValue>
@@ -69,11 +70,11 @@ concept CValueContainerConvertibleFrom =
     CConvertibleFrom<typename TValueContainer::value_type, typename TValues::value_type>;
 
 //
-// Key-value container (e.g., std::map) concepts.
+// Key-value container (e.g., std::map) concepts
 //
 
 // Ideally we would constrain the type of (*std::ranges::begin(...)).second to be convertible to
-// TKeyValueContainer::mapped_type, but this prevents the constraint for being satisfied, even when
+// TKeyValueContainer::mapped_type, but doing so prevents this constraint for being satisfied, even when
 // the input type is std::map. So we only constrain (*std::ranges::begin(...)).first to be convertible
 // to TKeyValueContainer::key_type.
 template <typename TKeyValueContainer>
@@ -187,7 +188,7 @@ public:
     }
 
     //
-    // Range functions
+    // std::ranges::range functions
     //
 
     template <typename TValue, typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TValue>
@@ -214,13 +215,13 @@ public:
     template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, bool>
     static bool all(TRange&& range)
     {
-        return std::ranges::all_of(range, [](auto val) { return val; });
+        return std::ranges::all_of(std::forward<decltype(range)>(range), [](auto val) { return val; });
     }
 
     template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, bool>
     static bool any(TRange&& range)
     {
-        return std::ranges::any_of(range, [](auto val) { return val; });
+        return std::ranges::any_of(std::forward<decltype(range)>(range), [](auto val) { return val; });
     }
 
     //
@@ -272,14 +273,17 @@ public:
     static std::vector<typename TKeyValueContainer::key_type> keys(const TKeyValueContainer& key_value_container)
     {
         using TKey = typename TKeyValueContainer::key_type;
-        using TValue = typename TKeyValueContainer::mapped_type;
 
-        // TODO: revert back to using std::views after migrating to UE 5.3:
-        //     return view = toVector(std::views::keys(key_value_range));
-
-        std::vector<TKey> keys;
-        boost::copy(key_value_container | boost::adaptors::map_keys, std::back_inserter(keys));
-        return keys;
+        // TODO: remove platform-specific logic
+        #ifdef BOOST_COMP_MSVC
+            return toVector<TKey>(std::views::keys(key_value_container));
+        #elif BOOST_COMP_CLANG
+            std::vector<TKey> keys;
+            boost::copy(key_value_container | boost::adaptors::map_keys, std::back_inserter(keys));
+            return keys;
+        #else
+            #error
+        #endif
     }
 
     template <typename TKeyValueContainer, typename TKey, typename TValue> requires CKeyValueContainerCanInsertValue<TKeyValueContainer, TKey, TValue>
@@ -289,6 +293,10 @@ public:
         SP_ASSERT(success);
     }
 
+    // An std::initializer_list type (e.g., std::initializer_list<int>) can't be inferred as a template parameter.
+    // Only the value type of the initializer list can be inferred (e.g., the int type in std::initializer_list<int>),
+    // and only when the initializer list passed to the templated function is non-empty. So this insert(...)
+    // specialization is required handle situations where a caller passes in a non-empty initializer list.
     template <typename TKeyValueContainer, typename TKey, typename TInitializerListValue> requires CKeyValueContainerCanInsertInitializerList<TKeyValueContainer, TKey, TInitializerListValue>
     static void insert(TKeyValueContainer& key_value_container, const TKey& key, std::initializer_list<TInitializerListValue> initializer_list)
     {
@@ -296,6 +304,9 @@ public:
         SP_ASSERT(success);
     }
 
+    // This insert(...) specialization is required to handle situations where a caller passes in an empty initializer
+    // list. Perhaps surprisingly, this specialization behaves as expected even though EmptyInitializerList is a
+    // private class.
 private:
     class EmptyInitializerList;
 public:
@@ -347,18 +358,19 @@ public:
         return reinterpretAsVectorImpl<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
     }
 
-    // Don't infer TSrc from the input initializer list, because we want to force the user to explicitly specify the
-    // intended data type of the initializer list somewhere. If we allow TSrc to be inferred automatically, we create
-    // a situation where, e.g., the user wants to create an initializer list of floats, but accidentally creates an
-    // initializer list of doubles. We don't need this extra layer of safety for reinterpretAsVectorOf(...), because
-    // the input to that function is, e.g., an std::vector, where the user would have already specified its data type
-    // somewhere in their code.
+    // Don't infer TSrcValue from the input initializer list, because we want to force the user to explicitly specify
+    // the intended value type of the initializer list somewhere. If we allow TSrc to be inferred automatically, we
+    // create a situation where, e.g., the user wants to create an initializer list of floats, but accidentally
+    // creates an initializer list of doubles. We don't need this extra layer of safety for reinterpretAsVectorOf(...),
+    // because the input to that function is, e.g., an std::vector, where the user would have already specified its
+    // value type somewhere in their code.
     template <typename TDestValue, typename TSrcValue, typename TSrcInitializerListValue> requires std::same_as<TSrcValue, TSrcInitializerListValue>
     static std::vector<TDestValue> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
     {
         return reinterpretAsVectorImpl<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
     }
 
+private:
     template <typename TDestValue, typename TSrcValue>
     static std::vector<TDestValue> reinterpretAsVectorImpl(const TSrcValue* src_data, size_t src_num_elements)
     {
