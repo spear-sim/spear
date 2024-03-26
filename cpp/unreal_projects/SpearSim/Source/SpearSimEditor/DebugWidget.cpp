@@ -14,6 +14,7 @@
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"

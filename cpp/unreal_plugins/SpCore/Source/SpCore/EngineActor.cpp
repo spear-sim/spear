@@ -12,6 +12,7 @@
 #include <UObject/NameTypes.h>  // FName
 #include <UObject/UnrealType.h> // FProperty, FStructProperty
 
+#include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 

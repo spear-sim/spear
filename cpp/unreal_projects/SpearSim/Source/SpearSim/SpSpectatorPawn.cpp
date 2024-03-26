@@ -12,6 +12,7 @@
 #include <GenericPlatform/GenericPlatformMisc.h>
 #include <Kismet/GameplayStatics.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Unreal.h"

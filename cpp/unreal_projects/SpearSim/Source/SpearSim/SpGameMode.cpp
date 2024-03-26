@@ -10,6 +10,7 @@
 #include <GameFramework/PlayerController.h>
 #include <Math/Color.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpearSim/SpPlayerController.h"

@@ -4,6 +4,7 @@
 
 #include "SpearSim/SpPlayerController.h"
 
+#include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UserInputComponent.h"

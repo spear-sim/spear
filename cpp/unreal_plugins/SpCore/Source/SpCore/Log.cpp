@@ -14,6 +14,7 @@
 #include <HAL/Platform.h>            // TEXT
 #include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
 
+#include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/Std.h"
 
