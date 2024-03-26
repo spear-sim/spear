@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--executable", required=True)

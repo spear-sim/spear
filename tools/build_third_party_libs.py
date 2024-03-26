@@ -71,45 +71,39 @@ if __name__ == "__main__":
     if sys.platform == "win32":
 
         cmd = [
-            "bootstrap.bat"
-        ]
+            "bootstrap.bat"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
             "b2",
-            "headers"
-        ]
+            "headers"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
     elif sys.platform == "darwin":
 
         cmd = [
-            "./bootstrap.sh"
-        ]
+            "./bootstrap.sh"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
             "./b2",
-            "headers"
-        ]
+            "headers"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
     elif sys.platform == "linux":
 
         cmd = [
-            "./bootstrap.sh"
-        ]
+            "./bootstrap.sh"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = [
             "./b2",
-            "headers"
-        ]
+            "headers"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 

@@ -19,7 +19,7 @@
 #include <Materials/Material.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
+#include <UObject/UObjectGlobals.h> // LoadObject
 
 #include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"

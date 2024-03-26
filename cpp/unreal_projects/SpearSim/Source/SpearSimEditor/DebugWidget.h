@@ -4,11 +4,9 @@
 
 #pragma once
 
-#include <Containers/UnrealString.h>     // FString
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Containers/UnrealString.h> // FString
 #include <GameFramework/Actor.h>
-#include <UObject/NameTypes.h>           // FName
-#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "DebugWidget.generated.h"
 
@@ -20,44 +18,35 @@ public:
     ADebugWidget();
     ~ADebugWidget();
 
-    // TODO: We override these functions to subscribe/unsubscribe to/from events that would affect an actor's
-    // stable name, e.g., renaming it or moving it in the World Outliner. Going forward, we should do this in a
-    // more central location. In principle, SimulationController would be a better place to do this, but most
-    // functionality in SimulationController doesn't execute in the editor, whereas the events we're subscribing
-    // to only broadcast in the editor.
-    #if WITH_EDITOR // defined in an auto-generated header
-        // AActor interface
-        void PostLoad() override;
-        void BeginDestroy() override;
-    #endif
-
     UFUNCTION(CallInEditor, Category="SPEAR")
     void LoadConfig();
-
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SaveConfig();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void PrintDebugString();
-
     UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Debug string")
     FString DebugString;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SpawnVehiclePawn();
-
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SpawnUrdfRobotPawn();
-
     UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="URDF file")
     FString UrdfFile;
 
-private:
-    #if WITH_EDITOR // defined in an auto-generated header
-        void actorLabelChangedHandler(AActor* actor);
-        void levelActorFolderChangedHandler(const AActor* actor, FName name);
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void GetAndSetObjectProperties();
 
-        FDelegateHandle actor_label_changed_handle_;
-        FDelegateHandle level_actor_folder_changed_handle_;
-    #endif
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void CallFunctions();
+
+    UFUNCTION()
+    FString GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
+
+    UFUNCTION()
+    FVector GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3);
+
+    UFUNCTION()
+    static UObject* GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1);
 };

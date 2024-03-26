@@ -12,7 +12,7 @@
 
 #include <Components/InputComponent.h>
 #include <Components/SceneComponent.h>
-#include <Engine/EngineBaseTypes.h> // ELevelTick
+#include <Engine/EngineBaseTypes.h> // ELevelTick, ETickingGroup
 #include <GameFramework/PlayerController.h>
 #include <GameFramework/PlayerInput.h>
 
@@ -25,6 +25,7 @@ UUserInputComponent::UUserInputComponent()
 
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = true;
+    PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 
 UUserInputComponent::~UUserInputComponent()
@@ -40,12 +41,12 @@ void UUserInputComponent::TickComponent(float delta_time, ELevelTick level_tick,
 {
     USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);
 
-    if (bEnableHandleUserInput && input_component_ && handle_user_input_func_) {
+    if (bHandleUserInput && input_component_ && handle_user_input_func_) {
         for (auto& user_input_desc : user_input_descs_) {
             float axis_value = input_component_->GetAxisValue(Unreal::toFName(user_input_desc.axis_));
             if (axis_value >= user_input_desc.threshold_) {
                 handle_user_input_func_(user_input_desc.key_, axis_value);
-            }   
+            }
         }
     }
 }

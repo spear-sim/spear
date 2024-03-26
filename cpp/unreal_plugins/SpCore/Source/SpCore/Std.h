@@ -7,7 +7,9 @@
 #include <stddef.h> // size_t
 
 #include <algorithm> // std::ranges::find, std::ranges::copy, std::ranges::equal, std::ranges::sort, std::ranges::set_intersection
+#include <cstdlib>   // std::strtoull
 #include <cstring>   // std::memcpy
+#include <format>
 #include <initializer_list>
 #include <iterator>  // std::back_inserter, std::distance
 #include <map>
@@ -59,9 +61,9 @@ public:
     // std::string functions
     //
 
-    static std::string toString(auto&&... args)
+    static bool contains(const std::string& string, const std::string& substring)
     {
-        return (... + boost::lexical_cast<std::string>(std::forward<decltype(args)>(args)));
+        return string.find(substring) != std::string::npos;
     }
 
     static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)
@@ -70,14 +72,25 @@ public:
         return std::vector<std::string>(tokenizer.begin(), tokenizer.end());
     }
 
-    static bool containsSubstring(const std::string& string, const std::string& substring)
-    {
-        return string.find(substring) != std::string::npos;
-    }
-
     static std::string toLower(const std::string& string)
     {
         return boost::algorithm::to_lower_copy(string);
+    }
+
+    static std::string toString(auto&&... args)
+    {
+        return (... + boost::lexical_cast<std::string>(std::forward<decltype(args)>(args)));
+    }
+
+    static std::string toStringFromPtr(void* ptr)
+    {
+        return std::format("{:#018x}", reinterpret_cast<uint64_t>(ptr));
+    }
+
+    template <typename TPtr>
+    static TPtr* toPtrFromString(const std::string& string)
+    {
+        return reinterpret_cast<TPtr*>(std::strtoull(string.c_str(), nullptr, 16));
     }
 
     //
@@ -127,19 +140,26 @@ public:
     }
 
     template <CValueContainer TValueContainer>
+    static std::vector<bool> contains(const TValueContainer& value_container, const TValueContainer& values)
+    {
+        return Std::toVector<bool>(values | std::views::transform([&value_container](const auto& value) { return Std::contains(value_container, value); }));
+    }
+
+    template <CValueContainer TValueContainer>
     static int index(const TValueContainer& value_container, const typename TValueContainer::value_type& value)
     {
         int index = std::distance(value_container.begin(), std::ranges::find(value_container, value));
         return (index < value_container.size()) ? index : -1;
     }
 
-    static auto unique(const CValueContainer auto& value_container)
+    template <CValueContainer TValueContainer>
+    static std::vector<typename TValueContainer::value_type> unique(const TValueContainer& value_container)
     {
         auto value_container_sorted_unique = value_container;
         std::ranges::sort(value_container_sorted_unique);
         const auto [begin, end] = std::ranges::unique(value_container_sorted_unique.begin(), value_container_sorted_unique.end());
         value_container_sorted_unique.erase(begin, end);
-        return value_container_sorted_unique;
+        return Std::toVector<typename TValueContainer::value_type>(value_container_sorted_unique);
     }
 
     template <CValueContainer TValueContainer> requires std::convertible_to<typename TValueContainer::value_type, bool>
@@ -225,8 +245,14 @@ public:
         return reinterpretAsVectorImpl<TDest, typename TContiguousValueContainer::value_type>(src.data(), src.size());
     }
 
-    template <typename TDest, typename TSrc, typename TSrcData> requires std::same_as<TSrc, TSrcData>
-    static std::vector<TDest> reinterpretAsVector(const std::initializer_list<TSrcData>& src)
+    // Don't infer TSrc from the input initializer list, because we want to force the user to explicitly specify the
+    // intended data type of the initializer list somewhere. If we allow TSrc to be inferred automatically, we create
+    // a situation where, e.g., the user wants to create an initializer list of floats, but accidentally creates an
+    // initializer list of doubles. We don't need this extra layer of safety for reinterpretAsVectorOf(...), because
+    // the input to that function is, e.g., an std::vector, where the user would have already specified its data type
+    // somewhere in their code.
+    template <typename TDest, typename TSrc, typename TInitializerList> requires std::same_as<TSrc, TInitializerList>
+    static std::vector<TDest> reinterpretAsVector(const std::initializer_list<TInitializerList>& src)
     {
         return reinterpretAsVectorImpl<TDest, TSrc>(std::data(src), src.size());
     }

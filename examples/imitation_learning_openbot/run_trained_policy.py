@@ -17,9 +17,9 @@ from policies import *
 from utils import *
 
 # import OpenBotEnv, observation_utils from common folder
-COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
-sys.path.append(COMMON_DIR)
+sys.path.append(common_dir)
 from common.openbot_env import OpenBotEnv
 import common.observation_utils as observation_utils
 
@@ -216,17 +216,18 @@ if __name__ == "__main__":
                 df_episode_reference_path.to_csv(os.path.realpath(os.path.join(logs_dir, "episode_reference_path.csv")), mode="w", index=False, header=True)
         
                 # save the per-iteration data to a file
-                df_episode_rollout = pd.DataFrame({"left_ctrl"                  : episode_control_data[:num_iterations_executed, 0],
-                                                   "right_ctrl"                 : episode_control_data[:num_iterations_executed, 1],
-                                                   "location_x"                 : episode_location_data[:num_iterations_executed, 0],
-                                                   "location_y"                 : episode_location_data[:num_iterations_executed, 1],
-                                                   "location_z"                 : episode_location_data[:num_iterations_executed, 2],
-                                                   "rotation_pitch"             : episode_rotation_data[:num_iterations_executed, 0],
-                                                   "rotation_yaw"               : episode_rotation_data[:num_iterations_executed, 1],
-                                                   "rotation_roll"              : episode_rotation_data[:num_iterations_executed, 2],
-                                                   "env_step_info_hit_goal"     : episode_env_step_info_hit_goal[:num_iterations_executed],
-                                                   "env_step_info_hit_obstacle" : episode_env_step_info_hit_obstacle[:num_iterations_executed],
-                                                   "goal_reached"               : episode_goal_reached[:num_iterations_executed]})
+                df_episode_rollout = pd.DataFrame({
+                    "left_ctrl"                  : episode_control_data[:num_iterations_executed, 0],
+                    "right_ctrl"                 : episode_control_data[:num_iterations_executed, 1],
+                    "location_x"                 : episode_location_data[:num_iterations_executed, 0],
+                    "location_y"                 : episode_location_data[:num_iterations_executed, 1],
+                    "location_z"                 : episode_location_data[:num_iterations_executed, 2],
+                    "rotation_pitch"             : episode_rotation_data[:num_iterations_executed, 0],
+                    "rotation_yaw"               : episode_rotation_data[:num_iterations_executed, 1],
+                    "rotation_roll"              : episode_rotation_data[:num_iterations_executed, 2],
+                    "env_step_info_hit_goal"     : episode_env_step_info_hit_goal[:num_iterations_executed],
+                    "env_step_info_hit_obstacle" : episode_env_step_info_hit_obstacle[:num_iterations_executed],
+                    "goal_reached"               : episode_goal_reached[:num_iterations_executed]})
                 df_episode_rollout.to_csv(os.path.realpath(os.path.join(logs_dir, "episode_rollout.csv")), mode="w", index=False, header=True)
         
                 # Create plots. Note that creating these plots will resize our cv2 windows in an

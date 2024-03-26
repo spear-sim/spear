@@ -23,12 +23,13 @@ public:
     // ASpectatorPawn interface
     void Tick(float delta_time) override;
 
-    UPROPERTY(VisibleAnywhere, DisplayName = "Stable Name Component")
+    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName="Stable Name Component")
     UStableNameComponent* StableNameComponent = nullptr;
 
-private:
-    USpectatorPawnMovement* spectator_pawn_movement_ = nullptr;
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Spectator Pawn Movement")
+    USpectatorPawnMovement* SpectatorPawnMovement = nullptr;
 
+private:
     float spectator_pawn_movement_max_speed_ = 0.0f;
     bool spectator_pawn_movement_ignore_time_dilation_ = false;
     bool is_paused_ = false;

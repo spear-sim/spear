@@ -6,6 +6,7 @@
                                   // UrdfJointInterfaceType, UrdfJointType, UrdfLinkDesc, UrdfMaterialDesc, UrdfRobotDesc, UrdfVisualDesc
 
 #include <string>
+#include <utility> // std::move
 #include <vector>
 
 #include <XmlFile.h>

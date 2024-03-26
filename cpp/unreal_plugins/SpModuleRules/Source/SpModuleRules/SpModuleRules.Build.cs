@@ -22,6 +22,9 @@ public class SpModuleRules : ModuleRules
         // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
+        // Required for concepts and ranges
+        CppStandard = CppStandardVersion.Cpp20;
+
         // Our SP_ASSERT macro throws exceptions, yaml-cpp (used by Config) throws exceptions,
         // and boost::interprocess::mapped_region (used by camera sensors) throws exceptions.
         // So we need to enable exceptions everywhere.
@@ -31,8 +34,6 @@ public class SpModuleRules : ModuleRules
         //     ... > SpCore/Std.h    > boost/tokenizer.hpp > ... > boost/exception/exception.h
         //     ... > SpCore/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
         bEnableUndefinedIdentifierWarnings = false;
-
-        CppStandard = CppStandardVersion.Cpp20;
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "ChaosVehiclesCore", "Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities", "NavigationSystem", "PhysicsCore", "RenderCore", "RHI",
@@ -108,7 +109,7 @@ public class SpModuleRules : ModuleRules
 
     private string GetPrefix(string filePath, int lineNumber)
     {
-        return "[SPEAR | " + GetCurrentFileAbbreviated(filePath) + ":" + lineNumber + "] ";
+        return "[SPEAR | " + GetCurrentFileAbbreviated(filePath) + ":" + lineNumber.ToString("D4") + "] ";
     }
 
     private string GetCurrentFileAbbreviated(string filePath)
@@ -118,6 +119,7 @@ public class SpModuleRules : ModuleRules
 
     private string GetCurrentFunctionExpanded(string memberName)
     {
-        return this.GetType() + "." + ((memberName == ".ctor") ? this.GetType() : memberName);
+        string sep = memberName.StartsWith(".") ? "" : ".";
+        return this.GetType() + sep + memberName;
     }
 }

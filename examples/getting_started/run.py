@@ -12,13 +12,12 @@ import spear
 import time
 
 # import OpenBotEnv from common folder
-COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
-sys.path.append(COMMON_DIR)
+sys.path.append(common_dir)
 from common.openbot_env import OpenBotEnv
 
-
-NUM_STEPS = 100
+num_steps = 100
 
 
 if __name__ == "__main__":
@@ -51,7 +50,7 @@ if __name__ == "__main__":
         cv2.waitKey(0)
 
     # take a few steps
-    for i in range(NUM_STEPS):
+    for i in range(num_steps):
         if config.SP_ENGINE.LEGACY_SERVICE.AGENT == "SphereAgent":
             obs, reward, done, info = env.step(action={
                 "add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64),

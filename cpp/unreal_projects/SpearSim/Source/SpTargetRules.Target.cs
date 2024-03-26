@@ -103,7 +103,7 @@ public class SpTargetRulesTarget : TargetRules
 
     private string GetPrefix(string filePath, int lineNumber)
     {
-        return "[SPEAR | " + GetCurrentFileAbbreviated(filePath) + ":" + lineNumber + "] ";
+        return "[SPEAR | " + GetCurrentFileAbbreviated(filePath) + ":" + lineNumber.ToString("D4") + "] ";
     }
 
     private string GetCurrentFileAbbreviated(string filePath)
@@ -113,6 +113,7 @@ public class SpTargetRulesTarget : TargetRules
 
     private string GetCurrentFunctionExpanded(string memberName)
     {
-        return this.GetType() + "." + ((memberName == ".ctor") ? this.GetType() : memberName);
+        string sep = memberName.StartsWith(".") ? "" : ".";
+        return this.GetType() + sep + memberName;
     }
 }

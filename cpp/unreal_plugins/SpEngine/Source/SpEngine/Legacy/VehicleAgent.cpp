@@ -6,11 +6,9 @@
 
 #include <stdint.h> // uint8_t
 
-#include <limits>  // std::numeric_limits
 #include <map>
-#include <memory>  // std::make_unique
+#include <memory> // std::make_unique
 #include <string>
-#include <utility> // std::move
 #include <vector>
 
 #include <Camera/CameraComponent.h>  // UCameraComponent::AspectRatio, UCameraComponent::FieldOfView

@@ -11,14 +11,14 @@
 
 #include "VehicleMovementComponent.generated.h"
 
+class AVehiclePawn;
+
 UCLASS()
 class VEHICLE_API UVehicleMovementComponent : public UChaosWheeledVehicleMovementComponent
 {
     GENERATED_BODY()
+    friend class AVehiclePawn;
 public:
     UVehicleMovementComponent();
     ~UVehicleMovementComponent();
-
-    // provides access to wheel rotation speeds in rad/s
-    std::vector<double> getWheelRotationSpeeds() const;
 };
