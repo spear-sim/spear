@@ -23,7 +23,7 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     // Disable collision so the user can fly through walls by default.
     SetActorEnableCollision(false);
 
-    // Need to enable these, otherwise mouse movements will not work when the game is paused in the editor.
+    // Need to enable these, otherwise mouse movements will not work when the game is paused.
     bUseControllerRotationPitch = true;
     bUseControllerRotationYaw = true;
     bUseControllerRotationRoll = true;
@@ -45,11 +45,6 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     SpectatorPawnMovement->PrimaryComponentTick.bCanEverTick = true;
     SpectatorPawnMovement->PrimaryComponentTick.bTickEvenWhenPaused = true;
     SpectatorPawnMovement->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
-
-    // Need to enable these, otherwise the mouse movements will not work when the game is paused.
-    //bUseControllerRotationPitch = true;
-    //bUseControllerRotationYaw   = true;
-    //bUseControllerRotationRoll  = true;
 }
 
 ASpSpectatorPawn::~ASpSpectatorPawn()
