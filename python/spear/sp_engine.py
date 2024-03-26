@@ -31,6 +31,8 @@ class SpEngine():
         self.navmesh_service = spear.NavMeshService(self)
 
     def close(self):
+        self.env.close()
+
         # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC client. Normally,
         # we would do things in the reverse order here. But if we close the client first, then we can't send a command to
         # the Unreal instance to close it. So we close the Unreal instance first and then close the client.
