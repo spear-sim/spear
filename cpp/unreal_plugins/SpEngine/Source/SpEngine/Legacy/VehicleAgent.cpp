@@ -57,6 +57,13 @@ VehicleAgent::VehicleAgent(UWorld* world)
     vehicle_pawn_ = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_parameters);
     SP_ASSERT(vehicle_pawn_);
 
+    // Strictly speaking, we should set the stable name of the underlying pawn in in all of our Agent
+    // constructors, but VehiclePawn is the only one of our pawn classes that needs to be found via our
+    // Unreal::findActor interface. So we set the stable name of our VehiclePawn instance here, but we
+    // don't do this in any other Agent constructors. This is an acceptable solution because we'll be
+    // removing our Agent interface soon anyway.
+    Unreal::setStableActorName(vehicle_pawn_, Config::get<std::string>("SP_ENGINE.LEGACY.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
+
     vehicle_pawn_->CameraComponent->FieldOfView =
         Config::get<float>("SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.FOV");
     vehicle_pawn_->CameraComponent->AspectRatio =

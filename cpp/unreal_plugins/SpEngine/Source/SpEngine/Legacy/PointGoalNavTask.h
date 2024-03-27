@@ -14,10 +14,10 @@
 
 #include <Math/Vector.h>
 
-#include "SpEngine/Legacy/Task.h"
 #include "SpCore/ArrayDesc.h"
 #include "SpEngine/Legacy/ActorHitEventComponent.h"
 #include "SpEngine/Legacy/StandaloneComponent.h"
+#include "SpEngine/Legacy/Task.h"
 
 class AActor;
 class AStaticMeshActor;
