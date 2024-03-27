@@ -49,6 +49,11 @@ class EngineService():
         self.tick()
         self.end_tick()
 
+        while self.get_current_level() != scene_id:
+            self.begin_tick()
+            self.tick()
+            self.end_tick()
+
     def get_byte_order(self):
         unreal_instance_byte_order = self._rpc_client.call("engine_service.get_byte_order")
         rpc_client_byte_order = sys.byteorder
