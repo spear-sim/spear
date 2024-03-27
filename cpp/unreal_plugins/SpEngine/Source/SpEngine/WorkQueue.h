@@ -14,7 +14,7 @@
 #include <vector>
 
 #include <SpCore/Assert.h>
-#include <SpCore/BoostAsio.h>
+#include <SpCore/Boost.h>
 
 template <typename TFunc, typename TReturn, typename... TArgs>
 concept CCallable = requires(TFunc func, TArgs... args) {

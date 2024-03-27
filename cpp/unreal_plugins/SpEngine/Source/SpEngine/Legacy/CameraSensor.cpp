@@ -25,7 +25,6 @@
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "SpEngine/Legacy/BoostInterprocess.h"
 
 struct FColor;
 struct FLinearColor;
