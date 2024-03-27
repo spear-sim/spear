@@ -4,7 +4,6 @@
 
 #include "SpEngine/Legacy/NavMesh.h"
 
-
 #include <stdint.h> // uint8_t
 #include <string>
 #include <vector>
