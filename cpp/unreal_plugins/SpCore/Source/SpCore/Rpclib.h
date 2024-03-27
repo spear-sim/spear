@@ -4,22 +4,23 @@
 
 #pragma once
 
-#include "SpCore/Windows.h"
+#include <boost/predef.h> // BOOST_OS_MACOS
 
-// Unreal and rpclib have different definitions for the check macro, so save its state.
-#pragma push_macro("check")
+#include "SpCore/Windows.h" // On Windows, rpclib expects <windows.h> to have been included
+
+#pragma push_macro("check") // Unreal macro, conflicts with rpclib
 #undef check
 
 // Some macOS-specifc header files define nil as nullptr or NULL. But rpclib depends on the
 // msgpack-c library, which has a different definition of nil. This creates naming conflicts
-// when we include rpc/msgpack.hpp. However, if MSGPACK_DISABLE_LEGACY_NIL is defined, then
+// when we include <rpc/msgpack.hpp>. However, if MSGPACK_DISABLE_LEGACY_NIL is defined, then
 // msgpack-c does not define nil, and we avoid the conflicts.
-#define MSGPACK_DISABLE_LEGACY_NIL
+#if BOOST_OS_MACOS
+	#define MSGPACK_DISABLE_LEGACY_NIL
+#endif
 
-// Include rpclib headers.
 #include <rpc/config.h>
 #include <rpc/msgpack.hpp>
 #include <rpc/server.h>
 
-// Restore the state of the check macro.
 #pragma pop_macro("check")

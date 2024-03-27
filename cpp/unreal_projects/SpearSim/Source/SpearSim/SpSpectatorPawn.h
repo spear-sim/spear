@@ -4,8 +4,12 @@
 
 #pragma once
 
+#include <chrono>
+
 #include <GameFramework/SpectatorPawn.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
+
+#include "SpCore/Boost.h"
 
 #include "SpSpectatorPawn.generated.h"
 
@@ -21,6 +25,7 @@ public:
     ~ASpSpectatorPawn();
 
     // ASpectatorPawn interface
+    void BeginPlay() override;
     void Tick(float delta_time) override;
 
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName="Stable Name Component")
@@ -30,7 +35,8 @@ public:
     USpectatorPawnMovement* SpectatorPawnMovement = nullptr;
 
 private:
-    float spectator_pawn_movement_max_speed_ = 0.0f;
-    bool spectator_pawn_movement_ignore_time_dilation_ = false;
-    bool is_paused_ = false;
+    boost::circular_buffer<double> previous_time_deltas_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> previous_time_point_;
+    bool previous_is_benchmarking_ = false;
+    float previous_max_speed_ = -1.0f;
 };
