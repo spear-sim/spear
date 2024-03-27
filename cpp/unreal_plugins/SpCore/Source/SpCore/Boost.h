@@ -38,7 +38,7 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 // header by the time <winsock2.h> uses it. But this macro interferes with our code, so we undefine it at
 // the end of "SpCore/Windows.h". And since headers are only expanded once per compilation unit, OPTIONAL
 // will not be redefined when <winsock2.h> includes the header that would normally define it. Therefore,
-// our strategy is to redefine it here here, include <boost/asio.hpp>, and then undefine it.
+// our strategy is to redefine it here, include <boost/asio.hpp>, and then undefine it.
 #if BOOST_OS_WINDOWS
     #pragma push_macro("OPTIONAL")
     #undef OPTIONAL
