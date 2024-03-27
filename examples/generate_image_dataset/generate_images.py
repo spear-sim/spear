@@ -124,6 +124,7 @@ if __name__ == "__main__":
             modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
 
             for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+                render_pass_dir = os.path.realpath(os.path.join(args.images_dir, pose["scene_id"], render_pass))
                 assert os.path.exists(render_pass_dir)
 
                 obs_render_pass_vis = modified_obs["camera." + render_pass]
