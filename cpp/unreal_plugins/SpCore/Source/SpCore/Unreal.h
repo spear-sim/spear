@@ -75,7 +75,7 @@ public:
     //
 
     static std::string getStableActorName(const AActor* actor);
-    static void setStableActorName(const AActor* actor, std::string stable_name);
+    static void setStableActorName(const AActor* actor, const std::string& stable_name);
 
     #if WITH_EDITOR // defined in an auto-generated header
         static void requestUpdateStableActorName(const AActor* actor);
@@ -545,6 +545,47 @@ public:
     }
 
     //
+    // Find struct by name
+    //
+
+    static UStruct* findStructByName(const UWorld* world, const std::string& name);
+
+    //
+    // Get and set object properties, uobject can't be const because we cast it to void*
+    //
+
+    static std::string getObjectPropertiesAsString(UObject* uobject);
+    static std::string getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct);
+
+    static void setObjectPropertiesFromString(UObject* uobject, const std::string& string);
+    static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string);
+
+    //
+    // Find property by name, get and set property values
+    //
+
+    struct PropertyDesc
+    {
+        void* value_ptr_ = nullptr;
+        FProperty* property_ = nullptr;
+    };
+
+    static PropertyDesc findPropertyByName(UObject* uobject, const std::string& name);
+    static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name);
+
+    static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
+    static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
+
+    //
+    // Find function by name, call function, ufunction can't be const because we pass it to uobject->ProcessEvent(...), which expects non-const
+    //
+
+    static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
+    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
+
+private:
+
+    //
     // Helper functions for finding actors and getting components
     //
 
@@ -568,43 +609,4 @@ public:
             return vec.at(0);
         }
     }
-
-    //
-    // Find struct by name
-    //
-
-    static UStruct* findStructByName(const UWorld* world, const std::string& name);
-
-    //
-    // Get and set object properties
-    //
-
-    static std::string getObjectPropertiesAsString(UObject* uobject);
-    static std::string getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct);
-
-    static void setObjectPropertiesFromString(UObject* uobject, const std::string& string);
-    static void setObjectPropertiesFromString(void* value_ptr, UStruct* ustruct, const std::string& string);
-
-    //
-    // Find property by name, get and set property values
-    //
-
-    struct PropertyDesc
-    {
-        void* value_ptr_ = nullptr;
-        FProperty* property_ = nullptr;
-    };
-
-    static PropertyDesc findPropertyByName(UObject* uobject, const std::string& name);
-    static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name);
-
-    static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
-    static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
-
-    //
-    // Find function by name, call function
-    //
-
-    static UFunction* findFunctionByName(UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
-    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
 };

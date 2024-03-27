@@ -4,6 +4,8 @@
 
 #include "SpEngine/Legacy/ImuSensor.h"
 
+#include <stdint.h> // uint8_t
+
 #include <map>
 #include <memory>  // std::make_unique
 #include <string>

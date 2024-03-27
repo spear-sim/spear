@@ -12,8 +12,6 @@
 #include <utility> // std::move
 #include <vector>
 
-#include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
-
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
@@ -23,6 +21,7 @@
 
 #include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"

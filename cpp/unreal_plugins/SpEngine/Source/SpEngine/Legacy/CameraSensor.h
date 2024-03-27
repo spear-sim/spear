@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "SpCore/ArrayDesc.h"
-#include "SpEngine/Legacy/BoostInterprocess.h"
+#include "SpCore/Boost.h"
 
 class AActor;
 class UCameraComponent;

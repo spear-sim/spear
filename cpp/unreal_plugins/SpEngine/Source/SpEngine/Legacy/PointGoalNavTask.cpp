@@ -176,9 +176,11 @@ std::map<std::string, ArrayDesc> PointGoalNavTask::getStepInfoSpace() const
 std::map<std::string, std::vector<uint8_t>> PointGoalNavTask::getStepInfo() const
 {
     std::map<std::string, std::vector<uint8_t>> step_info;
+    uint8_t hit_goal = hit_goal_;
+    uint8_t hit_obstacle = hit_obstacle_;
 
-    Std::insert(step_info, "hit_goal", {hit_goal_});
-    Std::insert(step_info, "hit_obstacle", {hit_obstacle_});
+    Std::insert(step_info, "hit_goal", {hit_goal});
+    Std::insert(step_info, "hit_obstacle", {hit_obstacle});
 
     return step_info;
 }
