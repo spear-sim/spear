@@ -243,7 +243,7 @@ public:
     template <typename TValueContainer> requires CValueContainer<TValueContainer>
     static std::vector<typename TValueContainer::value_type> unique(const TValueContainer& value_container)
     {
-        using TValue = TValueContainer::value_type;
+        using TValue = typename TValueContainer::value_type;
 
         std::vector<TValue> value_container_unique = toVector<TValue>(value_container);
         std::ranges::sort(value_container_unique);
@@ -268,7 +268,7 @@ public:
         using TKey = typename TKeyValueContainer::key_type;
 
         // TODO: remove platform-specific logic
-        #ifdef BOOST_COMP_MSVC
+        #if BOOST_COMP_MSVC
             return toVector<TKey>(std::views::keys(key_value_container));
         #elif BOOST_COMP_CLANG
             std::vector<TKey> keys;
