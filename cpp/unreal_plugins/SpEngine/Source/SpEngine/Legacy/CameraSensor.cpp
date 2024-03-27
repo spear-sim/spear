@@ -91,7 +91,7 @@ CameraSensor::CameraSensor(
         render_pass_desc.num_bytes_ = height * width * RENDER_PASS_NUM_CHANNELS.at(render_pass_name) * RENDER_PASS_NUM_BYTES_PER_CHANNEL.at(render_pass_name);
 
         // create TextureRenderTarget2D
-        auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(actor_, Unreal::toFName("texture_render_target_2d"));
+        auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(actor_, Unreal::toFName("texture_render_target_2d_" + render_pass_name));
         SP_ASSERT(texture_render_target_2d);
 
         bool clear_render_target = true;
@@ -101,7 +101,7 @@ CameraSensor::CameraSensor(
 
         // create SceneCaptureComponent2D
         render_pass_desc.scene_capture_component_2d_ = 
-            Unreal::createComponentOutsideOwnerConstructor<USceneCaptureComponent2D>(actor_, camera_component, "scene_capture_component_2d");
+            Unreal::createComponentOutsideOwnerConstructor<USceneCaptureComponent2D>(actor_, camera_component, "scene_capture_component_2d_" + render_pass_name);
         SP_ASSERT(render_pass_desc.scene_capture_component_2d_);
         render_pass_desc.scene_capture_component_2d_->TextureTarget = texture_render_target_2d;
         render_pass_desc.scene_capture_component_2d_->FOVAngle = fov;
