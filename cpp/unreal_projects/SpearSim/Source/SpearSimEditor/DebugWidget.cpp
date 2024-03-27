@@ -4,8 +4,6 @@
 
 #include "SpearSimEditor/DebugWidget.h"
 
-#include <format>
-
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>

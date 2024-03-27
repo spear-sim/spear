@@ -5,6 +5,7 @@
 #include "SpCore/Log.h"
 
 #include <filesystem>
+#include <format>
 #include <iostream> // std::cout
 #include <regex>
 #include <string>   // std::string::operator<<
@@ -15,6 +16,7 @@
 #include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
 
 #include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/Std.h"
 
@@ -40,7 +42,14 @@ void Log::logUnreal(const std::string& str)
 std::string Log::getPrefix(const std::filesystem::path& current_file, int current_line)
 {
     // We don't use Std::toString(current_line) because we want to pad with leading zeros.
-    return "[SPEAR | " + getCurrentFileAbbreviated(current_file) + ":" + toString("{:04}", current_line) + "] ";
+    // TODO: remove platform-specific logic
+    #if BOOST_COMP_MSVC
+        return "[SPEAR | " + getCurrentFileAbbreviated(current_file) + ":" + std::format("{:04}", current_line) + "] ";
+    #elif BOOST_COMP_CLANG
+        return "[SPEAR | " + getCurrentFileAbbreviated(current_file) + ":" + (boost::format("%04d")%current_line).str() + "] ";
+    #else
+        #error
+    #endif
 }
 
 std::string Log::getCurrentFileAbbreviated(const std::filesystem::path& current_file)

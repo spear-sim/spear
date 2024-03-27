@@ -12,6 +12,7 @@
 #include <concepts>  // std::convertible_to, std::same_as
 #include <cstdlib>   // std::strtoull
 #include <cstring>   // std::memcpy
+#include <format>
 #include <initializer_list>
 #include <iterator>  // std::back_inserter, std::ranges::distance
 #include <map>
@@ -160,7 +161,14 @@ public:
 
     static std::string toStringFromPtr(void* ptr)
     {
-        return Std::toString("{:#018x}", reinterpret_cast<uint64_t>(ptr));
+        // TODO: remove platform-specific logic
+        #if BOOST_COMP_MSVC
+            return std::format("{:#018x}", reinterpret_cast<uint64_t>(ptr));
+        #elif BOOST_COMP_CLANG
+            return (boost::format("0x%016x")%reinterpret_cast<uint64_t>(ptr)).str();
+        #else
+            #error
+        #endif
     }
 
     template <typename TPtr>
