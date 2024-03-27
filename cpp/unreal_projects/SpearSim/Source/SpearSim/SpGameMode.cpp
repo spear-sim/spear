@@ -11,6 +11,7 @@
 #include <HAL/Platform.h>            // uint64
 #include <Math/Color.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpearSim/SpPlayerController.h"

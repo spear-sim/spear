@@ -87,3 +87,9 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 
 #pragma pop_macro("verify")
 #pragma pop_macro("check")
+
+//
+// boost::format
+//
+
+#include <boost/format.hpp>

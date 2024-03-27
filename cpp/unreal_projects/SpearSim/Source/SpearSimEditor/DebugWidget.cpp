@@ -4,8 +4,6 @@
 
 #include "SpearSimEditor/DebugWidget.h"
 
-#include <format>
-
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>
@@ -14,6 +12,7 @@
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"

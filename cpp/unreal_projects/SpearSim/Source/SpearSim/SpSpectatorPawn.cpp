@@ -15,6 +15,7 @@
 #include <Kismet/GameplayStatics.h>
 #include <Misc/App.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
 #include "SpCore/StableNameComponent.h"

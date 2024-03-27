@@ -7,6 +7,7 @@
 #include <Components/ActorComponent.h>
 #include <GameFramework/Actor.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 
