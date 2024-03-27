@@ -31,7 +31,6 @@
 #include <UObject/UnrealType.h>      // FBoolProperty, FDoubleProperty, FFloatProperty, FIntProperty, FProperty, FStrProperty, FStructProperty, TFieldIterator
 
 #include "SpCore/Assert.h"
-#include "SpCore/BoostLexicalCast.h"
 #include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
 #include "SpCore/StableNameComponent.h"

@@ -23,14 +23,8 @@
 #include <utility>   // std::forward
 #include <vector>
 
-#include <boost/algorithm/string/case_conv.hpp> // boost::algorithm::to_lower_copy
-#include <boost/predef.h>                       // BOOST_COMP_CLANG, BOOST_COMP_MSVC
-#include <boost/range/adaptor/map.hpp>          // boost::adaptors::map_keys
-#include <boost/range/algorithm/copy.hpp>       // boost::copy
-#include <boost/tokenizer.hpp>                  // boost::char_separator
-
 #include "SpCore/Assert.h"
-#include "SpCore/BoostLexicalCast.h"
+#include "SpCore/Boost.h"
 
 //
 // std::ranges::range concepts

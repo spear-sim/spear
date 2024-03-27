@@ -7,5 +7,5 @@
 #include "SpCore/SuppressCompilerWarnings.h"
 
 SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
-#include <yaml-cpp/yaml.h>
+	#include <yaml-cpp/yaml.h>
 SP_END_SUPPRESS_COMPILER_WARNINGS

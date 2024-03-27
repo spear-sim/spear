@@ -8,12 +8,10 @@
 #include <string>
 #include <utility> // std::forward
 
-#include <boost/predef.h>             // BOOST_COMP_CLANG, BOOST_COMP_MSVC
-#include <boost/current_function.hpp> // BOOST_CURRENT_FUNCTION
-
 #include <CoreGlobals.h> // IsRunningCommandlet
 
 #include "SpCore/Std.h"
+#include "SpCore/Boost.h"
 
 // This macro returns an empty string if __VA_ARGS__ is empty, and returns __VA_ARGS__ with a leading comma otherwise. This macro
 // enables variadic macro arguments to be passed into a function that accepts other arguments, regardless of whether or not
