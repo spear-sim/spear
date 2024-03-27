@@ -12,7 +12,7 @@ import time
 
 class SpEngine():
     def __init__(self, config):
-        
+
         self._config = config
         self._rpc_client: msgpackrpc.Client
 
@@ -21,18 +21,12 @@ class SpEngine():
 
         # Need to do these after we have a valid rpc_client
         self.engine_service = spear.EngineService(self._rpc_client)
+        self.navmesh_service = spear.NavMeshService(self.engine_service)
 
-        # Need to do this after we have a valid engine_service object to call begin_tick(), tick(), and end_tick().
+        # Need to do this after we have a valid engine_service object because we call begin_tick(), tick(), and end_tick() here.
         self._initialize_unreal_instance()
 
-        # Need to do these here because sometimes it'll take more time for the world to call BeginPlay, and we need the agent, and
-        # task to be valid before we create Env object.
-        self.env = spear.Env(config, self)
-        self.navmesh_service = spear.NavMeshService(self)
-
     def close(self):
-        self.env.close()
-
         # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC client. Normally,
         # we would do things in the reverse order here. But if we close the client first, then we can't send a command to
         # the Unreal instance to close it. So we close the Unreal instance first and then close the client.

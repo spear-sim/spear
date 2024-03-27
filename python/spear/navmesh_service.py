@@ -5,8 +5,8 @@
 import numpy as np
 
 class NavMeshService():
-    def __init__(self, sp_engine):
-        self._engine_service = sp_engine.engine_service
+    def __init__(self, engine_service):
+        self._engine_service = engine_service
 
     def get_random_points(self, num_points):
 

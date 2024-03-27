@@ -11,12 +11,12 @@ import sys
 
 
 class Env(gym.Env):
-    def __init__(self, config, sp_engine):
+    def __init__(self, config, engine_service):
 
         super(Env, self).__init__()
 
         self._config = config
-        self._engine_service = sp_engine.engine_service
+        self._engine_service = engine_service
 
         self._byte_order = self._engine_service.get_byte_order()
 
@@ -25,10 +25,10 @@ class Env(gym.Env):
         self._task_step_info_space_desc = SpaceDesc(self._get_task_step_info_space(), dict_space_type=Dict, box_space_type=Box)
         self._agent_step_info_space_desc = SpaceDesc(self._get_agent_step_info_space(), dict_space_type=Dict, box_space_type=Box)
 
+        self._ready = False
+
         self.action_space = self._action_space_desc.space
         self.observation_space = self._observation_space_desc.space
-
-        self._ready = False
 
     def step(self, action):
         

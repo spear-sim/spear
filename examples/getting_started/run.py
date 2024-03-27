@@ -36,9 +36,9 @@ if __name__ == "__main__":
 
     # create or get gym object
     if config.SP_ENGINE.LEGACY_SERVICE.AGENT == "SphereAgent":
-        env = sp_engine.env
+        env = spear.Env(config, sp_engine.engine_service)
     elif config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent":
-        env = OpenBotEnv(config, sp_engine)
+        env = OpenBotEnv(config, sp_engine.engine_service)
 
     # reset the simulation to get the first observation
     obs = env.reset()
