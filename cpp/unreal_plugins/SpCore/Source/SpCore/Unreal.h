@@ -428,12 +428,11 @@ public:
     {
         auto components = Std::toVector<TActorComponent*>(
             getComponentsByType<TActorComponent>(actor) |
-            std::views::transform([&tags](auto component) { return std::make_pair(component, getComponentHasTags(actor, tags)); }) |
+            std::views::transform([&tags](auto component) { return std::make_pair(component, getComponentHasTags(component, tags)); }) |
             std::views::filter([](const auto& pair)       { const auto& [component, has_tags] = pair; return Std::all(has_tags); }) |
             std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return component; }));
         return components;
     }
-
 
     template <CActorComponent TActorComponent = UActorComponent>
     static std::vector<TActorComponent*> getComponentsByType(const AActor* actor)
@@ -604,8 +603,7 @@ private:
         }
         if (vec.size() == 0) {
             return default_val;
-        }
-        else {
+        } else {
             return vec.at(0);
         }
     }
