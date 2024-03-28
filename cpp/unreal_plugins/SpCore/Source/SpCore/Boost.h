@@ -5,7 +5,7 @@
 #pragma once
 
 //
-// All headers (from Boost and our own code) that are required by this header go here.
+// All headers that are required by this header go here.
 //
 
 #include <boost/predef.h> // BOOST_OS_MACOS, BOOST_OS_LINUX, BOOST_OS_WINDOWS
@@ -14,9 +14,8 @@
 #include "SpCore/Windows.h"
 
 //
-// All headers that are included as a convenience to users of this header go here. We start with Boost's
-// core headers and then proceed in alphabetical order. If a header or group of headers requires special
-// handling, we place it in its own section below.
+// All headers that are included as a convenience to users of this header go here. If a group of headers
+// requires special handling, we place it into its own section below.
 //
 
 #pragma push_macro("check")  // Unreal macro, conflicts with Boost
