@@ -20,15 +20,17 @@
 class GameWorldService {
 public:
     GameWorldService() = delete;
-	GameWorldService(CEntryPointBinder auto* entry_point_binder)
-	{
+    GameWorldService(CEntryPointBinder auto* entry_point_binder)
+    {
+        SP_ASSERT(entry_point_binder);
+
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &GameWorldService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &GameWorldService::worldCleanupHandler);
 
-		entry_point_binder->bind_func_wrapped("game_world_service", "pause_game", [this]() -> void {
+        entry_point_binder->bind_func_wrapped("game_world_service", "pause_game", [this]() -> void {
             SP_ASSERT(world_);
             UGameplayStatics::SetGamePaused(world_, true);
-	    });
+        });
 
         entry_point_binder->bind_func_wrapped("game_world_service", "unpause_game", [this]() -> void {
             SP_ASSERT(world_);
@@ -45,7 +47,7 @@ public:
             SP_ASSERT(world_);
             return Unreal::toStdString(world_->GetName());
         });
-	}
+    }
 
     ~GameWorldService()
     {

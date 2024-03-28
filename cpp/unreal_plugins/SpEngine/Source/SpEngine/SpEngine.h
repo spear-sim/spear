@@ -8,7 +8,7 @@
 
 #include <Modules/ModuleInterface.h>
 
-#include "SpCore/Rpclib.h" // rpc_server
+#include "SpCore/Rpclib.h"
 #include "SpEngine/EngineService.h"
 #include "SpEngine/GameWorldService.h"
 #include "SpEngine/LegacyService.h"

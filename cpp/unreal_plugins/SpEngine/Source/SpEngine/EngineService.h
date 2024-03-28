@@ -16,15 +16,15 @@
 #include "SpCore/Log.h"
 #include "SpEngine/WorkQueue.h"
 
-template <typename TBasicEntryPointBinder>
-concept CBasicEntryPointBinder = requires(TBasicEntryPointBinder basic_entry_point_binder) {
-    { basic_entry_point_binder.bind("", []() -> void {}) } -> std::same_as<void>;
-};
-
 template <typename TEntryPointBinder>
 concept CEntryPointBinder = requires(TEntryPointBinder entry_point_binder) {
-    { entry_point_binder.bind_func("", "", []() -> void {}) } -> std::same_as<void>;
-    { entry_point_binder.bind_func_wrapped("", "", []() -> void {}) } -> std::same_as<void>;
+    { entry_point_binder.bind("", []() -> void {}) } -> std::same_as<void>;
+};
+
+template <typename TUnrealEntryPointBinder>
+concept CUnrealEntryPointBinder = requires(TUnrealEntryPointBinder unreal_entry_point_binder) {
+    { unreal_entry_point_binder.bindFuncNoUnreal("", "", []() -> void {}) } -> std::same_as<void>;
+    { unreal_entry_point_binder.bindFuncUnreal("", "", []() -> void {}) } -> std::same_as<void>;
 };
 
 // Different possible frame states for thread synchronization
@@ -37,20 +37,22 @@ enum class FrameState
     ExecutingPostTick,
 };
 
-template <CBasicEntryPointBinder TBasicEntryPointBinder>
+template <CEntryPointBinder TEntryPointBinder>
 class EngineService {
 public:
     EngineService() = delete;
-    EngineService(TBasicEntryPointBinder* basic_entry_point_binder)
+    EngineService(TEntryPointBinder* entry_point_binder)
     {
-        basic_entry_point_binder_ = basic_entry_point_binder;
+        SP_ASSERT(entry_point_binder);
+
+        entry_point_binder_ = entry_point_binder;
 
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
         end_frame_handle_   = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
 
         frame_state_ = FrameState::Idle;
 
-        basic_entry_point_binder_->bind("engine_service.begin_tick", [this]() -> void {
+        entry_point_binder_->bind("engine_service.begin_tick", [this]() -> void {
             SP_ASSERT(frame_state_ == FrameState::Idle);
             // reset promises and futures
             frame_state_idle_promise_ = std::promise<void>();
@@ -67,31 +69,40 @@ public:
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         });
 
-        basic_entry_point_binder_->bind("engine_service.tick", [this]() -> void {
+        entry_point_binder_->bind("engine_service.tick", [this]() -> void {
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
 
             // allow beginFrameHandler() to finish executing, wait here until frame_state == FrameState::ExecutingPostTick
-            work_queue_.resetWorkGuard();
+            work_queue_.reset();
 
             frame_state_executing_post_tick_future_.wait();
 
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         });
 
-        basic_entry_point_binder_->bind("engine_service.end_tick", [this]() -> void {
+        entry_point_binder_->bind("engine_service.end_tick", [this]() -> void {
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
             // allow endFrameHandler() to finish executing, wait here until frame_state == FrameState::Idle
-            work_queue_.resetWorkGuard();
+            work_queue_.reset();
 
             frame_state_idle_future_.wait();
 
             SP_ASSERT(frame_state_ == FrameState::Idle);
         });
 
-        basic_entry_point_binder_->bind("engine_service.get_byte_order", []() -> std::string {
+        entry_point_binder_->bind("engine_service.get_byte_order", []() -> std::string {
             uint32_t dummy = 0x01020304;
             return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
+        });
+
+        entry_point_binder_->bind("engine_service.ping", []() -> std::string {
+            return "EngineService received a call to ping()...";
+        });
+
+        entry_point_binder_->bind("engine_service.request_close", []() -> void {
+            bool immediate_shutdown = false;
+            FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
     }
 
@@ -105,17 +116,17 @@ public:
         end_frame_handle_.Reset();
         begin_frame_handle_.Reset();
         
-        basic_entry_point_binder_ = nullptr;
+        entry_point_binder_ = nullptr;
     }
 
-    void bind_func(const std::string& service_name, const std::string& func_name, auto&& func)
+    void bindFuncNoUnreal(const std::string& service_name, const std::string& func_name, auto&& func)
     {
-        basic_entry_point_binder_->bind(service_name + "." + func_name, std::forward<decltype(func)>(func));
+        entry_point_binder_->bind(service_name + "." + func_name, std::forward<decltype(func)>(func));
     }
 
-    void bind_func_wrapped(const std::string& service_name, const std::string& func_name, auto&& func)
+    void bindFuncUnreal(const std::string& service_name, const std::string& func_name, auto&& func)
     {
-        basic_entry_point_binder_->bind(
+        entry_point_binder_->bind(
             service_name + "." + func_name,
             WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, std::forward<decltype(func)>(func))
         );
@@ -123,14 +134,14 @@ public:
 
     void beginFrameHandler()
     {
-        // if begin_tick() has indicated that we should advance the simulation
         if (frame_state_ == FrameState::RequestPreTick) {
+
             // update frame state, allow begin_tick() to finish executing
             frame_state_ = FrameState::ExecutingPreTick;
             frame_state_executing_pre_tick_promise_.set_value();
 
-            // execute all pre-tick synchronous work, wait here for tick() to unblock us
-            work_queue_.runIOContext();
+            // execute all pre-tick work, wait here for tick() to unblock us
+            work_queue_.run();
 
             // update local state
             frame_state_ = FrameState::ExecutingTick;
@@ -139,14 +150,14 @@ public:
 
     void endFrameHandler()
     {
-        // if we are currently advancing the simulation
         if (frame_state_ == FrameState::ExecutingTick) {
+
             // update frame state, allow tick() to finish executing
             frame_state_ = FrameState::ExecutingPostTick;
             frame_state_executing_post_tick_promise_.set_value();
 
-            // execute all post-tick synchronous work, wait here for endTick() to unblock
-            work_queue_.runIOContext();
+            // execute all post-tick work, wait here for endTick() to unblock
+            work_queue_.run();
 
             // update frame state, allow endTick() to finish executing
             frame_state_ = FrameState::Idle;
@@ -155,7 +166,7 @@ public:
     }
 
 private:
-    TBasicEntryPointBinder* basic_entry_point_binder_ = nullptr;
+    TEntryPointBinder* entry_point_binder_ = nullptr;
     WorkQueue work_queue_;
 
     // FDelegateHandle objects corresponding to each event handler defined in this class

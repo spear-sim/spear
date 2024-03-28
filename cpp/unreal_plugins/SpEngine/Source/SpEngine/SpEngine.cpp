@@ -4,14 +4,14 @@
 
 #include "SpEngine/SpEngine.h"
 
-#include <memory>                  // std::make_unique, std::unique_ptr
+#include <memory> // std::make_unique, std::unique_ptr
 
 #include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
-#include "SpCore/Rpclib.h" // rpc_server
+#include "SpCore/Rpclib.h"
 #include "SpCore/Unreal.h"
 #include "SpEngine/EngineService.h"
 #include "SpEngine/GameWorldService.h"
@@ -30,16 +30,6 @@ void SpEngine::StartupModule()
         rpc_server_ = std::make_unique<rpc::server>(30000);
     }
     SP_ASSERT(rpc_server_);
-
-    // bind functions here to be consistent with the usage of these functions on the python side
-    rpc_server_->bind("sp_engine.ping", []() -> std::string {
-        return "SpEngine received a call to ping()...";
-    });
-
-    rpc_server_->bind("sp_engine.request_close", []() -> void {
-        bool immediate_shutdown = false;
-        FGenericPlatformMisc::RequestExit(immediate_shutdown);
-    });
 
     // EngineService needs its own custom logic for binding its entry points, because they are
     // intended to run directly on the RPC server worker thread, whereas all other entry points

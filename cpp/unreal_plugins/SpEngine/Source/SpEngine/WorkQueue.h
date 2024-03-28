@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <concepts>    // std::same_as
-#include <cmath>       // std::nan
+#include <concepts> // std::same_as
+#include <cmath>    // std::nan
 #include <future>
 #include <map>
 #include <mutex>
 #include <string>
-#include <utility>     // std::forward, std::move
+#include <utility>  // std::forward, std::move
 #include <vector>
 
 #include <SpCore/Assert.h>
@@ -18,9 +18,8 @@
 
 template <typename TFunc, typename TReturn, typename... TArgs>
 concept CCallable = requires(TFunc func, TArgs... args) {
-        { func(args...) } -> std::same_as<TReturn>;
+    { func(args...) } -> std::same_as<TReturn>;
 };
-
 
 template <typename TClass>
 struct FuncInfo : public FuncInfo<decltype(&TClass::operator())> {};
@@ -106,7 +105,7 @@ public:
         return wrapFuncToExecuteInWorkQueueBlockingImpl(work_queue, std::forward<TFunc>(func), FuncInfo<TFunc>());
     }
 
-    void runIOContext()
+    void run()
     {
         // run all scheduled work and wait for executor_work_guard_.reset() to be called from a worker thread
         io_context_.run();
@@ -118,7 +117,7 @@ public:
         mutex_.unlock();
     }
 
-    void resetWorkGuard()
+    void reset()
     {
         // request io_context_.run() to stop executing once all of its scheduled work is finished
         mutex_.lock();

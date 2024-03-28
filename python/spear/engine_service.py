@@ -65,3 +65,9 @@ class EngineService():
             return ">"
         else:
             assert False
+
+    def request_close(self):
+        self._rpc_client.call("engine_service.request_close")
+    
+    def ping(self):
+        self._rpc_client.call("engine_service.ping")
