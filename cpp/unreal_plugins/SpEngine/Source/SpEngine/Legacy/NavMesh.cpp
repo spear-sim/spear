@@ -133,7 +133,7 @@ std::vector<double> NavMesh::getRandomReachablePointsInRadius(const std::vector<
 
     for (int i = 0; i < reference_points.size(); i += 3) {
 
-        FVector reference_point = { reference_points.at(i), reference_points.at(i + 1), reference_points.at(i + 2) };
+        FVector reference_point = {reference_points.at(i), reference_points.at(i + 1), reference_points.at(i + 2)};
         FNavLocation nav_location;
 
         bool found = recast_nav_mesh_->GetRandomReachablePointInRadius(reference_point, radius, nav_location);
@@ -155,8 +155,8 @@ std::vector<std::vector<double>> NavMesh::getPaths(const std::vector<double>& in
     std::vector<std::vector<double>> paths;
 
     for (int i = 0; i < initial_points.size(); i += 3) {
-        FVector initial_point = { initial_points.at(i), initial_points.at(i + 1), initial_points.at(i + 2) };
-        FVector goal_point = { goal_points.at(i), goal_points.at(i + 1), goal_points.at(i + 2) };
+        FVector initial_point = {initial_points.at(i), initial_points.at(i + 1), initial_points.at(i + 2)};
+        FVector goal_point = {goal_points.at(i), goal_points.at(i + 1), goal_points.at(i + 2)};
         FPathFindingQuery path_finding_query = FPathFindingQuery(world_, *recast_nav_mesh_, initial_point, goal_point);
         FPathFindingResult path_finding_result = navigation_system_v1_->FindPathSync(path_finding_query, EPathFindingMode::Type::Regular);
         SP_ASSERT(path_finding_result.IsSuccessful());

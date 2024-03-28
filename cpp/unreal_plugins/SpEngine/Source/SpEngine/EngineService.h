@@ -40,7 +40,7 @@ enum class FrameState
 template <CEntryPointBinder TEntryPointBinder>
 class EngineService {
 public:
-    EngineService() = delete;
+    //EngineService() = delete;
     EngineService(TEntryPointBinder* entry_point_binder)
     {
         SP_ASSERT(entry_point_binder);
@@ -48,12 +48,13 @@ public:
         entry_point_binder_ = entry_point_binder;
 
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
-        end_frame_handle_   = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
+        end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
 
         frame_state_ = FrameState::Idle;
 
         entry_point_binder_->bind("engine_service.begin_tick", [this]() -> void {
             SP_ASSERT(frame_state_ == FrameState::Idle);
+
             // reset promises and futures
             frame_state_idle_promise_ = std::promise<void>();
             frame_state_executing_pre_tick_promise_ = std::promise<void>();
@@ -66,6 +67,7 @@ public:
             // indicate that we want the game thread to advance the simulation, wait here until frame_state == FrameState::ExecutingPreTick
             frame_state_ = FrameState::RequestPreTick;
             frame_state_executing_pre_tick_future_.wait();
+
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         });
 

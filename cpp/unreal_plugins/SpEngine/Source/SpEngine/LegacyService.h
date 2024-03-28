@@ -18,7 +18,7 @@
 #include <SpCore/Config.h>
 #include <SpCore/Log.h>
 #include <SpCore/Unreal.h>
-#include <SpEngine/EngineService.h> // CEntryPointBinder
+#include <SpEngine/EngineService.h>
 #include "SpEngine/Legacy/Agent.h"
 #include "SpEngine/Legacy/CameraAgent.h"
 #include "SpEngine/Legacy/ClassRegistrationUtils.h"
@@ -34,94 +34,94 @@
 class LegacyService {
 public:
 	LegacyService() = delete;
-	LegacyService(CEntryPointBinder auto* entry_point_binder)
+	LegacyService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
 	{
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &LegacyService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &LegacyService::worldCleanupHandler);
 
-        entry_point_binder->bind_func("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
+        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getActionSpace();
         });
 
-        entry_point_binder->bind_func("legacy_service", "get_observation_space", [this]() -> std::map<std::string, ArrayDesc> {
+        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_observation_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getObservationSpace();
         });
 
-        entry_point_binder->bind_func("legacy_service", "get_agent_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
+        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_agent_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getStepInfoSpace();
         });
 
-        entry_point_binder->bind_func("legacy_service", "get_task_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
+        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_task_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(task_);
             return task_->getStepInfoSpace();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "apply_action", [this](const std::map<std::string, std::vector<uint8_t>>& action) -> void {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "apply_action", [this](const std::map<std::string, std::vector<uint8_t>>& action) -> void {
             SP_ASSERT(agent_);
             agent_->applyAction(action);
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "get_observation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_observation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
             SP_ASSERT(agent_);
             return agent_->getObservation();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "get_reward", [this]() -> float {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_reward", [this]() -> float {
             SP_ASSERT(task_);
             return task_->getReward();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "is_episode_done", [this]() -> bool {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "is_episode_done", [this]() -> bool {
             SP_ASSERT(task_);
             return task_->isEpisodeDone();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "get_agent_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_agent_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
             SP_ASSERT(agent_);
             return agent_->getStepInfo();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "get_task_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_task_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
             SP_ASSERT(task_);
             return task_->getStepInfo();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "reset_agent", [this]() -> void {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "reset_agent", [this]() -> void {
             SP_ASSERT(agent_);
             agent_->reset();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "reset_task", [this]() -> void {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "reset_task", [this]() -> void {
             SP_ASSERT(task_);
             task_->reset();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "is_agent_ready", [this]() -> bool {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "is_agent_ready", [this]() -> bool {
             SP_ASSERT(agent_);
             return agent_->isReady();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "is_task_ready", [this]() -> bool {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "is_task_ready", [this]() -> bool {
             SP_ASSERT(task_);
             return task_->isReady();
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "get_random_points",
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_points",
             [this](const int& num_points) -> std::vector<double> {
                 SP_ASSERT(nav_mesh_);
                 return nav_mesh_->getRandomPoints(num_points);
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "get_random_reachable_points_in_radius",
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_reachable_points_in_radius",
             [this](const std::vector<double>& initial_points, const float& radius) -> std::vector<double> {
                 SP_ASSERT(nav_mesh_);
                 return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
         });
 
-        entry_point_binder->bind_func_wrapped("legacy_service", "get_paths",
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_paths",
             [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
                 SP_ASSERT(nav_mesh_);
                 return nav_mesh_->getPaths(initial_points, goal_points);
@@ -154,8 +154,8 @@ public:
 
         if (world_is_ready) {
 
-            std::string scene_id = "apartment_0000";
-            std::string map_id = "apartment_0000";
+            std::string scene_id = "";
+            std::string map_id = "";
 
             if (Config::s_initialized_) {
                 scene_id = Config::get<std::string>("SP_ENGINE.LEGACY_SERVICE.SCENE_ID");

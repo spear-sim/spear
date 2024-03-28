@@ -15,35 +15,35 @@
 #include <SpCore/Assert.h>
 #include <SpCore/Log.h>
 #include <SpCore/Unreal.h>
-#include <SpEngine/EngineService.h> // CEntryPointBinder
+#include <SpEngine/EngineService.h>
 
 class GameWorldService {
 public:
     GameWorldService() = delete;
-    GameWorldService(CEntryPointBinder auto* entry_point_binder)
+    GameWorldService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
-        SP_ASSERT(entry_point_binder);
+        SP_ASSERT(unreal_entry_point_binder);
 
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &GameWorldService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &GameWorldService::worldCleanupHandler);
 
-        entry_point_binder->bind_func_wrapped("game_world_service", "pause_game", [this]() -> void {
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "pause_game", [this]() -> void {
             SP_ASSERT(world_);
             UGameplayStatics::SetGamePaused(world_, true);
         });
 
-        entry_point_binder->bind_func_wrapped("game_world_service", "unpause_game", [this]() -> void {
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "unpause_game", [this]() -> void {
             SP_ASSERT(world_);
             UGameplayStatics::SetGamePaused(world_, false);
         });
 
-        entry_point_binder->bind_func_wrapped("game_world_service", "open_level", [this](const std::string& desired_level_name) -> void {
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "open_level", [this](const std::string& desired_level_name) -> void {
             SP_ASSERT(world_);
             SP_LOG("Opening level: ", desired_level_name);
             UGameplayStatics::OpenLevel(world_, Unreal::toFName(desired_level_name));
         });
 
-        entry_point_binder->bind_func_wrapped("game_world_service", "get_current_level_name", [this]() -> std::string {
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_current_level_name", [this]() -> std::string {
             SP_ASSERT(world_);
             return Unreal::toStdString(world_->GetName());
         });

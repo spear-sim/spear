@@ -166,7 +166,7 @@ class SpEngine():
 
         spear.log("Closing Unreal instance...")
 
-        self.engine_service.request_close()
+        self._rpc_client.call("engine_service.request_close")
         self._wait_until_unreal_instance_is_closed()
 
         spear.log("Finished closing Unreal instance.")
@@ -183,7 +183,7 @@ class SpEngine():
                     msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT),
                     timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                self.engine_service.ping()
+                self._rpc_client.call("engine_service.ping")
                 connected = True
             except:
                 # Client may not clean up resources correctly in this case, so we clean things up explicitly.
@@ -209,7 +209,7 @@ class SpEngine():
                         msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT), 
                         timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                    self.engine_service.ping()
+                    self._rpc_client.call("engine_service.ping")
                     connected = True
                 except Exception as e:
                     # Client may not clean up resources correctly in this case, so we clean things up explicitly.
