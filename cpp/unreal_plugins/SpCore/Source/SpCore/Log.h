@@ -45,7 +45,7 @@ public:
 
     static void log(const std::filesystem::path& current_file, int current_line, auto&&... args)
     {
-        std::string str = getPrefix(current_file, current_line) + toString(std::forward<decltype(args)>(args)...);
+        std::string str = getPrefix(current_file, current_line) + Std::toString(std::forward<decltype(args)>(args)...);
         
         #if WITH_EDITOR // defined in an auto-generated header
             if (IsRunningCommandlet()) {
@@ -62,16 +62,6 @@ public:
     static std::string getPrefix(const std::filesystem::path& current_file, int current_line);
 
 private:
-    static std::string toString()
-    {
-        return "";
-    }
-
-    static std::string toString(auto&&... args)
-    {
-        return Std::toString(std::forward<decltype(args)>(args)...);
-    }
-
     static void logStdout(const std::string& str);
     static void logUnreal(const std::string& str);
 
