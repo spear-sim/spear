@@ -21,7 +21,7 @@
 #include <Math/Vector.h>
 
 #include "SimulationController/CameraSensor.h"
-#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/ArrayDesc.h"
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"

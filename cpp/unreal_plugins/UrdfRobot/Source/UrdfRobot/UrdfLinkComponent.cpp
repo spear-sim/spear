@@ -23,12 +23,12 @@
 #include <PhysicsEngine/BodyInstance.h>
 #include <PhysicalMaterials/PhysicalMaterial.h>
 
-#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/ArrayDesc.h"
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/Std.h"
-#include "UrdfRobot/UrdfParser.h" // UrdfGeometryDesc, UrdfGeometryType, UrdfLinkDesc, UrdfMaterialDesc
+#include "UrdfRobot/UrdfParser.h"
 
 UUrdfLinkComponent::UUrdfLinkComponent()
 {
@@ -38,10 +38,6 @@ UUrdfLinkComponent::UUrdfLinkComponent()
 UUrdfLinkComponent::~UUrdfLinkComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    // Objects created with CreateDefaultSubobject, DuplicateObject, LoadObject, NewObject don't need to be cleaned up explicitly.
-
-    StaticMeshComponents.Empty();
 }
 
 void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)

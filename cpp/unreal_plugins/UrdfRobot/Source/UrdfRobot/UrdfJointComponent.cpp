@@ -18,14 +18,14 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/ArrayDesc.h"
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UserInputComponent.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
-#include "UrdfRobot/UrdfParser.h" // UrdfJointControlType, UrdfJointDesc, UrdfJointType
+#include "UrdfRobot/UrdfParser.h"
 
 // useful for debugging fetch.urdf
 const std::map<std::string, std::pair<std::string, std::vector<double>>> USER_INPUT_ACTIONS = {
@@ -55,14 +55,6 @@ UUrdfJointComponent::UUrdfJointComponent()
 UUrdfJointComponent::~UUrdfJointComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    JointType = EJointType::Invalid;
-    JointControlType = EJointControlType::NotActuated;
-    JointInterfaceType = EJointInterfaceType::NoInterface;
-    //LinearTranslationOffset = FVector::ZeroVector; // TODO (MR): support linear translation offsets
-
-    SP_ASSERT(user_input_component_);
-    user_input_component_ = nullptr;
 }
 
 void UUrdfJointComponent::BeginPlay()

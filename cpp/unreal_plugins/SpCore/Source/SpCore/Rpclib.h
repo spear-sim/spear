@@ -16,11 +16,11 @@
 // when we include <rpc/msgpack.hpp>. However, if MSGPACK_DISABLE_LEGACY_NIL is defined, then
 // msgpack-c does not define nil, and we avoid the conflicts.
 #if BOOST_OS_MACOS
-	#define MSGPACK_DISABLE_LEGACY_NIL
+    #define MSGPACK_DISABLE_LEGACY_NIL
 #endif
 
 #include <rpc/config.h>
-#include <rpc/msgpack.hpp>
+#include <rpc/msgpack.hpp> // MSGPACK_ADD_ENUM, MSGPACK_DEFINE_MAP
 #include <rpc/server.h>
 
 #pragma pop_macro("check")

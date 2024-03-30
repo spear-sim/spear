@@ -12,7 +12,7 @@
 #include <GameFramework/Actor.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Unreal.h" // CActorComponent
+#include "SpCore/Unreal.h"
 
 template <CActorComponent TActorComponent>
 class StandaloneComponent

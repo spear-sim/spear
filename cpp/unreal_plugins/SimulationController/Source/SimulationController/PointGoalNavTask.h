@@ -14,7 +14,7 @@
 
 #include <Math/Vector.h>
 
-#include "SimulationController/ActorHitEventComponent.h"
+#include "SimulationController/ActorHitComponent.h"
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/Task.h"
 #include "SpCore/ArrayDesc.h"
@@ -47,7 +47,7 @@ private:
     AActor* agent_actor_ = nullptr;
     std::vector<AActor*> obstacle_ignore_actors_;
 
-    std::unique_ptr<StandaloneComponent<UActorHitEventComponent>> actor_hit_event_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UActorHitComponent>> actor_hit_component_ = nullptr;
 
     std::minstd_rand minstd_rand_;
     bool hit_goal_ = false;

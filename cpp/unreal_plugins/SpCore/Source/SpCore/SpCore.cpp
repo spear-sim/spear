@@ -15,11 +15,11 @@ void SpCore::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    Config::initialize();
+    Config::requestInitialize();
 
     // If the config system is not initialized, i.e., if the -config_file command-line argument is not passed in,
     // then there are no more initialization steps that we can do, so we return. 
-    if (!Config::s_initialized_) {
+    if (!Config::isInitialized()) {
         return;
     }
 

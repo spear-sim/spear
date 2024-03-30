@@ -13,7 +13,7 @@
 
 #include <Math/Vector.h>
 
-#include "SimulationController/ActorHitEventComponent.h"
+#include "SimulationController/ActorHitComponent.h"
 #include "SimulationController/StandaloneComponent.h"
 #include "SimulationController/Task.h"
 #include "SpCore/ArrayDesc.h"
@@ -44,7 +44,7 @@ private:
     AActor* goal_actor_ = nullptr;
     std::vector<AActor*> obstacle_ignore_actors_;
 
-    std::unique_ptr<StandaloneComponent<UActorHitEventComponent>> actor_hit_event_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UActorHitComponent>> actor_hit_component_ = nullptr;
 
     std::vector<FVector> agent_initial_locations_;
     std::vector<FVector> agent_goal_locations_;

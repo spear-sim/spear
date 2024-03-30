@@ -28,8 +28,8 @@
 
 #include "SimulationController/CameraSensor.h"
 #include "SimulationController/StandaloneComponent.h"
-#include "SimulationController/TickEventComponent.h"
-#include "SpCore/ArrayDesc.h" // DataType
+#include "SimulationController/TickComponent.h"
+#include "SpCore/ArrayDesc.h"
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"
@@ -106,15 +106,15 @@ SphereAgent::SphereAgent(UWorld* world)
         Config::get<float>("SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.IMAGE_HEIGHT");
 
     // Create UTickEventComponent
-    tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(world, "tick_event_component");
-    SP_ASSERT(tick_event_component_);
-    SP_ASSERT(tick_event_component_->component_);
-    tick_event_component_->component_->PrimaryComponentTick.bCanEverTick = true;
-    tick_event_component_->component_->PrimaryComponentTick.bTickEvenWhenPaused = false;
-    tick_event_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
-    tick_event_component_->component_->tick_func_ = [this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
+    tick_component_ = std::make_unique<StandaloneComponent<UTickComponent>>(world, "tick_component");
+    SP_ASSERT(tick_component_);
+    SP_ASSERT(tick_component_->component_);
+    tick_component_->component_->PrimaryComponentTick.bCanEverTick = true;
+    tick_component_->component_->PrimaryComponentTick.bTickEvenWhenPaused = false;
+    tick_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
+    tick_component_->component_->setTickFunc([this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
         camera_actor_->SetActorLocationAndRotation(static_mesh_actor_->GetActorLocation(), rotation_);
-    };
+    });
 
     auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.SPHERE_AGENT.OBSERVATION_COMPONENTS");
 
@@ -138,17 +138,12 @@ SphereAgent::~SphereAgent()
         camera_sensor_ = nullptr;
     }
 
-    SP_ASSERT(tick_event_component_);
-    SP_ASSERT(tick_event_component_->component_);
-    tick_event_component_->component_->tick_func_ = nullptr;
-    tick_event_component_ = nullptr;
+    SP_ASSERT(tick_component_);
+    tick_component_ = nullptr;
 
     SP_ASSERT(camera_actor_);
     camera_actor_->Destroy();
     camera_actor_ = nullptr;
-
-    SP_ASSERT(static_mesh_component_);
-    static_mesh_component_ = nullptr;
 
     SP_ASSERT(static_mesh_actor_);
     static_mesh_actor_->Destroy();

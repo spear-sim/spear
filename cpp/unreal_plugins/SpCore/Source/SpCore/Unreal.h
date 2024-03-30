@@ -481,7 +481,7 @@ public:
     }
 
     //
-    // Get component by name or tag or type and return a TActorComponent* pointer.
+    // Get component by name or tag or type and return a TActorComponent* pointer
     //
 
     template <CActorComponent TActorComponent = UActorComponent>
@@ -539,8 +539,8 @@ public:
 
     struct PropertyDesc
     {
-        void* value_ptr_ = nullptr;
         FProperty* property_ = nullptr;
+        void* value_ptr_ = nullptr;
     };
 
     static PropertyDesc findPropertyByName(UObject* uobject, const std::string& name);
@@ -554,6 +554,7 @@ public:
     //
 
     static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
+    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction); // useful for calling functions with no args
     static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
 
 private:
@@ -567,18 +568,24 @@ private:
     static std::vector<bool> getComponentHasTags(const UActorComponent* component, const std::vector<std::string>& tags);
 
     template <typename TData>
-    static const TData& getItem(const std::vector<TData>& vec, const TData& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
+    static const TData& getItem(const std::vector<TData>& vector, const TData& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
     {
         if (assert_if_size_is_zero) {
-            SP_ASSERT(vec.size() != 0);
+            SP_ASSERT(vector.size() != 0);
         }
         if (assert_if_size_is_greater_than_one) {
-            SP_ASSERT(vec.size() <= 1);
+            SP_ASSERT(vector.size() <= 1);
         }
-        if (vec.size() == 0) {
+        if (vector.size() == 0) {
             return default_val;
         } else {
-            return vec.at(0);
+            return vector.at(0);
         }
     }
+
+    //
+    // Helper function for formatting array properties as strings in the same style as Unreal
+    //
+
+    static std::string getFormattedArrayPropertyValueString(const FProperty* inner_property, const std::vector<std::string>& inner_strings);
 };

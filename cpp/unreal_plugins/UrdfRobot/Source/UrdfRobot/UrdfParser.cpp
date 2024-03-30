@@ -2,8 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "UrdfRobot/UrdfParser.h" // UrdfCollisionDesc, UrdfGeometryDesc, UrdfGeometryType, UrdfInertialDesc, UrdfJointControlType, UrdfJointDesc
-                                  // UrdfJointInterfaceType, UrdfJointType, UrdfLinkDesc, UrdfMaterialDesc, UrdfRobotDesc, UrdfVisualDesc
+#include "UrdfRobot/UrdfParser.h"
 
 #include <string>
 #include <utility> // std::move
@@ -69,31 +68,29 @@ UrdfRobotDesc UrdfParser::parseRobotNode(FXmlNode* robot_node)
     SP_ASSERT(robot_desc.joint_descs_.size() + 1 == robot_desc.link_descs_.size());
 
     // for each joint, update its parent and child links
-    for (auto& joint_desc_pair : robot_desc.joint_descs_) {
-        UrdfJointDesc* joint_desc = &(joint_desc_pair.second);
-        SP_ASSERT(joint_desc);
+    for (auto& [joint_name, joint_desc] : robot_desc.joint_descs_) {
+        UrdfJointDesc* joint_desc_ptr = &joint_desc;
+        SP_ASSERT(joint_desc_ptr);
 
-        UrdfLinkDesc* parent_link_desc = &(robot_desc.link_descs_.at(joint_desc->parent_));
-        UrdfLinkDesc* child_link_desc = &(robot_desc.link_descs_.at(joint_desc->child_));
+        UrdfLinkDesc* parent_link_desc = &(robot_desc.link_descs_.at(joint_desc_ptr->parent_));
+        UrdfLinkDesc* child_link_desc = &(robot_desc.link_descs_.at(joint_desc_ptr->child_));
         SP_ASSERT(parent_link_desc); // each joint must have a valid parent
         SP_ASSERT(child_link_desc);  // each joint must have a valid child
 
         parent_link_desc->child_link_descs_.push_back(child_link_desc);
-        parent_link_desc->child_joint_descs_.push_back(joint_desc);
+        parent_link_desc->child_joint_descs_.push_back(joint_desc_ptr);
 
         SP_ASSERT(!child_link_desc->has_parent_); // each link must have at most one parent
         child_link_desc->has_parent_ = true;
         child_link_desc->parent_simulate_physics_ = parent_link_desc->simulate_physics_;
 
         // a child link's reference frame is defined as the parent joint's reference frame
-        child_link_desc->xyz_ = joint_desc->xyz_;
-        child_link_desc->rpy_ = joint_desc->rpy_;
+        child_link_desc->xyz_ = joint_desc_ptr->xyz_;
+        child_link_desc->rpy_ = joint_desc_ptr->rpy_;
     }
 
     // update pointers for root node and material node
-    for (auto& link_desc_pair : robot_desc.link_descs_) {
-        UrdfLinkDesc& link_desc = link_desc_pair.second;
-
+    for (auto& [link_desc_name, link_desc] : robot_desc.link_descs_) {
         // for each material inside a link, if it refers to another material, update the reference
         for (auto& visual_desc_ : link_desc.visual_descs_) {
             UrdfMaterialDesc& material_desc = visual_desc_.material_desc_;

@@ -16,7 +16,7 @@
 #include "SimulationController/Agent.h"
 #include "SimulationController/ClassRegistrationUtils.h"
 #include "SimulationController/StandaloneComponent.h"
-#include "SimulationController/TickEventComponent.h"
+#include "SimulationController/TickComponent.h"
 #include "SpCore/ArrayDesc.h"
 
 class ACameraActor;
@@ -52,7 +52,7 @@ private:
     ACameraActor* camera_actor_ = nullptr;
 
     UStaticMeshComponent* static_mesh_component_ = nullptr;
-    std::unique_ptr<StandaloneComponent<UTickEventComponent>> tick_event_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UTickComponent>> tick_component_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
 

@@ -14,7 +14,7 @@
 #include <Math/Vector.h>
 
 #include "SimulationController/StandaloneComponent.h"
-#include "SimulationController/TickEventComponent.h"
+#include "SimulationController/TickComponent.h"
 #include "SpCore/ArrayDesc.h"
 
 class UPrimitiveComponent;
@@ -38,7 +38,7 @@ public:
 
 private:
     UPrimitiveComponent* primitive_component_ = nullptr;
-    std::unique_ptr<StandaloneComponent<UTickEventComponent>> tick_event_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UTickComponent>> tick_component_ = nullptr;
 
     FVector previous_linear_velocity_world_ = FVector::ZeroVector;
 };

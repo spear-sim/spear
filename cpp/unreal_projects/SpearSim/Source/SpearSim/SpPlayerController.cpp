@@ -32,9 +32,6 @@ ASpPlayerController::ASpPlayerController()
 ASpPlayerController::~ASpPlayerController()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    SP_ASSERT(UserInputComponent);
-    UserInputComponent = nullptr;
 }
 
 void ASpPlayerController::BeginPlay()

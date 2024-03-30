@@ -17,7 +17,7 @@ UVehicleWheel::UVehicleWheel()
     // values to be effective in applying drive torques and brake torques to the vehicle.
     ExternalTorqueCombineMethod = ETorqueCombineMethod::Override;
 
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         WheelMass               = Config::get<float>("VEHICLE.VEHICLE_WHEEL.WHEEL_MASS");
         WheelRadius             = Config::get<float>("VEHICLE.VEHICLE_WHEEL.WHEEL_RADIUS");
         WheelWidth              = Config::get<float>("VEHICLE.VEHICLE_WHEEL.WHEEL_WIDTH");

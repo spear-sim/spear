@@ -154,14 +154,13 @@ CameraSensor::CameraSensor(
 
 CameraSensor::~CameraSensor()
 {
-    for (auto& render_pass_desc : render_pass_descs_) {
+    for (auto& [render_pass_name, render_pass_desc] : render_pass_descs_) {
         if (Config::get<bool>("SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
             #if BOOST_OS_MACOS || BOOST_OS_LINUX
-                boost::interprocess::shared_memory_object::remove(render_pass_desc.second.shared_memory_id_.c_str());
+                boost::interprocess::shared_memory_object::remove(render_pass_desc.shared_memory_id_.c_str());
             #endif
         }
     }
-    render_pass_descs_.clear();
 
     SP_ASSERT(actor_);
     actor_->Destroy();

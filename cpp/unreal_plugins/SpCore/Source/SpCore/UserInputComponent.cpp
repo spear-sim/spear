@@ -30,10 +30,6 @@ UUserInputComponent::UUserInputComponent()
 UUserInputComponent::~UUserInputComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    handle_user_input_func_ = nullptr;
-    user_input_descs_.clear();
-    input_component_ = nullptr;
 }
 
 void UUserInputComponent::TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function)

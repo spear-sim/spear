@@ -17,8 +17,6 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "UrdfRobot/UrdfRobotPawn.h"
-#include "Vehicle/VehiclePawn.h"
 
 ADebugWidget::ADebugWidget()
 {
@@ -28,9 +26,6 @@ ADebugWidget::ADebugWidget()
 ADebugWidget::~ADebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    DebugString = Unreal::toFString("");
-    UrdfFile = Unreal::toFString("");
 }
 
 void ADebugWidget::LoadConfig()
@@ -46,41 +41,6 @@ void ADebugWidget::SaveConfig()
 void ADebugWidget::PrintDebugString()
 {
     SP_LOG("DebugString: ", Unreal::toStdString(DebugString));
-}
-
-void ADebugWidget::SpawnVehiclePawn()
-{
-    UWorld* world = GetWorld();
-    SP_ASSERT(world);
-
-    std::vector<AVehiclePawn*> vehicle_pawns_list = Unreal::findActorsByType<AVehiclePawn>(world);
-    std::string name_suffix = Std::toString(vehicle_pawns_list.size() + 1);
-    FVector spawn_location = FVector::ZeroVector;
-    FRotator spawn_rotation = FRotator::ZeroRotator;
-    FActorSpawnParameters actor_spawn_parameters;
-    actor_spawn_parameters.Name = Unreal::toFName("vehicle_pawn_" + name_suffix);
-    actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    AVehiclePawn* vehicle_pawn = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_parameters);
-    SP_ASSERT(vehicle_pawn);
-}
-
-void ADebugWidget::SpawnUrdfRobotPawn()
-{
-    UWorld* world = GetWorld();
-    SP_ASSERT(world);
-
-    std::vector<AUrdfRobotPawn*> urdf_robot_pawns_list = Unreal::findActorsByType<AUrdfRobotPawn>(world);
-    std::string name_suffix = Std::toString(urdf_robot_pawns_list.size() + 1);
-    FVector spawn_location = FVector::ZeroVector;
-    FRotator spawn_rotation = FRotator::ZeroRotator;
-    FActorSpawnParameters actor_spawn_parameters;
-    actor_spawn_parameters.Name = Unreal::toFName("urdf_robot_pawn_" + name_suffix);
-    actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    AUrdfRobotPawn* urdf_robot_pawn = world->SpawnActor<AUrdfRobotPawn>(spawn_location, spawn_rotation, actor_spawn_parameters);
-    SP_ASSERT(urdf_robot_pawn);
-
-    urdf_robot_pawn->UrdfFile = UrdfFile;
-    urdf_robot_pawn->Initialize();
 }
 
 void ADebugWidget::GetAndSetObjectProperties()
@@ -160,9 +120,9 @@ void ADebugWidget::GetAndSetObjectProperties()
 
     static int i = 0;
     std::string str;
+    FVector vec(1.23, 4.56, 7.89);
 
     // Set property value from void* and UStruct*
-    FVector vec(1.23, 4.56, 7.89);
     str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}");
     value_ptr = &vec;
     ustruct = Unreal::findStructByName(world, "FVector");
@@ -184,6 +144,28 @@ void ADebugWidget::GetAndSetObjectProperties()
     Unreal::setPropertyValueFromString(relative_location_z_property_desc, str);
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_z_property_desc));
     SP_LOG();
+
+    ArrayOfInts.Add(10);
+    ArrayOfInts.Add(20);
+    ArrayOfInts.Add(30);
+    ArrayOfVectors.Add(FVector(1.0f, 2.0f, 3.0f));
+    ArrayOfVectors.Add(FVector(4.0f, 5.0f, 6.0f));
+    SP_LOG(Unreal::getObjectPropertiesAsString(this));
+
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfInts[1]")));
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors[1]")));
+
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup"), "\"TG_PostPhysics\"");
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup")));
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup"), "\"TG_PrePhysics\"");
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup")));
+
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfInts")));
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors")));
+
+    str = Std::toString("{", "\"x\": ", 12.3 * i, ", \"y\": ", 45.6 * i, ", \"z\": ", 78.9 * i, "}");
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "ArrayOfVectors"), "[ " + str + ", " + str + ", " + str + "]");
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors")));
 
     //
     // We need to do this do see visual updates in the editor. But this interface is not ideal because
@@ -266,7 +248,32 @@ void ADebugWidget::CallFunctions()
     return_values = Unreal::callFunction(static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
 
+    UObject* uobject = Unreal::findActorByName(world, "Engine/EngineActor");
+    SP_ASSERT(uobject);
+    ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetActorHitEventDescs");
+    SP_ASSERT(ufunction);
+    return_values = Unreal::callFunction(uobject, ufunction, {});
+    SP_LOG(return_values.at("ReturnValue"));
+
+    args = {{"DeltaLocation", vec_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
+    ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");
+    SP_ASSERT(ufunction);
+    return_values = Unreal::callFunction(static_mesh_component, ufunction, args);
+    SP_LOG(return_values.at("SweepHitResult"));
+
     i++;
+}
+
+void ADebugWidget::SubscribeToActorHitEvents()
+{
+    AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
+    SP_ASSERT(static_mesh_actor);
+
+    AEngineActor* engine_actor = Unreal::findActorByName<AEngineActor>(GetWorld(), "Engine/EngineActor");
+    SP_ASSERT(engine_actor);
+
+    UFunction* ufunction = Unreal::findFunctionByName(engine_actor->GetClass(), "SubscribeToActorHitEvents");
+    Unreal::callFunction(engine_actor, ufunction, {{"actor", Std::toStringFromPtr(static_mesh_actor)}});
 }
 
 FString ADebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)

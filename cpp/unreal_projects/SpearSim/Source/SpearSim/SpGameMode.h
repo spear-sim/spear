@@ -30,6 +30,7 @@ public:
     // AGameModeBase interface
     void PostLogin(APlayerController* new_player) override;
 
+private:
     // Call this function by typing the following into the Unreal console: SpAddOnScreenDebugMessage 10.0 Hello World
     UFUNCTION(Exec)
     void SpAddOnScreenDebugMessage(float display_time, FString message);

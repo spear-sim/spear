@@ -56,7 +56,7 @@ void SimulationController::StartupModule()
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfRobot")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("Vehicle")));
 
-    if (!Config::s_initialized_) {
+    if (!Config::isInitialized()) {
         return;
     }
 
@@ -70,7 +70,7 @@ void SimulationController::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    if (!Config::s_initialized_) {
+    if (!Config::isInitialized()) {
         return;
     }
 
@@ -245,15 +245,15 @@ void SimulationController::worldCleanupHandler(UWorld* world, bool session_ended
             rpc_server_ = nullptr;
 
             SP_ASSERT(nav_mesh_);
-            nav_mesh_->cleanUpObjectReferences();
-            nav_mesh_ = nullptr;
-
             SP_ASSERT(task_);
-            task_->cleanUpObjectReferences();
-            task_ = nullptr;
-
             SP_ASSERT(agent_);
+
+            nav_mesh_->cleanUpObjectReferences();
+            task_->cleanUpObjectReferences();
             agent_->cleanUpObjectReferences();
+
+            nav_mesh_ = nullptr;
+            task_ = nullptr;
             agent_ = nullptr;
         }
 

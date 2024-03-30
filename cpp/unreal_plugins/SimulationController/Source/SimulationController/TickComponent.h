@@ -12,24 +12,25 @@
 
 #include "SpCore/Log.h"
 
-#include "TickEventComponent.generated.h"
+#include "TickComponent.generated.h"
 
 struct FActorComponentTickFunction;
 
 UCLASS()
-class UTickEventComponent : public UActorComponent
+class UTickComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    UTickEventComponent()
+    UTickComponent()
     {
         SP_LOG_CURRENT_FUNCTION();
 
         PrimaryComponentTick.bCanEverTick = true;
         PrimaryComponentTick.bTickEvenWhenPaused = false;
+        PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
     }
 
-    ~UTickEventComponent()
+    ~UTickComponent()
     {
         SP_LOG_CURRENT_FUNCTION();
     }
@@ -44,5 +45,11 @@ public:
         }
     }
 
+    void setTickFunc(const std::function<void(float, ELevelTick, FActorComponentTickFunction*)>& tick_func)
+    {
+        tick_func_ = tick_func_;
+    }
+
+private:
     std::function<void(float, ELevelTick, FActorComponentTickFunction*)> tick_func_;
 };

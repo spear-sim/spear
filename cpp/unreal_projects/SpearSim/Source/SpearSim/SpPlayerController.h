@@ -19,9 +19,10 @@ public:
     ASpPlayerController();
     ~ASpPlayerController();
 
-    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "User Input Component")
-    UUserInputComponent* UserInputComponent = nullptr;
-
     // APlayerController interface
     void BeginPlay() override;
+
+private:
+    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "User Input Component")
+    UUserInputComponent* UserInputComponent = nullptr;
 };
