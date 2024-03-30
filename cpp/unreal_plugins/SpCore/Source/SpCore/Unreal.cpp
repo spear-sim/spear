@@ -280,7 +280,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
             inner_strings.push_back(inner_string);
         }
 
-        return getFormattedArrayPropertyValueString(inner_property, inner_strings);
+        return getArrayPropertyValueAsFormattedString(inner_property, inner_strings);
 
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
 
@@ -432,7 +432,7 @@ std::vector<bool> Unreal::getComponentHasTags(const UActorComponent* component, 
 // Helper function for formatting array properties as strings in the same style as Unreal
 //
 
-std::string Unreal::getFormattedArrayPropertyValueString(const FProperty* inner_property, const std::vector<std::string>& inner_strings)
+std::string Unreal::getArrayPropertyValueAsFormattedString(const FProperty* inner_property, const std::vector<std::string>& inner_strings)
 {
     std::string formatted_string;
 

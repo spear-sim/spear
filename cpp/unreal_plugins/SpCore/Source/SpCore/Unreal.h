@@ -587,5 +587,5 @@ private:
     // Helper function for formatting array properties as strings in the same style as Unreal
     //
 
-    static std::string getFormattedArrayPropertyValueString(const FProperty* inner_property, const std::vector<std::string>& inner_strings);
+    static std::string getArrayPropertyValueAsFormattedString(const FProperty* inner_property, const std::vector<std::string>& inner_strings);
 };
