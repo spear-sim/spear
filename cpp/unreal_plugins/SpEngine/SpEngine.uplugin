@@ -18,7 +18,7 @@
         {
             "Name": "SpEngine",
             "Type": "Runtime",
-            "LoadingPhase": "PostEngineInit"
+            "LoadingPhase": "PostDefault"
         }
     ],
     "Plugins": [
