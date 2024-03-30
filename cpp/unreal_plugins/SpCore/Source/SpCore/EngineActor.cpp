@@ -93,13 +93,10 @@ void AEngineActor::ActorHitHandler(AActor* self_actor, AActor* other_actor, FVec
 
     actor_hit_event_descs_.Add(actor_hit_event_desc);
 
-    // HACK: Strictly speaking, this code doesn't need to be here, but I want to test this function when the array of hit events is non-empty.
+    // HACK: Strictly speaking, this code doesn't need to be here, but I wanted to test this function when the array of hit events is non-empty.
     UFunction* ufunction = Unreal::findFunctionByName(this->GetClass(), "GetActorHitEventDescs");
     std::map<std::string, std::string> return_values = Unreal::callFunction(this, ufunction);
-    for (auto& [return_value_name, return_value] : return_values) {
-        SP_LOG(return_value_name);
-        SP_LOG(return_value);
-    }
+    SP_LOG(return_values.at("ReturnValue"));
 }
 
 #if WITH_EDITOR // defined in an auto-generated header

@@ -138,21 +138,9 @@ public:
     // std::string functions
     //
 
-    static bool contains(const std::string& string, const std::string& substring)
-    {
-        return string.find(substring) != std::string::npos;
-    }
-
-    static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)
-    {
-        boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separators.c_str()));
-        return std::vector<std::string>(tokenizer.begin(), tokenizer.end());
-    }
-
-    static std::string toLower(const std::string& string)
-    {
-        return boost::algorithm::to_lower_copy(string);
-    }
+    static bool contains(const std::string& string, const std::string& substring);
+    static std::vector<std::string> tokenize(const std::string& string, const std::string& separators);
+    static std::string toLower(const std::string& string);
 
     static std::string toString(auto&&... args)
     {

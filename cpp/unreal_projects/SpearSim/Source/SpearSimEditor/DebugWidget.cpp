@@ -17,6 +17,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealClassRegistrar.h"
 
 ADebugWidget::ADebugWidget()
 {
@@ -51,6 +52,10 @@ void ADebugWidget::GetAndSetObjectProperties()
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(world, "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
+    // Get actor from registrar
+    AActor* static_mesh_actor_from_registrar = UnrealClassRegistrar::findActorByName("AStaticMeshActor", world, "Debug/SM_Prop_04");
+    SP_ASSERT(static_mesh_actor_from_registrar);
+
     // Get and set object properties from UObject*
     SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
 
@@ -75,6 +80,10 @@ void ADebugWidget::GetAndSetObjectProperties()
 
     UStaticMeshComponent* static_mesh_component = Unreal::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
     SP_ASSERT(static_mesh_component);
+
+    // Get component from registrar
+    UActorComponent* static_mesh_component_from_registrar = UnrealClassRegistrar::getComponentByType("UStaticMeshComponent", static_mesh_actor);
+    SP_ASSERT(static_mesh_component_from_registrar);
 
     Unreal::PropertyDesc relative_location_property_desc_  = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation");
     Unreal::PropertyDesc relative_location_x_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.X");
