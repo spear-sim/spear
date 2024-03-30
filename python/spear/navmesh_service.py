@@ -36,16 +36,16 @@ class NavMeshService():
         return points
     
     def _get_random_points(self, num_points):
-        random_points = self._engine_service.call("legacy_service", "get_random_points", num_points)
+        random_points = self._engine_service._rpc_client.call("legacy_service.get_random_points", num_points)
         return np.asarray(random_points, dtype=np.float64).reshape(num_points, 3)
 
     def _get_random_reachable_points_in_radius(self, reference_points, search_radius):
         assert reference_points.shape[1] == 3
-        reachable_points = self._engine_service.call("legacy_service", "get_random_reachable_points_in_radius", reference_points.flatten().tolist(), search_radius)
+        reachable_points = self._engine_service._rpc_client.call("legacy_service.get_random_reachable_points_in_radius", reference_points.flatten().tolist(), search_radius)
         return np.asarray(reachable_points, dtype=np.float64).reshape(reference_points.shape)
 
     def _get_paths(self, initial_points, goal_points):
         assert initial_points.shape[1] == 3
         assert goal_points.shape[1] == 3
-        paths = self._engine_service.call("legacy_service", "get_paths", initial_points.flatten().tolist(), goal_points.flatten().tolist())
+        paths = self._engine_service._rpc_client.call("legacy_service.get_paths", initial_points.flatten().tolist(), goal_points.flatten().tolist())
         return [ np.asarray(path, dtype=np.float64).reshape(-1, 3) for path in paths ]

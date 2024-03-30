@@ -5,13 +5,10 @@
 import spear
 import sys
 
-# TODO (RP): Separate EngineService and GameWorldService function calls from this class.
+# TODO: Separate EngineService and GameWorldService function calls from this class.
 class EngineService():
     def __init__(self, rpc_client):
         self._rpc_client = rpc_client
-
-    def call(self, service_name, func_name, *args):
-        return self._rpc_client.call(service_name + "." + func_name, *args)
 
     def begin_tick(self):
         self._rpc_client.call("engine_service.begin_tick")

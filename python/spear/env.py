@@ -77,20 +77,20 @@ class Env(gym.Env):
         self._agent_step_info_space_desc.terminate()
 
     def _get_action_space(self):
-        array_desc = self._engine_service.call("legacy_service", "get_action_space")
+        array_desc = self._engine_service._rpc_client.call("legacy_service.get_action_space")
         assert len(array_desc) > 0
         return array_desc
 
     def _get_observation_space(self):
-        array_desc = self._engine_service.call("legacy_service", "get_observation_space")
+        array_desc = self._engine_service._rpc_client.call("legacy_service.get_observation_space")
         assert len(array_desc) > 0
         return array_desc
 
     def _get_task_step_info_space(self):
-        return self._engine_service.call("legacy_service", "get_task_step_info_space")
+        return self._engine_service._rpc_client.call("legacy_service.get_task_step_info_space")
 
     def _get_agent_step_info_space(self):
-        return self._engine_service.call("legacy_service", "get_agent_step_info_space")
+        return self._engine_service._rpc_client.call("legacy_service.get_agent_step_info_space")
 
     def _apply_action(self, action):
 
@@ -102,13 +102,13 @@ class Env(gym.Env):
         action_non_shared = { name:component for name, component in action.items() if name in self._action_space_desc.space_non_shared.spaces.keys() }
         action_non_shared_serialized = _serialize_arrays(
             action_non_shared, space=self._action_space_desc.space_non_shared, byte_order=self._byte_order)
-        self._engine_service.call("legacy_service", "apply_action", action_non_shared_serialized)
+        self._engine_service._rpc_client.call("legacy_service.apply_action", action_non_shared_serialized)
 
     def _get_observation(self):
 
         observation_shared = self._observation_space_desc.shared_memory_arrays
 
-        observation_non_shared_serialized = self._engine_service.call("legacy_service", "get_observation")
+        observation_non_shared_serialized = self._engine_service._rpc_client.call("legacy_service.get_observation")
         observation_non_shared = _deserialize_arrays(
             observation_non_shared_serialized, space=self._observation_space_desc.space_non_shared, byte_order=self._byte_order)
 
@@ -117,18 +117,18 @@ class Env(gym.Env):
         return {**observation_shared, **observation_non_shared}
 
     def _get_reward(self):
-        return self._engine_service.call("legacy_service", "get_reward")
+        return self._engine_service._rpc_client.call("legacy_service.get_reward")
     
     def _is_episode_done(self):
-        return self._engine_service.call("legacy_service", "is_episode_done")
+        return self._engine_service._rpc_client.call("legacy_service.is_episode_done")
 
     def _get_step_info(self):
 
         task_step_info_shared = self._task_step_info_space_desc.shared_memory_arrays
         agent_step_info_shared = self._agent_step_info_space_desc.shared_memory_arrays
 
-        task_step_info_non_shared_serialized = self._engine_service.call("legacy_service", "get_task_step_info")
-        agent_step_info_non_shared_serialized = self._engine_service.call("legacy_service", "get_agent_step_info")
+        task_step_info_non_shared_serialized = self._engine_service._rpc_client.call("legacy_service.get_task_step_info")
+        agent_step_info_non_shared_serialized = self._engine_service._rpc_client.call("legacy_service.get_agent_step_info")
 
         task_step_info_non_shared = _deserialize_arrays(
             task_step_info_non_shared_serialized, space=self._task_step_info_space_desc.space_non_shared, byte_order=self._byte_order)
@@ -145,11 +145,11 @@ class Env(gym.Env):
     def _reset(self):
         # reset the task first in case it needs to set the pose of actors,
         # then reset agent so it can refine the pose of actors
-        self._engine_service.call("legacy_service", "reset_task")
-        self._engine_service.call("legacy_service", "reset_agent")
+        self._engine_service._rpc_client.call("legacy_service.reset_task")
+        self._engine_service._rpc_client.call("legacy_service.reset_agent")
 
     def _is_ready(self):
-        return self._engine_service.call("legacy_service", "is_task_ready") and self._engine_service.call("legacy_service", "is_agent_ready")
+        return self._engine_service._rpc_client.call("legacy_service.is_task_ready") and self._engine_service._rpc_client.call("legacy_service.is_agent_ready")
 
 
 # metadata for describing a space including the shared memory objects
