@@ -50,6 +50,18 @@ void SpEngine::ShutdownModule()
 
     rpc_server_->close_sessions();
     rpc_server_->stop();
+
+    SP_ASSERT(legacy_service_);
+    legacy_service_ = nullptr;
+
+    SP_ASSERT(game_world_service_);
+    game_world_service_ = nullptr;
+
+    SP_ASSERT(engine_service_);
+    engine_service_ = nullptr;
+
+    SP_ASSERT(rpc_server_);
+    rpc_server_ = nullptr;
 }
 
 IMPLEMENT_MODULE(SpEngine, SpEngine)
