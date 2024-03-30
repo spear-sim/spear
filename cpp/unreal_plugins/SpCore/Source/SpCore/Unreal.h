@@ -334,47 +334,34 @@ public:
     template <CActor TActor = AActor>
     static TActor* findActorByName(const UWorld* world, const std::string& name, bool assert_if_not_found = true)
     {
-        TActor* default_val                     = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = true;
-        bool return_null_if_not_found           = false;
-        return getItem(findActorsByName<TActor>(world, {name}, return_null_if_not_found), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        bool assert_if_multiple_found = true;
+        bool return_null_if_not_found = false;
+        return getItem(findActorsByName<TActor>(
+            world, {name}, return_null_if_not_found), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     template <CActor TActor = AActor>
     static TActor* findActorByTag(const UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActor* default_val                     = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
-        return getItem(findActorsByTag<TActor>(world, tag), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(findActorsByTag<TActor>(world, tag), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     template <CActor TActor = AActor>
     static TActor* findActorByTagAny(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActor* default_val                     = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
-        return getItem(findActorsByTagAny<TActor>(world, tags), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(findActorsByTagAny<TActor>(world, tags), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     template <CActor TActor = AActor>
     static TActor* findActorByTagAll(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActor* default_val                     = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
-        return getItem(findActorsByTagAll<TActor>(world, tags), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(findActorsByTagAll<TActor>(world, tags), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     template <CActor TActor = AActor>
     static TActor* findActorByType(const UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActor* default_val                     = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
-        return getItem(findActorsByType<TActor>(world), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(findActorsByType<TActor>(world), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     //
@@ -500,47 +487,34 @@ public:
     template <CActorComponent TActorComponent = UActorComponent>
     static TActorComponent* getComponentByName(const AActor* actor, const std::string& name, bool assert_if_not_found = true)
     {
-        TActorComponent* default_val            = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = true;
-        bool return_null_if_not_found           = false;
-        return getItem(getComponentsByName<TActorComponent>(actor, {name}, return_null_if_not_found), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        bool assert_if_multiple_found = true;
+        bool return_null_if_not_found = false;
+        return getItem(getComponentsByName<TActorComponent>(
+            actor, {name}, return_null_if_not_found), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     template <CActorComponent TActorComponent = UActorComponent>
     static TActorComponent* getComponentByTag(const AActor* actor, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActorComponent* default_val            = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
-        return getItem(getComponentsByTag<TActorComponent>(actor, tag), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(getComponentsByTag<TActorComponent>(actor, tag), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     template <CActorComponent TActorComponent = UActorComponent>
     static TActorComponent* getComponentByTagAny(const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActorComponent* default_val            = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
-        return getItem(getComponentsByTagAny<TActorComponent>(actor, tags), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(getComponentsByTagAny<TActorComponent>(actor, tags), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     template <CActorComponent TActorComponent = UActorComponent>
     static TActorComponent* getComponentByTagAll(const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActorComponent* default_val            = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
-        return getItem(getComponentsByTagAll<TActorComponent>(actor, tags), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(getComponentsByTagAll<TActorComponent>(actor, tags), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     template <CActorComponent TActorComponent = UActorComponent>
     static TActorComponent* getComponentByType(const AActor* actor, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        TActorComponent* default_val            = nullptr;
-        bool assert_if_size_is_zero             = assert_if_not_found;
-        bool assert_if_size_is_greater_than_one = assert_if_multiple_found;
-        return getItem(getComponentsByType<TActorComponent>(actor), default_val, assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(getComponentsByType<TActorComponent>(actor), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
     //

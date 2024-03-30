@@ -25,8 +25,8 @@ ASpPlayerController::ASpPlayerController()
     UserInputComponent = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetRootComponent(), "user_input");
     SP_ASSERT(UserInputComponent);
 
-    // UserInputComponents need to be enabled explicitly.
-    UserInputComponent->bHandleUserInput = true;
+    UserInputComponent->bHandleUserInput = true;                         // UserInputComponents need to be enabled explicitly
+    UserInputComponent->PrimaryComponentTick.bTickEvenWhenPaused = true; // enable because we want to exit even when paused
 }
 
 ASpPlayerController::~ASpPlayerController()

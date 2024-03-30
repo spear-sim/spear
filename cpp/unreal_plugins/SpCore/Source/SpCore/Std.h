@@ -159,6 +159,11 @@ public:
         return (... + boost::lexical_cast<std::string>(std::forward<decltype(args)>(args)));
     }
 
+    static std::string toString()
+    {
+        return "";
+    }
+
     static std::string toStringFromPtr(void* ptr)
     {
         // TODO: remove platform-specific logic
