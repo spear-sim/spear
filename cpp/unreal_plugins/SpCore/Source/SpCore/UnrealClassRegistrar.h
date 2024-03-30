@@ -363,12 +363,14 @@ private:
         TReturn create(const std::string& class_name, TArgs... args)
         {
             SP_ASSERT(Std::containsKey(create_funcs_, class_name));
+            SP_ASSERT(create_funcs_.at(class_name));
             return create_funcs_.at(class_name)(args...);
         }
 
         void destroy(const std::string& class_name, TReturn& created)
         {
             SP_ASSERT(Std::containsKey(destroy_funcs_, class_name));
+            SP_ASSERT(destroy_funcs_.at(class_name));
             destroy_funcs_.at(class_name)(created);
         }
 
