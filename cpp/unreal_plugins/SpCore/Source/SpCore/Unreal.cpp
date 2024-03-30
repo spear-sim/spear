@@ -132,9 +132,14 @@ std::map<std::string, UActorComponent*> Unreal::getComponentsAsMap(const AActor*
 
 UStruct* Unreal::findStructByName(const UWorld* world, const std::string& name)
 {
-    AEngineActor* engine_actor = findActorByType<AEngineActor>(world);
-    SP_ASSERT(engine_actor);
-    PropertyDesc property_desc = findPropertyByName(engine_actor, name + "_");
+    // We only need AEngineActor's property metadata here, so we can use the default object. This makes it so
+    // this function is usable even in levels that don't have an AEngineActor in them, and avoids the need to
+    // do a findActor operation.
+    UClass* engine_actor_uclass = AEngineActor::StaticClass();
+    SP_ASSERT(engine_actor_uclass);
+    UObject* engine_actor_default_object = engine_actor_uclass->GetDefaultObject();
+    SP_ASSERT(engine_actor_default_object);
+    PropertyDesc property_desc = findPropertyByName(engine_actor_default_object, "_" + name);
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
     FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);

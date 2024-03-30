@@ -95,7 +95,7 @@ private:
 
     // Used for obtaining a UStruct* in cases where a class or struct doesn't define a StaticStruct() function.
     UPROPERTY()
-    FVector FVector_;
+    FVector _FVector;
 
     // Required for keeping StableNameComponents up-to-date.
     #if WITH_EDITOR // defined in an auto-generated header
