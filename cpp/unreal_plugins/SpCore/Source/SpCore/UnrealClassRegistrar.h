@@ -7,6 +7,7 @@
 #include <functional> // std::function
 #include <map>
 #include <string>
+#include <vector>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
@@ -22,10 +23,48 @@ public:
     ~UnrealClassRegistrar() = delete;
 
     static void initialize();
-    static void terminate();
+    static void terminate() {};
 
     //
-    // Register actor
+    // Find actors using a class name instead of template parameters
+    //
+
+    static std::vector<AActor*> findActorsByTag(const std::string& class_name, const UWorld* world, const std::string& tag);
+    static std::vector<AActor*> findActorsByTagAny(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
+    static std::vector<AActor*> findActorsByTagAll(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
+    static std::vector<AActor*> findActorsByType(const std::string& class_name, const UWorld* world);
+    static std::map<std::string, AActor*> findActorsByNameAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& names);
+    static std::map<std::string, AActor*> findActorsByTagAsMap(const std::string& class_name, const UWorld* world, const std::string& tag);
+    static std::map<std::string, AActor*> findActorsByTagAnyAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
+    static std::map<std::string, AActor*> findActorsByTagAllAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
+    static std::map<std::string, AActor*> findActorsByTypeAsMap(const std::string& class_name, const UWorld* world);
+    static AActor* findActorByName(const std::string& class_name, const UWorld* world, const std::string& name, bool assert_if_not_found = true);
+    static AActor* findActorByTag(const std::string& class_name, const UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true);
+    static AActor* findActorByTagAny(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true);
+    static AActor* findActorByTagAll(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true);
+    static AActor* findActorByType(const std::string& class_name, const UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true);
+
+    //
+    // Get components using a class name instead of template parameters
+    //
+
+    static std::vector<UActorComponent*> getComponentsByTag(const std::string& class_name, const AActor* actor, const std::string& tag);
+    static std::vector<UActorComponent*> getComponentsByTagAny(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags);
+    static std::vector<UActorComponent*> getComponentsByTagAll(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags);
+    static std::vector<UActorComponent*> getComponentsByType(const std::string& class_name, const AActor* actor);
+    static std::map<std::string, UActorComponent*> getComponentsByNameAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& names);
+    static std::map<std::string, UActorComponent*> getComponentsByTagAsMap(const std::string& class_name, const AActor* actor, const std::string& tag);
+    static std::map<std::string, UActorComponent*> getComponentsByTagAnyAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags);
+    static std::map<std::string, UActorComponent*> getComponentsByTagAllAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags);
+    static std::map<std::string, UActorComponent*> getComponentsByTypeAsMap(const std::string& class_name, const AActor* actor);
+    static UActorComponent* getComponentByName(const std::string& class_name, const AActor* actor, const std::string& name, bool assert_if_not_found = true);
+    static UActorComponent* getComponentByTag(const std::string& class_name, const AActor* actor, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true);
+    static UActorComponent* getComponentByTagAny(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true);
+    static UActorComponent* getComponentByTagAll(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true);
+    static UActorComponent* getComponentByType(const std::string& class_name, const AActor* actor, bool assert_if_not_found = true, bool assert_if_multiple_found = true);
+
+    //
+    // Register actor class
     //
 
     template <CActor TActor>
@@ -108,7 +147,7 @@ public:
     }
 
     //
-    // Register component
+    // Register component class
     //
 
     template <CComponent TComponent>
@@ -190,126 +229,6 @@ public:
             });
     }
 
-    //
-    // Find actors using a class name instead of template parameters
-    //
-
-    static std::vector<AActor*> findActorsByTag(const std::string& class_name, const UWorld* world, const std::string& tag) {
-        return s_find_actors_by_tag_registrar_.create(class_name, world, tag);
-    }
-
-    static std::vector<AActor*> findActorsByTagAny(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags) {
-        return s_find_actors_by_tag_any_registrar_.create(class_name, world, tags);
-    }
-
-    static std::vector<AActor*> findActorsByTagAll(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags) {
-        return s_find_actors_by_tag_all_registrar_.create(class_name, world, tags);
-    }
-
-    static std::vector<AActor*> findActorsByType(const std::string& class_name, const UWorld* world) {
-        return s_find_actors_by_type_registrar_.create(class_name, world);
-    }
-
-    static std::map<std::string, AActor*> findActorsByNameAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& names) {
-        return s_find_actors_by_name_as_map_registrar_.create(class_name, world, names);
-    }
-
-    static std::map<std::string, AActor*> findActorsByTagAsMap(const std::string& class_name, const UWorld* world, const std::string& tag) {
-        return s_find_actors_by_tag_as_map_registrar_.create(class_name, world, tag);
-    }
-
-    static std::map<std::string, AActor*> findActorsByTagAnyAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags) {
-        return s_find_actors_by_tag_any_as_map_registrar_.create(class_name, world, tags);
-    }
-    
-    static std::map<std::string, AActor*> findActorsByTagAllAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags) {
-        return s_find_actors_by_tag_all_as_map_registrar_.create(class_name, world, tags);
-    }
-    
-    static std::map<std::string, AActor*> findActorsByTypeAsMap(const std::string& class_name, const UWorld* world) {
-        return s_find_actors_by_type_as_map_registrar_.create(class_name, world);
-    }
-    
-    static AActor* findActorByName(const std::string& class_name, const UWorld* world, const std::string& name, bool assert_if_not_found = true) {
-        return s_find_actor_by_name_registrar_.create(class_name, world, name, assert_if_not_found);
-    }
-    
-    static AActor* findActorByTag(const std::string& class_name, const UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true) {
-        return s_find_actor_by_tag_registrar_.create(class_name, world, tag, assert_if_not_found, assert_if_multiple_found);
-    }
-    
-    static AActor* findActorByTagAny(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true) {
-        return s_find_actor_by_tag_any_registrar_.create(class_name, world, tags, assert_if_not_found, assert_if_multiple_found);
-    }
-    
-    static AActor* findActorByTagAll(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true) {
-        return s_find_actor_by_tag_all_registrar_.create(class_name, world, tags, assert_if_not_found, assert_if_multiple_found);
-    }
-    
-    static AActor* findActorByType(const std::string& class_name, const UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true) {
-        return s_find_actor_by_type_registrar_.create(class_name, world, assert_if_not_found, assert_if_multiple_found);
-    }
-
-    //
-    // Find components using a class name instead of template parameters
-    //
-
-    static std::vector<UActorComponent*> getComponentsByTag(const std::string& class_name, const AActor* actor, const std::string& tag) {
-        return s_get_components_by_tag_registrar_.create(class_name, actor, tag);
-    }
-
-    static std::vector<UActorComponent*> getComponentsByTagAny(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags) {
-        return s_get_components_by_tag_any_registrar_.create(class_name, actor, tags);
-    }
-
-    static std::vector<UActorComponent*> getComponentsByTagAll(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags) {
-        return s_get_components_by_tag_all_registrar_.create(class_name, actor, tags);
-    }
-
-    static std::vector<UActorComponent*> getComponentsByType(const std::string& class_name, const AActor* actor) {
-        return s_get_components_by_type_registrar_.create(class_name, actor);
-    }
-
-    static std::map<std::string, UActorComponent*> getComponentsByNameAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& names) {
-        return s_get_components_by_name_as_map_registrar_.create(class_name, actor, names);
-    }
-
-    static std::map<std::string, UActorComponent*> getComponentsByTagAsMap(const std::string& class_name, const AActor* actor, const std::string& tag) {
-        return s_get_components_by_tag_as_map_registrar_.create(class_name, actor, tag);
-    }
-
-    static std::map<std::string, UActorComponent*> getComponentsByTagAnyAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags) {
-        return s_get_components_by_tag_any_as_map_registrar_.create(class_name, actor, tags);
-    }
-    
-    static std::map<std::string, UActorComponent*> getComponentsByTagAllAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags) {
-        return s_get_components_by_tag_all_as_map_registrar_.create(class_name, actor, tags);
-    }
-    
-    static std::map<std::string, UActorComponent*> getComponentsByTypeAsMap(const std::string& class_name, const AActor* actor) {
-        return s_get_components_by_type_as_map_registrar_.create(class_name, actor);
-    }
-    
-    static UActorComponent* getComponentByName(const std::string& class_name, const AActor* actor, const std::string& name, bool assert_if_not_found = true) {
-        return s_get_component_by_name_registrar_.create(class_name, actor, name, assert_if_not_found);
-    }
-    
-    static UActorComponent* getComponentByTag(const std::string& class_name, const AActor* actor, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true) {
-        return s_get_component_by_tag_registrar_.create(class_name, actor, tag, assert_if_not_found, assert_if_multiple_found);
-    }
-    
-    static UActorComponent* getComponentByTagAny(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true) {
-        return s_get_component_by_tag_any_registrar_.create(class_name, actor, tags, assert_if_not_found, assert_if_multiple_found);
-    }
-    
-    static UActorComponent* getComponentByTagAll(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true) {
-        return s_get_component_by_tag_all_registrar_.create(class_name, actor, tags, assert_if_not_found, assert_if_multiple_found);
-    }
-    
-    static UActorComponent* getComponentByType(const std::string& class_name, const AActor* actor, bool assert_if_not_found = true, bool assert_if_multiple_found = true) {
-        return s_get_component_by_type_registrar_.create(class_name, actor, assert_if_not_found, assert_if_multiple_found);
-    }
-
 private:
 
     //
@@ -379,6 +298,10 @@ private:
         std::map<std::string, std::function<void(TReturn&)>> destroy_funcs_;
     };
 
+    //
+    // Registrars for finding actors using a class name instead of template parameters
+    //
+
     inline static ClassRegistrar<std::vector<AActor*>, const UWorld*, const std::vector<std::string>&, bool>     s_find_actors_by_name_registrar_;
     inline static ClassRegistrar<std::vector<AActor*>, const UWorld*, const std::string&>                        s_find_actors_by_tag_registrar_;
     inline static ClassRegistrar<std::vector<AActor*>, const UWorld*, const std::vector<std::string>&>           s_find_actors_by_tag_any_registrar_;
@@ -394,6 +317,10 @@ private:
     inline static ClassRegistrar<AActor*, const UWorld*, const std::vector<std::string>&, bool, bool>            s_find_actor_by_tag_any_registrar_;
     inline static ClassRegistrar<AActor*, const UWorld*, const std::vector<std::string>&, bool, bool>            s_find_actor_by_tag_all_registrar_;
     inline static ClassRegistrar<AActor*, const UWorld*, bool, bool>                                             s_find_actor_by_type_registrar_;
+
+    //
+    // Registrars for getting components using a class name instead of template parameters
+    //
 
     inline static ClassRegistrar<std::vector<UActorComponent*>, const AActor*, const std::vector<std::string>&, bool>     s_get_components_by_name_registrar_;
     inline static ClassRegistrar<std::vector<UActorComponent*>, const AActor*, const std::string&>                        s_get_components_by_tag_registrar_;

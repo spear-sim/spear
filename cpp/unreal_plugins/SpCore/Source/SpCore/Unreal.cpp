@@ -37,67 +37,6 @@
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
 
-//
-// String functions
-//
-
-std::string Unreal::toStdString(const FString& str)
-{
-    // Note that the * operator for FString returns a pointer to the underlying string
-    return std::string(TCHAR_TO_UTF8(*str));
-}
-
-std::string Unreal::toStdString(const FName& str)
-{
-    // Note that str.ToString() converts FName to FString
-    return toStdString(str.ToString());
-}
-
-std::string Unreal::toStdString(const TCHAR* str)
-{
-    return std::string(TCHAR_TO_UTF8(str));
-}
-
-FString Unreal::toFString(const std::string& str)
-{
-    return FString(UTF8_TO_TCHAR(str.c_str()));
-}
-
-FName Unreal::toFName(const std::string& str)
-{
-    return FName(str.c_str());
-}
-
-//
-// Helper functions to get and set actor and component names
-//
-
-std::string Unreal::getStableActorName(const AActor* actor)
-{
-    SP_ASSERT(actor);
-    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
-    return toStdString(stable_name_component->StableName);
-}
-
-void Unreal::setStableActorName(const AActor* actor, const std::string& stable_name)
-{
-    SP_ASSERT(actor);
-    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
-    stable_name_component->StableName = toFString(stable_name);
-}
-
-#if WITH_EDITOR // defined in an auto-generated header
-    void Unreal::requestUpdateStableActorName(const AActor* actor)
-    {
-        SP_ASSERT(actor);
-        bool assert_if_not_found = false;
-        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
-        if (stable_name_component) {
-            stable_name_component->requestUpdate();
-        }
-    }
-#endif
-
 // 
 // Find actors unconditionally and return an std::vector or an std::map
 //
@@ -408,6 +347,67 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
 
     return return_values;
 }
+
+//
+// String functions
+//
+
+std::string Unreal::toStdString(const FString& str)
+{
+    // Note that the * operator for FString returns a pointer to the underlying string
+    return std::string(TCHAR_TO_UTF8(*str));
+}
+
+std::string Unreal::toStdString(const FName& str)
+{
+    // Note that str.ToString() converts FName to FString
+    return toStdString(str.ToString());
+}
+
+std::string Unreal::toStdString(const TCHAR* str)
+{
+    return std::string(TCHAR_TO_UTF8(str));
+}
+
+FString Unreal::toFString(const std::string& str)
+{
+    return FString(UTF8_TO_TCHAR(str.c_str()));
+}
+
+FName Unreal::toFName(const std::string& str)
+{
+    return FName(str.c_str());
+}
+
+//
+// Helper functions to get and set actor and component names
+//
+
+std::string Unreal::getStableActorName(const AActor* actor)
+{
+    SP_ASSERT(actor);
+    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
+    return toStdString(stable_name_component->StableName);
+}
+
+void Unreal::setStableActorName(const AActor* actor, const std::string& stable_name)
+{
+    SP_ASSERT(actor);
+    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
+    stable_name_component->StableName = toFString(stable_name);
+}
+
+#if WITH_EDITOR // defined in an auto-generated header
+    void Unreal::requestUpdateStableActorName(const AActor* actor)
+    {
+        SP_ASSERT(actor);
+        bool assert_if_not_found = false;
+        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
+        if (stable_name_component) {
+            stable_name_component->requestUpdate();
+        }
+    }
+#endif
 
 //
 // Helper functions for finding actors and getting components
