@@ -6,7 +6,7 @@
 
 #include <functional> // std::function
 #include <map>
-#include <memory>
+#include <memory>     // std::make_unique, std::shared_ptr
 #include <string>
 
 #include "SpCore/Assert.h"

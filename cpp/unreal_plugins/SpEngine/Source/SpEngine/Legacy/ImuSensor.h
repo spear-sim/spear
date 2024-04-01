@@ -15,7 +15,7 @@
 
 #include "SpCore/ArrayDesc.h"
 #include "SpEngine/Legacy/StandaloneComponent.h"
-#include "SpEngine/Legacy/TickEventComponent.h"
+#include "SpEngine/Legacy/TickComponent.h"
 
 class UPrimitiveComponent;
 
@@ -38,7 +38,7 @@ public:
 
 private:
     UPrimitiveComponent* primitive_component_ = nullptr;
-    std::unique_ptr<StandaloneComponent<UTickEventComponent>> tick_event_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UTickComponent>> tick_component_ = nullptr;
 
     FVector previous_linear_velocity_world_ = FVector::ZeroVector;
 };

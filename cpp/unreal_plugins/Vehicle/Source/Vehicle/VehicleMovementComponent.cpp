@@ -45,7 +45,7 @@ UVehicleMovementComponent::UVehicleMovementComponent()
     WheelSetups[3].BoneName = FName("RR");
     WheelSetups[3].AdditionalOffset = FVector::ZeroVector; // Offset the wheel from the bone's location
 
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         Mass                         = Config::get<float>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.MASS");
         ChassisWidth                 = Config::get<float>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.CHASSIS_WIDTH");
         ChassisHeight                = Config::get<float>("VEHICLE.VEHICLE_MOVEMENT_COMPONENT.CHASSIS_HEIGHT");

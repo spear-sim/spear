@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "SpCore/Rpclib.h" // MSGPACK_ADD_ENUM, MSGPACK_DEFINE_MAP
+#include "SpCore/Rpclib.h"
 
 // enum values must match python/spear/env.py, which is why we write them out explicitly
 enum class DataType

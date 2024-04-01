@@ -23,7 +23,7 @@
 #include "SpCore/UserInputComponent.h"
 #include "UrdfRobot/UrdfJointComponent.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
-#include "UrdfRobot/UrdfParser.h" // UrdfRobotDesc
+#include "UrdfRobot/UrdfParser.h"
 
 struct FHitResult;
 
@@ -55,15 +55,6 @@ UUrdfRobotComponent::UUrdfRobotComponent()
 UUrdfRobotComponent::~UUrdfRobotComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    LinkComponents.Empty();
-    JointComponents.Empty();
-
-    link_components_.clear();
-    joint_components_.clear();
-
-    SP_ASSERT(user_input_component_);
-    user_input_component_ = nullptr;
 }
 
 void UUrdfRobotComponent::BeginPlay()
@@ -73,7 +64,7 @@ void UUrdfRobotComponent::BeginPlay()
     // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
     // can be useful for debugging.
     std::map<std::string, std::map<std::string, std::vector<double>>> user_input_actions;
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         user_input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.INPUT_ACTIONS");
     } else {
         user_input_actions = DEFAULT_USER_INPUT_ACTIONS;
@@ -280,11 +271,12 @@ void UUrdfRobotComponent::applyAction(const std::map<std::string, std::vector<do
     // Since this method is private, we assume that there is no need to check action_components_, either because we're
     // being called directly due to keyboard input, or because we've already checked it in the public applyAction method.
 
-    for (auto& action_component : action) {
-        std::vector<std::string> tokens = Std::tokenize(action_component.first, ".");
+    for (auto& action_component : action) { // don't use structured binding here because we need to refer to action_component below
+        const std::string& action_component_name = action_component.first;
+        std::vector<std::string> tokens = Std::tokenize(action_component_name, ".");
         SP_ASSERT(tokens.size() == 2 || WITH_EDITOR); // defined in an auto-generated header
         if (tokens.size() != 2) {
-            SP_LOG("ERROR: Can't parse action component name:", action_component.first);
+            SP_LOG("ERROR: Can't parse action component name:", action_component_name);
             continue;
         }
 

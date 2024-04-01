@@ -22,7 +22,7 @@
 #include <UObject/UObjectGlobals.h> // FObjectInitializer
 #include <WheeledVehiclePawn.h>
 
-#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/ArrayDesc.h"
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
@@ -59,7 +59,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     // USkeletalMeshComponent
     std::string skeletal_mesh_str;
     std::string anim_instance_str;
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         skeletal_mesh_str = Config::get<std::string>("VEHICLE.VEHICLE_PAWN.SKELETAL_MESH");
         anim_instance_str = Config::get<std::string>("VEHICLE.VEHICLE_PAWN.ANIM_INSTANCE");
     } else {
@@ -88,7 +88,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     FRotator camera_rotation;
     float field_of_view;
     float aspect_ratio;
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         camera_location = {
             Config::get<double>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_X"),
             Config::get<double>("VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Y"),
@@ -117,7 +117,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     // UBoxComponent
     FVector imu_location;
     FRotator imu_rotation;
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         imu_location = {
             Config::get<double>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.LOCATION_X"),
             Config::get<double>("VEHICLE.VEHICLE_PAWN.IMU_COMPONENT.LOCATION_Y"),
@@ -144,23 +144,6 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
 AVehiclePawn::~AVehiclePawn()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    // Pawns don't need to be cleaned up explicitly.
-
-    SP_ASSERT(MovementComponent);
-    MovementComponent = nullptr;
-
-    SP_ASSERT(ImuComponent);
-    ImuComponent = nullptr;
-
-    SP_ASSERT(CameraComponent);
-    CameraComponent = nullptr;
-
-    SP_ASSERT(UserInputComponent);
-    UserInputComponent = nullptr;
-
-    SP_ASSERT(StableNameComponent);
-    StableNameComponent = nullptr;
 }
 
 void AVehiclePawn::BeginPlay()
@@ -170,7 +153,7 @@ void AVehiclePawn::BeginPlay()
     // Get player input actions from the config system if it is initialized, otherwise use hard-coded keyboard actions, which
     // can be useful for debugging.
     std::map<std::string, std::map<std::string, std::vector<double>>> user_input_actions;
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         user_input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("VEHICLE.VEHICLE_PAWN.USER_INPUT_ACTIONS");
     } else {
         user_input_actions = DEFAULT_USER_INPUT_ACTIONS;

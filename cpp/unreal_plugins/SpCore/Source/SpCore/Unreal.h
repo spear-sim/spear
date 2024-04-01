@@ -30,12 +30,13 @@
 
 class UClass;
 class UStruct;
+class UWorld;
 
-template <typename TActorComponent>
-concept CActorComponent = std::derived_from<TActorComponent, UActorComponent>;
+template <typename TComponent>
+concept CComponent = std::derived_from<TComponent, UActorComponent>;
 
 template <typename TSceneComponent>
-concept CSceneComponent = CActorComponent<TSceneComponent> && std::derived_from<TSceneComponent, USceneComponent>;
+concept CSceneComponent = CComponent<TSceneComponent> && std::derived_from<TSceneComponent, USceneComponent>;
 
 template <typename TActor>
 concept CActor = std::derived_from<TActor, AActor>;
@@ -45,6 +46,61 @@ class SPCORE_API Unreal
 public:
     Unreal() = delete;
     ~Unreal() = delete;
+
+    // 
+    // Find actors unconditionally and return an std::vector or an std::map
+    //
+
+    static std::vector<AActor*> findActors(const UWorld* world);
+    static std::map<std::string, AActor*> findActorsAsMap(const UWorld* world);
+
+
+    //
+    // Get components unconditionally and return an std::vector or an std::map
+    //
+
+    std::vector<UActorComponent*> getComponents(const AActor* actor);
+    std::map<std::string, UActorComponent*> getComponentsAsMap(const AActor* actor);
+
+    //
+    // Find struct by name
+    //
+
+    static UStruct* findStructByName(const UWorld* world, const std::string& name);
+
+    //
+    // Get and set object properties, uobject can't be const because we cast it to void*
+    //
+
+    static std::string getObjectPropertiesAsString(UObject* uobject);
+    static std::string getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct);
+
+    static void setObjectPropertiesFromString(UObject* uobject, const std::string& string);
+    static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string);
+
+    //
+    // Find property by name, get and set property values
+    //
+
+    struct PropertyDesc
+    {
+        FProperty* property_ = nullptr;
+        void* value_ptr_ = nullptr;
+    };
+
+    static PropertyDesc findPropertyByName(UObject* uobject, const std::string& name);
+    static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name);
+
+    static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
+    static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
+
+    //
+    // Find function by name, call function, ufunction can't be const because we pass it to uobject->ProcessEvent(...), which expects non-const
+    //
+
+    static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
+    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction); // useful for calling functions with no args
+    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
 
     //
     // String functions
@@ -60,18 +116,28 @@ public:
     // Container functions
     //
 
-    template <typename TData>
-    static std::vector<TData> toStdVector(const TArray<TData>& src)
+    template <typename TValue>
+    static std::vector<TValue> toStdVector(const TArray<TValue>& src)
     {
-        std::vector<TData> dest;
+        std::vector<TValue> dest;
         for (auto& data : src) {
             dest.push_back(data);
         }
         return dest;
     }
 
+    template <typename TDestValue, typename TSrcValue>
+    static std::vector<TDestValue> toStdVectorOf(const TArray<TSrcValue>& src)
+    {
+        std::vector<TDestValue> dest;
+        for (auto& data : src) {
+            dest.push_back(reinterpret_cast<TDestValue>(data));
+        }
+        return dest;
+    }
+
     //
-    // Helper functions to get actor and component names.
+    // Helper functions to get actor and component names
     //
 
     static std::string getStableActorName(const AActor* actor);
@@ -81,7 +147,7 @@ public:
         static void requestUpdateStableActorName(const AActor* actor);
     #endif
 
-    static std::string getStableComponentName(const CActorComponent auto* actor_component, bool include_stable_actor_name = false)
+    static std::string getStableComponentName(const CComponent auto* actor_component, bool include_stable_actor_name = false)
     {
         SP_ASSERT(actor_component);
         std::string component_name = toStdString(actor_component->GetName());
@@ -128,102 +194,95 @@ public:
     // SetupAttachment must be called before RegisterComponent.
     //
 
-    template <CActorComponent TActorComponent>
-    static TActorComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& name)
+    template <CComponent TComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static TReturnAsComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& name)
     {
         SP_ASSERT(owner);
-        TActorComponent* actor_component = owner->CreateDefaultSubobject<TActorComponent>(toFName(name));
+        TReturnAsComponent* actor_component = owner->CreateDefaultSubobject<TComponent>(toFName(name));
         SP_ASSERT(actor_component);
         return actor_component;
     }
 
-    template <CSceneComponent TSceneComponent>
-    static TSceneComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& name)
+    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsSceneComponent>
+    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& name)
     {
         SP_ASSERT(owner);
-        TSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(name));
+        TReturnAsSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(name));
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         return scene_component;
     }
 
-    template <CSceneComponent TSceneComponent>
-    static TSceneComponent* createComponentInsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& name)
+    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsSceneComponent>
+    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& name)
     {
         SP_ASSERT(owner);
-        TSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(name));
+        TReturnAsSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(name));
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         return scene_component;
     }
 
-    template <CSceneComponent TSceneComponent>
-    static TSceneComponent* createComponentInsideOwnerConstructor(USceneComponent* owner, const std::string& name)
+    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsSceneComponent>
+    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(USceneComponent* owner, const std::string& name)
     {
-        return createComponentInsideOwnerConstructor<TSceneComponent>(owner, owner, name);
+        return createComponentInsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, name);
     }
 
-    template <CActorComponent TActorComponent>
-    static TActorComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& name)
+    template <CComponent TComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static TComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& name)
     {
         SP_ASSERT(owner);
-        TActorComponent* actor_component = NewObject<TActorComponent>(owner, toFName(name));
+        TReturnAsComponent* actor_component = NewObject<TComponent>(owner, toFName(name));
         SP_ASSERT(actor_component);
         actor_component->RegisterComponent();
         return actor_component;
     }
 
-    template <CSceneComponent TSceneComponent>
-    static TSceneComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& name)
+    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsSceneComponent>
+    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& name)
     {
         SP_ASSERT(owner);
-        TSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(name));
+        TReturnAsSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(name));
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         scene_component->RegisterComponent();
         return scene_component;
     }
 
-    template <CSceneComponent TSceneComponent>
-    static TSceneComponent* createComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& name)
+    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsSceneComponent>
+    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& name)
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
-        TSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(name));
+        TReturnAsSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(name));
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         scene_component->RegisterComponent();
         return scene_component;
     }
 
-    template <CSceneComponent TSceneComponent>
-    static TSceneComponent* createComponentOutsideOwnerConstructor(USceneComponent* owner, const std::string& name)
+    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsSceneComponent>
+    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(USceneComponent* owner, const std::string& name)
     {
-        return createComponentOutsideOwnerConstructor<TSceneComponent>(owner, owner, name);
+        return createComponentOutsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, name);
     }
-
-    // 
-    // Find actors unconditionally and return an std::vector or an std::map
-    //
-
-    static std::vector<AActor*> findActors(const UWorld* world);
-    static std::map<std::string, AActor*> findActorsAsMap(const UWorld* world);
 
     //
     // Find actors by name or tag or type and return an std::vector
     //
 
-    template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByName(const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::vector<TReturnAsActor*> findActorsByName(const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
-        std::map<std::string, TActor*> actor_map = findActorsByNameAsMap<TActor>(world, names);
-        std::vector<TActor*> actors;
+        std::map<std::string, TReturnAsActor*> actor_map = findActorsByNameAsMap<TActor, TReturnAsActor>(world, names);
+        std::vector<TReturnAsActor*> actors;
         if (return_null_if_not_found) {
-            actors = Std::toVector<TActor*>(
+            actors = Std::toVector<TReturnAsActor*>(
                 names |
                 std::views::transform([&actor_map](const auto& name) { return Std::containsKey(actor_map, name) ? actor_map.at(name) : nullptr; }));
         } else {
-            actors = Std::toVector<TActor*>(
+            actors = Std::toVector<TReturnAsActor*>(
                 names |
                 std::views::filter([&actor_map](const auto& name)    { return Std::containsKey(actor_map, name); }) |
                 std::views::transform([&actor_map](const auto& name) { return actor_map.at(name); }));
@@ -231,41 +290,41 @@ public:
         return actors;
     }
 
-    template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByTag(const UWorld* world, const std::string& tag)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::vector<TReturnAsActor*> findActorsByTag(const UWorld* world, const std::string& tag)
     {
-        return findActorsByTagAny<TActor>(world, {tag});
+        return findActorsByTagAny<TActor, TReturnAsActor>(world, {tag});
     }
 
-    template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByTagAny(const UWorld* world, const std::vector<std::string>& tags)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::vector<TReturnAsActor*> findActorsByTagAny(const UWorld* world, const std::vector<std::string>& tags)
     {
-        auto actors = Std::toVector<TActor*>(
-            findActorsByType<TActor>(world) |
+        auto actors = Std::toVector<TReturnAsActor*>(
+            findActorsByType<TActor, TReturnAsActor>(world) |
             std::views::transform([&tags](auto actor)  { return std::make_pair(actor, getActorHasTags(actor, tags)); }) |
             std::views::filter([](const auto& pair)    { const auto& [actor, has_tags] = pair; return Std::any(has_tags); }) |
             std::views::transform([](const auto& pair) { const auto& [actor, has_tags] = pair; return actor; }));
         return actors;
     }
 
-    template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByTagAll(const UWorld* world, const std::vector<std::string>& tags)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::vector<TReturnAsActor*> findActorsByTagAll(const UWorld* world, const std::vector<std::string>& tags)
     {
-        auto actors = Std::toVector<TActor*>(
-            findActorsByType<TActor>(world) |
+        auto actors = Std::toVector<TReturnAsActor*>(
+            findActorsByType<TActor, TReturnAsActor>(world) |
             std::views::transform([&tags](auto actor)  { return std::make_pair(actor, getActorHasTags(actor, tags)); }) |
             std::views::filter([](const auto& pair)    { const auto& [actor, has_tags] = pair; return Std::all(has_tags); }) |
             std::views::transform([](const auto& pair) { const auto& [actor, has_tags] = pair; return actor; }));
         return actors;
     }
 
-    template <CActor TActor = AActor>
-    static std::vector<TActor*> findActorsByType(const UWorld* world)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::vector<TReturnAsActor*> findActorsByType(const UWorld* world)
     {
         SP_ASSERT(world);
-        std::vector<TActor*> actors;
+        std::vector<TReturnAsActor*> actors;
         for (TActorIterator<TActor> itr(world); itr; ++itr) {
-            TActor* actor = *itr;
+            TReturnAsActor* actor = *itr;
             SP_ASSERT(actor);
             actors.push_back(actor);
         }
@@ -276,28 +335,28 @@ public:
     // Find actors by name or tag or type and return an std::map
     //
 
-    template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByNameAsMap(const UWorld* world, const std::vector<std::string>& names)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::map<std::string, TReturnAsActor*> findActorsByNameAsMap(const UWorld* world, const std::vector<std::string>& names)
     {
-        auto actors = Std::toMap<std::string, TActor*>(
-            findActorsByType<TActor>(world) |
+        auto actors = Std::toMap<std::string, TReturnAsActor*>(
+            findActorsByType<TActor, TReturnAsActor>(world) |
             std::views::filter([](auto actor)       { return getActorHasStableName(actor); }) |
             std::views::filter([&names](auto actor) { return Std::contains(names, getStableActorName(actor)); }) |
             std::views::transform([](auto actor)    { return std::make_pair(getStableActorName(actor), actor); }));
         return actors;
     }
 
-    template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByTagAsMap(const UWorld* world, const std::string& tag)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::map<std::string, TReturnAsActor*> findActorsByTagAsMap(const UWorld* world, const std::string& tag)
     {
-        return findActorsByTagAnyAsMap(world, {tag});
+        return findActorsByTagAnyAsMap<TActor, TReturnAsActor>(world, {tag});
     }
     
-    template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByTagAnyAsMap(const UWorld* world, const std::vector<std::string>& tags)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::map<std::string, TReturnAsActor*> findActorsByTagAnyAsMap(const UWorld* world, const std::vector<std::string>& tags)
     {
-        auto actors = Std::toMap<std::string, TActor*>(
-            findActorsByType<TActor>(world) |
+        auto actors = Std::toMap<std::string, TReturnAsActor*>(
+            findActorsByType<TActor, TReturnAsActor>(world) |
             std::views::filter([](auto actor)          { return getActorHasStableName(actor); }) |
             std::views::transform([&tags](auto actor)  { return std::make_pair(actor, getActorHasTags(actor, tags)); }) |
             std::views::filter([](const auto& pair)    { const auto& [actor, has_tags] = pair; return Std::any(has_tags); }) |
@@ -305,11 +364,11 @@ public:
         return actors;
     }
 
-    template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByTagAllAsMap(const UWorld* world, const std::vector<std::string>& tags)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::map<std::string, TReturnAsActor*> findActorsByTagAllAsMap(const UWorld* world, const std::vector<std::string>& tags)
     {
-        auto actors = Std::toMap<std::string, TActor*>(
-            findActorsByType<TActor>(world) |
+        auto actors = Std::toMap<std::string, TReturnAsActor*>(
+            findActorsByType<TActor, TReturnAsActor>(world) |
             std::views::filter([](auto actor)          { return getActorHasStableName(actor); }) |
             std::views::transform([&tags](auto actor)  { return std::make_pair(actor, getActorHasTags(actor, tags)); }) |
             std::views::filter([](const auto& pair)    { const auto& [actor, has_tags] = pair; return Std::all(has_tags); }) |
@@ -317,11 +376,11 @@ public:
         return actors;
     }
     
-    template <CActor TActor = AActor>
-    static std::map<std::string, TActor*> findActorsByTypeAsMap(const UWorld* world)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static std::map<std::string, TReturnAsActor*> findActorsByTypeAsMap(const UWorld* world)
     {
-        auto actors = Std::toMap<std::string, TActor*>(
-            findActorsByType<TActor>(world) |
+        auto actors = Std::toMap<std::string, TReturnAsActor*>(
+            findActorsByType<TActor, TReturnAsActor>(world) |
             std::views::filter([](auto actor)    { return getActorHasStableName(actor); }) |
             std::views::transform([](auto actor) { return std::make_pair(getStableActorName(actor), actor); }));
         return actors;
@@ -331,61 +390,54 @@ public:
     // Find actor by name or tag or type and return a TActor* pointer
     //
 
-    template <CActor TActor = AActor>
-    static TActor* findActorByName(const UWorld* world, const std::string& name, bool assert_if_not_found = true)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static TReturnAsActor* findActorByName(const UWorld* world, const std::string& name, bool assert_if_not_found = true)
     {
         bool assert_if_multiple_found = true;
         bool return_null_if_not_found = false;
-        return getItem(findActorsByName<TActor>(
-            world, {name}, return_null_if_not_found), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByName<TActor, TReturnAsActor>(
+            world, {name}, return_null_if_not_found), reinterpret_cast<TReturnAsActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CActor TActor = AActor>
-    static TActor* findActorByTag(const UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static TReturnAsActor* findActorByTag(const UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(findActorsByTag<TActor>(world, tag), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByTag<TActor, TReturnAsActor>(world, tag), reinterpret_cast<TReturnAsActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CActor TActor = AActor>
-    static TActor* findActorByTagAny(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static TReturnAsActor* findActorByTagAny(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(findActorsByTagAny<TActor>(world, tags), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByTagAny<TActor, TReturnAsActor>(world, tags), reinterpret_cast<TReturnAsActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CActor TActor = AActor>
-    static TActor* findActorByTagAll(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static TReturnAsActor* findActorByTagAll(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(findActorsByTagAll<TActor>(world, tags), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByTagAll<TActor, TReturnAsActor>(world, tags), reinterpret_cast<TReturnAsActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CActor TActor = AActor>
-    static TActor* findActorByType(const UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
+    static TReturnAsActor* findActorByType(const UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(findActorsByType<TActor>(world), reinterpret_cast<TActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByType<TActor, TReturnAsActor>(world), reinterpret_cast<TReturnAsActor*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
-
-    //
-    // Get components unconditionally and return an std::vector or an std::map
-    //
-
-    std::vector<UActorComponent*> getComponents(const AActor* actor);
-    std::map<std::string, UActorComponent*> getComponentsAsMap(const AActor* actor);
 
     //
     // Get components by name or tag or type and return an std::vector
     //
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::vector<TActorComponent*> getComponentsByName(const AActor* actor, const std::vector<std::string>& names, bool return_null_if_not_found = true)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getComponentsByName(const AActor* actor, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
-        std::map<std::string, TActorComponent*> component_map = getComponentsByNameAsMap<TActorComponent>(actor, names);
-        std::vector<TActorComponent*> components;
+        std::map<std::string, TReturnAsComponent*> component_map = getComponentsByNameAsMap<TComponent, TReturnAsComponent>(actor, names);
+        std::vector<TReturnAsComponent*> components;
         if (return_null_if_not_found) {
-            components = Std::toVector<TActorComponent*>(
+            components = Std::toVector<TReturnAsComponent*>(
                 names |
                 std::views::transform([&component_map](const auto& name) { return Std::containsKey(component_map, name) ? component_map.at(name) : nullptr; }));
         } else {
-            components = Std::toVector<TActorComponent*>(
+            components = Std::toVector<TReturnAsComponent*>(
                 names |
                 std::views::filter([&component_map](const auto& name)    { return Std::containsKey(component_map, name); }) |
                 std::views::transform([&component_map](const auto& name) { return component_map.at(name); }));
@@ -393,168 +445,129 @@ public:
         return components;
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::vector<TActorComponent*> getComponentsByTag(const AActor* actor, const std::string& tag)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getComponentsByTag(const AActor* actor, const std::string& tag)
     {
-        return getComponentsByTagAny<TActorComponent>(actor, {tag});
+        return getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, {tag});
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::vector<TActorComponent*> getComponentsByTagAny(const AActor* actor, const std::vector<std::string>& tags)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getComponentsByTagAny(const AActor* actor, const std::vector<std::string>& tags)
     {
-        auto components = Std::toVector<TActorComponent*>(
-            getComponentsByType<TActorComponent>(actor) |
+        auto components = Std::toVector<TReturnAsComponent*>(
+            getComponentsByType<TComponent, TReturnAsComponent>(actor) |
             std::views::transform([&tags](auto component) { return std::make_pair(component, getComponentHasTags(component, tags)); }) |
             std::views::filter([](const auto& pair)       { const auto& [component, has_tags] = pair; return Std::any(has_tags); }) |
             std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return component; }));
         return components;
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::vector<TActorComponent*> getComponentsByTagAll(const AActor* actor, const std::vector<std::string>& tags)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getComponentsByTagAll(const AActor* actor, const std::vector<std::string>& tags)
     {
-        auto components = Std::toVector<TActorComponent*>(
-            getComponentsByType<TActorComponent>(actor) |
+        auto components = Std::toVector<TReturnAsComponent*>(
+            getComponentsByType<TComponent, TReturnAsComponent>(actor) |
             std::views::transform([&tags](auto component) { return std::make_pair(component, getComponentHasTags(component, tags)); }) |
             std::views::filter([](const auto& pair)       { const auto& [component, has_tags] = pair; return Std::all(has_tags); }) |
             std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return component; }));
         return components;
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::vector<TActorComponent*> getComponentsByType(const AActor* actor)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getComponentsByType(const AActor* actor)
     {
-        TArray<TActorComponent*> components;
-        actor->GetComponents<TActorComponent>(components);
-        return toStdVector(components);
+        TArray<TComponent*> components;
+        actor->GetComponents<TComponent>(components);
+        return toStdVectorOf<TReturnAsComponent*>(components);
     }
 
     //
     // Get components by name or tag or type and return an std::map
     //
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::map<std::string, TActorComponent*> getComponentsByNameAsMap(const AActor* actor, const std::vector<std::string>& names)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getComponentsByNameAsMap(const AActor* actor, const std::vector<std::string>& names)
     {
-        auto components = Std::toMap<std::string, TActorComponent*>(
-            getComponentsByType<TActorComponent>(actor) |
+        auto components = Std::toMap<std::string, TReturnAsComponent*>(
+            getComponentsByType<TComponent, TReturnAsComponent>(actor) |
             std::views::filter([&names](auto component) { return Std::contains(names, getStableComponentName(component)); }) |
             std::views::transform([](auto component)    { return std::make_pair(getStableComponentName(component), component); }));
         return components;
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::map<std::string, TActorComponent*> getComponentsByTagAsMap(const AActor* actor, const std::string& tag)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTagAsMap(const AActor* actor, const std::string& tag)
     {
-        return getComponentsByTagAnyAsMap(actor, {tag});
+        return getComponentsByTagAnyAsMap<TComponent, TReturnAsComponent>(actor, {tag});
     }
     
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::map<std::string, TActorComponent*> getComponentsByTagAnyAsMap(const AActor* actor, const std::vector<std::string>& tags)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTagAnyAsMap(const AActor* actor, const std::vector<std::string>& tags)
     {
-        auto components = Std::toMap<std::string, TActorComponent*>(
-            getComponentsByType<TActorComponent>(actor) |
+        auto components = Std::toMap<std::string, TReturnAsComponent*>(
+            getComponentsByType<TComponent, TReturnAsComponent>(actor) |
             std::views::transform([&tags](auto component) { return std::make_pair(component, getComponentHasTags(component, tags)); }) |
             std::views::filter([](const auto& pair)       { const auto& [component, has_tags] = pair; return Std::any(has_tags); }) |
             std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return std::make_pair(getStableComponentName(component), component); }));
         return components;
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::map<std::string, TActorComponent*> getComponentsByTagAllAsMap(const AActor* actor, const std::vector<std::string>& tags)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTagAllAsMap(const AActor* actor, const std::vector<std::string>& tags)
     {
-        auto components = Std::toMap<std::string, TActorComponent*>(
-            getComponentsByType<TActorComponent>(actor) |
+        auto components = Std::toMap<std::string, TReturnAsComponent*>(
+            getComponentsByType<TComponent, TReturnAsComponent>(actor) |
             std::views::transform([&tags](auto component) { return std::make_pair(component, getComponentHasTags(component, tags)); }) |
             std::views::filter([](const auto& pair)       { const auto& [component, has_tags] = pair; return Std::all(has_tags); }) |
             std::views::transform([](const auto& pair)    { const auto& [component, has_tags] = pair; return std::make_pair(getStableComponentName(component), component); }));
         return components;
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static std::map<std::string, TActorComponent*> getComponentsByTypeAsMap(const AActor* actor)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTypeAsMap(const AActor* actor)
     {
-        auto components = Std::toMap<std::string, TActorComponent*>(
-            getComponentsByType<TActorComponent>(actor) |
+        auto components = Std::toMap<std::string, TReturnAsComponent*>(
+            getComponentsByType<TComponent, TReturnAsComponent>(actor) |
             std::views::transform([](auto component) { return std::make_pair(getStableComponentName(component), component); }));
         return components;
     }
 
     //
-    // Get component by name or tag or type and return a TActorComponent* pointer.
+    // Get component by name or tag or type and return a TComponent* pointer
     //
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static TActorComponent* getComponentByName(const AActor* actor, const std::string& name, bool assert_if_not_found = true)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static TReturnAsComponent* getComponentByName(const AActor* actor, const std::string& name, bool assert_if_not_found = true)
     {
         bool assert_if_multiple_found = true;
         bool return_null_if_not_found = false;
-        return getItem(getComponentsByName<TActorComponent>(
-            actor, {name}, return_null_if_not_found), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByName<TComponent, TReturnAsComponent>(
+            actor, {name}, return_null_if_not_found), reinterpret_cast<TReturnAsComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static TActorComponent* getComponentByTag(const AActor* actor, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static TReturnAsComponent* getComponentByTag(const AActor* actor, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(getComponentsByTag<TActorComponent>(actor, tag), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByTag<TComponent, TReturnAsComponent>(actor, tag), reinterpret_cast<TReturnAsComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static TActorComponent* getComponentByTagAny(const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static TReturnAsComponent* getComponentByTagAny(const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(getComponentsByTagAny<TActorComponent>(actor, tags), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, tags), reinterpret_cast<TReturnAsComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static TActorComponent* getComponentByTagAll(const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static TReturnAsComponent* getComponentByTagAll(const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(getComponentsByTagAll<TActorComponent>(actor, tags), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByTagAll<TComponent, TReturnAsComponent>(actor, tags), reinterpret_cast<TReturnAsComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CActorComponent TActorComponent = UActorComponent>
-    static TActorComponent* getComponentByType(const AActor* actor, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
+    static TReturnAsComponent* getComponentByType(const AActor* actor, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(getComponentsByType<TActorComponent>(actor), reinterpret_cast<TActorComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByType<TComponent, TReturnAsComponent>(actor), reinterpret_cast<TReturnAsComponent*>(nullptr), assert_if_not_found, assert_if_multiple_found);
     }
-
-    //
-    // Find struct by name
-    //
-
-    static UStruct* findStructByName(const UWorld* world, const std::string& name);
-
-    //
-    // Get and set object properties, uobject can't be const because we cast it to void*
-    //
-
-    static std::string getObjectPropertiesAsString(UObject* uobject);
-    static std::string getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct);
-
-    static void setObjectPropertiesFromString(UObject* uobject, const std::string& string);
-    static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string);
-
-    //
-    // Find property by name, get and set property values
-    //
-
-    struct PropertyDesc
-    {
-        void* value_ptr_ = nullptr;
-        FProperty* property_ = nullptr;
-    };
-
-    static PropertyDesc findPropertyByName(UObject* uobject, const std::string& name);
-    static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name);
-
-    static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
-    static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
-
-    //
-    // Find function by name, call function, ufunction can't be const because we pass it to uobject->ProcessEvent(...), which expects non-const
-    //
-
-    static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
-    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
 
 private:
 
@@ -566,19 +579,25 @@ private:
     static std::vector<bool> getActorHasTags(const AActor* actor, const std::vector<std::string>& tags);
     static std::vector<bool> getComponentHasTags(const UActorComponent* component, const std::vector<std::string>& tags);
 
-    template <typename TData>
-    static const TData& getItem(const std::vector<TData>& vec, const TData& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
+    template <typename TValue>
+    static const TValue& getItem(const std::vector<TValue>& vector, const TValue& default_val, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
     {
         if (assert_if_size_is_zero) {
-            SP_ASSERT(vec.size() != 0);
+            SP_ASSERT(vector.size() != 0);
         }
         if (assert_if_size_is_greater_than_one) {
-            SP_ASSERT(vec.size() <= 1);
+            SP_ASSERT(vector.size() <= 1);
         }
-        if (vec.size() == 0) {
+        if (vector.size() == 0) {
             return default_val;
         } else {
-            return vec.at(0);
+            return vector.at(0);
         }
     }
+
+    //
+    // Helper function for formatting array properties as strings in the same style as Unreal
+    //
+
+    static std::string getArrayPropertyValueAsFormattedString(const FProperty* inner_property, const std::vector<std::string>& inner_strings);
 };

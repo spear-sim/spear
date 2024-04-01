@@ -15,7 +15,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "UrdfRobot/UrdfParser.h" // UrdfRobotDesc
+#include "UrdfRobot/UrdfParser.h"
 #include "UrdfRobot/UrdfRobotComponent.h"
 
 const auto DEFAULT_URDF_FILE = std::filesystem::path() / ".." / ".." / ".." / "python" / "spear" / "urdf" / "pendulum_horizontal.urdf";
@@ -36,23 +36,13 @@ AUrdfRobotPawn::AUrdfRobotPawn(const FObjectInitializer& object_initializer) : A
 AUrdfRobotPawn::~AUrdfRobotPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    // Pawns don't need to be cleaned up explicitly.
-
-    SP_ASSERT(CameraComponent);
-    CameraComponent = nullptr;
-
-    SP_ASSERT(UrdfRobotComponent);
-    UrdfRobotComponent = nullptr;
-
-    UrdfFile = Unreal::toFString("");
 }
 
 void AUrdfRobotPawn::Initialize()
 {
     // parse URDF file
     std::filesystem::path urdf_file;
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         urdf_file =
             std::filesystem::path() /
             Config::get<std::string>("URDF_ROBOT.URDF_ROBOT_PAWN.URDF_DIR") /
@@ -75,7 +65,7 @@ void AUrdfRobotPawn::Initialize()
     FRotator camera_rotation;
     float field_of_view;
     float aspect_ratio;
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         camera_location = {
             Config::get<double>("URDF_ROBOT.URDF_ROBOT_PAWN.CAMERA_COMPONENT.LOCATION_X"),
             Config::get<double>("URDF_ROBOT.URDF_ROBOT_PAWN.CAMERA_COMPONENT.LOCATION_Y"),

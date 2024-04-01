@@ -138,21 +138,9 @@ public:
     // std::string functions
     //
 
-    static bool contains(const std::string& string, const std::string& substring)
-    {
-        return string.find(substring) != std::string::npos;
-    }
-
-    static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)
-    {
-        boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separators.c_str()));
-        return std::vector<std::string>(tokenizer.begin(), tokenizer.end());
-    }
-
-    static std::string toLower(const std::string& string)
-    {
-        return boost::algorithm::to_lower_copy(string);
-    }
+    static bool contains(const std::string& string, const std::string& substring);
+    static std::vector<std::string> tokenize(const std::string& string, const std::string& separators);
+    static std::string toLower(const std::string& string);
 
     static std::string toString(auto&&... args)
     {
@@ -361,7 +349,7 @@ public:
     {
         using TSrcValue = typename TSrcValueContainer::value_type;
 
-        return reinterpretAsVectorImpl<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
+        return reinterpretAsVector<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
     }
 
     // Don't infer TSrcValue from the input initializer list, because we want to force the user to explicitly specify
@@ -373,12 +361,11 @@ public:
     template <typename TDestValue, typename TSrcValue, typename TSrcInitializerListValue> requires std::same_as<TSrcValue, TSrcInitializerListValue>
     static std::vector<TDestValue> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
     {
-        return reinterpretAsVectorImpl<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
+        return reinterpretAsVector<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
     }
 
-private:
     template <typename TDestValue, typename TSrcValue>
-    static std::vector<TDestValue> reinterpretAsVectorImpl(const TSrcValue* src_data, size_t src_num_elements)
+    static std::vector<TDestValue> reinterpretAsVector(const TSrcValue* src_data, size_t src_num_elements)
     {
         std::vector<TDestValue> dest;
         if (src_num_elements > 0) {

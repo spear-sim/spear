@@ -26,7 +26,7 @@
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "SpEngine/Legacy/ActorHitEventComponent.h"
+#include "SpEngine/Legacy/ActorHitComponent.h"
 #include "SpEngine/Legacy/StandaloneComponent.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
@@ -58,10 +58,10 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     goal_mesh_component->SetStaticMesh(goal_mesh);
     goal_mesh_component->SetMaterial(0, goal_material);
 
-    // Create UActorHitEventComponent but don't subscribe to any actors yet
-    actor_hit_event_component_ = std::make_unique<StandaloneComponent<UActorHitEventComponent>>(world, "actor_hit_event_component");
-    SP_ASSERT(actor_hit_event_component_);
-    SP_ASSERT(actor_hit_event_component_->component_);
+    // Create UActorHitComponent but don't subscribe to any actors yet
+    actor_hit_component_ = std::make_unique<StandaloneComponent<UActorHitComponent>>(world, "actor_hit_component");
+    SP_ASSERT(actor_hit_component_);
+    SP_ASSERT(actor_hit_component_->component_);
 
     minstd_rand_ = std::minstd_rand(Config::get<int>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.RANDOM_SEED"));
     hit_goal_ = false;
@@ -70,13 +70,8 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
 
 PointGoalNavTask::~PointGoalNavTask()
 {
-    hit_obstacle_ = false;
-    hit_goal_ = false;
-    minstd_rand_ = std::minstd_rand();
-
-    SP_ASSERT(actor_hit_event_component_);
-    SP_ASSERT(actor_hit_event_component_->component_);
-    actor_hit_event_component_ = nullptr;
+    SP_ASSERT(actor_hit_component_);
+    actor_hit_component_ = nullptr;
 
     SP_ASSERT(goal_actor_);
     goal_actor_->Destroy();
@@ -93,10 +88,10 @@ void PointGoalNavTask::findObjectReferences(UWorld* world)
         world, Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
-    SP_ASSERT(actor_hit_event_component_);
-    SP_ASSERT(actor_hit_event_component_->component_);
-    actor_hit_event_component_->component_->subscribe(agent_actor_);
-    actor_hit_event_component_->component_->setHandleActorHitFunc(
+    SP_ASSERT(actor_hit_component_);
+    SP_ASSERT(actor_hit_component_->component_);
+    actor_hit_component_->component_->subscribe(agent_actor_);
+    actor_hit_component_->component_->setHandleActorHitFunc(
         [this](AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result) -> void {
             SP_ASSERT(self_actor == agent_actor_);
             if (other_actor == goal_actor_) {
@@ -113,10 +108,10 @@ void PointGoalNavTask::findObjectReferences(UWorld* world)
 
 void PointGoalNavTask::cleanUpObjectReferences()
 {
-    SP_ASSERT(actor_hit_event_component_);
-    SP_ASSERT(actor_hit_event_component_->component_);
-    actor_hit_event_component_->component_->setHandleActorHitFunc(nullptr);
-    actor_hit_event_component_->component_->unsubscribe(agent_actor_);
+    SP_ASSERT(actor_hit_component_);
+    SP_ASSERT(actor_hit_component_->component_);
+    actor_hit_component_->component_->setHandleActorHitFunc(nullptr);
+    actor_hit_component_->component_->unsubscribe(agent_actor_);
 
     obstacle_ignore_actors_.clear();
 

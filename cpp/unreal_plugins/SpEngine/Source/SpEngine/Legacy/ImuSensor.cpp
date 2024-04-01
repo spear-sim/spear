@@ -27,7 +27,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpEngine/Legacy/StandaloneComponent.h"
-#include "SpEngine/Legacy/TickEventComponent.h"
+#include "SpEngine/Legacy/TickComponent.h"
 
 struct FActorComponentTickFunction;
 
@@ -36,13 +36,13 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
     SP_ASSERT(primitive_component);
     primitive_component_ = primitive_component;
 
-    tick_event_component_ = std::make_unique<StandaloneComponent<UTickEventComponent>>(primitive_component->GetWorld(), "tick_event_component");
-    SP_ASSERT(tick_event_component_);
-    SP_ASSERT(tick_event_component_->component_);
-    tick_event_component_->component_->PrimaryComponentTick.bCanEverTick = true;
-    tick_event_component_->component_->PrimaryComponentTick.bTickEvenWhenPaused = false;
-    tick_event_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
-    tick_event_component_->component_->tick_func_ = [this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
+    tick_component_ = std::make_unique<StandaloneComponent<UTickComponent>>(primitive_component->GetWorld(), "tick_event_component");
+    SP_ASSERT(tick_component_);
+    SP_ASSERT(tick_component_->component_);
+    tick_component_->component_->PrimaryComponentTick.bCanEverTick = true;
+    tick_component_->component_->PrimaryComponentTick.bTickEvenWhenPaused = false;
+    tick_component_->component_->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
+    tick_component_->component_->setTickFunc([this](float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) -> void {
 
         // Update linear acceleration
         FVector current_linear_velocity_world = primitive_component_->GetPhysicsLinearVelocity();
@@ -79,17 +79,13 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
             // Plot angular rate vector
             DrawDebugDirectionalArrow(world, location, location + rotation.RotateVector(angular_velocity_body_), 0.5f, FColor(0, 200, 200), false, 0.033f, 0, 0.5f);
         }
-    };
+    });
 }
 
 ImuSensor::~ImuSensor()
 {
-    SP_ASSERT(tick_event_component_);
-    tick_event_component_->component_->tick_func_ = nullptr;
-    tick_event_component_ = nullptr;
-
-    SP_ASSERT(primitive_component_);
-    primitive_component_ = nullptr;
+    SP_ASSERT(tick_component_);
+    tick_component_ = nullptr;
 }
 
 std::map<std::string, ArrayDesc> ImuSensor::getObservationSpace() const

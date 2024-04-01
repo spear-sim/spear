@@ -12,20 +12,19 @@
 #include <GameFramework/Actor.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Unreal.h" // CActorComponent
+#include "SpCore/Unreal.h"
 
-template <CActorComponent TActorComponent>
+template <CComponent TComponent>
 class StandaloneComponent
 {
 public:
     StandaloneComponent() = delete;
-
     StandaloneComponent(UWorld* world, const std::string& name)
     {
         actor_ = world->SpawnActor<AActor>();
         SP_ASSERT(actor_);
 
-        component_ = Unreal::createComponentOutsideOwnerConstructor<TActorComponent>(actor_, name);
+        component_ = Unreal::createComponentOutsideOwnerConstructor<TComponent>(actor_, name);
         SP_ASSERT(component_);
     }
 
@@ -39,6 +38,6 @@ public:
         actor_ = nullptr;
     }
 
-    TActorComponent* component_ = nullptr;
+    TComponent* component_ = nullptr;
     AActor* actor_ = nullptr;
 };

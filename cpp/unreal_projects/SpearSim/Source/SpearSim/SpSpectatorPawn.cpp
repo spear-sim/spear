@@ -56,12 +56,6 @@ ASpSpectatorPawn::ASpSpectatorPawn()
 ASpSpectatorPawn::~ASpSpectatorPawn()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    SP_ASSERT(SpectatorPawnMovement);
-    SpectatorPawnMovement = nullptr;
-
-    SP_ASSERT(StableNameComponent);
-    StableNameComponent = nullptr;
 }
 
 void ASpSpectatorPawn::BeginPlay()

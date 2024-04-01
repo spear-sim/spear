@@ -28,74 +28,14 @@
 #include <UObject/NameTypes.h>       // FName
 #include <UObject/Object.h>          // UObject
 #include <UObject/ObjectMacros.h>    // EPropertyFlags
-#include <UObject/UnrealType.h>      // FBoolProperty, FDoubleProperty, FFloatProperty, FIntProperty, FProperty, FStrProperty, FStructProperty, TFieldIterator
+#include <UObject/UnrealType.h>      // FArrayProperty, FBoolProperty, FDoubleProperty, FEnumProperty, FFloatProperty, FIntProperty, FProperty, FStrProperty,
+                                     // FStructProperty, TFieldIterator
 
 #include "SpCore/Assert.h"
 #include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
-
-//
-// String functions
-//
-
-std::string Unreal::toStdString(const FString& str)
-{
-    // Note that the * operator for FString returns a pointer to the underlying string
-    return std::string(TCHAR_TO_UTF8(*str));
-}
-
-std::string Unreal::toStdString(const FName& str)
-{
-    // Note that str.ToString() converts FName to FString
-    return toStdString(str.ToString());
-}
-
-std::string Unreal::toStdString(const TCHAR* str)
-{
-    return std::string(TCHAR_TO_UTF8(str));
-}
-
-FString Unreal::toFString(const std::string& str)
-{
-    return FString(UTF8_TO_TCHAR(str.c_str()));
-}
-
-FName Unreal::toFName(const std::string& str)
-{
-    return FName(str.c_str());
-}
-
-//
-// Helper functions to get and set actor and component names.
-//
-
-std::string Unreal::getStableActorName(const AActor* actor)
-{
-    SP_ASSERT(actor);
-    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
-    return toStdString(stable_name_component->StableName);
-}
-
-void Unreal::setStableActorName(const AActor* actor, const std::string& stable_name)
-{
-    SP_ASSERT(actor);
-    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
-    stable_name_component->StableName = toFString(stable_name);
-}
-
-#if WITH_EDITOR // defined in an auto-generated header
-    void Unreal::requestUpdateStableActorName(const AActor* actor)
-    {
-        SP_ASSERT(actor);
-        bool assert_if_not_found = false;
-        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
-        if (stable_name_component) {
-            stable_name_component->requestUpdate();
-        }
-    }
-#endif
 
 // 
 // Find actors unconditionally and return an std::vector or an std::map
@@ -131,9 +71,14 @@ std::map<std::string, UActorComponent*> Unreal::getComponentsAsMap(const AActor*
 
 UStruct* Unreal::findStructByName(const UWorld* world, const std::string& name)
 {
-    AEngineActor* engine_actor = findActorByType<AEngineActor>(world);
-    SP_ASSERT(engine_actor);
-    PropertyDesc property_desc = findPropertyByName(engine_actor, name);
+    // We only need AEngineActor's property metadata here, so we can use the default object. This makes it so
+    // this function is usable even in levels that don't have an AEngineActor in them, and avoids the need to
+    // do a findActor operation.
+    UClass* engine_actor_uclass = AEngineActor::StaticClass();
+    SP_ASSERT(engine_actor_uclass);
+    UObject* engine_actor_default_object = engine_actor_uclass->GetDefaultObject();
+    SP_ASSERT(engine_actor_default_object);
+    PropertyDesc property_desc = findPropertyByName(engine_actor_default_object, "_" + name);
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
     FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
@@ -195,71 +140,108 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
     PropertyDesc property_desc;
     property_desc.value_ptr_ = value_ptr;
 
-    for (int i = 0; i < property_names.size() - 1; i++) {
+    for (int i = 0; i < property_names.size(); i++) {
+
         std::string& property_name = property_names.at(i);
+        std::vector<std::string> property_name_tokens = Std::tokenize(property_name, "[]");
+        SP_ASSERT(property_name_tokens.size() >= 1 && property_name_tokens.size() <= 2);
 
-        property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(property_name));
+        property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(property_name_tokens.at(0)));
         SP_ASSERT(property_desc.property_);
-
         property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
         SP_ASSERT(property_desc.value_ptr_);
 
-        if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
-            FObjectProperty* object_ptr_property = static_cast<FObjectPtrProperty*>(property_desc.property_);
-            UObject* uobject = object_ptr_property->GetObjectPropertyValue(property_desc.value_ptr_);
-            SP_ASSERT(uobject);
-            property_desc.value_ptr_ = uobject;
-            ustruct = uobject->GetClass();
+        // If the current property is an array property, and the name includes the index operator, then update
+        // the current property to refer to the array element based on the index.
+        if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && property_name_tokens.size() == 2) {
+            int index = std::atoi(property_name_tokens.at(1).c_str());
+            FArrayProperty* array_property = static_cast<FArrayProperty*>(property_desc.property_);
+            FScriptArrayHelper script_array_helper(array_property, property_desc.value_ptr_);
+            SP_ASSERT(index < script_array_helper.Num());
 
-        } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
-            FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-            ustruct = struct_property->Struct;
+            property_desc.property_ = array_property->Inner;
+            SP_ASSERT(property_desc.property_);
+            property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(property_desc.property_, property_desc.value_ptr_, index);
+            SP_ASSERT(property_desc.value_ptr_);
+        }
 
-        } else {
-            SP_LOG(property_name, " is an unsupported type:", toStdString(property_desc.property_->GetClass()->GetName()));
-            SP_ASSERT(false);
+        // If the current property name is not the last name in our sequence, then by definition the current
+        // property refers to something with named properties (i.e., a struct or an object). In this case,
+        // we need to update our ustruct pointer, and potentially our value_ptr if our current property refers
+        // to an object. In contrast, if the current property name is the last name in our sequence, then
+        // there is nothing more to do, because we have already filled in our PropertyDesc object.
+        if (i < property_names.size() - 1) {
+            if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
+                FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
+                UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
+                SP_ASSERT(uobject);
+                property_desc.value_ptr_ = uobject;
+                ustruct = uobject->GetClass();
+
+            } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
+                FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
+                ustruct = struct_property->Struct;
+
+            } else {
+                SP_LOG(property_name, " is an unsupported type:", toStdString(property_desc.property_->GetClass()->GetName()));
+                SP_ASSERT(false);
+            }
         }
     }
-
-    std::string& property_name = property_names.at(property_names.size() - 1);
-
-    property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(property_name));
-    SP_ASSERT(property_desc.property_);
-
-    property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
-    SP_ASSERT(property_desc.value_ptr_);
 
     return property_desc;
 }
 
 std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& property_desc)
 {
-    SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
+    SP_ASSERT(property_desc.value_ptr_);
 
-    if (property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
-        property_desc.property_->IsA(FIntProperty::StaticClass()) ||
-        property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
+    if (property_desc.property_->IsA(FBoolProperty::StaticClass())   ||
+        property_desc.property_->IsA(FIntProperty::StaticClass())    ||
+        property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
-        property_desc.property_->IsA(FStrProperty::StaticClass())) {
+        property_desc.property_->IsA(FStrProperty::StaticClass())    ||
+        property_desc.property_->IsA(FByteProperty::StaticClass())) {
 
         TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
         SP_ASSERT(json_value.Get());
         return toStdString(json_value.Get()->AsString());
 
-    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
-        FObjectProperty* object_ptr_property = static_cast<FObjectProperty*>(property_desc.property_);
-        UObject* uobject = object_ptr_property->GetObjectPropertyValue(property_desc.value_ptr_);
-        return Std::toStringFromPtr(uobject);
+    }  else if (property_desc.property_->IsA(FArrayProperty::StaticClass())) {
+
+        FArrayProperty* array_property = static_cast<FArrayProperty*>(property_desc.property_);
+        FScriptArrayHelper script_array_helper(array_property, property_desc.value_ptr_);
+
+        FProperty* inner_property = array_property->Inner;
+        std::vector<std::string> inner_strings;
+        for (int i = 0; i < script_array_helper.Num(); i++) {
+            PropertyDesc inner_property_desc;
+            inner_property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
+            SP_ASSERT(inner_property_desc.value_ptr_);
+            inner_property_desc.property_ = inner_property;
+            std::string inner_string = getPropertyValueAsString(inner_property_desc);
+            inner_strings.push_back(inner_string);
+        }
+
+        return getArrayPropertyValueAsFormattedString(inner_property, inner_strings);
 
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
+
         FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
         UStruct* ustruct = struct_property->Struct;
         FString string;
         FJsonObjectConverter::UStructToJsonObjectString(ustruct, property_desc.value_ptr_, string);
         return toStdString(string);
 
+    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
+
+        FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
+        UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
+        return Std::toStringFromPtr(uobject);
+
     } else {
+
         SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
         SP_ASSERT(false);
         return "";
@@ -271,11 +253,14 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
 
-    if (property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
-        property_desc.property_->IsA(FIntProperty::StaticClass()) ||
-        property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
+    if (property_desc.property_->IsA(FBoolProperty::StaticClass())   ||
+        property_desc.property_->IsA(FIntProperty::StaticClass())    ||
+        property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
-        property_desc.property_->IsA(FStrProperty::StaticClass())) {
+        property_desc.property_->IsA(FStrProperty::StaticClass())    ||
+        property_desc.property_->IsA(FByteProperty::StaticClass())   ||
+        property_desc.property_->IsA(FArrayProperty::StaticClass())  ||
+        property_desc.property_->IsA(FStructProperty::StaticClass())) {
 
         bool success = false;
         TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString("{ \"dummy\": " + string + "}"));
@@ -290,17 +275,12 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
 
     } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
 
-        FObjectProperty* object_ptr_property = static_cast<FObjectProperty*>(property_desc.property_);
+        FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
         UObject* uobject = Std::toPtrFromString<UObject>(string);
-        object_ptr_property->SetObjectPropertyValue(property_desc.value_ptr_, uobject);
-
-    } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
-
-        FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-        UStruct* ustruct = struct_property->Struct;
-        setObjectPropertiesFromString(property_desc.value_ptr_, ustruct, string);
+        object_property->SetObjectPropertyValue(property_desc.value_ptr_, uobject);
 
     } else {
+
         SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
         SP_ASSERT(false);
     }
@@ -315,6 +295,11 @@ UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& n
     UFunction* function = uclass->FindFunctionByName(toFName(name), include_super_flag);
     SP_ASSERT(function);
     return function;
+}
+
+std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunction* ufunction)
+{
+    return callFunction(uobject, ufunction, {});
 }
 
 std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args)
@@ -364,6 +349,67 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
 }
 
 //
+// String functions
+//
+
+std::string Unreal::toStdString(const FString& str)
+{
+    // Note that the * operator for FString returns a pointer to the underlying string
+    return std::string(TCHAR_TO_UTF8(*str));
+}
+
+std::string Unreal::toStdString(const FName& str)
+{
+    // Note that str.ToString() converts FName to FString
+    return toStdString(str.ToString());
+}
+
+std::string Unreal::toStdString(const TCHAR* str)
+{
+    return std::string(TCHAR_TO_UTF8(str));
+}
+
+FString Unreal::toFString(const std::string& str)
+{
+    return FString(UTF8_TO_TCHAR(str.c_str()));
+}
+
+FName Unreal::toFName(const std::string& str)
+{
+    return FName(str.c_str());
+}
+
+//
+// Helper functions to get and set actor and component names
+//
+
+std::string Unreal::getStableActorName(const AActor* actor)
+{
+    SP_ASSERT(actor);
+    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
+    return toStdString(stable_name_component->StableName);
+}
+
+void Unreal::setStableActorName(const AActor* actor, const std::string& stable_name)
+{
+    SP_ASSERT(actor);
+    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
+    stable_name_component->StableName = toFString(stable_name);
+}
+
+#if WITH_EDITOR // defined in an auto-generated header
+    void Unreal::requestUpdateStableActorName(const AActor* actor)
+    {
+        SP_ASSERT(actor);
+        bool assert_if_not_found = false;
+        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
+        if (stable_name_component) {
+            stable_name_component->requestUpdate();
+        }
+    }
+#endif
+
+//
 // Helper functions for finding actors and getting components
 //
 
@@ -385,4 +431,51 @@ std::vector<bool> Unreal::getComponentHasTags(const UActorComponent* component, 
 {
     SP_ASSERT(component);
     return Std::toVector<bool>(tags | std::views::transform([component](const auto& tag) { return component->ComponentHasTag(toFName(tag)); }));
+}
+
+//
+// Helper function for formatting array properties as strings in the same style as Unreal
+//
+
+std::string Unreal::getArrayPropertyValueAsFormattedString(const FProperty* inner_property, const std::vector<std::string>& inner_strings)
+{
+    std::string formatted_string;
+
+    // If the inner property is a primitive type, then format the entire array on a single line,
+    // otherwise put each element on a new line.
+    std::string join_string;
+    if (!inner_strings.empty()) {
+        if (inner_property->IsA(FStructProperty::StaticClass())) {
+            join_string += "\n";
+        }
+        else {
+            join_string += " ";
+        }
+    }
+
+    // Build the formatted string except for indentation.
+    formatted_string += "[";
+    if (!inner_strings.empty()) {
+        formatted_string += join_string;
+    }
+    for (int i = 0; i < inner_strings.size() - 1; i++) {
+        formatted_string += inner_strings.at(i) + "," + join_string;
+    }
+    if (!inner_strings.empty()) {
+        formatted_string += inner_strings.at(inner_strings.size() - 1) + join_string;
+    }
+    formatted_string += "]";
+
+    // If the property is a struct type and the array is non-empty, then indent.
+    if (inner_property->IsA(FStructProperty::StaticClass()) && !inner_strings.empty()) {
+        std::vector<std::string> lines = Std::tokenize(formatted_string, "\n");
+        SP_ASSERT(lines.size() > 2);
+        formatted_string = lines.at(0) + "\n";
+        for (int i = 1; i < lines.size() - 1; i++) {
+            formatted_string += "\t" + lines.at(i) + "\n";
+        }
+        formatted_string += lines.at(lines.size() - 1);
+    }
+
+    return formatted_string;
 }

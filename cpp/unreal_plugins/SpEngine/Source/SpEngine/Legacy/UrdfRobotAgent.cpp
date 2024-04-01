@@ -9,7 +9,7 @@
 #include <stdint.h> // uint8_t
 
 #include <map>
-#include <memory>
+#include <memory> // std::make_unique
 #include <string>
 #include <vector>
 
