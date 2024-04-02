@@ -4,6 +4,9 @@
 
 #include "SpearSim/SpPlayerController.h"
 
+#include <Engine/EngineTypes.h> // EEndPlayReason
+#include <GenericPlatform/GenericPlatformMisc.h>
+
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
@@ -25,7 +28,7 @@ ASpPlayerController::ASpPlayerController()
     UserInputComponent = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetRootComponent(), "user_input");
     SP_ASSERT(UserInputComponent);
 
-    UserInputComponent->bHandleUserInput = true;                         // UserInputComponents need to be enabled explicitly
+    UserInputComponent->bHandleUserInput = true; // UserInputComponents need to be explicitly enabled
     UserInputComponent->PrimaryComponentTick.bTickEvenWhenPaused = true; // enable because we want to exit even when paused
 }
 
@@ -46,4 +49,12 @@ void ASpPlayerController::BeginPlay()
         bool force = false;
         FGenericPlatformMisc::RequestExit(force);
     });
+}
+
+void ASpPlayerController::EndPlay(const EEndPlayReason::Type end_play_reason)
+{
+    APlayerController::EndPlay(end_play_reason);
+
+    UserInputComponent->setHandleUserInputFunc(nullptr);
+    UserInputComponent->unsubscribeFromUserInputs({"Escape"});
 }

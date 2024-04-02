@@ -176,6 +176,10 @@ void ADebugWidget::GetAndSetObjectProperties()
     Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "ArrayOfVectors"), "[ " + str + ", " + str + ", " + str + "]");
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors")));
 
+    MapFromStringToVector.Add(Unreal::toFString("Hello"), 1.0*vec);
+    MapFromStringToVector.Add(Unreal::toFString("World"), 2.0*vec);
+    SP_LOG(Unreal::getObjectPropertiesAsString(this));
+
     //
     // We need to do this do see visual updates in the editor. But this interface is not ideal because
     // it requires passing in a position and rotation delta, and it doesn't take the UPROPERTIES we set

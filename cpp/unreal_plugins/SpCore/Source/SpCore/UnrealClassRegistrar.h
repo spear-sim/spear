@@ -23,7 +23,7 @@ public:
     ~UnrealClassRegistrar() = delete;
 
     static void initialize();
-    static void terminate() {};
+    static void terminate();
 
     //
     // Find actors using a class name instead of template parameters
@@ -64,7 +64,7 @@ public:
     static UActorComponent* getComponentByType(const std::string& class_name, const AActor* actor, bool assert_if_not_found = true, bool assert_if_multiple_found = true);
 
     //
-    // Register actor class
+    // Register and unregister actor class
     //
 
     template <CActor TActor>
@@ -146,8 +146,10 @@ public:
             });
     }
 
+    static void unregisterActorClass(const std::string& class_name);
+
     //
-    // Register component class
+    // Register and unregister component class
     //
 
     template <CComponent TComponent>
@@ -229,34 +231,41 @@ public:
             });
     }
 
+    static void unregisterComponentClass(const std::string& class_name);
+
 private:
 
     //
     // A ClassRegistrar<TReturn, TArgs...> is a templated type that allows a caller to create objects by name
-    // instead of by type. TReturn is the common type that is always returned by the ClassRegistrar (e.g., a
-    // base class pointer type). TArgs... are common argument types that will always be passed to a user-defined
-    // "create" function that can be specialized by type (e.g., a user-defined create function might call the
-    // new operator on a derived type). The user can also specify a type-specialized "destroy" function that
-    // is responsible for cleaning up whatever was previously created (e.g., by calling the delete operator on
-    // a derived pointer). Consider the following registar.
+    // instead of by type. The user is responsible for registering create and destroy functions that are
+    // specialized for each type that will be created. For example, a typical create function might call the
+    // new operator on a derived type and return a base class pointer, and the corresponding destroy function
+    // would call delete on the base class pointer.
+    // 
+    // All user-specified create functions that are registered with a registrar must have the same signature,
+    // taking as input TArgs... and returning as output TReturn. Likewise, all user-specified destroy functions
+    // registered with a registrar must take as input TReturn& and return void.
+    //
+    // This following example demonstrates a typical use case.
     // 
     //     ClassRegistrar<void*, int> my_registar;
     //
-    // All create functions that are registered with my_registrar must take as input an int and return as output
-    // a void*. We can register a specific type by calling registerClass(...) as follows.
+    // In this case, all create functions that are registered with my_registrar must take as input an int and
+    // return as output void*. We can register a specific type to my_registrar by calling registerClass(...)
+    // as follows.
     //
     //     my_registrar.registerClass(
-    //         "float",
+    //         "float",                                                                    // type name
     //         [](int num_elements) -> void* { return new float[num_elements]; },          // create function
     //         [](void* created) -> void { delete[] reinterpret_cast<float*>(created); }); // destroy function
     //
     // Here, we are registering the name "float" with a create function that allocates an array of floats, and
-    // a destroy function that deletes the array. In our destroy function, we need to cast the void* pointer to
-    // its correct type because calling deleting a void* is undefined behavior. At this point, we are able to
-    // call our create and delete functions using only their name.
+    // a corresponding destroy function that deletes the array. In our destroy function, we need to explicitly
+    // cast the void* pointer to float* because deleting a void* results in undefined behavior. After we have
+    // registered our type, we can call our create and destroy functions using only the type's registered name.
     //
     //     void* my_ptr = my_registrar.create("float", 10); // create an array of 10 floats
-    //     my_registrar.destroy("float", my_ptr);           // correctly destroy array
+    //     my_registrar.destroy("float", my_ptr);           // destroy the array
     //
 
     template <typename TReturn, typename... TArgs>
@@ -265,31 +274,44 @@ private:
     public:
         void registerClass(const std::string& class_name, const std::function<TReturn(TArgs...)>& create_func, const std::function<void(TReturn&)> destroy_func)
         {
-            registerClass(class_name, create_func);
-            registerClass(class_name, destroy_func);
+            SP_ASSERT(create_func);
+            SP_ASSERT(destroy_func);
+            Std::insert(create_funcs_, class_name, create_func);
+            Std::insert(destroy_funcs_, class_name, destroy_func);
         }
 
         void registerClass(const std::string& class_name, const std::function<TReturn(TArgs...)>& create_func)
         {
+            SP_ASSERT(create_func);
             Std::insert(create_funcs_, class_name, create_func);
         }
 
         void registerClass(const std::string& class_name, const std::function<void(TReturn&)> destroy_func)
         {
+            SP_ASSERT(destroy_func);
             Std::insert(destroy_funcs_, class_name, destroy_func);
+        }
+
+        void unregisterClass(const std::string& class_name)
+        {
+            SP_ASSERT(Std::containsKey(create_funcs_, class_name) || Std::containsKey(destroy_funcs_, class_name));
+            if (Std::containsKey(create_funcs_, class_name)) {
+                Std::remove(create_funcs_, class_name);
+            }
+            if (Std::containsKey(destroy_funcs_, class_name)) {
+                Std::remove(create_funcs_, class_name);
+            }
         }
 
         TReturn create(const std::string& class_name, TArgs... args)
         {
             SP_ASSERT(Std::containsKey(create_funcs_, class_name));
-            SP_ASSERT(create_funcs_.at(class_name));
             return create_funcs_.at(class_name)(args...);
         }
 
         void destroy(const std::string& class_name, TReturn& created)
         {
             SP_ASSERT(Std::containsKey(destroy_funcs_, class_name));
-            SP_ASSERT(destroy_funcs_.at(class_name));
             destroy_funcs_.at(class_name)(created);
         }
 

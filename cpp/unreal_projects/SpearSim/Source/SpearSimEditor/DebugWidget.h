@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Containers/Array.h>
+#include <Containers/Map.h>
 #include <Containers/UnrealString.h> // FString
 #include <GameFramework/Actor.h>
 #include <Math/Vector.h>
@@ -56,4 +57,6 @@ private:
 
     UPROPERTY()
     TArray<FVector> ArrayOfVectors;
+
+    TMap<FString, FVector> MapFromStringToVector;
 };
