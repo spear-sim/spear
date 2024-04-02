@@ -24,7 +24,7 @@ void SpEngine::StartupModule()
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfRobot")));
     SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("Vehicle")));
 
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         rpc_server_ = std::make_unique<rpc::server>(Config::get<int>("SP_ENGINE.PORT"));
     } else {
         rpc_server_ = std::make_unique<rpc::server>(30000);

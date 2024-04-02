@@ -157,7 +157,7 @@ public:
             std::string scene_id = "";
             std::string map_id = "";
 
-            if (Config::s_initialized_) {
+            if (Config::isInitialized()) {
                 scene_id = Config::get<std::string>("SP_ENGINE.LEGACY_SERVICE.SCENE_ID");
                 map_id = Config::get<std::string>("SP_ENGINE.LEGACY_SERVICE.MAP_ID");
             }
@@ -247,7 +247,7 @@ public:
         SP_ASSERT(world_);
 
         // execute optional console commands from python client
-        if (Config::s_initialized_) {
+        if (Config::isInitialized()) {
             for (auto& command : Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY_SERVICE.CUSTOM_UNREAL_CONSOLE_COMMANDS")) {
                 GEngine->Exec(world_, *Unreal::toFString(command));
             }
@@ -255,22 +255,22 @@ public:
 
         // set physics parameters
         UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
-        if (Config::s_initialized_) {
+        if (Config::isInitialized()) {
             physics_settings->bEnableEnhancedDeterminism = Config::get<bool>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.ENABLE_ENHANCED_DETERMINISM");
-            physics_settings->bSubstepping               = Config::get<bool>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.ENABLE_SUBSTEPPING");
-            physics_settings->MaxSubstepDeltaTime        = Config::get<float>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
-            physics_settings->MaxSubsteps                = Config::get<int32>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.MAX_SUBSTEPS");
+            physics_settings->bSubstepping = Config::get<bool>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.ENABLE_SUBSTEPPING");
+            physics_settings->MaxSubstepDeltaTime = Config::get<float>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.MAX_SUBSTEP_DELTA_TIME");
+            physics_settings->MaxSubsteps = Config::get<int32>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.MAX_SUBSTEPS");
         } else {
             physics_settings->bEnableEnhancedDeterminism = true;
-            physics_settings->bSubstepping               = true;
-            physics_settings->MaxSubstepDeltaTime        = 0.01;
-            physics_settings->MaxSubsteps                = 100;
+            physics_settings->bSubstepping = true;
+            physics_settings->MaxSubstepDeltaTime = 0.01;
+            physics_settings->MaxSubsteps = 100;
         }
 
         // Check that the physics substepping parameters match our desired simulation step time.
         // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep for more details.
         float step_time = 0.05;
-        if (Config::s_initialized_) {
+        if (Config::isInitialized()) {
             step_time = Config::get<float>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.SIMULATION_STEP_TIME");
         }
 
@@ -286,7 +286,7 @@ public:
         // pause the game
         UGameplayStatics::SetGamePaused(world_, true);
 
-        if (Config::s_initialized_) {
+        if (Config::isInitialized()) {
             // create Agent
             agent_ = std::unique_ptr<Agent>(ClassRegistrationUtils::create(Agent::s_class_registrar_, Config::get<std::string>("SP_ENGINE.LEGACY_SERVICE.AGENT"), world_));
 

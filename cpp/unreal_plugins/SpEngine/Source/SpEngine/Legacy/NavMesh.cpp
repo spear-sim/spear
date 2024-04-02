@@ -31,7 +31,7 @@ void NavMesh::findObjectReferences(UWorld* world)
     SP_ASSERT(navigation_system_v1_);
 
     FNavAgentProperties agent_properties;
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         agent_properties.AgentHeight = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_HEIGHT");
         agent_properties.AgentRadius = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_RADIUS");
         agent_properties.AgentStepHeight = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_MAX_STEP_HEIGHT");
@@ -50,7 +50,7 @@ void NavMesh::findObjectReferences(UWorld* world)
     float cell_size = 1.0;
     float cell_height = 1.0;
 
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         recast_nav_mesh_->TilePoolSize = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.TILE_POOL_SIZE");
         recast_nav_mesh_->TileSizeUU = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.TILE_SIZE_UU");
         recast_nav_mesh_->AgentRadius = Config::get<float>("SP_ENGINE.LEGACY.NAVMESH.AGENT_RADIUS");
@@ -91,10 +91,10 @@ void NavMesh::findObjectReferences(UWorld* world)
     //     Engine/Source/Runtime/NavigationSystem/Public/NavMesh/RecastNavMeshGenerator.h
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
-    
+
     std::string debug_navigation_data_file = "";
 
-    if (Config::s_initialized_) {
+    if (Config::isInitialized()) {
         debug_navigation_data_file = Config::get<std::string>("SP_ENGINE.LEGACY.NAVMESH.DEBUG_NAVIGATION_DATA_FILE");
     }
 
