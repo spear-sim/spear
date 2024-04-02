@@ -77,7 +77,7 @@ private:
             SP_ASSERT(key != "");
 
             // If the key is invalid, print an informative error message.
-            if (!node[key]) {
+            if (!current_node[key]) {
                 std::string str = "Invalid key, keys == [";
                 for (int i = 0; i < keys.size() - 1; i++) {
                     str = str + "\"" + keys.at(i)  + "\", ";
