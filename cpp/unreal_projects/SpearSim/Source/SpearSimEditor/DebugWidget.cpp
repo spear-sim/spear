@@ -159,8 +159,10 @@ void ADebugWidget::GetAndSetObjectProperties()
     ArrayOfInts.Add(30);
     ArrayOfVectors.Add(FVector(1.0f, 2.0f, 3.0f));
     ArrayOfVectors.Add(FVector(4.0f, 5.0f, 6.0f));
+    ArrayOfStrings.Add(Unreal::toFString("Hello"));
     SP_LOG(Unreal::getObjectPropertiesAsString(this));
 
+    // Arrays can be indexed when searching for properties
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfInts[1]")));
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors[1]")));
 
@@ -176,9 +178,27 @@ void ADebugWidget::GetAndSetObjectProperties()
     Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "ArrayOfVectors"), "[ " + str + ", " + str + ", " + str + "]");
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors")));
 
+    MapFromIntToInt.Add(1, 2);
+    MapFromIntToInt.Add(3, 4);
+    MapFromIntToInt.Add(5, 6);
+    SP_LOG(Unreal::getObjectPropertiesAsString(this));
+
     MapFromStringToVector.Add(Unreal::toFString("Hello"), 1.0*vec);
     MapFromStringToVector.Add(Unreal::toFString("World"), 2.0*vec);
     SP_LOG(Unreal::getObjectPropertiesAsString(this));
+
+    // Maps can also be indexed when searching for properties
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "MapFromIntToInt")));
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "MapFromStringToVector")));
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "MapFromIntToInt[3]")));
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "MapFromStringToVector[\"World\"]")));
+
+    SetOfStrings.Add("Hello");
+    SetOfStrings.Add("1");
+    SetOfStrings.Add("World");
+    SetOfStrings.Add("2");
+    SP_LOG(Unreal::getObjectPropertiesAsString(this));
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "SetOfStrings")));
 
     //
     // We need to do this do see visual updates in the editor. But this interface is not ideal because

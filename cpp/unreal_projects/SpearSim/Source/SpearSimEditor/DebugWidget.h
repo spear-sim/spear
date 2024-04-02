@@ -6,6 +6,7 @@
 
 #include <Containers/Array.h>
 #include <Containers/Map.h>
+#include <Containers/Set.h>
 #include <Containers/UnrealString.h> // FString
 #include <GameFramework/Actor.h>
 #include <Math/Vector.h>
@@ -58,5 +59,18 @@ private:
     UPROPERTY()
     TArray<FVector> ArrayOfVectors;
 
+    UPROPERTY()
+    TArray<FString> ArrayOfStrings;
+
+    UPROPERTY()
+    TMap<int, int> MapFromIntToInt;
+
+    UPROPERTY()
     TMap<FString, FVector> MapFromStringToVector;
+
+    UPROPERTY()
+    TMap<FString, FVector> OtherMapFromStringToVector;
+
+    UPROPERTY()
+    TSet<FString> SetOfStrings;
 };
