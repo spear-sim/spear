@@ -100,28 +100,23 @@ public:
 
         s_find_actors_by_name_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found) -> std::vector<AActor*> {
-                return Unreal::findActorsByName<TActor, AActor>(world, names, return_null_if_not_found);
-            });
+                return Unreal::findActorsByName<TActor, AActor>(world, names, return_null_if_not_found); });
 
         s_find_actors_by_tag_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::string& tag) -> std::vector<AActor*> {
-                return Unreal::findActorsByTag<TActor, AActor>(world, tag);
-            });
+                return Unreal::findActorsByTag<TActor, AActor>(world, tag); });
 
         s_find_actors_by_tag_any_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> std::vector<AActor*> {
-                return Unreal::findActorsByTagAny<TActor, AActor>(world, tags);
-            });
+                return Unreal::findActorsByTagAny<TActor, AActor>(world, tags); });
 
         s_find_actors_by_tag_all_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> std::vector<AActor*> {
-                return Unreal::findActorsByTagAll<TActor, AActor>(world, tags);
-            });
+                return Unreal::findActorsByTagAll<TActor, AActor>(world, tags); });
 
         s_find_actors_by_type_registrar_.registerClass(
             class_name, [](const UWorld* world) -> std::vector<AActor*> {
-                return Unreal::findActorsByType<TActor, AActor>(world);
-            });
+                return Unreal::findActorsByType<TActor, AActor>(world); });
 
         //
         // Find actors by name or tag or type and return an std::map
@@ -129,28 +124,23 @@ public:
 
         s_find_actors_by_name_as_map_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::vector<std::string>& names) -> std::map<std::string, AActor*> {
-                return Unreal::findActorsByNameAsMap<TActor, AActor>(world, names);
-            });
+                return Unreal::findActorsByNameAsMap<TActor, AActor>(world, names); });
 
         s_find_actors_by_tag_as_map_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::string& tag) -> std::map<std::string, AActor*> {
-                return Unreal::findActorsByTagAsMap<TActor, AActor>(world, tag);
-            });
+                return Unreal::findActorsByTagAsMap<TActor, AActor>(world, tag); });
         
         s_find_actors_by_tag_any_as_map_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> std::map<std::string, AActor*> {
-                return Unreal::findActorsByTagAnyAsMap<TActor, AActor>(world, tags);
-            });
+                return Unreal::findActorsByTagAnyAsMap<TActor, AActor>(world, tags); });
         
         s_find_actors_by_tag_all_as_map_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> std::map<std::string, AActor*> {
-                return Unreal::findActorsByTagAllAsMap<TActor, AActor>(world, tags);
-            });
+                return Unreal::findActorsByTagAllAsMap<TActor, AActor>(world, tags); });
         
         s_find_actors_by_type_as_map_registrar_.registerClass(
             class_name, [](const UWorld* world) -> std::map<std::string, AActor*> {
-                return Unreal::findActorsByTypeAsMap<TActor, AActor>(world);
-            });
+                return Unreal::findActorsByTypeAsMap<TActor, AActor>(world); });
         
         //
         // Find actor by name or tag or type and return a pointer
@@ -158,48 +148,23 @@ public:
 
         s_find_actor_by_name_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::string& name, bool assert_if_not_found) -> AActor* {
-                return Unreal::findActorByName<TActor, AActor>(world, name, assert_if_not_found);
-            });
+                return Unreal::findActorByName<TActor, AActor>(world, name, assert_if_not_found); });
         
         s_find_actor_by_tag_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::string& tag, bool assert_if_not_found, bool assert_if_multiple_found) -> AActor* {
-                return Unreal::findActorByTag<TActor, AActor>(world, tag, assert_if_not_found, assert_if_multiple_found);
-            });
+                return Unreal::findActorByTag<TActor, AActor>(world, tag, assert_if_not_found, assert_if_multiple_found); });
         
         s_find_actor_by_tag_any_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found, bool assert_if_multiple_found) -> AActor* {
-                return Unreal::findActorByTagAny<TActor, AActor>(world, tags, assert_if_not_found, assert_if_multiple_found);
-            });
+                return Unreal::findActorByTagAny<TActor, AActor>(world, tags, assert_if_not_found, assert_if_multiple_found); });
         
         s_find_actor_by_tag_all_registrar_.registerClass(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found, bool assert_if_multiple_found) -> AActor* {
-                return Unreal::findActorByTagAll<TActor, AActor>(world, tags, assert_if_not_found, assert_if_multiple_found);
-            });
+                return Unreal::findActorByTagAll<TActor, AActor>(world, tags, assert_if_not_found, assert_if_multiple_found); });
         
         s_find_actor_by_type_registrar_.registerClass(
             class_name, [](const UWorld* world, bool assert_if_not_found, bool assert_if_multiple_found) -> AActor* {
-                return Unreal::findActorByType<TActor, AActor>(world, assert_if_not_found, assert_if_multiple_found);
-            });
-    }
-
-    template <CActor TActor, CActor TRegisterAsActor = TActor>
-    static void unregisterActorClass(const std::string& class_name)
-    {
-        s_find_actors_by_name_registrar_.unregisterClass(class_name);
-        s_find_actors_by_tag_registrar_.unregisterClass(class_name);
-        s_find_actors_by_tag_any_registrar_.unregisterClass(class_name);
-        s_find_actors_by_tag_all_registrar_.unregisterClass(class_name);
-        s_find_actors_by_type_registrar_.unregisterClass(class_name);
-        s_find_actors_by_name_as_map_registrar_.unregisterClass(class_name);
-        s_find_actors_by_tag_as_map_registrar_.unregisterClass(class_name);
-        s_find_actors_by_tag_any_as_map_registrar_.unregisterClass(class_name);
-        s_find_actors_by_tag_all_as_map_registrar_.unregisterClass(class_name);
-        s_find_actors_by_type_as_map_registrar_.unregisterClass(class_name);
-        s_find_actor_by_name_registrar_.unregisterClass(class_name);
-        s_find_actor_by_tag_registrar_.unregisterClass(class_name);
-        s_find_actor_by_tag_any_registrar_.unregisterClass(class_name);
-        s_find_actor_by_tag_all_registrar_.unregisterClass(class_name);
-        s_find_actor_by_type_registrar_.unregisterClass(class_name);
+                return Unreal::findActorByType<TActor, AActor>(world, assert_if_not_found, assert_if_multiple_found); });
     }
 
     //
@@ -215,28 +180,23 @@ public:
 
         s_get_components_by_name_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::vector<std::string>& names, bool return_null_if_not_found) -> std::vector<UActorComponent*> {
-                return Unreal::getComponentsByName<TRegisterAsComponent, UActorComponent>(actor, names, return_null_if_not_found);
-            });
+                return Unreal::getComponentsByName<TRegisterAsComponent, UActorComponent>(actor, names, return_null_if_not_found); });
 
         s_get_components_by_tag_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::string& tag) -> std::vector<UActorComponent*> {
-                return Unreal::getComponentsByTag<TRegisterAsComponent, UActorComponent>(actor, tag);
-            });
+                return Unreal::getComponentsByTag<TRegisterAsComponent, UActorComponent>(actor, tag); });
 
         s_get_components_by_tag_any_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags) -> std::vector<UActorComponent*> {
-                return Unreal::getComponentsByTagAny<TRegisterAsComponent, UActorComponent>(actor, tags);
-            });
+                return Unreal::getComponentsByTagAny<TRegisterAsComponent, UActorComponent>(actor, tags); });
 
         s_get_components_by_tag_all_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags) -> std::vector<UActorComponent*> {
-                return Unreal::getComponentsByTagAll<TRegisterAsComponent, UActorComponent>(actor, tags);
-            });
+                return Unreal::getComponentsByTagAll<TRegisterAsComponent, UActorComponent>(actor, tags); });
 
         s_get_components_by_type_registrar_.registerClass(
             class_name, [](const AActor* actor) -> std::vector<UActorComponent*> {
-                return Unreal::getComponentsByType<TRegisterAsComponent, UActorComponent>(actor);
-            });
+                return Unreal::getComponentsByType<TRegisterAsComponent, UActorComponent>(actor); });
 
         //
         // Get components by name or tag or type and return an std::map
@@ -244,28 +204,23 @@ public:
 
         s_get_components_by_name_as_map_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::vector<std::string>& names) -> std::map<std::string, UActorComponent*> {
-                return Unreal::getComponentsByNameAsMap<TRegisterAsComponent, UActorComponent>(actor, names);
-            });
+                return Unreal::getComponentsByNameAsMap<TRegisterAsComponent, UActorComponent>(actor, names); });
 
         s_get_components_by_tag_as_map_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::string& tag) -> std::map<std::string, UActorComponent*> {
-                return Unreal::getComponentsByTagAsMap<TRegisterAsComponent, UActorComponent>(actor, tag);
-            });
+                return Unreal::getComponentsByTagAsMap<TRegisterAsComponent, UActorComponent>(actor, tag); });
         
         s_get_components_by_tag_any_as_map_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags) -> std::map<std::string, UActorComponent*> {
-                return Unreal::getComponentsByTagAnyAsMap<TRegisterAsComponent, UActorComponent>(actor, tags);
-            });
+                return Unreal::getComponentsByTagAnyAsMap<TRegisterAsComponent, UActorComponent>(actor, tags); });
         
         s_get_components_by_tag_all_as_map_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags) -> std::map<std::string, UActorComponent*> {
-                return Unreal::getComponentsByTagAllAsMap<TRegisterAsComponent, UActorComponent>(actor, tags);
-            });
+                return Unreal::getComponentsByTagAllAsMap<TRegisterAsComponent, UActorComponent>(actor, tags); });
         
         s_get_components_by_type_as_map_registrar_.registerClass(
             class_name, [](const AActor* actor) -> std::map<std::string, UActorComponent*> {
-                return Unreal::getComponentsByTypeAsMap<TRegisterAsComponent, UActorComponent>(actor);
-            });
+                return Unreal::getComponentsByTypeAsMap<TRegisterAsComponent, UActorComponent>(actor); });
 
         //
         // Get component by name or tag or type and return a pointer
@@ -273,48 +228,23 @@ public:
 
         s_get_component_by_name_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::string& name, bool assert_if_not_found) -> UActorComponent* {
-                return Unreal::getComponentByName<TRegisterAsComponent, UActorComponent>(actor, name, assert_if_not_found);
-            });
+                return Unreal::getComponentByName<TRegisterAsComponent, UActorComponent>(actor, name, assert_if_not_found); });
         
         s_get_component_by_tag_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::string& tag, bool assert_if_not_found, bool assert_if_multiple_found) -> UActorComponent* {
-                return Unreal::getComponentByTag<TRegisterAsComponent, UActorComponent>(actor, tag, assert_if_not_found, assert_if_multiple_found);
-            });
+                return Unreal::getComponentByTag<TRegisterAsComponent, UActorComponent>(actor, tag, assert_if_not_found, assert_if_multiple_found); });
         
         s_get_component_by_tag_any_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found, bool assert_if_multiple_found) -> UActorComponent* {
-                return Unreal::getComponentByTagAny<TRegisterAsComponent, UActorComponent>(actor, tags, assert_if_not_found, assert_if_multiple_found);
-            });
+                return Unreal::getComponentByTagAny<TRegisterAsComponent, UActorComponent>(actor, tags, assert_if_not_found, assert_if_multiple_found); });
         
         s_get_component_by_tag_all_registrar_.registerClass(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags, bool assert_if_not_found, bool assert_if_multiple_found) -> UActorComponent* {
-                return Unreal::getComponentByTagAll<TRegisterAsComponent, UActorComponent>(actor, tags, assert_if_not_found, assert_if_multiple_found);
-            });
+                return Unreal::getComponentByTagAll<TRegisterAsComponent, UActorComponent>(actor, tags, assert_if_not_found, assert_if_multiple_found); });
         
         s_get_component_by_type_registrar_.registerClass(
             class_name, [](const AActor* actor, bool assert_if_not_found, bool assert_if_multiple_found) -> UActorComponent* {
-                return Unreal::getComponentByType<TRegisterAsComponent, UActorComponent>(actor, assert_if_not_found, assert_if_multiple_found);
-            });
-    }
-
-    template <CComponent TComponent, CComponent TUnregisterAsComponent = TComponent>
-    static void unregisterComponentClass(const std::string& class_name)
-    {
-        s_get_components_by_name_registrar_.unregisterClass(class_name);
-        s_get_components_by_tag_registrar_.unregisterClass(class_name);
-        s_get_components_by_tag_any_registrar_.unregisterClass(class_name);
-        s_get_components_by_tag_all_registrar_.unregisterClass(class_name);
-        s_get_components_by_type_registrar_.unregisterClass(class_name);
-        s_get_components_by_name_as_map_registrar_.unregisterClass(class_name);
-        s_get_components_by_tag_as_map_registrar_.unregisterClass(class_name);
-        s_get_components_by_tag_any_as_map_registrar_.unregisterClass(class_name);
-        s_get_components_by_tag_all_as_map_registrar_.unregisterClass(class_name);
-        s_get_components_by_type_as_map_registrar_.unregisterClass(class_name);
-        s_get_component_by_name_registrar_.unregisterClass(class_name);
-        s_get_component_by_tag_registrar_.unregisterClass(class_name);
-        s_get_component_by_tag_any_registrar_.unregisterClass(class_name);
-        s_get_component_by_tag_all_registrar_.unregisterClass(class_name);
-        s_get_component_by_type_registrar_.unregisterClass(class_name);
+                return Unreal::getComponentByType<TRegisterAsComponent, UActorComponent>(actor, assert_if_not_found, assert_if_multiple_found); });
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TRegisterAsComponent = TSceneComponent>
@@ -329,28 +259,23 @@ public:
 
         s_get_children_components_by_name_registrar_.registerClass(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& names, bool include_all_descendants, bool return_null_if_not_found) -> std::vector<USceneComponent*> {
-                return Unreal::getChildrenComponentsByName<TRegisterAsComponent, USceneComponent>(parent, names, include_all_descendants, return_null_if_not_found);
-            });
+                return Unreal::getChildrenComponentsByName<TRegisterAsComponent, USceneComponent>(parent, names, include_all_descendants, return_null_if_not_found); });
 
         s_get_children_components_by_tag_registrar_.registerClass(
             class_name, [](const USceneComponent* parent, const std::string& tag, bool include_all_descendants) -> std::vector<USceneComponent*> {
-                return Unreal::getChildrenComponentsByTag<TRegisterAsComponent, USceneComponent>(parent, tag, include_all_descendants);
-            });
+                return Unreal::getChildrenComponentsByTag<TRegisterAsComponent, USceneComponent>(parent, tag, include_all_descendants); });
 
         s_get_children_components_by_tag_any_registrar_.registerClass(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::vector<USceneComponent*> {
-                return Unreal::getChildrenComponentsByTagAny<TRegisterAsComponent, USceneComponent>(parent, tags, include_all_descendants);
-            });
+                return Unreal::getChildrenComponentsByTagAny<TRegisterAsComponent, USceneComponent>(parent, tags, include_all_descendants); });
 
         s_get_children_components_by_tag_all_registrar_.registerClass(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::vector<USceneComponent*> {
-                return Unreal::getChildrenComponentsByTagAll<TRegisterAsComponent, USceneComponent>(parent, tags, include_all_descendants);
-            });
+                return Unreal::getChildrenComponentsByTagAll<TRegisterAsComponent, USceneComponent>(parent, tags, include_all_descendants); });
 
         s_get_children_components_by_type_registrar_.registerClass(
             class_name, [](const USceneComponent* parent, bool include_all_descendants) -> std::vector<USceneComponent*> {
-                return Unreal::getChildrenComponentsByType<TRegisterAsComponent, USceneComponent>(parent, include_all_descendants);
-            });
+                return Unreal::getChildrenComponentsByType<TRegisterAsComponent, USceneComponent>(parent, include_all_descendants); });
 
         //
         // Get children components by name or tag or type and return an std::map
@@ -409,6 +334,46 @@ public:
             class_name, [](const USceneComponent* parent, bool include_all_descendants, bool assert_if_not_found, bool assert_if_multiple_found) -> USceneComponent* {
                 return Unreal::getChildComponentByType<TRegisterAsComponent, USceneComponent>(parent, include_all_descendants, assert_if_not_found, assert_if_multiple_found);
             });
+    }
+
+    template <CActor TActor, CActor TRegisterAsActor = TActor>
+    static void unregisterActorClass(const std::string& class_name)
+    {
+        s_find_actors_by_name_registrar_.unregisterClass(class_name);
+        s_find_actors_by_tag_registrar_.unregisterClass(class_name);
+        s_find_actors_by_tag_any_registrar_.unregisterClass(class_name);
+        s_find_actors_by_tag_all_registrar_.unregisterClass(class_name);
+        s_find_actors_by_type_registrar_.unregisterClass(class_name);
+        s_find_actors_by_name_as_map_registrar_.unregisterClass(class_name);
+        s_find_actors_by_tag_as_map_registrar_.unregisterClass(class_name);
+        s_find_actors_by_tag_any_as_map_registrar_.unregisterClass(class_name);
+        s_find_actors_by_tag_all_as_map_registrar_.unregisterClass(class_name);
+        s_find_actors_by_type_as_map_registrar_.unregisterClass(class_name);
+        s_find_actor_by_name_registrar_.unregisterClass(class_name);
+        s_find_actor_by_tag_registrar_.unregisterClass(class_name);
+        s_find_actor_by_tag_any_registrar_.unregisterClass(class_name);
+        s_find_actor_by_tag_all_registrar_.unregisterClass(class_name);
+        s_find_actor_by_type_registrar_.unregisterClass(class_name);
+    }
+
+    template <CComponent TComponent, CComponent TUnregisterAsComponent = TComponent>
+    static void unregisterComponentClass(const std::string& class_name)
+    {
+        s_get_components_by_name_registrar_.unregisterClass(class_name);
+        s_get_components_by_tag_registrar_.unregisterClass(class_name);
+        s_get_components_by_tag_any_registrar_.unregisterClass(class_name);
+        s_get_components_by_tag_all_registrar_.unregisterClass(class_name);
+        s_get_components_by_type_registrar_.unregisterClass(class_name);
+        s_get_components_by_name_as_map_registrar_.unregisterClass(class_name);
+        s_get_components_by_tag_as_map_registrar_.unregisterClass(class_name);
+        s_get_components_by_tag_any_as_map_registrar_.unregisterClass(class_name);
+        s_get_components_by_tag_all_as_map_registrar_.unregisterClass(class_name);
+        s_get_components_by_type_as_map_registrar_.unregisterClass(class_name);
+        s_get_component_by_name_registrar_.unregisterClass(class_name);
+        s_get_component_by_tag_registrar_.unregisterClass(class_name);
+        s_get_component_by_tag_any_registrar_.unregisterClass(class_name);
+        s_get_component_by_tag_all_registrar_.unregisterClass(class_name);
+        s_get_component_by_type_registrar_.unregisterClass(class_name);
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TUnregisterAsComponent = TSceneComponent>
