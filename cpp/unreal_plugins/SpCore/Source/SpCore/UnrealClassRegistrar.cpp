@@ -16,6 +16,10 @@
 class AActor;
 class UWorld;
 
+// Normally we would do the operations in initialize() and terminate(...) in the opposite order. But we make an
+// exception here (i.e., we do the operations in the same order) to make it easier and less error-prone to add
+// classes and functions.
+
 void UnrealClassRegistrar::initialize()
 {
     // Unreal classes
@@ -24,6 +28,16 @@ void UnrealClassRegistrar::initialize()
 
     // SpCore classes
     registerActorClass<AEngineActor>("AEngineActor");
+}
+
+void UnrealClassRegistrar::terminate()
+{
+    // Unreal classes
+    unregisterActorClass("AStaticMeshActor");
+    unregisterComponentClass("UStaticMeshComponent");
+
+    // SpCore classes
+    unregisterActorClass("AEngineActor");
 }
 
 //
@@ -144,4 +158,42 @@ UActorComponent* UnrealClassRegistrar::getComponentByTagAll(const std::string& c
     
 UActorComponent* UnrealClassRegistrar::getComponentByType(const std::string& class_name, const AActor* actor, bool assert_if_not_found, bool assert_if_multiple_found) {
     return s_get_component_by_type_registrar_.create(class_name, actor, assert_if_not_found, assert_if_multiple_found);
+}
+
+void UnrealClassRegistrar::unregisterActorClass(const std::string& class_name)
+{
+    s_find_actors_by_name_registrar_.unregisterClass(class_name);
+    s_find_actors_by_tag_registrar_.unregisterClass(class_name);
+    s_find_actors_by_tag_any_registrar_.unregisterClass(class_name);
+    s_find_actors_by_tag_all_registrar_.unregisterClass(class_name);
+    s_find_actors_by_type_registrar_.unregisterClass(class_name);
+    s_find_actors_by_name_as_map_registrar_.unregisterClass(class_name);
+    s_find_actors_by_tag_as_map_registrar_.unregisterClass(class_name);
+    s_find_actors_by_tag_any_as_map_registrar_.unregisterClass(class_name);
+    s_find_actors_by_tag_all_as_map_registrar_.unregisterClass(class_name);
+    s_find_actors_by_type_as_map_registrar_.unregisterClass(class_name);
+    s_find_actor_by_name_registrar_.unregisterClass(class_name);
+    s_find_actor_by_tag_registrar_.unregisterClass(class_name);
+    s_find_actor_by_tag_any_registrar_.unregisterClass(class_name);
+    s_find_actor_by_tag_all_registrar_.unregisterClass(class_name);
+    s_find_actor_by_type_registrar_.unregisterClass(class_name);
+}
+
+void UnrealClassRegistrar::unregisterComponentClass(const std::string& class_name)
+{
+    s_get_components_by_name_registrar_.unregisterClass(class_name);
+    s_get_components_by_tag_registrar_.unregisterClass(class_name);
+    s_get_components_by_tag_any_registrar_.unregisterClass(class_name);
+    s_get_components_by_tag_all_registrar_.unregisterClass(class_name);
+    s_get_components_by_type_registrar_.unregisterClass(class_name);
+    s_get_components_by_name_as_map_registrar_.unregisterClass(class_name);
+    s_get_components_by_tag_as_map_registrar_.unregisterClass(class_name);
+    s_get_components_by_tag_any_as_map_registrar_.unregisterClass(class_name);
+    s_get_components_by_tag_all_as_map_registrar_.unregisterClass(class_name);
+    s_get_components_by_type_as_map_registrar_.unregisterClass(class_name);
+    s_get_component_by_name_registrar_.unregisterClass(class_name);
+    s_get_component_by_tag_registrar_.unregisterClass(class_name);
+    s_get_component_by_tag_any_registrar_.unregisterClass(class_name);
+    s_get_component_by_tag_all_registrar_.unregisterClass(class_name);
+    s_get_component_by_type_registrar_.unregisterClass(class_name);
 }

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <Engine/EngineTypes.h>   // EEndPlayReason
 #include <GameFramework/PlayerController.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 
@@ -21,6 +22,7 @@ public:
 
     // APlayerController interface
     void BeginPlay() override;
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
 
 private:
     UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "User Input Component")

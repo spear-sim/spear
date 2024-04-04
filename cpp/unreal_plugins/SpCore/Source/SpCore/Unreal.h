@@ -99,7 +99,7 @@ public:
     //
 
     static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
-    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction); // useful for calling functions with no args
+    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction);
     static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
 
     //
@@ -131,7 +131,7 @@ public:
     {
         std::vector<TDestValue> dest;
         for (auto& data : src) {
-            dest.push_back(reinterpret_cast<TDestValue>(data));
+            dest.push_back(data);
         }
         return dest;
     }
@@ -596,8 +596,11 @@ private:
     }
 
     //
-    // Helper function for formatting array properties as strings in the same style as Unreal
+    // Helper functions for formatting properties as strings in the same style as Unreal
     //
 
     static std::string getArrayPropertyValueAsFormattedString(const FProperty* inner_property, const std::vector<std::string>& inner_strings);
+    static std::string getMapPropertyValueAsFormattedString(
+        const FProperty* inner_key_property, const std::vector<std::string>& inner_key_strings,
+        const FProperty* inner_value_property, const std::vector<std::string>& inner_value_strings);
 };

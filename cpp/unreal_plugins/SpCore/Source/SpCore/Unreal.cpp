@@ -28,8 +28,8 @@
 #include <UObject/NameTypes.h>       // FName
 #include <UObject/Object.h>          // UObject
 #include <UObject/ObjectMacros.h>    // EPropertyFlags
-#include <UObject/UnrealType.h>      // FArrayProperty, FBoolProperty, FDoubleProperty, FEnumProperty, FFloatProperty, FIntProperty, FProperty, FStrProperty,
-                                     // FStructProperty, TFieldIterator
+#include <UObject/UnrealType.h>      // FArrayProperty, FBoolProperty, FDoubleProperty, FEnumProperty, FFloatProperty, FIntProperty, FMapProperty, FProperty,
+                                     // FScriptArrayHelper, FScriptMapHelper, FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, TFieldIterator
 
 #include "SpCore/Assert.h"
 #include "SpCore/EngineActor.h"
@@ -73,7 +73,8 @@ UStruct* Unreal::findStructByName(const UWorld* world, const std::string& name)
 {
     // We only need AEngineActor's property metadata here, so we can use the default object. This makes it so
     // this function is usable even in levels that don't have an AEngineActor in them, and avoids the need to
-    // do a findActor operation.
+    // do a findActor operation. For this operation to work, AEngineActor needs a property named _StructName
+    // of type StructName.
     UClass* engine_actor_uclass = AEngineActor::StaticClass();
     SP_ASSERT(engine_actor_uclass);
     UObject* engine_actor_default_object = engine_actor_uclass->GetDefaultObject();
@@ -151,18 +152,61 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
         property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
         SP_ASSERT(property_desc.value_ptr_);
 
-        // If the current property is an array property, and the name includes the index operator, then update
-        // the current property to refer to the array element based on the index.
+        // If the current property is an array or map property, and the name includes the index operator, then update
+        // the current property to refer to the array or map element based on the index. For map properties, we expect
+        // an index string that is enclosed enclosed in "" quotes if the key type is a string, and not enclosed in
+        // quotes otherwise. The index string must exactly match whatever is returned by getPropertyValueAsString(...)
+        // for the key.
         if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && property_name_tokens.size() == 2) {
             int index = std::atoi(property_name_tokens.at(1).c_str());
             FArrayProperty* array_property = static_cast<FArrayProperty*>(property_desc.property_);
-            FScriptArrayHelper script_array_helper(array_property, property_desc.value_ptr_);
-            SP_ASSERT(index < script_array_helper.Num());
+            FScriptArrayHelper array_helper(array_property, property_desc.value_ptr_);
+            SP_ASSERT(index < array_helper.Num());
 
             property_desc.property_ = array_property->Inner;
             SP_ASSERT(property_desc.property_);
             property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(property_desc.property_, property_desc.value_ptr_, index);
             SP_ASSERT(property_desc.value_ptr_);
+
+        } else if (property_desc.property_->IsA(FMapProperty::StaticClass()) && property_name_tokens.size() == 2) {
+
+            FMapProperty* map_property = static_cast<FMapProperty*>(property_desc.property_);
+            FScriptMapHelper map_helper(map_property, property_desc.value_ptr_);
+
+            property_desc.property_ = map_property->ValueProp;
+            SP_ASSERT(property_desc.property_);
+
+            bool found = false;
+            for (int j = 0; j < map_helper.Num(); j++) {
+                PropertyDesc inner_key_property_desc;
+                inner_key_property_desc.property_ = map_property->KeyProp;
+                inner_key_property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(map_property->KeyProp, property_desc.value_ptr_, j);
+                SP_ASSERT(inner_key_property_desc.value_ptr_);
+                std::string inner_key_string = getPropertyValueAsString(inner_key_property_desc);
+
+                // If the key type is a string, then we expect the index string to be enclosed in quotes,
+                // otherwise we expect it not to be enclosed in quotes.
+                if (inner_key_property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
+                    inner_key_property_desc.property_->IsA(FIntProperty::StaticClass())  ||
+                    inner_key_property_desc.property_->IsA(FByteProperty::StaticClass())) {
+                    if (property_name_tokens.at(1) == inner_key_string) {
+                        found = true;
+                    }
+                } else if (inner_key_property_desc.property_->IsA(FStrProperty::StaticClass())) {
+                    if (property_name_tokens.at(1) == "\"" + inner_key_string + "\"") {
+                        found = true;
+                    }
+                } else {
+                    SP_LOG(property_name, " has an unsupported key type: ", toStdString(map_property->KeyProp->GetClass()->GetName()));
+                    SP_ASSERT(false);
+                }
+                if (found) {
+                    property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(map_property->ValueProp, property_desc.value_ptr_, j);
+                    SP_ASSERT(property_desc.value_ptr_);
+                    break;
+                }
+            }
+            SP_ASSERT(found);
         }
 
         // If the current property name is not the last name in our sequence, then by definition the current
@@ -183,7 +227,7 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
                 ustruct = struct_property->Struct;
 
             } else {
-                SP_LOG(property_name, " is an unsupported type:", toStdString(property_desc.property_->GetClass()->GetName()));
+                SP_LOG(property_name, " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
                 SP_ASSERT(false);
             }
         }
@@ -211,20 +255,69 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
     }  else if (property_desc.property_->IsA(FArrayProperty::StaticClass())) {
 
         FArrayProperty* array_property = static_cast<FArrayProperty*>(property_desc.property_);
-        FScriptArrayHelper script_array_helper(array_property, property_desc.value_ptr_);
-
+        FScriptArrayHelper array_helper(array_property, property_desc.value_ptr_);
         FProperty* inner_property = array_property->Inner;
+        SP_ASSERT(inner_property);
+
         std::vector<std::string> inner_strings;
-        for (int i = 0; i < script_array_helper.Num(); i++) {
+        for (int i = 0; i < array_helper.Num(); i++) {
             PropertyDesc inner_property_desc;
+            inner_property_desc.property_ = inner_property;
             inner_property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
             SP_ASSERT(inner_property_desc.value_ptr_);
-            inner_property_desc.property_ = inner_property;
             std::string inner_string = getPropertyValueAsString(inner_property_desc);
             inner_strings.push_back(inner_string);
         }
 
         return getArrayPropertyValueAsFormattedString(inner_property, inner_strings);
+
+    }  else if (property_desc.property_->IsA(FSetProperty::StaticClass())) {
+
+        FSetProperty* set_property = static_cast<FSetProperty*>(property_desc.property_);
+        FScriptSetHelper set_helper(set_property, property_desc.value_ptr_);
+        FProperty* inner_property = set_property->ElementProp;
+        SP_ASSERT(inner_property);
+
+        std::vector<std::string> inner_strings;
+        for (int i = 0; i < set_helper.Num(); i++) {
+            PropertyDesc inner_property_desc;
+            inner_property_desc.property_ = inner_property;
+            inner_property_desc.value_ptr_ = set_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
+            SP_ASSERT(inner_property_desc.value_ptr_);
+            std::string inner_string = getPropertyValueAsString(inner_property_desc);
+            inner_strings.push_back(inner_string);
+        }
+
+        return getArrayPropertyValueAsFormattedString(inner_property, inner_strings);
+
+    }  else if (property_desc.property_->IsA(FMapProperty::StaticClass())) {
+
+        FMapProperty* map_property = static_cast<FMapProperty*>(property_desc.property_);
+        FScriptMapHelper map_helper(map_property, property_desc.value_ptr_);
+        FProperty* inner_key_property = map_property->KeyProp;
+        SP_ASSERT(inner_key_property);
+        FProperty* inner_value_property = map_property->ValueProp;
+        SP_ASSERT(inner_value_property);
+
+        std::vector<std::string> inner_key_strings;
+        std::vector<std::string> inner_value_strings;
+        for (int i = 0; i < map_helper.Num(); i++) {
+            PropertyDesc inner_key_property_desc;
+            inner_key_property_desc.property_ = inner_key_property;
+            inner_key_property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(inner_key_property, property_desc.value_ptr_, i);
+            SP_ASSERT(inner_key_property_desc.value_ptr_);
+            std::string inner_key_string = getPropertyValueAsString(inner_key_property_desc);
+            inner_key_strings.push_back(inner_key_string);
+
+            PropertyDesc inner_value_property_desc;
+            inner_value_property_desc.property_ = inner_value_property;
+            inner_value_property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(inner_value_property, property_desc.value_ptr_, i);
+            SP_ASSERT(inner_value_property_desc.value_ptr_);
+            std::string inner_value_string = getPropertyValueAsString(inner_value_property_desc);
+            inner_value_strings.push_back(inner_value_string);
+        }
+
+        return getMapPropertyValueAsFormattedString(inner_key_property, inner_key_strings, inner_value_property, inner_value_strings);
 
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
 
@@ -260,6 +353,8 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
         property_desc.property_->IsA(FByteProperty::StaticClass())   ||
         property_desc.property_->IsA(FArrayProperty::StaticClass())  ||
+        property_desc.property_->IsA(FSetProperty::StaticClass())    ||
+        property_desc.property_->IsA(FMapProperty::StaticClass())    ||
         property_desc.property_->IsA(FStructProperty::StaticClass())) {
 
         bool success = false;
@@ -439,35 +534,108 @@ std::vector<bool> Unreal::getComponentHasTags(const UActorComponent* component, 
 
 std::string Unreal::getArrayPropertyValueAsFormattedString(const FProperty* inner_property, const std::vector<std::string>& inner_strings)
 {
+    int num_elements = inner_strings.size();
     std::string formatted_string;
 
-    // If the inner property is a primitive type, then format the entire array on a single line,
-    // otherwise put each element on a new line.
+    // If the array is empty, then set the join string to be an empty string. Otherwise, if the inner property
+    // is a primitive type, then format the entire array on a single line. Otherwise put each element on a new
+    // line.
     std::string join_string;
-    if (!inner_strings.empty()) {
+    if (num_elements > 0) {
         if (inner_property->IsA(FStructProperty::StaticClass())) {
-            join_string += "\n";
+            join_string = "\n";
+        } else {
+            join_string = " ";
         }
-        else {
-            join_string += " ";
-        }
+    } else {
+        join_string = "";
+    }
+
+    std::string quote_string;
+    if (inner_property->IsA(FStrProperty::StaticClass())) {
+        quote_string = "\"";
+    } else {
+        quote_string = "";
     }
 
     // Build the formatted string except for indentation.
-    formatted_string += "[";
-    if (!inner_strings.empty()) {
-        formatted_string += join_string;
-    }
-    for (int i = 0; i < inner_strings.size() - 1; i++) {
-        formatted_string += inner_strings.at(i) + "," + join_string;
-    }
-    if (!inner_strings.empty()) {
-        formatted_string += inner_strings.at(inner_strings.size() - 1) + join_string;
+    formatted_string += "[" + join_string;
+    for (int i = 0; i < num_elements; i++) {
+        std::string join_prefix_string;
+        if (i < num_elements - 1) {
+            join_prefix_string = ",";
+        } else {
+            join_prefix_string = "";
+        }
+        formatted_string += quote_string + inner_strings.at(i) + quote_string + join_prefix_string + join_string;
     }
     formatted_string += "]";
 
     // If the property is a struct type and the array is non-empty, then indent.
-    if (inner_property->IsA(FStructProperty::StaticClass()) && !inner_strings.empty()) {
+    if (inner_property->IsA(FStructProperty::StaticClass()) && num_elements > 0) {
+        std::vector<std::string> lines = Std::tokenize(formatted_string, "\n");
+        SP_ASSERT(lines.size() > 2);
+        formatted_string = lines.at(0) + "\n";
+        for (int i = 1; i < lines.size() - 1; i++) {
+            formatted_string += "\t" + lines.at(i) + "\n";
+        }
+        formatted_string += lines.at(lines.size() - 1);
+    }
+
+    return formatted_string;
+}
+
+std::string Unreal::getMapPropertyValueAsFormattedString(
+    const FProperty* inner_key_property, const std::vector<std::string>& inner_key_strings,
+    const FProperty* inner_value_property, const std::vector<std::string>& inner_value_strings)
+{
+    SP_ASSERT(inner_key_strings.size() == inner_value_strings.size());
+
+    int num_elements = inner_key_strings.size();
+    std::string formatted_string;
+
+    // If the map is non-empty, put each element on a new line. Strictly speaking, Unreal appears to always
+    // set the join string to a new-line, even when the map is empty. But we don't try to replicate this
+    // behavior for better consistency with our array formatting implementation.
+    std::string join_string = "\n";
+    if (num_elements > 0) {
+        join_string = "\n";
+    } else {
+        join_string = "";
+    }
+
+    std::string quote_string;
+    if (inner_value_property->IsA(FStrProperty::StaticClass())) {
+        quote_string = "\"";
+    } else {
+        quote_string = "";
+    }
+
+    std::string value_prefix_string;
+    if (inner_value_property->IsA(FStructProperty::StaticClass())) {
+        value_prefix_string = "\n";
+    } else {
+        value_prefix_string = " ";
+    }
+
+    // Build the formatted string except for indentation. Strictly speaking, Unreal appears to add an
+    // extra new-line at the start of map strings, but we don't try to replicate this behavior for better
+    // consistency with our array formatting implementation.
+    formatted_string += "{" + join_string;
+    for (int i = 0; i < num_elements; i++) {
+        std::string join_prefix_string;
+        if (i < num_elements - 1) {
+            join_prefix_string = ",";
+        } else {
+            join_prefix_string = "";
+        }
+        formatted_string +=
+            "\"" + inner_key_strings.at(i) + "\":" + value_prefix_string + quote_string + inner_value_strings.at(i) + quote_string + join_prefix_string + join_string;
+    }
+    formatted_string += "}";
+
+    // If the map is non-empty, then indent.
+    if (num_elements > 0) {
         std::vector<std::string> lines = Std::tokenize(formatted_string, "\n");
         SP_ASSERT(lines.size() > 2);
         formatted_string = lines.at(0) + "\n";

@@ -50,72 +50,80 @@ concept CValueContainer =
     requires(TValueContainer value_container) {
         typename TValueContainer::value_type;
         { *std::ranges::begin(value_container) } -> std::convertible_to<typename TValueContainer::value_type>;
+        { *(value_container.erase(std::ranges::begin(value_container), std::ranges::end(value_container))) } -> std::convertible_to<typename TValueContainer::value_type>;
     };
 
-template <typename TValueContainer, typename TValue>
+template <typename TDestValueContainer, typename TSrcValue>
 concept CValueContainerHasValuesConvertibleFrom =
-    CValueContainer<TValueContainer> &&
-    CConvertibleFrom<typename TValueContainer::value_type, TValue>;
+    CValueContainer<TDestValueContainer> &&
+    CConvertibleFrom<typename TDestValueContainer::value_type, TSrcValue>;
 
-template <typename TValueContainer, typename TValues>
-concept CValueContainerConvertibleFrom =
-    CValueContainer<TValueContainer> &&
-    CValueContainer<TValues> &&
-    CConvertibleFrom<typename TValueContainer::value_type, typename TValues::value_type>;
+template <typename TDestValueContainer, typename TSrcValueContainer>
+concept CValueContainerHasValuesConvertibleFromContainer =
+    CValueContainer<TDestValueContainer> &&
+    CValueContainer<TSrcValueContainer> &&
+    CConvertibleFrom<typename TDestValueContainer::value_type, typename TSrcValueContainer::value_type>;
 
 //
 // Key-value container (e.g., std::map) concepts
 //
 
-// Ideally we would constrain the type of (*std::ranges::begin(...)).second to be convertible to
-// TKeyValueContainer::mapped_type, but doing so prevents this constraint for being satisfied, even when
-// the input type is std::map. So we only constrain (*std::ranges::begin(...)).first to be convertible
-// to TKeyValueContainer::key_type.
+// Ideally we would constrain the type of .second to be convertible to TKeyValueContainer::mapped_type
+// in the concept below, but doing so prevents this constraint for being satisfied, even when the input
+// type is std::map. So we only constrain .first to be convertible to TKeyValueContainer::key_type.
 template <typename TKeyValueContainer>
 concept CKeyValueContainer =
     std::ranges::range<TKeyValueContainer> &&
     requires(TKeyValueContainer key_value_container) {
         typename TKeyValueContainer::key_type;
         typename TKeyValueContainer::mapped_type;
+    } &&
+    requires(TKeyValueContainer key_value_container, typename TKeyValueContainer::key_type key, typename TKeyValueContainer::mapped_type&& value) {
         { (*std::ranges::begin(key_value_container)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
         { (*std::ranges::begin(key_value_container)).second };
+        { key_value_container.insert({key, std::forward<decltype(value)>(value)}).first };
+        { key_value_container.insert({key, std::forward<decltype(value)>(value)}).second } -> std::convertible_to<bool>;
+        { (*(key_value_container.insert({key, std::forward<decltype(value)>(value)}).first)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
+        { (*(key_value_container.insert({key, std::forward<decltype(value)>(value)}).first)).second };
+        { key_value_container.erase(key) } -> std::same_as<size_t>;
     };
 
-template <typename TKeyValueContainer, typename TValue>
+template <typename TDestKeyValueContainer, typename TSrcKey>
 concept CKeyValueContainerHasKeysConvertibleFrom =
-    CKeyValueContainer<TKeyValueContainer> &&
-    CConvertibleFrom<typename TKeyValueContainer::key_type, TValue>;
+    CKeyValueContainer<TDestKeyValueContainer> &&
+    CConvertibleFrom<typename TDestKeyValueContainer::key_type, TSrcKey>;
 
-template <typename TKeyValueContainer, typename TKey, typename TValue>
-concept CKeyValueContainerCanInsertValue =
-    CKeyValueContainer<TKeyValueContainer> &&
-    requires(TKeyValueContainer& key_value_range, const TKey& key, TValue&& value) {
-        { key_value_range.insert({key, std::forward<decltype(value)>(value)}).first };
-        { key_value_range.insert({key, std::forward<decltype(value)>(value)}).second };
+template <typename TDestKeyValueContainer, typename TSrcValue>
+concept CKeyValueContainerHasValuesConvertibleFrom =
+    CKeyValueContainer<TDestKeyValueContainer> &&
+    CConvertibleFrom<typename TDestKeyValueContainer::mapped_type, TSrcValue>;
+
+template <typename TDestKeyValueContainer, typename TSrcInitializerListValue>
+concept CKeyValueContainerHasValuesConvertibleFromInitializerList =
+    CKeyValueContainer<TDestKeyValueContainer> &&
+    requires(TDestKeyValueContainer key_value_container, typename TDestKeyValueContainer::key_type key, std::initializer_list<TSrcInitializerListValue> initializer_list) {
+        { key_value_container.insert({key, initializer_list}).first };
+        { key_value_container.insert({key, initializer_list}).second } -> std::convertible_to<bool>;
+        { (*(key_value_container.insert({key, initializer_list}).first)).first } -> std::convertible_to<typename TDestKeyValueContainer::key_type>;
+        { (*(key_value_container.insert({key, initializer_list}).first)).second };
     };
 
-template <typename TKeyValueContainer, typename TKey, typename TInitializerListValue>
-concept CKeyValueContainerCanInsertInitializerList =
-    CKeyValueContainer<TKeyValueContainer> &&
-    requires(TKeyValueContainer& key_value_range, const TKey& key, std::initializer_list<TInitializerListValue> initializer_list) {
-        { key_value_range.insert({key, initializer_list}).first };
-        { key_value_range.insert({key, initializer_list}).second };
-    };
-
-template <typename TKeyValueContainer, typename TKey>
-concept CKeyValueContainerCanInsertEmptyInitializerList =
-    CKeyValueContainer<TKeyValueContainer> &&
-    requires(TKeyValueContainer& key_value_range, const TKey& key) {
-        { key_value_range.insert({key, {}}).first };
-        { key_value_range.insert({key, {}}).second };
+template <typename TDestKeyValueContainer>
+concept CKeyValueContainerHasValuesConvertibleFromEmptyInitializerList =
+    requires(TDestKeyValueContainer key_value_container, typename TDestKeyValueContainer::key_type key) {
+        { key_value_container.insert({key, {}}).first };
+        { key_value_container.insert({key, {}}).second } -> std::convertible_to<bool>;
+        { (*(key_value_container.insert({key, {}}).first)).first } -> std::convertible_to<typename TDestKeyValueContainer::key_type>;
+        { (*(key_value_container.insert({key, {}}).first)).second };
     };
 
 template <typename TDestKeyValueContainer, typename TSrcKeyValueContainer>
-concept CKeyValueContainerCanInsertContainer =
+concept CKeyValueContainerHasKeysAndValuesConvertibleFromContainer =
     CKeyValueContainer<TDestKeyValueContainer> &&
     CKeyValueContainer<TSrcKeyValueContainer> &&
-    requires(TDestKeyValueContainer& dest_key_value_container, const TSrcKeyValueContainer& src_key_value_container) {
-        { dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container)) };
+    requires(TDestKeyValueContainer dest_key_value_container, TSrcKeyValueContainer src_key_value_container) {
+        { dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container)) } -> std::same_as<void>;
+        { dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container)) } -> std::same_as<void>;
     };
 
 //
@@ -185,7 +193,8 @@ public:
     // std::ranges::range functions
     //
 
-    template <typename TValue, typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TValue>
+    template <typename TValue, typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, TValue>
     static std::vector<TValue> toVector(TRange&& range)
     {
         std::vector<TValue> vector;
@@ -193,7 +202,8 @@ public:
         return vector;
     }
 
-    template <typename TKey, typename TValue, typename TRange> requires CRangeHasValuesConvertibleTo<TRange, std::pair<TKey, TValue>>
+    template <typename TKey, typename TValue, typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, std::pair<TKey, TValue>>
     static std::map<TKey, TValue> toMap(TRange&& range)
     {
         std::vector<std::pair<TKey, TValue>> pairs = toVector<std::pair<TKey, TValue>>(std::forward<decltype(range)>(range));
@@ -206,13 +216,15 @@ public:
         return std::map<TKey, TValue>(std::ranges::begin(pairs), std::ranges::end(pairs));
     }
 
-    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, bool>
+    template <typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, bool>
     static bool all(TRange&& range)
     {
         return std::ranges::all_of(std::forward<decltype(range)>(range), [](auto val) { return val; });
     }
 
-    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, bool>
+    template <typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, bool>
     static bool any(TRange&& range)
     {
         return std::ranges::any_of(std::forward<decltype(range)>(range), [](auto val) { return val; });
@@ -222,26 +234,30 @@ public:
     // Value container (e.g., std::vector) functions
     //
 
-    template <typename TValueContainer, typename TValue> requires CValueContainerHasValuesConvertibleFrom<TValueContainer, TValue>
+    template <typename TValueContainer, typename TValue> requires
+        CValueContainerHasValuesConvertibleFrom<TValueContainer, TValue>
     static bool contains(const TValueContainer& value_container, const TValue& value)
     {
         return std::ranges::find(value_container, value) != value_container.end();
     }
 
-    template <typename TValueContainer, typename TValues> requires CValueContainerConvertibleFrom<TValueContainer, TValues>
+    template <typename TValueContainer, typename TValues> requires
+        CValueContainerHasValuesConvertibleFromContainer<TValueContainer, TValues>
     static std::vector<bool> contains(const TValueContainer& value_container, const TValues& values)
     {
         return toVector<bool>(values | std::views::transform([&value_container](const auto& value) { return Std::contains(value_container, value); }));
     }
 
-    template <typename TValueContainer, typename TValue> requires CValueContainerHasValuesConvertibleFrom<TValueContainer, TValue>
+    template <typename TValueContainer, typename TValue> requires
+        CValueContainerHasValuesConvertibleFrom<TValueContainer, TValue>
     static int index(const TValueContainer& value_container, const TValue& value)
     {
         int index = std::ranges::distance(std::ranges::begin(value_container), std::ranges::find(value_container, value));
         return (index < std::ranges::size(value_container)) ? index : -1;
     }
 
-    template <typename TValueContainer> requires CValueContainer<TValueContainer>
+    template <typename TValueContainer> requires
+        CValueContainer<TValueContainer>
     static std::vector<typename TValueContainer::value_type> unique(const TValueContainer& value_container)
     {
         using TValue = typename TValueContainer::value_type;
@@ -257,13 +273,15 @@ public:
     // Key-value container (e.g., std::map) functions
     //
 
-    template <typename TKeyValueContainer, typename TKey> requires CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
+    template <typename TKeyValueContainer, typename TKey> requires
+        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
     static bool containsKey(const TKeyValueContainer& key_value_container, const TKey& key)
     {
         return key_value_container.contains(key);
     }
 
-    template <typename TKeyValueContainer> requires CKeyValueContainer<TKeyValueContainer>
+    template <typename TKeyValueContainer> requires
+        CKeyValueContainer<TKeyValueContainer>
     static std::vector<typename TKeyValueContainer::key_type> keys(const TKeyValueContainer& key_value_container)
     {
         using TKey = typename TKeyValueContainer::key_type;
@@ -280,22 +298,26 @@ public:
         #endif
     }
 
-    template <typename TKeyValueContainer, typename TKey, typename TValue> requires CKeyValueContainerCanInsertValue<TKeyValueContainer, TKey, TValue>
+    template <typename TKeyValueContainer, typename TKey, typename TValue> requires
+        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey> &&
+        CKeyValueContainerHasValuesConvertibleFrom<TKeyValueContainer, TValue>
     static void insert(TKeyValueContainer& key_value_container, const TKey& key, TValue&& value)
     {
         auto [itr, success] = key_value_container.insert({key, std::forward<decltype(value)>(value)});
-        SP_ASSERT(success);
+        SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
     // An std::initializer_list type (e.g., std::initializer_list<int>) can't be inferred as a template parameter.
     // Only the value type of the initializer list can be inferred (e.g., the int type in std::initializer_list<int>),
     // and only when the initializer list passed to the templated function is non-empty. So this insert(...)
     // specialization is required handle situations where a caller passes in a non-empty initializer list.
-    template <typename TKeyValueContainer, typename TKey, typename TInitializerListValue> requires CKeyValueContainerCanInsertInitializerList<TKeyValueContainer, TKey, TInitializerListValue>
+    template <typename TKeyValueContainer, typename TKey, typename TInitializerListValue> requires
+        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey> &&
+        CKeyValueContainerHasValuesConvertibleFromInitializerList<TKeyValueContainer, TInitializerListValue>
     static void insert(TKeyValueContainer& key_value_container, const TKey& key, std::initializer_list<TInitializerListValue> initializer_list)
     {
         auto [itr, success] = key_value_container.insert({key, initializer_list});
-        SP_ASSERT(success);
+        SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
     // This insert(...) specialization is required to handle situations where a caller passes in an empty initializer
@@ -304,14 +326,17 @@ public:
 private:
     class EmptyInitializerList;
 public:
-    template <typename TKeyValueContainer, typename TKey> requires CKeyValueContainerCanInsertEmptyInitializerList<TKeyValueContainer, TKey>
+    template <typename TKeyValueContainer, typename TKey> requires
+        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey> &&
+        CKeyValueContainerHasValuesConvertibleFromEmptyInitializerList<TKeyValueContainer>
     static void insert(TKeyValueContainer& key_value_container, const TKey& key, std::initializer_list<EmptyInitializerList> initializer_list)
     {
         auto [itr, success] = key_value_container.insert({key, {}});
-        SP_ASSERT(success);
+        SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
-    template <typename TDestKeyValueContainer, typename TSrcKeyValueContainer> requires CKeyValueContainerCanInsertContainer<TDestKeyValueContainer, TSrcKeyValueContainer>
+    template <typename TDestKeyValueContainer, typename TSrcKeyValueContainer> requires
+        CKeyValueContainerHasKeysAndValuesConvertibleFromContainer<TDestKeyValueContainer, TSrcKeyValueContainer>
     static void insert(TDestKeyValueContainer& dest_key_value_container, const TSrcKeyValueContainer& src_key_value_container)
     {
         using TKey = typename TDestKeyValueContainer::key_type;
@@ -322,6 +347,24 @@ public:
         SP_ASSERT(keys_set_intersection.empty());
 
         dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container));
+    }
+
+    template <typename TKeyValueContainer, typename TKey> requires
+        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
+    static void remove(TKeyValueContainer& key_value_container, const TKey& key)
+    {
+        size_t num_elements_removed = key_value_container.erase(key);
+        SP_ASSERT(num_elements_removed == 1);
+    }
+
+    template <typename TKeyValueContainer, typename TValueContainer> requires
+        CValueContainer<TValueContainer> &&
+        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, typename TValueContainer::value_type>
+    static void remove(TKeyValueContainer& key_value_container, const TValueContainer& keys)
+    {
+        for (auto& key : keys) {
+            remove(key_value_container, key);
+        }
     }
 
     //
