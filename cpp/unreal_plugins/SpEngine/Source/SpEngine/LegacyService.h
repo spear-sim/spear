@@ -33,9 +33,9 @@
 
 class LegacyService {
 public:
-	LegacyService() = delete;
-	LegacyService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
-	{
+    LegacyService() = delete;
+    LegacyService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
+    {
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &LegacyService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &LegacyService::worldCleanupHandler);
 
@@ -126,7 +126,7 @@ public:
                 SP_ASSERT(nav_mesh_);
                 return nav_mesh_->getPaths(initial_points, goal_points);
         });
-	}
+    }
 
     ~LegacyService()
     {
