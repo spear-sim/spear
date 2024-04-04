@@ -41,6 +41,9 @@ if __name__ == "__main__":
     df_columns = ["scene_id", "location_x", "location_y", "location_z", "rotation_pitch", "rotation_yaw", "rotation_roll"]
     df = pd.DataFrame(columns=df_columns)
 
+    # configure system based on config
+    spear.configure_system(config)
+
     # create spear.Instance object
     sp_instance = spear.Instance(config)
     

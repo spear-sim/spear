@@ -25,6 +25,10 @@ SPEAR:
 
     STANDALONE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
 
+    COMMAND_LINE_ARGS:
+      resx: 512
+      resy: 512
+
     CUSTOM_COMMAND_LINE_ARGUMENTS: []
 
 SP_ENGINE:

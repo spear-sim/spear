@@ -74,11 +74,6 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
-    # modify config
-    config.defrost()
-    config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.renderoffscreen = True
-    config.freeze()
-
     # configure system based on config
     spear.configure_system(config)
 

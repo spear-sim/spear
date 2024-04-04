@@ -10,6 +10,9 @@ SPEAR:
 
     PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
 
+    COMMAND_LINE_ARGS:
+      renderoffscreen: true
+
     CUSTOM_COMMAND_LINE_ARGUMENTS: []
 
 SIMULATION_CONTROLLER:
