@@ -13,7 +13,8 @@ from spear.path import path_exists, remove_path
 from spear.engine_service import EngineService
 from spear.env import Env
 from spear.instance import Instance
-from spear.navmesh_service import NavMeshService
+from spear.legacy_service import LegacyService
+from spear.game_world_service import GameWorldService
 
 spear_root_dir = os.path.dirname(os.path.realpath(__file__))
 # ordered from low-level to high-level

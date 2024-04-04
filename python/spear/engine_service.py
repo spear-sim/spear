@@ -2,54 +2,20 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import spear
 import sys
 
-# TODO: Separate EngineService and GameWorldService function calls from this class.
 class EngineService():
     def __init__(self, rpc_client):
         self._rpc_client = rpc_client
 
     def begin_tick(self):
         self._rpc_client.call("engine_service.begin_tick")
-        self._rpc_client.call("game_world_service.unpause_game")
 
     def tick(self):
-        self._rpc_client.call("engine_service.tick")
+        self._rpc_client.call("engine_service.begin_tick")
 
     def end_tick(self):
-        self._rpc_client.call("game_world_service.pause_game")
-        self._rpc_client.call("engine_service.end_tick")
-
-    def get_current_level(self):
-        self.begin_tick()
-        level_name = self._rpc_client.call("game_world_service.get_current_level_name")
-        self.tick()
-        self.end_tick()
-        return level_name
-
-    def open_level(self, scene_id, map_id=""):
-        desired_level_name = ""
-        if scene_id != "":
-            if map_id == "":
-                map_id = scene_id
-            else:
-                map_id = map_id
-            desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id
-
-        spear.log("scene_id:           ", scene_id)
-        spear.log("map_id:             ", map_id)
-        spear.log("desired_level_name: ", desired_level_name)
-
-        self.begin_tick()
-        self._rpc_client.call("game_world_service.open_level", desired_level_name)
-        self.tick()
-        self.end_tick()
-
-        while self.get_current_level() != scene_id:
-            self.begin_tick()
-            self.tick()
-            self.end_tick()
+        self._rpc_client.call("engine_service.begin_tick")
 
     def get_byte_order(self):
         unreal_instance_byte_order = self._rpc_client.call("engine_service.get_byte_order")

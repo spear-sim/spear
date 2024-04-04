@@ -21,8 +21,9 @@ class Instance():
         self._initialize_rpc_client()
 
         # Need to do these after we have a valid rpc_client
-        self.engine_service = spear.EngineService(self._rpc_client)
-        self.navmesh_service = spear.NavMeshService(self.engine_service)
+        self.engine_service = spear.EngineService(self.rpc_client)
+        self.game_world_service = spear.GameWorldService(self.rpc_client)
+        self.legacy_service = spear.LegacyService(self.rpc_client)
 
         # Need to do this after we have a valid EngineService object because we call begin_tick(), tick(), and end_tick() here.
         self._initialize_unreal_instance()
@@ -130,7 +131,9 @@ class Instance():
         # that leverage temporal coherence between frames.
         for i in range(1 + self._config.SPEAR.INSTANCE.NUM_EXTRA_WARMUP_TICKS):
             self.engine_service.begin_tick()
+            self.game_world_service.unpause_game()
             self.engine_service.tick()
+            self.game_world_service.pause_game()
             self.engine_service.end_tick()
 
         spear.log("Finished initializing Unreal instance.")
@@ -142,7 +145,7 @@ class Instance():
             return
 
         spear.log("Closing Unreal instance...")
-        self._rpc_client.call("engine_service.request_close")
+        self.rpc_client.call("engine_service.request_close")
         status = "running"
         while status in expected_status_values:
             try:
@@ -169,11 +172,11 @@ class Instance():
         if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "none":
 
             try:
-                self._rpc_client = msgpackrpc.Client(
+                self.rpc_client = msgpackrpc.Client(
                     msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT),
                     timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                self._rpc_client.call("engine_service.ping")
+                self.rpc_client.call("engine_service.ping")
                 connected = True
 
             except Exception as e:
@@ -196,11 +199,11 @@ class Instance():
                     break
 
                 try:
-                    self._rpc_client = msgpackrpc.Client(
+                    self.rpc_client = msgpackrpc.Client(
                         msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT), 
                         timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                    self._rpc_client.call("engine_service.ping")
+                    self.rpc_client.call("engine_service.ping")
                     connected = True
                     break
 
@@ -226,6 +229,6 @@ class Instance():
 
     def _close_rpc_client(self):
         spear.log("Closing RPC client...")
-        self._rpc_client.close()
-        self._rpc_client._loop._ioloop.close()
+        self.rpc_client.close()
+        self.rpc_client._loop._ioloop.close()
         spear.log("Finished closing RPC client.")
