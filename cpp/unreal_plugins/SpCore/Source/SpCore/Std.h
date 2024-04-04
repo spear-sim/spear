@@ -317,11 +317,7 @@ public:
 
         // If no default value is provided, then all keys must be present
         SP_ASSERT(Std::all(containsKeys(key_value_container, keys)));
-
-        return toVector<TValue>(
-            keys |
-            std::views::filter([&key_value_container](const auto& key)    { return containsKey(key_value_container, key); }) |
-            std::views::transform([&key_value_container](const auto& key) { return key_value_container.at(key); }));
+        return toVector<TValue>(keys | std::views::transform([&key_value_container](const auto& key) { return key_value_container.at(key); }));
     }
 
     template <typename TKeyValueContainer, typename TKeyContainer, typename TValue> requires
@@ -329,6 +325,7 @@ public:
         CKeyValueContainerHasValuesConvertibleFrom<TKeyValueContainer, TValue>
     static auto at(const TKeyValueContainer& key_value_container, const TKeyContainer& keys, const TValue& default_value)
     {
+        // not necessarily the same as TValue, e.g., if we pass in nullptr
         using TContainerReturnValue = typename TKeyValueContainer::mapped_type;
 
         // Since a default value is provided, we don't require all keys to be present
