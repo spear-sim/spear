@@ -37,10 +37,7 @@ def get_config(user_config_files):
     config.URDF_ROBOT.URDF_ROBOT_PAWN.URDF_DIR = os.path.realpath(os.path.join(SPEAR_ROOT_DIR, "urdf"))
 
     for c in user_config_files:
-
-        # Required to handle the case where we override an empty dictionary with a non-empty dictionary
-        config.set_new_allowed(True)
-
+        config.set_new_allowed(True)  # required to override an empty dict with a non-empty dict
         config.merge_from_file(c)
 
     config.freeze()

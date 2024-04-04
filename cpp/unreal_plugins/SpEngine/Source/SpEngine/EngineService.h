@@ -40,7 +40,7 @@ enum class FrameState
 template <CEntryPointBinder TEntryPointBinder>
 class EngineService {
 public:
-    //EngineService() = delete;
+    EngineService() = delete;
     EngineService(TEntryPointBinder* entry_point_binder)
     {
         SP_ASSERT(entry_point_binder);
@@ -130,8 +130,7 @@ public:
     {
         entry_point_binder_->bind(
             service_name + "." + func_name,
-            WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, std::forward<decltype(func)>(func))
-        );
+            WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, std::forward<decltype(func)>(func)));
     }
 
     void beginFrameHandler()
@@ -142,7 +141,7 @@ public:
             frame_state_ = FrameState::ExecutingPreTick;
             frame_state_executing_pre_tick_promise_.set_value();
 
-            // execute all pre-tick work, wait here for tick() to unblock us
+            // execute all pre-tick work, wait here for tick() to unblock
             work_queue_.run();
 
             // update local state

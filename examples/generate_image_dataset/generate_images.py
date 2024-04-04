@@ -78,10 +78,10 @@ if __name__ == "__main__":
     df = pd.read_csv(args.poses_file)
 
     # create SpEngine object
-    sp_engine = spear.SpEngine(config)
+    sp_instance = spear.Instance(config)
 
     # create Env object
-    env = CustomEnv(config, sp_engine.engine_service, num_internal_steps=args.num_internal_steps)
+    env = CustomEnv(config, sp_instance.engine_service, num_internal_steps=args.num_internal_steps)
 
     # iterate over all poses
     prev_scene_id = ""
@@ -102,10 +102,10 @@ if __name__ == "__main__":
             env.close()
 
             # open the desired level
-            sp_engine.engine_service.open_level(pose["scene_id"])
+            sp_instance.engine_service.open_level(pose["scene_id"])
 
             # create Env object
-            env = CustomEnv(config, sp_engine.engine_service, num_internal_steps=args.num_internal_steps)
+            env = CustomEnv(config, sp_instance.engine_service, num_internal_steps=args.num_internal_steps)
 
             # reset the simulation
             _ = env.reset()
@@ -148,6 +148,6 @@ if __name__ == "__main__":
     env.close()
 
     # close the unreal instance
-    sp_engine.close()
+    sp_instance.close()
 
     spear.log("Done.")

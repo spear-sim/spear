@@ -10,4 +10,4 @@ from spear.path import path_exists, remove_path
 from spear.engine_service import EngineService
 from spear.env import Env
 from spear.navmesh_service import NavMeshService
-from spear.sp_engine import SpEngine
+from spear.instance import Instance

@@ -10,11 +10,14 @@ from subprocess import Popen
 import sys
 import time
 
-class SpEngine():
+
+expected_status_values = ["disk-sleep", "running", "sleeping"]
+
+
+class Instance():
     def __init__(self, config):
 
         self._config = config
-        self._rpc_client: msgpackrpc.Client
 
         self._request_launch_unreal_instance()
         self._initialize_rpc_client()
@@ -23,7 +26,7 @@ class SpEngine():
         self.engine_service = spear.EngineService(self._rpc_client)
         self.navmesh_service = spear.NavMeshService(self.engine_service)
 
-        # Need to do this after we have a valid engine_service object because we call begin_tick(), tick(), and end_tick() here.
+        # Need to do this after we have a valid EngineService object because we call begin_tick(), tick(), and end_tick() here.
         self._initialize_unreal_instance()
 
     def close(self):
@@ -35,14 +38,14 @@ class SpEngine():
 
     def _request_launch_unreal_instance(self):
 
-        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
-            spear.log('SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance has already launched...')
+        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "none":
+            spear.log('SPEAR.INSTANCE.LAUNCH_MODE == "none" so we assume that an Unreal instance has been launched externally...')
             return
 
         spear.log("Launching Unreal instance...")
 
         # write temp file
-        temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.TEMP_DIR))
+        temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.INSTANCE.TEMP_DIR))
         temp_config_file = os.path.realpath(os.path.join(temp_dir, "config.yaml"))
 
         spear.log("Writing temp config file: " + temp_config_file)
@@ -51,21 +54,21 @@ class SpEngine():
         with open(temp_config_file, "w") as output:
             self._config.dump(stream=output, default_flow_style=False)
 
-        # create a symlink to SPEAR.PAKS_DIR
-        if self._config.SPEAR.LAUNCH_MODE == "standalone_executable" and self._config.SPEAR.PAKS_DIR != "":
+        # create a symlink to SPEAR.INSTANCE.PAKS_DIR
+        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "standalone" and self._config.SPEAR.INSTANCE.PAKS_DIR != "":
 
-            assert os.path.exists(self._config.SPEAR.STANDALONE_EXECUTABLE)
-            assert os.path.exists(self._config.SPEAR.PAKS_DIR)
+            assert os.path.exists(self._config.SPEAR.INSTANCE.STANDALONE)
+            assert os.path.exists(self._config.SPEAR.INSTANCE.PAKS_DIR)
 
             if sys.platform == "win32":
                 paks_dir = \
-                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.STANDALONE_EXECUTABLE)), "..", "..", "Content", "Paks"))
+                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.INSTANCE.STANDALONE)), "..", "..", "Content", "Paks"))
             elif sys.platform == "darwin":
                 paks_dir = \
-                    os.path.realpath(os.path.join(self._config.SPEAR.STANDALONE_EXECUTABLE, "Contents", "UE", "SpearSim", "Content", "Paks"))
+                    os.path.realpath(os.path.join(self._config.SPEAR.INSTANCE.STANDALONE, "Contents", "UE", "SpearSim", "Content", "Paks"))
             elif sys.platform == "linux":
                 paks_dir = \
-                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.STANDALONE_EXECUTABLE)), "SpearSim", "Content", "Paks"))
+                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.INSTANCE.STANDALONE)), "SpearSim", "Content", "Paks"))
             else:
                 assert False
 
@@ -78,23 +81,23 @@ class SpEngine():
                 spear.log(f"File or directory or symlink exists, removing: {spear_paks_dir}")
                 spear.remove_path(spear_paks_dir)
 
-            spear.log(f"Creating symlink: {spear_paks_dir} -> {self._config.SPEAR.PAKS_DIR}")
-            os.symlink(self._config.SPEAR.PAKS_DIR, spear_paks_dir)
+            spear.log(f"Creating symlink: {spear_paks_dir} -> {self._config.SPEAR.INSTANCE.PAKS_DIR}")
+            os.symlink(self._config.SPEAR.INSTANCE.PAKS_DIR, spear_paks_dir)
 
         # provide additional control over which Vulkan devices are recognized by Unreal
-        if self._config.SPEAR.VK_ICD_FILENAMES != "":
-            spear.log("Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.VK_ICD_FILENAMES)
-            os.environ["VK_ICD_FILENAMES"] = self._config.SPEAR.VK_ICD_FILENAMES
+        if self._config.SPEAR.INSTANCE.VK_ICD_FILENAMES != "":
+            spear.log("Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.INSTANCE.VK_ICD_FILENAMES)
+            os.environ["VK_ICD_FILENAMES"] = self._config.SPEAR.INSTANCE.VK_ICD_FILENAMES
 
         # set up launch executable and command-line arguments
         launch_args = []
 
-        if self._config.SPEAR.LAUNCH_MODE == "uproject":
-            launch_executable = self._config.SPEAR.UNREAL_EDITOR_EXECUTABLE
-            launch_args.append(self._config.SPEAR.UPROJECT)
+        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "uproject":
+            launch_executable = self._config.SPEAR.INSTANCE.EDITOR_EXECUTABLE
+            launch_args.append(self._config.SPEAR.INSTANCE.UPROJECT)
             launch_args.append("-game") # launch the game using uncooked content
-        elif self._config.SPEAR.LAUNCH_MODE == "standalone_executable":
-            launch_executable = self._config.SPEAR.STANDALONE_EXECUTABLE
+        elif self._config.SPEAR.INSTANCE.LAUNCH_MODE == "standalone":
+            launch_executable = self._config.SPEAR.INSTANCE.STANDALONE
         else:
             assert False
 
@@ -118,24 +121,24 @@ class SpEngine():
         assert os.path.exists(launch_executable_internal)
 
         launch_args.append("-windowed")
-        launch_args.append("-resx={}".format(self._config.SPEAR.WINDOW_RESOLUTION_X))
-        launch_args.append("-resy={}".format(self._config.SPEAR.WINDOW_RESOLUTION_Y))
-        launch_args.append("-graphicsadapter={}".format(self._config.SPEAR.GPU_ID))
+        launch_args.append("-resx={}".format(self._config.SPEAR.INSTANCE.WINDOW_RESOLUTION_X))
+        launch_args.append("-resy={}".format(self._config.SPEAR.INSTANCE.WINDOW_RESOLUTION_Y))
+        launch_args.append("-graphicsadapter={}".format(self._config.SPEAR.INSTANCE.GPU_ID))
         launch_args.append("-nosound")
         # launch_args.append("-fileopenlog")         # generate a log of which files are opened in which order
         launch_args.append("-stdout")              # ensure log output is written to the terminal 
         launch_args.append("-fullstdoutlogoutput") # ensure log output is written to the terminal
         launch_args.append("-nologtimes")          # don't print timestamps next to log messages twice
 
-        if self._config.SPEAR.RENDER_OFFSCREEN:
+        if self._config.SPEAR.INSTANCE.RENDER_OFFSCREEN:
             launch_args.append("-renderoffscreen")
 
-        if self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE != "":
-            launch_args.append("-log={}".format(self._config.SPEAR.UNREAL_INTERNAL_LOG_FILE))
+        if self._config.SPEAR.INSTANCE.UNREAL_INTERNAL_LOG_FILE != "":
+            launch_args.append("-log={}".format(self._config.SPEAR.INSTANCE.UNREAL_INTERNAL_LOG_FILE))
        
         launch_args.append("-config_file={}".format(temp_config_file))
 
-        for a in self._config.SPEAR.CUSTOM_COMMAND_LINE_ARGUMENTS:
+        for a in self._config.SPEAR.INSTANCE.CUSTOM_COMMAND_LINE_ARGUMENTS:
             launch_args.append("{}".format(a))
 
         cmd = [launch_executable_internal] + launch_args
@@ -151,121 +154,123 @@ class SpEngine():
 
         # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
         status = self._process.status()
-        if status not in ["running", "sleeping", "disk-sleep"]:
+        if status not in expected_status_values:
             spear.log("ERROR: Unrecognized process status: " + status)
             spear.log("ERROR: Killing process " + str(self._process.pid) + "...")
             self._force_kill_unreal_instance()
             self._close_rpc_client()
             assert False
 
-    def _request_close_unreal_instance(self):
-
-        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
-            spear.log('SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance should remain open...')
-            return
-
-        spear.log("Closing Unreal instance...")
-
-        self._rpc_client.call("engine_service.request_close")
-        self._wait_until_unreal_instance_is_closed()
-
-        spear.log("Finished closing Unreal instance.")
-
-    def _initialize_rpc_client(self):
-
-        spear.log("Initializing RPC client...")
-        
-        # if we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
-        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
-            connected = False
-            try:
-                self._rpc_client = msgpackrpc.Client(
-                    msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT),
-                    timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
-                    reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                self._rpc_client.call("engine_service.ping")
-                connected = True
-            except:
-                # Client may not clean up resources correctly in this case, so we clean things up explicitly.
-                # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more details.
-                self._close_rpc_client()
-
-        # otherwise try to connect repeatedly, since the RPC server might not have started yet
-        else:
-            connected = False
-            start_time_seconds = time.time()
-            elapsed_time_seconds = time.time() - start_time_seconds
-            while not connected and elapsed_time_seconds < self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_MAX_TIME_SECONDS:
-                # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
-                status = self._process.status()
-                if status not in ["disk-sleep", "running", "sleeping", "stopped"]:
-                    spear.log("ERROR: Unrecognized process status: " + status)
-                    spear.log("ERROR: Killing process " + str(self._process.pid) + "...")
-                    self._force_kill_unreal_instance()
-                    self._close_rpc_client()
-                    assert False
-                try:
-                    self._rpc_client = msgpackrpc.Client(
-                        msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT), 
-                        timeout=self._config.SPEAR.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
-                        reconnect_limit=self._config.SPEAR.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                    self._rpc_client.call("engine_service.ping")
-                    connected = True
-                except Exception as e:
-                    # Client may not clean up resources correctly in this case, so we clean things up explicitly.
-                    # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more details.
-                    spear.log("Exception:", e)
-                    self._close_rpc_client()
-                time.sleep(self._config.SPEAR.RPC_CLIENT_INITIALIZE_CONNECTION_SLEEP_TIME_SECONDS)
-                elapsed_time_seconds = time.time() - start_time_seconds
-
-        if not connected:
-            if self._config.SPEAR.LAUNCH_MODE != "running_instance":
-                spear.log("ERROR: Couldn't connect, killing process " + str(self._process.pid) + "...")
-                self._force_kill_unreal_instance()
-                self._close_rpc_client()
-            assert False
-
-        spear.log("Finished initializing RPC client.")
-
     def _initialize_unreal_instance(self):
 
-        if self._config.SPEAR.LAUNCH_MODE == "running_instance":
-            spear.log('SPEAR.LAUNCH_MODE == "running_instance" so we assume that the Unreal instance is already initialized...')
+        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "none":
+            spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance is already initialized...')
             return
 
-        spear.log("Initializing Unreal instance, warming up for " + str(1 + self._config.SPEAR.NUM_EXTRA_WARMUP_TICKS) + " ticks...")
+        spear.log("Initializing Unreal instance, warming up for " + str(1 + self._config.SPEAR.INSTANCE.NUM_EXTRA_WARMUP_TICKS) + " ticks...")
 
         # Do at least one complete tick to guarantee that we can receive valid observations. If we don't
         # do this, it is possible that Unreal will return an initial visual observation of all zeros. We
         # generally also want to do more than one tick to warm up various caches and rendering features
         # that leverage temporal coherence between frames.
-        for i in range(1 + self._config.SPEAR.NUM_EXTRA_WARMUP_TICKS):
+        for i in range(1 + self._config.SPEAR.INSTANCE.NUM_EXTRA_WARMUP_TICKS):
             self.engine_service.begin_tick()
             self.engine_service.tick()
             self.engine_service.end_tick()
 
         spear.log("Finished initializing Unreal instance.")
 
-    def _wait_until_unreal_instance_is_closed(self):
-        try:
-            status = self._process.status()
-        except psutil.NoSuchProcess:
-            pass
-        else:
-            while status in ["running", "sleeping", "disk-sleep"]:
-                time.sleep(1.0)
-                try:
-                    status = self._process.status()
-                except psutil.NoSuchProcess:
-                    break
+    def _request_close_unreal_instance(self):
+
+        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "none":
+            spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance should remain open...')
+            return
+
+        spear.log("Closing Unreal instance...")
+        self._rpc_client.call("engine_service.request_close")
+        status = "running"
+        while status in expected_status_values:
+            try:
+                status = self._process.status()
+            except psutil.NoSuchProcess:
+                break
+        time.sleep(self._config.SPEAR.INSTANCE.REQUEST_CLOSE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
+
+        spear.log("Finished closing Unreal instance.")
 
     def _force_kill_unreal_instance(self):
         spear.log("Forcefully killing Unreal instance...")
         self._process.terminate()
         self._process.kill()
+        spear.log("Finished forcefully killing Unreal instance.")
+
+    def _initialize_rpc_client(self):
+
+        spear.log("Initializing RPC client...")
+
+        connected = False
+        
+        # if we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
+        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "none":
+
+            try:
+                self._rpc_client = msgpackrpc.Client(
+                    msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT),
+                    timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
+                    reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
+                self._rpc_client.call("engine_service.ping")
+                connected = True
+
+            except Exception as e:
+                # Client may not clean up resources correctly in this case, so we clean things up explicitly.
+                # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more details.
+                spear.log("Exception: ", e)
+                self._close_rpc_client()
+
+        # otherwise try to connect repeatedly, since the RPC server might not have started yet
+        elif self._config.SPEAR.INSTANCE.LAUNCH_MODE in ["editor", "standalone"]:
+
+            start_time_seconds = time.time()
+            elapsed_time_seconds = time.time() - start_time_seconds
+            while elapsed_time_seconds < self._config.SPEAR.INSTANCE.INITIALIZE_RPC_CLIENT_MAX_TIME_SECONDS:
+
+                # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
+                status = self._process.status()
+                if status not in expected_status_values:
+                    spear.log("ERROR: Unrecognized process status: " + status)
+                    break
+
+                try:
+                    self._rpc_client = msgpackrpc.Client(
+                        msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT), 
+                        timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
+                        reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
+                    self._rpc_client.call("engine_service.ping")
+                    connected = True
+                    break
+
+                except Exception as e:
+                    # Client may not clean up resources correctly in this case, so we clean things up explicitly.
+                    # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more details.
+                    spear.log("Exception:", e)
+                    self._close_rpc_client()
+
+                time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_RPC_CLIENT_SLEEP_TIME_SECONDS)
+                elapsed_time_seconds = time.time() - start_time_seconds
+
+        else:
+            assert False
+
+        if not connected:
+            spear.log("ERROR: Couldn't connect to RPC server, giving up...")
+            if self._config.SPEAR.INSTANCE.LAUNCH_MODE in ["editor", "standalone"]:
+                self._force_kill_unreal_instance()
+            assert False
+
+        spear.log("Finished initializing RPC client.")
 
     def _close_rpc_client(self):
         spear.log("Closing RPC client...")
         self._rpc_client.close()
         self._rpc_client._loop._ioloop.close()
+        spear.log("Finished closing RPC client.")

@@ -149,7 +149,7 @@ public:
         #if WITH_EDITOR // defined in an auto-generated header
             bool world_is_ready = world->IsGameWorld();
         #else
-            bool world_is_ready = world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world);
+            bool world_is_ready = GEngine->GetWorldContextFromWorld(world) != nullptr;
         #endif
 
         if (world_is_ready) {
