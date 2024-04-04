@@ -146,12 +146,12 @@ void AEngineActor::ActorHitHandler(AActor* self_actor, AActor* other_actor, FVec
     void AEngineActor::actorLabelChangedHandler(AActor* actor)
     {
         SP_ASSERT(actor);
-        Unreal::requestUpdateStableActorName(actor);
+        Unreal::requestUpdateStableName(actor);
     }
 
     void AEngineActor::levelActorFolderChangedHandler(const AActor* actor, FName name)
     {
         SP_ASSERT(actor);
-        Unreal::requestUpdateStableActorName(actor);
+        Unreal::requestUpdateStableName(actor);
     }
 #endif

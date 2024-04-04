@@ -48,7 +48,7 @@ std::vector<AActor*> Unreal::findActors(const UWorld* world)
 
 std::map<std::string, AActor*> Unreal::findActorsAsMap(const UWorld* world)
 {
-    return findActorsByTypeAsMap(world);
+    return getObjectsAsMap(findActors(world));
 }
 
 // 
@@ -62,7 +62,26 @@ std::vector<UActorComponent*> Unreal::getComponents(const AActor* actor)
 
 std::map<std::string, UActorComponent*> Unreal::getComponentsAsMap(const AActor* actor)
 {
-    return getComponentsByTypeAsMap(actor);
+    return getObjectsAsMap(getComponents(actor));
+}
+
+// 
+// Get children components unconditionally and return an std::vector or an std::map
+//
+
+std::vector<USceneComponent*> Unreal::getChildrenComponents(const USceneComponent* parent, bool include_all_descendants)
+{
+    SP_ASSERT(parent);
+    TArray<USceneComponent*> children_tarray;
+    parent->GetChildrenComponents(include_all_descendants, children_tarray);
+    std::vector<USceneComponent*> children = toStdVector(children_tarray);
+    SP_ASSERT(!Std::contains(children, nullptr));
+    return children;
+}
+
+std::map<std::string, USceneComponent*> Unreal::getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants)
+{
+    return getObjectsAsMap(getChildrenComponents(parent, include_all_descendants));
 }
 
 //
@@ -75,6 +94,7 @@ UStruct* Unreal::findStructByName(const UWorld* world, const std::string& name)
     // this function is usable even in levels that don't have an AEngineActor in them, and avoids the need to
     // do a findActor operation. For this operation to work, AEngineActor needs a property named _StructName
     // of type StructName.
+    SP_ASSERT(world);
     UClass* engine_actor_uclass = AEngineActor::StaticClass();
     SP_ASSERT(engine_actor_uclass);
     UObject* engine_actor_default_object = engine_actor_uclass->GetDefaultObject();
@@ -97,6 +117,8 @@ std::string Unreal::getObjectPropertiesAsString(UObject* uobject)
 
 std::string Unreal::getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct)
 {
+    SP_ASSERT(value_ptr);
+    SP_ASSERT(ustruct);
     FString string;
     FJsonObjectConverter::UStructToJsonObjectString(ustruct, value_ptr, string);
     return toStdString(string);
@@ -104,6 +126,7 @@ std::string Unreal::getObjectPropertiesAsString(void* value_ptr, const UStruct* 
 
 void Unreal::setObjectPropertiesFromString(UObject* uobject, const std::string& string)
 {
+    SP_ASSERT(uobject);
     return setObjectPropertiesFromString(uobject, uobject->GetClass(), string);
 }
 
@@ -111,7 +134,6 @@ void Unreal::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustru
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
-
     bool success = false;
     TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(toFString(string));
     TSharedPtr<FJsonObject> json_object;
@@ -128,6 +150,7 @@ void Unreal::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustru
 
 Unreal::PropertyDesc Unreal::findPropertyByName(UObject* uobject, const std::string& name)
 {
+    SP_ASSERT(uobject);
     return findPropertyByName(uobject, uobject->GetClass(), name);
 }
 
@@ -387,6 +410,7 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
 
 UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag)
 {
+    SP_ASSERT(uclass);
     UFunction* function = uclass->FindFunctionByName(toFName(name), include_super_flag);
     SP_ASSERT(function);
     return function;
@@ -399,6 +423,9 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
 
 std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args)
 {
+    SP_ASSERT(uobject);
+    SP_ASSERT(ufunction);
+
     // Create buffer to store all args and the return value.
     size_t num_bytes = ufunction->ParmsSize;
     uint8_t initial_value = 0;
@@ -444,6 +471,66 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
 }
 
 //
+// Get and set actor and component stable names
+//
+
+bool Unreal::hasStableName(const AActor* actor)
+{
+    SP_ASSERT(actor);
+    bool assert_if_not_found = false;
+    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
+    return stable_name_component != nullptr;
+}
+
+bool Unreal::hasStableName(const UActorComponent* component)
+{
+    SP_ASSERT(component);
+    return true;
+}
+
+std::string Unreal::getStableName(const AActor* actor)
+{
+    SP_ASSERT(actor);
+    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
+    return toStdString(stable_name_component->StableName);
+}
+
+void Unreal::setStableName(const AActor* actor, const std::string& stable_name)
+{
+    SP_ASSERT(actor);
+    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
+    stable_name_component->StableName = toFString(stable_name);
+}
+
+#if WITH_EDITOR // defined in an auto-generated header
+    void Unreal::requestUpdateStableName(const AActor* actor)
+    {
+        SP_ASSERT(actor);
+        bool assert_if_not_found = false;
+        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
+        if (stable_name_component) {
+            stable_name_component->requestUpdate();
+        }
+    }
+#endif
+
+//
+// Get object tags
+//
+
+std::vector<std::string> Unreal::getTags(const AActor* actor)
+{
+    SP_ASSERT(actor);
+    return Std::toVector<std::string>(toStdVector(actor->Tags) | std::views::transform([](const auto& tag) { return toStdString(tag); }));
+}
+
+std::vector<std::string> Unreal::getTags(const UActorComponent* component)
+{
+    SP_ASSERT(component);
+    return Std::toVector<std::string>(toStdVector(component->ComponentTags) | std::views::transform([](const auto& tag) { return toStdString(tag); }));
+}
+
+//
 // String functions
 //
 
@@ -461,6 +548,7 @@ std::string Unreal::toStdString(const FName& str)
 
 std::string Unreal::toStdString(const TCHAR* str)
 {
+    SP_ASSERT(str);
     return std::string(TCHAR_TO_UTF8(str));
 }
 
@@ -475,65 +563,13 @@ FName Unreal::toFName(const std::string& str)
 }
 
 //
-// Helper functions to get and set actor and component names
-//
-
-std::string Unreal::getStableActorName(const AActor* actor)
-{
-    SP_ASSERT(actor);
-    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
-    return toStdString(stable_name_component->StableName);
-}
-
-void Unreal::setStableActorName(const AActor* actor, const std::string& stable_name)
-{
-    SP_ASSERT(actor);
-    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor);
-    stable_name_component->StableName = toFString(stable_name);
-}
-
-#if WITH_EDITOR // defined in an auto-generated header
-    void Unreal::requestUpdateStableActorName(const AActor* actor)
-    {
-        SP_ASSERT(actor);
-        bool assert_if_not_found = false;
-        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
-        if (stable_name_component) {
-            stable_name_component->requestUpdate();
-        }
-    }
-#endif
-
-//
-// Helper functions for finding actors and getting components
-//
-
-bool Unreal::getActorHasStableName(const AActor* actor)
-{
-    SP_ASSERT(actor);
-    bool assert_if_not_found = false;
-    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
-    return stable_name_component != nullptr;
-}
-
-std::vector<bool> Unreal::getActorHasTags(const AActor* actor, const std::vector<std::string>& tags)
-{
-    SP_ASSERT(actor);
-    return Std::toVector<bool>(tags | std::views::transform([actor](const auto& tag) { return actor->ActorHasTag(toFName(tag)); }));
-}
-
-std::vector<bool> Unreal::getComponentHasTags(const UActorComponent* component, const std::vector<std::string>& tags)
-{
-    SP_ASSERT(component);
-    return Std::toVector<bool>(tags | std::views::transform([component](const auto& tag) { return component->ComponentHasTag(toFName(tag)); }));
-}
-
-//
-// Helper function for formatting array properties as strings in the same style as Unreal
+// Helper functions for formatting container properties as strings in the same style as Unreal
 //
 
 std::string Unreal::getArrayPropertyValueAsFormattedString(const FProperty* inner_property, const std::vector<std::string>& inner_strings)
 {
+    SP_ASSERT(inner_property);
+
     int num_elements = inner_strings.size();
     std::string formatted_string;
 
@@ -589,6 +625,8 @@ std::string Unreal::getMapPropertyValueAsFormattedString(
     const FProperty* inner_key_property, const std::vector<std::string>& inner_key_strings,
     const FProperty* inner_value_property, const std::vector<std::string>& inner_value_strings)
 {
+    SP_ASSERT(inner_key_property);
+    SP_ASSERT(inner_value_property);
     SP_ASSERT(inner_key_strings.size() == inner_value_strings.size());
 
     int num_elements = inner_key_strings.size();

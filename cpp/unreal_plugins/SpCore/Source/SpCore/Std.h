@@ -98,6 +98,11 @@ concept CKeyValueContainerHasValuesConvertibleFrom =
     CKeyValueContainer<TDestKeyValueContainer> &&
     CConvertibleFrom<typename TDestKeyValueContainer::mapped_type, TSrcValue>;
 
+template <typename TDestKeyValueContainer, typename TSrcKeyContainer>
+concept CKeyValueContainerHasKeysConvertibleFromContainer =
+    CKeyValueContainer<TDestKeyValueContainer> &&
+    CConvertibleFrom<typename TDestKeyValueContainer::key_type, typename TSrcKeyContainer::value_type>;
+
 template <typename TDestKeyValueContainer, typename TSrcInitializerListValue>
 concept CKeyValueContainerHasValuesConvertibleFromInitializerList =
     CKeyValueContainer<TDestKeyValueContainer> &&
@@ -122,7 +127,6 @@ concept CKeyValueContainerHasKeysAndValuesConvertibleFromContainer =
     CKeyValueContainer<TDestKeyValueContainer> &&
     CKeyValueContainer<TSrcKeyValueContainer> &&
     requires(TDestKeyValueContainer dest_key_value_container, TSrcKeyValueContainer src_key_value_container) {
-        { dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container)) } -> std::same_as<void>;
         { dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container)) } -> std::same_as<void>;
     };
 
@@ -273,13 +277,6 @@ public:
     // Key-value container (e.g., std::map) functions
     //
 
-    template <typename TKeyValueContainer, typename TKey> requires
-        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
-    static bool containsKey(const TKeyValueContainer& key_value_container, const TKey& key)
-    {
-        return key_value_container.contains(key);
-    }
-
     template <typename TKeyValueContainer> requires
         CKeyValueContainer<TKeyValueContainer>
     static std::vector<typename TKeyValueContainer::key_type> keys(const TKeyValueContainer& key_value_container)
@@ -296,6 +293,46 @@ public:
         #else
             #error
         #endif
+    }
+
+    template <typename TKeyValueContainer, typename TKey> requires
+        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
+    static bool containsKey(const TKeyValueContainer& key_value_container, const TKey& key)
+    {
+        return key_value_container.contains(key);
+    }
+
+    template <typename TKeyValueContainer, typename TKey> requires
+        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
+    static std::vector<bool> containsKeys(const TKeyValueContainer& key_value_container, const std::vector<TKey>& keys)
+    {
+        return Std::contains(Std::keys(key_value_container), keys);
+    }
+
+    template <typename TKeyValueContainer, typename TKeyContainer> requires
+        CKeyValueContainerHasKeysConvertibleFromContainer<TKeyValueContainer, TKeyContainer>
+    static auto at(const TKeyValueContainer& key_value_container, const TKeyContainer& keys)
+    {
+        using TValue = typename TKeyValueContainer::mapped_type;
+
+        // If no default value is provided, then all keys must be present
+        SP_ASSERT(Std::all(containsKeys(key_value_container, keys)));
+        return toVector<TValue>(keys | std::views::transform([&key_value_container](const auto& key) { return key_value_container.at(key); }));
+    }
+
+    template <typename TKeyValueContainer, typename TKeyContainer, typename TValue> requires
+        CKeyValueContainerHasKeysConvertibleFromContainer<TKeyValueContainer, TKeyContainer> &&
+        CKeyValueContainerHasValuesConvertibleFrom<TKeyValueContainer, TValue>
+    static auto at(const TKeyValueContainer& key_value_container, const TKeyContainer& keys, const TValue& default_value)
+    {
+        // not necessarily the same as TValue, e.g., if we pass in nullptr
+        using TContainerReturnValue = typename TKeyValueContainer::mapped_type;
+
+        // Since a default value is provided, we don't require all keys to be present
+        return toVector<TContainerReturnValue>(
+            keys |
+            std::views::transform([&key_value_container, &default_value](const auto& key) {
+                return containsKey(key_value_container, key) ? key_value_container.at(key) : default_value; }));
     }
 
     template <typename TKeyValueContainer, typename TKey, typename TValue> requires

@@ -36,7 +36,7 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
 
     // Set the stable name for the DefaultPawnClass instance so we can find it later.
     SP_ASSERT(new_player->GetPawn());
-    Unreal::setStableActorName(new_player->GetPawn(), "Default/" + Unreal::toStdString(DefaultPawnClass->GetName()));
+    Unreal::setStableName(new_player->GetPawn(), "Default/" + Unreal::toStdString(DefaultPawnClass->GetName()));
 }
 
 void ASpGameMode::SpAddOnScreenDebugMessage(float display_time, FString message)

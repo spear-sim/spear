@@ -8,6 +8,7 @@ import json
 import numpy as np
 import os
 import pathlib
+import posixpath
 import spear
 import spear.pipeline
 import xml.dom.minidom
@@ -246,7 +247,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
         convex_decomposition_strategy = "coacd"
 
         # we don't use os.path.realpath here because we don't want to convert to an absolute path
-        merge_id_obj_dir = os.path.join(
+        merge_id_obj_dir = posixpath.join(
             "..",
             "collision_geometry",
             convex_decomposition_strategy,
@@ -258,7 +259,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
         for part_id in part_ids:
 
             # we don't use os.path.realpath here because we don't want to convert to an absolute path
-            part_id_obj_path = os.path.join(merge_id_obj_dir, f"part_id_{part_id:04}.obj")
+            part_id_obj_path = posixpath.join(merge_id_obj_dir, f"part_id_{part_id:04}.obj")
 
             if args.color_mode == "unique_color_per_geom":
                 color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
