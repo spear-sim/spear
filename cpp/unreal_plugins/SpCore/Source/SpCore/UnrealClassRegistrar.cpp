@@ -46,6 +46,10 @@ void UnrealClassRegistrar::terminate()
 // Find actors using a class name instead of template parameters
 //
 
+std::vector<AActor*> UnrealClassRegistrar::findActorsByName(const std::string& class_name, const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found) {
+    return s_find_actors_by_name_registrar_.create(class_name, world, names, return_null_if_not_found);
+}
+
 std::vector<AActor*> UnrealClassRegistrar::findActorsByTag(const std::string& class_name, const UWorld* world, const std::string& tag) {
     return s_find_actors_by_tag_registrar_.create(class_name, world, tag);
 }
@@ -106,6 +110,10 @@ AActor* UnrealClassRegistrar::findActorByType(const std::string& class_name, con
 // Get components using a class name instead of template parameters
 //
 
+std::vector<UActorComponent*> UnrealClassRegistrar::getComponentsByName(const std::string& class_name, const AActor* actor, const std::vector<std::string>& names, bool return_null_if_not_found) {
+    return s_get_components_by_name_registrar_.create(class_name, actor, names, return_null_if_not_found);
+}
+
 std::vector<UActorComponent*> UnrealClassRegistrar::getComponentsByTag(const std::string& class_name, const AActor* actor, const std::string& tag) {
     return s_get_components_by_tag_registrar_.create(class_name, actor, tag);
 }
@@ -165,6 +173,10 @@ UActorComponent* UnrealClassRegistrar::getComponentByType(const std::string& cla
 //
 // Get children components using a class name instead of template parameters
 //
+
+std::vector<USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByName(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& names, bool include_all_descendants, bool return_null_if_not_found) {
+    return s_get_children_components_by_name_registrar_.create(class_name, parent, names, include_all_descendants, return_null_if_not_found);
+}
 
 std::vector<USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByTag(const std::string& class_name, const USceneComponent* parent, const std::string& tag, bool include_all_descendants) {
     return s_get_children_components_by_tag_registrar_.create(class_name, parent, tag, include_all_descendants);
