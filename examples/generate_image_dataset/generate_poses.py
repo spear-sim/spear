@@ -49,11 +49,13 @@ if __name__ == "__main__":
 
         spear.log("Processing scene: " + scene_id)
 
-        if sp_instance.engine_service.get_current_level() != scene_id:
-            sp_instance.engine_service.open_level(scene_id)
+        spear.open_level(sp_instance, scene_id)
 
         # get a few random points
-        points = sp_instance.navmesh_service.get_random_points(args.num_poses_per_scene)
+        spear.begin_tick(sp_instance)
+        points = sp_instance.legacy_service.get_random_points(args.num_poses_per_scene)
+        spear.tick(sp_instance)
+        spear.end_tick(sp_instance)
 
         # generate random pitch, yaw, roll values
         pitch_values = np.random.uniform(low=0.0, high=0.0, size=args.num_poses_per_scene)

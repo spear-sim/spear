@@ -24,7 +24,7 @@ UUserInputComponent::UUserInputComponent()
     SP_LOG_CURRENT_FUNCTION();
 
     PrimaryComponentTick.bCanEverTick = true;
-    PrimaryComponentTick.bTickEvenWhenPaused = true;
+    PrimaryComponentTick.bTickEvenWhenPaused = false;
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 

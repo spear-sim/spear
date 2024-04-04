@@ -89,9 +89,11 @@ class Instance():
                 launch_args.append("-{}".format(arg))
             elif isinstance(value, bool) and value == False:
                 pass
+            elif isinstance(value, bool) and value == True:
+                launch_args.append("-{}".format(arg))
             else:
                 launch_args.append("-{}={}".format(arg, value))
-       
+
         launch_args.append("-config_file={}".format(temp_config_file))
 
         for a in self._config.SPEAR.INSTANCE.CUSTOM_COMMAND_LINE_ARGUMENTS:

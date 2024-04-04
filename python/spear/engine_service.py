@@ -12,10 +12,10 @@ class EngineService():
         self._rpc_client.call("engine_service.begin_tick")
 
     def tick(self):
-        self._rpc_client.call("engine_service.begin_tick")
+        self._rpc_client.call("engine_service.tick")
 
     def end_tick(self):
-        self._rpc_client.call("engine_service.begin_tick")
+        self._rpc_client.call("engine_service.end_tick")
 
     def get_byte_order(self):
         unreal_instance_byte_order = self._rpc_client.call("engine_service.get_byte_order")

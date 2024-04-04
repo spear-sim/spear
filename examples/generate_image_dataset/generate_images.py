@@ -28,8 +28,8 @@ import common.observation_utils as observation_utils
 # frames are not necessary in typical embodied AI scenarios, but are useful when teleporting a camera.
 class CustomEnv(spear.Env):
 
-    def __init__(self, config, engine_service, num_internal_steps):
-        super(CustomEnv, self).__init__(config, engine_service)
+    def __init__(self, config, instance, num_internal_steps):
+        super(CustomEnv, self).__init__(config, instance)
         assert num_internal_steps > 0
         self._num_internal_steps = num_internal_steps
 
@@ -45,19 +45,19 @@ class CustomEnv(spear.Env):
 
     def single_step(self, action=None, get_observation=False):
     
-        self._engine_service.begin_tick()
+        spear.begin_tick(self._instance)
         if action:
             self._apply_action(action)
-        self._engine_service.tick()
+        spear.tick(self._instance)
         if get_observation:
             obs = self._get_observation()
             reward = self._get_reward()
             is_done = self._is_episode_done()
             step_info = self._get_step_info()
-            self._engine_service.end_tick()
+            spear.end_tick(self._instance)
             return obs, reward, is_done, step_info
         else:
-            self._engine_service.end_tick()
+            spear.end_tick(self._instance)
             return None, None, None, None
 
 
@@ -74,6 +74,14 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
+    # modify config
+    config.defrost()
+    config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.renderoffscreen = True
+    config.freeze()
+
+    # configure system based on config
+    spear.configure_system(config)
+
     # read data from csv
     df = pd.read_csv(args.poses_file)
 
@@ -81,7 +89,7 @@ if __name__ == "__main__":
     sp_instance = spear.Instance(config)
 
     # create Env object
-    env = CustomEnv(config, sp_instance.engine_service, num_internal_steps=args.num_internal_steps)
+    env = CustomEnv(config, sp_instance, num_internal_steps=args.num_internal_steps)
 
     # iterate over all poses
     prev_scene_id = ""
@@ -102,10 +110,10 @@ if __name__ == "__main__":
             env.close()
 
             # open the desired level
-            sp_instance.engine_service.open_level(pose["scene_id"])
+            spear.open_level(sp_instance, pose["scene_id"])
 
             # create Env object
-            env = CustomEnv(config, sp_instance.engine_service, num_internal_steps=args.num_internal_steps)
+            env = CustomEnv(config, sp_instance, num_internal_steps=args.num_internal_steps)
 
             # reset the simulation
             _ = env.reset()

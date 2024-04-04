@@ -33,28 +33,28 @@ class Env(gym.Env):
 
     def step(self, action):
         
-        self.begin_tick()
+        spear.begin_tick(self._instance)
         self._apply_action(action)
-        self.tick()
+        spear.tick(self._instance)
         obs = self._get_observation()
         reward = self._get_reward()
         is_done = not self._ready or self._is_episode_done() # if the last call to reset() failed or the episode is done
         step_info = self._get_step_info()
-        self.end_tick()
+        spear.end_tick(self._instance)
 
         return obs, reward, is_done, step_info
 
     def reset(self, reset_info=None):
         
         for i in range(self._config.SPEAR.INSTANCE.MAX_NUM_TICKS_AFTER_RESET):
-            self.begin_tick()
+            spear.begin_tick(self._instance)
             if i == 0:
                 self._reset() # only reset the simulation once
-            self.tick()
+            spear.tick(self._instance)
             ready = self._is_ready()
             if ready or i == self._config.SPEAR.INSTANCE.MAX_NUM_TICKS_AFTER_RESET - 1:
                 obs = self._get_observation() # only get the observation if ready, or if we're about to give up
-            self.end_tick()
+            spear.end_tick(self._instance)
             if ready:
                 break
 
@@ -281,38 +281,3 @@ def _serialize_array(array, space, byte_order):
     assert (array <= space.high).all()
     data = array.data if byte_order is None else array.newbyteorder(byte_order).data
     return data
-
-# high-level functions
-def begin_tick(instance):
-    instance.engine_service.begin_tick()
-    instance.game_world_service.unpause_game()
-
-def tick(instance):
-    instance.engine_service.tick()
-
-def end_tick(instance):
-    instance.game_world_service.pause_game()
-    instance.engine_service.end_tick()
-
-def open_level(instance, scene_id, map_id=""):
-    desired_level_name = ""
-    if scene_id != "":
-        if map_id == "":
-            map_id = scene_id
-        else:
-            map_id = map_id
-        desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id
-
-    spear.log("scene_id:           ", scene_id)
-    spear.log("map_id:             ", map_id)
-    spear.log("desired_level_name: ", desired_level_name)
-
-    begin_tick(instance)
-    instance.game_world_service.open_level(desired_level_name)
-    tick(instance)
-    end_tick(instance)
-
-    while instance.game_world_service.get_current_level() != scene_id:
-        begin_tick(instance)
-        tick(instance)
-        end_tick(instance)
