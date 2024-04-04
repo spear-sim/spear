@@ -10,9 +10,7 @@ from subprocess import Popen
 import sys
 import time
 
-
 expected_status_values = ["disk-sleep", "running", "sleeping"]
-
 
 class Instance():
     def __init__(self, config):
@@ -46,48 +44,13 @@ class Instance():
 
         # write temp file
         temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.INSTANCE.TEMP_DIR))
-        temp_config_file = os.path.realpath(os.path.join(temp_dir, "config.yaml"))
+        temp_config_file = os.path.realpath(os.path.join(temp_dir, self._config.SPEAR.INSTANCE.TEMP_CONFIG_FILE))
 
         spear.log("Writing temp config file: " + temp_config_file)
 
         os.makedirs(temp_dir, exist_ok=True)
         with open(temp_config_file, "w") as output:
             self._config.dump(stream=output, default_flow_style=False)
-
-        # create a symlink to SPEAR.INSTANCE.PAKS_DIR
-        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "standalone" and self._config.SPEAR.INSTANCE.PAKS_DIR != "":
-
-            assert os.path.exists(self._config.SPEAR.INSTANCE.STANDALONE)
-            assert os.path.exists(self._config.SPEAR.INSTANCE.PAKS_DIR)
-
-            if sys.platform == "win32":
-                paks_dir = \
-                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.INSTANCE.STANDALONE)), "..", "..", "Content", "Paks"))
-            elif sys.platform == "darwin":
-                paks_dir = \
-                    os.path.realpath(os.path.join(self._config.SPEAR.INSTANCE.STANDALONE, "Contents", "UE", "SpearSim", "Content", "Paks"))
-            elif sys.platform == "linux":
-                paks_dir = \
-                    os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(self._config.SPEAR.INSTANCE.STANDALONE)), "SpearSim", "Content", "Paks"))
-            else:
-                assert False
-
-            assert os.path.exists(paks_dir)
-
-            # we don't use os.path.realpath here because we don't want to resolve the symlink
-            spear_paks_dir = os.path.join(paks_dir, "SpearPaks")
-
-            if spear.path_exists(spear_paks_dir):
-                spear.log(f"File or directory or symlink exists, removing: {spear_paks_dir}")
-                spear.remove_path(spear_paks_dir)
-
-            spear.log(f"Creating symlink: {spear_paks_dir} -> {self._config.SPEAR.INSTANCE.PAKS_DIR}")
-            os.symlink(self._config.SPEAR.INSTANCE.PAKS_DIR, spear_paks_dir)
-
-        # provide additional control over which Vulkan devices are recognized by Unreal
-        if self._config.SPEAR.INSTANCE.VK_ICD_FILENAMES != "":
-            spear.log("Setting VK_ICD_FILENAMES environment variable: " + self._config.SPEAR.INSTANCE.VK_ICD_FILENAMES)
-            os.environ["VK_ICD_FILENAMES"] = self._config.SPEAR.INSTANCE.VK_ICD_FILENAMES
 
         # set up launch executable and command-line arguments
         launch_args = []
@@ -120,21 +83,13 @@ class Instance():
 
         assert os.path.exists(launch_executable_internal)
 
-        launch_args.append("-windowed")
-        launch_args.append("-resx={}".format(self._config.SPEAR.INSTANCE.WINDOW_RESOLUTION_X))
-        launch_args.append("-resy={}".format(self._config.SPEAR.INSTANCE.WINDOW_RESOLUTION_Y))
-        launch_args.append("-graphicsadapter={}".format(self._config.SPEAR.INSTANCE.GPU_ID))
-        launch_args.append("-nosound")
-        # launch_args.append("-fileopenlog")         # generate a log of which files are opened in which order
-        launch_args.append("-stdout")              # ensure log output is written to the terminal 
-        launch_args.append("-fullstdoutlogoutput") # ensure log output is written to the terminal
-        launch_args.append("-nologtimes")          # don't print timestamps next to log messages twice
-
-        if self._config.SPEAR.INSTANCE.RENDER_OFFSCREEN:
-            launch_args.append("-renderoffscreen")
-
-        if self._config.SPEAR.INSTANCE.UNREAL_INTERNAL_LOG_FILE != "":
-            launch_args.append("-log={}".format(self._config.SPEAR.INSTANCE.UNREAL_INTERNAL_LOG_FILE))
+        for arg, value in (self._config.SPEAR.INSTANCE.COMMAND_LINE_ARGS).items():
+            if value == None:
+                launch_args.append("-{}".format(arg))
+            elif isinstance(value, bool) and value == False:
+                pass
+            else:
+                launch_args.append("-{}={}".format(arg, value))
        
         launch_args.append("-config_file={}".format(temp_config_file))
 

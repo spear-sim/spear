@@ -32,16 +32,17 @@ OPENBOT_ENV:
 
 
 SPEAR:
-  LAUNCH_MODE: "standalone_executable"
+  INSTANCE:
+    LAUNCH_MODE: "standalone"
 
-  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
+    STANDALONE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
 
-  PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
+    PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
 
-  CUSTOM_COMMAND_LINE_ARGUMENTS: []
-  RENDER_OFFSCREEN: False
-  WINDOW_RESOLUTION_X: 512
-  WINDOW_RESOLUTION_Y: 512
+    CUSTOM_COMMAND_LINE_ARGUMENTS: []
+    RENDER_OFFSCREEN: False
+    WINDOW_RESOLUTION_X: 512
+    WINDOW_RESOLUTION_Y: 512
 
 
 SIMULATION_CONTROLLER:

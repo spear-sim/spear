@@ -31,6 +31,12 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
+    # modify config values
+    config.defrost()
+    config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.resx = 512
+    config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.resy = 512
+    config.freeze()
+
     # create spear.Instance object
     sp_instance = spear.Instance(config)
 

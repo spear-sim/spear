@@ -45,13 +45,13 @@ class Env(gym.Env):
 
     def reset(self, reset_info=None):
         
-        for i in range(self._config.SPEAR.MAX_NUM_TICKS_AFTER_RESET):
+        for i in range(self._config.SPEAR.INSTANCE.MAX_NUM_TICKS_AFTER_RESET):
             self._engine_service.begin_tick()
             if i == 0:
                 self._reset() # only reset the simulation once
             self._engine_service.tick()
             ready = self._is_ready()
-            if ready or i == self._config.SPEAR.MAX_NUM_TICKS_AFTER_RESET - 1:
+            if ready or i == self._config.SPEAR.INSTANCE.MAX_NUM_TICKS_AFTER_RESET - 1:
                 obs = self._get_observation() # only get the observation if ready, or if we're about to give up
             self._engine_service.end_tick()
             if ready:
