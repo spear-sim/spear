@@ -62,7 +62,7 @@ VehicleAgent::VehicleAgent(UWorld* world)
     // Unreal::findActor interface. So we set the stable name of our VehiclePawn instance here, but we
     // don't do this in any other Agent constructors. This is an acceptable solution because we'll be
     // removing our Agent interface soon anyway.
-    Unreal::setStableActorName(vehicle_pawn_, Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
+    Unreal::setStableName(vehicle_pawn_, Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
 
     vehicle_pawn_->CameraComponent->FieldOfView =
         Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.FOV");

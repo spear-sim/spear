@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include <Components/ActorComponent.h>
+#include <Components/SceneComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
 
@@ -33,11 +35,11 @@ void UnrealClassRegistrar::initialize()
 void UnrealClassRegistrar::terminate()
 {
     // Unreal classes
-    unregisterActorClass("AStaticMeshActor");
-    unregisterComponentClass("UStaticMeshComponent");
+    unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
+    unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
 
     // SpCore classes
-    unregisterActorClass("AEngineActor");
+    unregisterActorClass<AEngineActor>("AEngineActor");
 }
 
 //
@@ -160,40 +162,62 @@ UActorComponent* UnrealClassRegistrar::getComponentByType(const std::string& cla
     return s_get_component_by_type_registrar_.create(class_name, actor, assert_if_not_found, assert_if_multiple_found);
 }
 
-void UnrealClassRegistrar::unregisterActorClass(const std::string& class_name)
-{
-    s_find_actors_by_name_registrar_.unregisterClass(class_name);
-    s_find_actors_by_tag_registrar_.unregisterClass(class_name);
-    s_find_actors_by_tag_any_registrar_.unregisterClass(class_name);
-    s_find_actors_by_tag_all_registrar_.unregisterClass(class_name);
-    s_find_actors_by_type_registrar_.unregisterClass(class_name);
-    s_find_actors_by_name_as_map_registrar_.unregisterClass(class_name);
-    s_find_actors_by_tag_as_map_registrar_.unregisterClass(class_name);
-    s_find_actors_by_tag_any_as_map_registrar_.unregisterClass(class_name);
-    s_find_actors_by_tag_all_as_map_registrar_.unregisterClass(class_name);
-    s_find_actors_by_type_as_map_registrar_.unregisterClass(class_name);
-    s_find_actor_by_name_registrar_.unregisterClass(class_name);
-    s_find_actor_by_tag_registrar_.unregisterClass(class_name);
-    s_find_actor_by_tag_any_registrar_.unregisterClass(class_name);
-    s_find_actor_by_tag_all_registrar_.unregisterClass(class_name);
-    s_find_actor_by_type_registrar_.unregisterClass(class_name);
+//
+// Get children components using a class name instead of template parameters
+//
+
+std::vector<USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByTag(const std::string& class_name, const USceneComponent* parent, const std::string& tag, bool include_all_descendants) {
+    return s_get_children_components_by_tag_registrar_.create(class_name, parent, tag, include_all_descendants);
 }
 
-void UnrealClassRegistrar::unregisterComponentClass(const std::string& class_name)
-{
-    s_get_components_by_name_registrar_.unregisterClass(class_name);
-    s_get_components_by_tag_registrar_.unregisterClass(class_name);
-    s_get_components_by_tag_any_registrar_.unregisterClass(class_name);
-    s_get_components_by_tag_all_registrar_.unregisterClass(class_name);
-    s_get_components_by_type_registrar_.unregisterClass(class_name);
-    s_get_components_by_name_as_map_registrar_.unregisterClass(class_name);
-    s_get_components_by_tag_as_map_registrar_.unregisterClass(class_name);
-    s_get_components_by_tag_any_as_map_registrar_.unregisterClass(class_name);
-    s_get_components_by_tag_all_as_map_registrar_.unregisterClass(class_name);
-    s_get_components_by_type_as_map_registrar_.unregisterClass(class_name);
-    s_get_component_by_name_registrar_.unregisterClass(class_name);
-    s_get_component_by_tag_registrar_.unregisterClass(class_name);
-    s_get_component_by_tag_any_registrar_.unregisterClass(class_name);
-    s_get_component_by_tag_all_registrar_.unregisterClass(class_name);
-    s_get_component_by_type_registrar_.unregisterClass(class_name);
+std::vector<USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByTagAny(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) {
+    return s_get_children_components_by_tag_any_registrar_.create(class_name, parent, tags, include_all_descendants);
+}
+
+std::vector<USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByTagAll(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) {
+    return s_get_children_components_by_tag_all_registrar_.create(class_name, parent, tags, include_all_descendants);
+}
+
+std::vector<USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByType(const std::string& class_name, const USceneComponent* parent, bool include_all_descendants) {
+    return s_get_children_components_by_type_registrar_.create(class_name, parent, include_all_descendants);
+}
+
+std::map<std::string, USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByNameAsMap(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& names, bool include_all_descendants) {
+    return s_get_children_components_by_name_as_map_registrar_.create(class_name, parent, names, include_all_descendants);
+}
+
+std::map<std::string, USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByTagAsMap(const std::string& class_name, const USceneComponent* parent, const std::string& tag, bool include_all_descendants) {
+    return s_get_children_components_by_tag_as_map_registrar_.create(class_name, parent, tag, include_all_descendants);
+}
+
+std::map<std::string, USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByTagAnyAsMap(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) {
+    return s_get_children_components_by_tag_any_as_map_registrar_.create(class_name, parent, tags, include_all_descendants);
+}
+    
+std::map<std::string, USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByTagAllAsMap(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) {
+    return s_get_children_components_by_tag_all_as_map_registrar_.create(class_name, parent, tags, include_all_descendants);
+}
+    
+std::map<std::string, USceneComponent*> UnrealClassRegistrar::getChildrenComponentsByTypeAsMap(const std::string& class_name, const USceneComponent* parent, bool include_all_descendants) {
+    return s_get_children_components_by_type_as_map_registrar_.create(class_name, parent, include_all_descendants);
+}
+    
+USceneComponent* UnrealClassRegistrar::getChildComponentByName(const std::string& class_name, const USceneComponent* parent, const std::string& name, bool include_all_descendants, bool assert_if_not_found) {
+    return s_get_child_component_by_name_registrar_.create(class_name, parent, name, include_all_descendants, assert_if_not_found);
+}
+    
+USceneComponent* UnrealClassRegistrar::getChildComponentByTag(const std::string& class_name, const USceneComponent* parent, const std::string& tag, bool include_all_descendants, bool assert_if_not_found, bool assert_if_multiple_found) {
+    return s_get_child_component_by_tag_registrar_.create(class_name, parent, tag, include_all_descendants, assert_if_not_found, assert_if_multiple_found);
+}
+    
+USceneComponent* UnrealClassRegistrar::getChildComponentByTagAny(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants, bool assert_if_not_found, bool assert_if_multiple_found) {
+    return s_get_child_component_by_tag_any_registrar_.create(class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found);
+}
+    
+USceneComponent* UnrealClassRegistrar::getChildComponentByTagAll(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants, bool assert_if_not_found, bool assert_if_multiple_found) {
+    return s_get_child_component_by_tag_all_registrar_.create(class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found);
+}
+    
+USceneComponent* UnrealClassRegistrar::getChildComponentByType(const std::string& class_name, const USceneComponent* parent, bool include_all_descendants, bool assert_if_not_found, bool assert_if_multiple_found) {
+    return s_get_child_component_by_type_registrar_.create(class_name, parent, include_all_descendants, assert_if_not_found, assert_if_multiple_found);
 }
