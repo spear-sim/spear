@@ -78,6 +78,12 @@ public:
         const FLinkerInstancingContext* instancing_context = nullptr);
 
     //
+    // Get static class using a class name instead of template parameters
+    //
+
+    static UClass* getStaticClass(const std::string& class_name);
+
+    //
     // Find actors using a class name instead of template parameters
     //
 
@@ -164,6 +170,8 @@ public:
     template <CActor TActor>
     static void registerActorClass(const std::string& class_name)
     {
+        registerClassCommon<TActor>(class_name);
+
         //
         // Spawn actor
         //
@@ -252,6 +260,8 @@ public:
     template <CComponent TComponent>
     static void registerComponentClassCommon(const std::string& class_name)
     {
+        registerClassCommon<TComponent>(class_name);
+
         //
         // Get components by name or tag or type and return an std::vector
         //
@@ -525,31 +535,52 @@ public:
             });
     }
 
-    template <CObject TObject>
-    static void registerObjectClass(const std::string& class_name)
+    template <CClass TClass>
+    static void registerClassCommon(const std::string& class_name)
     {
-        s_new_object_registrar_.registerClass(
-            class_name,
-            [](UObject* outer, FName name, EObjectFlags flags, UObject* uobject_template, bool copy_transients_from_class_defaults, FObjectInstancingGraph* in_instance_graph, UPackage* external_package) -> UObject* {
-                return NewObject<UObject>(outer, TObject::StaticClass(), name, flags, uobject_template, copy_transients_from_class_defaults, in_instance_graph, external_package);
-            });
+        //
+        // Get static class
+        //
 
-        s_load_object_registrar_.registerClass(class_name,
-            [](UObject* outer, const TCHAR* name, const TCHAR* filename, uint32 load_flags, UPackageMap* sandbox, const FLinkerInstancingContext* instancing_context) -> UObject* {
-                return LoadObject<TObject>(outer, name, filename, load_flags, sandbox, instancing_context);
+        s_get_static_class_registrar_.registerClass(
+            class_name, []() -> UClass* {
+                return TClass::StaticClass();
             });
     }
 
-    template <typename TStruct>
-    static void registerStructClass(const std::string& class_name)
+    template <CClass TClass>
+    static void registerClass(const std::string& class_name)
     {
-        std::string typeid_name = boost::core::demangle(typeid(TStruct).name());
-        Std::insert(s_struct_names_, typeid_name, class_name);
+        registerClassCommon<TClass>(class_name);
+
+        //
+        // Create object
+        //
+
+        s_new_object_registrar_.registerClass(
+            class_name, [](UObject* outer, FName name, EObjectFlags flags, UObject* uobject_template, bool copy_transients_from_class_defaults, FObjectInstancingGraph* in_instance_graph, UPackage* external_package) -> UObject* {
+                return NewObject<UObject>(outer, TClass::StaticClass(), name, flags, uobject_template, copy_transients_from_class_defaults, in_instance_graph, external_package);
+            });
+
+        s_load_object_registrar_.registerClass(
+            class_name, [](UObject* outer, const TCHAR* name, const TCHAR* filename, uint32 load_flags, UPackageMap* sandbox, const FLinkerInstancingContext* instancing_context) -> UObject* {
+                return LoadObject<TClass>(outer, name, filename, load_flags, sandbox, instancing_context);
+            });
+    }
+
+    // only special structs that don't define a StaticStruct() method (e.g., FVector) should be registered/unregistered
+    template <typename TSpecialStruct> requires !CObject<TSpecialStruct>
+    static void registerSpecialStruct(const std::string& class_name)
+    {
+        std::string demangled_name = boost::core::demangle(typeid(TSpecialStruct).name());
+        Std::insert(s_special_struct_names_, demangled_name, class_name);
     }
 
     template <CActor TActor>
     static void unregisterActorClass(const std::string& class_name)
     {
+        unregisterClassCommon<TActor>(class_name);
+
         s_spawn_actor_registrar_.unregisterClass(class_name);
 
         s_find_actors_by_name_registrar_.unregisterClass(class_name);
@@ -572,6 +603,8 @@ public:
     template <CComponent TComponent>
     static void unregisterComponentClassCommon(const std::string& class_name)
     {
+        unregisterClassCommon<TComponent>(class_name);
+
         s_get_components_by_name_registrar_.unregisterClass(class_name);
         s_get_components_by_tag_registrar_.unregisterClass(class_name);
         s_get_components_by_tag_any_registrar_.unregisterClass(class_name);
@@ -600,7 +633,6 @@ public:
     template <CSceneComponent TSceneComponent>
     static void unregisterComponentClass(const std::string& class_name)
     {
-        // Unregister each USceneComponent as a UActorComponent
         unregisterComponentClassCommon<TSceneComponent>(class_name);
 
         s_create_scene_component_outside_owner_constructor_from_actor_registrar_.unregisterClass(class_name);
@@ -640,32 +672,43 @@ public:
         s_get_child_component_by_type_from_scene_component_registrar_.unregisterClass(class_name);
     }
 
-    template <CObject TObject>
-    static void unregisterObjectClass(const std::string& class_name)
+    template <CClass TClass>
+    static void unregisterClassCommon(const std::string& class_name)
     {
+        s_get_static_class_registrar_.unregisterClass(class_name);
+    }
+
+    template <CClass TClass>
+    static void unregisterClass(const std::string& class_name)
+    {
+        unregisterClassCommon<TClass>(class_name);
+
         s_new_object_registrar_.unregisterClass(class_name);
         s_load_object_registrar_.unregisterClass(class_name);
     }
 
-    template <typename TStruct>
-    static void unregisterStructClass(const std::string& class_name)
+    // only special Unreal structs that don't define a StaticStruct() method (e.g., FVector) should be registered/unregistered
+    template <typename TSpecialStruct> requires !CObject<TSpecialStruct>
+    static void unregisterSpecialStruct(const std::string& class_name)
     {
-        std::string typeid_name = boost::core::demangle(typeid(TStruct).name());
-        Std::remove(s_struct_names_, typeid_name);
-    }
-
-    template <typename TStruct>
-    static UStruct* getStaticStruct()
-    {
-        std::string typeid_name = boost::core::demangle(typeid(TStruct).name());
-        std::string name = s_struct_names_.at(typeid_name);
-        return Unreal::findStructByName(name);
+        std::string demangled_name = boost::core::demangle(typeid(TSpecialStruct).name());
+        Std::remove(s_special_struct_names_, demangled_name);
     }
 
     template <CStruct TStruct>
     static UStruct* getStaticStruct()
     {
         return TStruct::StaticStruct();
+    }
+
+    // only special Unreal structs that don't define a StaticStruct() method (e.g., FVector) should use this code path, and
+    // must have been previously registered
+    template <typename TSpecialStruct> requires !CObject<TSpecialStruct>
+    static UStruct* getStaticStruct()
+    {
+        std::string demangled_name = boost::core::demangle(typeid(TSpecialStruct).name());
+        std::string name = s_special_struct_names_.at(demangled_name);
+        return Unreal::findStructByName(name);
     }
 
 private:
@@ -713,7 +756,7 @@ private:
         }
 
         void unregisterClass(const std::string& class_name)
-        {
+        { 
             Std::remove(class_funcs_, class_name);
         }
 
@@ -727,10 +770,12 @@ private:
     };
 
     //
-    // Map from platform-dependent type names to user-specified type names. Used to find special structs that don't have a StaticStruct() method.
+    // Map from platform-dependent type names (i.e., that can be obtained directly from any C++ type) to
+    // user-specified type names. Maintaining this map is necessary to implement our getStaticStruct<T>()
+    // method for special struct types (e.g., FVector) that don't have a StaticStruct() method.
     //
 
-    inline static std::map<std::string, std::string> s_struct_names_;
+    inline static std::map<std::string, std::string> s_special_struct_names_;
 
     //
     // Registrars for spawning actors using a class name instead of template parameters
@@ -746,6 +791,12 @@ private:
     inline static ClassRegistrar<USceneComponent*, AActor*, const std::string&>                    s_create_scene_component_outside_owner_constructor_from_actor_registrar_;
     inline static ClassRegistrar<USceneComponent*, UObject*, USceneComponent*, const std::string&> s_create_scene_component_outside_owner_constructor_from_object_registrar_;
     inline static ClassRegistrar<USceneComponent*, USceneComponent*, const std::string&>           s_create_scene_component_outside_owner_constructor_from_scene_component_registrar_;
+
+    //
+    // Registrars for getting static classes using a class name instead of template parameters
+    //
+
+    inline static ClassRegistrar<UClass*> s_get_static_class_registrar_;
 
     //
     // Registrars for creating objects using a class name instead of template parameters

@@ -42,6 +42,13 @@ concept CStruct =
         { TStruct::StaticStruct() } -> std::same_as<UStruct*>;
     };
 
+template <typename TClass>
+concept CClass =
+    CObject<TClass> &&
+    requires() {
+        { TClass::StaticClass() } -> std::same_as<UClass*>;
+    };
+
 template <typename TComponent>
 concept CComponent = CObject<TComponent> && std::derived_from<TComponent, UActorComponent>;
 

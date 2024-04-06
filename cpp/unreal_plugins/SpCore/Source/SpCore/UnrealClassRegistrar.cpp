@@ -10,9 +10,12 @@
 
 #include <Components/ActorComponent.h>
 #include <Components/StaticMeshComponent.h>
+#include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/TextureRenderTarget2D.h>
+#include <Kismet/GameplayStatics.h>
 #include <Materials/Material.h>
+#include <Materials/MaterialInterface.h>
 #include <Math/Transform.h> // FTransform (attempting to forward declare as a struct or a class causes errors)
 
 #include "SpCore/EngineActor.h"
@@ -20,6 +23,7 @@
 class AActor;
 class FLinkerInstancingContext;
 class UActorComponent;
+class UClass;
 class UObject;
 class UPackage;
 class UPackageMap;
@@ -37,11 +41,12 @@ void UnrealClassRegistrar::initialize()
     // Unreal classes
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
-    registerObjectClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
-    registerObjectClass<UMaterial>("UMaterial");
-    registerObjectClass<UMaterialInterface>("UMaterialInterface");
-    registerObjectClass<UStaticMesh>("UStaticMesh");
-    registerStructClass<FVector>("FVector");
+    registerClass<UGameplayStatics>("UGameplayStatics");
+    registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
+    registerClass<UMaterial>("UMaterial");
+    registerClass<UMaterialInterface>("UMaterialInterface");
+    registerClass<UStaticMesh>("UStaticMesh");
+    registerSpecialStruct<FVector>("FVector"); // need to register FVector because it doesn't define a StaticStruct() method
 
     // SpCore classes
     registerActorClass<AEngineActor>("AEngineActor");
@@ -52,11 +57,12 @@ void UnrealClassRegistrar::terminate()
     // Unreal classes
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
-    unregisterObjectClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
-    unregisterObjectClass<UMaterial>("UMaterial");
-    unregisterObjectClass<UMaterialInterface>("UMaterialInterface");
-    unregisterObjectClass<UStaticMesh>("UStaticMesh");
-    unregisterStructClass<FVector>("FVector");
+    unregisterClass<UGameplayStatics>("UGameplayStatics");
+    unregisterClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
+    unregisterClass<UMaterial>("UMaterial");
+    unregisterClass<UMaterialInterface>("UMaterialInterface");
+    unregisterClass<UStaticMesh>("UStaticMesh");
+    unregisterSpecialStruct<FVector>("FVector");
 
     // SpCore classes
     unregisterActorClass<AEngineActor>("AEngineActor");
@@ -117,6 +123,14 @@ UObject* UnrealClassRegistrar::loadObject(
     const FLinkerInstancingContext* instancing_context)
 {
     return s_load_object_registrar_.call(class_name, outer, name, filename, load_flags, sandbox, instancing_context);
+}
+
+//
+// Get static class using a class name instead of template parameters
+//
+
+UClass* UnrealClassRegistrar::getStaticClass(const std::string& class_name) {
+    return s_get_static_class_registrar_.call(class_name);
 }
 
 //

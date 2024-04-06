@@ -12,6 +12,7 @@
 #include <Math/Transform.h>
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
+#include <UObject/Object.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/EngineActor.h"
@@ -302,6 +303,9 @@ void ADebugWidget::CallFunctions()
 void ADebugWidget::CreateObjects()
 {
     static int i = 0;
+
+    UClass* uclass = UnrealClassRegistrar::getStaticClass("UGameplayStatics");
+    SP_ASSERT(uclass);
 
     std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
 
