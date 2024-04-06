@@ -26,6 +26,7 @@ class UObject;
 class UPackage;
 class UPackageMap;
 class USceneComponent;
+class UStruct;
 struct FActorSpawnParameters;
 struct FObjectInstancingGraph;
 
@@ -539,6 +540,13 @@ public:
             });
     }
 
+    template <typename TStruct>
+    static void registerStructClass(const std::string& class_name)
+    {
+        std::string typeid_name = boost::core::demangle(typeid(TStruct).name());
+        Std::insert(s_struct_names_, typeid_name, class_name);
+    }
+
     template <CActor TActor>
     static void unregisterActorClass(const std::string& class_name)
     {
@@ -639,6 +647,27 @@ public:
         s_load_object_registrar_.unregisterClass(class_name);
     }
 
+    template <typename TStruct>
+    static void unregisterStructClass(const std::string& class_name)
+    {
+        std::string typeid_name = boost::core::demangle(typeid(TStruct).name());
+        Std::remove(s_struct_names_, typeid_name);
+    }
+
+    template <typename TStruct>
+    static UStruct* getStaticStruct()
+    {
+        std::string typeid_name = boost::core::demangle(typeid(TStruct).name());
+        std::string name = s_struct_names_.at(typeid_name);
+        return Unreal::findStructByName(name);
+    }
+
+    template <CStruct TStruct>
+    static UStruct* getStaticStruct()
+    {
+        return TStruct::StaticStruct();
+    }
+
 private:
 
     //
@@ -696,6 +725,12 @@ private:
     private:
         std::map<std::string, std::function<TReturn(TArgs...)>> class_funcs_;
     };
+
+    //
+    // Map from platform-dependent type names to user-specified type names. Used to find special structs that don't have a StaticStruct() method.
+    //
+
+    inline static std::map<std::string, std::string> s_struct_names_;
 
     //
     // Registrars for spawning actors using a class name instead of template parameters

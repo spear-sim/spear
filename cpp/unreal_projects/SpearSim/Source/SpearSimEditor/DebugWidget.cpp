@@ -16,6 +16,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
+#include "SpCore/PropertyArg.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistrar.h"
@@ -302,11 +303,13 @@ void ADebugWidget::CreateObjects()
 {
     static int i = 0;
 
-    FTransform transform = FTransform::Identity;
-    FActorSpawnParameters spawn_parameters;
-    spawn_parameters.Name = Unreal::toFName(Std::toString("CreateObjectsActor_", i));
-    spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
 
+    PropertyArg<FVector> vec("vec");
+    PropertyArgUtils::setArgs({&vec}, {{"vec", vec_str}});
+
+    FTransform transform;
+    FActorSpawnParameters spawn_parameters;
     AActor* actor = UnrealClassRegistrar::spawnActor("AStaticMeshActor", GetWorld(), transform, spawn_parameters);
     SP_ASSERT(actor);
 

@@ -41,6 +41,7 @@ void UnrealClassRegistrar::initialize()
     registerObjectClass<UMaterial>("UMaterial");
     registerObjectClass<UMaterialInterface>("UMaterialInterface");
     registerObjectClass<UStaticMesh>("UStaticMesh");
+    registerStructClass<FVector>("FVector");
 
     // SpCore classes
     registerActorClass<AEngineActor>("AEngineActor");
@@ -55,6 +56,7 @@ void UnrealClassRegistrar::terminate()
     unregisterObjectClass<UMaterial>("UMaterial");
     unregisterObjectClass<UMaterialInterface>("UMaterialInterface");
     unregisterObjectClass<UStaticMesh>("UStaticMesh");
+    unregisterStructClass<FVector>("FVector");
 
     // SpCore classes
     unregisterActorClass<AEngineActor>("AEngineActor");

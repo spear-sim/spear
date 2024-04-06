@@ -35,6 +35,13 @@ class UWorld;
 template <typename TObject>
 concept CObject = std::derived_from<TObject, UObject>;
 
+template <typename TStruct>
+concept CStruct =
+    CObject<TStruct> &&
+    requires() {
+        { TStruct::StaticStruct() } -> std::same_as<UStruct*>;
+    };
+
 template <typename TComponent>
 concept CComponent = CObject<TComponent> && std::derived_from<TComponent, UActorComponent>;
 
