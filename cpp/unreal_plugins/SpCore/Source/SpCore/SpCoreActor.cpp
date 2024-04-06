@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpCore/EngineActor.h"
+#include "SpCore/SpCoreActor.h"
 
 #include <Containers/Array.h>
 #include <Engine/Engine.h>      // GEngine
@@ -19,24 +19,24 @@
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Unreal.h"
 
-AEngineActor::AEngineActor()
+ASpCoreActor::ASpCoreActor()
 {
     SP_LOG_CURRENT_FUNCTION();
 
     PrimaryActorTick.bCanEverTick = true;
-    PrimaryActorTick.bTickEvenWhenPaused = false;
+    PrimaryActorTick.bTickEvenWhenPaused = true; // we want to update IsGamePaused state when paused
     PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 
-    stable_name_component_ = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
-    SP_ASSERT(stable_name_component_);
+    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
+    SP_ASSERT(StableNameComponent);
 }
 
-AEngineActor::~AEngineActor()
+ASpCoreActor::~ASpCoreActor()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void AEngineActor::Tick(float delta_time)
+void ASpCoreActor::Tick(float delta_time)
 {
     AActor::Tick(delta_time);
 
@@ -45,37 +45,37 @@ void AEngineActor::Tick(float delta_time)
     actor_hit_event_descs_.Empty();
 }
 
-void AEngineActor::PauseGame()
+void ASpCoreActor::PauseGame()
 {
     UGameplayStatics::SetGamePaused(GetWorld(), true);
 }
 
-void AEngineActor::UnpauseGame()
+void ASpCoreActor::UnpauseGame()
 {
     UGameplayStatics::SetGamePaused(GetWorld(), false);
 }
 
-void AEngineActor::ToggleGamePaused()
+void ASpCoreActor::ToggleGamePaused()
 {
     UGameplayStatics::SetGamePaused(GetWorld(), !UGameplayStatics::IsGamePaused(GetWorld()));
 }
 
-void AEngineActor::SubscribeToActorHitEvents(AActor* actor)
+void ASpCoreActor::SubscribeToActorHitEvents(AActor* actor)
 {
-    actor->OnActorHit.AddDynamic(this, &AEngineActor::ActorHitHandler);
+    actor->OnActorHit.AddDynamic(this, &ASpCoreActor::ActorHitHandler);
 }
 
-void AEngineActor::UnsubscribeFromActorHitEvents(AActor* actor)
+void ASpCoreActor::UnsubscribeFromActorHitEvents(AActor* actor)
 {
-    actor->OnActorHit.AddDynamic(this, &AEngineActor::ActorHitHandler);
+    actor->OnActorHit.AddDynamic(this, &ASpCoreActor::ActorHitHandler);
 }
 
-TArray<FActorHitEventDesc> AEngineActor::GetActorHitEventDescs()
+TArray<FActorHitEventDesc> ASpCoreActor::GetActorHitEventDescs()
 {
     return actor_hit_event_descs_;
 }
 
-void AEngineActor::ActorHitHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
+void ASpCoreActor::ActorHitHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
 {
     SP_ASSERT(self_actor);
     SP_ASSERT(other_actor);
@@ -100,34 +100,34 @@ void AEngineActor::ActorHitHandler(AActor* self_actor, AActor* other_actor, FVec
 }
 
 #if WITH_EDITOR // defined in an auto-generated header
-    void AEngineActor::PostActorCreated()
+    void ASpCoreActor::PostActorCreated()
     { 
         AActor::PostActorCreated();
         initializeActorLabelHandlers();
     }
 
-    void AEngineActor::PostLoad()
+    void ASpCoreActor::PostLoad()
     {
         AActor::PostLoad();
         initializeActorLabelHandlers();
     }
 
-    void AEngineActor::BeginDestroy()
+    void ASpCoreActor::BeginDestroy()
     {
         AActor::BeginDestroy();
         requestTerminateActorLabelHandlers();
     }
 
-    void AEngineActor::initializeActorLabelHandlers()
+    void ASpCoreActor::initializeActorLabelHandlers()
     {
         SP_ASSERT(GEngine);
         SP_ASSERT(!actor_label_changed_handle_.IsValid());
         SP_ASSERT(!level_actor_folder_changed_handle_.IsValid());
-        actor_label_changed_handle_ = FCoreDelegates::OnActorLabelChanged.AddUObject(this, &AEngineActor::actorLabelChangedHandler);
-        level_actor_folder_changed_handle_ = GEngine->OnLevelActorFolderChanged().AddUObject(this, &AEngineActor::levelActorFolderChangedHandler);
+        actor_label_changed_handle_ = FCoreDelegates::OnActorLabelChanged.AddUObject(this, &ASpCoreActor::actorLabelChangedHandler);
+        level_actor_folder_changed_handle_ = GEngine->OnLevelActorFolderChanged().AddUObject(this, &ASpCoreActor::levelActorFolderChangedHandler);
     }
 
-    void AEngineActor::requestTerminateActorLabelHandlers()
+    void ASpCoreActor::requestTerminateActorLabelHandlers()
     {
         // Need to check IsValid() here because BeginDestroy() is called for default objects, but PostActorCreated() and PostLoad() are not.
 
@@ -143,13 +143,13 @@ void AEngineActor::ActorHitHandler(AActor* self_actor, AActor* other_actor, FVec
         }
     }
 
-    void AEngineActor::actorLabelChangedHandler(AActor* actor)
+    void ASpCoreActor::actorLabelChangedHandler(AActor* actor)
     {
         SP_ASSERT(actor);
         Unreal::requestUpdateStableName(actor);
     }
 
-    void AEngineActor::levelActorFolderChangedHandler(const AActor* actor, FName name)
+    void ASpCoreActor::levelActorFolderChangedHandler(const AActor* actor, FName name)
     {
         SP_ASSERT(actor);
         Unreal::requestUpdateStableName(actor);

@@ -15,8 +15,8 @@
 #include <UObject/Object.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
+#include "SpCore/SpCoreActor.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
@@ -284,7 +284,7 @@ void ADebugWidget::CallFunctions()
     return_values = Unreal::callFunction(static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
 
-    UObject* uobject = Unreal::findActorByName(world, "Engine/EngineActor");
+    UObject* uobject = Unreal::findActorByName(world, "SpCore/SpCoreActor");
     SP_ASSERT(uobject);
     ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetActorHitEventDescs");
     SP_ASSERT(ufunction);
@@ -309,15 +309,28 @@ void ADebugWidget::CreateObjects()
 
     std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
 
-    UnrealObj<FVector> vec("vec");
-    UnrealObjUtils::setObjectPropertiesFromStrings({&vec}, {{"vec", vec_str}});
+    UnrealObj<FVector> v("v");
+    UnrealObj<FTransform> t("t");
 
-    UnrealObj<FTransform> transform;
-    SP_LOG(Unreal::getObjectPropertiesAsString(transform.getValuePtr(), transform.getStaticStruct()));
+    // get object properties as strings for all objects in the input vector
+    std::map<std::string, std::string> strings = UnrealObjUtils::getObjectPropertiesAsStrings({v.getPtr(), t.getPtr()});
+    for (auto& [name, property_string] : strings) {
+        SP_LOG(name);
+        SP_LOG(property_string);
+    }
+
+    // set object properties from a map of strings
+    UnrealObjUtils::setObjectPropertiesFromStrings({v.getPtr(), t.getPtr()}, {{"v", vec_str}, {"t", "{}"}});
+
+    // verify objects have been updated
+    strings = UnrealObjUtils::getObjectPropertiesAsStrings({v.getPtr(), t.getPtr()});
+    for (auto& [name, property_string] : strings) {
+        SP_LOG(name);
+        SP_LOG(property_string);
+    }
 
     FActorSpawnParameters spawn_parameters;
-
-    AActor* actor = UnrealClassRegistrar::spawnActor("AStaticMeshActor", GetWorld(), transform.get(), spawn_parameters);
+    AActor* actor = UnrealClassRegistrar::spawnActor("AStaticMeshActor", GetWorld(), t.getObj(), spawn_parameters);
     SP_ASSERT(actor);
 
     i++;
@@ -328,11 +341,11 @@ void ADebugWidget::SubscribeToActorHitEvents()
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
-    AEngineActor* engine_actor = Unreal::findActorByName<AEngineActor>(GetWorld(), "Engine/EngineActor");
-    SP_ASSERT(engine_actor);
+    ASpCoreActor* sp_core_actor = Unreal::findActorByName<ASpCoreActor>(GetWorld(), "SpCore/SpCoreActor");
+    SP_ASSERT(sp_core_actor);
 
-    UFunction* ufunction = Unreal::findFunctionByName(engine_actor->GetClass(), "SubscribeToActorHitEvents");
-    Unreal::callFunction(engine_actor, ufunction, {{"actor", Std::toStringFromPtr(static_mesh_actor)}});
+    UFunction* ufunction = Unreal::findFunctionByName(sp_core_actor->GetClass(), "SubscribeToActorHitEvents");
+    Unreal::callFunction(sp_core_actor, ufunction, {{"actor", Std::toStringFromPtr(static_mesh_actor)}});
 }
 
 FString ADebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)

@@ -32,8 +32,8 @@
                                      // FScriptArrayHelper, FScriptMapHelper, FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, TFieldIterator
 
 #include "SpCore/Assert.h"
-#include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
+#include "SpCore/SpCoreActor.h"
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
 
@@ -99,11 +99,11 @@ UStruct* Unreal::findStructByName(const std::string& name)
     // this function is usable even in levels that don't have an AEngineActor in them, and avoids the need to
     // do a findActor operation. For this operation to work, AEngineActor needs a property named _StructName
     // of type StructName.
-    UClass* engine_actor_uclass = AEngineActor::StaticClass();
-    SP_ASSERT(engine_actor_uclass);
-    UObject* engine_actor_default_object = engine_actor_uclass->GetDefaultObject();
-    SP_ASSERT(engine_actor_default_object);
-    PropertyDesc property_desc = findPropertyByName(engine_actor_default_object, "_" + name);
+    UClass* sp_core_actor_uclass = ASpCoreActor::StaticClass();
+    SP_ASSERT(sp_core_actor_uclass);
+    UObject* sp_core_actor_default_object = sp_core_actor_uclass->GetDefaultObject();
+    SP_ASSERT(sp_core_actor_default_object);
+    PropertyDesc property_desc = findPropertyByName(sp_core_actor_default_object, "_SP_SPECIAL_STRUCT_" + name + "_");
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
     FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);

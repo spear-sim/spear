@@ -46,9 +46,8 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     SpectatorPawnMovement = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
     SP_ASSERT(SpectatorPawnMovement);
 
-    // We want this pawn to be able to move even when the game is paused.
     SpectatorPawnMovement->PrimaryComponentTick.bCanEverTick = true;
-    SpectatorPawnMovement->PrimaryComponentTick.bTickEvenWhenPaused = true;
+    SpectatorPawnMovement->PrimaryComponentTick.bTickEvenWhenPaused = true; // we want to be able to move even when paused
     SpectatorPawnMovement->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
     SpectatorPawnMovement->bIgnoreTimeDilation = true;
 }

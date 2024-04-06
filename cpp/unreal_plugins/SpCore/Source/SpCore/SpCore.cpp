@@ -9,7 +9,6 @@
 #include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
 #include "SpCore/Config.h"
-#include "SpCore/EngineActor.h"
 #include "SpCore/Log.h"
 #include "SpCore/UnrealClassRegistrar.h"
 

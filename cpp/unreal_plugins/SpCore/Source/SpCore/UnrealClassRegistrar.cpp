@@ -16,9 +16,10 @@
 #include <Kismet/GameplayStatics.h>
 #include <Materials/Material.h>
 #include <Materials/MaterialInterface.h>
-#include <Math/Transform.h> // FTransform (attempting to forward declare as a struct or a class causes errors)
+#include <Math/Transform.h>
+#include <Math/Vector.h>
 
-#include "SpCore/EngineActor.h"
+#include "SpCore/SpCoreActor.h"
 
 class AActor;
 class FLinkerInstancingContext;
@@ -47,12 +48,12 @@ void UnrealClassRegistrar::initialize()
     registerClass<UStaticMesh>("UStaticMesh");
     registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
 
-    // need to register structs if they don't define a StaticStruct() method
+    // need to register special structs, i.e., structs that don't define a StaticStruct() method
     registerSpecialStruct<FTransform>("FTransform");
     registerSpecialStruct<FVector>("FVector");
 
     // SpCore classes
-    registerActorClass<AEngineActor>("AEngineActor");
+    registerActorClass<ASpCoreActor>("ASpCoreActor");
 }
 
 void UnrealClassRegistrar::terminate()
@@ -71,7 +72,7 @@ void UnrealClassRegistrar::terminate()
     unregisterSpecialStruct<FVector>("FVector");
 
     // SpCore classes
-    unregisterActorClass<AEngineActor>("AEngineActor");
+    unregisterActorClass<ASpCoreActor>("ASpCoreActor");
 }
 
 //

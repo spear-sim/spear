@@ -65,7 +65,8 @@ public:
     void* getValuePtr() override { return &value; }
     UStruct* getStaticStruct() const override { return UnrealClassRegistrar::getStaticStruct<T>(); }
 
-    T& get() { return value; }
+    UnrealObjBase* getPtr() { return static_cast<UnrealObjBase*>(this); }
+    T& getObj() { return value; }
 
 private:
     T value;
@@ -76,6 +77,36 @@ class UnrealObjUtils
 public:
     UnrealObjUtils() = delete;
     ~UnrealObjUtils() = delete;
+
+    template <CUnrealObjPtr TUnrealObjPtr>
+    static std::map<std::string, std::string> getObjectPropertiesAsStrings(std::initializer_list<TUnrealObjPtr> unreal_objs)
+    {
+        // convert from initializer_list to vector but don't convert the underlying value type
+        return getObjectPropertiesFromStrings(Std::toVector<TUnrealObjPtr>(unreal_objs));
+    }
+
+    template <CUnrealObjValueContainer TUnrealObjValueContainer>
+    static std::map<std::string, std::string> getObjectPropertiesFromStrings(const TUnrealObjValueContainer& unreal_objs)
+    {
+        // convert from vector to map and from UnrealObj<T>* to UnrealObjBase*
+        SP_ASSERT(!Std::contains(unreal_objs, nullptr));
+        auto unreal_obj_map = Std::toMap<std::string, UnrealObjBase*>(
+            unreal_objs | std::views::transform([](auto unreal_obj) { return std::make_pair(unreal_obj->getName(), unreal_obj); }));
+        return getObjectPropertiesFromStrings(unreal_obj_map);
+    }
+
+    template <CUnrealObjKeyValueContainer TUnrealObjKeyValueContainer>
+    static std::map<std::string, std::string> getObjectPropertiesFromStrings(const TUnrealObjKeyValueContainer& unreal_objs)
+    {
+        // input is a map from names to pointers, output is a map from names to property strings
+        return Std::toMap<std::string, std::string>(
+            unreal_objs |
+            std::views::transform([](auto& pair) {
+                auto& [name, obj] = pair;
+                SP_ASSERT(obj);
+                return std::make_pair(name, Unreal::getObjectPropertiesAsString(obj->getValuePtr(), obj->getStaticStruct()));
+            }));
+    }
 
     template <CUnrealObjPtr TUnrealObjPtr>
     static void setObjectPropertiesFromStrings(std::initializer_list<TUnrealObjPtr> unreal_objs, const std::map<std::string, std::string>& strings)
