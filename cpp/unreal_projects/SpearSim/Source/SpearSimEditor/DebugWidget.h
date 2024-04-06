@@ -41,6 +41,9 @@ private:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void CallFunctions();
 
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void CreateObjects();
+
     UFUNCTION(CallInEditor, Category = "SPEAR")
     void SubscribeToActorHitEvents();
 

@@ -187,7 +187,7 @@ public:
     //
 
     template <typename TValue>
-    static const TValue& at(const std::span<TValue>& span, int index)
+    static const TValue& at(const std::span<TValue>& span, int index) // TODO:: replace with span.at() in C++26
     {
         SP_ASSERT(index < span.size());
         return span[index];
@@ -199,7 +199,7 @@ public:
 
     template <typename TValue, typename TRange> requires
         CRangeHasValuesConvertibleTo<TRange, TValue>
-    static std::vector<TValue> toVector(TRange&& range)
+    static std::vector<TValue> toVector(TRange&& range) // TODO: replace with std::ranges::to<std::vector> in C++23
     {
         std::vector<TValue> vector;
         std::ranges::copy(std::forward<decltype(range)>(range), std::back_inserter(vector));
@@ -208,7 +208,7 @@ public:
 
     template <typename TKey, typename TValue, typename TRange> requires
         CRangeHasValuesConvertibleTo<TRange, std::pair<TKey, TValue>>
-    static std::map<TKey, TValue> toMap(TRange&& range)
+    static std::map<TKey, TValue> toMap(TRange&& range) // TODO: replace with std::ranges::to<std::map> in C++23
     {
         std::vector<std::pair<TKey, TValue>> pairs = toVector<std::pair<TKey, TValue>>(std::forward<decltype(range)>(range));
 

@@ -37,6 +37,11 @@
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
 
+class UClass;
+class USceneComponent;
+class UStruct;
+class UWorld;
+
 // 
 // Find actors unconditionally and return an std::vector or an std::map
 //
@@ -88,13 +93,12 @@ std::map<std::string, USceneComponent*> Unreal::getChildrenComponentsAsMap(const
 // Find struct by name
 //
 
-UStruct* Unreal::findStructByName(const UWorld* world, const std::string& name)
+UStruct* Unreal::findStructByName(const std::string& name)
 {
     // We only need AEngineActor's property metadata here, so we can use the default object. This makes it so
     // this function is usable even in levels that don't have an AEngineActor in them, and avoids the need to
     // do a findActor operation. For this operation to work, AEngineActor needs a property named _StructName
     // of type StructName.
-    SP_ASSERT(world);
     UClass* engine_actor_uclass = AEngineActor::StaticClass();
     SP_ASSERT(engine_actor_uclass);
     UObject* engine_actor_default_object = engine_actor_uclass->GetDefaultObject();
@@ -264,6 +268,8 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.value_ptr_);
 
+    std::string string;
+
     if (property_desc.property_->IsA(FBoolProperty::StaticClass())   ||
         property_desc.property_->IsA(FIntProperty::StaticClass())    ||
         property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
@@ -273,7 +279,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
 
         TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
         SP_ASSERT(json_value.Get());
-        return toStdString(json_value.Get()->AsString());
+        string = toStdString(json_value.Get()->AsString());
 
     }  else if (property_desc.property_->IsA(FArrayProperty::StaticClass())) {
 
@@ -292,7 +298,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
             inner_strings.push_back(inner_string);
         }
 
-        return getArrayPropertyValueAsFormattedString(inner_property, inner_strings);
+        string = getArrayPropertyValueAsFormattedString(inner_property, inner_strings);
 
     }  else if (property_desc.property_->IsA(FSetProperty::StaticClass())) {
 
@@ -311,7 +317,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
             inner_strings.push_back(inner_string);
         }
 
-        return getArrayPropertyValueAsFormattedString(inner_property, inner_strings);
+        string = getArrayPropertyValueAsFormattedString(inner_property, inner_strings);
 
     }  else if (property_desc.property_->IsA(FMapProperty::StaticClass())) {
 
@@ -340,28 +346,29 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
             inner_value_strings.push_back(inner_value_string);
         }
 
-        return getMapPropertyValueAsFormattedString(inner_key_property, inner_key_strings, inner_value_property, inner_value_strings);
+        string = getMapPropertyValueAsFormattedString(inner_key_property, inner_key_strings, inner_value_property, inner_value_strings);
 
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
 
         FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
         UStruct* ustruct = struct_property->Struct;
-        FString string;
-        FJsonObjectConverter::UStructToJsonObjectString(ustruct, property_desc.value_ptr_, string);
-        return toStdString(string);
+        FString fstring;
+        FJsonObjectConverter::UStructToJsonObjectString(ustruct, property_desc.value_ptr_, fstring);
+        string = toStdString(fstring);
 
     } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
 
         FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
         UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
-        return Std::toStringFromPtr(uobject);
+        string = Std::toStringFromPtr(uobject);
 
     } else {
 
         SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
         SP_ASSERT(false);
-        return "";
     }
+
+    return string;
 }
 
 void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_desc, const std::string& string)

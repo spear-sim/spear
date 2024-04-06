@@ -6,9 +6,10 @@
 
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
-#include <Engine/World.h>
+#include <Engine/World.h> // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
+#include <Math/Transform.h>
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
 
@@ -123,7 +124,7 @@ void ADebugWidget::GetAndSetObjectProperties()
 
     // Get property values from void* and UStruct*
     value_ptr = relative_location_property_desc.value_ptr_;
-    ustruct = Unreal::findStructByName(world, "FVector"); // useful for when a class or struct doesn't define a StaticStruct() method
+    ustruct = Unreal::findStructByName("FVector"); // useful for when a class or struct doesn't define a StaticStruct() method
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
@@ -134,7 +135,7 @@ void ADebugWidget::GetAndSetObjectProperties()
     // Set property value from void* and UStruct*
     str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}");
     value_ptr = &vec;
-    ustruct = Unreal::findStructByName(world, "FVector");
+    ustruct = Unreal::findStructByName("FVector");
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     Unreal::setObjectPropertiesFromString(value_ptr, ustruct, str);
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
@@ -293,6 +294,21 @@ void ADebugWidget::CallFunctions()
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
+
+    i++;
+}
+
+void ADebugWidget::CreateObjects()
+{
+    static int i = 0;
+
+    FTransform transform = FTransform::Identity;
+    FActorSpawnParameters spawn_parameters;
+    spawn_parameters.Name = Unreal::toFName(Std::toString("CreateObjectsActor_", i));
+    spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    AActor* actor = UnrealClassRegistrar::spawnActor("AStaticMeshActor", GetWorld(), transform, spawn_parameters);
+    SP_ASSERT(actor);
 
     i++;
 }
