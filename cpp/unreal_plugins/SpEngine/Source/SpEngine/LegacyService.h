@@ -269,9 +269,11 @@ public:
 
         // Check that the physics substepping parameters match our desired simulation step time.
         // See https://carla.readthedocs.io/en/latest/adv_synchrony_timestep for more details.
-        float step_time = 0.05;
+        float step_time;
         if (Config::isInitialized()) {
             step_time = Config::get<float>("SP_ENGINE.LEGACY_SERVICE.PHYSICS.SIMULATION_STEP_TIME");
+        } else {
+            step_time = 0.05;
         }
 
         if (physics_settings->bSubstepping) {

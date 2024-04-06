@@ -52,6 +52,15 @@ public:
 
         frame_state_ = FrameState::Idle;
 
+        entry_point_binder_->bind("engine_service.ping", []() -> std::string {
+            return "EngineService received a call to ping()...";
+        });
+
+        entry_point_binder_->bind("engine_service.request_close", []() -> void {
+            bool immediate_shutdown = false;
+            FGenericPlatformMisc::RequestExit(immediate_shutdown);
+        });
+
         entry_point_binder_->bind("engine_service.begin_tick", [this]() -> void {
             SP_ASSERT(frame_state_ == FrameState::Idle);
 
@@ -96,15 +105,6 @@ public:
         entry_point_binder_->bind("engine_service.get_byte_order", []() -> std::string {
             uint32_t dummy = 0x01020304;
             return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
-        });
-
-        entry_point_binder_->bind("engine_service.ping", []() -> std::string {
-            return "EngineService received a call to ping()...";
-        });
-
-        entry_point_binder_->bind("engine_service.request_close", []() -> void {
-            bool immediate_shutdown = false;
-            FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
     }
 

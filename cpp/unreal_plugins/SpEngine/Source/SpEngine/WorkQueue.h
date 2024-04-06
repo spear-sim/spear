@@ -17,25 +17,20 @@
 #include <SpCore/Boost.h>
 
 template <typename TFunc>
-concept CFuncIsCallableWithNoArgs = requires(TFunc func) {
-    { func() };
-};
+concept CFuncIsCallableWithNoArgs = std::is_invocable_v<TFunc>;
 
 template <typename TFunc, typename... TArgs>
-concept CFuncIsCallableWithArgs = requires(TFunc func, TArgs... args) {
-    { func(args...) };
-};
+concept CFuncIsCallableWithArgs = std::is_invocable_v<TFunc, TArgs...>;
 
 template <typename TFunc, typename TReturn, typename... TArgs>
-concept CFuncReturnsAndIsCallableWithArgs = requires(TFunc func, TArgs... args) {
-    { func(args...) } -> std::same_as<TReturn>;
-};
+concept CFuncReturnsAndIsCallableWithArgs = std::same_as<TReturn, std::invoke_result_t<TFunc, TArgs...>>;
 
 class WorkQueue {
 
 public:
     WorkQueue() : io_context_(), executor_work_guard_(io_context_.get_executor()) {}
 
+    // typically called from the game thread in EngineService::beginFrameHandler(...) and EngineService::endFrameHandler(...)
     void run()
     {
         // run all scheduled work and wait for executor_work_guard_.reset() to be called from a worker thread
@@ -48,6 +43,7 @@ public:
         mutex_.unlock();
     }
 
+    // typically called from a worker thread in the "engine_service.tick" and "engine_service.end_tick" entry points
     void reset()
     {
         // request io_context_.run() to stop executing once all of its scheduled work is finished
@@ -56,6 +52,7 @@ public:
         mutex_.unlock();
     }
 
+    // typically called from the game thread in EngineService::bindFuncUnreal(...)
     template <typename TFunc>
     static auto wrapFuncToExecuteInWorkQueueBlocking(WorkQueue& work_queue, TFunc&& func)
     {
@@ -63,7 +60,6 @@ public:
     }
 
 private:
-
     template <typename TClass>
     struct FuncInfo : public FuncInfo<decltype(&TClass::operator())> {};
 
@@ -72,6 +68,9 @@ private:
 
     template <typename TClass, typename TReturn, typename... TArgs>
     struct FuncInfo<TReturn(TClass::*)(TArgs...) const> : public FuncInfo<TReturn(*)(TArgs...)> {};
+
+    template <class T>
+    struct FuncInfo<T&> : public FuncInfo<T> {};
 
     template <typename TReturn, typename... TArgs>
     struct FuncInfo<TReturn(*)(TArgs...)> {};
@@ -87,9 +86,11 @@ private:
         // function returned here. Deeper inside our implementation, we will eventually copy these
         // arguments so they are guaranteed to be accessible when we eventually execute the user's
         // function, but we want to avoid copying wherever possible.
+
+        // The lambda returned here is typically bound to a specific RPC entry point and called from a worker thread.
         return [&work_queue, func](TArgs&... args) -> TReturn {
             return work_queue.scheduleAndExecuteTaskBlocking(func, args...);
-            };
+        };
     }
 
     template <typename TFunc, typename... TArgs> requires CFuncIsCallableWithArgs<TFunc, TArgs...>
@@ -106,7 +107,7 @@ private:
                 return func(args...);
             });
 
-        std::future<TReturn> future = task.get_future();
+        std::future<TReturn> future = task.get_future(); // need to call get_future() before calling std::move(...)
         boost::asio::post(io_context_, std::move(task));
         return future.get();
     }
