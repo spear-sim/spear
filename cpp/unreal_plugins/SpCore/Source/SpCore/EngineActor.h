@@ -11,6 +11,7 @@
 #include <Engine/EngineTypes.h>          // FHitResult
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                // uint64
+#include <Math/Transform.h>
 #include <Math/Vector.h>
 #include <UObject/NameTypes.h>           // FName
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS
@@ -96,6 +97,9 @@ private:
     // Used for obtaining a UStruct* in cases where a class or struct doesn't define a StaticStruct() function.
     UPROPERTY()
     FVector _FVector;
+
+    UPROPERTY()
+    FTransform _FTransform;
 
     // Required for keeping StableNameComponents up-to-date.
     #if WITH_EDITOR // defined in an auto-generated header

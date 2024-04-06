@@ -42,11 +42,14 @@ void UnrealClassRegistrar::initialize()
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     registerClass<UGameplayStatics>("UGameplayStatics");
-    registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
     registerClass<UMaterial>("UMaterial");
     registerClass<UMaterialInterface>("UMaterialInterface");
     registerClass<UStaticMesh>("UStaticMesh");
-    registerSpecialStruct<FVector>("FVector"); // need to register FVector because it doesn't define a StaticStruct() method
+    registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
+
+    // need to register structs if they don't define a StaticStruct() method
+    registerSpecialStruct<FTransform>("FTransform");
+    registerSpecialStruct<FVector>("FVector");
 
     // SpCore classes
     registerActorClass<AEngineActor>("AEngineActor");
@@ -58,10 +61,13 @@ void UnrealClassRegistrar::terminate()
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     unregisterClass<UGameplayStatics>("UGameplayStatics");
-    unregisterClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
     unregisterClass<UMaterial>("UMaterial");
     unregisterClass<UMaterialInterface>("UMaterialInterface");
     unregisterClass<UStaticMesh>("UStaticMesh");
+    unregisterClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
+
+    // need to unregister special structs
+    unregisterSpecialStruct<FTransform>("FTransform");
     unregisterSpecialStruct<FVector>("FVector");
 
     // SpCore classes
