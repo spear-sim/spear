@@ -46,9 +46,10 @@ concept CConvertibleFrom = std::convertible_to<TSrc, TDest>;
 
 template <typename TValueContainer>
 concept CValueContainer =
-    std::ranges::range<TValueContainer> &&
+    std::ranges::sized_range<TValueContainer> &&
     requires(TValueContainer value_container) {
         typename TValueContainer::value_type;
+        { value_container.at(0) } -> std::convertible_to<typename TValueContainer::value_type>;
         { *std::ranges::begin(value_container) } -> std::convertible_to<typename TValueContainer::value_type>;
         { *(value_container.erase(std::ranges::begin(value_container), std::ranges::end(value_container))) } -> std::convertible_to<typename TValueContainer::value_type>;
     };
@@ -137,8 +138,7 @@ concept CKeyValueContainerHasKeysAndValuesConvertibleFromContainer =
 template <typename TContiguousValueContainer>
 concept CContiguousValueContainer =
     CValueContainer<TContiguousValueContainer> &&
-    std::ranges::contiguous_range<TContiguousValueContainer> &&
-    std::ranges::sized_range<TContiguousValueContainer>;
+    std::ranges::contiguous_range<TContiguousValueContainer>;
 
 class SPCORE_API Std
 {
@@ -214,8 +214,7 @@ public:
 
         // Assert if there are duplicate keys.
         std::vector<TKey> keys = toVector<TKey>(pairs | std::views::transform([](const auto& pair) { const auto& [key, value] = pair; return key; }));
-        std::ranges::sort(keys);
-        SP_ASSERT(std::ranges::equal(keys, unique(keys)));
+        SP_ASSERT(Std::allUnique(keys));
 
         return std::map<TKey, TValue>(std::ranges::begin(pairs), std::ranges::end(pairs));
     }
@@ -262,7 +261,14 @@ public:
 
     template <typename TValueContainer> requires
         CValueContainer<TValueContainer>
-    static std::vector<typename TValueContainer::value_type> unique(const TValueContainer& value_container)
+    static bool allUnique(const TValueContainer& value_container)
+    {
+        return value_container.size() == unique(value_container).size();
+    }
+
+    template <typename TValueContainer> requires
+        CValueContainer<TValueContainer>
+    static auto unique(const TValueContainer& value_container)
     {
         using TValue = typename TValueContainer::value_type;
 
@@ -273,27 +279,26 @@ public:
         return value_container_unique;
     }
 
+    template <typename TValueContainerKeys, typename TValueContainerValues> requires
+        CValueContainer<TValueContainerKeys> &&
+        CValueContainer<TValueContainerValues>
+    static auto zip(const TValueContainerKeys& keys, const TValueContainerValues& values)
+    {
+        using TKey = typename TValueContainerKeys::value_type;
+        using TValue = typename TValueContainerValues::value_type;
+
+        SP_ASSERT(keys.size() == values.size());
+        int num_elements = keys.size();
+        std::map<TKey, TValue> map;
+        for (int i = 0; i < num_elements; i++) {
+            Std::insert(map, keys.at(i), values.at(i));
+        }
+        return map;
+    }
+
     //
     // Key-value container (e.g., std::map) functions
     //
-
-    template <typename TKeyValueContainer> requires
-        CKeyValueContainer<TKeyValueContainer>
-    static std::vector<typename TKeyValueContainer::key_type> keys(const TKeyValueContainer& key_value_container)
-    {
-        using TKey = typename TKeyValueContainer::key_type;
-
-        // TODO: remove platform-specific logic
-        #if BOOST_COMP_MSVC
-            return toVector<TKey>(std::views::keys(key_value_container));
-        #elif BOOST_COMP_CLANG
-            std::vector<TKey> keys;
-            boost::copy(key_value_container | boost::adaptors::map_keys, std::back_inserter(keys));
-            return keys;
-        #else
-            #error
-        #endif
-    }
 
     template <typename TKeyValueContainer, typename TKey> requires
         CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
@@ -402,6 +407,40 @@ public:
         for (auto& key : keys) {
             remove(key_value_container, key);
         }
+    }
+
+    template <typename TKeyValueContainer> requires
+        CKeyValueContainer<TKeyValueContainer>
+    static auto keys(const TKeyValueContainer& key_value_container)
+    {
+        using TKey = typename TKeyValueContainer::key_type;
+
+        // TODO: remove platform-specific logic in C++23
+        #if BOOST_COMP_MSVC
+            return toVector<TKey>(std::views::keys(key_value_container));
+        #elif BOOST_COMP_CLANG
+            std::vector<TKey> keys;
+            boost::copy(key_value_container | boost::adaptors::map_keys, std::back_inserter(keys));
+            return keys;
+        #else
+            #error
+        #endif
+    }
+
+    template <typename TKeyValueContainer> requires
+        CKeyValueContainer<TKeyValueContainer>
+    static auto zip(const TKeyValueContainer& key_value_container)
+    {
+        using TKey = typename TKeyValueContainer::key_type;
+        using TValue = typename TKeyValueContainer::mapped_type;
+
+        std::vector<TKey> keys;
+        std::vector<TValue> values;
+        for (const auto& [key, value] : key_value_container) {
+            keys.push_back(key);
+            values.push_back(value);
+        }
+        return std::make_pair(std::move(keys), std::move(values));
     }
 
     //

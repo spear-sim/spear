@@ -52,6 +52,12 @@ void ADebugWidget::GetAndSetObjectProperties()
     UWorld* world = GetWorld();
     SP_ASSERT(world);
 
+    std::map<std::string, AStaticMeshActor*> static_mesh_actors = Unreal::findActorsByNameAsMap<AStaticMeshActor>(world, {"Debug/SM_Prop_04", "null"});
+    SP_ASSERT(Std::containsKey(static_mesh_actors, "Debug/SM_Prop_04"));
+    SP_ASSERT(Std::containsKey(static_mesh_actors, "null"));
+    SP_ASSERT(static_mesh_actors.at("Debug/SM_Prop_04"));
+    SP_ASSERT(!static_mesh_actors.at("null"));
+
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(world, "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
