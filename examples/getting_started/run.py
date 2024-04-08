@@ -31,14 +31,14 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
-    # create spear.Instance object
-    sp_instance = spear.Instance(config)
+    spear.configure_system(config)
+    instance = spear.Instance(config)
 
     # create or get gym object
     if config.SP_ENGINE.LEGACY_SERVICE.AGENT == "SphereAgent":
-        env = spear.Env(config, sp_instance)
+        env = spear.Env(config, instance)
     elif config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent":
-        env = OpenBotEnv(config, sp_instance)
+        env = OpenBotEnv(config, instance)
 
     # reset the simulation to get the first observation
     obs = env.reset()
@@ -96,6 +96,6 @@ if __name__ == "__main__":
     env.close()
 
     # close the unreal instance and rpc connection
-    sp_instance.close()
+    instance.close()
 
     spear.log("Done.")

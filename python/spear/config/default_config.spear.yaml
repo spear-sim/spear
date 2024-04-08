@@ -3,82 +3,72 @@
 #
 
 SPEAR:
+  # Launch Unreal application via different modes:
+  # - "standalone" launches a packaged executable of an Unreal Engine project
+  # - "uproject" launches an uproject with Unreal Engine editor executable
+  # - "none" connects to an already running instance of Unreal Engine
+  LAUNCH_MODE: ""
+
+  # If launch_mode is "STANDALONE", specify this path to an Unreal application.
+  STANDALONE: ""
+
+  # The location of downloaded (or built) pak files. This must be specified if you are attempting
+  # to load any scene other than the default scene.
+  PAKS_DIR: ""
+
+  # The "VK_ICD_FILENAMES" parameter can be used for additional control over which Vulkan devices are recognized
+  # by Unreal. This parameter can be useful to force Unreal to use an NVIDIA GPU. Only has an
+  # effect on Linux. See the following link for details:
+  #     https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/blob/master/loader/LoaderAndLayerInterface.md
+  ENVIRONMENT_VARS:
+    VK_ICD_FILENAMES: ""
 
   INSTANCE:
-
-    # Launch Unreal application via different modes:
-    # - "standalone" launches a packaged executable of an Unreal Engine project
-    # - "uproject" launches an uproject with Unreal Engine editor executable
-    # - "none" connects to an already running instance of Unreal Engine
-    LAUNCH_MODE: ""
-
-    # If launch_mode is "standalone_exectuable", specify this path to an Unreal application.
-    STANDALONE: ""
-
-    # If launch_mode is "uproject", specify this path to your Unreal Engine editor executable.
+    # If launch_mode is "UPROJECT", specify this path to your Unreal Engine editor executable.
     EDITOR_EXECUTABLE: ""
 
-    # If launch_mode is "uproject", specify this path to your uproject file.
+    # If launch_mode is "UPROJECT", specify this path to your uproject file.
     UPROJECT: ""
 
-    # The location of downloaded (or built) pak files. This must be specified if you are attempting
-    # to load any scene other than the default scene.
-    PAKS_DIR: ""
-
-    # Description of certain parameters
-    # -> resx and resy
-    #     If not running in headless mode, these parameters specify the window resolution used for
-    #     on-screen rendering. Has no effect on the size of the visual observations returned by the
-    #     application via the RPC server.
-    # -> graphicsadapter
-    #     Launch your Unreal application on the GPU specified by GPU_ID.
-    # -> log
-    #     Log file to capture Unreal debug output that isn't captured by STDOUT and STDERR. This is
-    #     useful for inspecting the stack trace when an Unreal application crashes. Note that Unreal
-    #     only writes to this log file in Development builds. If a path is included, it will be
-    #     interpreted as a relative path regardless of how it is formatted, and will be interpreted
-    #     as relative to the following locations:
+    # Command-line arguments that are passed to the Unreal application when launching. This has
+    # no effect if "launch_mode" is none.
+    #
+    # The "log" command-line argument captures Unreal debug output that isn't captured by STDOUT
+    # and STDERR. This is useful for inspecting the stack trace when an Unreal application crashes.
+    # Note that Unreal only writes to this log file in Development builds. If a path is included,
+    # it will be interpreted as a relative path regardless of how it is formatted, and will be
+    # interpreted as relative to the following locations:
     #     - Windows: path\to\spear\cpp\unreal_projects\SpearSim\Standalone-Development\Windows\SpearSim\Saved\Logs
     #     - macOS:   ~/Library/Logs/SpearSim
     #     - Linux:   path\to\spear\cpp\unreal_projects\SpearSim\Standalone-Development/Linux/SpearSim/Saved/Logs
-    # -> renderoffscreen
-    #     Set this parameter to true True to launch the executable in headless mode. Has no effect if launch_mode is "none".
     COMMAND_LINE_ARGS:
-      resx: 1024
-      resy: 1024
-      graphicsadapter: 0
-      log: ""
-      windowed: null
-      nosound: null
-      fileopenlog: null
-      stdout: null
-      fullstdoutlogoutput: null
-      nologtimes: null
-      renderoffscreen: False
+      resx: 1024                # window resolution
+      resy: 1024                # window resolution
+      graphicsadapter: 0        # GPU ID
+      log: ""                   # see description above
+      windowed: null            # run in windowed mode
+      nosound: null             # turn off sound
+      fileopenlog: null         # generate a log of which files are opened in which order
+      stdout: null              # ensure log output is written to the terminal
+      fullstdoutlogoutput: null # ensure log output is written to the terminal
+      nologtimes: null          # don't print timestamps next to log messages twice
+
+      # Non-exhaustive optional arguments that we sometimes find useful:
+      # renderoffscreen: null   # run in headless mode
 
     # Path to a temp dir for files generated by the spear Python package
     TEMP_DIR: "tmp"
 
-    # Name for a temp yaml config file generated by the spear Python package
+    # Name of the temp config file generated by the spear Python package, will be created in TEMP_DIR.
     TEMP_CONFIG_FILE: "config.yaml"
 
-    # List of custom command-line arguments passed to the Unreal application. This is useful
-    # when the Unreal application is built with a plugin that expects its own set of
-    # command-line arguments.
-    CUSTOM_COMMAND_LINE_ARGUMENTS: []
-
-    # This parameter can be used for additional control over which Vulkan devices are recognized
-    # by Unreal. This parameter can be useful to force Unreal to use an NVIDIA GPU. Only has an
-    # effect on Linux. See the following link for details:
-    #     https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/blob/master/loader/LoaderAndLayerInterface.md
-    VK_ICD_FILENAMES: ""
-
+    # Sleep for this amount of time when waiting for the Unreal instance to close.
     REQUEST_CLOSE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 1.0
 
-    # Maximum time to wait when initializing the RPC client
+    # Maximum time to wait when initializing the RPC client.
     INITIALIZE_RPC_CLIENT_MAX_TIME_SECONDS: 120.0
 
-    # Sleep for this amount of time in-between attempts to initialize the RPC client
+    # Sleep for this amount of time in-between attempts to initialize the RPC client.
     INITIALIZE_RPC_CLIENT_SLEEP_TIME_SECONDS: 1.0
 
     # The RPC client will try this number of reconnection attempts before returning from its
@@ -89,11 +79,12 @@ SPEAR:
     # time before throwing when calling a server function.
     RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 5.0
 
+    # Number of ticks to execute after launching the Unreal instance. This is useful to warm up
+    # various caches and rendering features that leverage temporal coherence between frames.
+    NUM_EXTRA_WARMUP_TICKS: 20
+
+  ENV:
     # The maximum number of ticks to execute during env.reset() before giving up. This is
     # useful in situations where the physics simulation does not successfully settle down
     # after calling env.reset().
     MAX_NUM_TICKS_AFTER_RESET: 10
-
-    # Number of ticks to execute after launching the Unreal instance. This is useful to warm up
-    # various caches and rendering features that leverage temporal coherence between frames.
-    NUM_EXTRA_WARMUP_TICKS: 20

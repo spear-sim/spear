@@ -23,12 +23,6 @@ if __name__ == "__main__":
     parser.add_argument("--scene_id")
     args = parser.parse_args()
 
-    # load config
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    config.defrost()
-    config.SP_ENGINE.LEGACY_SERVICE.AGENT = "NullAgent"
-    config.freeze()
-
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is None:
         scenes_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scenes.csv"))
@@ -41,24 +35,27 @@ if __name__ == "__main__":
     df_columns = ["scene_id", "location_x", "location_y", "location_z", "rotation_pitch", "rotation_yaw", "rotation_roll"]
     df = pd.DataFrame(columns=df_columns)
 
-    # configure system based on config
-    spear.configure_system(config)
+    # load config
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config.defrost()
+    config.SP_ENGINE.LEGACY_SERVICE.AGENT = "NullAgent"
+    config.freeze()
 
-    # create spear.Instance object
-    sp_instance = spear.Instance(config)
-    
+    spear.configure_system(config)
+    instance = spear.Instance(config)
+
     # iterate over all scenes
     for scene_id in scene_ids:
 
         spear.log("Processing scene: " + scene_id)
 
-        spear.open_level(sp_instance, scene_id)
+        spear.open_level(instance, scene_id)
 
         # get a few random points
-        spear.begin_tick(sp_instance)
-        points = sp_instance.legacy_service.get_random_points(args.num_poses_per_scene)
-        spear.tick(sp_instance)
-        spear.end_tick(sp_instance)
+        spear.Env.begin_tick(instance)
+        points = instance.legacy_service.get_random_points(args.num_poses_per_scene)
+        spear.Env.tick(instance)
+        spear.Env.end_tick(instance)
 
         # generate random pitch, yaw, roll values
         pitch_values = np.random.uniform(low=0.0, high=0.0, size=args.num_poses_per_scene)
@@ -85,7 +82,7 @@ if __name__ == "__main__":
         plt.show()
 
     # close the unreal instance
-    sp_instance.close()
+    instance.close()
 
     # write to a csv file
     df.to_csv(args.poses_file, index=False)

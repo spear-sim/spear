@@ -20,16 +20,14 @@ OPENBOT_ENV:
 
 
 SPEAR:
+  LAUNCH_MODE: "standalone"
+  STANDALONE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
+  
   INSTANCE:
-    LAUNCH_MODE: "standalone"
-
-    STANDALONE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
-
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
 
-    CUSTOM_COMMAND_LINE_ARGUMENTS: []
 
 SP_ENGINE:
 
@@ -37,7 +35,6 @@ SP_ENGINE:
     # AGENT: "SphereAgent" # uncomment when using SphereAgent
     AGENT: "VehicleAgent" # uncomment when using VehicleAgent
     TASK: "NullTask"
-    CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
     SCENE_ID: "apartment_0000"
 

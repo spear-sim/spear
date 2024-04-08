@@ -31,30 +31,71 @@ class Env(gym.Env):
         self.action_space = self._action_space_desc.space
         self.observation_space = self._observation_space_desc.space
 
+    # high-level helper functions
+    @staticmethod
+    def begin_tick(instance):
+        instance.engine_service.begin_tick()
+        instance.game_world_service.unpause_game()
+
+    @staticmethod
+    def tick(instance):
+        instance.engine_service.tick()
+
+    @staticmethod
+    def end_tick(instance):
+        instance.game_world_service.pause_game()
+        instance.engine_service.end_tick()
+
+    @staticmethod
+    def open_level(instance, scene_id, map_id=""):
+        desired_level_name = ""
+        if scene_id != "":
+            if map_id == "":
+                map_id = scene_id
+            else:
+                map_id = map_id
+            desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id
+
+        spear.log("scene_id:           ", scene_id)
+        spear.log("map_id:             ", map_id)
+        spear.log("desired_level_name: ", desired_level_name)
+
+        Env.begin_tick(instance)
+        current_scene_id = instance.game_world_service.get_current_level()
+        instance.game_world_service.open_level(desired_level_name)
+        Env.tick(instance)
+        Env.end_tick(instance)
+
+        while current_scene_id != scene_id:
+            Env.begin_tick(instance)
+            current_scene_id = instance.game_world_service.get_current_level()
+            Env.tick(instance)
+            Env.end_tick(instance)
+
     def step(self, action):
-        
-        spear.begin_tick(self._instance)
+
+        Env.begin_tick(self._instance)
         self._apply_action(action)
-        spear.tick(self._instance)
+        Env.tick(self._instance)
         obs = self._get_observation()
         reward = self._get_reward()
         is_done = not self._ready or self._is_episode_done() # if the last call to reset() failed or the episode is done
         step_info = self._get_step_info()
-        spear.end_tick(self._instance)
+        Env.end_tick(self._instance)
 
         return obs, reward, is_done, step_info
 
     def reset(self, reset_info=None):
         
-        for i in range(self._config.SPEAR.INSTANCE.MAX_NUM_TICKS_AFTER_RESET):
-            spear.begin_tick(self._instance)
+        for i in range(self._config.SPEAR.ENV.MAX_NUM_TICKS_AFTER_RESET):
+            Env.begin_tick(self._instance)
             if i == 0:
                 self._reset() # only reset the simulation once
-            spear.tick(self._instance)
+            Env.tick(self._instance)
             ready = self._is_ready()
-            if ready or i == self._config.SPEAR.INSTANCE.MAX_NUM_TICKS_AFTER_RESET - 1:
+            if ready or i == self._config.SPEAR.ENV.MAX_NUM_TICKS_AFTER_RESET - 1:
                 obs = self._get_observation() # only get the observation if ready, or if we're about to give up
-            spear.end_tick(self._instance)
+            Env.end_tick(self._instance)
             if ready:
                 break
 
@@ -71,7 +112,6 @@ class Env(gym.Env):
         pass
 
     def close(self):
-
         self._action_space_desc.terminate()
         self._observation_space_desc.terminate()
         self._task_step_info_space_desc.terminate()
@@ -220,7 +260,7 @@ class Dict():
         self.spaces = spaces
 
 
-# enum values must match cpp/unreal_plugins/CoreUtils/ArrayDesc.h
+# enum values must match cpp/unreal_plugins/SpCore/Source/SpCore/ArrayDesc.h
 class DataType(Enum):
     Invalid    = -1
     UInteger8  = 0

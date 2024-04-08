@@ -37,8 +37,8 @@ class Instance():
 
     def _request_launch_unreal_instance(self):
 
-        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "none":
-            spear.log('SPEAR.INSTANCE.LAUNCH_MODE == "none" so we assume that an Unreal instance has been launched externally...')
+        if self._config.SPEAR.LAUNCH_MODE == "none":
+            spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that an Unreal instance has been launched externally...')
             return
 
         spear.log("Launching Unreal instance...")
@@ -56,12 +56,12 @@ class Instance():
         # set up launch executable and command-line arguments
         launch_args = []
 
-        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "uproject":
+        if self._config.SPEAR.LAUNCH_MODE == "uproject":
             launch_executable = self._config.SPEAR.INSTANCE.EDITOR_EXECUTABLE
             launch_args.append(self._config.SPEAR.INSTANCE.UPROJECT)
             launch_args.append("-game") # launch the game using uncooked content
-        elif self._config.SPEAR.INSTANCE.LAUNCH_MODE == "standalone":
-            launch_executable = self._config.SPEAR.INSTANCE.STANDALONE
+        elif self._config.SPEAR.LAUNCH_MODE == "standalone":
+            launch_executable = self._config.SPEAR.STANDALONE
         else:
             assert False
 
@@ -87,17 +87,10 @@ class Instance():
         for arg, value in (self._config.SPEAR.INSTANCE.COMMAND_LINE_ARGS).items():
             if value == None:
                 launch_args.append("-{}".format(arg))
-            elif isinstance(value, bool) and value == False:
-                pass
-            elif isinstance(value, bool) and value == True:
-                launch_args.append("-{}".format(arg))
             else:
                 launch_args.append("-{}={}".format(arg, value))
 
         launch_args.append("-config_file={}".format(temp_config_file))
-
-        for a in self._config.SPEAR.INSTANCE.CUSTOM_COMMAND_LINE_ARGUMENTS:
-            launch_args.append("{}".format(a))
 
         cmd = [launch_executable_internal] + launch_args
 
@@ -121,7 +114,7 @@ class Instance():
 
     def _initialize_unreal_instance(self):
 
-        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "none":
+        if self._config.SPEAR.LAUNCH_MODE == "none":
             spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance is already initialized...')
             return
 
@@ -142,7 +135,7 @@ class Instance():
 
     def _request_close_unreal_instance(self):
 
-        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "none":
+        if self._config.SPEAR.LAUNCH_MODE == "none":
             spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance should remain open...')
             return
 
@@ -171,7 +164,7 @@ class Instance():
         connected = False
         
         # if we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
-        if self._config.SPEAR.INSTANCE.LAUNCH_MODE == "none":
+        if self._config.SPEAR.LAUNCH_MODE == "none":
 
             try:
                 self.rpc_client = msgpackrpc.Client(
@@ -188,7 +181,7 @@ class Instance():
                 self._close_rpc_client()
 
         # otherwise try to connect repeatedly, since the RPC server might not have started yet
-        elif self._config.SPEAR.INSTANCE.LAUNCH_MODE in ["editor", "standalone"]:
+        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "standalone"]:
 
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
@@ -223,7 +216,7 @@ class Instance():
 
         if not connected:
             spear.log("ERROR: Couldn't connect to RPC server, giving up...")
-            if self._config.SPEAR.INSTANCE.LAUNCH_MODE in ["editor", "standalone"]:
+            if self._config.SPEAR.LAUNCH_MODE in ["editor", "standalone"]:
                 self._force_kill_unreal_instance()
             assert False
 

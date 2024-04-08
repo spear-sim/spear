@@ -45,19 +45,19 @@ class CustomEnv(spear.Env):
 
     def single_step(self, action=None, get_observation=False):
     
-        spear.begin_tick(self._instance)
+        spear.Env.begin_tick(self._instance)
         if action:
             self._apply_action(action)
-        spear.tick(self._instance)
+        spear.Env.tick(self._instance)
         if get_observation:
             obs = self._get_observation()
             reward = self._get_reward()
             is_done = self._is_episode_done()
             step_info = self._get_step_info()
-            spear.end_tick(self._instance)
+            spear.Env.end_tick(self._instance)
             return obs, reward, is_done, step_info
         else:
-            spear.end_tick(self._instance)
+            spear.Env.end_tick(self._instance)
             return None, None, None, None
 
 
@@ -71,24 +71,15 @@ if __name__ == "__main__":
     parser.add_argument("--wait_for_key_press", action="store_true")
     args = parser.parse_args()
 
-    # load config
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-
-    # configure system based on config
-    spear.configure_system(config)
-
-    # read data from csv
     df = pd.read_csv(args.poses_file)
 
-    # create SpEngine object
-    sp_instance = spear.Instance(config)
-
-    # create Env object
-    env = CustomEnv(config, sp_instance, num_internal_steps=args.num_internal_steps)
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    spear.configure_system(config)
+    instance = spear.Instance(config)
+    env = CustomEnv(config, instance, num_internal_steps=args.num_internal_steps)
 
     # iterate over all poses
     prev_scene_id = ""
-
     for pose in df.to_records():
 
         # if the scene_id of our current pose has changed, then create a new Env
@@ -105,10 +96,10 @@ if __name__ == "__main__":
             env.close()
 
             # open the desired level
-            spear.open_level(sp_instance, pose["scene_id"])
+            spear.Env.open_level(instance, pose["scene_id"])
 
             # create Env object
-            env = CustomEnv(config, sp_instance, num_internal_steps=args.num_internal_steps)
+            env = CustomEnv(config, instance, num_internal_steps=args.num_internal_steps)
 
             # reset the simulation
             _ = env.reset()
@@ -151,6 +142,6 @@ if __name__ == "__main__":
     env.close()
 
     # close the unreal instance
-    sp_instance.close()
+    instance.close()
 
     spear.log("Done.")

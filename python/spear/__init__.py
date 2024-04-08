@@ -9,12 +9,13 @@ import sys
 from yacs.config import CfgNode
 
 from spear.log import log, log_current_function, log_no_prefix, log_get_prefix
-from spear.path import path_exists, remove_path
 from spear.engine_service import EngineService
 from spear.env import Env
 from spear.instance import Instance
 from spear.legacy_service import LegacyService
 from spear.game_world_service import GameWorldService
+from spear.path import path_exists, remove_path
+
 
 spear_root_dir = os.path.dirname(os.path.realpath(__file__))
 # ordered from low-level to high-level
@@ -54,21 +55,21 @@ def get_config(user_config_files):
 
 def configure_system(config):
 
-    # create a symlink to SPEAR.INSTANCE.PAKS_DIR
-    if config.SPEAR.INSTANCE.LAUNCH_MODE == "standalone" and config.SPEAR.INSTANCE.PAKS_DIR != "":
+    # create a symlink to SPEAR.PAKS_DIR
+    if config.SPEAR.LAUNCH_MODE == "standalone" and config.SPEAR.PAKS_DIR != "":
 
-        assert os.path.exists(config.SPEAR.INSTANCE.STANDALONE)
-        assert os.path.exists(config.SPEAR.INSTANCE.PAKS_DIR)
+        assert os.path.exists(config.SPEAR.STANDALONE)
+        assert os.path.exists(config.SPEAR.PAKS_DIR)
 
         if sys.platform == "win32":
             paks_dir = \
-                os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.INSTANCE.STANDALONE)), "..", "..", "Content", "Paks"))
+                os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE)), "..", "..", "Content", "Paks"))
         elif sys.platform == "darwin":
             paks_dir = \
-                os.path.realpath(os.path.join(config.SPEAR.INSTANCE.STANDALONE, "Contents", "UE", "SpearSim", "Content", "Paks"))
+                os.path.realpath(os.path.join(config.SPEAR.STANDALONE, "Contents", "UE", "SpearSim", "Content", "Paks"))
         elif sys.platform == "linux":
             paks_dir = \
-                os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.INSTANCE.STANDALONE)), "SpearSim", "Content", "Paks"))
+                os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE)), "SpearSim", "Content", "Paks"))
         else:
             assert False
 
@@ -81,47 +82,10 @@ def configure_system(config):
             log(f"File or directory or symlink exists, removing: {spear_paks_dir}")
             remove_path(spear_paks_dir)
 
-        log(f"Creating symlink: {spear_paks_dir} -> {config.SPEAR.INSTANCE.PAKS_DIR}")
-        os.symlink(config.SPEAR.INSTANCE.PAKS_DIR, spear_paks_dir)
+        log(f"Creating symlink: {spear_paks_dir} -> {config.SPEAR.PAKS_DIR}")
+        os.symlink(config.SPEAR.PAKS_DIR, spear_paks_dir)
 
     # provide additional control over which Vulkan devices are recognized by Unreal
-    if config.SPEAR.INSTANCE.VK_ICD_FILENAMES != "":
-        log("Setting VK_ICD_FILENAMES environment variable: " + config.SPEAR.INSTANCE.VK_ICD_FILENAMES)
-        os.environ["VK_ICD_FILENAMES"] = config.SPEAR.INSTANCE.VK_ICD_FILENAMES
-
-# high-level functions
-def begin_tick(instance):
-    instance.engine_service.begin_tick()
-    instance.game_world_service.unpause_game()
-
-def tick(instance):
-    instance.engine_service.tick()
-
-def end_tick(instance):
-    instance.game_world_service.pause_game()
-    instance.engine_service.end_tick()
-
-def open_level(instance, scene_id, map_id=""):
-    desired_level_name = ""
-    if scene_id != "":
-        if map_id == "":
-            map_id = scene_id
-        else:
-            map_id = map_id
-        desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id
-
-    log("scene_id:           ", scene_id)
-    log("map_id:             ", map_id)
-    log("desired_level_name: ", desired_level_name)
-
-    begin_tick(instance)
-    current_scene_id = instance.game_world_service.get_current_level()
-    instance.game_world_service.open_level(desired_level_name)
-    tick(instance)
-    end_tick(instance)
-
-    while current_scene_id != scene_id:
-        begin_tick(instance)
-        current_scene_id = instance.game_world_service.get_current_level()
-        tick(instance)
-        end_tick(instance)
+    if config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES != "":
+        log("Setting VK_ICD_FILENAMES environment variable: " + config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES)
+        os.environ["VK_ICD_FILENAMES"] = config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES
