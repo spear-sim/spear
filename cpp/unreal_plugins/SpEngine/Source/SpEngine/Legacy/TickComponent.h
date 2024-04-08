@@ -47,7 +47,7 @@ public:
 
     void setTickFunc(const std::function<void(float, ELevelTick, FActorComponentTickFunction*)>& tick_func)
     {
-        tick_func_ = tick_func_;
+        tick_func_ = tick_func;
     }
 
 private:

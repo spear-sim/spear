@@ -570,7 +570,7 @@ public:
     }
 
     // only special structs that don't define a StaticStruct() method (e.g., FVector) should be registered/unregistered
-    template <typename TSpecialStruct> requires !CObject<TSpecialStruct>
+    template <typename TSpecialStruct> requires (!CObject<TSpecialStruct>)
     static void registerSpecialStruct(const std::string& class_name)
     {
         std::string demangled_name = boost::core::demangle(typeid(TSpecialStruct).name());
@@ -690,7 +690,7 @@ public:
     }
 
     // only special Unreal structs that don't define a StaticStruct() method (e.g., FVector) should be registered/unregistered
-    template <typename TSpecialStruct> requires !CObject<TSpecialStruct>
+    template <typename TSpecialStruct> requires (!CObject<TSpecialStruct>)
     static void unregisterSpecialStruct(const std::string& class_name)
     {
         std::string demangled_name = boost::core::demangle(typeid(TSpecialStruct).name());
@@ -705,7 +705,7 @@ public:
 
     // only special Unreal structs that don't define a StaticStruct() method (e.g., FVector) should use this code path, and
     // must have been previously registered
-    template <typename TSpecialStruct> requires !CObject<TSpecialStruct>
+    template <typename TSpecialStruct> requires (!CObject<TSpecialStruct>)
     static UStruct* getStaticStruct()
     {
         std::string demangled_name = boost::core::demangle(typeid(TSpecialStruct).name());
