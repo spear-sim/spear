@@ -10,8 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "SimulationController/Task.h"
 #include "SpCore/ArrayDesc.h"
+#include "SpEngine/Legacy/Task.h"
 
 class UWorld;
 

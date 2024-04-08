@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SimulationController/PointGoalNavTask.h"
+#include "SpEngine/Legacy/PointGoalNavTask.h"
 
 #include <stdint.h> // uint8_t
 
@@ -21,19 +21,19 @@
 #include <Math/Vector.h>
 #include <UObject/UObjectGlobals.h> // LoadObject
 
-#include "SimulationController/ActorHitComponent.h"
-#include "SimulationController/StandaloneComponent.h"
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpEngine/Legacy/ActorHitComponent.h"
+#include "SpEngine/Legacy/StandaloneComponent.h"
 
 PointGoalNavTask::PointGoalNavTask(UWorld* world)
 {
     // Spawn actor
     FActorSpawnParameters actor_spawn_parameters;
-    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_ACTOR_NAME"));
+    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.GOAL_ACTOR_NAME"));
     actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     goal_actor_ = world->SpawnActor<AStaticMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator, actor_spawn_parameters);
     SP_ASSERT(goal_actor_);
@@ -42,15 +42,15 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
 
     FVector scale =
         FVector(
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_SCALE"),
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_SCALE"),
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_SCALE"));
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.GOAL_SCALE"),
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.GOAL_SCALE"),
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.GOAL_SCALE"));
     goal_actor_->SetActorScale3D(scale);
 
     // Load mesh and material
-    auto goal_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MESH")));
+    auto goal_mesh = LoadObject<UStaticMesh>(nullptr, *Unreal::toFString(Config::get<std::string>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.GOAL_MESH")));
     SP_ASSERT(goal_mesh);
-    auto goal_material = LoadObject<UMaterial>(nullptr, *Unreal::toFString(Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.GOAL_MATERIAL")));
+    auto goal_material = LoadObject<UMaterial>(nullptr, *Unreal::toFString(Config::get<std::string>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.GOAL_MATERIAL")));
     SP_ASSERT(goal_material);
 
     // Configure static mesh component
@@ -63,7 +63,7 @@ PointGoalNavTask::PointGoalNavTask(UWorld* world)
     SP_ASSERT(actor_hit_component_);
     SP_ASSERT(actor_hit_component_->component_);
 
-    minstd_rand_ = std::minstd_rand(Config::get<int>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.RANDOM_SEED"));
+    minstd_rand_ = std::minstd_rand(Config::get<int>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.RANDOM_SEED"));
     hit_goal_ = false;
     hit_obstacle_ = false;
 }
@@ -80,12 +80,12 @@ PointGoalNavTask::~PointGoalNavTask()
 
 void PointGoalNavTask::findObjectReferences(UWorld* world)
 {
-    agent_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.AGENT_ACTOR_NAME"));
+    agent_actor_ = Unreal::findActorByName(world, Config::get<std::string>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.AGENT_ACTOR_NAME"));
     SP_ASSERT(agent_actor_);
 
     bool return_null_if_not_found = false;
     obstacle_ignore_actors_ = Unreal::findActorsByName(
-        world, Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
+        world, Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.OBSTACLE_IGNORE_ACTOR_NAMES"), return_null_if_not_found);
 
     // Subscribe to the agent actor now that we have obtained a reference to it
     SP_ASSERT(actor_hit_component_);
@@ -132,9 +132,9 @@ float PointGoalNavTask::getReward() const
     float reward;
 
     if (hit_goal_) {
-        reward = Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.REWARD.HIT_GOAL");
+        reward = Config::get<float>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.REWARD.HIT_GOAL");
     } else if (hit_obstacle_) {
-        reward = Config::get<float>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.REWARD.HIT_OBSTACLE");
+        reward = Config::get<float>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.REWARD.HIT_OBSTACLE");
     } else {
         FVector agent_to_goal = goal_actor_->GetActorLocation() - agent_actor_->GetActorLocation();
         reward = -agent_to_goal.Size();
@@ -185,29 +185,29 @@ void PointGoalNavTask::reset()
     FVector agent_position;
     FVector goal_position;
 
-    while ((agent_position - goal_position).Size() < Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.SPAWN_DISTANCE_THRESHOLD")) {
+    while ((agent_position - goal_position).Size() < Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.SPAWN_DISTANCE_THRESHOLD")) {
 
         std::uniform_real_distribution distribution_agent_position_x(
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_X_MIN"),
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_X_MAX"));
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_X_MIN"),
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_X_MAX"));
         std::uniform_real_distribution distribution_agent_position_y(
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Y_MIN"),
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Y_MAX"));
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Y_MIN"),
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Y_MAX"));
         std::uniform_real_distribution distribution_goal_position_x(
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_X_MIN"),
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_X_MAX"));
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_X_MIN"),
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_X_MAX"));
         std::uniform_real_distribution distribution_goal_position_y(
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Y_MIN"),
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Y_MAX"));
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Y_MIN"),
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Y_MAX"));
 
         agent_position = FVector(
             distribution_agent_position_x(minstd_rand_),
             distribution_agent_position_y(minstd_rand_),
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Z"));
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.AGENT_LOCATION_Z"));
         goal_position = FVector(
             distribution_goal_position_x(minstd_rand_),
             distribution_goal_position_y(minstd_rand_),
-            Config::get<double>("SIMULATION_CONTROLLER.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Z"));
+            Config::get<double>("SP_ENGINE.LEGACY.POINT_GOAL_NAV_TASK.EPISODE_BEGIN.GOAL_LOCATION_Z"));
     }
 
     bool sweep = false;

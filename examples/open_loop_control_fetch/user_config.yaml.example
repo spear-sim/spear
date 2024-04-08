@@ -3,41 +3,40 @@
 #
 
 SPEAR:
-  LAUNCH_MODE: "standalone_executable"
-
-  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
-
+  LAUNCH_MODE: "standalone"
+  STANDALONE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
   PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
 
-  CUSTOM_COMMAND_LINE_ARGUMENTS: []
-  RENDER_OFFSCREEN: False
-  WINDOW_RESOLUTION_X: 512
-  WINDOW_RESOLUTION_Y: 512
+  INSTANCE:
+    COMMAND_LINE_ARGS:
+      resx: 512
+      resy: 512
 
-  NUM_EXTRA_WARMUP_TICKS: 10
-  RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0
+    NUM_EXTRA_WARMUP_TICKS: 10
+    RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0
 
-SIMULATION_CONTROLLER:
-  AGENT: "UrdfRobotAgent"
-  TASK: "NullTask"
-  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
+SP_ENGINE:
+  LEGACY_SERVICE:
+    AGENT: "UrdfRobotAgent"
+    TASK: "NullTask"
 
-  URDF_ROBOT_AGENT:
-    URDF_ROBOT_ACTOR_NAME: "UrdfRobotActor"
-    ACTION_COMPONENTS: ["control_joints"]
-    OBSERVATION_COMPONENTS: ["links_location", "links_rotation", "camera"]
-    STEP_INFO_COMPONENTS: []
-    SPAWN_LOCATION_X: -20.0
-    SPAWN_LOCATION_Y: 200.0
-    SPAWN_LOCATION_Z: 40.0
-    SPAWN_ROTATION_PITCH: 0.0
-    SPAWN_ROTATION_YAW: 0.0
-    SPAWN_ROTATION_ROLL: 0.0
-    CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
-      IMAGE_HEIGHT: 512
-      IMAGE_WIDTH: 512
-      FOV: 90.0
+  LEGACY:
+    URDF_ROBOT_AGENT:
+      URDF_ROBOT_ACTOR_NAME: "UrdfRobotActor"
+      ACTION_COMPONENTS: ["control_joints"]
+      OBSERVATION_COMPONENTS: ["links_location", "links_rotation", "camera"]
+      STEP_INFO_COMPONENTS: []
+      SPAWN_LOCATION_X: -20.0
+      SPAWN_LOCATION_Y: 200.0
+      SPAWN_LOCATION_Z: 40.0
+      SPAWN_ROTATION_PITCH: 0.0
+      SPAWN_ROTATION_YAW: 0.0
+      SPAWN_ROTATION_ROLL: 0.0
+      CAMERA:
+        RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals"
+        IMAGE_HEIGHT: 512
+        IMAGE_WIDTH: 512
+        FOV: 90.0
 
 URDF_ROBOT:
   URDF_ROBOT_PAWN:

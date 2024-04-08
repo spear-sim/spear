@@ -104,8 +104,7 @@ if __name__ == '__main__':
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Plugins")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Megascans")),
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "MSPresets")),
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id)),
-        ]
+            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id))]
 
         txt_file = os.path.realpath(os.path.join(output_dir, scene_id + "-" + args.version_tag + "-" + platform + ".txt"))
         pak_file = os.path.realpath(os.path.join(output_dir, scene_id + "-" + args.version_tag + "-" + platform + ".pak"))
@@ -165,8 +164,8 @@ if __name__ == '__main__':
             "-create=" + txt_file,
             "-platform=" + platform,
             "-multiprocess",
-            "-compress"
-        ]
+            "-compressed"]
+
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 

@@ -23,9 +23,6 @@ if __name__ == "__main__":
     parser.add_argument("--scene_id")
     args = parser.parse_args()
 
-    # load config
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is None:
         scenes_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scenes.csv"))
@@ -38,24 +35,27 @@ if __name__ == "__main__":
     df_columns = ["scene_id", "location_x", "location_y", "location_z", "rotation_pitch", "rotation_yaw", "rotation_roll"]
     df = pd.DataFrame(columns=df_columns)
 
+    # load config
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config.defrost()
+    config.SP_ENGINE.LEGACY_SERVICE.AGENT = "NullAgent"
+    config.freeze()
+
+    spear.configure_system(config)
+    instance = spear.Instance(config)
+
     # iterate over all scenes
     for scene_id in scene_ids:
 
         spear.log("Processing scene: " + scene_id)
 
-        # update scene_id
-        config.defrost()
-        config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
-        config.freeze()
-
-        # create Env object
-        env = spear.Env(config)
-
-        # reset the simulation
-        _ = env.reset()
+        spear.Env.open_level(instance, scene_id)
 
         # get a few random points
-        points = env.get_random_points(args.num_poses_per_scene)
+        spear.Env.begin_tick(instance)
+        points = instance.legacy_service.get_random_points(args.num_poses_per_scene)
+        spear.Env.tick(instance)
+        spear.Env.end_tick(instance)
 
         # generate random pitch, yaw, roll values
         pitch_values = np.random.uniform(low=0.0, high=0.0, size=args.num_poses_per_scene)
@@ -81,8 +81,8 @@ if __name__ == "__main__":
         plt.gca().invert_yaxis() # invert the y-axis so the plot matches a top-down view of the scene in Unreal
         plt.show()
 
-        # close the current scene
-        env.close()
+    # close the unreal instance
+    instance.close()
 
     # write to a csv file
     df.to_csv(args.poses_file, index=False)

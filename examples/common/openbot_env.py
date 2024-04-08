@@ -10,15 +10,15 @@ import spear
 # Custom Env implementation for OpenBot
 class OpenBotEnv(spear.Env):
 
-    def __init__(self, config):
+    def __init__(self, config, instance):
     
-        assert config.SIMULATION_CONTROLLER.AGENT == "VehicleAgent"
-        assert "set_drive_torques" in config.SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS
-        assert "wheel_rotation_speeds" in config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS
+        assert config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent"
+        assert "set_drive_torques" in config.SP_ENGINE.LEGACY.VEHICLE_AGENT.ACTION_COMPONENTS
+        assert "wheel_rotation_speeds" in config.SP_ENGINE.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS
 
         self._wheel_rotation_speeds = None
 
-        super().__init__(config)
+        super().__init__(config, instance)
 
         # In this derived class, we are expecting different actions than the base spear.Env class. So
         # we need to override self.action_space. We need to do this after calling super().__init__(...),

@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SimulationController/VehicleAgent.h"
+#include "SpEngine/Legacy/VehicleAgent.h"
 
 #include <stdint.h> // uint8_t
 
@@ -18,14 +18,14 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "SimulationController/CameraSensor.h"
-#include "SimulationController/ImuSensor.h"
 #include "SpCore/ArrayDesc.h"
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpEngine/Legacy/CameraSensor.h"
+#include "SpEngine/Legacy/ImuSensor.h"
 #include "Vehicle/VehicleMovementComponent.h"
 #include "Vehicle/VehiclePawn.h"
 
@@ -33,26 +33,26 @@ VehicleAgent::VehicleAgent(UWorld* world)
 {
     FVector spawn_location = FVector::ZeroVector;
     FRotator spawn_rotation = FRotator::ZeroRotator;
-    auto spawn_mode = Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_MODE");
+    auto spawn_mode = Config::get<std::string>("SP_ENGINE.LEGACY.VEHICLE_AGENT.SPAWN_MODE");
     if (spawn_mode == "specify_existing_actor") {
-        AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ACTOR_NAME"));
+        AActor* spawn_actor = Unreal::findActorByName(world, Config::get<std::string>("SP_ENGINE.LEGACY.VEHICLE_AGENT.SPAWN_ACTOR_NAME"));
         SP_ASSERT(spawn_actor);
         spawn_location = spawn_actor->GetActorLocation();
         spawn_rotation = spawn_actor->GetActorRotation();
     } else if (spawn_mode == "specify_pose") {
         spawn_location = FVector(
-            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_X"),
-            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Y"),
-            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_LOCATION_Z"));
+            Config::get<double>("SP_ENGINE.LEGACY.VEHICLE_AGENT.SPAWN_LOCATION_X"),
+            Config::get<double>("SP_ENGINE.LEGACY.VEHICLE_AGENT.SPAWN_LOCATION_Y"),
+            Config::get<double>("SP_ENGINE.LEGACY.VEHICLE_AGENT.SPAWN_LOCATION_Z"));
         spawn_rotation = FRotator(
-            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_PITCH"),
-            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_YAW"),
-            Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.SPAWN_ROTATION_ROLL"));
+            Config::get<double>("SP_ENGINE.LEGACY.VEHICLE_AGENT.SPAWN_ROTATION_PITCH"),
+            Config::get<double>("SP_ENGINE.LEGACY.VEHICLE_AGENT.SPAWN_ROTATION_YAW"),
+            Config::get<double>("SP_ENGINE.LEGACY.VEHICLE_AGENT.SPAWN_ROTATION_ROLL"));
     } else {
         SP_ASSERT(false);
     }
     FActorSpawnParameters actor_spawn_parameters;
-    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
+    actor_spawn_parameters.Name = Unreal::toFName(Config::get<std::string>("SP_ENGINE.LEGACY.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
     actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     vehicle_pawn_ = world->SpawnActor<AVehiclePawn>(spawn_location, spawn_rotation, actor_spawn_parameters);
     SP_ASSERT(vehicle_pawn_);
@@ -62,29 +62,29 @@ VehicleAgent::VehicleAgent(UWorld* world)
     // Unreal::findActor interface. So we set the stable name of our VehiclePawn instance here, but we
     // don't do this in any other Agent constructors. This is an acceptable solution because we'll be
     // removing our Agent interface soon anyway.
-    Unreal::setStableName(vehicle_pawn_, Config::get<std::string>("SIMULATION_CONTROLLER.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
+    Unreal::setStableName(vehicle_pawn_, Config::get<std::string>("SP_ENGINE.LEGACY.VEHICLE_AGENT.VEHICLE_ACTOR_NAME"));
 
     vehicle_pawn_->CameraComponent->FieldOfView =
-        Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.FOV");
+        Config::get<float>("SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.FOV");
     vehicle_pawn_->CameraComponent->AspectRatio =
-        Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH") /
-        Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT");
+        Config::get<float>("SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH") /
+        Config::get<float>("SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT");
 
     // We don't normally cache config values in member variables, but we make an exception in this case
     // because we want ACTION_COMPONENTS and OBSERVATION_COMPONENTS to be defined in VEHICLE_AGENT, but
     // we don't want to pass these arrays around every time we need to apply an action or get an observation.
-    vehicle_pawn_->setActionComponents(Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.ACTION_COMPONENTS"));
-    vehicle_pawn_->setObservationComponents(Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS"));
+    vehicle_pawn_->setActionComponents(Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.VEHICLE_AGENT.ACTION_COMPONENTS"));
+    vehicle_pawn_->setObservationComponents(Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS"));
 
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
+    auto observation_components = Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "camera")) {
         camera_sensor_ = std::make_unique<CameraSensor>(
             vehicle_pawn_->CameraComponent,
-            Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES"),
-            Config::get<unsigned int>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH"),
-            Config::get<unsigned int>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT"),
-            Config::get<float>("SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.FOV"));
+            Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.RENDER_PASSES"),
+            Config::get<unsigned int>("SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH"),
+            Config::get<unsigned int>("SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT"),
+            Config::get<float>("SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.FOV"));
         SP_ASSERT(camera_sensor_);
     }
 
@@ -98,7 +98,7 @@ VehicleAgent::~VehicleAgent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
+    auto observation_components = Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
     if (Std::contains(observation_components, "imu")) {
         SP_ASSERT(imu_sensor_);
@@ -126,7 +126,7 @@ std::map<std::string, ArrayDesc> VehicleAgent::getActionSpace() const
 std::map<std::string, ArrayDesc> VehicleAgent::getObservationSpace() const
 {
     std::map<std::string, ArrayDesc> observation_space;
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
+    auto observation_components = Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
     Std::insert(observation_space, vehicle_pawn_->getObservationSpace());
 
@@ -154,7 +154,7 @@ void VehicleAgent::applyAction(const std::map<std::string, std::vector<uint8_t>>
 std::map<std::string, std::vector<uint8_t>> VehicleAgent::getObservation() const
 {
     std::map<std::string, std::vector<uint8_t>> observation;
-    auto observation_components = Config::get<std::vector<std::string>>("SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
+    auto observation_components = Config::get<std::vector<std::string>>("SP_ENGINE.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS");
 
     Std::insert(observation, vehicle_pawn_->getObservation());
 
@@ -181,5 +181,5 @@ void VehicleAgent::reset()
 
 bool VehicleAgent::isReady() const
 {
-    return vehicle_pawn_->GetVelocity().Size() <= Config::get<double>("SIMULATION_CONTROLLER.VEHICLE_AGENT.IS_READY_VELOCITY_THRESHOLD");
+    return vehicle_pawn_->GetVelocity().Size() <= Config::get<double>("SP_ENGINE.LEGACY.VEHICLE_AGENT.IS_READY_VELOCITY_THRESHOLD");
 }

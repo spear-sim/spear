@@ -4,9 +4,9 @@
 
 using UnrealBuildTool;
 
-public class SimulationController : SpModuleRules
+public class SpEngine : SpModuleRules
 {
-    public SimulationController(ReadOnlyTargetRules target) : base(target)
+    public SpEngine(ReadOnlyTargetRules target) : base(target)
     {
         SP_LOG_CURRENT_FUNCTION();
 

@@ -11,22 +11,28 @@
 #include <string>
 #include <vector>
 
-#include "SimulationController/Agent.h"
-#include "SimulationController/ClassRegistrationUtils.h"
+#include <Math/Rotator.h>
+
 #include "SpCore/ArrayDesc.h"
+#include "SpEngine/Legacy/Agent.h"
+#include "SpEngine/Legacy/ClassRegistrationUtils.h"
+#include "SpEngine/Legacy/StandaloneComponent.h"
+#include "SpEngine/Legacy/TickComponent.h"
 
 class ACameraActor;
+class AStaticMeshActor;
+class UStaticMeshComponent;
 class UWorld;
 
 class CameraSensor;
 
-class CameraAgent : public Agent
+class SphereAgent : public Agent
 {
 public:
-    CameraAgent() = delete;
-    CameraAgent(UWorld* world);
-    ~CameraAgent();
-    
+    SphereAgent() = delete;
+    SphereAgent(UWorld* world);
+    ~SphereAgent();
+ 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
 
@@ -40,11 +46,17 @@ public:
 
     void reset() override;
     bool isReady() const override;
-    
+
 private:
+    AStaticMeshActor* static_mesh_actor_ = nullptr;
     ACameraActor* camera_actor_ = nullptr;
+
+    UStaticMeshComponent* static_mesh_component_ = nullptr;
+    std::unique_ptr<StandaloneComponent<UTickComponent>> tick_component_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
 
-    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<CameraAgent>(Agent::s_class_registrar_, "CameraAgent");
+    FRotator rotation_ = FRotator::ZeroRotator;
+
+    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<SphereAgent>(Agent::s_class_registrar_, "SphereAgent");
 };

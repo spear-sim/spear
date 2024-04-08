@@ -25,11 +25,11 @@
             "Enabled": true
         },
         {
-            "Name": "SimulationController",
+            "Name": "SpCore",
             "Enabled": true
         },
         {
-            "Name": "SpCore",
+            "Name": "SpEngine",
             "Enabled": true
         },
         {

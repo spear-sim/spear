@@ -3,34 +3,33 @@
 #
 
 SPEAR:
-  LAUNCH_MODE: "standalone_executable"
-
-  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
-
+  LAUNCH_MODE: "standalone"
+  STANDALONE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
   PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
 
-  CUSTOM_COMMAND_LINE_ARGUMENTS: []
-  RENDER_OFFSCREEN: False
-  WINDOW_RESOLUTION_X: 1024
-  WINDOW_RESOLUTION_Y: 1024
+  INSTANCE:
+    COMMAND_LINE_ARGS:
+      renderoffscreen: null
 
-SIMULATION_CONTROLLER:
-  AGENT: "CameraAgent"
-  TASK: "NullTask"
-  CUSTOM_UNREAL_CONSOLE_COMMANDS: []
 
-  NAVMESH:
-    MIN_REGION_AREA: 0.0
+SP_ENGINE:
+  LEGACY_SERVICE:
+    AGENT: "CameraAgent"
+    TASK: "NullTask"
 
-  CAMERA_AGENT:
-    CAMERA_ACTOR_NAME: "camera_actor"
-    SPAWN_MODE: "specify_existing_actor"
-    SPAWN_ACTOR_NAME: "PlayerStart_0"
-    ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
-    OBSERVATION_COMPONENTS: ["camera"] # "camera"
-    STEP_INFO_COMPONENTS: []
-    CAMERA:
-      RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation"
-      IMAGE_HEIGHT: 1024
-      IMAGE_WIDTH: 1024
-      FOV: 90.0
+  LEGACY:
+    NAVMESH:
+      MIN_REGION_AREA: 0.0
+
+    CAMERA_AGENT:
+      CAMERA_ACTOR_NAME: "camera_actor"
+      SPAWN_MODE: "specify_pose" # "specify_existing_actor"
+      SPAWN_ACTOR_NAME: "PlayerStart_0"
+      ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
+      OBSERVATION_COMPONENTS: ["camera"] # "camera"
+      STEP_INFO_COMPONENTS: []
+      CAMERA:
+        RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation"
+        IMAGE_HEIGHT: 1024
+        IMAGE_WIDTH: 1024
+        FOV: 90.0

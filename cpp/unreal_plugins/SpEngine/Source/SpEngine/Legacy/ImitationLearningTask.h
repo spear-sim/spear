@@ -8,26 +8,23 @@
 
 #include <map>
 #include <memory> // std::unique_ptr
-#include <random> // std::minstd_rand
 #include <string>
 #include <vector>
 
 #include <Math/Vector.h>
 
-#include "SimulationController/ActorHitComponent.h"
-#include "SimulationController/StandaloneComponent.h"
-#include "SimulationController/Task.h"
 #include "SpCore/ArrayDesc.h"
+#include "SpEngine/Legacy/ActorHitComponent.h"
+#include "SpEngine/Legacy/StandaloneComponent.h"
+#include "SpEngine/Legacy/Task.h"
 
 class AActor;
-class AStaticMeshActor;
 class UWorld;
 
-class PointGoalNavTask: public Task
-{
+class ImitationLearningTask : public Task {
 public:
-    PointGoalNavTask(UWorld* world);
-    ~PointGoalNavTask();
+    ImitationLearningTask(UWorld* world);
+    ~ImitationLearningTask();
 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
@@ -43,13 +40,15 @@ public:
     bool isReady() const override;
 
 private:
-    AStaticMeshActor* goal_actor_ = nullptr;
     AActor* agent_actor_ = nullptr;
+    AActor* goal_actor_ = nullptr;
     std::vector<AActor*> obstacle_ignore_actors_;
 
     std::unique_ptr<StandaloneComponent<UActorHitComponent>> actor_hit_component_ = nullptr;
 
-    std::minstd_rand minstd_rand_;
+    std::vector<FVector> agent_initial_locations_;
+    std::vector<FVector> agent_goal_locations_;
+    int episode_index_ = -1;
     bool hit_goal_ = false;
     bool hit_obstacle_ = false;
 };

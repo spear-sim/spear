@@ -13,9 +13,9 @@
 
 #include <Math/Vector.h>
 
-#include "SimulationController/StandaloneComponent.h"
-#include "SimulationController/TickComponent.h"
 #include "SpCore/ArrayDesc.h"
+#include "SpEngine/Legacy/StandaloneComponent.h"
+#include "SpEngine/Legacy/TickComponent.h"
 
 class UPrimitiveComponent;
 

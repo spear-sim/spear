@@ -17,8 +17,7 @@ public class SpTargetRulesTarget : TargetRules
         // Needs to be overridden in derived classes.
         Type = TargetType.Client;
 
-        // Added to projects by default in UE 5.2. Note that the default value in UE 5.2 preview 2 for IncludeOrderVersion is
-        // EngineIncludeOrderVersion.Unreal5_1, but that triggers a build warning.
+        // Added to projects by default in UE 5.2.
         DefaultBuildSettings = BuildSettingsVersion.V2;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
 

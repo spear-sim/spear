@@ -28,8 +28,8 @@ import common.observation_utils as observation_utils
 # frames are not necessary in typical embodied AI scenarios, but are useful when teleporting a camera.
 class CustomEnv(spear.Env):
 
-    def __init__(self, config, num_internal_steps):
-        super(CustomEnv, self).__init__(config)
+    def __init__(self, config, instance, num_internal_steps):
+        super(CustomEnv, self).__init__(config, instance)
         assert num_internal_steps > 0
         self._num_internal_steps = num_internal_steps
 
@@ -45,19 +45,19 @@ class CustomEnv(spear.Env):
 
     def single_step(self, action=None, get_observation=False):
     
-        self._begin_tick()
+        spear.Env.begin_tick(self._instance)
         if action:
             self._apply_action(action)
-        self._tick()
+        spear.Env.tick(self._instance)
         if get_observation:
             obs = self._get_observation()
             reward = self._get_reward()
             is_done = self._is_episode_done()
             step_info = self._get_step_info()
-            self._end_tick()
+            spear.Env.end_tick(self._instance)
             return obs, reward, is_done, step_info
         else:
-            self._end_tick()
+            spear.Env.end_tick(self._instance)
             return None, None, None, None
 
 
@@ -71,18 +71,12 @@ if __name__ == "__main__":
     parser.add_argument("--wait_for_key_press", action="store_true")
     args = parser.parse_args()
 
-    # load config
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-
-    # read data from csv
     df = pd.read_csv(args.poses_file)
 
-    # create dir for storing images
-    if not args.benchmark:
-        for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-            render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
-            shutil.rmtree(render_pass_dir, ignore_errors=True)
-            os.makedirs(render_pass_dir)
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    spear.configure_system(config)
+    instance = spear.Instance(config)
+    env = CustomEnv(config, instance, num_internal_steps=args.num_internal_steps)
 
     # iterate over all poses
     prev_scene_id = ""
@@ -91,17 +85,21 @@ if __name__ == "__main__":
         # if the scene_id of our current pose has changed, then create a new Env
         if pose["scene_id"] != prev_scene_id:
 
-            # close the previous Env
-            if prev_scene_id != "":
-                env.close()
+            # create dir for storing images
+            if not args.benchmark:
+                for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+                    render_pass_dir = os.path.realpath(os.path.join(args.images_dir, pose["scene_id"], render_pass))
+                    shutil.rmtree(render_pass_dir, ignore_errors=True)
+                    os.makedirs(render_pass_dir)
 
-            # update scene_id
-            config.defrost()
-            config.SIMULATION_CONTROLLER.SCENE_ID = pose["scene_id"]
-            config.freeze()
+            # close the previous Env
+            env.close()
+
+            # open the desired level
+            spear.Env.open_level(instance, pose["scene_id"])
 
             # create Env object
-            env = CustomEnv(config, num_internal_steps=args.num_internal_steps)
+            env = CustomEnv(config, instance, num_internal_steps=args.num_internal_steps)
 
             # reset the simulation
             _ = env.reset()
@@ -116,11 +114,11 @@ if __name__ == "__main__":
 
         # save images for each render pass
         if not args.benchmark:
-            observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES }
+            observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES }
             modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
 
-            for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
-                render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
+            for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+                render_pass_dir = os.path.realpath(os.path.join(args.images_dir, pose["scene_id"], render_pass))
                 assert os.path.exists(render_pass_dir)
 
                 obs_render_pass_vis = modified_obs["camera." + render_pass]
@@ -142,5 +140,8 @@ if __name__ == "__main__":
 
     # close the current Env
     env.close()
+
+    # close the unreal instance
+    instance.close()
 
     spear.log("Done.")

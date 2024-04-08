@@ -2,8 +2,8 @@
     "FileVersion": 3,
     "Version": 1,
     "VersionName": "1.0",
-    "FriendlyName": "SimulationController",
-    "Description": "WARNING: The loading phases for {SimulationController, SpCore, UrdfRobot, Vehicle} need to be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(UrdfRobot, Vehicle) < LoadingPhase(SimulationController)",
+    "FriendlyName": "SpEngine",
+    "Description": "WARNING: The loading phases for {SpCore, SpEngine, UrdfRobot, Vehicle} need to be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(UrdfRobot, Vehicle) < LoadingPhase(SpEngine)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -16,7 +16,7 @@
     "Installed": false,
     "Modules": [
         {
-            "Name": "SimulationController",
+            "Name": "SpEngine",
             "Type": "Runtime",
             "LoadingPhase": "PostDefault"
         }

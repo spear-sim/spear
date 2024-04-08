@@ -2,7 +2,9 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SimulationController/ImuSensor.h"
+#include "SpEngine/Legacy/ImuSensor.h"
+
+#include <stdint.h> // uint8_t
 
 #include <stdint.h> // uint8_t
 
@@ -21,11 +23,11 @@
 #include <Math/Vector.h>
 #include <PhysicsEngine/PhysicsSettings.h>
 
-#include "SimulationController/StandaloneComponent.h"
-#include "SimulationController/TickComponent.h"
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // DataType
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
+#include "SpEngine/Legacy/StandaloneComponent.h"
+#include "SpEngine/Legacy/TickComponent.h"
 
 struct FActorComponentTickFunction;
 
@@ -60,7 +62,7 @@ ImuSensor::ImuSensor(UPrimitiveComponent* primitive_component)
         angular_velocity_body_ = primitive_component_->GetComponentTransform().GetRotation().UnrotateVector(component_angular_velocity_world);
 
         // Debug render
-        if (Config::get<bool>("SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER")) {
+        if (Config::get<bool>("SP_ENGINE.LEGACY.IMU_SENSOR.DEBUG_RENDER")) {
             UWorld* world = primitive_component_->GetWorld();
             FTransform transform = primitive_component_->GetComponentTransform();
             FRotator rotation = transform.Rotator();

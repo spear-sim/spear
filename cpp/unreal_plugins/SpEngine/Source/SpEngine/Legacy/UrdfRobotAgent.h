@@ -11,22 +11,21 @@
 #include <string>
 #include <vector>
 
-#include "SimulationController/Agent.h"
-#include "SimulationController/ClassRegistrationUtils.h"
 #include "SpCore/ArrayDesc.h"
+#include "SpEngine/Legacy/Agent.h"
+#include "SpEngine/Legacy/ClassRegistrationUtils.h"
 
 class UWorld;
 
-class AVehiclePawn;
+class AUrdfRobotPawn;
 class CameraSensor;
-class ImuSensor;
 
-class VehicleAgent : public Agent
+class UrdfRobotAgent : public Agent
 {
 public:
-    VehicleAgent() = delete;
-    VehicleAgent(UWorld* world);
-    ~VehicleAgent();
+    UrdfRobotAgent() = delete;
+    UrdfRobotAgent(UWorld* world);
+    ~UrdfRobotAgent();
 
     void findObjectReferences(UWorld* world) override;
     void cleanUpObjectReferences() override;
@@ -43,10 +42,9 @@ public:
     bool isReady() const override;
 
 private:
-    AVehiclePawn* vehicle_pawn_ = nullptr;
+    AUrdfRobotPawn* urdf_robot_pawn_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
-    std::unique_ptr<ImuSensor> imu_sensor_;
 
-    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<VehicleAgent>(Agent::s_class_registrar_, "VehicleAgent");
+    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<UrdfRobotAgent>(Agent::s_class_registrar_, "UrdfRobotAgent");
 };
