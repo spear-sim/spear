@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
         spear.log("Processing scene: " + scene_id)
 
-        spear.open_level(instance, scene_id)
+        spear.Env.open_level(instance, scene_id)
 
         # get a few random points
         spear.Env.begin_tick(instance)
