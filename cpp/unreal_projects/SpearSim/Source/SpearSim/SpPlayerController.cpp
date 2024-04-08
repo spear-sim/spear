@@ -29,7 +29,8 @@ ASpPlayerController::ASpPlayerController()
     SP_ASSERT(UserInputComponent);
 
     UserInputComponent->bHandleUserInput = true; // UserInputComponents need to be explicitly enabled
-    UserInputComponent->PrimaryComponentTick.bTickEvenWhenPaused = true; // enable because we want to exit even when paused
+    UserInputComponent->PrimaryComponentTick.bTickEvenWhenPaused = true; // we want to exit even when paused
+    UserInputComponent->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 
 ASpPlayerController::~ASpPlayerController()

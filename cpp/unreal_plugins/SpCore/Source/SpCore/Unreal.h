@@ -32,14 +32,34 @@ class UClass;
 class UStruct;
 class UWorld;
 
+template <typename TObject>
+concept CObject = std::derived_from<TObject, UObject>;
+
+template <typename TStruct>
+concept CStruct =
+    CObject<TStruct> &&
+    requires() {
+        { TStruct::StaticStruct() } -> std::same_as<UStruct*>;
+    };
+
+template <typename TClass>
+concept CClass =
+    CObject<TClass> &&
+    requires() {
+        { TClass::StaticClass() } -> std::same_as<UClass*>;
+    };
+
 template <typename TComponent>
-concept CComponent = std::derived_from<TComponent, UActorComponent>;
+concept CComponent = CObject<TComponent> && std::derived_from<TComponent, UActorComponent>;
 
 template <typename TSceneComponent>
 concept CSceneComponent = CComponent<TSceneComponent> && std::derived_from<TSceneComponent, USceneComponent>;
 
 template <typename TActor>
-concept CActor = std::derived_from<TActor, AActor>;
+concept CActor = CObject<TActor> && std::derived_from<TActor, AActor>;
+
+template <typename TParent>
+concept CParent = CActor<TParent> || CSceneComponent<TParent>;
 
 class SPCORE_API Unreal
 {
@@ -73,7 +93,7 @@ public:
     // Find struct by name
     //
 
-    static UStruct* findStructByName(const UWorld* world, const std::string& name);
+    static UStruct* findStructByName(const std::string& name);
 
     //
     // Get and set object properties, uobject can't be const because we cast it to void*
@@ -260,7 +280,7 @@ public:
     }
 
     template <CComponent TComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
-    static TComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& name)
+    static TReturnAsComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& name)
     {
         SP_ASSERT(owner);
         TReturnAsComponent* actor_component = NewObject<TComponent>(owner, toFName(name));
@@ -305,15 +325,15 @@ public:
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
     static std::vector<TReturnAsActor*> findActorsByName(const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
-        std::map<std::string, TReturnAsActor*> actors =
-            getObjectsAsMap(findActorsByType<TActor, TReturnAsActor>(world));
+        std::vector<TReturnAsActor*> actors;
+        std::map<std::string, TReturnAsActor*> actor_map = getObjectsAsMap(findActorsByType<TActor, TReturnAsActor>(world));
         if (return_null_if_not_found) {
-            return Std::at(actors, names, nullptr);
+            actors = Std::at(actor_map, names, nullptr);
         } else {
-            std::vector<std::string> names_found_in_actors =
-                Std::toVector<std::string>(names | std::views::filter([&actors](const auto& name) { return Std::containsKey(actors, name); }));
-            return Std::at(actors, names_found_in_actors);
+            auto names_found_in_actor_map = Std::toVector<std::string>(names | std::views::filter([&actor_map](const auto& name) { return Std::containsKey(actor_map, name); }));
+            actors = Std::at(actor_map, names_found_in_actor_map);
         }
+        return actors;
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
@@ -356,9 +376,13 @@ public:
     //
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByNameAsMap(const UWorld* world, const std::vector<std::string>& names)
+    static std::map<std::string, TReturnAsActor*> findActorsByNameAsMap(const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
-        return getObjectsAsMap(findActorsByName<TActor, TReturnAsActor>(world, names));
+        if (return_null_if_not_found) {
+            return Std::zip(names, findActorsByName<TActor, TReturnAsActor>(world, names, return_null_if_not_found));
+        } else {
+            return getObjectsAsMap(findActorsByName<TActor, TReturnAsActor>(world, names, return_null_if_not_found));
+        }
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
@@ -428,15 +452,16 @@ public:
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::vector<TReturnAsComponent*> getComponentsByName(const AActor* actor, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
-        std::map<std::string, TReturnAsComponent*> components =
-            getObjectsAsMap(getComponentsByType<TComponent, TReturnAsComponent>(actor));
+        std::vector<TReturnAsComponent*> components;
+        std::map<std::string, TReturnAsComponent*> component_map = getObjectsAsMap(getComponentsByType<TComponent, TReturnAsComponent>(actor));
         if (return_null_if_not_found) {
-            return Std::at(components, names, nullptr);
+            components = Std::at(component_map, names, nullptr);
         } else {
-            std::vector<std::string> names_found_in_components =
-                Std::toVector<std::string>(names | std::views::filter([&components](const auto& name) { return Std::containsKey(components, name); }));
-            return Std::at(components, names_found_in_components);
+            auto names_found_in_component_map =
+                Std::toVector<std::string>(names | std::views::filter([&component_map](const auto& name) { return Std::containsKey(component_map, name); }));
+            components = Std::at(component_map, names_found_in_component_map);
         }
+        return components;
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
@@ -477,9 +502,13 @@ public:
     //
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByNameAsMap(const AActor* actor, const std::vector<std::string>& names)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByNameAsMap(const AActor* actor, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
-        return getObjectsAsMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, names));
+        if (return_null_if_not_found) {
+            return Std::zip(names, getComponentsByName<TComponent, TReturnAsComponent>(actor, names, return_null_if_not_found));
+        } else {
+            return getObjectsAsMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, names, return_null_if_not_found));
+        }
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
@@ -546,43 +575,68 @@ public:
     // Get children components by name or tag or type and return an std::vector
     //
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::vector<TReturnAsComponent*> getChildrenComponentsByName(const USceneComponent* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getChildrenComponentsByName(const TParent* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true)
     {
-        std::map<std::string, TReturnAsComponent*> components =
-            getObjectsAsMap(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants));
+        std::vector<TReturnAsComponent*> components;
+        std::map<std::string, TReturnAsComponent*> component_map = getObjectsAsMap(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants));
         if (return_null_if_not_found) {
-            return Std::at(components, names, nullptr);
+            components = Std::at(component_map, names, nullptr);
         } else {
-            std::vector<std::string> names_found_in_components =
-                Std::toVector<std::string>(names | std::views::filter([&components](const auto& name) { return Std::containsKey(components, name); }));
-            return Std::at(components, names_found_in_components);
+            auto names_found_in_component_map =
+                Std::toVector<std::string>(names | std::views::filter([&component_map](const auto& name) { return Std::containsKey(component_map, name); }));
+            components = Std::at(component_map, names_found_in_component_map);
         }
+        return components;
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::vector<TReturnAsComponent*> getChildrenComponentsByTag(const USceneComponent* parent, const std::string& tag, bool include_all_descendants = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getChildrenComponentsByTag(const TParent* parent, const std::string& tag, bool include_all_descendants = true)
     {
-        return getChildrenComponentsByTagAny<TSceneComponent, TReturnAsComponent>(parent, {tag}, include_all_descendants);
+        return getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, {tag}, include_all_descendants);
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::vector<TReturnAsComponent*> getChildrenComponentsByTagAny(const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getChildrenComponentsByTagAny(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
     {
         return Std::toVector<TReturnAsComponent*>(
             getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants) |
             std::views::filter([&tags](auto component) { return Std::any(Std::contains(getTags(component), tags)); }));
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::vector<TReturnAsComponent*> getChildrenComponentsByTagAll(const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getChildrenComponentsByTagAll(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
     {
         return Std::toVector<TReturnAsComponent*>(
             getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants) |
             std::views::filter([&tags](auto component) { return Std::all(Std::contains(getTags(component), tags)); }));
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
+    // specialization for AActor*
+    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getChildrenComponentsByType(const AActor* parent, bool include_all_descendants = true)
+    {
+        SP_ASSERT(parent);
+        USceneComponent* root = parent->GetRootComponent();
+        std::vector<TReturnAsComponent*> components;
+        if (root && dynamic_cast<TSceneComponent*>(root)) {
+            components.push_back(root);
+        }
+        if (root && include_all_descendants) {
+            std::vector<TReturnAsComponent*> children = getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(root, include_all_descendants);
+            components.insert(components.end(), children.begin(), children.end()); // TODO: replace with components.append_range(children) in C++23
+        }
+        return components;
+    }
+
+    // specialization for USceneComponent*
+    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
     static std::vector<TReturnAsComponent*> getChildrenComponentsByType(const USceneComponent* parent, bool include_all_descendants = true)
     {
         SP_ASSERT(parent);
@@ -597,32 +651,41 @@ public:
     // Get children components by name or tag or type and return an std::map
     //
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByNameAsMap(const USceneComponent* parent, const std::vector<std::string>& names, bool include_all_descendants = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByNameAsMap(const TParent* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true)
     {
-        return getObjectsAsMap(getChildrenComponentsByName<TSceneComponent, TReturnAsComponent>(parent, names, include_all_descendants));
+        if (return_null_if_not_found) {
+            return Std::zip(names, getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, names, include_all_descendants, return_null_if_not_found));
+        } else {
+            return getObjectsAsMap(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, names, include_all_descendants, return_null_if_not_found));
+        }
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTagAsMap(const USceneComponent* parent, const std::string& tag, bool include_all_descendants = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTagAsMap(const TParent* parent, const std::string& tag, bool include_all_descendants = true)
     {
-        return getObjectsAsMap(getChildrenComponentsByTagAny<TSceneComponent, TReturnAsComponent>(parent, {tag}, include_all_descendants));
+        return getObjectsAsMap(getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, {tag}, include_all_descendants));
     }
     
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTagAnyAsMap(const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTagAnyAsMap(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
     {
-        return getObjectsAsMap(getChildrenComponentsByTagAny<TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
+        return getObjectsAsMap(getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTagAllAsMap(const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTagAllAsMap(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
     {
-        return getObjectsAsMap(getChildrenComponentsByTagAll<TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
+        return getObjectsAsMap(getChildrenComponentsByTagAll<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTypeAsMap(const USceneComponent* parent, bool include_all_descendants = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTypeAsMap(const TParent* parent, bool include_all_descendants = true)
     {
         return getObjectsAsMap(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants));
     }
@@ -631,34 +694,39 @@ public:
     // Get child component by name or tag or type and return a pointer
     //
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByName(const USceneComponent* parent, const std::string& name, bool include_all_descendants = true, bool assert_if_not_found = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static TReturnAsComponent* getChildComponentByName(const TParent* parent, const std::string& name, bool include_all_descendants = true, bool assert_if_not_found = true)
     {
         bool assert_if_multiple_found = true;
         bool return_null_if_not_found = false;
-        return getItem(getChildrenComponentsByName<TSceneComponent, TReturnAsComponent>(parent, {name}, include_all_descendants, return_null_if_not_found), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, {name}, include_all_descendants, return_null_if_not_found), nullptr, assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByTag(const USceneComponent* parent, const std::string& tag, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static TReturnAsComponent* getChildComponentByTag(const TParent* parent, const std::string& tag, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(getChildrenComponentsByTag<TSceneComponent, TReturnAsComponent>(parent, tag, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByTag<TParent, TSceneComponent, TReturnAsComponent>(parent, tag, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByTagAny(const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static TReturnAsComponent* getChildComponentByTagAny(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(getChildrenComponentsByTagAny<TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByTagAll(const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static TReturnAsComponent* getChildComponentByTagAll(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
-        return getItem(getChildrenComponentsByTagAll<TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByTagAll<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
     }
 
-    template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByType(const USceneComponent* parent, bool assert_if_not_found = true, bool include_all_descendants = true, bool assert_if_multiple_found = true)
+    template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsComponent>
+    static TReturnAsComponent* getChildComponentByType(const TParent* parent, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
         return getItem(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
     }

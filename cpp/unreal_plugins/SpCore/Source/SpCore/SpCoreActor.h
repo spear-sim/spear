@@ -11,11 +11,12 @@
 #include <Engine/EngineTypes.h>          // FHitResult
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                // uint64
+#include <Math/Transform.h>
 #include <Math/Vector.h>
 #include <UObject/NameTypes.h>           // FName
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS
 
-#include "EngineActor.generated.h"
+#include "SpCoreActor.generated.h"
 
 class UStableNameComponent;
 
@@ -45,12 +46,12 @@ struct FActorHitEventDesc
 };
 
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
-class SPCORE_API AEngineActor : public AActor
+class SPCORE_API ASpCoreActor : public AActor
 {
     GENERATED_BODY()
 public: 
-    AEngineActor();
-    ~AEngineActor();
+    ASpCoreActor();
+    ~ASpCoreActor();
 
     // AActor interface
     void Tick(float delta_time) override;
@@ -63,9 +64,16 @@ public:
     #endif
 
 private:
+    // Required so this actor can be found through the Unreal::findActor interface, e.g., to call
+    // SubscribeToActorHitEvents().
+    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Stable Name Component");
+    UStableNameComponent* StableNameComponent = nullptr;
+
     // Calling UGameplayStatics::SetGamePaused() doesn't synchronize with the default play/pause button in the
-    // editor. So we provide custom buttons and a custom read-only property to visualize and update the pause
-    // state of the game, as defined by UGameplayStatics.
+    // editor. So we provide custom buttons and a custom read-only property to update and visualize the engine-
+    // level (as opposed to the editor-level) pause state of the game. This functionality is implemented by
+    // interacting directly with UGameplayStatics, and is therefore guaranteed to be synchronized with the
+    // engine-level state.
     UFUNCTION(CallInEditor, Category="SPEAR")
     void PauseGame();
 
@@ -78,24 +86,19 @@ private:
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName="Is Game Paused");
     bool IsGamePaused = false;
 
-    // Interface for subscribing to, unsubscribing from, and getting actor hit events.
+    // Interface for subscribing to, unsubscribing from, and getting actor hit events. Part of this interface must
+    // be implemented in terms of a UFUNCTION. We choose to implement the rest of the interface directly in this
+    // actor so we can keep the entire interface in one place in the code, near the required UFUNCTION. An alternative
+    // would be to implement this interface as a collection of entry points on a service (e.g., GameWorldService).
     UFUNCTION()
     void SubscribeToActorHitEvents(AActor* actor);
-
     UFUNCTION()
     void UnsubscribeFromActorHitEvents(AActor* actor);
-
     UFUNCTION()
     TArray<FActorHitEventDesc> GetActorHitEventDescs();
-
     UFUNCTION()
     void ActorHitHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
-
     TArray<FActorHitEventDesc> actor_hit_event_descs_;
-
-    // Used for obtaining a UStruct* in cases where a class or struct doesn't define a StaticStruct() function.
-    UPROPERTY()
-    FVector _FVector;
 
     // Required for keeping StableNameComponents up-to-date.
     #if WITH_EDITOR // defined in an auto-generated header
@@ -109,5 +112,15 @@ private:
         FDelegateHandle level_actor_folder_changed_handle_;
     #endif
 
-    UStableNameComponent* stable_name_component_ = nullptr;
+    // Required to support UnrealClassRegistrar::getStaticStruct<T>(), even in cases where an otherwise well-formed
+    // struct doesn't define a StaticStruct() method, as is the case with FVector and FTransform. To support such
+    // types, each type must meet the following conditions. First, a UPROPERTY of that type must be defined below
+    // with the _SP_SPECIAL_STRUCT_Type_. Second, the type must have been pre-registered by calling
+    // UnrealClassRegistrar::registerSpecialStruct<Type>("Type"). When the struct no longer needs to be registered,
+    // it should be unregistered by calling UnrealClassRegistrar::unregisterSpecialStruct<Type>("Type").
+    UPROPERTY()
+    FVector _SP_SPECIAL_STRUCT_FVector_;
+
+    UPROPERTY()
+    FTransform _SP_SPECIAL_STRUCT_FTransform_;
 };
