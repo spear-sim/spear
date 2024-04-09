@@ -39,6 +39,24 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &LegacyService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &LegacyService::worldCleanupHandler);
 
+        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_random_points",
+            [this](const int& num_points) -> std::vector<double> {
+                SP_ASSERT(nav_mesh_);
+                return nav_mesh_->getRandomPoints(num_points);
+        });
+
+        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_random_reachable_points_in_radius",
+            [this](const std::vector<double>& initial_points, const float& radius) -> std::vector<double> {
+                SP_ASSERT(nav_mesh_);
+                return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
+        });
+
+        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_paths",
+            [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
+                SP_ASSERT(nav_mesh_);
+                return nav_mesh_->getPaths(initial_points, goal_points);
+        });
+
         unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getActionSpace();
@@ -107,24 +125,6 @@ public:
         unreal_entry_point_binder->bindFuncUnreal("legacy_service", "is_task_ready", [this]() -> bool {
             SP_ASSERT(task_);
             return task_->isReady();
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_points",
-            [this](const int& num_points) -> std::vector<double> {
-                SP_ASSERT(nav_mesh_);
-                return nav_mesh_->getRandomPoints(num_points);
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_reachable_points_in_radius",
-            [this](const std::vector<double>& initial_points, const float& radius) -> std::vector<double> {
-                SP_ASSERT(nav_mesh_);
-                return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_paths",
-            [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
-                SP_ASSERT(nav_mesh_);
-                return nav_mesh_->getPaths(initial_points, goal_points);
         });
     }
 

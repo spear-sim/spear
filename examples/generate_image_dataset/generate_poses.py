@@ -15,7 +15,7 @@ import spear
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(common_dir)
-from examples.common.instance_utils import open_level
+from common.instance_utils import open_level
 
 
 CAMERA_LOCATION_Z_OFFSET = 200.0

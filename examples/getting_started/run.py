@@ -15,7 +15,7 @@ import time
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(common_dir)
-from examples.common.openbot_env_utils import OpenBotEnv
+from common.openbot_utils import OpenBotEnv
 
 num_steps = 100
 
