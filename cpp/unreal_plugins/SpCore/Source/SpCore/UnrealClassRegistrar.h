@@ -763,9 +763,10 @@ private:
     static const char* getTypeIdString()
     {
         // RTTI is not allowed in modules that define Unreal types, so we can't use typeid(T). We also can't use
-        // boost::typeindex::type_id<T> because this conflicts with some Unreal modules that explicitly enable
-        // RTTI. So we use BOOST_CURRENT_FUNCTION as a quick-and-dirty alternative because it will give us a
-        // unique string for each type, and that is the only type information we need.
+        // boost::typeindex::type_id<T>, which is intended to emulate RTTI without actually enabling it, because
+        // this conflicts with some Unreal modules that explicitly enable RTTI. So we use BOOST_CURRENT_FUNCTION
+        // as a quick-and-dirty alternative because it will give us a unique string for each type, and that is
+        // the only type information we need here.
         return BOOST_CURRENT_FUNCTION;
     }
 
