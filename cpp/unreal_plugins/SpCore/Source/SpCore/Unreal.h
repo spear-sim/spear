@@ -20,6 +20,7 @@
 #include <EngineUtils.h>             // TActorIterator
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>            // TCHAR
+#include <Templates/Casts.h>
 #include <UObject/Class.h>           // EIncludeSuperFlag
 #include <UObject/NameTypes.h>       // FName
 #include <UObject/Object.h>          // UObject
@@ -626,7 +627,7 @@ public:
         SP_ASSERT(parent);
         USceneComponent* root = parent->GetRootComponent();
         std::vector<TReturnAsComponent*> components;
-        if (root && dynamic_cast<TSceneComponent*>(root)) {
+        if (root && Cast<TSceneComponent>(root)) { // no RTTI available, so use Cast instead of dynamic_cast
             components.push_back(root);
         }
         if (root && include_all_descendants) {
@@ -646,7 +647,7 @@ public:
         parent->GetChildrenComponents(include_all_descendants, children_tarray);
         std::vector<USceneComponent*> children = toStdVector(children_tarray);
         SP_ASSERT(!Std::contains(children, nullptr));
-        return Std::toVector<TReturnAsComponent*>(children | std::views::filter([](auto child) { return dynamic_cast<TSceneComponent*>(child); }));
+        return Std::toVector<TReturnAsComponent*>(children | std::views::filter([](auto child) { return Cast<TSceneComponent>(child); })); // no RTTI available, so use Cast instead of dynamic_cast
     }
 
     //

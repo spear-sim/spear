@@ -693,7 +693,7 @@ public:
     // conditions. First, the type needs to be registered by calling registerSpecialStruct<T>(...) before calling
     // getStaticStruct<T>(). If the type is registered by UStruct*, then there are no other requirements. If the
     // type is registered by name, then getStaticStruct<T>() will call Unreal::findSpecialStructByName(...)
-    // internally, which must return a valid UStruct*. Note that for a type to be visible to Unreal::findSpecialStructByName(...)
+    // internally to find the appropriate UStruct*. For a type to be visible to Unreal::findSpecialStructByName(...),
     // ASpCoreActor must define a UPROPERTY of type T that is named according to a particular naming convention.
     // When a type no longer needs to be visible to getStaticStruct<T>(), it should be unregistered by calling
     // UnrealClassRegistrar::unregisterSpecialStruct<T>().
@@ -707,32 +707,32 @@ public:
     template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
     static void registerSpecialStruct(const std::string& struct_name)
     {
-        std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
-        SP_ASSERT(!Std::containsKey(s_special_struct_names_, type_id_name));
-        SP_ASSERT(!Std::containsKey(s_special_structs_, type_id_name));
-        Std::insert(s_special_struct_names_, type_id_name, struct_name);
+        std::string type_id_string = getTypeIdString<TSpecialStruct>();
+        SP_ASSERT(!Std::containsKey(s_special_struct_names_, type_id_string));
+        SP_ASSERT(!Std::containsKey(s_special_structs_, type_id_string));
+        Std::insert(s_special_struct_names_, type_id_string, struct_name);
     }
 
     template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
     static void registerSpecialStruct(UStruct* ustruct)
     {
         SP_ASSERT(ustruct);
-        std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
-        SP_ASSERT(!Std::containsKey(s_special_struct_names_, type_id_name));
-        SP_ASSERT(!Std::containsKey(s_special_structs_, type_id_name));
-        Std::insert(s_special_structs_, type_id_name, ustruct);
+        std::string type_id_string = getTypeIdString<TSpecialStruct>();
+        SP_ASSERT(!Std::containsKey(s_special_struct_names_, type_id_string));
+        SP_ASSERT(!Std::containsKey(s_special_structs_, type_id_string));
+        Std::insert(s_special_structs_, type_id_string, ustruct);
     }
 
     template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
     static void unregisterSpecialStruct()
     {
-        std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
-        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_name) + Std::containsKey(s_special_structs_, type_id_name) == 1);
-        if (Std::containsKey(s_special_struct_names_, type_id_name)) {
-            Std::remove(s_special_struct_names_, type_id_name);
+        std::string type_id_string = getTypeIdString<TSpecialStruct>();
+        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_string) + Std::containsKey(s_special_structs_, type_id_string) == 1);
+        if (Std::containsKey(s_special_struct_names_, type_id_string)) {
+            Std::remove(s_special_struct_names_, type_id_string);
         }
-        if (Std::containsKey(s_special_structs_, type_id_name)) {
-            Std::remove(s_special_structs_, type_id_name);
+        if (Std::containsKey(s_special_structs_, type_id_string)) {
+            Std::remove(s_special_structs_, type_id_string);
         }
     }
 
@@ -745,19 +745,30 @@ public:
     template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
     static UStruct* getStaticStruct()
     {
-        std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
-        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_name) + Std::containsKey(s_special_structs_, type_id_name) == 1);
-        if (Std::containsKey(s_special_struct_names_, type_id_name)) {
-            std::string name = s_special_struct_names_.at(type_id_name);
+        std::string type_id_string = getTypeIdString<TSpecialStruct>();
+        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_string) + Std::containsKey(s_special_structs_, type_id_string) == 1);
+        if (Std::containsKey(s_special_struct_names_, type_id_string)) {
+            std::string name = s_special_struct_names_.at(type_id_string);
             return Unreal::findSpecialStructByName(name);
         }
-        if (Std::containsKey(s_special_structs_, type_id_name)) {
-            return s_special_structs_.at(type_id_name);
+        if (Std::containsKey(s_special_structs_, type_id_string)) {
+            return s_special_structs_.at(type_id_string);
         }
         return nullptr;
     }
 
 private:
+
+    template <typename T>
+    static const char* getTypeIdString()
+    {
+        // RTTI is not allowed in modules that define Unreal types, so we can't use typeid(T). We also can't use
+        // use boost::typeindex::type_id<T>, which is intended to emulate RTTI without actually enabling it, because
+        // this conflicts with some Unreal modules that explicitly enable RTTI. So we use BOOST_CURRENT_FUNCTION
+        // as a lightweight alternative because it will give us a unique string for each type, and that is the only
+        // type information we need here.
+        return BOOST_CURRENT_FUNCTION;
+    }
 
     //
     // A ClassRegistrar<TReturn, TArgs...> is a templated type that allows a caller to call functions by name
