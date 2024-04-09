@@ -683,11 +683,6 @@ public:
         s_get_static_class_registrar_.unregisterClass(class_name);
     }
 
-<<<<<<< HEAD
-    // only special Unreal structs that don't define a StaticStruct() method (e.g., FVector) should be registered/unregistered
-    template <typename TSpecialStruct> requires (!CObject<TSpecialStruct>)
-    static void unregisterSpecialStruct(const std::string& class_name)
-=======
     //
     // The functions below are required to support the getStaticStruct<T>() method in cases where an otherwise
     // well-formed struct type doesn't define a StaticStruct() method, as is the case with FRotator and FVector.
@@ -711,7 +706,6 @@ public:
 
     template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
     static void registerSpecialStruct(const std::string& struct_name)
->>>>>>> origin
     {
         std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
         SP_ASSERT(!Std::containsKey(s_special_struct_names_, type_id_name));
@@ -748,13 +742,7 @@ public:
         return TStruct::StaticStruct();
     }
 
-<<<<<<< HEAD
-    // only special Unreal structs that don't define a StaticStruct() method (e.g., FVector) should use this code path, and
-    // must have been previously registered
-    template <typename TSpecialStruct> requires (!CObject<TSpecialStruct>)
-=======
     template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
->>>>>>> origin
     static UStruct* getStaticStruct()
     {
         std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
