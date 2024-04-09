@@ -11,7 +11,7 @@
 #include <Engine/EngineTypes.h>          // FHitResult
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                // uint64
-#include <Math/Transform.h>
+#include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <UObject/NameTypes.h>           // FName
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS
@@ -112,15 +112,9 @@ private:
         FDelegateHandle level_actor_folder_changed_handle_;
     #endif
 
-    // Required to support UnrealClassRegistrar::getStaticStruct<T>(), even in cases where an otherwise well-formed
-    // struct doesn't define a StaticStruct() method, as is the case with FVector and FTransform. To support such
-    // types, each type must meet the following conditions. First, a UPROPERTY of that type must be defined below
-    // with the _SP_SPECIAL_STRUCT_Type_. Second, the type must have been pre-registered by calling
-    // UnrealClassRegistrar::registerSpecialStruct<Type>("Type"). When the struct no longer needs to be registered,
-    // it should be unregistered by calling UnrealClassRegistrar::unregisterSpecialStruct<Type>("Type").
+    // The UPROPERTIES below are required to support the Unreal::findSpecialStructByName(...) method.
+    UPROPERTY()
+    FRotator _SP_SPECIAL_STRUCT_FRotator_;
     UPROPERTY()
     FVector _SP_SPECIAL_STRUCT_FVector_;
-
-    UPROPERTY()
-    FTransform _SP_SPECIAL_STRUCT_FTransform_;
 };

@@ -10,12 +10,14 @@
 #include <vector>
 
 #include <Engine/World.h>
-#include <Math/Transform.h>         // FTransform (attempting to forward declare as a struct or a class causes errors)
+#include <Math/Rotator.h>
+#include <Math/Vector.h>
 #include <UObject/NameTypes.h>      // FName
 #include <UObject/ObjectMacros.h>   // ELoadFlags, EObjectFlags
 #include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
 #include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
@@ -43,7 +45,7 @@ public:
     // Spawn actor using a class name instead of template parameters
     //
 
-    static AActor* spawnActor(const std::string& class_name, UWorld* world, const FTransform& transform, const FActorSpawnParameters& spawn_parameters);
+    static AActor* spawnActor(const std::string& class_name, UWorld* world, const FVector& location, const FRotator& rotation, const FActorSpawnParameters& spawn_parameters);
 
     //
     // Create component using a class name instead of template parameters
@@ -177,8 +179,8 @@ public:
         //
 
         s_spawn_actor_registrar_.registerClass(
-            class_name, [](UWorld* world, FTransform const& transform, const FActorSpawnParameters& spawn_parameters) -> AActor* {
-                SP_ASSERT(world); return world->SpawnActor<AActor>(TActor::StaticClass(), transform, spawn_parameters); });
+            class_name, [](UWorld* world, const FVector& location, const FRotator& rotation, const FActorSpawnParameters& spawn_parameters) -> AActor* {
+                SP_ASSERT(world); return world->SpawnActor<TActor>(location, rotation, spawn_parameters); });
 
         //
         // Find actors by name or tag or type and return an std::vector
@@ -569,14 +571,6 @@ public:
             });
     }
 
-    // only special structs that don't define a StaticStruct() method (e.g., FVector) should be registered/unregistered
-    template <typename TSpecialStruct> requires !CObject<TSpecialStruct>
-    static void registerSpecialStruct(const std::string& class_name)
-    {
-        std::string demangled_name = boost::core::demangle(typeid(TSpecialStruct).name());
-        Std::insert(s_special_struct_names_, demangled_name, class_name);
-    }
-
     template <CActor TActor>
     static void unregisterActorClass(const std::string& class_name)
     {
@@ -689,12 +683,57 @@ public:
         s_get_static_class_registrar_.unregisterClass(class_name);
     }
 
-    // only special Unreal structs that don't define a StaticStruct() method (e.g., FVector) should be registered/unregistered
-    template <typename TSpecialStruct> requires !CObject<TSpecialStruct>
-    static void unregisterSpecialStruct(const std::string& class_name)
+    //
+    // The functions below are required to support the getStaticStruct<T>() method in cases where an otherwise
+    // well-formed struct type doesn't define a StaticStruct() method, as is the case with FRotator and FVector.
+    // See the following file for more examples of similar special struct types:
+    //     Engine/Source/CoreUObject/Public/UObject/NoExportTypes.h
+    //
+    // For the getStaticStruct<T>() method to behave as expected for a type T, the type must meet the following
+    // conditions. First, the type needs to be registered by calling registerSpecialStruct<T>(...) before calling
+    // getStaticStruct<T>(). If the type is registered by UStruct*, then there are no other requirements. If the
+    // type is registered by name, then getStaticStruct<T>() will call Unreal::findSpecialStructByName(...)
+    // internally, which must return a valid UStruct*. Note that for a type to be visible to Unreal::findSpecialStructByName(...)
+    // ASpCoreActor must define a UPROPERTY of type T that is named according to a particular naming convention.
+    // When a type no longer needs to be visible to getStaticStruct<T>(), it should be unregistered by calling
+    // UnrealClassRegistrar::unregisterSpecialStruct<T>().
+    // 
+    // Registering special structs by name is more convenient because it doesn't require the caller to obtain a
+    // valid UStruct*, and can therefore be done any time during a program's execution. On the other hand,
+    // registering special structs by UStruct* is is more flexible because it enables the caller to register
+    // special structs that are not registered by default in this class.
+    //
+
+    template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
+    static void registerSpecialStruct(const std::string& struct_name)
     {
-        std::string demangled_name = boost::core::demangle(typeid(TSpecialStruct).name());
-        Std::remove(s_special_struct_names_, demangled_name);
+        std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
+        SP_ASSERT(!Std::containsKey(s_special_struct_names_, type_id_name));
+        SP_ASSERT(!Std::containsKey(s_special_structs_, type_id_name));
+        Std::insert(s_special_struct_names_, type_id_name, struct_name);
+    }
+
+    template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
+    static void registerSpecialStruct(UStruct* ustruct)
+    {
+        SP_ASSERT(ustruct);
+        std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
+        SP_ASSERT(!Std::containsKey(s_special_struct_names_, type_id_name));
+        SP_ASSERT(!Std::containsKey(s_special_structs_, type_id_name));
+        Std::insert(s_special_structs_, type_id_name, ustruct);
+    }
+
+    template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
+    static void unregisterSpecialStruct()
+    {
+        std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
+        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_name) + Std::containsKey(s_special_structs_, type_id_name) == 1);
+        if (Std::containsKey(s_special_struct_names_, type_id_name)) {
+            Std::remove(s_special_struct_names_, type_id_name);
+        }
+        if (Std::containsKey(s_special_structs_, type_id_name)) {
+            Std::remove(s_special_structs_, type_id_name);
+        }
     }
 
     template <CStruct TStruct>
@@ -703,14 +742,19 @@ public:
         return TStruct::StaticStruct();
     }
 
-    // only special Unreal structs that don't define a StaticStruct() method (e.g., FVector) should use this code path, and
-    // must have been previously registered
-    template <typename TSpecialStruct> requires !CObject<TSpecialStruct>
+    template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
     static UStruct* getStaticStruct()
     {
-        std::string demangled_name = boost::core::demangle(typeid(TSpecialStruct).name());
-        std::string name = s_special_struct_names_.at(demangled_name);
-        return Unreal::findStructByName(name);
+        std::string type_id_name = boost::typeindex::type_id<TSpecialStruct>().pretty_name(); // no RTTI available so we use boost
+        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_name) + Std::containsKey(s_special_structs_, type_id_name) == 1);
+        if (Std::containsKey(s_special_struct_names_, type_id_name)) {
+            std::string name = s_special_struct_names_.at(type_id_name);
+            return Unreal::findSpecialStructByName(name);
+        }
+        if (Std::containsKey(s_special_structs_, type_id_name)) {
+            return s_special_structs_.at(type_id_name);
+        }
+        return nullptr;
     }
 
 private:
@@ -772,18 +816,18 @@ private:
     };
 
     //
-    // Map from platform-dependent type names (i.e., that can be obtained directly from any C++ type) to
-    // user-specified type names. Maintaining this map is necessary to implement our getStaticStruct<T>()
-    // method for special struct types (e.g., FVector) that don't have a StaticStruct() method.
+    // These maps are necessary to support getStaticStruct<T>() for special struct types that don't have a
+    // StaticStruct() method., e.g., FRotator and FVector.
     //
 
-    inline static std::map<std::string, std::string> s_special_struct_names_;
+    inline static std::map<std::string, std::string> s_special_struct_names_; // map from platform-dependent type name to user-facing name
+    inline static std::map<std::string, UStruct*> s_special_structs_;         // map from platform-dependent type name to UStruct*
 
     //
     // Registrars for spawning actors using a class name instead of template parameters
     //
 
-    inline static ClassRegistrar<AActor*, UWorld*, const FTransform&, const FActorSpawnParameters&> s_spawn_actor_registrar_;
+    inline static ClassRegistrar<AActor*, UWorld*, const FVector&, const FRotator&, const FActorSpawnParameters&> s_spawn_actor_registrar_;
 
     //
     // Registrars for creating components using a class name instead of template parameters

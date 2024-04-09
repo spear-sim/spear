@@ -49,7 +49,6 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 
 #include <boost/algorithm/string/case_conv.hpp> // boost::algorithm::to_lower_copy
 #include <boost/circular_buffer.hpp>
-#include <boost/core/demangle.hpp>
 #include <boost/current_function.hpp>           // BOOST_CURRENT_FUNCTION
 #include <boost/format.hpp>                     // TODO: remove when we can use std::format on all platforms
 
@@ -84,7 +83,8 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 
 // ----------------------------------------------------------------------------------------------------------
 
-#include <boost/tokenizer.hpp> // boost::char_separator
+#include <boost/tokenizer.hpp>            // boost::char_separator
+#include <boost/type_index.hpp>
 #include <boost/range/adaptor/map.hpp>    // boost::adaptors::map_keys
 #include <boost/range/algorithm/copy.hpp> // boost::copy
 
