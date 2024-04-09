@@ -14,6 +14,7 @@
 #include <GenericPlatform/GenericPlatformMisc.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/App.h>
+#include <Templates/Casts.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
@@ -43,7 +44,7 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     SP_ASSERT(StableNameComponent);
 
     // USpectatorPawnMovement
-    SpectatorPawnMovement = dynamic_cast<USpectatorPawnMovement*>(GetMovementComponent());
+    SpectatorPawnMovement = Cast<USpectatorPawnMovement>(GetMovementComponent()); // no RTTI available, so use Cast instead of dynamic_cast
     SP_ASSERT(SpectatorPawnMovement);
 
     SpectatorPawnMovement->PrimaryComponentTick.bCanEverTick = true;

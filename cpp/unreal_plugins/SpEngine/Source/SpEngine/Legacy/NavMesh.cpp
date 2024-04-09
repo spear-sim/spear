@@ -16,6 +16,7 @@
 #include <NavigationSystem.h>
 #include <NavigationSystemTypes.h>         // FPathFindingQuery
 #include <NavMesh/RecastNavMesh.h>
+#include <Templates/Casts.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
@@ -44,7 +45,7 @@ void NavMesh::findObjectReferences(UWorld* world)
     ANavigationData* navigation_data = navigation_system_v1_->GetNavDataForProps(agent_properties);
     SP_ASSERT(navigation_data);
 
-    recast_nav_mesh_ = dynamic_cast<ARecastNavMesh*>(navigation_data);
+    recast_nav_mesh_ = Cast<ARecastNavMesh>(navigation_data); // no RTTI available, so use Cast instead of dynamic_cast
     SP_ASSERT(recast_nav_mesh_);
 
     float cell_size = 1.0;

@@ -17,6 +17,7 @@
 #include <Components/SkeletalMeshComponent.h>
 #include <Engine/CollisionProfile.h>
 #include <Engine/SkeletalMesh.h>
+#include <Templates/Casts.h>
 #include <UObject/ConstructorHelpers.h>
 #include <UObject/Object.h>         // CreateDefaultSubobject
 #include <UObject/UObjectGlobals.h> // FObjectInitializer
@@ -137,7 +138,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     ImuComponent->SetRelativeLocationAndRotation(imu_location, imu_rotation);
 
     // UVehicleMovementComponent
-    MovementComponent = dynamic_cast<UVehicleMovementComponent*>(GetVehicleMovementComponent());
+    MovementComponent = Cast<UVehicleMovementComponent>(GetVehicleMovementComponent()); // no RTTI available, so use Cast instead of dynamic_cast
     SP_ASSERT(MovementComponent);
 }
 

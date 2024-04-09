@@ -693,7 +693,7 @@ public:
     // conditions. First, the type needs to be registered by calling registerSpecialStruct<T>(...) before calling
     // getStaticStruct<T>(). If the type is registered by UStruct*, then there are no other requirements. If the
     // type is registered by name, then getStaticStruct<T>() will call Unreal::findSpecialStructByName(...)
-    // internally, which must return a valid UStruct*. Note that for a type to be visible to Unreal::findSpecialStructByName(...)
+    // internally to find the appropriate UStruct*. For a type to be visible to Unreal::findSpecialStructByName(...),
     // ASpCoreActor must define a UPROPERTY of type T that is named according to a particular naming convention.
     // When a type no longer needs to be visible to getStaticStruct<T>(), it should be unregistered by calling
     // UnrealClassRegistrar::unregisterSpecialStruct<T>().
@@ -763,10 +763,10 @@ private:
     static const char* getTypeIdString()
     {
         // RTTI is not allowed in modules that define Unreal types, so we can't use typeid(T). We also can't use
-        // boost::typeindex::type_id<T>, which is intended to emulate RTTI without actually enabling it, because
+        // use boost::typeindex::type_id<T>, which is intended to emulate RTTI without actually enabling it, because
         // this conflicts with some Unreal modules that explicitly enable RTTI. So we use BOOST_CURRENT_FUNCTION
-        // as a quick-and-dirty alternative because it will give us a unique string for each type, and that is
-        // the only type information we need here.
+        // as a lightweight alternative because it will give us a unique string for each type, and that is the only
+        // type information we need here.
         return BOOST_CURRENT_FUNCTION;
     }
 
