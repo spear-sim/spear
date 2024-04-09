@@ -14,7 +14,7 @@ class LegacyService():
 
     def get_random_reachable_points_in_radius(self, reference_points, radius):
         assert reference_points.shape[1] == 3
-        reachable_points = self._rpc_client.call("legacy_service.get_random_reachable_points_in_radius", reference_points.flatten().tolist(), search_radius)
+        reachable_points = self._rpc_client.call("legacy_service.get_random_reachable_points_in_radius", reference_points.flatten().tolist(), radius)
         return np.asarray(reachable_points, dtype=np.float64).reshape(reference_points.shape)
 
     def get_paths(self, initial_points, goal_points):

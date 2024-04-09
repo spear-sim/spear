@@ -16,7 +16,7 @@ from utils import plot_paths
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(common_dir)
-from examples.common.instance_utils import open_level
+from common.instance_utils import open_level
 
 
 if __name__ == "__main__":
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     # set certain default parameters required by this script
     config.defrost()
-    config.SP_ENGINE.LEGACY_SERVICE.AGENT = "NullTask"
+    config.SP_ENGINE.LEGACY_SERVICE.TASK = "NullTask"
     config.freeze()
 
     spear.configure_system(config)
