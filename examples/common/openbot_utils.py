@@ -7,21 +7,21 @@ import numpy as np
 
 def get_drive_torques(duty_cycles, wheel_rotation_speeds, config):
 
-    motor_velocity_constant = config.OPENBOT_ENV.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
-    gear_ratio              = config.OPENBOT_ENV.GEAR_RATIO              # Gear ratio of the OpenBot motors
+    motor_velocity_constant = config.EXAMPLES.COMMON.OPENBOT_UTILS.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
+    gear_ratio              = config.EXAMPLES.COMMON.OPENBOT_UTILS.GEAR_RATIO              # Gear ratio of the OpenBot motors
     motor_torque_constant   = 1.0 / motor_velocity_constant              # Motor torque constant in [rad/s/V]
 
-    battery_voltage         = config.OPENBOT_ENV.BATTERY_VOLTAGE         # Voltage of the battery powering the OpenBot [V]
-    control_dead_zone       = config.OPENBOT_ENV.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not
+    battery_voltage         = config.EXAMPLES.COMMON.OPENBOT_UTILS.BATTERY_VOLTAGE         # Voltage of the battery powering the OpenBot [V]
+    control_dead_zone       = config.EXAMPLES.COMMON.OPENBOT_UTILS.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not
                                                                             # produce any torque on the vehicle
-    motor_torque_max        = config.OPENBOT_ENV.MOTOR_TORQUE_MAX        # Motor maximal torque [N.m]
-    electrical_resistance   = config.OPENBOT_ENV.ELECTRICAL_RESISTANCE   # Motor winding electrical resistance [Ohms]
+    motor_torque_max        = config.EXAMPLES.COMMON.OPENBOT_UTILS.MOTOR_TORQUE_MAX        # Motor maximal torque [N.m]
+    electrical_resistance   = config.EXAMPLES.COMMON.OPENBOT_UTILS.ELECTRICAL_RESISTANCE   # Motor winding electrical resistance [Ohms]
 
     # Speed multiplier defined in the OpenBot to map a [-1,1] action to a suitable command to 
     # be processed by the low-level microcontroller. For more details, feel free to check the
     # "speedMultiplier" command in the OpenBot code.
     #     https://github.com/isl-org/OpenBot/blob/master/android/app/src/main/java/org/openbot/vehicle/Vehicle.java#L375
-    action_scale = config.OPENBOT_ENV.ACTION_SCALE
+    action_scale = config.EXAMPLES.COMMON.OPENBOT_UTILS.ACTION_SCALE
 
     # Acquire the ground truth motor and wheel velocity for motor counter-electromotive force
     # computation purposes (or alternatively friction computation purposes).
