@@ -6,21 +6,10 @@ import spear
 
 def open_level(instance, scene_id, map_id=""):
 
-    def begin_tick(instance):
-        instance.engine_service.begin_tick()
-        instance.game_world_service.unpause_game()
-
-    def tick(instance):
-        instance.engine_service.tick()
-
-    def end_tick(instance):
-        instance.game_world_service.pause_game()
-        instance.engine_service.end_tick()
-
-    begin_tick(instance)
+    instance.engine_service.begin_tick()
     current_scene_id = instance.game_world_service.get_current_level()
-    tick(instance)
-    end_tick(instance)
+    instance.engine_service.tick()
+    instance.engine_service.end_tick()
 
     if current_scene_id != scene_id:
         desired_level_name = ""
@@ -35,13 +24,13 @@ def open_level(instance, scene_id, map_id=""):
         spear.log("map_id:             ", map_id)
         spear.log("desired_level_name: ", desired_level_name)
 
-        begin_tick(instance)
+        instance.engine_service.begin_tick()
         instance.game_world_service.open_level(desired_level_name)
-        tick(instance)
-        end_tick(instance)
+        instance.engine_service.tick()
+        instance.engine_service.end_tick()
 
     while current_scene_id != scene_id:
-        begin_tick(instance)
+        instance.engine_service.begin_tick()
         current_scene_id = instance.game_world_service.get_current_level()
-        tick(instance)
-        end_tick(instance)
+        instance.engine_service.tick()
+        instance.engine_service.end_tick()
