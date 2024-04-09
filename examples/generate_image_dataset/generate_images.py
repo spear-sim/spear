@@ -18,6 +18,7 @@ COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(COMMON_DIR)
 import common.observation_utils as observation_utils
+from common.instance_utils import open_level
 
 
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
@@ -45,19 +46,19 @@ class CustomEnv(spear.Env):
 
     def single_step(self, action=None, get_observation=False):
     
-        spear.Env.begin_tick(self._instance)
+        self.begin_tick()
         if action:
             self._apply_action(action)
-        spear.Env.tick(self._instance)
+        self.tick()
         if get_observation:
             obs = self._get_observation()
             reward = self._get_reward()
             is_done = self._is_episode_done()
             step_info = self._get_step_info()
-            spear.Env.end_tick(self._instance)
+            self.end_tick()
             return obs, reward, is_done, step_info
         else:
-            spear.Env.end_tick(self._instance)
+            self.end_tick()
             return None, None, None, None
 
 
@@ -96,7 +97,7 @@ if __name__ == "__main__":
             env.close()
 
             # open the desired level
-            spear.Env.open_level(instance, pose["scene_id"])
+            open_level(instance, pose["scene_id"])
 
             # create Env object
             env = CustomEnv(config, instance, num_internal_steps=args.num_internal_steps)

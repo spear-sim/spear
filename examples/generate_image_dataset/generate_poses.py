@@ -11,6 +11,12 @@ import os
 import pandas as pd
 import spear
 
+# import open_level functionality from common folder
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+import sys
+sys.path.append(common_dir)
+from examples.common.instance_utils import open_level
+
 
 CAMERA_LOCATION_Z_OFFSET = 200.0
 
@@ -49,13 +55,10 @@ if __name__ == "__main__":
 
         spear.log("Processing scene: " + scene_id)
 
-        spear.Env.open_level(instance, scene_id)
+        open_level(instance, scene_id)
 
         # get a few random points
-        spear.Env.begin_tick(instance)
         points = instance.legacy_service.get_random_points(args.num_poses_per_scene)
-        spear.Env.tick(instance)
-        spear.Env.end_tick(instance)
 
         # generate random pitch, yaw, roll values
         pitch_values = np.random.uniform(low=0.0, high=0.0, size=args.num_poses_per_scene)
