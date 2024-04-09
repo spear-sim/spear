@@ -17,7 +17,7 @@ import time
 COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(COMMON_DIR)
-import common.observation_utils as observation_utils
+import common.visualization_utils as visualization_utils
 from common.instance_utils import open_level
 
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         # save images for each render pass
         if not args.benchmark:
             observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES }
-            modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
+            modified_obs = visualization_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
 
             for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, pose["scene_id"], render_pass))

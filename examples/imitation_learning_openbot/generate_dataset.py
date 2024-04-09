@@ -20,8 +20,8 @@ from utils import *
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(common_dir)
-from common.openbot_utils import OpenBotEnv
-import common.observation_utils as observation_utils
+from common.openbot_env import OpenBotEnv
+import common.visualization_utils as visualization_utils
 from common.instance_utils import open_level
 
 if __name__ == "__main__":
@@ -177,12 +177,12 @@ if __name__ == "__main__":
 
                 if args.debug:
                     observation_components_to_modify = {"final_color": ["camera.final_color"]}
-                    modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
+                    modified_obs = visualization_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
                     show_obs(modified_obs)
 
                 if not args.benchmark:
                     observation_components_to_modify = {"final_color": ["camera.final_color"]}
-                    modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
+                    modified_obs = visualization_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
                     obs_final_color = modified_obs["camera.final_color"]
 
                     # save the collected rgb observations

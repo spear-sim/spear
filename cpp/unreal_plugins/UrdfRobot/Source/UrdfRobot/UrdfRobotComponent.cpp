@@ -65,7 +65,7 @@ void UUrdfRobotComponent::BeginPlay()
     // can be useful for debugging.
     std::map<std::string, std::map<std::string, std::vector<double>>> user_input_actions;
     if (Config::isInitialized()) {
-        user_input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.INPUT_ACTIONS");
+        user_input_actions = Config::get<std::map<std::string, std::map<std::string, std::vector<double>>>>("URDF_ROBOT.URDF_ROBOT_COMPONENT.USER_INPUT_ACTIONS");
     } else {
         user_input_actions = DEFAULT_USER_INPUT_ACTIONS;
     }

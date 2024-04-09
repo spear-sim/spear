@@ -196,6 +196,9 @@ void ImitationLearningTask::reset()
     };
     FVector agent_initial_location = agent_initial_locations_.at(episode_index_) + offset_location;
 
+    SP_ASSERT(agent_actor_);
+    SP_ASSERT(goal_actor_);
+
     bool sweep = false;
     FHitResult* hit_result = nullptr;
     agent_actor_->SetActorLocationAndRotation(

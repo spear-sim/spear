@@ -45,7 +45,7 @@ class LegacyService():
         return self._rpc_client.call("legacy_service.get_reward")
 
     def is_episode_done(self):
-        return self._rpc_client.call("legacy_service.get_reward")
+        return self._rpc_client.call("legacy_service.is_episode_done")
     
     def get_task_step_info(self):
         return self._rpc_client.call("legacy_service.get_task_step_info")

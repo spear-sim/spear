@@ -17,8 +17,8 @@ import time
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(common_dir)
-import common.observation_utils as observation_utils
-
+import common.visualization_utils as visualization_utils
+from common.instance_utils import open_level
 
 def get_action(row):
     names = [ name[:-2] for name in row.dtype.names ][::3] # strip .x .y .z from each name, select every third entry
@@ -44,13 +44,10 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
-    # update scene_id
-    config.defrost()
-    config.SIMULATION_CONTROLLER.SCENE_ID = args.scene_id
-    config.freeze()
-    
-    # create Env object
-    env = spear.Env(config)
+    spear.configure_system(config)
+    instance = spear.Instance(config)
+    open_level(instance, args.scene_id)
+    env = spear.Env(config, instance)
 
     # reset the simulation
     obs = env.reset()
@@ -76,7 +73,7 @@ if __name__ == "__main__":
         # save images for each render pass
         if not args.benchmark and args.save_images:
             observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES }
-            modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
+            modified_obs = visualization_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
             for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 assert os.path.exists(render_pass_dir)
@@ -95,5 +92,8 @@ if __name__ == "__main__":
 
     # close the environment
     env.close()
+
+    # close the instance
+    instance.close()
 
     spear.log("Done.")
