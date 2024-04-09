@@ -19,9 +19,6 @@ public class SpModuleRules : ModuleRules
         PrivatePCHHeaderFile = "";
         bUseUnity = false;
 
-        // Required to use typeid(). This is equivalent to compiling with -frtti flag.
-        bUseRTTI = true;
-
         // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
