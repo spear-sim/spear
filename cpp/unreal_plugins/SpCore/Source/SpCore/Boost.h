@@ -84,7 +84,6 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 // ----------------------------------------------------------------------------------------------------------
 
 #include <boost/tokenizer.hpp>            // boost::char_separator
-#include <boost/type_index.hpp>
 #include <boost/range/adaptor/map.hpp>    // boost::adaptors::map_keys
 #include <boost/range/algorithm/copy.hpp> // boost::copy
 
