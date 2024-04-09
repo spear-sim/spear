@@ -32,22 +32,23 @@ class UClass;
 class UStruct;
 class UWorld;
 
-template <typename TObject>
-concept CObject = std::derived_from<TObject, UObject>;
-
 template <typename TStruct>
 concept CStruct =
-    CObject<TStruct> &&
     requires() {
-        { TStruct::StaticStruct() } -> std::same_as<UStruct*>;
-    };
+        { TStruct::StaticStruct() };
+    } &&
+    std::derived_from<std::remove_pointer_t<decltype(TStruct::StaticStruct())>, UStruct>;
+
+template <typename TObject>
+concept CObject = std::derived_from<TObject, UObject>;
 
 template <typename TClass>
 concept CClass =
     CObject<TClass> &&
     requires() {
-        { TClass::StaticClass() } -> std::same_as<UClass*>;
-    };
+        { TClass::StaticClass() };
+    } &&
+    std::derived_from<std::remove_pointer_t<decltype(TClass::StaticClass())>, UClass>;
 
 template <typename TComponent>
 concept CComponent = CObject<TComponent> && std::derived_from<TComponent, UActorComponent>;
@@ -88,12 +89,6 @@ public:
 
     std::vector<USceneComponent*> getChildrenComponents(const USceneComponent* parent, bool include_all_descendants = true);
     std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants = true);
-
-    //
-    // Find struct by name
-    //
-
-    static UStruct* findStructByName(const std::string& name);
 
     //
     // Get and set object properties, uobject can't be const because we cast it to void*
@@ -150,11 +145,11 @@ public:
     static bool hasStableName(const UActorComponent* component);
 
     static std::string getStableName(const AActor* actor);
-    static std::string getStableName(const CComponent auto* actor_component, bool include_stable_actor_name = false)
+    static std::string getStableName(const CComponent auto* actor_component, bool include_actor_name = false)
     {
         SP_ASSERT(actor_component);
         std::string component_name = toStdString(actor_component->GetName());
-        if (include_stable_actor_name) {
+        if (include_actor_name) {
             AActor* actor = actor_component->GetOwner();
             SP_ASSERT(actor);
             component_name = getStableName(actor) + ":" + component_name;
@@ -162,7 +157,7 @@ public:
         return component_name;
     }
 
-    static std::string getStableName(const CSceneComponent auto* scene_component, bool include_stable_actor_name = false)
+    static std::string getStableName(const CSceneComponent auto* scene_component, bool include_actor_name = false)
     {
         SP_ASSERT(scene_component);
         std::string component_name = toStdString(scene_component->GetName());
@@ -171,7 +166,7 @@ public:
         for (auto parent : parents) {
             component_name = toStdString(parent->GetName()) + "." + component_name;
         }
-        if (include_stable_actor_name) {
+        if (include_actor_name) {
             AActor* actor = scene_component->GetOwner();
             SP_ASSERT(actor);
             component_name = getStableName(actor) + ":" + component_name;
@@ -224,6 +219,13 @@ public:
     static std::string toStdString(const TCHAR* str);
     static FString toFString(const std::string& str);
     static FName toFName(const std::string& str);
+
+    //
+    // Find special struct by name. For this function to behave as expected, ASpCoreActor must have a UPROPERTY defined
+    // on it named _SP_SPECIAL_STRUCT_TypeName_ of type TypeName.
+    //
+
+    static UStruct* findSpecialStructByName(const std::string& name);
 
     //
     // Helper functions to create components.

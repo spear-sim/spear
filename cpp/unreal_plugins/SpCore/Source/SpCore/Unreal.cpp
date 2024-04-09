@@ -91,27 +91,6 @@ std::map<std::string, USceneComponent*> Unreal::getChildrenComponentsAsMap(const
 }
 
 //
-// Find struct by name
-//
-
-UStruct* Unreal::findStructByName(const std::string& name)
-{
-    // We only need AEngineActor's property metadata here, so we can use the default object. This makes it so
-    // this function is usable even in levels that don't have an AEngineActor in them, and avoids the need to
-    // do a findActor operation. For this operation to work, AEngineActor needs a property named _StructName
-    // of type StructName.
-    UClass* sp_core_actor_uclass = ASpCoreActor::StaticClass();
-    SP_ASSERT(sp_core_actor_uclass);
-    UObject* sp_core_actor_default_object = sp_core_actor_uclass->GetDefaultObject();
-    SP_ASSERT(sp_core_actor_default_object);
-    PropertyDesc property_desc = findPropertyByName(sp_core_actor_default_object, "_SP_SPECIAL_STRUCT_" + name + "_");
-    SP_ASSERT(property_desc.property_);
-    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
-    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-    return struct_property->Struct;
-}
-
-//
 // Get and set object properties, uobject can't be const because we cast it to void*
 //
 
@@ -568,6 +547,27 @@ FString Unreal::toFString(const std::string& str)
 FName Unreal::toFName(const std::string& str)
 {
     return FName(str.c_str());
+}
+
+//
+// Find special struct by name. For this function to behave as expected, ASpCoreActor must have a UPROPERTY
+// defined on it named _SP_SPECIAL_STRUCT_TypeName_ of type TypeName.
+//
+
+UStruct* Unreal::findSpecialStructByName(const std::string& name)
+{
+    // We only need ASpCoreActor's property metadata here, so we can use the default object. This makes it so
+    // this function is usable even in levels that don't have an ASpCoreActor in them, and avoids the need to
+    // do a findActor operation.
+    UClass* sp_core_actor_uclass = ASpCoreActor::StaticClass();
+    SP_ASSERT(sp_core_actor_uclass);
+    UObject* sp_core_actor_default_object = sp_core_actor_uclass->GetDefaultObject();
+    SP_ASSERT(sp_core_actor_default_object);
+    PropertyDesc property_desc = findPropertyByName(sp_core_actor_default_object, "_SP_SPECIAL_STRUCT_" + name + "_");
+    SP_ASSERT(property_desc.property_);
+    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
+    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
+    return struct_property->Struct;
 }
 
 //

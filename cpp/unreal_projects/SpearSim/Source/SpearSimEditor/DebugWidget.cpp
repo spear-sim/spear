@@ -126,13 +126,13 @@ void ADebugWidget::GetAndSetObjectProperties()
 
     // Get property values from void* and UStruct*
     value_ptr = &(static_mesh_component->BodyInstance);
-    ustruct = FBodyInstance::StaticStruct();
+    ustruct = UnrealClassRegistrar::getStaticStruct<FBodyInstance>();
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
     // Get property values from void* and UStruct*
     value_ptr = relative_location_property_desc.value_ptr_;
-    ustruct = Unreal::findStructByName("FVector"); // useful for when a class or struct doesn't define a StaticStruct() method
+    ustruct = UnrealClassRegistrar::getStaticStruct<FVector>();
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
@@ -143,7 +143,7 @@ void ADebugWidget::GetAndSetObjectProperties()
     // Set property value from void* and UStruct*
     str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}");
     value_ptr = &vec;
-    ustruct = Unreal::findStructByName("FVector");
+    ustruct = UnrealClassRegistrar::getStaticStruct<FVector>();
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     Unreal::setObjectPropertiesFromString(value_ptr, ustruct, str);
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
@@ -315,28 +315,28 @@ void ADebugWidget::CreateObjects()
 
     std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
 
-    UnrealObj<FVector> v("v");
-    UnrealObj<FTransform> t("t");
+    UnrealObj<FVector> location("location");
+    UnrealObj<FRotator> rotation("rotation");
 
     // get object properties as strings for all objects in the input vector
-    std::map<std::string, std::string> strings = UnrealObjUtils::getObjectPropertiesAsStrings({v.getPtr(), t.getPtr()});
+    std::map<std::string, std::string> strings = UnrealObjUtils::getObjectPropertiesAsStrings({location.getPtr(), rotation.getPtr()});
     for (auto& [name, property_string] : strings) {
         SP_LOG(name);
         SP_LOG(property_string);
     }
 
     // set object properties from a map of strings
-    UnrealObjUtils::setObjectPropertiesFromStrings({v.getPtr(), t.getPtr()}, {{"v", vec_str}, {"t", "{}"}});
+    UnrealObjUtils::setObjectPropertiesFromStrings({location.getPtr(), rotation.getPtr()}, {{"location", vec_str}, {"rotation", "{}"}});
 
     // verify objects have been updated
-    strings = UnrealObjUtils::getObjectPropertiesAsStrings({v.getPtr(), t.getPtr()});
+    strings = UnrealObjUtils::getObjectPropertiesAsStrings({location.getPtr(), rotation.getPtr()});
     for (auto& [name, property_string] : strings) {
         SP_LOG(name);
         SP_LOG(property_string);
     }
 
     FActorSpawnParameters spawn_parameters;
-    AActor* actor = UnrealClassRegistrar::spawnActor("AStaticMeshActor", GetWorld(), t.getObj(), spawn_parameters);
+    AActor* actor = UnrealClassRegistrar::spawnActor("AStaticMeshActor", GetWorld(), location.getObj(), rotation.getObj(), spawn_parameters);
     SP_ASSERT(actor);
 
     i++;

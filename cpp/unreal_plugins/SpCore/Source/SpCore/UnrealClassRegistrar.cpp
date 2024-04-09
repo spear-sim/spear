@@ -16,7 +16,7 @@
 #include <Kismet/GameplayStatics.h>
 #include <Materials/Material.h>
 #include <Materials/MaterialInterface.h>
-#include <Math/Transform.h>
+#include <Math/Rotator.h>
 #include <Math/Vector.h>
 
 #include "SpCore/SpCoreActor.h"
@@ -48,12 +48,12 @@ void UnrealClassRegistrar::initialize()
     registerClass<UStaticMesh>("UStaticMesh");
     registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
 
-    // need to register special structs, i.e., structs that don't define a StaticStruct() method
-    registerSpecialStruct<FTransform>("FTransform");
-    registerSpecialStruct<FVector>("FVector");
-
     // SpCore classes
     registerActorClass<ASpCoreActor>("ASpCoreActor");
+
+    // need to register special structs, i.e., structs that don't define a StaticStruct() method
+    registerSpecialStruct<FRotator>("FRotator");
+    registerSpecialStruct<FVector>("FVector");
 }
 
 void UnrealClassRegistrar::terminate()
@@ -67,20 +67,20 @@ void UnrealClassRegistrar::terminate()
     unregisterClass<UStaticMesh>("UStaticMesh");
     unregisterClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
 
-    // need to unregister special structs
-    unregisterSpecialStruct<FTransform>("FTransform");
-    unregisterSpecialStruct<FVector>("FVector");
-
     // SpCore classes
     unregisterActorClass<ASpCoreActor>("ASpCoreActor");
+
+    // need to unregister special structs
+    unregisterSpecialStruct<FRotator>();
+    unregisterSpecialStruct<FVector>();
 }
 
 //
 // Spawn actor using a class name instead of template parameters
 //
 
-AActor* UnrealClassRegistrar::spawnActor(const std::string& class_name, UWorld* world, const FTransform& transform, const FActorSpawnParameters& spawn_parameters) {
-    return s_spawn_actor_registrar_.call(class_name, world, transform, spawn_parameters);
+AActor* UnrealClassRegistrar::spawnActor(const std::string& class_name, UWorld* world, const FVector& location, const FRotator& rotation, const FActorSpawnParameters& spawn_parameters) {
+    return s_spawn_actor_registrar_.call(class_name, world, location, rotation, spawn_parameters);
 }
 
 //
