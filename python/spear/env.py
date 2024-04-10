@@ -15,8 +15,8 @@ class Env(gym.Env):
 
         super(Env, self).__init__()
 
-        self._config = config
         self._instance = instance
+        self._config = config
 
         self._byte_order = self._instance.engine_service.get_byte_order()
 
