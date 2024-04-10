@@ -19,6 +19,32 @@ sys.path.append(common_dir)
 from common.instance_utils import open_level
 
 
+class NavMesh:
+    def __init__(self, instance):
+        self._instance = instance
+
+    def get_random_points(self, num_poses):
+        instance.engine_service.begin_tick()
+        points = instance.legacy_service.get_random_points(num_poses)
+        instance.engine_service.tick()
+        instance.engine_service.end_tick()
+        return points
+
+    def get_random_reachable_points_in_radius(self, initial_points, radius):
+        instance.engine_service.begin_tick()
+        reachable_points = instance.legacy_service.get_random_reachable_points_in_radius(initial_points, radius)
+        instance.engine_service.tick()
+        instance.engine_service.end_tick()
+        return reachable_points
+
+    def get_paths(self, initial_points, goal_points):
+        instance.engine_service.begin_tick()
+        paths = instance.legacy_service.get_paths(initial_points, goal_points)
+        instance.engine_service.tick()
+        instance.engine_service.end_tick()
+        return paths
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -55,6 +81,7 @@ if __name__ == "__main__":
 
     spear.configure_system(config)
     instance = spear.Instance(config)
+    navmesh = NavMesh(instance)
 
     # iterate over all scenes
     for scene_id in scene_ids:
@@ -65,13 +92,13 @@ if __name__ == "__main__":
         open_level(instance, scene_id)
 
         # generate candidate points based out of args.num_episodes_per_scene
-        candidate_initial_points = instance.legacy_service.get_random_points(args.num_episodes_per_scene * args.num_candidates_per_episode)
+        candidate_initial_points = navmesh.get_random_points(args.num_episodes_per_scene * args.num_candidates_per_episode)
 
         # obtain a reachable goal point for every candidate point
-        candidate_goal_points = instance.legacy_service.get_random_reachable_points_in_radius(candidate_initial_points, 10000.0)
+        candidate_goal_points = navmesh.get_random_reachable_points_in_radius(candidate_initial_points, 10000.0)
 
         # obtain candidate paths for the candidate initial and goal points
-        candidate_paths = instance.legacy_service.get_paths(candidate_initial_points, candidate_goal_points)
+        candidate_paths = navmesh.get_paths(candidate_initial_points, candidate_goal_points)
 
         # score each path and obtain best paths
         candidate_num_waypoints = np.array([ path.shape[0] for path in candidate_paths ])

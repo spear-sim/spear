@@ -21,6 +21,18 @@ from common.instance_utils import open_level
 CAMERA_LOCATION_Z_OFFSET = 200.0
 
 
+class NavMesh:
+    def __init__(self, instance):
+        self._instance = instance
+
+    def get_random_points(self, num_poses):
+        instance.engine_service.begin_tick()
+        points = instance.legacy_service.get_random_points(num_poses)
+        instance.engine_service.tick()
+        instance.engine_service.end_tick()
+        return points
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -49,6 +61,7 @@ if __name__ == "__main__":
 
     spear.configure_system(config)
     instance = spear.Instance(config)
+    navmesh = NavMesh(instance)
 
     # iterate over all scenes
     for scene_id in scene_ids:
@@ -58,7 +71,7 @@ if __name__ == "__main__":
         open_level(instance, scene_id)
 
         # get a few random points
-        points = instance.legacy_service.get_random_points(args.num_poses_per_scene)
+        points = navmesh.get_random_points(args.num_poses_per_scene)
 
         # generate random pitch, yaw, roll values
         pitch_values = np.random.uniform(low=0.0, high=0.0, size=args.num_poses_per_scene)
