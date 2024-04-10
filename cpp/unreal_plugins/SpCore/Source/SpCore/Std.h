@@ -38,6 +38,15 @@ concept CRangeHasValuesConvertibleTo =
     };
 
 //
+// std::span concepts
+//
+
+template <typename TSpan>
+concept CSpan =
+    std::ranges::sized_range<TSpan> &&
+    std::ranges::contiguous_range<TSpan>;
+
+//
 // Value container (e.g., std::vector) concepts
 //
 
@@ -251,6 +260,12 @@ public:
         return toVector<bool>(values | std::views::transform([&value_container](const auto& value) { return Std::contains(value_container, value); }));
     }
 
+    template <typename TValueContainer>
+    static auto at(const TValueContainer& value_container, int index) // TODO:: remove when we can use span.at() in C++26
+    {
+        return value_container.at(index);
+    }
+
     template <typename TValueContainer, typename TValue> requires
         CValueContainerHasValuesConvertibleFrom<TValueContainer, TValue>
     static int index(const TValueContainer& value_container, const TValue& value)
@@ -291,7 +306,7 @@ public:
         int num_elements = keys.size();
         std::map<TKey, TValue> map;
         for (int i = 0; i < num_elements; i++) {
-            Std::insert(map, keys.at(i), values.at(i));
+            Std::insert(map, Std::at(keys, i), Std::at(values, i));
         }
         return map;
     }
@@ -447,28 +462,48 @@ public:
     // Functions for safely reinterpreting contiguous value containers (e.g., std::initializer_list and std::vector)
     //
 
-    template <typename TDestValue, typename TSrcValueContainer> requires CContiguousValueContainer<TSrcValueContainer>
-    static std::span<TDestValue> reinterpretAsSpanOf(const TSrcValueContainer& src)
+    template <typename TDestValue, typename TSrcContainer> requires CSpan<TSrcContainer> || CContiguousValueContainer<TSrcContainer>
+    static std::span<TDestValue> reinterpretAsSpanOf(const TSrcContainer& src)
     {
-        using TSrcValue = typename TSrcValueContainer::value_type;
+        return reinterpretAsSpan<TDestValue>(std::ranges::data(src), std::ranges::size(src));
+    }
 
+    template <typename TDestValue, typename TSrcContainer> requires CSpan<TSrcContainer> || CContiguousValueContainer<TSrcContainer>
+    static std::span<TDestValue> reinterpretAsSpanOf(TSrcContainer& src)
+    {
+        return reinterpretAsSpan<TDestValue>(std::ranges::data(src), std::ranges::size(src));
+    }
+
+    template <typename TDestValue, typename TSrcValue>
+    static std::span<TDestValue> reinterpretAsSpan(const TSrcValue* src_data, size_t src_num_elements)
+    {
         std::span<TDestValue> dest;
-        size_t src_num_elements = std::ranges::size(src);
         if (src_num_elements > 0) {
             size_t src_num_bytes = src_num_elements * sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
             size_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
-            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(std::ranges::data(src)), dest_num_elements);
+            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements);
         }
         return dest;
     }
 
-    template <typename TDestValue, typename TSrcValueContainer> requires CContiguousValueContainer<TSrcValueContainer>
-    static std::vector<TDestValue> reinterpretAsVectorOf(const TSrcValueContainer& src)
+    template <typename TDestValue, typename TSrcValue>
+    static std::span<TDestValue> reinterpretAsSpan(TSrcValue* src_data, size_t src_num_elements)
     {
-        using TSrcValue = typename TSrcValueContainer::value_type;
+        std::span<TDestValue> dest;
+        if (src_num_elements > 0) {
+            size_t src_num_bytes = src_num_elements * sizeof(TSrcValue);
+            SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
+            size_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
+            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements);
+        }
+        return dest;
+    }
 
-        return reinterpretAsVector<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
+    template <typename TDestValue, typename TSrcContainer> requires CSpan<TSrcContainer> || CContiguousValueContainer<TSrcContainer>
+    static std::vector<TDestValue> reinterpretAsVectorOf(const TSrcContainer& src)
+    {
+        return reinterpretAsVector<TDestValue>(std::ranges::data(src), std::ranges::size(src));
     }
 
     // Don't infer TSrcValue from the input initializer list, because we want to force the user to explicitly specify
@@ -480,7 +515,7 @@ public:
     template <typename TDestValue, typename TSrcValue, typename TSrcInitializerListValue> requires std::same_as<TSrcValue, TSrcInitializerListValue>
     static std::vector<TDestValue> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
     {
-        return reinterpretAsVector<TDestValue, TSrcValue>(std::ranges::data(src), std::ranges::size(src));
+        return reinterpretAsVector<TDestValue>(std::ranges::data(src), std::ranges::size(src));
     }
 
     template <typename TDestValue, typename TSrcValue>

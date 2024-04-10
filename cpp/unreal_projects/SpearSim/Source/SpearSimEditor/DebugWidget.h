@@ -12,6 +12,8 @@
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
+#include "SpCore/CppFuncComponent.h"
+
 #include "DebugWidget.generated.h"
 
 class UObject;
@@ -76,4 +78,6 @@ private:
 
     UPROPERTY()
     TSet<FString> SetOfStrings;
+
+    UCppFuncComponent* cpp_func_component_ = nullptr;
 };

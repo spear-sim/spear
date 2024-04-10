@@ -627,7 +627,7 @@ public:
         SP_ASSERT(parent);
         USceneComponent* root = parent->GetRootComponent();
         std::vector<TReturnAsComponent*> components;
-        if (root && Cast<TSceneComponent>(root)) { // no RTTI available, so use Cast instead of dynamic_cast
+        if (Cast<TSceneComponent>(root)) { // no RTTI available, so use Cast instead of dynamic_cast
             components.push_back(root);
         }
         if (root && include_all_descendants) {
