@@ -17,8 +17,8 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
-#include "SpCore/Unreal.h"
 #include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogSpear, Log, All);
 DEFINE_LOG_CATEGORY(LogSpear);
