@@ -15,6 +15,7 @@ import time
 
 from policies import *
 from utils import *
+from .generate_episodes import NavMesh
 
 # import OpenBotEnv, observation_utils from common folder
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
@@ -74,6 +75,7 @@ if __name__ == "__main__":
 
     spear.configure_system(config)
     instance = spear.Instance(config)
+    navmesh = NavMesh(instance)
     env = OpenBotEnv(config=config, instance=instance)
 
     # iterate over all episodes
@@ -118,7 +120,7 @@ if __name__ == "__main__":
         # if we aren't skipping the episode
         if not episode_skip:
 
-            path = instance.legacy_service.get_paths(episode_initial_location, episode_goal_location)[0]
+            path = navmesh.get_paths(episode_initial_location, episode_goal_location)[0]
 
             # initialize the policy with the desired goal location
             policy.reset(episode_goal_location)
