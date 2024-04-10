@@ -23,7 +23,6 @@ class SPCORE_API UCppFuncComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
-
     using TReturn = std::map<std::string, std::vector<uint8_t>>;
     using TArgs = std::map<std::string, std::span<const uint8_t>>;
 
