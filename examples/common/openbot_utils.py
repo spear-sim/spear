@@ -9,11 +9,11 @@ def get_drive_torques(duty_cycles, wheel_rotation_speeds, config):
 
     motor_velocity_constant = config.EXAMPLES.COMMON.OPENBOT_UTILS.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]
     gear_ratio              = config.EXAMPLES.COMMON.OPENBOT_UTILS.GEAR_RATIO              # Gear ratio of the OpenBot motors
-    motor_torque_constant   = 1.0 / motor_velocity_constant              # Motor torque constant in [rad/s/V]
+    motor_torque_constant   = 1.0 / motor_velocity_constant                                # Motor torque constant in [rad/s/V]
 
     battery_voltage         = config.EXAMPLES.COMMON.OPENBOT_UTILS.BATTERY_VOLTAGE         # Voltage of the battery powering the OpenBot [V]
     control_dead_zone       = config.EXAMPLES.COMMON.OPENBOT_UTILS.CONTROL_DEAD_ZONE       # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not
-                                                                            # produce any torque on the vehicle
+                                                                                           # produce any torque on the vehicle
     motor_torque_max        = config.EXAMPLES.COMMON.OPENBOT_UTILS.MOTOR_TORQUE_MAX        # Motor maximal torque [N.m]
     electrical_resistance   = config.EXAMPLES.COMMON.OPENBOT_UTILS.ELECTRICAL_RESISTANCE   # Motor winding electrical resistance [Ohms]
 

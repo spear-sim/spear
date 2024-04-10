@@ -40,7 +40,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # load config
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(
+        user_config_files=[
+            os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml")),
+            os.path.realpath(os.path.join(common_dir, "default_config.common.yaml"))])
 
     config.defrost()
     config.IMITATION_LEARNING_OPENBOT.PILOT_NET_POLICY_PATH = os.path.realpath(args.policy_file)
@@ -76,7 +79,7 @@ if __name__ == "__main__":
     spear.configure_system(config)
     instance = spear.Instance(config)
     navmesh = NavMesh(instance)
-    env = OpenBotEnv(config=config, instance=instance)
+    env = OpenBotEnv(instance, config)
 
     # iterate over all episodes
     prev_scene_id = ""
@@ -94,7 +97,7 @@ if __name__ == "__main__":
             open_level(instance, episode["scene_id"])
 
             # create Env object
-            env = OpenBotEnv(config=config, instance=instance)
+            env = OpenBotEnv(instance, config)
 
         # now that we have checked if we need to create a new Env, we can update prev_scene_id
         prev_scene_id = episode["scene_id"]
@@ -166,14 +169,11 @@ if __name__ == "__main__":
                 goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
 
                 if args.debug:
-                    observation_components_to_modify = {"final_color": ["camera.final_color"]}
-                    modified_obs = visualization_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
+                    modified_obs = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
                     show_obs(modified_obs)
 
                 if not args.benchmark:
-                    observation_components_to_modify = {"final_color": ["camera.final_color"]}
-                    modified_obs = visualization_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
-                    obs_final_color = modified_obs["camera.final_color"]
+                    obs_final_color = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
 
                     # save the collected rgb observations
                     plt.imsave(os.path.realpath(os.path.join(images_dir, "%04d.jpg"%i)), obs_final_color)

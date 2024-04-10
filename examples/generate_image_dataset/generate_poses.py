@@ -16,21 +16,10 @@ common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 import sys
 sys.path.append(common_dir)
 from common.instance_utils import open_level
+from common.navmesh_env import NavMesh
 
 
 CAMERA_LOCATION_Z_OFFSET = 200.0
-
-
-class NavMesh:
-    def __init__(self, instance):
-        self._instance = instance
-
-    def get_random_points(self, num_poses):
-        instance.engine_service.begin_tick()
-        points = instance.legacy_service.get_random_points(num_poses)
-        instance.engine_service.tick()
-        instance.engine_service.end_tick()
-        return points
 
 
 if __name__ == "__main__":

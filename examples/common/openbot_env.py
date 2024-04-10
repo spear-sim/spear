@@ -5,14 +5,14 @@
 import gym
 import numpy as np
 import spear
+import common.visualization_utils as visualization_utils
 from .openbot_utils import get_drive_torques
-from .visualization_utils import get_depth_image_for_visualization
 
 
 # Custom Env implementation for OpenBot
 class OpenBotEnv(spear.Env):
 
-    def __init__(self, config, instance):
+    def __init__(self, instance, config):
 
         assert config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent"
         assert "set_drive_torques" in config.SP_ENGINE.LEGACY.VEHICLE_AGENT.ACTION_COMPONENTS
@@ -42,7 +42,15 @@ class OpenBotEnv(spear.Env):
         assert "wheel_rotation_speeds" in obs.keys()
         self._wheel_rotation_speeds = obs["wheel_rotation_speeds"]
         if "camera.depth" in obs.keys():
-            obs["camera.depth"] = get_depth_image_for_visualization(obs["camera.depth"])
+            obs["camera.depth"] = visualization_utils.get_depth_image_for_visualization(obs["camera.depth"])
+        elif "camera.segmentation" in obs.keys():
+            obs["camera.segmentation"] = visualization_utils.get_segmentation_image_for_visualization(obs["camera.segmentation"])
+        elif "camera.final_color" in obs.keys():
+            obs["camera.final_color"] = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
+        elif "camera.normal" in obs.keys():
+            obs["camera.normal"] = visualization_utils.get_normal_image_for_visualization(obs["camera.normal"])
+        else:
+            assert False
         return obs
 
     def _apply_action(self, action):
@@ -50,10 +58,6 @@ class OpenBotEnv(spear.Env):
         assert "set_duty_cycles" in action.keys()
         assert action["set_duty_cycles"].shape[0] == 2
         assert self._wheel_rotation_speeds is not None
-
         duty_cycles = np.array([action["set_duty_cycles"][0], action["set_duty_cycles"][1], action["set_duty_cycles"][0], action["set_duty_cycles"][1]], dtype=np.float64)
-
         drive_torques = get_drive_torques(duty_cycles, self._wheel_rotation_speeds, self._config)
-
-        # formulate action before sending it to the simulator
         super()._apply_action(action={"set_drive_torques": drive_torques})

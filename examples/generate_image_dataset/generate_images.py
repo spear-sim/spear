@@ -29,8 +29,8 @@ from common.instance_utils import open_level
 # frames are not necessary in typical embodied AI scenarios, but are useful when teleporting a camera.
 class CustomEnv(spear.Env):
 
-    def __init__(self, config, instance, num_internal_steps):
-        super(CustomEnv, self).__init__(config, instance)
+    def __init__(self, instance, config, num_internal_steps):
+        super(CustomEnv, self).__init__(instance, config)
         assert num_internal_steps > 0
         self._num_internal_steps = num_internal_steps
 
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config)
     instance = spear.Instance(config)
-    env = CustomEnv(config, instance, num_internal_steps=args.num_internal_steps)
+    env = CustomEnv(instance, config, num_internal_steps=args.num_internal_steps)
 
     # iterate over all poses
     prev_scene_id = ""
@@ -100,7 +100,7 @@ if __name__ == "__main__":
             open_level(instance, pose["scene_id"])
 
             # create Env object
-            env = CustomEnv(config, instance, num_internal_steps=args.num_internal_steps)
+            env = CustomEnv(instance, config, num_internal_steps=args.num_internal_steps)
 
             # reset the simulation
             _ = env.reset()
@@ -115,14 +115,19 @@ if __name__ == "__main__":
 
         # save images for each render pass
         if not args.benchmark:
-            observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES }
-            modified_obs = visualization_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
-
             for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, pose["scene_id"], render_pass))
                 assert os.path.exists(render_pass_dir)
-
-                obs_render_pass_vis = modified_obs["camera." + render_pass]
+                if render_pass == "depth":
+                    obs_render_pass_vis = visualization_utils.get_depth_image_for_visualization(obs["camera.depth"])
+                elif render_pass == "final_color":
+                    obs_render_pass_vis = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
+                elif render_pass == "normal":
+                    obs_render_pass_vis = visualization_utils.get_normal_image_for_visualization(obs["camera.normal"])
+                elif render_pass == "segmentation":
+                    obs_render_pass_vis = visualization_utils.get_segmentation_image_for_visualization(obs["camera.segmentation"])
+                else:
+                    assert False
                 plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%pose["index"])), obs_render_pass_vis)
 
         # useful for comparing the game window to the image that has been saved to disk

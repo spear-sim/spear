@@ -17,6 +17,7 @@ import sys
 sys.path.append(common_dir)
 from common.openbot_env import OpenBotEnv
 
+
 num_steps = 100
 
 
@@ -29,7 +30,10 @@ if __name__ == "__main__":
     np.set_printoptions(linewidth=200)
 
     # load config
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(
+        user_config_files=[
+            os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml")),
+            os.path.realpath(os.path.join(common_dir, "default_config.common.yaml"))])
 
     spear.configure_system(config)
     instance = spear.Instance(config)
@@ -38,7 +42,7 @@ if __name__ == "__main__":
     if config.SP_ENGINE.LEGACY_SERVICE.AGENT == "SphereAgent":
         env = spear.Env(config, instance)
     elif config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent":
-        env = OpenBotEnv(config, instance)
+        env = OpenBotEnv(instance, config)
 
     # reset the simulation to get the first observation
     obs = env.reset()

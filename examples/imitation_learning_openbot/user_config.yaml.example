@@ -14,25 +14,6 @@ IMITATION_LEARNING_OPENBOT:
   PILOT_NET_POLICY_PATH: ""
 
 
-EXAMPLES:
-  COMMON:
-    OPENBOT_UTILS:
-      # Motor torque: 1200 gf.cm (gram force centimeter) == 0.1177 N.m
-      # Gear ratio: 50
-      # Max wheel torque: 5.88399 N.m
-      # https://www.conrad.de/de/p/joy-it-com-motor01-getriebemotor-gelb-schwarz-passend-fuer-einplatinen-computer-arduino-banana-pi-cubieboard-raspbe-1573543.html
-
-      MOTOR_VELOCITY_CONSTANT: 65.89 # Velocity constant of the OpenBot motors
-      GEAR_RATIO: 50.0               # Gear ratio of the OpenBot motors
-
-      BATTERY_VOLTAGE: 12.0          # Voltage of the battery powering the OpenBot [V]
-      CONTROL_DEAD_ZONE: 2.5         # Absolute duty cycle (in the ACTION_SCALE range) below which a command does not produces any torque on the vehicle
-      MOTOR_TORQUE_MAX: 0.0019       # Motor maximal torque [N.m]
-      ELECTRICAL_RESISTANCE: 0.5     # Motor winding electrical resistance [Ohms]
-
-      ACTION_SCALE: 255              # Action scaling factor
-
-
 SPEAR:
   LAUNCH_MODE: "standalone"
   STANDALONE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"

@@ -47,7 +47,7 @@ if __name__ == "__main__":
     spear.configure_system(config)
     instance = spear.Instance(config)
     open_level(instance, args.scene_id)
-    env = spear.Env(config, instance)
+    env = spear.Env(instance, config)
 
     # reset the simulation
     obs = env.reset()
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         start_time_seconds = time.time()
     else:
         if args.save_images:
-            for render_pass in config.SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES:
+            for render_pass in config.SP_ENGINE.LEGACY.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 shutil.rmtree(render_pass_dir, ignore_errors=True)
                 os.makedirs(render_pass_dir)
@@ -72,13 +72,19 @@ if __name__ == "__main__":
 
         # save images for each render pass
         if not args.benchmark and args.save_images:
-            observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES }
-            modified_obs = visualization_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
-            for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+            for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 assert os.path.exists(render_pass_dir)
-
-                obs_render_pass_vis = modified_obs["camera." + render_pass]
+                if render_pass == "depth":
+                    obs_render_pass_vis = visualization_utils.get_depth_image_for_visualization(obs["camera.depth"])
+                elif render_pass == "final_color":
+                    obs_render_pass_vis = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
+                elif render_pass == "normal":
+                    obs_render_pass_vis = visualization_utils.get_normal_image_for_visualization(obs["camera.normal"])
+                elif render_pass == "segmentation":
+                    obs_render_pass_vis = visualization_utils.get_segmentation_image_for_visualization(obs["camera.segmentation"])
+                else:
+                    assert False
                 plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%index)), obs_render_pass_vis)
             index += 1
 

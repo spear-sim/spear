@@ -11,7 +11,7 @@ import sys
 
 
 class Env(gym.Env):
-    def __init__(self, config, instance):
+    def __init__(self, instance, config):
 
         super(Env, self).__init__()
 
