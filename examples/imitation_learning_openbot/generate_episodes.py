@@ -13,11 +13,11 @@ import spear
 from utils import plot_paths
 
 # import open_level functionality from common folder
-common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from common.instance_utils import open_level
-from common.navmesh_env import NavMesh
+from instance_utils import open_level
+from navmesh_env import NavMesh
 
 if __name__ == "__main__":
 

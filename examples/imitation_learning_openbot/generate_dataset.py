@@ -15,16 +15,15 @@ import time
 
 from policies import *
 from utils import *
-from .generate_episodes import NavMesh
 
 # import OpenBotEnv, observation_utils from common folder
-common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from common.openbot_env import OpenBotEnv
-import common.visualization_utils as visualization_utils
-from common.instance_utils import open_level
-
+from openbot_env import OpenBotEnv
+from navmesh_env import NavMesh
+import visualization_utils
+from instance_utils import open_level
 
 if __name__ == "__main__":
 

@@ -12,10 +12,10 @@ import spear
 import time
 
 # import OpenBotEnv from common folder
-common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from common.openbot_env import OpenBotEnv
+from openbot_env import OpenBotEnv
 
 
 num_steps = 100
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # create or get gym object
     if config.SP_ENGINE.LEGACY_SERVICE.AGENT == "SphereAgent":
-        env = spear.Env(config, instance)
+        env = spear.Env(instance, config)
     elif config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent":
         env = OpenBotEnv(instance, config)
 

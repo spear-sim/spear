@@ -14,11 +14,11 @@ import spear
 import time
 
 # import observation_utils from common folder
-common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-import common.visualization_utils as visualization_utils
-from common.instance_utils import open_level
+import visualization_utils
+from instance_utils import open_level
 
 def get_action(row):
     names = [ name[:-2] for name in row.dtype.names ][::3] # strip .x .y .z from each name, select every third entry

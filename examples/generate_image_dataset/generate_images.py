@@ -14,11 +14,11 @@ import spear
 import time
 
 # import observation_utils from common folder
-COMMON_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
-sys.path.append(COMMON_DIR)
-import common.visualization_utils as visualization_utils
-from common.instance_utils import open_level
+sys.path.append(common_dir)
+import visualization_utils
+from instance_utils import open_level
 
 
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 

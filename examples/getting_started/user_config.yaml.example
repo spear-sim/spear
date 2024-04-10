@@ -19,8 +19,6 @@ SP_ENGINE:
     AGENT: "VehicleAgent" # uncomment when using VehicleAgent
     TASK: "NullTask"
 
-    SCENE_ID: "apartment_0000"
-
   LEGACY:
     SPHERE_AGENT:
       SPHERE_ACTOR_NAME: "sphere_actor"

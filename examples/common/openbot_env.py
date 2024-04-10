@@ -5,8 +5,8 @@
 import gym
 import numpy as np
 import spear
-import common.visualization_utils as visualization_utils
-from .openbot_utils import get_drive_torques
+import visualization_utils
+from openbot_utils import get_drive_torques
 
 
 # Custom Env implementation for OpenBot
@@ -21,7 +21,7 @@ class OpenBotEnv(spear.Env):
         self._config = config
         self._wheel_rotation_speeds = None
 
-        super().__init__(config, instance)
+        super().__init__(instance, config)
 
         # In this derived class, we are expecting different actions than the base spear.Env class. So
         # we need to override self.action_space. We need to do this after calling super().__init__(...),
