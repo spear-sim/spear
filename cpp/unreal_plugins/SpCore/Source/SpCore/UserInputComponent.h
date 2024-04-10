@@ -20,7 +20,7 @@
 class UInputComponent;
 struct FActorComponentTickFunction;
 
-// We need meta = (BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
+// We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Tags, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta=(BlueprintSpawnableComponent))
 class SPCORE_API UUserInputComponent : public USceneComponent
 {
@@ -40,7 +40,7 @@ public:
     void subscribeToUserInputs(const std::vector<std::string>& user_input_names);
     void unsubscribeFromUserInputs(const std::vector<std::string>& user_input_names);
 
-    // Set by the code using this class to specify what happens when user input (e.g., keyboard or mouse input) is received.
+    // Set by the code using this class to specify what happens when user input (e.g., keyboard or gamepad input) is received.
     void setHandleUserInputFunc(const std::function<void(const std::string&, float)>& handle_user_input_func);
 
 private:

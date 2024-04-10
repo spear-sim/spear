@@ -4,6 +4,8 @@
 
 #include "SpearSimEditor/DebugWidget.h"
 
+#include <stdint.h> // uint8_t
+
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h> // FActorSpawnParameters
@@ -25,11 +27,22 @@
 ADebugWidget::ADebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    cpp_func_component_ = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
+    SP_ASSERT(cpp_func_component_);
+
+    cpp_func_component_->registerFunc("my_func", [](const typename UCppFuncComponent::TArgs& args) -> typename UCppFuncComponent::TReturn {
+        std::span<const double> in_location = Std::reinterpretAsSpanOf<const double>(args.at("location"));
+        std::vector<double> out_location = Std::toVector<double>(in_location | std::views::transform([](double x) { return 2.0*x; }));
+        return {{"location", Std::reinterpretAsVectorOf<uint8_t>(out_location)}};
+    });
 }
 
 ADebugWidget::~ADebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    cpp_func_component_->unregisterFunc("my_func");
 }
 
 void ADebugWidget::LoadConfig()
@@ -303,6 +316,18 @@ void ADebugWidget::CallFunctions()
     return_values = Unreal::callFunction(static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
 
+    using TReturn = typename UCppFuncComponent::TReturn;
+    using TArgs = typename UCppFuncComponent::TArgs;
+
+    std::vector<double> cpp_func_in_location = {1.0, 2.0, 4.0};
+    TArgs cpp_func_args = {{"location", Std::reinterpretAsSpanOf<const uint8_t>(cpp_func_in_location)}};
+
+    UCppFuncComponent* cpp_func_component = Unreal::getComponentByType<UCppFuncComponent>(this);
+    SP_ASSERT(cpp_func_component);
+
+    TReturn cpp_func_return_values = cpp_func_component->call("my_func", cpp_func_args);
+    std::span<const double> cpp_func_out_location = Std::reinterpretAsSpanOf<const double>(cpp_func_return_values.at("location"));
+
     i++;
 }
 
@@ -313,26 +338,28 @@ void ADebugWidget::CreateObjects()
     UClass* uclass = UnrealClassRegistrar::getStaticClass("UGameplayStatics");
     SP_ASSERT(uclass);
 
-    std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
+    std::string in_vec_string = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
+    std::map<std::string, std::string> in_named_arg_strings = {{"location", in_vec_string}, {"rotation", "{}"}};
 
     UnrealObj<FVector> location("location");
     UnrealObj<FRotator> rotation("rotation");
+    std::vector<UnrealObjBase*> named_args = {location.getPtr(), rotation.getPtr()};
 
-    // get object properties as strings for all objects in the input vector
-    std::map<std::string, std::string> strings = UnrealObjUtils::getObjectPropertiesAsStrings({location.getPtr(), rotation.getPtr()});
-    for (auto& [name, property_string] : strings) {
+    // get object properties as strings for all of the UnrealObj objects in named_args
+    std::map<std::string, std::string> out_named_arg_strings = UnrealObjUtils::getObjectPropertiesAsStrings(named_args);
+    for (auto& [name, arg_string] : out_named_arg_strings) {
         SP_LOG(name);
-        SP_LOG(property_string);
+        SP_LOG(arg_string);
     }
 
-    // set object properties from a map of strings
-    UnrealObjUtils::setObjectPropertiesFromStrings({location.getPtr(), rotation.getPtr()}, {{"location", vec_str}, {"rotation", "{}"}});
+    // set object properties for all of the UnrealObj objects in named_args
+    UnrealObjUtils::setObjectPropertiesFromStrings(named_args, in_named_arg_strings);
 
-    // verify objects have been updated
-    strings = UnrealObjUtils::getObjectPropertiesAsStrings({location.getPtr(), rotation.getPtr()});
-    for (auto& [name, property_string] : strings) {
+    // verify the UnrealObj objects have been updated
+    out_named_arg_strings = UnrealObjUtils::getObjectPropertiesAsStrings(named_args);
+    for (auto& [name, arg_string] : out_named_arg_strings) {
         SP_LOG(name);
-        SP_LOG(property_string);
+        SP_LOG(arg_string);
     }
 
     FActorSpawnParameters spawn_parameters;
