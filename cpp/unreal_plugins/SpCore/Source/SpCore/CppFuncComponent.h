@@ -17,10 +17,7 @@
 
 #include "CppFuncComponent.generated.h"
 
-//class UInputComponent;
-//struct FActorComponentTickFunction;
-
-// We need meta = (BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
+// We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Tags, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta=(BlueprintSpawnableComponent))
 class SPCORE_API UCppFuncComponent : public USceneComponent
 {
