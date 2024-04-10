@@ -7,17 +7,16 @@ import gym.spaces
 import mmap
 import multiprocessing.shared_memory
 import numpy as np
-import spear
 import sys
 
 
 class Env(gym.Env):
-    def __init__(self, config, instance):
+    def __init__(self, instance, config):
 
         super(Env, self).__init__()
 
-        self._config = config
         self._instance = instance
+        self._config = config
 
         self._byte_order = self._instance.engine_service.get_byte_order()
 
@@ -31,71 +30,30 @@ class Env(gym.Env):
         self.action_space = self._action_space_desc.space
         self.observation_space = self._observation_space_desc.space
 
-    # high-level helper functions
-    @staticmethod
-    def begin_tick(instance):
-        instance.engine_service.begin_tick()
-        instance.game_world_service.unpause_game()
-
-    @staticmethod
-    def tick(instance):
-        instance.engine_service.tick()
-
-    @staticmethod
-    def end_tick(instance):
-        instance.game_world_service.pause_game()
-        instance.engine_service.end_tick()
-
-    @staticmethod
-    def open_level(instance, scene_id, map_id=""):
-        desired_level_name = ""
-        if scene_id != "":
-            if map_id == "":
-                map_id = scene_id
-            else:
-                map_id = map_id
-            desired_level_name = "/Game/Scenes/" + scene_id + "/Maps/" + map_id
-
-        spear.log("scene_id:           ", scene_id)
-        spear.log("map_id:             ", map_id)
-        spear.log("desired_level_name: ", desired_level_name)
-
-        Env.begin_tick(instance)
-        current_scene_id = instance.game_world_service.get_current_level()
-        instance.game_world_service.open_level(desired_level_name)
-        Env.tick(instance)
-        Env.end_tick(instance)
-
-        while current_scene_id != scene_id:
-            Env.begin_tick(instance)
-            current_scene_id = instance.game_world_service.get_current_level()
-            Env.tick(instance)
-            Env.end_tick(instance)
-
     def step(self, action):
 
-        Env.begin_tick(self._instance)
+        self.begin_tick()
         self._apply_action(action)
-        Env.tick(self._instance)
+        self.tick()
         obs = self._get_observation()
         reward = self._get_reward()
         is_done = not self._ready or self._is_episode_done() # if the last call to reset() failed or the episode is done
         step_info = self._get_step_info()
-        Env.end_tick(self._instance)
+        self.end_tick()
 
         return obs, reward, is_done, step_info
 
     def reset(self, reset_info=None):
         
         for i in range(self._config.SPEAR.ENV.MAX_NUM_TICKS_AFTER_RESET):
-            Env.begin_tick(self._instance)
+            self.begin_tick()
             if i == 0:
                 self._reset() # only reset the simulation once
-            Env.tick(self._instance)
+            self.tick()
             ready = self._is_ready()
             if ready or i == self._config.SPEAR.ENV.MAX_NUM_TICKS_AFTER_RESET - 1:
                 obs = self._get_observation() # only get the observation if ready, or if we're about to give up
-            Env.end_tick(self._instance)
+            self.end_tick()
             if ready:
                 break
 
@@ -116,6 +74,17 @@ class Env(gym.Env):
         self._observation_space_desc.terminate()
         self._task_step_info_space_desc.terminate()
         self._agent_step_info_space_desc.terminate()
+
+    def begin_tick(self):
+        self._instance.engine_service.begin_tick()
+        self._instance.game_world_service.unpause_game()
+
+    def tick(self):
+        self._instance.engine_service.tick()
+
+    def end_tick(self):
+        self._instance.game_world_service.pause_game()
+        self._instance.engine_service.end_tick()
 
     def _get_action_space(self):
         array_desc = self._instance.legacy_service.get_action_space()

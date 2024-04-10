@@ -17,12 +17,13 @@ from policies import *
 from utils import *
 
 # import OpenBotEnv, observation_utils from common folder
-common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from common.openbot_env import OpenBotEnv
-import common.observation_utils as observation_utils
-
+from openbot_env import OpenBotEnv
+from navmesh_env import NavMesh
+import visualization_utils
+from instance_utils import open_level
 
 if __name__ == "__main__":
 
@@ -38,20 +39,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # load config
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(
+        user_config_files=[
+            os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml")),
+            os.path.realpath(os.path.join(common_dir, "default_config.common.yaml"))])
 
     config.defrost()
-    config.SIMULATION_CONTROLLER.TASK = "ImitationLearningTask"
-    config.SIMULATION_CONTROLLER.IMITATION_LEARNING_TASK.EPISODES_FILE = os.path.abspath(args.episodes_file)
+    config.SP_ENGINE.LEGACY_SERVICE.TASK = "ImitationLearningTask"
+    config.SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.EPISODES_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
  
     if args.debug:
         config.defrost()
-        config.SIMULATION_CONTROLLER.IMU_SENSOR.DEBUG_RENDER = True # only has an effect in Development mode, not shipping mode
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 512
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 512
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
-        config.SIMULATION_CONTROLLER.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_rotation_speeds"]
+        config.SP_ENGINE.LEGACY.IMU_SENSOR.DEBUG_RENDER = True # only has an effect in Development mode, not shipping mode
+        config.SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 512
+        config.SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 512
+        config.SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
+        config.SP_ENGINE.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_rotation_speeds"]
         # aim camera in a third-person view facing backwards at an angle
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_X = -50.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Y = -50.0
@@ -71,6 +75,11 @@ if __name__ == "__main__":
     # load the episodes to be executed
     df = pd.read_csv(args.episodes_file)
 
+    spear.configure_system(config)
+    instance = spear.Instance(config)
+    navmesh = NavMesh(instance)
+    env = OpenBotEnv(instance, config)
+
     # iterate over all episodes
     prev_scene_id = ""
     for episode in df.to_records():
@@ -80,17 +89,14 @@ if __name__ == "__main__":
         # if the scene_id of our current episode has changed, then create a new Env
         if episode["scene_id"] != prev_scene_id:
 
-            # close the previous Env
-            if prev_scene_id != "":
-                env.close()              
+            # close the previous OpenBotEnv
+            env.close()
 
-            # change config based on current scene
-            config.defrost()
-            config.SIMULATION_CONTROLLER.SCENE_ID = episode["scene_id"]
-            config.freeze()
+            # open the desired level
+            open_level(instance, episode["scene_id"])
 
-            # create Env object
-            env = OpenBotEnv(config=config)
+            # open a new OpenBotEnv
+            env = OpenBotEnv(instance, config)
 
         # now that we have checked if we need to create a new Env, we can update prev_scene_id
         prev_scene_id = episode["scene_id"]
@@ -105,7 +111,7 @@ if __name__ == "__main__":
         episode_initial_location = np.array([episode["initial_location_x"], episode["initial_location_y"], episode["initial_location_z"]], dtype=np.float64).reshape(1,3)
         episode_goal_location = np.array([episode["goal_location_x"], episode["goal_location_y"], episode["goal_location_z"]], dtype=np.float64).reshape(1,3)
         episode_skip = False
-        
+
         # check conditions for skipping the episode
         cm_to_m = 0.01
         goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
@@ -115,11 +121,11 @@ if __name__ == "__main__":
 
         # if we aren't skipping the episode
         if not episode_skip:
-            
+
             # initialize the driving policy with the desired path
-            path = env.get_paths(episode_initial_location, episode_goal_location)[0]
+            path = navmesh.get_paths(episode_initial_location, episode_goal_location)[0]
             policy.reset(obs, path)
-    
+
             if args.benchmark:
                 start_time_seconds = time.time()
             else:     
@@ -132,10 +138,10 @@ if __name__ == "__main__":
                 os.makedirs(images_dir, exist_ok=True)
                 os.makedirs(sensor_data_dir, exist_ok=True)
                 os.makedirs(plots_dir, exist_ok=True)
-    
+
                 episode_timestamp_data = np.empty([args.num_iterations_per_episode], dtype=np.int64)
                 episode_frame_id_data  = np.empty([args.num_iterations_per_episode], dtype=np.int32)
-    
+
                 # Our convention in this example is to store all data that comes directly from Unreal in the native format
                 # exported by Unreal, i.e., centimeters and degrees. We eventually need to convert some of this data to
                 # meters and radians, but we only do so in local temporary variables.
@@ -157,14 +163,14 @@ if __name__ == "__main__":
             # execute episode
             num_iterations_executed = 0
             for i in range(args.num_iterations_per_episode):
-    
+
                 spear.log(f"    Executing iteration {i} of {args.num_iterations_per_episode}...")
-    
+
                 timestamp = time.time_ns()
-    
+
                 # update control action 
                 action, policy_step_info = policy.step(obs)
-    
+
                 # send control action to the agent and collect observations
                 obs, _, _, env_step_info = env.step(action={"set_duty_cycles": action})
 
@@ -175,18 +181,15 @@ if __name__ == "__main__":
                 goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
 
                 if args.debug:
-                    observation_components_to_modify = {"final_color": ["camera.final_color"]}
-                    modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
-                    show_obs(modified_obs)
-    
+                    obs_final_color = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
+                    show_obs(obs_final_color)
+
                 if not args.benchmark:
-                    observation_components_to_modify = {"final_color": ["camera.final_color"]}
-                    modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
-                    obs_final_color = modified_obs["camera.final_color"]
+                    obs_final_color = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
 
                     # save the collected rgb observations
                     plt.imsave(os.path.realpath(os.path.join(images_dir, "%d.jpeg"%i)), obs_final_color)
-    
+
                     # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training
                     # purposes. In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole
                     # path. In this case, rather than considering the whole episode as a fail, one can consider the last position reached by the agent as
@@ -200,7 +203,7 @@ if __name__ == "__main__":
                     episode_rotation_data[i]             = obs["rotation"]                          # [pitch, yaw, roll] in degs
                     episode_waypoint_data[i]             = policy_step_info["waypoint"]             # current waypoint being tracked by the policy
                     episode_rotation_yaw_desired_data[i] = policy_step_info["rotation_yaw_desired"] # desired yaw computed by the policy
-    
+
                 # check conditions for ending an episode
                 if env_step_info["task_step_info"]["hit_obstacle"][0]:
                     spear.log("    Collision detected according to env.step(), ending episode...")
@@ -217,19 +220,19 @@ if __name__ == "__main__":
             # If our episode did not end successfully, then remove the episode dir and proceed to the next episode, because we
             # don't want to collect any data from an unsuccessful episode. Otherwise, we are not in benchmarking mode and our
             # episode did end successfully, so save the collected data to log files.
-            
+
             if args.benchmark:
                 end_time_seconds = time.time()
                 elapsed_time_seconds = end_time_seconds - start_time_seconds
                 spear.log("    Average frame time: %0.4f ms (%0.4f fps)" %
                     ((elapsed_time_seconds / num_iterations_executed)*1000, num_iterations_executed / elapsed_time_seconds))
-    
+
             elif not episode_successful:
                 shutil.rmtree(episode_dir, ignore_errors=True)
-    
+
             else:
                 spear.log(f"    Writing log files...")
-          
+
                 # compute goal observations using last recorded position as the goal position
                 # https://github.com/isl-org/OpenBot/blob/7868c54742f8ba3df0ba2a886247a753df982772/android/app/src/main/java/org/openbot/pointGoalNavigation/PointGoalNavigationFragment.java#L103
                 cm_to_m = 0.01
@@ -237,32 +240,32 @@ if __name__ == "__main__":
                 for i in range(num_iterations_executed):
                     location_xy_current = episode_location_data[i, 0:2] * cm_to_m
                     location_xy_error   = np.linalg.norm(location_xy_desired - location_xy_current)
-                    
+
                     rotation_yaw_current = np.deg2rad(episode_rotation_data[i, 1])
                     heading_xy_current   = np.array([np.cos(rotation_yaw_current), np.sin(rotation_yaw_current)])
                     heading_xy_desired   = (location_xy_desired - location_xy_current) / (np.linalg.norm(location_xy_desired - location_xy_current) + 1e-10) # adding 1e-10 to present div by zero
                     rotation_yaw_error   = np.arctan2(heading_xy_desired[1], heading_xy_desired[0]) - np.arctan2(heading_xy_current[1], heading_xy_current[0])
-        
+
                     if rotation_yaw_error < -np.pi:
                         rotation_yaw_error += 2*np.pi
                     if rotation_yaw_error > np.pi:
                         rotation_yaw_error -= 2*np.pi
-        
+
                     episode_goal_data[i] = np.array([location_xy_error, np.sin(rotation_yaw_error), np.cos(rotation_yaw_error)])
-        
+
                 # low-level commands sent to the motors
                 df_ctrl = pd.DataFrame({
                     "timestamp"     : episode_timestamp_data[:num_iterations_executed],
                     "control_left"  : episode_control_data[:num_iterations_executed, 0],
                     "control_right" : episode_control_data[:num_iterations_executed, 1]})
                 df_ctrl.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "ctrlLog.txt")), mode="w", index=False, header=True)
-        
+
                 # reference of the images correespoinding to each control input
                 df_rgb = pd.DataFrame({
                     "timestamp" : episode_timestamp_data[:num_iterations_executed],
                     "frame_id"  : episode_frame_id_data[:num_iterations_executed]})
                 df_rgb.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "rgbFrames.txt")), mode="w", index=False, header=True)
-        
+
                 # high level commands
                 df_goal = pd.DataFrame({
                     "timestamp"        : episode_timestamp_data[:num_iterations_executed],
@@ -270,7 +273,7 @@ if __name__ == "__main__":
                     "sin_yaw"          : episode_goal_data[:num_iterations_executed, 1],
                     "cos_yaw"          : episode_goal_data[:num_iterations_executed, 2]})
                 df_goal.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "goalLog.txt")), mode="w", index=False, header=True)
-        
+
                 # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
                 df_pose = pd.DataFrame({
                     "timestamp"      : episode_timestamp_data[:num_iterations_executed],
@@ -285,7 +288,7 @@ if __name__ == "__main__":
                     "waypoint_y"     : episode_waypoint_data[:num_iterations_executed, 1],
                     "waypoint_z"     : episode_waypoint_data[:num_iterations_executed, 2]})
                 df_pose.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "debugLog.txt")), mode="w", index=False, header=True)
-        
+
                 # Create plots. Note that creating these plots will resize our cv2 windows in an
                 # unpleasant way, so we only generate these plots if we're not in debug mode.
                 if not args.debug:
@@ -300,13 +303,16 @@ if __name__ == "__main__":
                         episode_rotation_data[:num_iterations_executed, 1],
                         episode_rotation_yaw_desired_data[:num_iterations_executed],
                         os.path.realpath(os.path.join(plots_dir, "tracking_performance_temporal.png")))
-        
+
                 if args.create_videos:
                     spear.log(f"    Generating video...")
                     video_file = os.path.realpath(os.path.join(args.dataset_dir, "videos", args.split + "_data", episode["scene_id"], "%04d.mp4" % episode["index"]))
                     generate_video(images_dir, video_file, rate=int(1.0/config.SIMULATION_CONTROLLER.PHYSICS.SIMULATION_STEP_TIME), compress=True)
-        
+
     # at this point, we're finished executing all episodes, so close the Env
     env.close()
+
+    # close the unreal instance
+    instance.close()
 
     spear.log("Done.")

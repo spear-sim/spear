@@ -24,7 +24,6 @@ SP_ENGINE:
     CAMERA_AGENT:
       CAMERA_ACTOR_NAME: "camera_actor"
       SPAWN_MODE: "specify_pose" # "specify_existing_actor"
-      SPAWN_ACTOR_NAME: "PlayerStart_0"
       ACTION_COMPONENTS: ["set_location", "set_rotation"] # "set_location", "set_rotation"
       OBSERVATION_COMPONENTS: ["camera"] # "camera"
       STEP_INFO_COMPONENTS: []

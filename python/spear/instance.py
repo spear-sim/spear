@@ -85,7 +85,7 @@ class Instance():
         assert os.path.exists(launch_executable_internal)
 
         for arg, value in (self._config.SPEAR.INSTANCE.COMMAND_LINE_ARGS).items():
-            if value == None:
+            if value is None:
                 launch_args.append("-{}".format(arg))
             else:
                 launch_args.append("-{}={}".format(arg, value))
