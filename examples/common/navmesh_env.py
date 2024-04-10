@@ -2,7 +2,6 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-
 class NavMesh:
     def __init__(self, instance):
         self._instance = instance

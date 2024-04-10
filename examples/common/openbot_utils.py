@@ -4,7 +4,6 @@
 
 import numpy as np
 
-
 def get_drive_torques(duty_cycles, wheel_rotation_speeds, config):
 
     motor_velocity_constant = config.EXAMPLES.COMMON.OPENBOT_UTILS.MOTOR_VELOCITY_CONSTANT # Motor torque constant in [N.m/A]

@@ -181,8 +181,8 @@ if __name__ == "__main__":
                 goal_reached = np.linalg.norm(episode_goal_location[0, 0:2] - obs["location"][0:2]) * cm_to_m <= config.IMITATION_LEARNING_OPENBOT.GOAL_REACHED_RADIUS
 
                 if args.debug:
-                    modified_obs = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
-                    show_obs(modified_obs)
+                    obs_final_color = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
+                    show_obs(obs_final_color)
 
                 if not args.benchmark:
                     obs_final_color = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])

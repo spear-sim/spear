@@ -5,7 +5,6 @@
 import gym
 import numpy as np
 import spear
-import visualization_utils
 from openbot_utils import get_drive_torques
 
 
@@ -41,16 +40,6 @@ class OpenBotEnv(spear.Env):
         obs = super()._get_observation()
         assert "wheel_rotation_speeds" in obs.keys()
         self._wheel_rotation_speeds = obs["wheel_rotation_speeds"]
-        if "camera.depth" in obs.keys():
-            obs["camera.depth"] = visualization_utils.get_depth_image_for_visualization(obs["camera.depth"])
-        elif "camera.segmentation" in obs.keys():
-            obs["camera.segmentation"] = visualization_utils.get_segmentation_image_for_visualization(obs["camera.segmentation"])
-        elif "camera.final_color" in obs.keys():
-            obs["camera.final_color"] = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
-        elif "camera.normal" in obs.keys():
-            obs["camera.normal"] = visualization_utils.get_normal_image_for_visualization(obs["camera.normal"])
-        else:
-            assert False
         return obs
 
     def _apply_action(self, action):

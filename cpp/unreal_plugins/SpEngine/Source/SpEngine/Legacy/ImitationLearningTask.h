@@ -48,6 +48,7 @@ private:
 
     std::vector<FVector> agent_initial_locations_;
     std::vector<FVector> agent_goal_locations_;
+    std::string previous_scene_id_ = "";
     int episode_index_ = -1;
     bool hit_goal_ = false;
     bool hit_obstacle_ = false;
