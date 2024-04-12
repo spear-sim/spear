@@ -17,7 +17,7 @@ common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "com
 import sys
 sys.path.append(common_dir)
 from instance_utils import open_level
-from navmesh_env import NavMesh
+from navmesh import NavMesh
 
 if __name__ == "__main__":
 

@@ -8,12 +8,10 @@
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/Engine.h>               // GEngine
 #include <Engine/World.h>                // UWorld
 #include <Kismet/GameplayStatics.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpEngine/EngineService.h"
 
@@ -58,37 +56,8 @@ public:
         post_world_initialization_handle_.Reset();
     }
 
-    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
-    {
-        SP_LOG_CURRENT_FUNCTION();
-        SP_ASSERT(world);
-
-        #if WITH_EDITOR // defined in an auto-generated header
-            bool world_is_ready = world->IsGameWorld();
-        #else
-            bool world_is_ready = GEngine->GetWorldContextFromWorld(world) != nullptr;
-        #endif
-
-        if (world_is_ready) {
-            // we expect worldCleanupHandler(...) to be called before a new world is created
-            SP_ASSERT(!world_);
-
-            // cache local reference to the UWorld
-            world_ = world;
-        }
-    }
-
-    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
-    {
-        SP_LOG_CURRENT_FUNCTION();
-        SP_ASSERT(world);
-
-        // We only need to perform any additional steps if the world being cleaned up is the world we cached in our world_ member variable.
-        if (world == world_) {
-            // clear cached world_ pointer
-            world_ = nullptr;
-        }
-    }
+    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
+    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
 
 private:
 
