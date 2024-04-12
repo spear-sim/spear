@@ -20,10 +20,10 @@ from utils import *
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from openbot_env import OpenBotEnv
-from navmesh import NavMesh
-import visualization_utils
 from instance_utils import open_level
+from navmesh import NavMesh
+from openbot_env import OpenBotEnv
+import visualization_utils
 
 if __name__ == "__main__":
 

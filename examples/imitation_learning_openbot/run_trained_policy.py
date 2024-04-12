@@ -21,9 +21,9 @@ from .generate_episodes import NavMesh
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
+from instance_utils import open_level
 from openbot_env import OpenBotEnv
 import visualization_utils
-from instance_utils import open_level
 
 
 if __name__ == "__main__":
