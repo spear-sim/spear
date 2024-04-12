@@ -12,10 +12,10 @@ import pandas as pd
 import spear
 
 # import open_level functionality from common folder
-common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from common.instance_utils import open_level
+from instance_utils import open_level
 from navmesh import NavMesh
 
 
