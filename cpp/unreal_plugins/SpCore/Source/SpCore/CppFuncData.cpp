@@ -15,7 +15,7 @@
 #include "SpCore/Std.h"
 
 //
-// getArgsFromData(...) is typically called when preparing to call a UCppFuncComponent function
+// typically called before calling a UCppFuncComponent function to set args
 //
 
 std::map<std::string, CppFuncArg> CppFuncDataUtils::getArgsFromData(std::initializer_list<CppFuncDataBase*> data_objs)
@@ -39,14 +39,14 @@ std::map<std::string, CppFuncArg> CppFuncDataUtils::getArgsFromData(const std::m
     std::map<std::string, CppFuncArg> args;
     for (auto& [name, data_obj] : data_objs) {
         CppFuncArg arg;
-        data_obj->setDataAsTargetFor(arg);
+        data_obj->updateArg(arg);
         Std::insert(args, name, std::move(arg));
     }
     return args;
 }
 
 //
-// setDataFromArgs(...) is typically called from inside a UCppFuncComponent function to retrieve args
+// typically called from inside a UCppFuncComponent function to retrieve args
 //
 
 void CppFuncDataUtils::setDataFromArgs(std::initializer_list<CppFuncDataBase*> data_objs, const std::map<std::string, CppFuncArg>& args)
@@ -73,7 +73,7 @@ void CppFuncDataUtils::setDataFromArgs(const std::map<std::string, CppFuncDataBa
 }
 
 //
-// getReturnValuesFromData(...) is typically called from inside a UCppFuncComponent function to set return values
+// typically called from inside a UCppFuncComponent function to set return values
 //
 
 std::map<std::string, CppFuncReturnValue> CppFuncDataUtils::getReturnValuesFromData(std::initializer_list<CppFuncDataBase*> data_objs)
@@ -97,14 +97,14 @@ std::map<std::string, CppFuncReturnValue> CppFuncDataUtils::getReturnValuesFromD
     std::map<std::string, CppFuncReturnValue> return_values;
     for (auto& [name, data_obj] : data_objs) {
         CppFuncReturnValue return_value;
-        data_obj->moveDataTo(return_value);
+        data_obj->moveDataToReturnValue(return_value);
         Std::insert(return_values, name, std::move(return_value));
     }
     return return_values;
 }
 
 //
-// setDataFromReturnValues(...) is typically called after returning from a UCppFuncComponent function
+// typically called after returning from a UCppFuncComponent function to retrieve return values
 //
 
 void CppFuncDataUtils::setDataFromReturnValues(std::initializer_list<CppFuncDataBase*> data_objs, const std::map<std::string, CppFuncReturnValue>& return_values)

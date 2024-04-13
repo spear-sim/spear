@@ -27,6 +27,8 @@
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
 #include "SpCore/UnrealClassRegistrar.h"
+#include "SpCore/Yaml.h"
+#include "SpCore/YamlCpp.h"
 
 ADebugWidget::ADebugWidget()
 {
@@ -41,26 +43,37 @@ ADebugWidget::ADebugWidget()
 
     cpp_func_component_->registerFunc("my_func", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
 
-        // create new data objects directly from arg data
+        // create data objects directly from arg data
         CppFuncData<double> location("location");
         CppFuncData<double> rotation("rotation");
         CppFuncDataUtils::setDataFromArgs({location.getPtr(), rotation.getPtr()}, args.args_);
 
-        // create new Unreal objects directly from arg strings
+        // create Unreal objects directly from arg strings
         UnrealObj<FVector> vec("vec");
         UnrealObj<FRotator> rot("rot");
         UnrealObjUtils::setObjectPropertiesFromStrings({vec.getPtr(), rot.getPtr()}, args.unreal_obj_strings_);
 
+        // get arg config
+        std::string initialize_data_mode = Yaml::get<std::string>(args.config_, "INITIALIZE_DATA_MODE");
+
         // create new data objects
         CppFuncData<double> hello("hello");
-        hello.setData({16.0, 32.0}); // initialize from initializer list
-        std::vector<double> hello_vector = {64.0, 128.0};
-        hello.setData(hello_vector); // initialize from vector
+        if (initialize_data_mode == "initializer_list_of_double") {
+            hello.setData({ 16.0, 32.0 }); // initialize from initializer list of double
+        } else if (initialize_data_mode == "vector_of_double") {
+            std::vector<double> hello_vector = {64.0, 128.0};
+            hello.setData(hello_vector); // initialize from vector of double
+        } else if (initialize_data_mode == "rvalue_reference_to_vector_of_uint8") {
+            std::vector<uint8_t> hello_vector_uint8 = {1, 2, 3, 4, 5, 6, 7, 8};
+            hello.setData(std::move(hello_vector_uint8)); // initialize from rvalue reference to vector of uint8_t (avoids copy)
+        } else {
+            SP_ASSERT(false);
+        }
 
         CppFuncData<double> new_location("new_location");
         CppFuncData<double> new_rotation("new_rotation");
-        new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range
-        new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range
+        new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
+        new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
 
         // create new Unreal objects
         UnrealObj<FVector> new_vec("new_vec");
@@ -75,6 +88,9 @@ ADebugWidget::ADebugWidget()
 
         // set return strings from Unreal objects
         return_values.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({new_vec.getPtr(), new_rot.getPtr()});
+
+        // set return info
+        return_values.info_ = YAML::Load("SUCCESS: true");
 
         return return_values;
     });
@@ -378,36 +394,37 @@ void ADebugWidget::CallCppFunctions()
     location.setData({1.0, 2.0, 4.0});
     rotation.setData({3.0, 5.0, 7.0});
 
-    // set arg data from data objects
-    args.args_ = CppFuncDataUtils::getArgsFromData({location.getPtr(), rotation.getPtr()});
-
     // create new Unreal objects
     UnrealObj<FVector> vec("vec");
     UnrealObj<FRotator> rot("rot");
     vec.setObj(FVector(10.0, 20.0, 30.0));
     rot.setObj(FRotator(30.0, 50.0, 70.0));
 
+    // set arg data from data objects
+    args.args_ = CppFuncDataUtils::getArgsFromData({location.getPtr(), rotation.getPtr()});
+
     // set arg strings from Unreal objects
     args.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({vec.getPtr(), rot.getPtr()});
 
-    // or can set directly from a map of names to property strings
-    //std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
-    //std::string rot_str = Std::toString("{", "\"pitch\": ", 1.1*i, ", \"yaw\": ", 2.2*i, ", \"roll\": ", 3.3*i, "}");
-    //std::map<std::string, std::string> unreal_obj_strings = {{"vec", vec_str}, {"rot", rot_str}};
-    //args.unreal_obj_strings_ = unreal_obj_strings;
+    // set arg config
+    args.config_ = YAML::Load("INITIALIZE_DATA_MODE: rvalue_reference_to_vector_of_uint8");
 
     // call function
     CppFuncComponentReturnValues return_values = cpp_func_component->callFunc("my_func", args);
 
-    // create new data objects directly from return data
+    // create data objects directly from return data
     CppFuncData<double> new_location("new_location");
     CppFuncData<double> new_rotation("new_rotation");
     CppFuncDataUtils::setDataFromReturnValues({new_location.getPtr(), new_rotation.getPtr()}, return_values.return_values_);
 
-    // create new Unreal objects from return strings
+    // create Unreal objects directly from return strings
     UnrealObj<FVector> new_vec("new_vec");
     UnrealObj<FRotator> new_rot("new_rot");
     UnrealObjUtils::setObjectPropertiesFromStrings({new_vec.getPtr(), new_rot.getPtr()}, return_values.unreal_obj_strings_);
+
+    // get return info
+    bool success = Yaml::get<bool>(return_values.info_, "SUCCESS");
+    SP_ASSERT(success);
 
     i++;
 }

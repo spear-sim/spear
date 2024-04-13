@@ -28,14 +28,14 @@ struct CppFuncComponentArgs
 {
     std::map<std::string, CppFuncArg> args_;
     std::map<std::string, std::string> unreal_obj_strings_;
-    YAML::Node args_info_;
+    YAML::Node config_;
 };
 
 struct CppFuncComponentReturnValues
 {
     std::map<std::string, CppFuncReturnValue> return_values_;
     std::map<std::string, std::string> unreal_obj_strings_;
-    YAML::Node return_values_info_;
+    YAML::Node info_;
 };
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
@@ -54,13 +54,13 @@ public:
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Shared Memory View Names");
     TArray<FString> SharedMemoryViewNames;
 
-    // typically called by the owning component
+    // typically called by the owning component to register/unregister functions and shared memory
     void registerSharedMemoryView(const std::string& name, const SharedMemoryView& shared_memory_view);
     void unregisterSharedMemoryView(const std::string& name);
     void registerFunc(const std::string& name, const std::function<CppFuncComponentReturnValues(const CppFuncComponentArgs&)>& func);
     void unregisterFunc(const std::string& name);
 
-    // typically called by a caller, e.g., CppFuncService
+    // typically called by code that wants to call previously registered functions and shared memory
     const std::map<std::string, SharedMemoryView>& getSharedMemoryViews() const;
     CppFuncComponentReturnValues callFunc(const std::string& name, const CppFuncComponentArgs& args);
 

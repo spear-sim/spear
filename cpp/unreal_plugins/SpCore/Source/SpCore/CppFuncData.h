@@ -52,10 +52,10 @@ public:
     CppFuncDataBase(const std::string& name) { name_ = name; }; // use when storing in an std::vector
     virtual ~CppFuncDataBase() {};
 
-    virtual void setDataAsTargetFor(CppFuncArg& arg) = 0;
-    virtual void setData(const CppFuncArg& arg) = 0;
-    virtual void moveDataTo(CppFuncReturnValue& return_value) = 0;
-    virtual void setData(const CppFuncReturnValue& return_value) = 0;
+    virtual void updateArg(CppFuncArg& arg) const = 0;                        // typically called before calling a function to set args
+    virtual void setData(const CppFuncArg& arg) = 0;                          // typically called from inside a function to retrieve args
+    virtual void moveDataToReturnValue(CppFuncReturnValue& return_value) = 0; // typically called from inside a function to set return values
+    virtual void setData(const CppFuncReturnValue& return_value) = 0;         // typically called after calling a function to retrieve return values
 
     std::string getName() const { SP_ASSERT(name_ != ""); return name_; };
     CppFuncDataBase* getPtr() { return this; };
@@ -75,14 +75,14 @@ public:
     // CppFuncDataBase interface
     //
 
-    // setDataAsTargetFor(...) is typically called when preparing to call a UCppFuncComponent function
-    void setDataAsTargetFor(CppFuncArg& arg) override
+    // typically called before calling a function to set args
+    void updateArg(CppFuncArg& arg) const override
     {
         arg.data_ = Std::reinterpretAsSpanOf<const uint8_t>(view_);
         arg.data_type_ = getDataType<TValue>();
     }
 
-    // setData(...) is typically called from inside a UCppFuncComponent function to retrieve args
+    // typically called from inside a function to retrieve args
     void setData(const CppFuncArg& arg) override
     {
         SP_ASSERT(arg.data_type_ == getDataType<TValue>());
@@ -90,18 +90,16 @@ public:
         view_ = Std::reinterpretAsSpanOf<const TValue>(arg.data_);
     }
 
-    // moveDataTo(...) is typically called from inside a UCppFuncComponent function to set return values
-    void moveDataTo(CppFuncReturnValue& return_value) override
+    // typically called from inside a function to set return values
+    void moveDataToReturnValue(CppFuncReturnValue& return_value) override
     {
         return_value.data_ = std::move(data_);
         return_value.data_type_ = getDataType<TValue>();
-
-        // invalidate data_ and view_ because we moved data_
         data_ = {};
         view_ = std::span<const TValue>();
     }
 
-    // setData(...) is typically called after returning from a UCppFuncComponent function
+    // typically called after returning from a function to retrieve return values
     void setData(const CppFuncReturnValue& return_value) override
     {
         SP_ASSERT(return_value.data_type_ == getDataType<TValue>());
@@ -114,6 +112,12 @@ public:
     //
 
     std::span<const TValue>& getData() { return view_; }
+
+    void setData(std::vector<uint8_t>&& src)
+    {
+        data_ = std::move(src); // can be moved because no reinterpreting is required when assigning to data_
+        view_ = Std::reinterpretAsSpanOf<const TValue>(data_);
+    }
 
     void setData(std::initializer_list<TValue> initializer_list)
     {
@@ -151,22 +155,22 @@ public:
     CppFuncDataUtils() = delete;
     ~CppFuncDataUtils() = delete;
 
-    // getArgsFromData(...) is typically called when preparing to call a UCppFuncComponent function
+    // typically called before calling a function to set args
     static std::map<std::string, CppFuncArg> getArgsFromData(std::initializer_list<CppFuncDataBase*> data_objs);
     static std::map<std::string, CppFuncArg> getArgsFromData(const std::vector<CppFuncDataBase*>& data_objs);
     static std::map<std::string, CppFuncArg> getArgsFromData(const std::map<std::string, CppFuncDataBase*>& data_objs);
 
-    // setDataFromArgs(...) is typically called from inside a UCppFuncComponent function to retreive args
+    // typically called from inside a function to retrieve args
     static void setDataFromArgs(std::initializer_list<CppFuncDataBase*> data_objs, const std::map<std::string, CppFuncArg>& args);
     static void setDataFromArgs(const std::vector<CppFuncDataBase*>& data_objs, const std::map<std::string, CppFuncArg>& args);
     static void setDataFromArgs(const std::map<std::string, CppFuncDataBase*>& data_objs, const std::map<std::string, CppFuncArg>& args);
 
-    // getReturnValuesFromData(...) is typically called from inside a UCppFuncComponent function to set return values
+    // typically called from inside a function to set return values
     static std::map<std::string, CppFuncReturnValue> getReturnValuesFromData(std::initializer_list<CppFuncDataBase*> data_objs);
     static std::map<std::string, CppFuncReturnValue> getReturnValuesFromData(const std::vector<CppFuncDataBase*>& data_objs);
     static std::map<std::string, CppFuncReturnValue> getReturnValuesFromData(const std::map<std::string, CppFuncDataBase*>& data_objs);
 
-    // setDataFromReturnValues(...) is typically called after returning from a UCppFuncComponent function
+    // typically called after returning from a function to retrieve return values
     static void setDataFromReturnValues(std::initializer_list<CppFuncDataBase*> data_objs, const std::map<std::string, CppFuncReturnValue>& return_values);
     static void setDataFromReturnValues(const std::vector<CppFuncDataBase*>& data_objs, const std::map<std::string, CppFuncReturnValue>& return_values);
     static void setDataFromReturnValues(const std::map<std::string, CppFuncDataBase*>& data_objs, const std::map<std::string, CppFuncReturnValue>& return_values);
