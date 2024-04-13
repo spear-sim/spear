@@ -28,14 +28,14 @@ struct CppFuncComponentArgs
 {
     std::map<std::string, CppFuncArg> args_;
     std::map<std::string, std::string> unreal_obj_strings_;
-    YAML::Node yaml_node_;
+    YAML::Node args_info_;
 };
 
 struct CppFuncComponentReturnValues
 {
     std::map<std::string, CppFuncReturnValue> return_values_;
     std::map<std::string, std::string> unreal_obj_strings_;
-    YAML::Node yaml_node_;
+    YAML::Node return_values_info_;
 };
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
