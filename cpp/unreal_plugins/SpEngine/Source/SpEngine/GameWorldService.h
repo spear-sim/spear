@@ -12,10 +12,10 @@
 #include <Engine/World.h>                // UWorld
 #include <Kismet/GameplayStatics.h>
 
-#include <SpCore/Assert.h>
-#include <SpCore/Log.h>
-#include <SpCore/Unreal.h>
-#include <SpEngine/EngineService.h>
+#include "SpCore/Assert.h"
+#include "SpCore/Log.h"
+#include "SpCore/Unreal.h"
+#include "SpEngine/EngineService.h"
 
 class GameWorldService {
 public:

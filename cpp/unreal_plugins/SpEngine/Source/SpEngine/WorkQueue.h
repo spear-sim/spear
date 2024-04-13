@@ -13,8 +13,8 @@
 #include <vector>
 #include <type_traits> // std::invoke_result_t
 
-#include <SpCore/Assert.h>
-#include <SpCore/Boost.h>
+#include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
 
 template <typename TFunc>
 concept CFuncIsCallableWithNoArgs = std::is_invocable_v<TFunc>;

@@ -34,7 +34,7 @@ if __name__ == "__main__":
     if args.paks_dir is not None:
         config.SPEAR.PAKS_DIR = args.paks_dir
     if args.vk_icd_filenames is not None:
-        config.SPEAR.ENVIRONMEN_VARS.VK_ICD_FILENAMES = args.vk_icd_filenames
+        config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES = args.vk_icd_filenames
     if args.gpu_id is not None:
         config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.gpu_id
     config.freeze()

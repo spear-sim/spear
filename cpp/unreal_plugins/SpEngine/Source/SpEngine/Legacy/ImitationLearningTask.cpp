@@ -53,41 +53,6 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     agent_initial_locations_.clear();
     agent_goal_locations_.clear();
     episode_index_ = -1;
-
-    // Read file data, line-by-line in the format:
-    // scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
-    std::ifstream fs(Config::get<std::string>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.EPISODES_FILE"));
-    SP_ASSERT(fs.is_open());
-    std::string line;
-    std::getline(fs, line); // read header
-    std::vector<std::string> tokens = Std::tokenize(line, ",");
-    SP_ASSERT(tokens.size() == 7);
-    SP_ASSERT(tokens.at(0) == "scene_id");
-    SP_ASSERT(tokens.at(1) == "initial_location_x");
-    SP_ASSERT(tokens.at(2) == "initial_location_y");
-    SP_ASSERT(tokens.at(3) == "initial_location_z");
-    SP_ASSERT(tokens.at(4) == "goal_location_x");
-    SP_ASSERT(tokens.at(5) == "goal_location_y");
-    SP_ASSERT(tokens.at(6) == "goal_location_z");    
-    while (std::getline(fs, line)) {
-        tokens = Std::tokenize(line, ",");
-        SP_ASSERT(tokens.size() == 7);
-        std::string scene_id = tokens.at(0);
-        FVector initial_location = {std::stod(tokens.at(1)), std::stod(tokens.at(2)), std::stod(tokens.at(3))};
-        FVector goal_location = {std::stod(tokens.at(4)), std::stod(tokens.at(5)), std::stod(tokens.at(6))};
-
-        // If scene_id matches the currently opened map, then add to our list of episodes.
-        // TODO (MR): Maybe scene_id should be passed in, because currently this lower-level code is
-        // reading a config parameter that belongs to a higher-level system, which we usually avoid.
-        // I think this is ok for now though, because we intend to migrate this code to Python soon.
-        if (scene_id == Config::get<std::string>("SP_ENGINE.LEGACY.SCENE_ID")) {
-            agent_initial_locations_.push_back(initial_location);
-            agent_goal_locations_.push_back(goal_location);
-        }
-    }
-    fs.close();
-
-    episode_index_ = 0;
 }
 
 ImitationLearningTask::~ImitationLearningTask()
@@ -189,6 +154,56 @@ std::map<std::string, std::vector<uint8_t>> ImitationLearningTask::getStepInfo()
 
 void ImitationLearningTask::reset()
 {
+    SP_ASSERT(agent_actor_);
+    SP_ASSERT(goal_actor_);
+
+    UWorld* world = agent_actor_->GetWorld();
+    SP_ASSERT(world);
+
+    std::string current_scene_id = Unreal::toStdString(world->GetName());
+
+    // Only if we have changed the scene
+    if (previous_scene_id_ != current_scene_id) {
+        // Since we are now moving across different scenes using the new open_level functionality, we do not need to spawn a new executable
+        // everytime we want to open a new scene. Thus, the below functionality of reading from an episodes file needs to be moved 
+        // away from the constructor to reset(). This is fine for now as we will move all of this functionality to python soon.
+
+        // Read file data, line-by-line in the format:
+        // scene_id, initial_location_x, initial_location_y, initial_location_z, goal_location_x, goal_location_y, goal_location_z
+        std::ifstream fs(Config::get<std::string>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.EPISODES_FILE"));
+        SP_ASSERT(fs.is_open());
+        std::string line;
+        std::getline(fs, line); // read header
+        std::vector<std::string> tokens = Std::tokenize(line, ",");
+        SP_ASSERT(tokens.size() == 7);
+        SP_ASSERT(tokens.at(0) == "scene_id");
+        SP_ASSERT(tokens.at(1) == "initial_location_x");
+        SP_ASSERT(tokens.at(2) == "initial_location_y");
+        SP_ASSERT(tokens.at(3) == "initial_location_z");
+        SP_ASSERT(tokens.at(4) == "goal_location_x");
+        SP_ASSERT(tokens.at(5) == "goal_location_y");
+        SP_ASSERT(tokens.at(6) == "goal_location_z");
+        while (std::getline(fs, line)) {
+            tokens = Std::tokenize(line, ",");
+            SP_ASSERT(tokens.size() == 7);
+            std::string scene_id = tokens.at(0);
+            FVector initial_location = {std::stod(tokens.at(1)), std::stod(tokens.at(2)), std::stod(tokens.at(3))};
+            FVector goal_location = {std::stod(tokens.at(4)), std::stod(tokens.at(5)), std::stod(tokens.at(6))};
+
+            if (scene_id == current_scene_id) {
+                agent_initial_locations_.push_back(initial_location);
+                agent_goal_locations_.push_back(goal_location);
+            }
+        }
+        fs.close();
+
+        // reset the episode_index_ when we change to a new scene
+        episode_index_ = 0;
+
+        // store the scene_id for future reference
+        previous_scene_id_ = current_scene_id;
+    }
+
     FVector offset_location = {
         Config::get<double>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_X"),
         Config::get<double>("SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.AGENT_SPAWN_OFFSET_LOCATION_Y"),

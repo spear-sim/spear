@@ -14,11 +14,11 @@ import spear
 import time
 
 # import observation_utils from common folder
-common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-import common.observation_utils as observation_utils
-
+import visualization_utils
+from instance_utils import open_level
 
 def get_action(row):
     names = [ name[:-2] for name in row.dtype.names ][::3] # strip .x .y .z from each name, select every third entry
@@ -44,13 +44,10 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
-    # update scene_id
-    config.defrost()
-    config.SIMULATION_CONTROLLER.SCENE_ID = args.scene_id
-    config.freeze()
-    
-    # create Env object
-    env = spear.Env(config)
+    spear.configure_system(config)
+    instance = spear.Instance(config)
+    open_level(instance, args.scene_id)
+    env = spear.Env(instance, config)
 
     # reset the simulation
     obs = env.reset()
@@ -59,7 +56,7 @@ if __name__ == "__main__":
         start_time_seconds = time.time()
     else:
         if args.save_images:
-            for render_pass in config.SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES:
+            for render_pass in config.SP_ENGINE.LEGACY.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 shutil.rmtree(render_pass_dir, ignore_errors=True)
                 os.makedirs(render_pass_dir)
@@ -75,13 +72,19 @@ if __name__ == "__main__":
 
         # save images for each render pass
         if not args.benchmark and args.save_images:
-            observation_components_to_modify = { render_pass: ["camera." + render_pass] for render_pass in config.SIMULATION_CONTROLLER.URDF_ROBOT_AGENT.CAMERA.RENDER_PASSES }
-            modified_obs = observation_utils.get_observation_components_modified_for_visualization(obs, observation_components_to_modify)
-            for render_pass in config.SIMULATION_CONTROLLER.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+            for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, render_pass))
                 assert os.path.exists(render_pass_dir)
-
-                obs_render_pass_vis = modified_obs["camera." + render_pass]
+                if render_pass == "depth":
+                    obs_render_pass_vis = visualization_utils.get_depth_image_for_visualization(obs["camera.depth"])
+                elif render_pass == "final_color":
+                    obs_render_pass_vis = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
+                elif render_pass == "normal":
+                    obs_render_pass_vis = visualization_utils.get_normal_image_for_visualization(obs["camera.normal"])
+                elif render_pass == "segmentation":
+                    obs_render_pass_vis = visualization_utils.get_segmentation_image_for_visualization(obs["camera.segmentation"])
+                else:
+                    assert False
                 plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%index)), obs_render_pass_vis)
             index += 1
 
@@ -95,5 +98,8 @@ if __name__ == "__main__":
 
     # close the environment
     env.close()
+
+    # close the instance
+    instance.close()
 
     spear.log("Done.")

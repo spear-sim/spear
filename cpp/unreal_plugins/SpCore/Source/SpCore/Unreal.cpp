@@ -17,6 +17,7 @@
 #include <Containers/StringConv.h>   // TCHAR_TO_UTF8, UTF8_TO_TCHAR
 #include <Containers/UnrealString.h> // FString::operator*
 #include <Dom/JsonObject.h>
+#include <Dom/JsonValue.h>
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>            // TCHAR, uint16
 #include <JsonObjectConverter.h>

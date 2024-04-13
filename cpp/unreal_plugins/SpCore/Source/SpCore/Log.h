@@ -10,8 +10,8 @@
 
 #include <CoreGlobals.h> // IsRunningCommandlet
 
-#include "SpCore/Std.h"
 #include "SpCore/Boost.h"
+#include "SpCore/Std.h"
 
 // This macro returns an empty string if __VA_ARGS__ is empty, and returns __VA_ARGS__ with a leading comma otherwise. This macro
 // enables variadic macro arguments to be passed into a function that accepts other arguments, regardless of whether or not

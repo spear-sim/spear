@@ -14,11 +14,11 @@
 #include <Misc/App.h>
 #include <PhysicsEngine/PhysicsSettings.h>
 
-#include <SpCore/Assert.h>
-#include <SpCore/Config.h>
-#include <SpCore/Log.h>
-#include <SpCore/Unreal.h>
-#include <SpEngine/EngineService.h>
+#include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Log.h"
+#include "SpCore/Unreal.h"
+#include "SpEngine/EngineService.h"
 #include "SpEngine/Legacy/Agent.h"
 #include "SpEngine/Legacy/CameraAgent.h"
 #include "SpEngine/Legacy/ClassRegistrationUtils.h"
@@ -200,7 +200,7 @@ public:
 
                 // We need to defer initializing this handler until after we have a valid world_ pointer,
                 // and we defer the rest of our initialization code until the OnWorldBeginPlay event.
-                world_begin_play_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &LegacyService::worldBeginPlayEventHandler);
+                world_begin_play_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &LegacyService::worldBeginPlayHandler);
             }
         }
     }
@@ -214,7 +214,7 @@ public:
         if (world == world_) {
 
             // The worldCleanupHandler(...) function is called for all worlds, but some local state (such as rpc_server_ and agent_)
-            // is initialized only when worldBeginPlayEventHandler(...) is called for a particular world. So we check if worldBeginPlayEventHandler(...)
+            // is initialized only when worldBeginPlayHandler(...) is called for a particular world. So we check if worldBeginPlayHandler(...)
             // has been executed.
             if (has_world_begin_play_executed_) {
                 has_world_begin_play_executed_ = false;
@@ -241,7 +241,7 @@ public:
         }
     }
 
-    void worldBeginPlayEventHandler()
+    void worldBeginPlayHandler()
     {
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(world_);

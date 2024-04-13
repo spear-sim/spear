@@ -12,6 +12,12 @@ import spear
 
 from utils import plot_paths
 
+# import open_level functionality from common folder
+common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
+import sys
+sys.path.append(common_dir)
+from instance_utils import open_level
+from navmesh_env import NavMesh
 
 if __name__ == "__main__":
 
@@ -27,14 +33,6 @@ if __name__ == "__main__":
     os.makedirs(args.episodes_dir, exist_ok=True)
     episodes_file = os.path.realpath(os.path.join(args.episodes_dir, f"{args.split}_episodes.csv"))
 
-    # load config
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-
-    # set certain default parameters required by this script
-    config.defrost()
-    config.SIMULATION_CONTROLLER.TASK = "NullTask"
-    config.freeze()
-
     # if the user provides a scene_id, use it, otherwise use the scenes defined in scenes.csv
     if args.scene_id is None:
         scenes_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "scenes.csv"))
@@ -47,32 +45,34 @@ if __name__ == "__main__":
     df_columns = ["scene_id", "initial_location_x", "initial_location_y", "initial_location_z", "goal_location_x", "goal_location_y", "goal_location_z"]
     df = pd.DataFrame(columns=df_columns)
 
+    # load config
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+
+    # set certain default parameters required by this script
+    config.defrost()
+    config.SP_ENGINE.LEGACY_SERVICE.TASK = "NullTask"
+    config.freeze()
+
+    spear.configure_system(config)
+    instance = spear.Instance(config)
+    navmesh = NavMesh(instance)
+
     # iterate over all scenes
     for scene_id in scene_ids:
 
         spear.log("Processing scene: " + scene_id)
 
-        # change config based on current scene
-        config.defrost()
-        config.SIMULATION_CONTROLLER.SCENE_ID = scene_id
-        config.freeze()
-
-        # create Env object
-        env = spear.Env(config)
-
         # reset the simulation
-        env_reset_info = {}
-        _ = env.reset(reset_info=env_reset_info)
-        assert "success" in env_reset_info
-            
+        open_level(instance, scene_id)
+
         # generate candidate points based out of args.num_episodes_per_scene
-        candidate_initial_points = env.get_random_points(args.num_episodes_per_scene * args.num_candidates_per_episode)
+        candidate_initial_points = navmesh.get_random_points(args.num_episodes_per_scene * args.num_candidates_per_episode)
 
         # obtain a reachable goal point for every candidate point
-        candidate_goal_points = env.get_random_reachable_points_in_radius(candidate_initial_points, 10000.0)
+        candidate_goal_points = navmesh.get_random_reachable_points_in_radius(candidate_initial_points, 10000.0)
 
         # obtain candidate paths for the candidate initial and goal points
-        candidate_paths = env.get_paths(candidate_initial_points, candidate_goal_points)
+        candidate_paths = navmesh.get_paths(candidate_initial_points, candidate_goal_points)
 
         # score each path and obtain best paths
         candidate_num_waypoints = np.array([ path.shape[0] for path in candidate_paths ])
@@ -97,10 +97,10 @@ if __name__ == "__main__":
         plots_filename = os.path.realpath(os.path.join(args.episodes_dir, scene_id + "_" + args.split + "_paths.png"))
         plot_paths(scene_id, [candidate_paths[i] for i in candidate_best_indices], plots_filename)
 
-        # close the current scene
-        env.close()
-
     # write initial and goal locations of all episodes to a csv file
     df.to_csv(episodes_file, index=False)
+
+    # close the unreal instance
+    instance.close()
 
     spear.log("Done.")

@@ -2,11 +2,11 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include <SpEngine/WorkQueue.h>
+#include "SpEngine/WorkQueue.h"
 
 #include <mutex>
 
-#include <SpCore/Boost.h>
+#include "SpCore/Boost.h"
 
 void WorkQueue::run()
 {
