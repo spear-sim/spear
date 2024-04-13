@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <stddef.h> // size_t
-
 #include <concepts> // std::derived_from
 #include <map>
 #include <ranges>   // std::views::filter, std::views::transform

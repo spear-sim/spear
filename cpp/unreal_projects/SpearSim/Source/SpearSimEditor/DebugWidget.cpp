@@ -6,17 +6,21 @@
 
 #include <stdint.h> // uint8_t
 
+#include <memory> // std::make_unique
+#include <ranges> // std::views::transform
+
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h> // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
-#include <Math/Transform.h>
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
 #include <UObject/Object.h>
 
 #include "SpCore/Assert.h"
+#include "SpCore/CppFuncComponent.h"
+#include "SpCore/CppFuncData.h"
 #include "SpCore/Log.h"
 #include "SpCore/SpCoreActor.h"
 #include "SpCore/Std.h"
@@ -31,10 +35,48 @@ ADebugWidget::ADebugWidget()
     cpp_func_component_ = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
     SP_ASSERT(cpp_func_component_);
 
-    cpp_func_component_->registerFunc("my_func", [](const typename UCppFuncComponent::TArgs& args) -> typename UCppFuncComponent::TReturn {
-        std::span<const double> in_location = Std::reinterpretAsSpanOf<const double>(args.at("location"));
-        std::vector<double> out_location = Std::toVector<double>(in_location | std::views::transform([](double x) { return 2.0*x; }));
-        return {{"location", Std::reinterpretAsVectorOf<uint8_t>(out_location)}};
+    std::string shared_memory_name = Unreal::toStdString(GetFullName()) + ":shared_memory:" + "my_shared_memory";
+    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_name, 1024);
+    cpp_func_component_->registerSharedMemoryView("my_shared_memory", shared_memory_region_->getView());
+
+    cpp_func_component_->registerFunc("my_func", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
+
+        // create new data objects directly from arg data
+        CppFuncData<double> location("location");
+        CppFuncData<double> rotation("rotation");
+        CppFuncDataUtils::setDataFromArgs({location.getPtr(), rotation.getPtr()}, args.args_);
+
+        // create new Unreal objects directly from arg strings
+        UnrealObj<FVector> vec("vec");
+        UnrealObj<FRotator> rot("rot");
+        UnrealObjUtils::setObjectPropertiesFromStrings({vec.getPtr(), rot.getPtr()}, args.unreal_obj_strings_);
+
+        // create new data objects
+        CppFuncData<double> hello("hello");
+        hello.setData({16.0, 32.0}); // initialize from initializer list
+        std::vector<double> hello_vector = {64.0, 128.0};
+        hello.setData(hello_vector); // initialize from vector
+
+        CppFuncData<double> new_location("new_location");
+        CppFuncData<double> new_rotation("new_rotation");
+        new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range
+        new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range
+
+        // create new Unreal objects
+        UnrealObj<FVector> new_vec("new_vec");
+        UnrealObj<FRotator> new_rot("new_rot");
+        new_vec.setObj(4.0*vec.getObj());
+        new_rot.setObj(5.0*rot.getObj());
+
+        CppFuncComponentReturnValues return_values;
+
+        // set return data from data objects
+        return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({new_location.getPtr(), new_rotation.getPtr()});
+
+        // set return strings from Unreal objects
+        return_values.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({new_vec.getPtr(), new_rot.getPtr()});
+
+        return return_values;
     });
 }
 
@@ -43,6 +85,8 @@ ADebugWidget::~ADebugWidget()
     SP_LOG_CURRENT_FUNCTION();
 
     cpp_func_component_->unregisterFunc("my_func");
+    cpp_func_component_->unregisterSharedMemoryView("my_shared_memory");
+    shared_memory_region_ = nullptr;
 }
 
 void ADebugWidget::LoadConfig()
@@ -149,7 +193,7 @@ void ADebugWidget::GetAndSetObjectProperties()
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
-    static int i = 0;
+    static int i = 1;
     std::string str;
     FVector vec(1.23, 4.56, 7.89);
 
@@ -236,7 +280,7 @@ void ADebugWidget::GetAndSetObjectProperties()
 
 void ADebugWidget::CallFunctions()
 {
-    static int i = 0;
+    static int i = 1;
 
     UFunction* ufunction = nullptr;
     std::map<std::string, std::string> args;
@@ -316,24 +360,61 @@ void ADebugWidget::CallFunctions()
     return_values = Unreal::callFunction(static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
 
-    using TReturn = typename UCppFuncComponent::TReturn;
-    using TArgs = typename UCppFuncComponent::TArgs;
+    i++;
+}
 
-    std::vector<double> cpp_func_in_location = {1.0, 2.0, 4.0};
-    TArgs cpp_func_args = {{"location", Std::reinterpretAsSpanOf<const uint8_t>(cpp_func_in_location)}};
+void ADebugWidget::CallCppFunctions()
+{
+    static int i = 1;
 
     UCppFuncComponent* cpp_func_component = Unreal::getComponentByType<UCppFuncComponent>(this);
     SP_ASSERT(cpp_func_component);
 
-    TReturn cpp_func_return_values = cpp_func_component->call("my_func", cpp_func_args);
-    std::span<const double> cpp_func_out_location = Std::reinterpretAsSpanOf<const double>(cpp_func_return_values.at("location"));
+    CppFuncComponentArgs args;
+
+    // create new data objects
+    CppFuncData<double> location("location");
+    CppFuncData<double> rotation("rotation");
+    location.setData({1.0, 2.0, 4.0});
+    rotation.setData({3.0, 5.0, 7.0});
+
+    // set arg data from data objects
+    args.args_ = CppFuncDataUtils::getArgsFromData({location.getPtr(), rotation.getPtr()});
+
+    // create new Unreal objects
+    UnrealObj<FVector> vec("vec");
+    UnrealObj<FRotator> rot("rot");
+    vec.setObj(FVector(10.0, 20.0, 30.0));
+    rot.setObj(FRotator(30.0, 50.0, 70.0));
+
+    // set arg strings from Unreal objects
+    args.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({vec.getPtr(), rot.getPtr()});
+
+    // or can set directly from a map of names to property strings
+    //std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
+    //std::string rot_str = Std::toString("{", "\"pitch\": ", 1.1*i, ", \"yaw\": ", 2.2*i, ", \"roll\": ", 3.3*i, "}");
+    //std::map<std::string, std::string> unreal_obj_strings = {{"vec", vec_str}, {"rot", rot_str}};
+    //args.unreal_obj_strings_ = unreal_obj_strings;
+
+    // call function
+    CppFuncComponentReturnValues return_values = cpp_func_component->callFunc("my_func", args);
+
+    // create new data objects directly from return data
+    CppFuncData<double> new_location("new_location");
+    CppFuncData<double> new_rotation("new_rotation");
+    CppFuncDataUtils::setDataFromReturnValues({new_location.getPtr(), new_rotation.getPtr()}, return_values.return_values_);
+
+    // create new Unreal objects from return strings
+    UnrealObj<FVector> new_vec("new_vec");
+    UnrealObj<FRotator> new_rot("new_rot");
+    UnrealObjUtils::setObjectPropertiesFromStrings({new_vec.getPtr(), new_rot.getPtr()}, return_values.unreal_obj_strings_);
 
     i++;
 }
 
 void ADebugWidget::CreateObjects()
 {
-    static int i = 0;
+    static int i = 1;
 
     UClass* uclass = UnrealClassRegistrar::getStaticClass("UGameplayStatics");
     SP_ASSERT(uclass);
