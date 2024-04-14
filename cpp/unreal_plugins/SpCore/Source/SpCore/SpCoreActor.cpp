@@ -38,17 +38,18 @@ ASpCoreActor::ASpCoreActor()
     SP_ASSERT(CppFuncComponent);
 
     // TODO: remove these CppFuncs because they are only here for debugging
+
     CppFuncComponent->registerFunc("hello", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
 
         CppFuncData<uint8_t> hello("hello");
-        hello.setData("Hello!");
+        hello.setData("Hello!"); // initialize from string literal
 
         CppFuncData<uint8_t> world("world");
         std::string world_str = "World!";
-        world.setData(world_str);
+        world.setData(world_str); // or from string
 
         CppFuncData<double> data("data");
-        data.setData({1.1, 2.2, 4.4, 8.8});
+        data.setData({1.1, 2.2, 4.4, 8.8}); // or from initializer list
 
         CppFuncComponentReturnValues return_values;
         return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({hello.getPtr(), world.getPtr(), data.getPtr()});
