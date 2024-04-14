@@ -5,14 +5,15 @@
 #include "SpCore/SpCoreActor.h"
 
 #include <Containers/Array.h>
-#include <Engine/Engine.h>      // GEngine
-#include <Engine/EngineTypes.h> // FHitResult
+#include <Engine/Engine.h>          // GEngine
+#include <Engine/EngineBaseTypes.h> // ETickingGroup
+#include <Engine/EngineTypes.h>     // FHitResult
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>       // uint64
+#include <HAL/Platform.h>           // uint64
 #include <Kismet/GameplayStatics.h>
 #include <Math/Vector.h>
 #include <Misc/CoreDelegates.h>
-#include <UObject/NameTypes.h>  // FName
+#include <UObject/NameTypes.h>      // FName
 
 #include "SpCore/Assert.h"
 #include "SpCore/CppFuncData.h"
@@ -21,7 +22,6 @@
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
-#include "SpCore/Yaml.h"
 
 ASpCoreActor::ASpCoreActor()
 {
