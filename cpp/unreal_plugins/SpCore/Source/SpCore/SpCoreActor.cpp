@@ -15,9 +15,13 @@
 #include <UObject/NameTypes.h>  // FName
 
 #include "SpCore/Assert.h"
+#include "SpCore/CppFuncData.h"
+#include "SpCore/CppFuncComponent.h"
 #include "SpCore/Log.h"
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealObj.h"
+#include "SpCore/Yaml.h"
 
 ASpCoreActor::ASpCoreActor()
 {
@@ -29,6 +33,29 @@ ASpCoreActor::ASpCoreActor()
 
     StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
     SP_ASSERT(StableNameComponent);
+
+    CppFuncComponent = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
+    SP_ASSERT(CppFuncComponent);
+
+    CppFuncComponent->registerFunc("my_func", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
+
+        // create data objects directly from arg data
+        CppFuncData<double> location("location");
+        CppFuncData<double> rotation("rotation");
+        CppFuncDataUtils::setDataFromArgs({location.getPtr(), rotation.getPtr()}, args.args_);
+
+        CppFuncData<double> new_location("new_location");
+        CppFuncData<double> new_rotation("new_rotation");
+        new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; }));
+        new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; }));
+
+        CppFuncComponentReturnValues return_values;
+
+        // set return data from data objects
+        return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({new_location.getPtr(), new_rotation.getPtr()});
+
+        return return_values;
+    });
 }
 
 ASpCoreActor::~ASpCoreActor()

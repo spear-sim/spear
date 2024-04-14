@@ -15,6 +15,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 
+// Needs to match SpEngine/CppFuncService.h
 enum class CppFuncDataType
 {
     Invalid    = -1,

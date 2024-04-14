@@ -13,6 +13,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Rpclib.h"
 #include "SpCore/Unreal.h"
+#include "SpEngine/CppFuncService.h"
 #include "SpEngine/EngineService.h"
 #include "SpEngine/GameWorldService.h"
 #include "SpEngine/LegacyService.h"
@@ -37,6 +38,8 @@ void SpEngine::StartupModule()
     // when constructing EngineService, and we pass in EngineService when constructing all other
     // services.
     engine_service_ = std::make_unique<EngineService<rpc::server>>(rpc_server_.get());
+
+    cpp_func_service_ = std::make_unique<CppFuncService>(engine_service_.get());
     game_world_service_ = std::make_unique<GameWorldService>(engine_service_.get());
     legacy_service_ = std::make_unique<LegacyService>(engine_service_.get());
 
@@ -48,19 +51,20 @@ void SpEngine::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
+    SP_ASSERT(rpc_server_);
     rpc_server_->close_sessions();
     rpc_server_->stop();
 
     SP_ASSERT(legacy_service_);
-    legacy_service_ = nullptr;
-
     SP_ASSERT(game_world_service_);
+    SP_ASSERT(cpp_func_service_);
+    legacy_service_ = nullptr;
     game_world_service_ = nullptr;
+    cpp_func_service_ = nullptr;
 
     SP_ASSERT(engine_service_);
     engine_service_ = nullptr;
 
-    SP_ASSERT(rpc_server_);
     rpc_server_ = nullptr;
 }
 

@@ -7,6 +7,9 @@
 #include <functional> // std::function
 #include <string>
 
+#include <Containers/UnrealString.h>
+#include <Containers/Array.h>
+
 #include "SpCore/CppFuncRegistrar.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemoryRegion.h"
