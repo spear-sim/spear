@@ -39,7 +39,7 @@ ASpCoreActor::ASpCoreActor()
 
     // TODO: remove these CppFuncs because they are only here for debugging
 
-    CppFuncComponent->registerFunc("hello", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
+    CppFuncComponent->registerFunc("hello_world", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
 
         CppFuncData<uint8_t> hello("hello");
         hello.setData("Hello!"); // initialize from string literal
@@ -49,8 +49,9 @@ ASpCoreActor::ASpCoreActor()
         world.setData(world_str); // or from string
 
         CppFuncData<double> data("data");
-        data.setData({1.1, 2.2, 4.4, 8.8}); // or from initializer list
+        data.setData({1.1, 2.2, 4.4, 8.8}); // or from initializer list of double
 
+        // NOTE: for maximum efficiency, getReturnValuesFromData(...) performs std::move operations and invalidates data objects
         CppFuncComponentReturnValues return_values;
         return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({hello.getPtr(), world.getPtr(), data.getPtr()});
 
@@ -67,12 +68,13 @@ ASpCoreActor::ASpCoreActor()
         // create new data objects
         CppFuncData<double> new_location("new_location");
         CppFuncData<double> new_rotation("new_rotation");
-        new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; }));
-        new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; }));
+        new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
+        new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
 
-        // set return data from data objects
+        // set return data from data objects (NOTE: getReturnValuesFromData(...) performs std::move operations and invalidates data objects)
         CppFuncComponentReturnValues return_values;
         return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({new_location.getPtr(), new_rotation.getPtr()});
+
 
         return return_values;
     });

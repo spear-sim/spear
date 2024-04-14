@@ -86,7 +86,7 @@ ADebugWidget::ADebugWidget()
 
         CppFuncComponentReturnValues return_values;
 
-        // set return data from data objects
+        // set return data from data objects (NOTE: getReturnValuesFromData(...) performs std::move operations and invalidates data objects)
         return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({new_location.getPtr(), new_rotation.getPtr()});
 
         // set return strings from Unreal objects
