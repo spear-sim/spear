@@ -54,13 +54,13 @@ public:
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Shared Memory View Names");
     TArray<FString> SharedMemoryViewNames;
 
-    // typically called by the owning component to register/unregister functions and shared memory
+    // typically called by the owning component to register/unregister CppFuncs
     void registerSharedMemoryView(const std::string& name, const SharedMemoryView& shared_memory_view);
     void unregisterSharedMemoryView(const std::string& name);
     void registerFunc(const std::string& name, const std::function<CppFuncComponentReturnValues(const CppFuncComponentArgs&)>& func);
     void unregisterFunc(const std::string& name);
 
-    // typically called by code that wants to call previously registered functions and shared memory
+    // typically called by code that wants to call CppFuncs
     const std::map<std::string, SharedMemoryView>& getSharedMemoryViews() const;
     CppFuncComponentReturnValues callFunc(const std::string& name, const CppFuncComponentArgs& args);
 

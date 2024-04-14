@@ -37,6 +37,25 @@ ASpCoreActor::ASpCoreActor()
     CppFuncComponent = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
     SP_ASSERT(CppFuncComponent);
 
+    // TODO: remove these CppFuncs because they are only here for debugging
+    CppFuncComponent->registerFunc("hello", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
+
+        CppFuncData<uint8_t> hello("hello");
+        hello.setData("Hello!");
+
+        CppFuncData<uint8_t> world("world");
+        std::string world_str = "World!";
+        world.setData(world_str);
+
+        CppFuncData<double> data("data");
+        data.setData({1.1, 2.2, 4.4, 8.8});
+
+        CppFuncComponentReturnValues return_values;
+        return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({hello.getPtr(), world.getPtr(), data.getPtr()});
+
+        return return_values;
+    });
+
     CppFuncComponent->registerFunc("my_func", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
 
         // create data objects directly from arg data
@@ -44,14 +63,14 @@ ASpCoreActor::ASpCoreActor()
         CppFuncData<double> rotation("rotation");
         CppFuncDataUtils::setDataFromArgs({location.getPtr(), rotation.getPtr()}, args.args_);
 
+        // create new data objects
         CppFuncData<double> new_location("new_location");
         CppFuncData<double> new_rotation("new_rotation");
         new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; }));
         new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; }));
 
-        CppFuncComponentReturnValues return_values;
-
         // set return data from data objects
+        CppFuncComponentReturnValues return_values;
         return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({new_location.getPtr(), new_rotation.getPtr()});
 
         return return_values;

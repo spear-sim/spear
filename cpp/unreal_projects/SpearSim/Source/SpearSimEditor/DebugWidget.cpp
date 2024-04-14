@@ -59,7 +59,7 @@ ADebugWidget::ADebugWidget()
         // create new data objects
         CppFuncData<double> hello("hello");
         if (initialize_data_mode == "initializer_list_of_double") {
-            hello.setData({ 16.0, 32.0 }); // initialize from initializer list of double
+            hello.setData({16.0, 32.0}); // initialize from initializer list of double
         } else if (initialize_data_mode == "vector_of_double") {
             std::vector<double> hello_vector = {64.0, 128.0};
             hello.setData(hello_vector); // initialize from vector of double
@@ -69,6 +69,9 @@ ADebugWidget::ADebugWidget()
         } else {
             SP_ASSERT(false);
         }
+
+        CppFuncData<uint8_t> hello_str("hello_str");
+        hello_str.setData("Hello world!"); // initialize from string literal
 
         CppFuncData<double> new_location("new_location");
         CppFuncData<double> new_rotation("new_rotation");

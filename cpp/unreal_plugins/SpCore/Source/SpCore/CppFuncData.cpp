@@ -15,7 +15,7 @@
 #include "SpCore/Std.h"
 
 //
-// typically called before calling a UCppFuncComponent function to set args
+// typically called before calling a CppFunc to set args
 //
 
 std::map<std::string, CppFuncArg> CppFuncDataUtils::getArgsFromData(std::initializer_list<CppFuncDataBase*> data_objs)
@@ -46,7 +46,7 @@ std::map<std::string, CppFuncArg> CppFuncDataUtils::getArgsFromData(const std::m
 }
 
 //
-// typically called from inside a UCppFuncComponent function to retrieve args
+// typically called from inside a CppFunc to retrieve args
 //
 
 void CppFuncDataUtils::setDataFromArgs(std::initializer_list<CppFuncDataBase*> data_objs, const std::map<std::string, CppFuncArg>& args)
@@ -73,7 +73,7 @@ void CppFuncDataUtils::setDataFromArgs(const std::map<std::string, CppFuncDataBa
 }
 
 //
-// typically called from inside a UCppFuncComponent function to set return values
+// typically called from inside a CppFunc to set return values
 //
 
 std::map<std::string, CppFuncReturnValue> CppFuncDataUtils::getReturnValuesFromData(std::initializer_list<CppFuncDataBase*> data_objs)
@@ -104,7 +104,7 @@ std::map<std::string, CppFuncReturnValue> CppFuncDataUtils::getReturnValuesFromD
 }
 
 //
-// typically called after returning from a UCppFuncComponent function to retrieve return values
+// typically called after returning from a CppFunc to retrieve return values
 //
 
 void CppFuncDataUtils::setDataFromReturnValues(std::initializer_list<CppFuncDataBase*> data_objs, const std::map<std::string, CppFuncReturnValue>& return_values)

@@ -86,6 +86,7 @@ public:
         unreal_entry_point_binder->bindFuncUnreal("cpp_func_service", "call_func", [this](const std::string& func_name, const CppFuncServiceArgs& args) -> CppFuncServiceReturnValues {
             SP_ASSERT(world_);
 
+            // TODO: make the object ptr an input to this function
             UObject* object = Unreal::findActorByType<ASpCoreActor>(world_);
             SP_ASSERT(object);
 
@@ -102,6 +103,7 @@ public:
             } else {
                 SP_ASSERT(false);
             }
+            SP_ASSERT(cpp_func_component);
 
             // prepare args
             CppFuncComponentArgs component_args;
@@ -114,7 +116,7 @@ public:
             component_args.unreal_obj_strings_ = args.unreal_obj_strings_;
             component_args.config_ = YAML::Load(args.config_);
 
-            // call function
+            // call CppFunc
             CppFuncComponentReturnValues component_return_values = cpp_func_component->callFunc(func_name, component_args);
 
             // prepare return values

@@ -15,6 +15,13 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 
+// The purpose of this file is to assist in defining C++ functions on Unreal components, such that the
+// functions can be called from higher-level code dynamically by name. In our naming convention in this
+// codebase, we refer to such a function as a "CppFunc". CppFuncs can accept as input, and return as
+// output, the following data types: (1) a map of names to data arrays that can each have a different
+// data type; (2) a map of names to Unreal structs; and (3) YAML data. This file is concerned
+// specifically with representing and operating on data arrays.
+
 // Needs to match SpEngine/CppFuncService.h
 enum class CppFuncDataType
 {
@@ -53,10 +60,10 @@ public:
     CppFuncDataBase(const std::string& name) { name_ = name; }; // use when storing in an std::vector
     virtual ~CppFuncDataBase() {};
 
-    virtual void updateArg(CppFuncArg& arg) const = 0;                        // typically called before calling a function to set args
-    virtual void setData(const CppFuncArg& arg) = 0;                          // typically called from inside a function to retrieve args
-    virtual void moveDataToReturnValue(CppFuncReturnValue& return_value) = 0; // typically called from inside a function to set return values
-    virtual void setData(const CppFuncReturnValue& return_value) = 0;         // typically called after calling a function to retrieve return values
+    virtual void updateArg(CppFuncArg& arg) const = 0;                        // typically called before calling a CppFunc to set args
+    virtual void setData(const CppFuncArg& arg) = 0;                          // typically called from inside a CppFunc to retrieve args
+    virtual void moveDataToReturnValue(CppFuncReturnValue& return_value) = 0; // typically called from inside a CppFunc to set return values
+    virtual void setData(const CppFuncReturnValue& return_value) = 0;         // typically called after calling a CppFunc to retrieve return values
 
     std::string getName() const { SP_ASSERT(name_ != ""); return name_; };
     CppFuncDataBase* getPtr() { return this; };
@@ -76,14 +83,14 @@ public:
     // CppFuncDataBase interface
     //
 
-    // typically called before calling a function to set args
+    // typically called before calling a CppFunc to set args
     void updateArg(CppFuncArg& arg) const override
     {
         arg.data_ = Std::reinterpretAsSpanOf<const uint8_t>(view_);
         arg.data_type_ = getDataType<TValue>();
     }
 
-    // typically called from inside a function to retrieve args
+    // typically called from inside a CppFunc to retrieve args
     void setData(const CppFuncArg& arg) override
     {
         SP_ASSERT(arg.data_type_ == getDataType<TValue>());
@@ -91,7 +98,7 @@ public:
         view_ = Std::reinterpretAsSpanOf<const TValue>(arg.data_);
     }
 
-    // typically called from inside a function to set return values
+    // typically called from inside a CppFunc to set return values
     void moveDataToReturnValue(CppFuncReturnValue& return_value) override
     {
         return_value.data_ = std::move(data_);
@@ -100,7 +107,7 @@ public:
         view_ = std::span<const TValue>();
     }
 
-    // typically called after returning from a function to retrieve return values
+    // typically called after returning from a CppFunc to retrieve return values
     void setData(const CppFuncReturnValue& return_value) override
     {
         SP_ASSERT(return_value.data_type_ == getDataType<TValue>());
@@ -116,7 +123,7 @@ public:
 
     void setData(std::vector<uint8_t>&& src)
     {
-        data_ = std::move(src); // can be moved because no reinterpreting is required when assigning to data_
+        data_ = std::move(src); // can be moved because we don't need to reinterpret
         view_ = Std::reinterpretAsSpanOf<const TValue>(data_);
     }
 
@@ -156,22 +163,22 @@ public:
     CppFuncDataUtils() = delete;
     ~CppFuncDataUtils() = delete;
 
-    // typically called before calling a function to set args
+    // typically called before calling a CppFunc to set args
     static std::map<std::string, CppFuncArg> getArgsFromData(std::initializer_list<CppFuncDataBase*> data_objs);
     static std::map<std::string, CppFuncArg> getArgsFromData(const std::vector<CppFuncDataBase*>& data_objs);
     static std::map<std::string, CppFuncArg> getArgsFromData(const std::map<std::string, CppFuncDataBase*>& data_objs);
 
-    // typically called from inside a function to retrieve args
+    // typically called from inside a CppFunc to retrieve args
     static void setDataFromArgs(std::initializer_list<CppFuncDataBase*> data_objs, const std::map<std::string, CppFuncArg>& args);
     static void setDataFromArgs(const std::vector<CppFuncDataBase*>& data_objs, const std::map<std::string, CppFuncArg>& args);
     static void setDataFromArgs(const std::map<std::string, CppFuncDataBase*>& data_objs, const std::map<std::string, CppFuncArg>& args);
 
-    // typically called from inside a function to set return values
+    // typically called from inside a CppFunc to set return values
     static std::map<std::string, CppFuncReturnValue> getReturnValuesFromData(std::initializer_list<CppFuncDataBase*> data_objs);
     static std::map<std::string, CppFuncReturnValue> getReturnValuesFromData(const std::vector<CppFuncDataBase*>& data_objs);
     static std::map<std::string, CppFuncReturnValue> getReturnValuesFromData(const std::map<std::string, CppFuncDataBase*>& data_objs);
 
-    // typically called after returning from a function to retrieve return values
+    // typically called after returning from a CppFunc to retrieve return values
     static void setDataFromReturnValues(std::initializer_list<CppFuncDataBase*> data_objs, const std::map<std::string, CppFuncReturnValue>& return_values);
     static void setDataFromReturnValues(const std::vector<CppFuncDataBase*>& data_objs, const std::map<std::string, CppFuncReturnValue>& return_values);
     static void setDataFromReturnValues(const std::map<std::string, CppFuncDataBase*>& data_objs, const std::map<std::string, CppFuncReturnValue>& return_values);
