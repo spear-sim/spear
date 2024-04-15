@@ -13,12 +13,11 @@ import shutil
 import spear
 import time
 
-# import observation_utils from common folder
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
+import instance_utils
 import visualization_utils
-from instance_utils import open_level
 
 def get_action(row):
     names = [ name[:-2] for name in row.dtype.names ][::3] # strip .x .y .z from each name, select every third entry
@@ -46,7 +45,7 @@ if __name__ == "__main__":
 
     spear.configure_system(config)
     instance = spear.Instance(config)
-    open_level(instance, args.scene_id)
+    instance_utils.open_level(instance, args.scene_id)
     env = spear.Env(instance, config)
 
     # reset the simulation
