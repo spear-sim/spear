@@ -16,7 +16,7 @@ IMITATION_LEARNING_OPENBOT:
 
 SPEAR:
   LAUNCH_MODE: "standalone"
-  STANDALONE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
+  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
   PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
 
   INSTANCE:

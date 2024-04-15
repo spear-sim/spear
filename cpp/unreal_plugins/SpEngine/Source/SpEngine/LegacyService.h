@@ -132,20 +132,20 @@ public:
     void worldBeginPlayHandler();
 
 private:
-
-    // FDelegateHandle objects corresponding to each event handler defined in this class
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_begin_play_handle_;
     FDelegateHandle world_cleanup_handle_;
 
-    // store a local reference to the game world
     UWorld* world_ = nullptr;
 
-    // Unreal lifecycle state
+    // Unreal life cycle state
     bool has_world_begin_play_executed_ = false;
     bool open_level_pending_ = false;
 
+    // OpenAI Gym helper objects
     std::unique_ptr<Agent> agent_ = nullptr;
     std::unique_ptr<Task> task_ = nullptr;
+
+    // Navmesh helper object
     std::unique_ptr<NavMesh> nav_mesh_ = nullptr;
 };

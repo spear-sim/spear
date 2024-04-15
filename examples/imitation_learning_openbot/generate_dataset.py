@@ -13,16 +13,15 @@ import shutil
 import spear
 import time
 
-from policies import *
-from utils import *
+import policies
+import utils
 
-# import OpenBotEnv, observation_utils from common folder
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from instance_utils import open_level
-from navmesh import NavMesh
-from openbot_env import OpenBotEnv
+import instance_utils
+import navmesh
+import openbot_env
 import visualization_utils
 
 if __name__ == "__main__":
@@ -70,15 +69,15 @@ if __name__ == "__main__":
         shutil.rmtree(split_dir, ignore_errors=True)
 
     # load driving policy
-    policy = OpenBotPathFollowingPolicy(config)
+    policy = policies.OpenBotPathFollowingPolicy(config)
 
     # load the episodes to be executed
     df = pd.read_csv(args.episodes_file)
 
     spear.configure_system(config)
     instance = spear.Instance(config)
-    navmesh = NavMesh(instance)
-    env = OpenBotEnv(instance, config)
+    navmesh = navmesh.NavMesh(instance)
+    env = openbot_env.OpenBotEnv(instance, config)
 
     # iterate over all episodes
     prev_scene_id = ""
@@ -93,10 +92,10 @@ if __name__ == "__main__":
             env.close()
 
             # open the desired level
-            open_level(instance, episode["scene_id"])
+            instance_utils.open_level(instance, episode["scene_id"])
 
             # open a new OpenBotEnv
-            env = OpenBotEnv(instance, config)
+            env = openbot_env.OpenBotEnv(instance, config)
 
         # now that we have checked if we need to create a new Env, we can update prev_scene_id
         prev_scene_id = episode["scene_id"]
@@ -182,7 +181,7 @@ if __name__ == "__main__":
 
                 if args.debug:
                     obs_final_color = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
-                    show_obs(obs_final_color)
+                    utils.show_obs(obs_final_color)
 
                 if not args.benchmark:
                     obs_final_color = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
@@ -293,11 +292,11 @@ if __name__ == "__main__":
                 # unpleasant way, so we only generate these plots if we're not in debug mode.
                 if not args.debug:
                     spear.log(f"    Generating plots...")
-                    plot_tracking_performance_spatial(
+                    utils.plot_tracking_performance_spatial(
                         episode_location_data[:num_iterations_executed],
                         episode_waypoint_data[:num_iterations_executed],
                         os.path.realpath(os.path.join(plots_dir, "tracking_performance_spatial.png")))
-                    plot_tracking_performance_temporal(
+                    utils.plot_tracking_performance_temporal(
                         episode_location_data[:num_iterations_executed],
                         episode_waypoint_data[:num_iterations_executed],
                         episode_rotation_data[:num_iterations_executed, 1],
@@ -307,7 +306,7 @@ if __name__ == "__main__":
                 if args.create_videos:
                     spear.log(f"    Generating video...")
                     video_file = os.path.realpath(os.path.join(args.dataset_dir, "videos", args.split + "_data", episode["scene_id"], "%04d.mp4" % episode["index"]))
-                    generate_video(images_dir, video_file, rate=int(1.0/config.SIMULATION_CONTROLLER.PHYSICS.SIMULATION_STEP_TIME), compress=True)
+                    utils.generate_video(images_dir, video_file, rate=int(1.0/config.SIMULATION_CONTROLLER.PHYSICS.SIMULATION_STEP_TIME), compress=True)
 
     # at this point, we're finished executing all episodes, so close the Env
     env.close()

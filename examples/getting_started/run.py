@@ -11,11 +11,10 @@ import os
 import spear
 import time
 
-# import OpenBotEnv from common folder
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from openbot_env import OpenBotEnv
+import openbot_env
 
 
 num_steps = 100
@@ -42,7 +41,7 @@ if __name__ == "__main__":
     if config.SP_ENGINE.LEGACY_SERVICE.AGENT == "SphereAgent":
         env = spear.Env(instance, config)
     elif config.SP_ENGINE.LEGACY_SERVICE.AGENT == "VehicleAgent":
-        env = OpenBotEnv(instance, config)
+        env = openbot_env.OpenBotEnv(instance, config)
 
     # reset the simulation to get the first observation
     obs = env.reset()

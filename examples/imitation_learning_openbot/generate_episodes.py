@@ -10,14 +10,13 @@ import os
 import pandas as pd
 import spear
 
-from utils import plot_paths
+import utils
 
-# import open_level functionality from common folder
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from instance_utils import open_level
-from navmesh import NavMesh
+import instance_utils
+import navmesh
 
 if __name__ == "__main__":
 
@@ -55,7 +54,7 @@ if __name__ == "__main__":
 
     spear.configure_system(config)
     instance = spear.Instance(config)
-    navmesh = NavMesh(instance)
+    navmesh = navmesh.NavMesh(instance)
 
     # iterate over all scenes
     for scene_id in scene_ids:
@@ -63,7 +62,7 @@ if __name__ == "__main__":
         spear.log("Processing scene: " + scene_id)
 
         # reset the simulation
-        open_level(instance, scene_id)
+        instance_utils.open_level(instance, scene_id)
 
         # generate candidate points based out of args.num_episodes_per_scene
         candidate_initial_points = navmesh.get_random_points(args.num_episodes_per_scene * args.num_candidates_per_episode)
@@ -95,7 +94,7 @@ if __name__ == "__main__":
         df = pd.concat([df, df_])
 
         plots_filename = os.path.realpath(os.path.join(args.episodes_dir, scene_id + "_" + args.split + "_paths.png"))
-        plot_paths(scene_id, [candidate_paths[i] for i in candidate_best_indices], plots_filename)
+        utils.plot_paths(scene_id, [candidate_paths[i] for i in candidate_best_indices], plots_filename)
 
     # write initial and goal locations of all episodes to a csv file
     df.to_csv(episodes_file, index=False)

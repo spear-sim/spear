@@ -77,13 +77,13 @@ class Env(gym.Env):
 
     def begin_tick(self):
         self._instance.engine_service.begin_tick()
-        self._instance.game_world_service.unpause_game()
+        self._instance.game_world_service.set_game_paused(False)
 
     def tick(self):
         self._instance.engine_service.tick()
 
     def end_tick(self):
-        self._instance.game_world_service.pause_game()
+        self._instance.game_world_service.set_game_paused(True)
         self._instance.engine_service.end_tick()
 
     def _get_action_space(self):

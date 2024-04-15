@@ -13,11 +13,10 @@ import shutil
 import spear
 import time
 
-# import observation_utils from common folder
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
-from instance_utils import open_level
+import instance_utils
 import visualization_utils
 
 # Unreal Engine's rendering system assumes coherence between frames to achieve maximum image quality. 
@@ -96,7 +95,7 @@ if __name__ == "__main__":
             env.close()
 
             # open the desired level
-            open_level(instance, pose["scene_id"])
+            instance_utils.open_level(instance, pose["scene_id"])
 
             # create Env object
             env = CustomEnv(instance, config, num_internal_steps=args.num_internal_steps)

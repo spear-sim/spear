@@ -61,7 +61,7 @@ class Instance():
             launch_args.append(self._config.SPEAR.INSTANCE.UPROJECT)
             launch_args.append("-game") # launch the game using uncooked content
         elif self._config.SPEAR.LAUNCH_MODE == "standalone":
-            launch_executable = self._config.SPEAR.STANDALONE
+            launch_executable = self._config.SPEAR.STANDALONE_EXECUTABLE
         else:
             assert False
 
@@ -126,9 +126,9 @@ class Instance():
         # that leverage temporal coherence between frames.
         for i in range(1 + self._config.SPEAR.INSTANCE.NUM_EXTRA_WARMUP_TICKS):
             self.engine_service.begin_tick()
-            self.game_world_service.unpause_game()
+            self.game_world_service.set_game_paused(False)
             self.engine_service.tick()
-            self.game_world_service.pause_game()
+            self.game_world_service.set_game_paused(True)
             self.engine_service.end_tick()
 
         spear.log("Finished initializing Unreal instance.")
